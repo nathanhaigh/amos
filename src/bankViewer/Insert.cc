@@ -5,7 +5,7 @@ using namespace std;
 
 const int MAXTRANSPOSONDIST = 100;
 const int MIN3PRIMETRIM = 250;
-const int MAXSTDEV = 2;
+const int MAXSTDEV = 3;
 
 
 static int min (int a, int b)
