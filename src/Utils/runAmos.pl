@@ -216,6 +216,10 @@ sub doCommand
     open(STDOUT, '>>', $base->getLogFile()); # append to log file
     open(STDERR, ">&STDOUT");
     my $ret = system($command);
+    close(STDOUT);close(STDERR);
+#restore STDOUT and STDERR
+    open(STDOUT, ">&OLDOUT");
+    open(STDERR, ">&OLDERR");
     if ($ret == -1){
 	$base->bail("Failed to spawn command $command: $!\n");
     }
@@ -225,10 +229,6 @@ sub doCommand
 			    $ret / 256)
 		    );
     } 
-    close(STDOUT); close(STDERR);
-#restore STDOUT and STDERR
-    open(STDOUT, ">&OLDOUT");
-    open(STDERR, ">&OLDERR");
 }
 
 sub substituteVars
@@ -237,16 +237,26 @@ sub substituteVars
     my $outstring;
 
 #    print "Parsing $string\n";
-    while ($string =~ /\G([^\$]*)\$\((\w+)\)/gc){
-	$outstring .= "$1";
-#	print "before is $1 variable is $2 and subst is $variables{$2}\n";
-	if (! exists $variables{$2}){
-	    $base->bail("Don't recognize variable $2 at line $.");
+    my @tokens = split(/(\$\(\w+\))/, $string);
+    for (my $i = 0; $i <= $#tokens; $i++){
+	if ($tokens[$i] =~ /\$\((\w+)\)/){
+	    if (! exists $variables{$1}){
+		$base->bail("Don't recognize variable $1 at line $.");
+	    }
+	    $tokens[$i] = $variables{$1};
 	}
-	$outstring .= $variables{$2};
+	$outstring .= $tokens[$i];
     }
-    $string =~ /\G(.*)$/;
-    $outstring .= $1;
+#    while ($string =~ /\G([^\$]*)\$\((\w+)\)/gc){
+#	$outstring .= "$1";
+#	print "before is $1 variable is $2 and subst is $variables{$2}\n";
+#	if (! exists $variables{$2}){
+#	    $base->bail("Don't recognize variable $2 at line $.");
+#	}
+#	$outstring .= $variables{$2};
+#    }
+#    $string =~ /\G(.*)$/;
+#    $outstring .= $1;
 #    print "Into $outstring\n";
     return $outstring;
 }
