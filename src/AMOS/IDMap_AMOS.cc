@@ -20,9 +20,9 @@ using namespace std;
 void IDMap_t::insert (ID_t key, ID_t val)
 {
   if ( key == NULL_ID )
-    AMOS_THROW_ARGUMENT ("Insert key equals NULL_ID");
+    AMOS_THROW_ARGUMENT ("key equals NULL_ID");
   if ( val == NULL_ID )
-    AMOS_THROW_ARGUMENT ("Insert val equals NULL_ID");
+    AMOS_THROW_ARGUMENT ("val equals NULL_ID");
 
   HashNode_t * curr = hashfunc (key);
 
@@ -111,12 +111,15 @@ void IDMap_t::invert ( )
 //----------------------------------------------------- lookup -----------------
 ID_t IDMap_t::lookup (ID_t key)
 {
+  if ( key == NULL_ID )
+    return NULL_ID;
+
   HashNode_t * curr = hashfunc (key);
 
   while ( curr -> key != key )
     {
       if ( curr -> next == NULL )
-	return NULL_ID;
+	AMOS_THROW_ARGUMENT ("key does not exist");
       curr = curr -> next;
     }
 
@@ -159,6 +162,9 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & source)
 //----------------------------------------------------- remove -----------------
 void IDMap_t::remove (ID_t key)
 {
+  if ( key == NULL_ID )
+    return;
+
   HashNode_t * prev = NULL;
   HashNode_t * curr = hashfunc (key);
 

@@ -769,8 +769,8 @@ public:
   //!
   //! This value is approximately equal to the total number of objects in the
   //! Bank. However, it will also include deleted objects that have not been
-  //! cleaned from the Bank. This number will be the IID assigned to the next
-  //! appended object.
+  //! cleaned from the Bank. This number will be incremented by one on each
+  //! append operation.
   //!
   //! \return The last IID in the Bank, or NULL_ID if Bank is empty or closed
   //!
