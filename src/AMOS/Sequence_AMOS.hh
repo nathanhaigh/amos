@@ -254,7 +254,7 @@ public:
   //!
   //! After compression, this object will continue to compress incoming data
   //! until the uncompress method is called. Compression packs both a base
-  //! and a quality score into a single bit, effectively halving the memory
+  //! and a quality score into a single byte, effectively halving the memory
   //! requirements for each object.
   //!
   //! The sequence should only contain A,C,G,T and Ns and quality scores in the
