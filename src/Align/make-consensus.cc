@@ -27,7 +27,7 @@ const int  ALIGN_WIGGLE = 15;
    // Number of positions left and right of specified location
    // to look for alignments.
 const double  DEFAULT_ERROR_RATE = 0.06;
-const int  DEFAULT_MIN_OVERLAP = 0;
+const int  DEFAULT_MIN_OVERLAP = 5;
 const int  MAX_LINE = 1000;
 const int  NEW_SIZE = 1000;
 
