@@ -133,7 +133,7 @@ void cleanFiles()
     set<string> temps = splitBlank(variables["TEMPS"]);
 
     logFile << timeStr() 
-	    << "variable TEMPS is set - ignoring INPUTS and OUTPUTS" << endl;
+	    << "will clean file listed in variable TEMPS" << endl;
 
     for (set<string>::iterator t = temps.begin(); t != temps.end(); t++){
       logFile << timeStr() << "removing " << *t << endl;
@@ -147,65 +147,6 @@ void cleanFiles()
 
   logFile << timeStr() 
 	  << "variable TEMPS is not set - no cleaning done" << endl;
-
-//   if (variables.find("INPUTS") == variables.end() ||
-//       variables.find("OUTPUTS") == variables.end()){
-//     logFile << timeStr() << "variables INPUTS and OUTPUTS must both be set in order to use -clean" << endl;
-//     cerr << "variables INPUTS and OUTPUTS must both be set in order to use -clean" << endl;
-//     finish(1);
-//   }
-  
-//   set<string> inputs = splitBlank(variables["INPUTS"]);
-//   set<string> outputs = splitBlank(variables["OUTPUTS"]);
-  
-//   if (inputs.size() == 0 || outputs.size() == 0){
-//     logFile << timeStr() << "variables INPUTS and OUTPUTS must both be non-empty in order to use -ocd" << endl;
-//     cerr << "variables INPUTS and OUTPUTS must both be non-empty in order to use -ocd" << endl;
-//     finish(1);
-//   }
-
-//   inputs.insert(confFile);     // make sure we don't erase ourselves
-//   outputs.insert(logFileName); // or the log file
-
-//   DIR * thisdir = opendir(".");
-//   if (thisdir == NULL){
-//     logFile << timeStr() << "cannot open local dir - no cleaning will be done" 
-// 	    << endl;
-//     cerr << "cannot open local dir - no cleaning will be done" << endl;
-//     return;
-//   }
-
-//   struct dirent * de;
-//   struct stat buf;
-//   while ((de = readdir(thisdir)) != NULL){
-//     if (de->d_name[0] == '.') { // directory or hidden file
-//       cerr << "skipping directory " << de->d_name << endl;
-//       continue;
-//     }
-
-//     if (lstat(de->d_name, &buf) < 0){
-//       logFile << timeStr() << "cannot stat file: " << de->d_name << endl;
-//       continue;
-//     }
-
-//     if (buf.st_ctime < allstart) { // file existed before we started running
-//       cerr << "skipping preexisting file " << de->d_name << " (" 
-// 	   <<  buf.st_ctime << " < " << allstart << ")" << endl;
-//       continue;
-//     }
-
-//     if (inputs.find(string(de->d_name)) != inputs.end() ||
-// 	outputs.find(string(de->d_name)) != outputs.end()) // file in INPUTS or OUTPUTS
-//       continue;
-
-//     logFile << timeStr() << "removing " << de->d_name << endl;
-
-//     // if all else fails, we erase the file
-//     if (unlink(de->d_name) < 0){
-//       logFile << timeStr() << "cannot remove file: " << de->d_name << endl;
-//       continue;
-//     }
-//   }
 }
 
 string doCommandStr(string);
@@ -313,8 +254,7 @@ void printHelpText()
     "if the config file is not specified we use environment variable AMOSCONF\n"
     "if a start step is specified (-s) starts with that command\n"
     "if an end step is specified (-e) ends with the command prior to the number\n"
-    "if -clean is specified, all files except for those listed in the variables INPUTS\n"
-    "and OUTPUTS get removed from the current directory\n"
+    "if -clean is specified, all files listed in the TEMPS var get removed\n"
     "if -ocd is specified checks that all files in the INPUTS variable exist\n"
     "\n"
     "e.g.  runAmos -s 1 -e 5   will run steps 1, 2, 3, and 4.\n"
@@ -411,8 +351,7 @@ bool GetOptions(int argc, char ** argv)
     variables["PREFIX"] = string(argv[optind]);
     for (;optind < argc; optind++)
       cmdLnVars.push_back(string(argv[optind]));
-  } else 
-    return false;
+  } 
 
   return true;
 } // GetOptions
@@ -647,6 +586,8 @@ int main(int argc, char ** argv)
   int lineno = 0;
   string message;
   bool multiline = false;
+  bool continuation = false;
+  string outline = "";
   int currstep = -1;
   int step;
   int noscan;// where scanf stops
@@ -688,11 +629,26 @@ int main(int argc, char ** argv)
       if (line.length() == 1 && line[0] == '.'){ // end multiline
 	multiline = false;
 	noop = false;
+	if (continuation){
+	  commands.push_back(outline);
+	}
+	continuation = false;
+	outline = "";
 	continue;
       }
 
-      if (! noop)
-	commands.push_back(line);
+      if (! noop){
+	if (line.substr(line.size() - 1) == "\\"){ // is continuation line
+	  outline += line.substr(0, line.size() - 1);
+	  continuation = true;
+	} else if (continuation){
+	  outline += line;
+	  commands.push_back(outline);
+	  outline = "";
+	  continuation = false;
+	} else 
+	  commands.push_back(line);
+      }
 
       continue;
     } // multiline command
