@@ -56,23 +56,6 @@ namespace Bank_k {
   const std::string VAR_STORE_SUFFIX (".var");
   //!< Suffix for the variable length store
 
-  const std::string BANK_NAMES [Bankable_t::MAX_BANKS] =
-  //!< String names for the different BankTypes
-    {
-      "NULL_BANK",
-      "BANKABLE",
-      "CONTIGEDGE",
-      "CONTIGLINK",
-      "CONTIG",
-      "EXAMPLE",
-      "FRAGMENT",
-      "KMER",
-      "LIBRARY",
-      "OVERLAP",
-      "READ",
-      "SCAFFOLD",
-      "SEQUENCE",
-    };
 } // namespace Bank_k
 
 

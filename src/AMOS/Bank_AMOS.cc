@@ -14,6 +14,7 @@
 #include "Bank_AMOS.hh"
 using namespace AMOS;
 using namespace Bank_k;
+using namespace Bankable_k;
 using namespace std;
 
 
