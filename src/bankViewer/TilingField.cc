@@ -1,6 +1,8 @@
 #include "TilingField.hh"
 #include <qpainter.h>
 #include <qpixmap.h>
+#include "ReadInfo.hh"
+#include <qstring.h>
 
 using namespace AMOS;
 using namespace std;
@@ -89,57 +91,133 @@ TilingField::TilingField( QWidget *parent, const char *name )
           contig_bank(Contig_t::NCODE)
 {
   m_gindex = 0;
+  m_db = "DMG";
   setPalette( QPalette( QColor( 250, 250, 200) ) );
-  m_displaywidth=40;
   m_loaded = 0;
+  m_displaywidth=0;
+  m_desiredheight = 0;
+  m_fontsize = 12;
+  resize(this->width(), 500);
 }
 
-void TilingField::loadContig(string bank_name, int contigId)
+
+void TilingField::mouseReleaseEvent( QMouseEvent *e )
 {
-  cerr << "Loading " << bank_name << ":" << contigId 
-       << " at " << Date() << endl;
+  int lineheight  = m_fontsize+5;
+  int tilevoffset = lineheight*4;
 
-  read_bank.open(bank_name);
-  contig_bank.open(bank_name);
+  int top = tilevoffset - lineheight;
 
-  Contig_t contig;
-  contig_bank.fetch(contigId, contig);
+  int dcov = e->y();
+  if (dcov < top) { return; }
+  dcov -= top;
+  dcov /= lineheight;
+
+  if (dcov >= (int) m_currentReads.size()) { return; }
+  ReadInfo * readinfo = new ReadInfo(m_currentReads[dcov], m_db, this, "readinfo");
+  readinfo->show();
+}
+
+void TilingField::setContigId(int contigId)
+{
+  if (m_bankname != "")
   {
-    m_tiling = contig.getReadTiling();
-    m_consensus = contig.getSeqString();
-
-    sort(m_tiling.begin(), m_tiling.end(), TilingOrderCmp());
-
-    // Render the aligned sequences
-    int vectorpos;
-    vector<Tile_t>::const_iterator vi;
-
-    for (vi =  m_tiling.begin(), vectorpos = 0;
-         vi != m_tiling.end();
-         vi++, vectorpos++)
+    try
     {
-      RenderSeq_t rendered;
-      m_renderedSeqs.push_back(rendered);
-      m_renderedSeqs[vectorpos].load(read_bank, vi);
+      read_bank.open(m_bankname);
+      contig_bank.open(m_bankname);
+
+      Contig_t contig;
+      contig_bank.fetch(contigId, contig);
+
+      m_tiling = contig.getReadTiling();
+      m_consensus = contig.getSeqString();
+
+      sort(m_tiling.begin(), m_tiling.end(), TilingOrderCmp());
+
+      // Render the aligned sequences
+      int vectorpos;
+      vector<Tile_t>::const_iterator vi;
+
+      for (vi =  m_tiling.begin(), vectorpos = 0;
+           vi != m_tiling.end();
+           vi++, vectorpos++)
+      {
+        RenderSeq_t rendered(vectorpos);
+        m_renderedSeqs.push_back(rendered);
+        m_renderedSeqs[vectorpos].load(read_bank, vi);
+      }
+
+      emit setRange(0, (int)m_consensus.size()-1);
+      emit contigLoaded(contigId);
+      m_loaded = 1;
+
+      repaint();
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     }
   }
-
-  emit setRange(0, (int)m_consensus.size()-m_displaywidth);
-  m_loaded = 1;
 }
 
+int min (int a, int b)
+{
+  return a < b ? a : b;
+}
+
+int max (int a, int b)
+{
+  return a > b ? a : b;
+}
+
+void TilingField::setBankname(string bankname)
+{
+  if (bankname != "")
+  {
+    try
+    {
+      m_bankname = bankname;
+      contig_bank.open(m_bankname);
+      emit contigRange(1, contig_bank.getSize());
+
+      QString s = "Viewing ";
+      s += m_bankname.c_str();
+      s += " with ";
+      s += QString::number(contig_bank.getSize());
+      s += " contigs";
+
+      emit setStatus(s);
+
+      setContigId(1);
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    }
+  }
+}
+
+void TilingField::setFontSize(int fontsize )
+{
+  if (fontsize == m_fontsize) { return; }
+  m_fontsize = fontsize;
+
+  int width = this->width();
+  m_displaywidth = width/m_fontsize;
+
+  repaint();
+  emit setFontSize(m_fontsize);
+}
 
 void TilingField::setGindex( int gindex )
 {
   if (!m_loaded) { return; }
 
   int width = this->width();
-  m_displaywidth = width/8;
+  m_displaywidth = width/m_fontsize;
 
-  if (gindex > m_consensus.size()-m_displaywidth)
-  {
-    gindex = m_consensus.size()-m_displaywidth;
-  }
+  gindex = min(gindex, m_consensus.size()-m_displaywidth);
 
   if ( m_gindex == gindex ) {return;}
 
@@ -148,30 +226,28 @@ void TilingField::setGindex( int gindex )
   emit gindexChanged( m_gindex );
 }
 
-int min (int a, int b)
-{
-  return a < b ? a : b;
-
-}
-
 
 void TilingField::paintEvent( QPaintEvent * )
 {
-  QRect cr(0,0, this->width(), this->height());
+  if (!m_loaded) { return; }
 
-  QPixmap pix(this->width(), this->height());
-  pix.fill(this, cr.topLeft());
+  int height = 1000;
+
+  QPixmap pix(this->width(), height);
+  pix.fill(this, 0,0);
 
   QPainter p( &pix );
 
-  int fontsize = 12;
-  int lineheight  = fontsize+5;
+  int lineheight  = m_fontsize+5;
   int tilevoffset = lineheight*4;
-  int tilehoffset = 50;
+  int tilehoffset = m_fontsize*4;
   int seqnamehoffset = 10;
 
+  int width = this->width();
+  m_displaywidth = width/(m_fontsize-4);
 
-  p.setFont(QFont("Courier", fontsize));
+
+  p.setFont(QFont("Courier", m_fontsize));
 
   vector<int> reads;
   reads.reserve(m_tiling.size());
@@ -180,7 +256,7 @@ void TilingField::paintEvent( QPaintEvent * )
   Pos_t grangeEnd = min(m_gindex + m_displaywidth, m_consensus.size()-1);
 
   // Figure out which reads tile this range
-  vector<RenderSeq_t>::const_iterator ri;
+  vector<RenderSeq_t>::iterator ri;
   int dcov = 0;
   int vectorpos = 0;
   
@@ -195,11 +271,9 @@ void TilingField::paintEvent( QPaintEvent * )
   }
 
   p.drawText(tilehoffset, lineheight, pos);
-
   p.drawText(tilehoffset, lineheight*2, cons);
-  cons = "cons";
-  p.drawText(seqnamehoffset, lineheight*2, cons);
 
+  m_currentReads.clear();
 
   for (ri =  m_renderedSeqs.begin(), vectorpos = 0; 
        ri != m_renderedSeqs.end(); 
@@ -220,18 +294,30 @@ void TilingField::paintEvent( QPaintEvent * )
 
       p.drawText (tilehoffset, lineheight*dcov + tilevoffset, s);
       dcov++;
+
+      m_currentReads.push_back(ri);
     }
   }
 
+  height = lineheight*dcov + tilevoffset;
+  m_desiredheight = height;
+
   p.end();
   p.begin(this);
-  p.drawPixmap(cr.topLeft(), pix);
+  pix.resize(this->width(), height);
+
+  p.drawPixmap(0, 0, pix);
 }
 
 
 QSizePolicy TilingField::sizePolicy() const
 {
     return QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+}
+
+void TilingField::setDB(const QString & db)
+{
+  m_db = db.ascii();
 }
 
 

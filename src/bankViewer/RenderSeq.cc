@@ -1,7 +1,9 @@
 #include "RenderSeq.hh"
 
-RenderSeq_t::RenderSeq_t()
-{ }
+RenderSeq_t::RenderSeq_t(int vectorpos)
+{
+  m_vectorpos = vectorpos;
+}
 
 RenderSeq_t::~RenderSeq_t()
 { }

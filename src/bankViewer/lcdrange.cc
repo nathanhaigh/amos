@@ -35,6 +35,5 @@ void LCDRange::setValue( int value )
 
 void LCDRange::setRange( int minVal, int maxVal )
 {
-  cerr << "setting range to " << minVal  << " " << maxVal << endl;
   slider->setRange( minVal, maxVal );
 }
