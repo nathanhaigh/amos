@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 use TIGR::Foundation;
-use TIGR::ParseFasta;
+use AMOS::ParseFasta;
 use strict;
 
 my $VERSION = '$Revision$ ';

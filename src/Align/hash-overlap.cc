@@ -12,6 +12,7 @@
 
 
 #include  "hash-overlap.hh"
+#include  <cassert>
 
 
 #define  USE_SIMPLE_OVERLAP  0

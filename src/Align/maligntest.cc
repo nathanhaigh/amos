@@ -13,6 +13,7 @@
 #include  "fasta.hh"
 #include  "align.hh"
 #include  "prob.hh"
+#include  "utility_AMOS.hh"
 #include  <vector>
 
 
@@ -70,8 +71,8 @@ int  main
    slop = int (10 + base_len * 2.0 * error);
        // extra length to allow for indels
    ref_len = base_len + (num_strings - 1) * delta + slop;
-   a = (char *) SafeMalloc (1 + base_len + slop);
-   ref = (char *) SafeMalloc (1 + ref_len);
+   a = (char *) AMOS::SafeMalloc (1 + base_len + slop);
+   ref = (char *) AMOS::SafeMalloc (1 + ref_len);
    
    for  (i = 0;  i < ref_len;  i ++)
      ref [i] = Alphabet [lrand48 () % 4];

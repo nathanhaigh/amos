@@ -10,9 +10,8 @@
 #ifndef __Bank_AMOS_HH
 #define __Bank_AMOS_HH 1
 
-#include "inttypes_AMOS.hh"
+#include "utility_AMOS.hh"
 #include "IDMap_AMOS.hh"
-#include "alloc.hh"
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -20,9 +19,11 @@
 #include <vector>
 #include <deque>
 
+#define __PUBSETBUF pubsetbuf
 #ifdef __GNUC__
 #if __GNUC__ < 3
-#define pubsetbuf setbuf
+#undef __PUBSETBUF
+#define __PUBSETBUF setbuf
 #endif
 #endif
 
@@ -400,8 +401,8 @@ protected:
       fix_buff = (char *) SafeMalloc (buffer_size);
       var_buff = (char *) SafeMalloc (buffer_size);
 
-      fix . rdbuf( ) -> pubsetbuf (fix_buff, buffer_size);
-      var . rdbuf( ) -> pubsetbuf (var_buff, buffer_size);
+      fix . rdbuf( ) -> __PUBSETBUF (fix_buff, buffer_size);
+      var . rdbuf( ) -> __PUBSETBUF (var_buff, buffer_size);
     }
 
     ~BankPartition_t ( )

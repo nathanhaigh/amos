@@ -8,6 +8,7 @@
 //  multialignment for a specified contig
 
 
+#include  "utility_AMOS.hh"
 #include  "delcher.hh"
 #include  "fasta.hh"
 #include  "align.hh"
@@ -15,6 +16,7 @@
 #include  <set>
 #include  <string>
 #include  <algorithm>
+#include  <cassert>
 
 using namespace std;
 
@@ -538,7 +540,7 @@ int  main
            int  len;
 
            len = strtol (line + 4, NULL, 10);
-           consensus = (char *) SafeRealloc (consensus, len + 1);
+           consensus = (char *) AMOS::SafeRealloc (consensus, len + 1);
            consensus [0] = '\n';
            ct = 0;     // length of consensus
           }
@@ -701,14 +703,14 @@ static int  Count_SNPs
    cons_len = con_hi - con_lo;
    if  (count == NULL)
        {
-        count = (Count_t *) SafeCalloc (cons_len, sizeof (Count_t));
+        count = (Count_t *) AMOS::SafeCalloc (cons_len, sizeof (Count_t));
         count_len = cons_len;
        }
    else
        {
         if  (cons_len > count_len)
             {
-             count = (Count_t *) SafeRealloc (count, cons_len * sizeof (Count_t));
+             count = (Count_t *) AMOS::SafeRealloc (count, cons_len * sizeof (Count_t));
              count_len = cons_len;
             }
         for  (i = 0;  i < cons_len;  i ++)
@@ -755,9 +757,9 @@ static void  Get_Reads
    int  i, n, ct, q_ct;
 
    if  (read_buff == NULL)
-       read_buff = (char *) SafeMalloc (read_buff_len);
+       read_buff = (char *) AMOS::SafeMalloc (read_buff_len);
    if  (qual_buff == NULL)
-       qual_buff = (char *) SafeMalloc (qual_buff_len);
+       qual_buff = (char *) AMOS::SafeMalloc (qual_buff_len);
 
    // Find the read sequence information from the .frg file
    // for all the reads in read_list
@@ -829,7 +831,7 @@ static void  Get_Reads
                     {
                      read_buff_len *= 2;
                      read_buff
-                          = (char *) SafeRealloc (read_buff, read_buff_len);
+                          = (char *) AMOS::SafeRealloc (read_buff, read_buff_len);
                     }
                 strcpy (read_buff + ct, s);
                 ct += strlen (s);
@@ -851,7 +853,7 @@ static void  Get_Reads
                     {
                      qual_buff_len *= 2;
                      qual_buff
-                          = (char *) SafeRealloc (qual_buff, qual_buff_len);
+                          = (char *) AMOS::SafeRealloc (qual_buff, qual_buff_len);
                     }
                 strcpy (qual_buff + q_ct, s);
                 q_ct += strlen (s);
@@ -941,16 +943,16 @@ static void  List_SNPs
    cons_len = con_hi - con_lo;
    if  (count_a == NULL)
        {
-        count_a = (Count_t *) SafeCalloc (cons_len, sizeof (Count_t));
-        count_b = (Count_t *) SafeCalloc (cons_len, sizeof (Count_t));
+        count_a = (Count_t *) AMOS::SafeCalloc (cons_len, sizeof (Count_t));
+        count_b = (Count_t *) AMOS::SafeCalloc (cons_len, sizeof (Count_t));
         count_len = cons_len;
        }
    else
        {
         if  (cons_len > count_len)
             {
-             count_a = (Count_t *) SafeRealloc (count_a, cons_len * sizeof (Count_t));
-             count_b = (Count_t *) SafeRealloc (count_b, cons_len * sizeof (Count_t));
+             count_a = (Count_t *) AMOS::SafeRealloc (count_a, cons_len * sizeof (Count_t));
+             count_b = (Count_t *) AMOS::SafeRealloc (count_b, cons_len * sizeof (Count_t));
              count_len = cons_len;
             }
         for  (i = 0;  i < cons_len;  i ++)

@@ -12,6 +12,7 @@
 #include  "delcher.hh"
 #include  "fasta.hh"
 #include  "align.hh"
+#include  "utility_AMOS.hh"
 #include  <vector>
 
 
@@ -87,8 +88,8 @@ int  main
    error = strtod (argv [3], NULL);
 
    a_max = int (10 + a_len * (1.0 + 2.0 * error));
-   a = (char *) SafeMalloc (1 + a_max);
-   b = (char *) SafeMalloc (1 + b_len);
+   a = (char *) AMOS::SafeMalloc (1 + a_max);
+   b = (char *) AMOS::SafeMalloc (1 + b_len);
 
    for  (i = 0;  i < b_len;  i ++)
      b [i] = alphabet [lrand48 () % 4];

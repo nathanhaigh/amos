@@ -9,8 +9,8 @@
 //  .frg file with the sequence and quality set to the UMd values.
 
 
-#include  "delcher.hh"
 #include  "CelMsg.hh"
+#include  "delcher.hh"
 #include  "fasta.hh"
 #include  <vector>
 #include  <string>

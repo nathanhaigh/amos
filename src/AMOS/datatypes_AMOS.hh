@@ -10,8 +10,6 @@
 #ifndef __datatypes_AMOS_HH
 #define __datatypes_AMOS_HH 1
 
-#include "inttypes_AMOS.hh"
-#include "exceptions_AMOS.hh"
 #include "Message_AMOS.hh"
 #include <vector>
 #include <string>

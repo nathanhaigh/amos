@@ -7,9 +7,9 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "foundation_AMOS.hh"
 #include "amp.hh"
 #include "delta.hh"
-#include "foundation_AMOS.hh"
 #include <list>
 #include <algorithm>
 #include <iostream>

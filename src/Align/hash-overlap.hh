@@ -43,6 +43,7 @@
 
 using namespace std;
 using namespace AMOS;
+using namespace HASHMAP_NAMESPACE;
 
 const double  DEFAULT_ERROR_RATE = 0.06;
   // Default fraction of errors allowed in overlap alignment

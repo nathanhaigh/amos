@@ -31,8 +31,8 @@ Size_t Contig_t::getSpan ( ) const
     }
   else
     {
-      hi = -MAX_SIZE;
-      lo = MAX_SIZE;
+      hi = -(MAX_POS);
+      lo = MAX_POS;
     }
 
   std::vector<Tile_t>::const_iterator ti;

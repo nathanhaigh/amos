@@ -48,11 +48,11 @@ const char    MIN_QUALITY = '0';        //!< min quality score definition
 const char    MAX_QUALITY = '0' + 63;   //!< max quality score definition
 const char    NULL_CHAR   = '\0';       //!< null char
 const char    NL_CHAR     = '\n';       //!< newline char
-const string  NULL_STRING = &NULL_CHAR; //!< null string
+const std::string  NULL_STRING = &NULL_CHAR; //!< null string
 
-const ID_t    MAX_ID      = (2 << 31) - 1;   //!< 2^32 - 1 (unsigned 32bit int)
-const Size_t  MAX_SIZE    = (2 << 30) - 1;   //!< 2^31 - 1 (signed 32bit int)
-const Pos_t   MAX_POS     = (2 << 30) - 1;   //!< 2^31 - 1 (signed 32bit int)
+const ID_t    MAX_ID      = ~((uint32_t)0);        //!< (unsigned 32bit int)
+const Size_t  MAX_SIZE    = ~((uint32_t)0) >> 1;   //!< (  signed 32bit int)
+const Pos_t   MAX_POS     = ~((uint32_t)0) >> 1;   //!< (  signed 32bit int)
 
 } // namespace AMOS
 

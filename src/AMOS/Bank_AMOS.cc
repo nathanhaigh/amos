@@ -12,23 +12,25 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "Bank_AMOS.hh"
-#include "exceptions_AMOS.hh"
-#include "messages_AMOS.hh"
-#include "amp.hh"
+#include "Message_AMOS.hh"
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <cstdio>
+#include <ctime>
 using namespace AMOS;
 using namespace std;
 
-
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "?.?.?"
+#endif
 
 
 
 //================================================ Bank_t ======================
-const string  Bank_t::BANK_VERSION     = "1.2.2";
+const string  Bank_t::BANK_VERSION     = PACKAGE_VERSION;
 const string  Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string  Bank_t::IFO_STORE_SUFFIX = ".ifo";
 const string  Bank_t::VAR_STORE_SUFFIX = ".var";
@@ -138,7 +140,13 @@ void Bank_t::clean ( )
 
   try {
     //-- Concat this bank to a temporary bank (cleans as a side effect)
-    tempbank . create (TempDir (store_pfx_m . c_str( )));
+    char tname [1024];
+    snprintf (tname, 1024, "%s%ld%d",
+	      store_pfx_m . c_str( ), time(NULL), rand( ));
+    if ( mkdir (tname, 0755) == -1 )
+      AMOS_THROW_IO ("Could not create temporary directory");
+
+    tempbank . create (tname);
     tempbank . concat (*this);
 
     //-- Reset this bank

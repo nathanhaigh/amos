@@ -11,8 +11,7 @@
 #ifndef __Message_AMOS_HH
 #define __Message_AMOS_HH 1
 
-#include "inttypes_AMOS.hh"
-#include "exceptions_AMOS.hh"
+#include "utility_AMOS.hh"
 #include <map>
 #include <string>
 #include <vector>

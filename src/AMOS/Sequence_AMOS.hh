@@ -11,7 +11,6 @@
 #define __Sequence_AMOS_HH 1
 
 #include "Universal_AMOS.hh"
-#include "alloc.hh"
 #include <string>
 
 
@@ -46,13 +45,13 @@ private:
 
 protected:
 
-  static const uint8_t COMPRESS_BIT;   //!< compressed sequence flag
-  static const uint8_t ADENINE_BITS;   //!< 'A' bit
-  static const uint8_t CYTOSINE_BITS;  //!< 'C' bit
-  static const uint8_t GUANINE_BITS;   //!< 'G' bit
-  static const uint8_t THYMINE_BITS;   //!< 'T' bit
-  static const uint8_t SEQ_BITS;       //!< sequence bit mask
-  static const uint8_t QUAL_BITS;      //!< quality bit mask
+  static const uint8_t COMPRESS_BIT  = 0x1;   //!< compressed sequence flag
+  static const uint8_t ADENINE_BITS  = 0x0;   //!< 'A' bit
+  static const uint8_t CYTOSINE_BITS = 0x40;  //!< 'C' bit
+  static const uint8_t GUANINE_BITS  = 0x80;  //!< 'G' bit
+  static const uint8_t THYMINE_BITS  = 0xC0;  //!< 'T' bit
+  static const uint8_t SEQ_BITS      = 0xC0;  //!< sequence bit mask
+  static const uint8_t QUAL_BITS     = 0x3F;  //!< quality bit mask
 
 
   //--------------------------------------------------- compress ---------------
@@ -64,7 +63,29 @@ protected:
   //! \param qualchar The quality score character
   //! \return The compressed byte
   //!
-  static inline uint8_t compress (char seqchar, char qualchar);
+  static inline uint8_t compress (char seqchar, char qualchar)
+  {
+    //-- Force quality score into its bits
+    qualchar -= MIN_QUALITY;
+    if ( qualchar & SEQ_BITS )
+      {
+	std::cerr << "WARNING: qualscore '" << qualchar << "' cast to 0\n";
+	return 0;
+      }
+
+    //-- Force seq into its bits
+    switch ( seqchar )
+      {
+      case 'A': return (uint8_t)qualchar | ADENINE_BITS;
+      case 'C': return (uint8_t)qualchar | CYTOSINE_BITS;
+      case 'G': return (uint8_t)qualchar | GUANINE_BITS;
+      case 'T': return (uint8_t)qualchar | THYMINE_BITS;
+      case 'N': return 0;
+      default:
+	std::cerr << "WARNING: seqchar '" << seqchar << "' cast to 'N'\n";
+	return 0;
+      }
+  }
 
 
   //--------------------------------------------------- uncompress -------------
@@ -75,7 +96,25 @@ protected:
   //! \param byte The compressed sequence and quality byte
   //! \return The sequence and quality char respectively
   //!
-  static inline std::pair<char, char> uncompress (uint8_t byte);
+  static inline std::pair<char, char> uncompress (uint8_t byte)
+  {
+    std::pair<char, char> retval;
+
+    switch ( byte & SEQ_BITS )
+      {
+      case ADENINE_BITS:  retval . first = 'A'; break;
+      case CYTOSINE_BITS: retval . first = 'C'; break;
+      case GUANINE_BITS:  retval . first = 'G'; break;
+      case THYMINE_BITS:  retval . first = 'T'; break;
+      }
+
+    byte &= QUAL_BITS;
+    if ( byte == 0 )
+      retval . first = 'N';
+
+    retval . second = byte + MIN_QUALITY;
+    return retval;
+  }
 
 
   //--------------------------------------------------- readRecord -------------

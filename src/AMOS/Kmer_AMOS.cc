@@ -17,49 +17,6 @@ using namespace std;
 //================================================ Kmer_t ======================
 const NCode_t Kmer_t::NCODE = M_KMER;
 const uint8_t Kmer_t::MAX_LENGTH    = 255;
-const uint8_t Kmer_t::ADENINE_BITS  = 0x0;
-const uint8_t Kmer_t::CYTOSINE_BITS = 0x40;
-const uint8_t Kmer_t::GUANINE_BITS  = 0x80;
-const uint8_t Kmer_t::THYMINE_BITS  = 0xC0;
-const uint8_t Kmer_t::SEQ_BITS      = 0xC0;
-
-
-//----------------------------------------------------- compress ---------------
-inline uint8_t Kmer_t::compress (char seqchar)
-{
-  switch ( toupper(seqchar) )
-    {
-    case 'A':
-      return ADENINE_BITS;
-    case 'C':
-      return CYTOSINE_BITS;
-    case 'G':
-      return GUANINE_BITS;
-    case 'T':
-      return THYMINE_BITS;
-    default:
-      AMOS_THROW_ARGUMENT ((std::string)"Invalid Kmer character " + seqchar);
-    }
-}
-
-
-//----------------------------------------------------- uncompress -------------
-inline char Kmer_t::uncompress (uint8_t byte)
-{
-  switch ( byte & SEQ_BITS )
-    {
-    case ADENINE_BITS:
-      return 'A';
-    case CYTOSINE_BITS:
-      return 'C';
-    case GUANINE_BITS:
-      return 'G';
-    case THYMINE_BITS:
-      return 'T';
-    default:
-      AMOS_THROW ("Unknown logic error");
-    }
-}
 
 
 //----------------------------------------------------- getSeqString -----------

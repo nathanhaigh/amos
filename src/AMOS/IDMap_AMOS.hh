@@ -10,9 +10,7 @@
 #ifndef __IDMap_AMOS_HH
 #define __IDMap_AMOS_HH 1
 
-#include "inttypes_AMOS.hh"
 #include "Message_AMOS.hh"
-#include "alloc.hh"
 #include <string>
 #include <vector>
 

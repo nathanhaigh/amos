@@ -11,7 +11,6 @@
 #define __Kmer_AMOS_HH 1
 
 #include "Universal_AMOS.hh"
-#include "alloc.hh"
 #include <vector>
 #include <string>
 
@@ -40,11 +39,11 @@ private:
 
 protected:
 
-  static const uint8_t ADENINE_BITS;   //!< 'A' bit
-  static const uint8_t CYTOSINE_BITS;  //!< 'C' bit
-  static const uint8_t GUANINE_BITS;   //!< 'G' bit
-  static const uint8_t THYMINE_BITS;   //!< 'T' bit
-  static const uint8_t SEQ_BITS;       //!< sequence bit mask
+  static const uint8_t ADENINE_BITS  = 0x0;   //!< 'A' bit
+  static const uint8_t CYTOSINE_BITS = 0x40;  //!< 'C' bit
+  static const uint8_t GUANINE_BITS  = 0x80;  //!< 'G' bit
+  static const uint8_t THYMINE_BITS  = 0xC0;  //!< 'T' bit
+  static const uint8_t SEQ_BITS      = 0xC0;  //!< sequence bit mask
 
 
   //--------------------------------------------------- compress ---------------
@@ -57,7 +56,18 @@ protected:
   //! \throws ArgumentException_t
   //! \return The compressed 2 bits (in upper two bit positions)
   //!
-  static inline uint8_t compress (char seqchar);
+  static inline uint8_t compress (char seqchar)
+  {
+    switch ( toupper(seqchar) )
+      {
+      case 'A': return ADENINE_BITS;
+      case 'C': return CYTOSINE_BITS;
+      case 'G': return GUANINE_BITS;
+      case 'T': return THYMINE_BITS;
+      default:
+	AMOS_THROW_ARGUMENT ((std::string)"Invalid Kmer character " + seqchar);
+      }
+  }
 
 
   //--------------------------------------------------- uncompress -------------
@@ -69,7 +79,16 @@ protected:
   //! \throws Exception_t
   //! \return The sequence char
   //!
-  static inline char uncompress (uint8_t byte);
+  static inline char uncompress (uint8_t byte)
+  {
+    switch ( byte & SEQ_BITS )
+      {
+      case ADENINE_BITS:  return 'A';
+      case CYTOSINE_BITS: return 'C';
+      case GUANINE_BITS:  return 'G';
+      case THYMINE_BITS:  return 'T';
+      }
+  }
 
 
   //--------------------------------------------------- readRecord -------------

@@ -8,6 +8,7 @@
 #include  <cmath>
 #include  <vector>
 #include  <algorithm>
+#include  <cassert>
 using namespace std;
 
 const int  MAX_LINE = 1000;

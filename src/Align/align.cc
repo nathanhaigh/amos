@@ -8,6 +8,7 @@
 
 #include  "align.hh"
 #include  <stack>
+#include  <cassert>
 using namespace AMOS;
 using namespace std;
 

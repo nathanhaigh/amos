@@ -11,8 +11,8 @@
 
 
 #include  "datatypes_AMOS.hh"
+#include  "utility_AMOS.hh"
 #include  "Contig_AMOS.hh"
-#include  "alloc.hh"
 #include  "delcher.hh"
 #include  "fasta.hh"
 #include  "prob.hh"

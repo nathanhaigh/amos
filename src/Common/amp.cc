@@ -1,5 +1,4 @@
 #include "amp.hh"
-#include "alloc.hh"
 #include <new>
 #include <cstring>
 #include <ctime>

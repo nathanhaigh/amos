@@ -10,6 +10,7 @@
 #ifndef __foundation_AMOS_HH
 #define __foundation_AMOS_HH 1
 
+#include "utility_AMOS.hh"
 #include "inttypes_AMOS.hh"
 #include "exceptions_AMOS.hh"
 #include "datatypes_AMOS.hh"

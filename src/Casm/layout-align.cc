@@ -11,10 +11,9 @@
 //! \todo see "//TODO" in code
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "alloc.hh"
+#include "foundation_AMOS.hh"
 #include "amp.hh"
 #include "delta.hh"
-#include "foundation_AMOS.hh"
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
@@ -749,10 +748,13 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
       while ( ! reads . empty( ) )
 	{
 	  //-- If end of list reached, push a new contig and start over
-	  if ( rmpi == reads . end( )  &&  !cp->tiles.empty( ) )
+	  if ( rmpi == reads . end ( ) )
 	    {
-	      cp = new Contig_t( );
-	      assembly . contigs . push_back (cp);
+	      if ( !cp -> tiles . empty( ) )
+		{
+		  cp = new Contig_t( );
+		  assembly . contigs . push_back (cp);
+		}
 	      rmpi = reads . begin( );
 	    }
 
@@ -781,7 +783,7 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 	    }
 
 
-	  //-- Assemble reads up to but not including the conflict
+	  //-- Assemble reads up to but not including the current conflict
 	  while ( rmpi != reads . end( ) )
 	    {
 	      //-- Break if past the conflict
@@ -854,9 +856,6 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 		      cp -> adjust += (*cpi) -> gapQ - (*cpi) -> gapR;
 		      break;
 		    }
-
-		  //-- Resolved conflict, remove from list
-		  cpi = confs . erase (cpi);
 		  break;
 		}
 
@@ -901,6 +900,10 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 		  rmpic ++;
 		}
 	    }
+
+	  //-- Resolved conflict, remove from list
+	  if ( cpi != confs . end( ) )
+	    cpi = confs . erase (cpi);
 	}
     }
 
@@ -937,7 +940,7 @@ void ChainAligns (Mapping_t & mapping)
     {
       //-- Initialize the dynamic programming matrix
       n = (*rmpi) -> all . size( );
-      las = (ScoreLAS *) SafeRealloc (las, sizeof (ScoreLAS) * n);
+      las = (ScoreLAS *) AMOS::SafeRealloc (las, sizeof (ScoreLAS) * n);
       for ( i = 0; i < n; i ++ )
 	{
 	  las [i] . a = (*rmpi) -> all[i];
@@ -1523,6 +1526,7 @@ void PrintConflicts (const Mapping_t & mapping)
   for ( rmi  = mapping . references . begin( );
 	rmi != mapping . references . end( ); rmi ++ )
     {
+      cout << '>' << rmi -> first << endl;
       for ( cpi  = rmi -> second . conflicts . begin( );
 	    cpi != rmi -> second . conflicts . end( ); cpi ++ )
 	{
@@ -1927,7 +1931,7 @@ ReadAlignChain_t::ReadAlignChain_t (const ReadMap_t * rmp, ReadAlign_t * rap)
   idy = rap -> idy * len;
   while ( rap -> from != NULL )
     {
-      assert ( rap -> from -> lo  < rap -> lo  );
+      assert ( rap -> from -> lo <= rap -> lo  );
 
       olap1 = rap -> from -> hiR - rap -> loR + 1;
       if ( olap1 < 0  ||

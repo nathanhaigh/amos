@@ -14,7 +14,6 @@
 #include  "align.hh"
 #include  "prob.hh"
 #include  "fasta.hh"
-#include  "Contig_AMOS.hh"
 #include  <iostream>
 #include  <vector>
 #include  <string>
