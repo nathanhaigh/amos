@@ -35,6 +35,7 @@ public slots:
     void toggleShowFullRange(bool);
     void advanceNextDiscrepancy();
     void advancePrevDiscrepancy();
+    void highlightRead(int);
 
 signals:
     void gindexChanged( int );

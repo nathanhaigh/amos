@@ -10,6 +10,7 @@
 
 #include "TilingFrame.hh"
 #include "ContigPicker.hh"
+#include "ReadPicker.hh"
 #include "DataStore.hh"
 #include "InsertWindow.hh"
 #include "CGraphWindow.hh"
@@ -46,16 +47,20 @@ public slots:
   void fontIncrease();
   void fontDecrease();
 
+  void showReadPicker();
+
 signals:
   void bankSelected(std::string bankname);
   void contigIdSelected(int contigId);
   void gindexChanged(int gindex);
+  void highlightRead(int iid);
 
 private:
   QSpinBox * m_contigid;
   QSpinBox * m_gspin;
   QScrollBar * m_slider;
   QMainWindow * m_contigPicker;
+  QMainWindow * m_readPicker;
   InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;
   CGraphWindow * m_cgraphWindow;

@@ -24,6 +24,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_gindex = -1;
 
   m_contigPicker = NULL;
+  m_readPicker = NULL;
   m_fontsize = 10;
   m_insertWindow = NULL;
   m_cgraphWindow = NULL;
@@ -41,8 +42,9 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   // Menubar
   QPopupMenu* file = new QPopupMenu(this);
   menuBar()->insertItem("&File", file);
-  file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()) );
-  file->insertItem("&Contig Picker...", this, SLOT(chooseContig()));
+  file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()));
+  file->insertItem("&Contig Picker...", this,  SLOT(chooseContig()));
+  file->insertItem("&Locate Read...",   this,  SLOT(showReadPicker()));
   file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 
   m_options = new QPopupMenu(this);
@@ -140,9 +142,13 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(m_tiling, SIGNAL(setGindexRange(int, int)),
           this,     SLOT(setGindexRange(int, int)));
 
+  connect(this,     SIGNAL(highlightRead(int)),
+          m_tiling, SLOT(highlightRead(int)));
+
   // dbpick <-> tiling
   connect(dbpick, SIGNAL(textChanged(const QString &)),
           this,   SLOT(setDB(const QString &)));
+
 
   // Set defaults
   m_gspin->setValue(0);
@@ -245,6 +251,12 @@ void MainWindow::setContigId(int contigId)
     {
       m_contigPicker->close();
       m_contigPicker = NULL;
+    }
+
+    if (m_readPicker)
+    {
+      m_readPicker->close();
+      m_readPicker = NULL;
     }
   }
 }
@@ -351,4 +363,13 @@ void MainWindow::fontDecrease()
 void MainWindow::setDB(const QString & db)
 {
   m_datastore.m_db = db.ascii();
+}
+
+void MainWindow::showReadPicker()
+{
+  if (m_readPicker) { m_readPicker->close(); }
+
+  m_readPicker = new ReadPicker(&m_datastore, this, "readPicker");
+  connect(m_readPicker, SIGNAL(highlightRead(int)),
+          this,         SIGNAL(highlightRead(int)));
 }

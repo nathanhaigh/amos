@@ -335,3 +335,18 @@ void TilingFrame::toggleDisplayAllChromo(bool display)
     m_loadedWidth = 5000;
   }
 }
+
+void TilingFrame::highlightRead(int iid)
+{
+  if (iid != NULL_ID)
+  {
+    vector<Tile_t>::iterator vi;
+    for (vi =  m_tiling.begin(); vi != m_tiling.end(); vi++)
+    {
+      if (vi->source == iid)
+      {
+        setGindex(vi->offset);
+      }
+    }
+  }
+}
