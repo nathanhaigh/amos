@@ -94,24 +94,7 @@ void TilingFrame::setContigId(int contigId)
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
 
-      // Render the aligned sequences
-      int vectorpos = 0;
-      vector<Tile_t>::iterator vi;
-
-      for (vi =  m_tiling.begin(), vectorpos = 0;
-           vi != m_tiling.end();
-           vi++, vectorpos++)
-      {
-        RenderSeq_t rendered(vectorpos);
-        rendered.load(read_bank, vi);
-        m_renderedSeqs.push_back(rendered);
-
-        for (int j = rendered.m_offset; j < rendered.m_offset + rendered.m_nucs.size(); j++)
-        {
-          if      (m_cstatus[j] == ' ')              { m_cstatus[j] = rendered.base(j); }
-          else if (m_cstatus[j] != rendered.base(j)) { m_cstatus[j] = 'X'; }
-        }
-      }
+      setGindex(0);
 
       emit setGindexRange(0, (int)m_consensus.size()-1);
       emit contigLoaded(contigId);
@@ -171,6 +154,7 @@ void TilingFrame::setFontSize(int fontsize )
 
 void TilingFrame::setGindex( int gindex )
 {
+  cerr << "setGindex:" << gindex << endl;
   if (!m_loaded) { return; }
 
   int basespace = 5;
@@ -181,7 +165,35 @@ void TilingFrame::setGindex( int gindex )
 
   gindex = min(gindex, m_consensus.size()-m_displaywidth);
 
-  if ( m_gindex == gindex ) {return;}
+//  if ( m_gindex == gindex ) {return;}
+
+  m_renderedSeqs.clear();
+
+      
+  // Render the aligned sequences
+  int vectorpos = 0;
+  vector<Tile_t>::iterator vi;
+
+  for (vi =  m_tiling.begin(), vectorpos = 0;
+       vi != m_tiling.end();
+       vi++, vectorpos++)
+  {
+    int hasOverlap = RenderSeq_t::hasOverlap(m_gindex, m_gindex+m_displaywidth+100, 
+                                             vi->offset, vi->range.getLength() + vi->gaps.size(),
+                                             m_consensus.length());
+    if (hasOverlap)
+    {
+      RenderSeq_t rendered(vectorpos);
+      rendered.load(read_bank, vi);
+      m_renderedSeqs.push_back(rendered);
+
+      for (int j = rendered.m_offset; j < rendered.m_offset + rendered.m_nucs.size(); j++)
+      {
+        if      (m_cstatus[j] == ' ')              { m_cstatus[j] = rendered.base(j); }
+        else if (m_cstatus[j] != rendered.base(j)) { m_cstatus[j] = 'X'; }
+      }
+    }
+  }
 
   m_gindex = gindex;
   repaint();
@@ -202,6 +214,7 @@ void TilingFrame::trackGindex(int gindex)
 
 void TilingFrame::trackGindexDone()
 {
+  setGindex(m_gindex);
   repaint();
 }
 

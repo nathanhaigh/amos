@@ -123,7 +123,7 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 
 void TilingField::paintEvent( QPaintEvent * )
 {
-  // cerr << "paintTField:" << m_renderedSeqs.size() << endl;
+  //cerr << "paintTField:" << m_renderedSeqs.size() << endl;
   if (m_renderedSeqs.empty()) { resize(m_width, m_height); return; }
 
   int basespace      = 5;
@@ -136,7 +136,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
   int displaywidth = (m_width-tilehoffset)/basewidth;
 
-  int height = imax(m_renderedSeqs.size() * lineheight, 10000);
+  int height = 10000; // max height
 
   QPixmap pix(m_width, height);
   pix.fill(this, 0,0);
@@ -147,6 +147,7 @@ void TilingField::paintEvent( QPaintEvent * )
   p.setPen(pen);
   p.setFont(QFont("Helvetica", m_fontsize));
   p.setBrush(Qt::SolidPattern);
+
 
   QColor offsetColor(190,190,190);
 
@@ -184,15 +185,13 @@ void TilingField::paintEvent( QPaintEvent * )
       // offset rectangle
       if (dcov % 2)
       {
-        pen.setColor(offsetColor);
-        p.setPen(pen);
+        p.setPen(offsetColor);
         p.setBrush(offsetColor);
         p.drawRect(0, ldcov, m_width, readheight);
       }
 
       // black pen
-      pen.setColor(black);
-      p.setPen(pen);
+      p.setPen(black);
       p.setBrush(black);
       p.setFont(QFont("Helvetica", m_fontsize));
 
