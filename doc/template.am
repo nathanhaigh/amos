@@ -1,0 +1,43 @@
+##-- MAKE FRAGMENT FOR AMOS RULES
+include $(top_srcdir)/config/amos.mk
+
+
+##-- SUBDIRS TO RECURSE
+SUBDIRS =
+
+
+##-- EXTRA FILES TO BE INCLUDED IN DISTRIBUTION
+EXTRA_DIST =
+
+
+##-- TO BE INSTALLED
+bin_PROGRAMS =
+dist_bin_SCRIPTS =
+dist_amoslib_SCRIPTS =
+dist_tigrlib_SCRIPTS =
+amoslib_LIBRARIES =
+tigrlib_LIBRARIES =
+amosinclude_HEADERS =
+tigrinclude_HEADERS =
+dist_doc_DATA =
+
+
+##-- TO BE TESTED
+check_PROGRAMS =
+check_SCRIPTS =
+
+
+##-- GLOBAL INCLUDE
+AM_CPPFLAGS =
+
+
+##-- myprog
+myprog_LDADD =
+myprog_SOURCES =
+
+
+##-- libMy.a
+libMy_a_SOURCES =
+
+
+##-- END OF MAKEFILE --##

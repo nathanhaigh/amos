@@ -3,7 +3,7 @@
 # ParseFasta.pm
 #
 
-package TIGR::ParseFasta;
+package AMOS::ParseFasta;
 {
 
 =head1 NAME

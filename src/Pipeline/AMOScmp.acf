@@ -1,0 +1,38 @@
+#---- AMOS Comparative Assembler Pipeline
+
+#---- USER DEFINED ------------------------------------------------------------#
+TGT = ## target genome in AMOS message format
+REF = ## reference genome is multi-FastA format
+#------------------------------------------------------------------------------#
+
+BINDIR = ## location of the AMOS binaries
+NUCMER = ## location of the nucmer alignment utility
+
+SEQS    = $(PREFIX).seq
+BANK    = $(PREFIX).bank
+ALIGN   = $(PREFIX).delta
+LAYOUT  = $(PREFIX).layout
+CONTIG  = $(PREFIX).ctg
+FASTA   = $(PREFIX).fasta
+
+INPUTS  = $(TGT) $(REF)
+OUTPUTS = $(CONTIG) $(FASTA)
+
+
+## Building AMOS bank
+10: $(BINDIR)/bank-transact -c -f -z -b $(BANK) -m $(TGT)
+
+## Collecting clear range sequences
+20: $(BINDIR)/dumpreads $(BANK) > $(SEQS)
+
+## Running nucmer
+30: $(NUCMER) --maxmatch --prefix=$(PREFIX) $(REF) $(SEQS)
+
+## Running layout
+40: $(BINDIR)/layout-align -s 1 -c -r -U -b $(BANK) $(ALIGN) > $(LAYOUT)
+
+## Running consensus
+50: $(BINDIR)/make-consensus -s -S -T $(LAYOUT) $(BANK) > $(CONTIG)
+
+## Converting output to fasta file
+60: $(BINDIR)/ctg2fasta < $(CONTIG) > $(FASTA)

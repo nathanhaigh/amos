@@ -1,0 +1,82 @@
+AMOScmp - The AMOS Comparative Assembler
+
+
+Brief Summary
+=============
+
+   With the rapid growth in the number of sequenced genomes has come
+an increase in the number of organisms for which two or more
+closely-related species have been sequenced. This has created the
+possibility of building a comparative genome assembly algorithm, which
+can assemble a newly sequenced genome by mapping it onto a reference
+genome. The comparative assembler uses MUMmer to align each sequencing
+read to a reference genome. Given this information, the costly
+"overlap" step of assembly can be bypassed by placing each read using
+only its alignment to the reference. The consensus step can then build
+reliable contigs based on these read layouts. Such an approach
+drastically decreases the time and memory requirements for assembly,
+while producing better assemblies given a closely related reference
+genome.
+
+
+Dependencies
+============
+
+   AMOScmp requires the NUCmer whole genome alignment utility which is
+part of the MUMmer package. MUMmer is freely available and can be
+downloaded from:
+
+<http://www.tigr.org/software/mummer>
+
+Please follow the installation instructions in the `README' file in
+the base directory of this distribution to ensure AMOS can find and
+run `nucmer' successfully.
+
+
+Running
+=======
+
+   Either execute the AMOScmp configuration script directly from
+$bindir OR copy it to your local directory, edit it, and run it with
+the `runAmos' command interpreter. The following variables must be set
+on the command line or added to the script for the pipeline to
+operate properly:
+
+	TGT - The target genome sequences in AMOS message format
+	REF - The reference genome sequences in multi-FastA format
+
+`AMOScmp -D TGT=<target> -D REF=<reference> <prefix>'
+  OR
+`runAmos -C AMOScmp -D TGT=<target> -D REF=<reference> <prefix>'
+
+Where <prefix> will be the output file prefix, <target> is the input
+AMOS message file, and <reference> is the input multi-FastA
+file. Check the `runAmos' documentation or type `runAmos --help' for
+details on operating an AMOS pipeline.
+
+
+Example
+=======
+
+   Assume we have an AMOS message file, `target.afg', containing the
+sequence information for a whole genome project. This target genome is
+a different strain of the reference genome whose sequence is contained
+in the file, `reference.fasta'. To run the AMOScmp pipeline we type
+the following:
+
+`AMOScmp -D TGT=target.afg -D REF=reference.afg asm'
+
+This will produce a number of various files with the prefix `asm', but
+the only notable output files are `asm.ctg' and `asm.fasta'. The .ctg
+file contains the multi-alignment information for all the reads and
+contigs. Each contig sequence is preceded by a header line which
+starts with `##', followed by the gapped consensus sequence with gaps
+represented as a `-' character. Following the consensus is the gapped
+read sequence preceded by a header line beginning with `#'. The .fasta
+file contains all the contigs produced by AMOScmp in a multi-FastA
+formatted file. These sequences will match the sequences in the .ctg
+file, with the exception of the `-' being characters removed.
+
+
+August 2004
+

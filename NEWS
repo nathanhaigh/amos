@@ -1,0 +1,36 @@
+Welcome to AMOS Assembler. A Modular Open Source Assembler.
+website: <http://www.tigr.org/software/AMOS>
+contact: <amos@tigr.org>
+
+AMOS Assembler NEWS
+===================
+
+   The first release of the AMOS (A Modular Open Source) Assembler is
+now available for download.  Version 1.2.3 is the first version to be
+released under the OSI Artistic License (see `COPYING') and freely
+available to the public for download.  The AMOS project is still in
+its early development stages, and everyone interested in improving
+this project is strongly encouraged to contact us. See the project
+website for more details.
+
+   Currently the AMOS release comes with only _very_ limited user
+documentation, and almost nil developer documentation.  We understand
+that free software is useless without the proper documentation, so we
+are working hard to make a comprehensive HTML users manual for the
+entire project... stay tuned... developer documentation should follow.
+In the meantime, we will be more than happy to provide support and
+`virtual' documentation via Email.  PLEASE, do not hesitate to contact
+us; you will receive a prompt reply.
+
+
+Version Release History
+=======================
+
+Version 1.2.3 - August 2004
+
+	* First official release of the AMOS distribution, much work
+          yet to be done.
+
+
+August 2004
+

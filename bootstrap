@@ -1,0 +1,21 @@
+#!/bin/sh
+# If no configure script exists in the base directory, run this
+# script to bootstrap the project via automake and autoconf
+# OR
+# If the configure.in script has been edited, run this script to
+# regenerate the configure script.
+#
+# If this script generates some warnings, run autoupdate on the
+# configure.ac file.
+#
+rm -f config.cache
+echo "+ collecting m4 macros"
+aclocal
+echo "+ generating configuration header"
+autoheader --warnings=all
+echo "+ generating makefile inputs"
+automake --warnings=all --foreign --include-deps
+echo "+ generating configure script"
+autoconf --warnings=all
+
+##-- END OF SCRIPT --##

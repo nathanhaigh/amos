@@ -1,0 +1,103 @@
+Welcome to AMOS Assembler. A Modular Open Source Assembler.
+website: <http://www.tigr.org/software/AMOS>
+contact: <amos@tigr.org>
+
+   AMOS is open source software. Please see the `COPYING' file for
+details. For documentation, please refer to the Documentation
+section. For building and installation instructions please see the
+Installation section.
+
+
+Brief Summary
+=============
+
+   The AMOS consortium is committed to the development of open-source
+whole genome assembly software. The project acronym (AMOS) represents
+our primary goal -- to produce A Modular, Open-Source whole genome
+assembler. Open-source so that everyone is welcome to contribute and
+help build outstanding assembly tools, and modular in nature so that
+new contributions can be easily inserted into an existing assembly
+pipeline. This modular design will foster the development of new
+assembly algorithms and allow the AMOS project to continually grow and
+improve in hopes of eventually becoming a widely accepted and deployed
+assembly infrastructure. In this sense, AMOS is both a design
+philosophy and a software system.
+
+   Because of its modular nature, AMOS cannot be described in one
+paragraph since it is a composite of many different systems. See the
+Pipeline section for quick descriptions of each pipeline, or the
+Documentation section on where to find comprehensive documentation.
+
+
+Installation
+============
+
+   Please follow the instructions in the `INSTALL' file for building
+and installation. The `INSTALL' file is only a generic installation
+document, so any AMOS specific installation notes are listed below.
+
+   Once `make install' is issued, the installed scripts and Perl
+modules must not be moved. Thus, convince yourself of the installation
+directory beforehand and set the $PREFIX variable for `configure'
+accordingly.
+
+   AMOS makes use of a few custom installation directories not
+mentioned in `INSTALL', they are as follows. $datadir, $libdir and
+$includedir are set by `configure', see `configure --help' for more
+information.
+
+   - Documentation will be installed in $datadir/doc/amos-[version]
+   - AMOS libraries and Perl modules will be installed in $libdir/AMOS
+   - TIGR libraries and Perl modules will be installed in $libdir/TIGR
+   - AMOS headers will be installed in $includedir/AMOS
+   - TIGR headers will be installed in $includedir/TIGR
+
+
+Dependencies
+============
+
+   The AMOS package makes use of Perl (Practical Extraction and Report
+Language). Perl is available on most systems and the latest versions
+can be downloaded free of charge. AMOS requires Perl version 5.6.0 or
+later. If `perl' is available from your system PATH, all is well, if
+not you will need to instruct `configure' where it is located by
+setting the environment variable PERL to the full path of `perl' (see
+the Defining Variables section in the `INSTALL' file).
+
+   AMOScmp makes use of the NUCmer whole genome alignment utility
+which is part of the MUMmer package. If you wish to run AMOScmp, you
+will need download and install MUMmer (available for free from
+<http://www.tigr.org/software/mummer>). If `nucmer' is available from
+your system PATH, all is well, if not you will need to instruct
+`configure' where it is located by setting the environment variable
+NUCMER to the full path of `nucmer' (see the Defining Variables
+section in the `INSTALL' file).
+
+
+Documentation
+=============
+
+   Currently, AMOS is not released with a comprehensive manual. This
+is coming soon (see `NEWS'). In the meantime, check out the `doc'
+directory included in this distribution or point your browser to the
+AMOS website.
+
+
+Pipeline
+========
+
+   Listed here are the current AMOS pipelines available. Source files
+for the pipelines are in `src/Pipeline' and will be installed in
+$bindir as executable scripts. Please see individual documentation for
+each pipeline in the `doc' directory.
+
+   - AMOScmp -
+   Provides a general overlap-layout-consensus pipeline for assembly,
+   but with a twist. The overlap phase of the process is replaced with
+   an alignment to a reference, i.e. all sequencing reads are aligned
+   to a finished reference sequence and their alignments are used to
+   determine their layout position.
+
+
+August 2004
+
