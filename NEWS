@@ -26,25 +26,37 @@ prompt reply.
 Version Release History
 =======================
 
+Version 1.2.7 - November 2004
+
+     * `AMOScmp' enhancements
+        * improved conflict resolution
+        * operates on an AMOS bank
+     * `libAMOS' enhancements
+        * Feature_t added to Contig_t and Scaffold_t
+        * BankSet_t, BankStreamSet_t, UniversalSet_t added
+        * read/write locks added to Bank_t
+        * Message_t iterator added
+     * documentation updated
+
 Version 1.2.6 - September 2004
 
-	* `minimus' negative offset bug fixed
-	* `make-consensus' ID swapping bug fixed
-	* `AMOScmp' won't bomb if mate information absent from the bank
+     * `minimus' negative offset bug fixed
+     * `make-consensus' ID swapping bug fixed
+     * `AMOScmp' won't bomb if mate information absent from the bank
 
 Version 1.2.5 - September 2004
 
-        * Added `minimus' pipeline for lightweight assembly tasks.
-        * Improved portablity.
-        * Added --enable-FEATURE options to configure for conditional
-        builds.
+     * Added `minimus' pipeline for lightweight assembly tasks.
+     * Improved portablity.
+     * Added --enable-FEATURE options to configure for conditional
+       builds.
 
 Version 1.2.3 - August 2004
 
-        * First official release of the AMOS distribution, much work
-          yet to be done.
-        * Added `AMOScmp' comparative assembly pipeline.
+     * First official release of the AMOS distribution, much work
+       yet to be done.
+     * Added `AMOScmp' comparative assembly pipeline.
 
 
-August 2004
+November 2004
 

@@ -3,7 +3,7 @@
 # initialize
 AC_PREREQ(2.59)
 AC_INIT([AMOS Assembler],
-        [1.2.6],
+        [1.2.7],
         [amos@tigr.org],
         [amos])
 AC_PREFIX_DEFAULT([`pwd`])
@@ -148,6 +148,8 @@ echo \
 if test "${GCC}" = "yes" ; then
    gcc_version=`${CC} --version | head -n 1`
    echo "  GCC version:         ${gcc_version}"
+else
+   gcc_version=''
 fi
 
 echo \
@@ -162,7 +164,7 @@ case "${host}" in
      *alpha*osf*)
      case "${CFLAGS} ${CXXFLAGS}" in
 	  *-g*)
-	echo "Warning! TIGR alphas may bomb when -g flag is turned on"
+	echo "WARNING! TIGR alphas may bomb when -g flag is turned on"
 	echo "   use \`configure CFLAGS= CXXFLAGS=' to avoid"
 	  ;;
      esac
@@ -170,15 +172,21 @@ case "${host}" in
      *sparc*solaris*)
      case "${gcc_version}" in
 	  *2.*.*)
-	echo "Warning! TIGR suns using GCC 2.x.x will bomb on largefile support"
+	echo "WARNING! TIGR suns using GCC 2.x.x will bomb on largefile support"
 	echo "   use \`configure --disable-largefile' to avoid"
           ;;
      esac
      ;;
 esac
 
-if test "${NUCMER}" = ":" ; then
-   echo "Warning! nucmer was not found, but is required to run AMOScmp"
+case "${gcc_version}" in
+     *2.96.*)
+   echo "WARNING! GCC ${gcc_version} has bugs that affect AMOS"
+   echo "   please install an newer version of GCC and reconfigure"
+esac
+
+if test "${NUCMER}" = ":"  ||  ! test -x "${NUCMER}"; then
+   echo "WARNING! nucmer was not found, but is required to run AMOScmp"
    echo "   install nucmer if planning on using AMOScmp"
 fi
 
