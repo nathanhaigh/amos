@@ -4,14 +4,14 @@
 #include <qpen.h>
 #include <qcolor.h>
 
+#include "Insert.hh"
+
 
 class UIElements
 {
 public:
   static void setBasePen(QPen & pen, char base);
   static QColor & getBaseColor(char base);
-
-  static QColor & getInsertColor(char state);
 
   static QColor color_a;
   static QColor color_c;
@@ -21,11 +21,14 @@ public:
 
   static QColor color_discrepancy;
 
-  static QColor color_happy;
-  static QColor color_sad;
-  static QColor color_unknown;
-  static QColor color_link;
-  static QColor color_orientation;
+  static QColor & getInsertColor(Insert::MateState state);
+  static QColor color_Happy;
+  static QColor color_Unknown;
+  static QColor color_SizeViolation;
+  static QColor color_LinkingMate;
+  static QColor color_OrientationViolation;
+  static QColor color_MissingMate;
+  static QColor color_NoMate;
 };
 
 

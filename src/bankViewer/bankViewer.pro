@@ -18,4 +18,4 @@ QMAKE_LINK  = /usr/bin/g++
 
 
 INCLUDEPATH	+= ../AMOS ../Common ../Slice /local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/i386-linux/include/io_lib/
-LIBS	+= -L../../build/lib/AMOS -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/i386-linux/lib -lAMOS -lCommon -lread
+LIBS	+= -L../AMOS -L../Common -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/i386-linux/lib -lAMOS -lCommon -lread

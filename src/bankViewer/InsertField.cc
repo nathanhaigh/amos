@@ -22,13 +22,21 @@ InsertField::InsertField(const string & bankname,
     lib_bank(AMOS::Library_t::NCODE),
     mate_bank(AMOS::Matepair_t::NCODE)
 {
-  setPalette(QPalette(QColor(200, 200, 200)));
-  m_scale = .10;
-  m_seqheight = 8;
-
+  setPalette(QPalette(QColor(0, 0, 0)));
   m_bankname = bankname;
   m_contigId = contigId;
 
+  m_scale = .05;
+  m_seqheight = 3;
+  m_hoffset = (int)(20/m_scale);
+
+  int posoffset = 15;
+  int gutter = 5;
+
+  int tileoffset = posoffset+3*gutter;
+  int lineheight = m_seqheight+gutter;
+
+  int layoutgutter = (int)(10/m_scale);
 
   try
   {
@@ -50,7 +58,8 @@ InsertField::InsertField(const string & bankname,
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
 
-  resize((int)(m_consensus.size()*m_scale)+60, 10000);
+  unsigned int clen = m_consensus.size();
+  resize((int)(clen*m_scale)+60, 10000);
 
   cerr << "Creating iid -> tile_t * map" << endl;
   SeqTileMap_t seqtileLookup;
@@ -74,26 +83,57 @@ InsertField::InsertField(const string & bankname,
     ID_t bid = mates.getReads().second;
 
     Tile_t * a = seqtileLookup[aid];
-    Tile_t * b = seqtileLookup[bid];
+    if (a) { seqtileLookup.erase(aid); }
 
+    Tile_t * b = seqtileLookup[bid];
+    if (b) { seqtileLookup.erase(bid); }
+    
     if (a || b)
     {
-      Insert i(a, m_contigId, b, m_contigId, getLibrarySize(aid));
-      inserts.push_back(i);
+      Insert i(a, m_contigId, b, m_contigId, getLibrarySize(aid), clen);
+
+      if (i.m_state == Insert::Happy)
+      {
+        inserts.push_back(i);
+      }
+      else
+      {
+        Insert j = i;
+
+        if (a)
+        {
+          i.setActive(0);
+          inserts.push_back(i);
+        }
+        
+        if (b)
+        {
+          j.setActive(1);
+          inserts.push_back(j);
+        }
+      }
     }
   }
 
+
+  int unmated = 0;
+  SeqTileMap_t::iterator si;
+  for (si =  seqtileLookup.begin();
+       si != seqtileLookup.end();
+       si++)
+  {
+    if (si->second)
+    {
+      Insert i(si->second, m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
+      inserts.push_back(i);
+      unmated++;
+    }
+  }
+
+  cerr << "unmated: " << unmated << endl;
+
+
   sort(inserts.begin(), inserts.end(), Insert::TilingOrderCmp());
-
-
-  int posoffset = 15;
-  int gutter = 10;
-
-  int hoffset = (int)(20/m_scale);
-  int tileoffset = posoffset+gutter;
-  int seqdelta = 6;
-  int lineheight = m_seqheight+seqdelta+gutter;
-  int layoutgutter = (int)(10/m_scale);
 
   m_pix = new QPixmap(width(), height());
 
@@ -104,80 +144,107 @@ InsertField::InsertField(const string & bankname,
   p.setBrush(Qt::NoBrush);
   m_pix->fill(this,0,0);
 
+  p.setPen(white);
 
   // Numberline and tics
-  p.drawLine((int)(hoffset*m_scale), posoffset, 
-             (int)((hoffset + m_consensus.size())*m_scale), posoffset);
+  p.drawLine((int)(m_hoffset*m_scale), posoffset, 
+             (int)((m_hoffset + clen)*m_scale), posoffset);
 
   p.setFont(QFont("Helvetica", 8));
-  for (unsigned int i = 0; i < m_consensus.size(); i ++)
+
+  for (unsigned int i = 0; i < clen; i ++)
   {
-    if ((i % 500 == 0) || (i == m_consensus.size()-1))
+    if (((i % 1000 == 0) && (clen - i > 1000)) || (i == clen-1))
     {
-      p.drawLine((int)((hoffset + i)*m_scale), posoffset-2,
-                 (int)((hoffset + i)*m_scale), posoffset+2);
-      p.drawText((int)((hoffset + i)*m_scale - 20), posoffset-10, 
+      p.drawLine((int)((m_hoffset + i)*m_scale), posoffset-2,
+                 (int)((m_hoffset + i)*m_scale), posoffset+2);
+      p.drawText((int)((m_hoffset + i)*m_scale - 20), posoffset-10, 
                  40, 10, Qt::AlignHCenter | Qt::AlignBottom, QString::number(i));
     }
   }
 
-
   cerr << "paint inserts" << endl;
   p.scale(m_scale, 1.0);
+  p.setBrush(Qt::SolidPattern);
 
-  vector<int> layout;
-  vector<int>::iterator li;
-  int layoutpos;
+  char types [] = "HSMNOLU";
 
-  vector<Insert>::iterator ii;
-  for (ii = inserts.begin(); ii != inserts.end(); ii++)
+  int layoutoffset = 0;
+  int layoutpos = 0;
+
+  for (int type = 0; type < strlen(types); type++)
   {
-    for (li = layout.begin(), layoutpos = 0;
-         li != layout.end();
-         li++, layoutpos++)
+    vector<Insert>::iterator ii;
+    vector<int> layout;
+    vector<int>::iterator li;
+
+    for (ii = inserts.begin(); ii != inserts.end(); ii++)
     {
-      if (*li < ii->m_loffset)
+      if (ii->m_state != types[type]) { continue; }
+
+      for (li = layout.begin(), layoutpos = 0;
+           li != layout.end();
+           li++, layoutpos++)
       {
-        break;
+        if (*li < ii->m_loffset)
+        {
+          break;
+        }
       }
+
+      if (li == layout.end())
+      {
+        layout.push_back(0);
+      }
+
+      int vpos = tileoffset+(layoutpos + layoutoffset)*lineheight;
+      layout[layoutpos] = ii->m_roffset + layoutgutter;
+
+      p.setPen(UIElements::getInsertColor(ii->m_state));
+      p.setBrush(UIElements::getInsertColor(ii->m_state));
+
+      int inserthpos = m_hoffset + ii->m_loffset; 
+      int insertlength = ii->m_length;
+      int actuallength = ii->m_actual;
+
+      //cerr << (char) ii->m_state << " " << inserthpos << "," << insertlength;
+
+      p.drawLine(inserthpos, vpos+m_seqheight, inserthpos+insertlength, vpos+m_seqheight);
+      QString s = "Actual: " + QString::number(actuallength) +
+                  "\nExpected: " + QString::number(ii->m_dist.mean-3*ii->m_dist.sd) +
+                  " - "          + QString::number(ii->m_dist.mean+3*ii->m_dist.sd);
+      QToolTip::add(this, QRect((int)(inserthpos*m_scale), vpos,
+                                (int)(insertlength*m_scale), m_seqheight), s);
+
+
+      if (ii->m_state == Insert::Happy)
+      {
+        drawTile(ii->m_atile, p, m_hoffset, vpos);
+        drawTile(ii->m_btile, p, m_hoffset, vpos);
+      }
+      else if (ii->m_active == 0)
+      {
+        drawTile(ii->m_atile, p, m_hoffset, vpos);
+      }
+      else
+      {
+        drawTile(ii->m_btile, p, m_hoffset, vpos);
+      }
+
+      //cerr << endl;
     }
 
-    if (li == layout.end())
-    {
-      layout.push_back(0);
+    if (!layout.empty()) 
+    { 
+      layoutoffset += 2; 
+      layoutoffset += layout.size();
     }
-
-    int vpos = tileoffset+layoutpos*lineheight;
-    layout[layoutpos] = ii->m_roffset + layoutgutter;
-
-    int inserthpos = hoffset + ii->m_loffset; 
-    int insertlength = ii->m_roffset - ii->m_loffset;
-
-    QBrush b(UIElements::getInsertColor(ii->m_state));
-    b.setStyle(Qt::Dense7Pattern);
-    p.setPen(NoPen);
-    p.setBrush(b);
-
-    int insertheight = m_seqheight + seqdelta + 2;
-
-    p.drawRect(inserthpos, vpos, insertlength, insertheight);
-    QString s = "Actual: " + QString::number(insertlength) +
-                "\nExpected: " + QString::number(ii->m_dist.mean-3*ii->m_dist.sd) +
-                " - "          + QString::number(ii->m_dist.mean+3*ii->m_dist.sd);
-    QToolTip::add(this, QRect((int)(inserthpos*m_scale), vpos,
-                              (int)(insertlength*m_scale), insertheight), s);
-
-
-
-    b.setStyle(Qt::SolidPattern);
-    p.setBrush(b);
-    p.setPen(Qt::black);
-
-    drawTile(ii->m_atile, p, hoffset, vpos);
-    drawTile(ii->m_btile, p, hoffset, vpos + seqdelta);
   }
 
   p.end();
+
+  resize(width(), tileoffset+(layoutpos + layoutoffset)*lineheight);
+
 }
 
 void InsertField::paintEvent(QPaintEvent * e)
@@ -195,34 +262,36 @@ void InsertField::drawTile(Tile_t * tile, QPainter & p, int hoffset, int vpos)
 
   int hpos = hoffset + tile->offset;
   int readLength = tile->range.getLength() + tile->gaps.size();
-  int arrowLen = (int)(10/m_scale);
 
-  QPointArray seqarrow(5);
+  //cerr << " " << hpos << " " << readLength;
+
+  p.drawRect(hpos, vpos, readLength, m_seqheight);
+
+  const char * seqname = read_bank.lookupEID(tile->source);
+  QString tip = seqname;
+
+  tip += " [" + QString::number(tile->offset) 
+       +  "," + QString::number(tile->offset + tile->range.getLength() + tile->gaps.size() -1)
+       + "]";
 
   if (tile->range.end < tile->range.begin)
   {
-    // rc
-    seqarrow[0]=QPoint(hpos,            vpos+m_seqheight/2);
-    seqarrow[1]=QPoint(hpos+arrowLen,   vpos);
-    seqarrow[2]=QPoint(hpos+readLength, vpos);
-    seqarrow[3]=QPoint(hpos+readLength, vpos+m_seqheight);
-    seqarrow[4]=QPoint(hpos+arrowLen,   vpos+m_seqheight);
-  }
-  else
-  {
-    // forward
-    seqarrow[0]=QPoint(hpos,                     vpos);
-    seqarrow[1]=QPoint(hpos+readLength-arrowLen, vpos);
-    seqarrow[2]=QPoint(hpos+readLength,          vpos+m_seqheight/2);
-    seqarrow[3]=QPoint(hpos+readLength-arrowLen, vpos+m_seqheight);
-    seqarrow[4]=QPoint(hpos,                     vpos+m_seqheight);
+    tip += " [RC]";
   }
 
-  p.drawPolygon(seqarrow);
-
-  const char * seqname = read_bank.lookupEID(tile->source);
   QToolTip::add(this, QRect((int)(hpos*m_scale), vpos, 
-                            (int)(readLength*m_scale), m_seqheight), seqname);
+                            (int)(readLength*m_scale), m_seqheight), tip);
+}
+
+void InsertField::mouseDoubleClickEvent(QMouseEvent * e)
+{
+  int pos = e->x();
+  pos /= m_scale; 
+  pos -= m_hoffset;
+
+  cerr << "Click at " << pos << endl;
+  emit setGindex(pos);
+
 }
 
 

@@ -19,6 +19,10 @@ public:
 
 protected:
   void paintEvent(QPaintEvent * e);
+  void mouseDoubleClickEvent(QMouseEvent * e);
+
+signals:
+  void setGindex(int);
 
 
 private:
@@ -27,6 +31,7 @@ private:
 
   double m_scale;
   int m_seqheight;
+  int m_hoffset;
 
   AMOS::Bank_t read_bank;
   AMOS::Bank_t contig_bank;

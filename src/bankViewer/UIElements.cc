@@ -7,11 +7,13 @@ QColor UIElements::color_t(Qt::red);
 QColor UIElements::color_default(Qt::black);
 QColor UIElements::color_discrepancy(153, 102, 255);
 
-QColor UIElements::color_happy(Qt::green);
-QColor UIElements::color_sad(Qt::blue);
-QColor UIElements::color_unknown(Qt::magenta);
-QColor UIElements::color_link(Qt::yellow);
-QColor UIElements::color_orientation(Qt::red);
+QColor UIElements::color_Happy(Qt::green);
+QColor UIElements::color_SizeViolation(Qt::blue);
+QColor UIElements::color_LinkingMate(Qt::yellow);
+QColor UIElements::color_OrientationViolation(Qt::red);
+QColor UIElements::color_MissingMate(Qt::magenta);
+QColor UIElements::color_NoMate(Qt::cyan);
+QColor UIElements::color_Unknown(Qt::white);
 
 QColor & UIElements::getBaseColor(char base)
 {
@@ -39,15 +41,17 @@ void UIElements::setBasePen(QPen & pen, char base)
 }
 
 
-QColor & UIElements::getInsertColor(char state)
+QColor & UIElements::getInsertColor(Insert::MateState state)
 {
   switch (state)
   {
-    case 'H': return color_happy;
-    case 'S': return color_sad;
-    case 'L': return color_link;
-    case 'O': return color_orientation;
+    case Insert::Happy:                return color_Happy;
+    case Insert::SizeViolation:        return color_SizeViolation;
+    case Insert::LinkingMate:          return color_LinkingMate;
+    case Insert::OrientationViolation: return color_OrientationViolation;
+    case Insert::MissingMate:          return color_MissingMate;
+    case Insert::NoMate:               return color_NoMate;
 
-    default: return color_unknown;
+    default: return color_Unknown;
   };
 }

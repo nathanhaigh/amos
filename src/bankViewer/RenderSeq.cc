@@ -173,7 +173,7 @@ void RenderSeq_t::loadTrace(const string & db)
     }
   }
 
-  cerr << "loaded " << m_bcpos.size() << "positions" << i << endl;
+  cerr << "loaded " << m_bcpos.size() << "positions" << endl;
 
   string bases = m_read.getSeqString();
   int rangebegin = m_tile->range.begin;

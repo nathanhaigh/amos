@@ -76,7 +76,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
     }
   }
 
-  cerr << "loaded " << pos.size() << "positions" << i << endl;
+  cerr << "loaded " << pos.size() << "positions" << endl;
 
   m_pix = new QPixmap(width(), height());
   m_pix->fill(this, 0, 0);

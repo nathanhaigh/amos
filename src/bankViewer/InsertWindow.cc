@@ -19,6 +19,9 @@ InsertWindow::InsertWindow(const string & bankname,
 
   setCentralWidget(m_sv);
 
+  connect(m_insertfield, SIGNAL(setGindex(int)),
+          parent, SLOT(setGindex(int)));
+
 
 
 
