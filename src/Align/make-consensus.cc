@@ -14,6 +14,7 @@
 #include  "CelMsgWGA.hh"
 #include  "align.hh"
 #include  "prob.hh"
+#include  "fasta.hh"
 #include  <vector>
 #include  <string>
 #include  <algorithm>
@@ -42,6 +43,9 @@ static Input_Format_t  Input_Format = SIMPLE_CONTIG_FORMAT;
   // Type of input
 static bool  Output_Alignments = false;
   // If set true (by -a option) then multialignments will be output
+  // instead of just messages with consensus sequences
+static bool  Output_FASTA = false;
+  // If set true (by -f option) then multialignments will be output
   // instead of just messages with consensus sequences
 static string  Tig_File_Name;
   // Name of file containing input contig/unitig messages
@@ -110,7 +114,6 @@ int  main
 
                 gma . Get_Positions (pos);
                 gma . Extract_IMP_Dels (del_list);
-
                 msg . Update_IMPs (pos, ref, del_list);
 
                 if  (Output_Alignments)
@@ -176,6 +179,8 @@ int  main
                      Multi_Align (string_list, offset, 5, 0.04, gma, & ref);
                      gma . Get_Positions (pos);
                      gma . Extract_IMP_Dels (del_list);
+                     msg . Update_IMPs (pos, ref, del_list);
+
                      gma . Set_Consensus_And_Qual (string_list, qual_list);
                      msg . setSequence (gma . getConsensusString ());
                      msg . setQuality (gma . getQualityString ());
@@ -187,6 +192,11 @@ int  main
                                << " with " << frg_id_list . size ()
                                << " reads" << endl;
                           gma . Print (stdout, string_list, 60);
+                         }
+                     else if  (Output_FASTA)
+                         {
+                          cout << ">" << cid << endl;
+                          Fasta_Print (stdout, gma . getConsensusString (), NULL);
                          }
                        else
                          {
@@ -217,9 +227,42 @@ int  main
                }
           }
 
-        cerr << "Contig " << cid << " with " << frg_id_list . size ()
-             << " reads" << endl;
         // Process the last contig here
+        if  (frg_id_list . size () > 0)
+            {
+             Get_Strings_And_Offsets (string_list, qual_list, offset,
+                   frg_id_list, pos_list, read_bank);
+
+             msg . setAccession (cid);
+             msg . setIMPs (frg_id_list, pos_list);
+             Multi_Align (string_list, offset, 5, 0.04, gma, & ref);
+             gma . Get_Positions (pos);
+             gma . Extract_IMP_Dels (del_list);
+             msg . Update_IMPs (pos, ref, del_list);
+
+             gma . Set_Consensus_And_Qual (string_list, qual_list);
+             msg . setSequence (gma . getConsensusString ());
+             msg . setQuality (gma . getQualityString ());
+             msg . setUniLen (strlen (gma . getConsensusString ()));
+
+             if  (Output_Alignments)
+                 {
+                  cout << endl << endl << "Contig " << cid
+                       << " with " << frg_id_list . size ()
+                       << " reads" << endl;
+                  gma . Print (stdout, string_list, 60);
+                 }
+             else if  (Output_FASTA)
+                 {
+                  cout << ">" << cid << endl;
+                  Fasta_Print (stdout, gma . getConsensusString (), NULL);
+                 }
+               else
+                 {
+                  msg . print (stdout);
+                 }
+            }
+        contig_ct ++;
 
         cerr << "Processed " << contig_ct << " contigs" << endl;
        }
@@ -411,7 +454,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "acChSu")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "acCfhSu")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -425,6 +468,10 @@ static void  Parse_Command_Line
 
         case  'C' :
           Input_Format = CELERA_MSG_FORMAT;
+          break;
+
+        case  'f' :
+          Output_FASTA = true;
           break;
 
         case  'h' :
@@ -493,6 +540,7 @@ static void  Usage
            "  -a    Output alignments instead of consensus messages\n"
            "  -c    Process contig messages\n"
            "  -C    Input is Celera msg format, i.e., a .cgb or .cgw file\n"
+           "  -f    Output consensus only in FASTA format\n"
            "  -h    Print this usage message\n"
            "  -S    Input is simple contig format, i.e., UMD format\n"
            "  -u    Process unitig messages\n"
