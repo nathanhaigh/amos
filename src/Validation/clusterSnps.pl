@@ -19,7 +19,7 @@ sub printResults
     my $dist = $lastsnppos - $firstsnppos;
     my $density = sprintf("%.02f", $dist / $snpcount);
 
-    print "HIGHSNP $contigid $firstsnppos $lastsnppos $snpcount $density\n";
+    print "$contigid P HIGH_SNP $firstsnppos $lastsnppos $snpcount $density\n";
   }
 }
 
