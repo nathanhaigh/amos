@@ -167,8 +167,11 @@ string substVars(string & in)
       if (in[i + 1] == '('){
 	i += 2;
 	var = "";
-	while (i < in.length() && in[i] != ')')
+	while (i < in.length() && in[i] != ')'){
+	  if (in[i] == '\\' )
+	    i++;
 	  var += in[i++];
+	}
 	if (var.find_first_not_of("0123456789") == var.npos){
 	  // string is a number
 	  int n = strtol(var.c_str(), NULL, 10);
@@ -438,7 +441,12 @@ string doCommandStr(string command)
     finish(1);
   }
 
-  return out.str();
+  string outstr = out.str();
+  for (int s = 0; s < outstr.size(); s++)
+    if (outstr[s] == '\n') 
+      outstr[s] = ' ';
+
+  return outstr;
 } // doCommandStr
 
 void doCommand(string command)
@@ -598,6 +606,12 @@ int main(int argc, char ** argv)
   bool noop = false;
 
   allstart = time(NULL);
+  // before running make sure everything is kosher
+  if (globals.find("ocd") != globals.end()){
+    globals.erase("ocd");
+    checkFiles();
+  }
+
   while (getline(conf, line)){
     lineno++;
     if (line.length() > 1 && line[0] == '#' && line[1] == '#'){ // message - will be saved
@@ -633,10 +647,12 @@ int main(int argc, char ** argv)
 	multiline = false;
 	noop = false;
 	if (continuation){
-	  commands.push_back(outline);
+	  doCommand(outline);
 	}
 	continuation = false;
 	outline = "";
+	logFile << timeStr() << "Done! Elapsed time:" 
+		<< elapsed(time(NULL) - start) << endl;
 	continue;
       }
 
@@ -646,11 +662,11 @@ int main(int argc, char ** argv)
 	  continuation = true;
 	} else if (continuation){
 	  outline += line;
-	  commands.push_back(outline);
+	  doCommand(outline);
 	  outline = "";
 	  continuation = false;
 	} else 
-	  commands.push_back(line);
+	  doCommand(line);
       }
 
       continue;
@@ -681,15 +697,23 @@ int main(int argc, char ** argv)
 	  msg << ": " << message;
 	  message = "";
 	}
-	steps.push_back(pair<string, int> (msg.str(), commands.size()));
+	//	steps.push_back(pair<string, int> (msg.str(), commands.size()));
+	cout << "Doing " << msg.str() << endl;
+	logFile << timeStr() << "Doing " << msg.str() << endl;
       }
       
       if (line.substr(noscan).length() == 0) {// multiline command
 	multiline = true;
+	start = time(NULL);
 	continue;
       } else { 
-	if (! noop)
-	  commands.push_back(line.substr(noscan));
+	if (! noop){
+	  //	  commands.push_back(line.substr(noscan));
+	  start = time(NULL);	  
+	  doCommand(line.substr(noscan));
+	  logFile << timeStr() << "Done! Elapsed time:" 
+		  << elapsed(time(NULL) - start) << endl;
+	}
 	noop = false;
       }
       
@@ -711,28 +735,23 @@ int main(int argc, char ** argv)
     finish(1);
   } // while each line in configuration file
 
-  // before running make sure everything is kosher
-  if (globals.find("ocd") != globals.end()){
-    globals.erase("ocd");
-    checkFiles();
-  }
 
-  for (int vi = 0; vi < steps.size(); vi++){
-    int lastcmd;
-    start = time(NULL);
-    cout << "Doing " << steps[vi].first << endl;
-    logFile << timeStr() << "Doing " << steps[vi].first << endl;
-    if (vi == steps.size() - 1)
-      lastcmd = commands.size();
-    else
-      lastcmd = steps[vi + 1].second;
+//   for (int vi = 0; vi < steps.size(); vi++){
+//     int lastcmd;
+//     start = time(NULL);
+//     cout << "Doing " << steps[vi].first << endl;
+//     logFile << timeStr() << "Doing " << steps[vi].first << endl;
+//     if (vi == steps.size() - 1)
+//       lastcmd = commands.size();
+//     else
+//       lastcmd = steps[vi + 1].second;
     
-    for (int ci = steps[vi].second; ci < lastcmd; ci++)
-      doCommand(commands[ci]);
+//     for (int ci = steps[vi].second; ci < lastcmd; ci++)
+//       doCommand(commands[ci]);
 
-    logFile << timeStr() << "Done! Elapsed time:" 
-	    << elapsed(time(NULL) - start) << endl;
-  }
+//     logFile << timeStr() << "Done! Elapsed time:" 
+// 	    << elapsed(time(NULL) - start) << endl;
+//   }
 
   if (globals.find("clean") != globals.end())
     cleanFiles();
