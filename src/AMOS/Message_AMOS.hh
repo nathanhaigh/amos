@@ -306,7 +306,8 @@ public:
   //!
   //! Will set a new, or overwrite and existing field with the supplied data.
   //! Throws an exception for an improperly formatted  data record (i.e. a
-  //! multi-line record that does not end in a newline).
+  //! multi-line record that does not end in a newline). If the data string is
+  //! empty, the field will be ignored and will remain uninitialized.
   //!
   //! \param fcode The field NCode
   //! \param data The new field data
