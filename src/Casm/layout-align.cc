@@ -32,6 +32,22 @@ using namespace std;
 
 
 
+
+//=============================================================== Options ====//
+string  OPT_BankName;                 // bank name parameter
+string  OPT_AlignName;                // alignment name parameter
+bool    OPT_Matepair = false;         // use matepair information
+bool    OPT_Circular = false;         // circular reference
+bool    OPT_PrintConflicts = false;   // print conflicts
+bool    OPT_PrintMaps = false;        // print read maps
+bool    OPT_PrintTigr = false;        // print tigr contigs
+bool    OPT_PrintUMD = false;         // print UMD contigs
+bool    OPT_Random = false;           // randomly place ambiguous reads
+int     OPT_Seed = -1;                // random seed
+bool    OPT_ExcludeSegmented = false; // exclude all segmented reads
+
+
+
 //============================================================= Constants ====//
 const char FORWARD_CHAR  = '+';
 const char REVERSE_CHAR  = '-';
@@ -345,20 +361,6 @@ struct ConflictExcludePredicate_t
 
 
 
-//=============================================================== Options ====//
-string  OPT_BankName;                 // bank name parameter
-string  OPT_AlignName;                // alignment name parameter
-bool    OPT_Matepair = false;         // use matepair information
-bool    OPT_Circular = false;         // circular reference
-bool    OPT_PrintConflicts = false;   // print conflicts
-bool    OPT_PrintMaps = false;        // print read maps
-bool    OPT_PrintTigr = false;        // print tigr contigs
-bool    OPT_PrintUMD = false;         // print UMD contigs
-bool    OPT_Random = false;           // randomly place ambiguous reads
-int     OPT_Seed = -1;                // random seed
-
-
-
 //========================================================== Fuction Decs ====//
 long int lmin (long int a, long int b)
 { return (a < b ? a : b); }
@@ -422,14 +424,6 @@ void FindConflicts (Mapping_t & mapping);
 void ParseAlign (Mapping_t & mapping);
 
 
-//------------------------------------------------------------- ParseArgs ----//
-//! \brief Sets the global OPT_% values from the command line arguments
-//!
-//! \return void
-//!
-void ParseArgs (int argc, char ** argv);
-
-
 //------------------------------------------------------------ ParseMates ----//
 //! \brief Parse, sort and store the matepair input
 //!
@@ -481,15 +475,6 @@ void PlaceUnambiguous (Mapping_t & mapping);
 void PrintConflicts (const Mapping_t & mapping);
 
 
-//------------------------------------------------------------- PrintHelp ----//
-//! \brief Prints help information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintHelp (const char * s);
-
-
 //---------------------------------------------------------- PrintMapping ----//
 //! \brief Prints all the read mappings to stdout
 //!
@@ -518,15 +503,6 @@ void PrintTigr (const Assembly_t & assembly);
 void PrintUMD (const Assembly_t & assembly);
 
 
-//------------------------------------------------------------ PrintUsage ----//
-//! \brief Prints usage information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintUsage (const char * s);
-
-
 //------------------------------------------------------- RefineConflicts ----//
 //! \brief Count discounting reads, combine and select conflicts
 //!
@@ -538,6 +514,31 @@ void PrintUsage (const char * s);
 //!
 void RefineConflicts (Mapping_t & mapping);
 
+
+//------------------------------------------------------------- ParseArgs ----//
+//! \brief Sets the global OPT_% values from the command line arguments
+//!
+//! \return void
+//!
+void ParseArgs (int argc, char ** argv);
+
+
+//------------------------------------------------------------- PrintHelp ----//
+//! \brief Prints help information to cerr
+//!
+//! \param s The program name, i.e. argv[0]
+//! \return void
+//!
+void PrintHelp (const char * s);
+
+
+//------------------------------------------------------------ PrintUsage ----//
+//! \brief Prints usage information to cerr
+//!
+//! \param s The program name, i.e. argv[0]
+//! \return void
+//!
+void PrintUsage (const char * s);
 
 
 //========================================================== Inline Funcs ====//
@@ -614,6 +615,13 @@ inline bool IsEqualConflict (const Conflict_t * A, const Conflict_t * B)
 inline bool IsValidChain(const ReadAlignChain_t * cand,
 			 const ReadMap_t * read)
 {
+  //-- Exclude segmented or partial alignments
+  if ( OPT_ExcludeSegmented )
+    if ( cand -> head -> from != NULL  ||
+	 cand -> end  - cand -> tend > TRMLEN  ||
+	 cand -> tbeg - cand -> beg  > TRMLEN )
+      return false;
+
   return (
 	  (float)cand -> len / (float)read -> len * 100.0 >= MINCOV
 	  &&
@@ -645,26 +653,23 @@ int main (int argc, char ** argv)
   Mapping_t mapping;
   Assembly_t assembly;
 
+  ParseArgs (argc, argv);          // parse the command line arguments
+  srand (OPT_Seed);
+
   //-- INPUT
   cerr << "layout.INPUT\n";
-  ParseArgs (argc, argv);          // parse the command line arguments
   ParseAlign (mapping);            // parse the alignment data
   ChainAligns (mapping);           // build the LAS chains for each read
-
-  srand (OPT_Seed);
+  if ( OPT_Matepair )
+    ParseMates (mapping);          // parse the matepair data
 
   //-- READ PLACEMENT
   cerr << "layout.PLACEMENT\n";
   PlaceUnambiguous (mapping);      // place unambiguous reads
   if ( OPT_Matepair )
-    {
-      ParseMates (mapping);        // parse the matepair data
-      PlaceHappyMates (mapping);   // place 'happy' matepairs
-    }
+    PlaceHappyMates (mapping);     // place 'happy' matepairs
   if ( OPT_Random )
-    {
-      PlaceRandom (mapping);       // randomly place all unplaced reads
-    }
+    PlaceRandom (mapping);         // randomly place all unplaced reads
 
   sort (mapping.reads.begin( ), mapping.reads.end( ), ReadPlaceCmp_t( ));
 
@@ -827,6 +832,7 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 	    }
 
 	  //TODO - TEMPORARY
+	  //-- Back up to capture all reads overlapping the conflict
 	  if ( rmpic != reads . end( ) )
 	    while ( rmpic != reads . begin( )  &&
 		    (*rmpic) -> place -> end > confbeg )
@@ -1281,73 +1287,6 @@ void ParseAlign (Mapping_t & mapping)
 
 
 
-//------------------------------------------------------------- ParseArgs ----//
-void ParseArgs (int argc, char ** argv)
-{
-  int ch, errflg = 0;
-  optarg = NULL;
-
-  while ( !errflg && ((ch = getopt (argc, argv, "b:cChMrs:TU")) != EOF) )
-    switch (ch)
-      {
-      case 'b':
-	OPT_BankName = optarg;
-	OPT_Matepair = true;
-	break;
-
-      case 'c':
-	OPT_Circular = true;
-	break;
-
-      case 'C':
-	OPT_PrintConflicts = true;
-	break;
-
-      case 'h':
-        PrintHelp (argv[0]);
-        exit (EXIT_SUCCESS);
-        break;
-
-      case 'M':
-	OPT_PrintMaps = true;
-	break;
-
-      case 'r':
-	OPT_Random = true;
-	break;
-
-      case 's':
-	OPT_Seed = atoi (optarg);
-	break;
-
-      case 'T':
-	OPT_PrintTigr = true;
-	break;
-
-      case 'U':
-	OPT_PrintUMD = true;
-	break;
-
-      default:
-        errflg ++;
-      }
-
-  if ( errflg > 0 || optind != argc - 1 )
-    {
-      PrintUsage (argv[0]);
-      cerr << "Try '" << argv[0] << " -h' for more information.\n";
-      exit (EXIT_FAILURE);
-    }
-
-  if ( OPT_Seed < 0 )
-    OPT_Seed = time (NULL);
-
-  OPT_AlignName = argv [optind ++];
-}
-
-
-
-
 //------------------------------------------------------------ ParseMates ----//
 void ParseMates (Mapping_t & mapping)
 {
@@ -1633,35 +1572,6 @@ void PrintConflicts (const Mapping_t & mapping)
 
 
 
-//------------------------------------------------------------- PrintHelp ----//
-void PrintHelp (const char * s)
-{
-  PrintUsage (s);
-  cerr
-    << "-b path       The path of the AMOS bank to use for mate-pair info\n"
-    << "-c            Circular reference sequence\n"
-    << "-C            Print conflicts\n"
-    << "-h            Display help information\n"
-    << "-M            Print read maps\n"
-    << "-r            Randomly place repetitive reads into one of their copy\n"
-    << "              locations if it cannot be placed via mate-pair info\n"
-    << "-s uint       Set random generator seed to unsigned int. Default\n"
-    << "              seed is generated by the system clock\n"
-    << "-T            Print TIGR contig\n"
-    << "-U            Print UMD contig\n\n";
-
-  cerr
-    << "  Position query sequences on a reference based on the alignment\n"
-    << "information contained in the deltafile. Can utilize mate-pair\n"
-    << "information to place repetitive sequences, or random placement\n"
-    << "to simulate even coverage.\n\n";
-
-  return;
-}
-
-
-
-
 //---------------------------------------------------------- PrintMapping ----//
 void PrintMapping (Mapping_t & mapping)
 {
@@ -1795,17 +1705,6 @@ void PrintUMD (const Assembly_t & assembly)
 
       cout << endl;
     }
-}
-
-
-
-
-//------------------------------------------------------------ PrintUsage ----//
-void PrintUsage (const char * s)
-{
-  cerr
-    << "\nUSAGE: " << s << "  [options]  [-b amosbank]  <deltafile>\n\n";
-  return;
 }
 
 
@@ -2079,4 +1978,116 @@ Tile_t::Tile_t (ReadMap_t * rmp, Contig_t * cp)
       beg = RevComp1 (beg, rmp -> len);
       end = RevComp1 (end, rmp -> len);
     }
+}
+
+
+
+
+//------------------------------------------------------------- ParseArgs ----//
+void ParseArgs (int argc, char ** argv)
+{
+  int ch, errflg = 0;
+  optarg = NULL;
+
+  while ( !errflg && ((ch = getopt (argc, argv, "b:cCehMrs:TU")) != EOF) )
+    switch (ch)
+      {
+      case 'b':
+	OPT_BankName = optarg;
+	OPT_Matepair = true;
+	break;
+
+      case 'c':
+	OPT_Circular = true;
+	break;
+
+      case 'C':
+	OPT_PrintConflicts = true;
+	break;
+
+      case 'e':
+	OPT_ExcludeSegmented = true;
+	break;
+
+      case 'h':
+        PrintHelp (argv[0]);
+        exit (EXIT_SUCCESS);
+        break;
+
+      case 'M':
+	OPT_PrintMaps = true;
+	break;
+
+      case 'r':
+	OPT_Random = true;
+	break;
+
+      case 's':
+	OPT_Seed = atoi (optarg);
+	break;
+
+      case 'T':
+	OPT_PrintTigr = true;
+	break;
+
+      case 'U':
+	OPT_PrintUMD = true;
+	break;
+
+      default:
+        errflg ++;
+      }
+
+  if ( errflg > 0 || optind != argc - 1 )
+    {
+      PrintUsage (argv[0]);
+      cerr << "Try '" << argv[0] << " -h' for more information.\n";
+      exit (EXIT_FAILURE);
+    }
+
+  if ( OPT_Seed < 0 )
+    OPT_Seed = time (NULL);
+
+  OPT_AlignName = argv [optind ++];
+}
+
+
+
+
+//------------------------------------------------------------- PrintHelp ----//
+void PrintHelp (const char * s)
+{
+  PrintUsage (s);
+  cerr
+    << "-b path       The path of the AMOS bank to use for mate-pair info\n"
+    << "-c            Circular reference sequence\n"
+    << "-C            Print conflicts\n"
+    << "-e            Exclude all segmented and partial read mappings\n"
+    << "-h            Display help information\n"
+    << "-M            Print read maps\n"
+    << "-r            Randomly place repetitive reads into one of their copy\n"
+    << "              locations if it cannot be placed via mate-pair info\n"
+    << "-s uint       Set random generator seed to unsigned int. Default\n"
+    << "              seed is generated by the system clock\n"
+    << "-T            Print TIGR contig\n"
+    << "-U            Print UMD contig\n\n";
+
+  cerr
+    << "  Position query sequences on a reference based on the alignment\n"
+    << "information contained in the deltafile. Can utilize mate-pair\n"
+    << "information to place repetitive sequences, or random placement\n"
+    << "to simulate even coverage.\n\n";
+
+  return;
+}
+
+
+
+
+//------------------------------------------------------------ PrintUsage ----//
+void PrintUsage (const char * s)
+{
+  cerr
+    << "\nUSAGE: " << s << "  [options]  [-b amosbank]  <deltafile>\n\n";
+  return;
 }
