@@ -12,6 +12,7 @@
 //! duplicate eid or an invalid link will cause the violating message to be
 //! ignored.
 //!
+//! \todo -f option should remove all banks, not just the types in the message
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "amp.hh"
