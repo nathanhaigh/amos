@@ -356,7 +356,6 @@ typedef Range_t Ordered_Range_t;
 #include "ContigLink_AMOS.hh"
 #include "Contig_AMOS.hh"
 #include "Fragment_AMOS.hh"
-#include "KmerMap_AMOS.hh"
 #include "Kmer_AMOS.hh"
 #include "Library_AMOS.hh"
 #include "Overlap_AMOS.hh"
