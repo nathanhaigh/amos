@@ -6,12 +6,15 @@
 #include <string>
 #include <qpixmap.h>
 
+#include <stdio.h>
+
+
+
 
 ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const char *name)
   :QWidget(parent, name)
 {
   setPalette(QPalette(QColor(200, 200, 200)));
-
 
   string readname = read->m_read.getEID();
 
@@ -26,15 +29,55 @@ ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const
 
   resize (m_rawread->NPoints+100,160);
 
+  vector<int> pos;
+
+  char name[100];
+  int version;
+
+  char hex[5];
+  hex[4]='\0';
+  string curseq;
+  FILE * fpos = fopen("dmg.pos", "r");
+  char c;
+  int i;
+  while ((i = fscanf ( fpos, "%s\t%d\t", name, &version )) != 0)
+  {
+    if (readname == name)
+    {
+      while ( fgets ( hex, 5, fpos ) && hex[0] != '\n' )
+      {
+          int x;
+
+          sscanf ( hex, "%04x", &x );
+          pos.push_back(x);
+      }
+
+      break;
+    }
+    else
+    {
+      do {
+        c = fgetc(fpos);
+      } while (c != '\n');
+    }
+  }
+
+  cerr << "loaded " << pos.size() << "positions, i=" << i << endl;
+
+
+
+
+
+
   m_pix = new QPixmap(width(), height());
   m_pix->fill(this, 0, 0);
 
+  QPen pen;
   QPainter painter(m_pix);
 
   int baseline = 100;
   int offset = 20;
 
-  int i=0;
   int vscale=24;
   int tickwidth = 5;
   int maxy = 2000;
@@ -69,7 +112,6 @@ ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const
 
   for (int channel = 0; channel < 4; channel++)
   {
-    QPen pen;
 
     unsigned short * trace = NULL;
     switch (channel)
@@ -94,6 +136,27 @@ ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const
         painter.moveTo(i+offset,baseline);
       }
     }
+  }
+
+  string bases = read->m_read.getSeqString();
+
+  for (i = 0; i < pos.size(); i++)
+  {
+    char b = bases[i];
+
+    switch (b)
+    {
+      case 'A': pen.setColor(red); break;
+      case 'C': pen.setColor(green); break;
+      case 'G': pen.setColor(blue); break;
+      case 'T': pen.setColor(yellow); break;
+    };
+
+    painter.setPen(pen);
+
+    QString s;
+    s+= b;
+    painter.drawText(pos[i]-20+offset,baseline+25,40,20,Qt::AlignHCenter,s);
   }
 
   painter.end();

@@ -299,6 +299,11 @@ void TilingField::paintEvent( QPaintEvent * )
     {
 //      QString s = QString::number(ri->m_vectorpos);
       QString s = ri->m_read.getEID().c_str();
+      if (ri->m_rc)
+      {
+        s += "[RC]"; 
+      }
+
       p.drawText(seqnamehoffset, lineheight*dcov + tilevoffset, s);
 
       s = "";
