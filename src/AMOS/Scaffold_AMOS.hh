@@ -170,7 +170,7 @@ public:
   //--------------------------------------------------- setContigTiling --------
   //! \brief Set the tiling of underlying contigs
   //!
-  //! \param contigs The new contig layout
+  //! \param layout The new contig layout
   //! \return void
   //!
   void setContigTiling (const Layout_t & layout)

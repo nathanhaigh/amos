@@ -247,7 +247,7 @@ public:
   //--------------------------------------------------- setReadTiling ----------
   //! \brief Set the tiling of underlying reads
   //!
-  //! \param reads The new read layout
+  //! \param layout The new read layout
   //! \return void
   //!
   void setReadTiling (const Layout_t & layout)
