@@ -206,7 +206,7 @@ int  main
           } // celera input
       else  if  (Input_Format == BANK_INPUT)
           {
-	   ID_t layout_id = 1;  // we'll have to number the contigs ourselves
+	   ID_t layout_id = 0;  // we'll have to number the contigs ourselves
 	   Layout_t layout; 
            vector <Ordered_Range_t>  pos_list;
            vector <int>  frg_id_list;
@@ -222,7 +222,7 @@ int  main
            while  (layout_bank >> layout)
              {
 	       char sid[256]; 
-	       sprintf(sid, "%ld", layout_id++);
+	       sprintf(sid, "%ld", ++layout_id);
 	       cid = string(sid);
 
 	       Get_Strings_And_Offsets
@@ -261,6 +261,26 @@ int  main
 	       Output_Unit (label, msg . getAccession (),
 			    msg . getNumFrags (), gma, msg, string_list,
 			    qual_list, clr_list, tag_list, contig_bank);
+
+               // Cleanup before next layout to make valgrind happy on last layout
+               // Otherwise happens in Get_Strings_And_Offsets
+               {
+                 int i, n;
+                 n = string_list . size ();
+                 for  (i = 0;  i < n;  i ++)
+                   free (string_list [i]);
+                 string_list . clear ();
+
+                 n = qual_list . size ();
+                 for  (i = 0;  i < n;  i ++)
+                   free (qual_list [i]);
+                 qual_list . clear ();
+
+                 n = tag_list . size ();
+                 for  (i = 0;  i < n;  i ++)
+                   free (tag_list [i]);
+                 tag_list . clear ();
+               }
 	       
 	       contig_ct ++;
 	     } // while layout
@@ -791,8 +811,11 @@ static void  Get_Strings_And_Offsets
 	  
       pos . push_back ( Ordered_Range_t ( a, b ) );
       fid . push_back ( ti -> source );
+
       
       read_bank . fetch (ti -> source, read);
+
+      if (Verbose > 3) { cerr << "Loading e" << read.getEID() << " i" << read.getIID() <<  "... "; }
 
       if ( Use_SeqNames )
 	tag_list . push_back (strdup (read . getEID() . c_str()));
@@ -836,6 +859,8 @@ static void  Get_Strings_And_Offsets
       this_offset = Min (a, b);
       offset . push_back (this_offset - prev_offset);
       prev_offset = this_offset;
+
+      if (Verbose > 3) { cerr << "ok." << endl; }
      }
 
    return;
