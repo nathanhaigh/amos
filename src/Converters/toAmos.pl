@@ -67,7 +67,7 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "bq=i"  => \$BADQUAL,
 				 "q=s"   => \$qualfile,
 				 "s=s"   => \$fastafile,
-				 "id=d"  => \$minSeqId);
+				 "id=i"  => \$minSeqId);
 
 
 my $matesDone = 0;
