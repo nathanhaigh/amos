@@ -637,9 +637,9 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
 
   try {
     //-- Open the FIX and VAR partition files
-    ios::openmode mode = ios::binary | ios::ate;
-    if ( (mode_m & B_READ) )
-      mode |= ios::in;
+    ios::openmode mode = ios::binary | ios::ate | ios::in;
+    //    if ( (mode_m & B_READ) )
+    //      mode |= ios::in;
     if ( (mode_m & B_WRITE) )
       mode |= ios::out;
 
