@@ -4,7 +4,7 @@ $MAXSEQ = 2048;
 $MINSEQ = 64;
 $MINVEC = 60;
 
-use TIGR::AsmLib;
+use TIGR::AmosLib;
 
 $frgfile = $ARGV[0];
 my $splicename = $ARGV[1];

@@ -3,7 +3,7 @@
 # fixlib.pl     - recomputes library sizes based on reads within contigs
 
 use TIGR::Foundation;
-use TIGR::AsmLib;
+use TIGR::AmosLib;
 use XML::Parser;
 use Statistics::Descriptive;
 

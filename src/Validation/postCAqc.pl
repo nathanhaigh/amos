@@ -4,7 +4,7 @@
 #              compute new library sizes
 
 use TIGR::Foundation;
-use TIGR::AsmLib;
+use TIGR::AmosLib;
 use Statistics::Descriptive;
 
 use strict;

@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 use TIGR::Foundation;
-use TIGR::AsmLib;
+use TIGR::AmosLib;
 use XML::Parser;
 use POSIX qw(tmpnam);
 $ENV{TMPDIR} = ".";

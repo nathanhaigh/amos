@@ -9,7 +9,7 @@
 use IO::File;
 use File::Basename;
 use TIGR::Foundation;
-use TIGR::AsmLib;
+use TIGR::AmosLib;
 use strict;
 
 my $MY_VERSION = " Version 1.0 (Build " . (qw/$Revision$/ )[1] . ")";

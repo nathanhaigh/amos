@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 use strict;
-use TIGR::AsmLib;
+use TIGR::AmosLib;
 use TIGR::Foundation;
 
 my $version = '$Revision$ ';
