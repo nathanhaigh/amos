@@ -126,6 +126,66 @@ void Contig_t::readRecord (istream & fix,
 }
 
 
+//----------------------------------------------------- readUMD ----------------
+bool Contig_t::readUMD (std::istream & in)
+{
+  char ch;
+  ID_t tid;
+  Tile_t tile;
+  istringstream ss;
+  string line;
+
+  while ( line . empty( )  ||  line [0] != 'C' )
+    {
+      if ( !in . good( ) )
+	return false;
+      getline (in, line);
+    }
+
+  clear( );
+
+  try {
+
+    ss . str (line);
+    ss >> ch;
+    ss >> tid;
+    if ( !ss )
+      AMOS_THROW_ARGUMENT ("Invalid contig ID");
+    ss . clear( );
+    setEID (tid);
+
+    while ( true )
+      {
+	getline (in, line);
+	if ( line . empty( ) )
+	  break;
+
+	ss . str (line);
+	ss >> tile . id;
+	ss >> tile . range . begin;
+	ss >> tile . range . end;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid read layout");
+	ss . clear( );
+	tile . offset = tile . range . begin < tile . range . end ?
+	  tile . range . begin : tile . range . end;
+	tile . range . begin -= tile . offset;
+	tile . range . end -= tile . offset;
+	getReadTiling( ) . push_back (tile);
+      }
+
+  }
+  catch (IOException_t) {
+
+    //-- Clean up and rethrow
+    clear( );
+    throw;
+  }
+
+  return true;
+}
+
+
 //----------------------------------------------------- sizeVar ----------------
 Size_t Contig_t::sizeVar ( ) const
 {
@@ -145,7 +205,7 @@ Size_t Contig_t::sizeVar ( ) const
 }
 
 
-//--------------------------------------------------- writeMessage -----------
+//----------------------------------------------------- writeMessage -----------
 void Contig_t::writeMessage (Message_t & msg) const
 {
   Sequence_t::writeMessage (msg);
@@ -200,4 +260,23 @@ void Contig_t::writeRecord (ostream & fix,
       var . write ((char *)&reads_m [i] . offset, sizeof (Pos_t));
       var . write ((char *)&reads_m [i] . range, sizeof (Range_t));
     }
+}
+
+
+//----------------------------------------------------- writeUMD ---------------
+void Contig_t::writeUMD (std::ostream & out) const
+{
+  vector<Tile_t>::const_iterator ti;
+
+  out << "C " << getEID( ) << endl;
+
+  for ( ti = reads_m . begin( ); ti != reads_m . end( ); ti ++ )
+    out << ti -> id << ' '
+	<< ti -> range . begin + ti -> offset << ' '
+	<< ti -> range . end + ti -> offset << endl;
+
+  out << endl;
+
+  if ( !out . good( ) )
+    AMOS_THROW_IO ("UMD message write failure");
 }

@@ -13,6 +13,7 @@
 #include "Sequence_AMOS.hh"
 #include <vector>
 #include <cctype>
+#include <sstream>
 
 
 
@@ -231,6 +232,24 @@ public:
   virtual void readMessage (const Message_t & msg);
 
 
+  //--------------------------------------------------- readUMD ----------------
+  //! \brief Read a UMD contig message from an input stream
+  //!
+  //! Reads a University of Maryland style contig message and populates the
+  //! appropriate fields with the values read from the stream. Will throw an
+  //! exception if a message is found, but is not properly formatted. All
+  //! fields not included in the message will be reinitialized. Contig EID will
+  //! be set, and each tile will be stored with Read IID, read offset, and read
+  //! range. Read range will be flipped to represent reverse complement.
+  //!
+  //! \param in The input stream to read from
+  //! \pre The incoming message is properly formatted
+  //! \throws IOException_t
+  //! \return true if a message was read, false if no message read (EOF)
+  //!
+  bool readUMD (std::istream & in);
+
+
   //--------------------------------------------------- setPolymorphism --------
   //! \brief Set polymorphism information for this contig
   //!
@@ -259,6 +278,21 @@ public:
 
   //--------------------------------------------------- writeMessage -----------
   virtual void writeMessage (Message_t & msg) const;
+
+
+  //--------------------------------------------------- writeUMD ---------------
+  //! \brief Write a UMD contig message to an output stream
+  //!
+  //! Writes a University of Maryland style contig message to the output stream.
+  //! Will throw an exception if there was an error trying to write to the
+  //! output stream.
+  //!
+  //! \param out The output stream to write to
+  //! \pre The ostream is open and writable
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void writeUMD (std::ostream & out) const;
 
 };
 
