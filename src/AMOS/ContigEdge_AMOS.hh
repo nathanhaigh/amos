@@ -97,10 +97,6 @@ public:
   }
 
 
-  //--------------------------------------------------- fromMessage ------------
-  virtual void fromMessage (const Message_t & msg);
-
-
   //--------------------------------------------------- getContigLinks ---------
   //! \brief Get the bundle of contig link IDs that make up this contig edge
   //!
@@ -118,6 +114,10 @@ public:
     return ContigEdge_t::NCode( );
   }
 
+
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
   
   //--------------------------------------------------- setContigLinks ---------
   //! \brief Set the bundle of contig link IDs that make up this contig edge
@@ -131,8 +131,8 @@ public:
   }
 
 
-  //--------------------------------------------------- toMessage --------------
-  virtual void toMessage (Message_t & msg) const;
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

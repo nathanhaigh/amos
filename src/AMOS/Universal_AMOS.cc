@@ -16,8 +16,8 @@ using namespace std;
 
 
 //================================================ Universal_t =================
-//----------------------------------------------------- fromMessage ------------
-void Universal_t::fromMessage (const Message_t & msg)
+//----------------------------------------------------- readMessage ------------
+void Universal_t::readMessage (const Message_t & msg)
 {
   clear( );
 
@@ -46,8 +46,8 @@ void Universal_t::fromMessage (const Message_t & msg)
 }
 
 
-//----------------------------------------------------- toMessage --------------
-void Universal_t::toMessage (Message_t & msg) const
+//----------------------------------------------------- writeMessage -----------
+void Universal_t::writeMessage (Message_t & msg) const
 {
   msg . clear( );
 

@@ -136,10 +136,6 @@ public:
   }
 
 
-  //--------------------------------------------------- fromMessage ------------
-  virtual void fromMessage (const Message_t & msg);
-
-
   //--------------------------------------------------- getComment -------------
   //! \brief Get the comment string
   //!
@@ -167,6 +163,10 @@ public:
   {
     return Universal_t::NCode( );
   }
+
+
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
 
 
   //--------------------------------------------------- setComment -------------
@@ -197,8 +197,8 @@ public:
   }
 
 
-  //--------------------------------------------------- toMessage --------------
-  virtual void toMessage (Message_t & msg) const;
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

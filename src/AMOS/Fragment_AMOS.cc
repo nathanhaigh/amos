@@ -9,12 +9,76 @@
 
 #include "Fragment_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Fragment_t ==================
+//----------------------------------------------------- readMessage-------------
+void Fragment_t::readMessage (const Message_t & msg)
+{
+  clear( );
+  Universal_t::readMessage (msg);
+
+  try {
+    ID_t iid;
+    stringstream ss;
+
+    if ( msg . exists (F_LIBRARY) )
+      {
+	ss . str (msg . getField (F_LIBRARY));
+	ss >> library_m;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid lib format");
+      }
+
+    if ( msg . exists (F_5PRIME) )
+      {
+	ss . str (msg . getField (F_5PRIME));
+	ss >> ends_m . first;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid 5pr format");
+      }
+
+    if ( msg . exists (F_3PRIME) )
+      {
+	ss . str (msg . getField (F_3PRIME));
+	ss >> ends_m . second;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid 3pr format");
+      }
+
+    if ( msg . exists (F_TYPE) )
+      {
+        ss . str (msg . getField (F_TYPE));
+        setType (ss . get( ));
+      }
+
+    if ( msg . exists (F_READS) )
+      {
+	ss . str (msg . getField (F_READS));
+
+	while ( ss )
+	  {
+	    ss >> iid;
+	    if ( ! ss . fail( ) )
+	      reads_m . push_back (iid);
+	  }
+
+	if ( !ss . eof( ) )
+	  AMOS_THROW_ARGUMENT ("Invalid rds format");
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- readRecord -------------
 Size_t Fragment_t::readRecord (istream & fix,
 			       istream & var)
@@ -39,6 +103,61 @@ Size_t Fragment_t::readRecord (istream & fix,
   streamsize += size * sizeof (ID_t);
 
   return streamsize;
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Fragment_t::writeMessage (Message_t & msg) const
+{
+  Universal_t::writeMessage (msg);
+
+  try {
+    vector<ID_t>::const_iterator vi;
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    if ( library_m != NULL_ID )
+      {
+        ss << library_m;
+        msg . setField (F_LIBRARY, ss . str( ));
+        ss . str("");
+      }
+
+    if ( ends_m . first != NULL_ID )
+      {
+	ss << ends_m . first;
+	msg . setField (F_5PRIME, ss . str( ));
+	ss . str("");
+      }
+
+    if ( ends_m . second != NULL_ID )
+      {
+	ss << ends_m . second;
+	msg . setField (F_3PRIME, ss . str( ));
+	ss . str("");
+      }
+
+    if ( type_m != NULL_FRAGMENT )
+      {
+        ss << type_m;
+        msg . setField (F_TYPE, ss . str( ));
+        ss . str("");
+      }
+
+    if ( reads_m . size( ) != 0 )
+      {
+	for ( vi = reads_m . begin( ); vi != reads_m . end( ); vi ++ )
+	  ss << *vi << '\n';
+	msg . setField (F_READS, ss . str( ));
+	ss . str("");
+      }
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
 }
 
 

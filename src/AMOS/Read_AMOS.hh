@@ -223,11 +223,25 @@ public:
   //! \brief Set the type of read
   //!
   //! \param type The new type of read
+  //! \pre type is one of [XECBW]
+  //! \throws ArgumentException_t
   //! \return void
   //!
   void setType (ReadType_t type)
   {
-    type_m = type;
+    switch (type)
+      {
+      case NULL_READ:
+      case OTHER:
+      case END:
+      case CONTIG:
+      case BAC:
+      case WALK:
+	type_m = type;
+	break;
+      default:
+	AMOS_THROW_ARGUMENT ((string)"Invalid read type char: " + type);
+      }
   }
 
 

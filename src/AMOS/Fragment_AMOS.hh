@@ -170,6 +170,10 @@ public:
   }
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setEnds ----------------
   //! \brief Sets the IDs of the 5' and 3' ends of the Fragment
   //!
@@ -213,12 +217,29 @@ public:
   //! \brief Set the fragment type
   //!
   //! \param type The new fragment type
+  //! \pre type is one of [OITB] or NULL
+  //! \throws ArgumentException_t
   //! \return void
   //!
   void setType (FragmentType_t type)
   {
-    type_m = type;
+    switch (type)
+      {
+      case NULL_FRAGMENT:
+      case OTHER:
+      case INSERT:
+      case TRANSPOSON:
+      case BAC:
+	type_m = type;
+	break;
+      default:
+        AMOS_THROW_ARGUMENT ((string)"Invalid fragment type char: " + type);
+      }
   }
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

@@ -405,19 +405,6 @@ public:
   }
 
 
-  //--------------------------------------------------- fromMessage ------------
-  //! \brief Converts from a message
-  //!
-  //! Converts the data contained in a Message object to the Messagable object.
-  //! Will not complain if incoming message is of the wrong type, will only try
-  //! and suck out the fields it recognizes.
-  //!
-  //! \param msg The Message to read from
-  //! \return void
-  //!
-  virtual void fromMessage (const Message_t & msg) = 0;
-
-
   //--------------------------------------------------- getNCode ---------------
   //! \brief Get the AMOS NCode type identifier
   //!
@@ -426,15 +413,30 @@ public:
   virtual NCode_t getNCode ( ) const = 0;
 
 
-  //--------------------------------------------------- toMessage --------------
-  //! \brief Converts to a message
+  //--------------------------------------------------- readMessage ------------
+  //! \brief Reads in data from a Message object
   //!
-  //! Converts the data contained in the Messagable object to a Message object.
+  //! Reads the data contained in a Message object and stores it in the
+  //! Messagable object. Will not complain if incoming message is of the wrong
+  //! type, will only try and suck out the fields it recognizes. All previous
+  //! data in the Messagable object will be cleared or overwritten.
+  //!
+  //! \param msg The Message to read from
+  //! \return void
+  //!
+  virtual void readMessage (const Message_t & msg) = 0;
+
+
+  //--------------------------------------------------- writeMessage -----------
+  //! \brief Writes data to a Message object
+  //!
+  //! Writes the data contained in a Messagable object to a Message object.
+  //! All previous data in the Message will be cleared or overwritten.
   //!
   //! \param msg The Message to write to
   //! \return void
   //!
-  virtual void toMessage (Message_t & msg) const = 0;
+  virtual void writeMessage (Message_t & msg) const = 0;
 
 };
 

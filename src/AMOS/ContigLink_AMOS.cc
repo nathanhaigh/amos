@@ -33,11 +33,11 @@ LinkAdjacency_t ContigLink_t::getAdjacency ( ) const
 }
 
 
-//----------------------------------------------------- fromMessage ------------
-void ContigLink_t::fromMessage (const Message_t & msg)
+//----------------------------------------------------- readMessage ------------
+void ContigLink_t::readMessage (const Message_t & msg)
 {
   clear( );
-  Universal_t::fromMessage (msg);
+  Universal_t::readMessage (msg);
 
   try {
     string str;
@@ -156,10 +156,10 @@ void ContigLink_t::setAdjacency (LinkAdjacency_t adj)
 }
 
 
-//----------------------------------------------------- toMessage --------------
-void ContigLink_t::toMessage (Message_t & msg) const
+//----------------------------------------------------- writeMessage -----------
+void ContigLink_t::writeMessage (Message_t & msg) const
 {
-  Universal_t::toMessage (msg);
+  Universal_t::writeMessage (msg);
 
   try {
     stringstream ss;

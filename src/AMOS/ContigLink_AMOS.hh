@@ -131,10 +131,6 @@ public:
   }
 
 
-  //--------------------------------------------------- fromMessage ------------
-  virtual void fromMessage (const Message_t & msg);
-
-
   //--------------------------------------------------- getAdjacency -----------
   //! \brief Get the adjacent ends of the two contigs
   //!
@@ -220,6 +216,10 @@ public:
   }
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setAdjacency -----------
   //! \brief Set the adjacent ends of the two contigs
   //!
@@ -292,6 +292,8 @@ public:
   //! \brief Set the linking type
   //!
   //! \param type The new link type
+  //! \pre type is one of [XMOPAS] or NULL
+  //! \throws ArgumentException_t
   //! \return void
   //!
   void setType (LinkType_t type)
@@ -314,8 +316,8 @@ public:
   }
 
 
-  //--------------------------------------------------- toMessage --------------
-  virtual void toMessage (Message_t & msg) const;
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

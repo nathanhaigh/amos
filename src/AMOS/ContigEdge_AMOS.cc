@@ -16,11 +16,11 @@ using namespace std;
 
 
 //================================================ ContigEdge_t ================
-//----------------------------------------------------- fromMessage ------------
-void ContigEdge_t::fromMessage (const Message_t & msg)
+//----------------------------------------------------- readMessage ------------
+void ContigEdge_t::readMessage (const Message_t & msg)
 {
   clear( );
-  ContigLink_t::fromMessage (msg);
+  ContigLink_t::readMessage (msg);
 
   try {
     ID_t iid;
@@ -37,7 +37,7 @@ void ContigEdge_t::fromMessage (const Message_t & msg)
 	      links_m . push_back (iid);
 	  }
 
-	if ( !ss . eof( ) )
+	if ( ! ss . eof( ) )
 	  AMOS_THROW_ARGUMENT ("Invalid ctl format");
       }
   }
@@ -70,10 +70,10 @@ Size_t ContigEdge_t::readRecord (istream & fix,
 }
 
 
-//----------------------------------------------------- toMessage --------------
-void ContigEdge_t::toMessage (Message_t & msg) const
+//----------------------------------------------------- writeMessage -----------
+void ContigEdge_t::writeMessage (Message_t & msg) const
 {
-  ContigLink_t::toMessage (msg);
+  ContigLink_t::writeMessage (msg);
 
   try {
     vector<ID_t>::const_iterator vi;

@@ -26,8 +26,9 @@ int main (int argc, char ** argv)
     Universal_t unv;
     ContigLink_t ctl;
     ContigEdge_t cte;
+    Fragment_t frg;
 
-    Universal_t * unvp;
+    Universal_t * unvp = NULL;
     
     while ( msg . read (msgfile) )
       {
@@ -39,6 +40,8 @@ int main (int argc, char ** argv)
 	  unvp = &ctl;
 	else if ( msg . getMessageCode( ) == Message_k::M_CONTIGEDGE )
 	  unvp = &cte;
+	else if ( msg . getMessageCode( ) == Message_k::M_FRAGMENT )
+	  unvp = &frg;
 	else
 	  {
 	    cout << "# don't know how to parse message\n";
@@ -46,25 +49,13 @@ int main (int argc, char ** argv)
 	  }
 
 	unvp -> clear( );
-	unvp -> fromMessage (msg);
+	unvp -> readMessage (msg);
 
 	msg . clear( );
-	unvp -> toMessage (msg);
+	unvp -> writeMessage (msg);
 
 	msg . write (cout);
       }
-
-    unv . clear( );
-    unv . toMessage (msg);
-    msg . write (cout);
-
-    ctl . clear( );
-    ctl . toMessage (msg);
-    msg . write (cout);
-
-    cte . clear( );
-    cte . toMessage (msg);
-    msg . write (cout);
   }
   catch (Exception_t & e) {
     cerr << e;
