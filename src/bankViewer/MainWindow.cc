@@ -84,23 +84,23 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   QToolButton * bPrevDisc = new QToolButton(Qt::LeftArrow, status, "prev");
   bPrevDisc->setTextLabel("Previous Discrepancy");
-  bPrevDisc->setAccel(Key_PageDown);
+  bPrevDisc->setAccel(CTRL + Key_Space + SHIFT);
   bPrevDisc->setMinimumWidth(20);
 
   QToolButton * bNextDisc = new QToolButton(Qt::RightArrow, status, "next");
   bNextDisc->setTextLabel("Next Discrepancy");
-  bNextDisc->setAccel(Key_PageUp);
+  bNextDisc->setAccel(CTRL + Key_Space);
   bNextDisc->setMinimumWidth(20);
 
   QAccel *a = new QAccel( this );
-  a->connectItem(a->insertItem(Key_PageUp+SHIFT), this, SLOT(jumpFGindex()) );
-  a->connectItem(a->insertItem(Key_Up+SHIFT),     this, SLOT(jumpFGindex()) );
+  a->connectItem(a->insertItem(Key_PageUp),   this, SLOT(jumpFGindex()) );
+  a->connectItem(a->insertItem(Key_PageDown), this, SLOT(jumpPGindex()) );
 
-  a->connectItem(a->insertItem(Key_PageDown+SHIFT), this, SLOT(jumpPGindex()) );
-  a->connectItem(a->insertItem(Key_Down+SHIFT),     this, SLOT(jumpPGindex()) );
-
-  a->connectItem(a->insertItem(CTRL+Key_Plus), this, SLOT(fontIncrease()));
+  a->connectItem(a->insertItem(CTRL+Key_Plus),  this, SLOT(fontIncrease()));
   a->connectItem(a->insertItem(CTRL+Key_Minus), this, SLOT(fontDecrease()));
+
+  a->connectItem(a->insertItem(CTRL + Key_PageUp),   bNextDisc, SLOT(animateClick()));
+  a->connectItem(a->insertItem(CTRL + Key_PageDown), bPrevDisc, SLOT(animateClick()));
 
   new QLabel("   Contig ID", status, "contiglbl");
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
@@ -136,7 +136,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QToolButton * bFindPrev = new QToolButton(Qt::LeftArrow, searchbar, "rsearch");
   connect(bFindPrev, SIGNAL(clicked()), this, SLOT(findPrev()));
   bFindPrev->setTextLabel("Find Previous");
-  bFindPrev->setAccel(Key_Shift + CTRL + Key_F);
+  bFindPrev->setAccel(SHIFT + CTRL + Key_F);
   bFindPrev->setMinimumWidth(20);
 
   QToolButton * bFindNext = new QToolButton(Qt::RightArrow, searchbar, "fsearch");
