@@ -352,10 +352,12 @@ int main(int argc, char **argv)
   } else 
     cout << "Will not write features in bank" << endl;
 
-  if (globals.find("minobs") != globals.end())
-    MIN_OBS = strtol(globals["minobs"].c_str(), NULL, 10);
-  cout << "Minimum number of observations required to change library size: " 
-       << MIN_OBS << endl;
+  if (recompute){
+    if (globals.find("minobs") != globals.end())
+      MIN_OBS = strtol(globals["minobs"].c_str(), NULL, 10);
+    cout << "Minimum number of observations required to change library size: " 
+	 << MIN_OBS << endl;
+  }
 
   if (globals.find("numsd") != globals.end())
     NUM_SD = strtof(globals["numsd"].c_str(), NULL);
@@ -515,7 +517,11 @@ int main(int argc, char **argv)
   hash_map<ID_t, list<list<AnnotatedMatePair>::iterator>, hash<ID_t>, equal_to<ID_t> > ctg2mtp;
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > rd2name;
 
-  while (mate_bank >> mtp)
+  while (mate_bank >> mtp){
+    if (mtp.getType() != Matepair_t::END) // we only handle end reads
+      //      cerr << "Type is " << mtp.getType() << endl;
+      continue;
+
     if (rd2ctg[mtp.getReads().first] == rd2ctg[mtp.getReads().second]){
       // mate-pair between reads within the same contig
       list<AnnotatedMatePair>::iterator ti; 
@@ -545,7 +551,7 @@ int main(int argc, char **argv)
 	     <<	 rd2ctg[mtp.getReads().second] 
 	     << endl;
     }
-	
+  }
   
   // now we get the library information for each library
   hash_map<ID_t, pair<Pos_t, SD_t>, hash<ID_t>, equal_to<ID_t> > lib2size;
@@ -874,8 +880,8 @@ int main(int argc, char **argv)
       if ((*mi)->status == MP_OUTIE){
 	Pos_t left, right;
 
-	if ((*mi)->getType() == Matepair_t::TRANSPOSON)
-	  continue;  // transposons are not errors
+	//	if ((*mi)->getType() == Matepair_t::TRANSPOSON)
+	//	  continue;  // transposons are not errors
 	left = rd2posn[((*mi)->getReads()).first].getBegin(); 
 	right = rd2posn[((*mi)->getReads()).first].getEnd(); 
 	if (left < right)
