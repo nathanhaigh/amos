@@ -19,10 +19,13 @@
 static bool  AMOS_Output = false;
   // Determines whether output is AMOS messages or simple
   // text lines
-static string  Bank_Name;
-  // Name of read bank from which reads are obtained
+static string  Input_Name;
+  // Name of file or read bank from which reads are obtained
 static double  Error_Rate = DEFAULT_ERROR_RATE;
   // Fraction of errors allowed in overlap alignment
+static bool  FASTA_Input = false;
+  // If set true by the -F option, then input is a multi-fasta
+  // file instead of a read-bank
 static int  Lo_IID = 1, Hi_IID = INT_MAX;
   // Range of read (internal) IDs in bank for which to compute
   // overlaps
@@ -60,20 +63,33 @@ int  main
 
       Parse_Command_Line (argc, argv);
 
-      cerr << "Read bank is " << Bank_Name << endl;
+      if  (FASTA_Input)
+          cerr << "FASTA input file is " << Input_Name << endl;
+        else
+          cerr << "Read bank is " << Input_Name << endl;
       status = cerr . setf (ios :: fixed);
       cerr << "Alignment error rate is " << setprecision (2)
            << Error_Rate << endl;
       cerr . setf (status);
       cerr << "Minimum overlap bases is " << Min_Overlap_Len << endl;
 
-      read_bank . open (Bank_Name);
+      if  (FASTA_Input)
+          {
+           Read_Fasta_Strings (string_list, tag_list, Input_Name);
+           Lo_IID = 1;
+           Hi_IID = string_list . size ();
+           Check_IIDs ();
+          }
+        else
+          {
+           read_bank . open (Input_Name);
 
-      Hi_IID = Min (Hi_IID, int (read_bank . getLastIID ()));
-      Check_IIDs ();
+           Hi_IID = Min (Hi_IID, int (read_bank . getLastIID ()));
+           Check_IIDs ();
 
-      Get_Strings_From_Bank (Lo_IID, Hi_IID, string_list, qual_list, clr_list,
-           tag_list, read_bank);
+           Get_Strings_From_Bank (Lo_IID, Hi_IID, string_list, qual_list, clr_list,
+                tag_list, read_bank);
+          }
 
       Map_Minimizers (string_list, hash_table);
 
@@ -281,7 +297,6 @@ static void  Find_Rev_Overlaps
   {
    Minimizer_t  mini (Minimizer_Window_Len);
    Offset_Entry_t  offset;
-   hash_map <unsigned int, Hash_Entry_t> :: iterator  iter;
    Simple_Overlap_t  olap;
    double  erate;
    int  i, j, n, p;
@@ -320,8 +335,13 @@ static void  Find_Rev_Overlaps
               sig = mini . Get_Signature ();
               if  (ht . find (sig) != ht . end ())
                   for  (j = 0;  j < ht [sig] . ct;  j ++)
-                    offset . Add_Offset (ht [sig] . ref [j] . string_num,
-                         ht [sig] . ref [j] . pos - pos);
+                    {
+                     int  b = ht [sig] . ref [j] . string_num;
+
+                     if  (i < b)
+                         offset . Add_Offset (b,
+                              ht [sig] . ref [j] . pos - pos);
+                    }
               pos = new_pos;
              }
         }
@@ -355,7 +375,6 @@ static void  Find_Rev_Overlaps
               save = olap . a_hang;
               olap . a_hang = - olap . b_hang;
               olap . b_hang = - save;
-
               olap . a_id = i + lo_iid;
               olap . b_id = b + lo_iid;
               olap . flipped = true;
@@ -482,6 +501,7 @@ static void  Map_Minimizers
    hash_map <unsigned int, Hash_Entry_t> :: iterator  iter;
    int  c, i, n;
 
+   // First count the number of occurrences of each minimizer
    n = string_list . size ();
    for  (i = 0;  i < n;  i ++)
      {
@@ -520,12 +540,14 @@ static void  Map_Minimizers
         }
      }
 
+   // Allocate memory based on the counts
    for  (iter = ht . begin ();  iter != ht . end ();  iter ++)
      {
       iter -> second . ref = new Reference_t [iter -> second . ct];
       iter -> second . ct = 0;
      }
 
+   // Go back and actually store the minimizers this time
    for  (i = 0;  i < n;  i ++)
      {
       char  * s;
@@ -639,7 +661,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "Ab:e:ho:sv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "Ab:e:Fho:sv:")) != EOF))
      switch  (ch)
        {
         case  'A' :
@@ -652,6 +674,10 @@ static void  Parse_Command_Line
 
         case  'e' :
           Hi_IID = strtol (optarg, NULL, 10);
+          break;
+
+        case  'F' :
+          FASTA_Input = true;
           break;
 
         case  'h' :
@@ -689,7 +715,43 @@ static void  Parse_Command_Line
         exit (EXIT_FAILURE);
        }
 
-   Bank_Name = argv [optind ++];
+   Input_Name = argv [optind ++];
+
+   return;
+  }
+
+
+
+static void  Read_Fasta_Strings
+    (vector <char *> & s, vector <char *> & tag_list,
+     const std :: string & fn)
+
+//  Open file named  fn  and read FASTA-format sequences from it
+//  into  s  and their tags into  tag_list .
+
+  {
+   FILE  * fp;
+   std :: string  seq, hdr;
+
+   fp = File_Open (fn . c_str (), "r", __FILE__, __LINE__);
+   s . clear ();
+   tag_list . clear ();
+
+   while  (Fasta_Read (fp, seq, hdr))
+     {
+      char  tag [MAX_LINE];
+      char  * tmp;
+      int  j, len;
+
+      tmp = strdup (seq . c_str ());
+      len = seq . length ();
+      for  (j = 0;  j < len;  j ++)
+        tmp [j] = tolower (tmp [j]);
+      s . push_back (tmp);
+
+      sscanf (hdr . c_str (), "%s", tag);
+      tag_list . push_back (strdup (tag));
+     }
 
    return;
   }
@@ -721,16 +783,17 @@ static void  Usage
 
   {
    fprintf (stderr,
-           "USAGE:  %s  <bank-name>\n"
+           "USAGE:  %s  <input-name>\n"
            "\n"
            "Compute pairwise overlaps among a set of sequences by\n"
            "brute-force all-pairs alignment.  Sequences are obtained\n"
-           "from <bank-name>\n"
+           "from <input-name>, which by default is an AMOS read bank.\n"
            "\n"
            "Options:\n"
            "  -A       Output AMOS-format messages\n"
            "  -b <n>   Use <n> as lowest read iid\n"
            "  -e <n>   Use <n> as highest read iid\n"
+           "  -F       Input is from multi-fasta file <bank-name>\n"
            "  -h       Print this usage message\n"
            "  -o <n>   Set minimum overlap length to <n>\n"
            "  -s       Get id tag from readbank comment string\n"

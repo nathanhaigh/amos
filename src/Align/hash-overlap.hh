@@ -123,7 +123,7 @@ static void  Find_Rev_Overlaps
      hash_map <unsigned int, Hash_Entry_t> & ht, int lo_iid);
 static void  Get_Strings_From_Bank
     (int lo_iid, int hi_iid, vector <char *> & s, vector <char *> & q,
-     vector <Range_t> & clr_list, vector <char * > & tag_list,
+     vector <Range_t> & clr_list, vector <char *> & tag_list,
      Bank_t & read_bank);
 static void  Map_Minimizers
     (const vector <char *> & string_list,
@@ -132,6 +132,9 @@ static void  Output
     (ostream & os, const Simple_Overlap_t & olap);
 static void  Parse_Command_Line
     (int argc, char * argv []);
+static void  Read_Fasta_Strings
+    (vector <char *> & s, vector <char *> & tag_list,
+     const std :: string & fn);
 static void  Shift_In
     (unsigned int & u, char ch, unsigned int mask = UINT_MAX);
 static void  Usage
