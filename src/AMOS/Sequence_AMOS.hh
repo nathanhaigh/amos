@@ -1,0 +1,447 @@
+////////////////////////////////////////////////////////////////////////////////
+//! \file
+//! \author Adam M Phillippy
+//! \date 06/18/2003
+//!
+//! \brief Header for Sequence_t
+//!
+////////////////////////////////////////////////////////////////////////////////
+
+#ifndef __Sequence_AMOS_HH
+#define __Sequence_AMOS_HH 1
+
+#include "alloc_COMMON.hh"
+#include "exceptions_AMOS.hh"
+#include "Bankable_AMOS.hh"
+#include <cstdlib>
+#include <cctype>
+#include <string>
+#include <utility>
+
+
+
+
+namespace AMOS {
+
+//================================================ Sequence_t ==================
+//! \brief Sequence bases with quality scores
+//!
+//! Stores both sequence and quality score data in a space efficient manner
+//! (when compressed). Can represent any type of sequence data, but must always
+//! be used with both sequence AND quality data. If just one of these two data
+//! types is required use a simple character array instead. Can be used in
+//! uncompressed mode where a base and its quality occupy 2 bytes, or a
+//! compressed mode where a base and its quality are packed into a single byte.
+//! In uncompressed mode, any characters are valid for bases and quality
+//! scores, however in compressed mode, acceptable sequence bases are A,C,G,T
+//! and N (case insensitive) and acceptable quality scores are between
+//! MIN_QUALITY and MAX_QUALITY.
+//!
+//==============================================================================
+class Sequence_t : public Bankable_t
+{
+
+private:
+
+  uint8_t * seq_m;      //!< compressed seq and qual data or uncompressed seq
+  uint8_t * qual_m;     //!< uncompressed qual data
+  Size_t length_m;      //!< length of the sequence and quality data
+
+
+protected:
+
+  static const uint8_t COMPRESS_BIT  = 0x1;   //!< compressed sequence flag
+  static const uint8_t ADENINE_BITS  = 0x0;   //!< 'A' bit
+  static const uint8_t CYTOSINE_BITS = 0x40;  //!< 'C' bit
+  static const uint8_t GUANINE_BITS  = 0x80;  //!< 'G' bit
+  static const uint8_t THYMINE_BITS  = 0xC0;  //!< 'T' bit
+  static const uint8_t SEQ_BITS      = 0xC0;  //!< sequence bit mask
+  static const uint8_t QUAL_BITS     = 0x3F;  //!< quality bit mask
+
+
+  //--------------------------------------------------- compress ---------------
+  //! \brief Compresses a sequence char and quality char into a single byte
+  //!
+  //! \note Must work with uncompress(uint8_t) method
+  //!
+  //! \param seqchar The sequence base character
+  //! \param qualchar The quality score character
+  //! \return The compressed byte
+  //!
+  static uint8_t compress (char seqchar, char qualchar)
+  {
+    //-- Force quality score into its bits
+    qualchar -= MIN_QUALITY;
+    if ( qualchar & SEQ_BITS )
+      return 0;
+
+    //-- Force seq into its bits
+    switch ( seqchar )
+      {
+      case 'A':
+	return (uint8_t)qualchar | ADENINE_BITS;
+      case 'C':
+	return (uint8_t)qualchar | CYTOSINE_BITS;
+      case 'G':
+	return (uint8_t)qualchar | GUANINE_BITS;
+      case 'T':
+	return (uint8_t)qualchar | THYMINE_BITS;
+      default:
+	return 0;
+      }
+  }
+
+
+  //--------------------------------------------------- uncompress -------------
+  //! \brief Uncompresses a byte into a sequence and quality char
+  //!
+  //! \note Must work with compress(char,char)
+  //!
+  //! \param byte The compressed sequence and quality byte
+  //! \return The sequence and quality char respectively
+  //!
+  static std::pair<char, char> uncompress (uint8_t byte)
+  {
+    std::pair<char, char> retval;
+
+    switch ( byte & SEQ_BITS )
+      {
+      case ADENINE_BITS:
+	retval . first = 'A';
+	break;
+      case CYTOSINE_BITS:
+	retval . first = 'C';
+	break;
+      case GUANINE_BITS:
+	retval . first = 'G';
+	break;
+      case THYMINE_BITS:
+	retval . first = 'T';
+	break;
+      }
+
+    byte &= QUAL_BITS;
+    if ( byte == 0 )
+      retval . first = 'N';
+
+    retval . second = byte + MIN_QUALITY;
+
+    return retval;
+  }
+
+
+  //--------------------------------------------------- readRecord -------------
+  //! \brief Read all the class members from a biserial record
+  //!
+  //! Reads the fixed and variable length streams from a biserial record and
+  //! initializes all the class members to the values stored within. Used in
+  //! translating a biserial Bankable object, and needed to retrieve objects
+  //! from a Bank. Returned size of the record will only be valid if the read
+  //! was successful, i.e. fix.good( ) and var.good( ).
+  //!
+  //! \note This method must be able to interpret the biserial record
+  //! produced by its related function writeRecord.
+  //!
+  //! \param fix The fixed length stream (stores all fixed length members)
+  //! \param var The variable length stream (stores all var length members)
+  //! \pre The get pointer of fix is at the beginning of the record
+  //! \pre The get pointer of var is at the beginning of the record
+  //! \return size of read record (size of fix + size of var)
+  //!
+  Size_t readRecord (std::istream & fix,
+		     std::istream & var);
+
+
+  //--------------------------------------------------- writeRecord ------------
+  //! \brief Write all the class members to a biserial record
+  //!
+  //! Writes the fixed an variable length streams to a biserial record. Used in
+  //! generating a biserial Bankable object, and needed to commit objects to a
+  //! Bank. Will only write to the ready streams, but the size of the record
+  //! will always be returned.
+  //!
+  //! \note This method must be able to produce a biserial record that can
+  //! be read by its related funtion readRecord.
+  //!
+  //! \param fix The fixed length stream (stores all fixed length members)
+  //! \param var The variable length stream (stores all var length members)
+  //! \return size of written record (size of fix + size of var)
+  //!
+  Size_t writeRecord (std::ostream & fix,
+		      std::ostream & var) const;
+
+
+public:
+
+  static const BankType_t BANKTYPE = Bankable_t::SEQUENCE;
+  //!< Bank type, MUST BE UNIQUE for all derived Bankable classes!
+
+
+  //--------------------------------------------------- Sequence_t -------------
+  //! \brief Constructs an empty Sequence_t object
+  //!
+  //! Sets all members to 0 or NULL
+  //!
+  Sequence_t ( )
+  {
+    seq_m = NULL;
+    qual_m = NULL;
+
+    length_m = 0;
+  }
+
+
+  //--------------------------------------------------- Sequence_t -------------
+  //! \brief Copy constructor
+  //!
+  Sequence_t (const Sequence_t & source)
+  {
+    seq_m = NULL;
+    qual_m = NULL;
+
+    *this = source;
+  }
+
+
+  //--------------------------------------------------- ~Sequence_t ------------
+  //! \brief Destroys a Sequence_t object
+  //!
+  //! Frees the memory used for storing the sequence and quality data.
+  //!
+  ~Sequence_t ( )
+  {
+    free (seq_m);
+    free (qual_m);
+  }
+
+
+  //--------------------------------------------------- getBankType ------------
+  //! \brief Get the unique bank type identifier
+  //!
+  //! \return The unique bank type identifier
+  //!
+  BankType_t getBankType ( ) const
+  {
+    return BANKTYPE;
+  }
+
+
+  //--------------------------------------------------- compress ---------------
+  //! \brief Compress the internal representation of this sequence
+  //!
+  //! After compression, this object will continue to compress incoming data
+  //! until the uncompress method is called. Compression packs both a base
+  //! and a quality score into a single bit, effectively halving the memory
+  //! requirements for each object.
+  //!
+  //! The sequence should only contain A,C,G,T and Ns and quality scores in the
+  //! range [MIN_QUALITY,MAX_QUALITY], if either of these conditions are not
+  //! met the information will be lost when the data is compressed (see
+  //! postconditions below).
+  //!
+  //! \post All invalid quality scores will be cast to MIN_QUALITY
+  //! \post All N's will be assigned a MIN_QUALITY quality score
+  //! \post All MIN_QUALITY scores will be assigned a N seqchar
+  //! \return void
+  //!
+  void compress ( );
+
+
+  //--------------------------------------------------- getBase ----------------
+  //! \brief Get a single base and its quality score
+  //!
+  //! Retrieves and uncompresses the sequence base for the requested index.
+  //!
+  //! \param index The index of the requested base
+  //! \pre index >= 0 && index < length
+  //! \throws ArgumentException_t
+  //! \return The requested (uppercase) base character and its quality score
+  //!
+  std::pair<char, char> getBase (Pos_t index) const
+  {
+    if ( index < 0 || index >= length_m )
+      throw ArgumentException_t ("Requested index is out of range");
+
+    if ( isCompressed( ) )
+      return uncompress (seq_m [index]);
+    else
+      return std::pair<char, char> (seq_m [index], qual_m [index]);
+  }
+
+
+  //--------------------------------------------------- getLength --------------
+  //! \brief Get the length of the sequence
+  //!
+  //! \return The length of the sequence
+  //!
+  Size_t getLength ( ) const
+  {
+    return length_m;
+  }
+
+
+  //--------------------------------------------------- getQualString ----------
+  //! \brief Get the quality score string
+  //!
+  //! \return The full string of quality scores
+  //!
+  std::string getQualString ( ) const
+  {
+    return getQualString (Range_t (0, length_m));
+  }
+
+
+  //--------------------------------------------------- getQualString ----------
+  //! \brief Get a quality score substring
+  //!
+  //! Returns a subrange of quality scores [begin, end)
+  //!
+  //! \param range The range of quality scores to get
+  //! \pre range begin <= end
+  //! \pre range begin >= 0 && end <= length
+  //! \throws ArgumentException_t
+  //! \return A subrange quality scores
+  //!
+  std::string getQualString (Range_t range) const;
+
+
+  //--------------------------------------------------- getSeqString -----------
+  //! \brief Get the sequence base string
+  //!
+  //! \return The full string of sequence bases
+  //!
+  std::string getSeqString ( ) const
+  {
+    return getSeqString (Range_t (0, length_m));
+  }
+
+
+  //--------------------------------------------------- getSeqString -----------
+  //! \brief Get a sequence base substring
+  //!
+  //! Returns a subrange of sequence bases [begin, end)
+  //!
+  //! \param range The range of sequence bases to get
+  //! \pre range begin <= end
+  //! \pre range begin >= 0 && end <= length
+  //! \throws ArgumentException_t
+  //! \return A subrange of sequence bases
+  //!
+  std::string getSeqString (Range_t range) const;
+
+
+  //--------------------------------------------------- isCompressed -----------
+  //! \brief Checks if the sequence data is compressed
+  //!
+  //! Returns true if the Sequence is currently operating in compressed mode,
+  //! or false if under normal operation.
+  //!
+  //! \return True if compressed, false if not
+  //!
+  bool isCompressed ( ) const
+  {
+    //-- compression flag is in bit 0x1
+    return flags_m . extra & 0x1;
+  }
+
+
+  //--------------------------------------------------- setBase ----------------
+  //! \brief Set a sequence base and its quality score
+  //!
+  //! Any characters may be used for seq and qualchar unless dealing with a
+  //! compressed sequence. If compressed, the sequence should only contain
+  //! A,C,G,T and Ns and quality scores in the range [MIN_QUALITY,MAX_QUALITY],
+  //! if either of these conditions are not met the information will be lost
+  //! when the data is compressed (see postconditions below).
+  //!
+  //! \param seqchar The sequence base character
+  //! \param qualchar The quality score character
+  //! \param index The index to assign these values
+  //! \pre index >= 0 && index < length
+  //! \post If compressed:
+  //! - All invalid quality scores will be cast to MIN_QUALITY
+  //! - All N's will be assigned a MIN_QUALITY quality score
+  //! - All MIN_QUALITY scores will be assigned a N seqchar
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void setBase (char seqchar,
+		char qualchar,
+		Pos_t index)
+  {
+    if ( index < 0 || index >= length_m )
+      throw ArgumentException_t ("Requested index is out of range");
+
+    seqchar = std::toupper (seqchar);
+
+    if ( isCompressed( ) )
+      seq_m [index] = compress (seqchar, qualchar);
+    else
+      {
+	seq_m  [index] = seqchar;
+	qual_m [index] = qualchar;
+      }
+  }
+
+
+  //--------------------------------------------------- setSequence ------------
+  //! \brief Set the entire sequence
+  //!
+  //! Combines and compresses the sequence and quality data contained in the
+  //! two C strings. If current Sequence object is compressed, please refer
+  //! to the postconditions for the setBase(char,char,Pos_t) operation.
+  //!
+  //! \param seq The sequence base string
+  //! \param qual The quality score string
+  //! \pre strlen(seq) == strlen(qual)
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void setSequence (const char * seq,
+		    const char * qual);
+
+
+  //--------------------------------------------------- setSequence ------------
+  //! \brief Set the entire sequence
+  //!
+  //! Combines and compresses the sequence and quality data contained in the
+  //! two STL strings. If current Sequence object is compressed, please refer
+  //! to the postconditions for the setBase(char,char,Pos_t) operation.
+  //!
+  //! \param seq The sequence base string
+  //! \param qual The quality score string
+  //! \pre seq . size( ) == qual . size( )
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void setSequence (const std::string & seq,
+		    const std::string & qual);
+
+
+  //--------------------------------------------------- uncompress -------------
+  //! \brief Uncompress the internal representation of this sequence
+  //!
+  //! After uncompression, this object will not compress incoming data until
+  //! the compress method is called once again. The uncompressed version uses
+  //! two bytes to store a base and quality score, thus doubling the memory
+  //! requirements over a compressed version.
+  //!
+  //! \return void
+  //!
+  void uncompress ( );
+
+
+  //--------------------------------------------------- operator= --------------
+  //! \brief Assignment (copy) operator
+  //!
+  //! Efficiently copies the compressed data from the another Sequence_t.
+  //!
+  //! \param source The sequence to copy
+  //! \return The resulting Sequence_t object
+  //!
+  Sequence_t & operator= (const Sequence_t & source);
+};
+
+} // namespace AMOS
+
+#endif // #ifndef __Sequence_AMOS_HH
