@@ -28,6 +28,9 @@ void  Fasta_Print
 void  Fasta_Print_N
     (FILE * fp, const char * s, int n, const char * hdr = NULL,
      int fasta_width = DEFAULT_FASTA_WIDTH);
+void  Fasta_Print_Skip
+    (FILE * fp, const char * s, const char * skip, const char * hdr = NULL,
+     int fasta_width = DEFAULT_FASTA_WIDTH);
 bool  Fasta_Qual_Read
     (FILE * fp, string & q, string & hdr);
 bool  Fasta_Read

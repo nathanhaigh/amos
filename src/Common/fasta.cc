@@ -93,6 +93,44 @@ void  Fasta_Print_N
 
 
 
+void  Fasta_Print_Skip
+    (FILE * fp, const char * s, const char * skip, const char * hdr = NULL,
+     int fasta_width = DEFAULT_FASTA_WIDTH)
+
+//  Print string  s  in fasta format to  fp  but omit any characters
+//  that occur in string  skip .  Put string  hdr
+//  on header line, unless it's  NULL  in which case do not print
+//  a header line at all.  Print at most  fasta_width  characters per
+//  line.
+
+  {
+   int  ct = 0;
+
+   if  (hdr != NULL)
+       fprintf (fp, ">%s\n", hdr);
+
+   while  (* s != '\0')
+     {
+      if  (strchr (skip, * s) == NULL)
+          {
+           if  (ct == fasta_width)
+               {
+                fputc ('\n', fp);
+                ct = 0;
+               }
+           fputc (* s, fp);
+           ct ++;
+          }
+      s ++;
+     }
+
+   fputc ('\n', fp);
+
+   return;
+  }
+
+
+
 bool  Fasta_Qual_Read
     (FILE * fp, string & q, string & hdr)
 
