@@ -110,12 +110,18 @@ bool Message_t::read (istream & in)
 	  {
 	    getline (in, data, FIELD_TERMINATOR);
 
-	    while ( in.peek( ) != NL_CHAR  ||  *(data.rbegin( )) != NL_CHAR )
-	      {
-		data . push_back (FIELD_TERMINATOR);
-		getline (in, chunk, FIELD_TERMINATOR);
-		data . append (chunk);
-	      }
+            //-- Slurp up '.'s while not the '\n.\n' pattern
+            while ( in . peek( ) != NL_CHAR ||
+                    (!data . empty( ) && *(data . rbegin( )) != NL_CHAR) )
+              {
+                if ( !in . good( ) )
+                  AMOS_THROW_IO ("Unterminated multi-line field in '" +
+                                 Decode (mcode_m) + "' message");
+                
+                data . push_back (FIELD_TERMINATOR);
+                getline (in, chunk, FIELD_TERMINATOR);
+                data . append (chunk);
+              }
 	    in . get( );
 
 	    if ( !in . good( ) )
