@@ -106,7 +106,7 @@ int  main
           }
        }
 
-   Multi_Align (s, offset, 5, 0.04, gma);
+   Multi_Align ("Test", s, offset, 5, 0.04, gma);
 
    gma . Print (stderr, s, 60);
 
