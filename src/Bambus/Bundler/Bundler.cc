@@ -145,6 +145,11 @@ int main(int argc, char *argv[])
     // now, for each innie, outie and such we find a consistent subset of links
     // using as min and max mean -/+ 3*stdev
 
+    // we'll use Dan Sommer's algorithm for keeping track of the maximum clique
+    // Specifically, for each maximal clique we track the number of links in 
+    // the clique, the coordinate (beginning or end) of the clique, and we 
+    // track the links belonging to the maximum clique as they get removed from
+    // it.
     LinkAdjacency_t bestAdj;
     int bestAdjCount = 0;
     for (map<LinkAdjacency_t, int>::iterator at = adjacencies.begin();
@@ -152,37 +157,56 @@ int main(int argc, char *argv[])
       if (at->second > 1){ // there are links we have to deal with
 	cerr << "Doing " << at->second 
 	     << " links of type " << at->first << endl;
-	map<Size_t, LinkMap_t::iterator> begins, ends, best;
+	map<Size_t, LinkMap_t::iterator> begins, ends;
+	list<LinkMap_t::iterator> best;
+	list<LinkMap_t::iterator>::iterator bestEnd = best.end();
+	Size_t bestCoord;
 	int ncurrent = 0, nbest = 0;
 	for (list<LinkMap_t::iterator>::iterator 
 	       lnks = adjList[at->first].begin();
 	     lnks != adjList[at->first].end(); lnks++){
 	  begins.insert(pair<Size_t, LinkMap_t::iterator> 
 			(((**lnks).second.getSize() - 3 * (**lnks).second.getSD()), *lnks));
+	  ends.insert(pair<Size_t, LinkMap_t::iterator>
+		      (((**lnks).second.getSize() + 3 * (**lnks).second.getSD()), *lnks));
 	} // for each link
 	// because of the way maps work, the elements come sorted by the key
-	map<Size_t, LinkMap_t::iterator>::iterator bgi = begins.begin();
 	
-	while (bgi != begins.end() || ! ends.empty()){
-	  if ((ends.empty() && bgi != begins.end())|| 
-	      (bgi != begins.end() && bgi->first <= ends.begin()->first)){
+	map<Size_t, LinkMap_t::iterator>::iterator bgi = begins.begin();
+	map<Size_t, LinkMap_t::iterator>::iterator eni = ends.begin();
+	
+	while (bgi != begins.end() || eni != ends.end()){
+	  if (bgi != begins.end() && bgi->first <= eni->first){
+	    Size_t bgiLend = bgi->second->second.getSize() 
+	      - 3 * bgi->second->second.getSD(),
+	      bgiRend = bgi->second->second.getSize() 
+	      + 3 * bgi->second->second.getSD();
 	    // we add to the clique
 	    ncurrent++;
-	    ends.insert(pair<Size_t, LinkMap_t::iterator>
-			(bgi->second->second.getSize() 
-			 + 3 * bgi->second->second.getSD(), 
-			 bgi->second));
-	    bgi++;
-	  } else if ((bgi == begins.end() && ! ends.empty()) || 
-		     (! ends.empty() && bgi->first > ends.begin()->first)){
-	    // we remove from the clique
-	    if (ncurrent > nbest){ // make this clique the best
+	    if (ncurrent > nbest){
 	      nbest = ncurrent;
-	      best = ends;
+	      bestEnd = best.begin(); // reset best list
+	      bestCoord = bgiLend; // where the maximum occured
 	    }
+	    bgi++;
+	  } else if (eni != ends.end() && 
+		     (bgi == begins.end() || 
+		      bgi->first > eni->first)){
+	    Size_t eniLend = eni->second->second.getSize() 
+	      - 3 * eni->second->second.getSD(),
+	      eniRend = eni->second->second.getSize() 
+	      + 3 * eni->second->second.getSD();
+
+	    if (eniLend <= bestCoord && eniRend >= bestCoord){ 
+	      // current link was in best clique
+	      best.push_front(eni->second);
+	    }
+
+	    // we remove from the clique
 	    ncurrent--;
-	    map<Size_t, LinkMap_t::iterator>::iterator rm = ends.begin();
-	    ends.erase(rm);
+	    eni++;
+	    //	  map<Size_t, LinkMap_t::iterator>::iterator rm = ends.begin();
+	    //	  ends.erase(rm);
 	  } 
 	} // while bgi != begins.end()
 	// best is a map containing all the links in the current clique
@@ -190,15 +214,16 @@ int main(int argc, char *argv[])
 	// keep just the good
 	//	adjList[at->first].clear();
 	Size_t minRange, maxRange;
-	Size_t sz = best.begin()->second->second.getSize();
-	Size_t sd = best.begin()->second->second.getSD();
+	list<LinkMap_t::iterator>::iterator bg = best.begin();
+	Size_t sz = (**bg).second.getSize();
+	Size_t sd = (**bg).second.getSD();
 	minRange = sz - 3 * sd;
 	maxRange = sz + 3 * sd;
-	for (map<Size_t, LinkMap_t::iterator>::iterator bi = best.begin();
-	     bi != best.end(); bi++){
-	  bestList[at->first].push_back(bi->second);
-	  sz = bi->second->second.getSize();
-	  sd = bi->second->second.getSD();
+	for (list<LinkMap_t::iterator>::iterator bi = best.begin();
+	     bi != bestEnd; bi++){
+	  bestList[at->first].push_back(*bi);
+	  sz = (**bi).second.getSize();
+	  sd = (**bi).second.getSD();
 	  if (sz - 3 * sd > minRange)
 	    minRange = sz - 3 * sd;
 	  if (sz + 3 * sd < maxRange)
