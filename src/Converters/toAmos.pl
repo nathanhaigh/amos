@@ -86,6 +86,7 @@ my %forw;       # insert to forw (rev resp) end mapping
 my %rev; 
 my %libraries;  # libid to lib range (mean, stdev) mapping
 my %insertlib;  # lib id to insert list
+my %inserttype; # the type of insert, if undefined assume 'E'
 my %seenlib;    # insert id to lib id map
 my %seqinsert;  # sequence id to insert id map
 my %libnames;   # lib id to lib name
@@ -205,7 +206,7 @@ my %insid;
 my $ll = $minSeqId++;
 $libraries{$ll} = "0 0"; # dummy library for unmated guys
 $libnames{$ll} = "unmated";
-$libid{$ll} = $ll;
+#$libid{$ll} = $ll;
 
 while (my ($sid, $sname) = each %seqnames){
     if (! exists $seqinsert{$sid}){
@@ -213,7 +214,7 @@ while (my ($sid, $sname) = each %seqnames){
 	$seqinsert{$sid} = $id;
 	$insid{$id} = $id;
 	$seenlib{$id} = $ll;
-	$insertlib{$ll} .= "$id ";
+#	$insertlib{$ll} .= "$id ";
 	$forw{$id} = $sid;
     }
 }
@@ -237,8 +238,8 @@ while (my ($lib, $range) = each %libraries){
     my ($mean, $sd) = split(' ', $range);
     print OUT "{LIB\n";
 
-    $libid{$lib} = $minSeqId;
-    print OUT "iid:", $minSeqId++, "\n";
+    $libid{$lib} = $minSeqId++;
+    print OUT "iid:$libid{$lib}\n";
 
     if (exists $libnames{$lib}){
 	print OUT "eid:$libnames{$lib}\n";
@@ -323,7 +324,11 @@ while (my ($ins, $rd) = each %forw){
 	print OUT "iid:$linkId\n";
 	print OUT "rd1:$forw{$ins}\n";
 	print OUT "rd2:$rev{$ins}\n";
-	print OUT "typ:E\n";
+	if (exists $inserttype{$ins} && $inserttype{$ins} eq "T"){
+	    print OUT "typ:T\n";
+	} else {
+	    print OUT "typ:E\n";
+	}
 	print OUT "}\n";
     }
 }
@@ -509,17 +514,21 @@ sub parseFrgFile {
 	if ($type eq "DST"){
 	    my $id = getCAId($$fields{acc});
 	    $libraries{$id} = "$$fields{mea} $$fields{std}";
+#	    $libid{$id} = $minSeqId++;
 	    next;
 	}
 	
 	if ($type eq "LKG"){
 	    my $id = $minSeqId++;
-	    $insertlib{$$fields{dst}} .= "$id ";
+#	    $insertlib{$$fields{dst}} .= "$id ";
 	    $seenlib{$id} = $$fields{dst};
 	    $seqinsert{$seqids{$$fields{fg1}}} = $id;
 	    $seqinsert{$seqids{$$fields{fg2}}} = $id;
 	    $forw{$id} = $seqids{$$fields{fg1}};
 	    $rev{$id} = $seqids{$$fields{fg2}};
+	    if ($$fields{ori} eq "O"){
+		$inserttype{$id} = "T";
+	    }
 	    next;
 	}
     }
@@ -676,7 +685,7 @@ sub parseMatesFile {
 	}
 	
 	if (defined $recs[2]){
-	    $insertlib{$recs[2]} .= "$insname ";
+#	    $insertlib{$recs[2]} .= "$insname ";
 	    $seenlib{$insname} = $recs[2];
 	} else {
 	    $base->logError("$insname has no library\n");
@@ -726,7 +735,7 @@ sub parseMatesFile {
 		$base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
 		if ($nm =~ /$libregexp[$l]/){
 		    $base->logLocal("found $libids[$l]\n", 2);
-		    $insertlib{$libids[$l]} .= "$ins ";
+#		    $insertlib{$libids[$l]} .= "$ins ";
 		    $seenlib{$ins} = $libids[$l];
 		    $found = 1;
 		    last;
@@ -748,7 +757,7 @@ sub parseMatesFile {
 		$base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
 		if ($nm =~ /$libregexp[$l]/){
 		    $base->logLocal("found $libids[$l]\n", 2);
-		    $insertlib{$libids[$l]} .= "$ins ";
+#		    $insertlib{$libids[$l]} .= "$ins ";
 		    $seenlib{$ins} = $libids[$l];
 		    $found = 1;
 		    last;
@@ -1265,7 +1274,7 @@ sub EndTag
         }
 	    
 	$seqinsert{$seqId} = $template;
-	$insertlib{$library} .= "$template ";
+#	$insertlib{$library} .= "$template ";
 	$seenlib{$template} = $library;
 	
     
