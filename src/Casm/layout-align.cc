@@ -1028,6 +1028,8 @@ void ChainAligns (Mapping_t & mapping)
 	    }
 	}
     }
+
+  free (las);
 }
 
 
