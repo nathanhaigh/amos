@@ -27,7 +27,7 @@ install-bin-scripts-hook: $(dist_bin_SCRIPTS) $(bin_SCRIPTS)
           f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
           b=`echo "$$p" | sed 's|^.*/||;s|.[^.]*$$||;$(transform)'`; \
           if test -f "$(DESTDIR)$(bindir)/$$f"  &&  test "$$f" != "$$b"; then \
-            cp -p "$(DESTDIR)$(bindir)/$$f" "$(DESTDIR)$(bindir)/$$b" \
+            $(INSTALL_SCRIPT) "$(DESTDIR)$(bindir)/$$f" "$(DESTDIR)$(bindir)/$$b" \
             || exit 1; \
             case "$$p" in \
               *.pl) \

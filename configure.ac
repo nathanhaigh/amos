@@ -190,5 +190,10 @@ if test "${NUCMER}" = ":"  ||  ! test -x "${NUCMER}"; then
    echo "   install nucmer if planning on using AMOScmp"
 fi
 
+if test "${PERL}" = ":"  ||  ! test -x "${PERL}"; then
+   echo "WARNING! perl was not found, but is required to run AMOS scripts"
+   echo "   install perl if planning on using AMOS scripts"
+fi
+
 
 ##-- END OF CONFIGURE --##
