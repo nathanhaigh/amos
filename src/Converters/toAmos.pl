@@ -1114,7 +1114,12 @@ sub parseContigFile {
     while (<$IN>){
 	if (/^\#\#(\S+) \d+ (\d+)/ ){
 	    if ($first != 1){
+		print TMPCTG "#$sid\n";
+		print TMPCTG join(" ", @sdels), "\n";
 		print TMPCTG "#\n";
+		$arend = $alend + $slen;
+		$asm_range{$sid} = "$alend $arend";
+#		print TMPCTG "#\n";
 	    }
 	    $first = 0;
 	    $consensus = "";
