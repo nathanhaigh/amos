@@ -177,6 +177,31 @@ public:
 
 };
 
+
+
+
+//----------------------------------------------------- operator<< -------------
+//! \brief Dump Exception_t info to an ostream
+//!
+ostream & operator<< (ostream & o, Exception_t & e)
+{
+  o << "WHAT: " << e . what( ) << endl;
+  o << "LINE: " << e . line( ) << endl;
+  o << "FILE: " << e . file( ) << endl;
+  return o;
+}
+
+
+//----------------------------------------------------- operator<< -------------
+//! \brief Dump exception info to an ostream
+//!
+ostream & operator<< (ostream & o, exception & e)
+{
+  o << "WHAT: " << e . what( ) << endl;
+  return o;
+}
+
+
 } // namespace AMOS
 
 
@@ -185,5 +210,6 @@ public:
 #define AMOS_THROW_ALLOC(A) throw AllocException_t(A,__LINE__,__FILE__)
 #define AMOS_THROW_ARGUMENT(A) throw ArgumentException_t(A,__LINE__,__FILE__)
 #define AMOS_THROW_IO(A) throw IOException_t(A,__LINE__,__FILE__)
+
 
 #endif // #ifndef __exceptions_AMOS_HH

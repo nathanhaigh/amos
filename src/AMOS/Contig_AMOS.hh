@@ -203,7 +203,7 @@ public:
   //--------------------------------------------------- getUngappedSeqString ---
   //! \brief Get the ungapped sequence base string
   //!
-  //! Returns the sequence string with all the gaps ('-' chars) removed.
+  //! Returns the sequence string with all the gaps (non-alphas) removed.
   //!
   //! \return The full string of ungapped sequence bases
   //!
@@ -217,7 +217,7 @@ public:
   //! \brief Get an ungapped sequence base substring
   //!
   //! Returns a subrange of ungapped sequence bases [left, right) with all the
-  //! gaps ('-' chars) removed. The range bounds are relative to the gapped
+  //! gaps (non-alphas) removed. The range bounds are relative to the gapped
   //! consensus sequence.
   //!
   //! \param range The range of sequence bases to get

@@ -296,7 +296,7 @@ void WrapString (ostream & out, const string & s, int per);
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump read object to ostream
 //!
-ostream & operator<< (ostream & out, Read_t & read);
+ostream & operator<< (ostream & o, Read_t & read);
 
 } // namespace AMOS
 

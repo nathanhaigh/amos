@@ -68,7 +68,7 @@ Size_t Read_t::writeRecord (std::ostream & fix,
 
 //----------------------------------------------------- operator<< -------------
 //----------------------------------------------------- WrapStirng -------------
-void AMOS::WrapString (ostream & out, const string & s, int per)
+void AMOS::WrapString (ostream & o, const string & s, int per)
 {
   int  i, n;
   
@@ -81,26 +81,26 @@ void AMOS::WrapString (ostream & out, const string & s, int per)
       if  (n < last)
 	last = n;
       for  (j = i;  j < last;  j ++)
-        out << s [j];
-      out << endl;
+        o << s [j];
+      o << endl;
     }
 }
 
 
-ostream & AMOS::operator<< (ostream & out, Read_t & read)
+ostream & AMOS::operator<< (ostream & o, Read_t & read)
 {
   std::string s;
 
-  out << "#iid:" << read.getIID( ) << endl;
-  out << "#eid:" << read.getEID( ) << endl;
-  out << "#comment:" << endl;
-  out << read.getComment( ) << endl;
-  out << "#clear:" << read.getClearRange( ).begin << ","
+  o << "#iid:" << read.getIID( ) << endl;
+  o << "#eid:" << read.getEID( ) << endl;
+  o << "#comment:" << endl;
+  o << read.getComment( ) << endl;
+  o << "#clear:" << read.getClearRange( ).begin << ","
       << read.getClearRange( ).end << endl;
-  out << "#sequence:" << endl;
-  WrapString (out, read.getSeqString( ), 60);
-  out << "#quality:" << endl;
-  WrapString (out, read.getQualString( ), 60);
+  o << "#sequence:" << endl;
+  WrapString (o, read.getSeqString( ), 60);
+  o << "#quality:" << endl;
+  WrapString (o, read.getQualString( ), 60);
   
-  return out;
+  return o;
 }
