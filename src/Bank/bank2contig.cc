@@ -44,8 +44,6 @@ int main (int argc, char ** argv)
     Contig_t contig;
     Read_t read; 
     
-    int count = 1;
-
     while (contig_bank >> contig)
     {
       const std::vector<Tile_t> & tiling = contig.getReadTiling();
@@ -55,8 +53,8 @@ int main (int argc, char ** argv)
       if (USE_EID) 
       { 
         string s(contig.getEID());
-        if (s.empty()) { s = contig.getIID(); }
-        cout << s;
+        if (s.empty()) { cout << contig.getIID(); }
+        else           { cout << s; }
       }
       else { cout << contig.getIID(); }
 
@@ -86,10 +84,7 @@ int main (int argc, char ** argv)
         { 
           string s(read.getEID());
           int i = s.find(' ');
-          if (i != s.npos)
-          {
-            s = s.substr(0,i);
-          }
+          if (i != s.npos) { s = s.substr(0,i); }
           cout << s;
         }
         else { cout << read.getIID(); }
