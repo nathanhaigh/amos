@@ -7,7 +7,7 @@
 \red0\green0\blue255;\red0\green255\blue255;\red0\green255\blue0;\red255\green0\blue255;\red255\green0\blue0;\red255\green255\blue0;\red255\green255\blue255;\red0\green0\blue128;\red0\green128\blue128;\red0\green128\blue0;\red128\green0\blue128;
 \red128\green0\blue0;\red128\green128\blue0;\red128\green128\blue128;\red192\green192\blue192;}{\stylesheet{\ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \f2\fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 \snext0 Normal;}{
 \s1\ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \f2\fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 \sbasedon0 \snext0 heading 1;}{\s2\ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \f2\fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 
-\sbasedon0 \snext0 heading 2;}{\*\cs10 \additive Default Paragraph Font;}}{\info{\author Adam M Phillippy}{\operator Adam M Phillippy}{\creatim\yr2004\mo7\dy6\hr12\min40}{\revtim\yr2004\mo11\dy22\hr13\min50}{\version12}{\edmins84}{\nofpages5}
+\sbasedon0 \snext0 heading 2;}{\*\cs10 \additive Default Paragraph Font;}}{\info{\author Adam M Phillippy}{\operator Adam M Phillippy}{\creatim\yr2004\mo7\dy6\hr12\min40}{\revtim\yr2004\mo11\dy22\hr14\min37}{\version13}{\edmins86}{\nofpages5}
 {\nofwords952}{\nofchars5428}{\*\company TIGR}{\nofcharsws0}{\vern8269}}\widowctrl\ftnbj\aenddoc\noxlattoyen\expshrtn\noultrlspc\dntblnsbdb\nospaceforul\hyphcaps0\horzdoc\dghspace120\dgvspace120\dghorigin1701\dgvorigin1984\dghshow0\dgvshow3
 \jcompress\viewkind1\viewscale100\nolnhtadjtbl \fet0\sectd \linex0\sectdefaultcl {\*\pnseclvl1\pnucrm\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl2\pnucltr\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl3\pndec\pnstart1\pnindent720\pnhang
 {\pntxta .}}{\*\pnseclvl4\pnlcltr\pnstart1\pnindent720\pnhang{\pntxta )}}{\*\pnseclvl5\pndec\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl6\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl7
@@ -49,7 +49,7 @@ efine the subset 4,3,2.
 \par }{\i\fs20 eid}{\fs20  - External ID. This string ID must be unique among all objects of the same type. The ID may not contain any newlines, but may be any length.
 \par }{\i\fs20 iid}{\fs20  \endash  Internal (AMOS) ID. This integer ID must be unique among all objects of the same type. This is the ID used for all object links and thus is mandatory if other objects are to link to this one.
 \par }{\i\fs20 com}{\fs20  - Free-from comment field.
-\par }{\i\fs20 flg}{\fs20  \endash  Two generic boolean flags, default to zero if unspecified.
+\par }{\i\fs20 flg}{\fs20  \endash  Two generic boolean flags (A/B), default to zero if unspecified.
 \par 
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \f2\fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\b\i\fs20 ContigLink_t : Universal_t
@@ -142,7 +142,7 @@ efine the subset 4,3,2.
 \par ahg:(-?\\d+)
 \par bhg:(-?\\d+)
 \par scr:(\\d+)
-\par flg:([01]\{4\})
+\par flg:([01]\{3\})
 \par \}
 \par 
 \par }{\i\fs20 rd1}{\fs20  - First read in the pair, referenced by its IID.
@@ -151,7 +151,7 @@ efine the subset 4,3,2.
 \par }{\i\fs20 ahg}{\fs20  - Ahang. Length of the non-overlapping portion of the first read.
 \par }{\i\fs20 bhg}{\fs20  - Bhang. Length of the non-overlapping portion of the second read.
 \par }{\i\fs20 scr}{\fs20  \endash  An unsigned integer overlap score.
-\par }{\i\fs20 flg}{\fs20  \endash  First two flags inheritited from Universal_t plus an additional two boolean flags, default to \lquote 0\rquote  if unspecified.
+\par }{\i\fs20 flg}{\fs20  \endash  Universal_t flags plus one additional flag (A/B/C), default to zero if unspecified.
 \par 
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \f2\fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\b\i\fs20 Scaffold_t : Universal_t
