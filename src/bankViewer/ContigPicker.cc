@@ -15,21 +15,12 @@ class ContigListItem : public QListViewItem
 public:
   ContigListItem(QListView * parent, 
                  QString id,
-                 QString type,
-                 QString offset,
+                 QString iid,
+                 QString eid,
                  QString length,
-                 QString elements)
+                 QString reads)
                
-    : QListViewItem(parent, id, type, offset, length, elements) {}
-
-  ContigListItem(QListViewItem * parent, 
-                 QString id,
-                 QString type,
-                 QString offset,
-                 QString length,
-                 QString elements)
-               
-    : QListViewItem(parent, id, type, offset, length, elements) {}
+    : QListViewItem(parent, id, iid, eid, length, reads) {}
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
@@ -54,10 +45,10 @@ ContigPicker::ContigPicker(const string & bankname,
           this,  SLOT(itemSelected(QListViewItem *)));
 
   table->addColumn("Id");
-  table->addColumn("Type");
-  table->addColumn("Offset");
+  table->addColumn("IID");
+  table->addColumn("EID");
   table->addColumn("Length");
-  table->addColumn("Elements");
+  table->addColumn("Reads");
   table->setShowSortIndicator(true);
   table->setRootIsDecorated(true);
 
@@ -75,8 +66,6 @@ ContigPicker::ContigPicker(const string & bankname,
                      " contigs in " + bankname.c_str();
     statusBar()->message(status);
 
-    vector<ContigListItem> contigs;
-
     int contigid = 1;
     while (contig_bank >> contig)
     {
@@ -86,26 +75,10 @@ ContigPicker::ContigPicker(const string & bankname,
       //ContigListItem * contigitem = 
       new ContigListItem(table,  
                          QString::number(contigid), 
-                         "Contig",
-                         "0",
+                         QString::number(contig.getIID()),
+                         contig.getEID(),
                          QString::number(contiglen), 
                          QString::number(numreads));
-
-      /*
-      vector<AMOS::Tile_t>::iterator ti;
-      for (ti =  contig.getReadTiling().begin();
-           ti != contig.getReadTiling().end();
-           ti++)
-      {
-        new ContigListItem(contigitem,
-                           QString::number(ti->source),
-                           "Read",
-                           QString::number(ti->offset),
-                           QString::number(ti->range.getLength() + ti->gaps.size()),
-                           " ");
-      }
-      */
-      
       contigid++;
     }
     setCursor(orig);
