@@ -15,6 +15,7 @@ public:
 
   void setActive(int i, Insert * other);
   int getProjectedPosition(AMOS::Tile_t * tile, AMOS::Distribution_t dist);
+  void printInsert() const;
 
   int m_loffset;
   int m_roffset;
@@ -75,8 +76,8 @@ public:
 
       return true;
     }
-  };
 
+  };
 };
 
 #endif

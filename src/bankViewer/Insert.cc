@@ -110,6 +110,11 @@ Insert::Insert(Tile_t * atile,
   m_canvasItem = NULL;
 }
 
+void Insert::printInsert() const
+{
+  cerr << m_aid << "," << m_bid << " l:" << m_loffset << " r:" << m_roffset << " s:" << (char)m_state << endl;
+}
+
 int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
 {
   const int READLEN = 500;
@@ -134,18 +139,34 @@ void Insert::setActive(int i, Insert * other)
   if (i == 0) { tile = m_atile; }
   else        { tile = m_btile; }
 
-  if (tile->range.end < tile->range.begin)
+  int len = tile->range.getLength() + tile->gaps.size()-1;
+
+  if (tile->range.isReverse())
   {
-    //rc
-    m_roffset = tile->offset + tile->range.getLength() + tile->gaps.size()-1;
-    m_loffset = m_roffset - m_dist.mean;
+    m_roffset = tile->offset + len;
+
+    if (m_dist.mean > len)
+    {
+      m_loffset = m_roffset - m_dist.mean;
+    }
+    else
+    {
+      m_loffset = tile->offset - 250;
+    }
   }
   else
   {
-    //forward
     m_loffset = tile->offset;
-    m_roffset = m_loffset + m_dist.mean;
+
+    if (m_dist.mean > len)
+    {
+      m_roffset = m_loffset + m_dist.mean;
+    }
+    else
+    {
+      m_roffset = m_loffset + len + 250;
+    }
   }
 
-  m_length = m_dist.mean;
+  m_length = (m_roffset - m_loffset);
 }
