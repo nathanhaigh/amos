@@ -2,8 +2,8 @@
 
 use strict;
 
-use AmosLib;
-use ParseFasta;
+use TIGR::AmosLib;
+use TIGR::ParseFasta;
 use TIGR::Foundation;
 use XML::Parser;
 use IO::Handle;
