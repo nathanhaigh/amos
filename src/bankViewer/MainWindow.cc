@@ -21,11 +21,13 @@ using namespace std;
 MainWindow::MainWindow( QWidget *parent, const char *name )
            : QMainWindow( parent, name )
 {
+  setCaption("Assembly Investigator");
   m_gindex = -1;
 
   m_contigPicker = NULL;
   m_readPicker = NULL;
   m_libPicker = NULL;
+  m_chromoPicker = NULL;
   m_featPicker = NULL;
   m_fontsize = 10;
   m_insertWindow = NULL;
@@ -50,6 +52,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   file->insertItem("&Read Information...",   this,  SLOT(showReadPicker()));
   file->insertItem("&Feature Browser...",   this,  SLOT(showFeatureBrowser()));
   file->insertItem("&Library Information...",   this,  SLOT(showLibPicker()));
+  file->insertItem("&Chromatogram Paths...",   this,  SLOT(showChromoPicker()));
   file->insertSeparator();
   file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 
@@ -154,7 +157,10 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   // dbpick <-> tiling
   connect(dbpick, SIGNAL(textChanged(const QString &)),
-          this,   SLOT(setDB(const QString &)));
+          this,   SLOT(setChromoDB(const QString &)));
+
+  connect(this, SIGNAL(chromoDBSet(const QString &)),
+          dbpick, SLOT(setText(const QString &)));
 
 
   // Set defaults
@@ -379,9 +385,13 @@ void MainWindow::fontDecrease()
   m_tiling->setFontSize(m_fontsize);
 }
 
-void MainWindow::setDB(const QString & db)
+void MainWindow::setChromoDB(const QString & db)
 {
-  m_datastore.m_db = db.ascii();
+  if (m_datastore.m_db != db.ascii())
+  {
+    m_datastore.m_db = db.ascii();
+    emit chromoDBSet(db);
+  }
 }
 
 void MainWindow::showReadPicker()
@@ -400,6 +410,13 @@ void MainWindow::showLibPicker()
   m_libPicker = new LibraryPicker(&m_datastore, this, "libPicker");
 }
 
+void MainWindow::showChromoPicker()
+{
+  if (m_chromoPicker) { m_chromoPicker->close(); }
+
+  m_chromoPicker = new ChromoPicker(&m_datastore, this, "chromoPicker");
+}
+
 void MainWindow::showFeatureBrowser()
 {
   if (m_featPicker) { m_featPicker->close(); }
@@ -407,4 +424,14 @@ void MainWindow::showFeatureBrowser()
   m_featPicker = new FeatureBrowser(&m_datastore, this, "featPicker");
   connect(m_featPicker,   SIGNAL(setGindex(int)),
           this,           SLOT(setGindex(int)));
+}
+
+void MainWindow::addChromoPath(const QString & path)
+{
+  m_datastore.m_chromopaths.push_back(path.ascii());
+}
+
+void MainWindow::addChromoDB(const QString & db)
+{
+  m_datastore.m_chromodbs.push_back(db.ascii());
 }

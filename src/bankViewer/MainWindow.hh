@@ -13,6 +13,7 @@
 #include "ReadPicker.hh"
 #include "FeatureBrowser.hh"
 #include "LibraryPicker.hh"
+#include "ChromoPicker.hh"
 #include "DataStore.hh"
 #include "InsertWindow.hh"
 #include "CGraphWindow.hh"
@@ -30,7 +31,9 @@ public slots:
   void chooseBank();
   void chooseContig();
 
-  void setDB(const QString &);
+  void addChromoPath(const QString &);
+  void addChromoDB(const QString &);
+  void setChromoDB(const QString &);
   void setGindexRange(int, int);
   void setContigId(int contigID);
   void setGindex(int gindex);
@@ -52,6 +55,7 @@ public slots:
 
   void showReadPicker();
   void showLibPicker();
+  void showChromoPicker();
   void showFeatureBrowser();
 
 signals:
@@ -59,6 +63,7 @@ signals:
   void contigIdSelected(int contigId);
   void gindexChanged(int gindex);
   void highlightRead(int iid);
+  void chromoDBSet(const QString & db);
 
 private:
   QSpinBox * m_contigid;
@@ -67,6 +72,7 @@ private:
   QMainWindow * m_contigPicker;
   QMainWindow * m_readPicker;
   QMainWindow * m_libPicker;
+  QMainWindow * m_chromoPicker;
   QMainWindow * m_featPicker;
   InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;

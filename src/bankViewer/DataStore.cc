@@ -1,4 +1,12 @@
 #include "DataStore.hh"
+#include <sys/types.h>
+#include <dirent.h>
+
+extern "C"
+{
+  #include "Read.h"
+}
+
 
 using namespace AMOS;
 using namespace std;
@@ -15,6 +23,12 @@ DataStore::DataStore()
   m_contigId = -1;
   m_loaded = false;
 
+  m_chromodbs.push_back("/local/chromo/Chromatograms/");
+  m_chromodbs.push_back("/local/chromo2/Chromatograms/");
+  m_chromodbs.push_back("/local/chromo3/Chromatograms/");
+  m_chromodbs.push_back("/local/asmg/scratch/mschatz/Chromatograms/");
+
+//  m_chromopaths.push_back("/home/mschatz/build/sample/32774/chromo");
 }
 
 int DataStore::openBank(const string & bankname)
@@ -81,6 +95,8 @@ void DataStore::loadMates()
 {
   m_readmatelookup.clear();
 
+  cerr << "Loading mates... ";
+
   mate_bank.seekg(1);
   Matepair_t mates;
   while (mate_bank >> mates)
@@ -89,12 +105,12 @@ void DataStore::loadMates()
     m_readmatelookup[mates.getReads().second] = pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().first,  mates.getType());
   }
 
-  cerr << "Loaded mates for " << m_readmatelookup.size() << " reads" << endl;
+  cerr << m_readmatelookup.size() << " mated reads" << endl;
 }
 
 void DataStore::loadContigs()
 {
-  cerr << "Loading contigs\n";
+  cerr << "Indexing contigs... ";
   m_readcontiglookup.clear();
 
   int contigid = 1;
@@ -116,7 +132,7 @@ void DataStore::loadContigs()
     contigid++;
   }
 
-  cerr << "Loaded contig id mapping for " << m_readcontiglookup.size() << " reads" << endl;
+  cerr <<  m_readcontiglookup.size() << " reads in " << contigid-1 << " contigs" << endl;
 }
 
 int DataStore::setContigId(int id)
@@ -125,10 +141,8 @@ int DataStore::setContigId(int id)
 
   try
   {
-    ID_t bankid = contig_bank.getIDMap().lookupBID(id);
-    cerr << "Setting contig id to " << id << " bid: " << bankid << endl;
-
-    bankid = id;
+    ID_t bankid = id;
+    cerr << "Setting contig to bid " << bankid << endl;
 
     if (bankid != 0)
     {
@@ -163,7 +177,6 @@ Distribution_t DataStore::getLibrarySize(ID_t readid)
     }
     catch (Exception_t & e)
     {
-      cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     }
   }
 
@@ -182,4 +195,53 @@ ID_t DataStore::lookupContigId(ID_t readid)
   {
     return i->second;
   }
+}
+
+static string chromodbpath(const string & base,
+                    const string & db,
+                    const string & readname)
+{
+  string path = base + db;
+  path += (string)"/ABISSed/" +
+          readname[0]+readname[1]+readname[2] + "/" +
+          readname[0]+readname[1]+readname[2]+readname[3] + "/" +
+          readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/";
+
+  return path;        
+}
+
+
+void * DataStore::fetchTrace(const AMOS::Read_t & read)
+{
+  string readname = read.getEID();
+
+  Read * trace = NULL;
+
+  string path;
+
+  vector <string>::iterator ci;
+  for (ci =  m_chromopaths.begin();
+       ci != m_chromopaths.end() && !trace;
+       ci++)
+  {
+    path = *ci + "/";
+    path += readname;
+    trace = read_reading((char *)path.c_str(), TT_ANY);
+  }
+
+
+  for (ci =  m_chromodbs.begin();
+       ci != m_chromodbs.end() && !trace;
+       ci++)
+  {
+    path = chromodbpath(*ci, m_db, readname);
+    if (DIR * dir = opendir(path.c_str()))
+    {
+      closedir(dir);
+      path += readname;
+      trace = read_reading((char *)path.c_str(), TT_ANY);
+    }
+  }
+
+  return (void *) trace;
 }

@@ -179,7 +179,7 @@ void TilingFrame::loadContigRange(int gindex)
         // hasn't been rendered before
         RenderSeq_t rendered;
         rendered.load(m_datastore->read_bank, &*vi);
-        if (m_displayAllChromo) { rendered.loadTrace(m_datastore->m_db); rendered.m_displayTrace = true; }
+        if (m_displayAllChromo) { rendered.loadTrace(m_datastore); rendered.m_displayTrace = true; }
         m_renderedSeqs.push_back(rendered);
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
@@ -329,7 +329,7 @@ void TilingFrame::toggleDisplayAllChromo(bool display)
          ri != m_renderedSeqs.end();
          ri++)
     {
-      ri->loadTrace(m_datastore->m_db);
+      ri->loadTrace(m_datastore);
       ri->m_displayTrace = true;
     }
 

@@ -6,6 +6,7 @@
 #include "foundation_AMOS.hh"
 #include "amp.hh"
 #include "fasta.hh"
+#include "DataStore.hh"
 
 #include "ChromoField.hh"
 
@@ -17,7 +18,7 @@ public:
   ~RenderSeq_t();
 
   void load(AMOS::Bank_t & read_bank, AMOS::Tile_t * tile);
-  void loadTrace(const std::string & db);
+  void loadTrace(DataStore * datastore);
 
   char base(AMOS::Pos_t gindex, bool outsideclr = false) const;
   int    qv(AMOS::Pos_t gindex, bool outsideclr = false) const;

@@ -22,6 +22,8 @@ public:
   void loadLibraries();
   void loadContigs();
 
+  void * fetchTrace(const AMOS::Read_t & read);
+
   AMOS::Distribution_t getLibrarySize(AMOS::ID_t readid);
   AMOS::ID_t lookupContigId(AMOS::ID_t readid);
 
@@ -36,6 +38,9 @@ public:
 
   std::string m_db;
   std::string m_bankname;
+
+  std::vector <string> m_chromodbs;
+  std::vector <string> m_chromopaths;
 
   int m_contigId;
   bool m_loaded;

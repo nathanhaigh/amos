@@ -100,7 +100,7 @@ void TilingField::singleClick()
 
   if (m_renderedSeqs[dcov].m_displayTrace)
   {
-    m_renderedSeqs[dcov].loadTrace(m_datastore->m_db);
+    m_renderedSeqs[dcov].loadTrace(m_datastore);
   }
 
   repaint();
@@ -128,7 +128,7 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
   int dcov = getReadCov(e->y());
   if (dcov == -1) { return; }
 
-  m_renderedSeqs[dcov].loadTrace(m_datastore->m_db);
+  m_renderedSeqs[dcov].loadTrace(m_datastore);
   ReadInfo * readinfo = new ReadInfo(&m_renderedSeqs[dcov], 
                                      m_datastore->m_db, 
                                      m_consensus,

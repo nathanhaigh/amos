@@ -31,8 +31,12 @@ CoverageBackgroundCanvasItem::CoverageBackgroundCanvasItem(int x, int y, int wid
 
 void CoverageBackgroundCanvasItem::drawShape (QPainter & p)
 {
-  QColor bgcolor(120,120,120);
+  QColor bgcolor(60,60,60);
   p.setPen(bgcolor);
   p.setBrush(bgcolor);
   p.drawRect((int)(x()), (int)(y()), (int)(width()), (int)(height()));
+
+  QColor linecolor(Qt::white);
+  p.setPen(linecolor);
+  p.drawLine((int)(x()), (int)(y()+height()), (int)(x()+width()), (int)(y()+height()));
 }

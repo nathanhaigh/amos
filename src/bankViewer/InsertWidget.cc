@@ -175,12 +175,19 @@ void InsertWidget::refreshCanvas()
     Insert * insert;
     DataStore::MateLookupMap::iterator mi;
 
+
+    ProgressDots_t dots(seqtileLookup.size(), 50);
+    int count = 0;
+
     // For each read in the contig
     SeqTileMap_t::iterator ai;
     for (ai =  seqtileLookup.begin();
          ai != seqtileLookup.end();
          ai++)
     {
+      count++;
+      dots.update(count);
+
       if (ai->second == NULL)
       {
         //cerr << "Skipping already seen read" << endl;
@@ -198,7 +205,6 @@ void InsertWidget::refreshCanvas()
       if (mi == m_datastore->m_readmatelookup.end())
       {
         unmated++;
-        cerr << "o";
         insert = new Insert(aid, acontig, atile,
                             AMOS::NULL_ID, AMOS::NULL_ID, NULL,
                             dist, clen, AMOS::Matepair_t::NULL_MATE);
@@ -216,12 +222,10 @@ void InsertWidget::refreshCanvas()
         if (bi == seqtileLookup.end())
         {
           bcontig = m_datastore->lookupContigId(bid);
-          cerr << "+";
         }
         else
         {
           mated++;
-          cerr << ".";
 
           btile = bi->second;
           bi->second = NULL;
@@ -261,8 +265,9 @@ void InsertWidget::refreshCanvas()
       ai->second = NULL;
     }
 
-    cerr << endl
-         << "mated: "   << mated 
+    dots.end();
+
+    cerr << "mated: "   << mated 
          << " matelisted: " << matelisted
          << " unmated: " << unmated << endl;
   }
@@ -285,7 +290,6 @@ void InsertWidget::refreshCanvas()
   }
 
 
-  cerr << "leftmost: " << leftmost << endl;
   m_hoffset = -leftmost;
 
   // Draw the consensus
@@ -314,6 +318,7 @@ void InsertWidget::refreshCanvas()
 
   if (m_coveragePlot)
   {
+    cerr << "Paint coverage" << endl;
     int maxdepth = 0;
     int maxroffset = 0;
 
