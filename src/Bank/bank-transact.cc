@@ -92,19 +92,21 @@ int main (int argc, char ** argv)
   //-- The KNOWN types to put in the banks
   //   note: node constants are part of the AMOS namespace
   //    e.g. AMOS::M_UNIVERSAL == Encode ("UNV")
-  obps [M_UNIVERSAL]  = obpair (new Bank_t (M_UNIVERSAL),  new Universal_t);
-  obps [M_SEQUENCE]   = obpair (new Bank_t (M_SEQUENCE),   new Sequence_t);
-  obps [M_LIBRARY]    = obpair (new Bank_t (M_LIBRARY),    new Library_t);
-  obps [M_FRAGMENT]   = obpair (new Bank_t (M_FRAGMENT),   new Fragment_t);
-  obps [M_READ]       = obpair (new Bank_t (M_READ),       new Read_t);
-  obps [M_MATEPAIR]   = obpair (new Bank_t (M_MATEPAIR),   new Matepair_t);
-  obps [M_OVERLAP]    = obpair (new Bank_t (M_OVERLAP),    new Overlap_t);
-  obps [M_KMER]       = obpair (new Bank_t (M_KMER),       new Kmer_t);
-  obps [M_LAYOUT]     = obpair (new Bank_t (M_LAYOUT),     new Layout_t);
-  obps [M_CONTIG]     = obpair (new Bank_t (M_CONTIG),     new Contig_t);
-  obps [M_CONTIGLINK] = obpair (new Bank_t (M_CONTIGLINK), new ContigLink_t);
-  obps [M_CONTIGEDGE] = obpair (new Bank_t (M_CONTIGEDGE), new ContigEdge_t);
-  obps [M_SCAFFOLD]   = obpair (new Bank_t (M_SCAFFOLD),   new Scaffold_t);
+  obps[M_UNIVERSAL]   =obpair(new Bank_t (M_UNIVERSAL),   new Universal_t);
+  obps[M_SEQUENCE]    =obpair(new Bank_t (M_SEQUENCE),    new Sequence_t);
+  obps[M_LIBRARY]     =obpair(new Bank_t (M_LIBRARY),     new Library_t);
+  obps[M_FRAGMENT]    =obpair(new Bank_t (M_FRAGMENT),    new Fragment_t);
+  obps[M_READ]        =obpair(new Bank_t (M_READ),        new Read_t);
+  obps[M_MATEPAIR]    =obpair(new Bank_t (M_MATEPAIR),    new Matepair_t);
+  obps[M_OVERLAP]     =obpair(new Bank_t (M_OVERLAP),     new Overlap_t);
+  obps[M_KMER]        =obpair(new Bank_t (M_KMER),        new Kmer_t);
+  obps[M_LAYOUT]      =obpair(new Bank_t (M_LAYOUT),      new Layout_t);
+  obps[M_CONTIG]      =obpair(new Bank_t (M_CONTIG),      new Contig_t);
+  obps[M_CONTIGLINK]  =obpair(new Bank_t (M_CONTIGLINK),  new ContigLink_t);
+  obps[M_CONTIGEDGE]  =obpair(new Bank_t (M_CONTIGEDGE),  new ContigEdge_t);
+  obps[M_SCAFFOLD]    =obpair(new Bank_t (M_SCAFFOLD),    new Scaffold_t);
+  obps[M_SCAFFOLDLINK]=obpair(new Bank_t (M_SCAFFOLDLINK),new ScaffoldLink_t);
+  obps[M_SCAFFOLDEDGE]=obpair(new Bank_t (M_SCAFFOLDEDGE),new ScaffoldEdge_t);
 
 
   //-- Parse the command line arguments

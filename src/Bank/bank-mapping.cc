@@ -78,6 +78,8 @@ int main (int argc, char ** argv)
 	OPT_ExtractCodes . push_back (ContigLink_t::NCODE);
 	OPT_ExtractCodes . push_back (ContigEdge_t::NCODE);
 	OPT_ExtractCodes . push_back (Scaffold_t::NCODE);
+	OPT_ExtractCodes . push_back (ScaffoldLink_t::NCODE);
+	OPT_ExtractCodes . push_back (ScaffoldEdge_t::NCODE);
       }
 
     //-- Iterate through each bank and dump its map

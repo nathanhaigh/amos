@@ -22,6 +22,8 @@ amosinclude_HEADERS = \
 	Message_AMOS.hh \
 	Overlap_AMOS.hh \
 	Read_AMOS.hh \
+	ScaffoldEdge_AMOS.hh \
+	ScaffoldLink_AMOS.hh \
 	Scaffold_AMOS.hh \
 	Sequence_AMOS.hh \
 	Universal_AMOS.hh \
@@ -38,7 +40,6 @@ amosinclude_HEADERS = \
 ##-- TO BE TESTED
 check_PROGRAMS = \
 	banktest \
-	imsgtest \
 	maptest \
 	msgtest \
 	streamtest \
@@ -56,12 +57,6 @@ banktest_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 banktest_SOURCES = \
 	banktest.cc
-
-##-- imsgtest
-imsgtest_LDADD = \
-	$(top_builddir)/src/AMOS/libAMOS.a
-imsgtest_SOURCES = \
-	imsgtest.cc
 
 ##-- maptest
 maptest_LDADD = \
@@ -108,6 +103,8 @@ libAMOS_a_SOURCES = \
 	Message_AMOS.cc \
 	Overlap_AMOS.cc \
 	Read_AMOS.cc \
+	ScaffoldEdge_AMOS.cc \
+	ScaffoldLink_AMOS.cc \
 	Scaffold_AMOS.cc \
 	Sequence_AMOS.cc \
 	Universal_AMOS.cc \

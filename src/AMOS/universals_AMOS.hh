@@ -21,6 +21,8 @@
 #include "Overlap_AMOS.hh"
 #include "Read_AMOS.hh"
 #include "Scaffold_AMOS.hh"
+#include "ScaffoldEdge_AMOS.hh"
+#include "ScaffoldLink_AMOS.hh"
 #include "Sequence_AMOS.hh"
 #include "Universal_AMOS.hh"
 
