@@ -36,7 +36,7 @@ bool Message_t::read (istream & in)
 
     //-- Get the type name
     name = line . substr (1);
-    setType (name);
+    setMessageType (name);
 
     //-- Until end of message
     while (true)
@@ -56,7 +56,7 @@ bool Message_t::read (istream & in)
 
 	//-- Throw if bad format
 	if ( line . size( ) < 4  ||  line [3] != ':' )
-	  AMOS_THROW_IO ("");
+	  AMOS_THROW_IO ("Message read failure, line: " + line);
 
 	//-- Read in first line of field
 	name = line . substr (0,3);
@@ -71,7 +71,7 @@ bool Message_t::read (istream & in)
 		break;
 
 	      if ( !in . good( ) )
-		AMOS_THROW_IO ("");
+		AMOS_THROW_IO ("Message read failure, line: " + line);
 	      data += line;
 	      data += '\n';
 	    }
@@ -80,11 +80,11 @@ bool Message_t::read (istream & in)
 	setField (name, data);
       }
   }
-  catch (Exception_t & e) {
+  catch (IOException_t) {
 
     //-- Clean up and rethrow
     clear( );
-    AMOS_THROW_IO ("message read failure, line: " + line);
+    throw;
   }
 
   return true;
@@ -96,13 +96,15 @@ void Message_t::setField (const string & fname, const string & data)
 {
   //-- Check pre-conditions
   if ( fname . size( ) != NCODE )
-    AMOS_THROW_ARGUMENT ("invalid message field name length");
+    AMOS_THROW_ARGUMENT ("Invalid message field name length");
   for ( int i = 0; i < NCODE; i ++ )
     if ( !islower (fname [i]) )
-      AMOS_THROW_ARGUMENT ("invalid message field name format");
+      AMOS_THROW_ARGUMENT ("Invalid message field name format");
   if ( data . find ('\n') != string::npos  &&
        *(data . rbegin( )) != '\n' )
-    AMOS_THROW_ARGUMENT ("invalid message multi-line field format");
+    AMOS_THROW_ARGUMENT ("Invalid message multi-line field format");
+  if ( data . size( ) == 0 )
+    AMOS_THROW_ARGUMENT ("Empty fields are not allowed");
 
   pair<map<string,string>::iterator,bool> ret;
 
@@ -114,11 +116,11 @@ void Message_t::setField (const string & fname, const string & data)
 
 
 //----------------------------------------------------- write ------------------
-void Message_t::write (ostream & out)
+void Message_t::write (ostream & out) const
 {
   bool mline = false;
-  map<string, string>::iterator mi;
-  vector<Message_t>::iterator vi;
+  map<string, string>::const_iterator mi;
+  vector<Message_t>::const_iterator vi;
 
   //-- Write opening of message
   out << '{' << tname_m << endl;
@@ -140,12 +142,12 @@ void Message_t::write (ostream & out)
 
   //-- Write all sub-messages
   for ( vi = subs_m . begin( ); vi != subs_m . end( ); vi ++ )
-    vi -> write(out);
+    vi -> write (out);
 
   //-- Close out message
   out << '}' << endl;
 
   //-- Check stream 'goodness'
   if ( !out . good( ) )
-    AMOS_THROW_IO ("message write failure");
+    AMOS_THROW_IO ("Message write failure");
 }

@@ -44,16 +44,16 @@ namespace Bank_k {
   const Size_t BUFFER_SIZE = 1024;
   //!< IO buffer size
 
-  const std::string BANK_VERSION = "1.02";
+  const std::string BANK_VERSION ("1.02");
   //!< Current Bank version, may not be able to read from other versions
 
-  const std::string FIX_STORE_SUFFIX = ".fix";
+  const std::string FIX_STORE_SUFFIX (".fix");
   //!< Suffix for the fixed length store
   
-  const std::string INFO_STORE_SUFFIX = ".ifo";
+  const std::string INFO_STORE_SUFFIX (".ifo");
   //!< Suffix for the informational store
   
-  const std::string VAR_STORE_SUFFIX = ".var";
+  const std::string VAR_STORE_SUFFIX (".var");
   //!< Suffix for the variable length store
 
   const std::string BANK_NAMES [Bankable_t::MAX_BANKS] =

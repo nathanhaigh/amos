@@ -1,4 +1,5 @@
 #include <messages_AMOS.hh>
+#include <datatypes_AMOS.hh>
 #include <fstream>
 using namespace std;
 using namespace AMOS;
@@ -23,16 +24,18 @@ int main (int argc, char ** argv)
   try {
 
     Message_t msg;
+    Bankable_t bnk;
     
     while ( msg . read (msgfile) )
-      {
-	msg . write (cout);
-      }
+      if ( msg . getMessageType( ) == Message_k::M_BANKABLE )
+	{
+	  bnk . clear( );
+	  bnk . fromMessage (msg);
 
-    msg . clear( );
-    msg . setField ("tmp", "\n");
-    msg . write (cout);
-
+	  msg . clear( );
+	  bnk . toMessage (msg);
+	  msg . write (cout);
+	}
   }
   catch (Exception_t & e) {
     cerr << e;

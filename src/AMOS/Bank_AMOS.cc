@@ -53,7 +53,7 @@ void Bank_t::addPartition (bool nuke = true)
       AMOS_THROW_IO ("Could not add partition: " + ss . str( ));
     partition -> var . close( );
   }
-  catch ( IOException_t ) {
+  catch (IOException_t) {
     //-- Clean up before re-throwing
     partitions_m . pop_back( );
     last_partition_m --;
@@ -150,7 +150,7 @@ void Bank_t::clean ( )
     last_iid_m = nullbank . last_iid_m;
     flush( );
   }
-  catch ( IOException_t ) {
+  catch (IOException_t) {
     //-- Clean up before re-throwing
     nullbank . destroy( );
     throw;
@@ -313,7 +313,7 @@ void Bank_t::create (const string & dir)
 	open (dir);
 	destroy ( );
       }
-      catch ( IOException_t ) {
+      catch (IOException_t) {
 
       }
     }
@@ -524,7 +524,7 @@ void Bank_t::open (const string & dir)
 
     ifo . close( );
   }
-  catch ( IOException_t ) {
+  catch (IOException_t) {
     init( );
     throw;
   }
@@ -576,7 +576,7 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t iid)
     if ( partition -> var . fail( ) )
       AMOS_THROW_IO ("Could not open partition: " + partition -> var_name);
   }
-  catch ( IOException_t ) {
+  catch (IOException_t) {
     partition -> fix . close( );
     partition -> var . close( );
     throw;
@@ -815,7 +815,7 @@ void Bank_t::transform (vector<ID_t> id_map)
     last_iid_m = nullbank . last_iid_m;
     flush( );
   }
-  catch ( IOException_t ) {
+  catch (IOException_t) {
     //-- Clean up before re-throwing
     nullbank . destroy( );
     free (buffer);
