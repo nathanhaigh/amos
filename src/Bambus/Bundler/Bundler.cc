@@ -348,6 +348,6 @@ int main(int argc, char *argv[])
 
   edge_bank.close();
   link_bank.close();
-  exit(0);
+  return(0);
 } // main
 
