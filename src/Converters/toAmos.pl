@@ -355,7 +355,7 @@ sub parseLibMapFile {
     my $IN = shift;
 
     while (<IN>){
-	my ($name, $id) = split(' ', $_);
+	my ($id, $name) = split(' ', $_);
 	$libnames{$id} = $name;
     }
 }
