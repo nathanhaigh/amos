@@ -11,6 +11,51 @@
 
 
 
+void  Align_Score_Entry_t :: Dump
+    (FILE * fp)  const
+
+//  Print to  fp  the contents of this score entry.
+
+  {
+   fprintf (fp, "L = %d:%u  D = %d:%u  T = %d:%u\n",
+        left_score, left_from, diag_score, diag_from,
+        top_score, top_from);
+
+   return;
+  }
+
+
+
+void  Align_Score_Entry_t :: Get_Max
+    (int & max_score, unsigned int & max_from)  const
+
+//  Set  max_score  to the highest score in this entry
+//  and  max_from  to the sub_entry it came from.
+
+  {
+   if  (left_score <= diag_score)
+       {
+        max_score = diag_score;
+        max_from = FROM_DIAG;
+       }
+     else
+       {
+        max_score = left_score;
+        max_from = FROM_LEFT;
+       }
+
+   if  (max_score < top_score)
+       {
+        max_score = top_score;
+        max_from = FROM_TOP;
+       }
+
+   return;
+  }
+
+
+
+
 void  Vote_t :: Incr_After
     (char ch)
 
@@ -159,6 +204,52 @@ void  Vote_t :: Set_Zero
 
    for  (i = 0;  i <= ALPHABET_SIZE;  i ++)
      here [i] = after [i] = 0;
+
+   return;
+  }
+
+
+
+void  Base_Alignment_t :: Dump
+    (FILE * fp)  const
+
+//  Print to  fp  the contents of this base alignent.
+
+  {
+   fprintf (fp, "### a_lo = %d  a_hi = %d  b_lo = %d  b_hi = %d  errors = %d\n",
+            a_lo, a_hi, b_lo, b_hi, errors);
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Dump
+    (FILE * fp)  const
+
+//  Print to  fp  the entries of this alignment.
+
+  {
+   Base_Alignment_t :: Dump (fp);
+   fprintf (fp, "Delta:\n");
+   Dump_Delta (fp);
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Dump_Delta
+    (FILE * fp)  const
+
+//  Print to  fp  the  delta  entries of this alignment.
+
+  {
+   int  i, n;
+
+   n = delta . size ();
+   for  (i = 0;  i < n;  i ++)
+     fprintf (fp, "  %3d: %5d\n", i, delta [i]);
 
    return;
   }
@@ -508,6 +599,20 @@ void  Alignment_t :: Set_To_Identity
 
 
 
+void  Gapped_Alignment_t :: Clear
+    (void)
+
+//  Make this alignment empty.
+
+  {
+   a_lo = a_hi = b_lo = b_hi = errors = 0;
+   skip . clear ();
+
+   return;
+  }
+
+
+
 void  Gapped_Alignment_t :: Convert_From
     (const Alignment_t & ali, vector <int> & tr)
 
@@ -651,13 +756,12 @@ void  Gapped_Alignment_t :: Convert_Skip_to_Del
 
 
 void  Gapped_Alignment_t :: Dump
-    (FILE * fp)
+    (FILE * fp)  const
 
 //  Print to  fp  the entries of this alignment.
 
   {
-   fprintf (fp, "### a_lo = %d  a_hi = %d  b_lo = %d  b_hi = %d  error = %d\n",
-            a_lo, a_hi, b_lo, b_hi, errors);
+   Base_Alignment_t :: Dump (fp);
    fprintf (fp, "Skip:\n");
    Dump_Skip (fp);
 
@@ -667,7 +771,7 @@ void  Gapped_Alignment_t :: Dump
 
 
 void  Gapped_Alignment_t :: Dump_Skip
-    (FILE * fp)
+    (FILE * fp)  const
 
 //  Print to  fp  the  skip  entries of this alignment.
 
@@ -677,6 +781,35 @@ void  Gapped_Alignment_t :: Dump_Skip
    n = skip . size ();
    for  (i = 0;  i < n;  i ++)
      fprintf (fp, "  %3d: %5d\n", i, skip [i]);
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Flip
+    (int a_len, int b_len)
+
+//  Change this alignment to reflect that both strings
+//  have been reversed.   a_len  is the length of the
+//  a string (i.e., that a coordinates refer to) and
+//  b_len is the length of the b string.
+
+  {
+   int  i, n, tmp;
+
+   tmp = a_len - a_lo;
+   a_lo = a_len - a_hi;
+   a_hi = tmp;
+
+   tmp = b_len - b_lo;
+   b_lo = b_len - b_hi;
+   b_hi = tmp;
+
+   reverse (skip . begin (), skip . end ());
+   n = skip . size ();
+   for  (i = 0;  i < n;  i ++)
+     skip [i] = b_len - 1 - skip [i];
 
    return;
   }
@@ -697,6 +830,168 @@ int  Gapped_Alignment_t :: Get_Skip
        return  skip [i];
      else
        return  INT_MAX;
+  }
+
+
+
+void  Gapped_Alignment_t :: Make_Sub_Alignment
+    (Gapped_Alignment_t & sub_ali, int b1, int b2)  const
+
+//  Set  sub_ali  to the portion of this alignment that intersects
+//   b1 .. b2  of the b sequence.
+
+  {
+   int  d, n;
+
+   sub_ali . Clear ();
+
+   n = skip . size ();
+   d = 0;
+   if  (b1 <= b_lo)
+       {
+        sub_ali . b_lo = b_lo;
+        sub_ali . a_lo = a_lo;
+       }
+     else
+       {
+        while  (d < n && skip [d] < b1)
+          d ++;
+        sub_ali . b_lo = b1;
+        sub_ali . a_lo = a_lo + b1 - b_lo - d;
+       }
+
+   sub_ali . b_hi = Min (b2, b_hi);
+
+   for  ( ;  d < n && skip [d] <= sub_ali . b_hi;  d ++)
+     sub_ali . skip . push_back (skip [d]);
+
+   sub_ali . a_hi = a_lo + sub_ali . b_hi - b_lo - d;
+
+   assert (sub_ali . a_lo < sub_ali . a_hi);
+   assert (sub_ali . b_lo <= sub_ali . b_hi);
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Modify_For_B_Inserts
+    (const vector <int> & insert_sub)
+
+//  Change this alignment to reflect additional '-'s in the
+//  consensus sequence at positions in  insert_sub .
+
+  {
+   vector <int> :: iterator  p;
+   vector <int>  new_skip;
+   int  i, n;
+
+   n = insert_sub . size ();
+   for  (i = 0;  i < n && insert_sub [i] < b_lo;  i ++)
+     ;
+
+   b_lo += i;
+
+   p = skip . begin ();
+   while  (p != skip . end () && i < n)
+     {
+      if  (insert_sub [i] <= (* p) + i)
+          {
+           new_skip . push_back (insert_sub [i]);
+           i ++;
+          }
+        else
+          {
+           new_skip . push_back ((* p) + i);
+           p ++;
+          }
+     }
+
+   for  ( ;  p != skip . end ();  p ++)
+     new_skip . push_back ((* p) + i);
+
+   b_hi += i;
+
+   while  (i < n && insert_sub [i] < b_hi)
+     {
+      new_skip . push_back (insert_sub [i]);
+      i ++;
+     }
+
+   skip = new_skip;
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Pass_Through
+    (const Alignment_t & ali)
+
+//  Convert this alignment to refer to the b sequence in  ali ,
+//  which maps this alignment's consensus (as its a sequence)
+//  to another sequence.  Assume that the other sequence has
+//  had gaps inserted where needed.
+
+  {
+   vector <int>  new_skip;
+   bool  done_b_lo = false;
+   int  orig_b_lo;
+   int  skip_len;
+   int  d, i, j, k, n;
+
+   assert (ali . a_lo <= b_lo);
+   assert (b_hi <= ali . b_hi);
+
+   orig_b_lo = b_lo;
+   i = ali . a_lo;
+   j = ali . b_lo;
+   n = ali . delta . size ();
+   skip_len = skip . size ();
+   for  (d = k = 0;  d < int (ali . delta . size ()) && i < b_hi;  d ++)
+     {
+      i += abs (ali . delta [d]) - 1;
+      j += abs (ali . delta [d]) - 1;
+      if  (! done_b_lo && b_lo <= i)
+          b_lo += j - i;
+      while  (k < skip_len && skip [k] <= i)
+        {
+printf ("k = %d  i = %d  j = %d  old_skip = %d  new_skip = %d\n",
+     k, i, j, skip [k], skip [k] + j - i);
+         new_skip . push_back (skip [k] + j - i);
+         k ++;
+        }
+      if  (ali . delta [d] < 0)
+          {
+           i ++;
+           j ++;
+           // Advance both because we assume the "j" sequence has
+           // had gaps inserted
+          }
+      else if  (i >= b_hi)
+           break;
+         else
+          {
+           if  (orig_b_lo <= i)
+{
+printf ("k = %d  i = %d  j = %d  b_lo = %d  b_hi = %d  adding new_skip = %d\n",
+     k, i, j, b_lo, b_hi, j);
+               new_skip . push_back (j);
+}
+           j ++;
+          }
+     }
+
+   while  (k < skip_len)
+     {
+      new_skip . push_back (skip [k] + j - i);
+      k ++;
+     }
+
+   b_hi += j - i;
+   skip = new_skip;
+
+   return;
   }
 
 
@@ -1069,6 +1364,52 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
 
 
+void  Gapped_Multi_Alignment_t :: Add_Aligned_Seqs
+    (const Gapped_Multi_Alignment_t & m, const Alignment_t & ali,
+     int cons_lo, int cons_hi, vector <char *> & sl1,
+     const vector <char *> & sl2, vector <char *> * tg1,
+     vector <char *> * tg2)
+
+//  Add sequences in  m  that align to positions  cons_lo .. cons_hi
+//  in  m . consensus  to this multialignment.  Use alignment  ali
+//  to map  m . consensus  to  this -> consensus .  Add the
+//  actual sequences from  sl2  onto the end of  sl1 .  If
+//   tg1  and  tg2  are not both NULL, also add the tags from
+//   tg2  onto the end of  tg1 .
+
+  {
+   Gapped_Alignment_t  sub_ali;
+   bool  use_tgs = (tg1 != NULL && tg2 != NULL);
+   int  i, n;
+
+printf ("ali:\n");
+ali . Dump (stdout);
+   n = m . align . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (Range_Intersect (cons_lo, cons_hi, m . align [i] . b_lo,
+               m . align [i] . b_hi))
+         {
+printf ("m . align [%d]:\n", i);
+m . align [i] . Dump (stdout);
+          m . align [i] . Make_Sub_Alignment (sub_ali, cons_lo, cons_hi);
+printf ("First sub_ali:\n");
+sub_ali . Dump (stdout);
+
+          sub_ali . Pass_Through (ali);
+printf ("sub_ali after Pass_Through:\n");
+sub_ali . Dump (stdout);
+
+          align . push_back (sub_ali);
+          sl1 . push_back (strdup (sl2 [i]));
+          if  (use_tgs)
+              (* tg1) . push_back (strdup ((* tg2) [i]));
+         }
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Clear
     (void)
 
@@ -1159,6 +1500,104 @@ void  Gapped_Multi_Alignment_t :: Convert_From
      {
       ga . Convert_From (ma . align [i], tr);
       align . push_back (ga);
+     }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Dump_Aligns
+    (FILE * fp)
+
+//  Print to  fp  the alignments in this multialignment.
+
+  {
+   int  i, n;
+
+   n = align . size ();
+   fprintf (fp, "### num aligns = %d\n", n);
+   for  (i = 0;  i < n;  i ++)
+     align [i] . Dump (fp);
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Expand_Consensus
+    (const Alignment_t & ali)
+
+//  Adjust the consensus sequence of this multialignment to add
+//  gaps where needed to accommodate the alignment in  ali ,
+//  which represents the alignment of another consensus to this one.
+//  Also adjust the individual read alignments for the new gaps added.
+
+  {
+   Delta_Encoding_t  delta = ali . getDelta ();
+   vector <int>  insert_sub;
+   int  prev;
+   int  i, n;
+
+   n = delta . size ();
+   prev = ali . b_lo;
+   for  (i = 0;  i < n;  i ++)
+     if  (delta [i] > 0)
+         prev += delta [i];
+       else
+         {
+          prev -= delta [i];
+          insert_sub . push_back (prev - 1);
+          consensus . insert (prev - 1, 1, '-');
+         }
+
+   n = insert_sub . size ();
+
+   if  (n == 0)
+       return;  // nothing to do
+
+   for  (i = 0;  i < n;  i ++)
+     printf ("insert_sub [%d] = %d\n", i, insert_sub [i]);
+
+   n = align . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (insert_sub [0] < align [i] . b_hi)
+         align [i] . Modify_For_B_Inserts (insert_sub);
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Extract_Gapped_Region
+    (int lo, int hi, string & s, int & gapped_lo, int & gapped_hi)  const
+
+//  Set  s  to the substring of the gapped consensus
+//  between  lo  and  hi , where  lo  and  hi  are
+//  *UN*gapped positions.  Set  gapped_lo  and  gapped_hi
+//  to indicate the region in the gapped consensus that
+//  was extracted.
+
+  {
+   bool  is_first = true;
+   int  i, j, n;
+
+   s . erase ();
+
+   n = consensus . length ();
+   for  (i = j = 0;  i < n && j < hi;  i ++)
+     {
+      if  (consensus [i] != '-')
+          j ++;
+      if  (j > lo && j <= hi)
+          {
+           s . push_back (consensus [i]);
+           if  (is_first)
+               {
+                gapped_lo = i;
+                is_first = false;
+               }
+           gapped_hi = i + 1;
+          }
      }
 
    return;
@@ -1283,15 +1722,93 @@ void  Gapped_Multi_Alignment_t :: Merge
 
 
 
+void  Gapped_Multi_Alignment_t :: Partial_Merge
+    (const Gapped_Multi_Alignment_t & m, int a_lo, int a_hi,
+     int b_lo, int b_hi, vector <char *> & sl1,
+     const vector <char *> & sl2, vector <char *> * tg1,
+     vector <char *> * tg2)
+
+//  Merge the portion of the alignment in  m  between  a_lo  and
+//  a_hi  into this alignment between  b_lo  and  b_hi .
+//   sl1  and  sl2  are the sequences of the reads for this
+//  multialignment and multialignment  m , respectively.
+//  Must have  a_lo <= a_hi  and  b_lo <= b_hi .
+//  Add relevant sequences from  sl2  to end of  sl1 .
+//  If neither  tg1  nor  tg2  is  NULL , then also add relevant
+//  sequences from  tg2  to the end of  tg1 .
+
+  {
+   Alignment_t  ali;
+   string  x, y;
+   int  a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi;
+   int  x_len, y_len;
+
+   // First align the consensus sequences (also aligning the gap
+   //   positions based on the characters that are there)
+
+   // Pull out the respective consensus regions
+   // Need to add some indication of what characters aligned with the
+   //   gap position
+   m . Extract_Gapped_Region (a_lo, a_hi, x, a_gapped_lo, a_gapped_hi);
+   x_len = x . length ();
+
+   Extract_Gapped_Region (b_lo, b_hi, y, b_gapped_lo, b_gapped_hi);
+   y_len = y . length ();
+
+#if  0   
+   printf (">a%d..%d\n", a_lo, a_hi);
+   Fasta_Print (stdout, x . c_str (), NULL);
+
+   printf (">b%d..%d\n", b_lo, b_hi);
+   Fasta_Print (stdout, y . c_str (), NULL);
+#endif
+
+   // Align them
+   // Need to add something to take into account characters associated
+   //   with gap positions
+   Global_Align (x . c_str (), x_len, y . c_str (), 0, y_len, 2, -3, -2, -1, ali);
+
+   ali . Print (stdout, x . c_str (), y . c_str ());
+
+   // Then align the individual reads to the result.
+
+printf ("ali:\n");
+ali . Dump (stdout);
+printf ("a_gapped_lo/hi = %d/%d  b_gapped_lo/hi = %d/%d\n",
+    a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi);
+
+   ali . a_lo += a_gapped_lo;
+   ali . a_hi += a_gapped_lo;
+   ali . b_lo += b_gapped_lo;
+   ali . b_hi += b_gapped_lo;
+   Expand_Consensus (ali);
+
+   cout << endl << endl << "Contig #1 after Expand_Consensus" << endl;
+   Print (stdout, sl1, 60);
+
+   Add_Aligned_Seqs (m, ali, a_gapped_lo, a_gapped_hi, sl1, sl2, tg1, tg2);
+
+   // Then re-call the consensus
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Print
-    (FILE * fp, const vector <char *> & s, int width)
+    (FILE * fp, const vector <char *> & s, bool with_diffs, int width,
+     vector <char *> * tag)
 
 //  Display this multialignment to file  fp  using
 //   width  characters per line.   s  holds the strings
-//  the alignment references.
+//  the alignment references.  If  tag  is not NULL, it
+//  holds tag strings corresponding to the sequences  s
+//  to be used to label the sub-alignment lines.  If
+//   with_diffs  is true also print a line under the consensus showing
+//  where there are any differences with the aligned sequences.
 
   {
-   char  * buff;
+   char  * buff, * diff;
    int  lo, hi, len;
    int  i, n;
 
@@ -1306,6 +1823,8 @@ void  Gapped_Multi_Alignment_t :: Print
    n = s . size ();
    len = consensus . length ();
    buff = (char *) Safe_malloc (5 + len, __FILE__, __LINE__);
+   if  (with_diffs)
+       diff = (char *) Safe_malloc (5 + width, __FILE__, __LINE__);
 
    // assume for now the alignments are sorted in ascending order by
    // b_lo value
@@ -1315,22 +1834,53 @@ void  Gapped_Multi_Alignment_t :: Print
       int  a_lo, a_hi;
 
       hi = Min (lo + width, len);
+      if  (with_diffs)
+          {
+           memset (diff, ' ', hi - lo);
+           diff [hi - lo] = '\0';
+          }
 
       for  (i = 0;  i < n;  i ++)
         if  (Range_Intersect (align [i] . b_lo, align [i] . b_hi, lo, hi))
             {
              align [i] . Print_Subalignment_Line
                            (buff, lo, hi, s [i], a_lo, a_hi);
-             fprintf (fp, "%4d:  %s  (%d-%d)\n", i, buff, a_lo, a_hi);
+             if  (tag == NULL)
+                 fprintf (fp, "%4d:  %s  (%d-%d)\n", i, buff, a_lo, a_hi);
+               else
+                 fprintf (fp, "%10.10s:  %s  (%d-%d)\n", (* tag) [i], buff,
+                      a_lo, a_hi);
+             if  (with_diffs)
+                 {
+                  int  j, k;
+
+                  k = 0;
+                  for  (j = lo;  j < hi;  j ++, k ++)
+                    if  (buff [k] != ' ' && buff [k] != consensus [j])
+                        diff [k] = '^';
+                 }
             }
 
       Print_Consensus (buff, lo, hi);
-      fprintf (fp, "%4s:  %s  (%d-%d)\n", "cons", buff, lo, hi);
+      if  (tag == NULL)
+          {
+           fprintf (fp, "%4s:  %s  (%d-%d)\n", "cons", buff, lo, hi);
+           if  (with_diffs)
+               fprintf (fp, "%5s  %s\n", "", diff);
+          }
+        else
+          {
+           fprintf (fp, "%10.10s:  %s  (%d-%d)\n", "cons", buff, lo, hi);
+           if  (with_diffs)
+               fprintf (fp, "%11s  %s\n", "", diff);
+          }
       if  (hi < len)
           fprintf (fp, "\n");
      }
    
    free (buff);
+   if  (with_diffs)
+       free (diff);
 
    return;
   }
@@ -1351,6 +1901,44 @@ void  Gapped_Multi_Alignment_t :: Print_Consensus
      buff [ct ++] = consensus [i];
 
    buff [ct] = '\0';
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Reverse_Complement
+    (vector <char *> & s)
+
+//  Reverse-complement the consensus of this multialignment
+//  and all the entries in  s , and adjust the alignments
+//  of all the component strings (which are in  s ).
+
+  {
+   int  cons_len;
+   int  i, n;
+
+   :: Reverse_Complement (consensus);
+   Reverse_String (con_qual);
+
+   cons_len = consensus . length ();
+
+   if  (align . size () != s . size ())
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  GMA reverse_complement called with %d strings and %d alignments",
+            int (s . size ()), int (align . size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+        
+       }
+   n = align . size ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      int  read_len = strlen (s [i]);
+
+      :: Reverse_Complement (s [i]);
+      align [i] . Flip (read_len, cons_len);
+     }
 
    return;
   }
@@ -1540,6 +2128,27 @@ void  Gapped_Multi_Alignment_t :: Sort
 
 
 
+int  Gapped_Multi_Alignment_t :: Ungapped_Consensus_Len
+    (void)  const
+
+//  Return the number of non-'-' characters in this
+//  multialignment's consensus sequence.
+
+  {
+   int  i, n, ct;
+
+   n = consensus . length ();
+   ct = 0;
+   for  (i = 0;  i < n;  i ++)
+     if  (consensus [i] != '-')
+         ct ++;
+
+   return  ct;
+  }
+
+
+
+
 int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len)
 
@@ -1642,7 +2251,8 @@ void  Global_Align
 //  Find the best global alignment of the entire string  s  to a
 //  substring of  t  between postions  t_lo  and  t_hi .
 //  The length of  s  is  s_len  and the length of  t  is at least
-//   t_hi .  The resulting alignment is stored in  align .
+//   t_hi .  The resulting alignment is stored in  align ,
+//  where  s  is the  a  string and  t  is the  b  string.
 //   match_score  is the score for matching characters (positive);
 //   mismatch_score  the score for aligning different characters (negative);
 //   indel_score  the score for insertions/deletions (negative);
@@ -1651,9 +2261,13 @@ void  Global_Align
   {
    vector < vector <Align_Score_Entry_t> > a;  // the alignment array
    vector <Align_Score_Entry_t>  empty_vector;
+   vector <int>  delta;
    Align_Score_Entry_t  entry;
    int  r, c;    // row and column
-   int  i;  // position in string  t
+   int  max_row, max_score;
+   unsigned int  max_from;
+   int  ct, sign;
+   int  i, n;  // position in string  t
 
    assert (t_lo <= t_hi);
    assert (0 <= s_len );
@@ -1676,10 +2290,14 @@ void  Global_Align
       entry . left_from = FROM_LEFT;
       a [r] . push_back (entry);
      }
+   entry . Get_Max (max_score, max_from);
+   max_row = 0;
      
    // Do remaining rows
    for  (i = t_lo;  i < t_hi;  i ++)
      {
+      int  mxs;
+      unsigned int  mxf;
       r ++;
 
       // First column in row
@@ -1695,22 +2313,12 @@ void  Global_Align
          Align_Score_Entry_t  * p;
 
          p = & (a [r - 1] [c]);
-         if  (p -> left_score < p -> diag_score)
-             {
-              entry . top_score = p -> diag_score + gap_score;
-              entry . top_from = FROM_DIAG;
-             }
-           else
-             {
-              entry . top_score = p -> left_score + gap_score;
-              entry . top_from = FROM_LEFT;
-             }
-         if  (entry . top_score < p -> top_score)
-             {
-              entry . top_score = p -> top_score;   // Don't add gap_score here
-              entry . top_from = FROM_TOP;
-             }
-         entry . top_score += indel_score;
+         p -> Get_Max (mxs, mxf);
+         if  (mxf != FROM_TOP)
+             mxs += gap_score;
+         mxs += indel_score;
+         entry . top_score = mxs;
+         entry . top_from = mxf;
 
          p = & (a [r - 1] [c - 1]);
          if  (p -> left_score < p -> diag_score)
@@ -1728,28 +2336,115 @@ void  Global_Align
               entry . diag_score = p -> top_score;
               entry . diag_from = FROM_TOP;
              }
-         entry . diag_score += (t [r - 1] == s [c - 1] ? match_score : mismatch_score);
+         entry . diag_score += ((t [i] == s [c - 1]) ? match_score : mismatch_score);
 
          p = & (a [r] [c - 1]);
          if  (p -> left_score < p -> diag_score)
              {
-              entry . diag_score = p -> diag_score + gap_score;
-              entry . diag_from = FROM_DIAG;
+              entry . left_score = p -> diag_score + gap_score;
+              entry . left_from = FROM_DIAG;
              }
            else
              {
-              entry . diag_score = p -> left_score;   // Don't add gap_score here
-              entry . diag_from = FROM_LEFT;
+              entry . left_score = p -> left_score;   // Don't add gap_score here
+              entry . left_from = FROM_LEFT;
              }
-         if  (entry . diag_score < p -> top_score)
+         if  (entry . left_score < p -> top_score)
              {
-              entry . diag_score = p -> top_score + gap_score;
-              entry . diag_from = FROM_TOP;
+              entry . left_score = p -> top_score + gap_score;
+              entry . left_from = FROM_TOP;
              }
-         entry . diag_score += indel_score;
+         entry . left_score += indel_score;
          a [r] . push_back (entry);
+#if  0
+entry . Get_Max (mxs, mxf);
+printf ("r = %d  c = %d  mxs = %d  mxf = %u  max_score = %d  max_row = %d\n",
+     r, c, mxs, mxf, max_score, max_row);
+printf ("L = %d:%u  D = %d:%u  T = %d:%u\n", entry . left_score, entry . left_from,
+     entry . diag_score, entry . diag_from, entry . top_score, entry . top_from);
+#endif
+        }
+
+      entry . Get_Max (mxs, mxf);
+      if  (mxs > max_score)
+          {
+           max_score = mxs;
+           max_from = mxf;
+           max_row = r;
+          }
+     }
+
+   r = max_row;
+   c = s_len;
+   ct = 0;
+   sign = 0;
+   while  (c > 0)
+     {
+#if  0
+{
+ int  mxs;
+ unsigned int  mxf;
+
+ a [r] [c] . Get_Max (mxs, mxf);
+
+ printf ("r = %d  c = %d  mxs = %d  mxf = %u\n", r, c, mxs, mxf);
+ printf ("sign = %d  ct = %d\n", sign, ct);
+}
+#endif
+      switch  (max_from)
+        {
+         case  FROM_LEFT :
+           if  (sign != 0)
+               {
+                printf ("del = %d\n", sign * ct);
+                delta . push_back (sign * ct);
+               }
+           ct = 1;
+           sign = -1;
+           max_from = a [r] [c] . left_from;
+           c --;
+           break;
+         case  FROM_DIAG :
+           ct ++;
+           max_from = a [r] [c] . diag_from;
+           r --;
+           c --;
+           break;
+         case  FROM_TOP :
+           if  (sign != 0)
+               {
+                printf ("del = %d\n", sign * ct);
+                delta . push_back (sign * ct);
+               }
+           ct = 1;
+           sign = 1;
+           max_from = a [r] [c] . top_from;
+           r --;
+           break;
+         default :
+           sprintf (Clean_Exit_Msg_Line, "ERROR:  Bad from = %u in Global_Align",
+                max_from);
+           Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
         }
      }
+
+   if  (sign != 0)
+       {
+        printf ("del = %d\n", sign * ct);
+        delta . push_back (sign * ct);
+       }
+
+   align . a_lo = 0;
+   align . a_hi = s_len;
+   align . b_hi = max_row + t_lo;
+   align . b_lo = r + t_lo;
+
+   reverse (delta . begin (), delta . end ());
+   n = delta . size ();
+   for  (i = 0;  i < n;  i ++)
+     printf ("delta [%d] = %d\n", i, delta [i]);
+
+   align . setDelta (delta);
 
    return;
   }
