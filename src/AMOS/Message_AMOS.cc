@@ -90,9 +90,9 @@ void Message_t::setField (const string & fname, const string & data)
        *(data . rbegin( )) != '\n' )
     AMOS_THROW_ARGUMENT ("invalid message multi-line field format");
 
-  pair<map<string,string,StrLT>::iterator,bool> ret;
+  pair<map<string,string>::iterator,bool> ret;
 
-  ret = fields_m . insert (map<string,string,StrLT>::value_type(fname, data));
+  ret = fields_m . insert (map<string,string>::value_type(fname, data));
   if ( !ret . second )
     (ret . first) -> second = data;
 }
