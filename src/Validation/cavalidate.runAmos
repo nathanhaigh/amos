@@ -1,0 +1,28 @@
+## Convert a CA assembly to AMOS land, run validation steps
+
+INPUTS = $(PREFIX).asm $(PREFIX).frg
+
+## toAmos
+10: /local/asmg/Linux/bin/toAmos -f $(PREFIX).frg -a $(PREFIX).asm -o $(PREFIX).afg
+
+## bank-transact
+20: /local/asmg/Linux/bin/bank-transact -m $(PREFIX).afg -b $(PREFIX).bnk -c
+
+## asmQC
+30: /local/asmg/Linux/bin/asmQC -b $(PREFIX).bnk -feat -numsd 2
+
+## bank2contig
+40: /local/asmg/Linux/bin/bank2contig $(PREFIX).bnk > $(PREFIX).contig
+
+## getCoverage
+50: /usr/local/bin/getCoverage -t --gapped -R -a all -M $(PREFIX).contig
+
+## findTcovSnps
+60: /local/asmg/Linux/bin/findTcovSnp.pl -H $(PREFIX) > $(PREFIX).snps
+
+## ClusterSnps
+70: /local/asmg/Linux/bin/clusterSnps.pl $(PREFIX).snps > $(PREFIX).snp.feat
+
+## Load SNP Features
+80: /local/asmg/Linux/bin/loadFeatures $(PREFIX).bnk $(PREFIX).snp.feat
+
