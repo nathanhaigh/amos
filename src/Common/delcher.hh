@@ -24,7 +24,7 @@
 #include  <ctime>
 #include  <cassert>
 #include  <errno.h>
-#include  <getopt.h>
+#include  <unistd.h>
 
 
 #define  TRUE  1
