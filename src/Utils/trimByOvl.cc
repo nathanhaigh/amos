@@ -16,6 +16,8 @@
 using namespace std;
 using namespace AMOS;
 
+#undef howmany  // on the alphas with gcc3.3.2 this causes problems ???
+
 #define MAXOVL 10  // max overlap between ranges
 
 struct olap_t {
@@ -61,6 +63,7 @@ int main(int argc, char **argv)
   
   if (argc < 2 || argc > 3){
     cerr << "Usage: trimByOvl file.ovl [n]" << endl;
+    cerr << "n - number of fragments" << endl;
     exit(1);
   }
 
@@ -81,6 +84,16 @@ int main(int argc, char **argv)
 
   if (inFile == (ifstream *) NULL){
     cerr << "Cannot open input file: " << argv[1] << endl;
+    exit(1);
+  }
+
+  char outfilename[256];
+  sprintf(outfilename, "%s.guess", argv[1]);
+
+  ofstream outFile(outfilename);
+
+  if (!outFile.is_open()){
+    cerr << "Could not open output file: " << outfilename << endl;
     exit(1);
   }
 
@@ -217,21 +230,29 @@ int main(int argc, char **argv)
     cout << "cov " << i << " ";
     //    cerr << "cov " << i << " ";
 
+    outFile << i << " ";
     int cov = 0;
+    int lastend = 0;
     for (int j = 0; j < allpos.size(); j++){
       if (j > 0) 
 	cout << "(" << allpos[j - 1].x << "," << allpos[j].x << ")=" 
 	     << cov << " ";
       if (allpos[j].start) { // beginning of a range
 	//	cerr << j << " " << allpos[j].x << " start ";
-	//	if (cov == 0)
-	  //	  cout << allpos[j].x << " ";
+	if (cov == 0)
+	  outFile << allpos[j].x << " ";
 	cov++;
       } else { // end of range
 	//	cerr << j << " " << allpos[j].x << " end ";
 	cov--;
-	//	if (cov == 0)
-	  //	  cout << allpos[j].x << " B ";
+	if (cov == 0){
+	  outFile << allpos[j].x;
+	  if (allpos[j].x - lastend < 10)
+	    outFile << " B" << allpos[j].x - lastend << " ";
+	  else
+	    outFile << " b ";
+	}
+	lastend = allpos[j].x;
       }
     }
     
@@ -240,6 +261,7 @@ int main(int argc, char **argv)
     
     cout << "chi " << i << " ";
     //    cerr << "chi " << i << " ";
+    //outFile << "chi " << i << " ";
     cov = 0;
     for (int j = 0; j < shortpos.size(); j++){
       if (j > 0) 
@@ -247,90 +269,21 @@ int main(int argc, char **argv)
 	     << cov << " ";
       if (shortpos[j].start) { // beginning of a range
 	//	cerr << j << " " << allpos[j].x << " start ";
-	//	if (cov == 0)
-	// cout << shortpos[j].x << " ";
+	if (cov == 0)
+	  cout << ((j > 0) ? shortpos[j - 1].x : shortpos[j].x)<< " ";
 	cov++;
       } else { // end of range
 	//	cerr << j << " " << allpos[j].x << " end ";
 	cov--;
-	//	if (cov == 0)
-	// cout << shortpos[j].x << " B ";
+	if (cov == 0)
+	  cout << shortpos[j].x << " B ";
       }
     }
     //    cerr << endl;
     cout << endl;
-    
+    outFile << endl;
 
-//     // we sort the ranges by leftmost coordinate along the read
-//     sort(olapmap[i].begin(), olapmap[i].end(), cmpOlapByA());
-//     // build a set of contiguous ranges
-//     // pick the longest one
-//     // within it, find the leftmost reverse hit - set as 5'
-//     // set rightmost end as 3'
-
-//     // output id, 5', 3', and quality: A - one range, 5' set by reverse
-//     // B - one range, no reverse hits
-//     // C - multiple ranges, 5' set by reverse
-//     // D - multiple ranges, no reverse hits in best range
-//     // E - no overlaps
-
-//     Pos_t start = 0, end = -1;
-//     vector<Range_t> ranges;
-//     vector<Pos_t> rev5p;
-//     int max_range_id = -1;
-//     Pos_t max_range_len = 0;
-//     bool found_rev = false;
-//     for (vector<olap_t>::iterator o = olapmap[i].begin(); 
-// 	 o != olapmap[i].end(); o++){
-//       Pos_t rb, re;
-//       rb = o->rangeA.getBegin();
-//       re = o->rangeA.getEnd();
-//       if (! o->forw && !found_rev){
-// 	rev5p.push_back(rb); // remember first 5p location due to rev read
-// 	found_rev = true;
-//       }
-//       if (rb > end){ // starting new range
-// 	if (end != -1){
-// 	  ranges.push_back(Range_t(start, end));
-// 	  if (end - start > max_range_len){
-// 	    max_range_len = end - start;
-// 	    max_range_id = ranges.size() - 1;
-// 	  }
-// 	}
-// 	start = rb;
-// 	if (! found_rev)
-// 	  rev5p.push_back(-1);
-// 	found_rev = false;
-//       }
-//       if (re > end)
-// 	end = re;
-//     } // for each sorted overlap
-
-//     if (end != -1){
-//       ranges.push_back(Range_t(start, end));
-//       if (end - start > max_range_len){
-// 	max_range_len = end - start;
-// 	max_range_id = ranges.size() - 1;
-//       }
-//       if (! found_rev)
-// 	rev5p.push_back(-1);
-//     }
-
-//     // ranges contains all the ranges found
-
-//     if (ranges.empty()) // no overlaps
-//       cout << i << "\t" << 0 << "\t" << 0 << "\t" << "E" << "\n";
-//     else {
-//       if (rev5p[max_range_id] == -1)
-// 	cout << i << "\t" << ranges[max_range_id].getBegin() << "\t" 
-// 	     << ranges[max_range_id].getEnd() << "\t" 
-// 	     << ((ranges.size() == 1) ? "B" : "D") << "\n";
-//       else 
-// 	cout << i << "\t" << rev5p[max_range_id] << "\t" 
-// 	     << ranges[max_range_id].getEnd() 
-// 	     << "\t" << ((ranges.size() == 1) ? "A" : "C") << "\n";
-//     }
   } // while each overlap for this read
-
+  outFile.close();
   exit(0);
 }
