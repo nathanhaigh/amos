@@ -81,7 +81,7 @@ int  main
    else if  (Minimize_Max_Error)
        fprintf (stderr, "Minimizing max error instead of sum of |error|\n");
      else
-       fprintf (stderr, "Minimizing sum of |error| instead of square of error^2\n");
+       fprintf (stderr, "Minimizing sum of |error| instead of sum of error^2\n");
    fprintf (stderr, "Using only reads with 3' overlaps degrees <= %d\n",
         Degree_Cutoff);
 
