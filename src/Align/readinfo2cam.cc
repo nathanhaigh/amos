@@ -796,7 +796,7 @@ static void  Output_Mates
                   Bad_Start_Row, tag);
                  
              sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
-                 j, Read [j] . unitig_id, i, Read [j] . unitig_id,
+                 j, Read [j] . unitig_id, i, Read [i] . unitig_id,
                  (Read [i] . cam_a + Read [i] . cam_b) / 2);
              Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
                   Bad_Start_Row, tag);
