@@ -673,15 +673,6 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
 	lay_read->start = lay_read->end + len;
       }
 
-      if(lay_read->start < 0) {
-	cout << " negative start contained read " << lay_read->start << endl;
-	lay_read->end -= lay_read->start;
-	lay_read->start = 0;
-      } else if(lay_read->end < 0) {
-	cout << " negative end contained read " << lay_read->end << endl;
-	lay_read->start -= lay_read->end;
-	lay_read->end = 0;
-      }
 
     } else if(olap->type == 'R') {
 
@@ -724,6 +715,17 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
       lay_read->end = lay_read->start + len;
     }
   }
+
+  if(lay_read->start < 0) {
+    cout << " negative start read " << lay_read->start << endl;
+    lay_read->end -= lay_read->start;
+    lay_read->start = 0;
+  } else if(lay_read->end < 0) {
+    cout << " negative end read " << lay_read->end << endl;
+    lay_read->start -= lay_read->end;
+    lay_read->end = 0;
+  }
+
 
   // check start
   if((lay_read->start < 0) || (lay_read->end < 0)) {
