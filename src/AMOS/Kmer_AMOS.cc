@@ -9,6 +9,7 @@
 
 #include "Kmer_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
@@ -60,6 +61,49 @@ Kmer_t & Kmer_t::operator= (const Kmer_t & source)
 }
 
 
+//----------------------------------------------------- readMessage-------------
+void Kmer_t::readMessage (const Message_t & msg)
+{
+  clear( );
+  Universal_t::readMessage (msg);
+
+  try {
+    ID_t iid;
+    stringstream ss;
+
+    if ( msg . exists (F_COUNT) )
+      {
+	ss . str (msg . getField (F_COUNT));
+	ss >> count_m;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid cnt format");
+      }
+
+    if ( msg . exists (F_SEQUENCE) )
+      setSeqString (msg . getField (F_SEQUENCE));
+
+    if ( msg . exists (F_READS) )
+      {
+	ss . str (msg . getField (F_READS));
+
+	while ( ss )
+	  {
+	    ss >> iid;
+	    if ( ! ss . fail( ) )
+	      reads_m . push_back (iid);
+	  }
+
+	if ( !ss . eof( ) )
+	  AMOS_THROW_ARGUMENT ("Invalid rds format");
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+}
+
 //----------------------------------------------------- readRecord -------------
 Size_t Kmer_t::readRecord (istream & fix,
 			   istream & var)
@@ -102,10 +146,16 @@ void Kmer_t::setSeqString (const string & seq)
 
   //-- See comments for setBase regarding the compressed sequence
   Pos_t ci = -1;
-  int offset = 0;
-  for ( Pos_t ui = 0; ui < length_m; ui ++ )
+  int offset = 8;
+  for ( string::size_type ui = 0; ui < seq . size( ); ui ++ )
     {
-      if ( ui % 4 == 0 )
+      if ( seq [ui] == '\n' )
+	{
+	  length_m --;
+	  continue;
+	}
+
+      if ( offset >= 8 )
 	{
 	  offset = 0;
 	  seq_m [++ ci] = 0;
@@ -113,6 +163,47 @@ void Kmer_t::setSeqString (const string & seq)
       seq_m [ci] |= compress (seq [ui]) >> offset;
       offset += 2;
     }
+
+  size = length_m / 4 + (length_m % 4 ? 1 : 0);
+  seq_m = (uint8_t *) SafeRealloc (seq_m, size);
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Kmer_t::writeMessage (Message_t & msg) const
+{
+  Universal_t::writeMessage (msg);
+
+  try {
+    vector<ID_t>::const_iterator vi;
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    ss << count_m;
+    msg . setField (F_COUNT, ss . str( ));
+    ss . str("");
+
+    if ( length_m != 0 )
+      {
+	WrapString (ss, getSeqString( ), 70);
+	msg . setField (F_SEQUENCE, ss . str( ));
+	ss . str("");
+      }
+
+    if ( reads_m . size( ) != 0 )
+      {
+	for ( vi = reads_m . begin( ); vi != reads_m . end( ); vi ++ )
+	  ss << *vi << '\n';
+	msg . setField (F_READS, ss . str( ));
+	ss . str("");
+      }
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
 }
 
 

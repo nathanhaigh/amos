@@ -60,6 +60,7 @@ void Universal_t::writeMessage (Message_t & msg) const
       {
 	ss << iid_m;
 	msg . setField (F_IID, ss . str( ));
+	ss . str("");
       }
 
     if ( eid_m . size( ) != 0 )

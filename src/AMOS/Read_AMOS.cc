@@ -60,26 +60,6 @@ Size_t Read_t::writeRecord (ostream & fix,
 
 
 //================================================ Helper Functions ============
-//----------------------------------------------------- WrapStirng -------------
-void AMOS::WrapString (ostream & out, const string & s, int per)
-{
-  int  i, n;
-  
-  n = s . length ();
-  for  (i = 0;  i < n;  i += per)
-    {
-      int  j, last;
-      
-      last = i + per;
-      if  (n < last)
-	last = n;
-      for  (j = i;  j < last;  j ++)
-        out << s [j];
-      out << endl;
-    }
-}
-
-
 //----------------------------------------------------- operator<< -------------
 ostream & AMOS::operator<< (ostream & out, Read_t & read)
 {

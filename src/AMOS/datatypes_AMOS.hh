@@ -10,9 +10,13 @@
 #ifndef __datatypes_AMOS_HH
 #define __datatypes_AMOS_HH 1
 
+#include "exceptions_AMOS.hh"
 #include "inttypes_AMOS.hh"
+#include "Message_AMOS.hh"
 #include <vector>
 #include <cstdlib>
+#include <string>
+#include <sstream>
 
 
 
@@ -30,7 +34,7 @@ namespace AMOS {
 //! \todo make more general, however poisson and binomials can be approximated
 //! with a normal distribution... so this might stay the same
 //==============================================================================
-struct Distribution_t
+struct Distribution_t : public IMessagable_t
 {
 
   uint32_t mean;        //!< the mean
@@ -65,6 +69,21 @@ struct Distribution_t
   {
     mean = 0; sd = 0; skew = 0;
   }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  virtual NCode_t getNCode ( ) const
+  {
+    return Message_k::M_DISTRIBUTION;
+  }
+
+
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 
@@ -340,6 +359,12 @@ bool operator!= (const Distribution_t & a, const Distribution_t & b);
 //!
 bool operator== (const Tile_t & a, const Tile_t & b);
 bool operator!= (const Tile_t & a, const Tile_t & b);
+
+
+//----------------------------------------------------- WrapStirng -------------
+//! \brief Inserts a newline every 'per' characters when writing to stream
+//!
+void WrapString (std::ostream & out, const std::string & s, int per);
 
 
 //--TEMPORARY

@@ -262,12 +262,6 @@ public:
 
 
 //================================================ Helper Functions ============
-//----------------------------------------------------- WrapStirng -------------
-//! \brief Inserts a newline character every 'per' characters
-//!
-void WrapString (std::ostream & out, const std::string & s, int per);
-
-
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump read object to ostream
 //!

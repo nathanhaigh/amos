@@ -9,7 +9,82 @@
 
 #include "datatypes_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
+
+
+
+
+
+//================================================ Distribution_t ==============
+//----------------------------------------------------- readMessage ------------
+void Distribution_t::readMessage (const Message_t & msg)
+{
+  clear( );
+
+  try {
+    stringstream ss;
+
+    if ( msg . exists (F_MEAN) )
+      {
+	ss . str (msg . getField (F_MEAN));
+	ss >> mean;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid mea format");
+      }
+
+    if ( msg . exists (F_SD) )
+      {
+	ss . str (msg . getField (F_SD));
+	ss >> sd;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid std format");
+      }
+
+    if ( msg . exists (F_SKEWNESS) )
+      {
+	ss . str (msg . getField (F_SKEWNESS));
+	ss >> skew;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid skw format");
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Distribution_t::writeMessage (Message_t & msg) const
+{
+  msg . clear( );
+
+  try {
+    stringstream ss;
+
+    msg . setMessageCode (Distribution_t::getNCode( ));
+
+    ss << mean;
+    msg . setField (F_MEAN, ss . str( ));
+    ss . str("");
+
+    ss << sd;
+    msg . setField (F_SD, ss . str( ));
+    ss . str("");
+
+    ss << skew;
+    msg . setField (F_SKEWNESS, ss . str( ));
+    ss . str("");
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
+}
 
 
 
@@ -101,4 +176,24 @@ bool AMOS::operator== (const Tile_t & a, const Tile_t & b)
 bool AMOS::operator!= (const Tile_t & a, const Tile_t & b)
 {
   return !(a == b);
+}
+
+
+//----------------------------------------------------- WrapStirng -------------
+void AMOS::WrapString (ostream & out, const string & s, int per)
+{
+  int  i, n;
+  
+  n = s . length ();
+  for  (i = 0;  i < n;  i += per)
+    {
+      int  j, last;
+      
+      last = i + per;
+      if  (n < last)
+	last = n;
+      for  (j = i;  j < last;  j ++)
+        out << s [j];
+      out << endl;
+    }
 }

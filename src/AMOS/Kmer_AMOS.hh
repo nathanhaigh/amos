@@ -255,6 +255,10 @@ public:
   std::string getSeqString ( ) const;
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setBase ----------------
   //! \brief Set a single sequence base for the kmer
   //!
@@ -323,7 +327,7 @@ public:
   //! Compresses the string and updates the Kmer sequence. Does not alter
   //! Kmer count or read list, these must be reset manually. Only the
   //! characters A,C,G,T are allowed, all other characters will throw an
-  //! exception.
+  //! exception (except for newlines, which will be discarded).
   //!
   //! \param seq The new Kmer sequence string
   //! \pre seq can be longer than MAX_LENGTH (255) bases
@@ -346,6 +350,10 @@ public:
     count_m ++;
     return *this;
   }
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 
   //--------------------------------------------------- operator= --------------

@@ -114,6 +114,10 @@ public:
   }
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setDistribution --------
   //! \brief Set the insert fragment size distribution
   //!
@@ -124,6 +128,9 @@ public:
   {
     dist_m = dist;
   }
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 
