@@ -1,6 +1,12 @@
-// Read a list of short kmers (31 bases or less) and then
-// compute what regions of the fasta sequences read from
-// stdin are covered by them (or their reverse complement).
+//  A. L. Delcher
+//
+//  File:  kmer-cov.cc
+//
+//  Last Modified:  22 March 2004
+//
+//  Read a list of short kmers (31 bases or less) and then
+//  compute what regions of the fasta sequences read from
+//  stdin are covered by them (or their reverse complement).
 
 
 #include  "delcher.hh"
@@ -13,7 +19,10 @@
 
 
 const int  MAX_LINE = 1000;
-
+const double  DEFAULT_UNIQUE_CUTOFF = 50.0;
+  // Default value for global  Unique_Cutoff
+const double  DEFAULT_REPEAT_CUTOFF = 90.0;
+  // Default value for global  Repeat_Cutoff
 
 typedef  long long unsigned  Mer_t;
 
@@ -26,6 +35,16 @@ static int  Hash_Shift = 0;
 static Mer_t  * Hash_Table = NULL;
 static int  Hash_Table_Size = 0;
 static int  Kmer_Len = 0;
+static string  Kmer_File_Name;
+  // Name of file kmers
+static bool  Make_Fasta = false;
+  // If set true by the -f option, also generate fasta files
+  // of sequences that are unique, repeat and unsure.
+static double  Repeat_Cutoff = DEFAULT_REPEAT_CUTOFF;
+  // Strings covered >= this percent are classified repeat
+  // Inbetween is unsure.
+static double  Unique_Cutoff = DEFAULT_UNIQUE_CUTOFF;
+  // Strings covered < this percent are classified unique
 
 
 static void  Build_Hash_Table
@@ -44,10 +63,14 @@ static bool  Hash_Find
     (Mer_t mer);
 static void  Hash_Insert
     (Mer_t mer);
+static void  Parse_Command_Line
+    (int argc, char * argv []);
 static void  Print_Mer_Coverage
-    (const string & s);
+    (const string & s, double & percent_covered);
 static void  Read_Mers
     (const char * fname, vector <Mer_t> & mer_list);
+static void  Usage
+    (const char * command);
 
 
 
@@ -55,11 +78,17 @@ int  main
     (int argc, char * argv [])
 
   {
+   FILE  * unique_fp, * repeat_fp, * unsure_fp;
    vector <Mer_t>  mer_list;
    string  s, tag;
    int  n;
 
-   Read_Mers (argv [1], mer_list);
+   Parse_Command_Line (argc, argv);
+
+   fprintf (stderr, "Repeat_Cutoff set to %.2f%%\n", Repeat_Cutoff);
+   fprintf (stderr, "Unique_Cutoff set to %.2f%%\n", Unique_Cutoff);
+
+   Read_Mers (Kmer_File_Name . c_str (), mer_list);
 
    n = mer_list . size ();
 
@@ -86,11 +115,40 @@ int  main
 }
 #endif
 
+   if  (Make_Fasta)
+       {
+        unique_fp = File_Open ("unique.cov.fasta", "w", __FILE__, __LINE__);
+        repeat_fp = File_Open ("repeat.cov.fasta", "w", __FILE__, __LINE__);
+        unsure_fp = File_Open ("unsure.cov.fasta", "w", __FILE__, __LINE__);
+       }
+
    while  (Fasta_Read (stdin, s, tag))
      {
+      FILE  * fp;
+      double  percent_covered;
+
       printf (">%s\n", tag . c_str ());
-      Print_Mer_Coverage (s);
+      Print_Mer_Coverage (s, percent_covered);
+
+      if  (Make_Fasta)
+          {
+           if  (percent_covered < Unique_Cutoff)
+               fp = unique_fp;
+           else if  (percent_covered >= Repeat_Cutoff)
+               fp = repeat_fp;
+             else
+               fp = unsure_fp;
+           fprintf (fp, ">%s\n", tag . c_str ());
+           Fasta_Print (fp, s . c_str ());
+          }
      }
+
+   if  (Make_Fasta)
+       {
+        fclose (unique_fp);
+        fclose (repeat_fp);
+        fclose (unsure_fp);
+       }
 
    return  0;
   }
@@ -253,12 +311,70 @@ static void  Hash_Insert
 
 
 
+static void  Parse_Command_Line
+    (int argc, char * argv [])
+
+//  Get options and parameters from command line with  argc
+//  arguments in  argv [0 .. (argc - 1)] .
+
+  {
+   bool  errflg = false;
+   int  ch;
+
+   optarg = NULL;
+
+   while  (! errflg && ((ch = getopt (argc, argv, "fhr:u:")) != EOF))
+     switch  (ch)
+       {
+        case  'f' :
+          Make_Fasta = true;
+          break;
+
+        case  'h' :
+          errflg = true;
+          break;
+
+        case  'r' :
+          Repeat_Cutoff = strtod (optarg, NULL);
+          break;
+
+        case  'u' :
+          Unique_Cutoff = strtod (optarg, NULL);
+          break;
+
+        case  '?' :
+          fprintf (stderr, "Unrecognized option -%c\n", optopt);
+
+        default :
+          errflg = true;
+       }
+
+   if  (errflg)
+       {
+        Usage (argv [0]);
+        exit (EXIT_FAILURE);
+       }
+
+   if  (optind > argc - 1)
+       {
+        Usage (argv [0]);
+        exit (EXIT_FAILURE);
+       }
+
+   Kmer_File_Name = argv [optind ++];
+
+   return;
+  }
+
+
+
 static void  Print_Mer_Coverage
-    (const string & s)
+    (const string & s, double & percent_covered)
 
 //  Print regions in string  s  that are covered
 //  by mers (or their reverse-complements) in
-//  the global hash table.
+//  the global hash table.  Set  percent_covered  to
+//  the percentage of the entire read covered by the mers
 
   {
    Mer_t  fwd_mer = 0, rev_mer = 0;
@@ -269,6 +385,7 @@ static void  Print_Mer_Coverage
 
    if  (n < Kmer_Len)
        {
+        percent_covered = 0.0;
         printf ("Total %d of %d (%.1f%%)\n", 0, n, Percent (0, n));
         return;
        }
@@ -316,7 +433,8 @@ static void  Print_Mer_Coverage
         printf ("%8d %8d %8d\n", lo, hi, hi - lo);
        }
 
-   printf ("Total %d of %d (%.1f%%)\n", total, n, Percent (total, n));
+   percent_covered = Percent (total, n);
+   printf ("Total %d of %d (%.1f%%)\n", total, n, percent_covered);
 
    return;
   }
@@ -368,6 +486,33 @@ static void  Reverse_Add_Ch
   {
    mer >>= 2;
    mer |= ((long long unsigned) (3 ^ Char_To_Binary (ch)) << (2 * Kmer_Len - 2));
+
+   return;
+  }
+
+
+
+static void  Usage
+    (const char * command)
+
+//  Print to stderr description of options and command line for
+//  this program.   command  is the command that was used to
+//  invoke it.
+
+  {
+   fprintf (stderr,
+           "USAGE:  kmer-cov  <kmer-file>\n"
+           "\n"
+           "Read a list of short kmers (31 bases or less) from <kmer-file>\n"
+           "and then compute what regions of the fasta sequences read from\n"
+           "stdin are covered by them (or their reverse complement).\n"
+           "\n"
+           "Options:\n"
+           "  -f      Output unique/repeat/unsure fasta sequences\n"
+           "  -h      Print this usage message\n"
+           "  -r <x>  Repeats are > <x>%% covered by kmers\n"
+           "  -u <x>  Uniques are <= <x>%% covered by kmers\n"
+           "\n");
 
    return;
   }
