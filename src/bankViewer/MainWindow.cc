@@ -44,7 +44,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   menuBar()->insertItem("&File", file);
   file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()));
   file->insertItem("&Contig Picker...", this,  SLOT(chooseContig()));
-  file->insertItem("&Locate Read...",   this,  SLOT(showReadPicker()));
+  file->insertItem("&Read Information...",   this,  SLOT(showReadPicker()));
   file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 
   m_options = new QPopupMenu(this);
