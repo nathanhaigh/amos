@@ -28,7 +28,7 @@ using namespace std;
 
 
 //================================================ Bank_t ======================
-const string  Bank_t::BANK_VERSION     = "1.2.1";
+const string  Bank_t::BANK_VERSION     = "1.2.2";
 const string  Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string  Bank_t::IFO_STORE_SUFFIX = ".ifo";
 const string  Bank_t::VAR_STORE_SUFFIX = ".var";
