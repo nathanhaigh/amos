@@ -16,6 +16,8 @@ InsertWindow::InsertWindow(const std::string & bankname,
   InsertWidget * iw = new InsertWidget(bankname, contigId, this, "iw");
   setCentralWidget(iw);
   statusBar()->message("Ready", 2000);
+  statusBar()->setSizeGripEnabled(false);
+
 
   connect(iw,          SIGNAL(setStatus(const QString &)),
           statusBar(), SLOT(message(const QString &)));

@@ -259,7 +259,7 @@ void TilingField::paintEvent( QPaintEvent * )
                      Qt::AlignHCenter | Qt::AlignBottom, s);
 
           // QV
-          if (m_displayqv)
+          if (m_displayqv && b != ' ')
           {
             int qv = ri->qv(gindex);
             if (qv != -1)
