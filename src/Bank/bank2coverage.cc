@@ -10,26 +10,11 @@ using namespace std;
 
 bool USE_EID = 1;
 
-Pos_t getUngappedPos(const string & str, Pos_t offset)
-{
-  Pos_t retval = 1;
-
-  for (Pos_t gindex = 0; gindex < offset; gindex++)
-  {
-    if (str[gindex] != '-')
-    {
-      retval++;
-    }
-  }
-
-  return retval;
-}
-
-int hasOverlap(int rangeStart, // 0-based exact offset of range
-               int rangeEnd,   // 0-based exact end of range
-               int seqOffset,  // 0-bases exact offset of seq
-               int seqLen,     // count of bases of seq (seqend+1)
-               int contigLen)  // count of bases in contig (contigend+1)
+bool hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
+                Pos_t rangeEnd,   // 0-based exact end of range
+                Pos_t seqOffset,  // 0-bases exact offset of seq
+                Pos_t seqLen,     // count of bases of seq (seqend+1)
+                Pos_t contigLen)  // count of bases in contig (contigend+1)
 {
   int retval = 1;
 
@@ -53,6 +38,84 @@ int hasOverlap(int rangeStart, // 0-based exact offset of range
   return retval;
 }
 
+Pos_t getUngappedPos(const string & str, Pos_t offset)
+{
+  Pos_t retval = 1;
+
+  for (Pos_t gindex = 0; gindex < offset; gindex++)
+  {
+    if (str[gindex] != '-')
+    {
+      retval++;
+    }
+  }
+
+  return retval;
+}
+
+
+class Render_t
+{
+public:
+  Render_t();
+  ~Render_t();
+  void load(Bank_t & read_bank, vector<Tile_t>::const_iterator tile);
+
+  Read_t read;
+  string m_nucs;
+  string m_qual;
+  bool m_rc;
+  Pos_t m_offset;
+
+private:
+  Read_t m_read;
+};
+
+Render_t::Render_t()
+{ }
+
+Render_t::~Render_t()
+{ }
+
+void Render_t::load(Bank_t & read_bank, vector<Tile_t>::const_iterator tile)
+{
+  read_bank.fetch(tile->source, m_read);
+  Range_t range = tile->range;
+
+  m_offset = tile->offset;
+  m_rc = 0;
+  if (tile->range.begin > tile->range.end) { m_rc = 1; range.swap();} 
+
+  m_nucs = m_read.getSeqString(range);
+  m_qual = m_read.getQualString(range);
+
+  if (m_rc) 
+  { 
+    Reverse_Complement(m_nucs); 
+    reverse (m_qual.begin(), m_qual.end());
+  }
+
+  // Insert gaps
+  Pos_t gapcount;
+  vector<Pos_t>::const_iterator g;
+  for (g =  tile->gaps.begin(), gapcount = 0; 
+       g != tile->gaps.end(); 
+       g++, gapcount++)
+  {
+    m_nucs.insert(*g+gapcount, 1, '-');
+
+    // qv of a gap is the min of the flanking values
+    char lqv = (*g+gapcount > 0) ? m_qual[*g+gapcount-1] : -1;
+    char rqv = (*g+gapcount < m_qual.size()) ? m_qual[*g+gapcount] : -1;
+    char gapqv = (lqv < rqv) 
+                 ? (lqv != -1) ? lqv : rqv 
+                 : (rqv != -1) ? rqv : lqv;
+
+    m_qual.insert(*g+gapcount, 1, gapqv);
+  }
+}
+
+
 
 int main (int argc, char ** argv)
 {
@@ -74,7 +137,6 @@ int main (int argc, char ** argv)
     contig_bank.open(bank_name);
 
     Contig_t contig;
-    Read_t read; 
     int contig_count = 1;
     int vectoroffset = 0;
     
@@ -83,68 +145,44 @@ int main (int argc, char ** argv)
       const std::vector<Tile_t> & tiling = contig.getReadTiling();
       const string & consensus = contig.getSeqString();
       const Pos_t clen = consensus.size();
-      int vectorpos;
 
-      // Print coverage at each consensus position
+      // Render the aligned sequences
+      int vectorpos;
+      vector<Tile_t>::const_iterator vi;
+
+      vector<Render_t> renderedSeqs;
+      for (vi =  tiling.begin(), vectorpos = 0;
+           vi != tiling.end();
+           vi++, vectorpos++)
+      {
+        Render_t rendered;
+        rendered.load(read_bank, vi);
+        renderedSeqs.push_back(rendered);
+      }
+
       Pos_t gindex, index;
       for (gindex = 0, index = 1; gindex < clen; gindex++)
       {
         // Figure out which reads tile this position
-        // WARNING: This is horribly ineffient because it re-renders the 
-        //          aligned sequence at each position
         
         vector<int> reads;
         vector<char> quals;
         vector<char> rcs;
         string bases;
 
-        vector<Tile_t>::const_iterator i;
+        vector<Render_t>::const_iterator ri;
 
-        for (i =  tiling.begin(), vectorpos = 0; 
-             i != tiling.end(); 
-             i++, vectorpos++)
+        for (ri =  renderedSeqs.begin(), vectorpos = 0; 
+             ri != renderedSeqs.end(); 
+             ri++, vectorpos++)
         {
           if (hasOverlap(gindex, gindex, 
-                         i->offset, i->range.getLength() + i->gaps.size(), 
+                         ri->m_offset, ri->m_nucs.size(), 
                          clen))
           {
-            read_bank.fetch(i->source, read);
-            Range_t range = i->range;
-
-            bool rc = 0;
-            if (i->range.begin > i->range.end) { rc = 1; range.swap();} 
-
-            string nucs = read.getSeqString(range);
-            string qual = read.getQualString(range);
-
-            if (rc) 
-            { 
-              Reverse_Complement(nucs); 
-              reverse (qual.begin(), qual.end());
-            }
-
-            // Insert gaps
-            Pos_t gapcount;
-            vector<Pos_t>::const_iterator g;
-            for (g = i->gaps.begin(), gapcount = 0; 
-                 g != i->gaps.end(); 
-                 g++, gapcount++)
-            {
-              nucs.insert(*g+gapcount, 1, '-');
-
-              // qv of a gap is the min of the flanking values
-              char lqv = (*g+gapcount > 0) ? qual[*g+gapcount-1] : -1;
-              char rqv = (*g+gapcount < qual.size()) ? qual[*g+gapcount] : -1;
-              char gapqv = (lqv < rqv) 
-                           ? (lqv != -1) ? lqv : rqv 
-                           : (rqv != -1) ? rqv : lqv;
-
-              qual.insert(*g+gapcount, 1, gapqv);
-            }
-
-            bases.push_back(nucs[gindex - i->offset]);
-            quals.push_back(qual[gindex - i->offset]-AMOS::MIN_QUALITY);
-            rcs.push_back(rc);
+            bases.push_back(ri->m_nucs[gindex - ri->m_offset]);
+            quals.push_back(ri->m_qual[gindex - ri->m_offset]-AMOS::MIN_QUALITY);
+            rcs.push_back(ri->m_rc);
             reads.push_back(vectorpos+vectoroffset);
           }
         }
