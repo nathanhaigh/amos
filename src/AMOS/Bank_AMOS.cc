@@ -39,7 +39,7 @@ void Bank_t::addPartition (bool nuke = true)
     partition -> fix_name = ss . str( );
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
     if ( partition -> fix . fail( ) )
-      throw IOException_t ("Could not add partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not add partition: " + ss . str( ));
     partition -> fix . close( );
     
     //-- Add the VAR partition file
@@ -48,7 +48,7 @@ void Bank_t::addPartition (bool nuke = true)
     partition -> var_name = ss . str( );
     partition -> var . open (partition -> var_name . c_str( ), mode);
     if ( partition -> var . fail( ) )
-      throw IOException_t ("Could not add partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not add partition: " + ss . str( ));
     partition -> var . close( );
   }
   catch ( IOException_t ) {
@@ -73,10 +73,10 @@ ID_t Bank_t::append (Bankable_t & obj)
 {
   //-- Check preconditions
   if ( !isOpen( ) )
-    throw IOException_t ("Cannot append to a closed Bank");
+    AMOS_THROW_IO ("Cannot append to a closed Bank");
   if ( banktype_m != Bankable_t::NULL_BANK  &&
        banktype_m != obj . getBankType( ) )
-    throw ArgumentException_t ("Cannot append incompatible BankType_t");
+    AMOS_THROW_ARGUMENT ("Cannot append incompatible BankType_t");
 
   //-- Add new partition if necessary
   if ( ++ last_iid_m > max_iid_m )
@@ -207,12 +207,12 @@ void Bank_t::concat (Bank_t & source)
 {
   //-- Check preconditions
   if ( !isOpen( ) )
-    throw IOException_t ("Cannot concat to a closed Bank");
+    AMOS_THROW_IO ("Cannot concat to a closed Bank");
   if ( !source . isOpen( ) )
-    throw IOException_t ("Cannot concat a closed Bank");
+    AMOS_THROW_IO ("Cannot concat a closed Bank");
   if ( banktype_m != Bankable_t::NULL_BANK  &&
        banktype_m != source . banktype_m )
-    throw ArgumentException_t ("Cannot concat incompatible BankType_t");
+    AMOS_THROW_ARGUMENT ("Cannot concat incompatible BankType_t");
 
   Size_t size;
   Bankable_t::BankableFlags_t flags;
@@ -330,7 +330,7 @@ void Bank_t::create (const std::string & dir)
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK)  ||
        ( !access (ss . str( ) . c_str( ), F_OK)  &&
 	 access (ss . str( ) . c_str( ), R_OK|W_OK) ) )
-    throw IOException_t ("Insufficient permissions in directory: " + dir);
+    AMOS_THROW_IO ("Insufficient permissions in directory: " + dir);
 
   //-- Officially open
   is_open_m   = true;
@@ -388,12 +388,12 @@ void Bank_t::fetch (Bankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    throw IOException_t ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
   if ( banktype_m != Bankable_t::NULL_BANK  &&
        banktype_m != obj . getBankType( ) )
-    throw ArgumentException_t ("Cannot append incompatible BankType_t");
+    AMOS_THROW_ARGUMENT ("Cannot append incompatible BankType_t");
   if ( iid > last_iid_m )
-    throw ArgumentException_t ("Requested IID is out of range");
+    AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
   //-- Calculate the local and partition IDs
   ID_t lid, pid;
@@ -434,8 +434,8 @@ void Bank_t::flush ( )
   ifo . precision (5);
 
   if ( ifo . fail( ) )
-    throw IOException_t ("Could not open partition: " +
-			 store_pfx_m + Bank_k::INFO_STORE_SUFFIX);
+    AMOS_THROW_IO ("Could not open partition: " +
+		   store_pfx_m + Bank_k::INFO_STORE_SUFFIX);
 
   //-- Flush updated INFO
   ifo << "____BANK INFORMATION____\n";
@@ -447,8 +447,8 @@ void Bank_t::flush ( )
   ifo << "last partition = "    << last_partition_m     << "\n";
 
   if ( ifo . fail( ) )
-    throw IOException_t ("Error writing to partition: " +
-			 store_pfx_m + Bank_k::INFO_STORE_SUFFIX);
+    AMOS_THROW_IO ("Error writing to partition: " +
+		   store_pfx_m + Bank_k::INFO_STORE_SUFFIX);
 
   ifo . close( );
 }
@@ -473,51 +473,51 @@ void Bank_t::open (const std::string & dir)
 
   //-- Check permissions and INFO read/write-ability
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK) )
-    throw IOException_t ("Insufficient permissions in directory: " + dir);
+    AMOS_THROW_IO ("Insufficient permissions in directory: " + dir);
   if ( access (ss . str( ) . c_str( ), R_OK|W_OK) )
-    throw IOException_t ("Cannot find partition: " + ss . str( ));
+    AMOS_THROW_IO ("Cannot find partition: " + ss . str( ));
 
   //-- Open INFO partition
   std::ifstream ifo;
   ifo . open (ss . str( ) . c_str( ));
   if ( ifo . fail( ) )
-    throw IOException_t ("Could not open partition: " + ss . str( ));
+    AMOS_THROW_IO ("Could not open partition: " + ss . str( ));
 
   //-- Parse the INFO partition
   try {
     std::getline (ifo, line, '=');
     ifo >> line;
     if ( line != Bank_k::BANK_VERSION )
-      throw IOException_t ("Incompatible Bank version");
+      AMOS_THROW_IO ("Incompatible Bank version");
     if ( !ifo . good( ) )
-      throw IOException_t ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
     std::getline (ifo, line, '=');
     ifo >> (int)banktype;
     if ( banktype != banktype_m )
-      throw IOException_t ("Incompatible Bank type");
+      AMOS_THROW_IO ("Incompatible Bank type");
     if ( !ifo . good( ) )
-      throw IOException_t ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
     std::getline (ifo, line, '=');
     ifo >> fix_size_m;
     if ( !ifo . good( ) )
-      throw IOException_t ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
     std::getline (ifo, line, '=');
     ifo >> last_iid_m;
     if ( !ifo . good( ) )
-      throw IOException_t ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
     std::getline (ifo, line, '=');
     ifo >> partition_size_m;
     if ( !ifo . good( ) )
-      throw IOException_t ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
     std::getline (ifo, line, '=');
     ifo >> last_partition;
     if ( !ifo . good( ) )
-      throw IOException_t ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
     ifo . close( );
   }
@@ -566,14 +566,14 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t iid)
     //-- Open the FIX partition file
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
     if ( partition -> fix . fail( ) )
-      throw IOException_t ("Could not open partition: " +
-			   partition -> fix_name);
+      AMOS_THROW_IO ("Could not open partition: " +
+		     partition -> fix_name);
     
     //-- Open the VAR partition file
     partition -> var . open (partition -> var_name . c_str( ), mode);
     if ( partition -> var . fail( ) )
-      throw IOException_t ("Could not open partition: " +
-			   partition -> var_name);
+      AMOS_THROW_IO ("Could not open partition: " +
+		     partition -> var_name);
   }
   catch ( IOException_t ) {
     partition -> fix . close( );
@@ -597,9 +597,9 @@ void Bank_t::remove (Bankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    throw IOException_t ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
   if ( iid > last_iid_m )
-    throw ArgumentException_t ("Requested IID is out of range");
+    AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
   //-- Calculate the local and partition IDs
   ID_t lid, pid;
@@ -630,12 +630,12 @@ void Bank_t::replace (Bankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    throw IOException_t ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
   if ( banktype_m != Bankable_t::NULL_BANK  &&
        banktype_m != obj . getBankType( ) )
-    throw ArgumentException_t ("Cannot append incompatible BankType_t");
+    AMOS_THROW_ARGUMENT ("Cannot append incompatible BankType_t");
   if ( iid > last_iid_m )
-    throw ArgumentException_t ("Requested IID is out of range");
+    AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
   //-- Calculate the local and partition IDs
   ID_t lid, pid;
@@ -688,9 +688,9 @@ void Bank_t::restore (Bankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    throw IOException_t ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
   if ( iid > last_iid_m )
-    throw ArgumentException_t ("Requested IID is out of range");
+    AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
   //-- Calculate the local and partition IDs
   ID_t lid, pid;

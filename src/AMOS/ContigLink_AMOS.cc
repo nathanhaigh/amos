@@ -54,9 +54,9 @@ void ContigLink_t::setAdjacency (std::pair<char, char> adj)
 {
   //-- Check preconditions
   if ( adj . first != 'B'  &&  adj . first != 'E' )
-    throw ArgumentException_t ("Invalid adjacency character: " + adj . first);
+    AMOS_THROW_ARGUMENT ("Invalid adjacency character: " + adj . first);
   if ( adj . second != 'B'  &&  adj . second != 'E' )
-    throw ArgumentException_t ("Invalid adjacency character: " + adj . second);
+    AMOS_THROW_ARGUMENT ("Invalid adjacency character: " + adj . second);
 
   //-- first and second adjacency information is stored respectively in bits
   //   FIRST_BIT and SECOND_BIT. A 0 bit mean 'B' and a 1 bit means 'E'.=

@@ -92,7 +92,7 @@ void Kmer_t::setSeqString (const std::string & seq)
 {
   Size_t size = seq . size( );
   if ( size > MAX_LENGTH )
-    throw ArgumentException_t ("Kmer sequence is too long");
+    AMOS_THROW_ARGUMENT ("Kmer sequence is too long");
 
   length_m = size;
   size = length_m / 4 + (length_m % 4 ? 1 : 0);

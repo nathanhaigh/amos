@@ -55,6 +55,7 @@ protected:
   //!
   //! \param seqchar The sequence base character
   //! \pre seqchar is A,C,G,T (case insensitive)
+  //! \throws ArgumentException_t
   //! \return The compressed 2 bits (in upper two bit positions)
   //!
   static uint8_t compress (char seqchar)
@@ -70,7 +71,7 @@ protected:
       case 'T':
         return THYMINE_BITS;
       default:
-	throw ArgumentException_t ("Invalid Kmer character: " + seqchar);
+	AMOS_THROW_ARGUMENT ("Invalid Kmer character: " + seqchar);
       }
   }
 
@@ -81,6 +82,7 @@ protected:
   //! \note Must work with compress(char)
   //!
   //! \param byte The compressed sequence bits (in upper two bit positions)
+  //! \throws Exception_t
   //! \return The sequence char
   //!
   static char uncompress (uint8_t byte)
@@ -96,7 +98,7 @@ protected:
       case THYMINE_BITS:
 	return 'T';
       default:
-	throw Exception_t ("Unknown logic error");
+	AMOS_THROW ("Unknown logic error");
       }
   }
 
@@ -226,7 +228,7 @@ public:
   char getBase (Pos_t index) const
   {
     if ( index < 0 || index >= length_m )
-      throw ArgumentException_t ("Requested index is out of range");
+      AMOS_THROW_ARGUMENT ("Requested index is out of range");
 
     return uncompress ((seq_m [index / 4]) << (index % 4 * 2));
   }
@@ -292,7 +294,7 @@ public:
                 Pos_t index)
   {
     if ( index < 0 || index >= length_m )
-      throw ArgumentException_t ("Requested index is out of range");
+      AMOS_THROW_ARGUMENT ("Requested index is out of range");
 
     int offset = index % 4 * 2;
     uint8_t * seqp = seq_m + index / 4;

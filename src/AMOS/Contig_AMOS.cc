@@ -21,7 +21,7 @@ std::string Contig_t::getUngappedQualString (Range_t range) const
   if ( range . begin > range . end ||
        range . begin < 0 ||
        range . end > getLength( ) )
-    throw ArgumentException_t ("range does not represent a valid substring");
+    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
   std::pair<char, char> seqqualc;
   std::string retval;
@@ -46,7 +46,7 @@ std::string Contig_t::getUngappedSeqString (Range_t range) const
   if ( range . begin > range . end ||
        range . begin < 0 ||
        range . end > getLength( ) )
-    throw ArgumentException_t ("range does not represent a valid substring");
+    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
   char seqc;
   std::string retval;

@@ -45,7 +45,8 @@ public:
   //! \param line Line number of the exception
   //! \param file File name of the exception
   //!
-  Exception_t (const std::string & what, int line = 0,
+  Exception_t (const std::string & what,
+	       int line = 0,
 	       const std::string & file = "")
   {
     what_m = what;
@@ -107,7 +108,8 @@ public:
   //! \param line Line number of the exception
   //! \param file File name of the exception
   //!
-  ArgumentException_t (const std::string & what, int line = 0,
+  ArgumentException_t (const std::string & what,
+		       int line = 0,
 		       const std::string & file = "")
     : Exception_t (what, line, file)
   { }
@@ -137,7 +139,8 @@ public:
   //! \param line Line number of the exception
   //! \param file File name of the exception
   //!
-  IOException_t (const std::string & what, int line = 0,
+  IOException_t (const std::string & what,
+		 int line = 0,
 		 const std::string & file = "")
     : Exception_t (what, line, file)
   { }

@@ -40,7 +40,7 @@ std::string Sequence_t::getQualString (Range_t range) const
   if ( range . begin > range . end ||
        range . begin < 0 ||
        range . end > length_m )
-    throw ArgumentException_t ("range does not represent a valid substring");
+    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
   //-- Allocate space for retval
   std::string retval;
@@ -61,7 +61,7 @@ std::string Sequence_t::getSeqString (Range_t range) const
   if ( range . begin > range . end ||
        range . begin < 0 ||
        range . end > length_m )
-    throw ArgumentException_t ("range does not represent a valid substring");
+    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
   //-- Allocate space for retval
   std::string retval;
@@ -134,7 +134,7 @@ void Sequence_t::setSequence (const char * seq,
   //-- Check preconditions
   Size_t length = std::strlen (seq);
   if ( length != (Size_t)std::strlen (qual) )
-    throw ArgumentException_t ("seq and qual string lengths do not match");
+    AMOS_THROW_ARGUMENT ("seq and qual string lengths do not match");
 
   //-- Set the sequence
   seq_m = (uint8_t *) SafeRealloc (seq_m, length);
@@ -154,7 +154,7 @@ void Sequence_t::setSequence (const std::string & seq,
   //-- Check preconditions
   Size_t length = seq . size( );
   if ( length != (Size_t)qual . size( ) )
-    throw ArgumentException_t ("seq and qual string lengths do not match");
+    AMOS_THROW_ARGUMENT ("seq and qual string lengths do not match");
 
   //-- Set the sequence
   seq_m = (uint8_t *) SafeRealloc (seq_m, length);
