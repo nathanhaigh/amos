@@ -18,6 +18,8 @@ my $MY_VERSION = " Version 1.0 (Build " . (qw/$Revision$/ )[1] . ")";
 
 my $MY_HELPTEXT = qq~
     ca2ctg -i file.asm -o file.ctg -f file.frg -s select.list [-p]
+    
+    you can specify multiple frg files on the command line
 ~;
 
 my $base = new TIGR::Foundation;
@@ -34,13 +36,13 @@ $base->setVersionInfo($MY_VERSION);
 
 my $infile;
 my $outfile;
-my $frgfile;
+my @frgfiles;
 my $selfile;
 my $promote; # promote unitigs?
 
 my $err = $base->TIGR_GetOptions("i=s" => \$infile,
 				 "o=s" => \$outfile,
-				 "f=s" => \$frgfile,
+				 "f=s" => \@frgfiles,
 				 "s=s" => \$selfile,
 				 "p" => \$promote);
 
@@ -71,7 +73,8 @@ if (defined $selfile){
 my $record;
 
 my %seqnames;
-if (defined $frgfile){
+for (my $i = 0; $i <= $#frgfiles; $i++){
+    my $frgfile = $frgfiles[$i];
     print STDERR "Doing $frgfile\n";
     open(FRG, $frgfile) || $base->bail("Cannot open $frgfile: $!\n");
     while ($record = getRecord(\*FRG)){
