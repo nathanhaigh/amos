@@ -308,5 +308,5 @@ int main(int argc, char **argv)
   contig_bank.close();
   mate_bank.close();
 
-  exit(0);
+  return(0);
 } // main
