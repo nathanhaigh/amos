@@ -74,23 +74,41 @@ int main(int argc, char **argv)
       continue;
     }
 
-    overlap.idA = idA;
-    overlap.idB = idB;
-    overlap.lenA = lenA;
-    overlap.lenB = lenB;
-    overlap.rangeA = Range_t(startA, endA);
-    overlap.rangeB = Range_t(startB, endB);
-    overlap.perror = perror;
-    overlap.forw = (dir == 'f');
-    
-    olapmap[idA].push_back(overlap);
+    if (endA - startA >= 150){
+      
+      overlap.idA = idA;
+      overlap.idB = idB;
+      overlap.lenA = lenA;
+      overlap.lenB = lenB;
+      overlap.rangeA = Range_t(startA, endA);
+      overlap.rangeB = Range_t(startB, endB);
+      overlap.perror = perror;
+      overlap.forw = (dir == 'f');
+      
+      olapmap[idA].push_back(overlap);
+      
+      overlap.idA = idB;
+      overlap.idB = idA;
+      overlap.lenA = lenB;
+      overlap.lenB = lenA;
+      if (startB < endB){
+	overlap.rangeA = Range_t(startB, endB);
+	overlap.rangeB = Range_t(startA, endA);
+      } else {
+	overlap.rangeA = Range_t(endB, startB);
+	overlap.rangeB = Range_t(endA, startA);
+      }
+      overlap.perror = perror;
+      overlap.forw = (dir == 'f');
+	  
+      olapmap[idB].push_back(overlap);
+    }
   }
 
   inFile.close();
 
   for (map<long, vector<olap_t> >::iterator i = olapmap.begin(); 
        i != olapmap.end(); i++){
-    cerr << "doing " << i->first << endl;
     
     // we sort the ranges by leftmost coordinate along the read
     sort(i->second.begin(), i->second.end(), cmpOlapByA());
