@@ -17,7 +17,10 @@ public:
   void load(AMOS::Bank_t & read_bank, AMOS::Tile_t * tile);
   char base(AMOS::Pos_t gindex) const;
   int qv(AMOS::Pos_t gindex) const;
+
   AMOS::Pos_t getGindex(AMOS::Pos_t seqpos) const;
+  AMOS::Pos_t gappedLen() const;
+
   void loadTrace(const std::string & db);
   int getGSeqPos(int gindex);
 

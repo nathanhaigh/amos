@@ -57,6 +57,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QCheckBox * shownumbers  = new QCheckBox("Show Position", this, "consnumbers");
   QCheckBox * hldisc       = new QCheckBox("Highlight", this, "highlightconflicts");
   QCheckBox * showqv       = new QCheckBox("Show QV", this, "showqvchkbx");
+  QCheckBox * showchromo   = new QCheckBox("Prefetch Chromo", this, "displayall");
 
   QLabel * contig_lbl   = new QLabel(m_contigid, "Contig ID", this, "contiglbl");
   QLabel * db_lbl       = new QLabel(dbpick, "Database", this, "dblbl");
@@ -102,9 +103,11 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
           tiling, SLOT(toggleHighlightDiscrepancy(bool)));
   connect(showqv, SIGNAL(toggled(bool)),
           tiling, SLOT(toggleDisplayQV(bool)));
-
+  connect(showchromo, SIGNAL(toggled(bool)),
+          tiling,     SLOT(toggleDisplayAllChromo(bool)));
   connect(showinserts, SIGNAL(clicked()),
           tiling,      SLOT(showInserts()));
+
 
 
   // contigid <-> tiling
@@ -182,6 +185,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   leftgrid->addWidget(shownumbers);
   leftgrid->addWidget(hldisc);
   leftgrid->addWidget(showqv);
+  leftgrid->addWidget(showchromo);
   leftgrid->addStretch(gutter);
 
   //right

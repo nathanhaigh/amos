@@ -18,12 +18,15 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f)
    read_bank(Read_t::NCODE),
    contig_bank(Contig_t::NCODE)
 {
-  m_contigId = 1;
+  m_contigId = 0;
   m_gindex = 0;
   m_fontsize = 12;
-  m_loadedWidth = 1000;
+  m_displayAllChromo = true;
   m_loadedStart = -1;
   m_loadedEnd = -1;
+
+  toggleDisplayAllChromo(false);
+
 
   resize(500, 500);
   m_db = "DMG";
@@ -85,16 +88,19 @@ void TilingFrame::paintEvent(QPaintEvent * event)
 
 void TilingFrame::setContigId(int contigId)
 {
+  if (contigId == m_contigId) { return; }
+
   if (m_bankname != "")
   {
     try
     {
+      m_contigId = contigId;
+
       read_bank.open(m_bankname);
       contig_bank.open(m_bankname);
 
       Contig_t contig;
-      contig_bank.fetch(contigId, contig);
-      m_contigId = contigId;
+      contig_bank.fetch(m_contigId, contig);
 
       m_tiling = contig.getReadTiling();
       m_consensus = contig.getSeqString();
@@ -173,25 +179,26 @@ void TilingFrame::setGindex( int gindex )
   int basespace = 5;
   int basewidth = m_fontsize + basespace;
   int tilehoffset = m_fontsize*10;
-  int width = this->width();
-  m_displaywidth = (width-tilehoffset)/basewidth;
+  m_displaywidth = (width()-tilehoffset)/basewidth;
 
   gindex = min(gindex, m_consensus.size()-m_displaywidth+1);
   m_gindex = gindex;
 
   int grangeStart = m_gindex;
-  int grangeEnd = m_gindex + m_displaywidth+200;
+  int grangeEnd   = min(m_gindex + m_displaywidth+200, (int)m_consensus.length());
 
   if (grangeStart < m_loadedStart || grangeEnd > m_loadedEnd)
   {
-    m_renderedSeqs.clear();
-
     m_loadedStart = max(0, grangeStart-m_loadedWidth/2);
     m_loadedEnd   = min(m_consensus.length(), grangeEnd+m_loadedWidth/2);
       
     // Render the aligned sequences
     int vectorpos = 0;
     vector<Tile_t>::iterator vi;
+
+    int orig = m_renderedSeqs.size();
+    int kept = 0;
+    vector<RenderSeq_t>::iterator ri;
 
     for (vi =  m_tiling.begin(), vectorpos = 0;
          vi != m_tiling.end();
@@ -202,8 +209,26 @@ void TilingFrame::setGindex( int gindex )
                                                m_consensus.length());
       if (hasOverlap)
       {
+        // see if this has already been rendered
+        bool found = false;
+        for (ri =  m_renderedSeqs.begin();
+             ri != m_renderedSeqs.end();
+             ri++)
+        {
+          if (ri->m_tile->source == vi->source)
+          {
+            kept++;
+            found = true;
+            break;
+          }
+        }
+
+        if (found) { continue; }
+
+        // hasn't been rendered before
         RenderSeq_t rendered(vectorpos);
         rendered.load(read_bank, &*vi);
+        if (m_displayAllChromo) { rendered.loadTrace(m_db); rendered.m_displayTrace = true; }
         m_renderedSeqs.push_back(rendered);
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
@@ -214,10 +239,30 @@ void TilingFrame::setGindex( int gindex )
           else if (m_cstatus[gindex] != rendered.base(gindex)) 
             { m_cstatus[gindex] = 'X'; }
         }
+
       }
     }
 
-    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << endl;
+    // remove sequences that are no longer in the view window
+    vectorpos = 0;
+    for (ri = m_renderedSeqs.begin(); ri != m_renderedSeqs.end();)
+         
+    {
+      if (!RenderSeq_t::hasOverlap(m_loadedStart, m_loadedEnd,
+                                   ri->m_tile->offset, ri->gappedLen(),
+                                   m_consensus.length()))
+      {
+        m_renderedSeqs.erase(ri);
+        ri = m_renderedSeqs.begin() + vectorpos;
+      }
+      else
+      {
+        vectorpos++;
+        ri++;
+      }
+    }
+
+    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << kept << " of: " << orig << endl;
   }
 
   repaint();
@@ -253,6 +298,35 @@ void TilingFrame::toggleStable(bool stable)
 void TilingFrame::toggleDisplayQV(bool show)
 {
   m_tilingfield->toggleDisplayQV(show);
+}
+
+void TilingFrame::toggleDisplayAllChromo(bool display)
+{
+  m_displayAllChromo = display;
+
+  if (m_displayAllChromo)
+  {
+    m_loadedWidth = 500;
+
+    // load only the reads in this region
+    setGindex(m_gindex);
+
+    // force loading of chromatograms
+    vector<RenderSeq_t>::iterator ri;
+    for (ri =  m_renderedSeqs.begin();
+         ri != m_renderedSeqs.end();
+         ri++)
+    {
+      ri->loadTrace(m_db);
+      ri->m_displayTrace = true;
+    }
+
+    repaint();
+  }
+  else
+  {
+    m_loadedWidth = 5000;
+  }
 }
 
 void TilingFrame::showInserts()

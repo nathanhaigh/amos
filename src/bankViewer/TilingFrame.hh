@@ -30,6 +30,7 @@ public slots:
     void toggleShowNumbers(bool);
     void toggleHighlightDiscrepancy(bool);
     void toggleDisplayQV(bool);
+    void toggleDisplayAllChromo(bool);
     void showInserts();
 
 signals:
@@ -53,6 +54,8 @@ private:
     int m_gindex;
     int m_displaywidth;
     bool m_loaded;
+
+    bool m_displayAllChromo;
 
     int m_loadedStart;
     int m_loadedEnd;

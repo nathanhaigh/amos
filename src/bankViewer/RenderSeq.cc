@@ -94,7 +94,7 @@ void RenderSeq_t::load(Bank_t & read_bank, Tile_t * tile)
 
     // qv of a gap is the min of the flanking values
     char lqv = (*g+gapcount > 0) ? m_qual[*g+gapcount-1] : -1;
-    char rqv = (*g+gapcount < m_qual.size()) ? m_qual[*g+gapcount] : -1;
+    char rqv = (*g+gapcount < (int)m_qual.size()) ? m_qual[*g+gapcount] : -1;
     char gapqv = (lqv < rqv) 
                  ? (lqv != -1) ? lqv : rqv 
                  : (rqv != -1) ? rqv : lqv;
@@ -143,9 +143,11 @@ void RenderSeq_t::loadTrace(const string & db)
                            + readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/" 
                            + readname;
 
+  cerr << "Load trace ";
   m_trace = read_reading((char *)path.c_str(), TT_ANY);
   if (!m_trace) { return; }
 
+  cerr << "and ";
   char name[100];
   int version;
 
@@ -176,7 +178,7 @@ void RenderSeq_t::loadTrace(const string & db)
     }
   }
 
-  cerr << "loaded " << m_bcpos.size() << "positions" << endl;
+  cerr << m_bcpos.size() << " positions" << endl;
 
   string bases = m_read.getSeqString();
   int rangebegin = m_tile->range.begin;
@@ -224,5 +226,14 @@ int RenderSeq_t::getGSeqPos(int gindex)
     gseqpos = m_tile->range.begin + distance;
   }
 
+  if      (gseqpos < 0)                     { gseqpos = 0; }
+  else if (gseqpos >= (int) m_bcpos.size()) { gseqpos = m_bcpos.size()-1; }
+
   return gseqpos;
+}
+
+Pos_t RenderSeq_t::gappedLen() const
+{
+  if (!m_tile) { cerr << "m_tile is NULL!" << endl; return -1;}
+  return m_tile->range.getLength() + m_tile->gaps.size();
 }
