@@ -4056,6 +4056,9 @@ void Gapped_Multi_Alignment_t :: Make_AMOS_Contig
   for (int i = 0; i < n; i ++){
     AMOS :: Tile_t tile;
     tile . source = strtol(tag [i], NULL, 10);
+    if (tile.source == 0){
+      cerr << "Source of tag " << tag[i] << " is null\n";
+    }
     tile . range = clr_list [i];
     tile . offset = align [i] . b_lo;
     
