@@ -7,7 +7,6 @@
 //!
 //! \todo link mates that span the origin when -c is on
 //! \todo circ read olaps in readheap
-//! \todo set rand seed on command line
 //! \todo idy window diff checking?
 //! \todo see "//TODO" in code
 ////////////////////////////////////////////////////////////////////////////////
