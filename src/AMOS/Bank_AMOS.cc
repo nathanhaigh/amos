@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <cstdlib>
 #include <cstdio>
 #include <ctime>
 #include <cstring>
@@ -30,34 +31,9 @@ using namespace std;
 # endif
 #endif
 
-#define LOCK_TIME 10
-#define DIR_MODE 00755
+#define LOCK_TIME 5
+#define DIR_MODE  00755
 #define FILE_MODE 00644
-
-
-
-
-//================================================ BankPartition_t =============
-//----------------------------------------------------- BankPartition_t --------
-Bank_t::BankPartition_t::BankPartition_t (Size_t buffer_size)
-{
-  fix_buff = (char *) SafeMalloc (buffer_size);
-  var_buff = (char *) SafeMalloc (buffer_size);
-
-  fix . rdbuf( ) -> _PUBSETBUF_ (fix_buff, buffer_size);
-  var . rdbuf( ) -> _PUBSETBUF_ (var_buff, buffer_size);
-}
-
-
-//----------------------------------------------------- ~BankPartition_t -------
-Bank_t::BankPartition_t::~BankPartition_t ( )
-{
-  fix . close( );
-  var . close( );
-
-  free (fix_buff);
-  free (var_buff);
-}
 
 
 
@@ -67,7 +43,7 @@ const Size_t Bank_t::DEFAULT_BUFFER_SIZE    = 1024;
 const Size_t Bank_t::DEFAULT_PARTITION_SIZE = 1000000;
 const Size_t Bank_t::MAX_OPEN_PARTITIONS    = 20;
 
-const string Bank_t::BANK_VERSION     =  "2.3";
+const string Bank_t::BANK_VERSION     =  "2.4";
 
 const string Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string Bank_t::IFO_STORE_SUFFIX = ".ifo";
@@ -260,12 +236,29 @@ void Bank_t::close ( )
 {
   if ( ! is_open_m ) return;
 
-  flush( );
+  if ( (mode_m & B_WRITE) )
+    {
+      //-- Flush MAP partition
+      string map_path (store_pfx_m + MAP_STORE_SUFFIX);
+      ofstream map_stream (map_path . c_str( ));
+      if ( ! map_stream . is_open( ) )
+	AMOS_THROW_IO ("Could not open bank partition: " + map_path);
+      
+      idmap_m . writeRecord (map_stream);
+      
+      if ( ! map_stream . good( ) )
+	AMOS_THROW_IO ("Unknown file write error in close, bank corrupted");
+      map_stream . close( );
+    }
   
   //-- Close/free the partitions
   for ( Size_t i = 0; i < npartitions_m; i ++ )
     delete (partitions_m [i]);
 
+  //-- Sync the IFO partition
+  syncIFO (I_CLOSE);
+
+  //-- Reset
   init( );
 }
 
@@ -394,21 +387,23 @@ void Bank_t::create (const string & dir, BankMode_t mode)
 {
   if ( ! (mode & B_WRITE) )
     AMOS_THROW_IO ("Cannot create: bank not opened for writing");
-  checkMode (mode);
+  setMode (mode);
 
   if ( is_open_m ) close( );
 
   //-- Destroy any pre-existing bank
   if ( exists (dir) )
     {
-      open (dir);
+      open (dir); // resets the mode
       destroy( );
     }
+
+  //TODO eliminate race conditions
 
   try {
     //-- Initialize the bank
     is_open_m = true;
-    mode_m = mode;
+    setMode (mode);
     store_dir_m = dir;
     store_pfx_m = dir + '/' + Decode (banktype_m);
     mkdir (store_dir_m . c_str( ), DIR_MODE);
@@ -417,10 +412,11 @@ void Bank_t::create (const string & dir, BankMode_t mode)
     touchFile (store_pfx_m + IFO_STORE_SUFFIX, FILE_MODE, true);
     touchFile (store_pfx_m + MAP_STORE_SUFFIX, FILE_MODE, true);
 
+    //-- Create the IFO partition
+    syncIFO (I_CREATE);
+
     //-- Try to create the first partition
     addPartition (true);
-
-    flush( );
   }
   catch (Exception_t) {
     destroy( );
@@ -441,6 +437,7 @@ void Bank_t::destroy ( )
   //-- Unlink the IFO and MAP partitions
   unlink ((store_pfx_m + MAP_STORE_SUFFIX) . c_str( ));
   unlink ((store_pfx_m + IFO_STORE_SUFFIX) . c_str( ));
+  unlink ((store_pfx_m + LCK_STORE_SUFFIX) . c_str( ));
 
   //-- Remove the dir if empty
   rmdir (store_dir_m . c_str( ));
@@ -498,57 +495,6 @@ void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
 }
 
 
-//----------------------------------------------------- flush ------------------
-void Bank_t::flush ( )
-{
-  if ( ! is_open_m  ||  ! (mode_m & B_WRITE) ) return;
-
-  //-- Flush all open streams
-  deque<BankPartition_t *>::iterator di;
-  for ( di = opened_m . begin( ); di != opened_m . end( ); ++ di )
-    {
-      (*di) -> fix . flush( );
-      (*di) -> var . flush( );
-    }
-
-  //-- Flush MAP partition
-  string map_path (store_pfx_m + MAP_STORE_SUFFIX);
-  ofstream map_stream (map_path . c_str( ));
-  if ( ! map_stream . is_open( ) )
-    AMOS_THROW_IO ("Could not open bank partition: " + map_path);
-
-  idmap_m . writeRecord (map_stream);
-
-  if ( ! map_stream . good( ) )
-    AMOS_THROW_IO ("Unknown file write error in flush, bank corrupted");
-  map_stream . close( );
-
-
-  //-- Flush IFO partition
-  string ifo_path (store_pfx_m + IFO_STORE_SUFFIX);
-  ofstream ifo_stream (ifo_path . c_str( ));
-  if ( ! ifo_stream . is_open( ) )
-    AMOS_THROW_IO ("Could not open bank partition: " + ifo_path);
-
-  ifo_stream
-    << "____" << Decode (banktype_m) << " BANK INFORMATION____\n"
-    << "bank version = "      << BANK_VERSION         << endl
-    << "bank type = "         << banktype_m           << endl
-    << "objects = "           << nbids_m              << endl
-    << "indices = "           << last_bid_m           << endl
-    << "bytes/index = "       << fix_size_m           << endl
-    << "partitions = "        << npartitions_m        << endl
-    << "indices/partition = " << partition_size_m     << endl
-    << "state = "             << INVALID_STATE_CHAR   << endl
-    << "lock = "              << WRITE_LOCK_CHAR      << endl
-    << getuid( )                                      << endl;
-
-  if ( ! ifo_stream . good( ) )
-    AMOS_THROW_IO ("Unknown file write error in flush, bank corrupted");
-  ifo_stream . close( );
-}
-
-
 //----------------------------------------------------- IIDtoBID ---------------
 ID_t Bank_t::IIDtoBID (ID_t iid) const
 {
@@ -585,7 +531,7 @@ void Bank_t::init ( )
 //----------------------------------------------------- lockIFO ----------------
 void Bank_t::lockIFO ( )
 {
-  if ( mode_m & B_FORCE ) return;
+  if ( (mode_m & B_SPY) ) return;
 
   //-- Attempt to obtain the lock once every second for LOCK_TIME seconds
   string ifo_path (store_pfx_m + IFO_STORE_SUFFIX);
@@ -594,70 +540,31 @@ void Bank_t::lockIFO ( )
     if ( ! link (ifo_path.c_str( ), lck_path.c_str( )) )
       return;
 
-  AMOS_THROW_IO ((string)"Failed to obtain IFO lock: " + strerror (errno));
+  AMOS_THROW_IO
+    ((string)"Failed to obtain bank IFO partition lock: " + strerror(errno));
 }
 
 
 //----------------------------------------------------- open -------------------
 void Bank_t::open (const string & dir, BankMode_t mode)
 {
-  if ( ! (mode & B_READ) )
-    AMOS_THROW_IO ("Cannot open: bank not opened for reading");
-  checkMode (mode);
-
   if ( is_open_m ) close( );
 
   try {
-
     //-- Initialize the bank
-    mode_m = mode;
+    is_open_m   = true;
+    setMode (mode);
     store_dir_m = dir;
     store_pfx_m = dir + '/' + Decode (banktype_m);
 
-    //-- Read IFO partition
-    string ifo_path (store_pfx_m + IFO_STORE_SUFFIX);
-    ifstream ifo_stream (ifo_path . c_str( ));
-    if ( ! ifo_stream . is_open( ) )
-      AMOS_THROW_IO ("Could not open bank partition: " + ifo_path);
+    //-- Read the IFO partition
+    syncIFO (I_OPEN);
 
-    string line;
-    NCode_t banktype;
-    Size_t npartitions;
-    getline (ifo_stream, line, '=');
-    ifo_stream >> line;                // bank version
-    if ( line != BANK_VERSION )
-      AMOS_THROW_IO
-	("Could not open: incompatible bank version " + line);
-    getline (ifo_stream, line, '=');
-    ifo_stream >> banktype;            // bank type
-    if ( banktype != banktype_m )
-      AMOS_THROW_IO
-	("Could not open: incompatible bank type " + Decode (banktype));
-    getline (ifo_stream, line, '=');
-    ifo_stream >> nbids_m;             // number of objects
-    getline (ifo_stream, line, '=');
-    ifo_stream >> last_bid_m;          // last index
-    getline (ifo_stream, line, '=');
-    ifo_stream >> fix_size_m;          // index size (in bytes)
-    getline (ifo_stream, line, '=');
-    ifo_stream >> npartitions;         // number of partitions
-    getline (ifo_stream, line, '=');
-    ifo_stream >> partition_size_m;    // partition size (in indices)
-    getline (ifo_stream, line, '=');
-    ifo_stream >> line;                // bank state
-    getline (ifo_stream, line, '=');
-    ifo_stream >> line;                // bank lock
-
-    if ( ! ifo_stream . good( ) )
-      AMOS_THROW_IO ("Unknown file read error in open, bank corrupted");
-    ifo_stream . close( );
-
-
-    //-- Read MAP partition
+    //-- Read the MAP partition
     string map_path (store_pfx_m + MAP_STORE_SUFFIX);
     ifstream map_stream (map_path . c_str( ));
     if ( ! map_stream . is_open( ) )
-      AMOS_THROW_IO ("Could not open bank partition " + map_path);
+      AMOS_THROW_IO ("Could not open bank partition: " + map_path);
     
     idmap_m . readRecord (map_stream);
 
@@ -665,15 +572,14 @@ void Bank_t::open (const string & dir, BankMode_t mode)
       AMOS_THROW_IO ("Unknown file read error in open, bank corrupted");
     map_stream . close( );
 
-    //-- Update the partition list
-    is_open_m   = true;
-    while ( npartitions > npartitions_m )
-      addPartition (false);
+    //-- Make sure nothing smells fishy
+    if ( idmap_m . getSize( ) > nbids_m  ||
+	 nbids_m > last_bid_m  ||
+	 last_bid_m > max_bid_m  ||
+	 partitions_m . size( ) != npartitions_m )
+      AMOS_THROW_IO ("Unknown file read error in open, bank corrupted");
   }
   catch (Exception_t) {
-    if ( is_open_m )
-      for ( Size_t i = 0; i != npartitions_m; ++ i )
-        delete (partitions_m [i]);
     init( );
     throw;
   }
@@ -692,9 +598,9 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
   try {
     //-- Open the FIX and VAR partition files
     ios::openmode mode = ios::binary | ios::ate;
-    if ( mode_m & B_READ )
+    if ( (mode_m & B_READ) )
       mode |= ios::in;
-    if ( mode_m & B_WRITE )
+    if ( (mode_m & B_WRITE) )
       mode |= ios::out;
 
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
@@ -829,20 +735,198 @@ void Bank_t::replaceBID (ID_t bid, IBankable_t & obj)
 }
 
 
+//----------------------------------------------------- syncIFO ----------------
+void Bank_t::syncIFO (IFOMode_t mode)
+{
+  //-- B_SPY sneak out
+  if ( (mode_m & B_SPY)  &&  mode != I_OPEN )
+    return;
+
+  //-- Generate lock string
+  ostringstream ss;
+  char * user = getenv ("USER");
+  ss << ((mode_m & B_WRITE) ? WRITE_LOCK_CHAR : READ_LOCK_CHAR)
+     << ' ' << getuid( ) << ' ' << (user == NULL ? "null" : user);
+  string lock (ss . str( ));
+
+  
+  string line;
+  NCode_t banktype;
+  ID_t nbids, last_bid;
+  Size_t fix_size, npartitions, partition_size;
+  vector<string> locks;
+  vector<string>::iterator vi;
+
+
+  lockIFO( );
+
+  try {
+
+    //-- Read IFO partition 
+    if ( mode == I_OPEN  ||  mode == I_CLOSE )
+      {
+	string ifo_path (store_pfx_m + IFO_STORE_SUFFIX);
+	ifstream ifo_stream (ifo_path . c_str( ));
+	if ( ! ifo_stream . is_open( ) )
+	  AMOS_THROW_IO ("Could not open bank partition: " + ifo_path);
+
+	getline (ifo_stream, line, '=');
+	ifo_stream >> line;                // bank version
+	if ( line != BANK_VERSION )
+	  AMOS_THROW_IO
+	    ("Could not read bank: incompatible bank version " + line);
+	getline (ifo_stream, line, '=');
+	ifo_stream >> banktype;            // bank type
+	if ( banktype != banktype_m )
+	  AMOS_THROW_IO
+	    ("Could not read bank: incompatible type " + Decode (banktype));
+
+	getline (ifo_stream, line, '=');
+	ifo_stream >> nbids;               // number of objects
+	getline (ifo_stream, line, '=');
+	ifo_stream >> last_bid;            // last index
+	getline (ifo_stream, line, '=');
+	ifo_stream >> fix_size;            // index size (in bytes)
+	getline (ifo_stream, line, '=');
+	ifo_stream >> npartitions;         // number of partitions
+	getline (ifo_stream, line, '=');
+	ifo_stream >> partition_size;      // partition size (in indices)
+	getline (ifo_stream, line, '=');   // "locks ="
+	getline (ifo_stream, line);
+
+	if ( ! ifo_stream . good( ) )
+	  AMOS_THROW_IO ("Unknown file read error in sync, bank corrupted");
+
+	bool skipped = false;
+	getline (ifo_stream, line);
+	while ( ifo_stream . good( ) )
+	  {
+	    if ( mode != I_CLOSE  ||  skipped  ||  line != lock )
+	      locks . push_back (line);      // add bank lock
+	    else
+	      skipped = true;                // skip own lock
+	    getline (ifo_stream, line);
+	  }
+	ifo_stream . close( );
+
+
+	//-- If seeing this for the first time
+	if ( mode == I_OPEN )
+	  {
+	    nbids_m = nbids;
+	    last_bid_m = last_bid;
+	    fix_size_m = fix_size;
+	    partition_size_m = partition_size;
+
+	    //-- Update the partition list
+	    try {
+	      while ( npartitions > npartitions_m )
+		addPartition (false);
+	    }
+	    catch (Exception_t) {
+	      for ( Size_t i = 0; i != npartitions_m; ++ i )
+		delete (partitions_m [i]);
+	      npartitions_m = 0;
+	      throw;
+	    }
+	  }
+      }
+
+
+    //-- B_SPY sneak out
+    if ( (mode_m & B_SPY) ) return;
+
+
+    //-- Validate existing locks
+    char ltype = NULL_CHAR;
+    vector<string>::iterator vj;
+    for ( vi = locks . begin( ); vi != locks . end( ); ++ vi )
+      {
+	vj = vi;
+	ltype = vi -> empty( ) ? NULL_CHAR : (*vi)[0];
+	switch ( ltype )
+	  {
+	  case READ_LOCK_CHAR:
+	    break;
+	  case WRITE_LOCK_CHAR:
+	    if ( locks . size( ) == 1 )
+	      break;
+	  default: // intentional fall-through
+	    AMOS_THROW_IO ("Invalid bank partition lock, bank corrupted");
+	  }
+      }
+
+    //-- Check existing locks
+    if ( (mode_m & B_READ)   &&  ltype == WRITE_LOCK_CHAR )
+      AMOS_THROW_IO
+	("Could not open bank for reading: write lock exists\n" + *vj);
+    if ( (mode_m & B_WRITE)  &&  ltype == WRITE_LOCK_CHAR )
+      AMOS_THROW_IO
+	("Could not open bank for writing: write lock exists\n" + *vj);
+    if ( (mode_m & B_WRITE)  &&  ltype == READ_LOCK_CHAR )
+      AMOS_THROW_IO
+	("Could not open bank for writing: read lock exists\n"  + *vj);
+
+    //-- Add new lock
+    if ( mode != I_CLOSE )
+      locks . push_back (lock);
+
+
+    //-- Dump memory if writing
+    if ( (mode_m & B_WRITE) )
+      {
+	nbids = nbids_m;
+	last_bid = last_bid_m;
+	fix_size = fix_size_m;
+	npartitions = npartitions_m;
+	partition_size = partition_size_m;
+      }
+
+
+    //-- Write IFO partition
+    string ifo_path (store_pfx_m + IFO_STORE_SUFFIX);
+    ofstream ifo_stream (ifo_path . c_str( ));
+    if ( ! ifo_stream . is_open( ) )
+      AMOS_THROW_IO ("Could not open bank partition: " + ifo_path);
+
+    ifo_stream
+      << "____" << Decode (banktype_m) << " BANK INFORMATION____\n"
+      << "bank version = "      << BANK_VERSION         << endl
+      << "bank type = "         << banktype_m           << endl
+      << "objects = "           << nbids                << endl
+      << "indices = "           << last_bid             << endl
+      << "bytes/index = "       << fix_size             << endl
+      << "partitions = "        << npartitions          << endl
+      << "indices/partition = " << partition_size       << endl
+      << "locks = " << endl;
+
+    //-- Write updated locks
+    for ( vi = locks . begin( ); vi != locks . end( ); ++ vi )
+      ifo_stream << *vi << endl;
+
+    if ( ! ifo_stream . good( ) )
+      AMOS_THROW_IO ("Unknown file write error in sync, bank corrupted");
+    ifo_stream . close( );
+
+  }
+  catch (Exception_t) {
+    unlockIFO( );
+    throw;
+  }
+
+  unlockIFO( );
+}
+
 
 //----------------------------------------------------- touchFile --------------
 void Bank_t::touchFile (const string & path, int mode, bool create)
 {
   int fd, flags;
 
-  if ( mode_m & B_READ  &&  mode_m & B_WRITE )
-    flags = O_RDWR;
-  else if ( mode_m & B_WRITE )
-    flags = O_WRONLY;
-  else if ( mode_m & B_READ )
+  if ( (mode_m & B_SPY) )
     flags = O_RDONLY;
-  else
-    AMOS_THROW_ARGUMENT ("Invalid BankMode");
+  else // need both read/write for file locks
+    flags = O_RDWR;
 
   if ( create )
     flags |= O_CREAT | O_TRUNC;
@@ -851,27 +935,30 @@ void Bank_t::touchFile (const string & path, int mode, bool create)
   if ( fd == -1 )
     {
     if ( create )
-      AMOS_THROW_IO ("Could not create bank file: "+path+'\n'+strerror(errno));
-    else	
-      AMOS_THROW_IO ("Could not open bank file: "+path+'\n'+strerror(errno));
+      AMOS_THROW_IO
+	("Could not create bank partition: " + path + '\n' + strerror(errno));
+    else
+      AMOS_THROW_IO
+	("Could not open bank partition: "   + path + '\n' + strerror(errno));
     }
 
   fd = ::close (fd);
   if ( fd == -1 )
-    AMOS_THROW_IO ("Could not close bank file: "+path+'\n'+strerror(errno));
+    AMOS_THROW_IO
+      ("Could not close bank partition: "    + path + '\n' + strerror(errno));
 }
-
 
 
 //----------------------------------------------------- unlockIFO --------------
 void Bank_t::unlockIFO ( )
 {
-  if ( mode_m & B_FORCE ) return;
+  if ( (mode_m & B_SPY) ) return;
 
   //-- Attempt to release the lock
   string lck_path (store_pfx_m + LCK_STORE_SUFFIX);
   if ( unlink (lck_path . c_str( )) )
-    AMOS_THROW_IO ((string)"Failed to release IFO lock: " + strerror (errno));
+    AMOS_THROW_IO
+      ((string)"Failed to release bank IFO partition lock: " + strerror(errno));
 }
 
 
@@ -883,4 +970,29 @@ bool AMOS::BankExists (NCode_t ncode, const string & dir)
   return ( ! access (dir . c_str( ), R_OK | X_OK)
 	   &&
 	   ! access (ifo_path . c_str( ), R_OK) );
+}
+
+
+
+
+//================================================ BankPartition_t =============
+//----------------------------------------------------- BankPartition_t --------
+Bank_t::BankPartition_t::BankPartition_t (Size_t buffer_size)
+{
+  fix_buff = (char *) SafeMalloc (buffer_size);
+  var_buff = (char *) SafeMalloc (buffer_size);
+
+  fix . rdbuf( ) -> _PUBSETBUF_ (fix_buff, buffer_size);
+  var . rdbuf( ) -> _PUBSETBUF_ (var_buff, buffer_size);
+}
+
+
+//----------------------------------------------------- ~BankPartition_t -------
+Bank_t::BankPartition_t::~BankPartition_t ( )
+{
+  fix . close( );
+  var . close( );
+
+  free (fix_buff);
+  free (var_buff);
 }

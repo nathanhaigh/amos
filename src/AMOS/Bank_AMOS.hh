@@ -32,10 +32,10 @@
 namespace AMOS {
 
 typedef uint8_t BankMode_t;
-const BankMode_t B_READ  = 0x1;  //!< bank mode for reading from bank
-const BankMode_t B_WRITE = 0x2;  //!< bank mode for writing to bank
-const BankMode_t B_FORCE = 0x3;  //!< bank mode for ignoring bank locks
-
+const BankMode_t B_READ   = 0x1;  //!< protected reading mode
+const BankMode_t B_WRITE  = 0x2;  //!< protected writing mode
+const BankMode_t B_SPY    = 0x4;
+//!< unprotected reading mode, overrides reading and writing modes
 
 
 
@@ -322,6 +322,13 @@ protected:
   static const Size_t DEFAULT_PARTITION_SIZE;  //!< records per partition
   static const Size_t MAX_OPEN_PARTITIONS;     //!< open partitions
 
+  enum IFOMode_t
+    {
+      I_OPEN,
+      I_CREATE,
+      I_CLOSE,
+    };
+
 
   //================================================ BankPartition_t ===========
   //! \brief A single partition of the file-based bank
@@ -381,23 +388,6 @@ protected:
   //! \brief Append an object, thus assigning it the last BID
   //!
   void appendBID (IBankable_t & obj);
-
-
-  //--------------------------------------------------- checkMode --------------
-  //! \brief validates a BankMode
-  //!
-  //! \param mode BankMode_t to check
-  //! \pre mode is a valid BankMode_t
-  //! \throws ArgumentException_t
-  //! \return void
-  //!
-  void checkMode (BankMode_t mode)
-  {
-    if ( ! mode & B_READ  &&  ! mode & B_WRITE )
-      AMOS_THROW_ARGUMENT ("Invalid BankMode: read and write not specified");
-    if ( mode & ~(B_READ | B_WRITE | B_FORCE) )
-      AMOS_THROW_ARGUMENT ("Invalid BankMode: unknown mode");
-  }
 
 
   //--------------------------------------------------- EIDtoBID ---------------
@@ -484,8 +474,8 @@ protected:
   //!
   //! Obtains a file lock on the info store of the current Bank. Will throw an
   //! exception if the lock failed either because the info store does not exist
-  //! or it took too long to obtain the lock. Has no effect if BankMode is not
-  //! set for file locks.
+  //! or it took too long to obtain the lock. Has no effect if BankMode is set
+  //! to B_SPY.
   //!
   //! \post The info store is locked
   //! \throws IOException_t
@@ -512,6 +502,50 @@ protected:
   void replaceBID (ID_t bid, IBankable_t & obj);
 
 
+  //----------------------------------------------------- setMode --------------
+  //! \brief validates and sets the BankMode
+  //!
+  //! \param mode BankMode_t to check and set
+  //! \pre mode is a valid BankMode_t
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void setMode (BankMode_t mode)
+  {
+    if ( mode & ~(B_READ | B_WRITE | B_SPY) )
+      AMOS_THROW_ARGUMENT ("Invalid BankMode: unknown mode");
+
+    if ( ! (mode & B_READ)  &&  ! (mode & B_WRITE)  &&  ! (mode & B_SPY) )
+      AMOS_THROW_ARGUMENT ("Invalid BankMode: mode not specified");
+
+    if ( (mode & B_SPY)  &&  (mode & B_WRITE) )
+      mode &= ~B_WRITE;
+
+    if ( (mode & B_SPY) )
+      mode |= B_READ;
+
+      mode_m = mode;
+  }
+
+
+  //----------------------------------------------------- syncIFO --------------
+  //! \brief Syncs the IFO store with in-memory data
+  //!
+  //! Locks the IFO store if needed, then syncs the IFO store with in-memory
+  //! data. Either as an open, update or close depending on the IFOMode. Use
+  //! I_OPEN if opening the IFO store for the first time, I_CREATE if creating
+  //! a new IFO store or I_CLOSE if ready to close the IFO store. Only I_OPEN
+  //! will have an effect if bank is in B_SPY mode. Will throw an exception
+  //! if any of the bank locks are violated.
+  //!
+  //! \pre The Bank is open
+  //! \param mode I_OPEN, I_CREATE or I_CLOSE (cannot OR these together)
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void syncIFO (IFOMode_t mode);
+
+
   //--------------------------------------------------- touchFile --------------
   //! \brief Opens or creates a file, throwing exception on failure
   //!
@@ -523,8 +557,7 @@ protected:
   //!
   //! Releases the file lock on the info store of the current Bank. Will throw
   //! an exception if the unlock failed either because the lock did not exist
-  //! or could not be released. Has no effect if BankMode is not set for file
-  //! locks.
+  //! or could not be released. Has no effect if BankMode is set for B_SPY.
   //!
   //! \pre The Bank is open
   //! \pre The info store is currently locked
@@ -550,17 +583,13 @@ protected:
   Bank_t & operator= (const Bank_t & source);
 
 
-  //--------------------------------------------------- flush ------------------
-  void flush ( );
-
-
   NCode_t banktype_m;        //!< the type of objects stored in this bank
 
   Size_t buffer_size_m;      //!< size of the I/O buffer
   Size_t max_partitions_m;   //!< maximum number of open partitions
 
   bool is_open_m;            //!< open status of the bank
-  BankMode_t mode_m;         //!< mode of the bank, B_READ | B_WRITE | B_FORCE
+  BankMode_t mode_m;         //!< mode of the bank, B_READ | B_WRITE | B_SPY
 
   std::string store_dir_m;   //!< the disk store directory
   std::string store_pfx_m;   //!< the disk store prefix (including dir)
@@ -583,18 +612,17 @@ public:
 
   static const std::string BANK_VERSION;      //!< current bank version
 
-  static const std::string FIX_STORE_SUFFIX;  //!< the fixed length store
   static const std::string IFO_STORE_SUFFIX;  //!< the informational store
-  static const std::string LCK_STORE_SUFFIX;  //!< the ifo store file lock
-  static const std::string VAR_STORE_SUFFIX;  //!< the variable length store
   static const std::string MAP_STORE_SUFFIX;  //!< the ID map store
+  static const std::string LCK_STORE_SUFFIX;  //!< the ifo store file lock
+
+  static const std::string FIX_STORE_SUFFIX;  //!< the fixed length stores
+  static const std::string VAR_STORE_SUFFIX;  //!< the variable length stores
+
   static const std::string TMP_STORE_SUFFIX;  //!< the temporary store
 
   static const char WRITE_LOCK_CHAR    = 'w'; //!< write lock char
   static const char READ_LOCK_CHAR     = 'r'; //!< read lock char
-  static const char OPEN_LOCK_CHAR     = 'o'; //!< open lock char
-  static const char VALID_STATE_CHAR   = '0'; //!< valid bank state char
-  static const char INVALID_STATE_CHAR = '1'; //!< invalid bank state char
 
 
   //--------------------------------------------------- Bank_t -----------------
@@ -606,14 +634,24 @@ public:
   //!
   //! Once a Bank is created with a certain NCode, only objects compatible
   //! with that NCode can be used with that Bank. For instance, if a Bank
-  //! is constructed with 'Bank_t mybank (Read::NCODE);', only Read_t
+  //! is constructed with 'Bank_t mybank (Read_t::NCODE);', only Read_t
   //! objects could be used with mybank. Also, if a static NCode member is not
-  //! available 'Bank_t mybank (Encode("RED"));' will also work.
+  //! available 'Bank_t mybank ("RED");' will also work.
   //!
   //! \param type The type of Bank to construct
   //!
   Bank_t (NCode_t type)
     : banktype_m (type),
+      buffer_size_m (DEFAULT_BUFFER_SIZE),
+      max_partitions_m (MAX_OPEN_PARTITIONS)
+  {
+    init( );
+  }
+
+
+  //--------------------------------------------------- Bank_t -----------------
+  Bank_t (const std::string & type)
+    : banktype_m (Encode(type)),
       buffer_size_m (DEFAULT_BUFFER_SIZE),
       max_partitions_m (MAX_OPEN_PARTITIONS)
   {
@@ -730,7 +768,7 @@ public:
   //! bank will first be closed before the new one is created.
   //!
   //! \param dir The directory in which to create the bank
-  //! \param mode The mode of the bank (B_READ | B_WRITE | B_FORCE)
+  //! \param mode The mode of the bank (B_READ | B_WRITE)
   //! \pre mode includes B_WRITE
   //! \pre sufficient read/write/exe permissions for dir and bank files
   //! \throws IOException_t
@@ -930,11 +968,13 @@ public:
   //! Opens a bank on disk, allowing modification/access operations like append
   //! and fetch to be performed. An open bank will first be closed before the
   //! new one is opened. Check for the existence of a bank (with the exists
-  //! method) before opening to avoid an exception.
+  //! method) before opening to avoid an exception. If the B_SPY mode is
+  //! activated, only read access to the banks is required, otherwise both
+  //! read and write access is required.
   //!
   //! \param dir The resident directory of the bank
-  //! \param mode The mode of the bank (B_READ | B_WRITE | B_FORCE)
-  //! \pre mode most includes B_READ
+  //! \param mode The mode of the bank (B_READ | B_WRITE | B_SPY)
+  //! \pre At least one of the modes is specified
   //! \pre The specified directory contains a bank of this type
   //! \pre sufficient read/write/exe permissions for dir and bank files
   //! \throws IOException_t

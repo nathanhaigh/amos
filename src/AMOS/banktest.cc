@@ -222,7 +222,7 @@ int main (int argc, char ** argv)
     //    readbank . destroy( );
     //    readstream . destroy( );
   }
-  catch (Exception_t & e) {
+  catch (const Exception_t & e) {
 
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     return -1;
