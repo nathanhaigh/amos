@@ -1776,19 +1776,23 @@ void  Multi_Alignment_t :: Reset_From_Votes
 
       if  (! ok)
           {
-           long  status;
+           Fix_Status_t  fix_status;
+           long  ios_status;
 
-           Overlap_Align (s [i], len, cons, cons_len, lo, hi,
+//##ALD  Replace this with a Substring_Align
+           Overlap_Align (s [i], len, cons, lo, hi, cons_len,
                 1, -3, -2, -2, align [i]);
+           align [i] . Check_Fix_Start (s [i] , len, cons, cons_len,
+                fix_status);
 
            cerr << "In  Reset_From_Votes  in contig " << id << endl
                 << "  Forced alignment of string subscript " << i
                 << " to consensus\n";
-           status = cerr . setf (ios :: fixed);
+           ios_status = cerr . setf (ios :: fixed);
            cerr << "  with " << align [i] . errors << " errors ("
                 << setprecision (2) << 100.0 * align [i] . Error_Rate ()
                 << "% error)" << endl;
-           cerr . setf (status);
+           cerr . setf (ios_status);
 
 #if  0
 	    sprintf (Clean_Exit_Msg_Line,

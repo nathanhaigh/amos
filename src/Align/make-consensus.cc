@@ -26,7 +26,7 @@ const int  ALIGN_WIGGLE = 15;
    // Number of positions left and right of specified location
    // to look for alignments.
 const double  DEFAULT_ERROR_RATE = 0.06;
-const int  DEFAULT_MIN_OVERLAP = 10;
+const int  DEFAULT_MIN_OVERLAP = 0;
 const int  MAX_LINE = 1000;
 const int  NEW_SIZE = 1000;
 
@@ -123,6 +123,7 @@ int  main
       cerr << "Alignment error rate is " << setprecision (2)
            << Error_Rate << endl;
       cerr . setf (status);
+      cerr << "Minimum overlap bases is " << Min_Overlap << endl;
 
       gma . setPrintFlag (PRINT_WITH_DIFFS);
 
@@ -685,7 +686,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "acCe:E:fhPSTuv:")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "acCe:E:fho:PSTuv:")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -715,6 +716,10 @@ static void  Parse_Command_Line
 
         case  'h' :
           errflg = true;
+          break;
+
+        case  'o' :
+          Min_Overlap = strtol (optarg, NULL, 10);
           break;
 
         case  'P' :
@@ -854,6 +859,7 @@ static void  Usage
            "  -E <fn>  Get extra sequences to align from fasta file <fn>\n"
            "  -f       Output consensus only in FASTA format\n"
            "  -h       Print this usage message\n"
+           "  -o <n>   Set minimum overlap bases to <n>\n"
            "  -P       Input is simple contig format, i.e., UMD format\n"
            "              using partial reads\n"
            "  -S       Input is simple contig format, i.e., UMD format\n"
