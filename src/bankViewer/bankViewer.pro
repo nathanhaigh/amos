@@ -10,6 +10,7 @@ HEADERS	+= FeatureCanvasItem.hh ChromoPicker.hh CoverageCanvasItem.hh FeatureBro
 QMAKE_CFLAGS_RELEASE	= -I/usr/include/freetype2 -I/usr/include/freetype2/freetype -O2 -march=i386 -mcpu=i686 -fno-use-cxa-atexit
 QMAKE_CXXFLAGS_RELEASE	= -I/usr/include/freetype2 -I/usr/include/freetype2/freetype -O2 -march=i386 -mcpu=i686 -fno-use-cxa-atexit
 
+
 QMAKE_CFLAGS_WARN_ON	= -Wall -g
 QMAKE_CXXFLAGS_WARN_ON	= -Wall -g
 
@@ -17,7 +18,7 @@ INCLUDEPATH	+= ../AMOS ../Common ../Slice /usr/local/include/io_lib/
 LIBS	+=  -L../AMOS -L../Common -lAMOS -lCommon -lAMOS -lCommon 
 
 DOMAIN = $$system(hostname -d)
-contains( DOMAIN, tigr ) {
+contains( DOMAIN, tigr.org ) {
   INCLUDEPATH	+= local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/include/io_lib/
   LIBS	+=  -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/lib
   QMAKE_CXX = /usr/local/bin/g++
