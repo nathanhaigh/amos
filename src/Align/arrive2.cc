@@ -13,18 +13,24 @@ const int  WINDOW_SIZE = 50;
 
 static int  Degree_Cutoff = 6;
   // Only do counts of reads with <= this many right (3' end) overlaps
+static bool  Ignore_Zeroes = false;
+  // If set true by the -z option, ignore reads with no overlaps at all
 static int  Lo = 5;
 static int  Hi = 104;
   // Range of arrival positions to consider
 static FILE  * Len_fp = NULL;
   // File from which read lengths are read
+static bool  Minimize_Max_Error = FALSE;
+  // If set true (by the -x option) then the max
+  // error between observed and estimated proportions
+  // will be used to fit distributions
 static bool  Minimize_Squared_Error = FALSE;
   // If set true (by the -s option) then the square
   // of the error between observed and estimated proportions
   // will be used to fit distributions
 static int  Min_Read_Len = INT_MAX;
   // Ignore reads shorter than this
-static int  Max_Read_Len = 775;
+static int  Max_Read_Len = 900;
   // Ignore reads longer than this
 
 static double  Lo_Genome_Len;
@@ -62,12 +68,20 @@ int  main
    Parse_Command_Line (argc, argv);
 
    fprintf (stderr, "Using  Lo = %d  and  Hi = %d\n", Lo, Hi);
+   fprintf (stderr, "Degree cutoff = %d\n", Degree_Cutoff);
    if  (Min_Read_Len < INT_MAX)
-       fprintf (stderr, "Ignoring lengths < %d\n", Min_Read_Len);
+       {
+        fprintf (stderr, "Ignoring lengths < %d\n", Min_Read_Len);
+        fprintf (stderr, "Degree cutoff applied to region %d .. %d\n",
+             Lo, Min_Read_Len);
+       }
+   fprintf (stderr, "Ignoring lengths > %d\n", Max_Read_Len);
    if  (Minimize_Squared_Error)
-       fprintf (stderr, "Minimizing square of error instead of |error|\n");
+       fprintf (stderr, "Minimizing sum of error^2 instead of sum of |error|\n");
+   else if  (Minimize_Max_Error)
+       fprintf (stderr, "Minimizing max error instead of sum of |error|\n");
      else
-       fprintf (stderr, "Minimizing |error| instead of square of error\n");
+       fprintf (stderr, "Minimizing sum of |error| instead of square of error^2\n");
    fprintf (stderr, "Using only reads with 3' overlaps degrees <= %d\n",
         Degree_Cutoff);
 
@@ -137,12 +151,13 @@ int  main
 
            // Increment the zero count of each distribution for the
            // reads that had no overlaps at all;
-           for  (i = prev + 1;  i < a;  i ++)
-             {
-              for  (d = 0;  d < num_dists;  d ++)
-                dist [d] [0] ++;
-              num_reads ++;
-             }
+           if  (! Ignore_Zeroes)
+               for  (i = prev + 1;  i < a;  i ++)
+                 {
+                  for  (d = 0;  d < num_dists;  d ++)
+                    dist [d] [0] ++;
+                  num_reads ++;
+                 }
 
            for  (i = 0;  i < num_buckets;  i ++)
              bucket [i] = 0;
@@ -155,7 +170,8 @@ int  main
            i = (a_hang - Lo) / WINDOW_SIZE;
            if  (i < num_buckets)
                bucket [i] ++;
-           r_degr ++;
+           if  (a_hang < Min_Read_Len)
+               r_degr ++;
           }
       total_olaps ++;
      }
@@ -266,9 +282,10 @@ void  Analyze
 
   {
    double  lambda, term;
-   double  error, square_error;
+   double  error, square_error, mx_error;
    double  genome_len;
-   double  best_error, best_square_error, best_genome_len;
+   double  best_error, best_square_error, best_mx_error, best_genome_len;
+   double  diff;
    int  num_contams, max_contams, best_contams;
    int  sum, new_sum;
    int  j;
@@ -285,43 +302,62 @@ void  Analyze
 
    printf (" Hits   --- Observed ---   --- Expected ---\n");
    term = exp (-1.0 * lambda);
-   error = square_error = 0.0;
+   error = square_error = mx_error = 0.0;
    for  (j = 0;  j < DIST_MAX;  j ++)
      {
       printf ("  %3d:  %8d  %6.4f   %8d  %6.4f\n", j, dist [j],
            (1.0 * dist [j]) / sum, int (term * sum + 0.5), term);
-      error += fabs ((1.0 * dist [j]) / sum - term);
-      square_error += pow ((1.0 * dist [j]) / sum - term, 2);
+      diff = fabs ((1.0 * dist [j]) / sum - term);
+      error += diff;
+      square_error += diff * diff;
+      mx_error = Max (mx_error, diff);
       term *= lambda / (j + 1.0);
      }
 
    printf (">=%3d:  %8d  %6.4f   %8d  %6.4f\n", DIST_MAX, dist [DIST_MAX],
         (1.0 * dist [DIST_MAX]) / sum, int (term * sum + 0.5), term);
-   error += fabs ((1.0 * dist [DIST_MAX]) / sum - term);
-   square_error += pow ((1.0 * dist [DIST_MAX]) / sum - term, 2);
+   diff = fabs ((1.0 * dist [DIST_MAX]) / sum - term);
+   error += diff;
+   square_error += diff * diff;
+   mx_error = Max (mx_error, diff);
    printf ("Total:  %8d\n", sum);
    printf ("Lambda = %.4f\n", lambda);
    printf ("Estimated genome length = %.0f\n", ((1 + hi - lo) * n) / lambda);
-   printf ("Error = %.6e  Squared error = %.6e\n", error, square_error);
+   printf ("Error = %.6e  Squared error = %.6e  Max error = %.6e\n",
+       error, square_error, mx_error);
 
-   best_error = best_square_error = DBL_MAX;
+   best_error = best_square_error = best_mx_error = DBL_MAX;
    for  (genome_len = Lo_Genome_Len;  genome_len <= Hi_Genome_Len;
            genome_len += Genome_Len_Delta)
      {
+      bool  update;
+
       lambda = (n * (1 + hi - lo)) / genome_len;
       term = exp (-1.0 * lambda);
-      error = square_error = 0.0;
+      error = square_error = mx_error = 0.0;
       for  (j = 0;  j < DIST_MAX;  j ++)
         {
-         error += fabs ((1.0 * dist [j]) / sum - term);
-         square_error += pow ((1.0 * dist [j]) / sum - term, 2);
+         diff = fabs ((1.0 * dist [j]) / sum - term);
+         error += diff;
+         square_error += diff * diff;
+         mx_error = Max (mx_error, diff);
          term *= lambda / (j + 1.0);
         }
-      if  (Minimize_Squared_Error && square_error < best_square_error
-             || ! Minimize_Squared_Error && error < best_error)
+
+      update = false;
+      if  (Minimize_Squared_Error && square_error < best_square_error)
+          update = true;
+      else if  (Minimize_Max_Error && mx_error < best_mx_error)
+          update = true;
+      else if  (! Minimize_Squared_Error && ! Minimize_Max_Error
+                  && error < best_error)
+          update = true;
+
+      if  (update)
           {
            best_error = error;
            best_square_error = square_error;
+           best_mx_error = mx_error;
            best_genome_len = genome_len;
           }
      }
@@ -342,7 +378,8 @@ void  Analyze
    printf ("Total:  %8d\n", sum);
    printf ("Lambda = %.4f\n", lambda);
    printf ("Best-fit genome length = %.0f\n", best_genome_len);
-   printf ("Error = %.6e  Squared error = %.6e\n", best_error, best_square_error);
+   printf ("Error = %.6e  Squared error = %.6e  Max error = %.6e\n",
+        best_error, best_square_error, best_mx_error);
 
 
    // Re-do calculation allowing various numbers of reads to be "contaminant",
@@ -525,7 +562,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "d:hL:m:r:s")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "d:hL:m:r:sxz")) != EOF))
      switch  (ch)
        {
         case  'd' :
@@ -568,6 +605,14 @@ static void  Parse_Command_Line
 
         case  's' :
           Minimize_Squared_Error = true;
+          break;
+
+        case  'x' :
+          Minimize_Max_Error = true;
+          break;
+
+        case  'z' :
+          Ignore_Zeroes = true;
           break;
 
         case  '?' :
@@ -639,7 +684,9 @@ static void  Usage
            "  -L <fn>  Get read length info from file <fn>\n"
            "  -m <n>   Ignore reads shorter than <n> bp\n"
            "  -r <m>-<n>  Use windows in the range <m> .. <n>  of reads\n"
-           "  -s       Fit by minimizing squared error instead of |error|\n"
+           "  -s       Fit by minimizing sum of squared errors instead of |error|\n"
+           "  -x       Fit by minimizing max |error| instead of sum of |error|\n"
+           "  -z       Ignore reads with no overlaps at all\n"
            "\n",
            command);
 
