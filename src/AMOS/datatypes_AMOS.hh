@@ -292,6 +292,7 @@ struct Feature_t : public IMessagable_t
   static const FeatureType_t JOIN;
   static const FeatureType_t COVERAGE;
   static const FeatureType_t ORF;
+  static const FeatureType_t POLYMORPHISM;
 
 
   //--------------------------------------------------- Feature_t --------------
@@ -317,9 +318,9 @@ struct Feature_t : public IMessagable_t
   //!
   void clear ( )
   {
-    eid . clear( );
-    comment . clear( );
-    group . clear( );
+    eid . erase( );
+    comment . erase( );
+    group . erase( );
 
     range . clear( );
     type = NULL_FEATURE;

@@ -105,6 +105,7 @@ const FeatureType_t Feature_t::UNITIG       = 'U';
 const FeatureType_t Feature_t::JOIN         = 'J';
 const FeatureType_t Feature_t::COVERAGE     = 'C';
 const FeatureType_t Feature_t::ORF          = 'O';
+const FeatureType_t Feature_t::POLYMORPHISM = 'P';
 
 
 //----------------------------------------------------- readMessage ------------
