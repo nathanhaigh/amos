@@ -13,9 +13,12 @@ bin_PROGRAMS = \
 	grow-readbank \
 	load-overlaps \
 	bank2contig  \
-    bank2coverage \
-    updateBankPositions \
-    extractContig
+	bank2coverage \
+	updateBankPositions \
+	extractContig
+
+dist_bin_SCRIPTS = \
+	bank-unlock.pl
 
 
 ##-- GLOBAL INCLUDE
