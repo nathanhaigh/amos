@@ -42,7 +42,7 @@ bool Message_t::read (istream & in)
     while (true)
       {
 	//-- If a nested message, read it in
-	if ( in . peek( ) == '{' )
+	while ( in . peek( ) == '{' )
 	  {
 	    subs_m . push_back (Message_t ( ));
 	    subs_m . back( ) . read (in);
