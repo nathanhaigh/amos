@@ -314,10 +314,10 @@ void TilingField::paintEvent( QPaintEvent * )
               start = 0;
             }
 
-            int rightdistance = (grangeEnd - ri->m_rfoffset ) * basewidth;
+            int rightdistance = (min(grangeEnd, ri->m_rfoffset) - max(ri->m_roffset+1, grangeStart) + 1 ) * basewidth;
 
             p.drawRect(tilehoffset + start, ldcov + 2, 
-                       m_width - (rightdistance + tilehoffset + start),readheight - 4);
+                       rightdistance,readheight - 4);
           }
         }
 
