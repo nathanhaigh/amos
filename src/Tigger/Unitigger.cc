@@ -248,8 +248,6 @@ void Unitigger::calc_layout(IEdge* p_edge) {
 
 void Unitigger::output_amos_contigs(const string p_bankdir) {
   Message_t msg;
-  Layout_t layout;
-  vector<Tile_t> tiles;
   BankStream_t bank(Layout_t::NCODE);
   deque< IEdge* > contig;
   queue< IEdge* > containment;
@@ -418,7 +416,10 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
   // set the first to zero 
   IEdge* calc_edge;
   Tile_t tile;
-  cout << " ** first node is " << first_node->getKey() << endl;
+  Layout_t layout;
+  vector<Tile_t> tiles;
+
+  cout << " ** first node is " << first_node->getKey();
   Read* read_tile = (Read*) first_node->getElement();
   read_tile->start = 0;
   read_tile->end = read_tile->len;
@@ -432,6 +433,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     contig.pop_back();
     calc_layout(calc_edge);
     first_node = calc_edge->opposite(first_node);
+    cout << " -> " << first_node->getKey();
     read_tile = (Read*) first_node->getElement();
     tile.source = read_tile->id;
     
@@ -446,9 +448,9 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     
     tiles.push_back(tile);
   }
-	
 
   layout.setTiling(tiles);
+  cout << endl;
   
   bank << layout;
   }
