@@ -138,7 +138,7 @@ public:
   //!
   //! \return Iterator pointing to the beginning of the edge ID vector
   //!
-  std::vector<Tile_t>::iterator getContigEdgesItr ( )
+  std::vector<ID_t>::iterator getContigEdgesItr ( )
   {
     return edges_m . begin( );
   }
