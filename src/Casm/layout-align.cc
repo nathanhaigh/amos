@@ -1353,18 +1353,17 @@ void ParseMates (Mapping_t & mapping)
 	rmp -> mate . read -> mate . minoff = rmp -> mate . minoff;
 	rmp -> mate . read -> mate . maxoff = rmp -> mate . maxoff;
       }
-
-    mtp_bank . close( );
-    red_bank . close( );
-    frg_bank . close( );
-    lib_bank . close( );
   }
   catch (AMOS::Exception_t & e) {
 
-    //-- On error, print debugging information
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
-    exit (EXIT_FAILURE);
+    //-- Couldn't open banks, or find reads
+    cerr << "WARNING: Could not parse mate-pair information from bank\n" << e;
   }
+
+  mtp_bank . close( );
+  red_bank . close( );
+  frg_bank . close( );
+  lib_bank . close( );
 }
 
 
