@@ -72,9 +72,11 @@ pipeline we type the following:
 The output will be written into a file called asm.ctg.afg, which
 contains, for each contig generated, the consensus sequence and
 quality as well as detailed information regarding the placement of the
-reads within the contig. This file can be converted to .ACE format
-with the utility `amos2ace' which will appear in the $bindir directory
-upon installation.
+reads within the contig. This file, in conjunction with the file
+containing the RED messages can be converted to .ACE format with the
+utility `amos2ace' which will appear in the $bindir directory upon
+installation. For instance, `amos2ace <prefix>.afg <prefix>.ctg.afg'
+will generate the file `<prefix>.ace'.
 
 
 September 2004

@@ -96,7 +96,7 @@ Documentation
    Currently, AMOS is not released with a comprehensive manual. This
 is coming soon (see `NEWS'). In the meantime, check out the `doc'
 directory included in this distribution or point your browser to the
-AMOS website.
+AMOS website <http://www.tigr.org/software/AMOS>
 
 
 Pipeline
@@ -106,7 +106,7 @@ Pipeline
 for the pipelines are in `src/Pipeline' and will be installed in
 $bindir as executable scripts. Please see individual documentation for
 each pipeline in the `doc' directory. Individual pipelines can also be
-built and installed separately, see the `Install' section for more
+built and installed separately, see the Install section for more
 details.
 
    - AMOScmp -
