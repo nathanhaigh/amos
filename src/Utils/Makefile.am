@@ -4,7 +4,8 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	trimByOvl
+	trimByOvl \
+	runAmos
 
 dist_bin_SCRIPTS = \
 	benchmark_qual.pl \
@@ -15,8 +16,8 @@ dist_bin_SCRIPTS = \
 	getlengths.pl \
 	preTA.pl \
 	pullTArchive.pl \
-	runAmos.pl \
 	runTA.pl
+# runAmos.pl 
 
 
 ##-- GLOBAL INCLUDE
@@ -28,7 +29,8 @@ AM_CPPFLAGS = \
 trimByOvl_LDADD = \
         $(top_builddir)/src/AMOS/libAMOS.a
 trimByOvl_SOURCES = \
-	trimByOvl.cc
+	trimByOvl.cc \
+	runAmos.cc
 
 
 ##-- END OF MAKEFILE --##
