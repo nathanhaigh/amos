@@ -2,11 +2,12 @@
 #define TiggerIO_HH 1
 
 #include "foundation_AMOS.hh"
+#include <iostream>
+#include <unistd.h>
 #include "Read.hh"
 #include "Overlap.hh"
 #include "Unitigger.hh"
-#include <iostream>
-#include <unistd.h>
+
 
 using namespace std;
 using namespace AMOS;
@@ -127,6 +128,7 @@ void get_umd_reads(const char* p_file) {
     tigger.add_read(read);
   }
 }
+
 
 static void parse_command_line(int argc, char* argv[]) {
   bool errflg = false;

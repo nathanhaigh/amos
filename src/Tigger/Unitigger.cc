@@ -226,7 +226,7 @@ void Unitigger::hide_containment(IGraph* g) {
     }
   }
 
-  if(VERBOSE) cout << " total contained reads hidden " << containment.size() << endl;
+  cout << " total contained reads hidden " << containment.size() << endl;
 }
 
 
@@ -263,7 +263,7 @@ void Unitigger::add_containment() {
     }
   }
 
-  if(VERBOSE) cout << " total contained reads unhidden " << containment.size() << endl;
+  cout << " total contained reads unhidden " << count << endl;
 }
 
 // TODO: refactor 
@@ -739,7 +739,7 @@ void Unitigger::calc_contigs() {
   //
   find_chunks();
 
-  //  add_containment();
+  add_containment();
 
   //
   // Step 4. Layout
