@@ -182,7 +182,7 @@ void TilingFrame::loadContigRange(int gindex)
           if      (m_cstatus[gindex] == ' ')                   
             { m_cstatus[gindex] = rendered.base(gindex); }
 
-          else if (m_cstatus[gindex] != rendered.base(gindex)) 
+          else if (toupper(m_cstatus[gindex]) != toupper(rendered.base(gindex))) 
             { m_cstatus[gindex] = 'X'; }
         }
 
