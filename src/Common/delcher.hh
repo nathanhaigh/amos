@@ -10,7 +10,6 @@
 #ifndef  __DELCHER_HH
 #define  __DELCHER_HH
 
-
 #include  <cstdio>
 #include  <cstdlib>
 #include  <iostream>

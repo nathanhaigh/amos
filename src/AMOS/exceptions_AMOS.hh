@@ -248,13 +248,23 @@ public:
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump Exception_t info to an ostream
 //!
-std::ostream & operator<< (std::ostream & o, Exception_t & e);
+inline std::ostream & operator<< (std::ostream & out, Exception_t & e)
+{
+  out << "WHAT: " << e . what( ) << std::endl;
+  out << "LINE: " << e . line( ) << std::endl;
+  out << "FILE: " << e . file( ) << std::endl;
+  return out;
+}
 
 
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump exception info to an ostream
 //!
-std::ostream & operator<< (std::ostream & o, std::exception & e);
+inline std::ostream & operator<< (std::ostream & out, std::exception & e)
+{
+  out << "WHAT: " << e . what( ) << std::endl;
+  return out;
+}
 
 } // namespace AMOS
 

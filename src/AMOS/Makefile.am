@@ -41,6 +41,7 @@ check_PROGRAMS = \
 	imsgtest \
 	maptest \
 	msgtest \
+	streamtest \
 	umdtest
 
 
@@ -74,6 +75,12 @@ msgtest_LDADD = \
 msgtest_SOURCES = \
 	msgtest.cc
 
+##-- streamtest
+streamtest_LDADD = \
+	$(top_builddir)/src/AMOS/libAMOS.a
+streamtest_SOURCES = \
+	streamtest.cc
+
 ##-- umdtest
 umdtest_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
@@ -104,9 +111,7 @@ libAMOS_a_SOURCES = \
 	Scaffold_AMOS.cc \
 	Sequence_AMOS.cc \
 	Universal_AMOS.cc \
-	datatypes_AMOS.cc \
-	exceptions_AMOS.cc \
-	inttypes_AMOS.cc
+	datatypes_AMOS.cc
 
 
 ##-- END OF MAKEFILE --##

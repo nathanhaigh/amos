@@ -7,6 +7,7 @@
 //  Routines to manipulate FASTA format files
 
 
+#include  "inttypes_AMOS.hh"
 #include  "fasta.hh"
 using namespace std;
 

@@ -3,7 +3,7 @@
 # initialize
 AC_PREREQ(2.59)
 AC_INIT([AMOS Assembler],
-        [1.2.4],
+        [1.2.5],
         [amos@tigr.org],
         [amos])
 AC_PREFIX_DEFAULT([`pwd`])
@@ -65,6 +65,7 @@ AC_TYPE_SIZE_T
 AC_STRUCT_TM
 AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
+AMOS_C_BITFIELDS
 
 # check for functions which can be replaced with libGNU modules:
 #   getopt strtod strtol
@@ -161,7 +162,7 @@ case "${host}" in
      *alpha*osf*)
      case "${CFLAGS} ${CXXFLAGS}" in
 	  *-g*)
-	echo "Warning! TIGR alphas will bomb when -g flag is turned on"
+	echo "Warning! TIGR alphas may bomb when -g flag is turned on"
 	echo "   use \`configure CFLAGS= CXXFLAGS=' to avoid"
 	  ;;
      esac

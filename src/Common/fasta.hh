@@ -11,7 +11,6 @@
 #define  __FASTA_HH
 
 
-#include  "inttypes_AMOS.hh"
 #include  "delcher.hh"
 #include  <string>
 #include  <vector>

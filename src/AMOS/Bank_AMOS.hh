@@ -21,10 +21,10 @@
 
 #define __PUBSETBUF pubsetbuf
 #ifdef __GNUC__
-#if __GNUC__ < 3
-#undef __PUBSETBUF
-#define __PUBSETBUF setbuf
-#endif
+# if __GNUC__ < 3
+#  undef __PUBSETBUF
+#  define __PUBSETBUF setbuf
+# endif
 #endif
 
 

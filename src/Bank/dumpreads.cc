@@ -16,6 +16,7 @@ using namespace AMOS;
 
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
+bool   OPT_UseSeqNames = false;          // print EIDs instead of IIDs
 
 
 //========================================================== Fuction Decs ====//
@@ -73,7 +74,10 @@ int main (int argc, char ** argv)
 		 << " has no clear range sequence, skipped\n";
 	    continue;
 	  }
-	cout << ">" << red . getIID( ) << endl;
+	if ( OPT_UseSeqNames )
+	  cout << ">" << red . getEID( ) << endl;
+	else
+	  cout << ">" << red . getIID( ) << endl;
 	WrapString (cout, red . getSeqString(red . getClearRange( )), 70);
 
 	cntw ++;
@@ -101,13 +105,16 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "h")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "sh")) != EOF) )
     switch (ch)
       {
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
         break;
+      case 's':
+	OPT_UseSeqNames = true;
+	break;
       default:
         errflg ++;
       }
@@ -130,7 +137,8 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h            Display help information\n\n";
+    << "-h            Display help information\n"
+    << "-s            Use EID seqnames for FastA header instead of IIDs\n\n";
 
   cerr
     << "Takes an AMOS bank directory and dumps all contained reads listed by\n"
