@@ -9,12 +9,74 @@
 
 #include "Read_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Read_t ======================
+//----------------------------------------------------- readMessage-------------
+void Read_t::readMessage (const Message_t & msg)
+{
+  clear( );
+  Sequence_t::readMessage (msg);
+
+  try {
+    stringstream ss;
+
+    if ( msg . exists (F_FRAGMENT) )
+      {
+	ss . str (msg . getField (F_FRAGMENT));
+	ss >> frag_m;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid frg format");
+      }
+
+    if ( msg . exists (F_TYPE) )
+      {
+        ss . str (msg . getField (F_TYPE));
+        setType (ss . get( ));
+      }
+
+    if ( msg . exists (F_CLEAR) )
+      {
+        ss . str (msg . getField (F_CLEAR));
+        ss >> clear_m . begin;
+        ss . ignore( );
+        ss >> clear_m . end;
+        if ( !ss )
+          AMOS_THROW_ARGUMENT ("Invalid clr format");
+      }
+
+    if ( msg . exists (F_VECTORCLEAR) )
+      {
+        ss . str (msg . getField (F_VECTORCLEAR));
+        ss >> vclear_m . begin;
+        ss . ignore( );
+        ss >> vclear_m . end;
+        if ( !ss )
+          AMOS_THROW_ARGUMENT ("Invalid vcr format");
+      }
+
+    if ( msg . exists (F_QUALITYCLEAR) )
+      {
+        ss . str (msg . getField (F_QUALITYCLEAR));
+        ss >> qclear_m . begin;
+        ss . ignore( );
+        ss >> qclear_m . end;
+        if ( !ss )
+          AMOS_THROW_ARGUMENT ("Invalid qcr format");
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- readRecord -------------
 Size_t Read_t::readRecord (istream & fix,
 			   istream & var)
@@ -34,6 +96,50 @@ Size_t Read_t::readRecord (istream & fix,
   streamsize += sizeof (Range_t);
 
   return streamsize;
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Read_t::writeMessage (Message_t & msg) const
+{
+  Sequence_t::writeMessage (msg);
+
+  try {
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    if ( frag_m != NULL_ID )
+      {
+	ss << frag_m;
+	msg . setField (F_FRAGMENT, ss . str( ));
+	ss . str("");
+      }
+
+    if ( type_m != NULL_READ )
+      {
+        ss << type_m;
+        msg . setField (F_TYPE, ss . str( ));
+        ss . str("");
+      }
+
+    ss << clear_m . begin << ',' << clear_m . end;
+    msg . setField (F_CLEAR, ss . str( ));
+    ss . str("");
+
+    ss << vclear_m . begin << ',' << vclear_m . end;
+    msg . setField (F_VECTORCLEAR, ss . str( ));
+    ss . str("");
+
+    ss << qclear_m . begin << ',' << qclear_m . end;
+    msg . setField (F_QUALITYCLEAR, ss . str( ));
+    ss . str("");
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
 }
 
 

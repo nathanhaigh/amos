@@ -183,6 +183,10 @@ public:
   }
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setClearRange ----------
   //! \brief Set the generic clear range
   //!
@@ -255,6 +259,10 @@ public:
   {
     vclear_m = vclear;
   }
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

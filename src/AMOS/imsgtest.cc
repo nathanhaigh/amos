@@ -33,12 +33,13 @@ int main (int argc, char ** argv)
     Scaffold_t scf;
     Sequence_t seq;
     Contig_t ctg;
+    Read_t red;
 
     Universal_t * unvp = NULL;
     
     while ( msg . read (msgfile) )
       {
-	cout << "# Found new message: "
+	cerr << "# Found new message: "
 	     << Decode (msg . getMessageCode( )) << endl;
 	if ( msg . getMessageCode( ) == Message_k::M_UNIVERSAL )
 	  unvp = &unv;
@@ -60,9 +61,11 @@ int main (int argc, char ** argv)
 	  unvp = &seq;
 	else if ( msg . getMessageCode( ) == Message_k::M_CONTIG )
 	  unvp = &ctg;
+	else if ( msg . getMessageCode( ) == Message_k::M_READ )
+	  unvp = &red;
 	else
 	  {
-	    cout << "# don't know how to parse message\n";
+	    cerr << "# don't know how to parse message\n";
 	    continue;
 	  }
 
@@ -73,47 +76,9 @@ int main (int argc, char ** argv)
 	unvp -> writeMessage (msg);
 
 	msg . write (cout);
+
+	cerr << "# successfully parsed message\n";
       }
-
-    unv . clear( );
-    unv . writeMessage (msg);
-    msg . write (cout);
-
-    ctl . clear( );
-    ctl . writeMessage (msg);
-    msg . write (cout);
-
-    cte . clear( );
-    cte . writeMessage (msg);
-    msg . write (cout);
-
-    frg . clear( );
-    frg . writeMessage (msg);
-    msg . write (cout);
-
-    kmr . clear( );
-    kmr . writeMessage (msg);
-    msg . write (cout);
-
-    lib . clear( );
-    lib . writeMessage (msg);
-    msg . write (cout);
-
-    ovl . clear( );
-    ovl . writeMessage (msg);
-    msg . write (cout);
-
-    scf . clear( );
-    scf . writeMessage (msg);
-    msg . write (cout);
-
-    seq . clear( );
-    seq . writeMessage (msg);
-    msg . write (cout);
-
-    ctg . clear( );
-    ctg . writeMessage (msg);
-    msg . write (cout);
   }
   catch (Exception_t & e) {
     cerr << e;
