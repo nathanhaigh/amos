@@ -252,23 +252,37 @@ void RenderSeq_t::loadTrace(const string & db)
   cerr << "and trace" << endl;
 
   vector <string> chromodbs;
-  vector <string>::iterator ci;
   chromodbs.push_back("/local/chromo/Chromatograms/");
   chromodbs.push_back("/local/chromo2/Chromatograms/");
   chromodbs.push_back("/local/chromo3/Chromatograms/");
   chromodbs.push_back("/local/asmg/scratch/mschatz/Chromatograms/");
 
-  for (ci =  chromodbs.begin();
-       ci != chromodbs.end();
+  vector <string> chromopaths;
+  chromopaths.push_back("/home/mschatz/build/sample/32774/chromo");
+
+  string path;
+
+  vector <string>::iterator ci;
+  for (ci =  chromopaths.begin();
+       ci != chromopaths.end() && !m_trace;
        ci++)
   {
-    string path = chromodbpath(*ci, db, readname);
+    path = *ci + "/";
+    path += readname;
+    m_trace = read_reading((char *)path.c_str(), TT_ANY);
+  }
+
+
+  for (ci =  chromodbs.begin();
+       ci != chromodbs.end() && !m_trace;
+       ci++)
+  {
+    path = chromodbpath(*ci, db, readname);
     if (DIR * dir = opendir(path.c_str()))
     {
       closedir(dir);
       path += readname;
       m_trace = read_reading((char *)path.c_str(), TT_ANY);
-      if (m_trace) {break;}
     }
   }
 
