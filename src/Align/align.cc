@@ -3975,10 +3975,10 @@ void Gapped_Multi_Alignment_t :: Make_AMOS_Contig
       AMOS :: Contig_t & out) const
   // returns a Contig_t representation of the multi-alignment
 {
-  out . setSequence(consensus, con_qual);
-  out . setIID(id);
+  out . setSequence (consensus, con_qual);
+  out . setIID (strtol (id . c_str (), NULL, 10));
 
-  int n = align . size();
+  int n = align . size ();
 
   vector <Tile_t> tiles;
   for (int i = 0; i < n; i ++){
