@@ -11,24 +11,16 @@ int main ( )
 {
   try {
 
+    IDMap_t idmap;
     Message_t msg;
     msg . read (cin);
+    idmap . readMessage (msg);
 
-    Bank_t bnk (Universal_t::NCode( ));
-    bnk . create ("__testbank__");
-    bnk . map( ) . readMessage (msg);
-    bnk . close( );
+    idmap . invert( );
 
-    bnk . open ("__testbank__");
     msg . clear( );
-
-    cerr << bnk . map( ) . lookup (0) << endl;
-    cerr << bnk . map( ) . lookup (1) << endl;
-    cerr << bnk . map( ) . lookup (10000) << endl;
-
-    bnk . map( ) . writeMessage (msg);
+    idmap . writeMessage (msg);
     msg . write (cout);
-    bnk . close( );
   }
   catch (Exception_t & e) {
     cerr << e;

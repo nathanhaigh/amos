@@ -10,6 +10,7 @@
 #ifndef __IDMap_AMOS_HH
 #define __IDMap_AMOS_HH 1
 
+#include "alloc.hh"
 #include "Message_AMOS.hh"
 #include <sstream>
 
@@ -96,7 +97,7 @@ private:
   }
 
 
-  HashNode_t table_m [BUCKETS];      //!< the hash table
+  HashNode_t * table_m;              //!< the hash table
 
   ID_t size_m;                       //!< the number of entries
 
@@ -124,6 +125,7 @@ public:
   //!
   IDMap_t ( )
   {
+    table_m = new HashNode_t [BUCKETS];
     size_m = 0;
   }
 
@@ -142,7 +144,7 @@ public:
   //!
   ~IDMap_t ( )
   {
-
+    delete[] table_m;
   }
 
 
@@ -186,6 +188,18 @@ public:
   //! \return void
   //!
   void insert (ID_t key, ID_t val);
+
+
+  //--------------------------------------------------- invert -----------------
+  //! \brief Invert the map
+  //!
+  //! Inverts the map so the keys are now the values and the values are now the
+  //! keys. Somewhat costly operation, so use sparingly.
+  //!
+  //! \pre There must be no equal values in the map
+  //! \return void
+  //!
+  void invert ( );
 
 
   //--------------------------------------------------- lookup -----------------

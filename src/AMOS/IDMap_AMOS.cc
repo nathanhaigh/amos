@@ -52,6 +52,62 @@ void IDMap_t::insert (ID_t key, ID_t val)
 }
 
 
+//----------------------------------------------------- invert -----------------
+void IDMap_t::invert ( )
+{
+  HashNode_t * oldtable = table_m;
+  table_m = new HashNode_t [BUCKETS];
+  HashNode_t * oldcurr, * invcurr;
+
+  try {
+
+  for ( Size_t i = 0; i < BUCKETS; i ++ )
+    {
+      oldcurr = oldtable + i;
+      if ( oldcurr -> key == NULL_ID )
+	continue;
+	
+      do
+	{
+	  invcurr = hashfunc (oldcurr -> val);
+	    
+	  if ( invcurr -> key == NULL_ID )
+	    {
+	      invcurr -> key = oldcurr -> val;
+	      invcurr -> val = oldcurr -> key;
+	    }
+	  else
+	    {
+	      while ( invcurr -> next != NULL )
+		{
+		  if ( invcurr -> key == oldcurr -> val )
+		    AMOS_THROW_ARGUMENT ("invert failed due to multiple keys");
+		  invcurr = invcurr -> next;
+		}
+	      if ( invcurr -> key == oldcurr -> val )
+		AMOS_THROW_ARGUMENT ("invert failed due to multiple keys");	
+		
+	      invcurr -> next = new HashNode_t( );
+	      invcurr = invcurr -> next;
+	      invcurr -> key = oldcurr -> val;
+	      invcurr -> val = oldcurr -> key;
+	    }
+	    
+	  oldcurr = oldcurr -> next;
+	} while (oldcurr != NULL);
+    }
+  }
+  catch (Exception_t) {
+
+    delete[] table_m;
+    table_m = oldtable;
+    throw;
+  }
+
+  delete[] oldtable;
+}
+
+
 //----------------------------------------------------- lookup -----------------
 ID_t IDMap_t::lookup (ID_t key)
 {
