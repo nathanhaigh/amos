@@ -55,6 +55,39 @@ void  Align_Score_Entry_t :: Get_Max
 
 
 
+bool  Distinguishing_Column_t :: Intersects
+    (const Distinguishing_Column_t & d, Phase_Entry_t & p,
+     int & min)
+
+//  See if any of the subscripts in this  column  match
+//  those in  d .  If not, return  false .  Otherwise, return
+//   true  and set the counts in  p  for how many match a/a and b/b,
+//  and how many match a/b and b/a.  Set  min  to the smaller
+//  number of component matches in the larger of  same_ct  and
+//   opposite_ct .
+
+  {
+   int  aa, ab, ba, bb;
+
+   aa = Match_Count (hapa_sub, d . hapa_sub);
+   bb = Match_Count (hapb_sub, d . hapb_sub);
+
+   ab = Match_Count (hapa_sub, d . hapb_sub);
+   ba = Match_Count (hapb_sub, d . hapa_sub);
+
+   p . same_ct = aa + bb;
+   p . opposite_ct = ab + ba;
+
+   if  (p . same_ct >= p . opposite_ct)
+       min = Min (aa, bb);
+     else
+       min = Min (ab, ba);
+
+   return  (p . same_ct > 0 || p . opposite_ct > 0);
+  }
+
+
+
 
 void  Vote_t :: Incr_After
     (char ch)
@@ -210,6 +243,7 @@ void  Vote_t :: Set_Zero
 
 
 
+
 void  Base_Alignment_t :: Dump
     (FILE * fp)  const
 
@@ -221,6 +255,7 @@ void  Base_Alignment_t :: Dump
 
    return;
   }
+
 
 
 
@@ -599,6 +634,7 @@ void  Alignment_t :: Set_To_Identity
 
 
 
+
 void  Gapped_Alignment_t :: Clear
     (void)
 
@@ -816,6 +852,30 @@ void  Gapped_Alignment_t :: Flip
 
 
 
+char  Gapped_Alignment_t :: Get_Aligning_Char
+    (int b, char * s)
+
+//  Return the character in string  s  that aligns to
+//  consensus position  b .
+
+  {
+   int  d, i, n;
+
+   assert (b_lo <= b && b < b_hi);
+
+   n = skip . size ();
+   for  (d = 0;  d < n && skip [d] < b;  d ++)
+     ;
+
+   i = a_lo + b - b_lo - d;
+   if  (d < n && b == skip [d])
+       return '-';
+     else
+       return  s [i];
+  }
+
+
+
 int  Gapped_Alignment_t :: Get_Skip
     (int i)  const
 
@@ -830,6 +890,39 @@ int  Gapped_Alignment_t :: Get_Skip
        return  skip [i];
      else
        return  INT_MAX;
+  }
+
+
+
+void  Gapped_Alignment_t :: Incr_Column_Chars
+    (Matrix <unsigned char> & count, const char * s)
+
+//  Increment entries in  count  corresponding to this alignment
+//  of  s  to the consensus string.
+
+  {
+   int  skip_ct = skip . size ();
+   int  a, b, d, j;
+
+   a = a_lo;
+   d = 0;
+   for  (b = b_lo;  b < b_hi;  b ++)
+     {
+      if  (d < skip_ct && b == skip [d])
+          {
+           Incr_Limited (count . get (b, 4), (unsigned char) UCHAR_MAX);   // '-'
+           d ++;
+          }
+        else
+          {
+           j = DNA_Char_To_Sub (s [a]);
+           if  (j >= 0)
+               Incr_Limited (count . get (b, j), (unsigned char) UCHAR_MAX);
+           a ++;
+          }
+     }
+
+   return;
   }
 
 
@@ -1522,6 +1615,45 @@ void  Gapped_Multi_Alignment_t :: Convert_From
 
 
 
+void  Gapped_Multi_Alignment_t :: Count_Column_Chars
+    (Matrix <unsigned char> & count,
+     const vector <char *> & sl)
+
+//  Set entries in  count  to number of each character in
+//  corresponding alignment columns.   sl  has the actual
+//  sequences.  Assume entries in  count  are all already zero.
+
+  {
+   int  len;
+   int  i, n;
+
+   if  (sl . size () != align . size ())
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Count_Column_Chars called with %d strings and %d alignments",
+            int (sl . size ()), int (align . size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   n = align . size ();
+   len = getConsensusLen ();
+   if  (count . NumRows () < len)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Count_Column_Chars called with count vector = %d\n"
+            " and consensus len = %d",
+            count . NumRows (), len);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   for  (i = 0;  i < n;  i ++)
+     align [i] . Incr_Column_Chars (count, sl [i]);
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Dump_Aligns
     (FILE * fp)
 
@@ -1644,6 +1776,83 @@ void  Gapped_Multi_Alignment_t :: Extract_IMP_Dels
 
 
 
+void  Gapped_Multi_Alignment_t :: Get_Distinguishing_Columns
+    (vector <Distinguishing_Column_t> & dc,
+     const vector <char *> & sl)
+
+//  Fill  dc  with the distinguishing columns in this multialignment.
+//  A distinguishing column has a confirmed SNP.
+//  It may actually be a range of adjacent columns.
+//   sl  holds the component sequences in the multialignment and
+
+  {
+   Distinguishing_Column_t  d;
+   int  i, len;
+
+   dc . clear ();
+
+   len = getConsensusLen ();
+
+   Matrix <unsigned char>  count (len, 5);
+        // counts of a, c, g, t and - at each position of consensus
+        // automatically set to zero
+
+   Count_Column_Chars (count, sl);
+
+   for  (i = 0;  i < len;  i ++)
+     {
+      char  ch1, ch2;
+      int  ch1_ct, ch2_ct;
+
+      if  (Is_Distinguishing (count . getRow (i), ch1, ch1_ct, ch2, ch2_ct))
+          {
+           d . lo = i;
+           d . hi = i + 1;   // restrict to single characters for now
+           d . hapa_ch = ch1;
+           d . hapb_ch = ch2;
+           d . phase_ch = ' ';
+           Get_Element_Subs (d, sl);
+
+           dc . push_back (d);
+          }
+     }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Get_Element_Subs
+    (Distinguishing_Column_t & d, const vector <char *> & sl)
+
+//  Fill   hapa_sub  and  hapb_sub  in  d  with the subscripts
+//  of the strings in  sl  that have  d . hapa_ch  and  d . hapb_ch ,
+//  respectively, at the position indicated in  d .
+
+  {
+   int  i, n;
+
+   d . hapa_sub . clear ();
+   d . hapb_sub . clear ();
+
+   n = align . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (Range_Intersect (align [i] . b_lo, align [i] . b_hi, d . lo, d . hi))
+         {
+          char  ch;
+
+          ch = align [i] . Get_Aligning_Char (d . lo, sl [i]);
+          if  (ch == d . hapa_ch)
+              d . hapa_sub . push_back (i);
+          else if  (ch == d . hapb_ch)
+              d . hapb_sub . push_back (i);
+         }
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Get_Positions
     (vector <Range_t> & pos)  const
 
@@ -1658,6 +1867,81 @@ void  Gapped_Multi_Alignment_t :: Get_Positions
 
    for  (i = 0;  i < n;  i ++)
      pos [i] . setRange (align [i] . b_lo, align [i] . b_hi);
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Haplo_Sep
+    (const vector <char *> & sl, vector <Distinguishing_Column_t> & dc,
+     vector <char *> * tg = NULL)
+
+//  Identify distinguishing columns in this multialignment
+//  and use them to partition the elements into separate
+//  haplotypes as much as possible.   sl  holds the sequences
+//  of the elements and  tg  holds the id tags of the elements.
+//  Set  dc  to hold the SNPs between the haplotypes.
+
+  {
+   vector <char>  side;
+   vector <int>  segment;
+   int  i, m, n;
+
+   Get_Distinguishing_Columns (dc, sl);
+
+   Set_Phase (dc);
+
+   n = sl . size ();
+   vector <int>  pos (n, 0), neg (n, 0);
+
+   Classify_Reads (dc, n, side, segment);
+
+   m = dc . size ();
+   for  (i = 0;  i < m;  i ++)
+     {
+      int  j, k;
+
+      if  (dc [i] . phase_ch == '+')
+          {
+           k = dc [i] . hapa_sub . size ();
+           for  (j = 0;  j < k;  j ++)
+             pos [dc [i] . hapa_sub [j]] ++;
+
+           k = dc [i] . hapb_sub . size ();
+           for  (j = 0;  j < k;  j ++)
+             neg [dc [i] . hapb_sub [j]] ++;
+          }
+      else if  (dc [i] . phase_ch == '-')
+          {
+           k = dc [i] . hapa_sub . size ();
+           for  (j = 0;  j < k;  j ++)
+             neg [dc [i] . hapa_sub [j]] ++;
+
+           k = dc [i] . hapb_sub . size ();
+           for  (j = 0;  j < k;  j ++)
+             pos [dc [i] . hapb_sub [j]] ++;
+          }
+     }
+
+   int  p_ct = 0, n_ct = 0, u_ct = 0;
+
+   printf ("String Assignments:\n");
+   for  (i = 0;  i < n;  i ++)
+     {
+      if  (tg != NULL)
+          printf ("%3d %8s: %7d %7d  %c %4d\n", i, (* tg) [i], pos [i], neg [i],
+               side [i], segment [i]);
+        else
+          printf ("%3d: %7d %7d  %c %4d\n", i, pos [i], neg [i], side [i],
+               segment [i]);
+      if  (pos [i] > neg [i])
+          p_ct ++;
+      else if  (pos [i] < neg [i])
+          n_ct ++;
+        else
+          u_ct ++;
+     }
 
    return;
   }
@@ -2107,6 +2391,144 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 
 
 
+void  Gapped_Multi_Alignment_t :: Set_Phase
+    (vector <Distinguishing_Column_t> & dc)
+
+//  Determine the phase of each column based on common reads with
+//  consistent haplotype patterns
+
+  {
+   vector <Phase_Entry_t>  edge_list;
+   vector <int>  tree_edge;
+   Phase_Entry_t  phase;
+   vector <Distinguishing_Column_t> :: iterator  p;
+   int  min;
+   int  i, j, e, n, t;
+
+   n = dc . size ();
+   for  (i = 0;  i < n;  i ++)
+     dc [i] . phase_ch = ' ';
+
+   // Eliminate dubious  dc  entries by marking the ones that
+   // are bounded by much better ones
+   for  (i = 0;  i < n - 1;  i ++)
+     {
+      int  k, hi_j = i;
+
+      if  (dc [i] . phase_ch == 'D')
+          continue;
+
+      for  (j = i + 1;  j < n && dc [i] . Intersects (dc [j], phase, min);  j ++)
+        {
+         if  (abs (phase . same_ct - phase . opposite_ct) >= 4
+                && min >= 4)
+             hi_j = j;
+        }
+
+      for  (k = i + 1;  k < hi_j;  k ++)
+        if  (dc [k] . hapb_sub . size () <= 2)
+            dc [k] . phase_ch = 'D';
+     }
+
+   if  (Verbose > 2)
+       {
+        printf ("Dubious Columns:\n");
+        for  (i = 0;  i < n;  i ++)
+          if  (dc [i] . phase_ch == 'D')
+              dc [i] . Print (stdout);
+       }
+
+   // Eliminate dubious columns
+   p = dc . begin ();
+   while  (p != dc . end ())
+     if  (p -> phase_ch == 'D')
+         dc . erase (p);
+       else
+         p ++;
+
+   // Create edges between remaining columns
+   n = dc . size ();
+
+   for  (i = 0;  i < n - 1;  i ++)
+     {
+      for  (j = i + 1;  j < n && dc [i] . Intersects (dc [j], phase, min);  j ++)
+        {
+         phase . from = i;
+         phase . to = j;
+         phase . weight = abs (phase . same_ct - phase . opposite_ct);
+         if  (phase . weight > 0)
+             edge_list . push_back (phase);
+        }
+     }
+
+   sort (edge_list . begin (), edge_list . end (), greater<Phase_Entry_t>());
+
+   e = edge_list . size ();
+
+   if  (Verbose > 2)
+       {
+        printf ("Edges:\n");
+        for  (i = 0;  i < e;  i ++)
+          printf ("%4d %4d  %3d %3d  %3d\n", edge_list [i] . from,
+               edge_list [i] . to, edge_list [i] . same_ct,
+               edge_list [i] . opposite_ct, edge_list [i] . weight);
+       }
+
+
+   vector < vector <Phase_Entry_t> >  tree (n);
+     // allocate n empty adjacency lists
+
+   Best_Spanning_Tree (n, edge_list, tree_edge);
+
+   printf ("Vertices = %d\n", n);
+   t = tree_edge . size ();
+   printf ("Tree edges = %d\n", t);
+   for  (i = 0;  i < t;  i ++)
+     {
+      tree [edge_list [tree_edge [i]] . from]
+           . push_back (edge_list [tree_edge [i]]);
+      Swap (edge_list [tree_edge [i]] . from,
+              edge_list [tree_edge [i]] . to);
+      tree [edge_list [tree_edge [i]] . from]
+           . push_back (edge_list [tree_edge [i]]);
+     }
+
+   if  (Verbose > 2)
+       {
+        printf ("Tree:\n");
+        for  (i = 0;  i < n;  i ++)
+          {
+           int  j, m;
+
+           printf ("%3d:\n", i);
+           m = tree [i] . size ();
+           for  (j = 0;  j < m;  j ++)
+             tree [i] [j] . Print (stdout);
+          }
+       }
+
+   for  (i = 0;  i < n;  i ++)
+     if  (dc [i] . phase_ch == ' ')
+         {
+          int  sum = 0;
+
+          Traverse (i, -1, tree, dc, '+', sum);
+          if  (sum < 0)
+              Traverse (i, -1, tree, dc, '-', sum);
+         }
+
+   printf ("DC after Set_Phase\n");
+   for  (i = 0;  i < n;  i ++)
+     {
+      printf ("i = %d:\n", i);
+      dc [i] . Print (stdout);
+     }
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Show_Skips
     (FILE * fp)
 
@@ -2197,6 +2619,198 @@ int  Gapped_Multi_Alignment_t :: Ungapped_Consensus_Len
 
 
 
+void  Best_Spanning_Tree
+    (int n, const vector <Phase_Entry_t> & edge_list,
+     vector <int> & tree_edge)
+
+//  Find the best spanning tree of graph of  n  vertices,  0 .. (n-1)
+//  using edges in  edge_list  in order.  Put subscripts of edges
+//  used in  tree_edge .  Use  Union-Find  algorithm.
+
+  {
+   vector <int>  uf (n, -1);
+   int  i, e;
+
+   tree_edge . clear ();
+
+   e = edge_list . size ();
+   for  (i = 0;  i < e;  i ++)
+     {
+      int  j, k;
+
+edge_list [i] . Print (stdout);
+      j = UF_Find (edge_list [i] . from, uf);
+      k = UF_Find (edge_list [i] . to, uf);
+printf ("  j = %d  k = %d\n", j, k);
+      if  (j != k)
+          {
+           tree_edge . push_back (i);
+           UF_Union (j, k, uf);
+          }
+     }
+
+   return;
+  }
+
+
+
+const int  MAX_ITERATIONS = 200;
+
+void  Classify_Reads
+    (const vector <Distinguishing_Column_t> & dc, int n,
+     vector <char> & side, vector <int> & segment)
+
+//  Assign haplotypes to reads  0 .. (n-1)  based on the
+//  entries in  dc .
+
+  {
+   vector < vector <Phase_Entry_t> >  A (n);
+   vector <Phase_Entry_t>  edge_list;
+   Phase_Entry_t  phase;
+   vector <int>  uf (n, -1);
+   int  len;
+   int  e, i, j, k, m;
+
+   m = dc . size ();
+   for  (i = 0;  i < m;  i ++)
+     {
+      int  a_len, b_len;
+      int  from, to;
+
+      a_len = dc [i] . hapa_sub . size ();
+      b_len = dc [i] . hapb_sub . size ();
+
+      for  (j = 0;  j < a_len;  j ++)
+        for  (k = 0;  k < b_len;  k ++)
+          {
+           from = dc [i] . hapa_sub [j];
+           to = dc [i] . hapb_sub [k];
+           if  (from < to)
+               Incr_Opposite (A [from], from, to);
+             else
+               Incr_Opposite (A [to], to, from);
+          }
+     }
+
+   printf ("Opposite Counts  n = %d:\n", n);
+   for  (i = 0;  i < n;  i ++)
+     {
+      len = A [i] . size ();
+      printf ("%3d (%2d): ", i, len);
+      for  (j = 0;  j < len;  j ++)
+        if  (A [i] [j] . opposite_ct > 0)
+            printf (" %3d/%-3d", A [i] [j] . to, A [i] [j] . opposite_ct);
+      putchar ('\n');
+     }
+
+   // Make a list of edges
+   for  (i = 0;  i < n;  i ++)
+     {
+      len = A [i] . size ();
+      for  (j = 0;  j < len;  j ++)
+        {
+         phase . from = i;
+         phase . to = A [i] [j] . to;
+         phase . weight = A [i] [j] . opposite_ct;
+
+         edge_list . push_back (phase);
+        }
+     }
+
+   // Sort into descending order by weight
+   sort (edge_list . begin (), edge_list . end (), greater<Phase_Entry_t>());
+
+   // Greedily find approximate best bipartite subgraph
+   e = edge_list . size ();
+   for  (i = 0;  i < e;  i ++)
+     {
+      int  j_par, k_par;
+      int  from, to;
+
+      from = edge_list [i] . from;
+      to = edge_list [i] . to;
+
+      j = UF_Find_With_Parity (from, uf, j_par);
+      k = UF_Find_With_Parity (to, uf, k_par);
+
+      if  (j != k)
+          {
+           if  (j_par == k_par)
+               UF_Union (j, k, uf);
+             else
+               {  // break usual UF rules to ensure that  from  and
+                  //  to  get opposite sides of the bipartite graph
+                if  (j == from)
+                    {
+                     uf [k] += uf [j];
+                     uf [j] = to;
+                    }
+                else if  (k == to)
+                    {
+                     uf [j] += uf [k];
+                     uf [k] = from;
+                    }
+                else if  (uf [j] <= uf [k])
+                    {  // k is smaller since values are negative sizes
+                     uf [j] += uf [k];
+                     uf [k] = from;
+                    }
+               }
+          }
+     }
+
+   side . resize (n);
+   segment . resize (n);
+
+   printf ("Bipartite Segments:\n");
+   for  (i = 0;  i < n;  i ++)
+     {
+      char  ch;
+      int  par;
+
+      j = UF_Find_With_Parity (i, uf, par);
+      if  (par == 0)
+          ch = 'a';
+        else
+          ch = 'b';
+      side [i] = ch;
+      segment [i] = j;
+
+      printf ("%4d %4d  %c\n", i, j, ch);
+     }
+
+   return;
+  }
+
+
+
+int  DNA_Char_To_Sub
+    (char ch)
+
+//  Return the subscript  0 .. 4  corresponding to  ch
+//  acgt-, respectively.  Return  -1  if  ch  is not
+//  one of these characters
+
+  {
+   switch (tolower (ch))
+     {
+      case  'a' :
+        return  0;
+      case  'c' :
+        return  1;
+      case  'g' :
+        return  2;
+      case  't' :
+        return  3;
+      case  '-' :
+        return  4;
+      default :
+        return  -1;
+     }
+  }
+
+
+
 int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len)
 
@@ -2224,6 +2838,153 @@ int  Exact_Prefix_Match
        }
 
    return  i;
+  }
+
+
+
+void  Incr_Opposite
+    (vector <Phase_Entry_t> & v, int from, int to)
+
+//  Increment  opposite_ct  in  v [i]  that matches  from  and
+//   to .  If none is found, then add a new one and set its
+//   oppostie_ct  to  1  and its  same_ct  to  0 .
+
+  {
+   Phase_Entry_t  p;
+   int  i, n;
+
+   n = v . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (v [i] . to == to)
+         {
+          assert (v [i] . from = from);
+          v [i] . opposite_ct ++;
+          return;
+         }
+
+   p . from = from;
+   p . to = to;
+   p . opposite_ct = 1;
+   p . same_ct = 0;
+   p . weight = 0;
+
+   v . push_back (p);
+
+   return;
+  }
+
+
+
+void  Incr_Same
+    (vector <Phase_Entry_t> & v, int from, int to)
+
+//  Increment  same_ct  in  v [i]  that matches  from  and
+//   to .  If none is found, then add a new one and set its
+//   same_ct  to  1  and its  opposite_ct  to  0 .
+
+  {
+   Phase_Entry_t  p;
+   int  i, n;
+
+   n = v . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (v [i] . to == to)
+         {
+          assert (v [i] . from = from);
+          v [i] . same_ct ++;
+          return;
+         }
+
+   p . from = from;
+   p . to = to;
+   p . same_ct = 1;
+   p . opposite_ct = 0;
+   p . weight = 0;
+
+   v . push_back (p);
+
+   return;
+  }
+
+
+
+bool  Is_Distinguishing
+    (unsigned char ct [5], char & ch1, int & ch1_ct,
+     char & ch2, int & ch2_ct)
+
+//  Check if values in  ct  indicate a polymorphism.  If so set
+//   ch1  and  ch2  to the most frequenct characters and
+//   ch1_ct  and  ch2_ct  to the number of occurrences of each.
+
+  {
+   int  sub1, sub2;
+   int  i;
+
+   ch1_ct = ct [0];
+   sub1 = 0;
+   ch2_ct = 0;
+
+   for  (i = 1;  i < 5;  i ++)
+     if  (ch2_ct < ct [i])
+         {
+          if  (ch1_ct < ct [i])
+              {
+               ch2_ct = ch1_ct;
+               sub2 = sub1;
+               ch1_ct = ct [i];
+               sub1 = i;
+              }
+            else
+              {
+               ch2_ct = ct [i];
+               sub2 = i;
+              }
+         }
+
+   // Simple version that makes a column distinguishing if it has
+   // >= 3 occurrences of 3 or more characters
+   // Should probably make alternative version that uses quality values
+   if  (ch1_ct >= 3 && ch2_ct >= 3)
+       {
+        ch1 = Sub_To_DNA_Char (sub1);
+        ch2 = Sub_To_DNA_Char (sub2);
+        return  true;
+       }
+
+   return  false;
+  }
+
+
+
+int  Match_Count
+    (const vector <int> & a, const vector <int> & b)
+
+//  Return the number of entries in  a  that are also in  b
+//  Assume each list is in ascending sorted order without
+//  duplicates.
+
+  {
+   int  i, j, m, n, ct;
+
+   m = a . size ();
+   n = b . size ();
+
+   i = j = ct = 0;
+   while  (i < m && j < n)
+     {
+      if  (a [i] < b [j])
+          i ++;
+      else if  (b [j] < a [i])
+          j ++;
+        else
+          {
+           ct ++;
+           i ++;
+           j ++;
+          }
+     }
+
+   return  ct;
   }
 
 
@@ -3099,6 +3860,167 @@ bool  Substring_Match_VS
        }
 
    return  false;
+  }
+
+
+
+char  Sub_To_DNA_Char
+    (int i)
+
+//  Return the DNA character equivalent of subscript  i .
+
+  {
+   static char  convert [] = "acgt-";
+
+   if  (i >= 5)
+       {
+        sprintf (Clean_Exit_Msg_Line, "ERROR:  subscript %d >= 5",
+             i);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   return  convert [i];
+  }
+
+
+
+void  Traverse
+    (int v, int par, vector < vector <Phase_Entry_t> > & tree,
+     vector <Distinguishing_Column_t> & dc, char ch, int & sum)
+
+//  Set  dc [v] . phase_char  to  ch  and continue a depth-first
+//  traversal of the tree in  tree  using the phase of the tree
+//  edges to determine the next phase character.  Increment
+//   sum  by  ch * (dc [v] . (hapa_ct - hapb_ct)) .
+//   par  is the subscript of the parent of  v  in the tree.
+//  Note:  there must be *NO* cycles in tree except between
+//  parent and child.
+
+  {
+   int  i, n;
+
+   dc [v] . phase_ch = ch;
+   if  (ch == '+')
+       sum += int (dc [v] . hapa_sub . size ())
+                - int (dc [v] . hapb_sub . size ());
+     else
+       sum += int (dc [v] . hapb_sub . size ())
+                - int (dc [v] . hapa_sub . size ());
+
+   n = tree [v] . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (tree [v] [i] . to != par)
+         {
+          if  (tree [v] [i] . same_ct >= tree [v] [i] . opposite_ct)
+              Traverse (tree [v] [i] . to, v, tree, dc, ch, sum);
+            else
+              {
+               char  flip_ch;
+
+               if  (ch == '+')
+                   flip_ch = '-';
+                 else
+                   flip_ch = '+';
+               Traverse (tree [v] [i] . to, v, tree, dc, flip_ch, sum);
+              }
+         }
+
+   return;
+  }
+
+
+
+int  UF_Find
+    (int i, vector <int> & uf)
+
+//  Return the subscript of the set leader of  i  in  Union-Find
+//  array  uf .
+
+  {
+   int  j;
+
+   for  (j = i;  uf [j] >= 0;  j = uf [j])
+     ;
+
+   if  (j == i)
+       return  j;
+
+   while  (uf [i] != j)
+     {
+      int  k = uf [i];
+
+      uf [i] = j;
+      i = k;
+     }
+
+   return  j;
+  }
+
+
+
+int  UF_Find_With_Parity
+    (int i, vector <int> & uf, int & parity)
+
+//  Return the subscript of the set leader of  i  in  Union-Find
+//  array  uf  and set  parity to  0  if it's an even number of
+//  edges from the leader in the UF tree or  1  if it's  odd.
+//  Maintain the parity of any other nodes when compressing the path.
+
+  {
+   int  j, par, save;
+
+   parity = 0;
+   for  (j = i;  uf [j] >= 0;  j = uf [j])
+     {
+      save = j;
+      parity = 1 - parity;
+     }
+
+   //  save  should now be the child of  j  (which is the root of
+   // the tree), on the path from  i  to the root.
+
+   if  (j == i)
+       return  j;
+
+   par = parity;
+   while  (uf [i] != j)
+     {
+      int  k = uf [i];
+
+      if  (par == 0)
+          uf [i] = save;
+        else
+          uf [i] = j;
+      i = k;
+      par = 1 - par;
+     }
+
+   return  j;
+  }
+
+
+
+void  UF_Union
+    (int i, int j, vector <int> & uf)
+
+//  Union the sets represented by  i  and  j  in Union-Find
+//  array  uf .  
+
+  {
+   assert (uf [i] < 0 && uf [j] < 0);
+
+   if  (uf [i] <= uf [j])
+       {  // i is more negative, hence bigger
+        uf [i] += uf [j];
+        uf [j] = i;
+       }
+     else
+       {  // j is more negative, hence bigger
+        uf [j] += uf [i];
+        uf [i] = j;
+       }
+
+   return;
   }
 
 

@@ -122,8 +122,9 @@ int  main
    Gapped_Multi_Alignment_t  gma, gma1, gma2;
    vector <ID_Pair_t>  map;
    vector <Unitig_Ref_t>  uni_list;
+   vector <Distinguishing_Column_t> dc;
    time_t  now;
-   int  contig_ct, cons_len;
+   int  contig_ct;
 
    now = time (NULL);
    cerr << "Starting at " << ctime (& now) << endl;
@@ -177,7 +178,8 @@ int  main
    read_bank . closeStore ();
 
    cout << endl << endl << "Contig #1" << endl;
-   gma1 . Print (stdout, sl1, true, 60, & tg1);
+//   gma1 . Print (stdout, sl1, true, 60, & tg1);
+   gma1 . Print (stdout, sl1, true, 60);
 
 if  (0)
 {
@@ -193,7 +195,8 @@ if  (0)
 }
 
 #if  0
-   cons_len = gma2 . Ungapped_Consensus_Len ();
+  {
+   int  cons_len = gma2 . Ungapped_Consensus_Len ();
 
 //   gma1 . Partial_Merge (gma2, cons_len - 3731, cons_len - 2452, 1322, 2638,
 //        sl1, sl2, & tg1, & tg2);
@@ -209,18 +212,10 @@ if  (0)
 
    cout << endl << endl << "Contig #1 after merge" << endl;
    gma1 . Print (stdout, sl1, true, 60, & tg1);
+  }
 #endif
 
-#if  0
-   {
-    char  * s = "gacgttc";
-    char  * t = "ggactcc";
-    Alignment_t  ali;
-
-    Global_Align (s, 7, t, 0, 7, 2, -3, -2, -1, ali);
-    ali . Print (stdout, s, t);
-   }
-#endif
+   gma1 . Haplo_Sep (sl1, dc, & tg1);
 
    return  0;
   }

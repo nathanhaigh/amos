@@ -11,6 +11,7 @@
 
 
 #include  "delcher.hh"
+#include  "matrix.hh"
 #include  "fasta.hh"
 #include  "WGA_datatypes.hh"
 #include  "CelMsgWGA.hh"
@@ -18,7 +19,9 @@
 #include  "Slice.h"
 #include  <string>
 #include  <vector>
+#include  <functional>
 #include  <algorithm>
+
 
 
 //  Delta encoding shows the positions of the insertions and deletions
@@ -49,6 +52,7 @@ const unsigned int  FROM_DIAG = 1;
 const unsigned int  FROM_TOP = 2;
 const unsigned int  FROM_NOWHERE = 3;
 
+
 class  Align_Score_Entry_t
   {
   public:
@@ -63,6 +67,66 @@ class  Align_Score_Entry_t
        (FILE * fp)  const;
    void  Get_Max
        (int & max_score, unsigned int & max_from)  const;
+  };
+
+
+class Phase_Entry_t
+  {
+  public:
+   int  from, to;  // entries connected
+   int  same_ct, opposite_ct, weight;
+
+   void  Print
+       (FILE * fp)  const
+     {
+      fprintf (fp, "from = %d  to = %d  same = %d  opp = %d  wt = %d\n",
+           from, to, same_ct, opposite_ct, weight);
+     }
+
+   bool  operator >
+       (const Phase_Entry_t & p)  const
+     {
+      if  (weight > p . weight)
+          return  true;
+      if  (weight == p . weight && same_ct > p . same_ct)
+          return  true;
+      if  (weight == p . weight && same_ct == p . same_ct
+             && abs (to - from) > abs (p . to - p . from))
+          return  true;
+
+      return  false;
+     }
+  };
+
+
+class  Distinguishing_Column_t
+  {
+  public:
+   int  lo, hi;
+       // indicate range of gapped consensus columns where there's a
+       // consistent significant difference
+   char  hapa_ch, hapb_ch, phase_ch;
+   vector <int>  hapa_sub, hapb_sub;
+
+   bool  Intersects
+       (const Distinguishing_Column_t & d, Phase_Entry_t & p,
+        int & min);
+   void  Print
+       (FILE * fp)
+     {
+      int  i, na, nb;
+
+      na = hapa_sub . size ();
+      nb = hapb_sub . size ();
+      fprintf (fp, "lo/hi = %d/%d  %c %2d  %c %2d  %c\n",
+           lo, hi, hapa_ch, na, hapb_ch, nb, phase_ch);
+      for  (i = 0;  i < na;  i ++)
+        fprintf (fp, " %3d", hapa_sub [i]);
+      fputc ('\n', fp);
+      for  (i = 0;  i < nb;  i ++)
+        fprintf (fp, " %3d", hapb_sub [i]);
+      fputc ('\n', fp);
+     }
   };
 
 
@@ -176,6 +240,10 @@ class  Gapped_Alignment_t  :  public Base_Alignment_t
        (FILE * fp)  const;
    void  Flip
        (int a_len, int b_len);
+   void  Incr_Column_Chars
+       (Matrix <unsigned char> & count, const char * s);
+   char  Get_Aligning_Char
+       (int b, char * s);
    int  Get_Skip
        (int i)  const;
    void  Make_Sub_Alignment
@@ -287,6 +355,9 @@ void  Check  (void)
        (const Multi_Alignment_t & ma, const vector <short> & v);
    void  Convert_From
        (const Multi_Alignment_t & ma);
+   void  Count_Column_Chars
+       (Matrix <unsigned char> & count,
+        const vector <char *> & sl);
    void  Dump_Aligns
        (FILE * fp);
    void  Expand_Consensus
@@ -295,8 +366,16 @@ void  Check  (void)
        (int lo, int hi, string & s, int & gapped_lo, int & gapped_hi)  const;
    void  Extract_IMP_Dels
        (vector < vector <int> > & del_list);
+   void  Get_Distinguishing_Columns
+       (vector <Distinguishing_Column_t> & dc,
+        const vector <char *> & sl);
+   void  Get_Element_Subs
+       (Distinguishing_Column_t & d, const vector <char *> & sl);
    void  Get_Positions
        (vector <Range_t> & pos)  const;
+   void  Haplo_Sep
+       (const vector <char *> & sl, vector <Distinguishing_Column_t> & dc,
+        vector <char *> * tg = NULL);
    void  Make_From_CCO_Msg
        (const Celera_Message_t & msg, const vector <int> & slen);
    void  Merge
@@ -316,6 +395,8 @@ void  Check  (void)
        (vector <char *> & s);
    void  Set_Consensus_And_Qual
        (const vector <char *> & s, const vector <char *> & q);
+   void  Set_Phase
+       (vector <Distinguishing_Column_t> & dc);
    void  Show_Skips
        (FILE * fp);
    void  Sort
@@ -326,12 +407,29 @@ void  Check  (void)
 
 
 
+void  Best_Spanning_Tree
+    (int n, const vector <Phase_Entry_t> & edge_list,
+     vector <int> & tree_edge);
+void  Classify_Reads
+    (const vector <Distinguishing_Column_t> & dc, int n,
+     vector <char> & side, vector <int> & segment);
+int  DNA_Char_To_Sub
+    (char ch);
 int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len);
 void  Global_Align
     (const char * s, int s_len, const char * t, int t_lo, int t_hi,
      int match_score, int mismatch_score, int indel_score,
      int gap_score, Alignment_t & align);
+void  Incr_Opposite
+    (vector <Phase_Entry_t> & v, int from, int to);
+void  Incr_Same
+    (vector <Phase_Entry_t> & v, int from, int to);
+bool  Is_Distinguishing
+    (unsigned char ct [5], char & ch1, int & ch1_ct,
+     char & ch2, int & ch2_ct);
+int  Match_Count
+    (const vector <int> & a, const vector <int> & b);
 void  Multi_Align
     (vector <char *> & s, vector <int> & offset, int offset_delta,
      double error_rate, Gapped_Multi_Alignment_t & ma,
@@ -354,8 +452,17 @@ void  Sort_Strings_And_Offsets
 bool  Substring_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int max_errors, Alignment_t & align);
-void  Vote_From_Alignment
-    (vector <Vote_t> & vote, const Alignment_t & ali);
+char  Sub_To_DNA_Char
+    (int i);
+void  Traverse
+    (int v, int par, vector < vector <Phase_Entry_t> > & tree,
+     vector <Distinguishing_Column_t> & dc, char ch, int & sum);
+int  UF_Find
+    (int i, vector <int> & uf);
+int  UF_Find_With_Parity
+    (int i, vector <int> & uf, int & parity);
+void  UF_Union
+    (int i, int j, vector <int> & uf);
 
 
 #endif
