@@ -415,14 +415,30 @@ bool doCommand(string command, bool noop)
     waitpid(process, & status, 0);
   }
   
-  if (WIFEXITED(status) != 0 && WEXITSTATUS(status) != 0){
+#ifdef WCOREDUMP
+  if (WCOREDUMP(status)){
+    logFile << timeStr() << "Command: " << command << " exited with a coredump"
+	    << endl;
+    cerr << "Command: " << command << " exited with a coredump" << endl;
+    finish(1);
+  }
+#endif
+
+  if (WIFEXITED(status) == 0){
+    logFile << timeStr() << "Command: " << command << " failed: likely through abort() or coredump" << endl;
+    cerr << "Command: " << command << " failed: likely through abort() or coredump" << endl;
+    finish(1);
+  }
+
+  // here we assume that WIFEXITED(status) is non null(should have been caught)
+
+  if (WEXITSTATUS(status) != 0){
     logFile << timeStr() << "Command: " << command << " exited with status: " 
 	    << WEXITSTATUS(status) << endl;
     cerr << "Command: " << command << " exited with status: " << WEXITSTATUS(status) << endl;
     finish(1);
   }
 } // doCommand
-
 
 
 int main(int argc, char ** argv)
