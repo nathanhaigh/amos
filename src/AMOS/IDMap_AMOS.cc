@@ -226,11 +226,11 @@ void IDMap_t::readMessage (const Message_t & msg)
   clear( );
 
   try {
-    ID_t key, val, size;
     stringstream ss;
 
     if ( msg . exists (F_MAP) )
       {
+	ID_t key, val;
 	ss . str (msg . getField (F_MAP));
 
 	while ( ss )
@@ -249,6 +249,8 @@ void IDMap_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_SIZE) )
       {
+	ID_t size;
+
 	ss . str (msg . getField (F_SIZE));
 	ss >> size;
 	if ( !ss )
@@ -293,14 +295,14 @@ void IDMap_t::writeMessage (Message_t & msg) const
   msg . clear( );
 
   try {
-    stringstream ss;
 
     msg . setMessageCode (NCode( ));
 
-    const HashNode_t * curr;
-
     if ( size_m != 0 )
       {
+	stringstream ss;
+	const HashNode_t * curr;
+
 	ss << size_m;
 	msg . setField (F_SIZE, ss . str( ));
 	ss . str("");

@@ -68,7 +68,7 @@ void Kmer_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    ID_t iid;
+
     stringstream ss;
 
     if ( msg . exists (F_COUNT) )
@@ -84,6 +84,8 @@ void Kmer_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_READS) )
       {
+	ID_t iid;
+
 	ss . str (msg . getField (F_READS));
 
 	while ( ss )
@@ -177,7 +179,7 @@ void Kmer_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    vector<ID_t>::const_iterator vi;
+
     stringstream ss;
 
     msg . setMessageCode (NCode( ));
@@ -191,6 +193,8 @@ void Kmer_t::writeMessage (Message_t & msg) const
 
     if ( reads_m . size( ) != 0 )
       {
+	vector<ID_t>::const_iterator vi;
+
 	for ( vi = reads_m . begin( ); vi != reads_m . end( ); vi ++ )
 	  ss << *vi << '\n';
 	msg . setField (F_READS, ss . str( ));

@@ -40,7 +40,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    string str;
+
     stringstream ss;
 
     if ( msg . exists (F_CONTIG1) )
@@ -89,6 +89,8 @@ void ContigLink_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_SOURCE))
       {
+	string str;
+
 	ss . str (msg . getField (F_SOURCE));
 	ss >> source_m . first;
 	ss . ignore( );

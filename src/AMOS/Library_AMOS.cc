@@ -60,14 +60,11 @@ void Library_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    Message_t submsg;
-    vector<Message_t> msgs;
 
     msg . setMessageCode (NCode( ));
 
-    dist_m . writeMessage (submsg);
-    msgs . push_back (submsg);
-    msg . setSubMessages (msgs);
+    msg . getSubMessages( ) . resize (1);
+    dist_m . writeMessage (msg . getSubMessages( ) [0]);
   }
   catch (ArgumentException_t) {
 

@@ -25,11 +25,12 @@ void Scaffold_t::readMessage (const Message_t & msg)
   try {
     Tile_t tile;
     vector<Message_t>::const_iterator vi;
-    ID_t iid;
-    stringstream ss;
 
     if ( msg . exists (F_CONTIGEDGE) )
       {
+	ID_t iid;
+	stringstream ss;
+    
 	ss . str (msg . getField (F_CONTIGEDGE));
 
 	while ( ss )
@@ -113,16 +114,14 @@ void Scaffold_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    Message_t submsg;
-    vector<Message_t> msgs;
-    vector<Tile_t>::const_iterator tvi;
-    vector<ID_t>::const_iterator evi;
     stringstream ss;
 
     msg . setMessageCode (NCode( ));
 
     if ( edges_m . size( ) != 0 )
       {
+	vector<ID_t>::const_iterator evi;
+
 	for ( evi = edges_m . begin( ); evi != edges_m . end( ); evi ++ )
 	  ss << *evi << '\n';
 	msg . setField (F_CONTIGEDGE, ss . str( ));
@@ -131,12 +130,14 @@ void Scaffold_t::writeMessage (Message_t & msg) const
 
     if ( contigs_m . size( ) != 0 )
       {
+	vector<Tile_t>::const_iterator tvi;
+	Pos_t begin = msg . getSubMessages( ) . size( );
+	Pos_t end = begin + contigs_m . size( );
+	msg . getSubMessages( ) . reserve (end);
+	msg . getSubMessages( ) . resize (end);
+
 	for ( tvi = contigs_m . begin( ); tvi != contigs_m . end( ); tvi ++ )
-	  {
-	    tvi -> writeMessage (submsg);
-	    msgs . push_back (submsg);
-	  }
-	msg . setSubMessages (msgs);
+	  tvi -> writeMessage (msg . getSubMessages( ) [begin ++]);
       }
   }
   catch (ArgumentException_t) {

@@ -22,10 +22,11 @@ void Universal_t::readMessage (const Message_t & msg)
   clear( );
 
   try {
-    stringstream ss;
 
     if ( msg . exists (F_EID) )
       {
+	stringstream ss; 
+
 	ss . str (msg . getField (F_EID));
 	ss >> eid_m;
 	if ( !ss )
@@ -49,12 +50,13 @@ void Universal_t::writeMessage (Message_t & msg) const
   msg . clear( );
 
   try {
-    stringstream ss;
 
     msg . setMessageCode (NCode( ));
 
     if ( eid_m != NULL_ID )
       {
+	stringstream ss;
+
 	ss << eid_m;
 	msg . setField (F_EID, ss . str( ));
 	ss . str("");

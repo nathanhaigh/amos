@@ -23,7 +23,6 @@ void Matepair_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    string str;
     stringstream ss;
 
     if ( msg . exists (F_READ1) )

@@ -73,9 +73,7 @@ void Contig_t::readMessage (const Message_t & msg)
   Sequence_t::readMessage (msg);
 
   try {
-    Tile_t tile;
     vector<Message_t>::const_iterator vi;
-    stringstream ss;
 
     if ( msg . exists (F_POLYMORPHISM) )
       AMOS_THROW_ARGUMENT ("Polymorphism not yet implemented");
@@ -83,6 +81,8 @@ void Contig_t::readMessage (const Message_t & msg)
     for ( vi  = msg . getSubMessages( ) . begin( );
           vi != msg . getSubMessages( ) . end( ); vi ++ )
       {
+	Tile_t tile;
+
         if ( vi -> getMessageCode( ) != M_TILE )
           AMOS_THROW_ARGUMENT ("Invalid submessage");
         tile . readMessage (*vi);
@@ -140,7 +140,6 @@ void Contig_t::writeMessage (Message_t & msg) const
   Sequence_t::writeMessage (msg);
 
   try {
-    stringstream ss;
 
     msg . setMessageCode (NCode( ));
 

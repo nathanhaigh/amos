@@ -23,11 +23,12 @@ void ContigEdge_t::readMessage (const Message_t & msg)
   ContigLink_t::readMessage (msg);
 
   try {
-    ID_t iid;
-    stringstream ss;
 
     if ( msg . exists (F_CONTIGLINK) )
       {
+	stringstream ss;
+	ID_t iid;
+
 	ss . str (msg . getField (F_CONTIGLINK));
 
 	while ( ss )
@@ -77,13 +78,14 @@ void ContigEdge_t::writeMessage (Message_t & msg) const
   ContigLink_t::writeMessage (msg);
 
   try {
-    vector<ID_t>::const_iterator vi;
-    stringstream ss;
 
     msg . setMessageCode (NCode( ));
 
     if ( links_m . size( ) != 0 )
       {
+	vector<ID_t>::const_iterator vi;
+	stringstream ss;
+
 	for ( vi = links_m . begin( ); vi != links_m . end( ); vi ++ )
 	  ss << *vi << '\n';
 	msg . setField (F_CONTIGLINK, ss . str( ));
