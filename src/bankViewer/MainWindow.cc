@@ -128,15 +128,22 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   QToolBar * searchbar = new QToolBar(this, "SearchBar");
 
-  m_searchedit = new QLineEdit(searchbar, "searchbox");
-  QToolButton * bfind = new QToolButton(QPixmap(), "Find", "Find", this, SLOT(findString()), searchbar);
-  bfind->setMinimumWidth(20);
-  bfind->setText("Find");
-  bfind->setAccel(CTRL+Key_F);
 
-  connect(m_searchedit, SIGNAL(returnPressed()),
-          this,         SLOT(findString()));
-        
+  new QLabel("Find", searchbar, "findlbl");
+  m_searchedit = new QLineEdit(searchbar, "searchbox");
+  connect(m_searchedit, SIGNAL(returnPressed()), this, SLOT(findNext()));
+
+  QToolButton * bFindPrev = new QToolButton(Qt::LeftArrow, searchbar, "rsearch");
+  connect(bFindPrev, SIGNAL(clicked()), this, SLOT(findPrev()));
+  bFindPrev->setTextLabel("Find Previous");
+  bFindPrev->setAccel(Key_Shift + CTRL + Key_F);
+  bFindPrev->setMinimumWidth(20);
+
+  QToolButton * bFindNext = new QToolButton(Qt::RightArrow, searchbar, "fsearch");
+  connect(bFindNext, SIGNAL(clicked()), this, SLOT(findNext()));
+  bFindNext->setTextLabel("Find Next");
+  bFindNext->setAccel(CTRL + Key_F);
+  bFindNext->setMinimumWidth(20);
 
 
   // gindex
@@ -221,8 +228,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(this,        SIGNAL(toggleSNPColoring(bool)),
           m_tiling,    SIGNAL(toggleSNPColoring(bool)));
 
-  connect(this,        SIGNAL(searchString(const QString &)),
-          m_tiling,    SLOT(searchString(const QString &)));
+  connect(this,        SIGNAL(searchString(const QString &, bool)),
+          m_tiling,    SLOT(searchString(const QString &, bool)));
 
 
   // Set defaults
@@ -514,8 +521,14 @@ void MainWindow::jumpPGindex()
   setGindex(m_gindex-20);
 }
 
-void MainWindow::findString()
+void MainWindow::findNext()
 {
   const QString & str = m_searchedit->text();
-  emit searchString(str);
+  emit searchString(str, true);
+}
+
+void MainWindow::findPrev()
+{
+  const QString & str = m_searchedit->text();
+  emit searchString(str, false);
 }

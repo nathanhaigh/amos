@@ -63,7 +63,8 @@ public slots:
   void jumpFGindex();
   void jumpPGindex();
 
-  void findString();
+  void findNext();
+  void findPrev();
 
 signals:
   void bankSelected(std::string bankname);
@@ -71,7 +72,7 @@ signals:
   void gindexChanged(int gindex);
   void highlightRead(int iid);
   void chromoDBSet(const QString & db);
-  void searchString(const QString & str);
+  void searchString(const QString & str, bool forward);
 
   void toggleShowFullRange(bool);
   void toggleShowNumbers(bool);

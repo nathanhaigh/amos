@@ -23,6 +23,7 @@ public slots:
     void toggleHighlightDiscrepancy(bool doShow);
     void toggleBaseColors(bool show);
     void toggleShowIndicator(bool show);
+    void setHighlightRange(int start, int end);
 
 signals:
     void sortColumns(int);
@@ -50,6 +51,9 @@ private:
     int m_posoffset;
     int m_discoffset;
     int m_consoffset;
+
+    int m_rangestart;
+    int m_rangeend;
 };
 
 #endif

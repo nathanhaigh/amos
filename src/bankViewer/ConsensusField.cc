@@ -7,11 +7,11 @@
 using namespace std;
 
 
-int jmin (int a, int b)
+static int min (int a, int b)
 {
   return a < b ? a : b;
 }
-int jmax (int a, int b)
+static int max (int a, int b)
 {
   return a > b ? a : b;
 }
@@ -36,6 +36,9 @@ ConsensusField::ConsensusField(const string & cons,
 
   setFontSize(10);
   setPalette(QPalette(UIElements::color_tiling));
+
+  m_rangestart = -1;
+  m_rangeend = -1;
 }
 
 void ConsensusField::setFontSize(int fontsize)
@@ -96,12 +99,29 @@ void ConsensusField::paintEvent(QPaintEvent * event)
              Qt::AlignLeft | Qt::AlignBottom, "Consensus");
 
   int grangeStart = m_gindex;
-  int grangeEnd = jmin(m_gindex + displaywidth, m_consensus.size()-1);
+  int grangeEnd = min(m_gindex + displaywidth, m_consensus.size()-1);
 
   //x-axis
   p.drawLine(m_tilehoffset, m_lineoffset, 
              m_tilehoffset+(grangeEnd-grangeStart+1)*m_basewidth, m_lineoffset);
   QString s;
+
+  if (!(m_rangeend < grangeStart || m_rangestart > grangeEnd))
+  {
+    int drawStart = max(m_rangestart, grangeStart);
+    int drawEnd = min(m_rangeend, grangeEnd);
+
+    p.setPen(Qt::red);
+
+    p.drawRect(m_tilehoffset + (drawStart - grangeStart)*m_basewidth - 1, 
+               m_consoffset,
+               (drawEnd - drawStart + 1) * m_basewidth - m_basespace + 3,
+               m_lineheight);
+
+    p.setPen(Qt::black);
+  }
+
+
 
   for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
   {
@@ -141,7 +161,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     p.setPen(Qt::black);
 
     int n = gindex%10;
-    int scaledfont = (int)jmax((int)(m_fontsize*.6), 6);
+    int scaledfont = (int)max((int)(m_fontsize*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
 
     if (m_shownumbers)
@@ -215,6 +235,12 @@ void ConsensusField::mouseReleaseEvent( QMouseEvent * e)
 {
   int gindex = m_gindex + (e->x() - m_tilehoffset)/m_basewidth;
   emit sortColumns(gindex);
+}
+
+void ConsensusField::setHighlightRange(int start, int end)
+{
+  m_rangestart = start;
+  m_rangeend = end;
 }
 
 

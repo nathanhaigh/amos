@@ -161,8 +161,8 @@ void TilingFrame::setContigId(int contigId)
 
       m_loadedStart = m_loadedEnd = -1;
 
+      m_consfield->setHighlightRange(-1,-1);
       setGindex(0);
-
       emit setGindexRange(0, (int)m_consensus.size()-1);
     }
     catch (Exception_t & e)
@@ -372,23 +372,31 @@ void TilingFrame::highlightRead(int iid)
 
 #include <qregexp.h>
 
-void TilingFrame::searchString(const QString & str)
+void TilingFrame::searchString(const QString & str, bool forward)
 {
   if (!str.isEmpty())
   {
-    int gindex = m_gindex + m_nextDiscrepancyBuffer + 1;
-
+    int pos;
+    QRegExp regex(str);
     QString qcons(m_consensus);
-    int pos = qcons.find(QRegExp(str), gindex);
 
-    if (pos != -1)
+    int gindex = m_gindex + m_nextDiscrepancyBuffer;
+
+    if (forward)
     {
-      //cerr << "found at " << pos << endl;
-      setGindex(pos-m_nextDiscrepancyBuffer);
+      gindex +=  1;
+      pos = regex.search(qcons, gindex);
     }
     else
     {
-      //cerr << "not found" << endl;
+      gindex -= 1;
+      pos = regex.searchRev(qcons, gindex - m_consensus.length());
+    }
+
+    if (pos != -1)
+    {
+      m_consfield->setHighlightRange(pos, pos+regex.matchedLength() - 1);
+      setGindex(pos-m_nextDiscrepancyBuffer);
     }
   }
 }

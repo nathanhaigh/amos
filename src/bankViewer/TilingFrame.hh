@@ -30,7 +30,7 @@ public slots:
     void highlightRead(int);
     void sortColumns(int);
     void toggleDisplayAllChromo(bool);
-    void searchString(const QString &);
+    void searchString(const QString &, bool forward);
 
 signals:
     void gindexChanged( int );
