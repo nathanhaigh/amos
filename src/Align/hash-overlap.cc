@@ -324,8 +324,13 @@ static void  Find_Rev_Overlaps
       pos = mini . Get_Window_Offset ();
       if  (ht . find (sig) != ht . end ())
           for  (j = 0;  j < ht [sig] . ct;  j ++)
-            offset . Add_Offset (ht [sig] . ref [j] . string_num,
-                 ht [sig] . ref [j] . pos - pos);
+            {
+             int  b = ht [sig] . ref [j] . string_num;
+
+             if  (i < b)
+                 offset . Add_Offset (ht [sig] . ref [j] . string_num,
+                      ht [sig] . ref [j] . pos - pos);
+            }
 
       k = Minimizer_Window_Len;
       for  (p = 1;  p <= m - Minimizer_Window_Len;  p ++, k++)
