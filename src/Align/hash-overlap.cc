@@ -652,7 +652,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:x:")) != EOF))
      switch  (ch)
        {
         case  'A' :
@@ -685,6 +685,10 @@ static void  Parse_Command_Line
 
         case  'v' :
           Verbose = strtol (optarg, NULL, 10);
+          break;
+
+        case  'x' :
+          Error_Rate = strtod (optarg, NULL);
           break;
 
         case  '?' :
@@ -810,6 +814,7 @@ static void  Usage
            "  -h       Print this usage message\n"
            "  -o <n>   Set minimum overlap length to <n>\n"
            "  -v <n>   Set verbose level to <n>. Higher produces more output.\n"
+           "  -x <d>   Set maximum error rate to <d>.  E.g., 0.06 is 6%% error\n"
            "\n",
            command);
 
