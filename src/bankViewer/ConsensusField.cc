@@ -29,6 +29,7 @@ ConsensusField::ConsensusField(const string & cons,
   m_shownumbers = 0;
   m_highlightdiscrepancy = 0;
   m_showIndicator = true;
+  m_basecolors = false;
 
   m_diam = 5;
   m_basespace = 5;

@@ -45,6 +45,7 @@ TilingField::TilingField(DataStore * datastore,
   m_lowquallower = false;
   m_fullseq = false;
   m_snpcoloring = true;
+  m_basecolors = false;
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),

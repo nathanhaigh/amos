@@ -214,7 +214,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_slider->setFocus();
   dbpick->setText("DMG");
 
-  if (strcmp(getenv("USER"), "mpop"))
+  // If not mpop, enable
+  if (strcmp(getenv("USER"), "mpop") && strcmp(getenv("USER"), "mschatz"))
   {
     toggleBaseColors();
   }
