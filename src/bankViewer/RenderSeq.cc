@@ -166,12 +166,16 @@ void RenderSeq_t::loadTrace(const string & db)
                            + readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/" 
                            + readname;
 
-  cerr << "Load trace ";
-  m_trace = read_reading((char *)path.c_str(), TT_ANY);
-  if (!m_trace) { return; }
-
+  cerr << "Load Positions [";
   m_pos = m_read.getBasePositions();
-  cerr << "and " << m_pos.size() << " positions" << endl;
+  cerr << m_pos.size() << "]";
+  
+  if (m_pos.empty()) { cerr << endl; return; }
+  
+  cerr << "and trace";
+  m_trace = read_reading((char *)path.c_str(), TT_ANY);
+  if (!m_trace) { cerr << "=NULL" << endl; return; }
+  cerr << " ok." << endl;
 
   if (m_rc)
   {

@@ -147,7 +147,7 @@ void TilingField::paintEvent( QPaintEvent * )
   if (m_renderedSeqs.empty()) { resize(m_width, m_height); return; }
 
   int basespace      = 5;
-  int gutter         = m_fontsize/2;
+  int gutter         = m_fontsize;
   int lineheight     = m_fontsize+gutter;
   int tilehoffset    = m_fontsize*12;
   int seqnamehoffset = gutter;
@@ -265,7 +265,15 @@ void TilingField::paintEvent( QPaintEvent * )
           }
 
           // Bases
-          p.setPen(UIElements::getBaseColor(b));
+          if (m_basecolors)
+          {
+            p.setPen(UIElements::getBaseColor(b));
+          }
+          else
+          {
+            p.setPen(black);
+          }
+
           p.setFont(QFont("Helvetica", m_fontsize));
           p.drawText(hoffset, ldcov, 
                      m_fontsize, lineheight,
@@ -418,6 +426,12 @@ void TilingField::setSize(int width, int height)
 void TilingField::toggleHighlightDiscrepancy(bool show)
 {
   m_highlightdiscrepancy = show;
+  repaint();
+}
+
+void TilingField::toggleBaseColors(bool showColors)
+{
+  m_basecolors = showColors;
   repaint();
 }
 

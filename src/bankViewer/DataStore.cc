@@ -48,7 +48,6 @@ int DataStore::openBank(const string & bankname)
   }
   catch (Exception_t & e)
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     cerr << "Mates not available\n";
   }
 
@@ -59,7 +58,6 @@ int DataStore::openBank(const string & bankname)
   }
   catch (Exception_t & e)
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     cerr << "Contig Graph not available\n";
   }
 

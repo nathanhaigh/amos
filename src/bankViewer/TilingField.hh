@@ -31,6 +31,7 @@ public slots:
     void toggleHighlightDiscrepancy(bool);
     void toggleDisplayQV(bool);
     void toggleLowQualityLowerCase(bool);
+    void toggleBaseColors(bool);
     void singleClick();
 
 signals:
@@ -61,6 +62,7 @@ private:
 
     bool m_highlightdiscrepancy;
     bool m_lowquallower;
+    bool m_basecolors;
 
     std::vector<RenderSeq_t> & m_renderedSeqs;
     std::vector<RenderSeq_t *> m_currentReads;

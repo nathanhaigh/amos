@@ -20,6 +20,7 @@ public slots:
     void setFontSize(int fontsize);
     void setShowNumbers(bool doShow);
     void toggleHighlightDiscrepancy(bool doShow);
+    void toggleBaseColors(bool show);
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -31,6 +32,7 @@ private:
     int m_fontsize;
     bool m_shownumbers;
     bool m_highlightdiscrepancy;
+    bool m_basecolors;
 
     int m_lineheight;
     int m_tilehoffset;

@@ -44,11 +44,12 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
-  m_posid    = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
-  m_qvid     = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleShowQV()));
+  m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
+  m_posid          = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
+  m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleShowQV()));
   m_lowquallowerid = m_options->insertItem("Lower Case &Low QV", this, SLOT(toggleLowQualityLowerCase()));
-  m_highid   = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
-  m_prefetch = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(togglePrefetchChromatograms()));
+  m_highid         = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
+  m_prefetch       = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(togglePrefetchChromatograms()));
 
   // Status Bar
   statusBar()->message("No Bank Loaded");
@@ -63,9 +64,11 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   QToolButton * bPrevDisc = new QToolButton(Qt::LeftArrow, status, "prev");
   bPrevDisc->setTextLabel("Previous Discrepancy");
+  bPrevDisc->setAccel(Key_PageDown);
 
   QToolButton * bNextDisc = new QToolButton(Qt::RightArrow, status, "next");
   bNextDisc->setTextLabel("Next Discrepancy");
+  bNextDisc->setAccel(Key_PageUp);
 
   new QLabel("   Contig ID", status, "contiglbl");
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
@@ -138,6 +141,11 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_gspin->setValue(0);
   m_slider->setFocus();
   dbpick->setText("DMG");
+
+  if (strcmp(getenv("USER"), "mpop"))
+  {
+    toggleBaseColors();
+  }
 }
 
 
@@ -285,6 +293,14 @@ void MainWindow::toggleLowQualityLowerCase()
   m_options->setItemChecked(m_lowquallowerid, b);
 
   m_tiling->toggleLowQualityLowerCase(b);
+}
+
+void MainWindow::toggleBaseColors()
+{
+  bool b = !m_options->isItemChecked(m_basecolorid);
+  m_options->setItemChecked(m_basecolorid, b);
+
+  m_tiling->toggleBaseColors(b);
 }
 
 void MainWindow::toggleHighlightDiscrepancy()

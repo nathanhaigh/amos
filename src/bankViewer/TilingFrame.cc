@@ -18,7 +18,7 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
    m_datastore(datastore)
 {
   m_gindex = 0;
-  m_fontsize = 12;
+  m_fontsize = 10;
   m_displayAllChromo = true;
 
   m_loadedStart = m_loadedEnd = -1;
@@ -294,6 +294,12 @@ void TilingFrame::toggleDisplayQV(bool show)
 void TilingFrame::toggleLowQualityLowerCase(bool dolower)
 {
   m_tilingfield->toggleLowQualityLowerCase(dolower);
+}
+
+void TilingFrame::toggleBaseColors(bool showColors)
+{
+  m_tilingfield->toggleBaseColors(showColors);
+  m_consfield->toggleBaseColors(showColors);
 }
 
 void TilingFrame::toggleDisplayAllChromo(bool display)

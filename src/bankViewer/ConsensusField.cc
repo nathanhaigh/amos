@@ -32,14 +32,14 @@ ConsensusField::ConsensusField(const string & cons,
   m_diam = 5;
   m_basespace = 5;
 
-  setFontSize(12);
+  setFontSize(10);
   setPalette(QPalette(UIElements::color_tiling));
 }
 
 void ConsensusField::setFontSize(int fontsize)
 {
   m_fontsize=fontsize;
-  int gutter         = m_fontsize/2;
+  int gutter         = m_fontsize;
   int framegutter    = 2;
 
   m_lineheight     = m_fontsize + gutter;
@@ -107,8 +107,11 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     s = b;
 
     p.setFont(QFont("Helvetica", m_fontsize));
-    UIElements::setBasePen(pen, b);
-    p.setPen(pen);
+    if (m_basecolors)
+    {
+      UIElements::setBasePen(pen, b);
+      p.setPen(pen);
+    }
 
     int xcoord = m_tilehoffset + (gindex-grangeStart)*m_basewidth;
 
@@ -175,4 +178,10 @@ void ConsensusField::toggleHighlightDiscrepancy(bool show)
 {
   //m_highlightdiscrepancy = show;
   //repaint();
+}
+
+void ConsensusField::toggleBaseColors(bool show)
+{
+  m_basecolors = show;
+  repaint();
 }
