@@ -280,7 +280,7 @@ inline Range_t operator| (Range_t a, Range_t b)
 
 
 //-- Primary (bankable) types, include
-#ifndef __NO_BANKABLE_INC
+#ifndef __NO_BANKABLE_TYPES
 #include "Bankable_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "ContigLink_AMOS.hh"
@@ -293,6 +293,6 @@ inline Range_t operator| (Range_t a, Range_t b)
 #include "Read_AMOS.hh"
 #include "Scaffold_AMOS.hh"
 #include "Sequence_AMOS.hh"
-#endif // #ifndef __NO_BANKABLE_INC
+#endif // #ifndef __NO_BANKABLE_TYPES
 
 #endif // #ifndef __datatypes_AMOS_HH
