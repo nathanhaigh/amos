@@ -73,6 +73,17 @@ enum  Fix_Status_t
   {NO_FIX_NEEDED, NEEDS_LEFT_SHIFT, SHIFTED_RIGHT};
 
 
+//  Defaults values for alignment score parameters
+const int  DEFAULT_MATCH_SCORE = 1;
+  // Score for matching characters
+const int  DEFAULT_MISMATCH_SCORE = -3;
+  // Score for substitution error
+const int  DEFAULT_INDEL_SCORE = -3;
+  // Score for insertion or deletion
+const int  DEFAULT_GAP_SCORE = -1;
+  // Extra penalty for first insertion/deletion in a run
+
+
 class  Align_Score_Entry_t
   {
   public:
@@ -105,6 +116,21 @@ class  Augmented_Score_Entry_t  :  public Align_Score_Entry_t
    void  Dump
        (FILE * fp)  const;
    int  Get_Ref
+       (unsigned int & from)  const;
+  };
+
+
+class  Errors_Score_Entry_t  :  public Augmented_Score_Entry_t
+  {
+  public:
+   int  top_errors;
+   int  diag_errors;
+   int  left_errors;
+        // number of errors to get to this entry in the respective direction
+
+   void  Dump
+       (FILE * fp)  const;
+   int  Get_Errors
        (unsigned int & from)  const;
   };
 
@@ -174,6 +200,19 @@ class  Match_Extent_Entry_t
   public:
    int  len : 30;
    int  from : 2;  
+  };
+
+
+class  Simple_Overlap_t
+  {
+  public:
+   int  a_id, b_id;
+   int  a_hang, b_hang;
+   int  a_olap_len, b_olap_len;
+   int  errors, score;
+   bool  flipped;
+     // a is always forward.  If b is forward flipped is false; otherwise,
+     // it's true
   };
 
 
@@ -542,6 +581,17 @@ void  Align_Row_Update
     (vector <Augmented_Score_Entry_t> & align_row, char ch, const char * s,
      int s_len, int match_score, int mismatch_score, int indel_score,
      int gap_score, int first_score);
+void  Align_Row_Update_With_Errors
+    (vector <Errors_Score_Entry_t> & align_row, char ch, const char * s,
+     int s_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, int first_score, int first_error);
+void  Banded_Overlap
+    (const char * s, int s_len, const char * t, int t_len,
+     int  lo_offset, int hi_offset, Simple_Overlap_t & olap,
+     int match_score = DEFAULT_MATCH_SCORE,
+     int mismatch_score = DEFAULT_MISMATCH_SCORE,
+     int indel_score = DEFAULT_INDEL_SCORE,
+     int gap_score = DEFAULT_GAP_SCORE);
 void  Best_Spanning_Tree
     (int n, const vector <Phase_Entry_t> & edge_list,
      vector <int> & tree_edge);
@@ -612,6 +662,12 @@ void  Print_VS_Table
      int best_i, bool found);
 bool  Range_Intersect
     (int a_lo, int a_hi, int b_lo, int b_hi);
+void  Simple_Overlap
+    (const char * s, int s_len, const char * t, int t_len,
+     Simple_Overlap_t & olap, int match_score = DEFAULT_MATCH_SCORE,
+     int mismatch_score = DEFAULT_MISMATCH_SCORE,
+     int indel_score = DEFAULT_INDEL_SCORE,
+     int gap_score = DEFAULT_GAP_SCORE);
 void  Sort_Strings_And_Offsets
     (vector <char *> & s, vector <int> & offset, vector <int> * ref = NULL,
      vector <char *> * tag_list = NULL);
@@ -635,6 +691,11 @@ void  UF_Union
     (int i, int j, vector <int> & uf);
 int  Ungapped_Positions
     (const string & s, int lo, int hi);
+void  Update_Banded_Row
+    (vector <Errors_Score_Entry_t> & band, char ch, const char * s,
+     int s_len, int left_col, int right_col, int match_score,
+     int mismatch_score, int indel_score, int gap_score, int first_score,
+     int first_error);
 
 
 

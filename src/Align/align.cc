@@ -160,6 +160,45 @@ int  Augmented_Score_Entry_t :: Get_Ref
 
 
 
+void  Errors_Score_Entry_t :: Dump
+    (FILE * fp)  const
+
+//  Print to  fp  the contents of this score entry.
+
+  {
+   Augmented_Score_Entry_t :: Dump (fp);
+   fprintf (fp, "Errors:  %d  %d  %d\n", left_errors, diag_errors, top_errors);
+
+   return;
+  }
+
+
+
+int  Errors_Score_Entry_t :: Get_Errors
+    (unsigned int & from)  const
+
+//  Return the  ref  entry corresponding to  from .
+
+  {
+   switch  (from)
+     {
+      case  FROM_TOP :
+        return  top_errors;
+      case  FROM_DIAG :
+        return  diag_errors;
+      case  FROM_LEFT :
+        return  left_errors;
+      default :
+        sprintf (Clean_Exit_Msg_Line, "ERROR:  Bad from value = %d in  Get_Errors\n",
+                 from);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+     }
+
+   return  -1;
+  }
+
+
+
 
 // ###  Distinguishing_Column_t  methods  ###
 
@@ -3968,7 +4007,7 @@ void  Align_Row_Update
 //   match_score ,  mismatch_score ,  indel_score  and  gap_score
 //  are the scores for matching characters, mismatching characters,
 //  insertion/deletion and initiating a gap, respectively.
-//   first_score  is the value to the first entry's  top_score  field.
+//   first_score  is the value to add to the first entry's  top_score  field.
 
   {
    Augmented_Score_Entry_t  prev, curr;
@@ -4009,6 +4048,231 @@ void  Align_Row_Update
 
       prev = curr;
      }
+
+   return;
+  }
+
+
+
+void  Align_Row_Update_With_Errors
+    (vector <Errors_Score_Entry_t> & align_row, char ch, const char * s,
+     int s_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, int first_score, int first_error)
+
+//  Update  align_row  to be the values in the next row of an alignment
+//  matrix where the preceding row is in  align_row  now.   ch  is
+//  the character for the next row and  s  (whose length is  s_len )
+//  is the characters across the top of the alignment matrix.
+//   match_score ,  mismatch_score ,  indel_score  and  gap_score
+//  are the scores for matching characters, mismatching characters,
+//  insertion/deletion and initiating a gap, respectively.
+//   first_score  is the value to add to the first entry's  top_score  field.
+//   first_error  is the value to add to the first entry's  top_errors  field.
+
+  {
+   Errors_Score_Entry_t  prev, curr;
+   int  mxs;
+   unsigned int  mxf;
+   int  i;
+
+   if  (s_len == 0)
+       return;
+
+   assert (int (align_row . size ()) == s_len + 1);
+
+   prev = align_row [0];
+   align_row [0] . top_score += first_score;
+   align_row [0] . diag_score = align_row [0] . left_score = NEG_INFTY_SCORE;
+   align_row [0] . top_errors += first_error;
+   align_row [0] . diag_errors = align_row [0] . left_errors = 0;
+
+   for  (i = 1;  i <= s_len;  i ++)
+     {
+      Errors_Score_Entry_t  * p = & (align_row [i]);
+
+      curr = align_row [i];
+      curr . Get_Max_Top (mxs, mxf, gap_score);
+      
+      p -> top_score = mxs + indel_score;
+      p -> top_from = mxf;
+      p -> top_ref = curr . Get_Ref (mxf);
+      p -> top_errors = curr . Get_Errors (mxf) + 1;
+
+      prev . Get_Max (mxs, mxf);
+      p -> diag_score = mxs
+           + ((ch == s [i - 1]) ? match_score : mismatch_score);
+      p -> diag_from = mxf;
+      p -> diag_ref = prev . Get_Ref (mxf);
+      p -> diag_errors = prev . Get_Errors (mxf);
+      if  (ch != s [i - 1])
+          p -> diag_errors ++;
+
+      align_row [i - 1] .  Get_Max_Left (mxs, mxf, gap_score);
+      p -> left_score = mxs + indel_score;
+      p -> left_from = mxf;
+      p -> left_ref = align_row [i - 1] . Get_Ref (mxf);
+      p -> left_errors = align_row [i - 1] . Get_Errors (mxf) + 1;
+
+      prev = curr;
+     }
+
+   return;
+  }
+
+
+
+void  Banded_Overlap
+    (const char * s, int s_len, const char * t, int t_len,
+     int  lo_offset, int hi_offset, Simple_Overlap_t & olap,
+     int match_score = DEFAULT_MATCH_SCORE,
+     int mismatch_score = DEFAULT_MISMATCH_SCORE,
+     int indel_score = DEFAULT_INDEL_SCORE,
+     int gap_score = DEFAULT_GAP_SCORE)
+
+//  Find the highest-scoring overlap alignment between string  s  and
+//  string  t , restricted to a band between  lo_offset  and
+//  hi_offset , inclusive.  Offsets are measured by the position in
+//   t  minus the position in  s  of a corresponding base.
+//  The length of  s  is  s_len  and the length of  t  is  t_len .
+//  The resulting overlap is stored in  olap .
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+
+  {
+   vector <Errors_Score_Entry_t> band;
+     //  row of alignment array
+   Errors_Score_Entry_t  entry;
+   int  max_row, max_col, max_score, mxs, max_ref, max_errors;
+   unsigned int  max_from, mxf;
+   int  bandwidth;
+   int  left_col, right_col;
+     // bound region represented by band
+   int  r, c;
+
+   if  (s_len + lo_offset < 0)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+                 "lo_offset=%d longer than s_len=%d in  Banded_Overlap",
+                 lo_offset, s_len);
+        throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
+                                    -1, -1);
+       }
+   if  (t_len < hi_offset)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+                 "hi_offset=%d longer than t_len=%d in  Banded_Overlap",
+                 hi_offset, t_len);
+        throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
+                                    -1, -1);
+       }
+
+   bandwidth = 1 + hi_offset - lo_offset;
+   max_score = NEG_INFTY_SCORE;
+
+   // Create the first row of the alignment matrix
+   entry . diag_score = entry . top_score = entry . left_score = 0;
+   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   entry . diag_errors = entry . top_errors = entry . left_errors = 0;
+
+   if  (lo_offset <= 0)
+       {
+        r = 0;
+        right_col = - lo_offset;
+       }
+     else
+       {
+        r = lo_offset;
+        right_col = 0;
+       }
+   left_col = 1 + right_col - bandwidth;
+
+   // Create band
+   for  (c = left_col;  c <= right_col;  c ++)
+     {
+      entry . top_ref = entry . diag_ref = entry . left_ref = c;
+      band . push_back (entry);
+     }
+
+   if  (right_col == s_len || r == t_len)
+       {
+        entry . Get_Max (max_score, max_from);
+        max_row = 0;
+        max_col = s_len;
+        max_ref = s_len;
+        max_errors = entry . Get_Errors (max_from);
+       }
+
+   // Do remaining rows
+   while  (left_col < s_len && r < t_len)
+     {
+      if  (left_col <= 0)
+          band [- left_col] . top_ref = band [- left_col] . diag_ref
+           = band [- left_col] . left_ref = - r;
+              // is value of current row, not one being built
+
+      Update_Banded_Row (band, t [r], s, s_len, left_col, right_col,
+           match_score, mismatch_score, indel_score, gap_score, 0, 0);
+      r ++;
+      left_col ++;
+      right_col ++;
+
+      // Check last column entry for max
+      if  (left_col <= s_len && s_len <= right_col)
+          {
+           band [s_len - left_col] . Get_Max (mxs, mxf);
+           if  (mxs > max_score)
+               {
+                max_score = mxs;
+                max_from = mxf;
+                max_row = r;
+                max_col = s_len;
+                max_ref = band [s_len - left_col] . Get_Ref (mxf);
+                max_errors = band [s_len - left_col] . Get_Errors (mxf);
+               }
+          }
+     }
+
+   // Check entries in last row for max
+   if  (r == t_len)
+       {
+        int  lo, hi;
+
+        lo = Max (0, - left_col);
+        hi = Min (bandwidth - 1, s_len - left_col);
+        for  (c = lo;  c <= hi;  c ++)
+          {
+           band [c] . Get_Max (mxs, mxf);
+           if  (mxs > max_score)
+               {
+                max_score = mxs;
+                max_from = mxf;
+                max_row = t_len;
+                max_col = left_col + c;
+                max_ref = band [c] . Get_Ref (mxf);
+                max_errors = band [c] . Get_Errors (mxf);
+               }
+          }
+       }
+
+   olap . score = max_score;
+   olap . errors = max_errors;
+   olap . a_hang = max_ref;
+   if  (max_col < s_len)
+       olap . b_hang = max_col - s_len;
+     else
+       olap . b_hang = t_len - max_row;
+   if  (max_ref >= 0)
+       {
+        olap . b_olap_len = max_row;
+        olap . a_olap_len = max_col - max_ref;
+       }
+     else
+       {
+        olap . b_olap_len = max_row + max_ref;
+        olap . a_olap_len = max_col;
+       }
 
    return;
   }
@@ -5016,7 +5280,7 @@ void  Overlap_Align
      int gap_score, Alignment_t & align)
 
 //  Find the best alignment of a prefix of string  s  to a
-//  substring of  t  starting between postions  t_lo  and  t_hi ,
+//  substring of  t  starting between positions  t_lo  and  t_hi ,
 //  where the alignment must extend to the end of one of the strings.
 //  The length of  s  is  s_len  and the length of  t  is  t_len .
 //  The resulting alignment is stored in  align ,
@@ -5685,6 +5949,111 @@ bool  Range_Intersect
 
 
 
+void  Simple_Overlap
+    (const char * s, int s_len, const char * t, int t_len,
+     Simple_Overlap_t & olap, int match_score = DEFAULT_MATCH_SCORE,
+     int mismatch_score = DEFAULT_MISMATCH_SCORE,
+     int indel_score = DEFAULT_INDEL_SCORE,
+     int gap_score = DEFAULT_GAP_SCORE)
+
+//  Find the highest-scoring overlap alignment between string  s  and
+//  string  t , i.e., an alignment the extends to the end of either
+//  of the two strings on each end.
+//  The length of  s  is  s_len  and the length of  t  is  t_len .
+//  The resulting overlap is stored in  olap .
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+
+  {
+   vector <Errors_Score_Entry_t> align_row;
+        //  row of alignment array
+   Errors_Score_Entry_t  entry;
+   int  max_row, max_col, max_score, mxs, max_ref, max_errors;
+   unsigned int  max_from, mxf;
+   int  r, c;
+
+   // Create the first row of the alignment matrix
+   entry . diag_score = entry . top_score = entry . left_score = 0;
+   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   entry . diag_errors = entry . top_errors = entry . left_errors = 0;
+
+   for  (c = 0;  c <= s_len;  c ++)
+     {
+      entry . top_ref = entry . diag_ref = entry . left_ref = c;
+      align_row . push_back (entry);
+     }
+
+   entry . Get_Max (max_score, max_from);
+   max_row = 0;
+   max_col = s_len;
+   max_ref = s_len;
+
+   // Do remaining rows
+   for  (r = 1;  r <= t_len;  r ++)
+     {
+      align_row [0] . top_ref = align_row [0] . diag_ref
+           = align_row [0] . left_ref = 1 - r;
+              // is value of current row, not one being built
+      Align_Row_Update_With_Errors (align_row, t [r - 1], s, s_len, match_score,
+           mismatch_score, indel_score, gap_score, 0, 0);
+
+      // Check last column entry for max
+      align_row [s_len] . Get_Max (mxs, mxf);
+      if  (mxs > max_score)
+          {
+           max_score = mxs;
+           max_from = mxf;
+           max_row = r;
+           max_col = s_len;
+           max_ref = align_row [s_len] . Get_Ref (mxf);
+           max_errors = align_row [s_len] . Get_Errors (mxf);
+          }
+     }
+
+   // Check entries in last row for max
+   for  (c = 0;  c <= s_len;  c ++)
+     {
+      align_row [c] . Get_Max (mxs, mxf);
+      if  (mxs > max_score)
+          {
+           max_score = mxs;
+           max_from = mxf;
+           max_row = t_len;
+           max_col = c;
+           max_ref = align_row [c] . Get_Ref (mxf);
+           max_errors = align_row [c] . Get_Errors (mxf);
+          }
+     }
+
+   if  (Verbose > 2)
+       printf ("row = %d  col = %d  ref = %d  score = %d  s_len = %d  t_len = %d\n",
+           max_row, max_col, max_ref, max_score, s_len, t_len);
+
+   olap . score = max_score;
+   olap . errors = max_errors;
+   olap . a_hang = max_ref;
+   if  (max_col < s_len)
+       olap . b_hang = max_col - s_len;
+     else
+       olap . b_hang = t_len - max_row;
+   if  (max_ref >= 0)
+       {
+        olap . b_olap_len = max_row;
+        olap . a_olap_len = max_col - max_ref;
+       }
+     else
+       {
+        olap . b_olap_len = max_row + max_ref;
+        olap . a_olap_len = max_col;
+       }
+
+   return;
+  }
+
+
+
 void  Sort_Strings_And_Offsets
     (vector <char *> & s, vector <int> & offset, vector <int> * ref,
      vector <char *> * tag_list)
@@ -6220,4 +6589,118 @@ int  Ungapped_Positions
          ct ++;
 
    return  ct;
+  }
+
+
+
+void  Update_Banded_Row
+    (vector <Errors_Score_Entry_t> & band, char ch, const char * s,
+     int s_len, int left_col, int right_col, int match_score,
+     int mismatch_score, int indel_score, int gap_score, int first_score,
+     int first_error)
+
+//  Update  band  to be the values in the next row of an alignment
+//  matrix where the preceding row is in  band  now.
+//  The new band is shifted one to the right of the current band.
+//   ch  is the character for the next row and  s  (whose length is  s_len )
+//  is the characters across the top of the alignment matrix.
+//  The current band represents columns  left_col .. right_col  in
+//  the alignment matrix.
+//   match_score ,  mismatch_score ,  indel_score  and  gap_score
+//  are the scores for matching characters, mismatching characters,
+//  insertion/deletion and initiating a gap, respectively.
+//   first_score  is the value to add to the first entry's  top_score  field.
+//   first_error  is the value to add to the first entry's  top_errors  field.
+
+  {
+   Errors_Score_Entry_t  save, * p, * q;
+   int  mxs;
+   unsigned int  mxf;
+   int  c, i, first, last;
+
+   assert (int (band . size ()) == 1 + right_col - left_col);
+
+   // Fill in the first cell
+   if  (left_col < 0)
+       {
+        first = -1 - left_col;
+        c = 0;
+        p = & (band [first]);
+        q = & (band [first + 1]);
+
+        p -> top_score = q -> top_score + first_score;
+        p -> diag_score = p -> left_score = NEG_INFTY_SCORE;
+        p -> top_errors = q -> top_errors + first_error;
+        p -> diag_errors = p -> left_errors = 0;
+       }
+     else
+       {
+        first = 0;
+        c = left_col + 1;
+        save = band [first];
+        p = & (band [first]);
+        q = & (band [first + 1]);
+
+        q -> Get_Max_Top (mxs, mxf, gap_score);
+        p -> top_score = mxs + indel_score;
+        p -> top_from = mxf;
+        p -> top_ref = q -> Get_Ref (mxf);
+        p -> top_errors = q -> Get_Errors (mxf) + 1;
+
+        save . Get_Max (mxs, mxf);
+        p -> diag_score = mxs
+             + ((ch == s [left_col]) ? match_score : mismatch_score);
+        p -> diag_from = mxf;
+        p -> diag_ref = save . Get_Ref (mxf);
+        p -> diag_errors = save . Get_Errors (mxf);
+        if  (ch != s [left_col])
+            p -> diag_errors ++;
+
+        p -> left_score = NEG_INFTY_SCORE;
+        p -> left_errors = 0;
+        p -> left_ref = 0;
+       }
+
+   // Do the remaining cells
+   if  (right_col >= s_len)
+       last = s_len - left_col - 1;
+     else
+       last = right_col - left_col;
+   for  (i = first + 1;  i <= last;  i ++, c++)
+     {
+      save = band [i];
+      p = & (band [i]);
+
+      if  (i == last)
+          {
+           p -> top_score = NEG_INFTY_SCORE;
+           p -> top_ref = p -> top_errors = 0;
+          }
+        else
+          {
+           q = & (band [i + 1]);
+           q -> Get_Max_Top (mxs, mxf, gap_score);
+           p -> top_score = mxs + indel_score;
+           p -> top_from = mxf;
+           p -> top_ref = q -> Get_Ref (mxf);
+           p -> top_errors = q -> Get_Errors (mxf) + 1;
+          }
+
+      save . Get_Max (mxs, mxf);
+      p -> diag_score = mxs
+           + ((ch == s [c]) ? match_score : mismatch_score);
+      p -> diag_from = mxf;
+      p -> diag_ref = save . Get_Ref (mxf);
+      p -> diag_errors = save . Get_Errors (mxf);
+      if  (ch != s [c])
+          p -> diag_errors ++;
+
+      band [i - 1] .  Get_Max_Left (mxs, mxf, gap_score);
+      p -> left_score = mxs + indel_score;
+      p -> left_from = mxf;
+      p -> left_ref = band [i - 1] . Get_Ref (mxf);
+      p -> left_errors = band [i - 1] . Get_Errors (mxf) + 1;
+     }
+
+   return;
   }
