@@ -30,6 +30,7 @@ class Scaffold_t : public Bankable_t
 
 private:
 
+  null_t poly_m;                   //!< polymorphism
   std::vector<Tile_t> contigs_m;   //!< contig tiling
   std::vector<ID_t> edges_m;       //!< list of contig edges
 
@@ -154,6 +155,19 @@ public:
   }
 
 
+  //--------------------------------------------------- getPolymorphism --------
+  //! \brief Get polymorphism information for this scaffold
+  //!
+  //! \note datatype not yet decided upon
+  //!
+  //! \return The polymorphism info
+  //!
+  null_t & getPolymorphism ( )
+  {
+    return poly_m;
+  }
+
+
   //--------------------------------------------------- setContigTiling --------
   //! \brief Set the tiling of underlying contigs
   //!
@@ -175,6 +189,20 @@ public:
   void setContigEdges (const std::vector<ID_t> & edges)
   {
     edges_m = edges;
+  }
+
+
+  //--------------------------------------------------- setPolymorphism --------
+  //! \brief Set polymorphism information for this scaffold
+  //!
+  //! \note datatype not yet decided upon
+  //!
+  //! \param poly The new polymorphism info
+  //! \return void
+  //!
+  void setPolymorphism (const null_t & poly)
+  {
+    poly_m = poly;
   }
 
 };

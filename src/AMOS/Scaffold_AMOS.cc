@@ -22,6 +22,9 @@ Size_t Scaffold_t::readRecord (istream & fix,
   Size_t streamsize = Bankable_t::readRecord (fix, var);
   Size_t size, tsize;
 
+  fix . read ((char *)&poly_m, sizeof (null_t));
+  streamsize += sizeof (null_t);
+
   //-- Read contig list
   fix . read ((char *)&size, sizeof (Size_t));
   streamsize += sizeof (Size_t);
@@ -61,6 +64,9 @@ Size_t Scaffold_t::writeRecord (ostream & fix,
 {
   Size_t streamsize = Bankable_t::writeRecord (fix, var);
   Size_t size, tsize;
+
+  fix . write ((char *)&poly_m, sizeof (null_t));
+  streamsize += sizeof (null_t);
 
   //-- Write contig list
   size = contigs_m . size( );
