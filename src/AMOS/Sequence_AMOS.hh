@@ -385,7 +385,9 @@ public:
   //!
   //! Combines and compresses the sequence and quality data contained in the
   //! two C strings. If current Sequence object is compressed, please refer
-  //! to the postconditions for the setBase(char,char,Pos_t) operation.
+  //! to the postconditions for the setBase(char,char,Pos_t) operation. All
+  //! newline characters will be discarded, but the newlines must be in the
+  //! same location in both the sequence and quality files.
   //!
   //! \param seq The sequence base string
   //! \param qual The quality score string
@@ -402,7 +404,9 @@ public:
   //!
   //! Combines and compresses the sequence and quality data contained in the
   //! two STL strings. If current Sequence object is compressed, please refer
-  //! to the postconditions for the setBase(char,char,Pos_t) operation.
+  //! to the postconditions for the setBase(char,char,Pos_t) operation. All
+  //! newline characters will be discarded. but the newlines must be in the
+  //! same location in both the sequence and quality files.
   //!
   //! \param seq The sequence base string
   //! \param qual The quality score string

@@ -164,8 +164,11 @@ void Kmer_t::setSeqString (const string & seq)
       offset += 2;
     }
 
-  size = length_m / 4 + (length_m % 4 ? 1 : 0);
-  seq_m = (uint8_t *) SafeRealloc (seq_m, size);
+  if ( length_m != seq . size( ) )
+    {
+      size = length_m / 4 + (length_m % 4 ? 1 : 0);
+      seq_m = (uint8_t *) SafeRealloc (seq_m, size);
+    }
 }
 
 

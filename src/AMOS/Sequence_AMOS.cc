@@ -141,10 +141,26 @@ void Sequence_t::setSequence (const char * seq,
   seq_m = (uint8_t *) SafeRealloc (seq_m, length);
   if ( !isCompressed( ) )
     qual_m = (uint8_t *) SafeRealloc (qual_m, length);
-  length_m = length;
 
-  for ( Pos_t i = 0; i < length_m; i ++ )
-    setBase (seq [i], qual [i], i);
+  length_m = length;
+  for ( Pos_t i = 0; i < length; i ++ )
+    {
+      if ( seq[i] == '\n' )
+	{
+	  length_m --;
+	  continue;
+	}
+      if ( qual[i] == '\n' )
+	AMOS_THROW_ARGUMENT ("Invalid newline found in quality data");
+      setBase (seq [i], qual [i], i);
+    }
+
+  if ( length_m != length )
+    {
+      seq_m = (uint8_t *) SafeRealloc (seq_m, length_m);
+      if ( !isCompressed( ) )
+	qual_m = (uint8_t *) SafeRealloc (qual_m, length_m);
+    }
 }
 
 
@@ -161,10 +177,26 @@ void Sequence_t::setSequence (const string & seq,
   seq_m = (uint8_t *) SafeRealloc (seq_m, length);
   if ( !isCompressed( ) )
     qual_m = (uint8_t *) SafeRealloc (qual_m, length);
-  length_m = length;
 
-  for ( Pos_t i = 0; i < length_m; i ++ )
-    setBase (seq [i], qual [i], i);
+  length_m = length;
+  for ( Pos_t i = 0; i < length; i ++ )
+    {
+      if ( seq[i] == '\n' )
+	{
+	  length_m --;
+	  continue;
+	}
+      if ( qual[i] == '\n' )
+	AMOS_THROW_ARGUMENT ("Invalid newline found in quality data");
+      setBase (seq [i], qual [i], i);
+    }
+
+  if ( length_m != length )
+    {
+      seq_m = (uint8_t *) SafeRealloc (seq_m, length_m);
+      if ( !isCompressed( ) )
+	qual_m = (uint8_t *) SafeRealloc (qual_m, length_m);
+    }
 }
 
 
