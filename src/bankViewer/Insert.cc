@@ -24,6 +24,7 @@ Insert::Insert(ID_t     aid,
                ID_t     bid,
                ID_t     bcontig,
                Tile_t * btile,
+               ID_t     libid,
                Distribution_t dist,
                int conslen,
                AMOS::MateType_t matetype)
@@ -37,10 +38,10 @@ Insert::Insert(ID_t     aid,
   m_bcontig = bcontig;
 
   m_matetype = matetype;
-
+  m_dist = dist;
+  m_libid = libid;
 
   m_state = Unknown;
-  m_dist = dist;
   m_active = -1;
   m_actual = -1;
 

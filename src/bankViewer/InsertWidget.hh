@@ -44,6 +44,7 @@ public slots:
   void setPartitionTypes(bool);
   void setCoveragePlot(bool);
   void setFeatures(bool);
+  void setColorByLibrary(bool);
 
   void start();
   void stopbreak();
@@ -80,6 +81,7 @@ private:
   int m_partitionTypes;
   int m_coveragePlot;
   int m_showFeatures;
+  int m_colorByLibrary;
 
   // from insert canvas
   void drawTile(AMOS::Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state);

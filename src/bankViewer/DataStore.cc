@@ -161,6 +161,28 @@ int DataStore::setContigId(int id)
   return retval;
 }
 
+AMOS::ID_t DataStore::getLibrary(ID_t readid)
+{
+  if (!m_libdistributionlookup.empty())
+  {
+    try
+    {
+      Read_t read;
+      read_bank.fetch(readid, read);
+
+      Fragment_t frag;
+      frag_bank.fetch(read.getFragment(), frag);
+
+      return frag.getLibrary();
+    }
+    catch (Exception_t & e)
+    {
+    }
+  }
+
+  return AMOS::NULL_ID;
+}
+
 Distribution_t DataStore::getLibrarySize(ID_t readid)
 {
   if (!m_libdistributionlookup.empty())

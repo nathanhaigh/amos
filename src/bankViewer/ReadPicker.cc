@@ -27,13 +27,15 @@ public:
                  QString dir,
                  QString seql,
                  QString seqr,
+                 QString libid,
                  QString mean)
                
     : QListViewItem(parent, iid, eid, type, matetype, offset, endoffset, len, dir) 
     {
       setText(8, seql);
       setText(9, seqr);
-      setText(10, mean);
+      setText(10, libid);
+      setText(11, mean);
     }
 
 
@@ -99,6 +101,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
   m_table->addColumn("Dir");
   m_table->addColumn("CLR Begin");
   m_table->addColumn("CLR End");
+  m_table->addColumn("Lib ID");
   m_table->addColumn("Lib Mean");
 
   m_table->setShowSortIndicator(true);
@@ -120,7 +123,8 @@ ReadPicker::ReadPicker(DataStore * datastore,
          ti != datastore->m_contig.getReadTiling().end();
          ti++)
     {
-      AMOS::Distribution_t dist = datastore->getLibrarySize(ti->source);
+      AMOS::ID_t libid = datastore->getLibrary(ti->source);
+      AMOS::Distribution_t dist = datastore->m_libdistributionlookup[libid];
 
       AMOS::Read_t red;
       datastore->read_bank.fetch(ti->source, red);
@@ -136,6 +140,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
         if (mateType == 0) { mateType = '?'; }
       }
 
+
       int len = ti->range.getLength() + ti->gaps.size();
       new ReadListItem(m_table,
                        QString::number(ti->source),
@@ -148,6 +153,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
                        ((ti->range.isReverse())?"R":"F"),
                        QString::number(ti->range.begin),
                        QString::number(ti->range.end),
+                       QString::number(libid),
                        QString::number(dist.mean));
     }
 

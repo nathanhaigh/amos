@@ -10,7 +10,7 @@ class Insert
 public:
   Insert(AMOS::ID_t aid, AMOS::ID_t acontig, AMOS::Tile_t * atile, 
          AMOS::ID_t bid, AMOS::ID_t bcontig, AMOS::Tile_t * btile, 
-         AMOS::Distribution_t distribution,
+         AMOS::ID_t libid, AMOS::Distribution_t distribution,
          int conslen,
          AMOS::MateType_t matetype);
 
@@ -33,6 +33,7 @@ public:
   InsertCanvasItem * m_canvasItem;
 
   AMOS::Distribution_t m_dist;
+  AMOS::ID_t m_libid;
 
   int m_active;
 

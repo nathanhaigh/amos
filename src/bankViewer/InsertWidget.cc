@@ -10,6 +10,7 @@
 #include "CoverageCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
 #include <set>
+#include "UIElements.hh"
 
 
 using namespace AMOS;
@@ -73,6 +74,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_partitionTypes = 1;
   m_coveragePlot = 1;
   m_showFeatures = 1;
+  m_colorByLibrary = 0;
+
 
   refreshCanvas();
 
@@ -238,7 +241,8 @@ void InsertWidget::refreshCanvas()
       ID_t acontig = m_datastore->m_contigId;
       Tile_t * atile = ai->second;
 
-      AMOS::Distribution_t dist = m_datastore->getLibrarySize(aid);
+      AMOS::ID_t libid = m_datastore->getLibrary(aid);
+      AMOS::Distribution_t dist = m_datastore->m_libdistributionlookup[libid];
 
       // Does it have a mate
       mi = m_datastore->m_readmatelookup.find(aid);
@@ -247,7 +251,8 @@ void InsertWidget::refreshCanvas()
         unmated++;
         insert = new Insert(aid, acontig, atile,
                             AMOS::NULL_ID, AMOS::NULL_ID, NULL,
-                            dist, clen, AMOS::Matepair_t::NULL_MATE);
+                            libid, dist, clen, 
+                            AMOS::Matepair_t::NULL_MATE);
       }
       else
       {
@@ -274,7 +279,7 @@ void InsertWidget::refreshCanvas()
 
         insert = new Insert(aid, acontig, atile, 
                             bid, bcontig, btile, 
-                            dist, clen, 
+                            libid, dist, clen, 
                             mi->second.second);
 
 
@@ -584,6 +589,31 @@ void InsertWidget::refreshCanvas()
     }
   }
 
+  typedef map <ID_t, QColor> LibColorMap;
+  LibColorMap libColorMap;
+
+  if (m_colorByLibrary)
+  {
+    int type = 0;
+
+    map<ID_t, Distribution_t>::const_iterator li;
+    for (li =  m_datastore->m_libdistributionlookup.begin();
+         li != m_datastore->m_libdistributionlookup.end();
+         li++)
+    {
+      libColorMap[li->first] = UIElements::getInsertColor((Insert::MateState)types[type]);
+      type++;
+
+      if (type >= types.size())
+      {
+        type = 0;
+      }
+    }
+  }
+
+
+
+
 
   cerr << " inserts" << endl;
   int layoutoffset = 0;
@@ -634,6 +664,26 @@ void InsertWidget::refreshCanvas()
       InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
                                                       insertlength, m_seqheight,
                                                       *ii, m_icanvas);
+      if (m_colorByLibrary)
+      {
+        QColor insertcolor(Qt::cyan);
+
+        LibColorMap::const_iterator lci = libColorMap.find((*ii)->m_libid);
+
+        if (lci != libColorMap.end())
+        {
+          insertcolor = lci->second;
+        }
+
+        iitem->setPen(insertcolor);
+        iitem->setBrush(insertcolor);
+      }
+      else
+      {
+        iitem->setPen(UIElements::getInsertColor((*ii)->m_state));
+        iitem->setBrush(UIElements::getInsertColor((*ii)->m_state));
+      }
+
       iitem->show();
     }
 
@@ -691,6 +741,12 @@ void InsertWidget::setCoveragePlot(bool b)
 void InsertWidget::setFeatures(bool b)
 {
   m_showFeatures = b;
+  refreshCanvas();
+}
+
+void InsertWidget::setColorByLibrary(bool b)
+{
+  m_colorByLibrary = b;
   refreshCanvas();
 }
 

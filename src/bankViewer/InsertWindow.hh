@@ -24,6 +24,7 @@ public slots:
   void togglePartitionTypes();
   void toggleCoveragePlot();
   void toggleFeatures();
+  void toggleColorByLibrary();
 
 signals:
   void setGindex(int gindex);
@@ -35,6 +36,7 @@ signals:
   void setPartitionTypes(bool);
   void setCoveragePlot(bool);
   void setFeatures(bool);
+  void setColorByLibrary(bool);
 
 private:
 
@@ -49,6 +51,7 @@ private:
   int m_partitiontypesid;
   int m_coverageid;
   int m_featid;
+  int m_libcolorid;
 };
 
 #endif

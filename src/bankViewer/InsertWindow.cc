@@ -77,6 +77,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_featid = m_optionsmenu->insertItem("Show F&eatures", this, SLOT(toggleFeatures()));
   m_optionsmenu->setItemChecked(m_featid, true);
 
+  m_libcolorid = m_optionsmenu->insertItem("Color By &Library", this, SLOT(toggleColorByLibrary()));
+  m_optionsmenu->setItemChecked(m_libcolorid, false);
+
   // Main Widget
   InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
   setCentralWidget(iw);
@@ -116,6 +119,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(setFeatures(bool)),
           iw,   SLOT(setFeatures(bool)));
+
+  connect(this, SIGNAL(setColorByLibrary(bool)),
+          iw,   SLOT(setColorByLibrary(bool)));
 
   QAccel *a = new QAccel( this );
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_S), iw, SLOT(start()) );
@@ -177,4 +183,12 @@ void InsertWindow::toggleFeatures()
   m_optionsmenu->setItemChecked(m_featid, b);
 
   emit setFeatures(b);
+}
+
+void InsertWindow::toggleColorByLibrary()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_libcolorid);
+  m_optionsmenu->setItemChecked(m_libcolorid, b);
+
+  emit setColorByLibrary(b);
 }

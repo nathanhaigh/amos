@@ -25,6 +25,7 @@ public:
   void * fetchTrace(const AMOS::Read_t & read);
 
   AMOS::Distribution_t getLibrarySize(AMOS::ID_t readid);
+  AMOS::ID_t getLibrary(AMOS::ID_t readid);
   AMOS::ID_t lookupContigId(AMOS::ID_t readid);
 
   AMOS::BankStream_t contig_bank;
