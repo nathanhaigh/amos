@@ -904,8 +904,9 @@ void Bank_t::syncIFO (IFOMode_t mode)
     //-- B_SPY sneak out
     if ( mode_m & B_SPY )
       {
-        cerr << "WARNING: Disregarding '" << Decode (banktype_m)
-             << "' bank lock, locked by '" + *vj + "'" << endl;
+	if ( ltype == WRITE_LOCK_CHAR )
+          cerr << "WARNING: Disregarding '" << Decode (banktype_m)
+               << "' bank lock, locked by '" + *vj + "'" << endl;
         return;
       }
 
