@@ -267,7 +267,7 @@ int  main
 	       msg . setQuality (gma . getQualityString ());
 	       msg . setUniLen (strlen (gma . getConsensusString ())); 
 
-	       Output_Unit (label, msg . getAccession (),
+	       Output_Unit (label, layout.getEID(),
 			    msg . getNumFrags (), gma, msg, string_list,
 			    qual_list, clr_list, tag_list, contig_bank);
 
@@ -895,6 +895,7 @@ static void  Output_Unit
   {
     Contig_t act;
     Message_t amg;
+    act.setEID(id);
    switch  (Output_Format)
      {
       case  MULTI_ALIGN_OUTPUT :
