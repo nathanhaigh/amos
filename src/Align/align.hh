@@ -43,6 +43,8 @@ const int  ALPHABET_SIZE = 5;
 const int  MATCH_FROM_TOP = 0;
 const int  MATCH_FROM_NW = 1;
 const int  MATCH_FROM_NE = -1;
+const int  MATRIX_SIZE_LIMIT = 100000;
+  // Largest matrix that will be used for full alignment computations
 const char  MAX_QUALITY_CHAR = 60;
 
 
@@ -67,6 +69,25 @@ class  Align_Score_Entry_t
        (FILE * fp)  const;
    void  Get_Max
        (int & max_score, unsigned int & max_from)  const;
+   void  Get_Max_Left
+       (int & max_score, unsigned int & max_from, int penalty)  const;
+   void  Get_Max_Top
+       (int & max_score, unsigned int & max_from, int penalty)  const;
+  };
+
+
+class  Augmented_Score_Entry_t  :  public Align_Score_Entry_t
+  {
+  public:
+   int  top_ref;
+   int  diag_ref;
+   int  left_ref;
+        // subscript where best alignment to here began in a designated prior row
+
+   void  Dump
+       (FILE * fp)  const;
+   int  Get_Ref
+       (unsigned int & from)  const;
   };
 
 
@@ -203,12 +224,18 @@ class  Alignment_t  :  public Base_Alignment_t
        (const Delta_Encoding_t & d)
      { delta = d; }
 
+   void  Clear
+       (void);
+   void  Combine
+       (const Alignment_t & a1, const Alignment_t & a2);
    void  Dump
        (FILE * fp)  const;
    void  Dump_Delta
        (FILE * fp)  const;
    void  Incr_Votes
        (vector <Vote_t> & vote, char * a);
+   void  Offset_A
+       (int n);
    void  Print
        (FILE * fp, const char * a, const char * b,
         int width = DEFAULT_FASTA_WIDTH);
@@ -373,6 +400,11 @@ void  Check  (void)
        (int lo, int hi, string & s, int & gapped_lo, int & gapped_hi)  const;
    void  Extract_IMP_Dels
        (vector < vector <int> > & del_list);
+   void  Full_Merge_Right
+       (const Gapped_Multi_Alignment_t & m, int a_lo,
+        int b_lo, vector <char *> & sl1,
+        const vector <char *> & sl2, vector <int> & sl2_place,
+        vector <char *> * tg1 = NULL, vector <char *> * tg2 = NULL);
    void  Get_Distinguishing_Columns
        (vector <Distinguishing_Column_t> & dc,
         const vector <char *> & sl);
@@ -427,12 +459,28 @@ void  Check  (void)
 
 
 
+void  Align_Row_Update
+    (vector <Augmented_Score_Entry_t> & align_row, char ch, const char * s,
+     int s_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, int first_score);
 void  Best_Spanning_Tree
     (int n, const vector <Phase_Entry_t> & edge_list,
      vector <int> & tree_edge);
 void  Classify_Reads
     (const vector <Distinguishing_Column_t> & dc, int n,
      vector <char> & side, vector <int> & segment);
+void  Complete_Align
+    (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
+     int t_hi, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align);
+void  Complete_Align_Full_Matrix
+    (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
+     int t_hi, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align);
+void  Complete_Align_Save_Space
+    (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
+     int t_hi, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align);
 int  DNA_Char_To_Sub
     (char ch);
 int  Exact_Prefix_Match
@@ -454,6 +502,18 @@ void  Multi_Align
     (vector <char *> & s, vector <int> & offset, int offset_delta,
      double error_rate, Gapped_Multi_Alignment_t & ma,
      vector <int> * ref = NULL);
+void  Overlap_Align
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int t_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align);
+void  Overlap_Align_Full_Matrix
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int t_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align);
+void  Overlap_Align_Save_Space
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int t_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align);
 bool  Overlap_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int min_len, int max_errors,
@@ -474,6 +534,10 @@ bool  Substring_Match_VS
      int lo, int hi, int max_errors, Alignment_t & align);
 char  Sub_To_DNA_Char
     (int i);
+void  Trace_Back_Align_Path
+    (const vector < vector <Align_Score_Entry_t> > & a, int & r, int & c,
+     int r_start, int c_start, vector <int> & delta, int & errors,
+     const char * s, const char * t);
 void  Traverse
     (int v, int par, vector < vector <Phase_Entry_t> > & tree,
      vector <Distinguishing_Column_t> & dc, char ch, int & sum);

@@ -11,6 +11,9 @@
 
 
 
+// ###  Align_Score_Entry_t  methods  ###
+
+
 void  Align_Score_Entry_t :: Dump
     (FILE * fp)  const
 
@@ -55,6 +58,111 @@ void  Align_Score_Entry_t :: Get_Max
 
 
 
+void  Align_Score_Entry_t :: Get_Max_Left
+    (int & max_score, unsigned int & max_from, int penalty)  const
+
+//  Set  max_score  to the highest score in this entry
+//  and  max_from  to the sub_entry it came from, where  penalty
+//  is added to  max_score  if  max_from  is not  FROM_LEFT .
+
+  {
+   if  (top_score <= diag_score)
+       {
+        max_score = diag_score;
+        max_from = FROM_DIAG;
+       }
+     else
+       {
+        max_score = top_score;
+        max_from = FROM_TOP;
+       }
+   max_score += penalty;
+
+   if  (max_score <= left_score)
+       {
+        max_score = left_score;
+        max_from = FROM_LEFT;
+       }
+
+   return;
+  }
+
+
+
+void  Align_Score_Entry_t :: Get_Max_Top
+    (int & max_score, unsigned int & max_from, int penalty)  const
+
+//  Set  max_score  to the highest score in this entry
+//  and  max_from  to the sub_entry it came from, where  penalty
+//  is added to  max_score  if  max_from  is not  FROM_TOP .
+
+  {
+   if  (left_score <= diag_score)
+       {
+        max_score = diag_score;
+        max_from = FROM_DIAG;
+       }
+     else
+       {
+        max_score = left_score;
+        max_from = FROM_LEFT;
+       }
+   max_score += penalty;
+
+   if  (max_score < top_score)
+       {
+        max_score = top_score;
+        max_from = FROM_TOP;
+       }
+
+   return;
+  }
+
+
+
+void  Augmented_Score_Entry_t :: Dump
+    (FILE * fp)  const
+
+//  Print to  fp  the contents of this score entry.
+
+  {
+   Align_Score_Entry_t :: Dump (fp);
+   fprintf (fp, "Refs:  %d  %d  %d\n", left_ref, diag_ref, top_ref);
+
+   return;
+  }
+
+
+
+int  Augmented_Score_Entry_t :: Get_Ref
+    (unsigned int & from)  const
+
+//  Return the  ref  entry corresponding to  from .
+
+  {
+   switch  (from)
+     {
+      case  FROM_TOP :
+        return  top_ref;
+      case  FROM_DIAG :
+        return  diag_ref;
+      case  FROM_LEFT :
+        return  left_ref;
+      default :
+        sprintf (Clean_Exit_Msg_Line, "ERROR:  Bad from value = %d in  Get_Ref\n",
+                 from);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+     }
+
+   return  -1;
+  }
+
+
+
+
+// ###  Distinguishing_Column_t  methods  ###
+
+
 bool  Distinguishing_Column_t :: Intersects
     (const Distinguishing_Column_t & d, Phase_Entry_t & p,
      int & min)
@@ -87,6 +195,9 @@ bool  Distinguishing_Column_t :: Intersects
   }
 
 
+
+
+// ###  Vote_t  methods  ###
 
 
 void  Vote_t :: Incr_After
@@ -244,6 +355,9 @@ void  Vote_t :: Set_Zero
 
 
 
+// ###  Base_Alignment_t  methods  ###
+
+
 void  Base_Alignment_t :: Dump
     (FILE * fp)  const
 
@@ -256,6 +370,89 @@ void  Base_Alignment_t :: Dump
    return;
   }
 
+
+
+
+// ###  Alignment_t  methods  ###
+
+
+void  Alignment_t :: Clear
+    (void)
+
+//  Make this alignment empty.
+
+  {
+   a_lo = a_hi = b_lo = b_hi = errors = 0;
+   delta . clear ();
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Combine
+    (const Alignment_t & a1, const Alignment_t & a2)
+
+//  Concatenate alignments  a1  and  a2  into this single alignment.
+
+  {
+   int  a_used, b_used, extent;
+   int  a_left, b_left;
+   int  i, n;
+
+   if  (Verbose > 3)
+       {
+        cerr << "Combine:" << endl;
+        a1 . Dump (stderr);
+        a2 . Dump (stderr);
+       }
+
+   assert (a1 . a_hi == a2 . a_lo);
+   assert (a1 . b_hi == a2 . b_lo);
+
+   delta = a1 . delta;
+   a_lo = a1 . a_lo;
+   a_hi = a2 . a_hi;
+   b_lo = a1 . b_lo;
+   b_hi = a2 . b_hi;
+   errors = a1 . errors + a2 . errors;
+   string_sub = a1 . string_sub;
+   flipped = a1 . flipped;
+   a_len = a1 . a_len;
+
+   if  (a2 . delta . size () == 0)
+       return;
+
+   // Compute the number of characters in the  a  and  b  strings
+   // accounted for by the delta values in  a1 .
+   n = a1 . delta . size ();
+   a_used = b_used = 0;
+   for  (i = 0;  i < n;  i ++)
+     {
+      extent = abs (a1 . delta [i]) - 1;
+      a_used += extent;
+      b_used += extent;
+      if  (delta [i] < 0)
+          a_used ++;
+        else
+          b_used ++;
+     }
+
+   a_left = a1 . a_hi - a1 . a_lo - a_used;
+   b_left = a1 . b_hi - a1 . b_lo - b_used;
+   assert (a_left == b_left);
+
+   if  (a2 . delta [0] < 0)
+       delta . push_back (a2 . delta [0] - a_left);
+     else
+       delta . push_back (a2 . delta [0] + a_left);
+
+   n = a2 . delta . size ();
+   for  (i = 1;  i < n;  i ++)
+     delta . push_back (a2 . delta [i]);
+
+   return;
+  }
 
 
 
@@ -362,6 +559,20 @@ void  Alignment_t :: Incr_Votes
                  "ERROR:  Bad alignment end  j = %d  b_hi = %d", j, b_hi);
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Offset_A
+    (int n)
+
+//  Add  n  to the  a_lo  and  a_hi  positions of this alignment.
+
+  {
+   a_lo += n;
+   a_hi += n;
 
    return;
   }
@@ -633,6 +844,9 @@ void  Alignment_t :: Set_To_Identity
   }
 
 
+
+
+// ###  Gapped_Alignment_t  methods  ###
 
 
 void  Gapped_Alignment_t :: Clear
@@ -1197,6 +1411,10 @@ void  Gapped_Alignment_t :: Print_Subalignment_Line
 
 
 
+
+// ###  Gapped_MA_Bead_t  methods  ###
+
+
 void  Gapped_MA_Bead_t :: Advance
     (void)
 
@@ -1226,6 +1444,10 @@ void  Gapped_MA_Bead_t :: Advance
    return;
   }
 
+
+
+
+// ###  Multi_Alignment_t  methods  ###
 
 
 void  Multi_Alignment_t :: Clear
@@ -1501,6 +1723,10 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    return;
   }
 
+
+
+
+// ###  Gapped_Multi_Alignment_t  methods  ###
 
 
 void  Gapped_Multi_Alignment_t :: Add_Aligned_Seqs
@@ -1829,6 +2055,119 @@ void  Gapped_Multi_Alignment_t :: Extract_IMP_Dels
       align [i] . Convert_Skip_to_Del (del);
       del_list . push_back (del);
      }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Full_Merge_Right
+    (const Gapped_Multi_Alignment_t & m, int a_lo,
+     int b_lo, vector <char *> & sl1,
+     const vector <char *> & sl2, vector <int> & sl2_place,
+     vector <char *> * tg1, vector <char *> * tg2)
+
+//  Merge the entire alignment in  m  starting at  a_lo
+//  into this alignment starting at  b_lo .  The presumption
+//  is that the alignment will go to the right end of this
+//  multialignment and beyond to extend it.
+//   sl1  and  sl2  are the sequences of the reads for this
+//  multialignment and multialignment  m , respectively.
+//  Must have  a_lo <= a_hi  and  b_lo <= b_hi .
+//   sl2_place  indicates whether and where  sl2  strings are already
+//  in  sl1 .  Any new strings are added
+//  from  sl2  to end of  sl1  and  sl2_place  is updated.
+//  If neither  tg1  nor  tg2  is  NULL , then also add relevant
+//  sequences from  tg2  to the end of  tg1 , mirroring  sl1
+//  and  sl2 .
+
+  {
+   Alignment_t  ali;
+   string  x, y;
+   int  a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi;
+   int  a_hi, b_hi, x_len, y_len, extra;
+
+   // First align the consensus sequences (also aligning the gap
+   //   positions based on the characters that are there) in the
+   // overlap region
+
+   // Pull out the respective consensus regions to the end of each
+   // sequence.
+   // Need to add some indication of what characters aligned with the
+   //   gap position
+   a_hi = m . Ungapped_Consensus_Len ();
+   m . Extract_Gapped_Region (a_lo, a_hi, x, a_gapped_lo, a_gapped_hi);
+   x_len = x . length ();
+
+   b_hi = Ungapped_Consensus_Len ();
+   Extract_Gapped_Region (b_lo, b_hi, y, b_gapped_lo, b_gapped_hi);
+   y_len = y . length ();
+
+   // Align them
+   // Need to add something to take into account characters associated
+   //   with gap positions
+   // This version has no flexibility--the alignments must start exactly
+   // where indicated
+   Overlap_Align (x . c_str (), x_len, y . c_str (), 0, 1, y_len,
+        2, -3, -2, -1, ali);
+
+   if  (Verbose > 2)
+       ali . Print (stdout, x . c_str (), y . c_str ());
+
+   extra = x_len - ali . a_hi;
+
+   // Append the leftover part of  a  to the end of this sequence
+   if  (extra > 0)
+       {
+        assert (ali . b_hi == y_len);
+        consensus . append (x, ali . a_hi, extra);
+       }
+     else
+       extra = 0;
+
+   // Because the added leftover part is identical, the alignment is
+   // correct for the entire region, too.
+
+   ali . a_lo += a_gapped_lo;
+   ali . a_hi += a_gapped_lo + extra;
+   ali . b_lo += b_gapped_lo;
+   ali . b_hi += b_gapped_lo + extra;
+
+   Expand_Consensus (ali);
+
+   if  (Verbose > 2)
+       {
+        cout << endl << endl << "Contig in  Full_Merge_Right  after Expand_Consensus"
+             << endl;
+        cout << "sl1 . size () = " << sl1 . size () << endl;
+        cout << "sl2 . size () = " << sl2 . size () << endl;
+        Print (stdout, sl1, true, true, 60);
+       }
+
+   Add_Aligned_Seqs (m, ali, a_gapped_lo, a_gapped_hi, sl1, sl2, sl2_place,
+        tg1, tg2);
+
+   if  (Verbose > 2)
+       {
+        int  i, n;
+
+        n = align . size ();
+        cout << endl << "Align after  Full_Merge_Right  n = " << n << endl;
+        cout << "sl1 . size () = " << sl1 . size () << endl;
+        cout << "sl2 . size () = " << sl2 . size () << endl;
+        for  (i = 0;  i < n;  i ++)
+          {
+           printf ("align [%d]:\n", i);
+           align [i] . Dump (stdout);
+          }
+        
+        n = sl2_place . size ();
+        cout << endl << "sl2_place  n = " << n << endl;
+        for  (i = 0;  i < n;  i ++)
+          cout << sl2_place [i] << endl;
+       }
+
+   // Eventually re-call the consensus here
 
    return;
   }
@@ -2340,7 +2679,12 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
    // Align them
    // Need to add something to take into account characters associated
    //   with gap positions
+#if  0
    Global_Align (x . c_str (), x_len, y . c_str (), 0, y_len, 2, -3, -2, -1, ali);
+#else
+   Complete_Align (x . c_str (), 0, x_len, y . c_str (), 0, 1, y_len,
+        2, -3, -2, -1, ali);
+#endif
 
    if  (Verbose > 2)
        ali . Print (stdout, x . c_str (), y . c_str ());
@@ -2392,7 +2736,7 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
           cout << sl2_place [i] << endl;
        }
 
-   // Then re-call the consensus
+   // Eventually re-call the consensus here
 
    return;
   }
@@ -2951,6 +3295,68 @@ int  Gapped_Multi_Alignment_t :: Ungapped_Consensus_Len
 
 
 
+// ###  Independent Functions  ###
+
+
+void  Align_Row_Update
+    (vector <Augmented_Score_Entry_t> & align_row, char ch, const char * s,
+     int s_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, int first_score)
+
+//  Update  align_row  to be the values in the next row of an alignment
+//  matrix where the preceding row is in  align_row  now.   ch  is
+//  the character for the next row and  s  (whose length is  s_len )
+//  is the characters across the top of the alignment matrix.
+//   match_score ,  mismatch_score ,  indel_score  and  gap_score
+//  are the scores for matching characters, mismatching characters,
+//  insertion/deletion and initiating a gap, respectively.
+//   first_score  is the value to the first entry's  top_score  field.
+
+  {
+   Augmented_Score_Entry_t  prev, curr;
+   int  mxs;
+   unsigned int  mxf;
+   int  i;
+
+   if  (s_len == 0)
+       return;
+
+   assert (int (align_row . size ()) == s_len + 1);
+
+   prev = align_row [0];
+   align_row [0] . top_score += first_score;
+   align_row [0] . diag_score = align_row [0] . left_score = NEG_INFTY_SCORE;
+
+   for  (i = 1;  i <= s_len;  i ++)
+     {
+      Augmented_Score_Entry_t  * p = & (align_row [i]);
+
+      curr = align_row [i];
+      curr . Get_Max_Top (mxs, mxf, gap_score);
+      
+      p -> top_score = mxs + indel_score;
+      p -> top_from = mxf;
+      p -> top_ref = curr . Get_Ref (mxf);
+
+      prev . Get_Max (mxs, mxf);
+      p -> diag_score = mxs
+           + ((ch == s [i - 1]) ? match_score : mismatch_score);
+      p -> diag_from = mxf;
+      p -> diag_ref = prev . Get_Ref (mxf);
+
+      align_row [i - 1] .  Get_Max_Left (mxs, mxf, gap_score);
+      p -> left_score = mxs + indel_score;
+      p -> left_from = mxf;
+      p -> left_ref = align_row [i - 1] . Get_Ref (mxf);
+
+      prev = curr;
+     }
+
+   return;
+  }
+
+
+
 void  Best_Spanning_Tree
     (int n, const vector <Phase_Entry_t> & edge_list,
      vector <int> & tree_edge)
@@ -3110,6 +3516,278 @@ void  Classify_Reads
 
       printf ("%4d %4d  %c\n", i, j, ch);
      }
+
+   return;
+  }
+
+
+
+void  Complete_Align
+    (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
+     int t_hi, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align)
+
+//  Find the best alignment of the entire string  s [s_lo .. (s_hi - 1)]
+//  to the entire string  t [t_lo .. (t_hi - 1)]  but the alignment in
+//   t  may start between  t_lo  and  t_slip .
+//  The resulting alignment is stored in  align ,
+//  where  s  is the  a  string and  t  is the  b  string.
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+
+  {
+   int  matrix_size;
+
+   assert (t_lo < t_slip);
+   assert (t_slip <= t_hi);
+   assert (s_lo < s_hi );
+
+   matrix_size = (s_hi - s_lo) * (t_hi - t_lo);
+   if  (t_hi - t_lo <= 10 || matrix_size <= MATRIX_SIZE_LIMIT)
+       Complete_Align_Full_Matrix (s, s_lo, s_hi, t, t_lo, t_slip, t_hi,
+            match_score, mismatch_score, indel_score, gap_score, align);
+     else
+       Complete_Align_Save_Space (s, s_lo, s_hi, t, t_lo, t_slip, t_hi,
+            match_score, mismatch_score, indel_score, gap_score, align);
+
+   return;
+  }
+
+
+
+void  Complete_Align_Full_Matrix
+    (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
+     int t_hi, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align)
+
+//  Find the best alignment of the entire string  s [s_lo .. (s_hi - 1)]
+//  to the entire string  t [t_lo .. (t_hi - 1)]  but the alignment in
+//   t  may start between  t_lo  and  t_slip .
+//  The resulting alignment is stored in  align ,
+//  where  s  is the  a  string and  t  is the  b  string.
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+//  Use a full matrix for the computation.
+
+  {
+   vector < vector <Align_Score_Entry_t> > a;  // the alignment array
+   vector <Align_Score_Entry_t>  empty_vector;
+   vector <int>  delta;
+   Align_Score_Entry_t  entry;
+   unsigned int  mxf;
+   int  mxs, s_len, t_len, error_ct, row_limit;
+   int  r, c;    // row and column
+   int  i, j, n;  // position in string  t
+
+   if  (Verbose > 3)
+       {
+        fprintf (stderr, "Start Complete_Align_Full_Matrix\n");
+        fprintf (stderr, "s_lo = %d  s_hi = %d  t_lo = %d  t_slip = %d  t_hi = %d\n",
+             s_lo, s_hi, t_lo, t_slip, t_hi);
+        fprintf (stderr, "Scores:  match/mismatch/indel/gap = %d/%d/%d/%d\n",
+             match_score, mismatch_score, indel_score, gap_score);
+       }
+
+   s_len = s_hi - s_lo;
+   t_len = t_hi - t_lo;
+
+   // Do first row
+   a . push_back (empty_vector);
+   entry . diag_score = entry . top_score = entry . left_score = 0;
+   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   r = c = 0;
+   a [r] . push_back (entry);
+
+   entry . top_score = NEG_INFTY_SCORE;
+   entry . top_from = FROM_NOWHERE;
+   entry . diag_score = NEG_INFTY_SCORE;
+   entry . diag_from = FROM_NOWHERE;
+   for  (c = 1;  c <= s_len;  c ++)
+     {
+      entry . left_score = a [r] [c - 1] . left_score + indel_score;
+      if  (c == 1)
+          entry . left_score += gap_score;
+      entry . left_from = FROM_LEFT;
+      a [r] . push_back (entry);
+     }
+     
+   // Do remaining rows
+   for  (i = t_lo;  i < t_hi;  i ++)
+     {
+      r ++;
+
+      // First column in row
+      a . push_back (empty_vector);
+      entry . diag_score = entry . left_score = NEG_INFTY_SCORE;
+      if  (i < t_slip - 1)
+          {
+           entry . top_score = 0;
+           entry . top_from = FROM_NOWHERE;
+          }
+        else
+          {
+           entry . top_score = a [r - 1] [0] . top_score + indel_score;
+           if  (i == t_slip - 1)
+               entry . top_score += gap_score;
+           entry . top_from = FROM_TOP;
+          }
+      entry . diag_from = entry . left_from = FROM_NOWHERE;
+      a [r] . push_back (entry);
+
+      // Remaining columns in row
+      j = s_lo;
+      for  (c = 1;  c <= s_len;  c ++, j ++)
+        {
+         Align_Score_Entry_t  * p;
+
+         p = & (a [r - 1] [c]);
+         p -> Get_Max_Top (mxs, mxf, gap_score);
+         entry . top_score = mxs + indel_score;
+         entry . top_from = mxf;
+
+         p = & (a [r - 1] [c - 1]);
+         p -> Get_Max (mxs, mxf);
+         entry . diag_score = mxs;
+         entry . diag_from = mxf;
+         entry . diag_score += ((t [i] == s [j]) ? match_score : mismatch_score);
+
+         p = & (a [r] [c - 1]);
+         p -> Get_Max_Left (mxs, mxf, gap_score);
+         entry . left_score = mxs + indel_score;
+         entry . left_from = mxf;
+         a [r] . push_back (entry);
+        }
+     }
+
+   // Trace back
+   row_limit = t_slip - t_lo - 1;
+   Trace_Back_Align_Path (a, r, s_len, row_limit, 0, delta,
+        error_ct, s + s_lo, t + t_lo);
+
+   align . a_lo = s_lo;
+   align . a_hi = s_hi;
+   align . b_hi = t_hi;
+   align . b_lo = r + t_lo;
+   align . errors = error_ct;
+
+   if  (Verbose > 2)
+       {
+        n = delta . size ();
+        for  (i = 0;  i < n;  i ++)
+          printf ("delta [%d] = %d\n", i, delta [i]);
+       }
+
+   align . setDelta (delta);
+
+   return;
+  }
+
+
+
+void  Complete_Align_Save_Space
+    (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
+     int t_hi, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align)
+
+//  Find the best alignment of the entire string  s [s_lo .. (s_hi - 1)]
+//  to the entire string  t [t_lo .. (t_hi - 1)]  but the alignment in
+//   t  may start between  t_lo  and  t_slip .
+//  The resulting alignment is stored in  align ,
+//  where  s  is the  a  string and  t  is the  b  string.
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+//  Do recursively keeping just a single row.
+
+  {
+   Alignment_t  sub_ali_1, sub_ali_2;
+   vector <Augmented_Score_Entry_t> align_row;
+        //  row of alignment array
+   Augmented_Score_Entry_t  entry;
+   int  s_len, t_len, t_half, tmp_slip;
+   int  mxs, max_ref;
+   unsigned int  mxf;
+   int  r, c;
+   
+   s_len = s_hi - s_lo;
+   t_len = t_hi - t_lo;
+   assert (t_len > 1);
+
+   // Build first row
+   entry . diag_score = entry . top_score = entry . left_score = 0;
+   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   entry . top_ref = entry . diag_ref = entry . left_ref = 0;
+   align_row . push_back (entry);
+
+   entry . top_score = NEG_INFTY_SCORE;
+   entry . top_from = FROM_NOWHERE;
+   entry . diag_score = NEG_INFTY_SCORE;
+   entry . diag_from = FROM_NOWHERE;
+   entry . left_from = FROM_LEFT;
+   entry . left_ref = 0;
+   entry . top_ref = entry . diag_ref = -1;
+
+   for  (c = 1;  c <= s_len;  c ++)
+     {
+      entry . left_score = align_row [c - 1] . left_score + indel_score;
+      if  (c == 1)
+          entry . left_score += gap_score;
+      align_row . push_back (entry);
+     }
+
+   // Do remaining rows
+   t_half = (t_lo + t_hi) / 2;
+   for  (r = t_lo + 1;  r <= t_hi;  r ++)
+     {
+      int  first_score;
+
+      if  (r < t_slip)
+          first_score = 0;
+      else if  (r == t_slip)
+          first_score = indel_score + gap_score;
+        else
+          first_score = indel_score;
+
+      Align_Row_Update (align_row, t [r - 1], s + s_lo, s_len, match_score,
+           mismatch_score, indel_score, gap_score, first_score);
+
+      if  (r == t_half)
+          {  // set the ref entries to reference this row
+           align_row [0] . top_ref = 0;
+           for  (c = 1;  c <= s_len;  c ++)
+             {
+              align_row [c] . top_ref = align_row [c] . diag_ref = c;
+              align_row [c - 1] . Get_Max_Left (mxs, mxf, gap_score);
+              align_row [c] . left_ref = align_row [c - 1] . Get_Ref (mxf);
+             }
+          }
+     }
+
+   // Get max from last entry
+   align_row [s_len] . Get_Max (mxs, mxf);
+   max_ref = align_row [s_len] . Get_Ref (mxf);
+
+   tmp_slip = Min (t_slip, t_half);
+   if  (Verbose > 3)
+       fprintf (stderr, "max_ref = %d  t_lo = %d  t_slip = %d  t_half = %d  t_hi = %d\n",
+            max_ref, t_lo, t_slip, t_half, t_hi);
+   Complete_Align_Full_Matrix (s, s_lo, s_lo + max_ref, t, t_lo, tmp_slip, t_half,
+        match_score, mismatch_score, indel_score, gap_score, sub_ali_1);
+
+   if  (max_ref == 0)
+       tmp_slip = Max (t_slip, t_half + 1);
+     else
+       tmp_slip = t_half + 1;
+   Complete_Align_Full_Matrix (s, s_lo + max_ref, s_hi, t, t_half, tmp_slip,
+        t_hi, match_score, mismatch_score, indel_score, gap_score,
+        sub_ali_2);
+
+   align . Combine (sub_ali_1, sub_ali_2);
 
    return;
   }
@@ -3390,7 +4068,7 @@ void  Global_Align
      int gap_score, Alignment_t & align)
 
 //  Find the best global alignment of the entire string  s  to a
-//  substring of  t  between postions  t_lo  and  t_hi .
+//  substring of  t  between positions  t_lo  and  t_hi .
 //  The length of  s  is  s_len  and the length of  t  is at least
 //   t_hi .  The resulting alignment is stored in  align ,
 //  where  s  is the  a  string and  t  is the  b  string.
@@ -3407,6 +4085,8 @@ void  Global_Align
    int  r, c;    // row and column
    int  max_row, max_score;
    unsigned int  max_from;
+   int  mxs;
+   unsigned int  mxf;
    int  ct, sign;
    int  i, n;  // position in string  t
 
@@ -3437,8 +4117,6 @@ void  Global_Align
    // Do remaining rows
    for  (i = t_lo;  i < t_hi;  i ++)
      {
-      int  mxs;
-      unsigned int  mxf;
       r ++;
 
       // First column in row
@@ -3590,6 +4268,326 @@ printf ("L = %d:%u  D = %d:%u  T = %d:%u\n", entry . left_score, entry . left_fr
           printf ("delta [%d] = %d\n", i, delta [i]);
 
    align . setDelta (delta);
+
+   return;
+  }
+
+
+
+void  Overlap_Align
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int t_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align)
+
+//  Find the best alignment of a prefix of string  s  to a
+//  substring of  t  starting between postions  t_lo  and  t_hi ,
+//  where the alignment must extend to the end of one of the strings.
+//  The length of  s  is  s_len  and the length of  t  is  t_len .
+//  The resulting alignment is stored in  align ,
+//  where  s  is the  a  string and  t  is the  b  string.
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+
+  {
+   int  matrix_size;
+
+   assert (t_lo <= t_hi);
+   assert (t_hi <= t_len);
+   assert (0 <= s_len );
+
+   matrix_size = s_len * (t_len - t_lo);
+   if  (t_len - t_lo <= 10 || matrix_size <= MATRIX_SIZE_LIMIT)
+       Overlap_Align_Full_Matrix (s, s_len, t, t_lo, t_hi, t_len,
+            match_score, mismatch_score, indel_score, gap_score, align);
+     else
+       Overlap_Align_Save_Space (s, s_len, t, t_lo, t_hi, t_len,
+            match_score, mismatch_score, indel_score, gap_score, align);
+
+   return;
+  }
+
+
+
+void  Overlap_Align_Full_Matrix
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int t_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align)
+
+//  Find the best alignment of a prefix of string  s  to a
+//  substring of  t  starting between postions  t_lo  and  t_hi ,
+//  where the alignment must extend to the end of one of the strings.
+//  The length of  s  is  s_len  and the length of  t  is  t_len .
+//  The resulting alignment is stored in  align ,
+//  where  s  is the  a  string and  t  is the  b  string.
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+//  Use a full matrix for the computation.
+
+  {
+   vector < vector <Align_Score_Entry_t> > a;  // the alignment array
+   vector <Align_Score_Entry_t>  empty_vector;
+   vector <int>  delta;
+   Align_Score_Entry_t  entry;
+   int  r, c;    // row and column
+   unsigned int  max_from, mxf;
+   int  max_row, max_col, max_score, mxs;
+   int  error_ct, row_limit;
+   int  i, n;  // position in string  t
+
+   // Do first row
+
+   a . push_back (empty_vector);
+   entry . diag_score = entry . top_score = entry . left_score = 0;
+   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   r = 0;
+   a [r] . push_back (entry);
+   for  (c = 1;  c <= s_len;  c ++)
+     {
+      entry . top_score = NEG_INFTY_SCORE;
+      entry . top_from = FROM_NOWHERE;
+      entry . diag_score = NEG_INFTY_SCORE;
+      entry . diag_from = FROM_NOWHERE;
+      entry . left_score = a [r] [c - 1] . left_score + indel_score;
+      if  (c == 1)
+          entry . left_score += gap_score;
+      entry . left_from = FROM_LEFT;
+      a [r] . push_back (entry);
+     }
+   entry . Get_Max (max_score, max_from);
+   max_row = 0;
+     
+   // Do remaining rows
+   for  (i = t_lo;  i < t_len;  i ++)
+     {
+      r ++;
+
+      // First column in row
+      a . push_back (empty_vector);
+      entry . diag_score = entry . left_score = NEG_INFTY_SCORE;
+      if  (i < t_hi - 1)
+          {
+           entry . top_score = 0;
+           entry . top_from = FROM_NOWHERE;
+          }
+        else
+          {
+           entry . top_score = a [r - 1] [0] . top_score + indel_score;
+           if  (i == t_hi - 1)
+               entry . top_score += gap_score;
+           entry . top_from = FROM_TOP;
+          }
+      entry . diag_from = entry . left_from = FROM_NOWHERE;
+      a [r] . push_back (entry);
+
+      // Remaining columns in row
+      for  (c = 1;  c <= s_len;  c ++)
+        {
+         Align_Score_Entry_t  * p;
+
+         p = & (a [r - 1] [c]);
+         p -> Get_Max_Top (mxs, mxf, gap_score);
+         entry . top_score = mxs + indel_score;
+         entry . top_from = mxf;
+
+         p = & (a [r - 1] [c - 1]);
+         p -> Get_Max (mxs, mxf);
+         entry . diag_score = mxs;
+         entry . diag_from = mxf;
+         entry . diag_score += ((t [i] == s [c - 1]) ? match_score : mismatch_score);
+
+         p = & (a [r] [c - 1]);
+         p -> Get_Max_Left (mxs, mxf, gap_score);
+         entry . left_score = mxs + indel_score;
+         entry . left_from = mxf;
+         a [r] . push_back (entry);
+        }
+
+      // check last entry in row to find max
+      entry . Get_Max (mxs, mxf);
+      if  (mxs > max_score)
+          {
+           max_score = mxs;
+           max_from = mxf;
+           max_row = r;
+           max_col = s_len;
+          }
+     }
+
+   // See if get better max in the last row
+   for  (c = 0;  c <= s_len;  c ++)
+     {
+      a [r] [c] . Get_Max (mxs, mxf);
+      if  (mxs > max_score)
+          {
+           max_score = mxs;
+           max_from = mxf;
+           max_row = r;
+           max_col = c;
+          }
+     }
+
+   // Trace back
+   r = max_row;
+   c = max_col;
+   row_limit = t_hi - t_lo - 1;
+   Trace_Back_Align_Path (a, r, c, row_limit, 0, delta,
+        error_ct, s, t + t_lo);
+
+   align . a_lo = 0;
+   align . a_hi = max_col;
+   align . b_hi = max_row + t_lo;
+   align . b_lo = r + t_lo;
+   align . errors = error_ct;
+
+   if  (Verbose > 2)
+       {
+        n = delta . size ();
+        for  (i = 0;  i < n;  i ++)
+          printf ("delta [%d] = %d\n", i, delta [i]);
+       }
+
+   align . setDelta (delta);
+
+   return;
+  }
+
+
+
+void  Overlap_Align_Save_Space
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int t_len, int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align)
+
+//  Find the best alignment of a prefix of string  s  to a
+//  substring of  t  starting between postions  t_lo  and  t_hi ,
+//  where the alignment must extend to the end of one of the strings.
+//  The length of  s  is  s_len  and the length of  t  is  t_len .
+//  The resulting alignment is stored in  align ,
+//  where  s  is the  a  string and  t  is the  b  string.
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+//  Do recursively keeping just a finite number of rows
+
+  {
+   Alignment_t  sub_ali_1, sub_ali_2;
+   vector <Augmented_Score_Entry_t> align_row;
+        //  row of alignment array
+   Augmented_Score_Entry_t  entry;
+   int  t_half, t_slip;
+   int  max_row, max_col, max_score, mxs, max_ref;
+   unsigned int  max_from, mxf;
+   int  r, c;
+   
+   // Build first row
+
+   entry . diag_score = entry . top_score = entry . left_score = 0;
+   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   entry . top_ref = entry . diag_ref = entry . left_ref = 0;
+   align_row . push_back (entry);
+   for  (c = 1;  c <= s_len;  c ++)
+     {
+      entry . top_score = NEG_INFTY_SCORE;
+      entry . top_from = FROM_NOWHERE;
+      entry . diag_score = NEG_INFTY_SCORE;
+      entry . diag_from = FROM_NOWHERE;
+      entry . left_score = align_row [c - 1] . left_score + indel_score;
+      if  (c == 1)
+          entry . left_score += gap_score;
+      entry . left_from = FROM_LEFT;
+      entry . left_ref = 0;
+      entry . top_ref = entry . diag_ref = -1;
+      align_row . push_back (entry);
+     }
+   entry . Get_Max (max_score, max_from);
+   max_row = t_lo;
+   max_col = s_len;
+   max_ref = 0;
+
+   // Do remaining rows
+
+   t_half = (t_lo + t_len) / 2;
+   for  (r = t_lo + 1;  r <= t_len;  r ++)
+     {
+      int  first_score;
+
+      if  (r < t_hi)
+          first_score = 0;
+      else if  (r == t_hi)
+          first_score = indel_score + gap_score;
+        else
+          first_score = indel_score;
+
+      Align_Row_Update (align_row, t [r - 1], s, s_len, match_score,
+           mismatch_score, indel_score, gap_score, first_score);
+
+      if  (r == t_half)
+          {  // set the ref entries to reference this row
+           align_row [0] . top_ref = 0;
+           for  (c = 1;  c <= s_len;  c ++)
+             {
+              align_row [c] . top_ref = align_row [c] . diag_ref = c;
+              align_row [c - 1] . Get_Max_Left (mxs, mxf, gap_score);
+              align_row [c] . left_ref = align_row [c - 1] . Get_Ref (mxf);
+             }
+          }
+
+      // Check last column entry for max
+      align_row [s_len] . Get_Max (mxs, mxf);
+      if  (mxs > max_score)
+          {
+           max_score = mxs;
+           max_from = mxf;
+           max_row = r;
+           max_col = s_len;
+           max_ref = align_row [s_len] . Get_Ref (mxf);
+          }
+     }
+
+   // Check entries in last row for max
+   for  (c = 0;  c <= s_len;  c ++)
+     {
+      align_row [c] . Get_Max (mxs, mxf);
+      if  (mxs > max_score)
+          {
+           max_score = mxs;
+           max_from = mxf;
+           max_row = t_len;
+           max_col = c;
+           max_ref = align_row [c] . Get_Ref (mxf);
+          }
+     }
+
+   t_slip = Min (t_hi, max_row);
+   if  (max_row <= t_half)
+       {  // only need one recursive call
+        Complete_Align_Full_Matrix (s, 0, s_len, t, t_lo, t_slip, max_row,
+             match_score, mismatch_score, indel_score, gap_score, align);
+
+        return;
+       }
+
+   t_slip = Min (t_hi, t_half);
+   if  (Verbose > 3)
+       fprintf (stderr, "max_ref = %d  t_lo = %d  t_slip = %d  t_half = %d  t_hi = %d\n",
+            max_ref, t_lo, t_slip, t_half, t_hi);
+   Complete_Align (s, 0, max_ref, t, t_lo, t_slip, t_half,
+        match_score, mismatch_score, indel_score, gap_score, sub_ali_1);
+
+   if  (max_ref == 0)
+       t_slip = Max (t_hi, t_half + 1);
+     else
+       t_slip = t_half + 1;
+   Complete_Align (s, max_ref, max_col, t, t_half, t_slip,
+        max_row, match_score, mismatch_score, indel_score, gap_score,
+        sub_ali_2);
+
+   align . Combine (sub_ali_1, sub_ali_2);
 
    return;
   }
@@ -4214,6 +5212,85 @@ char  Sub_To_DNA_Char
        }
 
    return  convert [i];
+  }
+
+
+
+void  Trace_Back_Align_Path
+    (const vector < vector <Align_Score_Entry_t> > & a, int & r, int & c,
+     int r_start, int c_start, vector <int> & delta, int & errors,
+     const char * s, const char * t)
+
+//  Trace back the alignment in  a  from row/column  r / c  back
+//  to an entry with  r <= r_start  and  c <= c_start .
+//  Set  delta  to the delta-encoding for the alignment and set
+//   errors  to the number of errors in the alignment.  Strings
+//  s  and  t  are the strings referred to by the matrix,  s
+//  for columns and  t  for rows.
+
+  {
+   int  ct, sign, mxs;
+   unsigned int  mxf;
+
+   a [r] [c] . Get_Max (mxs, mxf);
+   ct = sign = errors = 0;
+   delta . clear ();
+   
+   while  (r > r_start || c > c_start)
+     {
+      switch  (mxf)
+        {
+         case  FROM_LEFT :
+           if  (sign != 0)
+               {
+                if  (Verbose > 2)
+                    printf ("del = %d\n", sign * ct);
+                delta . push_back (sign * ct);
+               }
+           ct = 1;
+           sign = -1;
+           mxf = a [r] [c] . left_from;
+           c --;
+           errors ++;
+           break;
+         case  FROM_DIAG :
+           ct ++;
+           mxf = a [r] [c] . diag_from;
+           r --;
+           c --;
+           if  (s [c] != t [r])
+               errors ++;
+           break;
+         case  FROM_TOP :
+           if  (sign != 0)
+               {
+                if  (Verbose > 2)
+                    printf ("del = %d\n", sign * ct);
+                delta . push_back (sign * ct);
+               }
+           ct = 1;
+           sign = 1;
+           mxf = a [r] [c] . top_from;
+           r --;
+           errors ++;
+           break;
+         default :
+           sprintf (Clean_Exit_Msg_Line, "ERROR:  Bad from = %u in Global_Align",
+                mxf);
+           Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+        }
+     }
+
+   if  (sign != 0)
+       {
+        if  (Verbose > 2)
+            printf ("del = %d\n", sign * ct);
+        delta . push_back (sign * ct);
+       }
+
+   reverse (delta . begin (), delta . end ());
+
+   return;
   }
 
 
