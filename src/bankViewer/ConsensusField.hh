@@ -17,6 +17,7 @@ public:
 
 public slots:
     void setFontSize(int fontsize);
+    void setShowNumbers(bool doShow);
 
 protected:
     void paintEvent(QPaintEvent *);

@@ -43,6 +43,14 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
 
   connect(this,        SIGNAL(fontSizeChanged(int)),
           m_consfield, SLOT(setFontSize(int)));
+
+  connect(this,        SIGNAL(setShowNumbers(bool)),
+          m_consfield, SLOT(setShowNumbers(bool)));
+}
+
+void TilingFrame::toggleShowNumbers(bool doShow)
+{
+  emit setShowNumbers(doShow);
 }
 
 void TilingFrame::paintEvent(QPaintEvent * event)

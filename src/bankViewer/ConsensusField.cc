@@ -17,7 +17,7 @@ ConsensusField::ConsensusField(string & cons,
     m_consensus(cons),
     m_gindex(gindex)
 {
-  m_shownumbers = 1;
+  m_shownumbers = 0;
   setFontSize(12);
   setPalette(QPalette(QColor(160, 160, 160)));
 }
@@ -25,10 +25,17 @@ ConsensusField::ConsensusField(string & cons,
 void ConsensusField::setFontSize(int fontsize)
 {
   m_fontsize=fontsize;
-  int lineheight  = m_fontsize+5;
+  int gutter = m_fontsize/2;
+  int lineheight  = m_fontsize+gutter;
 
   if (m_shownumbers) { setMinimumHeight(3*lineheight+2); }
   else               { setMinimumHeight(2*lineheight+2); }
+}
+
+void ConsensusField::setShowNumbers(bool doShow)
+{
+  m_shownumbers = doShow;
+  setFontSize(m_fontsize);
 }
 
 void ConsensusField::paintEvent(QPaintEvent * event)
@@ -49,7 +56,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   pen.setColor(black);
   p.setPen(pen);
 
-  int gutter         = 5;
+  int gutter         = m_fontsize/2;
   int framegutter    = 2;
   int lineheight     = m_fontsize + gutter;
   int tilehoffset    = m_fontsize*12 + framegutter;
@@ -106,7 +113,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
     s = b;
     p.drawText(xcoord, consoffset, 
-               m_fontsize, m_fontsize+gutter+extraheight, 
+               m_fontsize, lineheight+extraheight, 
                Qt::AlignHCenter | Qt::AlignBottom, s);
 
     pen.setColor(black);
@@ -119,7 +126,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       // Numbers
       s = QString::number(n);
       p.drawText(xcoord, posoffset, 
-                 m_fontsize, m_fontsize+gutter+extraheight, 
+                 m_fontsize, lineheight+extraheight, 
                  Qt::AlignHCenter | Qt::AlignBottom, s);
     }
 

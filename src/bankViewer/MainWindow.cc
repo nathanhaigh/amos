@@ -43,6 +43,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   TilingFrame * tiling = new TilingFrame(this, "tilingframe");
 
   QCheckBox * stable = new QCheckBox("Stable Tiling", this, "stable");
+  QCheckBox * shownumbers = new QCheckBox("Show Position", this, "consnumbers");
 
   m_slider = new QSlider(Horizontal, this, "slider");
   m_slider->setTracking(0);
@@ -71,9 +72,11 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(fontsize, SIGNAL(valueChanged(int)), 
           tiling,   SLOT(setFontSize(int)));
 
-  // stable <-> tiling
+  // checkboxes <-> tiling
   connect(stable, SIGNAL(toggled(bool)),
           tiling, SLOT(toggleStable(bool)));
+  connect(shownumbers, SIGNAL(toggled(bool)),
+          tiling, SLOT(toggleShowNumbers(bool)));
 
   // contigid <-> tiling
   connect(m_contigid, SIGNAL(valueChanged(int)),
@@ -117,7 +120,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   vbox->activate();
   
   // outer
-  QGridLayout *leftgrid = new QGridLayout(NULL, 12, 1, 1, -1, "leftg");
+  QGridLayout *leftgrid = new QGridLayout(NULL, 15, 1, 1, -1, "leftg");
   QGridLayout *rightgrid = new QGridLayout(NULL, 2, 1, 10, -1, "rightg");
   outergrid->addMultiCellLayout(leftgrid, 0, 0, 0, 0);
   outergrid->addMultiCellLayout(rightgrid, 0, 0, 1, 1);
@@ -145,7 +148,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   leftgrid->addRowSpacing(11,10);
 
   leftgrid->addWidget(stable, 12, 0);
-  leftgrid->setRowStretch(13,10);
+  leftgrid->addWidget(shownumbers, 13, 0);
+  leftgrid->setRowStretch(14,10);
 
   //right
   rightgrid->addWidget(tiling, 0, 0);

@@ -27,6 +27,7 @@ public slots:
     void trackGindex(int);
     void trackGindexDone();
     void toggleStable(bool);
+    void toggleShowNumbers(bool);
 
 signals:
     void gindexChanged( int );
@@ -35,6 +36,7 @@ signals:
     void contigLoaded(int);
     void setStatus(const QString &);
     void fontSizeChanged(int);
+    void setShowNumbers(bool);
 
 protected:
     void paintEvent(QPaintEvent *);
