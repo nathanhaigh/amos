@@ -7,7 +7,7 @@ Edge::Edge(void* p_element, bool p_directed) : element(p_element) {
   flags = 0;
   //  flags |= p_directed;
   hidden = false;
-  color = 0x0;
+  color = "black";
 }
 
 void Edge::reverse() {

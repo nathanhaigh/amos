@@ -1,37 +1,6 @@
-int main ( )
-{
-
-  return 0;
-}
-
-/**
- * genLinearGraph - generate a graph that is a linklist
- * Example : 1 -> 2 -> 3 -> ...
- */ 
-// Graph* genLinearGraph(int p_size) {
-//   Graph* g = new Graph();
-//   int *c;
-//   Node *n1;
-//   Node *n2;
-  
-//   for(int i = 0; i < p_size; i++) {
-//     c = new int();
-//     *c = i;
-    
-//     n1 = g->new_node(c);
-    
-//     if(i != 0) {
-//       g->new_edge(n2, n1);
-//     }
-//     n2 = n1;
-//   }
-  
-//   cout << " # Nodes " << g->num_nodes() << endl;
-//   cout << " # Edges " << g->num_edges() << endl;
-  
-//   return g;
-// }
-
+#include "IGraph.hh"
+#include "Graph.hh"
+#include "SubGraph.hh"
 
 // void testLinearGraph() {
 //   Graph* g = genLinearGraph(200);
@@ -104,3 +73,51 @@ int main ( )
 //   g.create_dot_file("test.dot");
 
 // }
+
+
+/**
+ * genLinearGraph - generate a graph that is a linklist
+ * Example : 1 -> 2 -> 3 -> ...
+ */ 
+Graph* genLinearGraph(int p_size) {
+  Graph* g = new Graph();
+  int *c;
+  INode *n1;
+  INode *n2;
+  
+  for(int i = 0; i < p_size; i++) {
+    c = new int();
+    *c = i;
+    
+    n1 = g->new_node(i, (void*)c);
+    
+    if(i != 0) {
+      g->new_edge(n2, n1);
+    }
+    n2 = n1;
+  }
+  
+  cout << " # Nodes " << g->num_nodes() << endl;
+  cout << " # Edges " << g->num_edges() << endl;
+  
+  SubGraph* sg = new SubGraph(*g);
+
+
+
+  sg->add_edge(g->get_edge(2));
+  sg->add_edge(g->get_edge(8));
+  sg->add_node(g->get_node(7));
+
+  cout << " # Nodes " << sg->num_nodes() << endl;
+  cout << " # Edges " << sg->num_edges() << endl;
+
+  sg->create_dot_file("subgraph.dot");
+  g->create_dot_file("graph.dot");
+  
+  return (Graph*) sg;
+}
+
+
+int main() {
+  genLinearGraph(12);
+}

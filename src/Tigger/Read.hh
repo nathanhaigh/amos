@@ -2,6 +2,8 @@
 #define Read_HH 1
 
 #include "foundation_AMOS.hh"
+#include <iostream>
+#include <cstdlib>
 
 /**
  * The <b>Read</b> class
@@ -29,6 +31,10 @@ public:
 
   Read(int p_id, int p_len, int p_start = -1, int p_end = -1) 
     : id(p_id), len(p_len), start(p_start), end(p_end) {  }
+
+  void print() {
+    std::cout << " read " << id << " len " << len << " LAY (" << start << ", " << end << ")" << std::endl;
+  }
 
 };
 

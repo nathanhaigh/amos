@@ -2,14 +2,13 @@
 #define __IEdge_HH 1
 
 #include <list>
+
 #include "INode.hh"
 
 using namespace std;
 
 class IEdge;
 class INode;
-
-typedef list< IEdge* >::iterator IEdgeIterator;
 
 /**
  * The <b>IEdge</b> class
@@ -31,8 +30,8 @@ class IEdge {
 
 public:
 
-  virtual void setColor(int p_color) = 0;
-  virtual int getColor() const = 0;
+  virtual void setColor(string p_color) = 0;
+  virtual string getColor() const = 0;
 
   virtual   void* getElement() const = 0;
   virtual   void setElement(void* p_element) = 0;

@@ -1,9 +1,7 @@
 #ifndef Node_HH
 #define Node_HH 1
 
-#include <iostream>
-#include <sstream>
-#include <list>
+#include <map>
 #include "INode.hh"
 #include "IEdge.hh"
 
@@ -11,8 +9,6 @@
 class IEdge;
 
 using namespace std;
-
-typedef list< IEdge* >::iterator IEdgeIterator;
 
 /**
  * The <b>Node</b> class
@@ -36,8 +32,8 @@ public:
   void* element;
 
   // 
-  list< IEdge* > oedges;
-  list< IEdge* > iedges;
+  map< int, IEdge* > oedges;
+  map< int, IEdge* > iedges;
 
   // identitfier or position
   int key;
@@ -50,8 +46,8 @@ public:
   int depth;
 
   int parent;
-  
-  int color;
+
+  string color;
 
   unsigned long flags;
 
@@ -60,15 +56,15 @@ public:
     depth = 0;
     parent = -1;
     hidden = false;
-    color = 0x0;
+    color = "black";
   }
 
   /* Setters & Getters */
   void* getElement() const { return element; }
   void setElement(void* p_element) { element = p_element; }
 
-  void setColor(const int p_color) { color = p_color; }
-  int getColor() const { return color; }
+  void setColor(const string p_color) { color = p_color; }
+  string getColor() const { return color; }
   
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }
@@ -85,7 +81,7 @@ public:
     IEdge* edge;
     hidden = p_hidden;
     for(IEdgeIterator edges = oedges.begin(); edges != oedges.end(); edges++) {
-      edge = (*edges);
+      edge = (*edges).second;
       edge->setHidden(p_hidden);
     }
   }
@@ -100,11 +96,11 @@ public:
   unsigned long getFlags() const { return flags; }
   void setFlags(unsigned long p_flags) { flags = p_flags; }
 
-  void add_edge(IEdge* p_edge) { oedges.push_back(p_edge); }
+  void add_edge(IEdge* p_edge) { oedges[p_edge->getKey()] = p_edge; }
 
-  void add_oedge(IEdge* p_edge) { oedges.push_back(p_edge); }
+  void add_oedge(IEdge* p_edge) { oedges[p_edge->getKey()] = p_edge; }
 
-  void add_iedge(IEdge* p_edge) { iedges.push_back(p_edge); }
+  void add_iedge(IEdge* p_edge) { iedges[p_edge->getKey()] = p_edge; }
 
 
   int degree() { return (oedges.size() + iedges.size()); }

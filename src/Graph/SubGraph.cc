@@ -8,186 +8,38 @@
 
 using namespace std;
 
-// Node Methods
-////////////////
-
-inline int SubGraph::degree(Node* p_node) const {
-  return p_node->degree();
+SubGraph::SubGraph(IGraph& p_parent, string p_name) : parent(p_parent), Graph(p_name) {
+  directed = parent.isDirected();
 }
 
-inline int SubGraph::out_degree(Node* p_node) const {
-  return p_node->out_degree();
-}
-
-inline int SubGraph::in_degree(Node* p_node) const {
-  return p_node->in_degree();
-}
-
-Node* SubGraph::opposite(Node* p_node, Edge* p_edge) {
-  return p_edge->opposite(p_node);
-}
-
-Node* SubGraph::target(Edge* p_edge) {
-  return p_edge->target();
-}
-
-Node* SubGraph::source(Edge* p_edge) {
-  return p_edge->source();
-}
-
-list< Edge* > SubGraph::incident_edges(Node* p_node) const {
-  list<Edge *> edges;
-  EdgeIterator iter = p_node->out_edges_begin();
-
-  for( ; iter != p_node->out_edges_end(); ++iter) {
-    edges.push_back(*iter);
-  }
-
-  if(directed) {
-    iter = p_node->in_edges_begin();
-    for( ; iter != p_node->in_edges_end(); ++iter) {
-      edges.push_back(*iter);
-    }
-  }
-
-  return edges;
-}
-
-
-list< Edge* > SubGraph::out_edges(Node* p_node) const {
-  list<Edge *> edges;
-
-  if(directed) {
-    EdgeIterator iter = p_node->out_edges_begin();
-    for( ; iter != p_node->out_edges_end(); ++iter) {
-      edges.push_back(*iter);
-    }
-  }
-
-  return edges;
-}
-
-list< Edge* > SubGraph::in_edges(Node* p_node) const {
-  list<Edge *> edges;
-
-  if(directed) {
-    EdgeIterator iter = p_node->in_edges_begin();
-    for( ; iter != p_node->in_edges_end(); ++iter) {
-      edges.push_back(*iter);
-    }
-  }
-
-  return edges;
-}
-
-list< Node* > SubGraph::adjacent_nodes(Node* p_node) {
-  list< Node* > nodes;
-  Edge* edge;
-  EdgeIterator iter = p_node->out_edges_begin();
-
-  for( ; iter != p_node->out_edges_end(); ++iter) {
-    nodes.push_back(opposite(p_node, (*iter)));
-  }
-
-  if(directed) {
-    iter = p_node->in_edges_begin();
-    for( ; iter != p_node->in_edges_end(); ++iter) {
-      nodes.push_back(opposite(p_node, (*iter)));
-    }
-  }
-
-  return nodes;
-}
-
-list< Node* > SubGraph::out_adjacent(Node* p_node) {
-  list< Node* > nodes;
-  Edge* edge;
-  EdgeIterator iter = p_node->out_edges_begin();
-
-  if(directed) {
-    for( ; iter != p_node->out_edges_end(); ++iter) {
-      nodes.push_back(opposite(p_node, (*iter)));
-    }
-  }
-
-  return nodes;
-}
-
-list< Node* > SubGraph::in_adjacent(Node* p_node) {
-  list< Node* > nodes;
-  Edge* edge;
-  EdgeIterator iter = p_node->out_edges_begin();
-
-  if(directed) {
-    iter = p_node->in_edges_begin();
-    for( ; iter != p_node->in_edges_end(); ++iter) {
-      nodes.push_back(opposite(p_node, (*iter)));
-    }
-  }
-
-  return nodes;
-}
-
-Node* SubGraph::new_node(void* p_element = NULL) { 
-  Node* n = new Node(p_element);
-  n->setKey(keys++);
-  nodes.push_back(n);
-  return n;
-}
-
-// Edge Methods
-////////////////
-Edge* SubGraph::new_edge(Node* p_n1, Node* p_n2, void* p_element =NULL) {
-  Edge* e = new Edge(p_element, directed);
-  edges.push_back(e);
-  
-  e->setNodes(p_n1, p_n2);
-  e->setKey(keys++);
-
-  p_n1->add_oedge(e);
-
-  if(directed) {
-    p_n2->add_iedge(e);
+bool SubGraph::contains(INode* p_node) {
+  map< int, INode* >::iterator n = nodes.find(p_node->getKey());
+  if(n != nodes.end()) {
+    return ! (p_node->getHidden());
   } else {
-    p_n2->add_oedge(e);
+    return false;
   }
-  
-  return e;
 }
 
-/**
- *
- */
-void SubGraph::createDotFile(string p_fileName) {
-  ofstream dotOut("test.dot");
-  NodeIterator nodeIter = nodes.begin();
-  
-  dotOut << " digraph " << name << " {" << endl;
-  
-  dotOut << "  label=\"" << name << "\";" << endl;
-  dotOut << "  URL=\"" << name << ".html\";" << endl;
-  
-  for( ; nodeIter != nodes.end(); ++nodeIter) {
-    dotOut << "  " << (*nodeIter)->getKey() << " [shape=house,orientation=270,URL=\"";
-    dotOut << (*nodeIter)->getKey() + ".html\"];" << endl;
+bool SubGraph::contains(IEdge* p_edge) {
+  map< int, IEdge* >::iterator e = edges.find(p_edge->getKey());
+  if(e != edges.end()) {
+    return ! (p_edge->getHidden());
+  } else {
+    return false;
   }
+}
 
-  EdgeIterator edgeIter = edges.begin();  
-  Node* n1;
-  Node* n2;
-  Edge* e;
+void SubGraph::add_node(INode* p_node) {
+  nodes[p_node->getKey()] = p_node;
+}
 
-  for( ; edgeIter != edges.end(); ++edgeIter) {
-    e = (*edgeIter);
-    n1 = e->getSource();
-    n2 = e->getTarget();
-
-    dotOut << "  " << n1->getKey() << " -> " << n2->getKey() << " [label=\"" << e->getKey() << "\"]; " << endl;
-
-  }
-
-  dotOut << endl;
-  dotOut << "} " << endl;
+void SubGraph::add_edge(IEdge* p_edge) {
+  INode* target = p_edge->getTarget();
+  INode* source = p_edge->getSource();
+  edges[p_edge->getKey()] = p_edge;
+  nodes[source->getKey()] = source;
+  nodes[target->getKey()] = target;
 }
 
 

@@ -20,32 +20,9 @@ static string read_file;
 static string overlap_file;
 static string contig_file;
 
+static bool VERBOSE = false;
+
 Unitigger tigger;
-
-
-void create_test_bank(const char* p_bankdir) {
-  const char* TESTSEQ = "nnnn";
-  Message_t msg;
-  Read_t* read;
-  BankStream_t bank(Read_t::NCODE);
-  
-  try {
-    // create read bank for testing
-    bank.create(p_bankdir);
-
-    // create 10 reads
-    for(int i = 0; i < 10; i++) {
-      read = new Read_t();
-      read->setSequence(TESTSEQ, "0000");
-      bank << *read;
-    }
-  
-    bank.close();
-
-  } catch (Exception_t &e) {
-    cerr << "Exception: " << e << endl;
-  }
-}
 
 
 void get_amos_reads(const string p_bankdir) {
@@ -65,7 +42,7 @@ void get_amos_reads(const string p_bankdir) {
       }
       
       while(bank >> amos_read) {
-	if(tigger.VERBOSE) {
+	if(VERBOSE) {
 	  amos_read.writeMessage(msg);
 	  msg.write(cout);
 	}
@@ -100,7 +77,7 @@ void get_amos_overlaps(const string p_bankdir) {
       }
       
       while(bank >> amos_overlap) {
-	if(tigger.VERBOSE) {
+	if(VERBOSE) {
 	  amos_overlap.writeMessage(msg);
 	  msg.write(cout);
 	}
@@ -116,6 +93,38 @@ void get_amos_overlaps(const string p_bankdir) {
     }
   } catch (Exception_t &e) {
     cerr << "Exception: " << e << endl;
+  }
+}
+
+////////////////////////////// read in UMD overlap ////////////
+void get_umd_overlaps(const char* p_file) {
+  ifstream olaps(p_file);
+  if(!olaps) cerr << "cannot open overlaps file" << endl;
+  int alen, blen;
+  int alin_score, errors;
+  float percent;
+  
+  Overlap* olap = new Overlap();
+
+  while(olaps >> olap->ridA >> olap->ridB >> olap->ori >> olap->ahang \
+	>> olap->bhang >> alen >> blen >> alin_score >> errors >> percent) {
+    tigger.add_overlap(olap);
+  }
+
+}
+
+///////////////// read in UMD reads ///////////////
+void get_umd_reads(const char* p_file) {
+  ifstream reads(p_file);
+  if(!reads) cerr << "cannot open reads file" << endl;
+
+  int rid;
+  int len;
+  Read* read;
+
+  while(reads >> rid >> len) {
+    read = new Read(rid, len);
+    tigger.add_read(read);
   }
 }
 
@@ -155,7 +164,7 @@ static void parse_command_line(int argc, char* argv[]) {
       break;
 
     case 'v':
-      tigger.VERBOSE = true;
+      VERBOSE = true;
       break;
       
     case '?' :
@@ -195,7 +204,7 @@ int main(int argc, char** argv) {
 
   if(AMOS_mode) {
 
-    if(tigger.VERBOSE) {
+    if(VERBOSE) {
       cout << " AMOS mode " << endl;
       cout << " use bank: " << bankdir << endl;
     }
@@ -211,13 +220,18 @@ int main(int argc, char** argv) {
     cout << "\t get reads from: " << read_file << endl;
     cout << "\t get overlaps from: " << overlap_file << endl;
 
+    get_umd_reads(read_file.c_str());
+    get_umd_overlaps(overlap_file.c_str());
+    tigger.calc_contigs();
+
   } else {
 
     cout << " Error with inputs, no mode was set" << endl;
   }
 
   if(GRAPH) {
-    tigger.graph->create_dot_file("test2.dot");
+    tigger.graph->create_dot_file("fullgraph.dot");
+    tigger.output_contig_graphs();
   }
 
 }

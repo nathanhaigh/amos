@@ -1,15 +1,15 @@
 #ifndef INode_HH
 #define INode_HH 1
 
-#include "IEdge.hh"
 #include <list>
+#include <map>
+#include "IEdge.hh"
+
 
 class IEdge;
 
 using namespace std;
-
-typedef list< IEdge* >::iterator IEdgeIterator;
-
+typedef map< int, IEdge* >::iterator IEdgeIterator;
 
 /**
  * The <b>INode</b> class is a interface
@@ -30,8 +30,8 @@ typedef list< IEdge* >::iterator IEdgeIterator;
 class INode {
 public:
 
-  virtual void setColor(const int p_color) = 0;
-  virtual int getColor() const = 0;
+  virtual void setColor(const string p_color) = 0;
+  virtual string getColor() const = 0;
 
   virtual void* getElement() const = 0;
   virtual void setElement(void* p_element) = 0;

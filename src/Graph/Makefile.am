@@ -6,7 +6,7 @@ check_PROGRAMS = Test
 
 ##-- test
 Test_LDADD = \
-	$(top_builddir)/src/AMOS/libAMOS.a
+	$(top_builddir)/src/Graph/libGraph.a
 
 Test_SOURCES = \
 	Test.cc
@@ -17,19 +17,22 @@ amoslib_LIBRARIES = \
 	libGraph.a
 
 amosinclude_HEADERS = \
+	INode.hh \
+	Node.hh \
+	IEdge.hh \
 	Edge.hh \
 	Graph.hh \
-	IEdge.hh \
 	IGraph.hh \
-	INode.hh \
-	Node.hh
+	SubGraph.hh
+
 
 
 ##-- libGraph.a
 libGraph_a_SOURCES = \
 	Edge.cc \
 	Graph.cc \
-	Node.cc 
+	Node.cc \
+	SubGraph.cc
 
 
 ##-- END OF MAKEFILE --##

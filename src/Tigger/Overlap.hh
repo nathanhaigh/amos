@@ -1,6 +1,8 @@
 #ifndef Overlap_HH
 #define Overlap_HH 1
 
+#include <iostream>
+
 /**
  * The <b>Overlap</b> class
  *
@@ -21,17 +23,40 @@ class Overlap {
 
 public:
 
-  int rid1;  // A
-  int rid2;  // B
+  int ridA;  // A
+  int ridB;  // B
   bool asuffix;
   bool bsuffix;
-  bool flip;
   char ori;
   int ahang, bhang;
   char type;
-  int alen, blen;
-  int alin_score, errors;
-  float percent;
+
+  void flip() {
+    bool tsuffix = asuffix;
+    int ridT = ridA;
+    
+    ridA = ridB;
+    asuffix = bsuffix;
+
+    ridB = ridT;
+    bsuffix = tsuffix;
+
+    if((type == 'C') && (ori == 'I')) {
+      int thang = ahang;
+      ahang = bhang;
+      bhang = thang;
+    } else {
+      bhang = -bhang;
+      ahang = -ahang;
+    }
+  }
+
+  void print() {
+    std::cout << " read A " << ridA << " overlaps B " << ridB << " ori " << ori << std::endl;
+    std::cout << " type " << type << " ahang " << ahang << " bhang " << bhang << std::endl;
+  }
+
+
 };
 
 #endif // #ifndef Overlap_HH

@@ -15,10 +15,6 @@ class INode;
 class Edge;
 class Node;
 
-typedef list< IEdge* >::iterator IEdgeIterator;
-typedef list< INode* >::iterator INodeIterator;
-typedef map< int, INode* >::iterator PairIterator;
-
 using namespace std;
 
 
@@ -45,11 +41,8 @@ public:
   /** <code> directed </code> is the graph directed */
   bool directed;
 
-  /** <code> simple </code> is the graph simple, no loops or multi-edges */
-  bool simple;
-  
   /** map of edges */
-  list< IEdge* > edges;
+  map< int, IEdge* > edges;
 
   /** map of nodes */
   map< int, INode* > nodes;
@@ -72,21 +65,27 @@ public:
    */
   INode* new_node(int key, void* p_element = NULL);
   INode* new_node(void* p_element = NULL);
-
   INode* get_node(int p_key);
+
+  IEdge* get_edge(int p_key);
+
+  virtual bool contains(IEdge* p_edge);
+  virtual bool contains(INode* p_node);
 
   int num_nodes() { return nodes.size(); }
 
-  PairIterator nodes_begin() { return nodes.begin(); }
-  PairIterator nodes_end() { return nodes.end(); }
+  INodeIterator nodes_begin() { return nodes.begin(); }
+  INodeIterator nodes_end() { return nodes.end(); }
   
   void clear_flags();
+  void clear_node_flags();
   void clear_edge_flags();
+
   int degree(INode* p_node) const;
   int out_degree(INode* p_node) const;
   int in_degree(INode* p_node) const;
   
-  list< IEdge* > incident_edges(INode* p_node) const;
+  list< IEdge* > incident_edges(INode* p_node);
   list< IEdge* > in_edges(INode* p_node) const;
   list< IEdge* > out_edges(INode* p_node) const;
 
@@ -108,6 +107,8 @@ public:
   list< INode* > adjacent_nodes(INode* p_node);
   list< INode* > out_adjacent(INode* p_node);
   list< INode* > in_adjacent(INode* p_node);
+
+  bool isDirected();
 };
 
 
