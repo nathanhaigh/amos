@@ -19,6 +19,7 @@
 #include <string>
 
 
+namespace AMOS {
 
 typedef uint32_t  ID_t;     //!< ID type for iid's
 typedef uint32_t  NCode_t;  //!< unique integer code for dynamic typing
@@ -26,8 +27,6 @@ typedef uint32_t  SD_t;     //!< standard deviation type
 typedef int32_t   Size_t;   //!< size type (for links,etc)
 typedef Size_t    Pos_t;    //!< position type (in a sequence,etc)
 
-
-namespace AMOS {
 
 const uint8_t NCODE_SIZE  =  3;         //!< length of the NCode strings
 const NCode_t NULL_NCODE  =  0;         //!< NULL NCode definition

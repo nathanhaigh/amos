@@ -148,7 +148,7 @@ struct ReadAlignChain_t
 
 struct ReadMap_t
 {
-  ID_t id;                              // ID of read
+  AMOS::ID_t id;                        // ID of read
   long int len;                         // len of read
 
   vector<ReadAlign_t *> all;            // all alignments for this read
@@ -1136,7 +1136,7 @@ void ParseAlign (Mapping_t & mapping)
 {
   DeltaReader_t dr;
   Reference_t * refp;
-  ID_t id;
+  AMOS::ID_t id;
   stringstream ss;
   ReadMap_t * currmp;
   ReadAlign_t * currap;

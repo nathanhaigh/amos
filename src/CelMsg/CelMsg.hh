@@ -175,7 +175,7 @@ class  Celera_IMP_Sub_Msg_t
        (int i)
      { id = i; }
    void  setPosition
-       (Pos_t s, Pos_t e)
+       (AMOS::Pos_t s, AMOS::Pos_t e)
      { position . setRange (s, e); }
    void  setPosition
        (AMOS::Ordered_Range_t p)
@@ -231,7 +231,7 @@ class  Celera_MPS_Sub_Msg_t
        (int i)
      { id = i; }
    void  setPosition
-       (Pos_t s, Pos_t e)
+       (AMOS::Pos_t s, AMOS::Pos_t e)
      { position . setRange (s, e); }
    void  setPosition
        (AMOS::Ordered_Range_t p)
@@ -289,7 +289,7 @@ class  Celera_UPS_Sub_Msg_t
        (int i)
      { id = i; }
    void  setPosition
-       (Pos_t s, Pos_t e)
+       (AMOS::Pos_t s, AMOS::Pos_t e)
      { position . setRange (s, e); }
    void  setPosition
        (AMOS::Ordered_Range_t p)
@@ -346,7 +346,7 @@ class  Celera_Msg_Body_t
    virtual  void  setAccession
        (const string & s);
    virtual  void  setClearRange
-       (Pos_t a, Pos_t b);
+       (AMOS::Pos_t a, AMOS::Pos_t b);
    virtual  void  setIMPs
        (const vector <int> & f, const vector <AMOS::Ordered_Range_t> & p);
    virtual  void  setQuality
@@ -553,7 +553,7 @@ class  Celera_FRG_Msg_Body_t  :  public Celera_Msg_Body_t
      { return  clear_range; }
 
    void  setClearRange
-       (Pos_t a, Pos_t b)
+       (AMOS::Pos_t a, AMOS::Pos_t b)
      { clear_range . setRange (a, b); }
    void  setQuality
        (const char * q)
@@ -792,7 +792,7 @@ class  Celera_Message_t
    void  setAccession
       (const string & s);
    void  setClearRange
-       (Pos_t a, Pos_t b);
+       (AMOS::Pos_t a, AMOS::Pos_t b);
    void  setIMPs
        (const vector <int> & f, const vector <AMOS::Ordered_Range_t> & p);
    void  setQuality
