@@ -99,10 +99,10 @@ for another architecture.
 Installation Names
 ==================
 
-   By default, `make install' will install the package's files in
-`/usr/local/bin', `/usr/local/man', etc.  You can specify an
-installation prefix other than `/usr/local' by giving `configure' the
-option `--prefix=PATH'.
+   By default, `make install' will install the package's files in the
+current build directory (the directory from which `configure' was
+called).  You can specify an installation prefix other than this one
+by giving `configure' the option `--prefix=PATH'.
 
    You can specify separate installation prefixes for
 architecture-specific files and architecture-independent files.  If you

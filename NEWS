@@ -17,16 +17,17 @@ website for more details.
 documentation, and almost nil developer documentation.  We understand
 that free software is useless without the proper documentation, so we
 are working hard to make a comprehensive HTML users manual for the
-entire project... stay tuned... developer documentation should follow.
-In the meantime, we will be more than happy to provide support and
-"virtual" documentation via Email.  PLEASE, do not hesitate to contact
-us; you will receive a prompt reply.
+entire project... stay tuned (see AMOS website)... developer
+documentation should follow.  In the meantime, we will be more than
+happy to provide support and "virtual" documentation via Email.
+PLEASE, do not hesitate to contact us; you will receive a prompt
+reply.
 
 
 Version Release History
 =======================
 
-Version 1.2.4 - August 2004
+Version 1.2.5 - September 2004
 
         * Added `minimus' pipeline for lightweight assembly tasks.
         * Improved portablity.
