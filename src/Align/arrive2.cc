@@ -27,6 +27,12 @@ static int  Min_Read_Len = INT_MAX;
 static int  Max_Read_Len = 775;
   // Ignore reads longer than this
 
+static double  Lo_Genome_Len;
+static double  Hi_Genome_Len;
+static double  Genome_Len_Delta;
+  // Determine range of genome sizes to use for best-fit analysis
+  // Values come from command line
+
 
 static void  Analyze
     (int dist [], int lo, int hi, int n);
@@ -263,7 +269,6 @@ void  Analyze
    double  error, square_error;
    double  genome_len;
    double  best_error, best_square_error, best_genome_len;
-   double  lo_genome_len, hi_genome_len;
    int  num_contams, max_contams, best_contams;
    int  sum, new_sum;
    int  j;
@@ -300,7 +305,8 @@ void  Analyze
    printf ("Error = %.6e  Squared error = %.6e\n", error, square_error);
 
    best_error = best_square_error = DBL_MAX;
-   for  (genome_len = 40e6;  genome_len <= 200e6;  genome_len += 1e6)
+   for  (genome_len = Lo_Genome_Len;  genome_len <= Hi_Genome_Len;
+           genome_len += Genome_Len_Delta)
      {
       lambda = (n * (1 + hi - lo)) / genome_len;
       term = exp (-1.0 * lambda);
@@ -342,13 +348,12 @@ void  Analyze
    // Re-do calculation allowing various numbers of reads to be "contaminant",
    // which reduces the number of zero-degree hits
 
-   lo_genome_len = best_genome_len - 20e6;
-   hi_genome_len = best_genome_len + 20e6;
    max_contams = Min (80000, dist [0]);
 
    best_error = best_square_error = DBL_MAX;
-   for  (genome_len = lo_genome_len;  genome_len <= hi_genome_len;  genome_len += 1e6)
-     for  (num_contams = 0;  num_contams <= max_contams;  num_contams += 5000)
+   for  (genome_len = Lo_Genome_Len;  genome_len <= Hi_Genome_Len;
+         genome_len += Genome_Len_Delta)
+     for  (num_contams = 0;  num_contams <= max_contams;  num_contams += 1000)
        {
         lambda = ((n - num_contams) * (1 + hi - lo)) / genome_len;
         term = exp (-1.0 * lambda);
@@ -419,7 +424,6 @@ void  Double_Fit
    double  error, square_error;
    double  genome_len;
    double  best_error, best_square_error, best_genome_len;
-   double  lo_genome_len, hi_genome_len;
    double  dbl_copy_p, best_dcp;
    vector <double>  observe (DIST_MAX);
    int  sum;
@@ -436,11 +440,9 @@ void  Double_Fit
    for  (j = 0;  j < DIST_MAX;  j ++)
      observe [j] = (1.0 * dist [j]) / sum;
 
-   lo_genome_len = 20e6;
-   hi_genome_len = 200e6;
-
    best_error = best_square_error = DBL_MAX;
-   for  (genome_len = lo_genome_len;  genome_len <= hi_genome_len;  genome_len += 1e6)
+   for  (genome_len = Lo_Genome_Len;  genome_len <= Hi_Genome_Len;
+           genome_len += Genome_Len_Delta)
      for  (dbl_copy_p = 0.00;  dbl_copy_p <= 0.80;  dbl_copy_p += 0.01)
        {
         lambda1 = (n * (1 + hi - lo)) / genome_len;
@@ -518,6 +520,7 @@ static void  Parse_Command_Line
 
   {
    bool  errflg = false;
+   char  * p;
    int  ch;
 
    optarg = NULL;
@@ -574,8 +577,37 @@ static void  Parse_Command_Line
           errflg = true;
        }
 
-   if  (errflg)
+   if  (errflg || optind != argc - 3)
        {
+        Usage (argv [0]);
+        exit (EXIT_FAILURE);
+       }
+
+   Lo_Genome_Len = strtod (argv [optind], & p);
+   if  (p == argv [optind])
+       {
+        fprintf (stderr, "ERROR:  Bad low genome length value \"%s\"\n",
+             argv [optind]);
+        Usage (argv [0]);
+        exit (EXIT_FAILURE);
+       }
+
+   optind ++;
+   Hi_Genome_Len = strtod (argv [optind], & p);
+   if  (p == argv [optind])
+       {
+        fprintf (stderr, "ERROR:  Bad high genome length value \"%s\"\n",
+             argv [optind]);
+        Usage (argv [0]);
+        exit (EXIT_FAILURE);
+       }
+
+   optind ++;
+   Genome_Len_Delta = strtod (argv [optind], & p);
+   if  (p == argv [optind])
+       {
+        fprintf (stderr, "ERROR:  Bad genome length delta value \"%s\"\n",
+             argv [optind]);
         Usage (argv [0]);
         exit (EXIT_FAILURE);
        }
@@ -594,10 +626,12 @@ static void  Usage
 
   {
    fprintf (stderr,
-           "USAGE:  %s\n"
+           "USAGE:  %s  <lo> <hi> <del>\n"
            "\n"
-           "Read overlap information and estimate genome length from it\n"
-           "based on arrivals in windows on reads\n"
+           "Read overlap information (from stdin in format produced\n"
+           "by dump-olaps program) and estimate genome length from it\n"
+           "based on arrivals in windows on reads.  Do best-fit trying\n"
+           "genomes with lengths from <lo> to <hi> in increments of <del>\n"
            "\n"
            "Options:\n"
            "  -d <n>   Ignore 3' overlap degrees > <n>\n"
