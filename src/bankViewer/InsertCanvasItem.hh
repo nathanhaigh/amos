@@ -14,6 +14,7 @@ public:
   static const int RTTI;
   int rtti () const { return RTTI; }
   Insert * m_insert;
+  bool m_highlight;
 
 protected:
   void drawShape (QPainter & p);

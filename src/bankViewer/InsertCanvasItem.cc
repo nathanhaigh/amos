@@ -9,6 +9,9 @@ InsertCanvasItem::InsertCanvasItem(int x, int y, int width, int height,
   : QCanvasRectangle(x, y, width, height, canvas)
 {
   m_insert = insert;
+  m_highlight = false;
+
+  m_insert->m_canvasItem = this;
 }
 
 void InsertCanvasItem::drawShape (QPainter & p)
@@ -33,16 +36,13 @@ void InsertCanvasItem::drawShape (QPainter & p)
   p.drawLine((int) x(),            (int) (y() + height()),
              (int)(x() + width()), (int) (y() + height()));
 
-#if 0
-
-      //cerr << endl;
-      QString s = "Actual: " + QString::number(actuallength) +
-                  "\nExpected: " + QString::number(ii->m_dist.mean-3*ii->m_dist.sd) +
-                  " - "          + QString::number(ii->m_dist.mean+3*ii->m_dist.sd);
-      QToolTip::add(this, QRect(inserthpos, vpos,
-                                insertlength, m_seqheight), s);
-
-#endif                               
+  if (m_highlight)
+  {
+    p.setPen(QColor(255,255,255));
+    p.setBrush(Qt::NoBrush);
+    p.drawRect((int) x(),     (int) y()-1,
+               (int) width(), (int) height()+3);
+  }
 }
 
 void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p)
@@ -52,24 +52,3 @@ void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p)
   int readLength = tile->range.getLength() + tile->gaps.size();
   p.drawRect(tile->offset, (int) y(), readLength, height());
 }
-
-#if 0
-
-
-  const char * seqname = read_bank.lookupEID(tile->source);
-  QString tip = seqname;
-
-  tip += " [" + QString::number(tile->offset) 
-       +  "," + QString::number(tile->offset + tile->range.getLength() + tile->gaps.size() -1)
-       + "]";
-
-  if (tile->range.end < tile->range.begin)
-  {
-    tip += " [RC]";
-  }
-
- // QToolTip::add(this, QRect(hpos, vpos, 
- //               readLength, m_seqheight), tip);
-}
-
-#endif

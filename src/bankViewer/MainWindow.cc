@@ -15,6 +15,10 @@
 #include <qcheckbox.h>
 #include <qpushbutton.h>
 
+#include <qmainwindow.h>
+#include <qlistview.h>
+#include <qcursor.h>
+
 #include "TilingFrame.hh"
 
 using namespace std;
@@ -26,11 +30,14 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QMenuBar* menubar = new QMenuBar(this);
   Q_CHECK_PTR( menubar );
 
+  m_contigPicker = NULL;
+
   QPopupMenu* file = new QPopupMenu( menubar );
   Q_CHECK_PTR( file );
   menubar->insertItem( "&File", file );
-  file->insertItem( "&Open Bank...", this,  SLOT(chooseBank()) );
-  file->insertItem( "&Quit", qApp,  SLOT(quit()) );
+  file->insertItem("&Open Bank...", this,  SLOT(chooseBank()) );
+  file->insertItem("&Contig Picker...", this, SLOT(chooseContig()));
+  file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 
   // Statusbar
   QLabel * statusbar = new QLabel(this);
@@ -189,6 +196,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
 void MainWindow::setBankname(std::string bankname)
 {
+  m_bankname = bankname;
   emit bankSelected(bankname);
 }
 
@@ -213,6 +221,7 @@ void MainWindow::chooseBank()
 
   if (s != "")
   {
+    m_bankname = s.ascii();
     emit bankSelected(s.ascii());
   }
 }
@@ -226,6 +235,84 @@ void MainWindow::setGindexRange(int a, int b)
 {
   m_gindex->setRange(a,b);
   m_slider->setRange(a,b);
+}
+
+class ContigListItem : public QListViewItem
+{
+public:
+  ContigListItem(QListView * table, 
+                 QString val1,
+                 QString val2,
+                 QString val3)
+    : QListViewItem(table, val1, val2, val3) {}
+
+  int compare(QListViewItem *i, int col,
+              bool ascending ) const
+  {
+    return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
+  }
+};
+
+void MainWindow::chooseContig()
+{
+  if (m_contigPicker) { delete m_contigPicker; }
+
+  m_contigPicker = new QMainWindow(this);
+
+  QListView * table = new QListView(m_contigPicker, "contigpicker");
+  table->resize(500,500);
+  m_contigPicker->setCentralWidget(table);
+  m_contigPicker->resize(300,300);
+  m_contigPicker->show();
+
+  connect(table, SIGNAL(doubleClicked(QListViewItem *)),
+          this,  SLOT(contigSelected(QListViewItem *)));
+
+  table->addColumn("Contig Id");
+  table->addColumn("Size");
+  table->addColumn("Reads");
+  table->setShowSortIndicator(true);
+
+  try
+  {
+    QCursor orig = m_contigPicker->cursor();
+    m_contigPicker->setCursor(Qt::waitCursor);
+    AMOS::Contig_t contig;
+    AMOS::BankStream_t contig_bank(AMOS::Contig_t::NCODE);
+
+    contig_bank.open(m_bankname);
+
+    QString status = "Select from " + 
+                     QString::number(contig_bank.getSize()) + 
+                     " contigs in " + m_bankname.c_str();
+    m_contigPicker->statusBar()->message(status);
+
+    int contigid = 1;
+    while (contig_bank >> contig)
+    {
+      int contiglen = contig.getSeqString().length();
+      int numreads = contig.getReadTiling().size();
+
+      new ContigListItem(table,  
+                         QString::number(contigid), 
+                         QString::number(contiglen), 
+                         QString::number(numreads));
+      contigid++;
+    }
+    m_contigPicker->setCursor(orig);
+
+  }
+  catch (AMOS::Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+  }
+}
+
+void MainWindow::contigSelected(QListViewItem * item)
+{
+  emit contigIdSelected(atoi(item->text(0)));
+  m_contigPicker->close();
+  m_contigPicker = NULL;
 }
 
 

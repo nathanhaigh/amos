@@ -129,11 +129,14 @@ Insert::Insert(Tile_t * atile,
   }
 
   m_actual = m_roffset - m_loffset + 1;
+  m_other = NULL;
+  m_canvasItem = NULL;
 }
 
-void Insert::setActive(int i)
+void Insert::setActive(int i, Insert * other)
 {
   Tile_t * tile;
+  m_other = other;
 
   m_active = i;
 

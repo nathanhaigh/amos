@@ -23,7 +23,6 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
   if (l.empty())
   {
-    emit setStatus(QString("Position is ") + QString::number(real.x()));
     emit setGindex(real.x());
   }
   else
@@ -33,19 +32,37 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       if ((*it)->rtti() == InsertCanvasItem::RTTI)
       {
         InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
-        QString s = "Insert ";
+        Insert * ins = iitem->m_insert;
 
-        if (iitem->m_insert->m_atile)
+        QString s = "Insert";
+        if (ins->m_atile)
         {
-          s += "atile: " + QString::number(iitem->m_insert->m_atile->source);
+          s += " atile: " + QString::number(ins->m_atile->source);
         }
 
-        if (iitem->m_insert->m_btile)
+        if (ins->m_btile)
         {
-          s += "btile: " + QString::number(iitem->m_insert->m_btile->source);
+          s += " btile: " + QString::number(ins->m_btile->source);
         }
+
+        s += " Actual: "   + QString::number(ins->m_actual);
+        s += " Expected: " + QString::number(ins->m_dist.mean - 3*ins->m_dist.sd) 
+          +  " - "         + QString::number(ins->m_dist.mean + 3*ins->m_dist.sd);
 
         emit setStatus(s);
+
+        iitem->m_highlight = !iitem->m_highlight;
+        canvas()->setChanged(iitem->boundingRect());
+
+        if (e->button() == RightButton && 
+            ins->m_other && 
+            ins->m_other->m_canvasItem)
+        {
+          ins->m_other->m_canvasItem->m_highlight = iitem->m_highlight;
+          canvas()->setChanged(ins->m_other->m_canvasItem->boundingRect());
+        }
+
+        canvas()->update();
       }
     }
   }

@@ -31,11 +31,9 @@ InsertCanvas::InsertCanvas(const string & bankname,
   m_seqheight = 3;
   m_hoffset = 0; // 20
 
-  int posoffset = 15;
+  int posoffset = 5;
   int gutter = 5;
-
-  setBackgroundColor(Qt::black);
-  int tileoffset = posoffset+3*gutter;
+  int tileoffset = posoffset+2*gutter;
   int lineheight = m_seqheight+gutter;
 
   int layoutgutter = 50;
@@ -53,15 +51,15 @@ InsertCanvas::InsertCanvas(const string & bankname,
 
     m_consensus = contig.getSeqString();
     m_tiling = contig.getReadTiling();
-    sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
   }
   catch (Exception_t & e)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
 
+  sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
+
   unsigned int clen = m_consensus.size();
-  resize(clen+1000, 1000);
 
   cerr << "Creating iid -> tile_t * map" << endl;
   SeqTileMap_t seqtileLookup;
@@ -75,49 +73,64 @@ InsertCanvas::InsertCanvas(const string & bankname,
   }
 
 
-  cerr << "Loading mates" << endl;
+  int mated = 0;
+  int unmated = 0;
+  int allmates = 0;
+
+  cerr << "Loading mates ";
   Matepair_t mates;
 
   while (mate_bank >> mates)
   {
+    allmates++;
     ID_t aid = mates.getReads().first;
     ID_t bid = mates.getReads().second;
+    
+    SeqTileMap_t::iterator ai = seqtileLookup.find(aid);
+    SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
 
-    Tile_t * a = seqtileLookup[aid];
-    if (a) { seqtileLookup.erase(aid); }
+    Tile_t * a = NULL;
+    Tile_t * b = NULL;
 
-    Tile_t * b = seqtileLookup[bid];
-    if (b) { seqtileLookup.erase(bid); }
+    if (ai != seqtileLookup.end())
+    {
+      a = ai->second;
+      seqtileLookup.erase(ai);
+    }
+
+    if (bi != seqtileLookup.end())
+    {
+      b = bi->second;
+      seqtileLookup.erase(bi);
+    }
     
     if (a || b)
     {
-      Insert i(a, m_contigId, b, m_contigId, getLibrarySize(aid), clen);
+      mated++;
+      Insert * i = new Insert(a, m_contigId, b, m_contigId, getLibrarySize(aid), clen);
 
-      if (i.m_state == Insert::Happy)
+      if (i->m_state == Insert::Happy)
       {
         m_inserts.push_back(i);
       }
       else
       {
-        Insert j = i;
-
-        if (a)
+        if (a && b)
         {
-          i.setActive(0);
-          m_inserts.push_back(i);
-        }
-        
-        if (b)
-        {
-          j.setActive(1);
+          Insert * j = new Insert(*i);
+          i->setActive(0, j);
+          j->setActive(1, i);
           m_inserts.push_back(j);
         }
+        else if (a) { i->setActive(0, NULL); }
+        else if (b) { i->setActive(1, NULL); }
+
+        m_inserts.push_back(i);
       }
     }
   }
 
 
-  int unmated = 0;
   SeqTileMap_t::iterator si;
   for (si =  seqtileLookup.begin();
        si != seqtileLookup.end();
@@ -125,14 +138,15 @@ InsertCanvas::InsertCanvas(const string & bankname,
   {
     if (si->second)
     {
-      Insert i(si->second, m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
+      Insert * i = new Insert(si->second, m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
       m_inserts.push_back(i);
       unmated++;
     }
   }
 
-  cerr << "unmated: " << unmated << endl;
-
+  cerr << "allmates: " << allmates 
+       << " mated: "   << mated 
+       << " unmated: " << unmated << endl;
 
   sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
 
@@ -158,28 +172,32 @@ InsertCanvas::InsertCanvas(const string & bankname,
 
   cerr << "paint inserts: ";
   char types [] = "HSMNOLU";
+  int numtypes = strlen(types);
 
   int layoutoffset = 0;
-  int layoutpos = 0;
 
-  for (int type = 0; type < strlen(types); type++)
+  // For all types
+  for (int type = 0; type < numtypes; type++)
   {
-    vector<Insert>::iterator ii;
+    vector<Insert *>::iterator ii;
 
     vector<int> layout;
     vector<int>::iterator li;
+    int layoutpos;
     
     cerr << types[type];
 
+    // For all inserts
     for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
     {
-      if (ii->m_state != types[type]) { continue; }
+      if ((*ii)->m_state != types[type]) { continue; }
 
-      for (li = layout.begin(), layoutpos = 0;
+      // Find a position
+      for (li =  layout.begin(), layoutpos = 0;
            li != layout.end();
            li++, layoutpos++)
       {
-        if (*li < ii->m_loffset)
+        if (*li < (*ii)->m_loffset)
         {
           break;
         }
@@ -191,27 +209,38 @@ InsertCanvas::InsertCanvas(const string & bankname,
       }
 
       int vpos = tileoffset+(layoutpos + layoutoffset)*lineheight;
-      layout[layoutpos] = ii->m_roffset + layoutgutter;
+      layout[layoutpos] = (*ii)->m_roffset + layoutgutter;
 
-      int inserthpos = m_hoffset + ii->m_loffset; 
-      int insertlength = ii->m_length;
+      int inserthpos = m_hoffset + (*ii)->m_loffset; 
+      int insertlength = (*ii)->m_length;
 
       InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
                                                       insertlength, m_seqheight,
-                                                      ii, this);
+                                                      *ii, this);
       iitem->show();
     }
 
     if (!layout.empty()) 
     { 
-      layoutoffset++;
-      layoutoffset += layout.size();
+      layoutoffset += layout.size() + 1;
     }
   }
 
   cerr << endl;
 
-  resize(width(), tileoffset+(layoutpos + layoutoffset)*lineheight);
+  resize(clen+1000, tileoffset+layoutoffset*lineheight);
+}
+
+InsertCanvas::~InsertCanvas()
+{
+  vector<Insert *>::iterator i;
+  
+  for (i =  m_inserts.begin();
+       i != m_inserts.end();
+       i++)
+  {
+    delete (*i);
+  }
 }
 
 AMOS::Distribution_t InsertCanvas::getLibrarySize(ID_t readid)

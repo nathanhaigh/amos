@@ -3,6 +3,8 @@
 
 #include "foundation_AMOS.hh"
 
+class InsertCanvasItem;
+
 
 class Insert
 {
@@ -12,7 +14,7 @@ public:
          AMOS::Distribution_t distribution,
          int conslen);
 
-  void setActive(int i);
+  void setActive(int i, Insert * other);
 
   int m_loffset;
   int m_roffset;
@@ -21,6 +23,9 @@ public:
 
   int m_arc;
   int m_brc;
+
+  Insert * m_other;
+  InsertCanvasItem * m_canvasItem;
 
   AMOS::Distribution_t m_dist;
 
@@ -48,9 +53,9 @@ public:
 
   struct TilingOrderCmp
   {
-    bool operator() (const Insert & a, const Insert & b)
+    bool operator() (Insert * const & a, Insert * const & b)
     {
-      int offdiff = b.m_loffset - a.m_loffset;
+      int offdiff = b->m_loffset - a->m_loffset;
 
       if (offdiff)
       {
@@ -58,7 +63,7 @@ public:
         return true;
       }
 
-      int lendiff = b.m_roffset - a.m_roffset;
+      int lendiff = b->m_roffset - a->m_roffset;
 
       if (lendiff)
       {

@@ -31,6 +31,24 @@ void InsertPosition::paintEvent(QPaintEvent * e)
   p.drawRect(rect());
   p.setPen(Qt::white);
 
+  int distance = (int)(50/m_scale); // 50 pixels between tick marks
+
+  double sd = distance;
+  int num = 0;
+
+  while (sd > 10)
+  {
+    sd /= 10;
+    num++;
+  }
+
+  distance = (int) sd;
+  while (num)
+  {
+    distance *= 10;
+    num--;
+  }
+
   p.translate(2, 0); // account for scroll view frame
 
   p.drawLine(0, linepos, width(), linepos);
@@ -39,18 +57,22 @@ void InsertPosition::paintEvent(QPaintEvent * e)
 
   for (int i = m_start; i < m_start + (width() / m_scale); i++)
   {
-    if (i % 500 == 0)
+    if (i % distance == 0)
     {
       p.drawLine((i-m_start) * m_scale, linepos-2,
                  (i-m_start) * m_scale, linepos+2);
 
-      if (i % 1000 == 0)
+      if (i > 1000)
       {
-        pos = QString::number(i/1000);
-        pos += "k";
-        p.drawText((i-m_start) * m_scale - 20, 4, 40, 15,  
-                   Qt::AlignHCenter | Qt::AlignBottom, pos);
+        pos = QString::number(i/1000.0) + "k";
       }
+      else
+      {
+        pos = QString::number(i);
+      }
+
+      p.drawText((i-m_start) * m_scale - 20, 4, 40, 15,  
+                 Qt::AlignHCenter | Qt::AlignBottom, pos);
     }
   }
 }

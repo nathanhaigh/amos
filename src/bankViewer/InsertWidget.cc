@@ -23,11 +23,8 @@ InsertWidget::InsertWidget(const string & bankname, int contigId,
   z_lbl->setMinimumWidth(100);
 
   m_iposition = new InsertPosition(this, "insertposition");
-
-  m_icanvas = new InsertCanvas(m_bankname, m_contigId,
-                               this, "insertcanvas");
-
-  m_ifield = new InsertField(m_icanvas, this, "qcv");
+  m_icanvas   = new InsertCanvas(m_bankname, m_contigId, this, "icanvas");
+  m_ifield    = new InsertField(m_icanvas, this, "qcv");
   m_ifield->show();
 
   vbox->addWidget(m_iposition);
@@ -63,11 +60,22 @@ InsertWidget::InsertWidget(const string & bankname, int contigId,
 
 void InsertWidget::setTilingVisibleRange(int gstart, int gend)
 {
+  QRect rc = QRect(m_ifield->contentsX(), m_ifield->contentsY(),
+                   m_ifield->visibleWidth(), m_ifield->visibleHeight());
+  QRect canvasRect = m_ifield->inverseWorldMatrix().mapRect(rc);
+
   m_tilingVisible->setSize(gend - gstart +1, m_icanvas->height());
   m_tilingVisible->move(gstart, 0);
   m_tilingVisible->show();
 
-  m_ifield->ensureVisible(((int) (gstart + gend)/2), 0);
+
+  int mapx;
+  int mapy;
+
+  m_ifield->worldMatrix().map((gstart + gend)/2, canvasRect.y() + canvasRect.height()/2,
+                              &mapx, &mapy);
+
+  m_ifield->ensureVisible(mapx, mapy);
 
   m_icanvas->update();
 }

@@ -16,8 +16,8 @@ public:
               QWidget * parent=0,
               const char * name = 0);
 
-  // void mouseDoubleClickEvent(QMouseEvent * e);
-  // void setGindex(int);
+  ~InsertCanvas();
+
 
 private:
   void drawTile(AMOS::Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state);
@@ -37,7 +37,7 @@ private:
 
   std::string m_consensus;
   std::vector<AMOS::Tile_t> m_tiling;
-  std::vector<Insert> m_inserts;
+  std::vector<Insert *> m_inserts;
 };
 
 
