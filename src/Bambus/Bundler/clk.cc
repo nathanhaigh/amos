@@ -183,8 +183,20 @@ int main(int argc, char **argv)
     for (vector<Tile_t>::iterator ti = ctg.getReadTiling().begin(); 
 	 ti != ctg.getReadTiling().end(); ti++){
       rd2ctg[ti->source] = ctg.getIID();
+
+      Pos_t f, l; // coords of beginning/end of read
+      if (ti->range.end < ti->range.begin) { // reverse
+	f = ti->offset + ti->range.begin - ti->range.end;
+	l = ti->offset;
+      } else {
+	f = ti->offset;
+	l = ti->offset + ti->range.end - ti->range.begin;
+      }
       rd2posn[ti->source] = 
-	Range_t(ti->offset, ti->offset + ti->range.end - ti->range.begin);
+        Range_t(f, l);
+
+      //      rd2posn[ti->source] = 
+      //	Range_t(ti->offset, ti->offset + ti->range.end - ti->range.begin);
       ctglen[ctg.getIID()] = ctg.getLength();
     }
       //      cerr << "Read " << ti->source << " lives in contig " << ctg.getIID() << endl;;
