@@ -1,12 +1,12 @@
 #ifndef TiggerIO_HH
 #define TiggerIO_HH 1
 
-#include <iostream>
-#include <unistd.h>
 #include "foundation_AMOS.hh"
 #include "Read.hh"
 #include "Overlap.hh"
 #include "Unitigger.hh"
+#include <iostream>
+#include <unistd.h>
 
 using namespace std;
 using namespace AMOS;
