@@ -5,6 +5,9 @@
 using namespace AMOS;
 using namespace std;
 
+int DEBUG = 0;
+int LOAD = 1;
+
 int main (int argc, char ** argv)
 {
   if (argc != 3)
@@ -41,24 +44,48 @@ int main (int argc, char ** argv)
     int end5;
     string count;
     string density;
+    char type;
 
-    string comment;
 
     int featurecount = 0;
 
-    while (features >> group >> eid >> end5 >> end3 >> count >> density)
+    while (features >> eid 
+                    >> type 
+                    >> group 
+                    >> end5 
+                    >> end3) 
     {
-      comment = count + " " + density;
+      string comment;
+      char delim;
+      features.get(delim);
+
+      if (delim != '\n')
+      {
+        getline(features, comment);
+      }
 
       Feature_t feat;
-      feat.type = 'P';
+      feat.type = type;
       feat.group = group;
       feat.range.setRange(end5,end3);
       feat.comment = comment;
 
-      contig_bank.fetch(eid.c_str(), contig);
-      contig.getFeatures().push_back(feat);
-      contig_bank.replace(eid.c_str(), contig);
+
+      if (DEBUG)
+      {
+        cerr << "contigeid: " << eid << endl
+             << "type: " << type << endl
+             << "group: " << group << endl
+             << "range: " << end5 << "," << end3 << endl
+             << "coment: \"" << comment << "\"" << endl;
+      }
+
+      if (LOAD)
+      {
+        contig_bank.fetch(eid.c_str(), contig);
+        contig.getFeatures().push_back(feat);
+        contig_bank.replace(eid.c_str(), contig);
+      }
 
       featurecount++;
       cerr << ".";
