@@ -53,7 +53,7 @@ void ParseExtract ( );
 //!
 //! \return void
 //!
-void PrintObject (const Universal_t * obj, ID_t bid);
+void PrintObject (const Universal_t & obj, ID_t bid);
 
 
 //----------------------------------------------------- ParseArgs --------------
@@ -149,7 +149,7 @@ int main (int argc, char ** argv)
 		if ( bid == NULL_ID )
 		  continue;
 		bank . fetch (*ii, *i);
-		PrintObject (i, bid);
+		PrintObject (*i, bid);
 		cntc ++;
 	      }
 
@@ -161,7 +161,7 @@ int main (int argc, char ** argv)
 		if ( bid == NULL_ID )
 		  continue;
 		bank . fetch (ei -> c_str( ), *i);
-		PrintObject (i, bid);
+		PrintObject (*i, bid);
 		cntc ++;
 	      }
 
@@ -188,7 +188,7 @@ int main (int argc, char ** argv)
 	    //-- Get ALL of the objects
 	    while ( bankstream >> *i )
 	      {
-		PrintObject (i, bankstream . tellg( ) - 1);
+		PrintObject (*i, bankstream . tellg( ) - 1);
 		cntc ++;
 	      }
 
@@ -271,12 +271,12 @@ void ParseExtract ( )
 
 
 //----------------------------------------------------- PrintObject ------------
-void PrintObject (const Universal_t * obj, ID_t bid)
+void PrintObject (const Universal_t & obj, ID_t bid)
 {
   Message_t msg;
   ostringstream ss;
 
-  obj -> writeMessage (msg);
+  obj . writeMessage (msg);
 
   if ( OPT_IsBIDs )
     {
