@@ -3606,6 +3606,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
            memset (sl . rc, 0, max_len);
           }
       sl . dcov = col_len;
+
       libSlice_getConsensus (& sl, & cns, NULL, 0);
 
       consensus [i] = cns -> consensus;
@@ -3628,6 +3629,8 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
            cout << "         cons = " << cns -> consensus << "  qv = "
                 << Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR)) << endl;
           }
+
+      free (cns);
      }
 
    return;
