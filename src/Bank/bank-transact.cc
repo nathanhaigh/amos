@@ -66,6 +66,12 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
+  //***************
+  double loopa = 0;
+  double loopb = 0;
+  clock_t clocka, clockb;
+  //***************
+
   char act;                      // action enumeration
   Message_t msg;                 // the current message
   ifstream msgfile;              // the message file stream
@@ -178,8 +184,12 @@ int main (int argc, char ** argv)
     AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
   
   //-- Read the message file
-  while ( msg . read (msgfile) )
+  while ( 1 )
     {
+      clocka = clock( );
+      if ( ! msg . read (msgfile) )
+	break;
+
       //-- Increment the message counter
       cnts ++;
 
@@ -210,7 +220,9 @@ int main (int argc, char ** argv)
 	     << typep -> getEID( ) << ", message ignored\n";
 	continue;
       }
-      
+      clockb = clock( );
+      loopa += (double)(clockb - clocka);
+
       //-- Open the bank if necessary
       try {
 	if ( ! bankp -> isOpen( ) )
@@ -335,6 +347,7 @@ int main (int argc, char ** argv)
 	act = E_ADD;
 
       //-- Perform the appropriate action on the bank
+      clocka = clock( );
       try {
 	switch (act)
 	  {
@@ -374,14 +387,14 @@ int main (int argc, char ** argv)
 	     << typep -> getEID( ) << ", message ignored\n";
 	continue;
       }
+      clockb = clock( );
+      loopb += (double)(clockb - clocka);
 
       cntc ++;
     }
   
 
   //-- Close all the banks and free the object
-  if ( !msgfile )
-    AMOS_THROW_IO ("Failure in message input stream");
   msgfile . close( );
   for ( ID_t i = 1; i < I_MAX; i ++ )
     {
@@ -394,19 +407,24 @@ int main (int argc, char ** argv)
 
   //-- On error, print debugging information
   cerr << "Current message: " << Decode (msgcode)
-       << " eid:" << typep -> getEID( ) << endl;
-  cerr << "Messages seen: " << cnts << endl;
-  cerr << "Messages committed: " << cntc << endl;
-  cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+       << " eid:" << typep -> getEID( ) << endl
+       << "Messages seen: " << cnts << endl
+       << "Messages committed: " << cntc << endl
+       << "ERROR: -- Fatal AMOS Exception --\n" << e;
   return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
 
   //-- Output the end time
-  cerr << "Messages seen: " << cnts << endl;
-  cerr << "Messages committed: " << cntc << endl;
-  cerr << "END DATE:   " << Date( ) << endl;
+  cerr << "Messages seen: " << cnts << endl
+       << "Messages committed: " << cntc << endl
+       << "END DATE:   " << Date( ) << endl;
+
+  cerr << endl
+       << "loopa: " << (double)loopa / CLOCKS_PER_SEC << " sec.\n"
+       << "loopb: " << (double)loopb / CLOCKS_PER_SEC << " sec.\n"
+       << "granu: " << CLOCKS_PER_SEC << " of a sec.\n";
 
   return EXIT_SUCCESS;
 }

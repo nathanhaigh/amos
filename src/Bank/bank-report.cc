@@ -63,6 +63,12 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
+  //***************
+  double loopa = 0;
+  double loopb = 0;
+  clock_t clocka, clockb;
+  //***************
+
   Message_t msg;                 // the current message
   ofstream msgfile;              // the message file stream
   IDMap_t typemap(1000);         // NCode to index mapping
@@ -199,10 +205,13 @@ int main (int argc, char ** argv)
       //-- Iterate through each object in the bank
       for ( id = 1; id <= bankp -> getLastIID( ); id ++ )
 	{
+	  clocka = clock( );
 	  //-- Fetch the next object
 	  typep -> setIID (id);
 	  bankp -> fetch (*typep);
 	  cnts ++;
+	  clockb = clock( );
+	  loopa += (double)(clockb - clocka);
 
 	  //-- Translate the ID pointers from IID to EID
 	  try {
@@ -305,9 +314,12 @@ int main (int argc, char ** argv)
 	    continue;
 	  }
 
+	  clocka = clock( );
 	  typep -> writeMessage (msg);
 	  msg . write (msgfile);
 	  cntw ++;
+	  clockb = clock( );
+	  loopb += (double)(clockb - clocka);
 	}
 
       //-- Close the bank, only its inverted ID map are needed now
@@ -329,19 +341,24 @@ int main (int argc, char ** argv)
   catch (Exception_t & e) {
 
   //-- On error, print debugging information
-  cerr << "Objects seen: " << cnts << endl;
-  cerr << "Objects written: " << cntw << endl;
-  cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+  cerr << "Objects seen: " << cnts << endl
+       << "Objects written: " << cntw << endl
+       << "ERROR: -- Fatal AMOS Exception --\n" << e;
   return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
 
   //-- Output the end time
-  cerr << "Objects seen: " << cnts << endl;
-  cerr << "Objects written: " << cntw << endl;
-  cerr << "END DATE:   " << Date( ) << endl;
+  cerr << "Objects seen: " << cnts << endl
+       << "Objects written: " << cntw << endl
+       << "END DATE:   " << Date( ) << endl;
 
+  cerr << endl
+       << "loopa: " << (double)loopa / CLOCKS_PER_SEC << " sec.\n"
+       << "loopb: " << (double)loopb / CLOCKS_PER_SEC << " sec.\n"
+       << "granu: " << CLOCKS_PER_SEC << " of a sec.\n";
+  
   return EXIT_SUCCESS;
 }
 
