@@ -13,7 +13,6 @@
 #include <unistd.h>
 using namespace std;
 using namespace AMOS;
-using namespace Bank_k;
 
 
 //=============================================================== Globals ====//
@@ -55,10 +54,10 @@ int main (int argc, char ** argv)
   Library_t lib;
   Matepair_t mtp;
 
-  Bank_t red_bank (READ);
-  Bank_t frg_bank (FRAGMENT);
-  BankStream_t lib_bank (LIBRARY);
-  BankStream_t mtp_bank (MATEPAIR);
+  Bank_t red_bank (Read_t::NCODE);
+  Bank_t frg_bank (Fragment_t::NCODE);
+  BankStream_t lib_bank (Library_t::NCODE);
+  BankStream_t mtp_bank (Matepair_t::NCODE);
 
   long int cnts = 0;             // seen object count
   long int cntw = 0;             // written object count

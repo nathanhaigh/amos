@@ -12,111 +12,17 @@
 #include <sstream>
 #include <cstring>
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 
-//================================================ iterator ====================
-//------------------------------------------------ iterator --------------------
-IDMap_t::iterator::iterator (std::vector<HashNode_t> * iid_bucs_p,
-			     std::vector<HashNode_t> * eid_bucs_p)
-  : iid_bucs (iid_bucs_p), eid_bucs (eid_bucs_p)
-{
-  if ( iid_bucs -> empty( ) )
-    curr = NULL;
-  else
-    {
-      iids = true;
-      buc = iid_bucs -> begin( );
-      curr = &(*buc);
-      if ( curr -> triple == NULL )
-	this->operator++();
-    }
-}
-
-
-//------------------------------------------------ operator++ ------------------
-IDMap_t::iterator & IDMap_t::iterator::operator++ ( )
-{
-  while ( curr != NULL )
-    {
-      curr = curr -> next;
-      while ( curr == NULL )
-	{
-	  ++ buc;
-
-	  if ( iids  &&  buc >= iid_bucs -> end( ) )
-	    {
-	      iids = false;
-	      buc = eid_bucs -> begin( );
-	    }
-		
-	  if ( !iids  &&  buc >= eid_bucs -> end( ) )
-	    return *this;
-
-	  if ( buc -> triple != NULL )
-	    curr = &(*buc);
-	}
-
-      if ( iids  ||  curr -> triple -> c == 1 )
-	break;
-    }
-  return *this;
-}
-
-
-//------------------------------------------------ const_iterator --------------
-IDMap_t::const_iterator::const_iterator (const vector<HashNode_t> * iid_bucs_p,
-					 const vector<HashNode_t> * eid_bucs_p)
-  : iid_bucs (iid_bucs_p), eid_bucs (eid_bucs_p)
-{
-  if ( iid_bucs -> empty( ) )
-    curr = NULL;
-  else
-    {
-      iids = true;
-      buc = iid_bucs -> begin( );
-      curr = &(*buc);
-      if ( curr -> triple == NULL )
-	this->operator++();
-    }
-}
-
-
-//------------------------------------------------ operator++ ------------------
-IDMap_t::const_iterator & IDMap_t::const_iterator::operator++ ( )
-{
-  while ( curr != NULL )
-    {
-      curr = curr -> next;
-      while ( curr == NULL )
-	{
-	  ++ buc;
-
-	  if ( iids  &&  buc >= iid_bucs -> end( ) )
-	    {
-	      iids = false;
-	      buc = eid_bucs -> begin( );
-	    }
-		
-	  if ( !iids  &&  buc >= eid_bucs -> end( ) )
-	    return *this;
-
-	  if ( buc -> triple != NULL )
-	    curr = &(*buc);
-	}
-
-      if ( iids  ||  curr -> triple -> c == 1 )
-	break;
-    }
-  return *this;
-}
-
-
 //================================================ IDMap_t =====================
+const NCode_t IDMap_t::NCODE = M_IDMAP;
+const Size_t IDMap_t::DEFAULT_NUM_BUCKETS = 1000;
+
+
 //----------------------------------------------------- minbuckets -------------
 Size_t IDMap_t::minbuckets (Size_t min)
 {
@@ -291,7 +197,7 @@ void IDMap_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_TYPE) )
       {
-	if ( msg . getField (F_TYPE) . length( ) != NCODE )
+	if ( msg . getField (F_TYPE) . length( ) != NCODE_SIZE )
 	  AMOS_THROW_ARGUMENT ("Invalid type format");
 	type_m = Encode (msg . getField (F_TYPE));
       }
@@ -489,7 +395,7 @@ void IDMap_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (IDMap_t::NCODE);
     
     if ( type_m != NULL_NCODE )
       msg . setField (F_TYPE, Decode (type_m));
@@ -568,4 +474,104 @@ void IDMap_t::writeRecord (std::ostream & out) const
       out . write ((char *)&(itr -> iid), sizeof (ID_t));
       out . write (itr -> eid, strlen (itr -> eid) + 1);
     }
+}
+
+
+
+
+
+//================================================ iterator ====================
+//------------------------------------------------ iterator --------------------
+IDMap_t::iterator::iterator (std::vector<HashNode_t> * iid_bucs_p,
+			     std::vector<HashNode_t> * eid_bucs_p)
+  : iid_bucs (iid_bucs_p), eid_bucs (eid_bucs_p)
+{
+  if ( iid_bucs -> empty( ) )
+    curr = NULL;
+  else
+    {
+      iids = true;
+      buc = iid_bucs -> begin( );
+      curr = &(*buc);
+      if ( curr -> triple == NULL )
+	this->operator++();
+    }
+}
+
+
+//------------------------------------------------ operator++ ------------------
+IDMap_t::iterator & IDMap_t::iterator::operator++ ( )
+{
+  while ( curr != NULL )
+    {
+      curr = curr -> next;
+      while ( curr == NULL )
+	{
+	  ++ buc;
+
+	  if ( iids  &&  buc >= iid_bucs -> end( ) )
+	    {
+	      iids = false;
+	      buc = eid_bucs -> begin( );
+	    }
+		
+	  if ( !iids  &&  buc >= eid_bucs -> end( ) )
+	    return *this;
+
+	  if ( buc -> triple != NULL )
+	    curr = &(*buc);
+	}
+
+      if ( iids  ||  curr -> triple -> c == 1 )
+	break;
+    }
+  return *this;
+}
+
+
+//------------------------------------------------ const_iterator --------------
+IDMap_t::const_iterator::const_iterator (const vector<HashNode_t> * iid_bucs_p,
+					 const vector<HashNode_t> * eid_bucs_p)
+  : iid_bucs (iid_bucs_p), eid_bucs (eid_bucs_p)
+{
+  if ( iid_bucs -> empty( ) )
+    curr = NULL;
+  else
+    {
+      iids = true;
+      buc = iid_bucs -> begin( );
+      curr = &(*buc);
+      if ( curr -> triple == NULL )
+	this->operator++();
+    }
+}
+
+
+//------------------------------------------------ operator++ ------------------
+IDMap_t::const_iterator & IDMap_t::const_iterator::operator++ ( )
+{
+  while ( curr != NULL )
+    {
+      curr = curr -> next;
+      while ( curr == NULL )
+	{
+	  ++ buc;
+
+	  if ( iids  &&  buc >= iid_bucs -> end( ) )
+	    {
+	      iids = false;
+	      buc = eid_bucs -> begin( );
+	    }
+		
+	  if ( !iids  &&  buc >= eid_bucs -> end( ) )
+	    return *this;
+
+	  if ( buc -> triple != NULL )
+	    curr = &(*buc);
+	}
+
+      if ( iids  ||  curr -> triple -> c == 1 )
+	break;
+    }
+  return *this;
 }

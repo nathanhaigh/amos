@@ -9,13 +9,15 @@
 
 #include "Scaffold_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Scaffold_t ==================
+const NCode_t Scaffold_t::NCODE = M_SCAFFOLD;
+
+
 //----------------------------------------------------- readMessage ------------
 void Scaffold_t::readMessage (const Message_t & msg)
 {
@@ -104,7 +106,7 @@ void Scaffold_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Scaffold_t::NCODE);
 
     if ( !edges_m . empty( ) )
       {

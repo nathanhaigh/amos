@@ -1290,10 +1290,10 @@ void ParseMates (Mapping_t & mapping)
   AMOS::Library_t lib;
   AMOS::Matepair_t mtp;
 
-  AMOS::Bank_t red_bank (AMOS::Bank_k::READ);
-  AMOS::Bank_t frg_bank (AMOS::Bank_k::FRAGMENT);
-  AMOS::Bank_t lib_bank (AMOS::Bank_k::LIBRARY);
-  AMOS::BankStream_t mtp_bank (AMOS::Bank_k::MATEPAIR);
+  AMOS::Bank_t red_bank (AMOS::Read_t::NCODE);
+  AMOS::Bank_t frg_bank (AMOS::Fragment_t::NCODE);
+  AMOS::Bank_t lib_bank (AMOS::Library_t::NCODE);
+  AMOS::BankStream_t mtp_bank (AMOS::Matepair_t::NCODE);
 
   ReadMap_t * rmp, temprm;
   pair<

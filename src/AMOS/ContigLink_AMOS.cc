@@ -9,13 +9,27 @@
 
 #include "ContigLink_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ ContigLink_t ================
+const NCode_t ContigLink_t::NCODE = M_CONTIGLINK;
+const LinkType_t ContigLink_t::NULL_LINK  = 0;
+const LinkType_t ContigLink_t::OTHER      = 'X';
+const LinkType_t ContigLink_t::MATEPAIR   = 'M';
+const LinkType_t ContigLink_t::OVERLAP    = 'O';
+const LinkType_t ContigLink_t::PHYSICAL   = 'P';
+const LinkType_t ContigLink_t::ALIGNMENT  = 'A';
+const LinkType_t ContigLink_t::SYNTENY    = 'S';
+const LinkAdjacency_t ContigLink_t::NULL_ADJACENCY = 0;
+extern const LinkAdjacency_t ContigLink_t::NORMAL         = 'N';
+const LinkAdjacency_t ContigLink_t::ANTINORMAL     = 'A';
+const LinkAdjacency_t ContigLink_t::INNIE          = 'I';
+const LinkAdjacency_t ContigLink_t::OUTIE          = 'O';
+
+
 //----------------------------------------------------- getAdjacency -----------
 LinkAdjacency_t ContigLink_t::getAdjacency ( ) const
 {
@@ -111,7 +125,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss >> source_m . first;
 	ss . ignore( );
 	ss >> str;
-	if ( !ss )
+	if ( !ss  ||  str . length( ) != NCODE_SIZE )
 	  AMOS_THROW_ARGUMENT ("Invalid source link format");
 	ss . clear( );
 	source_m . second = Encode (str);
@@ -168,6 +182,27 @@ void ContigLink_t::setAdjacency (LinkAdjacency_t adj)
 }
 
 
+//------------------------------------------00--------- setType ----------------
+inline void ContigLink_t::setType (LinkType_t type)
+{
+  switch (type)
+    {
+    case NULL_LINK:
+    case OTHER:
+    case MATEPAIR:
+    case OVERLAP:
+    case PHYSICAL:
+    case ALIGNMENT:
+    case SYNTENY:
+      type_m = type;
+      break;
+    default:
+      AMOS_THROW_ARGUMENT ((std::string)"Invalid contig link type " + type);
+    }
+  type_m = type;
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void ContigLink_t::writeMessage (Message_t & msg) const
 {
@@ -176,7 +211,7 @@ void ContigLink_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (ContigLink_t::NCODE);
 
     if ( contigs_m . first != NULL_ID )
       {

@@ -17,7 +17,6 @@
 #include <map>
 #include <unistd.h>
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 

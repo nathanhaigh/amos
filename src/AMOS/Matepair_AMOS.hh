@@ -33,10 +33,10 @@ class Matepair_t : public Universal_t
 
 public:
 
-  static const MateType_t NULL_MATE  = 0;
-  static const MateType_t OTHER      = 'X';
-  static const MateType_t END        = 'E';
-  static const MateType_t TRANSPOSON = 'T';
+  static const MateType_t NULL_MATE;
+  static const MateType_t OTHER;
+  static const MateType_t END;
+  static const MateType_t TRANSPOSON;
 
 
 private:
@@ -59,18 +59,8 @@ protected:
   
 public:
 
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Matepair_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::MATEPAIR;
-  }
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
 
 
   //--------------------------------------------------- Matepair_t -------------
@@ -142,7 +132,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Matepair_t::NCode( );
+    return Matepair_t::NCODE;
   }
 
 
@@ -188,21 +178,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setType (MateType_t type)
-  {
-    switch (type)
-      {
-      case NULL_MATE:
-      case OTHER:
-      case END:
-      case TRANSPOSON:
-	type_m = type;
-	break;
-      default:
-	AMOS_THROW_ARGUMENT ((std::string)"Invalid mate type " + type);
-      }
-    type_m = type;
-  }
+  inline void setType (MateType_t type);
 
 
   //--------------------------------------------------- writeMessage -----------

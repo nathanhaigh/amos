@@ -12,7 +12,6 @@
 #include <unistd.h>
 using namespace std;
 using namespace AMOS;
-using namespace Bank_k;
 
 
 //=============================================================== Globals ====//
@@ -49,7 +48,7 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  BankStream_t red_bank (READ);
+  BankStream_t red_bank (Read_t::NCODE);
   Read_t red;
 
   long int cnts = 0;             // seen object count

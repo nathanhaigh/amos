@@ -9,7 +9,6 @@
 
 #include "Sequence_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 #define CHARS_PER_LINE 70
 
@@ -17,6 +16,78 @@ using namespace std;
 
 
 //================================================ Sequence_t ==================
+const NCode_t Sequence_t::NCODE = M_SEQUENCE;
+const uint8_t Sequence_t::COMPRESS_BIT  = 0x1;
+const uint8_t Sequence_t::ADENINE_BITS  = 0x0;
+const uint8_t Sequence_t::CYTOSINE_BITS = 0x40;
+const uint8_t Sequence_t::GUANINE_BITS  = 0x80;
+const uint8_t Sequence_t::THYMINE_BITS  = 0xC0;
+const uint8_t Sequence_t::SEQ_BITS      = 0xC0;
+const uint8_t Sequence_t::QUAL_BITS     = 0x3F;
+
+
+//----------------------------------------------------- compress ---------------
+inline uint8_t Sequence_t::compress (char seqchar, char qualchar)
+{
+  //-- Force quality score into its bits
+  qualchar -= MIN_QUALITY;
+  if ( qualchar & SEQ_BITS )
+    {
+      std::cerr << "WARNING: qualscore '" << qualchar << "' cast to 0\n";
+      return 0;
+    }
+
+  //-- Force seq into its bits
+  switch ( seqchar )
+    {
+    case 'A':
+      return (uint8_t)qualchar | ADENINE_BITS;
+    case 'C':
+      return (uint8_t)qualchar | CYTOSINE_BITS;
+    case 'G':
+      return (uint8_t)qualchar | GUANINE_BITS;
+    case 'T':
+      return (uint8_t)qualchar | THYMINE_BITS;
+    case 'N':
+      return 0;
+    default:
+      std::cerr << "WARNING: seqchar '" << seqchar << "' cast to 'N'\n";
+      return 0;
+    }
+}
+
+
+//----------------------------------------------------- uncompress -------------
+inline std::pair<char, char> Sequence_t::uncompress (uint8_t byte)
+{
+  std::pair<char, char> retval;
+
+  switch ( byte & SEQ_BITS )
+    {
+    case ADENINE_BITS:
+      retval . first = 'A';
+      break;
+    case CYTOSINE_BITS:
+      retval . first = 'C';
+      break;
+    case GUANINE_BITS:
+      retval . first = 'G';
+      break;
+    case THYMINE_BITS:
+      retval . first = 'T';
+      break;
+    }
+
+  byte &= QUAL_BITS;
+  if ( byte == 0 )
+    retval . first = 'N';
+
+  retval . second = byte + MIN_QUALITY;
+
+  return retval;
+}
+
+
 //----------------------------------------------------- compress ---------------
 void Sequence_t::compress ( )
 {
@@ -221,7 +292,7 @@ void Sequence_t::writeMessage (Message_t & msg) const
 
   try {
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Sequence_t::NCODE);
 
     if ( length_m != 0 )
       {

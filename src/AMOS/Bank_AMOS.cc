@@ -21,7 +21,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 using namespace AMOS;
-using namespace Bank_k;
 using namespace std;
 
 
@@ -29,6 +28,16 @@ using namespace std;
 
 
 //================================================ Bank_t ======================
+const string  Bank_t::BANK_VERSION     = "1.2.1";
+const string  Bank_t::FIX_STORE_SUFFIX = ".fix";
+const string  Bank_t::IFO_STORE_SUFFIX = ".ifo";
+const string  Bank_t::VAR_STORE_SUFFIX = ".var";
+const string  Bank_t::MAP_STORE_SUFFIX = ".map";
+const Size_t  Bank_t::DEFAULT_BUFFER_SIZE    = 1024;
+const Size_t  Bank_t::DEFAULT_PARTITION_SIZE = 1000000;
+const uint8_t Bank_t::MAX_OPEN_PARTITIONS    = 20;
+
+
 //----------------------------------------------------- addPartition -----------
 void Bank_t::addPartition (bool nuke)
 {
@@ -620,7 +629,7 @@ bool AMOS::BankExists (NCode_t ncode, const std::string & dir)
 {
   //-- Generate the IFO path
   ostringstream ss;
-  ss << dir << '/' << Decode (ncode) << IFO_STORE_SUFFIX;
+  ss << dir << '/' << Decode (ncode) << Bank_t::IFO_STORE_SUFFIX;
   
   //-- Return false if insufficient permissions or absent IFO partition
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK)

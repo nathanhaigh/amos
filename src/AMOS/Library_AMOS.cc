@@ -15,6 +15,9 @@ using namespace std;
 
 
 //================================================ Library_t ===================
+const NCode_t Library_t::NCODE = M_LIBRARY;
+
+
 //----------------------------------------------------- readMessage ------------
 void Library_t::readMessage (const Message_t & msg)
 {
@@ -59,7 +62,7 @@ void Library_t::writeMessage (Message_t & msg) const
 
   try {
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Library_t::NCODE);
 
     msg . getSubMessages( ) . resize (1);
     dist_m . writeMessage (msg . getSubMessages( ) [0]);

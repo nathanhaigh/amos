@@ -41,6 +41,10 @@ struct Distribution_t : public IMessagable_t
   float skew;           //!< the skewness
 
 
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
+
+
   //--------------------------------------------------- Distribution_t ---------
   //! \brief Constructs an empty Distribution_t object
   //!
@@ -73,7 +77,7 @@ struct Distribution_t : public IMessagable_t
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Message_k::M_DISTRIBUTION;
+    return Distribution_t::NCODE;
   }
 
 
@@ -261,6 +265,10 @@ struct Tile_t : public IMessagable_t
   Range_t range;              //!< the usable range of the tile
 
 
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
+
+
   //--------------------------------------------------- Tile_t -----------------
   //! \brief Constructs an empty Tile_t object
   //!
@@ -297,7 +305,7 @@ struct Tile_t : public IMessagable_t
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Message_k::M_TILE;
+    return Tile_t::NCODE;
   }
 
 
@@ -309,8 +317,6 @@ struct Tile_t : public IMessagable_t
   virtual void writeMessage (Message_t & msg) const;
 
 };
-
-
 
 
 //================================================ Helper Functions ============

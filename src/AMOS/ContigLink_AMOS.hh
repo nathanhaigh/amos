@@ -56,33 +56,22 @@ protected:
   
 public:
 
-  static const LinkType_t NULL_LINK  = 0;
-  static const LinkType_t OTHER      = 'X';
-  static const LinkType_t MATEPAIR   = 'M';
-  static const LinkType_t OVERLAP    = 'O';
-  static const LinkType_t PHYSICAL   = 'P';
-  static const LinkType_t ALIGNMENT  = 'A';
-  static const LinkType_t SYNTENY    = 'S';
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
 
-  static const LinkAdjacency_t NULL_ADJACENCY = 0;
-  static const LinkAdjacency_t NORMAL     = 'N';     //!< E,B
-  static const LinkAdjacency_t ANTINORMAL = 'A';     //!< B,E
-  static const LinkAdjacency_t INNIE      = 'I';     //!< E,E
-  static const LinkAdjacency_t OUTIE      = 'O';     //!< B,B
+  static const LinkType_t NULL_LINK;
+  static const LinkType_t OTHER;
+  static const LinkType_t MATEPAIR;
+  static const LinkType_t OVERLAP;
+  static const LinkType_t PHYSICAL;
+  static const LinkType_t ALIGNMENT;
+  static const LinkType_t SYNTENY;
 
-
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (ContigLink_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::CONTIGLINK;
-  }
+  static const LinkAdjacency_t NULL_ADJACENCY;
+  static const LinkAdjacency_t NORMAL;         //!< E,B
+  static const LinkAdjacency_t ANTINORMAL;     //!< B,E
+  static const LinkAdjacency_t INNIE;          //!< E,E
+  static const LinkAdjacency_t OUTIE;          //!< B,B
 
 
   //--------------------------------------------------- ContigLink_t -----------
@@ -175,7 +164,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return ContigLink_t::NCode( );
+    return ContigLink_t::NCODE;
   }
 
 
@@ -313,24 +302,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setType (LinkType_t type)
-  {
-    switch (type)
-      {
-      case NULL_LINK:
-      case OTHER:
-      case MATEPAIR:
-      case OVERLAP:
-      case PHYSICAL:
-      case ALIGNMENT:
-      case SYNTENY:
-	type_m = type;
-	break;
-      default:
-	AMOS_THROW_ARGUMENT ((std::string)"Invalid contig link type " + type);
-      }
-    type_m = type;
-  }
+  inline void setType (LinkType_t type);
 
 
   //--------------------------------------------------- writeMessage -----------

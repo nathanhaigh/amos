@@ -9,13 +9,24 @@
 
 #include "Overlap_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Overlap_t ===================
+const NCode_t Overlap_t::NCODE = M_OVERLAP;
+const OverlapAdjacency_t Overlap_t::NULL_ADJACENCY = 0;
+const OverlapAdjacency_t Overlap_t::NORMAL     = 'N';
+const OverlapAdjacency_t Overlap_t::ANTINORMAL = 'A';
+const OverlapAdjacency_t Overlap_t::INNIE      = 'I';
+const OverlapAdjacency_t Overlap_t::OUTIE      = 'O';
+const uint8_t Overlap_t::FIRST_BIT  = 0x1;
+const uint8_t Overlap_t::SECOND_BIT = 0x2;
+const uint8_t Overlap_t::FLAGC_BIT  = 0x4;
+const uint8_t Overlap_t::FLAGD_BIT  = 0x8;
+
+
 //----------------------------------------------------- getAdjacency -----------
 OverlapAdjacency_t Overlap_t::getAdjacency ( ) const
 {
@@ -163,7 +174,7 @@ void Overlap_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Overlap_t::NCODE);
 
     if ( reads_m . first != NULL_ID )
       {

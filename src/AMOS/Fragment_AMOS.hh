@@ -52,26 +52,15 @@ protected:
 
 public:
 
-  static const FragmentType_t NULL_FRAGMENT  = 0;
-  static const FragmentType_t OTHER          = 'X';
-  static const FragmentType_t BAC            = 'B';
-  static const FragmentType_t INSERT         = 'I';
-  static const FragmentType_t TRANSPOSON     = 'T';
-  static const FragmentType_t WALK           = 'W';
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
 
-
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Fragment_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::FRAGMENT;
-  }
+  static const FragmentType_t NULL_FRAGMENT;
+  static const FragmentType_t OTHER;
+  static const FragmentType_t BAC;
+  static const FragmentType_t INSERT;
+  static const FragmentType_t TRANSPOSON;
+  static const FragmentType_t WALK;
 
 
   //--------------------------------------------------- Fragment_t -------------
@@ -118,7 +107,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Fragment_t::NCode( );
+    return Fragment_t::NCODE;
   }
 
 
@@ -220,22 +209,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setType (FragmentType_t type)
-  {
-    switch (type)
-      {
-      case NULL_FRAGMENT:
-      case OTHER:
-      case BAC:
-      case INSERT:
-      case TRANSPOSON:
-      case WALK:
-	type_m = type;
-	break;
-      default:
-        AMOS_THROW_ARGUMENT ((std::string)"Invalid fragment type " + type);
-      }
-  }
+  inline void setType (FragmentType_t type);
 
 
   //--------------------------------------------------- writeMessage -----------

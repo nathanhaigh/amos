@@ -9,7 +9,6 @@
 
 #include "BankStream_AMOS.hh"
 using namespace AMOS;
-using namespace Bank_k;
 using namespace std;
 
 
@@ -17,6 +16,10 @@ using namespace std;
 
 
 //================================================ Bank_t ======================
+const Size_t BankStream_t::DEFAULT_BUFFER_SIZE = 131072;
+const Size_t BankStream_t::MAX_OPEN_PARTITIONS = 2;
+
+
 //----------------------------------------------------- ignore -----------------
 BankStream_t & BankStream_t::ignore (bankstreamoff n)
 {

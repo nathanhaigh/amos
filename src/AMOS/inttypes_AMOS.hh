@@ -35,19 +35,20 @@ std::string Decode (NCode_t ncode);
 //! \brief Converts an AMOS message/field type to an NCode integer
 //!
 //! \param str The NCode string equivalent
-//! \pre str is of proper NCode length, i.e. str . size( ) == NCODE
+//! \pre str is of proper NCode length, i.e. str . size( ) == NCODE_SIZE
 //! \return NCode of the string
 //!
 NCode_t Encode (const std::string & str);
 
-const uint8_t NCODE       =  3;         //!< length of the NCode strings
+
+const uint8_t NCODE_SIZE  =  3;         //!< length of the NCode strings
 const NCode_t NULL_NCODE  =  0;         //!< NULL NCode definition
 const ID_t    NULL_ID     =  0;         //!< NULL ID definition
 const char    MIN_QUALITY = '0';        //!< min quality score definition
 const char    MAX_QUALITY = '0' + 63;   //!< max quality score definition
 const char    NULL_CHAR   = '\0';       //!< null char
 const char    NL_CHAR     = '\n';       //!< newline char
-const std::string NULL_STRING (&NULL_CHAR); //!< null string
+const string  NULL_STRING = &NULL_CHAR; //!< null string
 
 } // namespace AMOS
 

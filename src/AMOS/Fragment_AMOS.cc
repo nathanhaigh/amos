@@ -9,13 +9,21 @@
 
 #include "Fragment_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Fragment_t ==================
+const NCode_t Fragment_t::NCODE = M_FRAGMENT;
+const FragmentType_t Fragment_t::NULL_FRAGMENT  = 0;
+const FragmentType_t Fragment_t::OTHER          = 'X';
+const FragmentType_t Fragment_t::BAC            = 'B';
+const FragmentType_t Fragment_t::INSERT         = 'I';
+const FragmentType_t Fragment_t::TRANSPOSON     = 'T';
+const FragmentType_t Fragment_t::WALK           = 'W';
+
+
 //----------------------------------------------------- readMessage-------------
 void Fragment_t::readMessage (const Message_t & msg)
 {
@@ -81,6 +89,25 @@ void Fragment_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- setType ----------------
+inline void Fragment_t::setType (FragmentType_t type)
+{
+  switch (type)
+    {
+    case NULL_FRAGMENT:
+    case OTHER:
+    case BAC:
+    case INSERT:
+    case TRANSPOSON:
+    case WALK:
+      type_m = type;
+      break;
+    default:
+      AMOS_THROW_ARGUMENT ((std::string)"Invalid fragment type " + type);
+    }
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Fragment_t::writeMessage (Message_t & msg) const
 {
@@ -89,7 +116,7 @@ void Fragment_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Fragment_t::NCODE);
 
     if ( library_m != NULL_ID )
       {

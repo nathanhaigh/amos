@@ -90,7 +90,7 @@ public:
 
 private:
 
-  static const Size_t DEFAULT_NUM_BUCKETS = 1000;  //!< default min buckets
+  static const Size_t DEFAULT_NUM_BUCKETS;  //!< default min buckets
 
   //============================================== HashNode_t ==================
   //! \brief HashNode for IDMap
@@ -269,6 +269,10 @@ private:
 
 public:
 
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
+
+
   //============================================== const_iterator ==============
   //! \brief const_iterator for moving through the map
   //!
@@ -301,20 +305,6 @@ public:
 	return tmp;
       }
   };
-
-
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (IDMap_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Message_k::M_IDMAP;
-  }
 
 
   //--------------------------------------------------- IDMap_t ----------------
@@ -461,7 +451,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return IDMap_t::NCode( );
+    return IDMap_t::NCODE;
   }
 
 

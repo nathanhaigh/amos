@@ -10,13 +10,15 @@
 #include "Contig_AMOS.hh"
 #include <cctype>
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Contig_t ====================
+const NCode_t Contig_t::NCODE = M_CONTIG;
+
+
 //----------------------------------------------------- getUngappedQualString --
 string Contig_t::getUngappedQualString (Range_t range) const
 {
@@ -188,7 +190,7 @@ void Contig_t::writeMessage (Message_t & msg) const
 
   try {
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Contig_t::NCODE);
 
     if ( !reads_m . empty( ) )
       {

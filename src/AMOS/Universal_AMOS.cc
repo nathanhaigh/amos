@@ -9,13 +9,15 @@
 
 #include "Universal_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Universal_t =================
+const NCode_t Universal_t::NCODE = M_UNIVERSAL;
+
+
 //----------------------------------------------------- readMessage ------------
 void Universal_t::readMessage (const Message_t & msg)
 {
@@ -55,7 +57,7 @@ void Universal_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Universal_t::NCODE);
 
     if ( !comment_m . empty( ) )
       msg . setField (F_COMMENT, comment_m);

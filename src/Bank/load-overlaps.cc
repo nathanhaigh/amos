@@ -209,7 +209,7 @@ int main (int argc, char ** argv)
 //---------------------------------------------------------- LoadOverlaps ----//
 void LoadOverlaps (const Overlaps_t & overlaps)
 {
-  BankStream_t ovl_bank (Bank_k::OVERLAP);
+  BankStream_t ovl_bank (Overlap_t::NCODE);
   list<Overlap_t *>::const_iterator opi;
 
   try {
@@ -228,7 +228,7 @@ void LoadOverlaps (const Overlaps_t & overlaps)
   catch (Exception_t & e) {
 
     //-- On error, print debugging information
-    cerr << "ERROR: -- Fata AMOS Exception --\n" << e;
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     exit (EXIT_FAILURE);
   }
 }

@@ -36,10 +36,10 @@ class BankStream_t : private Bank_t
 
 protected:
 
-  static const Size_t DEFAULT_BUFFER_SIZE = 131072;
+  static const Size_t DEFAULT_BUFFER_SIZE;
   //!< IO buffer size
 
-  static const Size_t MAX_OPEN_PARTITIONS = 2;
+  static const Size_t MAX_OPEN_PARTITIONS;
   //!< Allowable simultaneously open partitions (one for >>, one for <<)
 
 
@@ -83,11 +83,11 @@ public:
   //! compatibile with the supplied NCode.
   //!
   //! Once a BankStream is created with a certain NCode, only objects
-  //! compatible with that NCode can be used with that Bank. For instance, if a
-  //! bank is constructed with 'BankStream_t mybank (Bank_k::READ);', only
-  //! Read_t objects could be used with mybank. Also, if the IBankable object
-  //! has a static 'NCode( )' function included, the user can construct a Bank
-  //! of these objects with 'Bank_t mybank (Read_t::NCode( ))'.
+  //! compatible with that NCode can be used with that Bank. For instance, if
+  //! a BankStream is constructed with 'BankStream_t mybank (Read::NCODE);',
+  //! only Read_t objects could be used with mybank. Also, if a static NCode
+  //! member is not available 'BankStream_t mybank (Encode("RED"));'
+  //! will also work.
   //!
   //! \param type The type of Bank to construct
   //!

@@ -42,29 +42,29 @@ int main (int argc, char ** argv)
       {
 	cerr << "# Found new message: "
 	     << Decode (msg . getMessageCode( )) << endl;
-	if ( msg . getMessageCode( ) == Message_k::M_UNIVERSAL )
+	if ( msg . getMessageCode( ) == M_UNIVERSAL )
 	  unvp = &unv;
-	else if ( msg . getMessageCode( ) == Message_k::M_CONTIGLINK )
+	else if ( msg . getMessageCode( ) == M_CONTIGLINK )
 	  unvp = &ctl;
-	else if ( msg . getMessageCode( ) == Message_k::M_CONTIGEDGE )
+	else if ( msg . getMessageCode( ) == M_CONTIGEDGE )
 	  unvp = &cte;
-	else if ( msg . getMessageCode( ) == Message_k::M_FRAGMENT )
+	else if ( msg . getMessageCode( ) == M_FRAGMENT )
 	  unvp = &frg;
-	else if ( msg . getMessageCode( ) == Message_k::M_KMER )
+	else if ( msg . getMessageCode( ) == M_KMER )
 	  unvp = &kmr;
-	else if ( msg . getMessageCode( ) == Message_k::M_LIBRARY )
+	else if ( msg . getMessageCode( ) == M_LIBRARY )
 	  unvp = &lib;
-	else if ( msg . getMessageCode( ) == Message_k::M_MATEPAIR )
+	else if ( msg . getMessageCode( ) == M_MATEPAIR )
 	  unvp = &mtp;
-	else if ( msg . getMessageCode( ) == Message_k::M_OVERLAP )
+	else if ( msg . getMessageCode( ) == M_OVERLAP )
 	  unvp = &ovl;
-	else if ( msg . getMessageCode( ) == Message_k::M_SCAFFOLD )
+	else if ( msg . getMessageCode( ) == M_SCAFFOLD )
 	  unvp = &scf;
-	else if ( msg . getMessageCode( ) == Message_k::M_SEQUENCE )
+	else if ( msg . getMessageCode( ) == M_SEQUENCE )
 	  unvp = &seq;
-	else if ( msg . getMessageCode( ) == Message_k::M_CONTIG )
+	else if ( msg . getMessageCode( ) == M_CONTIG )
 	  unvp = &ctg;
-	else if ( msg . getMessageCode( ) == Message_k::M_READ )
+	else if ( msg . getMessageCode( ) == M_READ )
 	  unvp = &red;
 	else
 	  {

@@ -34,15 +34,6 @@ typedef char OverlapAdjacency_t;
 class Overlap_t : public Universal_t
 {
 
-public:
-
-  static const OverlapAdjacency_t NULL_ADJACENCY = 0;
-  static const OverlapAdjacency_t NORMAL     = 'N';     //!< E,B
-  static const OverlapAdjacency_t ANTINORMAL = 'A';     //!< B,E
-  static const OverlapAdjacency_t INNIE      = 'I';     //!< E,E
-  static const OverlapAdjacency_t OUTIE      = 'O';     //!< B,B
-
-
 private:
 
   Size_t aHang_m;          //!< length of non-overlapping portion of A
@@ -53,10 +44,10 @@ private:
 
 protected:
 
-  static const uint8_t FIRST_BIT  = 0x1;  //!< adjacency info for 1st read
-  static const uint8_t SECOND_BIT = 0x2;  //!< adjacency info for 2nd read
-  static const uint8_t FLAGC_BIT  = 0x4;  //!< C flag
-  static const uint8_t FLAGD_BIT  = 0x8;  //!< D flag
+  static const uint8_t FIRST_BIT;   //!< adjacency info for 1st read
+  static const uint8_t SECOND_BIT;  //!< adjacency info for 2nd read
+  static const uint8_t FLAGC_BIT;   //!< C flag
+  static const uint8_t FLAGD_BIT;   //!< D flag
 
 
   //--------------------------------------------------- readRecord -------------
@@ -71,18 +62,14 @@ protected:
 
 public:
 
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Overlap_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::OVERLAP;
-  }
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
+
+  static const OverlapAdjacency_t NULL_ADJACENCY;
+  static const OverlapAdjacency_t NORMAL;         //!< E,B
+  static const OverlapAdjacency_t ANTINORMAL;     //!< B,E
+  static const OverlapAdjacency_t INNIE;          //!< E,E
+  static const OverlapAdjacency_t OUTIE;          //!< B,B
 
 
   //--------------------------------------------------- Overlap_t --------------
@@ -191,7 +178,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Overlap_t::NCode( );
+    return Overlap_t::NCODE;
   }
 
 

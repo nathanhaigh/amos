@@ -16,8 +16,8 @@ int main (int argc, char ** argv)
   try {
 
     ID_t N, i , j, step;
-    Bank_t readbank (Bank_k::READ);
-    BankStream_t readstream (Bank_k::READ);
+    Bank_t readbank (Read_t::NCODE);
+    BankStream_t readstream (Read_t::NCODE);
     Read_t read;
     ostringstream ss;
 

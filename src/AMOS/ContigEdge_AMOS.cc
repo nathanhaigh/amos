@@ -9,13 +9,15 @@
 
 #include "ContigEdge_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ ContigEdge_t ================
+const NCode_t ContigEdge_t::NCODE = M_CONTIGEDGE;
+
+
 //----------------------------------------------------- readMessage ------------
 void ContigEdge_t::readMessage (const Message_t & msg)
 {
@@ -74,7 +76,7 @@ void ContigEdge_t::writeMessage (Message_t & msg) const
 
   try {
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (ContigEdge_t::NCODE);
 
     if ( !links_m . empty( ) )
       {

@@ -23,26 +23,6 @@
 
 namespace AMOS {
 
-namespace Bank_k {
-
-  const NCode_t UNIVERSAL  = Message_k::M_UNIVERSAL;
-  const NCode_t CONTIG     = Message_k::M_CONTIG;
-  const NCode_t CONTIGEDGE = Message_k::M_CONTIGEDGE;
-  const NCode_t CONTIGLINK = Message_k::M_CONTIGLINK;
-  const NCode_t FRAGMENT   = Message_k::M_FRAGMENT;
-  const NCode_t KMER       = Message_k::M_KMER;
-  const NCode_t LIBRARY    = Message_k::M_LIBRARY;
-  const NCode_t MATEPAIR   = Message_k::M_MATEPAIR;
-  const NCode_t OVERLAP    = Message_k::M_OVERLAP;
-  const NCode_t READ       = Message_k::M_READ;
-  const NCode_t SCAFFOLD   = Message_k::M_SCAFFOLD;
-  const NCode_t SEQUENCE   = Message_k::M_SEQUENCE;
-
-} // namespace Bank_k
-
-
-
-
 //================================================ Universal_t =================
 //! \brief A universal base class that can be used by Banks or Messages
 //!
@@ -80,18 +60,8 @@ protected:
 
 public:
 
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Universal_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::UNIVERSAL;
-  }
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
 
 
   //--------------------------------------------------- Universal_t ------------
@@ -145,7 +115,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Universal_t::NCode( );
+    return Universal_t::NCODE;
   }
 
 

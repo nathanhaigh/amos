@@ -9,13 +9,19 @@
 
 #include "Matepair_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Matepair_t ==================
+const NCode_t Matepair_t::NCODE = M_MATEPAIR;
+const MateType_t Matepair_t::NULL_MATE  = 0;
+const MateType_t Matepair_t::OTHER      = 'X';
+const MateType_t Matepair_t::END        = 'E';
+const MateType_t Matepair_t::TRANSPOSON = 'T';
+
+
 //----------------------------------------------------- readMessage ------------
 void Matepair_t::readMessage (const Message_t & msg)
 {
@@ -71,6 +77,24 @@ void Matepair_t::readRecord (istream & fix,
 }
 
 
+//----------------------------------------------------- setType ----------------
+inline void Matepair_t::setType (MateType_t type)
+{
+  switch (type)
+    {
+    case NULL_MATE:
+    case OTHER:
+    case END:
+    case TRANSPOSON:
+      type_m = type;
+      break;
+    default:
+      AMOS_THROW_ARGUMENT ((std::string)"Invalid mate type " + type);
+    }
+  type_m = type;
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Matepair_t::writeMessage (Message_t & msg) const
 {
@@ -79,7 +103,7 @@ void Matepair_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Matepair_t::NCODE);
 
     if ( reads_m . first != NULL_ID )
       {

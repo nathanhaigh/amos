@@ -9,13 +9,21 @@
 
 #include "Read_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Read_t ======================
+const NCode_t Read_t::NCODE = M_READ;
+const ReadType_t Read_t::NULL_READ  = 0;
+const ReadType_t Read_t::OTHER      = 'X';
+const ReadType_t Read_t::END        = 'E';
+const ReadType_t Read_t::CONTIG     = 'C';
+const ReadType_t Read_t::BAC        = 'B';
+const ReadType_t Read_t::WALK       = 'W';
+
+
 //----------------------------------------------------- readMessage-------------
 void Read_t::readMessage (const Message_t & msg)
 {
@@ -98,6 +106,25 @@ void Read_t::readRecord (istream & fix,
 }
 
 
+//----------------------------------------------------- setType ----------------
+inline void Read_t::setType (ReadType_t type)
+{
+  switch (type)
+    {
+    case NULL_READ:
+    case OTHER:
+    case END:
+    case CONTIG:
+    case BAC:
+    case WALK:
+      type_m = type;
+      break;
+    default:
+      AMOS_THROW_ARGUMENT ((std::string)"Invalid read type " + type);
+    }
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Read_t::writeMessage (Message_t & msg) const
 {
@@ -106,7 +133,7 @@ void Read_t::writeMessage (Message_t & msg) const
   try {
     ostringstream ss;
 
-    msg . setMessageCode (NCode( ));
+    msg . setMessageCode (Read_t::NCODE);
 
     if ( frag_m != NULL_ID )
       {

@@ -31,16 +31,6 @@ typedef char ReadType_t;
 class Read_t : public Sequence_t
 {
 
-public:
-
-  static const ReadType_t NULL_READ  = 0;
-  static const ReadType_t OTHER      = 'X';
-  static const ReadType_t END        = 'E';
-  static const ReadType_t CONTIG     = 'C';
-  static const ReadType_t BAC        = 'B';
-  static const ReadType_t WALK       = 'W';
-
-
 private:
 
   Range_t clear_m;                 //!< generic clear range
@@ -64,18 +54,15 @@ protected:
 
 public:
 
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Read_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::READ;
-  }
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
+
+  static const ReadType_t NULL_READ;
+  static const ReadType_t OTHER;
+  static const ReadType_t END;
+  static const ReadType_t CONTIG;
+  static const ReadType_t BAC;
+  static const ReadType_t WALK;
 
 
   //--------------------------------------------------- Read_t -----------------
@@ -145,7 +132,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Read_t::NCode( );
+    return Read_t::NCODE;
   }
 
 
@@ -230,22 +217,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setType (ReadType_t type)
-  {
-    switch (type)
-      {
-      case NULL_READ:
-      case OTHER:
-      case END:
-      case CONTIG:
-      case BAC:
-      case WALK:
-	type_m = type;
-	break;
-      default:
-	AMOS_THROW_ARGUMENT ((std::string)"Invalid read type " + type);
-      }
-  }
+  inline void setType (ReadType_t type);
 
 
   //--------------------------------------------------- setVectorClearRange ----
@@ -264,8 +236,6 @@ public:
   virtual void writeMessage (Message_t & msg) const;
 
 };
-
-
 
 
 //================================================ Helper Functions ============

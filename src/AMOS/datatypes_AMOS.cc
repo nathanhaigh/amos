@@ -10,11 +10,14 @@
 #include "datatypes_AMOS.hh"
 #include <sstream>
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
 
+
+
+const NCode_t Tile_t::NCODE = M_TILE;
+const NCode_t Distribution_t::NCODE = M_DISTRIBUTION;
 
 
 //----------------------------------------------------- readMessage ------------

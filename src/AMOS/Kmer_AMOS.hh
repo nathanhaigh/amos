@@ -40,11 +40,11 @@ private:
 
 protected:
 
-  static const uint8_t ADENINE_BITS  = 0x0;   //!< 'A' bit
-  static const uint8_t CYTOSINE_BITS = 0x40;  //!< 'C' bit
-  static const uint8_t GUANINE_BITS  = 0x80;  //!< 'G' bit
-  static const uint8_t THYMINE_BITS  = 0xC0;  //!< 'T' bit
-  static const uint8_t SEQ_BITS      = 0xC0;  //!< sequence bit mask
+  static const uint8_t ADENINE_BITS;   //!< 'A' bit
+  static const uint8_t CYTOSINE_BITS;  //!< 'C' bit
+  static const uint8_t GUANINE_BITS;   //!< 'G' bit
+  static const uint8_t THYMINE_BITS;   //!< 'T' bit
+  static const uint8_t SEQ_BITS;       //!< sequence bit mask
 
 
   //--------------------------------------------------- compress ---------------
@@ -57,22 +57,7 @@ protected:
   //! \throws ArgumentException_t
   //! \return The compressed 2 bits (in upper two bit positions)
   //!
-  static uint8_t compress (char seqchar)
-  {
-    switch ( toupper(seqchar) )
-      {
-      case 'A':
-        return ADENINE_BITS;
-      case 'C':
-        return CYTOSINE_BITS;
-      case 'G':
-        return GUANINE_BITS;
-      case 'T':
-        return THYMINE_BITS;
-      default:
-	AMOS_THROW_ARGUMENT ((std::string)"Invalid Kmer character " + seqchar);
-      }
-  }
+  static inline uint8_t compress (char seqchar);
 
 
   //--------------------------------------------------- uncompress -------------
@@ -84,22 +69,7 @@ protected:
   //! \throws Exception_t
   //! \return The sequence char
   //!
-  static char uncompress (uint8_t byte)
-  {
-    switch ( byte & SEQ_BITS )
-      {
-      case ADENINE_BITS:
-	return 'A';
-      case CYTOSINE_BITS:
-	return 'C';
-      case GUANINE_BITS:
-	return 'G';
-      case THYMINE_BITS:
-	return 'T';
-      default:
-	AMOS_THROW ("Unknown logic error");
-      }
-  }
+  static inline char uncompress (uint8_t byte);
 
 
   //--------------------------------------------------- readRecord -------------
@@ -114,22 +84,11 @@ protected:
 
 public:
 
-  static const uint8_t MAX_LENGTH    = 255;
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
+
+  static const uint8_t MAX_LENGTH;
   //!< Maximum Kmer length
-
-
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Kmer_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::KMER;
-  }
 
 
   //--------------------------------------------------- Kmer_t -----------------
@@ -230,7 +189,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Kmer_t::NCode( );
+    return Kmer_t::NCODE;
   }
 
 

@@ -50,7 +50,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   Bank_t  read_bank (Bank_k::READ);
+   Bank_t  read_bank (Read_t::NCODE);
    Read_t  read;
    Celera_Message_t  msg;
    int  ct;

@@ -23,72 +23,62 @@
 
 namespace AMOS {
 
-namespace Message_k {
-
-  //-- Enumeration characters
-  const char      E_ADD         = 'A';
-  const char      E_DELETE      = 'D';
-  const char      E_REPLACE     = 'R';
-
-  //-- Field NCode types
-  const NCode_t   F_NULL         = Encode ("nul");
-  const NCode_t   F_3PRIME       = Encode ("3pr");
-  const NCode_t   F_5PRIME       = Encode ("5pr");
-  const NCode_t   F_AHANG        = Encode ("ahg");
-  const NCode_t   F_ACTION       = Encode ("act");
-  const NCode_t   F_ADJACENCY    = Encode ("adj");
-  const NCode_t   F_BHANG        = Encode ("bhg");
-  const NCode_t   F_BID          = Encode ("bid");
-  const NCode_t   F_CLEAR        = Encode ("clr");
-  const NCode_t   F_COMMENT      = Encode ("com");
-  const NCode_t   F_CONTIG1      = Encode ("ct1");
-  const NCode_t   F_CONTIG2      = Encode ("ct2");
-  const NCode_t   F_CONTIGEDGE   = Encode ("cte");
-  const NCode_t   F_CONTIGLINK   = Encode ("ctl");
-  const NCode_t   F_COUNT        = Encode ("cnt");
-  const NCode_t   F_EID          = Encode ("eid");
-  const NCode_t   F_FRAGMENT     = Encode ("frg");
-  const NCode_t   F_GAPS         = Encode ("gap");
-  const NCode_t   F_IID          = Encode ("iid");
-  const NCode_t   F_LIBRARY      = Encode ("lib");
-  const NCode_t   F_MAP          = Encode ("map");
-  const NCode_t   F_MEAN         = Encode ("mea");
-  const NCode_t   F_OFFSET       = Encode ("off");
-  const NCode_t   F_QUALITY      = Encode ("qlt");
-  const NCode_t   F_QUALITYCLEAR = Encode ("qcr");
-  const NCode_t   F_READ1        = Encode ("rd1");
-  const NCode_t   F_READ2        = Encode ("rd2");
-  const NCode_t   F_READS        = Encode ("rds");
-  const NCode_t   F_SCORE        = Encode ("scr");
-  const NCode_t   F_SEQUENCE     = Encode ("seq");
-  const NCode_t   F_SD           = Encode ("std");
-  const NCode_t   F_SIZE         = Encode ("sze");
-  const NCode_t   F_SKEWNESS     = Encode ("skw");
-  const NCode_t   F_SOURCE       = Encode ("src");
-  const NCode_t   F_TYPE         = Encode ("typ");
-  const NCode_t   F_VECTORCLEAR  = Encode ("vcr");
-
-  //-- Message NCode types
-  const NCode_t   M_NULL         = Encode ("NUL");
-  const NCode_t   M_UNIVERSAL    = Encode ("UNV");
-  const NCode_t   M_CONTIG       = Encode ("CTG");
-  const NCode_t   M_CONTIGEDGE   = Encode ("CTE");
-  const NCode_t   M_CONTIGLINK   = Encode ("CTL");
-  const NCode_t   M_DISTRIBUTION = Encode ("DST");
-  const NCode_t   M_FRAGMENT     = Encode ("FRG");
-  const NCode_t   M_KMER         = Encode ("KMR");
-  const NCode_t   M_LIBRARY      = Encode ("LIB");
-  const NCode_t   M_IDMAP        = Encode ("MAP");
-  const NCode_t   M_MATEPAIR     = Encode ("MTP");
-  const NCode_t   M_OVERLAP      = Encode ("OVL");
-  const NCode_t   M_READ         = Encode ("RED");
-  const NCode_t   M_SCAFFOLD     = Encode ("SCF");
-  const NCode_t   M_SEQUENCE     = Encode ("SEQ");
-  const NCode_t   M_TILE         = Encode ("TLE");
-
-} // namespace Message_k
-
-
+const char      E_ADD          = 'A';
+const char      E_DELETE       = 'D';
+const char      E_REPLACE      = 'R';
+const NCode_t   F_NULL         = Encode ("nul");
+const NCode_t   F_3PRIME       = Encode ("3pr");
+const NCode_t   F_5PRIME       = Encode ("5pr");
+const NCode_t   F_AHANG        = Encode ("ahg");
+const NCode_t   F_ACTION       = Encode ("act");
+const NCode_t   F_ADJACENCY    = Encode ("adj");
+const NCode_t   F_BHANG        = Encode ("bhg");
+const NCode_t   F_BID          = Encode ("bid");
+const NCode_t   F_CLEAR        = Encode ("clr");
+const NCode_t   F_COMMENT      = Encode ("com");
+const NCode_t   F_CONTIG1      = Encode ("ct1");
+const NCode_t   F_CONTIG2      = Encode ("ct2");
+const NCode_t   F_CONTIGEDGE   = Encode ("cte");
+const NCode_t   F_CONTIGLINK   = Encode ("ctl");
+const NCode_t   F_COUNT        = Encode ("cnt");
+const NCode_t   F_EID          = Encode ("eid");
+const NCode_t   F_FRAGMENT     = Encode ("frg");
+const NCode_t   F_GAPS         = Encode ("gap");
+const NCode_t   F_IID          = Encode ("iid");
+const NCode_t   F_LIBRARY      = Encode ("lib");
+const NCode_t   F_MAP          = Encode ("map");
+const NCode_t   F_MEAN         = Encode ("mea");
+const NCode_t   F_OFFSET       = Encode ("off");
+const NCode_t   F_QUALITY      = Encode ("qlt");
+const NCode_t   F_QUALITYCLEAR = Encode ("qcr");
+const NCode_t   F_READ1        = Encode ("rd1");
+const NCode_t   F_READ2        = Encode ("rd2");
+const NCode_t   F_READS        = Encode ("rds");
+const NCode_t   F_SCORE        = Encode ("scr");
+const NCode_t   F_SEQUENCE     = Encode ("seq");
+const NCode_t   F_SD           = Encode ("std");
+const NCode_t   F_SIZE         = Encode ("sze");
+const NCode_t   F_SKEWNESS     = Encode ("skw");
+const NCode_t   F_SOURCE       = Encode ("src");
+const NCode_t   F_TYPE         = Encode ("typ");
+const NCode_t   F_VECTORCLEAR  = Encode ("vcr");
+const NCode_t   M_NULL         = Encode ("NUL");
+const NCode_t   M_UNIVERSAL    = Encode ("UNV");
+const NCode_t   M_CONTIG       = Encode ("CTG");
+const NCode_t   M_CONTIGEDGE   = Encode ("CTE");
+const NCode_t   M_CONTIGLINK   = Encode ("CTL");
+const NCode_t   M_DISTRIBUTION = Encode ("DST");
+const NCode_t   M_FRAGMENT     = Encode ("FRG");
+const NCode_t   M_KMER         = Encode ("KMR");
+const NCode_t   M_LAYOUT       = Encode ("LAY");
+const NCode_t   M_LIBRARY      = Encode ("LIB");
+const NCode_t   M_IDMAP        = Encode ("MAP");
+const NCode_t   M_MATEPAIR     = Encode ("MTP");
+const NCode_t   M_OVERLAP      = Encode ("OVL");
+const NCode_t   M_READ         = Encode ("RED");
+const NCode_t   M_SCAFFOLD     = Encode ("SCF");
+const NCode_t   M_SEQUENCE     = Encode ("SEQ");
+const NCode_t   M_TILE         = Encode ("TLE");
 
 
 //================================================ Message_t ===================
@@ -119,7 +109,7 @@ public:
   //!
   Message_t ( )
   {
-    mcode_m = Message_k::M_NULL;
+    mcode_m = M_NULL;
   }
 
 
@@ -139,7 +129,7 @@ public:
   //!
   void clear ( )
   {
-    mcode_m = Message_k::M_NULL;
+    mcode_m = M_NULL;
     fields_m . clear( );
     subs_m . clear( );
   }

@@ -30,32 +30,6 @@
 
 namespace AMOS {
 
-namespace Bank_k {
-
-  const std::string BANK_VERSION ("1.2.1");
-  //!< Current Bank version, may not be able to read from other versions
-
-  const std::string FIX_STORE_SUFFIX (".fix");
-  //!< Suffix for the fixed length store
-  
-  const std::string IFO_STORE_SUFFIX (".ifo");
-  //!< Suffix for the informational store
-  
-  const std::string VAR_STORE_SUFFIX (".var");
-  //!< Suffix for the variable length store
-
-  const std::string MAP_STORE_SUFFIX (".map");
-  //!< Suffix for the ID map store
-
-  const NCode_t EXAMPLE = Encode ("EXX");
-  //!< Example bank NCode
-
-} // namespace Bank_k
-
-
-
-
-
 //================================================ BankFlags_t =================
 //! \brief 8 bit flag set for IBankable types
 //!
@@ -386,13 +360,13 @@ class Bank_t
 
 protected:
 
-  static const Size_t DEFAULT_BUFFER_SIZE = 1024;
+  static const Size_t DEFAULT_BUFFER_SIZE;
   //!< IO buffer size
 
-  static const Size_t DEFAULT_PARTITION_SIZE = 1000000;
+  static const Size_t DEFAULT_PARTITION_SIZE;
   //!< Default number of records per partition
 
-  static const uint8_t MAX_OPEN_PARTITIONS = 20;
+  static const uint8_t MAX_OPEN_PARTITIONS;
   //!< Allowable simultaneously open partitions
 
 
@@ -636,6 +610,22 @@ protected:
 
 public:
 
+  static const std::string BANK_VERSION;
+  //!< Current Bank version, may not be able to read from other versions
+
+  static const std::string FIX_STORE_SUFFIX;
+  //!< Suffix for the fixed length store
+  
+  static const std::string IFO_STORE_SUFFIX;
+  //!< Suffix for the informational store
+  
+  static const std::string VAR_STORE_SUFFIX;
+  //!< Suffix for the variable length store
+
+  static const std::string MAP_STORE_SUFFIX;
+  //!< Suffix for the ID map store
+
+
   //--------------------------------------------------- Bank_t -----------------
   //! \brief Constructs an empty Bank_t of objects with a certain NCode
   //!
@@ -645,10 +635,9 @@ public:
   //!
   //! Once a Bank is created with a certain NCode, only objects compatible
   //! with that NCode can be used with that Bank. For instance, if a Bank
-  //! is constructed with 'Bank_t mybank (Bank_k::READ);', only Read_t
-  //! objects could be used with mybank. Also, if the IBankable object has
-  //! a static 'NCode( )' function included, the user can construct a Bank
-  //! of these objects with 'Bank_t mybank (Read_t::NCode( ))'.
+  //! is constructed with 'Bank_t mybank (Read::NCODE);', only Read_t
+  //! objects could be used with mybank. Also, if a static NCode member is not
+  //! available 'Bank_t mybank (Encode("RED"));' will also work.
   //!
   //! \param type The type of Bank to construct
   //!

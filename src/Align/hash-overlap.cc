@@ -40,7 +40,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   BankStream_t  read_bank (Read_t :: NCode());
+   BankStream_t  read_bank (Read_t::NCODE);
    Simple_Overlap_t  olap;
    vector <char *>  string_list, qual_list;
    vector <char *>  tag_list;

@@ -21,8 +21,6 @@
 #include <vector>
 #include <unistd.h>
 using namespace AMOS;
-using namespace Bank_k;
-using namespace Message_k;
 using namespace std;
 
 
@@ -92,18 +90,18 @@ int main (int argc, char ** argv)
   obpair obp;                    // object,bank pair pointer
 
   //-- The KNOWN types to put in the banks
-  obps [UNIVERSAL]  = obpair (new Bank_t (UNIVERSAL),  new Universal_t);
-  obps [SEQUENCE]   = obpair (new Bank_t (SEQUENCE),   new Sequence_t);
-  obps [LIBRARY]    = obpair (new Bank_t (LIBRARY),    new Library_t);
-  obps [FRAGMENT]   = obpair (new Bank_t (FRAGMENT),   new Fragment_t);
-  obps [READ]       = obpair (new Bank_t (READ),       new Read_t);
-  obps [MATEPAIR]   = obpair (new Bank_t (MATEPAIR),   new Matepair_t);
-  obps [OVERLAP]    = obpair (new Bank_t (OVERLAP),    new Overlap_t);
-  obps [KMER]       = obpair (new Bank_t (KMER),       new Kmer_t);
-  obps [CONTIG]     = obpair (new Bank_t (CONTIG),     new Contig_t);
-  obps [CONTIGLINK] = obpair (new Bank_t (CONTIGLINK), new ContigLink_t);
-  obps [CONTIGEDGE] = obpair (new Bank_t (CONTIGEDGE), new ContigEdge_t);
-  obps [SCAFFOLD]   = obpair (new Bank_t (SCAFFOLD),   new Scaffold_t);
+  obps [M_UNIVERSAL]  = obpair (new Bank_t (M_UNIVERSAL),  new Universal_t);
+  obps [M_SEQUENCE]   = obpair (new Bank_t (M_SEQUENCE),   new Sequence_t);
+  obps [M_LIBRARY]    = obpair (new Bank_t (M_LIBRARY),    new Library_t);
+  obps [M_FRAGMENT]   = obpair (new Bank_t (M_FRAGMENT),   new Fragment_t);
+  obps [M_READ]       = obpair (new Bank_t (M_READ),       new Read_t);
+  obps [M_MATEPAIR]   = obpair (new Bank_t (M_MATEPAIR),   new Matepair_t);
+  obps [M_OVERLAP]    = obpair (new Bank_t (M_OVERLAP),    new Overlap_t);
+  obps [M_KMER]       = obpair (new Bank_t (M_KMER),       new Kmer_t);
+  obps [M_CONTIG]     = obpair (new Bank_t (M_CONTIG),     new Contig_t);
+  obps [M_CONTIGLINK] = obpair (new Bank_t (M_CONTIGLINK), new ContigLink_t);
+  obps [M_CONTIGEDGE] = obpair (new Bank_t (M_CONTIGEDGE), new ContigEdge_t);
+  obps [M_SCAFFOLD]   = obpair (new Bank_t (M_SCAFFOLD),   new Scaffold_t);
 
 
   //-- Parse the command line arguments
@@ -119,8 +117,8 @@ int main (int argc, char ** argv)
     //-- Compress RED and SEQ if option is turned on
     if ( OPT_Compress )
       {
-	((Read_t *)(obps [READ] . obj)) -> compress( );
-	((Sequence_t *)(obps [SEQUENCE] . obj)) -> compress( );
+	((Read_t *)(obps [M_READ] . obj)) -> compress( );
+	((Sequence_t *)(obps [M_SEQUENCE] . obj)) -> compress( );
       }
 
     //-- Open the message file
@@ -188,6 +186,7 @@ int main (int argc, char ** argv)
 	      //-- Append a new object to the bank
 	      obp . bank -> append (*(obp . obj));
 	      break;
+
 	    case E_DELETE:
 	      //-- Flag an existing object for removal from the bank
 	      if ( obp . obj -> getIID( ) != NULL_ID )
@@ -197,6 +196,7 @@ int main (int argc, char ** argv)
 	      else
 		AMOS_THROW_ARGUMENT ("Cannot remove object w/o IID or EID");
 	      break;
+
 	    case E_REPLACE:
 	      //-- Replace an existing object in the bank
 	      if ( obp . obj -> getIID( ) != NULL_ID )
@@ -207,6 +207,7 @@ int main (int argc, char ** argv)
 	      else
 		AMOS_THROW_ARGUMENT ("Cannot edit object w/o IID or EID");
 	      break;
+
 	    default:
 	      AMOS_THROW_IO ("Unrecognized action field");
 	    }

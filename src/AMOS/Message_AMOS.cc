@@ -9,7 +9,6 @@
 
 #include "Message_AMOS.hh"
 using namespace AMOS;
-using namespace Message_k;
 using namespace std;
 
 
@@ -22,7 +21,7 @@ bool Message_t::read (istream & in)
   uint8_t i;
   char ch, chp, chpp;
   string data;
-  string name (NCODE, NULL_CHAR);
+  string name (NCODE_SIZE, NULL_CHAR);
 
   //-- Search for the beginning of the message
   while ( in . get( ) != '{' )
@@ -35,10 +34,10 @@ bool Message_t::read (istream & in)
   try {
 
     //-- Get the type name
-    for ( i = 0; i < NCODE; i ++ )
+    for ( i = 0; i < NCODE_SIZE; i ++ )
       name [i] = in . get( );
     in . ignore( );
-    setMessageCode (name);    // will assert that name . size == NCODE
+    setMessageCode (name);    // will assert that name . size == NCODE_SIZE
 
     //-- Until end of message
     while (true)
@@ -62,7 +61,7 @@ bool Message_t::read (istream & in)
 	  }
 
 	//-- Get the field name
-	for ( i = 0; i < NCODE; i ++ )
+	for ( i = 0; i < NCODE_SIZE; i ++ )
 	  name [i] = in . get( );
 	ch = in . get( );
 
@@ -167,7 +166,7 @@ NCode_t Message_t::skip (istream & in) // static const
 {
   NCode_t retcode;
   char ch, chp, chpp;
-  string name (NCODE, NULL_CHAR);
+  string name (NCODE_SIZE, NULL_CHAR);
 
   //-- Search for the beginning of the message
   while ( in . get( ) != '{' )
@@ -177,7 +176,7 @@ NCode_t Message_t::skip (istream & in) // static const
   try {
 
     //-- Get the type name
-    for ( int i = 0; i < NCODE; i ++ )
+    for ( int i = 0; i < NCODE_SIZE; i ++ )
       name [i] = in . get( );
     in . ignore( );
     retcode = Encode (name);
@@ -203,7 +202,7 @@ NCode_t Message_t::skip (istream & in) // static const
 	  }
 
 	//-- Get the field name
-	in . ignore (NCODE);
+	in . ignore (NCODE_SIZE);
 
 	//-- Throw if bad format
 	if ( in . get( ) != ':' )

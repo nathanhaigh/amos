@@ -16,7 +16,6 @@
 #include <unistd.h>
 using namespace std;
 using namespace AMOS;
-using namespace Bank_k;
 
 
 
@@ -66,18 +65,18 @@ int main (int argc, char ** argv)
     if ( ! OPT_IsExtractCodes )
       {
 	//-- The KNOWN types to pull from the banks
-	OPT_ExtractCodes . push_back (UNIVERSAL);
-	OPT_ExtractCodes . push_back (SEQUENCE);
-	OPT_ExtractCodes . push_back (LIBRARY);
-	OPT_ExtractCodes . push_back (FRAGMENT);
-	OPT_ExtractCodes . push_back (READ);
-	OPT_ExtractCodes . push_back (MATEPAIR);
-	OPT_ExtractCodes . push_back (OVERLAP);
-	OPT_ExtractCodes . push_back (KMER);
-	OPT_ExtractCodes . push_back (CONTIG);
-	OPT_ExtractCodes . push_back (CONTIGLINK);
-	OPT_ExtractCodes . push_back (CONTIGEDGE);
-	OPT_ExtractCodes . push_back (SCAFFOLD);
+	OPT_ExtractCodes . push_back (Universal_t::NCODE);
+	OPT_ExtractCodes . push_back (Sequence_t::NCODE);
+	OPT_ExtractCodes . push_back (Library_t::NCODE);
+	OPT_ExtractCodes . push_back (Fragment_t::NCODE);
+	OPT_ExtractCodes . push_back (Read_t::NCODE);
+	OPT_ExtractCodes . push_back (Matepair_t::NCODE);
+	OPT_ExtractCodes . push_back (Overlap_t::NCODE);
+	OPT_ExtractCodes . push_back (Kmer_t::NCODE);
+	OPT_ExtractCodes . push_back (Contig_t::NCODE);
+	OPT_ExtractCodes . push_back (ContigLink_t::NCODE);
+	OPT_ExtractCodes . push_back (ContigEdge_t::NCODE);
+	OPT_ExtractCodes . push_back (Scaffold_t::NCODE);
       }
 
     //-- Iterate through each bank and dump its map

@@ -51,20 +51,6 @@ protected:
 
 public:
 
-  //--------------------------------------------------- NCode ------------------
-  //! \brief Get the AMOS NCode type identifier (statically)
-  //!
-  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Example_t::NCode( ))'
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
-  static NCode_t NCode ( )
-  {
-    return Bank_k::EXAMPLE;
-  }
-
-
   //--------------------------------------------------- Example_t --------------
   //! \brief Constructs an empty Example_t object
   //!
@@ -103,7 +89,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Example_t::NCode( );
+    return Encode ("EXX");
   }
 
 
