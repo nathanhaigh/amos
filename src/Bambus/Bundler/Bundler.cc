@@ -228,6 +228,7 @@ int main(int argc, char *argv[])
 	    minRange = sz - 3 * sd;
 	  if (sz + 3 * sd < maxRange)
 	    maxRange = sz + 3 * sd;
+	  cerr << "Clique range = " << minRange << ", " << maxRange << endl;
 	}
 	// now minRange-maxRange is the range of the clique.
 	// we can mark all links that end before minRange or start after
@@ -253,6 +254,10 @@ int main(int argc, char *argv[])
 	for (list<LinkMap_t::iterator>::iterator 
 	       bi = adjList[at->first].begin();
 	     bi != adjList[at->first].end(); bi++){
+	  cerr << "Link " << (**bi).second.getComment() << " (" 
+	       << (**bi).second.getSize() << ", " 
+	       << (**bi).second.getSD() << ")"
+	       << " is just right" << endl;
 	  bestList[at->first].push_back(*bi);
 	}
       }// if enough links exist
@@ -280,7 +285,7 @@ int main(int argc, char *argv[])
       
       p += (**ni).second.getSize() / tmp;
       q += 1 / tmp; 
-      cerr << "p is " << p << " and q is " << q << endl;
+      //      cerr << "p is " << p << " and q is " << q << endl;
     }
     
 
