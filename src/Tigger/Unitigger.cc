@@ -550,7 +550,13 @@ Contig* Unitigger::walk(INode* p_node) {
 
     while(edge != NULL) {
       node2 = edge->opposite(node2);
-      edge = walk_edge(edge, node2, ctg);
+      if(node2 != p_node) {
+	//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
+	edge = walk_edge(edge, node2, ctg);
+      } else {
+	edge = NULL;
+	smatch = 0;
+      }
     }
   }
 
@@ -561,7 +567,12 @@ Contig* Unitigger::walk(INode* p_node) {
 
     while(edge != NULL) {
       node2 = edge->opposite(node2);
-      edge = walk_edge(edge, node2, ctg);
+      if(node2 != p_node) {
+	//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
+	edge = walk_edge(edge, node2, ctg);
+      } else {
+	edge = NULL;
+      }
     }
   }
 
