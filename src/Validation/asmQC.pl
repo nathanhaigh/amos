@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl
 
+#asmQC.pl      - checks mate-pair satisfiability and produces both reports and
+# optionally a .cam file
 
 use TIGR::Foundation;
 use DBI;

@@ -1,24 +1,19 @@
 #!/usr/local/bin/perl
 
-# fixlib.pl     - recomputes library sizes based on reads within contigs
-
 use TIGR::Foundation;
 use TIGR::AsmLib;
 use XML::Parser;
-use Statistics::Descriptive;
+use POSIX qw(tmpnam);
+$ENV{TMPDIR} = ".";
 
 use strict;
 
-my $BUCKETSIZE = 100;
-my $MEANSTOP = 50;
-my $SDSTOP = 50;
-
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    fixlib (-m mates|-x traceinfo.xml|-f frg) 
+    toAmos (-m mates|-x traceinfo.xml|-f frg) 
            (-c contig|-a asm|-ta tasm|-ace ace) 
-           [-circ] -o outfile 
-           [-i insertfile] [-map dstmap]
+           -o outfile 
+           [-i insertfile | -map dstmap]
 ~;
 
 my $base = new TIGR::Foundation();
@@ -37,7 +32,6 @@ my $frgfile;
 my $asmfile;
 my $tasmfile;
 my $acefile;
-my $circular;
 my $outfile;
 my $insertfile;
 my $libmap;
@@ -49,7 +43,6 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "a=s"   => \$asmfile,
 				 "ta=s"  => \$tasmfile,
 				 "ace=s" => \$acefile,
-				 "circ"  => \$circular,
 				 "o=s"   => \$outfile,
 				 "i=s"   => \$insertfile,
 				 "map=s" => \$libmap);
@@ -78,6 +71,13 @@ my %libnames;   # lib id to lib name
 my $minSeqId = 1;  # where to start numbering reads
 
 my $outprefix;
+
+my $tmprefix = tmpnam();
+
+open(TMPSEQ, ">$tmprefix.seq") 
+    || $base->bail("Cannot open $tmprefix.seq: $!\n");
+open(TMPCTG, ">$tmprefix.ctg") 
+    || $base->bail("Cannot open $tmprefix.ctg: $!\n");
 
 #first get the contig information
 
@@ -153,236 +153,181 @@ if (defined $libmap){
     parseLibMapFile(\*IN);
     close(IN);
 }
+close(TMPSEQ);
+close(TMPCTG);
+
+## here's where we output all the stuff
+
+# first print out a pretty header message
+my $date = localtime();
+
+print OUT "{UNV\n";
+print OUT "act:A\n";
+print OUT "eid:1\n";
+print OUT "com:\n";
+print OUT "$date\n";
+print OUT ".\n";
+print OUT "}\n";
 
 
-# now it's time to figure it all out.
-# for each insert with a defined size range:
-#   if both ends are in the same contig
-#       add to library size array
-#   if ends are in different contigs
-#       add them to list of linking clones
-#
-# for each pair of contigs linked by clones do in order of insert sizes:
-#   find the average insert size (assuming any size gap)
-#   add the deviations to a deviation array for the library
-#
-# for all arrays, screen out observations outside SOME RANGE
-# 
-# for each library, compute a mean (based on inserts in the same contig) and
-# a standard deviation (based on all inserts, both linking and within the same
-# contig.
-my $genomesize = 0;
-while (my ($ctg, $len) = each %contigs){
-    $genomesize += $len;
+# then print out one library at a time
+while (my ($lib, $range) = each %libraries){
+    my ($mean, $sd) = split(' ', $range);
+    print OUT "{LIB\n";
+    print OUT "act:A\n";
+    print OUT "eid:$lib\n";
+    if (exists $libnames{$lib}){
+	print OUT "com:\n$libnames{$lib}\n.\n";
+    }
+    print OUT "{DST\n";
+    print OUT "mea:$mean\n";
+    print OUT "std:$sd\n";
+    print OUT "skw:0\n";
+    print OUT "}\n";
+    print OUT "}\n";
 }
 
-my $nsingle = 0;
-my $nlinking = 0;
-my $nori = 0;
-my $nlen = 0;
+# then all the inserts
+while (my ($ins, $lib) = each %seenlib){
+    print OUT "{FRG\n";
+    print OUT "act:A\n";
+    print OUT "eid:$ins\n";
+#    print OUT "com:\n";
+    print OUT "lib:$lib\n";
+    print OUT "typ:I\n";
+#   print OUT "src:0\n";
+    print OUT "}\n";
+}
 
-my %percontig;
-my %contigins;
-my %insertlen;
-my $it;
+# then all the reads
+open(TMPSEQ, "$tmprefix.seq") 
+    || $base->bail("Cannot open $tmprefix.seq: $!\n");
 
-while (my ($lib, $sz) = each %libraries){
-    my ($mean, $std) = split(" ", $sz);
-
-    %percontig = ();
-    %contigins = ();
-    %insertlen = ();
-
-    my $stat = Statistics::Descriptive::Full->new();
-
-    if ($insertlib{$lib} =~ /^\s*$/){
-	next; # empty library
-    }
-
-    my @inserts = split(' ', $insertlib{$lib});
-
-    if (exists $libnames{$lib}){
-	$lib = $libnames{$lib};
-    }
-
-    print STDERR ">$lib\n";
-
-    print "library $lib\n";
-    print "\tmean=$mean sd=$std\n"; 
-
-    print OUT "[library_${lib}_initial]\n";
-    print OUT "mean=$mean\n";
-    print OUT "sd=$std\n";
-
-    for (my $i = 0; $i <= $#inserts; $i++){
-	my $ins = $inserts[$i];
-	
-	if (exists $forw{$ins} && exists $rev{$ins}){
-	    if (! exists $seqcontig{$forw{$ins}} ||
-		! exists $seqcontig{$rev{$ins}}) {
-		$nsingle++;
-		next; # if reads are not in contigs we don't care
-	    }
-#	    print "$seqnames{$forw{$ins}} $seqnames{$rev{$ins}}\n";
-	    if ($seqcontig{$forw{$ins}} ne $seqcontig{$rev{$ins}}){
-#		print "linking\n";
-		$nlinking++;
-		next; # ignore for now
-	    }
-
-	    print STDERR "seqcontig is $seqcontig{$forw{$ins}} - $seqcontig{$rev{$ins}}\n";
-
-	    my $contiglen = $contigs{$seqcontig{$forw{$ins}}};
-	    $percontig{$seqcontig{$forw{$ins}}}++;
-	    $contigins{$seqcontig{$forw{$ins}}} .= "$ins ";
-	    # here all the inserts have both mates in the same contig
-	    my $f = $forw{$ins};
-	    my $r = $rev{$ins};
-	    my ($fl, $fr) = split(" ", $asm_range{$f});
-	    my ($sfl, $sfr) = split(" ", $seq_range{$f});
-	    my ($rl, $rr) = split(" ", $asm_range{$r});
-	    my ($srl, $srr) = split(" ", $seq_range{$r});
-
-	    print STDERR "$seqnames{$f} $fl $fr\n";
-	    print STDERR "$seqnames{$r} $rl $rr\n";
-	    
-	    my $ef; # end of forward read
-	    my $er; 
-	    my $of; # orientation of forward read
-	    my $or;
-	    
-	    if ($sfl < $sfr){
-		$of = 1;
-		$ef = $fl;
-	    } else {
-		$of = -1;
-		$ef = $fr;
-	    }
-
-	    if ($srl < $srr){
-		$or = 1;
-		$er = $rl;
-	    } else {
-		$or = -1;
-		$er = $rr;
-	    }
-
-	    if ($ef > $er){ # swap the values, keep forward toward the beggining of the contig
-		my $tmp = $ef; $ef = $er; $er = $tmp;
-		$tmp = $of; $of = $or; $or = $tmp;
-	    }
-
-	    if ($of == 1 && $or == -1){ # proper orientation
-		$nlen++;
-#		$stat->add_data($er - $ef);
-		$insertlen{$ins} = $er - $ef;
-		print STDERR "len $er $ef ", $er - $ef, "\n";
-	    } elsif ($circular && $of == -1 && $or == 1){
-		$nlen++;
-#		$stat->add_data($ef + $contiglen - $er);
-		$insertlen{$ins} = $ef + $contiglen - $er;
-		print STDERR "len $er $ef $contiglen ", $ef + $contiglen - $er, "\n"; 
-	    } else {
-		$nori++;
-	    }
-	} else {
-	    $nsingle++;
-#	    print "ONE\n";
+while (<TMPSEQ>){
+    if (/^\#(\d+)/){
+	my $rid = $1;
+	print OUT "{RED\n";
+	print OUT "act:A\n";
+	print OUT "eid:$rid\n";
+	print OUT "com:\n";
+	print OUT "$seqnames{$rid}\n";
+	print OUT ".\n";
+	print OUT "seq:\n";
+	$_ = <TMPSEQ>;
+	while ($_ !~ /^\#/){
+	    print OUT;
+	    $_ = <TMPSEQ>;
 	}
-    }  # for each insert
-
-    
-    while (my ($i, $l) = each %insertlen){
-	$stat->add_data($l);
-    }
-
-    my $newmean;
-    my $newstd;
-    my $nout;
-    if ($stat->count() < 2) {
-	$newmean = 0;
-	$newstd = 0;
-	$nout = 0;
+	print OUT ".\n";
+	print OUT "qlt:\n";
+	$_ = <TMPSEQ>;
+	while ($_ !~ /^\#/){
+	    print OUT;
+	    $_ = <TMPSEQ>;
+	}
+	print OUT ".\n";
+	if  (! exists $seqinsert{$rid}){
+	    die("Cannot find insert for $rid ($seqnames{$rid})\n");
+	}
+	print OUT "frg:$seqinsert{$rid}\n";
+	my ($cll, $clr) = split(' ', $seq_range{$rid});
+	print OUT "clr:$cll,$clr\n";
+	print OUT "vcr:$cll,$clr\n";
+	print OUT "qcr:$cll,$clr\n";
+	print OUT "}\n";
     } else {
-	my ($low, $lowidx) = $stat->percentile(2);
-	my ($high, $highidx) = $stat->percentile(98);
-	
-	my @data = $stat->get_data();
-	print OUT "hist=<<EOH\n";
-	print OUT join("\n", @data);
-	print OUT "\nEOH\n";
-	$nout = $lowidx + $#data - $highidx;
-    
-	$stat = Statistics::Descriptive::Full->new();
-	$stat->add_data(@data[$lowidx..$highidx]); # trim the outliers
-
-	$newmean = $stat->mean();
-	$newstd = $stat->standard_deviation();
+	$base->bail("Weird error at line $. in $tmprefix.seq");
     }
-    print OUT "\n";
-#    my $nprobm = $newmean;
-#    my $nprobsd = $newstd;
-    my $nartm = $newmean;
-    my $nartsd = $newstd;
-    my $artstat;
-    my $artmean; my $artstd;
-    for ($it = 0; $it <= 5; $it++){
-#	my ($newestmean, $neweststd) = contigbyNum($newmean, $newstd);
-#	my ($probmean, $probstd) = contigbyProb($nprobm, $nprobsd);
-	
-	($artmean, $artstd, $artstat) 
-	    = contigbyArt($nartm, $nartsd, \@inserts);
-	
-	print ">$it\n";
-	print "\tinserts all=", 
-	$#inserts + 1, 
-	" nomate=$nsingle linking=$nlinking ori=$nori len=$nout good=$nlen\n";
-	printf("\tnewmean=%.2f newsd=%.2f\n", $stat->mean(), 
-	       $stat->standard_deviation());
-	printf("\t5mean=%.2f\n", $stat->trimmed_mean(0.05));
-	printf("\tmin=%d max=%d median=%d\n", $stat->min(), $stat->max(), $stat->median());
-#	printf("\tnewestmean=%.2f newestsd=%.2f\n", $newestmean, $neweststd);
-#	printf("\tprobmean=%.2f probsd=%.2f\n", $probmean, $probstd);
-	printf("\tartmean=%.2f artsd=%.2f\n", $artmean, $artstd);
-	
-#	my %dist = $stat->frequency_distribution(($stat->max() - $stat->min()) / 10);
-#	for (sort {$a <=> $b} keys %dist){
-#	    print STDERR "$_ $dist{$_}\n";
-#	}
-#	if ($newestmean != 0){
-#	    $newmean = $newestmean;
-#	    $newstd = $neweststd;
-#	}
-#	if ($probmean != 0) {
-#	    $nprobm = $probmean;
-#	    $nprobsd = $probstd;
-#	}
+}
+close(TMPSEQ);
 
-	if ($artmean == 0 ||
-	    (abs($artmean - $nartm) < $MEANSTOP &&
-	     abs($nartsd - $artstd) < $SDSTOP)) {
-	    last;
+unlink("$tmprefix.seq") || $base->bail("Cannot remove $tmprefix.seq: $!\n");
+
+# then all the links
+
+my $linkId = 0;
+while (my ($ins, $rd) = each %forw){
+    if (exists $rev{$ins}){
+	$linkId++;
+	print OUT "{MTP\n";
+#	print OUT "act:A\n";
+	print OUT "eid:$linkId\n";
+	print OUT "rd1:$forw{$ins}\n";
+	print OUT "rd2:$rev{$ins}\n";
+	print OUT "typ:E\n";
+	print OUT "}\n";
+    }
+}
+
+# then all the contigs
+
+open(TMPCTG, "$tmprefix.ctg") 
+    || $base->bail("Cannot open $tmprefix.ctg: $!\n");
+
+while (<TMPCTG>){
+    if (/^\#(\d+)/){
+	my $cid = $1;
+	print OUT "{CTG\n";
+	print OUT "act:A\n";
+	print OUT "eid:$cid\n";
+	print OUT "seq:\n";
+	$_ = <TMPCTG>;
+	while ($_ !~ /^\#/){
+	    print OUT;
+	    $_ = <TMPCTG>;
 	}
-
-	if ($artmean != 0){
-	    $nartm = $artmean;
-	    $nartsd = $artstd;
+	print OUT ".\n";
+	print OUT "qlt:\n";
+	$_ = <TMPCTG>;
+	while ($_ !~ /^\#/){
+	    print OUT;
+	    $_ = <TMPCTG>;
 	}
+	print OUT ".\n";
+#	print OUT "ply:\n";
+#	print OUT ".\n";
+	while (/^\#(\d+)/){
+	    my $rid = $1;
+	    my ($len, $ren) = split(' ', $asm_range{$rid});
+	    my ($cl, $cr) = split(' ', $seq_range{$rid});
+	    if ($len > $ren){
+		$len = $ren;
+		$ren = $cr;
+		$cr = $cl;
+		$cl = $ren;
+	    }
+	    print OUT "{TLE\n";
+	    print OUT "src:$rid\n";
+	    print OUT "off:$len\n";
+	    print OUT "clr:$cl,$cr\n";
+	    my $deltastring;
+	    $_ = <TMPCTG>;
+	    while ($_ !~ /^\#/){
+		$deltastring .= $_;
+		$_ = <TMPCTG>;
+	    }
+	    if ($deltastring !~ /^\s*$/){
+		print OUT "del:\n";
+		print OUT $deltastring;
+		print OUT ".\n";
+	    }
+	    print OUT "}\n";
+	}
+	print OUT "}\n";
+    } else {
+	$base->bail("Weird error at line $. in $tmprefix.seq");
     }
+}
 
-    print OUT "[library_${lib}_final]\n";
-    print OUT "mean=$artmean\n";
-    print OUT "sd=$artstd\n";
-    if ($artmean != 0){
-	print OUT "median=", $artstat->median(), "\n";
-	my @data = $artstat->get_data();
-	print OUT "hist=<<EOH\n";
-	print OUT join("\n", @data);
-	print OUT "\nEOH\n";
-    }
-    print OUT "\n";
-    
-} # for each library
+close(TMPCTG);
+
+unlink("$tmprefix.ctg") || $base->bail("Cannot remove $tmprefix.ctg: $!\n");
+
+# all the contig links
+
+# all the contig edges
+
+# and all the scaffolds
 
 close(OUT);
 
@@ -393,227 +338,6 @@ exit(0);
 
 ###############################################################################
 
-sub contigbyNum
-{
-    my $inmean = shift;
-    my $insd = shift;
-    
-    my $mean;
-    my $sd;
-
-    my $req_obs = ($insd / 500) ** 2;
-
-    my $stat = Statistics::Descriptive::Full->new();
-    
-    while (my ($ctg, $nobs) = each %percontig){
-	my $testlen = $inmean + 3 * $insd;
-	my $ctglen = $contigs{$ctg};
-	my $ratio = ($ctglen > $testlen) ? 1.0 * (($ctglen - $testlen) / $genomesize) : 0;
-	$ratio /= ($nobs / ($nlinking + $nlen));
-	if ($ratio > 0.95){
-	    my @ins = split(' ', $contigins{$ctg});
-	    for (my $i = 0; $i <= $#ins; $i++){
-		if (exists $insertlen{$ins[$i]}){
-		    $stat->add_data($insertlen{$ins[$i]});
-		}
-	    }
-	}
-	print STDERR "testmean $inmean testlen $testlen contigsize $ctglen ratio $ratio nobs = $nobs\n";
-    }
-
-    if ($stat->count() < $req_obs){
-	print STDERR "num too few observations ", $stat->count(), " < $req_obs\n";
-	return (0, 0);
-    } else {
-	my ($low, $lowidx) = $stat->percentile(2);
-	my ($high, $highidx) = $stat->percentile(98);
-	
-	my @data = $stat->get_data();
-	
-	$stat = Statistics::Descriptive::Full->new();
-	$stat->add_data(@data[$lowidx..$highidx]); # trim the outliers
-	return ($stat->mean(), $stat->standard_deviation());
-    }
-} # contigbyNum
-
-sub contigbyProb
-{
-    my $inmean = shift;
-    my $insd = shift;
-    
-    my $mean;
-    my $sd;
-
-    my $req_obs = ($insd / 500) ** 2;
-    my $stat = Statistics::Descriptive::Full->new();
-    
-    while (my ($ctg, $nobs) = each %percontig){
-	my $testlen = $inmean + 3 * $insd;
-	my $ctglen = $contigs{$ctg};
-	my $ratio = ($ctglen > $testlen) ? 1.0 * ($ctglen - $testlen) : 0;
-	my $probsum = 0.0;
-	for (my $l = 0; $l <$ctglen; $l++){
-	    $probsum += 1.0 * ($ctglen - $l) * bell($inmean, $insd, $l);
-	}
-	$ratio /= $probsum;
-	if ($ratio > 0.95){
-	    my @ins = split(' ', $contigins{$ctg});
-	    for (my $i = 0; $i <= $#ins; $i++){
-		if (exists $insertlen{$ins[$i]}){
-		    $stat->add_data($insertlen{$ins[$i]});
-		}
-	    }
-	}
-	print STDERR "Prob $ctg testmean $inmean testlen $testlen contigsize $ctglen ratio $ratio nobs = $nobs\n";
-    }
-
-    if ($stat->count() < $req_obs){
-	print STDERR "prob too few observations ", $stat->count(), " < $req_obs\n";
-	return (0, 0);
-    } else {
-	my ($low, $lowidx) = $stat->percentile(2);
-	my ($high, $highidx) = $stat->percentile(98);
-	
-	my @data = $stat->get_data();
-	
-	$stat = Statistics::Descriptive::Full->new();
-	$stat->add_data(@data[$lowidx..$highidx]); # trim the outliers
-
-	open(OUT, ">$outprefix.Prob.$it") || die ("cannot open $outprefix.Prob.$it: $!\n");
-#	my %dist = $stat->frequency_distribution(($stat->max() - $stat->min()) / 1000);
-#	for (sort {$a <=> $b} keys %dist){
-#	    print OUT "$_ $dist{$_}\n";
-#	}
-	for (my $d = 0; $d <= $#data; $d++){
-	    print OUT "$data[$d]\n";
-	}
-	close(OUT);
-
-
-	return ($stat->mean(), $stat->standard_deviation());
-    }
-} # contigbyProb
-
-
-sub contigbyArt
-{
-    my $inmean = shift;
-    my $insd = shift;
-    my $inserts = shift;
-    
-    my $req_obs = ($insd / 500) ** 2;
-    $req_obs = ($req_obs > 10) ? $req_obs : 10; # pick at least ten
-    
-    my $stat = Statistics::Descriptive::Full->new();
-
-    for (my $i = 0; $i <= $#$inserts; $i++){
-	my $ins = $$inserts[$i];
-	
-	if (exists $forw{$ins} && exists $rev{$ins}){
-	    if (! exists $seqcontig{$forw{$ins}} ||
-		! exists $seqcontig{$rev{$ins}}) {
-		next; # if reads are not in contigs we don't care
-	    }
-	    if ($seqcontig{$forw{$ins}} ne $seqcontig{$rev{$ins}}){
-		next; # ignore for now
-	    }
-
-	    my $contiglen = $contigs{$seqcontig{$forw{$ins}}};
-#	    $percontig{$seqcontig{$forw{$ins}}}++;
-#	    $contigins{$seqcontig{$forw{$ins}}} .= "$ins ";
-	    # here all the inserts have both mates in the same contig
-	    my $f = $forw{$ins};
-	    my $r = $rev{$ins};
-	    my ($fl, $fr) = split(" ", $asm_range{$f});
-	    my ($sfl, $sfr) = split(" ", $seq_range{$f});
-	    my ($rl, $rr) = split(" ", $asm_range{$r});
-	    my ($srl, $srr) = split(" ", $seq_range{$r});
-
-	    my $ef; # end of forward read
-	    my $er; 
-	    my $of; # orientation of forward read
-	    my $or;
-	    
-	    if ($sfl < $sfr){
-		$of = 1;
-		$ef = $fl;
-	    } else {
-		$of = -1;
-		$ef = $fr;
-	    }
-
-	    if ($srl < $srr){
-		$or = 1;
-		$er = $rl;
-	    } else {
-		$or = -1;
-		$er = $rr;
-	    }
-
-	    if ($ef > $er){ # swap the values, keep forward toward the beggining of the contig
-		my $tmp = $ef; $ef = $er; $er = $tmp;
-		$tmp = $of; $of = $or; $or = $tmp;
-	    }
-
-	    if ($of == 1 && $or == -1){ # proper orientation
-		if (! $circular && ($ef + 3 * $insd > $contiglen ||
-		    $er - 3 * $insd < 0)){ # skip inserts that could fall off
-		    next;
-		} else {
-		    $stat->add_data($er - $ef);
-		    if ($er < $ef) {
-			print "Weird: $seqnames{$f} - $seqnames{$r}\n";
-		    }
-		}
-	    } elsif ($circular && $of == -1 && $or == 1){
-		$stat->add_data($ef + $contiglen - $er);
-		if ($er > $contiglen) {
-		    print "Weird c: $seqnames{$f} - $seqnames{$r}\n";
-		}
-	    }
-	}
-    }  # for each insert
-    
-    if ($stat->count() < $req_obs){
-	print STDERR "too few observations ", $stat->count(), " < $req_obs\n";
-	return (0, 0);
-    } else {
-	my ($low, $lowidx) = $stat->percentile(2);
-	my ($high, $highidx) = $stat->percentile(98);
-	
-	my @data = $stat->get_data();
-	
-	$stat = Statistics::Descriptive::Full->new();
-	$stat->add_data(@data[$lowidx..$highidx]); # trim the outliers
-	if ($stat->count() < $req_obs){
-	    print STDERR "too few observations after trimming ", $stat->count(), " < $req_obs\n";
-	    return (0, 0);
-	}
-	    
-#	open(OUT, ">$outprefix.Art.$it") || die ("cannot open $outprefix.Art.$it: $!\n");
-#	my %dist = $stat->frequency_distribution(($stat->max() - $stat->min()) / 1000);
-#	for (sort {$a <=> $b} keys %dist){
-#	    print OUT "$_ $dist{$_}\n";
-#	}
-#	for (my $d = 0; $d <= $#data; $d++){
-#	    print OUT "$data[$d]\n";
-#	}
-#	close(OUT);
-
-	return ($stat->mean(), $stat->standard_deviation(), $stat);
-    }
-}
-
-sub bell
-{
-    my $mean = shift;
-    my $sd = shift;
-    my $x = shift;
-
-    my $PI = 3.141592;
-
-    return 1.0 / (sqrt(2 * $PI) * $sd) * exp(-($x - $mean) ** 2 / 2 / $sd ** 2);
-} # bell
 
 # LIBRARY NAME PARSING
 sub parseInsertFile {
@@ -683,6 +407,11 @@ sub parseFrgFile {
 	    }
 	    my ($seql, $seqr) = split(',', $$fields{clr});
 	    $seq_range{$id} = "$seql $seqr";
+	    print TMPSEQ "#$id\n";
+	    print TMPSEQ "$$fields{seq}";
+	    print TMPSEQ "#\n";
+	    print TMPSEQ "$$fields{qlt}";
+	    print TMPSEQ "#\n";
 	    next;
 	}
 	
@@ -701,6 +430,19 @@ sub parseFrgFile {
 	    $forw{$id} = $$fields{fg1};
 	    $rev{$id} = $$fields{fg2};
 	    next;
+	}
+    }
+
+# make sure all reads have an insert
+    my $ll = $minSeqId++;
+    $libraries{$ll} = "0 0"; # dummy library for unmated guys
+    while (my ($sid, $sname) = each %seqnames){
+	if (! exists $seqinsert{$sid}){
+	    my $id = $minSeqId++;
+	    $seqinsert{$sid} = $id;
+	    $seenlib{$id} = $ll;
+	    $insertlib{$ll} .= "$id ";
+	    $forw{$id} = $sid;
 	}
     }
 } #parseFrgFile
@@ -866,6 +608,12 @@ sub parseAsmFile {
 	    my $consensus = $$fields{cns};
 	    my @consensus = split('\n', $consensus);
 	    $consensus = join('', @consensus);
+
+	    print TMPCTG "#$id\n";
+	    print TMPCTG $$fields{cns};
+	    print TMPCTG "#\n";
+	    print TMPCTG $$fields{qlt};
+	    
 	    
 	    $#offsets = length($consensus) - 1;
 
@@ -878,56 +626,24 @@ sub parseAsmFile {
 		$offsets[$i] = $coord;
 	    }
 
-
-#           my @gaps;
-#	    while ($$fields{cns} =~ /-/g){
-#		$contiglen--;
-#		push(@gaps, $-[0]);
-#	    }
-
 	    $contigs{$id} = $contiglen;
-
-#	    $contigcons{$id} = $consensus;
-#	    $contigcons{$id} =~ s/-//g;
 
 	    for (my $i = 0; $i <= $#$recs; $i++){
 		my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
 		if ($sid eq "MPS"){
 		    my $fid = getCAId($$sfs{mid});
 		    my ($cll, $clr) = split(' ', $seq_range{$fid});
-		    
+
+		    print TMPCTG "#$fid\n";
+		    print TMPCTG $$sfs{del};
 		    $seqcontig{$fid} = $id;
 		    $contigseq{$id} .= "$fid ";
 		    
 		    my ($asml, $asmr) = split(',', $$sfs{pos});
-		    if ($asml > $asmr) {
-			my $tmp = $cll;
-			$cll = $clr;
-			$clr = $tmp;
-			$tmp = $asml;
-			$asml = $asmr;
-			$asmr = $tmp;
-			$seq_range{$fid} = "$cll $clr";
-		    }
-
-		    $asml = $offsets[$asml]; $asml--;
-		    $asmr = $offsets[$asmr - 1];
-
-# 		    my $g = 0;
-# 		    while ($g <= $#gaps && $gaps[$g] < $asml){
-# 			$g++;
-# 		    } 
-# 		    $asml -= $g;
-		    
-# 		    while ($g <= $#gaps && $gaps[$g] < $asmr){
-# 			$g++;
-# 		    } 
-
-# 		    $asmr -= $g;
-
 		    $asm_range{$fid} = "$asml $asmr";
 		}
 	    }
+	    print TMPCTG "#\n";
 	} # if type eq CCO
     }
 } # parseAsmFile
@@ -955,7 +671,6 @@ sub parseTAsmFile {
 	    $ctg = $1;
 	    $contigs{$ctg} = $len;  # here we assume that length 
                                     # was already computed
-#            $contigcons{$ctg} = $consensus;
 	    next;
 	}
 	if (/^seq_name\s+(\S+)/){
@@ -1040,7 +755,6 @@ sub parseACEFile {
 		push(@gaps, $gap + 1);
 		$gap = index($seq, "-", $gap + 1);
 	    }
-#	    $contigcons{$contigName} = $seq;
 	    $contigs{$contigName} = $contigLen;
 	    
 	    next;
@@ -1146,7 +860,6 @@ sub parseContigFile {
 	if (/^\#\#(\S+) \d+ (\d+)/ ){
 	    if (defined $consensus){
 		$consensus =~ s/-//g;
-#		$contigcons{$ctg} = $consensus;
 	    }
 	    $consensus = "";
 	    $ctg = $1;
@@ -1189,7 +902,6 @@ sub parseContigFile {
     }
     if (defined $consensus){
 	$consensus =~ s/-//g;
-#	$contigcons{$ctg} = $consensus;
     }
 
 } # parseContigFile

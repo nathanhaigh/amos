@@ -140,7 +140,7 @@ public:
 
     Size_t tHang = aHang_m; aHang_m = bHang_m; bHang_m = tHang;
 
-    reads_m = make_pair (reads_m . second, reads_m . first);
+    reads_m = std::make_pair (reads_m . second, reads_m . first);
   }
 
 

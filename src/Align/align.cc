@@ -9,6 +9,7 @@
 #include  "align.hh"
 #include  <stack>
 using namespace AMOS;
+using namespace std;
 
 
 // ###  Align_Score_Entry_t  methods  ###
@@ -1778,7 +1779,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
       if  (! ok)
           {
            Fix_Status_t  fix_status;
-           long  ios_status;
+           iostream::fmtflags  ios_status;
 
 //##ALD  Replace this with a Substring_Align
            Overlap_Align (s [i], len, cons, lo, hi, cons_len,
@@ -1928,7 +1929,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
       if  (! matched)
           {
-           long  status;
+           iostream::fmtflags status;
            int  a_width, b_width, max_width;
 
            if  (Verbose > 0)

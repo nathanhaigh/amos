@@ -18,6 +18,7 @@
 #include  "matrix.hh"
 #include  "CelMsg.hh"
 #include  "Slice.h"
+#include  <iostream>
 #include  <string>
 #include  <vector>
 #include  <functional>

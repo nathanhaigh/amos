@@ -126,7 +126,7 @@ public:
   //!
   void flip ( )
   {
-    reads_m = make_pair (reads_m . second, reads_m . first);
+    reads_m = std::make_pair (reads_m . second, reads_m . first);
   }
 
 

@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl
+# coords2cam.pl - creates a celamy file from NUCmer .coords output
 
 use strict;
 

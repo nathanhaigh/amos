@@ -1,7 +1,8 @@
-#!/usr/local/bin/perl
+#!__PERL
 
-use strict;
+use lib "__LOCAL_LIB";
 use TIGR::Foundation;
+use strict;
 
 my $VERSION = '$Revision$ ';
 my $USAGE = q~

@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
-use strict;
 use TIGR::Foundation;
+use strict;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~

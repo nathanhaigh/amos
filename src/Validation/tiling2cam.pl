@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl
 
+# tiling2cam.pl - creates a celamy file from show-tiling output
+
 my $PAD = 100;
 
 my $refColor = "0refColor: CFF0000 T2 S \# reference";

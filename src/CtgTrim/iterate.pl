@@ -1,6 +1,5 @@
 #!/usr/local/bin/perl
 
-
 my $BASEDIR = "/local/asmg/work/mpop/WGA/";
 my $BINDIR  = $BASEDIR . "bin/";
 

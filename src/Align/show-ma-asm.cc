@@ -12,7 +12,7 @@
 #include  "fasta.hh"
 #include  "align.hh"
 #include  <vector>
-#include  <hash_set.h>
+#include  <set>
 #include  <string>
 #include  <algorithm>
 
@@ -276,9 +276,10 @@ struct  Count_t
    const char *  SNP_String
        (void)
      {
-      char  buff [10] = "";
+      static char  buff [10];
       bool  first = true;
-      
+
+      buff [0] = '\0';
       if  (a_ct > 1)
           {
            if  (! first)
@@ -372,7 +373,7 @@ static int  Count_SNPs
      const vector <Read_Info_t> & read_list, int & possible);
 static void  Get_Reads
     (const char * file_name, vector <Read_Info_t> & read_list,
-     const hash_set <int> & frg_ids);
+     const set <int> & frg_ids);
 static void  Incr_Align_Counts
     (Count_t * count, const Read_Info_t & read, int offset);
 static void  List_SNPs
@@ -407,7 +408,7 @@ int  main
   {
    FILE  * fp;
    char  line [MAX_LINE], hdr_line [MAX_LINE];
-   hash_set <int>  frg_ids;
+   set <int>  frg_ids;
    vector <Read_Info_t>  read_list, surro_list;
    Read_Info_t  read;
    Gapped_Multi_Alignment_t  gma;
@@ -735,7 +736,7 @@ static int  Count_SNPs
 
 static void  Get_Reads
     (const char * file_name, vector <Read_Info_t> & read_list,
-     const hash_set <int> & frg_ids)
+     const set <int> & frg_ids)
 
 //  Open and read sequence information from .frg file  file_name
 //  and put the relevant information into  read_list .

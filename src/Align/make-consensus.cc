@@ -14,6 +14,7 @@
 #include  "align.hh"
 #include  "prob.hh"
 #include  "fasta.hh"
+#include  <iostream>
 #include  <vector>
 #include  <string>
 #include  <algorithm>
@@ -107,7 +108,7 @@ int  main
    vector < vector <int> >  del_list;
    Gapped_Multi_Alignment_t  gma;
    time_t  now;
-   long  status;
+   iostream::fmtflags status;
    int  contig_ct, unitig_ct;
 
    

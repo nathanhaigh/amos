@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
-use lib "/local/asmg/lib";
-use AsmLib;
+use TIGR::AsmLib;
+
 $N = 8;
 $START = 60;
 my %starts;

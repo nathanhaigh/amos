@@ -1,7 +1,6 @@
 #!/usr/local/bin/perl
 
 use strict;
-
 use TIGR::Foundation;
 
 my $base = new TIGR::Foundation;

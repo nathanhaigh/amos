@@ -541,7 +541,7 @@ void Bank_t::open (const string & dir)
       AMOS_THROW_IO ("Could not parse bank partition " + ss . str( ));
 
     getline (ifo, line, '=');
-    ifo >> (int)banktype;
+    ifo >> banktype;
     if ( banktype != banktype_m )
       AMOS_THROW_IO ("Cannot open incompatible bank type");
     if ( !ifo . good( ) )

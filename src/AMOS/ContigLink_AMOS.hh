@@ -151,7 +151,7 @@ public:
     if ( la == NORMAL ) setAdjacency (ANTINORMAL);
     else if ( la == ANTINORMAL ) setAdjacency (NORMAL);
 
-    contigs_m = make_pair (contigs_m . second, contigs_m . first);
+    contigs_m = std::make_pair (contigs_m . second, contigs_m . first);
   }
 
 

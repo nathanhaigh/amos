@@ -262,7 +262,7 @@ public:
     if ( isCompressed( ) )
       return uncompress (seq_m [index]);
     else
-      return make_pair ((char)(seq_m [index]), (char)(qual_m [index]));
+      return std::make_pair ((char)(seq_m [index]), (char)(qual_m [index]));
   }
 
 
@@ -380,7 +380,7 @@ public:
     if ( index < 0 || index >= length_m )
       AMOS_THROW_ARGUMENT ("Requested sequence index is out of range");
 
-    seqchar = std::toupper (seqchar);
+    seqchar = toupper (seqchar);
 
     if ( isCompressed( ) )
       seq_m [index] = compress (seqchar, qualchar);

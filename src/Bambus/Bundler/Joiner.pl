@@ -1,8 +1,8 @@
 #!/usr/local/bin/perl
 
-use strict;
 use TIGR::Foundation;
-use ParseFasta;
+use TIGR::ParseFasta;
+use strict;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~

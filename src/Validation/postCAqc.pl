@@ -1,5 +1,8 @@
 #!/usr/local/bin/perl
 
+# postCAqc.pl   - runs caqc, fixlib and uses an optional reference file to
+#              compute new library sizes
+
 use TIGR::Foundation;
 use TIGR::AsmLib;
 use Statistics::Descriptive;

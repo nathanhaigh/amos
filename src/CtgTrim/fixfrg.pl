@@ -1,7 +1,6 @@
 #!/usr/local/bin/perl
 
-use lib "/local/asmg/lib";
-use AsmLib;
+use TIGR::AsmLib;
 
 $seqfile = $ARGV[0];
 $frgfile = $ARGV[1];
