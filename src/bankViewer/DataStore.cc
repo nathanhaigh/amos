@@ -124,10 +124,17 @@ int DataStore::setContigId(int id)
   try
   {
     ID_t bankid = contig_bank.getIDMap().lookupBID(id);
-    contig_bank.seekg(bankid);
-    contig_bank >> m_contig;
-    m_contigId = id;
-    m_loaded = true;
+    cerr << "Setting contig id to " << id << " bid: " << bankid << endl;
+
+    bankid = id;
+
+    if (bankid != 0)
+    {
+      contig_bank.seekg(bankid);
+      contig_bank >> m_contig;
+      m_contigId = id;
+      m_loaded = true;
+    }
   }
   catch (Exception_t & e)
   {
