@@ -167,6 +167,7 @@ open(IN, $infile) || $base->bail("Cannot open $infile: $!\n");
 $seekpos = tell IN;
 my %utgpos;
 my %utgs;
+my %seenutgs;
 while (my $record = getRecord(\*IN)){
     my ($rec, $fields, $recs) = parseRecord($record);
     my $nseqs;
@@ -190,10 +191,10 @@ while (my $record = getRecord(\*IN)){
 	$contigLen = length($seq);
 
 	if ($rec eq "UTG"){
-	    print "unitig $id is $seq\n";
+#	    print "unitig $id is $seq\n";
 	    $utgs{$id} = $seq;
 	    $utgs{$id} =~ s/[*]//g; ## use ungapped
-	    print "unitig $id still is $utgs{$id}\n";
+#	    print "unitig $id still is $utgs{$id}\n";
 	}
 
 	my @offsets;
@@ -257,7 +258,13 @@ while (my $record = getRecord(\*IN)){
 		$nReads++;
 		$nseqs++;
 		if ($srec eq "UPS"){
-		    $seqName = "surr$$sfields{lid}";
+		    if (! exists $seenutgs{$$sfields{lid}}){
+			$seenutgs{$$sfields{lid}} = "a";
+		    } else {
+			$seenutgs{$$sfields{lid}} =
+			    chr(ord($seenutgs{$$sfields{lid}}) + 1);
+		    }
+		    $seqName = "surr$$sfields{lid}_$seenutgs{$$sfields{lid}}";
 		    $sequence = $utgs{$$sfields{lid}};
 		    $seql = 0; $seqr = length($sequence);
 		}else {
@@ -303,10 +310,10 @@ while (my $record = getRecord(\*IN)){
 		    $outseq .= substr($sequence, $j, 1);
 		}
 
-		print "Adding seq ($seqName) = ", length($sequence), " outseq = ",
-		length($outseq), " gaps = ", $#gaps + 1, "\n";
-		print "!$sequence\n";
-		print "!$outseq\n";
+#		print "Adding seq ($seqName) = ", length($sequence), " outseq = ",
+#		length($outseq), " gaps = ", $#gaps + 1, "\n";
+#		print "!$sequence\n";
+#		print "!$outseq\n";
 
 		$seqAlnRng{$seqName} = sprintf("%d %d", $asml + 1, $asmr);
 		$seqAlnClr{$seqName} = sprintf("%d %d", 
@@ -339,7 +346,7 @@ while (my $record = getRecord(\*IN)){
 		    $end5 = $seql;
 		    $end3 = length($outseq) - length($sequence) + $seqr;
 		}
-		print "QA $end5 $end3 $seql $seqr ", length($sequence), " ", length($outseq), "\n";
+#		print "QA $end5 $end3 $seql $seqr ", length($sequence), " ", length($outseq), "\n";
 		$end5++; #all coordinates are 1 based
 		print SEQOUT sprintf("QA %d %d %d %d\n", 
 				     $end5, $end3, $end5, $end3);
@@ -435,7 +442,7 @@ sub get_seq
     seek $file, $seqpos{$id}, 0; # seek set
     my $record = getRecord($file);
     if (! defined $record){
-        print "wierd error\n";
+        print "weird error\n";
         return;
     }
 
