@@ -70,14 +70,8 @@ void *  Safe_realloc
      size_t line_num = 0);
 char *  Strip_Trailing
     (char * s, char ch);
-
-
-template <class DT>
-  DT  Max  (DT, DT);
-template <class DT>
-  DT  Min  (DT, DT);
-template <class DT>
-  void  Swap  (DT &, DT &);
+void  Uppercase
+    (char * s);
 
 
 

@@ -247,3 +247,19 @@ char *  Strip_Trailing
 
 
 
+void  Uppercase
+    (char * s)
+
+//  Convert all letters in string  s  to upper-case.
+
+  {
+   char  * p;
+
+   for  (p = s;  * p != '\0';  p ++)
+     * p = toupper (* p);
+
+   return;
+  }
+
+
+
