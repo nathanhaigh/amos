@@ -11,6 +11,7 @@
 #include "TilingFrame.hh"
 #include "ContigPicker.hh"
 #include "ReadPicker.hh"
+#include "FeatureBrowser.hh"
 #include "LibraryPicker.hh"
 #include "DataStore.hh"
 #include "InsertWindow.hh"
@@ -51,6 +52,7 @@ public slots:
 
   void showReadPicker();
   void showLibPicker();
+  void showFeatureBrowser();
 
 signals:
   void bankSelected(std::string bankname);
@@ -65,6 +67,7 @@ private:
   QMainWindow * m_contigPicker;
   QMainWindow * m_readPicker;
   QMainWindow * m_libPicker;
+  QMainWindow * m_featPicker;
   InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;
   CGraphWindow * m_cgraphWindow;
