@@ -343,6 +343,9 @@ while (<TMPCTG>){
 	my $cid = $1;
 	print OUT "{CTG\n";
 	print OUT "iid:$cid\n";
+	if (exists $ctgnames{$cid}){
+	    print OUT "eid:$ctgnames{$cid}\n";
+	}
 	print OUT "seq:\n";
 	$_ = <TMPCTG>;
 	while ($_ !~ /^\#/){
