@@ -50,6 +50,7 @@ namespace Message_k {
   const NCode_t   F_EID          = Encode ("eid");
   const NCode_t   F_FRAGMENT     = Encode ("frg");
   const NCode_t   F_LIBRARY      = Encode ("lib");
+  const NCode_t   F_MAP          = Encode ("map");
   const NCode_t   F_MEAN         = Encode ("mea");
   const NCode_t   F_OFFSET       = Encode ("off");
   const NCode_t   F_POLYMORPHISM = Encode ("ply");
@@ -73,10 +74,10 @@ namespace Message_k {
   const NCode_t   M_CONTIGEDGE   = Encode ("CTE");
   const NCode_t   M_CONTIGLINK   = Encode ("CTL");
   const NCode_t   M_DISTRIBUTION = Encode ("DST");
-  const NCode_t   M_EXAMPLE      = Encode ("EXX");
   const NCode_t   M_FRAGMENT     = Encode ("FRG");
   const NCode_t   M_KMER         = Encode ("KMR");
   const NCode_t   M_LIBRARY      = Encode ("LIB");
+  const NCode_t   M_IDMAP        = Encode ("MAP");
   const NCode_t   M_OVERLAP      = Encode ("OVL");
   const NCode_t   M_READ         = Encode ("RED");
   const NCode_t   M_SCAFFOLD     = Encode ("SCF");

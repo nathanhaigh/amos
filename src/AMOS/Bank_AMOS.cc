@@ -719,7 +719,7 @@ void Bank_t::transform (vector<ID_t> id_map)
   if ( !isOpen( ) )
     AMOS_THROW_IO ("Cannot transform a closed Bank");
   if ( id_map[0] != NULL_ID )
-    AMOS_THROW_ARGUMENT ("Cannot map id_map[0] to NULL_ID (0)");
+    AMOS_THROW_ARGUMENT ("Cannot map id_map[0], must be NULL_ID");
 
   ID_t lid, pid;
 

@@ -105,6 +105,7 @@ void Tile_t::readMessage (const Message_t & msg)
 
 	if ( !ss . eof( ) )
 	  AMOS_THROW_ARGUMENT ("Invalid del format");
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {

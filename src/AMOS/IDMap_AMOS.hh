@@ -11,11 +11,21 @@
 #define __IDMap_AMOS_HH 1
 
 #include "Bank_AMOS.hh"
+#include "Message_AMOS.hh"
 
 
 
 
 namespace AMOS {
+
+namespace Bank_k {
+
+  const NCode_t IDMAP = Message_k::M_IDMAP;
+
+} // namespace Bank_k
+
+
+
 
 //================================================ IDMap_t =====================
 //! \brief A one-to-one mapping of IDs
@@ -24,7 +34,7 @@ namespace AMOS {
 //! in an AMOS Bank.
 //!
 //==============================================================================
-class IDMap_t : public IBankable_t
+class IDMap_t : public IBankable_t, public IMessagable_t
 {
 
 private:
@@ -212,6 +222,10 @@ public:
   ID_t lookup (ID_t key);
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- operator= --------------
   //! \brief Assignment (copy) operator
   //!
@@ -233,6 +247,10 @@ public:
   //! \return void
   //!
   void remove (ID_t key);
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

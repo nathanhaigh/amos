@@ -9,6 +9,7 @@
 
 #include "IDMap_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
@@ -135,6 +136,52 @@ void IDMap_t::remove (ID_t key)
 }
 
 
+//----------------------------------------------------- readMessage ------------
+void IDMap_t::readMessage (const Message_t & msg)
+{
+  clear( );
+
+  try {
+    ID_t key, val, size;
+    stringstream ss;
+
+    if ( msg . exists (F_MAP) )
+      {
+	ss . str (msg . getField (F_MAP));
+
+	while ( ss )
+	  {
+	    ss >> key;
+	    ss . ignore( );
+	    ss >> val;
+	    if ( ! ss . fail( ) )
+	      insert (key, val);
+	  }
+
+	if ( ! ss . eof( ) )
+	  AMOS_THROW_ARGUMENT ("Invalid map format");
+	ss . clear( );
+      }
+
+    if ( msg . exists (F_SIZE) )
+      {
+	ss . str (msg . getField (F_SIZE));
+	ss >> size;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid sze format");
+
+	if ( size != size_m )
+	  AMOS_THROW_ARGUMENT ("sze value does not match number of entries");
+      }
+  }
+  catch (ArgumentException_t) {
+
+    clear( );
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- readRecord -------------
 Size_t IDMap_t::readRecord (istream & fix,
 			    istream & var)
@@ -152,10 +199,47 @@ Size_t IDMap_t::readRecord (istream & fix,
       insert (key, val);
     }
 
-  if ( size != size_m )
-    var . exceptions (istream::badbit);
-
   return sizeof (ID_t) + size_m * sizeof (ID_t) * 2;
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void IDMap_t::writeMessage (Message_t & msg) const
+{
+  msg . clear( );
+
+  try {
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    const HashNode_t * curr;
+
+    if ( size_m != 0 )
+      {
+	ss << size_m;
+	msg . setField (F_SIZE, ss . str( ));
+	ss . str("");
+
+	for ( Size_t i = 0; i < BUCKETS; i ++ )
+	  if ( table_m [i] . key != NULL_ID )
+	    {
+	      curr = table_m + i;
+	      while ( curr != NULL )
+		{
+		  ss << curr -> key << ',' << curr -> val << endl;
+		  curr = curr -> next;
+		}
+	    }
+	msg . setField (F_MAP, ss . str( ));
+	ss . str("");
+      }
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
 }
 
 

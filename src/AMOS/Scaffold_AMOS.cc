@@ -41,6 +41,7 @@ void Scaffold_t::readMessage (const Message_t & msg)
 
 	if ( !ss . eof( ) )
 	  AMOS_THROW_ARGUMENT ("Invalid cte format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_POLYMORPHISM) )

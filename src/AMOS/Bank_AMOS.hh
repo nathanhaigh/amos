@@ -59,7 +59,6 @@ namespace Bank_k {
 
   const NCode_t NULL_BANK = Encode ("NUL");   //!< NULL bank NCode
   const NCode_t EXAMPLE   = Encode ("EXX");   //!< Example bank NCode
-  const NCode_t IDMAP     = Encode ("MAP");   //!< IDMap NCode
 
 } // namespace Bank_k
 

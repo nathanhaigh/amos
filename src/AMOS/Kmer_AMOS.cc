@@ -95,6 +95,7 @@ void Kmer_t::readMessage (const Message_t & msg)
 
 	if ( !ss . eof( ) )
 	  AMOS_THROW_ARGUMENT ("Invalid rds format");
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {
