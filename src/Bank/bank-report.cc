@@ -98,7 +98,7 @@ int main (int argc, char ** argv)
     //-- The KNOWN types to pull from the banks
     //   Order of the list is important to maintain definition before
     //   reference rule (def must come before ref in output message)
-    const Size_t N_TYPES = 12;
+    const Size_t N_TYPES = 13;
     Universal_t * types [N_TYPES] =
       {
 	new Universal_t( ),
@@ -109,6 +109,7 @@ int main (int argc, char ** argv)
 	new Matepair_t( ),
 	new Overlap_t( ),
 	new Kmer_t( ),
+	new Layout_t( ),
 	new Contig_t( ),
 	new ContigLink_t( ),
 	new ContigEdge_t( ),

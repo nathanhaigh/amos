@@ -73,6 +73,7 @@ int main (int argc, char ** argv)
 	OPT_ExtractCodes . push_back (Matepair_t::NCODE);
 	OPT_ExtractCodes . push_back (Overlap_t::NCODE);
 	OPT_ExtractCodes . push_back (Kmer_t::NCODE);
+	OPT_ExtractCodes . push_back (Layout_t::NCODE);
 	OPT_ExtractCodes . push_back (Contig_t::NCODE);
 	OPT_ExtractCodes . push_back (ContigLink_t::NCODE);
 	OPT_ExtractCodes . push_back (ContigEdge_t::NCODE);
