@@ -619,15 +619,31 @@ void  Gapped_Alignment_t :: Convert_From
 
    if  (Verbose > 2)
        {
-        int  i, n;
-
         fprintf (stderr, "Convert_From:  a_lo = %d  a_hi = %d\n", a_lo, a_hi);
         fprintf (stderr, "  b_lo = %d  b_hi = %d\n", b_lo, b_hi);
         fprintf (stderr, "  Skip:\n");
-        n = skip . size ();
-        for  (i = 0;  i < n;  i ++)
-          fprintf (stderr, "  %3d:  %5d\n", i, skip [i]);
+        Dump_Skip (stderr);
        }
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Convert_Skip_to_Del
+    (vector <int> & del)
+
+//  Set  del  to the entries in an IMP submessage that correspond
+//  to the skip values in this alignment.
+
+  {
+   int  i, n;
+
+   del . clear ();
+
+   n = skip . size ();
+   for  (i = 0;  i < n;  i ++)
+     del . push_back (a_lo + skip [i] - b_lo - i);
 
    return;
   }
@@ -1135,6 +1151,50 @@ void  Gapped_Multi_Alignment_t :: Convert_From
 
 
 
+void  Gapped_Multi_Alignment_t :: Extract_IMP_Dels
+    (vector < vector <int> > & del_list)
+
+//  Set  del_list  to be the del entries in IMP submessages
+//  corresponding to the skip values in this alignment.
+
+  {
+   vector <int>  del;
+   int  i, n;
+
+   del_list . clear ();
+
+   n = align . size ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      align [i] . Convert_Skip_to_Del (del);
+      del_list . push_back (del);
+     }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Get_Positions
+    (vector <Range_t> & pos)  const
+
+//  Set  pos  to the list of  b_lo  and  b_hi  values in
+//  the  align  vector of this alignment
+
+  {
+   int  i, n;
+
+   n = align . size ();
+   pos . resize (n);
+
+   for  (i = 0;  i < n;  i ++)
+     pos [i] . setRange (align [i] . b_lo, align [i] . b_hi);
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Print
     (FILE * fp, const vector <char *> & s, int width)
 
@@ -1323,11 +1383,29 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 
 
 
+void  Gapped_Multi_Alignment_t :: Show_Skips
+    (FILE * fp)
+
+//  Print the skip values in the alignment to file  fp .
+
+  {
+   vector <Gapped_Alignment_t> :: iterator  p;
+
+   for  (p = align . begin ();  p != align . end ();  p ++)
+     p -> Dump_Skip (fp);
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Sort
-    (vector <char *> & s)
+    (vector <char *> & s, vector <int> * ref)
 
 //  Sort the align entries in this multialignment according to their
-//   b_lo  values.  Also sort the strings  s  along with them
+//   b_lo  values.  Also sort the strings  s  along with them.
+//  If  ref  isn't  NULL , then move its entries in parallel
+//  with those of  s  and  align .
 
   {
    int  i, j, n;
@@ -1345,21 +1423,28 @@ void  Gapped_Multi_Alignment_t :: Sort
      {
       char  * s_save;
       Gapped_Alignment_t  a_save;
+      int  r_save;
 
       if  (align [i - 1] . b_lo <= align [i] . b_lo)
           continue;
 
       s_save = s [i];
       a_save = align [i];
+      if  (ref != NULL)
+          r_save = (* ref) [i];
 
       for  (j = i;  j > 0 && align [j - 1] . b_lo > a_save . b_lo;  j --)
         {
          align [j] = align [j - 1];
          s [j] = s [j - 1];
+         if  (ref != NULL)
+             (* ref) [j] = (* ref) [j - 1];
         }
 
       s [j] = s_save;
       align [j] = a_save;
+      if  (ref != NULL)
+          (* ref) [j] = r_save;
      }
 
    return;
@@ -1400,7 +1485,8 @@ int  Exact_Prefix_Match
 
 void  Multi_Align
     (vector <char *> & s, vector <int> & offset, int offset_delta,
-     double error_rate, Gapped_Multi_Alignment_t & gma)
+     double error_rate, Gapped_Multi_Alignment_t & gma,
+     vector <int> * ref)
 
 //  Create multialignment in  ma  of strings  s  each of which has
 //  a nominal offset from its predecessor of  offset .   offset_delta  is
@@ -1409,6 +1495,9 @@ void  Multi_Align
 //  in alignments between strings.  It should be twice the expected error
 //  rate to the real reference string to allow for independent errors
 //  in separate strings.  The value of  offset [0]  must be zero.
+//  If  ref  isn't  NULL  then make its values be the subscripts of
+//  the original locations of the entries in  s  in case they are
+//  shifted
 
   {
    Multi_Alignment_t  ma;
@@ -1434,7 +1523,7 @@ void  Multi_Align
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
 
-   Sort_Strings_And_Offsets (s, offset);
+   Sort_Strings_And_Offsets (s, offset, ref);
 
    ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote);
 
@@ -1450,7 +1539,7 @@ void  Multi_Align
 
    gma . Convert_From (ma);
 
-   gma . Sort (s);
+   gma . Sort (s, ref);
 
    return;
   }
@@ -1796,11 +1885,14 @@ bool  Range_Intersect
 
 
 void  Sort_Strings_And_Offsets
-    (vector <char *> & s, vector <int> & offset)
+    (vector <char *> & s, vector <int> & offset, vector <int> * ref)
 
 //  Sort the strings in  s  into order so that all their offsets
 //  are non-negative.  Adjust the values in  offset  accordingly.
 //  Use insertion sort since most offsets should be positive.
+//  If  ref  isn't  NULL, then set it to the subscripts of the
+//  positions of the entries in  s  and  offset  before they were
+//  changed.
 
   {
    int  i, j, n;
@@ -1813,17 +1905,25 @@ void  Sort_Strings_And_Offsets
              int (s . size ()), n);
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
+   if  (ref != NULL)
+       {
+        ref -> resize (n);
+        for  (i = 0;  i < n;  i ++)
+          (* ref) [i] = i;
+       }
 
    for  (i = 1;  i < n;  i ++)
      {
       char  * s_save;
-      int  o_save;
+      int  o_save, r_save;
 
       if  (0 <= offset [i])
           continue;
 
       s_save = s [i];
       o_save = offset [i];
+      if  (ref != NULL)
+          r_save = (* ref) [i];
       if  (i < n - 1)
           offset [i + 1] += o_save;
 
@@ -1832,11 +1932,15 @@ void  Sort_Strings_And_Offsets
          o_save += offset [j - 1];
          offset [j] = offset [j - 1];
          s [j] = s [j - 1];
+         if  (ref != NULL)
+             (* ref) [j] = (* ref) [j - 1];
         }
 
       s [j] = s_save;
       offset [j] = o_save;
       offset [j + 1] -= o_save;
+      if  (ref != NULL)
+          (* ref) [j] = r_save;
      }
 
    return;

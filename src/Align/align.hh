@@ -122,6 +122,8 @@ class  Gapped_Alignment_t  :  public Base_Alignment_t
   public:
    void  Gapped_Alignment_t :: Convert_From
        (const Alignment_t & ali, vector <int> & tr);
+   void  Convert_Skip_to_Del
+       (vector <int> & del);
    void  Dump
        (FILE * fp);
    void  Dump_Skip
@@ -203,6 +205,10 @@ class  Gapped_Multi_Alignment_t
        (const Multi_Alignment_t & ma, const vector <short> & v);
    void  Convert_From
        (const Multi_Alignment_t & ma);
+   void  Extract_IMP_Dels
+       (vector < vector <int> > & del_list);
+   void  Get_Positions
+       (vector <Range_t> & pos)  const;
    void  Print
        (FILE * fp, const vector <char *> & s,
         int width = DEFAULT_FASTA_WIDTH);
@@ -210,8 +216,10 @@ class  Gapped_Multi_Alignment_t
        (char * buff, int b1, int b2);
    void  Set_Consensus_And_Qual
        (const vector <char *> & s, const vector <char *> & q);
+   void  Show_Skips
+       (FILE * fp);
    void  Sort
-       (vector <char *> & s);
+       (vector <char *> & s, vector <int> * ref = NULL);
   };
 
 
@@ -220,7 +228,8 @@ int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len);
 void  Multi_Align
     (vector <char *> & s, vector <int> & offset, int offset_delta,
-     double error_rate, Gapped_Multi_Alignment_t & ma);
+     double error_rate, Gapped_Multi_Alignment_t & ma,
+     vector <int> * ref = NULL);
 bool  Overlap_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int min_len, int max_errors,
@@ -235,7 +244,7 @@ void  Print_VS_Table
 bool  Range_Intersect
     (int a_lo, int a_hi, int b_lo, int b_hi);
 void  Sort_Strings_And_Offsets
-    (vector <char *> & s, vector <int> & offset);
+    (vector <char *> & s, vector <int> & offset, vector <int> * ref = NULL);
 bool  Substring_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int max_errors, Alignment_t & align);

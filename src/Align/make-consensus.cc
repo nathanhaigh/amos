@@ -59,6 +59,9 @@ int  main
    FILE  * input_fp;
    vector <char *>  string_list, qual_list;
    vector <int>  offset;
+   vector <int>  ref;
+   vector <Range_t>  pos;
+   vector < vector <int> >  del_list;
    Gapped_Multi_Alignment_t  gma;
    int  contig_ct, unitig_ct;
 
@@ -88,7 +91,12 @@ int  main
            Get_Strings_And_Offsets
                (string_list, qual_list, offset, msg, read_bank);
 
-           Multi_Align (string_list, offset, 5, 0.04, gma);
+           Multi_Align (string_list, offset, 5, 0.04, gma, & ref);
+
+           gma . Get_Positions (pos);
+           gma . Extract_IMP_Dels (del_list);
+
+           msg . Update_IMPs (pos, ref, del_list);
 
 #if 0
            cout << endl << endl << "Unitig #" << msg . getAccession () << endl;
@@ -97,6 +105,7 @@ int  main
            gma . Set_Consensus_And_Qual (string_list, qual_list);
            msg . setSequence (gma . getConsensusString ());
            msg . setQuality (gma . getQualityString ());
+           msg . setUniLen (strlen (gma . getConsensusString ()));
            msg . print (stdout);
 #endif
 
@@ -291,3 +300,6 @@ static void  Usage
 
    return;
   }
+
+
+
