@@ -353,9 +353,9 @@ Inputs are:
 
 sub printFastaSequence
 {
-    my($file) = @_[0];
-    my($header) = @_[1];
-    my($seqs) = @_[2];
+    my($file) = $_[0];
+    my($header) = $_[1];
+    my($seqs) = $_[2];
 
     print $file ">$header\n";
     print_sequence($file, $seqs);
@@ -375,9 +375,9 @@ Inputs are:
 
 sub printFastaQual
 {
-    my($file) = @_[0];
-    my($header) = @_[1];
-    my($quals) = @_[2];
+    my($file) = $_[0];
+    my($header) = $_[1];
+    my($quals) = $_[2];
     my(@qv);
  
     print $file ">$header\n";
@@ -450,15 +450,6 @@ sub reverseComplement {
 
     return $string;
 } # reverseComplement
-
-#sub reverseComplement {
-#    my($string) = @_;
-#
-#    $string = reverse($string);
-#    $string =~ tr/AaCcTtGgUuMmRrWwSsYyKkVvHhDdBbXxNn.-/TtGgAaCcAaKkYyWwSsRrMmBbDdHhVvXxNn.-/;
-#    return $string;
-#} # reverseComplement
-
 
 =back
 
