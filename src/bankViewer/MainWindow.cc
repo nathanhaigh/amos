@@ -51,6 +51,12 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(tiling, SIGNAL(gindexChanged(int)),
           m_slider, SLOT(setValue(int)) );
 
+  connect(m_slider, SIGNAL(sliderMoved(int)),
+          tiling,   SLOT(trackGindex(int)));
+
+  connect(m_slider, SIGNAL(sliderReleased()),
+          tiling,   SLOT(trackGindexDone()) );
+
   // m_gindex <-> tiling
   connect(tiling, SIGNAL(gindexChanged(int)),
           m_gindex, SLOT(setValue(int)));

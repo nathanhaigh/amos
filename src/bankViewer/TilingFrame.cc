@@ -20,7 +20,7 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
   m_db = "DMG";
   m_sv = new QScrollView(this, "tilingscroll");
   m_sv->setHScrollBarMode(QScrollView::AlwaysOff);
-  m_sv->setVScrollBarMode(QScrollView::AlwaysOn);
+  //m_sv->setVScrollBarMode(QScrollView::AlwaysOn);
 
   m_tilingfield = new TilingField(m_renderedSeqs,
                                   m_consensus,
@@ -137,8 +137,9 @@ void TilingFrame::setFontSize(int fontsize )
   if (fontsize == m_fontsize) { return; }
   m_fontsize = fontsize;
 
+  int tilehoffset=m_fontsize*10;
   int width = this->width();
-  m_displaywidth = width/m_fontsize;
+  m_displaywidth = (width-tilehoffset)/m_fontsize;
 
   repaint();
   emit fontSizeChanged(m_fontsize);
@@ -148,8 +149,9 @@ void TilingFrame::setGindex( int gindex )
 {
   if (!m_loaded) { return; }
 
+  int tilehoffset = m_fontsize*10;
   int width = this->width();
-  m_displaywidth = width/m_fontsize;
+  m_displaywidth = (width-tilehoffset)/m_fontsize;
 
   gindex = min(gindex, m_consensus.size()-m_displaywidth);
 
@@ -163,4 +165,15 @@ void TilingFrame::setGindex( int gindex )
 void TilingFrame::setDB(const QString & db)
 {
   m_db = db.ascii();
+}
+
+void TilingFrame::trackGindex(int gindex)
+{
+  m_gindex = gindex;
+  m_consfield->repaint();
+}
+
+void TilingFrame::trackGindexDone()
+{
+  repaint();
 }

@@ -24,6 +24,8 @@ public slots:
     void setBankname(string bankname);
     void setFontSize(int);
     void setDB(const QString & db);
+    void trackGindex(int);
+    void trackGindexDone();
 
 signals:
     void gindexChanged( int );
