@@ -5372,7 +5372,7 @@ void  Multi_Align
 
    gma . Convert_From (ma);
 
-   gma . Sort (s, ref);
+   gma . Sort (s, ref, tag_list);
 
    return;
   }
