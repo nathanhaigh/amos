@@ -7,14 +7,15 @@ my $VERSION = '$Revision$ ';
 my $HELP = q~
     runAmos -C config_file [-s start] [-e end] prefix
 
-    if the config file is not specified uses the value in the
- environment variable AMOSCONF
+    if the config file is not specified we use environment variable AMOSCONF
     if a start step is specified (-s) starts with that command
     if an end step is specified (-e) ends with the command prior to the number
 
     e.g.  runAmos -s 1 -e 5   will run steps 1, 2, 3, and 4.
     
    Special variable PREFIX gets set to the prefix specified in the command line
+   Lines starting with \# are comments
+   Lines starting with \#\# get displayed when next command is run
 
   Example config file:
 
@@ -26,13 +27,13 @@ my $HELP = q~
     $(PERL) $(PREFIX)-1.pl
     $(PERL) $(PREFIX)-2.pl
     .
-
 ~;
 
 my $base = new TIGR::Foundation();
 if (! defined $base) {
     die("A horrible death\n");
 }
+$base->logAppend(1);
 
 $base->setVersionInfo($VERSION);
 $base->setHelpInfo($HELP);
@@ -72,6 +73,9 @@ if (defined $start && defined $end && $end < $start){
 my %variables;
 my $multiLine = 0;
 my $step = 0;
+my $message;
+my $startime;
+my $noop = 0;
 
 $variables{PREFIX} = $prefix;
 
@@ -79,18 +83,31 @@ open(CONF, "$conffile") || $base->bail("Cannot open $conffile: $!\n");
 
 while (<CONF>){
     chomp;
+    if (/^\#\#(.*)$/){ # comment that will be displayed
+	$message = $1;
+	next;
+    }
     if (/^\#/){ #comment
 	next;
     }
     if (/^\s*$/){ # empty line
 	next;
     }
+    
     if ($multiLine){
-	if (/^\.$/){
-	    $multiLine = 0;
-	    next;
-	}
-	doCommand($_);
+	if (/^\.\s*$/) {
+	    if (! $noop){
+		my $elapsed = time() - $startime;
+		printf ("Elapsed: %s\n", prettyTime($elapsed));
+		$base->logLocal(sprintf ("Elapsed: %s\n", prettyTime($elapsed)), 1);
+            } else {
+                $noop = 0;
+            }
+            $multiLine = 0;
+            next;
+        }
+        doCommand($_);
+	next;
     }
     if (/^(\S+)\s*=\s*(\S+)\s*$/){ # variable definition
 	$variables{$1} = substituteVars($2);
@@ -102,8 +119,23 @@ while (<CONF>){
 	    $base->bail("Steps appear out of order at line $.");
 	}
 	$step = $1;
-	$base->logLocal("Doing step $step", 1);
+	if ((defined $start && $step < $start) ||
+	    (defined $end && $step >= $end)){
+	    $noop = 1;
+	} else {
+	    print "Doing step $step: $message\n";
+	    $base->logLocal("Doing step $step: $message", 1);
+	}
+	$startime = time();
 	doCommand($2);
+	if (!$noop){
+	    my $elapsed = time() - $startime;
+	    printf ("Elapsed: %s\n", prettyTime($elapsed));
+	    $base->logLocal(sprintf ("Elapsed: %s\n", prettyTime($elapsed)), 1);
+	} else {
+	    $noop = 0;
+	}
+	$message = "";
 	next;
     }
     if (/^(\S+)\s*:\s*$/){ # multi-line command
@@ -111,8 +143,16 @@ while (<CONF>){
 	    $base->bail("Steps appear out of order at line $.");
 	}
 	$step = $1;
-	$base->logLocal("Doing step $step", 1);
+	if ((defined $start && $step < $start) ||
+	    (defined $end && $step >= $end)){
+	    $noop = 1;
+	} else {
+	    print "Doing step $step: $message\n";
+	    $base->logLocal("Doing step $step: $message", 1);
+	}
+	$message = "";
 	$multiLine = 1;
+	$startime = time();
 	next;
     }
     $base->logError("Don't understand line $.: $_\n");
@@ -124,8 +164,7 @@ sub doCommand
     my $command = shift;
 
     return if (! defined $step);
-    return if (defined $start && $step < $start);
-    return if (defined $end && $step >= $end);
+    return if ($noop);
 
     $command = substituteVars($command);
     $base->logLocal("Running: $command", 1);
@@ -159,4 +198,16 @@ sub substituteVars
     $outstring .= $1;
 #    print "Into $outstring\n";
     return $outstring;
+}
+
+sub prettyTime
+{
+    my $elapsed = shift;
+    
+    my $secs =     $elapsed          % 60;
+    my $min  = int($elapsed / 60)    % 60;
+    my $hr   = int($elapsed / 3600)  % 60;
+    my $day  = int($elapsed / 86400) % 24;
+
+    return "${day}d ${hr}h ${min}m ${secs}s";
 }
