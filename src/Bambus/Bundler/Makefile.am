@@ -15,12 +15,11 @@ dist_bin_SCRIPTS = \
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
-	-I$(top_srcdir)/src/AMOS
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_builddir)/src/GNU
 
 
 ##-- Bundler\
-Bundler_CPPFLAGS = \
-	-I$(top_builddir)/src/GNU
 Bundler_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
@@ -31,8 +30,6 @@ Bundler_SOURCES = \
 
 
 ##-- CLK
-clk_CPPFLAGS = \
-	-I$(top_builddir)/src/GNU
 clk_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
