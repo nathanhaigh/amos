@@ -19,6 +19,7 @@
 using namespace std;
 
 
+
 static const char  * VERSION_ID = "1.2";
 
 
@@ -265,8 +266,6 @@ static void  Print_Multialignment_Segment
     (FILE * fp, char * consensus, int con_lo, int con_hi,
      const vector <Read_Info_t> & read_list, int & gaps,
      bool with_diffs = true);
-void  Reverse_String
-    (char * s);
 bool  Significant_Diff
     (const Count_t & x, const Count_t & y, char & x_ch, char & y_ch,
      unsigned & qual_diff);
@@ -1051,29 +1050,6 @@ static void  Print_Multialignment_Segment
         fprintf (fp, "%*s   %s\n", TAG_WIDTH, "", diff_line . c_str ());
        }
      
-   return;
-  }
-
-
-
-void  Reverse_String
-    (char * s)
-
-//  Reverse the order of characters in string  s .
-
-  {
-   int  i, j, n;
-
-   n = strlen (s);
-   for  (i = 0, j = n - 1;  i < j;  i ++, j --)
-     {
-      char  ch;
-
-      ch = s [i];
-      s [i] = s [j];
-      s [j] = ch;
-     }
-
    return;
   }
 
