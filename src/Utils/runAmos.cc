@@ -25,6 +25,7 @@ using namespace std;
 
 map<string, string> globals;   // global variables
 map<string, string> variables; // conf file variables 
+vector<string> cmdLnVars;      // command line variables (numbered)
 ofstream logFile;
 string logFileName;
 string confFile;
@@ -144,66 +145,66 @@ void cleanFiles()
   }
 
   logFile << timeStr() 
-	  << "variable TEMPS is not set - trying INPUTS and OUTPUTS" << endl;
+	  << "variable TEMPS is not set - no cleaning done" << endl;
 
-  if (variables.find("INPUTS") == variables.end() ||
-      variables.find("OUTPUTS") == variables.end()){
-    logFile << timeStr() << "variables INPUTS and OUTPUTS must both be set in order to use -clean" << endl;
-    cerr << "variables INPUTS and OUTPUTS must both be set in order to use -clean" << endl;
-    finish(1);
-  }
+//   if (variables.find("INPUTS") == variables.end() ||
+//       variables.find("OUTPUTS") == variables.end()){
+//     logFile << timeStr() << "variables INPUTS and OUTPUTS must both be set in order to use -clean" << endl;
+//     cerr << "variables INPUTS and OUTPUTS must both be set in order to use -clean" << endl;
+//     finish(1);
+//   }
   
-  set<string> inputs = splitBlank(variables["INPUTS"]);
-  set<string> outputs = splitBlank(variables["OUTPUTS"]);
+//   set<string> inputs = splitBlank(variables["INPUTS"]);
+//   set<string> outputs = splitBlank(variables["OUTPUTS"]);
   
-  if (inputs.size() == 0 || outputs.size() == 0){
-    logFile << timeStr() << "variables INPUTS and OUTPUTS must both be non-empty in order to use -ocd" << endl;
-    cerr << "variables INPUTS and OUTPUTS must both be non-empty in order to use -ocd" << endl;
-    finish(1);
-  }
+//   if (inputs.size() == 0 || outputs.size() == 0){
+//     logFile << timeStr() << "variables INPUTS and OUTPUTS must both be non-empty in order to use -ocd" << endl;
+//     cerr << "variables INPUTS and OUTPUTS must both be non-empty in order to use -ocd" << endl;
+//     finish(1);
+//   }
 
-  inputs.insert(confFile);     // make sure we don't erase ourselves
-  outputs.insert(logFileName); // or the log file
+//   inputs.insert(confFile);     // make sure we don't erase ourselves
+//   outputs.insert(logFileName); // or the log file
 
-  DIR * thisdir = opendir(".");
-  if (thisdir == NULL){
-    logFile << timeStr() << "cannot open local dir - no cleaning will be done" 
-	    << endl;
-    cerr << "cannot open local dir - no cleaning will be done" << endl;
-    return;
-  }
+//   DIR * thisdir = opendir(".");
+//   if (thisdir == NULL){
+//     logFile << timeStr() << "cannot open local dir - no cleaning will be done" 
+// 	    << endl;
+//     cerr << "cannot open local dir - no cleaning will be done" << endl;
+//     return;
+//   }
 
-  struct dirent * de;
-  struct stat buf;
-  while ((de = readdir(thisdir)) != NULL){
-    if (de->d_name[0] == '.') { // directory or hidden file
-      cerr << "skipping directory " << de->d_name << endl;
-      continue;
-    }
+//   struct dirent * de;
+//   struct stat buf;
+//   while ((de = readdir(thisdir)) != NULL){
+//     if (de->d_name[0] == '.') { // directory or hidden file
+//       cerr << "skipping directory " << de->d_name << endl;
+//       continue;
+//     }
 
-    if (lstat(de->d_name, &buf) < 0){
-      logFile << timeStr() << "cannot stat file: " << de->d_name << endl;
-      continue;
-    }
+//     if (lstat(de->d_name, &buf) < 0){
+//       logFile << timeStr() << "cannot stat file: " << de->d_name << endl;
+//       continue;
+//     }
 
-    if (buf.st_ctime < allstart) { // file existed before we started running
-      cerr << "skipping preexisting file " << de->d_name << " (" 
-	   <<  buf.st_ctime << " < " << allstart << ")" << endl;
-      continue;
-    }
+//     if (buf.st_ctime < allstart) { // file existed before we started running
+//       cerr << "skipping preexisting file " << de->d_name << " (" 
+// 	   <<  buf.st_ctime << " < " << allstart << ")" << endl;
+//       continue;
+//     }
 
-    if (inputs.find(string(de->d_name)) != inputs.end() ||
-	outputs.find(string(de->d_name)) != outputs.end()) // file in INPUTS or OUTPUTS
-      continue;
+//     if (inputs.find(string(de->d_name)) != inputs.end() ||
+// 	outputs.find(string(de->d_name)) != outputs.end()) // file in INPUTS or OUTPUTS
+//       continue;
 
-    logFile << timeStr() << "removing " << de->d_name << endl;
+//     logFile << timeStr() << "removing " << de->d_name << endl;
 
-    // if all else fails, we erase the file
-    if (unlink(de->d_name) < 0){
-      logFile << timeStr() << "cannot remove file: " << de->d_name << endl;
-      continue;
-    }
-  }
+//     // if all else fails, we erase the file
+//     if (unlink(de->d_name) < 0){
+//       logFile << timeStr() << "cannot remove file: " << de->d_name << endl;
+//       continue;
+//     }
+//   }
 }
 
 
@@ -221,14 +222,27 @@ string substVars(string & in)
 	var = "";
 	while (i < in.length() && in[i] != ')')
 	  var += in[i++];
-	if (variables.find(var) == variables.end()){
-	  cerr << "Cannot substitute variable " << var << endl;
-	  if (logFile.is_open())
-	    logFile << timeStr() << "Cannot substitute variable " 
-		    << var << endl;
-	  finish(1);
+	if (var.find_first_not_of("0123456789") == var.size()){
+	  // string is a number
+	  int n = strtol(var.c_str(), NULL, 10);
+	  if (n >= cmdLnVars.size()){
+	    cerr << "Cannot find command line parameter " << n << endl;
+	    if (logFile.is_open())
+	      logFile << timeStr() << "Cannot find command line parameter " 
+		      << n << endl;
+	    finish(1);
+	  }
+	  out += cmdLnVars[n];
+	} else {
+	  if (variables.find(var) == variables.end()){
+	    cerr << "Cannot substitute variable " << var << endl;
+	    if (logFile.is_open())
+	      logFile << timeStr() << "Cannot substitute variable " 
+		      << var << endl;
+	    finish(1);
+	  }
+	  out += variables[var];
 	}
-	out += variables[var];
       } else {
 	out += in[i];
       }
@@ -267,7 +281,7 @@ void processDefn(string def)
 
 void printHelpText()
 {
-  cerr << 
+  cout << 
     "\n"
     "USAGE:\n"
     "\n"
@@ -316,15 +330,19 @@ bool GetOptions(int argc, char ** argv)
     {"D",     1, 0, 'D'},
     {0, 0, 0, 0}
   };
-  
+
+  bool helpRequested = false;
+  bool confFile = false;
   int c;
   while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
     switch (c){
     case 'c':
+      confFile = true;
       globals["conffile"] = string(optarg);
       break;
     case 'h':
-      printHelpText();
+      //      printHelpText();
+      helpRequested = true;
       break;
     case 's':
       globals["start"] = string(optarg);
@@ -345,13 +363,117 @@ bool GetOptions(int argc, char ** argv)
       return false;
     }
   }
-  if (optind < argc)
+
+  if (helpRequested && confFile){
+    ifstream conf(confFile.c_str());
+    if (! conf.is_open()){
+      cerr << "Could not open config file " << confFile << endl;
+      finish(1);
+    }
+    
+    string line;
+    while (getline(conf, line))
+      if (line.length() > 1 && line[0] == '#' && line[1] == '?') //help
+	cout << line.substr(2) << endl;;
+
+    exit(0);
+  }
+  
+  if (helpRequested){
+    printHelpText();
+    exit(0);
+  }
+
+  if (optind < argc){
     variables["PREFIX"] = string(argv[optind]);
-  else 
+    for (;optind < argc; optind++)
+      cmdLnVars.push_back(string(argv[optind]));
+  } else 
     return false;
   return true;
 } // GetOptions
 
+
+// returns the stdout of the command
+string doCommandStr(string command)
+{
+  ostringstream out;
+
+  command = substVars(command);
+
+  logFile << timeStr() << "Running: " << command << endl;
+
+  int fd[2];
+  
+  if (pipe(fd) < 0){
+    logFile << timeStr() << "Failed to create pipe" << endl;
+    finish(1);
+  }
+
+  int status;
+
+  pid_t process = fork();
+
+  if (process == -1){
+    logFile << timeStr() << "Could not fork!" << endl;
+    finish(1);
+  }
+
+  if (process == 0){ // child
+    close(fd[0]); // don't need to read
+
+    if (dup2(fd[1], fileno(stdout)) == -1){// redirect stdout
+       logFile << timeStr() << "Could not redirect stdout" << endl;
+       finish(1);
+    }
+    execlp("/bin/sh", "/bin/sh", "-c", command.c_str(), NULL);
+
+    logFile << timeStr() << "Could not exec command: " << command << endl;
+    finish(1);
+  } else {
+    close(fd[1]);
+    char buf[256];
+    int nread;
+    while ((nread = read(fd[0], buf, 256)) > 0){
+      buf[nread] = 0;
+      //      printf("got %s\n", buf);
+      out.write(buf, nread);
+    }
+    if (nread == -1)
+      logFile << timeStr() << "Could not read from pipe" << endl;
+
+    //    logFile << "waiting " << endl;
+
+    close(fd[0]);
+    waitpid(process, & status, 0);
+  }
+  
+#ifdef WCOREDUMP
+  if (WCOREDUMP(status)){
+    logFile << timeStr() << "Command: " << command << " exited with a coredump"
+	    << endl;
+    cerr << "Command: " << command << " exited with a coredump" << endl;
+    finish(1);
+  }
+#endif
+
+  if (WIFEXITED(status) == 0){
+    logFile << timeStr() << "Command: " << command << " failed: likely through abort() or coredump" << endl;
+    cerr << "Command: " << command << " failed: likely through abort() or coredump" << endl;
+    finish(1);
+  }
+
+  // here we assume that WIFEXITED(status) is non null(should have been caught)
+
+  if (WEXITSTATUS(status) != 0){
+    logFile << timeStr() << "Command: " << command << " exited with status: " 
+	    << WEXITSTATUS(status) << endl;
+    cerr << "Command: " << command << " exited with status: " << WEXITSTATUS(status) << endl;
+    finish(1);
+  }
+
+  return out.str();
+} // doCommandStr
 
 bool doCommand(string command, bool noop)
 {
@@ -441,12 +563,15 @@ bool doCommand(string command, bool noop)
 } // doCommand
 
 
+
+//--------------------------------------------------------
 int main(int argc, char ** argv)
 {
 
   if (!GetOptions(argc, argv)){
-    cerr << "Command line parsing failed" << endl;
-    printHelpText();
+    cerr << "Command line parsing failed, use -h option for usage info" 
+	 << endl;
+    //printHelpText();
     finish(1);
   }
 
@@ -461,6 +586,10 @@ int main(int argc, char ** argv)
     confFile = string(amosConf);
   } else 
     confFile = globals["conffile"];
+
+
+  vector<pair<string, vector<string>::iterator> > steps; //steps that will be executed
+  vector<string> commands; // commands that will be executed
 
   ifstream conf(confFile.c_str());
   if (! conf.is_open()){
@@ -559,7 +688,7 @@ int main(int argc, char ** argv)
 	  strtol(globals["start"].c_str(), NULL, 10) > currstep)
 	noop =  true;
       if (globals.find("end") != globals.end() &&
-	  strtol(globals["end"].c_str(), NULL, 10) <= currstep)
+	  strtol(globals["end"].c_str(), NULL, 10) < currstep)
 	noop = true;  
       
 
@@ -600,6 +729,15 @@ int main(int argc, char ** argv)
       continue;
     }
 
+    int numvars;
+    if (sscanf(line.c_str(), "EXPECT %d", &numvars) == 1){
+      if (cmdLnVars.size() < numvars){
+	cerr << "Expecting " << numvars 
+	     << " parameters. Try -h for usage info" <<endl;
+	finish(1);
+      }
+    } 
+
     logFile << timeStr() << "Cannot parse line " << lineno << " in " 
 	    << confFile << ":" << endl << line << endl;
     cerr << "Cannot parse line " << lineno << " in " 
@@ -614,5 +752,3 @@ int main(int argc, char ** argv)
   // successful end
   finish(0);
 }// main
-
-
