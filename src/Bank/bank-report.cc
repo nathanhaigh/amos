@@ -9,6 +9,7 @@
 //! AMOS message file. The bank's internal ID (iid) links are translated back
 //! their external IDs (eid's).
 //!
+//! \todo allow the reporting of one or more specific objects
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "amp.hh"
@@ -26,10 +27,10 @@ using namespace std;
 
 
 //=============================================================== Globals ====//
-string OPT_BankName;                 //!< bank name parameter
-string OPT_MessageName;              //!< message name parameter
-bool   OPT_Concat = false;           //!< concat to existing message
-bool   OPT_Truncate = false;         //!< truncate message file before write
+string OPT_BankName;                 // bank name parameter
+string OPT_MessageName;              // message name parameter
+bool   OPT_Concat = false;           // concat to existing message
+bool   OPT_Truncate = false;         // truncate message file before write
 
 
 //========================================================== Fuction Decs ====//
@@ -62,21 +63,21 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  Message_t msg;                 //!< the current message
-  ofstream msgfile;              //!< the message file stream
-  IDMap_t typemap(1000);         //!< NCode to index mapping
-  ID_t ti;                       //!< type index
-  Universal_t * typep;           //!< type pointer
-  Bank_t * bankp = NULL;         //!< bank pointer
+  Message_t msg;                 // the current message
+  ofstream msgfile;              // the message file stream
+  IDMap_t typemap(1000);         // NCode to index mapping
+  ID_t ti;                       // type index
+  Universal_t * typep;           // type pointer
+  Bank_t * bankp = NULL;         // bank pointer
 
-  long int cnts = 0;             //!< seen object count
-  long int cntw = 0;             //!< written object count
+  long int cnts = 0;             // seen object count
+  long int cntw = 0;             // written object count
 
-  ID_t id;                       //!< id holder
-  pair<ID_t, ID_t> idp;          //!< id pair
-  pair<ID_t, NCode_t> scp;       //!< source pair
-  vector<Tile_t>::iterator tvi;  //!< tile vector iterator
-  vector<ID_t>::iterator ivi;    //!< ID vector iterator
+  ID_t id;                       // id holder
+  pair<ID_t, ID_t> idp;          // id pair
+  pair<ID_t, NCode_t> scp;       // source pair
+  vector<Tile_t>::iterator tvi;  // tile vector iterator
+  vector<ID_t>::iterator ivi;    // ID vector iterator
 
   //-- Indices of the types in the bank array
   //   order of this list is important to maintain def before ref linking rule

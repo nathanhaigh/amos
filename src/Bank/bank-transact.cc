@@ -29,11 +29,11 @@ using namespace std;
 
 
 //=============================================================== Globals ====//
-bool   OPT_Create      = false;      //!< create bank option
-bool   OPT_ForceCreate = false;      //!< forcibly create bank option
-bool   OPT_Compress    = false;      //!< SEQ and RED compression option
-string OPT_BankName;                 //!< bank name parameter
-string OPT_MessageName;              //!< message name parameter
+bool   OPT_Create      = false;      // create bank option
+bool   OPT_ForceCreate = false;      // forcibly create bank option
+bool   OPT_Compress    = false;      // SEQ and RED compression option
+string OPT_BankName;                 // bank name parameter
+string OPT_MessageName;              // message name parameter
 
 
 //========================================================== Fuction Decs ====//
@@ -66,22 +66,22 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  char act;                      //!< action enumeration
-  Message_t msg;                 //!< the current message
-  ifstream msgfile;              //!< the message file stream
-  NCode_t msgcode;               //!< current message NCode
-  IDMap_t typemap(1000);         //!< NCode to index mapping
-  ID_t ti;                       //!< type index
-  Universal_t * typep;           //!< type pointer
-  Bank_t * bankp;                //!< bank pointer
-  long int cnts = 0;             //!< seen message count
-  long int cntc = 0;             //!< committed message count
+  char act;                      // action enumeration
+  Message_t msg;                 // the current message
+  ifstream msgfile;              // the message file stream
+  NCode_t msgcode;               // current message NCode
+  IDMap_t typemap(1000);         // NCode to index mapping
+  ID_t ti;                       // type index
+  Universal_t * typep;           // type pointer
+  Bank_t * bankp;                // bank pointer
+  long int cnts = 0;             // seen message count
+  long int cntc = 0;             // committed message count
 
-  ID_t id;                       //!< id holder
-  pair<ID_t, ID_t> idp;          //!< id pair
-  pair<ID_t, NCode_t> scp;       //!< source pair
-  vector<Tile_t>::iterator tvi;  //!< tile vector iterator
-  vector<ID_t>::iterator ivi;    //!< ID vector iterator
+  ID_t id;                       // id holder
+  pair<ID_t, ID_t> idp;          // id pair
+  pair<ID_t, NCode_t> scp;       // source pair
+  vector<Tile_t>::iterator tvi;  // tile vector iterator
+  vector<ID_t>::iterator ivi;    // ID vector iterator
 
   //-- Indices of the types in the bank and type arrays
   enum
