@@ -16,7 +16,6 @@ using namespace std;
 
 
 
-//================================================ Distribution_t ==============
 //----------------------------------------------------- readMessage ------------
 void Distribution_t::readMessage (const Message_t & msg)
 {
