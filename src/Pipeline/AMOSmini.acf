@@ -23,7 +23,7 @@ OUTPUTS = $(CONTIG)
 30: $(BINDIR)/tigger -b $(BANK)
 
 ## Running consensus
-40: $(BINDIR)/make-consensus -B ? ? $(BANK)
+40: $(BINDIR)/make-consensus -B -b $(BANK)
 
 ## Outputting contigs
 50: $(BINDIR)/bank-report -b $(BANK) CTG > $(CONTIG)
