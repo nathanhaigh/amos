@@ -114,7 +114,7 @@ public:
   //!
   Contig_t ( )
   {
-
+    poly_m = 0;
   }
 
 
@@ -133,6 +133,17 @@ public:
   ~Contig_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Sequence_t::clear( );
+    poly_m = 0;
+    reads_m . clear( );
   }
 
 

@@ -96,7 +96,6 @@ public:
   //! \brief Constructs an empty Example_t object
   //!
   Example_t ( )
-    : Bankable_t ( )
   {
 
   }
@@ -117,6 +116,15 @@ public:
   ~Example_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Bankable_t::clear( );
   }
 
 

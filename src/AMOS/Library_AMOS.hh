@@ -88,7 +88,6 @@ public:
   //! \brief Constructs an empty Library_t object
   //!
   Library_t ( )
-    : Bankable_t ( )
   {
 
   }
@@ -109,6 +108,17 @@ public:
   ~Library_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Bankable_t::clear( );
+    dist_m . clear( );
+    frags_m . clear( );
   }
 
 

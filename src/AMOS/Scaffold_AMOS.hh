@@ -87,7 +87,6 @@ public:
   //! \brief Constructs an empty Scaffold_t object
   //!
   Scaffold_t ( )
-    : Bankable_t ( )
   {
 
   }
@@ -108,6 +107,17 @@ public:
   ~Scaffold_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Bankable_t::clear( );
+    contigs_m . clear( );
+    edges_m . clear( );
   }
 
 

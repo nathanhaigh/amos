@@ -133,6 +133,21 @@ public:
   }
 
 
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Sequence_t::clear( );
+    clear_m . clear( );
+    eid_m . erase( );
+    frag_m = NULL_ID;
+    qclear_m . clear( );
+    type_m = NULL_READ;
+    vclear_m . clear( );
+  }
+
+
   //--------------------------------------------------- getBankType ------------
   //! \brief Get the unique bank type identifier
   //!

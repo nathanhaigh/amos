@@ -234,14 +234,13 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  //! \brief Clears the sequence and quality strings
+  //! \brief Clears all object data, reinitializes the object
   //!
-  //! Effectively re-initializes the Sequence
-  //!
-  //! \return void
+  //! \post Object will revert back to uncompressed mode
   //!
   void clear ( )
   {
+    Bankable_t::clear( );
     free (seq_m);
     free (qual_m);
     seq_m = qual_m = NULL;

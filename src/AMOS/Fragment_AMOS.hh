@@ -106,11 +106,9 @@ public:
   //! Sets all members to NULL
   //!
   Fragment_t ( )
-    : Bankable_t ( )
   {
-    ends_m.first = ends_m.second = NULL_ID;
-    library_m = NULL_ID;
-    type_m = this->NULL_FRAGMENT;
+    ends_m . first = ends_m . second = library_m = NULL_ID;
+    type_m = NULL_FRAGMENT;
   }
 
 
@@ -129,6 +127,18 @@ public:
   ~Fragment_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Bankable_t::clear( );
+    ends_m . first = ends_m . second = library_m = NULL_ID;
+    reads_m . clear( );
+    type_m = NULL_FRAGMENT;
   }
 
 

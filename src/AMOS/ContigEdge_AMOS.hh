@@ -110,6 +110,16 @@ public:
   }
 
 
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    ContigLink_t::clear( );
+    links_m . clear( );
+  }
+
+
   //--------------------------------------------------- getBankType ------------
   //! \brief Get the unique bank type identifier
   //!

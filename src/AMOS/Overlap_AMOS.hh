@@ -95,9 +95,9 @@ public:
   //! Sets all members to 0
   //!
   Overlap_t ( )
-    : Bankable_t ( )
   {
     aHang_m = bHang_m = 0;
+    reads_m . first = reads_m . second = NULL_ID;
   }
 
 
@@ -116,6 +116,17 @@ public:
   ~Overlap_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Bankable_t::clear( );
+    aHang_m = bHang_m = 0;
+    reads_m . first = reads_m . second = NULL_ID;
   }
 
 

@@ -61,7 +61,7 @@ struct Distribution_t
   //!
   Distribution_t ( )
   {
-    mean = 0; sd = 0; skew = 0;
+    clear( );
   }
 
 
@@ -72,6 +72,16 @@ struct Distribution_t
   {
 
   }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    mean = 0; sd = 0; skew = 0;
+  }
+
 };
 
 
@@ -103,7 +113,7 @@ struct Range_t
   //!
   Range_t ( )
   {
-    begin = end = 0;
+    clear( );
   }
 
 
@@ -265,6 +275,18 @@ struct Tile_t
   ~Tile_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    id = NULL_ID;
+    gaps . clear( );
+    offset = 0;
+    range . clear( );
   }
 
 };

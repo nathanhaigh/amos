@@ -159,7 +159,6 @@ public:
   //! Sets all members to 0 or NULL
   //!
   Kmer_t ( )
-    : Bankable_t ( )
   {
     seq_m = NULL;
     count_m = length_m = 0;
@@ -189,14 +188,11 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  //! \brief Clears the sequence, count and read list
-  //!
-  //! Effectively re-initializes the Kmer
-  //!
-  //! \return void
+  //! \brief Clears all object data, reinitializes the object
   //!
   void clear ( )
   {
+    Bankable_t::clear( );
     free (seq_m);
     seq_m = NULL;
     count_m = length_m = 0;

@@ -116,12 +116,11 @@ public:
   //! Sets all members to zero or NULL
   //!
   ContigLink_t ( )
-    : Bankable_t ( )
   {
-    contigs_m.first = contigs_m.second = source_m.first = NULL_ID;
-    source_m.second = Bankable_t::BANKTYPE;
+    contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
+    source_m . second = Bankable_t::NULL_BANK;
     sd_m = size_m = 0;
-    type_m = this->NULL_LINK;
+    type_m = NULL_LINK;
   }
 
 
@@ -140,6 +139,19 @@ public:
   ~ContigLink_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    Bankable_t::clear( );
+    contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
+    source_m . second = Bankable_t::NULL_BANK;
+    sd_m = size_m = 0;
+    type_m = NULL_LINK;
   }
 
 
