@@ -121,7 +121,6 @@ struct Mate_t
 struct ReadAlign_t
 {
   Reference_t * ref;                    // ponits to the reference map value
-  char dirR;                            // direction of ref
   char ori;                             // orientation of read relative to ref
   long int loR, hiR, lo, hi;            // lo hi in ref, lo hi in read
   float idy;                            // identity of alignment
@@ -1230,19 +1229,17 @@ void ParseAlign (Mapping_t & mapping)
 	  //-- Force ascending coordinates
 	  if ( dai -> sR < dai -> eR )
 	    {
-	      currap -> dirR = FORWARD_CHAR;
 	      currap -> loR = dai -> sR;
 	      currap -> hiR = dai -> eR;
 	    }
 	  else
 	    {
-	      currap -> dirR = REVERSE_CHAR;
 	      currap -> loR = dai -> eR;
 	      currap -> hiR = dai -> sR;
 	    }
 
-	  if ( (currap -> dirR == FORWARD_CHAR  &&  dai -> sQ < dai -> eQ)  ||
-	       (currap -> dirR == REVERSE_CHAR  &&  dai -> sQ > dai -> eQ) )
+	  if ( (dai -> sR < dai -> eR  &&  dai -> sQ < dai -> eQ)  ||
+	       (dai -> sR > dai -> eR  &&  dai -> sQ > dai -> eQ) )
 	    {
 	      currap -> ori = FORWARD_CHAR;
 	      if ( dai -> sQ < dai -> eQ )
