@@ -63,6 +63,7 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
+
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
@@ -237,7 +238,7 @@ int main (int argc, char ** argv)
   }
   catch (const Exception_t & e) {
     cerr << endl
-      	 << "ERROR: " << e . what( ) << endl
+      	 << "FATAL: " << e . what( ) << endl
 	 << "  could not perform transaction, abort" << endl
 	 << "Messages seen: " << cnts << endl
 	 << "Messages committed: " << cntc << endl;
@@ -303,7 +304,8 @@ void ParseArgs (int argc, char ** argv)
 
   if ( !OPT_Create  &&  access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
-      cerr << "ERROR: Bank directory is not accessible" << endl;
+      cerr << "ERROR: Bank directory is not accessible, "
+	   << strerror (errno) << endl;
       errflg ++;
     }
 
@@ -311,7 +313,8 @@ void ParseArgs (int argc, char ** argv)
        !OPT_ForceCreate  &&
        !access (OPT_BankName . c_str( ), F_OK) )
     {
-      cerr << "ERROR: Bank path already exists" << endl;
+      cerr << "ERROR: Bank path already exists, "
+	   << strerror (errno) << endl;
       errflg ++;
     }
 
