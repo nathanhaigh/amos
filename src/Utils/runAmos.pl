@@ -1,6 +1,5 @@
-#!__PERL
+#/usr/local/bin/perl
 
-use lib "__LOCAL_LIB";
 use TIGR::Foundation;
 use strict;
 
@@ -197,12 +196,18 @@ if (defined $clean){
     my %pardoned;
     my @inputs = split(/\s+/, $variables{"INPUTS"});
     my @outputs = split(/\s+/, $variables{"OUTPUTS"});
+    if ($#inputs == -1 || $#outputs == -1){
+	$base->logError("-clean requires that both the INPUTS and the OUTPUTS variables be set\n");
+	goto NOCLEAN;
+    }
+
+    push @inputs, $conffile;
     while (@inputs){
-	print "pardonning input $inputs[$#inputs]\n";
+	$base->logLocal("pardonning input $inputs[$#inputs]", 1);
 	$pardoned{pop(@inputs)} = 1;
     }
     while (@outputs){
-	print "pardonning output $outputs[$#outputs]\n";
+	$base->logLocal("pardonning output $outputs[$#outputs]", 1);
 	$pardoned{pop(@outputs)} = 1;
     }
     opendir(DOT, ".") || $base->bail("Cannot open .: $!");
@@ -226,7 +231,7 @@ if (defined $clean){
     }
     closedir(DOT);
 }
-
+ NOCLEAN:
 exit(0);
 
 sub doCommand
