@@ -33,20 +33,20 @@ void Fragment_t::readMessage (const Message_t & msg)
 	  AMOS_THROW_ARGUMENT ("Invalid lib format");
       }
 
-    if ( msg . exists (F_5PRIME) )
+    if ( msg . exists (F_SIZE) )
       {
-	ss . str (msg . getField (F_5PRIME));
-	ss >> ends_m . first;
+	ss . str (msg . getField (F_SIZE));
+	ss >> size_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid 5pr format");
+	  AMOS_THROW_ARGUMENT ("Invalid sze format");
       }
 
-    if ( msg . exists (F_3PRIME) )
+    if ( msg . exists (F_SOURCE) )
       {
-	ss . str (msg . getField (F_3PRIME));
-	ss >> ends_m . second;
+	ss . str (msg . getField (F_SOURCE));
+	ss >> source_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid 3pr format");
+	  AMOS_THROW_ARGUMENT ("Invalid src format");
       }
 
     if ( msg . exists (F_TYPE) )
@@ -70,9 +70,11 @@ Size_t Fragment_t::readRecord (istream & fix,
   Size_t streamsize = Universal_t::readRecord (fix, var);
 
   //-- Read FIX data
-  fix . read ((char *)&ends_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . read ((char *)&library_m, sizeof (ID_t));
+  streamsize += sizeof (ID_t);
+  fix . read ((char *)&size_m, sizeof (Size_t));
+  streamsize += sizeof (Size_t);
+  fix . read ((char *)&source_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . read ((char *)&type_m, sizeof (FragmentType_t));
   streamsize += sizeof (FragmentType_t);
@@ -98,17 +100,17 @@ void Fragment_t::writeMessage (Message_t & msg) const
         ss . str("");
       }
 
-    if ( ends_m . first != NULL_ID )
+    if ( size_m != 0 )
       {
-	ss << ends_m . first;
-	msg . setField (F_5PRIME, ss . str( ));
-	ss . str("");
+	ss << size_m;
+	msg . setField (F_SIZE, ss . str( ));
+	ss .str("");
       }
 
-    if ( ends_m . second != NULL_ID )
+    if ( source_m != NULL_ID )
       {
-	ss << ends_m . second;
-	msg . setField (F_3PRIME, ss . str( ));
+	ss << source_m;
+	msg . setField (F_SOURCE, ss . str( ));
 	ss . str("");
       }
 
@@ -134,9 +136,11 @@ Size_t Fragment_t::writeRecord (ostream & fix,
   Size_t streamsize = Universal_t::writeRecord (fix, var);
 
   //-- Write FIX data
-  fix . write ((char *)&ends_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . write ((char *)&library_m, sizeof (ID_t));
+  streamsize += sizeof (ID_t);
+  fix . write ((char *)&size_m, sizeof (Size_t));
+  streamsize += sizeof (Size_t);
+  fix . write ((char *)&source_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . write ((char *)&type_m, sizeof (FragmentType_t));
   streamsize += sizeof (FragmentType_t);

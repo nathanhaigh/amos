@@ -34,15 +34,17 @@ public:
 
   static const FragmentType_t NULL_FRAGMENT  = 0;
   static const FragmentType_t OTHER          = 'X';
+  static const FragmentType_t BAC            = 'B';
   static const FragmentType_t INSERT         = 'I';
   static const FragmentType_t TRANSPOSON     = 'T';
-  static const FragmentType_t BAC            = 'B';
+  static const FragmentType_t WALK           = 'W';
 
 
 private:
 
-  std::pair<ID_t, ID_t> ends_m;    //!< The forward and reverse fragment ends
   ID_t library_m;                  //!< ID of the parent library
+  Size_t size_m;                   //!< size of the fragment, 0 if not known
+  ID_t source_m;                   //!< ID of the source fragment
   FragmentType_t type_m;           //!< type of fragment
 
 
@@ -81,7 +83,8 @@ public:
   //!
   Fragment_t ( )
   {
-    ends_m . first = ends_m . second = library_m = NULL_ID;
+    size_m = 0;
+    library_m = source_m = NULL_ID;
     type_m = NULL_FRAGMENT;
   }
 
@@ -108,7 +111,8 @@ public:
   virtual void clear ( )
   {
     Universal_t::clear( );
-    ends_m . first = ends_m . second = library_m = NULL_ID;
+    size_m = 0;
+    library_m = source_m = NULL_ID;
     type_m = NULL_FRAGMENT;
   }
 
@@ -120,20 +124,6 @@ public:
   }
 
 
-  //--------------------------------------------------- getEnds ----------------
-  //! \brief Returns the IDs of the 5' and 3' ends of the Fragment
-  //!
-  //! Returns the IDs of the reads that represent the 5' and 3' ends of the
-  //! fragment. Useful for retrieving mate-pair information.
-  //!
-  //! \return The 5' and 3' ends respectively
-  //!
-  std::pair<ID_t, ID_t> getEnds ( ) const
-  {
-    return ends_m;
-  }
-
-
   //--------------------------------------------------- getLibrary -------------
   //! \brief Get the parent library ID
   //!
@@ -142,6 +132,32 @@ public:
   ID_t getLibrary ( ) const
   {
     return library_m;
+  }
+
+
+  //--------------------------------------------------- getSize ----------------
+  //! \brief Get the size of the fragment, if known
+  //!
+  //! Size will be 0 if unknown
+  //!
+  //! \return The size of the fragment
+  //!
+  Size_t getSize ( ) const
+  {
+    return size_m;
+  }
+
+
+  //--------------------------------------------------- getSource --------------
+  //! \brief Get the source fragment of this fragment
+  //!
+  //! e.g. The insert fragment used for a PCR walk fragment
+  //!
+  //! \return The ID of the source fragment
+  //!
+  ID_t getSource ( ) const
+  {
+    return source_m;
   }
 
 
@@ -160,21 +176,6 @@ public:
   virtual void readMessage (const Message_t & msg);
 
 
-  //--------------------------------------------------- setEnds ----------------
-  //! \brief Sets the IDs of the 5' and 3' ends of the Fragment
-  //!
-  //! Set the IDs of the reads that represent the 5' and 3' ends of the
-  //! Fragment. Useful in storing mate-pair information.
-  //!
-  //! \param ends The 5' and 3' ends respectively
-  //! \return void
-  //!
-  void setEnds (std::pair<ID_t, ID_t> ends)
-  {
-    ends_m = ends;
-  }
-
-
   //--------------------------------------------------- setLibrary -------------
   //! \brief Set the parent library ID
   //!
@@ -184,6 +185,32 @@ public:
   void setLibrary (ID_t library)
   {
     library_m = library;
+  }
+
+
+  //--------------------------------------------------- getSize ----------------
+  //! \brief Set the size of the fragment, if known
+  //!
+  //! \param size The size of the fragment
+  //! \return void
+  //!
+  void setSize (Size_t size)
+  {
+    size_m = size;
+  }
+
+
+  //--------------------------------------------------- getSource --------------
+  //! \brief Set the source fragment of this fragment
+  //!
+  //! e.g. The insert fragment used for a PCR walk fragment
+  //!
+  //! \param The ID of the source fragment
+  //! \return void
+  //!
+  void setSource (ID_t source)
+  {
+    source_m = source;
   }
 
 
@@ -201,9 +228,10 @@ public:
       {
       case NULL_FRAGMENT:
       case OTHER:
+      case BAC:
       case INSERT:
       case TRANSPOSON:
-      case BAC:
+      case WALK:
 	type_m = type;
 	break;
       default:
