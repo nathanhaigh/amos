@@ -77,6 +77,11 @@ struct  Unitig_Info_t
    int  match;
    short  copy_num, copy_total;
    bool  cam_fwd;
+
+   Unitig_Info_t  ()
+     {
+      match = -1;
+     }
   };
 
 
@@ -513,7 +518,8 @@ fprintf (stderr, "### %d contigs\n", n);
       j = Search (contig_pos, contig [i] . contig_id);
 
       contig [i] . match = j;
-      contig_pos [j] . scaff_id = contig [i] . scaff_id;
+      if  (j >= 0)
+          contig_pos [j] . scaff_id = contig [i] . scaff_id;
      }
 
    // Output scaffold links
