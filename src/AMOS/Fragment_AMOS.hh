@@ -205,7 +205,7 @@ public:
   //!
   //! e.g. The insert fragment used for a PCR walk fragment
   //!
-  //! \param The ID of the source fragment
+  //! \param source The ID of the source fragment
   //! \return void
   //!
   void setSource (ID_t source)

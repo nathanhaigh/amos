@@ -31,6 +31,7 @@ namespace Bank_k {
   const NCode_t FRAGMENT   = Message_k::M_FRAGMENT;
   const NCode_t KMER       = Message_k::M_KMER;
   const NCode_t LIBRARY    = Message_k::M_LIBRARY;
+  const NCode_t MATEPAIR   = Message_k::M_MATEPAIR;
   const NCode_t OVERLAP    = Message_k::M_OVERLAP;
   const NCode_t READ       = Message_k::M_READ;
   const NCode_t SCAFFOLD   = Message_k::M_SCAFFOLD;

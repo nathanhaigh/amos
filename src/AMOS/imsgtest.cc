@@ -29,6 +29,7 @@ int main (int argc, char ** argv)
     Fragment_t frg;
     Kmer_t kmr;
     Library_t lib;
+    Matepair_t mtp;
     Overlap_t ovl;
     Scaffold_t scf;
     Sequence_t seq;
@@ -53,6 +54,8 @@ int main (int argc, char ** argv)
 	  unvp = &kmr;
 	else if ( msg . getMessageCode( ) == Message_k::M_LIBRARY )
 	  unvp = &lib;
+	else if ( msg . getMessageCode( ) == Message_k::M_MATEPAIR )
+	  unvp = &mtp;
 	else if ( msg . getMessageCode( ) == Message_k::M_OVERLAP )
 	  unvp = &ovl;
 	else if ( msg . getMessageCode( ) == Message_k::M_SCAFFOLD )

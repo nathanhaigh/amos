@@ -78,6 +78,7 @@ namespace Message_k {
   const NCode_t   M_KMER         = Encode ("KMR");
   const NCode_t   M_LIBRARY      = Encode ("LIB");
   const NCode_t   M_IDMAP        = Encode ("MAP");
+  const NCode_t   M_MATEPAIR     = Encode ("MTP");
   const NCode_t   M_OVERLAP      = Encode ("OVL");
   const NCode_t   M_READ         = Encode ("RED");
   const NCode_t   M_SCAFFOLD     = Encode ("SCF");

@@ -22,6 +22,7 @@
 #include "Fragment_AMOS.hh"
 #include "Kmer_AMOS.hh"
 #include "Library_AMOS.hh"
+#include "Matepair_AMOS.hh"
 #include "Overlap_AMOS.hh"
 #include "Read_AMOS.hh"
 #include "Scaffold_AMOS.hh"
