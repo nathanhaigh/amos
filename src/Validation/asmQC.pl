@@ -4,7 +4,6 @@
 # optionally a .cam file
 
 use TIGR::Foundation;
-use DBI;
 
 $base = new TIGR::Foundation;
 
@@ -18,10 +17,6 @@ my $MINSEQS = 0;   # minimum cluster size to be considered
 
 my $ctgfile;
 my $db;
-my $dbuser = "access";
-my $dbpass = "access";
-my $dbserver = "SYBTIGR";
-my $dbtype = "Sybase";
 my $libfile;
 my $outfile;
 my $matefile;
@@ -58,10 +53,6 @@ my %stats = ("LENS" => 0,
 my $helpText = qq~
     asmQC [opts]
      -i <file>  .contig input file (required)
-     -D <db>    database for finding clone sizes
-     -U <user>, 
-     -P <pass>, 
-     -S <server> database user/password/server
      -L <lib>   use library data from <lib> file
      -o <outfile> name of output
      -cam <camfile> name of celamy output
@@ -86,10 +77,6 @@ my $helpText = qq~
 $base->setHelpInfo($helpText);
 
 $err = $base->TIGR_GetOptions("i=s" => \$ctgfile,
-			      "D=s" => \$db,
-			      "U=s" => \$dbuser,
-			      "P=s" => \$dbpass,
-			      "S=s" => \$dbserver,
 			      "L=s" => \$libfile,
 			      "o=s" => \$outfile,
 			      "cam=s" => \$camfile,
@@ -145,19 +132,12 @@ if (! defined $ctgfile){
     $base->bail("You must provide a file with the -i option");
 }
 
-if (! defined $db){
-    $base->bail("You must provide a database with the -D option");
+if (! defined $matefile){
+    $base->bail("You must provide a mates file with the -mates option");
 }
 
 if (! defined $outfile){
     $base->bail("You must provide an output file name with the -o option");
-}
-
-my ($dbproc) = DBI->connect("dbi:$dbtype:server=$dbserver;packetSize=8092",
-			    $dbuser, $dbpass);
-
-if (! defined $dbproc){
-    $base->bail("Connection to server $dbserver failed: $!\n");
 }
 
 my $camid = 0;
@@ -170,7 +150,7 @@ if (defined $camfile){
 0longColor: CFF00FF T1 S # long clone
 0longReadColor: CFF00FF T2 S # read_in_long clone
 0noMateColor: C0000FF T2 S # no mate 
-0MateExtColor: C0000FF T1 S # no mate extension
+0MateExtColor: C0000FF T1 S # w/o mate extension
 0orientColor: C800080 T1 D # misoriented mate clone
 0orientReadColor: C800080 T2 S # read_in_misoriented clone
 0backboneColor: C808080 T2 S # backbone
@@ -178,29 +158,72 @@ if (defined $camfile){
 ~;
 }
 
-$dbproc->do("use track") || $base->bail("use track error: " . $dbproc->errstr);
-
-my $libQuery = q~
-    select lib_id, min_clone_len, max_clone_len, cat#
-    from library
-    where db = ?
-    ~;
-
-$qh = $dbproc->prepare($libQuery) || $base->bail("Cannot prepare query");
-
-$qh->execute($db) || $base->bail("Cannot execute query");
 
 %libRange = ();
-my %libId = ();  # mapping between libIds and cat#
-while ($lineref = $qh->fetchrow_arrayref){
-    $libRange{$$lineref[3]} = "$$lineref[1] $$lineref[2]";
-    $libId{$$lineref[0]} = $$lineref[3];
-    print STDERR "setting lib $$lineref[3] to $$lineref[1], $$lineref[2]\n";
-    if ($$lineref[1] < $LIBLIMIT ||
-	$$lineref[2] < $LIBLIMIT ||
-	$$lineref[2] - $$lineref[1] < $LIBLIMIT){
-	$base->logError("Library $$lineref[3] has incorrect range $$lineref[1] - $$lineref[2]");
-    }
+#my %libId = ();  # mapping between libIds and cat#
+my %inserts;
+my %forw;
+my %rev;
+my %seq2ins;
+my %ins2lib;
+
+my $insid = 1;
+
+if (defined $matefile){
+    open(MATES, $matefile) || $base->bail("Cannot open $matefile: $!\n");
+    
+    while (<MATES>){
+        chomp;
+        if (/^library/){
+            my @recs = split('\t', $_);
+	    
+            if ($#recs < 3 || $#recs > 4){
+                $base->logError("Improperly formated line $. in \"$matefile\".\nMaybe you didn't use TABs to separate fields\n", 1);
+                next;
+            }
+
+	    $libRange{$recs[1]} = "$recs[2] $recs[3]"; 
+            
+            next;
+        } # if library
+
+	if (/^\#/) { # comment
+            next;
+        }
+
+        if (/^\s*$/) { # empty line
+            next;
+        }
+
+	if (/^pair/) { # regexp pair
+	    # deal with this at a later time
+	    next;
+	}
+        
+        # now we just deal with the pair lines
+        my @recs = split('\t', $_);
+        if ($#recs < 1 || $#recs > 2){
+            $base->logError("Improperly formated line $. in \"$matefile\".\nMaybe you didn't use TABs to separate fields\n");
+            next;
+        }
+
+        my $insname = $insid++;
+
+        if (defined $recs[2]){
+            $ins2lib{$insname} = $recs[2];
+        } else {
+            $base->logError("$insname has no library\n");
+        }
+        
+        $forw{$insname} = $recs[0];
+        $rev{$insname} = $recs[1];
+        
+        $seq2ins{$recs[0]} = $insname;
+        $seq2ins{$recs[1]} = $insname;
+    } # while <MATES>
+
+    close(MATES);
+
 }
 
 if (defined $libfile){
@@ -208,7 +231,6 @@ if (defined $libfile){
     while (<LIB>){
 	if (/^(\w+) (\d+) (\d+)/){
 	    $libRange{$1} = "$2 $3";
-	    $libId{$1} = $1;
 	}
     }
     close(LIB);
@@ -268,11 +290,12 @@ while (<IN>){
 	print STDERR "doing contig $contig\n";
 	next;
     }
-    if (/^\#(\w+).*\{(\d+ \d+)\} <(\d+ \d+)>/){
+    if (/^\#(\S+)\(\d+\).*\{(\d+ \d+)\} <(\d+ \d+)>/){
+#	print STDERR "Got sequence $1\n";
 	$seqCtg{$1} = $contig;
 	$asmRange{$1} = $3;
 	$seqRange{$1} = $2;
-	$cloneSeqs{get_clone($1)} .= "$1 ";
+#	$cloneSeqs{get_clone($1)} .= "$1 ";
 	$nSeqs++;
 	next;
     }
@@ -290,12 +313,29 @@ $badLenH = 0;
 $badMisC = 0;
 $badMisL = 0;
 
-if (defined $matefile) {
-    open (MATES, ">$matefile") || $base->bail("Cannot open $matefile: $!\n");
+$libRange{"unmated"} = "100 1000";
+
+while (my ($seq, $ctg) = each %seqCtg){
+    if (! exists $seq2ins{$seq}){
+	my $iid = $insid++;
+	$seq2ins{$seq} = $iid;
+	$forw{$iid} = $seq;
+	$ins2lib{$iid} = "unmated";
+    }
 }
 
-while (($cln, $clnseqs) = each %cloneSeqs){
-    ($forw, $rev) = process_clone($clnseqs);
+
+
+while (($ins, $lib) = each %ins2lib){
+    my $forw = $forw{$ins};
+    my $rev = $rev{$ins};
+    my $clnseqs = "";
+    if (defined $forw){$clnseqs .= "$forw ";}
+    if (defined $rev) {$clnseqs .= "$rev ";}
+
+    if ((defined $forw && ! exists $seqCtg{$forw}) && 
+	(defined $rev && ! exists $seqCtg{$rev})){next;}
+
     $allClones++;
 
     if ($forw eq "" || $rev eq ""){ # unpaired ends
@@ -305,16 +345,17 @@ while (($cln, $clnseqs) = each %cloneSeqs){
 	if ($rev ne ""){
 	    ($minCln, $maxCln) = split(' ', $asmRange{$rev});
 	}
-	if (($forw ne "" || $rev ne "") && 
+	if ( (($forw ne "" && exists $asmRange{$forw}) || 
+	      ($rev ne "" && exists $asmRange{$rev})) && 
 	    defined $camfile && 
 	    exists $report{"NOPAIR"}){
 	    my $l; my $r;
 	    if ($rev ne ""){
 		($l, $r) = split(' ', $seqRange{$rev});
-		($libLow, $libHi) = split(' ', $libRange{get_lib($rev)});
+		($libLow, $libHi) = split(' ', $libRange{$lib});
 	    } else {
 		($l, $r) = split(' ', $seqRange{$forw});
-		($libLow, $libHi) = split(' ', $libRange{get_lib($forw)});
+		($libLow, $libHi) = split(' ', $libRange{$lib});
 	    }
 	    my $libMed = int (($libLow + $libHi) / 2);
 	    if ($l < $r) 
@@ -331,8 +372,12 @@ while (($cln, $clnseqs) = each %cloneSeqs){
 	next;
     }
 
-    if ($seqCtg{$forw} != $seqCtg{$rev}){ # ends belong to different contigs
+    if (exists $seqCtg{$forw} && exists $seqCtg{$rev} && $seqCtg{$forw} != $seqCtg{$rev}){ # ends belong to different contigs
 	markBad($clnseqs, "OTHER");
+	next;
+    }
+	
+    if (! exists $asmRange{$forw} || ! exists $asmRange{$rev}){
 	next;
     }
     
@@ -378,16 +423,12 @@ while (($cln, $clnseqs) = each %cloneSeqs){
 	}
     }
 
-    ($libLow, $libHi) = split(' ', $libRange{get_lib($forw)});
+    ($libLow, $libHi) = split(' ', $libRange{$lib});
 
-    if (defined $matefile){
-	print MATES get_lib($forw), " $cln $seqCtg{$forw} $minCln $maxCln ", $maxCln - $minCln,
-	" $libLow $libHi\n";
-    }
     if ($maxCln - $minCln < $libLow){ 
 	markBad($clnseqs, "LENS");
 	my $len = $maxCln - $minCln;
-	print STDERR "$cln ", get_lib($forw), " $minCln, $maxCln < $libLow, $libHi\n";
+	print STDERR "$cln ", $lib, " $minCln, $maxCln < $libLow, $libHi\n";
 	if (defined $camfile){
 	    if ($highCln < $lowCln){
 		print CAM "${camid}$cln: $minCln A0shortReadColor $maxCln R2 \# short $cln ($rev $forw) $len < $libLow\n";
@@ -401,7 +442,7 @@ while (($cln, $clnseqs) = each %cloneSeqs){
     if ($maxCln - $minCln > $libHi) {
 	my $len = $maxCln - $minCln;
 	markBad($clnseqs, "LENH");
-	print STDERR "$cln ", get_lib($forw), " $minCln, $maxCln > $libLow, $libHi\n";
+	print STDERR "$cln ", $lib, " $minCln, $maxCln > $libLow, $libHi\n";
 	if (defined $camfile){
 	    print CAM "${camid}$cln: $minCln A0longReadColor $lowCln A0longColor $highCln A0longReadColor $maxCln R3 \# long $cln ($rev $forw) $len > $libHi\n";
 	    $camid++;
@@ -429,8 +470,6 @@ while (($cln, $clnseqs) = each %cloneSeqs){
 	}
     }
 }
-
-close(MATES);
 
 if (defined $camfile){
     close(CAM);
