@@ -12,12 +12,17 @@
 using namespace std;
 using namespace AMOS;
 
-enum COLORS { green, orange, red, blue, yellow, pink };
 static bool VERBOSE = false;
 
 Unitigger::Unitigger() {
   if(VERBOSE) cout << " construct new unitigger" << endl;
   graph = new Graph();
+  
+  colors.push_back("green");
+  colors.push_back("red");
+  colors.push_back("orange");
+  colors.push_back("yellow");
+  
 }
 
 
@@ -251,7 +256,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
   BankStream_t bank(Layout_t::NCODE);
   deque< IEdge* > contig;
   queue< IEdge* > containment;
-  int contig_count = 1;
+  int contig_count = -1;
   bool need_suffix;
   bool next_suffix;
   graph->clear_flags();
@@ -276,10 +281,13 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     if((start_node->getHidden()) || (start_node->getFlags() == 1)) {
       continue;
     }
-  
+    
+    cout << " ------------------------------------------------- " << endl;
+    contig_count++;  
+    graph->clear_edge_flags();
   for(int i = 0; i < 2; i++) {
     bool backtrack = false;
-    cout << " ------------------------------------------------- " << endl;
+
     need_suffix = ! i;
     INode* cur_node = start_node;
     first_node = start_node;
@@ -287,7 +295,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     // first forward
     while(cur_node->getFlags() != 1) {
       cur_node->setFlags(1);
-      cur_node->setColor("green");
+      cur_node->setColor(colors[contig_count]);
       IEdge* edge;
       Overlap* ovl;
       int matches = 0;
@@ -298,9 +306,11 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
       for(IEdgeIterator iter = edges.begin(); iter != edges.end(); ++iter) {
 	edge = (*iter);
 	ovl = (Overlap*) edge->getElement();
-	//cout << " current node is " << cur_rid << endl;
-	//	cout << " current overlap between " << ovl->rid1 << "and " << ovl->rid2 << " type " << ovl->type;
-	//	cout << " a " << ovl->asuffix << " b " << ovl->bsuffix << " need " << need_suffix << endl;
+	if(VERBOSE) {
+	  cout << " current node is " << cur_rid << endl;
+	  cout << " current overlap between " << ovl->rid1 << "and " << ovl->rid2 << " type " << ovl->type;
+	  cout << " a " << ovl->asuffix << " b " << ovl->bsuffix << " need " << need_suffix << endl;
+	}
 	if(edge->getFlags() == 1) {
 	  continue;
 	}
@@ -400,7 +410,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
 	  contig.push_back(path);
 	else 
 	  contig.push_front(path);
-	path->setColor("green");
+	path->setColor(colors[contig_count]);
 	first_node = cur_node;
 	cur_node = path->opposite(cur_node);
 	need_suffix = next_suffix;

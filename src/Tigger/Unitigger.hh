@@ -2,8 +2,10 @@
 #define Unitigger_HH 1
 
 #include "foundation_AMOS.hh"
+#include <vector>
 #include "IGraph.hh"
 #include "Graph.hh"
+
 
 /**
  * The <b>Unitigger</b> class
@@ -27,6 +29,8 @@ public:
   
   /** <code> g </code> overlap graph */
   Graph* graph;
+  
+  vector<string> colors;
 
   void Unitigger::error(const char* m, const char* c = "");
   void Unitigger::add_read(AMOS::Read_t p_read);
