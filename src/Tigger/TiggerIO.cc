@@ -73,10 +73,10 @@ void get_amos_overlaps(const string p_bankdir) {
       }
       
       while(bank >> amos_overlap) {
-// 	if(VERBOSE) {
-// 	  amos_overlap.writeMessage(msg);
-// 	  msg.write(cout);
-// 	}
+//	if(VERBOSE) {
+//	  amos_overlap.writeMessage(msg);
+//	  msg.write(cout);
+//	}
 
 	tigger.add_overlap(amos_overlap);
 	overlapCount++;
@@ -172,7 +172,7 @@ static void parse_command_line(int argc, char* argv[]) {
     }
   }
   
-  if(AMOS_mode  &&  (rflg || lflg)) {
+  if(AMOS_mode	&&  (rflg || lflg)) {
     cerr << " Can't use AMOS and UMD together " << endl;
     errflg = true;
   }
@@ -182,7 +182,7 @@ static void parse_command_line(int argc, char* argv[]) {
     errflg = true;
   }
 
-  if(!AMOS_mode  &&  !UMD_mode) {
+  if(!AMOS_mode	 &&  !UMD_mode) {
     cerr << " Need to provide either an AMOS bank or UMD files " << endl;
     errflg = true;
   }

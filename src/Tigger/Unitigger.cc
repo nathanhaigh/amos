@@ -33,7 +33,8 @@ void Unitigger::error(const char* m, const char* c) {
 
 
 void Unitigger::add_overlap(Overlap* p_olap) {
-
+  
+  // convert AMOS adjacency info to Gene's from paper
   // determine overlap dovetail type
   if((p_olap->ahang >= 0) && (p_olap->bhang <= 0)) {
     p_olap->type = 'C';
@@ -703,7 +704,7 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
 	lay_read->start = set_read->start + ahang;
 	lay_read->end = lay_read->start + len;
 
-      } else {  // innie
+      } else {	// innie
 
 	lay_read->end = set_read->start + ahang;
 	lay_read->start = lay_read->end + len;
@@ -735,7 +736,7 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
       if(olap->ori == 'N') {
 	lay_read->start = set_read->start - ahang;
 	lay_read->end = lay_read->start + len;
-      } else {  // innie
+      } else {	// innie
 	lay_read->start = set_read->end - ahang;
 	lay_read->start = lay_read->end + len;
       }
