@@ -51,7 +51,7 @@ protected:
 
 public:
 
-  static const NCode_t NCODE;   // set value in source file
+  static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
 
