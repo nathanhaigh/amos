@@ -27,6 +27,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_icanvas->setBackgroundColor(Qt::black);
 
   m_hoffset = 0;
+  m_connectMates = 1;
 
   refreshCanvas();
 
@@ -226,7 +227,8 @@ void InsertWidget::refreshCanvas()
                             bid, bcontig, btile, 
                             dist, clen);
 
-        if (insert->reasonablyConnected())
+
+        if (m_connectMates && insert->reasonablyConnected())
         {
           // A and B are within this contig, and should be drawn together
           insert->m_active = 2;
@@ -235,15 +237,15 @@ void InsertWidget::refreshCanvas()
         {
           // A and B are within this contig, but not reasonably connected
           Insert * j = new Insert(*insert);
-          j->setActive(1, insert);
+          j->setActive(1, insert, m_connectMates);
           m_inserts.push_back(j);
 
-          insert->setActive(0, j);
+          insert->setActive(0, j, m_connectMates);
         }
         else 
         { 
           // Just A is valid
-          insert->setActive(0, NULL); 
+          insert->setActive(0, NULL, m_connectMates); 
         }
       }
 
@@ -306,10 +308,12 @@ void InsertWidget::refreshCanvas()
   // bubblesort the types by the order they appear in the popup menu
   vector<char> types;
   map<char, pair<int, bool> >::iterator ti;
+  map<char, bool> drawType;
 
   for (ti = m_types.begin(); ti != m_types.end(); ti++)
   {
     types.push_back(ti->first);
+    drawType[ti->first] = ti->second.second;
   }
 
   for (unsigned int i = 0; i < types.size(); i++)
@@ -326,26 +330,31 @@ void InsertWidget::refreshCanvas()
   }
 
 
-  cerr << "paint inserts: ";
+  cerr << "paint inserts" << endl;
   int layoutoffset = 0;
 
   vector<Insert *>::iterator ii;
   vector<int>::iterator li;
   int layoutpos;
 
-  // For all types
+  // For all types, or when !m_connectMates, do exactly 1 pass
   for (unsigned int type = 0; type < types.size(); type++)
   {
-    cerr << (char)(types[type] - 'A' + 'a');
-    if (!m_types[types[type]].second) { continue; }
+    if (m_connectMates && !m_types[types[type]].second) { continue; }
 
-    cerr << types[type];
     vector<int> layout;
 
-    // For all inserts (of this type)
+    // For all inserts of this type (or if type enabled)
     for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
     {
-      if ((*ii)->m_state != types[type]) { continue; }
+      if (m_connectMates)
+      {
+        if ((*ii)->m_state != types[type]) { continue; }
+      }
+      else
+      {
+        if (!drawType[(*ii)->m_state]) { continue; }
+      }
 
       // Find a position
       for (li =  layout.begin(), layoutpos = 0;
@@ -378,12 +387,21 @@ void InsertWidget::refreshCanvas()
     { 
       layoutoffset += layout.size() + 1;
     }
-  }
 
-  cerr << endl;
+    if (!m_connectMates)
+    {
+      break;
+    }
+  }
 
   m_icanvas->resize(rightmost - leftmost + 1000, tileoffset+layoutoffset*lineheight);
   m_icanvas->update();
+}
+
+void InsertWidget::setConnectMates(bool b)
+{
+  m_connectMates = b;
+  refreshCanvas();
 }
 
 

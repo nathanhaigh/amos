@@ -28,11 +28,11 @@ void InsertCanvasItem::drawShape (QPainter & p)
   }
   else if (m_insert->m_active == 0)
   {
-    drawTile(m_insert->m_atile, p, 'a');
+    drawTile(m_insert->m_atile, p, 'A');
   }
   else
   {
-    drawTile(m_insert->m_btile, p, 'b');
+    drawTile(m_insert->m_btile, p, 'B');
   }
 
   p.drawLine((int)(x()),           (int) (y() + height()),

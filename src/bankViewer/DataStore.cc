@@ -23,10 +23,7 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
-    cerr << "open red bank" << endl;
     read_bank.open(bankname,   B_SPY);
-
-    cerr << "open ctg bank" << endl;
     contig_bank.open(bankname, B_SPY);
 
     m_bankname = bankname;
@@ -43,11 +40,8 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
-    cerr << "open mtp bank" << endl;
     mate_bank.open(bankname, B_SPY);
-    cerr << "open frg bank" << endl;
     frag_bank.open(bankname, B_SPY);
-    cerr << "open lib bank" << endl;
     lib_bank.open(bankname,  B_SPY);
     loadMates();
     loadLibraries();
@@ -59,9 +53,7 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
-    cerr << "open edg bank" << endl;
     edge_bank.open(bankname, B_SPY);
-    cerr << "open lnk bank" << endl;
     link_bank.open(bankname, B_SPY);
   }
   catch (Exception_t & e)

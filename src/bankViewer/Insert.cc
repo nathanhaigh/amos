@@ -66,11 +66,11 @@ Insert::Insert(ID_t     aid,
     m_state = Happy;
     m_active = 2;
 
-    if (m_length > dist.mean + 3*dist.sd)
+    if ((unsigned int)m_length > dist.mean + 3*dist.sd)
     {
       m_state = StretchedMate;
     }
-    else if (m_length + 3*dist.sd < dist.mean)
+    else if ((int)(m_length + 3*dist.sd) < dist.mean)
     {
       m_state = CompressedMate;
     }
@@ -159,12 +159,17 @@ bool Insert::reasonablyConnected() const
   if (!m_atile || !m_btile) { return false; }
 
   return (m_state == Happy) ||
-         (m_state == StretchedMate && (m_actual <= m_dist.mean + 10 * m_dist.sd)) ||
+         (m_state == CompressedMate) ||
+         (m_state == StretchedMate && (m_actual <= m_dist.mean + 10 * m_dist.sd));
+
+
+  /*  //This would force reads that overlap to be disconnected 
          (m_state == CompressedMate && (m_actual > (m_atile->range.getLength() + m_atile->gaps.size() +
                                                     m_btile->range.getLength() + m_btile->gaps.size())));
+  */
 }
 
-void Insert::setActive(int i, Insert * other)
+void Insert::setActive(int i, Insert * other, bool includeLibrary)
 {
   Tile_t * tile;
   m_other = other;
@@ -176,31 +181,39 @@ void Insert::setActive(int i, Insert * other)
 
   int len = tile->range.getLength() + tile->gaps.size()-1;
 
-  if (tile->range.isReverse())
+  if (includeLibrary)
   {
-    m_roffset = tile->offset + len;
-
-    if (m_dist.mean > len)
+    if (tile->range.isReverse())
     {
-      m_loffset = m_roffset - m_dist.mean;
+      m_roffset = tile->offset + len;
+
+      if (m_dist.mean > len)
+      {
+        m_loffset = m_roffset - m_dist.mean;
+      }
+      else
+      {
+        m_loffset = tile->offset - 250;
+      }
     }
     else
     {
-      m_loffset = tile->offset - 250;
+      m_loffset = tile->offset;
+
+      if (m_dist.mean > len)
+      {
+        m_roffset = m_loffset + m_dist.mean;
+      }
+      else
+      {
+        m_roffset = m_loffset + len + 250;
+      }
     }
   }
   else
   {
     m_loffset = tile->offset;
-
-    if (m_dist.mean > len)
-    {
-      m_roffset = m_loffset + m_dist.mean;
-    }
-    else
-    {
-      m_roffset = m_loffset + len + 250;
-    }
+    m_roffset = tile->offset + len;
   }
 
   m_length = (m_roffset - m_loffset);

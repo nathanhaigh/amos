@@ -13,7 +13,7 @@ public:
          AMOS::Distribution_t distribution,
          int conslen);
 
-  void setActive(int i, Insert * other);
+  void setActive(int i, Insert * other, bool includeLibrary);
   int getProjectedPosition(AMOS::Tile_t * tile, AMOS::Distribution_t dist);
   void printInsert() const;
   bool reasonablyConnected() const;

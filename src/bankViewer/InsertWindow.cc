@@ -64,6 +64,11 @@ InsertWindow::InsertWindow(DataStore * datastore,
     m_typesmenu->setItemChecked(m_types[state].first, m_types[state].second);
   }
 
+  m_optionsmenu = new QPopupMenu(this);
+  menuBar()->insertItem("&Options", m_optionsmenu);
+  m_connectmatesid = m_optionsmenu->insertItem("&Connect Mates", this, SLOT(toggleConnectMates()));
+  m_optionsmenu->setItemChecked(m_connectmatesid, true);
+
   // Main Widget
   InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
   setCentralWidget(iw);
@@ -91,6 +96,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(eidpick, SIGNAL(textChanged(const QString &)),
           iw,      SIGNAL(highlightEID(const QString &)));
+
+  connect(this, SIGNAL(setConnectMates(bool)),
+          iw,   SLOT(setConnectMates(bool)));
 }
 
 void InsertWindow::contigChanged()
@@ -113,4 +121,12 @@ void InsertWindow::toggleItem(int id)
       break;
     }
   }
+}
+
+void InsertWindow::toggleConnectMates()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_connectmatesid);
+  m_optionsmenu->setItemChecked(m_connectmatesid, b);
+
+  emit setConnectMates(b);
 }

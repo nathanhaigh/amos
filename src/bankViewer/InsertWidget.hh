@@ -39,13 +39,13 @@ public slots:
   void setTilingVisibleRange(int, int);
   void setZoom(int);
   void refreshCanvas();
+  void setConnectMates(bool);
 
 signals:
   void setStatus(const QString & message);
   void setGindex(int gindex);
   void highlightIID(const QString & qiid);
   void highlightEID(const QString & qeid);
-
 
 private:
   void flushInserts();
@@ -57,6 +57,8 @@ private:
   InsertPosition * m_iposition;
 
   QCanvasRectangle * m_tilingVisible;
+
+  int m_connectMates;
 
   // from insert canvas
   void drawTile(AMOS::Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state);

@@ -19,12 +19,14 @@ public:
 public slots:
   void contigChanged();
   void toggleItem(int id);
+  void toggleConnectMates();
 
 signals:
   void setGindex(int gindex);
   void visibleRange(int, int);
   void setTilingVisibleRange(int, int);
   void refreshCanvas();
+  void setConnectMates(bool);
 
 private:
 
@@ -33,6 +35,9 @@ private:
   typemap m_types;
 
   QPopupMenu * m_typesmenu;
+  QPopupMenu * m_optionsmenu;
+
+  int m_connectmatesid;
 };
 
 #endif
