@@ -9,7 +9,6 @@
 //! AMOS message file. The bank's internal ID (iid) links are translated back
 //! their external IDs (eid's).
 //!
-//! \todo allow the reporting of one or more specific objects
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "amp.hh"
@@ -27,10 +26,9 @@ using namespace std;
 
 
 //=============================================================== Globals ====//
-string OPT_BankName;                 // bank name parameter
-string OPT_MessageName;              // message name parameter
-bool   OPT_Concat = false;           // concat to existing message
-bool   OPT_Truncate = false;         // truncate message file before write
+string  OPT_BankName;                // bank name parameter
+bool    OPT_IsExtractCodes = false;  // extract codes or not
+IDMap_t OPT_ExtractCodes(1000);      // extract message type map
 
 
 //========================================================== Fuction Decs ====//
@@ -63,14 +61,7 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  //***************
-  double loopa = 0;
-  double loopb = 0;
-  clock_t clocka, clockb;
-  //***************
-
   Message_t msg;                 // the current message
-  ofstream msgfile;              // the message file stream
   IDMap_t typemap(1000);         // NCode to index mapping
   ID_t ti;                       // type index
   Universal_t * typep;           // type pointer
@@ -148,7 +139,6 @@ int main (int argc, char ** argv)
   //-- Output the current time and bank directory
   cerr << "START DATE: " << Date( ) << endl;
   cerr << "Bank is: " << OPT_BankName << endl;
-  cerr << "Message is: " << OPT_MessageName << endl;
 
 
   //-- BEGIN: MAIN EXCEPTION CATCH
@@ -167,13 +157,6 @@ int main (int argc, char ** argv)
   typemap . insert (ContigLink_t::NCode( ), I_CONTIGLINK);
   typemap . insert (ContigEdge_t::NCode( ), I_CONTIGEDGE);
   typemap . insert (Scaffold_t::NCode( ),   I_SCAFFOLD);
-
-
-  //-- Open the message file
-  msgfile . open (OPT_MessageName . c_str( ),
-		  OPT_Truncate ? ios::out|ios::trunc : ios::out);
-  if ( !msgfile )
-    AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
 
 
   //-- Iterate through each bank and add objects to the message file
@@ -202,7 +185,14 @@ int main (int argc, char ** argv)
       (*(invmaps [ti])) = bankp -> map( );
       invmaps [ti] -> invert( );
 
-      //-- Iterate through each object in the bank
+      //-- If this Bank was not requested, skip it
+      if ( OPT_IsExtractCodes  &&
+	   ! OPT_ExtractCodes . exists (bankp -> getBankCode( )) )
+	continue;
+
+      //-- Iterate through each object in the bank, if requested
+      if ( ! OPT_IsExtractCodes  ||
+	   OPT_ExtractCodes . exists (bankp -> getBankCode( )) )
       for ( id = 1; id <= bankp -> getLastIID( ); id ++ )
 	{
 	  //-- Fetch the next object
@@ -316,14 +306,8 @@ int main (int argc, char ** argv)
 	    continue;
 	  }
 
-	  clocka = clock( );
 	  typep -> writeMessage (msg);
-	  clockb = clock( );
-	  loopa += (double)(clockb - clocka);
-	  clocka = clock( );
-	  msg . write (msgfile);
-	  clockb = clock( );
-	  loopb += (double)(clockb - clocka);
+	  msg . write (cout);
 	  cntw ++;
 	}
 
@@ -333,7 +317,6 @@ int main (int argc, char ** argv)
 
 
   //-- Close and free the objects
-  msgfile . close( );
   for ( ID_t i = 1; i < I_MAX; i ++ )
     {
       delete invmaps [i];
@@ -357,11 +340,6 @@ int main (int argc, char ** argv)
        << "Objects written: " << cntw << endl
        << "END DATE:   " << Date( ) << endl;
 
-  cerr << endl
-       << "loopa: " << (double)loopa / CLOCKS_PER_SEC << " sec.\n"
-       << "loopb: " << (double)loopb / CLOCKS_PER_SEC << " sec.\n"
-       << "granu: " << CLOCKS_PER_SEC << " of a sec.\n";
-  
   return EXIT_SUCCESS;
 }
 
@@ -380,59 +358,49 @@ void ParseArgs (int argc, char ** argv)
       case 'b':
         OPT_BankName = optarg;
         break;
-      case 'c':
-	OPT_Concat = true;
-	break;
-      case 'f':
-	OPT_Truncate = true;
-	break;
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
-        break;
-      case 'm':
-        OPT_MessageName = optarg;
         break;
       default:
         errflg ++;
       }
 
-  if (OPT_BankName == "")
+  if ( OPT_BankName . empty( ) )
     {
       cerr << "ERROR: The -b option is mandatory\n";
       errflg ++;
     }
 
-  if (OPT_MessageName == "")
-    {
-      cerr << "ERROR: The -m option is mandatory\n";
-      errflg ++;
-    }
-
-  if (OPT_Concat  &&  OPT_Truncate)
-    {
-      cerr << "ERROR: The -c and -f options exclude each other\n";
-      errflg ++;
-    }
-
-  if (access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
+  if ( access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
       cerr << "ERROR: Bank path is not accessible\n";
       errflg ++;
     }
 
-  if (!OPT_Concat  &&  !OPT_Truncate  &&
-      !access (OPT_MessageName . c_str( ), F_OK) )
-    {
-      cerr << "ERROR: Message path already exists\n";
-      errflg ++;
-    }
-
-  if ( errflg > 0 || argc != optind )
+  if ( errflg > 0 )
     {
       PrintUsage (argv[0]);
       cerr << "Try '" << argv[0] << " -h' for more information.\n";
       exit (EXIT_FAILURE);
+    }
+
+  if ( optind != argc )
+    {
+      OPT_IsExtractCodes = true;
+
+      while ( optind != argc )
+	{
+	  try {
+	    
+	    OPT_ExtractCodes . insert (Encode (argv [optind ++]), 1);
+	  }
+	  catch (Exception_t & e) {
+	    
+	    cerr << "WARNING: " << e . what( )
+		 << " - NCode " << argv [optind - 1] << " ignored" << endl;
+	  }
+	}
     }
 }
 
@@ -444,18 +412,17 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-b path       The directory path of the banks to report\n"
-    << "-c            Concat report to an existing message\n"
-    << "-f            Force new report by truncating existing file\n"
-    << "-h            Display help information\n"
-    << "-m path       The file path of the message to generate\n\n";
+    << "-b path       The directory path of the bank to report\n"
+    << "-h            Display help information\n\n";
 
   cerr
-    << "Takes an AMOS bank directory and message file path as input. Reports\n"
-    << "the information contained in the bank to a message file. IID link\n"
-    << "information in the banks will be automatically translated to EID link\n"
-    << "information, so all links in the message will refer to EIDs. To alter\n"
-    << "the contents of a bank, please use the bank-transact utility.\n\n";
+    << "Takes an AMOS bank directory as input. Will output the information\n"
+    << "contained in the bank in the form of an AMOS message to stdout. IID\n"
+    << "link information in the banks will be automatically translated to EID\n"
+    << "link information, so all links in the message will refer to EIDs. If\n"
+    << "no NCodes are listed on the command line, all object types will be\n"
+    << "reported. This utility only outputs bank information; To alter the\n"
+    << "contents of a bank, please use the bank-transact utility.\n\n";
   return;
 }
 
@@ -466,6 +433,7 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  -b <bank path>  -m <message path>\n\n";
+    << "\nUSAGE: " << s
+    << "  [options]  -b <bank path>  [NCodes]\n\n";
   return;
 }
