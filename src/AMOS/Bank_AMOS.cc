@@ -59,7 +59,7 @@ Bank_t::BankPartition_t::~BankPartition_t ( )
 
 
 //================================================ Bank_t ======================
-const string  Bank_t::BANK_VERSION     = "2.0";
+const string  Bank_t::BANK_VERSION     = "2.1";
 const string  Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string  Bank_t::IFO_STORE_SUFFIX = ".ifo";
 const string  Bank_t::VAR_STORE_SUFFIX = ".var";
