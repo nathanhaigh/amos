@@ -219,6 +219,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getSubMessagesItr ------
+  //! \brief Get a mutable iterator to the beginning of the submessage vector
+  //!
+  //! \return Iterator pointing to the beginning of the submessage vector
+  //!
+  std::vector<Message_t>::iterator getSubMessagesItr ( )
+  {
+    return subs_m . begin( );
+  }
+
+
   //--------------------------------------------------- getMessageCode ---------
   //! \brief Get the NCode type  of this message
   //!

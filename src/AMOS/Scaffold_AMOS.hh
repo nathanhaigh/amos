@@ -111,6 +111,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getContigTilingItr -----
+  //! \brief Get a mutable iterator to the beginning of the contig tile vector
+  //!
+  //! \return Iterator pointing to the beginning of the contig tile vector
+  //!
+  std::vector<Tile_t>::iterator getContigTilingItr ( )
+  {
+    return contigs_m . begin( );
+  }
+
+
   //--------------------------------------------------- getContigEdges ---------
   //! \brief Get the contig edge IDs
   //!
@@ -119,6 +130,17 @@ public:
   const std::vector<ID_t> & getContigEdges ( ) const
   {
     return edges_m;
+  }
+
+
+  //--------------------------------------------------- getContigEdgesItr ------
+  //! \brief Get a mutable iterator to the beginning of the edge ID vector
+  //!
+  //! \return Iterator pointing to the beginning of the edge ID vector
+  //!
+  std::vector<Tile_t>::iterator getContigEdgesItr ( )
+  {
+    return edges_m . begin( );
   }
 
 

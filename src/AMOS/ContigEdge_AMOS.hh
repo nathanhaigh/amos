@@ -108,6 +108,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getContigLinksItr ------
+  //! \brief Get a mutable iterator to the beginning of the link ID vector
+  //!
+  //! \return Iterator pointing to the beginning of the link ID vector
+  //!
+  std::vector<ID_t>::iterator getContigLinksItr ( )
+  {
+    return links_m . begin( );
+  }
+
+
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {

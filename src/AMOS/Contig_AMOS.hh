@@ -154,6 +154,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getReadTilingItr -------
+  //! \brief Get a mutable iterator to the beginning of the read tile vector
+  //!
+  //! \return Iterator pointing to the beginning of the read tile vector
+  //!
+  std::vector<Tile_t>::iterator getReadTilingItr ( )
+  {
+    return reads_m . begin( );
+  }
+
+
   //--------------------------------------------------- getUngappedQualString --
   //! \brief Get the ungapped quality score string
   //!

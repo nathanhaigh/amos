@@ -245,6 +245,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getReadsItr ------------
+  //! \brief Get a mutable iterator to the beginning of the read ID vector
+  //!
+  //! \return Iterator pointing to the beginning of the read ID vector
+  //!
+  std::vector<ID_t>::iterator getReadsItr ( )
+  {
+    return reads_m . begin( );
+  }
+
+
   //--------------------------------------------------- getSeqString -----------
   //! \brief Get the Kmer sequence string
   //!
