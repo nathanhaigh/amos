@@ -153,7 +153,7 @@ int main (int argc, char ** argv)
 		  ii != OPT_ExtractIIDs . end( ); ++ ii )
 	      {
 		bid = bank . getIDMap( ) . lookupBID (*ii);
-		if ( bid != NULL_ID )
+		if ( bid == NULL_ID )
 		  continue;
 		bank . fetch (*ii, *obj);
 		PrintObject (obj, bid);
@@ -165,7 +165,7 @@ int main (int argc, char ** argv)
 		  ei != OPT_ExtractEIDs . end( ); ++ ei )
 	      {
 		bid = bank . getIDMap( ) . lookupBID (ei -> c_str( ));
-		if ( bid != NULL_ID )
+		if ( bid == NULL_ID )
 		  continue;
 		bank . fetch (ei -> c_str( ), *obj);
 		PrintObject (obj, bid);
