@@ -331,6 +331,30 @@ Range_t operator| (Range_t a, Range_t b);
 bool operator== (Range_t a, Range_t b);
 
 
+//----------------------------------------------------- operator== -------------
+//! \brief An equality operator for Distributions
+//!
+//! Returns true if distributions have identical values
+//!
+//! \param a Distribution A
+//! \param b Distribution B
+//! \return true if distributions have identical values
+//!
+bool operator== (Distribution_t a, Distribution_t b);
+
+
+//----------------------------------------------------- operator== -------------
+//! \brief An equality operator for Tiles
+//!
+//! Returns true if distributions have identical values
+//!
+//! \param a Tile A
+//! \param b Tile B
+//! \return true if distributions have identical values
+//!
+bool operator== (Tile_t a, Tile_t b);
+
+
 //--TEMPORARY
 typedef Range_t Ordered_Range_t;
 

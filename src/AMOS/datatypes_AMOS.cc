@@ -70,3 +70,22 @@ bool AMOS::operator== (Range_t a, Range_t b)
 {
   return ( a . begin == b . begin  &&  a . end == b . end );
 }
+
+
+//----------------------------------------------------- operator== -------------
+bool AMOS::operator== (Distribution_t a, Distribution_t b)
+{
+  return ( a . mean == b . mean  &&
+	   a . sd == b . sd  &&
+	   a . skew == b . skew );
+}
+
+
+//----------------------------------------------------- operator== -------------
+bool AMOS::operator== (Tile_t a, Tile_t b)
+{
+  return ( a . id == b . id  &&
+	   a . gaps == b . gaps  &&
+	   a . offset == b . offset  &&
+	   a . range == b . range );
+}
