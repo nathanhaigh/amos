@@ -12,6 +12,10 @@ using namespace AMOS;
 using namespace std;
 using namespace HASHMAP;
 
+#define FIELD_SEPARATOR  ':'
+#define FIELD_TERMINATOR '.'
+
+
 
 
 //================================================ Message_t ===================
@@ -40,6 +44,7 @@ bool Message_t::read (istream & in)
   int i;
   char ch;
   string data;
+  string chunk;
   string name (NCODE_SIZE, NULL_CHAR);
 
   //-- Search for the beginning of the message
@@ -90,7 +95,7 @@ bool Message_t::read (istream & in)
 	//-- Get the field name
 	for ( i = 0; i < NCODE_SIZE; i ++ )
 	  name [i] = in . get( );
-	if ( in . get( ) != ':' )
+	if ( in . get( ) != FIELD_SEPARATOR )
 	  AMOS_THROW_IO ("Could not parse field code in '" +
 			 Decode (mcode_m) + "' message");
 
@@ -100,16 +105,22 @@ bool Message_t::read (istream & in)
 	  AMOS_THROW_IO ("Could not parse single-line field data in '" +
 			 Decode (mcode_m) + "' message");
 
-	//-- If multi-line field, read the rest
+	//-- If multi-line field
 	if ( data . empty( ) )
 	  {
-	    do {
-	      getline (in, data, '.');
-	      if ( !in . good( ) )
-		AMOS_THROW_IO ("Could not parse multi-line field data in '" +
-			       Decode (mcode_m) + "' message");
-	    } while ( in.peek( ) != NL_CHAR  ||  *(data.rbegin( )) != NL_CHAR );
-	    in . get( ); 
+	    getline (in, data, FIELD_TERMINATOR);
+
+	    while ( in.peek( ) != NL_CHAR  ||  *(data.rbegin( )) != NL_CHAR )
+	      {
+		data . push_back (FIELD_TERMINATOR);
+		getline (in, chunk, FIELD_TERMINATOR);
+		data . append (chunk);
+	      }
+	    in . get( );
+
+	    if ( !in . good( ) )
+	      AMOS_THROW_IO ("Could not parse multi-line field data in '" +
+			     Decode (mcode_m) + "' message");
 	  }
 
 	//-- Set field data
@@ -199,12 +210,12 @@ void Message_t::write (ostream & out) const
       //-- Set multi-line message flag
       mline = *(mi -> second . rbegin( )) == NL_CHAR ? true : false;
 
-      out << Decode (mi -> first) << ':';
+      out << Decode (mi -> first) << FIELD_SEPARATOR;
       if ( mline )
 	out . put (NL_CHAR);
       out << mi -> second;
       if ( mline )
-	out . put ('.');
+	out . put (FIELD_TERMINATOR);
       out . put (NL_CHAR);
     }
 
