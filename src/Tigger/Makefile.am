@@ -3,18 +3,18 @@ include $(top_srcdir)/config/amos.mk
 
 
 ##-- TO BE INSTALLED
-bin_PROGRAMS = tigger
+bin_PROGRAMS = 
 
 ##-- TO BE TESTED
 check_SCRIPTS =
 
 
 ##-- GLOBAL INCLUDE
-AM_CPPFLAGS = -I$(top_srcdir)/src/AMOS -I$(top_srcdir)/src/Graph
+AM_CPPFLAGS = 
 
 
 ##-- tigger
-tigger_LDADD = $(top_builddir)/src/AMOS/libGraph.a $(top_builddir)/src/AMOS/libAMOS.a 
+tigger_LDADD =
 tigger_SOURCES = 
 
 ##-- END OF MAKEFILE --##
