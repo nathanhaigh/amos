@@ -221,7 +221,7 @@ public:
   //! \param library The new ID of parent library
   //! \return void
   //!
-  void setLibraries (ID_t library)
+  void setLibrary (ID_t library)
   {
     library_m = library;
   }
