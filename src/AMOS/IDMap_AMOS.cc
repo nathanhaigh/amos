@@ -242,7 +242,7 @@ void IDMap_t::readMessage (const Message_t & msg)
   clear( );
 
   try {
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_MAP) )
       {
@@ -271,6 +271,7 @@ void IDMap_t::readMessage (const Message_t & msg)
 	ss >> size;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid size format");
+	ss . clear( );
 
 	if ( size != size_m )
 	  AMOS_THROW_ARGUMENT ("map and size fields do not agree");
@@ -316,7 +317,7 @@ void IDMap_t::writeMessage (Message_t & msg) const
 
     if ( size_m != 0 )
       {
-	stringstream ss;
+	ostringstream ss;
 	const HashNode_t * curr;
 
 	ss << size_m;

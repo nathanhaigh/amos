@@ -23,7 +23,7 @@ void Fragment_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_LIBRARY) )
       {
@@ -31,6 +31,7 @@ void Fragment_t::readMessage (const Message_t & msg)
 	ss >> library_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid library link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_SIZE) )
@@ -39,6 +40,7 @@ void Fragment_t::readMessage (const Message_t & msg)
 	ss >> size_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid size format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_SOURCE) )
@@ -47,12 +49,14 @@ void Fragment_t::readMessage (const Message_t & msg)
 	ss >> source_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid source link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_TYPE) )
       {
         ss . str (msg . getField (F_TYPE));
         setType (ss . get( ));
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {
@@ -91,7 +95,7 @@ void Fragment_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
 

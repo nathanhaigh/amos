@@ -114,7 +114,7 @@ void Message_t::setField (NCode_t fcode, const string & data)
   if ( data . find ('\n') != string::npos  &&
        *(data . rbegin( )) != '\n' )
     AMOS_THROW_ARGUMENT ("Invalid multi-line message field format");
-  if ( data . size( ) == 0 )
+  if ( data . empty( ) )
     {
       //AMOS_THROW_ARGUMENT ("Empty fields are not allowed");
       //maybe write to log stream

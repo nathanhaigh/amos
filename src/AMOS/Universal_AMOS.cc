@@ -25,12 +25,13 @@ void Universal_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_EID) )
       {
-	stringstream ss; 
+	istringstream ss; 
 
 	ss . str (msg . getField (F_EID));
 	ss >> eid_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid eid format");
+	ss . clear( );
       }
     
     if ( msg . exists (F_COMMENT) )
@@ -55,7 +56,7 @@ void Universal_t::writeMessage (Message_t & msg) const
 
     if ( eid_m != NULL_ID )
       {
-	stringstream ss;
+	ostringstream ss;
 
 	ss << eid_m;
 	msg . setField (F_EID, ss . str( ));

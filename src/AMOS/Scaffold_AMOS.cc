@@ -29,7 +29,7 @@ void Scaffold_t::readMessage (const Message_t & msg)
     if ( msg . exists (F_CONTIGEDGE) )
       {
 	ID_t iid;
-	stringstream ss;
+	istringstream ss;
     
 	ss . str (msg . getField (F_CONTIGEDGE));
 
@@ -126,7 +126,7 @@ void Scaffold_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
 

@@ -23,7 +23,7 @@ void Matepair_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_READ1) )
       {
@@ -31,6 +31,7 @@ void Matepair_t::readMessage (const Message_t & msg)
 	ss >> reads_m . first;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid contig1 link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_READ2) )
@@ -39,12 +40,14 @@ void Matepair_t::readMessage (const Message_t & msg)
 	ss >> reads_m . second;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid contig2 link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_TYPE) )
       {
 	ss . str (msg . getField (F_TYPE));
 	setType (ss . get( ));
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {
@@ -81,7 +84,7 @@ void Matepair_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
 

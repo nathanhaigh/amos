@@ -51,7 +51,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 
   try {
 
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_CONTIG1) )
       {
@@ -59,6 +59,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss >> contigs_m . first;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid contig1 link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_CONTIG2) )
@@ -67,12 +68,14 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss >> contigs_m . second;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid contig2 link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_ADJACENCY) )
       {
 	ss . str (msg . getField (F_ADJACENCY));
 	setAdjacency (ss . get( ));
+	ss . clear( );
       }
 
     if ( msg . exists (F_SD) )
@@ -81,6 +84,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss >> sd_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid standard deviation format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_SIZE) )
@@ -89,12 +93,14 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss >> size_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid size format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_TYPE) )
       {
 	ss . str (msg . getField (F_TYPE));
 	setType (ss . get( ));
+	ss . clear( );
       }
 
     if ( msg . exists (F_SOURCE))
@@ -107,6 +113,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss >> str;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid source link format");
+	ss . clear( );
 	source_m . second = Encode (str);
       }
   }
@@ -175,7 +182,7 @@ void ContigLink_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
 

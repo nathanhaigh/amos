@@ -22,7 +22,7 @@ void Distribution_t::readMessage (const Message_t & msg)
   clear( );
 
   try {
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_MEAN) )
       {
@@ -30,6 +30,7 @@ void Distribution_t::readMessage (const Message_t & msg)
 	ss >> mean;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid mean format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_SD) )
@@ -38,6 +39,7 @@ void Distribution_t::readMessage (const Message_t & msg)
 	ss >> sd;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid standard deviation format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_SKEWNESS) )
@@ -46,6 +48,7 @@ void Distribution_t::readMessage (const Message_t & msg)
 	ss >> skew;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid skewness format");
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {
@@ -63,7 +66,7 @@ void Tile_t::readMessage (const Message_t & msg)
 
   try {
     int32_t delta;
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_SOURCE) )
       {
@@ -71,6 +74,7 @@ void Tile_t::readMessage (const Message_t & msg)
 	ss >> id;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid source link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_OFFSET) )
@@ -79,6 +83,7 @@ void Tile_t::readMessage (const Message_t & msg)
 	ss >> offset;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid offset format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_CLEAR) )
@@ -89,6 +94,7 @@ void Tile_t::readMessage (const Message_t & msg)
 	ss >> range . end;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid clear range format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_DELTA) )
@@ -121,7 +127,7 @@ void Distribution_t::writeMessage (Message_t & msg) const
   msg . clear( );
 
   try {
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (Distribution_t::getNCode( ));
 
@@ -152,7 +158,7 @@ void Tile_t::writeMessage (Message_t & msg) const
 
   try {
     vector<int32_t>::const_iterator vi;
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (Tile_t::getNCode( ));
 

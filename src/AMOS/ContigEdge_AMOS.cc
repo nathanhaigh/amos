@@ -26,7 +26,7 @@ void ContigEdge_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_CONTIGLINK) )
       {
-	stringstream ss;
+	istringstream ss;
 	ID_t iid;
 
 	ss . str (msg . getField (F_CONTIGLINK));
@@ -89,7 +89,7 @@ void ContigEdge_t::writeMessage (Message_t & msg) const
     if ( links_m . size( ) != 0 )
       {
 	vector<ID_t>::const_iterator vi;
-	stringstream ss;
+	ostringstream ss;
 
 	for ( vi = links_m . begin( ); vi != links_m . end( ); vi ++ )
 	  ss << *vi << '\n';

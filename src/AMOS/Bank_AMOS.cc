@@ -36,7 +36,7 @@ void Bank_t::addPartition (bool nuke = true)
 
   try {
     //-- Add the FIX partition file
-    stringstream ss;
+    ostringstream ss;
     ss << store_pfx_m << '.' << last_partition_m << FIX_STORE_SUFFIX;
     partition -> fix_name = ss . str( );
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
@@ -346,7 +346,7 @@ void Bank_t::create (const string & dir)
     }
 
   string pfx;
-  stringstream ss;
+  ostringstream ss;
 
   //-- Make the bank directory (will do nothing if already exists)
   mkdir (dir . c_str( ), 0755);
@@ -395,7 +395,7 @@ void Bank_t::destroy ( )
 bool Bank_t::exists (const string & dir)
 {
   //-- Generate the INFO path
-  stringstream ss;
+  ostringstream ss;
   ss << dir << '/' << Decode (banktype_m) << INFO_STORE_SUFFIX;
 
   //-- Return false if insufficient permissions or absent INFO partition
@@ -493,7 +493,7 @@ void Bank_t::open (const string & dir)
   string line;
   ID_t last_partition;
   NCode_t banktype;
-  stringstream ss;
+  ostringstream ss;
 
   //-- Generate the INFO path
   ss << dir << '/' << Decode (banktype_m);

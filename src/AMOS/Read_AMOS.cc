@@ -23,7 +23,7 @@ void Read_t::readMessage (const Message_t & msg)
   Sequence_t::readMessage (msg);
 
   try {
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_FRAGMENT) )
       {
@@ -31,12 +31,14 @@ void Read_t::readMessage (const Message_t & msg)
 	ss >> frag_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid fragment link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_TYPE) )
       {
         ss . str (msg . getField (F_TYPE));
         setType (ss . get( ));
+	ss . clear( );
       }
 
     if ( msg . exists (F_CLEAR) )
@@ -47,6 +49,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss >> clear_m . end;
         if ( !ss )
           AMOS_THROW_ARGUMENT ("Invalid clear range format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_VECTORCLEAR) )
@@ -57,6 +60,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss >> vclear_m . end;
         if ( !ss )
           AMOS_THROW_ARGUMENT ("Invalid vector clear range format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_QUALITYCLEAR) )
@@ -67,6 +71,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss >> qclear_m . end;
         if ( !ss )
           AMOS_THROW_ARGUMENT ("Invalid quality clear range format");
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {
@@ -106,7 +111,7 @@ void Read_t::writeMessage (Message_t & msg) const
   Sequence_t::writeMessage (msg);
 
   try {
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
 

@@ -69,7 +69,7 @@ void Kmer_t::readMessage (const Message_t & msg)
 
   try {
 
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_COUNT) )
       {
@@ -77,6 +77,7 @@ void Kmer_t::readMessage (const Message_t & msg)
 	ss >> count_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid count format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_SEQUENCE) )
@@ -186,7 +187,7 @@ void Kmer_t::writeMessage (Message_t & msg) const
 
   try {
 
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
 

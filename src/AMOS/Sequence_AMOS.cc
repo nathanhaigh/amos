@@ -263,6 +263,7 @@ void Sequence_t::writeMessage (Message_t & msg) const
 	pair<char, char> cp;
 	Pos_t i, j, last;
 	string seq, qlt;
+
 	seq . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
 	qlt . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
 
@@ -282,7 +283,7 @@ void Sequence_t::writeMessage (Message_t & msg) const
 	  }
 	
 	msg . setField (F_SEQUENCE, seq);
-	msg . setField (F_QUALITY, qlt);
+       	msg . setField (F_QUALITY, qlt);
       }
   }
   catch (ArgumentException_t) {

@@ -50,7 +50,7 @@ void Overlap_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    stringstream ss;
+    istringstream ss;
 
     if ( msg . exists (F_READ1) )
       {
@@ -58,6 +58,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss >> reads_m . first;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid read1 link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_READ2) )
@@ -66,12 +67,14 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss >> reads_m . second;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid read2 link format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_ADJACENCY) )
       {
         ss . str (msg . getField (F_ADJACENCY));
         setAdjacency (ss . get( ));
+	ss . clear( );
       }
 
     if ( msg . exists (F_AHANG) )
@@ -80,6 +83,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss >> aHang_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid aHang format");
+	ss . clear( );
       }
 
     if ( msg . exists (F_BHANG) )
@@ -88,6 +92,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss >> bHang_m;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid bHang format");
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {
@@ -153,7 +158,7 @@ void Overlap_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    stringstream ss;
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
 
