@@ -51,7 +51,8 @@ void Bank_t::addPartition (bool nuke)
 
   //-- Set the open 'mode', i.e. to truncate or not to truncate
   fstream::openmode mode = nuke ?
-    fstream::binary | fstream::trunc : fstream::binary;
+    fstream::out | fstream::binary | fstream::trunc  :
+    fstream::out | fstream::binary;
 
   try {
     //-- Add the FIX partition file
