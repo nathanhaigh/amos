@@ -1,125 +1,136 @@
 // $Id$
 
-#include "Bundler.hh"
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <string>
+#include <map>
 #include <math.h>
 #include <stdio.h>
 #include <list>
 #include <iostream>
+#include <getopt.h>
+
+#include "ContigLink_AMOS.hh"
+#include "ContigEdge_AMOS.hh"
+#include "datatypes_AMOS.hh"
+#include "Bank_AMOS.hh"
+#include "BankStream_AMOS.hh"
 
 using namespace AMOS;
 using namespace std;
 
-ID_t getID(char*);
+typedef multimap<pair<ID_t, ID_t> , ContigLink_t > LinkMap_t;
+
+map<string, string> globals; // global variables
+ID_t EdgeId = 0;             // where numbering starts for edges
+
+void printHelpText()
+{
+  cerr << 
+    "\n"
+    "USAGE:\n"
+    "\n"
+    "Bundler -b[ank] <bank_name>\n"
+       << endl;
+}
+
+
+bool GetOptions(int argc, char ** argv)
+{  
+  int option_index = 0;
+  static struct option long_options[] = {
+    {"help",  0, 0, 'h'},
+    {"h",     0, 0, 'h'},
+    {"b",     1, 0, 'b'},
+    {"bank",  1, 0, 'b'},
+    {0, 0, 0, 0}
+  };
+  
+  int c;
+  while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -
+	 1){
+    switch (c){
+    case 'h':
+      printHelpText();
+      break;
+    case 'b':
+      globals["bank"] = string(optarg);
+      break;
+    case '?':
+      return false;
+    }
+  }
+
+  return true;
+} // GetOptions
+
 
 int main(int argc, char *argv[])
 {
   LinkMap_t linkMap;
-  IdMap_t contigIdMap;
-  ContigLen_t contigLenMap;
 
-  if (argc != 2){
-    cerr << "Usage: Bundler file.inp" << endl;
+  if (!GetOptions(argc, argv)){
+    cerr << "Command line parsing failed" << endl;
+    printHelpText();
     exit(1);
   }
 
-  ifstream inFile(argv[1]);
-
-  if (inFile == (ifstream *) NULL){
-    cerr << "Cannot open input file: " << argv[1] << endl;
+  if (globals.find("bank") == globals.end()){ // no bank was specified
+    cerr << "A bank must be specified" << endl;
     exit(1);
   }
 
-  string inputLine;
-  int whichLine = 0;
-  char ts[256];
+
+  BankStream_t link_bank (ContigLink_t::NCODE);
+  try {
+    if (! link_bank.exists(globals["bank"])) {
+      cerr << "Cannot find a contig link account in bank: " << globals["bank"] << endl;
+      exit(1);
+    }
+    link_bank.open(globals["bank"]);
+  } catch (Exception_t & e)
+    {
+      cerr << "Failed to open link account in bank " << globals["bank"] 
+	   << ": " << endl << e << endl;
+      exit(1);
+    }
+
+  BankStream_t edge_bank (ContigEdge_t::NCODE);
+  try {
+    if (! edge_bank.exists(globals["bank"])) 
+      edge_bank.create(globals["bank"]);
+    else 
+      edge_bank.open(globals["bank"]);
+  } catch (Exception_t & e)
+    {
+      cerr << "Failed to open edge account in bank " << globals["bank"] 
+	   << ": " << endl << e << endl;
+      exit(1);
+    }
+  
+
   Size_t ti;
-  
-  char tlnm[256], tasmA[256], tasmB[256], 
-    toriA[256], toriB[256], tlib[256], tolap[256];
   Size_t minlen, maxlen;  // contig adjacency gap range;
-  
 
-  while (getline(inFile, inputLine)){
-    whichLine++;
 
-    // skip comments
-    if (inputLine[0] == '#'){
-      continue;
-    }
+  ContigLink_t ctl;
+
+  while (link_bank >> ctl){
+    ID_t ctgA, ctgB;
     
-    if (sscanf(inputLine.c_str(), "contig %s %d", ts, &ti) == 2){
-      // contig record
-      ID_t cid;
-      cid = getID(ts);
-      contigIdMap[ts] = cid;
-      contigLenMap[cid] = ti;
-      //      cout << "contig " << cid << " (" << ts << ") has length " << ti << endl;
-    } else if (sscanf(inputLine.c_str(), 
-		      "link %s %s %s %s %s %s %d %d %s", 
-		      tlnm, tasmA, toriA, tasmB, toriB, tlib, 
-		      &minlen, &maxlen, tolap) == 9){ 
-      ID_t ctgA, ctgB;
-      // link record
-      if (contigIdMap.find(tasmA) == contigIdMap.end()){
-	cerr << "Contig " << tasmA << " not defined at line " 
-	     << whichLine << endl;
-	exit(1);
-      }
-      if (contigIdMap.find(tasmB) == contigIdMap.end()){
-	cerr << "Contig " << tasmB << " not defined at line " 
-	     << whichLine << endl;
-	exit(1);
-      }
+    ctgA = ctl.getContigs().first;
+    ctgB = ctl.getContigs().second;
 
-      ctgA = contigIdMap.find(tasmA)->second;
-      ctgB = contigIdMap.find(tasmB)->second;
-
-      ContigLink_t cl;
-
-      if (       (string) toriA == "BE" && (string) toriB == "BE"){
-	// type is normal
-	cl.setAdjacency(ContigLink_t::NORMAL);
-      } else if ((string) toriA == "BE" && (string) toriB == "EB"){
-	// type is innie 
-	cl.setAdjacency(ContigLink_t::INNIE);
-      } else if ((string) toriA == "EB" && (string) toriB == "EB"){
-	// type is antinormal
-	cl.setAdjacency(ContigLink_t::ANTINORMAL);
-      } else if ((string) toriA == "EB" && (string) toriB == "BE"){
-	// type is outie
-	cl.setAdjacency(ContigLink_t::OUTIE);
-      }
-
-      if (linkMap.find(pair<ID_t, ID_t>(ctgB, ctgA)) != linkMap.end()){
-	// must reverse the link
-	cl.setContigs(pair<ID_t, ID_t>(ctgB, ctgA));
-	if (cl.getAdjacency() == ContigLink_t::NORMAL){
-	  cl.setAdjacency(ContigLink_t::ANTINORMAL);
-	} else if (cl.getAdjacency() == ContigLink_t::ANTINORMAL){
-	  cl.setAdjacency(ContigLink_t::NORMAL);
-	}
-      } else {
-	cl.setContigs(pair<ID_t, ID_t>(ctgA, ctgB));
-      }
-
-      cl.setSize((maxlen + minlen) / 2);
-      cl.setSD((maxlen - minlen) / 6);
-      cl.setType(ContigLink_t::MATEPAIR);
-      cl.setComment((string)tlnm);
-
-      linkMap.insert(pair<pair<ID_t, ID_t>, ContigLink_t>
-		     (cl.getContigs(), cl));
-    } else if (inputLine.find_first_not_of(" 	") == -1){ // empty lines OK
-      // the string in the find is "SPC TAB"
-      // do nothing anyway...
-    } else { 
-      cerr << "Malformed line " << whichLine << " in input: " 
-	   << inputLine << endl;
-      // should I crash here?  
-    }
+    if (linkMap.find(pair<ID_t, ID_t>(ctgB, ctgA)) != linkMap.end()){
+      // must reverse the link
+      ctl.flip();
+    } 
+    linkMap.insert(pair<pair<ID_t, ID_t>, ContigLink_t>
+		   (ctl.getContigs(), ctl));
   }
-  cerr << "Read " << whichLine << " lines from input file" << endl;
-  
+
   // now all the links should be in the linkMap, nicely grouped by the contigs
   // they connect.
 
@@ -243,12 +254,12 @@ int main(int argc, char *argv[])
 	  sz = (**lnks).second.getSize();
 	  sd = (**lnks).second.getSD();
 	  if (sz + 3 * sd < minRange)
-	    cerr << "Link " << (**lnks).second.getComment() << " (" 
+	    cerr << "Link " << (**lnks).second.getIID() << " (" 
 		 << (**lnks).second.getSize() << ", " 
 		 << (**lnks).second.getSD() << ")"
 		 << " is too short ( < " << minRange << ")" << endl;
 	  if (sz - 3 * sd > maxRange)
-	    cerr << "Link " << (**lnks).second.getComment() << " (" 
+	    cerr << "Link " << (**lnks).second.getIID() << " (" 
 		 << (**lnks).second.getSize() << ", " 
 		 << (**lnks).second.getSD() << ")"
 		 << " is too long ( > " << maxRange << ")" << endl;
@@ -258,7 +269,7 @@ int main(int argc, char *argv[])
 	for (list<LinkMap_t::iterator>::iterator 
 	       bi = adjList[at->first].begin();
 	     bi != adjList[at->first].end(); bi++){
-	  cerr << "Link " << (**bi).second.getComment() << " (" 
+	  cerr << "Link " << (**bi).second.getIID() << " (" 
 	       << (**bi).second.getSize() << ", " 
 	       << (**bi).second.getSD() << ")"
 	       << " is just right" << endl;
@@ -277,11 +288,20 @@ int main(int argc, char *argv[])
 	 << " OUTIES: " << adjacencies[(LinkAdjacency_t)ContigLink_t::OUTIE]
 	 << "\n";
 
+
+    ContigEdge_t cte;
+
+    // import adjacency info from first link
+    list<LinkMap_t::iterator>::iterator li = bestList[bestAdj].begin();
+    cte.setContigs((**li).second.getContigs());
+    cte.setAdjacency((**li).second.getAdjacency());
+
+    vector<ID_t> linkIds;
+    linkIds.reserve(bestList[bestAdj].size());  // try to keep memory low - best to prealloc
+
     // here we want to combine the gaussians described by the "good" links
     // use the idea of Huson et al. RECOMB 2001
-
     float newMean, newSD, p = 0, q = 0;
-    
     for (list<LinkMap_t::iterator>::iterator ni = bestList[bestAdj].begin();
 	 ni != bestList[bestAdj].end(); ni++){
       float tmp = (**ni).second.getSD();
@@ -289,35 +309,27 @@ int main(int argc, char *argv[])
       
       p += (**ni).second.getSize() / tmp;
       q += 1 / tmp; 
-      //      cerr << "p is " << p << " and q is " << q << endl;
+      linkIds.push_back((**ni).second.getIID());
     }
     
-
     newMean = p / q;
     newSD = 1 / sqrt(q);
 
-    cout << lastPair.first << "\t" << lastPair.second << "\t" 
-	 << bestAdj << "\t" << newMean << "\t" << newSD << "\t" 
-	 << bestAdjCount << endl;
+    // set size as aggregate of all links
+    cte.setSize(newMean);
+    cte.setSD(newSD);
+    
+    // set contig link IDs
+    cte.setContigLinks(linkIds);
 
+    // give the edge an identifier
+    cte.setIID(++EdgeId);
+    
+    edge_bank << cte;
   } // for each contig pair
 
+  edge_bank.close();
+  link_bank.close();
+  exit(0);
 } // main
 
-
-ID_t getID(char * str)
-{
-  ID_t ret;
-
-  if (sscanf(str, "%d", &ret) == 1)
-    return ret;
-  if (sscanf(str, "contig_%d", &ret) == 1) 
-    return ret;
-  if (sscanf(str, "scaff_%d", &ret) == 1)
-    return ret;
-  
-
-  // here I may want to make up IDs
-  
-  return ret;
-}
