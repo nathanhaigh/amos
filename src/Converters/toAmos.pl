@@ -2,6 +2,7 @@
 
 use TIGR::Foundation;
 use TIGR::AmosLib;
+use TIGR::ParseFasta;
 use XML::Parser;
 use POSIX qw(tmpnam);
 $ENV{TMPDIR} = ".";
@@ -11,9 +12,10 @@ use strict;
 my $VERSION = '$Revision$ ';
 my $HELP = q~
     toAmos (-m mates|-x traceinfo.xml|-f frg) 
-           (-c contig|-a asm|-ta tasm|-ace ace) 
+           (-c contig|-a asm|-ta tasm|-ace ace|-s fasta|-q qual) 
            -o outfile 
            [-i insertfile | -map dstmap]
+           [-gq goodqual] [-bq badqual]
 ~;
 
 my $base = new TIGR::Foundation();
@@ -33,8 +35,12 @@ my $asmfile;
 my $tasmfile;
 my $acefile;
 my $outfile;
+my $fastafile;
+my $qualfile;
 my $insertfile;
 my $libmap;
+my $GOODQUAL = 30;
+my $BADQUAL = 10;
 
 my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "x=s"   => \$traceinfofile,
@@ -45,7 +51,11 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "ace=s" => \$acefile,
 				 "o=s"   => \$outfile,
 				 "i=s"   => \$insertfile,
-				 "map=s" => \$libmap);
+				 "map=s" => \$libmap,
+				 "gq=i"  => \$GOODQUAL,
+				 "bq=i"  => \$BADQUAL,
+				 "q=s"   => \$qualfile,
+				 "s=s"   => \$fastafile);
 
 
 my $matesDone = 0;
@@ -94,6 +104,18 @@ if (defined $frgfile){
     $matesDone = 1;
 }
 
+if (defined $fastafile){
+    open(IN, $fastafile) || $base->bail("Cannot open $fastafile: $!\n");
+    if (defined $qualfile){
+	open(QUAL, $qualfile) || $base->bail("Cannot open $qualfile: $!\n");
+	parseFastaFile(\*IN, \*QUAL);
+	close(QUAL);
+    } else {
+	parseFastaFile(\*IN);
+    }
+    close(IN);
+}
+
 if (defined $asmfile){
     $outprefix = $asmfile;
     open(IN, $asmfile) || $base->bail("Cannot open $asmfile: $!\n");
@@ -133,7 +155,6 @@ if (defined $traceinfofile){
     close(IN);
 }
 
-
 if (! $matesDone && defined $matesfile) { # the mate file contains either mates
     # or regular expressions defining them
     open(IN, $matesfile) || 
@@ -156,7 +177,29 @@ if (defined $libmap){
 close(TMPSEQ);
 close(TMPCTG);
 
+## make sure all reads have an insert
+my %libid;
+my %insid;
+my $ll = $minSeqId++;
+$libraries{$ll} = "0 0"; # dummy library for unmated guys
+$libnames{$ll} = "UNMATED";
+$libid{$ll} = $ll;
+while (my ($sid, $sname) = each %seqnames){
+    if (! exists $seqinsert{$sid}){
+	my $id = $minSeqId++;
+	$seqinsert{$sid} = $id;
+	$insid{$id} = $id;
+	$seenlib{$id} = $ll;
+	$insertlib{$ll} .= "$id ";
+	$forw{$id} = $sid;
+    }
+}
+
+
+
 ## here's where we output all the stuff
+
+
 
 # first print out a pretty header message
 my $date = localtime();
@@ -175,7 +218,13 @@ while (my ($lib, $range) = each %libraries){
     my ($mean, $sd) = split(' ', $range);
     print OUT "{LIB\n";
     print OUT "act:A\n";
-    print OUT "eid:$lib\n";
+    if ($lib =~ /^\d+$/){
+	print OUT "eid:$lib\n";
+	$libid{$lib} = $lib;
+    } else {
+	$libid{$lib} = $minSeqId;
+	print OUT "eid:", $minSeqId++, "\n";
+    }
     if (exists $libnames{$lib}){
 	print OUT "com:\n$libnames{$lib}\n.\n";
     }
@@ -191,9 +240,15 @@ while (my ($lib, $range) = each %libraries){
 while (my ($ins, $lib) = each %seenlib){
     print OUT "{FRG\n";
     print OUT "act:A\n";
-    print OUT "eid:$ins\n";
+    if ($ins =~ /^\d+$/){
+	print OUT "eid:$ins\n";
+	$insid{$ins} = $ins;
+    } else {
+	$insid{$ins} = $minSeqId;
+	print OUT "eid:", $minSeqId++, "\n";
+    }
 #    print OUT "com:\n";
-    print OUT "lib:$lib\n";
+    print OUT "lib:$libid{$lib}\n";
     print OUT "typ:I\n";
 #   print OUT "src:0\n";
     print OUT "}\n";
@@ -229,7 +284,10 @@ while (<TMPSEQ>){
 	if  (! exists $seqinsert{$rid}){
 	    die("Cannot find insert for $rid ($seqnames{$rid})\n");
 	}
-	print OUT "frg:$seqinsert{$rid}\n";
+	if (! exists $insid{$seqinsert{$rid}}){
+	    die ("cannot find insert id for insert $seqinsert{$rid}, sequence $rid, $seqnames{$rid}\n");
+	}
+	print OUT "frg:$insid{$seqinsert{$rid}}\n";
 	my ($cll, $clr) = split(' ', $seq_range{$rid});
 	print OUT "clr:$cll,$clr\n";
 	print OUT "vcr:$cll,$clr\n";
@@ -433,21 +491,100 @@ sub parseFrgFile {
 	}
     }
 
-# make sure all reads have an insert
-    my $ll = $minSeqId++;
-    $libraries{$ll} = "0 0"; # dummy library for unmated guys
-    $libnames{$ll} = "UNMATED";
-    while (my ($sid, $sname) = each %seqnames){
-	if (! exists $seqinsert{$sid}){
-	    my $id = $minSeqId++;
-	    $seqinsert{$sid} = $id;
-	    $seenlib{$id} = $ll;
-	    $insertlib{$ll} .= "$id ";
-	    $forw{$id} = $sid;
-	}
-    }
+# # make sure all reads have an insert
+#     my $ll = $minSeqId++;
+#     $libraries{$ll} = "0 0"; # dummy library for unmated guys
+#     $libnames{$ll} = "UNMATED";
+#     while (my ($sid, $sname) = each %seqnames){
+# 	if (! exists $seqinsert{$sid}){
+# 	    my $id = $minSeqId++;
+# 	    $seqinsert{$sid} = $id;
+# 	    $seenlib{$id} = $ll;
+# 	    $insertlib{$ll} .= "$id ";
+# 	    $forw{$id} = $sid;
+# 	}
+#     }
 } #parseFrgFile
 
+# multi-fasta formatted file
+# accepts one of the following headers:
+# >seqname
+# >seqname clearleft clearright
+# >seqname \d+ \d+ \d+ clearleft clearright
+sub parseFastaFile
+{
+    my $seqfile = shift;
+    my $qualfile = shift;
+
+    my $pf = new TIGR::ParseFasta($seqfile);
+    my $qf;
+    if (defined $qualfile){
+	$qf = new TIGR::ParseFasta($qualfile, '>', ' ');
+    }
+    while (my ($head, $data) = $pf->getRecord()){
+	my $seqname;
+	my $cll;
+	my $clr;
+	if ($head =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
+	    $seqname = $1; $cll = $2; $clr = $3;
+	} elsif ($head =~ /^(\S+)\s+(\d+)\s+(\d+)/){
+	    $seqname = $1; $cll = $2; $clr = $3;
+	} elsif ($head =~ /^(\S+)/){
+	    $seqname = $1;
+	}
+
+	if (! defined $cll){
+	    $cll = 0;
+	    $clr = length($data);
+	}
+
+	my $id = $minSeqId++;
+	$seqnames{$id} = $seqname;
+	$seqids{$seqname} = $id;
+	if (! exists $seq_range{$id}){
+	    $seq_range{$id} = "$cll $clr";
+	} else {
+	    ($cll, $clr) = split(' ', $seq_range{$id});
+	}
+	
+	print TMPSEQ "#$id\n";
+	for (my $i = 0; $i <= length($data); $i+= 60){
+	    print TMPSEQ substr($data, $i, 60), "\n";
+	}
+	print TMPSEQ "#\n";
+	my $qualdata = "";
+	if (defined $qualfile){
+	    my ($qh, $qdata) = $qf->getRecord();
+	    if ($qh !~ /^$seqname/){
+		$base->bail("Sequence and quality records must agree: $seqname != $qh\n");
+	    }
+	    my @quals = split(' ', $qdata);
+	    if ($#quals + 1 != length($data)){
+		$base->bail(sprintf("Sequence and quality records must have same length for $seqname: %d vs %d\n", length($data), $#quals + 1));
+	    }
+	    for (my $i = 0; $i <= $#quals; $i++){
+		if ($quals[$i] <= 0) {$quals[$i] = 1;}
+		if ($quals[$i] > 60) {$quals[$i] = 60;}
+		$qualdata .= chr(ord('0') + $quals[$i]);
+	    }
+	} else {
+	    for (my $i = 0; $i < $cll; $i++){
+		$qualdata .= chr(ord('0') + $BADQUAL);
+	    }
+	    for (my $i = $cll; $i < $clr; $i++){
+		$qualdata .= chr(ord('0') + $GOODQUAL);
+	    }
+	    for (my $i = $clr; $i < length($data); $i++){
+		$qualdata .= chr(ord('0') + $BADQUAL);
+	    }
+	}
+
+	for (my $i = 0; $i <= length($qualdata); $i+= 60){
+	    print TMPSEQ substr($qualdata, $i, 60), "\n";
+	}
+	print TMPSEQ "#\n";
+    }
+}
 
 # parses BAMBUS style .mates file
 # * expects %seqids to be populated
@@ -553,6 +690,28 @@ sub parseMatesFile {
     } # while each %seqids
     
     while (my ($ins, $nm) = each %forw) {
+	if (! exists $seenlib{$ins}){
+	    my $found = 0;
+	    
+	    $nm = $seqnames{$nm};
+
+	    for (my $l = 0; $l <= $#libregexp; $l++){
+		$base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
+		if ($nm =~ /$libregexp[$l]/){
+		    $base->logLocal("found $libids[$l]\n", 2);
+		    $insertlib{$libids[$l]} .= "$ins ";
+		    $seenlib{$ins} = $libids[$l];
+		    $found = 1;
+		    last;
+		}
+	    }
+	    if ($found == 0){
+		$base->logError("Cannot find library for \"$nm\"");
+		next;
+	    }
+	}
+    }
+    while (my ($ins, $nm) = each %rev) {
 	if (! exists $seenlib{$ins}){
 	    my $found = 0;
 	    
