@@ -12,7 +12,7 @@
 #include <qlabel.h>
 #include <qscrollview.h>
 #include <qlineedit.h>
-#include "TilingField.hh"
+#include "TilingFrame.hh"
 
 MainWindow::MainWindow(string bankname, int contigID,
                        QWidget *parent, const char *name )
@@ -40,12 +40,7 @@ MainWindow::MainWindow(string bankname, int contigID,
 
 
   QLineEdit * dbpick = new QLineEdit("DMG", this, "dbpick");
-
-  QScrollView * sv = new QScrollView(this, "tilingscroll");
-  TilingField * tiling = new TilingField( sv->viewport(), "tiling" );
-  sv->addChild(tiling);
-  sv->setHScrollBarMode(QScrollView::AlwaysOff);
-  sv->setResizePolicy(QScrollView::AutoOneFit);
+  TilingFrame * tiling = new TilingFrame(this, "tilingframe");
 
   m_slider = new QSlider(Horizontal, this, "slider");
   m_slider->setTracking(0);
@@ -132,7 +127,7 @@ MainWindow::MainWindow(string bankname, int contigID,
   leftgrid->setRowStretch(11,10);
 
   //right
-  rightgrid->addWidget(sv, 0, 0);
+  rightgrid->addWidget(tiling, 0, 0);
   rightgrid->addWidget(m_slider, 1, 0);
   rightgrid->setRowStretch(0, 10);
 

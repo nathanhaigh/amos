@@ -21,8 +21,36 @@ char RenderSeq_t::base(Pos_t gindex) const
   }
 }
 
-void RenderSeq_t::load(Bank_t & read_bank, vector<Tile_t>::const_iterator tile)
+Pos_t RenderSeq_t::getGindex(Pos_t seqpos) const
 {
+  Pos_t gindex = 0;
+
+  if (m_rc)
+  {
+
+  }
+  else
+  {
+    //convert to gapped sequence position
+    int gapcount;
+    vector<Pos_t>::const_iterator g;
+    for (g =  m_tile->gaps.begin(), gapcount = 0;
+         g != m_tile->gaps.end(); 
+         g++, gapcount++)
+    {
+      if (*g+gapcount+m_tile->range.begin < seqpos) { seqpos++; }
+    }
+
+    int seqoffset = seqpos - m_tile->range.begin;
+    gindex = m_offset + seqoffset;
+  }
+
+  return gindex;
+}
+
+void RenderSeq_t::load(Bank_t & read_bank, Tile_t * tile)
+{
+  m_tile = tile;
   read_bank.fetch(tile->source, m_read);
   Range_t range = tile->range;
 
@@ -58,4 +86,33 @@ void RenderSeq_t::load(Bank_t & read_bank, vector<Tile_t>::const_iterator tile)
     m_qual.insert(*g+gapcount, 1, gapqv);
   }
 }
+
+bool RenderSeq_t::hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
+                             Pos_t rangeEnd,   // 0-based exact end of range
+                             Pos_t seqOffset,  // 0-bases exact offset of seq
+                             Pos_t seqLen,     // count of bases of seq (seqend+1)
+                             Pos_t contigLen)  // count of bases in contig (contigend+1)
+{
+  int retval = 1;
+
+  if (seqOffset >= (Pos_t) 0)
+  {
+    if ((seqOffset > rangeEnd)                  // sequence right flanks
+        || (seqOffset + seqLen-1 < rangeStart)) // sequence left flanks
+    {
+      retval = 0;
+    }
+  }
+  else
+  {
+    // Negative Offset, test left and right separately
+    retval = hasOverlap(rangeStart, rangeEnd, 
+                        0, seqLen+seqOffset, contigLen) ||
+             hasOverlap(rangeStart, rangeEnd, 
+                        contigLen+seqOffset, -seqOffset, contigLen);
+  }
+
+  return retval;
+}
+
 

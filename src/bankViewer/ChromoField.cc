@@ -11,7 +11,11 @@
 
 
 
-ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const char *name)
+ChromoField::ChromoField(RenderSeq_t * read, 
+                         string & db, 
+                         string & cons,
+                         QWidget *parent, 
+                         const char *name)
   :QWidget(parent, name)
 {
   setPalette(QPalette(QColor(200, 200, 200)));
@@ -64,11 +68,6 @@ ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const
 
   cerr << "loaded " << pos.size() << "positions, i=" << i << endl;
 
-
-
-
-
-
   m_pix = new QPixmap(width(), height());
   m_pix->fill(this, 0, 0);
 
@@ -104,11 +103,13 @@ ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const
   }
 
   // x-labels
+  painter.setFont(QFont("Courier", 8));
   for (i=0; i < m_rawread->NPoints; i += 50)
   {
     QString s = QString::number(i);
     painter.drawText(i-20+offset,baseline+10,40,20,Qt::AlignHCenter,s);
   }
+  painter.setFont(QFont("Courier", 12));
 
   for (int channel = 0; channel < 4; channel++)
   {
@@ -157,6 +158,17 @@ ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const
     QString s;
     s+= b;
     painter.drawText(pos[i]-20+offset,baseline+25,40,20,Qt::AlignHCenter,s);
+
+    pen.setColor(black);
+    painter.setPen(pen);
+
+    int gindex = read->getGindex(i);
+    if (gindex >= read->m_offset && gindex < read->m_offset + read->m_nucs.size())
+    {
+      s = "";
+      s += cons[gindex];
+      painter.drawText(pos[i]-20+offset,baseline+40,40,20,Qt::AlignHCenter,s);
+    }
   }
 
   painter.end();

@@ -21,7 +21,11 @@ class ChromoField: public QWidget
 {
   Q_OBJECT
 public:
-    ChromoField(RenderSeq_t * read, string & db, QWidget *parent=0, const char *name=0);
+    ChromoField(RenderSeq_t * read, 
+                string & db,
+                string & cons,
+                QWidget *parent=0, 
+                const char *name=0);
 
 protected:
     void paintEvent( QPaintEvent * );
@@ -30,7 +34,6 @@ private:
     Read * m_rawread;
     RenderSeq_t * m_render;
     QPixmap * m_pix;
-
 };
 
 
