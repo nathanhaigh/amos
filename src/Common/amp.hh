@@ -17,17 +17,17 @@ class ProgressDots_t
 {
 private:
 
-  int total_m;    // number of dots currently printed
-  int count_m;    // total number of dots to print
-  int end_m;      // end of job progress (progress measured between 0 - end)
+  long long total_m; // number of dots currently printed
+  long long count_m; // total number of dots to print
+  long long end_m;   // end of job progress (progress measured between 0 - end)
 
 public:
 
-  ProgressDots_t (int end, int count = 100)
+  ProgressDots_t (long long end, long long count = 100)
     : end_m (end), count_m (count), total_m (0)
   { }
 
-  void update (int progress);  // update job progress with respect to end
+  void update (long long progress);  // update job progress with respect to end
 
   void end ( );  // job complete, flush remaining dots and newline
 };

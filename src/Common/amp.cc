@@ -24,9 +24,9 @@ const char * Date
   return cp;
 }
 
-void ProgressDots_t::update (int progress)
+void ProgressDots_t::update (long long progress)
 {
-  int dots = (int)((double)progress / (double)end_m * (double)count_m);
+  int dots = (long long)((double)progress / (double)end_m * (double)count_m);
   while ( total_m < dots  &&  total_m < count_m )
     {
       cerr << '.';
