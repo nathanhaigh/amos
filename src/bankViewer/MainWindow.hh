@@ -6,6 +6,7 @@
 #include <qslider.h>
 #include <qscrollbar.h>
 #include <qpopupmenu.h>
+#include <qlineedit.h>
 #include <string>
 
 #include "TilingFrame.hh"
@@ -62,12 +63,15 @@ public slots:
   void jumpFGindex();
   void jumpPGindex();
 
+  void findString();
+
 signals:
   void bankSelected(std::string bankname);
   void contigIdSelected(int contigId);
   void gindexChanged(int gindex);
   void highlightRead(int iid);
   void chromoDBSet(const QString & db);
+  void searchString(const QString & str);
 
   void toggleShowFullRange(bool);
   void toggleShowNumbers(bool);
@@ -94,6 +98,7 @@ private:
   CGraphWindow * m_cgraphWindow;
 
   QPopupMenu * m_options;
+  QLineEdit * m_searchedit;
 
   int m_posid;
   int m_qvid;

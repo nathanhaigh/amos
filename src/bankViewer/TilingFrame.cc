@@ -42,6 +42,7 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
   m_loadedStart = m_loadedEnd = -1;
 
   toggleDisplayAllChromo(false);
+  m_nextDiscrepancyBuffer = 10;
 
   resize(500, 500);
   m_sv = new QScrollView(this, "tilingscroll");
@@ -65,6 +66,7 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
   QBoxLayout * layout = new QVBoxLayout(this);
   layout->addWidget(m_consfield);
   layout->addWidget(m_sv, 10);
+
 
   connect(this,        SIGNAL(fontSizeChanged(int)),
           m_consfield, SLOT(setFontSize(int)));
@@ -284,9 +286,8 @@ void TilingFrame::setGindex(int gindex)
 
 void TilingFrame::advanceNextDiscrepancy()
 {
-  int nextDiscrepancyBuffer = 10;
 
-  int gindex = m_gindex+nextDiscrepancyBuffer+1;
+  int gindex = m_gindex+m_nextDiscrepancyBuffer+1;
 
   while (gindex < (int)m_consensus.length())
   {
@@ -299,7 +300,7 @@ void TilingFrame::advanceNextDiscrepancy()
     {
       if (m_cstatus[gindex] == 'X')
       {
-        setGindex(gindex-nextDiscrepancyBuffer);
+        setGindex(gindex-m_nextDiscrepancyBuffer);
         return;
       }
       else
@@ -329,9 +330,7 @@ void TilingFrame::sortColumns(int gindex)
 
 void TilingFrame::advancePrevDiscrepancy()
 {
-  int nextDiscrepancyBuffer = 10;
-
-  int gindex = m_gindex+nextDiscrepancyBuffer-1;
+  int gindex = m_gindex+m_nextDiscrepancyBuffer-1;
 
   while (gindex >=0 )
   {
@@ -344,7 +343,7 @@ void TilingFrame::advancePrevDiscrepancy()
     {
       if (m_cstatus[gindex] == 'X')
       {
-        setGindex(gindex-nextDiscrepancyBuffer);
+        setGindex(gindex-m_nextDiscrepancyBuffer);
         return;
       }
 
@@ -367,6 +366,29 @@ void TilingFrame::highlightRead(int iid)
       {
         setGindex(vi->offset);
       }
+    }
+  }
+}
+
+#include <qregexp.h>
+
+void TilingFrame::searchString(const QString & str)
+{
+  if (!str.isEmpty())
+  {
+    int gindex = m_gindex + m_nextDiscrepancyBuffer + 1;
+
+    QString qcons(m_consensus);
+    int pos = qcons.find(QRegExp(str), gindex);
+
+    if (pos != -1)
+    {
+      //cerr << "found at " << pos << endl;
+      setGindex(pos-m_nextDiscrepancyBuffer);
+    }
+    else
+    {
+      //cerr << "not found" << endl;
     }
   }
 }

@@ -126,6 +126,19 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   new QToolButton(icon_fontminus, "Font Decrease", "Font Decrease",
                   this, SLOT(fontDecrease()), status);
 
+  QToolBar * searchbar = new QToolBar(this, "SearchBar");
+
+  m_searchedit = new QLineEdit(searchbar, "searchbox");
+  QToolButton * bfind = new QToolButton(QPixmap(), "Find", "Find", this, SLOT(findString()), searchbar);
+  bfind->setMinimumWidth(20);
+  bfind->setText("Find");
+  bfind->setAccel(CTRL+Key_F);
+
+  connect(m_searchedit, SIGNAL(returnPressed()),
+          this,         SLOT(findString()));
+        
+
+
   // gindex
   connect(this,     SIGNAL(gindexChanged(int)),
           m_tiling, SLOT(setGindex(int)));
@@ -207,6 +220,9 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   connect(this,        SIGNAL(toggleSNPColoring(bool)),
           m_tiling,    SIGNAL(toggleSNPColoring(bool)));
+
+  connect(this,        SIGNAL(searchString(const QString &)),
+          m_tiling,    SLOT(searchString(const QString &)));
 
 
   // Set defaults
@@ -496,4 +512,10 @@ void MainWindow::jumpFGindex()
 void MainWindow::jumpPGindex()
 {
   setGindex(m_gindex-20);
+}
+
+void MainWindow::findString()
+{
+  const QString & str = m_searchedit->text();
+  emit searchString(str);
 }

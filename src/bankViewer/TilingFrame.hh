@@ -30,6 +30,7 @@ public slots:
     void highlightRead(int);
     void sortColumns(int);
     void toggleDisplayAllChromo(bool);
+    void searchString(const QString &);
 
 signals:
     void gindexChanged( int );
@@ -65,6 +66,7 @@ private:
     int m_loadedStart;
     int m_loadedEnd;
     int m_loadedWidth;
+    int m_nextDiscrepancyBuffer;
 
     QScrollView * m_sv;
 
