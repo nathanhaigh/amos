@@ -140,14 +140,17 @@ int main(int argc, char *argv[])
     pair<ID_t, ID_t> lastPair = (*li).first;
     cerr << "Doing contig pair (" << lastPair.first << ", " 
 	 << lastPair.second << ")" << endl; 
-    list <ContigLink_t> linkList;
     map <LinkAdjacency_t, list<LinkMap_t::iterator> > adjList;
     map <LinkAdjacency_t, list<LinkMap_t::iterator> > bestList;
-    while ((*li).first == lastPair){
+    adjacencies.clear();  // make sure we don't carry unnecessary info from before
+    while (li->first == lastPair){
+      LinkAdjacency_t a = li->second.getAdjacency();
+
       // handle one pair of contigs
-      linkList.push_back(li->second);
-      adjacencies[li->second.getAdjacency()]++;
-      adjList[li->second.getAdjacency()].push_back(li);
+      adjacencies[a]++;
+      adjList[a].push_back(li);
+    
+      assert(adjacencies[a] == adjList[a].size());
       li++;
     }
 
@@ -170,13 +173,19 @@ int main(int argc, char *argv[])
     for (map<LinkAdjacency_t, int>::iterator at = adjacencies.begin();
 	 at != adjacencies.end(); at++){
       if (at->second > 1){ // there are links we have to deal with
-	cerr << "Doing " << at->second 
-	     << " links of type " << at->first << endl;
 	map<Size_t, LinkMap_t::iterator> begins, ends;
 	list<LinkMap_t::iterator> best;
 	list<LinkMap_t::iterator>::iterator bestEnd = best.end();
 	Size_t bestCoord;
 	int ncurrent = 0, nbest = 0;
+
+	cerr << "Doing " << at->second 
+	     << " links of type " << at->first << endl;
+
+	cerr << " Found " << adjList[at->first].size() << " links " << endl;
+
+	assert (at->second == adjList[at->first].size());
+
 	for (list<LinkMap_t::iterator>::iterator 
 	       lnks = adjList[at->first].begin();
 	     lnks != adjList[at->first].end(); lnks++){
@@ -185,10 +194,13 @@ int main(int argc, char *argv[])
 	  ends.insert(pair<Size_t, LinkMap_t::iterator>
 		      (((**lnks).second.getSize() + 3 * (**lnks).second.getSD()), *lnks));
 	} // for each link
+
 	// because of the way maps work, the elements come sorted by the key
-	
 	map<Size_t, LinkMap_t::iterator>::iterator bgi = begins.begin();
 	map<Size_t, LinkMap_t::iterator>::iterator eni = ends.begin();
+	
+	cerr << " Begins has " << begins.size() << " elements" << endl;
+	cerr << " Ends has " << ends.size() << " elements" << endl;
 	
 	while (bgi != begins.end() || eni != ends.end()){
 	  if (bgi != begins.end() && bgi->first <= eni->first){
@@ -202,6 +214,7 @@ int main(int argc, char *argv[])
 	      nbest = ncurrent;
 	      bestEnd = best.begin(); // reset best list
 	      bestCoord = bgiLend; // where the maximum occured
+	      cerr << "best coord is " << bestCoord << endl;
 	    }
 	    bgi++;
 	  } else if (eni != ends.end() && 
@@ -215,6 +228,8 @@ int main(int argc, char *argv[])
 	    if (eniLend <= bestCoord && eniRend >= bestCoord){ 
 	      // current link was in best clique
 	      best.push_front(eni->second);
+	    } else {
+	      cerr << "link " << eniLend << ", " << eniRend << " did not surround " << bestCoord << endl;
 	    }
 
 	    // we remove from the clique
@@ -228,6 +243,8 @@ int main(int argc, char *argv[])
 	at->second = nbest;
 	// keep just the good
 	//	adjList[at->first].clear();
+	cerr << "nbest is " << nbest << endl;
+	cerr << "best has " << best.size() << " records " << endl;
 	Size_t minRange, maxRange;
 	list<LinkMap_t::iterator>::iterator bg = best.begin();
 	Size_t sz = (**bg).second.getSize();
@@ -275,7 +292,8 @@ int main(int argc, char *argv[])
 	       << " is just right" << endl;
 	  bestList[at->first].push_back(*bi);
 	}
-      }// if enough links exist
+      } // if enough links exist
+
       if (at->second > bestAdjCount){
 	bestAdjCount = at->second;
 	bestAdj = at->first;
