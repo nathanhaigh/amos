@@ -1731,8 +1731,10 @@ void  Multi_Alignment_t :: Reset_From_Votes
 
       if  (! ok)
           {
-           fprintf (stderr, "Failed on string %d in  Reset_From_Votes\n", i);
-           exit (EXIT_FAILURE);
+	    sprintf (Clean_Exit_Msg_Line,
+		     "Failed on string %d in  Reset_From_Votes", i);
+	    throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
+					-1, i);
           }
 
       align [i] . Incr_Votes (vote, s [i]);
