@@ -372,6 +372,19 @@ void  Base_Alignment_t :: Dump
 
 
 
+void  Base_Alignment_t :: Flip_AB
+    (void)
+
+//  Switch the roles of  a  and  b .  No change to  errors ,  string_sub,
+//   flipped  or  a_len .
+
+  {
+   Swap (a_lo, b_lo);
+   Swap (a_hi, b_hi);
+  }
+
+
+
 
 // ###  Alignment_t  methods  ###
 
@@ -482,6 +495,25 @@ void  Alignment_t :: Dump_Delta
    n = delta . size ();
    for  (i = 0;  i < n;  i ++)
      fprintf (fp, "  %3d: %5d\n", i, delta [i]);
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Flip_AB
+    (void)
+
+//  Switch the roles of  a  and  b  in this alignment.
+
+  {
+   int  i, n;
+
+   Base_Alignment_t :: Flip_AB ();
+
+   n = delta . size ();
+   for  (i = 0;  i < n;  i ++)
+     delta [i] *= -1;
 
    return;
   }
@@ -839,6 +871,26 @@ void  Alignment_t :: Set_To_Identity
    errors = 0;
 
    delta . clear ();
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Shift_First_Delta
+    (int offset)
+
+//  Adjust the first delta value (if any) in this alignment
+//  by  offset .
+
+  {
+   if  (delta . size () > 0)
+       {
+        if  (delta [0] > 0)
+            delta [0] += offset;
+          else
+            delta [0] -= offset;
+       }
 
    return;
   }
@@ -1405,6 +1457,23 @@ void  Gapped_Alignment_t :: Print_Subalignment_Line
      }
 
    buff [ct] = '\0';
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Shift_Skip
+    (int offset)
+
+//  Add  offset  to all the values in this alignment's  skip  vector.
+
+  {
+   int  i, n;
+
+   n = skip . size ();
+   for  (i = 0;  i < n;  i ++)
+     skip [i] += offset;
 
    return;
   }
@@ -2061,6 +2130,137 @@ void  Gapped_Multi_Alignment_t :: Extract_IMP_Dels
 
 
 
+void  Gapped_Multi_Alignment_t :: Full_Merge_Left
+    (const Gapped_Multi_Alignment_t & m, int adj_a_lo, int a_lo, int a_hi,
+     int b_lo, int b_hi, int & prefix_len_added, vector <char *> & sl1,
+     const vector <char *> & sl2, vector <int> & sl2_place,
+     vector <char *> * tg1, vector <char *> * tg2)
+
+//  Merge the prefix of the alignment in  m  onto the front
+//  of this alignment.  The region  a_lo .. a_hi
+//  in the  m  consensus matches the prefix of this
+//  alignment  b_lo .. b_hi .  Note that  b_lo  may be
+//  slightly bigger than 0, so some "play" is allowed
+//  for finding where the beginning of this multialignment
+//  consensus actually hits  m 's consensus.  The search for the
+//  start of the alignment begins between  adj_a_lo  and  a_lo + 1 .
+//   sl1  and  sl2  are the sequences of the reads for this
+//  multialignment and multialignment  m , respectively.
+//  Set  prefix_len_added  to the number of *ungapped* positions
+//  in the prefix prepended to this consensus sequence.
+//  Must have  a_lo <= a_hi  and  b_lo <= b_hi .
+//   sl2_place  indicates whether and where  sl2  strings are already
+//  in  sl1 .  Any new strings are added
+//  from  sl2  to end of  sl1  and  sl2_place  is updated.
+//  If neither  tg1  nor  tg2  is  NULL , then also add relevant
+//  sequences from  tg2  to the end of  tg1 , mirroring  sl1
+//  and  sl2 .
+
+  {
+   Alignment_t  ali;
+   string  x, y;
+   int  a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi;
+   int  x_len, y_len, x_slip, extra;
+
+   // First align the consensus sequences (also aligning the gap
+   //   positions based on the characters that are there) in the
+   // overlap region
+
+   // Pull out the respective consensus regions to the end of each
+   // sequence.
+   // Need to add some indication of what characters aligned with the
+   //   gap position
+   m . Extract_Gapped_Region (adj_a_lo, a_hi, x, a_gapped_lo, a_gapped_hi);
+   x_len = x . length ();
+
+   Extract_Gapped_Region (0, b_hi, y, b_gapped_lo, b_gapped_hi);
+   y_len = y . length ();
+
+   // Align them
+   // Need to add something to take into account characters associated
+   //   with gap positions
+   // The alignments must end exactly where indicated
+
+   x_slip = 1 + Gapped_Equivalent (a_lo - adj_a_lo, x);
+   Complete_Align (y . c_str (), 0, y_len, x . c_str (), 0,
+        x_slip, x_len, 2, -3, -2, -1, ali);
+
+   if  (Verbose > 2)
+       {
+        printf ("Full_Merge_Left:  Alignment before flip:\n");
+        ali . Print (stdout, y . c_str (), x . c_str ());
+       }
+
+   ali . Flip_AB ();
+
+   if  (Verbose > 2)
+       {
+        printf ("Full_Merge_Left:  Alignment after flip:\n");
+        ali . Print (stdout, x . c_str (), y . c_str ());
+       }
+
+   extra = a_gapped_lo + ali . a_lo;
+
+   // Prepend the leftover part of  a  to the front of this consensus sequence
+   // Because the added leftover part is identical, only need to adjust
+   // the first delta value.
+
+   assert (extra >= 0);
+   if  (extra > 0)
+       {
+        consensus . insert (0, m . consensus, 0, extra);
+        ali . Shift_First_Delta (extra);
+        Shift_B_Right (extra);
+       }
+
+   ali . a_lo = 0;
+   ali . a_hi = a_gapped_hi;
+   assert (ali . b_lo == 0);
+   ali . b_hi += extra;
+
+   Expand_Consensus (ali);
+
+   if  (Verbose > 2)
+       {
+        cout << endl << endl << "Contig in  Full_Merge_Left  after Expand_Consensus"
+             << endl;
+        cout << "sl1 . size () = " << sl1 . size () << endl;
+        cout << "sl2 . size () = " << sl2 . size () << endl;
+        Print (stdout, sl1, 60);
+       }
+
+   Add_Aligned_Seqs (m, ali, 0, a_gapped_hi, sl1, sl2, sl2_place,
+        tg1, tg2);
+
+   if  (Verbose > 2)
+       {
+        int  i, n;
+
+        n = align . size ();
+        cout << endl << "Align after  Full_Merge_Right  n = " << n << endl;
+        cout << "sl1 . size () = " << sl1 . size () << endl;
+        cout << "sl2 . size () = " << sl2 . size () << endl;
+        for  (i = 0;  i < n;  i ++)
+          {
+           printf ("align [%d]:\n", i);
+           align [i] . Dump (stdout);
+          }
+        
+        n = sl2_place . size ();
+        cout << endl << "sl2_place  n = " << n << endl;
+        for  (i = 0;  i < n;  i ++)
+          cout << sl2_place [i] << endl;
+       }
+
+   // Eventually re-call the consensus here
+
+   prefix_len_added = Ungapped_Positions (consensus, 0, extra);
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Full_Merge_Right
     (const Gapped_Multi_Alignment_t & m, int a_lo,
      int b_lo, vector <char *> & sl1,
@@ -2141,7 +2341,7 @@ void  Gapped_Multi_Alignment_t :: Full_Merge_Right
              << endl;
         cout << "sl1 . size () = " << sl1 . size () << endl;
         cout << "sl2 . size () = " << sl2 . size () << endl;
-        Print (stdout, sl1, true, true, 60);
+        Print (stdout, sl1, 60);
        }
 
    Add_Aligned_Seqs (m, ali, a_gapped_lo, a_gapped_hi, sl1, sl2, sl2_place,
@@ -2403,7 +2603,7 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
    Ordered_Range_t  position;
    Gapped_Alignment_t  ga;
    vector <int>  del;
-   int  i, n;
+   int  i, n, slen_sub;
 
    consensus = msg . getConsensus ();
    n = consensus . length ();
@@ -2448,6 +2648,8 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
       align . push_back (ga);
      }
 
+   slen_sub = n;
+
    // Only extract alignment for surrogate (i.e., stone) unitigs
    n = ups_list . size ();
    for  (i = 0;  i < n;  i ++)
@@ -2457,8 +2659,9 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
       if  (ups_list [i] . getUnitigType () == STONE_UNI_T)
           {
            ga . a_lo = 0;
-           ga . a_hi = slen [i];
-           ga . a_len = slen [i];
+           ga . a_hi = slen [slen_sub];
+           ga . a_len = slen [slen_sub];
+           slen_sub ++;
            position = ups_list [i] . getPosition ();
            x = position . getStart ();
            y = position . getEnd ();
@@ -2483,6 +2686,14 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
            align . push_back (ga);
           }
      }
+
+   if  (slen_sub != int (slen . size ()))
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  In Make_From_CCO_Msg used %d of %d lengths\n"
+            "  Should have been equal", slen_sub, int (slen.size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
 
    return;
   }
@@ -2534,7 +2745,7 @@ void  Gapped_Multi_Alignment_t :: Output_Read_Positions
 //  Output to  fp  a header line for this multialignment
 //  containing  id  and the (ungapped) length of the consensus
 //  followed by a list of reads and their implied positions
-//  in this multialignments.  Include an indication of whether
+//  in this multialignment.  Include an indication of whether
 //  the read is an original read (if it's subscript is  < orig_tag_ct )
 //  or an added one (otherwise).   len  is the length of the
 //  ungapped consensus.   offset  is added to the b positions
@@ -2710,7 +2921,7 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
         cout << endl << endl << "Contig #1 after Expand_Consensus" << endl;
         cout << "sl1 . size () = " << sl1 . size () << endl;
         cout << "sl2 . size () = " << sl2 . size () << endl;
-        Print (stdout, sl1, true, true, 60);
+        Print (stdout, sl1, 60);
        }
 
    Add_Aligned_Seqs (m, ali, a_gapped_lo, a_gapped_hi, sl1, sl2, sl2_place,
@@ -2744,8 +2955,7 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
 
 
 void  Gapped_Multi_Alignment_t :: Print
-    (FILE * fp, const vector <char *> & s, bool use_string_sub = false,
-     bool with_diffs = false, int width = DEFAULT_FASTA_WIDTH,
+    (FILE * fp, const vector <char *> & s, int width = DEFAULT_FASTA_WIDTH,
      vector <char *> * tag = NULL)
 
 //  Display this multialignment to file  fp  using
@@ -2760,8 +2970,13 @@ void  Gapped_Multi_Alignment_t :: Print
 
   {
    char  * buff, * diff;
-   int  lo, hi, len;
-   int  i, n;
+   bool  use_string_sub, with_diffs, use_gapped_coords;
+   int  lo, hi, len, print_lo, print_hi, ungapped_lo, ungapped_hi;
+   int  i, j, n;
+
+   use_string_sub = (print_flags & PRINT_USING_STRING_SUB);
+   with_diffs = (print_flags & PRINT_WITH_DIFFS);
+   use_gapped_coords = (print_flags & PRINT_CONSENSUS_GAP_COORDS);
 
    if  (! use_string_sub && s . size () != align . size ())
        {
@@ -2780,6 +2995,7 @@ void  Gapped_Multi_Alignment_t :: Print
    // assume for now the alignments are sorted in ascending order by
    // b_lo value
 
+   ungapped_lo = 0;
    for  (lo = 0;  lo < len;  lo += width)
      {
       int  a_lo, a_hi;
@@ -2794,6 +3010,7 @@ void  Gapped_Multi_Alignment_t :: Print
       for  (i = 0;  i < n;  i ++)
         if  (Range_Intersect (align [i] . b_lo, align [i] . b_hi, lo, hi))
             {
+             char  tag_buff [100];
              int  sub;
 
              if  (use_string_sub)
@@ -2802,12 +3019,24 @@ void  Gapped_Multi_Alignment_t :: Print
                  sub = i;
              align [i] . Print_Subalignment_Line
                            (buff, lo, hi, s [sub], a_lo, a_hi);
+             
              if  (tag == NULL)
-                 fprintf (fp, "%4d:  %s  (%d-%d%c)\n", sub, buff, a_lo, a_hi,
-                      align [i] . flipped ? 'r' : 'f');
+                 sprintf (tag_buff, "%4d:", sub);
                else
-                 fprintf (fp, "%10.10s:  %s  (%d-%d%c)\n", (* tag) [sub], buff,
-                      a_lo, a_hi, align [i] . flipped ? 'r' : 'f');
+                 sprintf (tag_buff, "%10.10s:", (* tag) [sub]);
+             if  (align [i] . flipped)
+                 {
+                  print_lo = align [i] . a_len - a_lo;
+                  print_hi = align [i] . a_len - a_hi;
+                 }
+               else
+                 {
+                  print_lo = a_lo;
+                  print_hi = a_hi;
+                 }
+             fprintf (fp, "%s  %s  (%d-%d)\n", tag_buff, buff, print_lo,
+                  print_hi);
+
              if  (with_diffs)
                  {
                   int  j, k;
@@ -2820,18 +3049,39 @@ void  Gapped_Multi_Alignment_t :: Print
             }
 
       Print_Consensus (buff, lo, hi);
+
+      ungapped_hi = ungapped_lo;
+      for  (j = 0;  buff [j] != '\0';  j ++)
+        if  (buff [j] != '-')
+            ungapped_hi ++;
+
+      if  (use_gapped_coords)
+          {
+           print_lo = lo;
+           print_hi = hi;
+          }
+        else
+          {
+           print_lo = ungapped_lo;
+           print_hi = ungapped_hi;
+          }
+
       if  (tag == NULL)
           {
-           fprintf (fp, "%4s:  %s  (%d-%d)\n", "cons", buff, lo, hi);
+           fprintf (fp, "%4s:  %s  (%d-%d)\n", "cons", buff, print_lo, print_hi);
            if  (with_diffs)
                fprintf (fp, "%5s  %s\n", "", diff);
           }
         else
           {
-           fprintf (fp, "%10.10s:  %s  (%d-%d)\n", "consensus", buff, lo, hi);
+           fprintf (fp, "%10.10s:  %s  (%d-%d)\n", "consensus", buff, print_lo,
+                print_hi);
            if  (with_diffs)
                fprintf (fp, "%11s  %s\n", "", diff);
           }
+
+      ungapped_lo = ungapped_hi;
+
       if  (hi < len)
           fprintf (fp, "\n");
      }
@@ -3203,6 +3453,29 @@ void  Gapped_Multi_Alignment_t :: Set_String_Subs
 
    return;
   }
+
+
+
+void  Gapped_Multi_Alignment_t :: Shift_B_Right
+    (int offset)
+
+//  Shift all the  b  values in this alignment to the right
+//  by  offset .
+
+  {
+   int  i, n;
+
+   n = align . size ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      align [i] . b_lo += offset;
+      align [i] . b_hi += offset;
+      align [i] . Shift_Skip (offset);
+     }
+
+   return;
+  }
+
 
 
 void  Gapped_Multi_Alignment_t :: Show_Skips
@@ -3852,212 +4125,27 @@ int  Exact_Prefix_Match
 
 
 
-void  Incr_Opposite
-    (vector <Phase_Entry_t> & v, int from, int to)
+int  Gapped_Equivalent
+    (int pos, const string & s)
 
-//  Increment  opposite_ct  in  v [i]  that matches  from  and
-//   to .  If none is found, then add a new one and set its
-//   oppostie_ct  to  1  and its  same_ct  to  0 .
+//  Return the gapped position in  s  that is equivalent to
+//  pos  in an ungapped sequence.  The return position is
+//  the largest possible value, i.e., we slide over as many
+//  '-'s as possible.
 
   {
-   Phase_Entry_t  p;
-   int  i, n;
+   int  i, j, n;
 
-   n = v . size ();
-   for  (i = 0;  i < n;  i ++)
-     if  (v [i] . to == to)
+   n = s . length ();
+   for  (i = j = 0;  i < n && j <= pos;  i ++)
+     if  (s [i] != '-')
          {
-          assert (v [i] . from = from);
-          v [i] . opposite_ct ++;
-          return;
-         }
-
-   p . from = from;
-   p . to = to;
-   p . opposite_ct = 1;
-   p . same_ct = 0;
-   p . weight = 0;
-
-   v . push_back (p);
-
-   return;
-  }
-
-
-
-void  Incr_Same
-    (vector <Phase_Entry_t> & v, int from, int to)
-
-//  Increment  same_ct  in  v [i]  that matches  from  and
-//   to .  If none is found, then add a new one and set its
-//   same_ct  to  1  and its  opposite_ct  to  0 .
-
-  {
-   Phase_Entry_t  p;
-   int  i, n;
-
-   n = v . size ();
-   for  (i = 0;  i < n;  i ++)
-     if  (v [i] . to == to)
-         {
-          assert (v [i] . from = from);
-          v [i] . same_ct ++;
-          return;
-         }
-
-   p . from = from;
-   p . to = to;
-   p . same_ct = 1;
-   p . opposite_ct = 0;
-   p . weight = 0;
-
-   v . push_back (p);
-
-   return;
-  }
-
-
-
-bool  Is_Distinguishing
-    (unsigned char ct [5], char & ch1, int & ch1_ct,
-     char & ch2, int & ch2_ct)
-
-//  Check if values in  ct  indicate a polymorphism.  If so set
-//   ch1  and  ch2  to the most frequenct characters and
-//   ch1_ct  and  ch2_ct  to the number of occurrences of each.
-
-  {
-   int  sub1, sub2;
-   int  i;
-
-   ch1_ct = ct [0];
-   sub1 = 0;
-   ch2_ct = 0;
-
-   for  (i = 1;  i < 5;  i ++)
-     if  (ch2_ct < ct [i])
-         {
-          if  (ch1_ct < ct [i])
-              {
-               ch2_ct = ch1_ct;
-               sub2 = sub1;
-               ch1_ct = ct [i];
-               sub1 = i;
-              }
-            else
-              {
-               ch2_ct = ct [i];
-               sub2 = i;
-              }
-         }
-
-   // Simple version that makes a column distinguishing if it has
-   // >= 3 occurrences of 3 or more characters
-   // Should probably make alternative version that uses quality values
-   if  (ch1_ct >= 3 && ch2_ct >= 3)
-       {
-        ch1 = Sub_To_DNA_Char (sub1);
-        ch2 = Sub_To_DNA_Char (sub2);
-        return  true;
-       }
-
-   return  false;
-  }
-
-
-
-int  Match_Count
-    (const vector <int> & a, const vector <int> & b)
-
-//  Return the number of entries in  a  that are also in  b
-//  Assume each list is in ascending sorted order without
-//  duplicates.
-
-  {
-   int  i, j, m, n, ct;
-
-   m = a . size ();
-   n = b . size ();
-
-   i = j = ct = 0;
-   while  (i < m && j < n)
-     {
-      if  (a [i] < b [j])
-          i ++;
-      else if  (b [j] < a [i])
+          if  (j == pos)
+              return  i;
           j ++;
-        else
-          {
-           ct ++;
-           i ++;
-           j ++;
-          }
-     }
+         }
 
-   return  ct;
-  }
-
-
-
-void  Multi_Align
-    (vector <char *> & s, vector <int> & offset, int offset_delta,
-     double error_rate, Gapped_Multi_Alignment_t & gma,
-     vector <int> * ref)
-
-//  Create multialignment in  gma  of strings  s  each of which has
-//  a nominal offset from its predecessor of  offset .   offset_delta  is
-//  the number of positions by which the offset is allowed to vary in
-//  either direction.   error_rate  is the maximum expected error rate
-//  in alignments between strings.  It should be twice the expected error
-//  rate to the real reference string to allow for independent errors
-//  in separate strings.  The value of  offset [0]  must be zero.
-//  If  ref  isn't  NULL  then make its values be the subscripts of
-//  the original locations of the entries in  s  in case they are
-//  shifted
-
-  {
-   Multi_Alignment_t  ma;
-   vector <Vote_t>  vote;
-   bool  changed;
-   int  ct, n;
-
-   n = s . size ();
-   if  (n == 0)
-       Clean_Exit ("ERROR:  Multi_Align called with no strings", __FILE__, __LINE__);
-   if  (n != int (offset . size ()))
-       {
-        sprintf (Clean_Exit_Msg_Line,
-            "ERROR:  Multi_Align called with %d strings and %d offsets",
-            n, int (offset . size ()));
-        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-       }
-   if  (offset [0] != 0)
-       {
-        sprintf (Clean_Exit_Msg_Line,
-            "ERROR:  Multi_Align called with non-zero  offset [0] = %d",
-            offset [0]);
-        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-       }
-
-   Sort_Strings_And_Offsets (s, offset, ref);
-
-   ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote);
-
-   ct = 0;
-   do
-     {
-      ma . Reset_From_Votes (s, 5, error_rate, vote, changed);
-      ct ++;
-     }  while  (ct < 3 && changed);
-
-   if  (Verbose > 3)
-       ma . Print_Alignments_To_Consensus (stderr, s);
-
-   gma . Convert_From (ma);
-
-   gma . Sort (s, ref);
-
-   return;
+   return  i;
   }
 
 
@@ -4268,6 +4356,216 @@ printf ("L = %d:%u  D = %d:%u  T = %d:%u\n", entry . left_score, entry . left_fr
           printf ("delta [%d] = %d\n", i, delta [i]);
 
    align . setDelta (delta);
+
+   return;
+  }
+
+
+
+void  Incr_Opposite
+    (vector <Phase_Entry_t> & v, int from, int to)
+
+//  Increment  opposite_ct  in  v [i]  that matches  from  and
+//   to .  If none is found, then add a new one and set its
+//   oppostie_ct  to  1  and its  same_ct  to  0 .
+
+  {
+   Phase_Entry_t  p;
+   int  i, n;
+
+   n = v . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (v [i] . to == to)
+         {
+          assert (v [i] . from = from);
+          v [i] . opposite_ct ++;
+          return;
+         }
+
+   p . from = from;
+   p . to = to;
+   p . opposite_ct = 1;
+   p . same_ct = 0;
+   p . weight = 0;
+
+   v . push_back (p);
+
+   return;
+  }
+
+
+
+void  Incr_Same
+    (vector <Phase_Entry_t> & v, int from, int to)
+
+//  Increment  same_ct  in  v [i]  that matches  from  and
+//   to .  If none is found, then add a new one and set its
+//   same_ct  to  1  and its  opposite_ct  to  0 .
+
+  {
+   Phase_Entry_t  p;
+   int  i, n;
+
+   n = v . size ();
+   for  (i = 0;  i < n;  i ++)
+     if  (v [i] . to == to)
+         {
+          assert (v [i] . from = from);
+          v [i] . same_ct ++;
+          return;
+         }
+
+   p . from = from;
+   p . to = to;
+   p . same_ct = 1;
+   p . opposite_ct = 0;
+   p . weight = 0;
+
+   v . push_back (p);
+
+   return;
+  }
+
+
+
+bool  Is_Distinguishing
+    (unsigned char ct [5], char & ch1, int & ch1_ct,
+     char & ch2, int & ch2_ct)
+
+//  Check if values in  ct  indicate a polymorphism.  If so set
+//   ch1  and  ch2  to the most frequenct characters and
+//   ch1_ct  and  ch2_ct  to the number of occurrences of each.
+
+  {
+   int  sub1, sub2;
+   int  i;
+
+   ch1_ct = ct [0];
+   sub1 = 0;
+   ch2_ct = 0;
+
+   for  (i = 1;  i < 5;  i ++)
+     if  (ch2_ct < ct [i])
+         {
+          if  (ch1_ct < ct [i])
+              {
+               ch2_ct = ch1_ct;
+               sub2 = sub1;
+               ch1_ct = ct [i];
+               sub1 = i;
+              }
+            else
+              {
+               ch2_ct = ct [i];
+               sub2 = i;
+              }
+         }
+
+   // Simple version that makes a column distinguishing if it has
+   // >= 3 occurrences of 3 or more characters
+   // Should probably make alternative version that uses quality values
+   if  (ch1_ct >= 3 && ch2_ct >= 3)
+       {
+        ch1 = Sub_To_DNA_Char (sub1);
+        ch2 = Sub_To_DNA_Char (sub2);
+        return  true;
+       }
+
+   return  false;
+  }
+
+
+
+int  Match_Count
+    (const vector <int> & a, const vector <int> & b)
+
+//  Return the number of entries in  a  that are also in  b
+//  Assume each list is in ascending sorted order without
+//  duplicates.
+
+  {
+   int  i, j, m, n, ct;
+
+   m = a . size ();
+   n = b . size ();
+
+   i = j = ct = 0;
+   while  (i < m && j < n)
+     {
+      if  (a [i] < b [j])
+          i ++;
+      else if  (b [j] < a [i])
+          j ++;
+        else
+          {
+           ct ++;
+           i ++;
+           j ++;
+          }
+     }
+
+   return  ct;
+  }
+
+
+
+void  Multi_Align
+    (vector <char *> & s, vector <int> & offset, int offset_delta,
+     double error_rate, Gapped_Multi_Alignment_t & gma,
+     vector <int> * ref)
+
+//  Create multialignment in  gma  of strings  s  each of which has
+//  a nominal offset from its predecessor of  offset .   offset_delta  is
+//  the number of positions by which the offset is allowed to vary in
+//  either direction.   error_rate  is the maximum expected error rate
+//  in alignments between strings.  It should be twice the expected error
+//  rate to the real reference string to allow for independent errors
+//  in separate strings.  The value of  offset [0]  must be zero.
+//  If  ref  isn't  NULL  then make its values be the subscripts of
+//  the original locations of the entries in  s  in case they are
+//  shifted
+
+  {
+   Multi_Alignment_t  ma;
+   vector <Vote_t>  vote;
+   bool  changed;
+   int  ct, n;
+
+   n = s . size ();
+   if  (n == 0)
+       Clean_Exit ("ERROR:  Multi_Align called with no strings", __FILE__, __LINE__);
+   if  (n != int (offset . size ()))
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Multi_Align called with %d strings and %d offsets",
+            n, int (offset . size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+   if  (offset [0] != 0)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Multi_Align called with non-zero  offset [0] = %d",
+            offset [0]);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   Sort_Strings_And_Offsets (s, offset, ref);
+
+   ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote);
+
+   ct = 0;
+   do
+     {
+      ma . Reset_From_Votes (s, 5, error_rate, vote, changed);
+      ct ++;
+     }  while  (ct < 3 && changed);
+
+   if  (Verbose > 3)
+       ma . Print_Alignments_To_Consensus (stderr, s);
+
+   gma . Convert_From (ma);
+
+   gma . Sort (s, ref);
 
    return;
   }
@@ -5436,3 +5734,28 @@ void  UF_Union
 
 
 
+int  Ungapped_Positions
+    (const string & s, int lo, int hi)
+
+//  Return the number of non-'-' positions in string  s
+//  in the range  lo .. hi , which are in gapped coordinates.
+
+  {
+   int  i, n, ct;
+
+   n = s . length ();
+   if  (hi > n)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+             "ERROR:  hi = %d > s . length () = %d in Ungapped_Positions\n",
+             hi, n);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   ct = 0;
+   for  (i = lo;  i < hi;  i ++)
+     if  (s [i] != '-')
+         ct ++;
+
+   return  ct;
+  }

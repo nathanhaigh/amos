@@ -55,6 +55,15 @@ const unsigned int  FROM_TOP = 2;
 const unsigned int  FROM_NOWHERE = 3;
 
 
+// Flags for printing multialignments
+const unsigned int  PRINT_WITH_DIFFS = 1;
+  // if set true then print ^'s under consensus where not unanimous
+const unsigned int  PRINT_USING_STRING_SUB = 1 << 1;
+  // if set true then use string_sub value to get component string
+const unsigned int  PRINT_CONSENSUS_GAP_COORDS = 1 << 2;
+  // if set true then print consensus range values counting gap positions
+
+
 class  Align_Score_Entry_t
   {
   public:
@@ -203,6 +212,8 @@ class  Base_Alignment_t
 
    void  Dump
        (FILE * fp)  const;
+   void  Flip_AB
+       (void);
   };
 
 
@@ -232,6 +243,8 @@ class  Alignment_t  :  public Base_Alignment_t
        (FILE * fp)  const;
    void  Dump_Delta
        (FILE * fp)  const;
+   void  Flip_AB
+       (void);
    void  Incr_Votes
        (vector <Vote_t> & vote, char * a);
    void  Offset_A
@@ -247,6 +260,8 @@ class  Alignment_t  :  public Base_Alignment_t
        (vector <short> & v)  const;
    void  Set_To_Identity
        (int len);
+   void  Shift_First_Delta
+       (int offset);
   };
 
 
@@ -288,6 +303,8 @@ class  Gapped_Alignment_t  :  public Base_Alignment_t
        (const Alignment_t & ali);
    void  Print_Subalignment_Line
        (char * buff, int b1, int b2, char * s, int & a1, int & a2);
+   void  Shift_Skip
+       (int offset);
   };
 
 
@@ -340,6 +357,7 @@ class  Gapped_Multi_Alignment_t
   {
   friend  Multi_Alignment_t;
   private:
+   unsigned int  print_flags;
    string  consensus;
        // consensus of each column of the multialignment
    string  con_qual;
@@ -348,15 +366,9 @@ class  Gapped_Multi_Alignment_t
        // alignment of each string to the consensus
 
   public:
-// Temporary
-void  Check  (void)
-  {
-   int  i;
-
-   for  (i = 0;  i < 20;  i ++)
-     putchar (consensus [i]);
-   putchar ('\n');
-  }
+   Gapped_Multi_Alignment_t
+       ()  // default constructor
+     { print_flags = 0; }
 
    int  getConsensusLen
        (void)  const
@@ -374,9 +386,16 @@ void  Check  (void)
    void  setConsensusString
        (const string & s)
      { consensus = s; }
+   void  setPrintFlag
+       (unsigned int  f)
+     { print_flags |= f; }
    void  setQualityString
        (const string & q)
      { con_qual = q; }
+   void  unsetPrintFlag
+       (unsigned int  f)
+     { print_flags &= (~ f); }
+   
 
    void  Add_Aligned_Seqs
        (const Gapped_Multi_Alignment_t & m, const Alignment_t & ali,
@@ -385,6 +404,9 @@ void  Check  (void)
         vector <char *> * tg1 = NULL, vector <char *> * tg2 = NULL);
    void  Clear
        (void);
+   void  Clear_All_Print_Flags
+       (void)
+     { print_flags = 0; }
    void  Convert_Consensus
        (const Multi_Alignment_t & ma, const vector <short> & v);
    void  Convert_From
@@ -400,6 +422,11 @@ void  Check  (void)
        (int lo, int hi, string & s, int & gapped_lo, int & gapped_hi)  const;
    void  Extract_IMP_Dels
        (vector < vector <int> > & del_list);
+   void  Full_Merge_Left
+       (const Gapped_Multi_Alignment_t & m, int adj_a_lo, int a_lo, int a_hi,
+        int b_lo, int b_hi, int & prefix_len_added, vector <char *> & sl1,
+        const vector <char *> & sl2, vector <int> & sl2_place,
+        vector <char *> * tg1, vector <char *> * tg2);
    void  Full_Merge_Right
        (const Gapped_Multi_Alignment_t & m, int a_lo,
         int b_lo, vector <char *> & sl1,
@@ -434,8 +461,7 @@ void  Check  (void)
         const vector <char *> & sl2, vector <int> & sl2_place,
         vector <char *> * tg1 = NULL, vector <char *> * tg2 = NULL);
    void  Print
-       (FILE * fp, const vector <char *> & s, bool use_string_sub = false,
-        bool with_diffs = false, int width = DEFAULT_FASTA_WIDTH,
+       (FILE * fp, const vector <char *> & s, int width = DEFAULT_FASTA_WIDTH,
         vector <char *> * tag = NULL);
    void  Print_Consensus
        (char * buff, int b1, int b2);
@@ -449,6 +475,8 @@ void  Check  (void)
        (vector <Distinguishing_Column_t> & dc);
    void  Set_String_Subs
        (void);
+   void  Shift_B_Right
+       (int offset);
    void  Show_Skips
        (FILE * fp);
    void  Sort
@@ -485,6 +513,8 @@ int  DNA_Char_To_Sub
     (char ch);
 int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len);
+int  Gapped_Equivalent
+    (int pos, const string & s);
 void  Global_Align
     (const char * s, int s_len, const char * t, int t_lo, int t_hi,
      int match_score, int mismatch_score, int indel_score,
@@ -547,6 +577,8 @@ int  UF_Find_With_Parity
     (int i, vector <int> & uf, int & parity);
 void  UF_Union
     (int i, int j, vector <int> & uf);
+int  Ungapped_Positions
+    (const string & s, int lo, int hi);
 
 
 #endif

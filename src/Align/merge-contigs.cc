@@ -22,6 +22,9 @@
 using namespace std;
 
 
+const int  END_FUDGE_BASES = 5;
+  // If match is within this many bases of the end, regard it as
+  // matching to the end
 const int  MAX_LINE = 1000;
 const int  NEW_SIZE = 1000;
 
@@ -156,10 +159,11 @@ int  main
    vector <Contig_Map_Entry_t>  contig_map;
    Contig_Map_Entry_t  map_entry;
    Coord_Line_t  c;
-   string  left_string, right_string, ref_string;
-   int  acc, len, left_offset, right_tail;
-   bool  result, same_ref, same_query, q_flipped, full_merge = false;
-   bool  first = true;
+   string  ref_string;
+   int  acc, len, prefix_len_added, right_tail;
+   bool  result, same_ref, same_query, q_flipped;
+   bool  full_merge_left = false, full_merge_right = false;
+   bool  first = true, skip_left_variant;
    time_t  now;
    char  buff [MAX_LINE];
    int  orig_ref_tag_ct;
@@ -171,7 +175,7 @@ int  main
    now = time (NULL);
    cerr << "Starting at " << ctime (& now) << endl;
 
-   Verbose = 1;
+   Verbose = 0;
 
    Parse_Command_Line (argc, argv);
 
@@ -199,19 +203,23 @@ int  main
    sprintf (buff, "%s.vary", Output_Prefix . c_str ());
    vary_fp = File_Open (buff, "w");
 
+   ref_gma . setPrintFlag (PRINT_WITH_DIFFS);
+   ref_gma . setPrintFlag (PRINT_USING_STRING_SUB);
+   gma2 . setPrintFlag (PRINT_WITH_DIFFS);
+   gma2 . setPrintFlag (PRINT_USING_STRING_SUB);
+
    while  (fscanf (coords_fp, "%d %d %d %d %d %d %lf %d %d %lf %lf %d %d",
         & c . r_lo, & c . r_hi, & c . q_start, & c . q_end,
         & c . r_match_len, & c . q_match_len, & c . percent_id,
         & c . r_len, & c . q_len, & c . r_percent_matched,
         & c . q_percent_matched, & c . r_id, & c . q_id) == 13)
      {
-
       match_ct ++;
 
       same_ref = (c . r_id == prev_ref_id);
       same_query = (same_ref && c . q_id == prev_q_id);
 
-      if  (! first && ! same_query && ! full_merge
+      if  (! first && ! same_query && ! full_merge_right
               && right_string_id != prev_q_id && q_hi < prev_q_len)
           {  // need to output variant to end of query string
            Output_Variant (vary_fp, prev_ref_id, prev_q_id, q_flipped,
@@ -227,25 +235,23 @@ int  main
                 if  (Output_Multialignment)
                     {
                      fprintf (mali_fp, "\nContig %d:\n\n", prev_ref_id);
-                     ref_gma . Print (mali_fp, ref_sl, true, true, 60, & ref_tag);
-//                     ref_gma . Print (mali_fp, ref_sl, true, true, 60);
+                     ref_gma . Print (mali_fp, ref_sl, 60, & ref_tag);
+//                     ref_gma . Print (mali_fp, ref_sl, 60);
                     }
                 ref_gma . Get_Ungapped_Consensus (ref_string);
-                len = left_string . length () + ref_string . length ()
-                        + right_string . length ();
-                left_offset = left_string . length ();
+                len = ref_string . length ();
                 ref_gma . Output_Read_Positions (rpos_fp,
-                     prev_ref_id, ref_tag, orig_ref_tag_ct, len, left_offset);
-                left_string . append (ref_string);
-                left_string . append (right_string);
+                     prev_ref_id, ref_tag, orig_ref_tag_ct, len, 0);
                 sprintf (buff, "%d merged  len=%d  reads=%d",
                      prev_ref_id, len, int (ref_sl . size ()));
-                Fasta_Print (ref_fp, left_string . c_str (), buff);
+                Fasta_Print (ref_fp, ref_string . c_str (), buff);
                 printf ("\nFinished merge for ref %d\n", prev_ref_id);
                }
            contig_map . clear ();
            ref_gma . Clear ();
            gma2 . Clear ();
+           prefix_len_added = 0;
+           full_merge_left = full_merge_right = false;
 
            // Read next cco message and convert to gma
            result = msg . read (cco_fp);
@@ -280,14 +286,12 @@ int  main
            contig_map . push_back (map_entry);
 
            ref_string . erase ();
-           left_string . erase ();
-           right_string . erase ();
            right_string_id = -1;
 
            if  (Verbose > 2)
                {
                 printf ("\nRef Contig %d\n", c . r_id);
-                ref_gma . Print (stdout, ref_sl, true, true, 60, & ref_tag);
+                ref_gma . Print (stdout, ref_sl, 60, & ref_tag);
                }
            printf ("\nStart merge for ref %d\n", c . r_id);
           }
@@ -326,13 +330,18 @@ int  main
            if  (Verbose > 2)
                {
                 printf ("\nQuery Contig %d\n", c . q_id);
-                gma2 . Print (stdout, sl2, false, true, 60, & tg2);
+                gma2 . Print (stdout, sl2, 60, & tg2);
                }
            printf ("\nStart merge for query %d\n", c . q_id);
           }
            
       prev_ref_id = c . r_id;
       prev_q_id = c . q_id;
+
+      // adjust if previously added a prefix to this reference string
+      right_tail = c . r_len - c . r_hi;
+      c . r_lo += prefix_len_added;
+      c . r_hi += prefix_len_added;
 
       // do overlaps
       if  (c . q_start < c . q_end)
@@ -350,34 +359,40 @@ int  main
            q_flipped = true;
           }
 
-      full_merge = false;
-      if  (c . r_lo == 1 && 0 < q_lo 
-             && left_string . length () == 0)
+      skip_left_variant = false;
+      if  (! full_merge_left && c . r_lo <= 1 + END_FUDGE_BASES
+               && 0 <= q_lo - c . r_lo)
           {
-           // should be Full_Merge_Left but for now we'll just
-           // extract the appropriate piece of the query sequence so
-           // we can prepend it to the output
+           int  adjusted_q_lo;
+             // low bound on where match is allowed to start
 
-           gma2 . Get_Partial_Ungapped_Consensus (left_string, 0, q_lo);
-           prev_ref_end = c . r_hi;  // prevents outputting variant
-           prev_q_hi = q_hi;
+           adjusted_q_lo = Max (0, 1 + q_lo - c . r_lo - END_FUDGE_BASES);
+           
+           ref_gma . Full_Merge_Left (gma2, adjusted_q_lo, q_lo, q_hi,
+                c . r_lo - 1, c . r_hi, prefix_len_added, ref_sl, sl2, sl2_place,
+                & ref_tag, & tg2);
+
+           c . r_lo += prefix_len_added;
+           c . r_hi += prefix_len_added;
+           full_merge_left = skip_left_variant = true;
           }
-      right_tail = c . r_len - c . r_hi;
-      if  (right_tail <= 3 && right_tail < c . q_len - q_hi
-             && right_string . length () == 0)
+      else if  (! full_merge_right && right_tail <= END_FUDGE_BASES
+                    && right_tail < c . q_len - q_hi)
           {
            ref_gma . Full_Merge_Right (gma2, q_lo, c . r_lo - 1,
                 ref_sl, sl2, sl2_place, & ref_tag, & tg2);
-//**ALD           gma2 . Get_Partial_Ungapped_Consensus (right_string, q_hi, c . q_len);
-//**ALD           right_string_id = prev_q_id;
-           full_merge = true;
+
+           right_string_id = c . q_id;
+           full_merge_right = true;
+          }
+        else
+          {
+           ref_gma . Partial_Merge (gma2, q_lo, q_hi, c . r_lo - 1,
+                c . r_hi, ref_sl, sl2, sl2_place, & ref_tag, & tg2);
           }
 
-      if  (! full_merge)
-          ref_gma . Partial_Merge (gma2, q_lo, q_hi, c . r_lo - 1,
-               c . r_hi, ref_sl, sl2, sl2_place, & ref_tag, & tg2);
-
-      if  (0 < q_lo && (prev_ref_end < c . r_lo || prev_q_hi < q_lo))
+      if  (! skip_left_variant && 0 < q_lo
+              && (prev_ref_end < c . r_lo || prev_q_hi < q_lo))
           Output_Variant (vary_fp, prev_ref_id, prev_q_id, q_flipped,
                prev_ref_end, c . r_lo - 1, prev_q_hi, q_lo, gma2);
 
@@ -389,7 +404,7 @@ int  main
       if  (Verbose > 2)
           {
            printf ("\nRef after first merge\n");
-           ref_gma . Print (stdout, ref_sl, true, true, 60, & ref_tag);
+           ref_gma . Print (stdout, ref_sl, 60, & ref_tag);
           }
 
       // push appropriate entries onto  contig_map;
@@ -398,7 +413,7 @@ int  main
    // handle any leftover matches at end of file
    if  (! first)
        {
-        if  (right_string_id != prev_q_id && ! full_merge
+        if  (right_string_id != prev_q_id && ! full_merge_right
                 && q_hi < prev_q_len)
             {  // need to output variant to end of query string
              Output_Variant (vary_fp, prev_ref_id, prev_q_id, q_flipped,
@@ -409,20 +424,16 @@ int  main
         if  (Output_Multialignment)
             {
              fprintf (mali_fp, "\nContig %d:\n\n", prev_ref_id);
-             ref_gma . Print (mali_fp, ref_sl, true, true, 60, & ref_tag);
+             ref_gma . Print (mali_fp, ref_sl, 60, & ref_tag);
 //             ref_gma . Print (mali_fp, true, false, true, 60);
             }
         ref_gma . Get_Ungapped_Consensus (ref_string);
-        len = left_string . length () + ref_string . length ()
-                + right_string . length ();
-        left_offset = left_string . length ();
+        len = ref_string . length ();
         ref_gma . Output_Read_Positions (rpos_fp,
-             prev_ref_id, ref_tag, orig_ref_tag_ct, len, left_offset);
-        left_string . append (ref_string);
-        left_string . append (right_string);
+             prev_ref_id, ref_tag, orig_ref_tag_ct, len, 0);
         sprintf (buff, "%d merged  len=%d  reads=%d",
              prev_ref_id, len, int (ref_sl . size ()));
-        Fasta_Print (ref_fp, left_string . c_str (), buff);
+        Fasta_Print (ref_fp, ref_string . c_str (), buff);
         printf ("\nFinished merge for ref %d\n", prev_ref_id);
        }
 
