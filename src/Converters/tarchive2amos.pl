@@ -106,8 +106,14 @@ if (!defined $xml) {
 my %clones;
 my %seqs;
 my %lib ;
+my %doneins;
 
-my $fragname = "$outprefix.afg";
+my $fragname;
+if ($outprefix =~ /\.afg$/){
+    $fragname = $outprefix;
+} else {
+    $fragname = "$outprefix.afg";
+}
 
 # get the clear ranges if externally determined
 if (defined $clears){
@@ -517,6 +523,19 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    }
 	}
 
+	if (exists $seq2ins{$fid} &&
+	    exists $ins2id{$seq2ins{$fid}} &&
+	    ! exists $doneins{$ins2id{$seq2ins{$fid}}}){
+	    print FRAG "{FRG\n";
+	    print FRAG "act:A\n";              # ADD
+	    print FRAG "iid:$ins2id{$seq2ins{$fid}}\n";     
+	    print FRAG "eid:$seq2ins{$fid}\n";           # external fragment id
+	    print FRAG "lib:$lib2id{$ins2lib{$seq2ins{$fid}}}\n";  
+	    print FRAG "typ:I\n";              # INSERT
+	    print FRAG "}\n";	    
+	    $doneins{$ins2id{$seq2ins{$fid}}} = 1;
+	}
+
 	print FRAG "{RED\n";                # read
 	print FRAG "act:A\n";               # ADD
 	print FRAG "iid:$recId\n";          
@@ -536,7 +555,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    $seq_rend = $seqlen;
 	}
 	print FRAG ".\n";
-	if ($ins2id{$seq2ins{$fid}} != 0){
+	if (exists $ins2id{$seq2ins{$fid}}){
 	    print FRAG "frg:$ins2id{$seq2ins{$fid}}\n";
 	}
 	print FRAG "clr:$seq_lend,$seq_rend\n";
@@ -554,18 +573,6 @@ if (! defined $silent){
     print STDERR "doing mates\n";
 }
 
-# and the fragment information
-while (my ($frg, $lib) = each %ins2lib){
-    my $insid = $ins2id{$frg};
-
-    print FRAG "{FRG\n";
-    print FRAG "act:A\n";              # ADD
-    print FRAG "iid:$insid\n";     
-    print FRAG "eid:$frg\n";           # external fragment id
-    print FRAG "lib:$lib2id{$lib}\n";  
-    print FRAG "typ:I\n";              # INSERT
-    print FRAG "}\n";
-}
 
 while (my ($ins, $lib) = each %ins2lib){
     if (exists $end5{$ins} && exists $end3{$ins}){
