@@ -8,8 +8,8 @@ use TIGR::Foundation;
 use XML::Parser;
 use IO::Handle;
 
-my $MINSEQ = 100;
-my $MAXSEQ = 2048;
+my $MINSEQ = 0;
+my $MAXSEQ = undef;
 my $DEFAULT_QUAL = 20;
 
 my $tag; # XML tag
@@ -67,7 +67,7 @@ Options
     -i <id> - start numbering messages with id <id> (useful when appending
 to a bank)
     -min <minlen> - reads shorter than <minlen> are rejected (default $MINSEQ)
-    -max <maxlen> - reads longer than <maxlen> are rejected (default $MAXSEQ)
+    -max <maxlen> - reads longer than <maxlen> are rejected (default no limit)
     -qual <qval> - default quality value assigned when no quality file is 
 provided (default $DEFAULT_QUAL)
 ~;
@@ -486,11 +486,11 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	
 	($seq_lend, $seq_rend) = split(',', $clr{$fid});
 	
-	if ($seqlen > $MAXSEQ){
+	if (defined $MAXSEQ && $seqlen > $MAXSEQ){
 	    $frec = substr($frec, 0, $seq_rend + 1);
 	    $caqual = substr($caqual, 0, $seq_rend + 1);
 	    $seqlen = length($frec);
-	    if ($seqlen > $MAXSEQ){
+	    if (defined $MAXSEQ && $seqlen > $MAXSEQ){
 		if (! defined $silent){
 		    $base->logError("skipping sequence $fidname due to length $seqlen\n");
 		}
