@@ -323,6 +323,6 @@ sub checkFiles
 	}
     }
     if ($errors != 0){
-	$base->bail("Could not find some of the files specified in INPUTS\n");
+	$base->bail("Could not find some of the files specified in INPUTS - check .error file\n");
     }
 }
