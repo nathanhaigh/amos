@@ -33,7 +33,7 @@ const int  NEW_SIZE = 1000;
 
 
 enum  Input_Format_t
-     {PARTIAL_READ_INPUT, SIMPLE_CONTIG_INPUT, CELERA_MSG_INPUT};
+     {PARTIAL_READ_INPUT, SIMPLE_CONTIG_INPUT, CELERA_MSG_INPUT, BANK_INPUT};
 enum  Output_Format_t
      {MULTI_ALIGN_OUTPUT, ONLY_FASTA_OUTPUT, CELERA_MSG_OUTPUT,
       TIGR_CONTIG_OUTPUT, AMOS_OUTPUT, BANK_OUTPUT};
@@ -74,6 +74,10 @@ static void  Get_Strings_And_Offsets
      vector <char * > & tag_list, vector <int> & offset, vector <int> & fid,
      vector <Ordered_Range_t> & pos, vector <Ordered_Range_t> & seg,
      Bank_t & read_bank);
+static void  Get_Strings_And_Offsets
+    (vector <char *> & s, vector <char *> & q, vector <Range_t> & clr_list,
+     vector <char * > & tag_list, vector <int> & offset, Layout_t & layout, 
+     vector <int> & fid, vector <Ordered_Range_t> & pos, Bank_t & read_bank);
 static void  Output_Unit
     (const string & label, const string & id, int num_reads,
      Gapped_Multi_Alignment_t & gma, Celera_Message_t & msg,
@@ -95,7 +99,8 @@ int  main
 
   {
    Bank_t  read_bank (Read_t::NCODE);
-   BankStream_t  contig_bank (Contig_t::NCODE);
+   BankStream_t contig_bank (Contig_t::NCODE);
+   BankStream_t layout_bank (Layout_t::NCODE);
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * input_fp;
@@ -199,7 +204,60 @@ int  main
                cerr << unitig_ct << " IUM messages processed" << endl;
            if  (Do_Contig_Messages)
                cerr << contig_ct << " ICM messages processed" << endl;
-          }
+          } // celera input
+      else  if  (Input_Format == BANK_INPUT)
+          {
+	   ID_t layout_id = 1;  // we'll have to number the contigs ourselves
+	   Layout_t layout; 
+           vector <Ordered_Range_t>  pos_list;
+           vector <int>  frg_id_list;
+
+           read_bank . open (Bank_Name);
+	   layout_bank . open (Bank_Name);
+
+           while  (layout_bank >> layout)
+             {
+	       cid = layout_id++;
+
+	       Get_Strings_And_Offsets
+		 (string_list, qual_list, clr_list, tag_list, offset,
+		  layout, frg_id_list, pos_list, read_bank);
+
+	       msg . setAccession(cid);
+	       msg . setIMPs(frg_id_list, pos_list);
+
+	       try
+		 {
+		   Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
+				Error_Rate, Min_Overlap, gma, & ref, & tag_list);
+		 }
+	       catch (AlignmentException_t)
+		 {
+		   cerr << "Failed on " << cid << "\'th layout/contig" <<  endl;
+		   throw;
+		 }
+
+	       Permute (qual_list, ref);
+	       Permute (clr_list, ref);
+	       Permute (frg_id_list, ref);
+	       
+	       gma . Set_Flipped (clr_list);
+	       gma . Get_Positions (pos);
+	       gma . Extract_IMP_Dels (del_list);
+	       msg . Update_IMPs (pos, ref, del_list);
+	       
+	       /*	       gma . Set_Consensus_And_Qual (string_list, qual_list);
+	       msg . setSequence (gma .  getConsensusString ());
+	       msg . setQuality (gma . getQualityString ());
+	       msg . setUniLen (strlen (gma . getConsensuString ())); */
+
+	       Output_Unit (label, msg . getAccession (),
+			    msg . getNumFrags (), gma, msg, string_list,
+			    qual_list, clr_list, tag_list, contig_bank);
+	       
+	       contig_ct ++;
+	     }
+          } // amos bank input
       else if  (Input_Format == SIMPLE_CONTIG_INPUT
                   || Input_Format == PARTIAL_READ_INPUT)
           {
@@ -275,7 +333,7 @@ int  main
 
                    p = strtok (NULL, " \t\n");
                    cid = p;
-                  }
+                  } // if line starts with 'C'
                 else
                   {
                    Ordered_Range_t  ps;
@@ -299,7 +357,7 @@ int  main
                         seg_list . push_back (ps);
                        }
                   }
-             }
+             } // while fgets
 
            // Process the last contig here
            if  (frg_id_list . size () > 0)
@@ -350,10 +408,10 @@ int  main
                      qual_list, clr_list, tag_list, contig_bank);
 
                 contig_ct ++;
-               }
+               } // if frg_id_list.size > 0
 
            cerr << "Processed " << contig_ct << " contigs" << endl;
-          }
+          } // if PARTIAL_READ_INPUT || SIMPLE_CONTIG_INPUT
 
       fclose (input_fp);
       read_bank . close ();
@@ -642,7 +700,138 @@ static void  Get_Strings_And_Offsets
    return;
   }
 
+struct cmpTile : public binary_function<Tile_t, Tile_t, bool> {
+  bool operator () (Tile_t x, Tile_t y)
+  {
+    if (x . offset < y . offset)
+      return true;
+    if (x . offset == y . offset && x . range . getLength () < y . range . getLength ())
+	return true;
+    return false;
+  }
+};
 
+
+// MP - using layout info to populate fid & pos in addition to the other work
+// done in this function
+static void  Get_Strings_And_Offsets
+    (vector <char *> & s, vector <char *> & q, vector <Range_t> & clr_list,
+     vector <char *> & tag_list, vector <int> & offset, Layout_t & layout, 
+     vector <int> & fid, vector <Ordered_Range_t> & pos,
+     Bank_t & read_bank)
+
+//  Populate  s  and  offset  with reads and their contig positions
+//  for the contig with read-ids in  fid  and  consensus positions
+//  in  pos .  Put the corresponding quality-value strings for the reads
+//  into  q .  Put the clear-ranges for the strings in  clr_list  with
+//  coordinates swapped if the string is reverse-complemented.
+//  Put the identifying tags for the reads
+//  in  tag_list .  Get reads and qualities from  read_bank.
+//   read_bank  must already be opened.  If  seg  is not empty, used
+//  the values in it to determine what segment of each read to use.
+
+  {
+   Read_t  read;
+   int  prev_offset;
+   bool  partial_reads;
+   int  i, n;
+
+   n = s . size ();
+   for  (i = 0;  i < n;  i ++)
+     free (s [i]);
+   s . clear ();
+
+   n = q . size ();
+   for  (i = 0;  i < n;  i ++)
+     free (q [i]);
+   q . clear ();
+
+   n = tag_list . size ();
+   for  (i = 0;  i < n;  i ++)
+     free (tag_list [i]);
+   tag_list . clear ();
+
+   clr_list . clear ();
+   offset . clear ();
+
+   sort(layout . getTiling () . begin (), layout . getTiling () .end (), cmpTile ());
+   
+   
+
+   prev_offset = 0;
+   //   int i = 0;
+
+   for  (vector<Tile_t>::iterator ti = layout . getTiling () . begin  ();
+	 ti != layout . getTiling () . end() ; ti++)
+     {
+      char  * tmp, tag_buff [100];
+      string  seq;
+      string  qual;
+      Range_t  clear;
+      int  this_offset;
+      int  a, b, j, len, qlen;
+
+      //      i++;
+
+      if ( ti -> range . getBegin () < ti -> range . getEnd () ){ // forward match
+	a = ti -> offset;
+	b = ti -> offset + ti -> range . getLength ();
+      } else {
+	a = ti -> offset + ti -> range . getLength ();
+	b = ti -> offset;
+      }
+	  
+      pos . push_back ( Ordered_Range_t ( a, b ) );
+      fid . push_back ( ti -> source );
+      
+      read_bank . fetch (ti -> source, read);
+
+      if ( Use_SeqNames )
+	tag_list . push_back (strdup (read . getEID() . c_str()));
+      else
+	{
+	  sprintf (tag_buff, "%u", read . getIID ());
+	  tag_list . push_back (strdup (tag_buff));
+	}      
+
+      clear = read . getClearRange ();
+      seq = read . getSeqString (clear);
+      qual = read . getQualString (clear);
+
+      if  (b < a)
+          {
+           Reverse_Complement (seq);
+           reverse (qual . begin (), qual . end ());
+           clear . swap ();
+          }
+
+      clr_list . push_back (clear);
+
+      len = seq . length ();
+      tmp = strdup (seq . c_str ());
+      for  (j = 0;  j < len;  j ++)
+        tmp [j] = tolower (tmp [j]);
+      s . push_back (tmp);
+
+      qlen = qual . length ();
+      if  (len != qlen)
+          {
+           sprintf
+               (Clean_Exit_Msg_Line,
+                "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+                    len, qlen, ti->source);
+           Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+          }
+      tmp = strdup (qual . c_str ());
+      q . push_back (tmp);
+
+      this_offset = Min (a, b);
+      offset . push_back (this_offset - prev_offset);
+      prev_offset = this_offset;
+     }
+
+   return;
+  } // Get_Strings_And_Offsets
 
 static void  Output_Unit
     (const string & label, const string & id, int num_reads,
@@ -720,7 +909,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "aABcCe:E:fho:PsSTuv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "aAbBcCe:E:fho:PsSTuv:")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -729,6 +918,10 @@ static void  Parse_Command_Line
 
         case 'A' :
 	  Output_Format = AMOS_OUTPUT;
+	  break;
+	  
+        case 'b' :
+	  Input_Format = BANK_INPUT;
 	  break;
 	  
         case 'B' :
@@ -900,6 +1093,7 @@ static void  Usage
            "Options:\n"
            "  -a       Output alignments instead of consensus messages\n"
 	   "  -A       Output an AMOS message file\n"
+	   "  -b       Input from AMOS bank\n"
 	   "  -B       Output to an AMOS bank\n"
            "  -c       Process contig messages\n"
            "  -C       Input is Celera msg format, i.e., a .cgb or .cgw file\n"
