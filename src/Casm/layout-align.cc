@@ -5,9 +5,6 @@
 //!
 //! \brief Layout the query seqs based on alignment and mate-pair info
 //!
-//! \todo link mates that span the origin when -c is on
-//! \todo circ read olaps in readheap
-//! \todo idy window diff checking?
 //! \todo see "//TODO" in code
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -61,13 +58,14 @@ const char FORWARD_CHAR  = '+';
 const char REVERSE_CHAR  = '-';
 
 const int   FUZZY        =   10;         // fuzzy equals tolerance
-const int   MININDELS    =    2;         // min coverage of indels needed
+const unsigned int MININDELS = 2;        // min coverage of indels needed
 
 struct ReadMap_t;
 struct Contig_t;
 
 struct Conflict_t
 {
+  // don't swap order, sorts depend on values
   enum
     {
       INDEL,
@@ -102,7 +100,7 @@ struct Reference_t
   ~Reference_t ( )
   {
     list<Conflict_t *>::iterator cpi;
-    for ( cpi = conflicts . begin( ); cpi != conflicts . end( ); cpi ++ )
+    for ( cpi = conflicts . begin( ); cpi != conflicts . end( ); ++ cpi )
       delete (*cpi);
   }
 };
@@ -158,10 +156,10 @@ struct ReadMap_t
   ~ReadMap_t ( )
   {
     vector<ReadAlign_t *>::iterator rapi;
-    for ( rapi = all . begin( ); rapi != all . end( ); rapi ++ )
+    for ( rapi = all . begin( ); rapi != all . end( ); ++ rapi )
       delete (*rapi);
     list<ReadAlignChain_t *>::iterator rcpi;
-    for ( rcpi = best . begin( ); rcpi != best . end( ); rcpi ++ )
+    for ( rcpi = best . begin( ); rcpi != best . end( ); ++ rcpi )
       delete (*rcpi);
   }
 };
@@ -174,7 +172,7 @@ struct Mapping_t
   ~Mapping_t ( )
   {
     vector<ReadMap_t *>::iterator rmpi;
-    for ( rmpi = reads . begin( ); rmpi != reads . end( ); rmpi ++ )
+    for ( rmpi = reads . begin( ); rmpi != reads . end( ); ++ rmpi )
       delete (*rmpi);
   }
 };
@@ -199,7 +197,7 @@ struct Contig_t
   ~Contig_t ( )
   {
     vector<Tile_t *>::iterator tpi;
-    for ( tpi = tiles . begin( ); tpi != tiles . end( ); tpi ++ )
+    for ( tpi = tiles . begin( ); tpi != tiles . end( ); ++ tpi )
       delete (*tpi);
   }
 };
@@ -211,7 +209,7 @@ struct Assembly_t
   ~Assembly_t ( )
   {
     vector<Contig_t *>::iterator cpi;
-    for ( cpi = contigs . begin( ); cpi != contigs . end( ); cpi ++ )
+    for ( cpi = contigs . begin( ); cpi != contigs . end( ); ++ cpi )
       delete (*cpi);
   }
 };
@@ -358,6 +356,7 @@ long int lmin (long int a, long int b)
 
 long int lmax (long int a, long int b)
 { return (a < b ? b : a); }
+
 
 //-------------------------------------------------------------- Assemble ----//
 //! \brief Construct the assembly
@@ -722,7 +721,7 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 
   //-- For each reference
   for ( rmi  = mapping . references . begin( );
-	rmi != mapping . references . end( ); rmi ++ )
+	rmi != mapping . references . end( ); ++ rmi )
     {
       rp = &(rmi -> second);
 
@@ -761,7 +760,7 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 	  //-- Jump to the next conflict
 	  if ( rmpi != reads . end( ) )
 	    {
-	      for ( cpi  = confs . begin( ); cpi != confs . end( ); cpi ++ )
+	      for ( cpi  = confs . begin( ); cpi != confs . end( ); ++ cpi )
 		if ( (*cpi) -> pos > (*rmpi) -> place -> beg )
 		  break;
 	    }
@@ -823,7 +822,7 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 		{
 		  if ( rmpic == reads . end( ) )
 		    rmpic = rmpi;
-		  rmpi ++;
+		  ++ rmpi;
 		}
 	    }
 
@@ -897,7 +896,7 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 	      //-- If overlapping, but not supporting, save for later
 	      else
 		{
-		  rmpic ++;
+		  ++ rmpic;
 		}
 	    }
 
@@ -936,7 +935,7 @@ void ChainAligns (Mapping_t & mapping)
 
   //-- For each read in the mapping
   for ( rmpi  = mapping . reads . begin( );
-	rmpi != mapping . reads . end( ); rmpi ++ )
+	rmpi != mapping . reads . end( ); ++ rmpi )
     {
       //-- Initialize the dynamic programming matrix
       n = (*rmpi) -> all . size( );
@@ -1022,7 +1021,7 @@ void ChainAligns (Mapping_t & mapping)
       while ( rcpi != (*rmpi) -> best . end( ) )
 	{
 	  if ( IsEqualChain (*rcpi, bestchain, *rmpi) )
-	    rcpi ++;
+	    ++ rcpi;
 	  else
 	    {
 	      delete (*rcpi);
@@ -1047,7 +1046,7 @@ void CleanContigs (Assembly_t & assembly)
   long int adj;
 
   for ( cpi  = assembly . contigs . begin( );
-	cpi != assembly . contigs . end( ); cpi ++ )
+	cpi != assembly . contigs . end( ); ++ cpi )
     {
       //-- Sort the tiled reads
       sort ((*cpi) -> tiles . begin( ), (*cpi) -> tiles . end( ), TileCmp_t( ));
@@ -1057,7 +1056,7 @@ void CleanContigs (Assembly_t & assembly)
 	{
 	  adj = (*cpi) -> tiles . front( ) -> off;
 	  for ( tpi  = (*cpi) -> tiles . begin( );
-		tpi != (*cpi) -> tiles . end( ); tpi ++ )
+		tpi != (*cpi) -> tiles . end( ); ++ tpi )
 	    (*tpi) -> off -= adj;
 	}
 
@@ -1079,7 +1078,7 @@ void FindConflicts (Mapping_t & mapping)
 
   //-- For each read
   for ( rmpi  = mapping . reads . begin( );
-	rmpi != mapping . reads . end( ); rmpi ++ )
+	rmpi != mapping . reads . end( ); ++ rmpi )
     {
       if ( (*rmpi) -> place == NULL )
 	continue;
@@ -1123,7 +1122,7 @@ void FindConflicts (Mapping_t & mapping)
   map<string, Reference_t>::iterator rmi;
   list<Conflict_t *>::iterator first, last, next, nxtf;
   for ( rmi  = mapping . references . begin( );
-	rmi != mapping . references . end( ); rmi ++ )
+	rmi != mapping . references . end( ); ++ rmi )
     {
       if ( rmi -> second . conflicts . empty( ) )
 	continue;
@@ -1222,7 +1221,7 @@ void ParseAlign (Mapping_t & mapping)
 
       //-- For all the alignments in this record
       for ( dai  = dr . getRecord( ) . aligns . begin( );
-	    dai != dr . getRecord( ) . aligns . end( ); dai ++ )
+	    dai != dr . getRecord( ) . aligns . end( ); ++ dai )
 	{
 	  currmp -> all . push_back (new ReadAlign_t ( ));
 	  currap = currmp -> all . back( );
@@ -1381,7 +1380,7 @@ void PlaceHappyMates (Mapping_t & mapping)
 
   //-- For each read in the mapping
   for ( rmpi  = mapping . reads . begin( );
-	rmpi != mapping . reads . end( ); rmpi ++ )
+	rmpi != mapping . reads . end( ); ++ rmpi )
     {
       rmp = *rmpi;
 
@@ -1395,7 +1394,7 @@ void PlaceHappyMates (Mapping_t & mapping)
       //-- Find all the happy placements
       places . clear( );
       for ( mrcpi  = mrmp -> best . begin( );
-	    mrcpi != mrmp -> best . end( ); mrcpi ++ )
+	    mrcpi != mrmp -> best . end( ); ++ mrcpi )
 	{
 	  //-- If mate not placed, search through all its best
 	  if ( mrmp -> place == NULL )
@@ -1408,10 +1407,11 @@ void PlaceHappyMates (Mapping_t & mapping)
 	    }
 
 	  for ( rcpi  = rmp -> best . begin( );
-		rcpi != rmp -> best . end( ); rcpi ++ )	    
+		rcpi != rmp -> best . end( ); ++ rcpi )	    
 	    {
 	      rcp = *rcpi;
 
+	      //TODO - allow circular
 	      //-- Skip if constraints are not satisfied
 	      if ( rcp -> head -> ref != mrcp -> head -> ref )
 		continue;
@@ -1466,7 +1466,7 @@ void PlaceRandom (Mapping_t & mapping)
 
   //-- For each read in the mapping
   for ( rmpi  = mapping . reads . begin( );
-	rmpi != mapping . reads . end( ); rmpi ++ )
+	rmpi != mapping . reads . end( ); ++ rmpi )
     {
       rmp = *rmpi;
 
@@ -1477,7 +1477,7 @@ void PlaceRandom (Mapping_t & mapping)
       //-- Get all of the valid chains
       places . clear( );
       for ( rcpi  = rmp -> best . begin( );
-	    rcpi != rmp -> best . end( ); rcpi ++ )
+	    rcpi != rmp -> best . end( ); ++ rcpi )
 	if ( IsValidChain (*rcpi, rmp) )
 	  places . push_back (*rcpi);
 
@@ -1499,7 +1499,7 @@ void PlaceUnambiguous (Mapping_t & mapping)
 
   //-- For each read in the mapping
   for ( rmpi  = mapping . reads . begin( );
-	rmpi != mapping . reads . end( ); rmpi ++ )
+	rmpi != mapping . reads . end( ); ++ rmpi )
     {
       rmp = *rmpi;
 
@@ -1523,11 +1523,11 @@ void PrintConflicts (const Mapping_t & mapping)
   map<string, Reference_t>::const_iterator rmi;
 
   for ( rmi  = mapping . references . begin( );
-	rmi != mapping . references . end( ); rmi ++ )
+	rmi != mapping . references . end( ); ++ rmi )
     {
       cout << '>' << rmi -> first << endl;
       for ( cpi  = rmi -> second . conflicts . begin( );
-	    cpi != rmi -> second . conflicts . end( ); cpi ++ )
+	    cpi != rmi -> second . conflicts . end( ); ++ cpi )
 	{
 	  if ( (*cpi) -> status == Conflict_t::SUPPORTED )
 	    cout << "+  ";
@@ -1542,18 +1542,18 @@ void PrintConflicts (const Mapping_t & mapping)
 	       << "\tN." << (*cpi) -> discount . size( )
 	       << "\tY." << (*cpi) -> support . size( ) << "\t" << endl;
 
-	  /*
+	  //
 	  vector<ReadMap_t *>::const_iterator rmpi;
 	  cout << "S: ";
 	  for (rmpi  = (*cpi) -> support . begin( );
-	       rmpi != (*cpi) -> support . end( ); rmpi ++ )
+	       rmpi != (*cpi) -> support . end( ); ++ rmpi )
 	    cout << ((*rmpi) -> exclude ? '-' : '+') << (*rmpi) -> id << ' ';
 	  cout << "\nD: ";
 	  for (rmpi  = (*cpi) -> discount . begin( );
-	       rmpi != (*cpi) -> discount . end( ); rmpi ++ )
+	       rmpi != (*cpi) -> discount . end( ); ++ rmpi )
 	    cout << ((*rmpi) -> exclude ? '-' : '+') << (*rmpi) -> id << ' ';
 	  cout << endl << endl;
-	  */
+	  //
 	}
     }
 }
@@ -1571,6 +1571,9 @@ void PrintMapping (Mapping_t & mapping)
   map<string, Reference_t>::iterator rmi;
   vector<ReadMap_t *>::iterator rmpi;
 
+  ReadAlign_t * curraln;
+  list<ReadAlignChain_t *>::iterator racpi;
+
   pair<
     vector<ReadMap_t *>::iterator,
     vector<ReadMap_t *>::iterator
@@ -1579,7 +1582,7 @@ void PrintMapping (Mapping_t & mapping)
 
   //-- For each reference
   for ( rmi  = mapping . references . begin( );
-	rmi != mapping . references . end( ); rmi ++ )
+	rmi != mapping . references . end( ); ++ rmi )
     {
       //-- Find the reference range
       temprm . place -> head -> ref = &(rmi -> second);
@@ -1591,7 +1594,7 @@ void PrintMapping (Mapping_t & mapping)
 	   << endl;
 
       //-- For each read mapping to this reference
-      for ( rmpi = rmpip . first; rmpi != rmpip . second; rmpi ++ )
+      for ( rmpi = rmpip . first; rmpi != rmpip . second; ++ rmpi )
 	{
 	  cout << (*rmpi) -> id << '\t'
 	       << (*rmpi) -> place -> beg << '\t'
@@ -1601,6 +1604,15 @@ void PrintMapping (Mapping_t & mapping)
 	  else
 	    cout << '\t' << (*rmpi) -> mate . read -> id;
 	  cout << endl;
+
+	  for ( racpi  = (*rmpi) -> best . begin( );
+		racpi != (*rmpi) -> best . end( ); racpi ++ )
+	    {
+	      cout << "#\n";
+	      for ( curraln  = (*racpi) -> head;
+		    curraln != NULL; curraln = curraln -> from )
+		cout << ' ' << curraln -> loR << '\t' << curraln -> hiR << endl;
+	    }
 	}
     }
 
@@ -1620,7 +1632,7 @@ void PrintTigr (const Assembly_t & assembly)
 
   ctgs = 0;
   for ( cpi = assembly . contigs . begin( );
-	cpi != assembly . contigs . end( ); cpi ++ )
+	cpi != assembly . contigs . end( ); ++ cpi )
     {
       if ( (*cpi) -> tiles . size( ) <= 1 )
 	{
@@ -1636,7 +1648,7 @@ void PrintTigr (const Assembly_t & assembly)
 	<< endl;
 
       for ( tpi = (*cpi) -> tiles . begin( );
-	    tpi != (*cpi) -> tiles . end( ); tpi ++ )
+	    tpi != (*cpi) -> tiles . end( ); ++ tpi )
 	{
 	  len = labs ((*tpi) -> end - (*tpi) -> beg) + 1;
 
@@ -1664,7 +1676,7 @@ void PrintUMD (const Assembly_t & assembly)
 
   ctgs = 0;
   for ( cpi = assembly . contigs . begin( );
-	cpi != assembly . contigs . end( ); cpi ++ )
+	cpi != assembly . contigs . end( ); ++ cpi )
     {
       if ( (*cpi) -> tiles . size( ) <= 1 )
 	{
@@ -1681,7 +1693,7 @@ void PrintUMD (const Assembly_t & assembly)
 	+ (*cpi) -> len - 1 << endl;
 
       for ( tpi  = (*cpi) -> tiles . begin( );
-	    tpi != (*cpi) -> tiles . end( ); tpi ++ )
+	    tpi != (*cpi) -> tiles . end( ); ++ tpi )
 	{
 	  cout
 	    << (*tpi) -> read -> id << ' '
@@ -1715,7 +1727,7 @@ void RefineConflicts (Mapping_t & mapping)
 
   list<Conflict_t *>::iterator cpi, locpi, hicpi, bcpi, ecpi;
   map<string, Reference_t>::iterator rmi;
-  vector<ReadMap_t *>::iterator rmpi, rmpie, ri;
+  vector<ReadMap_t *>::iterator rmpi, rmpie, ri, rj;
   pair<
     vector<ReadMap_t *>::iterator,
     vector<ReadMap_t *>::iterator
@@ -1728,7 +1740,7 @@ void RefineConflicts (Mapping_t & mapping)
 
   //-- For each reference and its conflicts
   for ( rmi  = mapping . references . begin( );
-	rmi != mapping . references . end( ); rmi ++ )
+	rmi != mapping . references . end( ); ++ rmi )
     {
       rp = &(rmi -> second);
       bcpi = rp -> conflicts . begin( );
@@ -1743,38 +1755,48 @@ void RefineConflicts (Mapping_t & mapping)
 
 
       //-- For each *BREAK*, collect nay counts
-      for ( cpi = bcpi; cpi != ecpi; cpi ++ )
+      for ( cpi = bcpi; cpi != ecpi; ++ cpi )
 	{
 	  if ( (*cpi) -> type == Conflict_t::INDEL )
 	    continue;
 
 	  cpos = (*cpi) -> pos;
 
+	  //TODO - allow circular
 	  //-- Update the heap to current conflict pos
 	  while ( !heap . empty( )  &&  heap . front( ) -> place -> end < cpos )
 	    PopHeap (heap);
 
 	  //-- Load up the heap with reads that overlap the conflict
-	  for ( ; rmpi != rmpie  &&  (*rmpi) -> place -> beg <= cpos; rmpi ++ )
+	  for ( ; rmpi != rmpie  &&  (*rmpi) -> place -> beg <= cpos; ++ rmpi )
 	    if ( (*rmpi) -> place -> end >= cpos )
 	      PushHeap (heap, *rmpi);
 
-	  //-- Collect the nay counts, i.e. reads that do not agree on break
-	  for ( ri = heap . begin( ); ri != heap . end( ); ri ++ )
-	    for ( rap = (*ri) -> place -> head; rap != NULL; rap = rap->from )
-	      if ( rap -> loR < cpos - FUZZY  &&  rap -> hiR > cpos + FUZZY )
-		{
-		  (*cpi) -> discount . push_back (*ri);
-		  break;
-		}
-
-	  //-- Sort and unique-ify the support vectors
+	  //-- Sort and unique-ify the support vector
 	  sort ((*cpi) -> support . begin( ), (*cpi) -> support . end( ));
-	  ri = unique ((*cpi)->support . begin( ), (*cpi)-> support . end( ));
+	  ri = unique ((*cpi)->support . begin( ), (*cpi)->support . end( ));
 	  if ( ri != (*cpi) -> support . end( ) )
 	    (*cpi) -> support . erase (ri, (*cpi) -> support . end( ));
+
+	  //-- Collect the nay counts, i.e. reads that do not agree on break
+	  for ( ri = heap . begin( ); ri != heap . end( ); ++ ri )
+	    {
+	      //-- Support can't also discount
+	      if ( binary_search ((*cpi) -> support . begin( ),
+				  (*cpi) -> support . end( ), *ri) )
+		continue;
+	      
+	      for ( rap = (*ri)->place->head; rap != NULL; rap = rap->from )
+		if ( rap -> loR < cpos - FUZZY  &&  rap -> hiR > cpos + FUZZY )
+		  {
+		    (*cpi) -> discount . push_back (*ri);
+		    break;
+		  }
+	    }
+
+	  //-- Sort and unique-ify the discount vector
 	  sort ((*cpi) -> discount . begin( ), (*cpi) -> discount . end( ));
-	  ri = unique ((*cpi)->discount . begin( ), (*cpi)-> discount . end( ));
+	  ri = unique ((*cpi)->discount . begin( ), (*cpi)->discount . end( ));
 	  if ( ri != (*cpi) -> discount . end( ) )
 	    (*cpi) -> discount . erase (ri, (*cpi) -> discount .end( ));
 
@@ -1788,7 +1810,7 @@ void RefineConflicts (Mapping_t & mapping)
 
 
       //-- For each *INDEL*, sum yay/nay counts from its break counts
-      for ( cpi = bcpi; cpi != ecpi; cpi ++ )
+      for ( cpi = bcpi; cpi != ecpi; ++ cpi )
 	{
 	  if ( (*cpi) -> type != Conflict_t::INDEL )
 	    continue;
@@ -1804,7 +1826,7 @@ void RefineConflicts (Mapping_t & mapping)
 	    locpi --;
 
 	  //-- Find hang conflicts corresponding to the reference HIBREAK
-	  for ( ; hicpi != ecpi  &&  (*hicpi) -> pos - beg <= FUZZY; hicpi ++ )
+	  for ( ; hicpi != ecpi  &&  (*hicpi) -> pos - beg <= FUZZY; ++ hicpi )
 	    if ( hicpi != cpi  &&  labs (beg - (*hicpi) -> pos) <= FUZZY )
 	      {
 		breaks . push_back (*hicpi);
@@ -1812,22 +1834,28 @@ void RefineConflicts (Mapping_t & mapping)
 		if ( (*hicpi) -> type == Conflict_t::HIBREAK )
 		  {
 		    //-- Add to INDEL support if hang isn't too large
-		    if ( (*cpi)->support.size( ) >= (unsigned int)MININDELS )
+		    if ( (*cpi)->support.size( ) >= MININDELS )
 		      for ( ri  = (*hicpi) -> support . begin( );
-			    ri != (*hicpi) -> support . end( ); ri ++ )
+			    ri != (*hicpi) -> support . end( ); ++ ri )
 			if ( (*ri) -> place -> end - beg <
 			     (*cpi) -> gapQ + OPT_MaxTrimLen )
 			  (*cpi) -> support . push_back (*ri);
 
 		    //-- Add to INDEL discount
 		    for ( ri  = (*hicpi) -> discount . begin( );
-			  ri != (*hicpi) -> discount . end( ); ri ++ )
-		      (*cpi) -> discount . push_back (*ri);
+			  ri != (*hicpi) -> discount . end( ); ++ ri )
+		      {
+			//-- If gapR < 0, read must span both breaks to discount
+			if ( (*cpi) -> gapR >= 0  ||
+			     ((*ri) -> place -> tbeg < end  &&
+			      (*ri) -> place -> tend > beg) )
+			  (*cpi) -> discount . push_back (*ri);
+		      }
 		  }
 	      }
 
 	  //-- Find hang conflicts corresponding to the reference LOBREAK
-	  for ( ; locpi != ecpi  &&  (*locpi) -> pos - end <= FUZZY; locpi ++ )
+	  for ( ; locpi != ecpi  &&  (*locpi) -> pos - end <= FUZZY; ++ locpi )
 	    if ( locpi != cpi  &&  labs (end - (*locpi) -> pos) <= FUZZY )
 	      {
 		breaks . push_back (*locpi);
@@ -1835,17 +1863,23 @@ void RefineConflicts (Mapping_t & mapping)
 		if ( (*locpi) -> type == Conflict_t::LOBREAK )
 		  {
 		    //-- Add to INDEL support if hang isn't too large
-		    if ( (*cpi)->support.size( ) >= (unsigned int)MININDELS )
+		    if ( (*cpi)->support.size( ) >= MININDELS )
 		      for ( ri  = (*locpi) -> support . begin( );
-			    ri != (*locpi) -> support . end( ); ri ++ )
+			    ri != (*locpi) -> support . end( ); ++ ri )
 			if ( end - (*ri) -> place -> beg <
 			     (*cpi) -> gapQ + OPT_MaxTrimLen )
 			  (*cpi) -> support . push_back (*ri);
 		    
 		    //-- Add to INDEL discount
 		    for ( ri  = (*locpi) -> discount . begin( );
-			  ri != (*locpi) -> discount . end( ); ri ++ )
-		      (*cpi) -> discount . push_back (*ri);
+			  ri != (*locpi) -> discount . end( ); ++ ri )
+		      {
+			//-- If gapR < 0, read must span both breaks to discount
+			if ( (*cpi) -> gapR > 0  ||
+			     ((*ri) -> place -> tbeg < end  &&
+			      (*ri) -> place -> tend > beg) )
+			  (*cpi) -> discount . push_back (*ri);
+		      }
 		  }
 	      }
 
@@ -1860,14 +1894,16 @@ void RefineConflicts (Mapping_t & mapping)
 	    (*cpi) -> discount . erase (ri, (*cpi) -> discount .end( ));
 
 	  //-- Decide whether or not INDEL is real
-	  if ( (*cpi) -> support . size( ) > (*cpi) -> discount . size( ) )
+	  if ( (*cpi) -> support . size( ) >= MININDELS
+	       &&
+	       (*cpi) -> support . size( ) > (*cpi) -> discount . size( ) )
 	    (*cpi) -> status = Conflict_t::SUPPORTED;
 	  else
 	    (*cpi) -> status = Conflict_t::UNSUPPORTED;
 
 	  //-- If INDEL is real, flag its BREAKS as artificial
 	  if ( (*cpi) -> status == Conflict_t::SUPPORTED )
-	    for ( bi = breaks . begin( ); bi != breaks . end( ); bi ++ )
+	    for ( bi = breaks . begin( ); bi != breaks . end( ); ++ bi )
 	      {
 		//TODO - CHECK FOR BEST INDEL IF BREAK==INDEL
 		if ( (*bi) -> type == Conflict_t::INDEL )
@@ -1881,27 +1917,27 @@ void RefineConflicts (Mapping_t & mapping)
 
 
       //-- EXCLUDE all "inconsistent" reads
-      for ( cpi = bcpi; cpi != ecpi; cpi ++ )
+      for ( cpi = bcpi; cpi != ecpi; ++ cpi )
 	if ( (*cpi) -> status == Conflict_t::ARTIFICIAL )
 	  for ( ri  = (*cpi) -> support . begin( );
-		ri != (*cpi) -> support . end( ); ri ++ )
+		ri != (*cpi) -> support . end( ); ++ ri )
 	    (*ri) -> exclude = true;
 
-      for ( cpi = bcpi; cpi != ecpi; cpi ++ )
+      for ( cpi = bcpi; cpi != ecpi; ++ cpi )
 	if ( (*cpi) -> status == Conflict_t::SUPPORTED )
 	  {
 	    for ( ri  = (*cpi) -> discount . begin( );
-		  ri != (*cpi) -> discount . end( ); ri ++ )
+		  ri != (*cpi) -> discount . end( ); ++ ri )
 	      (*ri) -> exclude = true;
 	    for ( ri  = (*cpi) -> support . begin( );
-		  ri != (*cpi) -> support . end( ); ri ++ )
+		  ri != (*cpi) -> support . end( ); ++ ri )
 	      (*ri) -> exclude = false;
 	  }
 
-      for ( cpi = bcpi; cpi != ecpi; cpi ++ )
+      for ( cpi = bcpi; cpi != ecpi; ++ cpi )
 	if ( (*cpi) -> status == Conflict_t::UNSUPPORTED )
 	  for ( ri  = (*cpi) -> support . begin( );
-		ri != (*cpi) -> support . end( ); ri ++ )
+		ri != (*cpi) -> support . end( ); ++ ri )
 	    (*ri) -> exclude = true;
     }
 
