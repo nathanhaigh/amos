@@ -950,16 +950,16 @@ void Bank_t::touchFile (const string & path, int mode, bool create)
     {
     if ( create )
       AMOS_THROW_IO
-	("Could not create bank file, " + path + ',' + strerror (errno));
+	("Could not create bank file, " + path + ", " + strerror (errno));
     else
       AMOS_THROW_IO
-	("Could not open bank file, "   + path + ',' + strerror (errno));
+	("Could not open bank file, "   + path + ", " + strerror (errno));
     }
 
   fd = ::close (fd);
   if ( fd == -1 )
     AMOS_THROW_IO
-      ("Could not close bank file, "    + path + ',' + strerror (errno));
+      ("Could not close bank file, "    + path + ", " + strerror (errno));
 }
 
 
