@@ -597,9 +597,9 @@ static void  Output
         std :: pair <ID_t, ID_t>  read_pair;
 
         if  (olap . flipped)
-            ovl . setAdjacency (ovl . INNIE);
+            ovl . setAdjacency (Overlap_t :: INNIE);
           else
-            ovl . setAdjacency (ovl . NORMAL);
+            ovl . setAdjacency (Overlap_t :: NORMAL);
         read_pair . first = olap . a_id;
         read_pair . second = olap . b_id;
         ovl . setReads (read_pair);
