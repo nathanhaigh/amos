@@ -27,6 +27,7 @@ AM_CPPFLAGS = \
 
 ##-- bank-mapping
 bank_mapping_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
 bank_mapping_SOURCES = \
 	bank-mapping.cc
