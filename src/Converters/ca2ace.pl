@@ -359,7 +359,7 @@ while (my $record = getRecord(\*IN)){
 		    $time =~ s/TIME: //;
 		}
 		
-		if (! defined $time){
+		if (! defined $time && -e phddir){
 		    $base->logError("Cannot stat phd file \"$phdfile\"", 1);
 		    $time = localtime;
 		} 
