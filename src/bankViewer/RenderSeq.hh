@@ -19,13 +19,18 @@ public:
   void load(AMOS::Bank_t & read_bank, AMOS::Tile_t * tile);
   void loadTrace(const std::string & db);
 
-  char base(AMOS::Pos_t gindex) const;
-  int    qv(AMOS::Pos_t gindex) const;
-  int   pos(AMOS::Pos_t gindex) const;
+  char base(AMOS::Pos_t gindex, bool outsideclr = false) const;
+  int    qv(AMOS::Pos_t gindex, bool outsideclr = false) const;
+  int   pos(AMOS::Pos_t gindex, bool outsideclr = false) const;
+
+  void getBases(std::string & alignedBases, 
+                AMOS::Pos_t grangeStart, 
+                AMOS::Pos_t grangeEnd);
 
   int getGSeqPos(int gindex);
   AMOS::Pos_t getGindex(AMOS::Pos_t seqpos) const;
   AMOS::Pos_t gappedLen() const;
+  AMOS::Pos_t fullLen() const;
 
   // Tiling Specific
   int m_displaystart;
@@ -33,6 +38,10 @@ public:
 
   int m_loffset;
   int m_roffset;
+
+  // Projected left and right offsets to full range sequence
+  int m_lfoffset;
+  int m_rfoffset;
 
   AMOS::Read_t read;
   

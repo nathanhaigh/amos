@@ -32,6 +32,7 @@ public slots:
     void toggleDisplayQV(bool);
     void toggleLowQualityLowerCase(bool);
     void toggleBaseColors(bool);
+    void toggleShowFullRange(bool);
     void singleClick();
 
 signals:
@@ -63,6 +64,7 @@ private:
     bool m_highlightdiscrepancy;
     bool m_lowquallower;
     bool m_basecolors;
+    bool m_fullseq;
 
     std::vector<RenderSeq_t> & m_renderedSeqs;
 

@@ -43,7 +43,7 @@ TilingField::TilingField(DataStore * datastore,
   m_traceheight = m_tracespace - 10;
   m_displayqv = 0;
   m_lowquallower = false;
-
+  m_fullseq = false;
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),
@@ -177,6 +177,13 @@ void TilingField::paintEvent( QPaintEvent * )
                                              ri->m_loffset, ri->gappedLen(),
                                              clen);
 
+    if (m_fullseq)
+    {
+      hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+                                           ri->m_lfoffset, ri->fullLen(),
+                                           clen);
+    }
+
     if (hasOverlap || m_stabletiling)
     {
       ri->m_displaystart = ldcov;
@@ -196,6 +203,7 @@ void TilingField::paintEvent( QPaintEvent * )
   }
 
   int height = ldcov;
+  QString s;
 
   QPixmap pix(m_width, height);
   pix.fill(this, 0,0);
@@ -227,6 +235,14 @@ void TilingField::paintEvent( QPaintEvent * )
       int hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
                                                ri->m_loffset, ri->gappedLen(),
                                                clen);
+
+      if (m_fullseq)
+      {
+        hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+                                             ri->m_lfoffset, ri->fullLen(),
+                                             clen);
+      }
+
       ldcov = ri->m_displaystart;
 
       int readheight = lineheight; // seqname
@@ -264,19 +280,56 @@ void TilingField::paintEvent( QPaintEvent * )
       p.drawPolygon(rcflag);
 
       // Seqname
-      QString s = ri->m_read.getEID().c_str();
       p.drawText(seqnamehoffset, ldcov,
                  rchoffset-seqnamehoffset, lineheight,
-                 Qt::AlignLeft | Qt::AlignBottom, s);
+                 Qt::AlignLeft | Qt::AlignBottom, 
+                 QString(ri->m_read.getEID()));
 
       if (hasOverlap)
       {
-        for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
+
+        if (m_fullseq)
+        {
+          p.setPen(UIElements::color_tilingtrim);
+          p.setBrush(UIElements::color_tilingtrim);
+
+          if (grangeStart < ri->m_loffset)
+          {
+            int start = (ri->m_lfoffset - grangeStart) * basewidth;
+            if (grangeStart > ri->m_lfoffset)
+            {
+              start = 0;
+            }
+
+            p.drawRect(tilehoffset + start, ldcov + 2, 
+                       (ri->m_loffset - grangeStart) * basewidth, readheight-4);
+          }
+
+          if (grangeEnd > ri->m_roffset)
+          {
+            int start = (ri->m_roffset - grangeStart + 1) * basewidth;
+
+            if (grangeStart > ri->m_roffset)
+            {
+              start = 0;
+            }
+
+            int rightdistance = (grangeEnd - ri->m_rfoffset ) * basewidth;
+
+            p.drawRect(tilehoffset + start, ldcov + 2, 
+                       m_width - (rightdistance + tilehoffset + start),readheight - 4);
+          }
+        }
+
+
+        for (int gindex = grangeStart, alignedPos = 0;
+             gindex <= grangeEnd; 
+             gindex++, alignedPos++)
         {
           int hoffset = tilehoffset + (gindex-grangeStart)*basewidth;
 
-          int qv = ri->qv(gindex);
-          char b = ri->base(gindex);
+          int qv = ri->qv(gindex, m_fullseq);
+          char b = ri->base(gindex, m_fullseq);
 
           if (qv < 30 && m_lowquallower) { b = tolower(b); }
           else                           { b = toupper(b); }
@@ -291,15 +344,7 @@ void TilingField::paintEvent( QPaintEvent * )
           }
 
           // Bases
-          if (m_basecolors)
-          {
-            p.setPen(UIElements::getBaseColor(b));
-          }
-          else
-          {
-            p.setPen(black);
-          }
-
+          p.setPen((m_basecolors) ? UIElements::getBaseColor(b) : black);
           p.setFont(QFont("Helvetica", m_fontsize));
           p.drawText(hoffset, ldcov, 
                      m_fontsize, lineheight,
@@ -359,15 +404,24 @@ void TilingField::paintEvent( QPaintEvent * )
 
               bool first = true;
 
+              int leftboundary = ri->m_loffset;
+              int rightboundary = ri->m_roffset;
+
+              if (m_fullseq)
+              {
+                leftboundary = ri->m_lfoffset;
+                rightboundary = ri->m_rfoffset;
+              }
+
               // go beyond the range so the entire peak will be drawn
-              for (int gindex =  max(ri->m_loffset, grangeStart-1); 
-                       gindex <= min(ri->m_roffset, grangeEnd+1); 
+              for (int gindex =  max(leftboundary, grangeStart-1); 
+                       gindex <= min(rightboundary, grangeEnd+1); 
                        gindex++)
               {
                 int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
 
-                int peakposition     = ri->pos(gindex);
-                int nextpeakposition = ri->pos(gindex+1);
+                int peakposition     = ri->pos(gindex, m_fullseq);
+                int nextpeakposition = ri->pos(gindex+1, m_fullseq);
 
                 // in 1 basewidth worth of pixels, cover hdelta worth of trace
                 int    hdelta = nextpeakposition - peakposition;
@@ -419,9 +473,10 @@ void TilingField::paintEvent( QPaintEvent * )
   }
 
   p.end();
-  p.begin(this);
 
+  p.begin(this);
   p.drawPixmap(0, 0, pix);
+  p.end();
 
   if (m_width != this->width() || height != this->height())
   {
@@ -450,6 +505,12 @@ void TilingField::toggleHighlightDiscrepancy(bool show)
 void TilingField::toggleBaseColors(bool showColors)
 {
   m_basecolors = showColors;
+  repaint();
+}
+
+void TilingField::toggleShowFullRange(bool showFull)
+{
+  m_fullseq = showFull;
   repaint();
 }
 

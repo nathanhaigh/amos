@@ -41,6 +41,7 @@ public slots:
   void togglePrefetchChromatograms();
   void toggleLowQualityLowerCase();
   void toggleBaseColors();
+  void toggleShowFullRange();
 
   void fontIncrease();
   void fontDecrease();
@@ -67,6 +68,7 @@ private:
   int m_fontsize;
   int m_lowquallowerid;
   int m_basecolorid;
+  int m_showfullid;
 
   int m_gindex;
 

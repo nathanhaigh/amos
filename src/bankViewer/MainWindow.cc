@@ -48,6 +48,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
+  m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange()));
   m_posid          = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
   m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleShowQV()));
   m_lowquallowerid = m_options->insertItem("Lower Case &Low QV", this, SLOT(toggleLowQualityLowerCase()));
@@ -274,6 +275,15 @@ void MainWindow::setGindexRange(int a, int b)
 {
   m_gspin->setRange(a,b);
   m_slider->setRange(a,b);
+}
+
+void MainWindow::toggleShowFullRange()
+{
+  bool b = !m_options->isItemChecked(m_showfullid);
+  m_options->setItemChecked(m_showfullid, b);
+
+  m_tiling->toggleShowFullRange(b);
+
 }
 
 

@@ -15,9 +15,18 @@ RenderSeq_t::~RenderSeq_t()
 { }
 
 
-char RenderSeq_t::base(Pos_t gindex) const
+char RenderSeq_t::base(Pos_t gindex, bool outsideclr) const
 {
-  if (gindex < m_loffset || gindex > m_roffset)
+  int leftboundary = m_loffset;
+  int rightboundary = m_roffset;
+
+  if (outsideclr)
+  {
+    leftboundary = m_lfoffset;
+    rightboundary = m_rfoffset;
+  }
+
+  if (gindex < leftboundary || gindex > rightboundary)
   {
     return ' ';
   }
@@ -27,9 +36,54 @@ char RenderSeq_t::base(Pos_t gindex) const
   }
 }
 
-int RenderSeq_t::qv(Pos_t gindex) const
+void RenderSeq_t::getBases(string & alignedBases, Pos_t grangeStart, Pos_t grangeEnd)
 {
-  if (gindex < m_loffset || gindex > m_roffset)
+  alignedBases.clear();
+
+  int gindex;
+
+  // Initialize string with spaces
+  if (grangeStart < m_loffset)
+  {
+    for (gindex = grangeStart; 
+         gindex < m_loffset && gindex <= grangeEnd; 
+         gindex++)
+    {
+      alignedBases += ' ';
+    }
+
+    grangeStart = m_loffset;
+  }
+
+
+  // Now incorporate the bases
+  for (gindex = grangeStart; 
+       gindex <= m_roffset && gindex <= grangeEnd; 
+       gindex++)
+  {
+    alignedBases += m_bases[gindex-m_loffset + m_rangebegin];
+  }
+
+  // Trailing spaces
+  for (gindex = m_roffset+1; gindex <= grangeEnd; gindex++)
+  {
+    alignedBases += ' ';
+  }
+
+}
+
+int RenderSeq_t::qv(Pos_t gindex, bool outsideclr) const
+{
+  int leftboundary = m_loffset;
+  int rightboundary = m_roffset;
+
+  if (outsideclr)
+  {
+    leftboundary = m_lfoffset;
+    rightboundary = m_rfoffset;
+  }
+
+  if (gindex < leftboundary || gindex > rightboundary)
   {
     return -1;
   }
@@ -39,13 +93,23 @@ int RenderSeq_t::qv(Pos_t gindex) const
   }
 }
 
-int RenderSeq_t::pos(Pos_t gindex) const
+int RenderSeq_t::pos(Pos_t gindex, bool outsideclr) const
 {
-  if (gindex < m_loffset)
+  int leftboundary = m_loffset;
+  int rightboundary = m_roffset;
+
+  if (outsideclr)
+  {
+    leftboundary = m_lfoffset;
+    rightboundary = m_rfoffset;
+  }
+
+
+  if (gindex < leftboundary)
   {
     return m_pos[m_rangebegin];
   }
-  else if (gindex > m_roffset)
+  else if (gindex > rightboundary)
   {
     return m_pos[m_rangeend];
   }
@@ -124,6 +188,9 @@ void RenderSeq_t::load(Bank_t & read_bank, Tile_t * tile)
 
     m_quals.insert(gappos, 1, gapqv);
   }
+
+  m_lfoffset = m_loffset - m_rangebegin;
+  m_rfoffset = m_lfoffset + m_bases.size() - 1;
 }
 
 bool RenderSeq_t::hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
@@ -231,4 +298,9 @@ Pos_t RenderSeq_t::gappedLen() const
 {
   if (!m_tile) { cerr << "m_tile is NULL!" << endl; return -1;}
   return m_tile->range.getLength() + m_tile->gaps.size();
+}
+
+Pos_t RenderSeq_t::fullLen() const
+{
+  return m_bases.size();
 }

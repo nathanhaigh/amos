@@ -302,6 +302,11 @@ void TilingFrame::toggleBaseColors(bool showColors)
   m_consfield->toggleBaseColors(showColors);
 }
 
+void TilingFrame::toggleShowFullRange(bool showFull)
+{
+  m_tilingfield->toggleShowFullRange(showFull);
+}
+
 void TilingFrame::toggleDisplayAllChromo(bool display)
 {
   m_displayAllChromo = display;

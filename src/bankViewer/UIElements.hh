@@ -15,6 +15,7 @@ public:
 
   static QColor color_tiling;
   static QColor color_tilingoffset;
+  static QColor color_tilingtrim;
 
   static QColor color_a;
   static QColor color_c;

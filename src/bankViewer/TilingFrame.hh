@@ -32,6 +32,7 @@ public slots:
     void toggleDisplayAllChromo(bool);
     void toggleLowQualityLowerCase(bool);
     void toggleBaseColors(bool);
+    void toggleShowFullRange(bool);
     void advanceNextDiscrepancy();
     void advancePrevDiscrepancy();
 
