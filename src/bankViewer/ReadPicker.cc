@@ -47,7 +47,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
   QListView * table = new QListView(this, "readpickertbl");
   table->resize(500,500);
   setCentralWidget(table);
-  resize(300,300);
+  resize(500,500);
   show();
 
   connect(table, SIGNAL(doubleClicked(QListViewItem *)),
