@@ -40,12 +40,13 @@ my $VERSION = '1.0 ($Revision$)';
 $base->setVersionInfo($VERSION);
 
 my $HELPTEXT = qq~
-    tarchive2ca -o <out_prefix> [-c <clear_ranges>] fasta1 ... fastan
+    tarchive2ca -o <out_prefix> [-c <clear_ranges>] [-l <libinfo>] fasta1 ... fastan
 
    <out_prefix> - prefix for the output files
    <clear_ranges> - file containing clear ranges for the reads.  If this file
            is provided, any sequence that does not appear in it is excluded
            from the output.
+   <libinfo> - tab-delimited file of lib_id, mean, stdev
    fasta1 ... fastan - list of files to be converted.
            The program assumes that for each program called <file>.seq there
            is a <file>.qual and a <file>.xml.  
@@ -57,9 +58,11 @@ my $outprefix;
 my $clears;
 my $ID = 1;
 my $silent;
+my $libfile;
 my $err = $base->TIGR_GetOptions("o=s" => \$outprefix,
 				 "c=s" => \$clears,
                                  "i=i" => \$ID,
+				 "l=s" => \$libfile,
 				 "silent" => \$silent);
 if ($err == 0) {
     $base->bail("Command line processing failed\n");
@@ -85,6 +88,19 @@ my $fragname = "$outprefix.frg";
 open(FRAG, ">$fragname") || die ("Cannot open $fragname: $!");
 printFragHeader(\*FRAG);
 
+if (defined $libfile){
+    open(LIB, $libfile) || die ("Cannot open $libfile: $!");
+    while (<LIB>){
+	chomp;
+	if (/^(\S+)\t(\d+.?\d*)\t(\d+.?\d*)$/){
+	    $means{$1} = $2;
+	    $stdevs{$1} = $3;
+	} else {
+	    print STDERR "Cannot parse line $. of $libfile: $_\n";
+	}
+    }
+    close(LIB);
+}
 
 for (my $f = 0; $f <= $#ARGV; $f++){
 # for each file
@@ -421,19 +437,31 @@ sub EndTag
 	    if (! defined $silent){
 		print "library $library has no mean - replacing with 33333\n";
 	    }
-	    $means{$library} = 33333;
-	    $mean = 33333;
+	    if (! exists $means{$library}){
+		$means{$library} = 33333; 
+		$mean = 33333;
+	    } else {
+		$mean = $means{$library};
+	    }
 	} else {
-	    $means{$library} = $mean;
+	    if (! exists $means{$library}){
+		$means{$library} = $mean;
+	    } else {
+		$mean = $means{$library};
+	    }
 	}
 	
 	if (! defined $stdev){
 	    if (! defined $silent){
 		print "library $library has no stdev - replacing with 10% of $mean\n";
 	    }
-	    $stdevs{$library} = $mean * 0.1;
+	    if (! exists $stdevs{$library}){
+		$stdevs{$library} = $mean * 0.1;
+	    }
 	} else {
-	    $stdevs{$library} = $stdev;
+	    if (! exists $stdevs{$library}){
+		$stdevs{$library} = $stdev;
+	    }
 	}
 	
 	if (! defined $template){
