@@ -12,12 +12,10 @@
 using namespace std;
 using namespace AMOS;
 
-static bool VERBOSE = false;
-
 static int CCOLOR = 0x100000;
 
 Unitigger::Unitigger() {
-  if(VERBOSE) cout << " construct new unitigger" << endl;
+  VERBOSE = false;
   graph = new Graph();
 }
 

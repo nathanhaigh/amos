@@ -20,8 +20,6 @@ static string read_file;
 static string overlap_file;
 static string contig_file;
 
-static bool VERBOSE = false;
-
 Unitigger tigger;
 
 
@@ -67,7 +65,7 @@ void get_amos_reads(const string p_bankdir) {
       }
       
       while(bank >> amos_read) {
-	if(VERBOSE) {
+	if(tigger.VERBOSE) {
 	  amos_read.writeMessage(msg);
 	  msg.write(cout);
 	}
@@ -102,7 +100,7 @@ void get_amos_overlaps(const string p_bankdir) {
       }
       
       while(bank >> amos_overlap) {
-	if(VERBOSE) {
+	if(tigger.VERBOSE) {
 	  amos_overlap.writeMessage(msg);
 	  msg.write(cout);
 	}
@@ -157,7 +155,7 @@ static void parse_command_line(int argc, char* argv[]) {
       break;
 
     case 'v':
-      VERBOSE = true;
+      tigger.VERBOSE = true;
       break;
       
     case '?' :
@@ -197,7 +195,7 @@ int main(int argc, char** argv) {
 
   if(AMOS_mode) {
 
-    if(VERBOSE) {
+    if(tigger.VERBOSE) {
       cout << " AMOS mode " << endl;
       cout << " use bank: " << bankdir << endl;
     }

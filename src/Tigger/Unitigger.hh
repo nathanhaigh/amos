@@ -7,6 +7,7 @@
 #include "Graph.hh"
 
 
+
 /**
  * The <b>Unitigger</b> class
  *
@@ -29,6 +30,8 @@ public:
   
   /** <code> g </code> overlap graph */
   Graph* graph;
+
+  bool VERBOSE;
   
   void Unitigger::error(const char* m, const char* c = "");
   void Unitigger::add_read(AMOS::Read_t p_read);
