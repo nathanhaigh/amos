@@ -20,6 +20,8 @@ int main(int argc, char ** argv)
   string bank_name = argv[1];
   string pos_name = argv[2];
 
+  int verbose = 0;
+
   vector<string> badSeqs;
 
   cerr << "Processing " << bank_name << " at " << Date() << endl;
@@ -45,6 +47,7 @@ int main(int argc, char ** argv)
     char seqname[MAX_SEQNAME];
     int version;
     int x;
+    int count = 0;
 
     while(fscanf(fpos, "%s\t%d\t", seqname, &version) > 0)
     {
@@ -58,7 +61,7 @@ int main(int argc, char ** argv)
       }
       else
       {
-        cerr << "Loading " << seqname;
+        if (verbose) { cerr << "Loading " << seqname; }
         vector<int16_t> positions;
 
         c = fgetc(fpos);
@@ -73,11 +76,11 @@ int main(int argc, char ** argv)
           ungetc(c, fpos);
         }
 
-        cerr << " " << positions.size();
+        if (verbose) {cerr << " " << positions.size(); }
 
         if (read_bank.existsEID(seqname))
         {
-          cerr << ".";
+          if (verbose) {  cerr << "."; }
           read_bank.fetch(seqname, read);
 
           if (read.getLength() != positions.size())
@@ -93,11 +96,14 @@ int main(int argc, char ** argv)
 
           read.setBasePositions(positions);
           read_bank.replace(read.getIID(), read);
+          count++;
         }
         
-        cerr << endl;
+        if (verbose) { cerr << endl; }
       }
     }
+
+    cerr << "Loaded " << count << " records." << endl;
 
     cerr << "Cleaning Bank" << endl;
     read_bank.clean();
