@@ -234,6 +234,9 @@ static bool  Show_SNPs = false;
 
 static void  Clean_Consensus
     (char * consensus, int & gapped_len, int & ungapped_len);
+static int  Count_SNPs
+    (char * consensus, int con_lo, int con_hi,
+     const vector <Read_Info_t> & read_list, int & possible);
 static void  Get_Reads
     (const char * file_name, vector <Read_Info_t> & read_list,
      const hash_set <int> & frg_ids);
@@ -289,8 +292,11 @@ int  main
 
    Parse_Command_Line (argc, argv);
 
-   printf ("Multialignment for contig %d\n", Contig_ID);
-   printf ("Using .asm file %s and .frg file %s\n",
+   if  (Only_One)
+       fprintf (stderr, "Multialignment for contig %d\n", Contig_ID);
+     else
+       fprintf (stderr, "Multialignment for all contigs\n");
+   fprintf (stderr, "Using .asm file %s and .frg file %s\n",
         ASM_File_Name, FRG_File_Name);
 
    // Find and extract the CCO message for the specified contig
@@ -327,21 +333,32 @@ int  main
           utg_id = strtol (line + 5, NULL, 10);
       if  (found_it && level == 0)
           {
+           int  possible, snps;
+
            if  (Only_One)
                break;
 
            Clean_Consensus (consensus, consensus_len, consensus_ungapped_len);
            assert (ct == consensus_len);
 
-           Get_Reads (FRG_File_Name, read_list, frg_ids);
+           if  (consensus_ungapped_len >= 5000)
+               {
+                Get_Reads (FRG_File_Name, read_list, frg_ids);
+                n = read_list . size ();
 
-           n = read_list . size ();
+                snps = Count_SNPs (consensus, 0, consensus_len, read_list, possible);
+                printf ("%10d %10d  %8d  %8d %8d  %8d %8d\n",
+                    cid, contig_iid, n, consensus_len, consensus_ungapped_len,
+                    snps, possible);
+               }
+#if  0
            printf ("\n\nContig %d (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
                 cid, contig_iid, n, consensus_len, consensus_ungapped_len);
            gaps = 0;
            Print_Multialignment (stdout, consensus, 0, consensus_len,
                 read_list, gaps);
            List_SNPs (stdout, consensus, 0, consensus_len, read_list);
+#endif
 
            found_it = false;
            n = read_list . size ();
@@ -478,6 +495,58 @@ static void  Clean_Consensus
    ungapped_len = ct;
 
    return;
+  }
+
+
+
+static int  Count_SNPs
+    (char * consensus, int con_lo, int con_hi,
+     const vector <Read_Info_t> & read_list, int & possible)
+
+//  Return the number of potential SNPs in  consensus
+//  in region  con_lo .. con_hi .  Use the reads in
+//  read_list .  Set  possible  to the number of positions
+//  that had enough coverage to possibly meet the conditions
+//  for a SNP.
+
+  {
+   static Count_t  * count = NULL;
+   static int  count_len;
+   int  cons_len, ct;
+   int  i, n;
+
+   cons_len = con_hi - con_lo;
+   if  (count == NULL)
+       {
+        count = (Count_t *) Safe_calloc (cons_len, sizeof (Count_t));
+        count_len = cons_len;
+       }
+   else
+       {
+        if  (cons_len > count_len)
+            {
+             count = (Count_t *) Safe_realloc (count, cons_len * sizeof (Count_t));
+             count_len = cons_len;
+            }
+        for  (i = 0;  i < cons_len;  i ++)
+          count [i] . Zero ();
+       }
+
+   n = read_list . size ();
+   for  (i = 0;  i < n;  i ++)
+     Incr_Align_Counts (count, read_list [i], con_lo);
+
+   possible = 0;
+   for  (i = con_lo;  i < con_hi;  i ++)
+     if  (count [i] . Sum () >= 4)
+         possible ++;
+
+   ct = 0;
+   for  (i = con_lo;  i < con_hi;  i ++)
+     if  (count [i] . Num_Greater (2) >= 2)
+         ct ++;
+
+   return  ct;
   }
 
 
@@ -1036,7 +1105,7 @@ static void  Usage
            "Options:\n"
            "  -g    Count gaps in printed consensus positions\n"
            "  -h    Print this usage message\n"
-           "  -s    Print SNPs in addition to multialignments"
+           "  -s    Print SNPs in addition to multialignments\n"
            "  -V    Display code version\n"
            "\n",
            command);
