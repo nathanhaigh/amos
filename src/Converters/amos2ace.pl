@@ -400,22 +400,30 @@ sub get_seq
     my $file = shift;
     my $id = shift;
 
+    my $currloc = tell $files[$file];
+
+    if (! exists $seqpos{$id}){
+	$base->bail("Failure: could not find RED record for id $id\n");
+    }
+
     seek $files[$file], $seqpos{$id}, 0; # seek set
     my $record = getRecord($files[$file]);
+    seek $files[$file], $currloc, 0; # come back to the original location
+
     if (! defined $record){
-        print "weird error\n";
+	$base->bail("Weird error - no record found\n");
         return;
     }
 
     my ($rec, $fields, $recs) = parseRecord($record);
     
     if ($rec ne "RED"){
-        print STDERR "weird error in get_seq for read $id, expecting RED not $rec at position $seqpos{$id} in file $file\n";
+        $base->bail("weird error in get_seq for read $id, expecting RED not $rec at position $seqpos{$id} in file $file\n");
         return;
     }
     if ($$fields{iid} != $id){
-        print STDERR "weird error in get_seq, expecting $id, got $$fields{acc}\n
-";
+        $base->bail("weird error in get_seq, expecting $id, got $$fields{acc}\n
+");
         return;
     }
     return $$fields{seq};
