@@ -802,10 +802,14 @@ public:
   //! destroy). Map is only flushed to disk on Bank_t::close operation. If
   //! 'mybank.map( ).size( ) == 0', there is no ID map for this Bank.
   //!
+  //! \pre The Bank is open
+  //! \throws ArgumentException_t
   //! \return The ID map of for this Bank
   //!
   IDMap_t & map ( )
   {
+    if ( !isOpen( ) )
+      AMOS_THROW_ARGUMENT ("Cannot access ID map from a closed Bank");
     return idmap_m;
   }
 

@@ -9,20 +9,21 @@ using namespace AMOS;
 
 int main ( )
 {
-  char c;
-
   try {
 
     Message_t msg;
-    IDMap_t idmap, idmap2;
-
     msg . read (cin);
-    idmap . readMessage (msg);
+
+    Bank_t bnk (Universal_t::NCode( ));
+    bnk . create ("__testbank__");
+    bnk . map( ) . readMessage (msg);
+    bnk . close( );
+
+    bnk . open ("__testbank__");
     msg . clear( );
-
-
-    idmap . writeMessage (msg);
+    bnk . map( ) . writeMessage (msg);
     msg . write (cout);
+    bnk . close( );
   }
   catch (Exception_t & e) {
     cerr << e;
