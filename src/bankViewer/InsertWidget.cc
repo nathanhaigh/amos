@@ -63,6 +63,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_paddle = NULL;
   m_ball = NULL;
   m_timer = new QTimer(this, "timer");
+  m_autoplay = 0;
   connect(m_timer, SIGNAL(timeout()),
           this, SLOT(timeout()));
 
@@ -693,6 +694,12 @@ void InsertWidget::stopbreak()
   m_icanvas->update();
 }
 
+void InsertWidget::autoplay()
+{
+  m_autoplay = !m_autoplay;
+
+}
+
 
 void InsertWidget::timeout()
 {
@@ -744,6 +751,11 @@ void InsertWidget::timeout()
       if (abs(m_xvel) > 250) { m_xvel = m_xvel/2; }
 
       m_ball->moveBy(m_xvel, m_yvel);
+
+      if (m_autoplay)
+      {
+        m_paddle->move(m_ball->x()-500, m_paddle->y());
+      }
 
       m_icanvas->update();
     }

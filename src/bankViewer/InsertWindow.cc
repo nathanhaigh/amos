@@ -122,6 +122,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   a->connectItem(a->insertItem(Key_Left), iw, SLOT(left()) );
   a->connectItem(a->insertItem(Key_Right), iw, SLOT(right()) );
   a->connectItem(a->insertItem(Key_Escape), iw, SLOT(stopbreak()));
+  a->connectItem(a->insertItem(CTRL+SHIFT+Key_A), iw, SLOT(autoplay()) );
 }
 
 void InsertWindow::contigChanged()

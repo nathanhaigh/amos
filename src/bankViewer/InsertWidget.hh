@@ -50,6 +50,7 @@ public slots:
   void left();
   void right();
   void timeout();
+  void autoplay();
 
 
 signals:
@@ -73,6 +74,7 @@ private:
   QTimer * m_timer;
   int m_xvel;
   int m_yvel;
+  int m_autoplay;
 
   int m_connectMates;
   int m_partitionTypes;
