@@ -452,11 +452,11 @@ sub parseFrgFile {
 		$seqids{$nm} = $iid;
 	    } else {
 		$seqnames{$iid} = $id;
-		$seqids{$id} = $iid;
 	    }
+	    $seqids{$id} = $iid;
 	    my ($seql, $seqr) = split(',', $$fields{clr});
 	    $seq_range{$iid} = "$seql $seqr";
-	    print TMPSEQ "#$id\n";
+	    print TMPSEQ "#$iid\n";
 	    print TMPSEQ "$$fields{seq}";
 	    print TMPSEQ "#\n";
 	    print TMPSEQ "$$fields{qlt}";
@@ -474,10 +474,10 @@ sub parseFrgFile {
 	    my $id = $minSeqId++;
 	    $insertlib{$$fields{dst}} .= "$id ";
 	    $seenlib{$id} = $$fields{dst};
-	    $seqinsert{$$fields{fg1}} = $id;
-	    $seqinsert{$$fields{fg2}} = $id;
-	    $forw{$id} = $$fields{fg1};
-	    $rev{$id} = $$fields{fg2};
+	    $seqinsert{$seqids{$$fields{fg1}}} = $id;
+	    $seqinsert{$seqids{$$fields{fg2}}} = $id;
+	    $forw{$id} = $seqids{$$fields{fg1}};
+	    $rev{$id} = $seqids{$$fields{fg2}};
 	    next;
 	}
     }
