@@ -36,7 +36,7 @@ int  Binomial_Cutoff
        fprintf (stderr, "Binomial Cutoff:  n = %d  p = %e  lambda = %e\n",
                 n, p, lambda);
 
-   if  (lambda <= 5.0 && n >= 50.0)
+   if  (lambda <= 5.0 && n >= 30.0)
        {  // use Poisson approximation
         target = (1.0 - e_prob) * exp (lambda);
         sum = term = 1.0;
@@ -74,7 +74,7 @@ int  Binomial_Cutoff
         sum = term = pow (q, n);
         for  (i = 1;  sum <= target && i < n;  i ++)
           {
-           term *= (n + 1 - i) / i;
+           term *= double (n + 1 - i) / i;
            term *= p / q;
            sum += term;
           }
