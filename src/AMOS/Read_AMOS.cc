@@ -9,14 +9,15 @@
 
 #include "Read_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ Read_t ======================
 //----------------------------------------------------- readRecord -------------
-Size_t Read_t::readRecord (std::istream & fix,
-			   std::istream & var)
+Size_t Read_t::readRecord (istream & fix,
+			   istream & var)
 {
   Size_t streamsize = Sequence_t::readRecord (fix, var);
 
@@ -33,7 +34,7 @@ Size_t Read_t::readRecord (std::istream & fix,
   streamsize += sizeof (Range_t);
 
   //-- Read VAR data
-  std::getline (var, eid_m, '\0');
+  getline (var, eid_m, '\0');
   streamsize += eid_m . size( ) + 1;
 
   return streamsize;
@@ -41,8 +42,8 @@ Size_t Read_t::readRecord (std::istream & fix,
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Read_t::writeRecord (std::ostream & fix,
-			    std::ostream & var) const
+Size_t Read_t::writeRecord (ostream & fix,
+			    ostream & var) const
 {
   Size_t streamsize = Sequence_t::writeRecord (fix, var);
 
@@ -68,7 +69,7 @@ Size_t Read_t::writeRecord (std::ostream & fix,
 
 //================================================ Helper Functions ============
 //----------------------------------------------------- WrapStirng -------------
-void AMOS::WrapString (ostream & o, const string & s, int per)
+void AMOS::WrapString (ostream & out, const string & s, int per)
 {
   int  i, n;
   
@@ -81,27 +82,27 @@ void AMOS::WrapString (ostream & o, const string & s, int per)
       if  (n < last)
 	last = n;
       for  (j = i;  j < last;  j ++)
-        o << s [j];
-      o << endl;
+        out << s [j];
+      out << endl;
     }
 }
 
 
 //----------------------------------------------------- operator<< -------------
-ostream & AMOS::operator<< (ostream & o, Read_t & read)
+ostream & AMOS::operator<< (ostream & out, Read_t & read)
 {
-  std::string s;
+  string s;
 
-  o << "#iid:" << read.getIID( ) << endl;
-  o << "#eid:" << read.getEID( ) << endl;
-  o << "#comment:" << endl;
-  o << read.getComment( ) << endl;
-  o << "#clear:" << read.getClearRange( ).begin << ","
+  out << "#iid:" << read.getIID( ) << endl;
+  out << "#eid:" << read.getEID( ) << endl;
+  out << "#comment:" << endl;
+  out << read.getComment( ) << endl;
+  out << "#clear:" << read.getClearRange( ).begin << ","
       << read.getClearRange( ).end << endl;
-  o << "#sequence:" << endl;
-  WrapString (o, read.getSeqString( ), 60);
-  o << "#quality:" << endl;
-  WrapString (o, read.getQualString( ), 60);
+  out << "#sequence:" << endl;
+  WrapString (out, read.getSeqString( ), 60);
+  out << "#quality:" << endl;
+  WrapString (out, read.getQualString( ), 60);
   
-  return o;
+  return out;
 }

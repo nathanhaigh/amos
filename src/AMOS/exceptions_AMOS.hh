@@ -12,6 +12,7 @@
 
 #include <string>
 #include <exception>
+#include <iostream>
 
 
 
@@ -25,7 +26,7 @@ namespace AMOS {
 //! this class should effectively catch all AMOS exceptions.
 //!
 //==============================================================================
-class Exception_t : public exception
+class Exception_t : public std::exception
 {
 
 private:
@@ -55,6 +56,15 @@ public:
   }
 
 
+  //---------------------------------------------- ~Exception_t ----------------
+  //! \brief Default destructor
+  //!
+  ~Exception_t ( ) throw( )
+  {
+
+  }
+
+
   //---------------------------------------------- file ------------------------
   //! \brief Returns the file (if available) of the exception
   //!
@@ -76,7 +86,7 @@ public:
   //---------------------------------------------- what ------------------------
   //! \brief Returns a short description (if available) of the exception
   //!
-  virtual const char * what ( ) const
+  virtual const char * what ( ) const throw( )
   {
     return what_m . c_str( );
   }
@@ -183,13 +193,13 @@ public:
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump Exception_t info to an ostream
 //!
-ostream & operator<< (ostream & o, Exception_t & e);
+std::ostream & operator<< (std::ostream & o, Exception_t & e);
 
 
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump exception info to an ostream
 //!
-ostream & operator<< (ostream & o, std::exception & e);
+std::ostream & operator<< (std::ostream & o, std::exception & e);
 
 } // namespace AMOS
 

@@ -9,14 +9,15 @@
 
 #include "Scaffold_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ Scaffold_t ==================
 //----------------------------------------------------- readRecord -------------
-Size_t Scaffold_t::readRecord (std::istream & fix,
-                               std::istream & var)
+Size_t Scaffold_t::readRecord (istream & fix,
+                               istream & var)
 {
   Size_t streamsize = Bankable_t::readRecord (fix, var);
   Size_t size, tsize;
@@ -55,8 +56,8 @@ Size_t Scaffold_t::readRecord (std::istream & fix,
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Scaffold_t::writeRecord (std::ostream & fix,
-                                std::ostream & var) const
+Size_t Scaffold_t::writeRecord (ostream & fix,
+                                ostream & var) const
 {
   Size_t streamsize = Bankable_t::writeRecord (fix, var);
   Size_t size, tsize;

@@ -9,24 +9,25 @@
 
 #include "exceptions_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ Helper Functions ============
 //----------------------------------------------------- operator<< -------------
-ostream & AMOS::operator<< (ostream & o, Exception_t & e)
+ostream & AMOS::operator<< (ostream & out, Exception_t & e)
 {
-  o << "WHAT: " << e . what( ) << endl;
-  o << "LINE: " << e . line( ) << endl;
-  o << "FILE: " << e . file( ) << endl;
-  return o;
+  out << "WHAT: " << e . what( ) << endl;
+  out << "LINE: " << e . line( ) << endl;
+  out << "FILE: " << e . file( ) << endl;
+  return out;
 }
 
 
 //----------------------------------------------------- operator<< -------------
-ostream & AMOS::operator<< (ostream & o, std::exception & e)
+ostream & AMOS::operator<< (ostream & out, std::exception & e)
 {
-  o << "WHAT: " << e . what( ) << endl;
-  return o;
+  out << "WHAT: " << e . what( ) << endl;
+  return out;
 }

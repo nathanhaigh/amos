@@ -9,14 +9,15 @@
 
 #include "Fragment_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ Fragment_t ==================
 //----------------------------------------------------- readRecord -------------
-Size_t Fragment_t::readRecord (std::istream & fix,
-			       std::istream & var)
+Size_t Fragment_t::readRecord (istream & fix,
+			       istream & var)
 {
   Size_t streamsize = Bankable_t::readRecord (fix, var);
   Size_t size;
@@ -24,8 +25,8 @@ Size_t Fragment_t::readRecord (std::istream & fix,
   //-- Read FIX data
   fix . read ((char *)&size, sizeof (Size_t));
   streamsize += sizeof (Size_t);
-  fix . read ((char *)&ends_m, sizeof (std::pair<ID_t, ID_t>));
-  streamsize += sizeof (std::pair<ID_t, ID_t>);
+  fix . read ((char *)&ends_m, sizeof (pair<ID_t, ID_t>));
+  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . read ((char *)&library_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . read ((char *)&type_m, sizeof (FragmentType_t));
@@ -42,8 +43,8 @@ Size_t Fragment_t::readRecord (std::istream & fix,
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Fragment_t::writeRecord (std::ostream & fix,
-				std::ostream & var) const
+Size_t Fragment_t::writeRecord (ostream & fix,
+				ostream & var) const
 {
   Size_t streamsize = Bankable_t::writeRecord (fix, var);
   Size_t size = reads_m . size( );
@@ -51,8 +52,8 @@ Size_t Fragment_t::writeRecord (std::ostream & fix,
   //-- Write FIX data
   fix . write ((char *)&size, sizeof (Size_t));
   streamsize += sizeof (Size_t);
-  fix . write ((char *)&ends_m, sizeof (std::pair<ID_t, ID_t>));
-  streamsize += sizeof (std::pair<ID_t, ID_t>);
+  fix . write ((char *)&ends_m, sizeof (pair<ID_t, ID_t>));
+  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . write ((char *)&library_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . write ((char *)&type_m, sizeof (FragmentType_t));

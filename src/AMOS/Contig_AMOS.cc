@@ -9,13 +9,14 @@
 
 #include "Contig_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ Contig_t ====================
 //----------------------------------------------------- getUngappedQualString --
-std::string Contig_t::getUngappedQualString (Range_t range) const
+string Contig_t::getUngappedQualString (Range_t range) const
 {
   //-- Check preconditions
   if ( range . begin > range . end ||
@@ -23,8 +24,8 @@ std::string Contig_t::getUngappedQualString (Range_t range) const
        range . end > getLength( ) )
     AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
-  std::pair<char, char> seqqualc;
-  std::string retval;
+  pair<char, char> seqqualc;
+  string retval;
   retval . reserve (range . end - range . begin);
 
   //-- Skip the gaps in the sequence and populate the retval
@@ -40,7 +41,7 @@ std::string Contig_t::getUngappedQualString (Range_t range) const
 
 
 //----------------------------------------------------- getUngappedSeqString ---
-std::string Contig_t::getUngappedSeqString (Range_t range) const
+string Contig_t::getUngappedSeqString (Range_t range) const
 {
   //-- Check preconditions
   if ( range . begin > range . end ||
@@ -49,7 +50,7 @@ std::string Contig_t::getUngappedSeqString (Range_t range) const
     AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
   char seqc;
-  std::string retval;
+  string retval;
   retval . reserve (range . end - range . begin);
 
   //-- Skip the gaps in the sequence and populate the retval
@@ -65,8 +66,8 @@ std::string Contig_t::getUngappedSeqString (Range_t range) const
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Contig_t::readRecord (std::istream & fix,
-                               std::istream & var)
+Size_t Contig_t::readRecord (istream & fix,
+			     istream & var)
 {
   Size_t streamsize = Sequence_t::readRecord (fix, var);
   Size_t size, tsize;
@@ -101,8 +102,8 @@ Size_t Contig_t::readRecord (std::istream & fix,
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Contig_t::writeRecord (std::ostream & fix,
-			      std::ostream & var) const
+Size_t Contig_t::writeRecord (ostream & fix,
+			      ostream & var) const
 {
   Size_t streamsize = Sequence_t::writeRecord (fix, var);
   Size_t size, tsize;

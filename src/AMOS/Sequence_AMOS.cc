@@ -9,6 +9,7 @@
 
 #include "Sequence_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
@@ -34,7 +35,7 @@ void Sequence_t::compress ( )
 
 
 //----------------------------------------------------- getQualString ----------
-std::string Sequence_t::getQualString (Range_t range) const
+string Sequence_t::getQualString (Range_t range) const
 {
   //-- Check preconditions
   if ( range . begin > range . end ||
@@ -43,7 +44,7 @@ std::string Sequence_t::getQualString (Range_t range) const
     AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
   //-- Allocate space for retval
-  std::string retval;
+  string retval;
   retval . reserve (range . end - range . begin);
 
   //-- Fill retval
@@ -55,7 +56,7 @@ std::string Sequence_t::getQualString (Range_t range) const
 
 
 //----------------------------------------------------- getSeqString -----------
-std::string Sequence_t::getSeqString (Range_t range) const
+string Sequence_t::getSeqString (Range_t range) const
 {
   //-- Check preconditions
   if ( range . begin > range . end ||
@@ -64,7 +65,7 @@ std::string Sequence_t::getSeqString (Range_t range) const
     AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
 
   //-- Allocate space for retval
-  std::string retval;
+  string retval;
   retval . reserve (range . end - range . begin);
 
   //-- Fill retval
@@ -103,8 +104,8 @@ Sequence_t & Sequence_t::operator= (const Sequence_t & source)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Sequence_t::readRecord (std::istream & fix,
-			       std::istream & var)
+Size_t Sequence_t::readRecord (istream & fix,
+			       istream & var)
 {
   Size_t streamsize = Bankable_t::readRecord (fix, var);
 
@@ -132,8 +133,8 @@ void Sequence_t::setSequence (const char * seq,
 			      const char * qual)
 {
   //-- Check preconditions
-  Size_t length = std::strlen (seq);
-  if ( length != (Size_t)std::strlen (qual) )
+  Size_t length = strlen (seq);
+  if ( length != (Size_t)strlen (qual) )
     AMOS_THROW_ARGUMENT ("seq and qual string lengths do not match");
 
   //-- Set the sequence
@@ -148,8 +149,8 @@ void Sequence_t::setSequence (const char * seq,
 
 
 //----------------------------------------------------- setSequence ------------
-void Sequence_t::setSequence (const std::string & seq,
-			      const std::string & qual)
+void Sequence_t::setSequence (const string & seq,
+			      const string & qual)
 {
   //-- Check preconditions
   Size_t length = seq . size( );
@@ -174,7 +175,7 @@ void Sequence_t::uncompress ( )
     return;
 
   //-- Uncompress, move quality scores back to qual_m
-  std::pair<char, char> retval;
+  pair<char, char> retval;
   qual_m = (uint8_t *) SafeRealloc (qual_m, length_m);
   for ( Pos_t i = 0; i < length_m; i ++ )
     {
@@ -189,8 +190,8 @@ void Sequence_t::uncompress ( )
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Sequence_t::writeRecord (std::ostream & fix,
-				std::ostream & var) const
+Size_t Sequence_t::writeRecord (ostream & fix,
+				ostream & var) const
 {
   Size_t streamsize = Bankable_t::writeRecord (fix, var);
 

@@ -9,14 +9,15 @@
 
 #include "Library_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ Library_t ===================
 //----------------------------------------------------- readRecord -------------
-Size_t Library_t::readRecord (std::istream & fix,
-			      std::istream & var)
+Size_t Library_t::readRecord (istream & fix,
+			      istream & var)
 {
   Size_t streamsize = Bankable_t::readRecord (fix, var);
   Size_t size;
@@ -38,8 +39,8 @@ Size_t Library_t::readRecord (std::istream & fix,
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Library_t::writeRecord (std::ostream & fix,
-			       std::ostream & var) const
+Size_t Library_t::writeRecord (ostream & fix,
+			       ostream & var) const
 {
   Size_t streamsize = Bankable_t::writeRecord (fix, var);
   Size_t size = frags_m . size( );

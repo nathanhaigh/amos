@@ -9,14 +9,15 @@
 
 #include "ContigEdge_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ ContigEdge_t ================
 //----------------------------------------------------- readRecord -------------
-Size_t ContigEdge_t::readRecord (std::istream & fix,
-				 std::istream & var)
+Size_t ContigEdge_t::readRecord (istream & fix,
+				 istream & var)
 {
   Size_t streamsize = ContigLink_t::readRecord (fix, var);
   Size_t size;
@@ -36,8 +37,8 @@ Size_t ContigEdge_t::readRecord (std::istream & fix,
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t ContigEdge_t::writeRecord (std::ostream & fix,
-				  std::ostream & var) const
+Size_t ContigEdge_t::writeRecord (ostream & fix,
+				  ostream & var) const
 {
   Size_t streamsize = ContigLink_t::writeRecord (fix, var);
   Size_t size = links_m . size( );

@@ -9,6 +9,7 @@
 
 #include "datatypes_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
@@ -70,6 +71,10 @@ bool AMOS::operator== (Range_t a, Range_t b)
 {
   return ( a . begin == b . begin  &&  a . end == b . end );
 }
+bool AMOS::operator!= (Range_t a, Range_t b)
+{
+  return !(a == b);
+}
 
 
 //----------------------------------------------------- operator== -------------
@@ -78,6 +83,10 @@ bool AMOS::operator== (Distribution_t a, Distribution_t b)
   return ( a . mean == b . mean  &&
 	   a . sd == b . sd  &&
 	   a . skew == b . skew );
+}
+bool AMOS::operator!= (Distribution_t a, Distribution_t b)
+{
+  return !(a == b);
 }
 
 
@@ -88,4 +97,8 @@ bool AMOS::operator== (Tile_t a, Tile_t b)
 	   a . gaps == b . gaps  &&
 	   a . offset == b . offset  &&
 	   a . range == b . range );
+}
+bool AMOS::operator!= (Tile_t a, Tile_t b)
+{
+  return !(a == b);
 }

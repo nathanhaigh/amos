@@ -9,15 +9,16 @@
 
 #include "Kmer_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
 
 //================================================ Kmer_t ======================
 //----------------------------------------------------- getSeqString -----------
-std::string Kmer_t::getSeqString ( ) const
+string Kmer_t::getSeqString ( ) const
 {
-  std::string retval;
+  string retval;
   retval . reserve (length_m);
 
   //-- See comments for getBase regarding the compressed sequence
@@ -60,8 +61,8 @@ Kmer_t & Kmer_t::operator= (const Kmer_t & source)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Kmer_t::readRecord (std::istream & fix,
-			   std::istream & var)
+Size_t Kmer_t::readRecord (istream & fix,
+			   istream & var)
 {
   Size_t streamsize = Bankable_t::readRecord (fix, var);
   Size_t size;
@@ -89,7 +90,7 @@ Size_t Kmer_t::readRecord (std::istream & fix,
 
 
 //----------------------------------------------------- setSeqString -----------
-void Kmer_t::setSeqString (const std::string & seq)
+void Kmer_t::setSeqString (const string & seq)
 {
   Size_t size = seq . size( );
   if ( size > Kmer_t::MAX_LENGTH )
@@ -116,8 +117,8 @@ void Kmer_t::setSeqString (const std::string & seq)
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Kmer_t::writeRecord (std::ostream & fix,
-			    std::ostream & var) const
+Size_t Kmer_t::writeRecord (ostream & fix,
+			    ostream & var) const
 {
   Size_t streamsize = Bankable_t::writeRecord (fix, var);
   Size_t size = reads_m . size( );

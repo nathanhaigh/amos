@@ -11,6 +11,7 @@
 #define __Read_AMOS_HH 1
 
 #include "Sequence_AMOS.hh"
+#include <iostream>
 
 
 
@@ -305,13 +306,13 @@ public:
 //----------------------------------------------------- WrapStirng -------------
 //! \brief Inserts a newline character every 'per' characters
 //!
-void WrapString (ostream & out, const string & s, int per);
+void WrapString (std::ostream & out, const std::string & s, int per);
 
 
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump read object to ostream
 //!
-ostream & operator<< (ostream & o, Read_t & read);
+std::ostream & operator<< (std::ostream & o, Read_t & read);
 
 } // namespace AMOS
 

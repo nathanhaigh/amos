@@ -13,6 +13,7 @@
 
 #include "Bank_AMOS.hh"
 using namespace AMOS;
+using namespace std;
 
 
 
@@ -29,13 +30,12 @@ void Bank_t::addPartition (bool nuke = true)
   BankPartition_t * partition = partitions_m [++ last_partition_m];
 
   //-- Set the open 'mode', i.e. to truncate or not to truncate
-  std::fstream::openmode mode = nuke ?
-    std::ios::in|std::ios::out|std::ios::binary|std::ios::trunc :
-    std::ios::in|std::ios::out|std::ios::binary;
+  fstream::openmode mode = nuke ?
+    ios::in|ios::out|ios::binary|ios::trunc : ios::in|ios::out|ios::binary;
 
   try {
     //-- Add the FIX partition file
-    std::stringstream ss;
+    stringstream ss;
     ss << store_pfx_m << '.' << last_partition_m << Bank_k::FIX_STORE_SUFFIX;
     partition -> fix_name = ss . str( );
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
@@ -93,10 +93,10 @@ ID_t Bank_t::append (Bankable_t & obj)
   //-- Seek to end of partitions and write record
   //   FIX = [VAR streampos] [BankableFlags] [OBJECT FIX] [VAR size]
   //   VAR = [OBJECT VAR]
-  partition -> fix . seekp (0, std::ios::end);
-  partition -> var . seekp (0, std::ios::end);
-  std::streampos vpos = partition -> var . tellp( );
-  partition -> fix . write ((char *)&vpos, sizeof (std::streampos));
+  partition -> fix . seekp (0, ios::end);
+  partition -> var . seekp (0, ios::end);
+  streampos vpos = partition -> var . tellp( );
+  partition -> fix . write ((char *)&vpos, sizeof (streampos));
   partition -> fix . write ((char *)&(obj . flags_m),
 			    sizeof (Bankable_t::BankableFlags_t));
   obj . writeRecord (partition -> fix, partition -> var);
@@ -177,8 +177,8 @@ void Bank_t::clear ( )
     }
 
   //-- Reset everything back to scratch
-  std::string dir = store_dir_m;
-  std::string pfx = store_pfx_m;
+  string dir = store_dir_m;
+  string pfx = store_pfx_m;
 
   close( );
 
@@ -223,15 +223,15 @@ void Bank_t::concat (Bank_t & source)
   Size_t buffer_size = source . fix_size_m;
   char * buffer = (char *) SafeMalloc (buffer_size);
 
-  std::streampos vpos;
+  streampos vpos;
   BankPartition_t * thisp = openPartition (last_partition_m);
   BankPartition_t * sourcep;
 
   //-- Seek to the end of current bank
   if ( thisp != NULL )
     {
-      thisp -> fix . seekp (0, std::ios::end);
-      thisp -> var . seekp (0, std::ios::end);
+      thisp -> fix . seekp (0, ios::end);
+      thisp -> var . seekp (0, ios::end);
     }
 
   //-- For each source partition
@@ -239,12 +239,12 @@ void Bank_t::concat (Bank_t & source)
     {
       //-- Seek to the beginning of source bank
       sourcep = source . getPartition (i);
-      sourcep -> fix . seekg (0, std::ios::beg);
+      sourcep -> fix . seekg (0, ios::beg);
 
       while ( true )
 	{
 	  //-- Read vpos and Bankable flags, break on EOF
-	  sourcep -> fix . read ((char *)&vpos, sizeof (std::streampos));
+	  sourcep -> fix . read ((char *)&vpos, sizeof (streampos));
 	  sourcep -> fix . read ((char *)&flags,
 				 sizeof (Bankable_t::BankableFlags_t));
 	  if ( sourcep -> fix . eof( ) )
@@ -268,7 +268,7 @@ void Bank_t::concat (Bank_t & source)
 
 	  //-- Write new vpos and copy Bankable flags
 	  vpos = thisp -> var . tellp( );
-	  thisp -> fix . write ((char *)&vpos, sizeof (std::streampos));
+	  thisp -> fix . write ((char *)&vpos, sizeof (streampos));
 	  thisp -> fix . write ((char *)&flags,
 				sizeof (Bankable_t::BankableFlags_t));
 
@@ -300,7 +300,7 @@ void Bank_t::concat (Bank_t & source)
 
 
 //----------------------------------------------------- create -----------------
-void Bank_t::create (const std::string & dir)
+void Bank_t::create (const string & dir)
 {
   if ( isOpen( ) )
     close( );
@@ -317,8 +317,8 @@ void Bank_t::create (const std::string & dir)
       }
     }
 
-  std::string pfx;
-  std::stringstream ss;
+  string pfx;
+  stringstream ss;
 
   //-- Make the bank directory (will do nothing if already exists)
   mkdir (dir . c_str( ), 0755);
@@ -350,8 +350,8 @@ void Bank_t::destroy ( )
   if ( !isOpen( ) )
     return;
 
-  std::string dir = store_dir_m;
-  std::string pfx = store_pfx_m;
+  string dir = store_dir_m;
+  string pfx = store_pfx_m;
 
   //-- Nuke the files and close the bank
   clear( );
@@ -364,10 +364,10 @@ void Bank_t::destroy ( )
 
 
 //----------------------------------------------------- exists -----------------
-bool Bank_t::exists (const std::string & dir)
+bool Bank_t::exists (const string & dir)
 {
   //-- Generate the INFO path
-  std::stringstream ss;
+  stringstream ss;
   ss << dir << '/'
      << Bank_k::BANK_NAMES [banktype_m]
      << Bank_k::INFO_STORE_SUFFIX;
@@ -404,9 +404,9 @@ void Bank_t::fetch (Bankable_t & obj)
   BankPartition_t * partition = getPartition (pid);
 
   //-- Set the stream get pointers
-  std::streampos vpos;
+  streampos vpos;
   partition -> fix . seekg (lid * fix_size_m);
-  partition -> fix . read  ((char *)&vpos, sizeof (std::streampos));
+  partition -> fix . read  ((char *)&vpos, sizeof (streampos));
   partition -> var . seekg (vpos);
 
   //-- Read the object data
@@ -423,7 +423,7 @@ void Bank_t::flush ( )
     return;
 
   //-- Flush all open streams
-  std::deque<BankPartition_t *>::iterator di;
+  deque<BankPartition_t *>::iterator di;
   for ( di = opened_m . begin( ); di != opened_m . end( ); di ++ )
     {
       (*di) -> fix . flush( );
@@ -431,7 +431,7 @@ void Bank_t::flush ( )
     }
 
   //-- Open INFO partition
-  std::ofstream ifo;
+  ofstream ifo;
   ifo . open ((store_pfx_m + Bank_k::INFO_STORE_SUFFIX) . c_str( ));
   ifo . precision (5);
 
@@ -457,16 +457,16 @@ void Bank_t::flush ( )
 
 
 //----------------------------------------------------- open -------------------
-void Bank_t::open (const std::string & dir)
+void Bank_t::open (const string & dir)
 {
   if ( isOpen( ) )
     close( );
 
-  std::string pfx;
-  std::string line;
+  string pfx;
+  string line;
   ID_t last_partition;
   Bankable_t::BankType_t banktype;
-  std::stringstream ss;
+  stringstream ss;
 
   //-- Generate the INFO path
   ss << dir << '/' << Bank_k::BANK_NAMES [banktype_m];
@@ -480,43 +480,43 @@ void Bank_t::open (const std::string & dir)
     AMOS_THROW_IO ("Cannot find partition: " + ss . str( ));
 
   //-- Open INFO partition
-  std::ifstream ifo;
+  ifstream ifo;
   ifo . open (ss . str( ) . c_str( ));
   if ( ifo . fail( ) )
     AMOS_THROW_IO ("Could not open partition: " + ss . str( ));
 
   //-- Parse the INFO partition
   try {
-    std::getline (ifo, line, '=');
+    getline (ifo, line, '=');
     ifo >> line;
     if ( line != Bank_k::BANK_VERSION )
       AMOS_THROW_IO ("Incompatible Bank version");
     if ( !ifo . good( ) )
       AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
-    std::getline (ifo, line, '=');
+    getline (ifo, line, '=');
     ifo >> (int)banktype;
     if ( banktype != banktype_m )
       AMOS_THROW_IO ("Incompatible Bank type");
     if ( !ifo . good( ) )
       AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
-    std::getline (ifo, line, '=');
+    getline (ifo, line, '=');
     ifo >> fix_size_m;
     if ( !ifo . good( ) )
       AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
-    std::getline (ifo, line, '=');
+    getline (ifo, line, '=');
     ifo >> last_iid_m;
     if ( !ifo . good( ) )
       AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
-    std::getline (ifo, line, '=');
+    getline (ifo, line, '=');
     ifo >> partition_size_m;
     if ( !ifo . good( ) )
       AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
 
-    std::getline (ifo, line, '=');
+    getline (ifo, line, '=');
     ifo >> last_partition;
     if ( !ifo . good( ) )
       AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
@@ -562,20 +562,18 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t iid)
     }  
 
   //-- Set the open 'mode', i.e. not to truncate
-  std::fstream::openmode mode = std::ios::in|std::ios::out|std::ios::binary;
+  fstream::openmode mode = ios::in|ios::out|ios::binary;
 
   try {
     //-- Open the FIX partition file
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
     if ( partition -> fix . fail( ) )
-      AMOS_THROW_IO ("Could not open partition: " +
-		     partition -> fix_name);
+      AMOS_THROW_IO ("Could not open partition: " + partition -> fix_name);
     
     //-- Open the VAR partition file
     partition -> var . open (partition -> var_name . c_str( ), mode);
     if ( partition -> var . fail( ) )
-      AMOS_THROW_IO ("Could not open partition: " +
-		     partition -> var_name);
+      AMOS_THROW_IO ("Could not open partition: " + partition -> var_name);
   }
   catch ( IOException_t ) {
     partition -> fix . close( );
@@ -610,7 +608,7 @@ void Bank_t::remove (Bankable_t & obj)
   //-- Seek to and read FIX record
   Bankable_t::BankableFlags_t flags;
   BankPartition_t * partition = getPartition (pid);
-  std::streampos fpos = lid * fix_size_m + sizeof (std::streampos);
+  streampos fpos = lid * fix_size_m + sizeof (streampos);
   partition -> fix . seekg (fpos);
   partition -> fix . read ((char *)&flags,
 			   sizeof (Bankable_t::BankableFlags_t));
@@ -649,15 +647,14 @@ void Bank_t::replace (Bankable_t & obj)
   obj . flags_m . is_modified = true;
 
   //-- Seek to and read old record
-  std::streampos vpos;
+  streampos vpos;
   Size_t newsize, oldsize;
-  std::ofstream nullfix, nullvar;
-  std::streampos fpos = lid * fix_size_m;
+  ofstream nullfix, nullvar;
+  streampos fpos = lid * fix_size_m;
   partition -> fix . seekg (fpos);
-  partition -> fix . read ((char *)&vpos, sizeof (std::streampos));
-  partition -> fix . seekg (fpos +
-			    (std::streamoff)fix_size_m -
-			    (std::streamoff)sizeof (Size_t));
+  partition -> fix . read ((char *)&vpos, sizeof (streampos));
+  partition -> fix . seekg (fpos + (streamoff)fix_size_m -
+			    (streamoff)sizeof (Size_t));
   partition -> fix . read ((char *)&oldsize, sizeof (Size_t));
 
   //-- Check the new size of VAR record
@@ -667,12 +664,12 @@ void Bank_t::replace (Bankable_t & obj)
   if ( newsize <= oldsize )
     partition -> var . seekp (vpos);
   else
-    partition -> var . seekp (0, std::ios::end);
+    partition -> var . seekp (0, ios::end);
 
   //-- Seek to and write new record
   vpos = partition -> var . tellp( );
   partition -> fix . seekp (fpos);
-  partition -> fix . write ((char *)&vpos, sizeof (std::streampos));
+  partition -> fix . write ((char *)&vpos, sizeof (streampos));
   partition -> fix . write ((char *)&(obj . flags_m),
 			    sizeof (Bankable_t::BankableFlags_t));
   obj . writeRecord (partition -> fix, partition -> var);
@@ -701,7 +698,7 @@ void Bank_t::restore (Bankable_t & obj)
   //-- Seek to and read FIX record
   Bankable_t::BankableFlags_t flags;
   BankPartition_t * partition = getPartition (pid);
-  std::streampos fpos = lid * fix_size_m + sizeof (std::streampos);
+  streampos fpos = lid * fix_size_m + sizeof (streampos);
   partition -> fix . seekg (fpos);
   partition -> fix . read ((char *)&flags,
 			   sizeof (Bankable_t::BankableFlags_t));
@@ -715,7 +712,7 @@ void Bank_t::restore (Bankable_t & obj)
 
 
 //----------------------------------------------------- transform --------------
-void Bank_t::transform (std::vector<ID_t> id_map)
+void Bank_t::transform (vector<ID_t> id_map)
 {
   //-- Check preconditions
   if ( !isOpen( ) )
@@ -732,7 +729,7 @@ void Bank_t::transform (std::vector<ID_t> id_map)
   Size_t buffer_size = fix_size_m;
   char * buffer = (char *) SafeMalloc (buffer_size);
 
-  std::streampos vpos;
+  streampos vpos;
   BankPartition_t * thisp;
   BankPartition_t * tranp;
 
@@ -753,7 +750,7 @@ void Bank_t::transform (std::vector<ID_t> id_map)
 	lookup (id_map [i], lid, pid);
 	thisp = getPartition (pid);
 	thisp -> fix . seekg (lid * fix_size_m);
-	thisp -> fix . read ((char *)&vpos, sizeof (std::streampos));
+	thisp -> fix . read ((char *)&vpos, sizeof (streampos));
 	thisp -> var . seekg (vpos);
 	thisp -> fix . read ((char *)&flags,
 			     sizeof (Bankable_t::BankableFlags_t));
@@ -767,7 +764,7 @@ void Bank_t::transform (std::vector<ID_t> id_map)
 
 	//-- Write transformed vpos and Bankable flags
 	vpos = tranp -> var . tellp( );
-	tranp -> fix . write ((char *)&vpos, sizeof (std::streampos));
+	tranp -> fix . write ((char *)&vpos, sizeof (streampos));
 	tranp -> fix . write ((char *)&flags,
 			      sizeof (Bankable_t::BankableFlags_t));
 

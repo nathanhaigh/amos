@@ -329,6 +329,7 @@ Range_t operator| (Range_t a, Range_t b);
 //! \return true if a.begin == b.begin && a.end == b.end, else false
 //!
 bool operator== (Range_t a, Range_t b);
+bool operator!= (Range_t a, Range_t b);
 
 
 //----------------------------------------------------- operator== -------------
@@ -341,6 +342,7 @@ bool operator== (Range_t a, Range_t b);
 //! \return true if distributions have identical values
 //!
 bool operator== (Distribution_t a, Distribution_t b);
+bool operator!= (Distribution_t a, Distribution_t b);
 
 
 //----------------------------------------------------- operator== -------------
@@ -353,6 +355,7 @@ bool operator== (Distribution_t a, Distribution_t b);
 //! \return true if distributions have identical values
 //!
 bool operator== (Tile_t a, Tile_t b);
+bool operator!= (Tile_t a, Tile_t b);
 
 
 //--TEMPORARY
