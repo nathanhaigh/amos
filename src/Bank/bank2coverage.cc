@@ -10,7 +10,7 @@ using namespace std;
 
 bool USE_EID = 1;
 
-bool hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
+inline bool hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
                 Pos_t rangeEnd,   // 0-based exact end of range
                 Pos_t seqOffset,  // 0-bases exact offset of seq
                 Pos_t seqLen,     // count of bases of seq (seqend+1)
@@ -156,21 +156,26 @@ int main (int argc, char ** argv)
            vi++, vectorpos++)
       {
         Render_t rendered;
-        rendered.load(read_bank, vi);
         renderedSeqs.push_back(rendered);
+        renderedSeqs[vectorpos].load(read_bank, vi);
       }
+
+      vector<int> reads;
+      reads.reserve(tiling.size());
+
+      libSlice_Slice s;
+      int dcov;
+      dcov = tiling.size();
+      s.bc = new char [dcov+1];
+      s.qv = new char [dcov];
+      s.rc = new char [dcov];
 
       Pos_t gindex, index;
       for (gindex = 0, index = 1; gindex < clen; gindex++)
       {
         // Figure out which reads tile this position
-        
-        vector<int> reads;
-        vector<char> quals;
-        vector<char> rcs;
-        string bases;
-
         vector<Render_t>::const_iterator ri;
+        dcov = 0;
 
         for (ri =  renderedSeqs.begin(), vectorpos = 0; 
              ri != renderedSeqs.end(); 
@@ -180,36 +185,25 @@ int main (int argc, char ** argv)
                          ri->m_offset, ri->m_nucs.size(), 
                          clen))
           {
-            bases.push_back(ri->m_nucs[gindex - ri->m_offset]);
-            quals.push_back(ri->m_qual[gindex - ri->m_offset]-AMOS::MIN_QUALITY);
-            rcs.push_back(ri->m_rc);
-            reads.push_back(vectorpos+vectoroffset);
+            s.bc[dcov]  = ri->m_nucs[gindex - ri->m_offset];
+            s.qv[dcov]  = ri->m_qual[gindex - ri->m_offset]-AMOS::MIN_QUALITY;
+            s.rc[dcov]  = ri->m_rc;
+            reads[dcov] = vectorpos+vectoroffset;
+
+            dcov++;
           }
         }
 
         // Compute consensus qv
 
-        libSlice_Slice s;
         libSlice_Consensus * consensusResults;
         s.c = consensus[gindex];
-        s.dcov = reads.size();
-        s.bc = (char *) bases.c_str();
-
-        s.qv = (char *) malloc(s.dcov);
-        s.rc = (char *) malloc(s.dcov);
-
-        int j;
-        for (j = 0; j < s.dcov; j++)
-        {
-          s.qv[j] = quals[j];
-          s.rc[j] = rcs[j];
-        }
+        s.dcov = dcov;
+        s.bc[dcov] = '\0';
 
         libSlice_getConsensusParam(&s, &consensusResults, NULL, 0, 0);
         int cqv = consensusResults->qvConsensus;
 
-        free(s.qv);
-        free(s.rc);
         free(consensusResults);
 
         int coordinate = index;
@@ -224,31 +218,34 @@ int main (int argc, char ** argv)
 
         if (consensus[gindex] != '-') { index++; }
 
-        if (!reads.empty())
+        if (dcov)
         {
-          cout << " " << bases << " ";
-          
-          vector<char>::const_iterator q;
-          for (q = quals.begin(); q != quals.end(); q++)
-          {
-            if (q != quals.begin()) { cout << ":"; }
+          cout << " " << s.bc << " ";
 
-            cout << (int) *q;
+          int j;
+          for (j = 0; j < dcov; j++)
+          {
+            if (j) { cout << ":"; }
+
+            cout << (int) s.qv[j];
           }
 
           cout << " ";
 
-          vector<int>::const_iterator r;
-          for (r = reads.begin(); r != reads.end(); r++)
+          for (j = 0; j < dcov; j++)
           {
-            if (r != reads.begin()) { cout << ":"; }
+            if (j) { cout << ":"; }
 
-            cout << *r;
+            cout << (int) reads[j];
           }
         }
 
         cout << endl;
       }
+
+      delete [] s.bc;
+      delete [] s.qv;
+      delete [] s.rc;
 
       vectoroffset += tiling.size();
       contig_count++;
