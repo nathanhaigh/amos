@@ -5,11 +5,13 @@ use TIGR::Foundation;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    runAmos -C config_file [-s start] [-e end] prefix
+    runAmos -C config_file [-s start] [-e end] [-clean] prefix 
 
     if the config file is not specified we use environment variable AMOSCONF
     if a start step is specified (-s) starts with that command
     if an end step is specified (-e) ends with the command prior to the number
+    if -clean is specified, all files except for those listed in the variables INPUTS
+and OUTPUTS get removed from the current directory
 
     e.g.  runAmos -s 1 -e 5   will run steps 1, 2, 3, and 4.
     
@@ -43,10 +45,12 @@ my $conffile;
 my $prefix;
 my $start;
 my $end;
+my $clean;
 
-my $err = $base->TIGR_GetOptions("C=s"  => \$conffile,
-				 "s=i"  => \$start,
-				 "e=i"  => \$end);
+my $err = $base->TIGR_GetOptions("conf|C=s"   => \$conffile,
+				 "start|s=i"  => \$start,
+				 "end|e=i"    => \$end,
+				 "clean"      => \$clean);
 
 if ($err != 1){
     $base->bail("Command line processing failed");
@@ -96,7 +100,7 @@ while (<CONF>){
     
     if ($multiLine){
 	if (/^\.\s*$/) {
-	    if (! $noop){
+	    if ($noop == 0){
 		my $elapsed = time() - $startime;
 		printf ("Elapsed: %s\n", prettyTime($elapsed));
 		$base->logLocal(sprintf ("Elapsed: %s\n", prettyTime($elapsed)), 1);
@@ -109,9 +113,11 @@ while (<CONF>){
         doCommand($_);
 	next;
     }
-    if (/^(\S+)\s*=\s*(\S+)\s*$/){ # variable definition
-	$variables{$1} = substituteVars($2);
-	$base->logLocal("Setting variable $1 to $2", 2);
+    if (/^(\S+)\s*=\s*(\S.*)\s*$/){ # variable definition
+	if (! exists $variables{$1}){
+	    $variables{$1} = substituteVars($2);
+	    $base->logLocal("Setting variable $1 to $2", 2);
+	}
 	next;
     }
     if (/^(\d+)\s*:\s*(\S.*)\s*$/){ # one-line command
@@ -128,7 +134,7 @@ while (<CONF>){
 	}
 	$startime = time();
 	doCommand($2);
-	if (!$noop){
+	if ($noop == 0){
 	    my $elapsed = time() - $startime;
 	    printf ("Elapsed: %s\n", prettyTime($elapsed));
 	    $base->logLocal(sprintf ("Elapsed: %s\n", prettyTime($elapsed)), 1);
@@ -158,6 +164,41 @@ while (<CONF>){
     $base->logError("Don't understand line $.: $_\n");
 }
 
+if (defined $clean){
+    my %pardoned;
+    my @inputs = split(/\s+/, $variables{"INPUTS"});
+    my @outputs = split(/\s+/, $variables{"OUTPUTS"});
+    while (@inputs){
+	print "pardonning input $inputs[$#inputs]\n";
+	$pardoned{pop(@inputs)} = 1;
+    }
+    while (@outputs){
+	print "pardonning output $outputs[$#outputs]\n";
+	$pardoned{pop(@outputs)} = 1;
+    }
+    opendir(DOT, ".") || $base->bail("Cannot open .: $!");
+    while (my $file = readdir(DOT)){
+	if ($file =~ /^.$/    ||
+	    $file =~ /^..$/   ||
+	    $file =~ /^.nfs/  ||
+	    $file =~ /\.log$/ ||
+	    $file =~ /\.error$/){ # pardon the useful files
+	    next;
+	}
+	if (exists $pardoned{$file}){
+	    next;
+	}
+#	print "Removing: $file\n";
+	if (-d $file){
+	    system("rm -rf $file");
+	} else {
+	    unlink $file || $base->logError ("Could not remove $file: $!\n");
+	}
+    }
+    closedir(DOT);
+}
+
+exit(0);
 
 sub doCommand
 {
@@ -168,6 +209,12 @@ sub doCommand
 
     $command = substituteVars($command);
     $base->logLocal("Running: $command", 1);
+
+#save STDOUT and STDERR
+    open(OLDOUT, ">&STDOUT");
+    open(OLDERR, ">&STDERR");
+    open(STDOUT, '>>', $base->getLogFile()); # append to log file
+    open(STDERR, ">&STDOUT");
     my $ret = system($command);
     if ($ret == -1){
 	$base->bail("Failed to spawn command $command: $!\n");
@@ -178,6 +225,10 @@ sub doCommand
 			    $ret / 256)
 		    );
     } 
+    close(STDOUT); close(STDERR);
+#restore STDOUT and STDERR
+    open(STDOUT, ">&OLDOUT");
+    open(STDERR, ">&OLDERR");
 }
 
 sub substituteVars
