@@ -151,7 +151,7 @@ private:
     { curr = NULL; }
     iterator (std::vector<HashNode_t> * iid_bucs_p,
 	      std::vector<HashNode_t> * eid_bucs_p);
-    HashTriple_t & operator*()
+    HashTriple_t & operator*() const
     { return *(curr -> triple); }
     operator HashTriple_t * () const
     { return (curr == NULL ? NULL : curr -> triple); }
@@ -159,11 +159,11 @@ private:
     { return (curr == NULL ? NULL : curr -> triple); }
     iterator & operator++();
     iterator operator++(int)
-      {
-	iterator tmp = *this;
-	this->operator++();
-	return tmp;
-      }
+    {
+      iterator tmp = *this;
+      this->operator++();
+      return tmp;
+    }
   };
 
 
@@ -271,7 +271,7 @@ public:
     { curr = NULL; }
     const_iterator (const std::vector<HashNode_t> * iid_bucs_p,
 		    const std::vector<HashNode_t> * eid_bucs_p);
-    const HashTriple_t & operator*()
+    const HashTriple_t & operator*() const
     { return *(curr -> triple); }
     operator const HashTriple_t * () const
     { return (curr == NULL ? NULL : curr -> triple); }
@@ -279,11 +279,11 @@ public:
     { return (curr == NULL ? NULL : curr -> triple); }
     const_iterator & operator++();
     const_iterator operator++(int)
-      {
-	const_iterator tmp = *this;
-	this->operator++();
-	return tmp;
-      }
+    {
+      const_iterator tmp = *this;
+      this->operator++();
+      return tmp;
+    }
   };
 
 

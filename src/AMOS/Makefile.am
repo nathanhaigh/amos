@@ -108,7 +108,8 @@ libAMOS_a_SOURCES = \
 	Scaffold_AMOS.cc \
 	Sequence_AMOS.cc \
 	Universal_AMOS.cc \
-	datatypes_AMOS.cc
+	datatypes_AMOS.cc \
+	universals_AMOS.cc
 
 
 ##-- END OF MAKEFILE --##

@@ -3,11 +3,12 @@
 #include <cstdlib>
 #include <ctime>
 #include <sstream>
+#include <iostream>
 using namespace std;
 using namespace AMOS;
 
-const string BANK_STORE_DIR = "__bank";
-const string STREAM_STORE_DIR = "__stream";
+const string BANK_STORE_DIR = "_bank_";
+const string STREAM_STORE_DIR = "_stream_";
 
 int main (int argc, char ** argv)
 {
@@ -171,12 +172,11 @@ int main (int argc, char ** argv)
 	 << " consecutive reads\n" << Date( ) << endl << "begin";
     for ( i = 1; readstream >> read; i ++ )
       {
-	/*
-	cout << readstream . getIDMap() . lookupBID (read . getIID( ))
-	     << ": " << read . getIID( )
-	     << ' ' << read . getEID( )
-	     << ' ' << read . getComment( ) << endl;
-	*/
+// 	cout << readstream . getIDMap() . lookupBID (read . getIID( ))
+// 	     << ": " << read . getIID( )
+// 	     << ' ' << read . getEID( )
+// 	     << ' ' << read . getComment( ) << endl;
+
 	if ( i % step == 0 )
 	  cerr << '.';
       }
@@ -205,12 +205,11 @@ int main (int argc, char ** argv)
 	 << " consecutive reads\n" << Date( ) << endl << "begin";
     for ( i = 1; readstream >> read; i ++ )
       {
-	/*
-	cout << readstream . getIDMap() . lookupBID (read . getIID( ))
-	     << ": " << read . getIID( )
-	     << ' ' << read . getEID( )
-	     << ' ' << read . getComment( ) << endl;
-	*/
+// 	cout << readstream . getIDMap() . lookupBID (read . getIID( ))
+// 	     << ": " << read . getIID( )
+// 	     << ' ' << read . getEID( )
+// 	     << ' ' << read . getComment( ) << endl;
+
 	if ( i % step == 0 )
 	  cerr << '.';
       }
