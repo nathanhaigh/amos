@@ -152,7 +152,7 @@ public:
   //!
   //! \return The external ID
   //!
-  const ID_t getEID ( ) const
+  ID_t getEID ( ) const
   {
     return eid_m;
   }
