@@ -84,7 +84,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   new QLabel("   Contig ID", status, "contiglbl");
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
 
-  new QLabel("   Database", status, "dblbl");
+  new QLabel("   Chromo DB", status, "dblbl");
   QLineEdit *  dbpick  = new QLineEdit(status, "dbpick");
 
   QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 

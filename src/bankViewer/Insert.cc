@@ -3,22 +3,22 @@
 using namespace AMOS;
 using namespace std;
 
-int omin (int a, int b)
+static int min (int a, int b)
 {
   return (a < b) ? a : b;
 }
 
-int omax (int a, int b)
+static int max (int a, int b)
 {
   return (a > b) ? a : b;
 }
 
-Insert::Insert(Tile_t * atile, 
-               ID_t     aid,
+Insert::Insert(ID_t     aid,
                ID_t     acontig,
-               Tile_t * btile,
+               Tile_t * atile, 
                ID_t     bid,
                ID_t     bcontig,
+               Tile_t * btile,
                Distribution_t dist,
                int conslen)
 {
@@ -39,15 +39,27 @@ Insert::Insert(Tile_t * atile,
   m_arc = 0;
   m_brc = 0;
 
-  if (atile) { m_arc = (atile->range.end < atile->range.begin); }
-  if (btile) { m_brc = (btile->range.end < btile->range.begin); }
-  
+  // Gapped ranges on the contig
+  Range_t arange, brange;
+
+  if (atile) 
+  { 
+    m_arc = atile->range.isReverse(); 
+    arange.setBegin(atile->offset);
+    arange.setEnd(atile->offset + atile->range.getLength() + atile->gaps.size()-1);
+  }
+
+  if (btile) 
+  { 
+    m_brc = btile->range.isReverse(); 
+    brange.setBegin(btile->offset);
+    brange.setEnd(btile->offset + btile->range.getLength() + btile->gaps.size()-1);
+  }
+
   if (atile && btile)
   {
-    m_loffset = omin(atile->offset, btile->offset);
-
-    m_roffset = omax(atile->offset + atile->range.getLength() + atile->gaps.size() -1,
-                     btile->offset + btile->range.getLength() + btile->gaps.size() -1);
+    m_loffset = min(arange.begin, brange.begin);
+    m_roffset = max(arange.end, brange.end);
 
     m_length = m_roffset - m_loffset + 1;
 
@@ -61,7 +73,17 @@ Insert::Insert(Tile_t * atile,
       m_state = SizeViolation;
     }
 
-    if (m_arc + m_brc != 1)
+
+    // Orientation violation if the reads point in the same direction, or
+    // if there is at least 1 3' base not covered:
+    //   <--------
+    //     -------->
+
+    if ((m_arc + m_brc != 1) ||
+        (m_arc && arange.begin < brange.begin) ||
+        (m_arc && brange.end > arange.end) ||
+        (m_brc && brange.begin < arange.begin) ||
+        (m_brc && arange.end > brange.end))
     {
       m_state = OrientationViolation;
     }
@@ -69,8 +91,8 @@ Insert::Insert(Tile_t * atile,
   else if (atile)
   {
     m_state = LinkingMate;
-    m_loffset = atile->offset;
-    m_roffset = atile->offset + atile->range.getLength() + atile->gaps.size() -1;
+    m_loffset = arange.begin;
+    m_roffset = arange.end;
 
     if (bid == NULL_ID)
     {
@@ -91,8 +113,8 @@ Insert::Insert(Tile_t * atile,
   else if (btile)
   {
     m_state = LinkingMate;
-    m_loffset = btile->offset;
-    m_roffset = btile->offset + btile->range.getLength() + btile->gaps.size() -1;
+    m_loffset = brange.begin;
+    m_roffset = brange.end;
 
     int projected = getProjectedPosition(btile, m_dist);
 
@@ -120,7 +142,7 @@ int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
 {
   const int READLEN = 500;
 
-  if (tile->range.end < tile->range.begin)
+  if (tile->range.isReverse())
   {
     return tile->offset + tile->range.getLength() + tile->gaps.size() - 1 - dist.mean - 3*dist.sd - READLEN;
   }
@@ -128,6 +150,17 @@ int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
   {
     return tile->offset + dist.mean + 3*dist.sd + READLEN;
   }
+}
+
+bool Insert::reasonablyConnected() const
+{
+  if (!m_atile || !m_btile) { return false; }
+
+  return (m_state == Happy) ||
+          (m_state == Insert::SizeViolation && 
+           (m_actual <= m_dist.mean + 10 * m_dist.sd) &&
+           (m_actual > (m_atile->range.getLength() + m_atile->gaps.size() +
+                        m_btile->range.getLength() + m_btile->gaps.size())));
 }
 
 void Insert::setActive(int i, Insert * other)

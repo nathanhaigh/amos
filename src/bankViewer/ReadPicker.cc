@@ -57,7 +57,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
   m_table = new QListView(this, "readpickertbl");
   setCentralWidget(m_table);
   setCaption("Read Chooser");
-  resize(550,500);
+  resize(800,500);
   show();
 
   QToolBar * tool = new QToolBar(this, "tools");

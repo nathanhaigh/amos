@@ -21,7 +21,7 @@ void InsertCanvasItem::drawShape (QPainter & p)
   p.setPen(UIElements::getInsertColor(m_insert->m_state));
   p.setBrush(UIElements::getInsertColor(m_insert->m_state));
 
-  if (m_insert->m_state == Insert::Happy)
+  if (m_insert->m_active == 2)
   {
     drawTile(m_insert->m_atile, p, 'A');
     drawTile(m_insert->m_btile, p, 'B');
