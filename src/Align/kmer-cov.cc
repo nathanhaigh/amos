@@ -191,6 +191,7 @@ static unsigned  Char_To_Binary
    switch  (tolower (ch))
      {
       case  'a' :
+      case  'n' :
         return  0;
       case  'c' :
         return  1;
