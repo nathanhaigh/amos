@@ -18,6 +18,8 @@
 
 namespace AMOS {
 
+typedef char OverlapAdjacency_t;
+
 //================================================ Overlap_t ===================
 //! \brief An overlap relation between to sequencing reads
 //!
@@ -28,6 +30,15 @@ namespace AMOS {
 class Overlap_t : public Universal_t
 {
 
+public:
+
+  static const OverlapAdjacency_t NULL_ADJACENCY = 0;
+  static const OverlapAdjacency_t NORMAL     = 'N';     //!< E,B
+  static const OverlapAdjacency_t ANTINORMAL = 'A';     //!< B,E
+  static const OverlapAdjacency_t INNIE      = 'I';     //!< E,E
+  static const OverlapAdjacency_t OUTIE      = 'O';     //!< B,B
+
+
 private:
 
   Size_t aHang_m;          //!< length of non-overlapping portion of A
@@ -36,11 +47,6 @@ private:
 
 
 protected:
-
-  static const char NORMAL     = 'N';     //!< E,B
-  static const char ANTINORMAL = 'A';     //!< B,E
-  static const char INNIE      = 'I';     //!< E,E
-  static const char OUTIE      = 'O';     //!< B,B
 
   static const uint8_t FIRST_BIT  = 0x1;  //!< adjacency info for 1st read
   static const uint8_t SECOND_BIT = 0x2;  //!< adjacency info for 2nd read
@@ -145,15 +151,16 @@ public:
 
 
   //--------------------------------------------------- getAdjacency -----------
-  //! \brief Get the overlapping ends of the two reads
+  //! \brief Get the overlapping ends of the reads
   //!
-  //! Get the ends of the first and second reads that are overlapping, i.e.
-  //! (E,B), (E,E), (B,B), or (E,B), where (E,B) would mean the end of the
-  //! first contig is overlapping the beginning of the second read.
+  //! Get the overlap information for the reads, i.e. [N]ORMAL (EB),
+  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where B is the
+  //! beginning of the read and E is the end of the read and [N]ORMAL means
+  //! the end of read1 overlaps the beginning of read2.
   //!
-  //! \return The pair of overlapping ends
+  //! \return The pair of adjacent ends
   //!
-  std::pair<char, char> getAdjacency ( ) const;
+  OverlapAdjacency_t getAdjacency ( ) const;
 
 
   //--------------------------------------------------- getAhang ---------------
@@ -205,21 +212,21 @@ public:
 
 
   //--------------------------------------------------- setAdjacency -----------
-  //! \brief Set the overlapping ends of the two reads
+  //! \brief Set the overlapping ends of the reads
   //!
-  //! Set the ends of the first and second reads that overlap, i.e.
-  //! (E,B), (E,E), (B,B), or (E,B), where (E,B) would mean the end of the
-  //! first read overlaps the beginning of the second read. 'B' denotes begin,
-  //! while 'E' denotes end.
+  //! Set the overlap information for the reads, i.e. [N]ORMAL (EB),
+  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where B is the
+  //! beginning of the read and E is the end of the read and EB would mean
+  //! the end of read1 overlaps the beginning of read2.
   //!
   //! \note Will store info in extra portion of BankableFlags
   //!
-  //! \param adj The new adjacent ends (B or E) of the two contigs
-  //! \pre Each char in the pair must be either 'B' or 'E'
+  //! \param adj The new adjacency of the reads
+  //! \pre adj must be one of [NAIO]
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setAdjacency (std::pair<char, char> adj);
+  void setAdjacency (OverlapAdjacency_t adj);
 
 
   //--------------------------------------------------- setAhang ---------------

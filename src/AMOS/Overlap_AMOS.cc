@@ -16,15 +16,19 @@ using namespace std;
 
 //================================================ Overlap_t ===================
 //----------------------------------------------------- getAdjacency -----------
-pair<char, char> Overlap_t::getAdjacency ( ) const
+OverlapAdjacency_t Overlap_t::getAdjacency ( ) const
 {
   //-- first and second adjacency information is stored respectively in bits
-  //   FIRST_BIT and SECOND_BIT. A 0 bit means 'B' and a 1 bit means 'E'.
-  pair<char, char> adj;
-  adj . first  = flags_m . extra & FIRST_BIT  ? 'E' : 'B';
-  adj . second = flags_m . extra & SECOND_BIT ? 'E' : 'B';
-
-  return adj;
+  //   0x1 and 0x2. A 0 bit means 'B' and a 1 bit means 'E'. If 0x4 = 0, then
+  //   no adjacency information exists.
+  if ( flags_m . extra & 0x4 )
+    {
+      if ( flags_m . extra & 0x1 )
+	return flags_m . extra & 0x2 ? INNIE : NORMAL;
+      else
+	return flags_m . extra & 0x2 ? ANTINORMAL : OUTIE;
+    }
+  return NULL_ADJACENCY;
 }
 
 
@@ -47,27 +51,30 @@ Size_t Overlap_t::readRecord (istream & fix,
 
 
 //----------------------------------------------------- setAdjacency -----------
-void Overlap_t::setAdjacency (pair<char, char> adj)
+void Overlap_t::setAdjacency (OverlapAdjacency_t adj)
 {
-  //-- Check preconditions
-  if ( adj . first != 'B'  &&  adj . first != 'E' )
-    AMOS_THROW_ARGUMENT ((string)"Invalid adjacency character: " +
-			 adj . first);
-  if ( adj . second != 'B'  &&  adj . second != 'E' )
-    AMOS_THROW_ARGUMENT ((string)"Invalid adjacency character: " +
-			 adj . second);
-
   //-- first and second adjacency information is stored respectively in bits
-  //   FIRST_BIT and SECOND_BIT. A 0 bit mean 'B' and a 1 bit means 'E'.=
-  if ( adj . first == 'B' )
-    flags_m . extra &= ~FIRST_BIT;
-  else // == 'E'
-    flags_m . extra |= FIRST_BIT;
-
-  if ( adj . second == 'B' )
-    flags_m . extra &= ~SECOND_BIT;
-  else // == 'E'
-    flags_m . extra |= SECOND_BIT;
+  //   0x1 and 0x2. A 0 bit means 'B' and a 1 bit means 'E'. If 0x4 = 0, then
+  //   no adjacency information exists.
+  switch (adj)
+    {
+    case NORMAL:
+    case ANTINORMAL:
+    case INNIE:
+    case OUTIE:
+      flags_m . extra &= ~0x7;
+      if ( adj == NORMAL || adj == INNIE )
+	flags_m . extra |= 0x1;
+      if ( adj == INNIE || adj == ANTINORMAL )
+	flags_m . extra |= 0x2;
+      flags_m . extra |= 0x4;
+      break;
+    case NULL_ADJACENCY:
+      flags_m . extra &= ~0x7;
+      break;
+    default:
+      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency type char: " + adj);
+    }
 }
 
 
