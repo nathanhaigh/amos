@@ -71,7 +71,7 @@ protected:
       case 'T':
         return THYMINE_BITS;
       default:
-	AMOS_THROW_ARGUMENT ("Invalid Kmer character: " + seqchar);
+	AMOS_THROW_ARGUMENT ((std::string)"Invalid Kmer character: " + seqchar);
       }
   }
 
@@ -352,10 +352,14 @@ public:
   //! \brief Set the Kmer sequence string
   //!
   //! Compresses the string and updates the Kmer sequence. Does not alter
-  //! Kmer count or read list, these must be reset manually.
+  //! Kmer count or read list, these must be reset manually. Only the
+  //! characters A,C,G,T are allowed, all other characters will throw an
+  //! exception.
   //!
   //! \param seq The new Kmer sequence string
   //! \pre seq can be longer than MAX_LENGTH (255) bases
+  //! \pre seqchar is A,C,G,T (case insensitive)
+  //! \throws ArgumentException_t
   //! \return void
   //!
   void setSeqString (const std::string & seq);

@@ -92,7 +92,7 @@ Size_t Kmer_t::readRecord (std::istream & fix,
 void Kmer_t::setSeqString (const std::string & seq)
 {
   Size_t size = seq . size( );
-  if ( size > MAX_LENGTH )
+  if ( size > Kmer_t::MAX_LENGTH )
     AMOS_THROW_ARGUMENT ("Kmer sequence is too long");
 
   length_m = size;
