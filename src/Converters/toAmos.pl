@@ -52,6 +52,7 @@ my $libmap;
 my $GOODQUAL = 30;
 my $BADQUAL = 10;
 
+my $minSeqId = 1;  # where to start numbering reads
 my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "x=s"   => \$traceinfofile,
 				 "c=s"   => \$ctgfile,
@@ -65,7 +66,8 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "gq=i"  => \$GOODQUAL,
 				 "bq=i"  => \$BADQUAL,
 				 "q=s"   => \$qualfile,
-				 "s=s"   => \$fastafile);
+				 "s=s"   => \$fastafile,
+				 "id=d"  => \$minSeqId);
 
 
 my $matesDone = 0;
@@ -87,8 +89,10 @@ my %insertlib;  # lib id to insert list
 my %seenlib;    # insert id to lib id map
 my %seqinsert;  # sequence id to insert id map
 my %libnames;   # lib id to lib name
+my %ctgnames;   # ctg id to ctg name
+my %ctgids;     # ctg name to ctg id
 
-my $minSeqId = 1;  # where to start numbering reads
+my $minCtgId = $minSeqId;  # where to start numbering contigs
 
 my $outprefix;
 
@@ -251,12 +255,16 @@ while (my ($lib, $range) = each %libraries){
 # then all the inserts
 while (my ($ins, $lib) = each %seenlib){
     print OUT "{FRG\n";
-    if ($ins =~ /^\d+$/){
-	print OUT "iid:$ins\n";
-	$insid{$ins} = $ins;
-    } else {
-	$insid{$ins} = $minSeqId;
-	print OUT "iid:", $minSeqId++, "\n";
+#    if ($ins =~ /^\d+$/){
+#	print OUT "iid:$ins\n";
+#	$insid{$ins} = $ins;
+#    } else {
+    $insid{$ins} = $minSeqId;
+    print OUT "iid:", $minSeqId++, "\n";
+    print OUT "eid:", $ins, "\n";
+#    }
+    if (! exists $libid{$lib}){ 
+	die ("Have not seen library $lib yet: possible error in input\n");
     }
     print OUT "lib:$libid{$lib}\n";
     print OUT "typ:I\n";
@@ -403,6 +411,12 @@ if (-f "$tmprefix.scf"){
     unlink("$tmprefix.scf") || $base->bail("Cannot remove $tmprefix.scf: $!\n");
 }
 close(OUT);
+
+if ($minSeqId > $minCtgId){
+    print "Max ID: $minSeqId\n";
+} else {
+    print "Max ID: $minCtgId\n";
+}
 
 exit(0);
 
@@ -774,7 +788,11 @@ sub parseAsmFile {
 	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type eq "CCO"){
 	    my $id = getCAId($$fields{acc});
+	    my $iid = $minCtgId++;
 	    my $contiglen = $$fields{len};
+
+	    $ctgnames{$iid} = $id;
+	    $ctgids {$id} = $iid;
 
 	    my $coord;
 
@@ -782,12 +800,12 @@ sub parseAsmFile {
 	    my @consensus = split('\n', $consensus);
 	    $consensus = join('', @consensus);
 
-	    print TMPCTG "#$id\n";
+	    print TMPCTG "#$iid\n";
 	    print TMPCTG $$fields{cns};
 	    print TMPCTG "#\n";
 	    print TMPCTG $$fields{qlt};
 	    
-	    $contigs{$id} = $contiglen;
+	    $contigs{$iid} = $contiglen;
 
 	    for (my $i = 0; $i <= $#$recs; $i++){
 		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
@@ -808,32 +826,37 @@ sub parseAsmFile {
 	    my $off = 0;
 	    print TMPSCF "{SCF\n";
 	    my $id = getCAId($$fields{acc});
+	    my $iid = $minCtgId++;
+	    $ctgids{$id} = $iid;
+	    $ctgnames{$iid} = $id;
+	    print TMPSCF "iid:$iid\n";
+	    print TMPSCF "eid:$id\n";
 	    for (my $i = 0; $i <= $#$recs; $i++){
 		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		if ($sid eq "CTP"){
 		    print TMPSCF "{TLE\n";
-		    print TMPSCF "src:$$sfs{ct1}\n";
+		    print TMPSCF "src:$ctgids{$$sfs{ct1}}\n";
 		    print TMPSCF "off:$off\n";
 		    if ($$sfs{ori} eq "N" ||
 			$$sfs{ori} eq "I"){
-			print TMPSCF "clr:0,$contigs{$$sfs{ct1}}\n";
+			print TMPSCF "clr:0,$contigs{$ctgids{$$sfs{ct1}}}\n";
 		    } else {
-			print TMPSCF "clr:$contigs{$$sfs{ct1}},0\n";
+			print TMPSCF "clr:$contigs{$ctgids{$$sfs{ct1}}},0\n";
 		    }
 		    print TMPSCF "}\n";
-		    $off += $contigs{$$sfs{ct1}};
+		    $off += $contigs{$ctgids{$$sfs{ct1}}};
 		    $off += int($$sfs{mea});
 
 		    if ($i == $#$recs &&
 			$$sfs{ct1} != $$sfs{ct2}){
 			print TMPSCF "{TLE\n";
-			print TMPSCF "src:$$sfs{ct2}\n";
+			print TMPSCF "src:$ctgids{$$sfs{ct2}}\n";
 			print TMPSCF "off:$off\n";
 			if ($$sfs{ori} eq "N" ||
 			    $$sfs{ori} eq "O"){
-			    print TMPSCF "clr:0,$contigs{$$sfs{ct2}}\n";
+			    print TMPSCF "clr:0,$contigs{$ctgids{$$sfs{ct2}}}\n";
 			} else {
-			    print TMPSCF "clr:$contigs{$$sfs{ct2}},0\n";
+			    print TMPSCF "clr:$contigs{$ctgids{$$sfs{ct2}}},0\n";
 			}
 			print TMPSCF "}\n";
 		    }
@@ -843,8 +866,8 @@ sub parseAsmFile {
 	} # if type eq SCF
 	if ($type eq "CLK"){
 	    print TMPSCF "{CTE\n";
-	    print TMPSCF "ct1:$$fields{co1}\n";
-	    print TMPSCF "ct2:$$fields{co2}\n";
+	    print TMPSCF "ct1:$ctgids{$$fields{co1}}\n";
+	    print TMPSCF "ct2:$ctgids{$$fields{co2}}\n";
 	    print TMPSCF "adj:$$fields{ori}\n";
 	    print TMPSCF "sze:$$fields{mea}\n";
 	    print TMPSCF "std:$$fields{std}\n";
@@ -867,6 +890,7 @@ sub parseTAsmFile {
     my $srend;
     my $sid;
     my $consensus;
+    my $iid;
     while (<$IN>){
 	if (/^sequence\s+(\w+)/){
 	    $len = length($1);
@@ -875,7 +899,10 @@ sub parseTAsmFile {
 	}
 	if (/^asmbl_id\s+(\w+)/){
 	    $ctg = $1;
-	    $contigs{$ctg} = $len;  # here we assume that length 
+	    $iid = $minCtgId++;
+	    $ctgnames{$iid} = $ctg;
+	    $ctgids{$ctg} = $iid;
+	    $contigs{$iid} = $len;  # here we assume that length 
                                     # was already computed
 	    next;
 	}
@@ -889,8 +916,8 @@ sub parseTAsmFile {
 		$sid = $seqids{$sname};
 	    }
 
-	    $seqcontig{$sid} = $ctg;
-	    $contigseq{$ctg} .= "$sid ";
+	    $seqcontig{$sid} = $iid;
+	    $contigseq{$iid} .= "$sid ";
 	    next;
 	}
 	if (/^asm_lend\s+(\d+)/){
@@ -942,9 +969,13 @@ sub parseACEFile {
     my %rc;
     my $seq;
     my @gaps;
+    my $iid;
     while (<$IN>){
 	if (/^CO (\S+) (\d+) (\d+)/){
 	    $contigName = $1;
+	    $iid = $minCtgId++;
+	    $ctgnames{$iid} = $contigName;
+	    $ctgids{$contigName} = $iid;
 	    $contigLen = $2;
 	    $contigSeqs = $3;
 	    $inContig = 1;
@@ -961,7 +992,7 @@ sub parseACEFile {
 		push(@gaps, $gap + 1);
 		$gap = index($seq, "-", $gap + 1);
 	    }
-	    $contigs{$contigName} = $contigLen;
+	    $contigs{$iid} = $contigLen;
 	    
 	    next;
 	}
@@ -1037,8 +1068,8 @@ sub parseACEFile {
 	    } else {
 		$seqId = $seqids{$seqName};
 	    }
-	    $seqcontig{$seqId} = $contigName;
-	    $contigseq{$contigName} .= "$seqId ";
+	    $seqcontig{$seqId} = $iid;
+	    $contigseq{$iid} .= "$seqId ";
 	    $seq_range{$seqId} = "$cll $clr";
 	    $asm_range{$seqId} = "$asml $asmr";
 	    next;
@@ -1065,6 +1096,7 @@ sub parseContigFile {
     my @sdels;
     my $ndel;
     my $slen;
+    my $iid;
 
     my $first = 1;
     while (<$IN>){
@@ -1075,7 +1107,10 @@ sub parseContigFile {
 	    $first = 0;
 	    $consensus = "";
 	    $ctg = $1;
-	    $contigs{$ctg} = $2;
+	    $iid = $minCtgId++;
+	    $ctgids{$ctg} = $iid;
+	    $ctgnames{$iid} = $ctg;
+	    $contigs{$iid} = $2;
 	    $incontig = 1;
 	    $slen = 0;
 	    next;
@@ -1083,7 +1118,7 @@ sub parseContigFile {
 
 	if (/^\#(\S+)\((\d+)\) .*\{(\d+) (\d+)\} <(\d+) (\d+)>/){
 	    if ($incontig == 1){
-		print TMPCTG "#$ctg\n";
+		print TMPCTG "#$iid\n";
 		for (my $c = 0; $c < length($consensus); $c+=60){
 		    print TMPCTG substr($consensus, $c, 60), "\n";
 		}
@@ -1114,8 +1149,8 @@ sub parseContigFile {
 		$sid = $seqids{$sname};
 	    }
 	    
-	    $seqcontig{$sid} = $ctg;
-	    $contigseq{$ctg} .= "$sid ";
+	    $seqcontig{$sid} = $iid;
+	    $contigseq{$iid} .= "$sid ";
 	    
 	    $alend = $2;
 	    
