@@ -10,7 +10,8 @@ bin_PROGRAMS = \
 	dumpmates \
 	dumpreads \
 	grow-readbank \
-	load-overlaps
+	load-overlaps \
+	bank2contig
 
 
 ##-- GLOBAL INCLUDE
@@ -25,6 +26,14 @@ bank_mapping_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 bank_mapping_SOURCES = \
 	bank-mapping.cc
+
+##-- bank2contig
+bank2contig_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+bank2contig_SOURCES = \
+	bank2contig.cc
+
 
 ##-- bank-report
 bank_report_LDADD = \
