@@ -329,6 +329,14 @@ void ParseArgs (int argc, char ** argv)
       errflg ++;
     }
 
+  if ( OPT_Create  &&
+       !OPT_ForceCreate  &&
+       !access (OPT_BankName . c_str( ), F_OK) )
+    {
+      cerr << "ERROR: Bank path already exists\n";
+      errflg ++;
+    }
+
   if ( errflg > 0 || argc != optind )
     {
       PrintUsage (argv[0]);

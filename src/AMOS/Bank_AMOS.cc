@@ -23,14 +23,10 @@
 using namespace AMOS;
 using namespace std;
 
-#ifndef PACKAGE_VERSION
-#define PACKAGE_VERSION "?.?.?"
-#endif
-
 
 
 //================================================ Bank_t ======================
-const string  Bank_t::BANK_VERSION     = PACKAGE_VERSION;
+const string  Bank_t::BANK_VERSION     = "1.4";
 const string  Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string  Bank_t::IFO_STORE_SUFFIX = ".ifo";
 const string  Bank_t::VAR_STORE_SUFFIX = ".var";

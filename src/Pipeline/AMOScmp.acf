@@ -20,7 +20,7 @@ OUTPUTS = $(CONTIG) $(FASTA)
 
 
 ## Building AMOS bank
-10: $(BINDIR)/bank-transact -c -f -z -b $(BANK) -m $(TGT)
+10: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(TGT)
 
 ## Collecting clear range sequences
 20: $(BINDIR)/dumpreads $(BANK) > $(SEQS)

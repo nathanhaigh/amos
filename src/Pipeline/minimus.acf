@@ -14,7 +14,7 @@ OUTPUTS = $(CONTIG)
 
 
 ## Building AMOS bank
-10: $(BINDIR)/bank-transact -c -f -z -b $(BANK) -m $(TGT)
+10: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(TGT)
 
 ## Running overlap
 20: $(BINDIR)/hash-overlap -B $(BANK)
