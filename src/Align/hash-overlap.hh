@@ -4,6 +4,7 @@
 //
 //  Last Modified:  Tue May 25 09:45:25 EDT 2004
 //                  Thu Jul  1 17:29:28 EDT 2004 (amp)
+//                  Tue Aug 24 15:30:52 EDT 2004 (amp)
 //
 //  Declarations for  simple-overlap.cc
 
@@ -138,11 +139,11 @@ static void  Check_IDs
 static void  Find_Fwd_Overlaps
     (const vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht,
-     const vector <ID_t> & id_list);
+     const vector <ID_t> & id_list, BankStream_t & overlap_bank);
 static void  Find_Rev_Overlaps
     (vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht,
-     const vector <ID_t> & id_list);
+     const vector <ID_t> & id_list, BankStream_t & overlap_bank);
 static void  Get_Strings_From_Bank
     (vector <char *> & s, vector <char *> & q,
      vector <Range_t> & clr_list, vector <ID_t> & id_list,
@@ -151,7 +152,7 @@ static void  Map_Minimizers
     (const vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht);
 static void  Output
-    (ostream & os, const Simple_Overlap_t & olap);
+    (ostream & os, BankStream_t & overlap_bank, const Simple_Overlap_t & olap);
 static void  Parse_Command_Line
     (int argc, char * argv []);
 static void  Read_Fasta_Strings

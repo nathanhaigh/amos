@@ -4,6 +4,7 @@
 //
 //  Last Modified:  Tue May 25 09:42:14 EDT 2004
 //                  Thu Jul  1 17:29:28 EDT 2004 (amp)
+//                  Tue Aug 24 15:30:52 EDT 2004 (amp)
 //
 //  Compute overlaps among an input set of sequences by
 //  creating a hash table of minimizers to use as seed
@@ -17,10 +18,9 @@
 
 #define  USE_SIMPLE_OVERLAP  0
 
-
-static bool  AMOS_Output = false;
-  // Determines whether output is AMOS messages or simple
-  // text lines
+static bool  AMOS_Message_Output = false;
+static bool  AMOS_Bank_Output = false;
+  // Determines whether output is AMOS messages, banks
 static string  Input_Name;
   // Name of file or read bank from which reads are obtained
 static double  Error_Rate = DEFAULT_ERROR_RATE;
@@ -42,6 +42,7 @@ int  main
 
   {
    BankStream_t  read_bank (Read_t::NCODE);
+   BankStream_t  overlap_bank (Overlap_t::NCODE);
    Simple_Overlap_t  olap;
    vector <char *>  string_list, qual_list;
    vector <char *>  tag_list;
@@ -82,13 +83,23 @@ int  main
            Get_Strings_From_Bank (string_list, qual_list, clr_list,
 				  id_list, tag_list, read_bank);
 	   read_bank . close ();
+
+	   if ( AMOS_Bank_Output )
+	     {
+	       if ( overlap_bank . exists (Input_Name) )
+		 overlap_bank . open (Input_Name);
+	       else
+		 overlap_bank . create (Input_Name);
+	     }
           }
 
       Map_Minimizers (string_list, hash_table);
 
-      Find_Fwd_Overlaps (string_list, hash_table, id_list);
+      Find_Fwd_Overlaps (string_list, hash_table, id_list, overlap_bank);
 
-      Find_Rev_Overlaps (string_list, hash_table, id_list);
+      Find_Rev_Overlaps (string_list, hash_table, id_list, overlap_bank);
+
+      overlap_bank . close( );
      }
    catch (Exception_t & e)
      {
@@ -191,7 +202,7 @@ static void  Check_IDs
 static void  Find_Fwd_Overlaps
     (const vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht,
-     const vector <ID_t> & id_list)
+     const vector <ID_t> & id_list, BankStream_t & overlap_bank)
 
 //  Find all overlaps between pairs of strings in  string_list
 //  where both are in the forward orientation and share
@@ -261,7 +272,7 @@ static void  Find_Fwd_Overlaps
              olap . a_id = id_list [i];
              olap . b_id = id_list [b];
              olap . flipped = false;
-             Output (cout, olap);
+             Output (cout, overlap_bank, olap);
             }
        }
 
@@ -277,7 +288,7 @@ static void  Find_Fwd_Overlaps
 static void  Find_Rev_Overlaps
     (vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht,
-     const vector <ID_t> & id_list)
+     const vector <ID_t> & id_list, BankStream_t & overlap_bank)
 
 //  Find all overlaps between pairs of strings in  string_list
 //  where the lower-numbered string is in the reverse orientation
@@ -369,7 +380,7 @@ static void  Find_Rev_Overlaps
               olap . a_id = id_list [i];
               olap . b_id = id_list [b];
               olap . flipped = true;
-              Output (cout, olap);
+              Output (cout, overlap_bank, olap);
              }
         }
 
@@ -579,42 +590,50 @@ static void  Map_Minimizers
 
 
 static void  Output
-     (ostream & os, const Simple_Overlap_t & olap)
+     (ostream & os, BankStream_t & overlap_bank, const Simple_Overlap_t & olap)
 
 //  Print the contents of  olap  to  fp .
 
   {
-   if  (AMOS_Output)
-       {
-        Message_t  msg;
+    if  ( AMOS_Message_Output || AMOS_Bank_Output )
+      {
         AMOS :: Overlap_t  ovl;
         std :: pair <ID_t, ID_t>  read_pair;
 
         if  (olap . flipped)
-            ovl . setAdjacency (Overlap_t :: INNIE);
-          else
-            ovl . setAdjacency (Overlap_t :: NORMAL);
+	  ovl . setAdjacency (Overlap_t :: INNIE);
+	else
+	  ovl . setAdjacency (Overlap_t :: NORMAL);
         read_pair . first = olap . a_id;
         read_pair . second = olap . b_id;
         ovl . setReads (read_pair);
         ovl . setAhang (olap . a_hang);
         ovl . setBhang (olap . b_hang);
-        ovl . writeMessage (msg);
-        msg . write (cout);
-       }
-     else
-       {
+
+	if ( AMOS_Bank_Output )
+	  {
+	    overlap_bank << ovl;
+	  }
+	else // AMOS_Message_Output
+	  {
+	    Message_t  msg;
+	    ovl . writeMessage (msg);
+	    msg . write (cout);
+	  }
+      }
+    else
+      {
         char  line [MAX_LINE];
         
         sprintf (line, "%5d %5d  %c %5d %5d  %5d %5d  %5d  %3d  %4.2f\n",
-             olap . a_id, olap . b_id, olap . flipped ? 'I' : 'N',
-             olap . a_hang, olap . b_hang,
-             olap . a_olap_len, olap . b_olap_len, olap . score,
-             olap . errors,
-             200.0 * olap . errors
-                  / (olap . a_olap_len + olap . b_olap_len));
+		 olap . a_id, olap . b_id, olap . flipped ? 'I' : 'N',
+		 olap . a_hang, olap . b_hang,
+		 olap . a_olap_len, olap . b_olap_len, olap . score,
+		 olap . errors,
+		 200.0 * olap . errors
+		 / (olap . a_olap_len + olap . b_olap_len));
         os << line;
-       }
+      }
 
    return;
   }
@@ -633,12 +652,16 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "Ab:e:Fho:v:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:")) != EOF))
      switch  (ch)
        {
         case  'A' :
-          AMOS_Output = true;
+          AMOS_Message_Output = true;
           break;
+
+        case  'B' :
+          AMOS_Bank_Output = true;
+	  break;
 
         case  'b' :
           Lo_ID = strtol (optarg, NULL, 10);
@@ -670,6 +693,18 @@ static void  Parse_Command_Line
         default :
           errflg = true;
        }
+
+   if ( AMOS_Message_Output  &&  AMOS_Bank_Output )
+     {
+       fprintf (stderr, "The -A and -B options are mutually exclusive\n");
+       errflg = true;
+     }
+
+   if ( AMOS_Bank_Output  &&  FASTA_Input )
+     {
+       fprintf (stderr, "The -B and -F options are mutually exclusive\n");
+       errflg = true;
+     }
 
    if  (errflg)
        {
@@ -767,7 +802,8 @@ static void  Usage
 	   "sequence index for fasta file input.\n"
            "\n"
            "Options:\n"
-           "  -A       Output AMOS-format messages\n"
+           "  -A       Output AMOS-format messages instead of default\n"
+           "  -B       Output to AMOS bank instead of default\n"
            "  -b <n>   Use <n> as lowest read index (0 based inclusive)\n"
            "  -e <n>   Use <n> as highest read index (0 based exclusive)\n"
            "  -F       Input is from multi-fasta file <input-name>\n"
