@@ -45,7 +45,7 @@ my $VERSION = '1.0 ($Revision$)';
 $base->setVersionInfo($VERSION);
 
 my $HELPTEXT = qq~
-    tarchive2ca -o <out_prefix> [-c <clear_ranges>] fasta1 ... fastan
+    tarchive2amos -o <out_prefix> [-c <clear_ranges>] fasta1 ... fastan
 
    <out_prefix>   - prefix for the output files
    <clear_ranges> - file containing clear ranges for the reads.  If this file
