@@ -1,12 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 //! \file
 //! \author Adam M Phillippy
-//! \date 02/20/2004
+//! \date 02/25/2004
 //!
-//! \brief Reads an AMOS message and displays summary information
+//! \brief Reads an AMOS message and extracts the requested message types
 //!
-//! message-count reads an AMOS message and displays the number of each top-
-//! level message, along with their total and average sizes.
+//! message-extract reads an AMOS message and extracts the requested message
+//! types to stdout.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -14,7 +14,6 @@
 #include "messages_AMOS.hh"
 #include "alloc.hh"
 #include <fstream>
-#include <vector>
 #include <unistd.h>
 using namespace AMOS;
 using namespace Message_k;
