@@ -39,6 +39,8 @@ public:
   int key;
 
   bool hidden;
+  
+  string color;
 
   /* nodes that the edge is connected */
   /** source if node is directed */
@@ -58,10 +60,13 @@ public:
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }
 
+  void setColor(string p_color) { color = p_color; }
+  string getColor() const { return color; }
+
   int getHidden() const { return hidden; }
   void setHidden(bool p_hidden) { hidden = p_hidden; }
 
-  unsigned long getFlags() const { return key; }
+  unsigned long getFlags() const { return flags; }
   void setFlags(unsigned long p_flags) { flags = p_flags; }
   bool isDirected() const { return flags & DIRECT_MASK; }
   void setDirected(bool p_bit) { flags |= p_bit; }

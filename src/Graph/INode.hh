@@ -30,6 +30,8 @@ typedef list< IEdge* >::iterator IEdgeIterator;
 class INode {
 public:
 
+  virtual void setColor(const string p_color) = 0;
+  virtual string getColor() const = 0;
 
   virtual void* getElement() const = 0;
   virtual void setElement(void* p_element) = 0;
@@ -48,6 +50,7 @@ public:
 
   virtual int getHidden() const = 0;
   virtual void setHidden(bool p_hidden) = 0;
+  virtual void setNodeHidden(bool p_hidden) = 0;
   virtual unsigned long getFlags() const = 0;
   virtual void setFlags(unsigned long p_flags) = 0;
 

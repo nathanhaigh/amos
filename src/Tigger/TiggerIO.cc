@@ -15,6 +15,7 @@ static bool AMOS_mode = false;
 static string bankdir;
 
 static bool UMD_mode = false;
+static bool GRAPH = false;
 static string read_file;
 static string overlap_file;
 static string contig_file;
@@ -128,7 +129,7 @@ static void parse_command_line(int argc, char* argv[]) {
 
   optarg = NULL;
 
-  while (!errflg && ((ch = getopt(argc, argv, "r:l:b:hv")) != EOF)) {
+  while (!errflg && ((ch = getopt(argc, argv, "r:l:b:hgv")) != EOF)) {
     switch  (ch) {
     case 'b' :
       AMOS_mode = true;
@@ -149,6 +150,10 @@ static void parse_command_line(int argc, char* argv[]) {
       
     case 'h' :
       errflg = true;
+      break;
+
+    case 'g' :
+      GRAPH = true;
       break;
 
     case 'v':
@@ -211,6 +216,10 @@ int main(int argc, char** argv) {
   } else {
 
     cout << " Error with inputs, no mode was set" << endl;
+  }
+
+  if(GRAPH) {
+    tigger.graph->create_dot_file("test2.dot");
   }
 
 }

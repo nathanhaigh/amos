@@ -51,6 +51,8 @@ public:
 
   int parent;
 
+  string color;
+
   unsigned long flags;
 
   Node(void* p_element) : element(p_element) {
@@ -58,11 +60,15 @@ public:
     depth = 0;
     parent = -1;
     hidden = false;
+    color = "black";
   }
 
   /* Setters & Getters */
   void* getElement() const { return element; }
   void setElement(void* p_element) { element = p_element; }
+
+  void setColor(const string p_color) { color = p_color; }
+  string getColor() const { return color; }
   
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }
@@ -82,6 +88,10 @@ public:
       edge = (*edges);
       edge->setHidden(p_hidden);
     }
+  }
+
+  void setNodeHidden(bool p_hidden) {
+    hidden = p_hidden;
   }
 
   int getInterval() const { return interval; }

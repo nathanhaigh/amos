@@ -31,6 +31,9 @@ class IEdge {
 
 public:
 
+  virtual void setColor(string p_color) = 0;
+  virtual string getColor() const = 0;
+
   virtual   void* getElement() const = 0;
   virtual   void setElement(void* p_element) = 0;
   

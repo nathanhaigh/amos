@@ -203,8 +203,9 @@ void Graph::create_dot_file(const char* p_filename) {
     n = (*nodeIter).second;
     if(! n->getHidden()) {
       int key = (*nodeIter).first;
-      dotOut << "  " <<  key << " [shape=house,orientation=270,URL=\"";
-      dotOut << key << ".html\"];" << endl;
+      dotOut << "  " <<  key << " [shape=house,orientation=270";
+      dotOut << ", color=" << n->getColor();
+      dotOut << ",URL=\"" << key << ".html\"];" << endl;
     }
   }
 
@@ -219,7 +220,10 @@ void Graph::create_dot_file(const char* p_filename) {
       n1 = e->getSource();
       n2 = e->getTarget();
       
-      dotOut << "  " << n1->getKey() << " -> " << n2->getKey() << " [label=\"" << e->getKey() << "\"]; " << endl;
+      dotOut << "  " << n1->getKey() << " -> " << n2->getKey();
+      dotOut << " [label=\"" << e->getKey() << "\"";
+      dotOut << ", color=" << e->getColor();
+      dotOut << "]; " << endl;
 
     }
   }
