@@ -58,9 +58,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_slider->setTracking(0);
 
   // slider <-> tiling
-  connect(m_slider, SIGNAL(valueChanged(int)),
-          tiling, SLOT(setGindex(int)) );
-
   connect(tiling, SIGNAL(gindexChanged(int)),
           m_slider, SLOT(setValue(int)) );
 
