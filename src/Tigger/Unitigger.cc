@@ -484,7 +484,6 @@ IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg) {
     e->setFlags(1);
     n->setFlags(1);
     ctg->start_node = n->getKey();
-    cout << " contig first read now is " << n->getKey() << endl;
   }
   
   if((omatch == 1) && (imatch == 0)) {
@@ -632,10 +631,11 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
   // read to layout
   Read* set_read = (Read*) p_edge->opposite(p_node)->getElement();
 
-  cout << " layout read " << lay_read->id << " against " << set_read->id << endl;
-
-  set_read->print();
-  olap->print();
+  if(VERBOSE) {
+    cout << " layout read " << lay_read->id << " against " << set_read->id << endl;
+    set_read->print();
+    olap->print();
+  }
   
   int ahang = olap->ahang;
   int len = lay_read->len;
@@ -705,10 +705,10 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
     cerr << " ***** layout read error: negative coordinates for " << lay_read->id << endl;
   }
 
-  cout << " done " << lay_read->start << ", " << lay_read->end << endl;
-  lay_read->print();
-
-  if(VERBOSE) cout << " end read layout " << endl;
+  if(VERBOSE) {
+    cout << " done " << lay_read->start << ", " << lay_read->end << endl;
+    lay_read->print();
+  }
   
 }
 
