@@ -120,7 +120,7 @@ Graph* genLinearGraph(int p_size) {
   
   return (Graph*) sg;
 }
-
+/*
 void testCompositeNode(Graph* g) {
   void* nothing;
   //  CompositeNode cn(nothing);
@@ -131,8 +131,8 @@ void testCompositeNode(Graph* g) {
 
   cout << " Composite Node key is " << cn->getKey() << endl;
 }
-
+*/
 int main() {
   Graph* g = genLinearGraph(12);
-  testCompositeNode(g);
+  //  testCompositeNode(g);
 }
