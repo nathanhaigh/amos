@@ -606,6 +606,27 @@ int main(int argc, char ** argv)
   bool noop = false;
 
   allstart = time(NULL);
+
+
+  char * temp;
+  string user;
+  string host;
+  
+  temp = getenv("USER");
+  if (temp == NULL) 
+    user = "UNKNOWN";
+  else
+    user = string(temp);
+
+  temp = getenv("HOSTNAME");
+  if (temp == NULL)
+    host = "UNKNOWN";
+  else
+    host = string(temp);
+
+  logFile << timeStr() << "Started by " << user << "@" << host << " on " 
+	  << ctime(&allstart) << endl;
+
   // before running make sure everything is kosher
   if (globals.find("ocd") != globals.end()){
     globals.erase("ocd");
