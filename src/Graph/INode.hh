@@ -12,7 +12,7 @@ typedef list< IEdge* >::iterator IEdgeIterator;
 
 
 /**
- * The <b>INode</b> interface
+ * The <b>INode</b> class is a interface
  *
  *
  * <p>Copyright &copy; 2004, The Institute for Genomic Research (TIGR).
