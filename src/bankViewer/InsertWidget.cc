@@ -167,7 +167,7 @@ void InsertWidget::refreshCanvas()
 
     cerr << "Loading mates" << endl;
     Insert * insert;
-    map<ID_t, ID_t>::iterator mi;
+    DataStore::MateLookupMap::iterator mi;
 
     // For each read in the contig
     SeqTileMap_t::iterator ai;
@@ -201,7 +201,7 @@ void InsertWidget::refreshCanvas()
       {
         matelisted++;
 
-        ID_t bid = mi->second;
+        ID_t bid = mi->second.first;
         ID_t bcontig = AMOS::NULL_ID;
         Tile_t * btile = NULL;
 

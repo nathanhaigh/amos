@@ -13,16 +13,16 @@ using namespace std;
 
 
 
-class ContigListItem : public QListViewItem
+class FeatureListItem : public QListViewItem
 {
 public:
-  ContigListItem(QListView * parent, 
-                 QString eid,
-                 QString type,
-                 QString group,
-                 QString end5,
-                 QString end3,
-                 QString comment)
+  FeatureListItem(QListView * parent, 
+                  QString eid,
+                  QString type,
+                  QString group,
+                  QString end5,
+                  QString end3,
+                  QString comment)
                
     : QListViewItem(parent, eid, type, group, end5, end3, comment)
     {
@@ -39,7 +39,7 @@ public:
     }
     else
     {
-      return strcmp(key(col,ascending), i->key(col,ascending));
+      return key(col,ascending).compare(i->key(col,ascending));
     }
   }
 };
@@ -99,13 +99,13 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
          ti != datastore->m_contig.getFeatures().end();
          ti++)
     {
-      new ContigListItem(m_table,
-                         QString(ti->eid),
-                         QString((QChar)(char)ti->type),
-                         QString(ti->group),
-                         QString::number(ti->range.begin),
-                         QString::number(ti->range.end),
-                         QString(ti->comment));
+      new FeatureListItem(m_table,
+                          QString(ti->eid),
+                          QString((QChar)(char)ti->type),
+                          QString(ti->group),
+                          QString::number(ti->range.begin),
+                          QString::number(ti->range.end),
+                          QString(ti->comment));
     }
 
     setCursor(orig);

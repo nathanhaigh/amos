@@ -30,7 +30,7 @@ public:
   {
     if (col == 1)
     {
-      return strcmp(key(col,ascending), i->key(col,ascending));
+      return key(col,ascending).compare(i->key(col,ascending));
     }
     else
     {

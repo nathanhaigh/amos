@@ -23,7 +23,10 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
+    cerr << "open red bank" << endl;
     read_bank.open(bankname,   B_SPY);
+
+    cerr << "open ctg bank" << endl;
     contig_bank.open(bankname, B_SPY);
 
     m_bankname = bankname;
@@ -56,7 +59,9 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
+    cerr << "open edg bank" << endl;
     edge_bank.open(bankname, B_SPY);
+    cerr << "open lnk bank" << endl;
     link_bank.open(bankname, B_SPY);
   }
   catch (Exception_t & e)
@@ -88,8 +93,8 @@ void DataStore::loadMates()
   Matepair_t mates;
   while (mate_bank >> mates)
   {
-    m_readmatelookup[mates.getReads().first] = mates.getReads().second;
-    m_readmatelookup[mates.getReads().second] = mates.getReads().first;
+    m_readmatelookup[mates.getReads().first]  = pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().second, mates.getType());
+    m_readmatelookup[mates.getReads().second] = pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().first,  mates.getType());
   }
 
   cerr << "Loaded mates for " << m_readmatelookup.size() << " reads" << endl;

@@ -13,12 +13,14 @@ using namespace std;
 
 
 
-class ContigListItem : public QListViewItem
+class ReadListItem : public QListViewItem
 {
 public:
-  ContigListItem(QListView * parent, 
+  ReadListItem(QListView * parent, 
                  QString iid,
                  QString eid,
+                 QString type,
+                 QString matetype,
                  QString offset,
                  QString endoffset,
                  QString len,
@@ -27,19 +29,20 @@ public:
                  QString seqr,
                  QString mean)
                
-    : QListViewItem(parent, iid, eid, offset, endoffset, len, dir, seql, seqr) 
+    : QListViewItem(parent, iid, eid, type, matetype, offset, endoffset, len, dir) 
     {
-      setText(8, mean);
-      
+      setText(8, seql);
+      setText(9, seqr);
+      setText(10, mean);
     }
 
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 1 || col == 5)
+    if (col == 1 || col == 2 || col==3 || col == 7)
     {
-      return strcmp(key(col,ascending), i->key(col,ascending));
+      return key(col,ascending).compare(i->key(col,ascending));
     }
     else
     {
@@ -88,6 +91,8 @@ ReadPicker::ReadPicker(DataStore * datastore,
 
   m_table->addColumn("IID");
   m_table->addColumn("EID");
+  m_table->addColumn("Type");
+  m_table->addColumn("MateType");
   m_table->addColumn("Offset");
   m_table->addColumn("End Offset");
   m_table->addColumn("Length");
@@ -117,17 +122,33 @@ ReadPicker::ReadPicker(DataStore * datastore,
     {
       AMOS::Distribution_t dist = datastore->getLibrarySize(ti->source);
 
+      AMOS::Read_t red;
+      datastore->read_bank.fetch(ti->source, red);
+      char type = red.getType();
+      if (type == 0) { type = '?'; }
+
+      DataStore::MateLookupMap::iterator mi = datastore->m_readmatelookup.find(ti->source);
+      char mateType = '?';
+
+      if (mi != datastore->m_readmatelookup.end())
+      {
+        mateType = mi->second.second;
+        if (mateType == 0) { mateType = '?'; }
+      }
+
       int len = ti->range.getLength() + ti->gaps.size();
-      new ContigListItem(m_table,
-                         QString::number(ti->source),
-                         datastore->read_bank.lookupEID(ti->source),
-                         QString::number(ti->offset),
-                         QString::number(ti->offset + len - 1),
-                         QString::number(len),
-                         ((ti->range.isReverse())?"R":"F"),
-                         QString::number(ti->range.begin),
-                         QString::number(ti->range.end),
-                         QString::number(dist.mean));
+      new ReadListItem(m_table,
+                       QString::number(ti->source),
+                       datastore->read_bank.lookupEID(ti->source),
+                       QString(QChar(type)),
+                       QString(QChar(mateType)),
+                       QString::number(ti->offset),
+                       QString::number(ti->offset + len - 1),
+                       QString::number(len),
+                       ((ti->range.isReverse())?"R":"F"),
+                       QString::number(ti->range.begin),
+                       QString::number(ti->range.end),
+                       QString::number(dist.mean));
     }
 
     setCursor(orig);

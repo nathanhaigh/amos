@@ -50,6 +50,11 @@ public:
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
+    if (col == 2)
+    {
+      return key(col,ascending).compare(i->key(col,ascending));
+    }
+
     return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
   }
 };
