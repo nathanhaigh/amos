@@ -3,7 +3,7 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	asmQC
+	asmQC 
 dist_bin_SCRIPTS = \
 #	asmQC.pl \
 	coords2cam.pl \
