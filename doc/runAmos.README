@@ -37,6 +37,7 @@ export AMOSCONF=/home/user/myfavorite.acf
 setenv AMOSCONF /home/user/myfavorite.acf
 
 To view the available runAmos command line options, type `runAmos -h'.
+
 The most important of these options being `-D <definition>', where
 <definition> is of the form NAME=value, e.g. `-D TGT=target.afg'. This
 allows the user to specify inputs to the pipeline by setting variables
@@ -59,10 +60,28 @@ starts with line:
 
 #!runAmos -C
 
-attempting to execute this file (assuming the "execute" permission is set) will be equivalent to running: 
+attempting to execute this file (assuming the "execute" permission is
+set) will be equivalent to running:
 
 runAmos -C test.acf
 
+
+Command line options
+====================
+
+-C <config_file>  runAmos will execute the commands in <config_file>
+-s, -start <step> runAmos will begin the execution from step <step> in 
+                  the configuration file
+-e, -end <step>   runAmos will end the execution before step <step> in 
+                  the configuration file
+-clean            runAmos will remove all the files specified in the 
+                  TEMPS variable
+-ocd              runAmos will test that all files specified in the 
+                  INPUTS variable are available and exit with an error 
+                  otherwise.
+-D <var_def>      specify a variable definition (e.g. INPUTS=myfile) on 
+                  the command line. Multiple -D options may be specified 
+                  on the command line.
 
 
 Configuration file syntax
@@ -177,8 +196,6 @@ about the commands being run.
 
 In the third case (`#' followed by `?') the line is output when
 runAmos is run with both -h and -C options.
-
-
 
 
 Examples
