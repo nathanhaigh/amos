@@ -50,9 +50,9 @@ struct  Read_Info_t
   {
    int  mate;
    int  dst;
-   int  unitig_id;
+   long long int  unitig_id;
    int  u_a_pos, u_b_pos;
-   int  contig_id;
+   long long int  contig_id;
    int  c_a_pos, c_b_pos;
    int  cam_a, cam_b;
    bool  mark;
@@ -69,8 +69,8 @@ struct  Read_Info_t
 
 struct  Unitig_Info_t
   {
-   int  unitig_id;
-   int  contig_id;
+   long long int  unitig_id;
+   long long int  contig_id;
    int  c_a_pos, c_b_pos;
    char  typ;
    int  cam_lo, cam_hi;
@@ -82,8 +82,8 @@ struct  Unitig_Info_t
 
 struct  Contig_Info_t
   {
-   int  contig_id;
-   int  scaff_id;
+   long long int  contig_id;
+   long long int  scaff_id;
    int  scaff_place;
    char  ori;
    double  gap_mean;
@@ -99,8 +99,8 @@ struct  Contig_Info_t
 
 struct  Contig_Pos_t
   {
-   int  contig_id;
-   int  scaff_id;
+   long long int  contig_id;
+   long long int   scaff_id;
    int  a, b;
    int  len;
    char  * tag;
@@ -122,7 +122,7 @@ struct  Dst_Info_t
 
 struct  Uni_Data_t
   {
-   int  unitig_id;
+   long long int  unitig_id;
    float  coverage;
    char  typ;
    int  num_reads;
@@ -132,7 +132,7 @@ struct  Uni_Data_t
 
 struct  Con_Data_t
   {
-   int  contig_id;
+   long long int  contig_id;
    char  typ;
    int  num_reads;
    int  num_unis;
@@ -174,13 +174,13 @@ static void  Output_Single_Read
 static void  Print_Colour_Headers
     (void);
 static int  Search
-    (const vector <Contig_Pos_t> & pos, int id);
+    (const vector <Contig_Pos_t> & pos, long long int id);
 static void  Set_Position
     (int & x, int & y, int a, int b, int c, int d, int len);
 static int  Uni_Data_Search
-    (const vector <Uni_Data_t> & u, int id);
+    (const vector <Uni_Data_t> & u, long long int id);
 static int  Unitig_Search
-    (const vector <Unitig_Info_t> & u, int id);
+    (const vector <Unitig_Info_t> & u, long long int id);
 
 
 
@@ -199,7 +199,7 @@ int  main
    float  cov;
    short  copy_ct;
    int  unitig_ct;
-   int  id1, id2, hi_id;
+   long long int  id1, id2, hi_id;
    int  a, b, c;
    int  hi_read = 0;
    int  i, j, n;
@@ -213,7 +213,7 @@ int  main
 
    fp = fopen (argv [1], "r");
    assert (fp != NULL);
-   while  (fscanf (fp, "%d %d %d %s", & id1, & a, & b, line) == 4)
+   while  (fscanf (fp, "%lld %d %d %s", & id1, & a, & b, line) == 4)
      {
       Contig_Pos_t  c;
 
@@ -232,7 +232,7 @@ int  main
       sscanf (line, "%s", tag);
       if  (strcmp (tag, "LKG") == 0)
           {
-           sscanf (line + 4, "%d %d %lf %lf %s",
+           sscanf (line + 4, "%lld %lld %lf %lf %s",
                & id1, & id2, & mean, & stddev, ori);
            if  (id1 > id2)
                hi_id = id1;
@@ -255,8 +255,8 @@ int  main
            if  (Read [id1] . mate != -1 || Read [id2] . mate != -1)
                {
                 fprintf (stderr, "ERROR:  Duplicate mate\n");
-                fprintf (stderr, "id1 = %d  mate = %d\n", id1, Read [id1] . mate);
-                fprintf (stderr, "id2 = %d  mate = %d\n", id2, Read [id2] . mate);
+                fprintf (stderr, "id1 = %lld  mate = %d\n", id1, Read [id1] . mate);
+                fprintf (stderr, "id2 = %lld  mate = %d\n", id2, Read [id2] . mate);
                 exit (EXIT_FAILURE);
                }
            Read [id1] . mate = id2;
@@ -284,7 +284,7 @@ int  main
           }
       else if  (strcmp (tag, "UTG") == 0)
           {
-           sscanf (line + 4, "%d %d %d %d %s",
+           sscanf (line + 4, "%lld %lld %d %d %s",
                & id1, & id2, & a, & b, typ);
            if  (id1 > hi_read)
                {
@@ -307,7 +307,7 @@ int  main
           }
       else if  (strcmp (tag, "CCO") == 0)
           {
-           sscanf (line + 4, "%d %d %d %d %s",
+           sscanf (line + 4, "%lld %lld %d %d %s",
                & id1, & id2, & a, & b, typ);
            if  (id1 > hi_read)
                {
@@ -332,7 +332,7 @@ int  main
           {
            Uni_Data_t  uni;
 
-           sscanf (line + 4, "%d %f %s %d %d",
+           sscanf (line + 4, "%lld %f %s %d %d",
                & id1, & cov, typ, & a, & b);
            uni . unitig_id = id1;
            uni . coverage = cov;
@@ -345,7 +345,7 @@ int  main
           {
            Con_Data_t  con;
 
-           sscanf (line + 4, "%d %s %d %d %d",
+           sscanf (line + 4, "%lld %s %d %d %d",
                & id1, typ, & a, & b, & c);
            con . contig_id = id1;
            con . typ = typ [0];
@@ -358,7 +358,7 @@ int  main
           {
            Unitig_Info_t  u;
 
-           sscanf (line + 4, "%d %d %d %d %s",
+           sscanf (line + 4, "%lld %lld %d %d %s",
                & id1, & id2, & a, & b, typ);
 
            u . unitig_id = id1;
@@ -372,7 +372,7 @@ int  main
           {
            Contig_Info_t  c;
 
-           sscanf (line + 4, "%d %d %d %s %lf %lf",
+           sscanf (line + 4, "%lld %lld %d %s %lf %lf",
                & id1, & id2, & a, ori, & mean, & stddev);
 
            assert (ori [0] == 'F' || ori [0] == 'R');
@@ -477,21 +477,21 @@ fprintf (stderr, "### %d unitigs\n", n);
            k = Uni_Data_Search (uni_data, unitig [i] . unitig_id);
            if  (k < 0)
                {
-                fprintf (stderr, "ERROR:  Missing unitig %d in uni_data\n",
+                fprintf (stderr, "ERROR:  Missing unitig %lld in uni_data\n",
                     unitig [i] . unitig_id);
                 exit (EXIT_FAILURE);
                }
 
            unitig_ct ++;
            if  (x < y)
-               printf ("%dUnitig: %d A%s %d R6 # Utg%d Ctg%d"
+               printf ("%dUnitig: %d A%s %d R6 # Utg%lld Ctg%lld"
                    " cov=%.1f typ=%c nfr=%d len=%d",
                    unitig_ct, x, colour, y, unitig [i] . unitig_id,
                    unitig [i] . contig_id, uni_data [k] . coverage,
                    uni_data [k] . typ, uni_data [k] . num_reads,
                    uni_data [k] . len);
              else
-               printf ("%dUnitig: %d A%s %d R6 # Utg%d Ctg%d"
+               printf ("%dUnitig: %d A%s %d R6 # Utg%lld Ctg%lld"
                    "  cov=%.1f typ=%c nfr=%d len=%d",
                    unitig_ct, y, colour, x, unitig [i] . unitig_id,
                    unitig [i] . contig_id, uni_data [k] . coverage,
@@ -537,7 +537,7 @@ fprintf (stderr, "### %d contigs\n", n);
                       contig_pos [j] . mark = true;
                       printf (" %s", contig_pos [j] . tag);
                      }
-               printf (" A%s # Scaff %d\n", Scaff_Link_Col_Id,
+               printf (" A%s # Scaff %lld\n", Scaff_Link_Col_Id,
                    contig_pos [i] . scaff_id);
               }
          }
@@ -566,7 +566,7 @@ fprintf (stderr, "### %d reads\n", n);
 
            j = Unitig_Search (unitig, Read [i] . unitig_id);
            if  (j < 0)
-               fprintf (stderr, "** Unitig %d not found\n",
+               fprintf (stderr, "** Unitig %lld not found\n",
                     Read [i] . unitig_id);
              else
                {
@@ -603,7 +603,7 @@ fprintf (stderr, "### %d reads\n", n);
            j = Read [i] . mate;
            if  (j < 0)
                {
-                sprintf (tag, "Single read %d (Utg%d)", i, Read [i] . unitig_id);
+                sprintf (tag, "Single read %d (Utg%lld)", i, Read [i] . unitig_id);
                 Output_Single_Read (i, Single_Read_Col_Id, Single_Mate_Col_Id,
                     2500, tag);
                }
@@ -616,7 +616,7 @@ fprintf (stderr, "### %d reads\n", n);
                     {
                      int  mean;
 
-                     sprintf (tag, "Read %d (Utg%d) mate %d (Utg%d) not in picture",
+                     sprintf (tag, "Read %d (Utg%lld) mate %d (Utg%lld) not in picture",
                          i, Read [i] . unitig_id, j, Read [j] . unitig_id);
                      mean = int (Dst [Read [i] . dst] . mean);
                      Output_Single_Read (i, Infer_Read_Col_Id, Infer_Mate_Col_Id,
@@ -650,12 +650,12 @@ static void  Output_Mates
                || Read [j] . cam_a < Read [i] . cam_a + 200
                || Read [j] . cam_a > Read [i] . cam_a + mean + 10 * sd)
             {
-             sprintf (tag, "Read %d (Utg%d) has bad mate %d (Utg%d) at coord %d",
+             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  i, Read [i] . unitig_id, j, Read [j] . unitig_id,
                  (Read [j] . cam_a + Read [j] . cam_b) / 2);
              Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
                  
-             sprintf (tag, "Read %d (Utg%d) has bad mate %d (Utg%d) at coord %d",
+             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  j, Read [j] . unitig_id, i, Read [j] . unitig_id,
                  (Read [i] . cam_a + Read [i] . cam_b) / 2);
              Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
@@ -663,7 +663,7 @@ static void  Output_Mates
         else if  (Read [j] . cam_a > Read [j] . cam_b)
             {
              diff = Read [j] . cam_a - Read [i] . cam_a;
-             sprintf (tag, "Mated reads %d (Utg%d) and %d (Utg%d)"
+             sprintf (tag, "Mated reads %d (Utg%lld) and %d (Utg%lld)"
                  "  diff=%d mn=%d sd=%d distort=%+.1fsd",
                  i, Read [i] . unitig_id, j, Read [j] . unitig_id,
                  diff, mean, sd, double (diff - mean) / sd);
@@ -679,12 +679,12 @@ static void  Output_Mates
                || Read [i] . cam_a < Read [j] . cam_a + 200
                || Read [i] . cam_a > Read [j] . cam_a + mean + 10 * sd)
             {
-             sprintf (tag, "Read %d (Utg%d) has bad mate %d (Utg%d) at coord %d",
+             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  i, Read [i] . unitig_id, j, Read [j] . unitig_id,
                  (Read [j] . cam_a + Read [j] . cam_b) / 2);
              Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
                  
-             sprintf (tag, "Read %d (Utg%d) has bad mate %d (Utg%d) at coord %d",
+             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  j, Read [j] . unitig_id, i, Read [i] . unitig_id,
                  (Read [i] . cam_a + Read [i] . cam_b) / 2);
              Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
@@ -692,7 +692,7 @@ static void  Output_Mates
         else if  (Read [j] . cam_a <= Read [j] . cam_b)
             {
              diff = Read [i] . cam_a - Read [j] . cam_a;
-             sprintf (tag, "Mated reads %d (Utg%d) and %d (Utg%d)"
+             sprintf (tag, "Mated reads %d (Utg%lld) and %d (Utg%lld)"
                  "  diff=%d mn=%d sd=%d distort=%+.1fsd",
                  j, Read [j] . unitig_id, i, Read [i] . unitig_id,
                  diff, mean, sd, double (diff - mean) / sd);
@@ -813,7 +813,7 @@ static void  Print_Colour_Headers
 
 
 static int  Search
-    (const vector <Contig_Pos_t> & pos, int id)
+    (const vector <Contig_Pos_t> & pos, long long int id)
 
 //  Do a binary search of  pos  for entry with  contig_id == id
 //  Return subscript of entry if found;  -1 , if not found
@@ -871,7 +871,7 @@ static void  Set_Position
 
 
 static int  Uni_Data_Search
-    (const vector <Uni_Data_t> & u, int id)
+    (const vector <Uni_Data_t> & u, long long int id)
 
 //  Do a binary search of  u  for entries with  unitig_id == id
 //  Return subscript of entry if found;  -1 , if not found.
@@ -899,7 +899,7 @@ static int  Uni_Data_Search
 
 
 static int  Unitig_Search
-    (const vector <Unitig_Info_t> & u, int id)
+    (const vector <Unitig_Info_t> & u, long long int id)
 
 //  Do a binary search of  u  for entries with  unitig_id == id
 //  Return subscript of first entry if found;  -1 , if not found.
