@@ -178,7 +178,7 @@ NCode_t Message_t::skip (istream & in) // static const
   //-- Search for the beginning of the message
   while ( in . get( ) != '{' )
     if ( !in . good( ) )
-      return false;
+      return NULL_NCODE;
 
   try {
 
