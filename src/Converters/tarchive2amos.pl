@@ -45,7 +45,7 @@ my $VERSION = '1.0 ($Revision$)';
 $base->setVersionInfo($VERSION);
 
 my $HELPTEXT = qq~
-    tarchive2amos -o <out_prefix> [-c <clear_ranges>] fasta1 ... fastan
+    tarchive2amos -o <out_prefix> [-c <clear_ranges>] [options] fasta1 ... fastan
 
    <out_prefix>   - prefix for the output files
    <clear_ranges> - file containing clear ranges for the reads.  If this file
@@ -53,10 +53,18 @@ my $HELPTEXT = qq~
            from the output.
    fasta1 ... fastan - list of files to be converted.
            The program assumes that for each program called <file>.seq there
-           is a <file>.qual and a <file>.xml.  If no .xml file is present the program
-           will only produce a set of RED (read) records.  If no quality file is provided
-           the program assumes a quality value of $DEFAULT_QUAL for every base.
-    ~;
+           is a <file>.qual and a <file>.xml.  If no .xml file is present 
+           the program will only produce a set of RED (read) records.  
+
+Options
+
+    -i <id> - start numbering messages with id <id> (useful when appending
+to a bank)
+    -min <minlen> - reads shorter than <minlen> are rejected (default $MINSEQ)
+    -max <maxlen> - reads longer than <maxlen> are rejected (default $MAXSEQ)
+    -qual <qval> - default quality value assigned when no quality file is 
+provided (default $DEFAULT_QUAL)
+~;
 
 $base->setHelpInfo($HELPTEXT);
 
@@ -68,7 +76,10 @@ my $silent;
 my $err = $base->TIGR_GetOptions("o=s"    => \$outprefix,
 				 "c=s"    => \$clears,
                                  "i=i"    => \$ID,
-				 "silent" => \$silent);
+				 "silent" => \$silent,
+				 "min"    => \$MINSEQ,
+				 "max"    => \$MAXSEQ,
+				 "qual"   => \$DEFAULT_QUAL);
 if ($err == 0) {
     $base->bail("Command line processing failed\n");
 }
