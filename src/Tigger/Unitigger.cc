@@ -2,12 +2,14 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <foundation_AMOS.hh>
 #include "IGraph.hh"
 #include "Graph.hh"
 #include "Read.hh"
 #include "Overlap.hh"
 #include "Unitigger.hh"
-// #include <foundation_AMOS.hh>
+
+
 using namespace std;
 
 void Unitigger::error(const char* m, const char* c) {
