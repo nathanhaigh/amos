@@ -468,7 +468,7 @@ void ParseArgs (int argc, char ** argv)
       errflg ++;
     }
 
-  if (access (OPT_MessageName . c_str( ), R_OK|W_OK|X_OK))
+  if (access (OPT_MessageName . c_str( ), R_OK))
     {
       cerr << "ERROR: Message path is not accessible\n";
       errflg ++;
