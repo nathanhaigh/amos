@@ -40,6 +40,12 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
   m_traceheight = 50;
   m_displayqv = 0;
 
+  m_clickTimer = new QTimer(this, 0);
+  connect (m_clickTimer, SIGNAL(timeout()),
+           this, SLOT(singleClick()));
+
+  m_clickstate = 0;
+
   setMinimumSize(m_width, m_height);
   setPalette(QPalette(QColor(170, 170, 170)));
 }
@@ -60,7 +66,7 @@ int TilingField::getReadCov(int y)
   {
     if (y >= (*i)->m_displaystart && y < (*i)->m_displayend)
     {
-      cerr << "Hit " << (*i)->m_read.getEID() << " [" << dcov << "]" << endl;
+      //cerr << "Hit " << (*i)->m_read.getEID() << " [" << dcov << "]" << endl;
       return dcov;
     }
   }
@@ -68,9 +74,18 @@ int TilingField::getReadCov(int y)
   return -1;
 }
 
-void TilingField::mouseReleaseEvent( QMouseEvent * e)
+void TilingField::mousePressEvent(QMouseEvent *e)
 {
-  int dcov = getReadCov(e->y());
+  m_clickstate = 1;
+  m_clickTimer->start(1000, true);
+  m_yclick = e->y();
+}
+
+void TilingField::singleClick()
+{
+  //cerr << "Timer fired! single click" << endl;
+
+  int dcov = getReadCov(m_yclick);
   if (dcov == -1) { return; }
 
   m_currentReads[dcov]->m_displayTrace = !m_currentReads[dcov]->m_displayTrace;
@@ -83,9 +98,18 @@ void TilingField::mouseReleaseEvent( QMouseEvent * e)
   repaint();
 }
 
+void TilingField::mouseReleaseEvent( QMouseEvent * e)
+{
+  //cerr << "mouserelease state:" << m_clickstate << endl;
+}
+
 
 void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 {
+  //cerr << "doubleclick, stop timer" << endl;
+  m_clickstate = 2;
+  m_clickTimer->stop();
+
   int dcov = getReadCov(e->y());
   if (dcov == -1) { return; }
   ReadInfo * readinfo = new ReadInfo(m_currentReads[dcov], 

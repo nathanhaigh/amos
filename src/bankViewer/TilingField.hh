@@ -2,6 +2,7 @@
 #define TILING_H
 
 #include <qwidget.h>
+#include <qtimer.h>
 #include "RenderSeq.hh"
 
 class TilingField : public QWidget
@@ -19,6 +20,7 @@ public:
 
     QSizePolicy sizePolicy() const;
     void mouseDoubleClickEvent(QMouseEvent * event);
+    void mousePressEvent(QMouseEvent * event);
     void mouseReleaseEvent(QMouseEvent * event);
     void setSize(int width, int height);
 
@@ -26,12 +28,17 @@ public slots:
     void toggleStable(bool);
     void toggleHighlightDiscrepancy(bool);
     void toggleDisplayQV(bool);
+    void singleClick();
 
 protected:
     void paintEvent( QPaintEvent * );
 
 private:
     int getReadCov(int y);
+
+    int m_clickstate;
+    QTimer * m_clickTimer;
+    int m_yclick;
 
     int & m_fontsize;
     int & m_gindex;
