@@ -84,8 +84,10 @@ my %seqId;
 my %lib ;
 
 my $fragname = "$outprefix.frg";
+my $dstname = "$outprefix.dst";
 
 open(FRAG, ">$fragname") || die ("Cannot open $fragname: $!");
+open(DST, ">$dstname") || die ("Cannot open $dstname: $!");
 printFragHeader(\*FRAG);
 
 if (defined $libfile){
@@ -340,6 +342,7 @@ while (my ($lib, $mean) = each %means){
 
     my $dstId = getId();
 
+    print DST "$dstId\t$lib\n";
 
     if ($stdevs{$lib} > $means{$lib} / 3){
 	$stdevs{$lib} = int($means{$lib} / 3);
@@ -384,6 +387,7 @@ if (! defined $silent){
     print STDERR "done\n";
 }
 close(FRAG);
+close(DST);
 
 
 exit(0);
