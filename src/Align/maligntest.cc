@@ -9,10 +9,10 @@
 //  of those sequences.
 
 
-#include  "delcher.h"
-#include  "fasta.h"
-#include  "align.h"
-#include  "prob.h"
+#include  "delcher.hh"
+#include  "fasta.hh"
+#include  "align.hh"
+#include  "prob.hh"
 #include  <vector>
 
 

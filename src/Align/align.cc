@@ -6,9 +6,7 @@
 //  Routines to do string alignments
 
 
-#include  "delcher.h"
-#include  "align.h"
-#include  "fasta.h"
+#include  "align.hh"
 #include  <stack>
 
 
@@ -669,6 +667,24 @@ void  Gapped_Alignment_t :: Dump_Skip
 
 
 
+int  Gapped_Alignment_t :: Get_Skip
+    (int i)  const
+
+//  Return the skip value associated with subscript  i , if there
+//  is one; otherwise, return  INT_MAX .
+
+  {
+   int  n;
+
+   n = skip . size ();
+   if  (i < n)
+       return  skip [i];
+     else
+       return  INT_MAX;
+  }
+
+
+
 void  Gapped_Alignment_t :: Print_Subalignment_Line
     (char * buff, int b1, int b2, char * s, int & a1, int & a2)
 
@@ -725,6 +741,37 @@ void  Gapped_Alignment_t :: Print_Subalignment_Line
      }
 
    buff [ct] = '\0';
+
+   return;
+  }
+
+
+
+void  Gapped_MA_Bead_t :: Advance
+    (void)
+
+//  Set  seq_ch  and  qual_ch  to the next character in the
+//  alignment referred to by this bead.  Also update the other
+//  members to track the change.
+
+  {
+   b_pos ++;
+   if  (b_pos == skip_pos)
+       {
+        seq_ch = '-';
+        qual_ch = Min (qual [a_pos], qual [a_pos + 1]);
+        skip_i ++;
+        skip_pos = ga -> Get_Skip (skip_i);
+       }
+     else
+       {
+        a_pos ++;
+        seq_ch = seq [a_pos];
+        qual_ch = qual [a_pos];
+       }
+
+   if  (a_pos >= ga -> a_hi || b_pos >= ga -> b_hi)
+       active = false;
 
    return;
   }
@@ -1162,6 +1209,164 @@ void  Gapped_Multi_Alignment_t :: Print_Consensus
 
 
 
+void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
+    (const vector <char *> & s, const vector <char *> & q)
+
+//  Reset the consensus base values using the libSlice package
+//  and assign the corresponding quality for each one in the
+//  con_qual string.  Strings in alignment are in  s  and their
+//  quality values are in  q .
+
+  {
+   vector <Gapped_MA_Bead_t>  active_bead;
+   string  seq_column, qual_column;
+   Consensus  * cns;
+   static slice  sl;
+   int  col_len;
+   static int  max_len = 0;
+   int  len, next;
+   int  i, j, n;
+
+
+   len = consensus . length ();
+   con_qual . resize (len);
+   n = align . size ();
+
+   if  (Verbose > 3)
+       {
+        for  (i = 0;  i < n;  i ++)
+          {
+           printf ("> Sequence %d\n", i);
+           Fasta_Print (stdout, s [i], NULL);
+           Fasta_Print (stdout, q [i], NULL);
+          }
+       }
+
+   if  (max_len == 0)
+       {
+        max_len = 200;
+        sl . rc = (char *) Safe_malloc (max_len, __FILE__, __LINE__);
+        memset (sl . rc, 0, max_len);
+       }
+
+   next = 0;
+   for  (i = 0;  i < len;  i ++)
+     {
+      Gapped_MA_Bead_t  b;
+      vector <Gapped_MA_Bead_t> :: iterator  bp;
+
+      seq_column . erase ();
+      qual_column . erase ();
+      for  (bp = active_bead . begin ();  bp != active_bead . end (); )
+        {
+         bp -> Advance ();
+         if  (! bp -> active)
+             bp = active_bead . erase (bp);
+           else
+             {
+              seq_column . push_back (bp -> seq_ch);
+              qual_column . push_back (bp -> qual_ch - QUALITY_OFFSET);
+              bp ++;
+             }
+        }
+
+      while  (next < n && align [next] . b_lo == i)
+        {
+         b . seq = s [next];
+         b . qual = q [next];
+         b . ga = & (align [next]);
+         b . a_pos = b . ga -> a_lo;
+         b . b_pos = i;
+         b . skip_i = 0;
+         b . skip_pos = b . ga -> Get_Skip (b . skip_i);
+         b . seq_ch = s [next] [b . a_pos];
+         b . qual_ch = q [next] [b . a_pos];
+         b . active = true;
+         active_bead . push_back (b);
+
+         seq_column . push_back (b . seq_ch);
+         qual_column . push_back (b . qual_ch - QUALITY_OFFSET);
+
+         next ++;
+        }
+
+      sl . bc = (char *) seq_column . c_str ();
+      sl . qv = (char *) qual_column . c_str ();
+      col_len = seq_column . length ();
+      if  (col_len >= max_len)
+          {
+           max_len = Max (2 * max_len, col_len + 1);
+           sl . rc = (char *) Safe_realloc (sl . rc, max_len);
+           memset (sl . rc, 0, max_len);
+          }
+      sl . dcov = col_len;
+      getConsensus (& sl, & cns, NULL, 0);
+
+      consensus [i] = cns -> consensus;
+      con_qual [i] = QUALITY_OFFSET
+          + Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR));
+
+      if  (Verbose > 3)
+          {
+           printf ("%6d:  ", i);
+           cout << seq_column << "  col_len = " << col_len << endl;
+           for  (j = 0;  j < col_len;  j ++)
+             qual_column [j] += QUALITY_OFFSET;
+           cout << "         " << qual_column << endl;
+           cout << "         cons = " << cns -> consensus << "  qv = "
+                << Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR)) << endl;
+          }
+     }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Sort
+    (vector <char *> & s)
+
+//  Sort the align entries in this multialignment according to their
+//   b_lo  values.  Also sort the strings  s  along with them
+
+  {
+   int  i, j, n;
+
+   n = align . size ();
+   if  (n != int (s . size ()))
+       {
+        sprintf (Clean_Exit_Msg_Line,
+             "ERROR:  Sorting %d strings with %d alignments\n",
+             int (s . size ()), n);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   for  (i = 1;  i < n;  i ++)
+     {
+      char  * s_save;
+      Gapped_Alignment_t  a_save;
+
+      if  (align [i - 1] . b_lo <= align [i] . b_lo)
+          continue;
+
+      s_save = s [i];
+      a_save = align [i];
+
+      for  (j = i;  j > 0 && align [j - 1] . b_lo > a_save . b_lo;  j --)
+        {
+         align [j] = align [j - 1];
+         s [j] = s [j - 1];
+        }
+
+      s [j] = s_save;
+      align [j] = a_save;
+     }
+
+   return;
+  }
+
+
+
 int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len)
 
@@ -1194,8 +1399,8 @@ int  Exact_Prefix_Match
 
 
 void  Multi_Align
-    (vector <char *> s, vector <int> offset, int offset_delta, double error_rate,
-     Gapped_Multi_Alignment_t & gma)
+    (vector <char *> & s, vector <int> & offset, int offset_delta,
+     double error_rate, Gapped_Multi_Alignment_t & gma)
 
 //  Create multialignment in  ma  of strings  s  each of which has
 //  a nominal offset from its predecessor of  offset .   offset_delta  is
@@ -1229,6 +1434,8 @@ void  Multi_Align
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
 
+   Sort_Strings_And_Offsets (s, offset);
+
    ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote);
 
    ct = 0;
@@ -1242,6 +1449,8 @@ void  Multi_Align
        ma . Print_Alignments_To_Consensus (stderr, s);
 
    gma . Convert_From (ma);
+
+   gma . Sort (s);
 
    return;
   }
@@ -1582,6 +1791,55 @@ bool  Range_Intersect
        return  false;
 
    return  true;
+  }
+
+
+
+void  Sort_Strings_And_Offsets
+    (vector <char *> & s, vector <int> & offset)
+
+//  Sort the strings in  s  into order so that all their offsets
+//  are non-negative.  Adjust the values in  offset  accordingly.
+//  Use insertion sort since most offsets should be positive.
+
+  {
+   int  i, j, n;
+
+   n = offset . size ();
+   if  (n != int (s . size ()))
+       {
+        sprintf (Clean_Exit_Msg_Line,
+             "ERROR:  Sorting %d strings with %d offsets\n",
+             int (s . size ()), n);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   for  (i = 1;  i < n;  i ++)
+     {
+      char  * s_save;
+      int  o_save;
+
+      if  (0 <= offset [i])
+          continue;
+
+      s_save = s [i];
+      o_save = offset [i];
+      if  (i < n - 1)
+          offset [i + 1] += o_save;
+
+      for  (j = i;  j > 0 && o_save < 0;  j --)
+        {
+         o_save += offset [j - 1];
+         offset [j] = offset [j - 1];
+         s [j] = s [j - 1];
+        }
+
+      s [j] = s_save;
+      offset [j] = o_save;
+      offset [j + 1] -= o_save;
+     }
+
+   return;
   }
 
 

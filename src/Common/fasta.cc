@@ -7,8 +7,26 @@
 //  Routines to manipulate FASTA format files
 
 
-#include  "delcher.h"
-#include  "fasta.h"
+#include  "fasta.hh"
+
+
+
+static const char  Complement_Table []
+    = "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
+      " nnnnnnnnn*nn-.nnnnnnnnnnnnnnnnn"
+      "nTVGHNNCDNNMNKNNNNYSANBSNRNnnnn_"
+      "ntvghnncdnnmnknnnnysanbsnrnnnnnn";
+
+
+char  Complement
+    (char ch)
+
+// Returns the DNA complement of  ch
+
+  {
+   return  Complement_Table [ch];
+  }
+
 
 
 void  Fasta_Print
@@ -69,6 +87,32 @@ void  Fasta_Print_N
      }
 
    fputc ('\n', fp);
+
+   return;
+  }
+
+
+
+void  Reverse_Complement
+  (string & s)
+
+//  Set string  s  to its DNA Watson-Crick reverse complement
+
+  {
+   int  i, j, n;
+
+   n = s . length ();
+   for  (i = 0, j = n - 1;  i < j;  i ++, j --)
+     {
+      char  ch;
+
+      ch = s [j];
+      s [j] = Complement (s [i]);
+      s [i] = Complement (ch);
+     }
+
+   if  (i == j)
+       s [i] = Complement (s [i]);
 
    return;
   }

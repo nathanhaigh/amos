@@ -7,7 +7,7 @@
 
 
 
-#include  "prob.h"
+#include  "prob.hh"
 
 
 
