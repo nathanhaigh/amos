@@ -31,20 +31,11 @@ int main (int argc, char ** argv)
 
       for (fi = feats.begin(); fi != feats.end(); fi++)
       {
-        AMOS::Range_t r = fi->range;
-        bool rc = false;
-        if (r.isReverse())
-        {
-          r.swap();
-          rc = true;
-        }
-
         cout << contig.getEID() << " "
-             << fi->type     << " "
-             << fi->group    << " "
-             << r.begin      << " "
-             << r.end        << " "
-             << (rc ? 1 : 0) << " "
+             << fi->type        << " "
+             << fi->group       << " "
+             << fi->range.begin << " "
+             << fi->range.end   << " "
              << fi->comment
              << endl;
       }
