@@ -117,7 +117,6 @@ int  main
    iostream::fmtflags status;
    int  contig_ct, unitig_ct;
 
-   
    try
      {
       now = time (NULL);
@@ -230,10 +229,6 @@ int  main
 		 (string_list, qual_list, clr_list, tag_list, offset,
 		  layout, frg_id_list, pos_list, read_bank);
 
-	       //	       cerr << "qual_list has " << qual_list.size() << " elements\n";
-	       //	       cerr << "clr_list has " << clr_list.size() << " elements\n";
-	       //	       cerr << "frg_id_list has " << frg_id_list.size() << " elements\n";
-
 	       msg . setAccession(cid);
 	       msg . setIMPs(frg_id_list, pos_list);
 
@@ -248,9 +243,6 @@ int  main
 		   cerr << "Failed on " << cid << "\'th layout/contig" <<  endl;
 		   throw;
 		 }
-
-	       //	       cerr << "ref has " << ref.size() << " elements\n";
-	       //	       cerr << "Multialign succeeded" << endl;
 
 	       Permute (qual_list, ref);
 	       Permute (clr_list, ref);

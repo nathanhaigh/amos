@@ -676,7 +676,7 @@ void  Alignment_t :: Flip_AB
 void  Alignment_t :: Incr_Votes
     (vector <Vote_t> & vote, char * a)
 
-//  Use the entries in the alignemnt to increment the entries in  vote
+//  Use the entries in the alignment to increment the entries in  vote
 //  that correspond to the  b  string in the alignment.
 //  Vote values are from the string  a .
 
@@ -1761,6 +1761,7 @@ void  Multi_Alignment_t :: Print_Alignments_To_Consensus
    n = align . size ();
    con = consensus . c_str ();
 
+   fprintf (fp, "\nConsensus len = %d\n", consensus . length ());
    for  (i = 0;  i < n;  i ++)
      {
       fprintf (fp, "\nString #%d:\n", i);
@@ -1790,6 +1791,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
    string  new_cons;
    char  * cons;
    int  adj, attempts, cons_len, wiggle;
+   int  min_b_lo, max_b_hi;
    int  i, n;
 
    n = vote . size ();
@@ -1833,6 +1835,8 @@ void  Multi_Alignment_t :: Reset_From_Votes
      vote [i] . Set_Zero ();
 
    n = s . size ();
+   min_b_lo = INT_MAX;
+   max_b_hi = 0;
    for  (i = 0;  i < n;  i ++)
      {
       bool  ok;
@@ -1914,7 +1918,23 @@ void  Multi_Alignment_t :: Reset_From_Votes
           }
 
       align [i] . Incr_Votes (vote, s [i]);
+      if  (align [i] . b_lo < min_b_lo)
+          min_b_lo = align [i] . b_lo;
+      if  (align [i] . b_hi > max_b_hi)
+          max_b_hi = align [i] . b_hi;
      }
+
+   if  (max_b_hi < cons_len)
+       consensus . resize (max_b_hi);
+   if  (min_b_lo > 0)
+       {
+        for  (i = 0;  i < n;  i ++)
+          {
+           align [i] . b_lo -= min_b_lo;
+           align [i] . b_hi -= min_b_lo;
+           consensus . erase (0, min_b_lo);
+          }
+       }
 
    free (cons);
 
