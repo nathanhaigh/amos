@@ -21,12 +21,22 @@ else
 fi
 
 echo "+ collecting m4 macros"
-${ACLOCAL}
+${ACLOCAL} \
+|| { echo "ERROR: aclocal failed"; exit 1; }
+
 echo "+ generating configuration header"
-${AUTOHEADER} --warnings=all
+${AUTOHEADER} --warnings=all \
+|| { echo "ERROR: autoheader failed"; exit 1; }
+
 echo "+ generating makefile inputs"
-${AUTOMAKE} --warnings=all --foreign --include-deps
+${AUTOMAKE} --warnings=all --foreign --include-deps \
+|| { echo "ERROR: automake failed"; exit 1; }
+
 echo "+ generating configure script"
-${AUTOCONF} --warnings=all
+${AUTOCONF} --warnings=all \
+|| { echo "ERROR: autoconf failed"; exit 1; }
+
+echo "BOOTSTRAP COMPLETE"
+
 
 ##-- END OF SCRIPT --##

@@ -2,8 +2,20 @@
 # Reverses the actions of bootstrap
 #
 
-rm -f `find . -name Makefile.in`
+echo "+ removing m4 macros"
+rm -f aclocal.m4
 rm -rf autom4te.cache
-rm -f aclocal.m4 config.h.in configure
+
+echo "+ removing configuration header"
+rm -f config.h.in
+
+echo "+ removing makefile inputs"
+rm -f `find . -name Makefile.in`
+
+echo "+ removing conifgure script"
+rm -f configure
+
+echo "UNBOOTSTRAP COMPLETE"
+
 
 ##-- END OF SCRIPT --##
