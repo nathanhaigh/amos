@@ -203,15 +203,19 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  //! \post Object will revert back to uncompressed mode
+  //! All data will be cleared, but object compression status will remain
+  //! unchanged. Use the compress/uncompress members to change this info.
   //!
   virtual void clear ( )
   {
+    bool compress = flags_m . extra & COMPRESS_BIT;
     Universal_t::clear( );
     free (seq_m);
     free (qual_m);
     seq_m = qual_m = NULL;
     length_m = 0;
+    if ( compress )
+      flags_m . extra |= COMPRESS_BIT;
   }
 
 
