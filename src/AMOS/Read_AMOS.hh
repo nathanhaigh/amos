@@ -18,6 +18,8 @@
 
 namespace AMOS {
 
+typedef char ReadType_t;
+
 //================================================ Read_t ======================
 //! \brief A DNA sequencing read
 //!
@@ -32,17 +34,12 @@ class Read_t : public Sequence_t
 
 public:
 
-  enum ReadType_t
-  //!< read description
-    {
-      NULL_READ = 0,
-      OTHER,
-      NORMAL,
-      CONTIG,
-      BAC,
-      WALK,
-      MAX_READS,
-    };
+  static const ReadType_t NULL_READ  = 0;
+  static const ReadType_t OTHER      = 'X';
+  static const ReadType_t END        = 'E';
+  static const ReadType_t CONTIG     = 'C';
+  static const ReadType_t BAC        = 'B';
+  static const ReadType_t WALK       = 'W';
 
 
 private:

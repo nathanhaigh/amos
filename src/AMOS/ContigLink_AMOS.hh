@@ -20,6 +20,8 @@
 
 namespace AMOS {
 
+typedef char LinkType_t;
+
 //================================================ ContigLink_t ================
 //! \brief Linking information between two contigs
 //!
@@ -34,18 +36,13 @@ class ContigLink_t : public Bankable_t
 
 public:
 
-  enum LinkType_t
-  //! link description
-    {
-      NULL_LINK = 0,
-      OTHER,
-      MATEPAIR,
-      OVERLAP,
-      PHYSICAL,
-      ALIGNMENT,
-      SYNTENY,
-      MAX_LINKS,
-    };
+  static const LinkType_t NULL_LINK  = 0;
+  static const LinkType_t OTHER      = 'X';
+  static const LinkType_t MATEPAIR   = 'M';
+  static const LinkType_t OVERLAP    = 'O';
+  static const LinkType_t PHYSICAL   = 'P';
+  static const LinkType_t ALIGNMENT  = 'A';
+  static const LinkType_t SYNTENY    = 'S';
 
 
 private:
@@ -58,6 +55,13 @@ private:
 
 
 protected:
+
+  static const char BEGIN      = 'B';
+  static const char END        = 'E';
+  static const char NORMAL     = 'N';     //!< E,B
+  static const char ANTINORMAL = 'A';     //!< B,E
+  static const char INNIE      = 'I';     //!< E,E
+  static const char OUTIE      = 'O';     //!< B,B
 
   static const uint8_t FIRST_BIT  = 0x1;  //!< adjacency info for 1st contig
   static const uint8_t SECOND_BIT = 0x2;  //!< adjacency info for 2nd contig
@@ -155,6 +159,19 @@ public:
   }
 
 
+  //--------------------------------------------------- fromMessage ------------
+  //! \brief Converts from a message
+  //!
+  //! Converts the data contained in a Message object to the Messagable object.
+  //! Will not complain if incoming message is of the wrong type, will only try
+  //! and suck out the fields it recognizes.
+  //!
+  //! \param msg The Message to read from
+  //! \return void
+  //!
+  virtual void fromMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- getAdjacency -----------
   //! \brief Get the adjacent ends of the two contigs
   //!
@@ -186,6 +203,17 @@ public:
   std::pair<ID_t, ID_t> getContigs ( ) const
   {
     return contigs_m;
+  }
+
+
+  //--------------------------------------------------- getMessageType ---------
+  //! \brief Returns the message type string for this Messagable object
+  //!
+  //! \return The message type string
+  //!
+  virtual const std::string & getMessageType ( ) const
+  {
+    return Message_k::M_CONTIGLINK;
   }
 
 
@@ -321,6 +349,17 @@ public:
   {
     type_m = type;
   }
+
+
+  //--------------------------------------------------- toMessage --------------
+  //! \brief Converts to a message
+  //!
+  //! Converts the data contained in the Messagable object to a Message object.
+  //!
+  //! \param msg The Message to write to
+  //! \return void
+  //!
+  virtual void toMessage (Message_t & msg) const;
 
 };
 

@@ -18,6 +18,8 @@
 
 namespace AMOS {
 
+typedef char FragmentType_t;
+
 //================================================ Fragment_t ==================
 //! \brief Single piece of DNA
 //!
@@ -31,16 +33,11 @@ class Fragment_t : public Bankable_t
 
 public:
 
-  enum FragmentType_t
-  //! fragment description
-    {
-      NULL_FRAGMENT = 0,
-      OTHER,
-      INSERT,
-      TRANSPOSON,
-      BAC,
-      MAX_FRAGMENTS,
-    };
+  static const FragmentType_t NULL_FRAGMENT  = 0;
+  static const FragmentType_t OTHER          = 'X';
+  static const FragmentType_t INSERT         = 'I';
+  static const FragmentType_t TRANSPOSON     = 'T';
+  static const FragmentType_t BAC            = 'B';
 
 
 private:

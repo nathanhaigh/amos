@@ -38,6 +38,11 @@ private:
 
 protected:
 
+  static const char NORMAL     = 'N';     //!< E,B
+  static const char ANTINORMAL = 'A';     //!< B,E
+  static const char INNIE      = 'I';     //!< E,E
+  static const char OUTIE      = 'O';     //!< B,B
+
   static const uint8_t FIRST_BIT  = 0x1;  //!< adjacency info for 1st read
   static const uint8_t SECOND_BIT = 0x2;  //!< adjacency info for 2nd read
 

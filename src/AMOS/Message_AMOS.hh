@@ -36,6 +36,11 @@ namespace Message_k {
   const std::string M_NULL ("NUL");
   //!< NULL message 3-code name
 
+  //-- Enumeration characters
+  const char          E_ADD         = 'A';
+  const char          E_DELETE      = 'D';
+  const char          E_EDIT        = 'E';
+
   //-- Field type names
   const std::string   F_3PRIME       ("3pr");
   const std::string   F_5PRIME       ("5pr");
@@ -343,10 +348,10 @@ public:
   //! \brief Converts from a message
   //!
   //! Converts the data contained in a Message object to the Messagable object.
+  //! Will not complain if incoming message is of the wrong type, will only try
+  //! and suck out the fields it recognizes.
   //!
   //! \param msg The Message to read from
-  //! \pre msg is of the same message type as the Messagable object
-  //! \throws ArgumentException_t
   //! \return void
   //!
   virtual void fromMessage (const Message_t & msg) = 0;
