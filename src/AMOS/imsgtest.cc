@@ -29,6 +29,7 @@ int main (int argc, char ** argv)
     Fragment_t frg;
     Kmer_t kmr;
     Library_t lib;
+    Overlap_t ovl;
 
     Universal_t * unvp = NULL;
     
@@ -48,6 +49,8 @@ int main (int argc, char ** argv)
 	  unvp = &kmr;
 	else if ( msg . getMessageCode( ) == Message_k::M_LIBRARY )
 	  unvp = &lib;
+	else if ( msg . getMessageCode( ) == Message_k::M_OVERLAP )
+	  unvp = &ovl;
 	else
 	  {
 	    cout << "# don't know how to parse message\n";
@@ -85,6 +88,10 @@ int main (int argc, char ** argv)
 
     lib . clear( );
     lib . writeMessage (msg);
+    msg . write (cout);
+
+    ovl . clear( );
+    ovl . writeMessage (msg);
     msg . write (cout);
   }
   catch (Exception_t & e) {

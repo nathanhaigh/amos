@@ -174,6 +174,10 @@ public:
   }
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setAdjacency -----------
   //! \brief Set the overlapping ends of the reads
   //!
@@ -229,6 +233,10 @@ public:
   {
     reads_m = reads;
   }
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 
