@@ -61,6 +61,7 @@ $base->setHelpInfo($HELPTEXT);
 my $outprefix;
 my $clears;
 my $ID = 1;
+my $TEM_ID = 1;  # generic identifier for reads with no template
 my $silent;
 my $err = $base->TIGR_GetOptions("o=s"    => \$outprefix,
 				 "c=s"    => \$clears,
@@ -228,8 +229,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	print STDERR "Parsing $seqname and $qualname\n";
     }
 
-    my $seqparse = new ParseFasta(\*SEQ);
-    my $qualparse = new ParseFasta(\*QUAL, ">", " ");
+    my $seqparse = new TIGR::ParseFasta(\*SEQ);
+    my $qualparse = new TIGR::ParseFasta(\*QUAL, ">", " ");
 
     my ($fhead, $frec) = $seqparse->getRecord(); 
     my ($qhead, $qrec) = $qualparse->getRecord();
@@ -325,6 +326,12 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		print "skipping sequence $fidname since it's short\n";
 	    }
 	    delete $seqId{$fidname};
+	    next;
+	}
+
+	if (! exists $seq2ins{$fidname} ||
+	    ! exists $ins2id{$seq2ins{$fidname}}){
+	    $base->logError("Found a sequence without a template - probably not in XML file: $fidname\n");
 	    next;
 	}
 
@@ -460,8 +467,9 @@ sub EndTag
 	}
 	
 	if (! defined $template){
+	    $template = "TEM_" . $TEM_ID++;
 	    if (! defined $silent){
-		print "trace $seqId has no template\n";
+		print "trace $seqId has no template.  Setting to $template\n";
 	    }
 	} 
 	
