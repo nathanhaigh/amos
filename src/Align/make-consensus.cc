@@ -287,7 +287,7 @@ static void  Get_Strings_And_Offsets
 //  strings for the reads into  q .
 
   {
-   const vector <Celera_IMP_Sub_Msg_t> &  frgs = msg . getFragList ();
+   const vector <Celera_IMP_Sub_Msg_t> &  frgs = msg . getIMPList ();
    Read_t  read;
    Ordered_Range_t  position;
    int  id, prev_offset;
