@@ -1,8 +1,10 @@
 #!/usr/local/bin/perl
 
+# $Id$
+#
 # Converts from a TIGR .asm file to a new .ace file
 #
-# Copyright @ 2002, The Institute for Genomic Research (TIGR). 
+#  Copyright @ 2002, The Institute for Genomic Research (TIGR). 
 
 use strict;
 use TIGR::AsmLib;
@@ -59,6 +61,7 @@ my $seq;
 my %offset;
 my %rc;
 my @gaps;
+my $contigSequence;
 while (<ACE>){
     if (/^CO (\S+) (\d+) (\d+)/){
 	$contigName = $1;
@@ -79,7 +82,8 @@ while (<ACE>){
             $gap = index($seq, "-", $gap + 1);
         }
 
-	printContigRecord(\*CONTIG, $contigName, $contigLen, $contigSeqs, $seq, "contig");
+	$contigSequence = $seq;
+#	printContigRecord(\*CONTIG, $contigName, $contigLen, $contigSeqs, $seq, "contig");
 	next;
     }
     if ($inSequence && $_ =~ /^\s*$/){
@@ -104,10 +108,10 @@ while (<ACE>){
     }
     if (/^QA -?(\d+) -?(\d+) (\d+) (\d+)/){
 	my $offset = $offset{$seqName};
-	my $cll = $1;
-	my $clr = $2;
-	my $end5 = $3;
-	my $end3 = $4;
+	my $cll = $3;
+	my $clr = $4;
+	my $end5 = $1;
+	my $end3 = $2;
 	$seq =~ s/\*/-/g;
 	my $len = length($seq);
 	$offset += $cll - 2;

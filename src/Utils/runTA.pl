@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl
 
+# $Id$
+#
 # Runs TIGR Assembler.
 #
 #  Copyright @ 2002, The Institute for Genomic Research (TIGR).  All

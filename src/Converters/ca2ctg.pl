@@ -1,7 +1,10 @@
 #!/usr/local/bin/perl
 
+# $Id$
+#
 # This program creates an empty .ctg file that only contains
 # the headers for the sequences and contigs
+#
 
 use IO::File;
 use File::Basename;

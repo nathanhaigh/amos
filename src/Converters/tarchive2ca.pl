@@ -179,7 +179,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	my $fid = $1;
 	my $fidname = $2;
 
-	if (! defined $fidname){
+	if (! defined $fidname || $fidname eq "bases"){
 	    $fidname = $fid;
 	}
 	
@@ -234,7 +234,9 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	}
 	
 	if (! exists $clr{$fidname}){
-	    next;
+	    if (defined $clears){
+		next;
+	    }
 	    if (! defined $silent){
 		print "$fid has no clear range\n";
 	    }

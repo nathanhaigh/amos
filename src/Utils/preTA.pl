@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl
 
+# $Id$
+#
 # Runs phred and the trimming software similarly to "phredPhrap".
 #
 #  Copyright @ 2002, The Institute for Genomic Research (TIGR).  All

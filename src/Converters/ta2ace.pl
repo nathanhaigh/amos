@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl
 
+# $Id$
+#
 # Converts from a TIGR .asm file to a new .ace file
 #
 #  Copyright @ 2002, The Institute for Genomic Research (TIGR).  All
