@@ -319,10 +319,12 @@ while (my $record = getRecord(\*IN)){
 		$seqAlnClr{$seqName} = sprintf("%d %d", 
 					       (($seql < $seqr)?$seql + 1:$seql), 
 					       (($seql < $seqr)?$seqr : $seqr + 1));
-		$seqOff{$seqName} = $asml;
-		$rend{$seqName} = $asmr;
 		my $off = $asml;
 		my $ori = ($seql > $seqr) ? "C" : "U";
+		$seqOff{$seqName} = $asml;
+		$rend{$seqName} = $asmr;
+#		if ($ori eq "C") {$seqOff{$seqName}++;} # fix a problem in BS
+		$seqOff{$seqName}++;
 		if ($ori eq "C"){
 		    $off -= length($sequence) - $seql;
 		} else {
@@ -359,8 +361,10 @@ while (my $record = getRecord(\*IN)){
 		    $time =~ s/TIME: //;
 		}
 		
-		if (! defined $time && -e phddir){
-		    $base->logError("Cannot stat phd file \"$phdfile\"", 1);
+		if (! defined $time){
+		    if (-e $phddir) {
+			$base->logError("Cannot stat phd file \"$phdfile\"", 1);
+		    }
 		    $time = localtime;
 		} 
 		
