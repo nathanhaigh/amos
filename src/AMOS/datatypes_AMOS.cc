@@ -67,38 +67,38 @@ Range_t AMOS::operator| (Range_t a, Range_t b)
 
 
 //----------------------------------------------------- operator== -------------
-bool AMOS::operator== (Range_t a, Range_t b)
+bool AMOS::operator== (const Range_t & a, const Range_t & b)
 {
   return ( a . begin == b . begin  &&  a . end == b . end );
 }
-bool AMOS::operator!= (Range_t a, Range_t b)
+bool AMOS::operator!= (const Range_t & a, const Range_t & b)
 {
   return !(a == b);
 }
 
 
 //----------------------------------------------------- operator== -------------
-bool AMOS::operator== (Distribution_t a, Distribution_t b)
+bool AMOS::operator== (const Distribution_t & a, const Distribution_t & b)
 {
   return ( a . mean == b . mean  &&
 	   a . sd == b . sd  &&
 	   a . skew == b . skew );
 }
-bool AMOS::operator!= (Distribution_t a, Distribution_t b)
+bool AMOS::operator!= (const Distribution_t & a, const Distribution_t & b)
 {
   return !(a == b);
 }
 
 
 //----------------------------------------------------- operator== -------------
-bool AMOS::operator== (Tile_t a, Tile_t b)
+bool AMOS::operator== (const Tile_t & a, const Tile_t & b)
 {
   return ( a . id == b . id  &&
 	   a . gaps == b . gaps  &&
 	   a . offset == b . offset  &&
 	   a . range == b . range );
 }
-bool AMOS::operator!= (Tile_t a, Tile_t b)
+bool AMOS::operator!= (const Tile_t & a, const Tile_t & b)
 {
   return !(a == b);
 }
