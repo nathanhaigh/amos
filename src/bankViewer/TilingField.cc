@@ -146,6 +146,8 @@ void TilingField::paintEvent( QPaintEvent * )
   int rchoffset      = m_fontsize*11;
   int basewidth      = m_fontsize+basespace;
 
+  double tracevscale = 1500.0 / (m_traceheight - 10);
+
   int displaywidth = (m_width-tilehoffset)/basewidth;
 
   int height = 10000; // max height
@@ -281,15 +283,15 @@ void TilingField::paintEvent( QPaintEvent * )
         if (ri->m_displayTrace) 
         { 
           int baseline = ldcov + m_traceheight - 10;
-          ldcov += m_traceheight;
           
           if (ri->m_trace)
           {
-            if (!ri->m_rc)
+            unsigned short * trace = NULL;
+
+            for (int channel = 0; channel < 4; channel++)
             {
-              for (int channel = 0; channel < 4; channel++)
+              if (!ri->m_rc)
               {
-                unsigned short * trace = NULL;
                 switch (channel)
                 {
                   case 0: trace = ri->m_trace->traceA; UIElements::setBasePen(pen, 'A'); break;
@@ -297,55 +299,9 @@ void TilingField::paintEvent( QPaintEvent * )
                   case 2: trace = ri->m_trace->traceG; UIElements::setBasePen(pen, 'G'); break;
                   case 3: trace = ri->m_trace->traceT; UIElements::setBasePen(pen, 'T'); break;
                 };
-
-                p.setPen(pen);
-
-                bool first = true;
-
-                for (int gindex = grangeStart-1; gindex <= grangeEnd+1; gindex++)
-                {
-                  int peakposition = ri->m_bcpos[ri->getGSeqPos(gindex)];
-                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(gindex+1)];
-
-                  int hdelta = nextpeakposition - peakposition;
-                  double hscale = ((double)(basewidth))/hdelta;
-                  double vscale = 25;
-
-                  int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
-                        
-                  for (int t = peakposition; t < nextpeakposition; t++)
-                  {
-                    int tval = (int)(trace[t]/vscale);
-                    int hval = (int)(hoffset + (t-peakposition)*hscale); 
-
-                    if ((t % 5 == 0) && channel == 0)
-                    {
-                      QPoint current = p.pos();
-                      p.setPen(Qt::black);
-
-                      p.drawLine(hval, baseline-1, hval, baseline+1);
-
-                      p.moveTo(current);
-                      p.setPen(pen);
-                    }
-
-
-                    if (first)
-                    {
-                      p.moveTo(hval, baseline - tval);
-                      first = false;
-                    }
-
-                    p.lineTo(hval, baseline-tval);
-                  }
-                }
               }
-            }
-            else
-            {
-              for (int channel = 0; channel < 4; channel++)
+              else
               {
-                unsigned short * trace = NULL;
                 switch (channel)
                 {
                   case 0: trace = ri->m_trace->traceA; UIElements::setBasePen(pen, 'T'); break;
@@ -353,54 +309,68 @@ void TilingField::paintEvent( QPaintEvent * )
                   case 2: trace = ri->m_trace->traceG; UIElements::setBasePen(pen, 'C'); break;
                   case 3: trace = ri->m_trace->traceT; UIElements::setBasePen(pen, 'A'); break;
                 };
+              }
 
-                p.setPen(pen);
+              p.setPen(pen);
 
-                bool first = true;
+              bool first = true;
 
-                for (int gindex = grangeStart-1; gindex <= grangeEnd+1; gindex++)
+              // go beyond the range so the entire peak will be drawn
+              for (int gindex = grangeStart-1; gindex <= grangeEnd+1; gindex++)
+              {
+                int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
+
+                int peakposition     = ri->m_bcpos[ri->getGSeqPos(gindex)];
+                int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(gindex+1)];
+
+                // in 1 basewidth worth of pixels, cover hdelta worth of trace
+                int    hdelta = nextpeakposition - peakposition;
+                double hscale = ((double)(basewidth))/hdelta; // rc negative
+                      
+                int tpos = peakposition;
+                while ((!ri->m_rc && tpos < nextpeakposition) ||
+                       ( ri->m_rc && tpos > nextpeakposition))
                 {
-                  int peakposition = ri->m_bcpos[ri->getGSeqPos(gindex)];
-                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(gindex+1)];
+                  int hval = hoffset + (int)((tpos-peakposition)*hscale); // rc negative
+                  int tval = (int)(trace[tpos]/tracevscale);
 
-                  int hdelta = peakposition - nextpeakposition;
-                  double hscale = ((double)(basewidth))/hdelta;
-                  double vscale = 25;
-
-                  int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
-                        
-                  for (int t = peakposition; t > nextpeakposition; t--)
+                  if (tval > m_traceheight - 10)
                   {
-                    int tval = (int)(trace[t]/vscale);
-                    int hval = (int)(hoffset + (peakposition-t)*hscale);
-
-                    if ((t % 5 == 0) && channel == 0)
-                    {
-                      QPoint current = p.pos();
-                      p.setPen(Qt::black);
-
-                      p.drawLine(hval, baseline-1, hval, baseline+1);
-
-                      p.moveTo(current);
-                      p.setPen(pen);
-                    }
-
-
-                    if (first)
-                    {
-                      p.moveTo(hval, baseline - tval);
-                      first = false;
-                    }
-
-                    p.lineTo(hval, baseline-tval);
+                    // truncate very tall peaks
+                    tval = m_traceheight - 10;
                   }
+
+                  if (first)
+                  {
+                    p.moveTo(hval, baseline - tval);
+                    first = false;
+                  }
+
+                  // draw trace
+                  p.lineTo(hval, baseline-tval);
+
+                  // ticks
+                  if ((tpos % 5 == 0) && channel == 0)
+                  {
+                    QPoint current = p.pos();
+                    p.setPen(Qt::black);
+
+                    p.drawLine(hval, baseline-1, hval, baseline+1);
+
+                    p.moveTo(current);
+                    p.setPen(pen);
+                  }
+
+                  if (ri->m_rc) { tpos--; }
+                  else          { tpos++; }
                 }
               }
             }
           }
 
           p.setPen(black);
-          p.drawLine(tilehoffset, baseline, m_width, baseline);
+          p.drawLine(tilehoffset-basewidth, baseline, m_width, baseline);
+          ldcov += m_traceheight;
         }
       }
       else
@@ -415,7 +385,6 @@ void TilingField::paintEvent( QPaintEvent * )
       m_currentReads.push_back(&(*ri));
     }
   }
-
 
   p.end();
   p.begin(this);
