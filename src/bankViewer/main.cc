@@ -32,7 +32,7 @@ int main( int argc, char **argv )
   if (a.argc() > 1)
   {
     QPainter p (&pixmap);
-    p.drawText(200, 200, 100, 48, Qt::AlignLeft | Qt::AlignBottom, "Waiting for Adam...");
+    p.drawText(200, 200, 200, 48, Qt::AlignLeft | Qt::AlignBottom, "Waiting for Adam...");
     p.end();
   }
 

@@ -581,7 +581,7 @@ void InsertWidget::refreshCanvas()
     {
       int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
 
-      QCanvasRectangle * rect = new QCanvasRectangle(offset, 0, fi->range.getLength(), newheight, m_icanvas);
+      QCanvasRectangle * rect = new QCanvasRectangle(m_hoffset + offset, 0, fi->range.getLength(), newheight, m_icanvas);
       rect->setBrush(QColor(139,119,101));
       rect->setPen(QColor(169,149,131));
       rect->setZ(-2);
