@@ -1,22 +1,24 @@
 #!/usr/local/bin/perl
 
 
-my $BASEDIR = "/local/asmg/work/mpop/GBX/";
+my $BASEDIR = "/local/asmg/work/mpop/WGA/";
 my $BINDIR  = $BASEDIR . "bin/";
 
 $trim       = $BINDIR . "trimends";
 $grep       = "/bin/grep";
 
 
-
 $infile = $ARGV[0];
-$inittime = time();
 
+$inittime = time();
 $time = time();
 print "###Doing prelimnary trimming\n";
 system("$trim $infile");
 ($sec, $min, $hour, $day) = gmtime(time() - $time); $day--;
 print "###finished trimming in $day days $hour:$min:$sec\n";
+if (! -s "${infile}_trimmed.qc"){
+    die ("trimming ($trim $infile) appears to have failed\n");
+}
 
 $iter = 0;
 do {
