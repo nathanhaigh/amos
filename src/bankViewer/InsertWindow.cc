@@ -6,6 +6,7 @@
 #include <qslider.h>
 #include <qpopupmenu.h>
 #include <qtoolbutton.h>
+#include <qaccel.h>
 #include <qmenubar.h>
 #include <qpixmap.h>
 #include <qpainter.h>
@@ -39,8 +40,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   new QLabel("EID:", options, "eidlbl");
   QLineEdit * eidpick = new QLineEdit(options, "eidpick");
-
-
 
 
   // MenuBar
@@ -117,6 +116,12 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(setFeatures(bool)),
           iw,   SLOT(setFeatures(bool)));
+
+  QAccel *a = new QAccel( this );
+  a->connectItem(a->insertItem(CTRL+SHIFT+Key_S), iw, SLOT(start()) );
+  a->connectItem(a->insertItem(Key_Left), iw, SLOT(left()) );
+  a->connectItem(a->insertItem(Key_Right), iw, SLOT(right()) );
+  a->connectItem(a->insertItem(Key_Escape), iw, SLOT(stopbreak()));
 }
 
 void InsertWindow::contigChanged()

@@ -84,8 +84,6 @@ int main( int argc, char **argv )
     }
   }
 
-  sleep(1);
-
   splash->finish(&w);
   delete splash;
 

@@ -57,6 +57,9 @@ public slots:
   void showLibPicker();
   void showChromoPicker();
   void showFeatureBrowser();
+  
+  void jumpFGindex();
+  void jumpPGindex();
 
 signals:
   void bankSelected(std::string bankname);

@@ -9,6 +9,7 @@
 #include "DataStore.hh"
 
 #include <qslider.h>
+#include <qtimer.h>
 #include <qpixmap.h>
 #include <qcanvas.h>
 #include <qwidget.h>
@@ -44,6 +45,13 @@ public slots:
   void setCoveragePlot(bool);
   void setFeatures(bool);
 
+  void start();
+  void stopbreak();
+  void left();
+  void right();
+  void timeout();
+
+
 signals:
   void setStatus(const QString & message);
   void setGindex(int gindex);
@@ -60,6 +68,11 @@ private:
   InsertPosition * m_iposition;
 
   QCanvasRectangle * m_tilingVisible;
+  QCanvasRectangle * m_paddle;
+  QCanvasEllipse * m_ball;
+  QTimer * m_timer;
+  int m_xvel;
+  int m_yvel;
 
   int m_connectMates;
   int m_partitionTypes;

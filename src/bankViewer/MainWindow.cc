@@ -5,6 +5,7 @@
 #include <qtoolbar.h>
 #include <qtoolbutton.h>
 #include <qfiledialog.h>
+#include <qaccel.h>
 #include <qstatusbar.h>
 #include <qlabel.h>
 #include <qlineedit.h>
@@ -88,6 +89,15 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   bNextDisc->setAccel(Key_PageUp);
   bNextDisc->setMinimumWidth(20);
 
+  QAccel *a = new QAccel( this );
+  a->connectItem(a->insertItem(Key_PageUp+SHIFT), this, SLOT(jumpFGindex()) );
+  a->connectItem(a->insertItem(Key_Up+SHIFT),     this, SLOT(jumpFGindex()) );
+
+  a->connectItem(a->insertItem(Key_PageDown+SHIFT), this, SLOT(jumpPGindex()) );
+  a->connectItem(a->insertItem(Key_Down+SHIFT),     this, SLOT(jumpPGindex()) );
+
+  a->connectItem(a->insertItem(CTRL+SHIFT+Key_Plus), this, SLOT(fontIncrease()));
+  a->connectItem(a->insertItem(CTRL+SHIFT+Key_Minus), this, SLOT(fontDecrease()));
 
   new QLabel("   Contig ID", status, "contiglbl");
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
@@ -98,6 +108,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 
                                                this, SLOT(showInserts()), status );
   bShowInserts->setText("Inserts");
+  bShowInserts->setAccel(CTRL+Key_I);
 
   QToolButton * bShowCGraph = new QToolButton(QPixmap(), "Show CGraph", "Show CGraph", 
                                                this, SLOT(showCGraph()), status );
@@ -431,4 +442,14 @@ void MainWindow::addChromoPath(const QString & path)
 void MainWindow::addChromoDB(const QString & db)
 {
   m_datastore.m_chromodbs.push_back(db.ascii());
+}
+
+void MainWindow::jumpFGindex()
+{
+  setGindex(m_gindex+20);
+}
+
+void MainWindow::jumpPGindex()
+{
+  setGindex(m_gindex-20);
 }

@@ -3,6 +3,7 @@
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qwmatrix.h>
+#include <qmessagebox.h>
 #include "RenderSeq.hh"
 #include "InsertCanvasItem.hh"
 #include "CoverageCanvasItem.hh"
@@ -58,6 +59,12 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_iposition = new InsertPosition(this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
   m_icanvas->setBackgroundColor(Qt::black);
+
+  m_paddle = NULL;
+  m_ball = NULL;
+  m_timer = new QTimer(this, "timer");
+  connect(m_timer, SIGNAL(timeout()),
+          this, SLOT(timeout()));
 
   m_hoffset = 0;
   m_connectMates = 1;
@@ -609,3 +616,141 @@ void InsertWidget::setFeatures(bool b)
   m_showFeatures = b;
   refreshCanvas();
 }
+
+class Paddle : public QCanvasRectangle
+{
+public:
+  static const int RTTI = 987654;
+  Paddle(int x, int y, int width, int height, QCanvas * canvas)
+   : QCanvasRectangle(x,y,width,height,canvas) {}
+  int rtti() const {return RTTI; }
+};
+
+static int min(int a, int b)
+{
+  return (a<b) ? a : b;
+}
+
+void InsertWidget::start()
+{
+  QRect rc = QRect(m_ifield->contentsX(),    m_ifield->contentsY(),
+                   m_ifield->visibleWidth(), m_ifield->visibleHeight() );
+  QRect rect = m_ifield->inverseWorldMatrix().mapRect(rc);
+
+  int basey = min(rect.y()+rect.height(), m_icanvas->height());
+
+  m_ball = new QCanvasEllipse(100, 5, m_icanvas);
+  m_ball->setX(rect.x() + rect.width()/2);
+  m_ball->setY(basey - 25);
+  m_ball->setPen(Qt::white);
+  m_ball->setBrush(Qt::white);
+  m_ball->show();
+
+  m_paddle = new Paddle(rect.x() + rect.width()/2, basey-10, 1000, 5, m_icanvas);
+  m_paddle->setPen(Qt::white);
+  m_paddle->setBrush(Qt::white);
+  m_paddle->show();
+
+  m_xvel = rand() % 250 - 125;
+  m_yvel = 1;
+
+  m_icanvas->update();
+
+  m_timer->start(20);
+}
+
+void InsertWidget::left()
+{
+  if (m_paddle)
+  {
+    m_paddle->moveBy(-250, 0);
+    m_icanvas->update();
+  }
+}
+
+void InsertWidget::right()
+{
+  if (m_paddle)
+  {
+    m_paddle->moveBy(250, 0);
+    m_icanvas->update();
+  }
+}
+
+
+void InsertWidget::stopbreak()
+{
+  m_timer->stop();
+  QCanvasItemList list = m_icanvas->allItems();
+  QCanvasItemList::Iterator it = list.begin();
+  for (; it != list.end(); ++it) {
+    (*it)->show();
+  }
+
+  if (m_paddle) { m_paddle->hide(); delete m_paddle; m_paddle = NULL; }
+  if (m_ball)   { m_ball->hide();   delete m_ball; m_ball = NULL;}
+
+  m_icanvas->update();
+}
+
+
+void InsertWidget::timeout()
+{
+  if (m_ball)
+  {
+    QRect rc = QRect(m_ifield->contentsX(),    m_ifield->contentsY(),
+                     m_ifield->visibleWidth(), m_ifield->visibleHeight() );
+    QRect rect = m_ifield->inverseWorldMatrix().mapRect(rc);
+
+    if (m_ball->y() >= min(rect.y()+rect.height(), m_icanvas->height()))
+    {
+      m_timer->stop();
+      QMessageBox mb("Sorry!", "Game Over!", 
+                     QMessageBox::Critical, QMessageBox::Ok, 
+                     QMessageBox::NoButton, QMessageBox::NoButton);
+      mb.exec();
+      stopbreak();
+    }
+    else
+    {
+      if (m_ball->y() <= rect.y())
+      {
+        m_yvel = -m_yvel;
+      }
+      else if ((m_ball->x() <= rect.x()) ||
+               (m_ball->x() >= min(rect.x()+rect.width(), m_icanvas->width())))
+      {
+        m_xvel = -m_xvel;
+      }
+      else
+      {
+        QCanvasItemList l = m_ball->collisions(false);
+
+        for (QCanvasItemList::Iterator li=l.begin(); li != l.end(); li++)
+        {
+          if ((*li)->rtti() == InsertCanvasItem::RTTI)
+          {
+            (*li)->hide();
+            m_yvel = -m_yvel;
+          }
+          else if ((*li)->rtti() == Paddle::RTTI)
+          {
+            m_yvel = -m_yvel;
+            m_xvel += rand()%100-50;
+          }
+        }
+      }
+
+      if (abs(m_xvel) > 250) { m_xvel = m_xvel/2; }
+
+      m_ball->moveBy(m_xvel, m_yvel);
+
+      m_icanvas->update();
+    }
+  }
+}
+
+
+
+
+

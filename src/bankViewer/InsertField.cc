@@ -178,6 +178,3 @@ void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int se
     s += "]";
   }
 }
-
-
-
