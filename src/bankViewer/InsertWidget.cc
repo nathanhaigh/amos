@@ -26,7 +26,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   refreshCanvas();
 
-  m_ifield    = new InsertField(m_icanvas, this, "qcv");
+  m_ifield    = new InsertField(datastore, m_icanvas, this, "qcv");
   m_ifield->show();
 
   vbox->addWidget(m_iposition);
@@ -191,7 +191,7 @@ void InsertWidget::refreshCanvas()
       {
         mated++;
         Insert * i = new Insert(a, m_datastore->m_contigId, b, m_datastore->m_contigId, 
-                                getLibrarySize(good), clen);
+                                m_datastore->getLibrarySize(good), clen);
 
         if (i->m_state == Insert::Happy)
         {
@@ -222,7 +222,8 @@ void InsertWidget::refreshCanvas()
     {
       if (si->second)
       {
-        Insert * i = new Insert(si->second, m_datastore->m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
+        Insert * i = new Insert(si->second, m_datastore->m_contigId, NULL, AMOS::NULL_ID, 
+                                m_datastore->getLibrarySize(si->second->source), clen);
         m_inserts.push_back(i);
         unmated++;
       }
@@ -321,19 +322,3 @@ void InsertWidget::refreshCanvas()
   m_icanvas->resize(clen+1000, tileoffset+layoutoffset*lineheight);
   m_icanvas->update();
 }
-
-
-AMOS::Distribution_t InsertWidget::getLibrarySize(ID_t readid)
-{
-  Read_t read;
-  m_datastore->read_bank.fetch(readid, read);
-
-  Fragment_t frag;
-  m_datastore->frag_bank.fetch(read.getFragment(), frag);
-
-  Library_t lib;
-  m_datastore->lib_bank.fetch(frag.getLibrary(), lib);
-
-  return lib.getDistribution();
-}
-

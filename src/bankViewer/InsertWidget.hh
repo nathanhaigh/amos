@@ -5,13 +5,10 @@
 #include <string>
 
 #include "InsertField.hh"
-#include "InsertCanvas.hh"
 #include "InsertPosition.hh"
 #include "DataStore.hh"
 
-#include <qcanvas.h>
 #include <qslider.h>
-
 #include <qpixmap.h>
 #include <qcanvas.h>
 #include <qwidget.h>
@@ -46,18 +43,15 @@ private:
   void flushInserts();
   void initializeVisibleRectangle();
 
+  DataStore * m_datastore;
   InsertField    * m_ifield;
   QCanvas        * m_icanvas;
   InsertPosition * m_iposition;
 
   QCanvasRectangle * m_tilingVisible;
-  QSlider * m_zoom;
-
-  DataStore * m_datastore;
 
   // from insert canvas
   void drawTile(AMOS::Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state);
-  AMOS::Distribution_t getLibrarySize(AMOS::ID_t readid);
 
   int m_seqheight;
   int m_hoffset;

@@ -13,6 +13,8 @@ public:
   int openBank(const string & bank_name);
   int setContigId(int id);
 
+  AMOS::Distribution_t getLibrarySize(AMOS::ID_t readid);
+
   AMOS::Bank_t contig_bank;
   AMOS::Bank_t read_bank;
   AMOS::Bank_t frag_bank;

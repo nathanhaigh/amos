@@ -5,8 +5,12 @@
 #include <iostream>
 using namespace std;
 
-InsertField::InsertField(QCanvas * canvas, QWidget * parent, const char * name)
- : QCanvasView(canvas, parent, name)
+InsertField::InsertField(DataStore * datastore,
+                         QCanvas * canvas, 
+                         QWidget * parent, 
+                         const char * name)
+ : QCanvasView(canvas, parent, name),
+   m_datastore(datastore)
 {
 
    QWMatrix m = worldMatrix();
@@ -37,12 +41,16 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
         QString s = "Insert";
         if (ins->m_atile)
         {
-          s += " atile: " + QString::number(ins->m_atile->source);
+          s += " atile: ";
+          s += m_datastore->read_bank.lookupEID(ins->m_atile->source);
+          s += " {" + QString::number(ins->m_atile->source) + "}";
         }
 
         if (ins->m_btile)
         {
-          s += " btile: " + QString::number(ins->m_btile->source);
+          s += " btile: ";
+          s += m_datastore->read_bank.lookupEID(ins->m_btile->source);
+          s += " {" + QString::number(ins->m_btile->source) + "}";
         }
 
         s += " Actual: "   + QString::number(ins->m_actual);
