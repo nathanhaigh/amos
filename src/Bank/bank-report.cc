@@ -31,13 +31,14 @@ using namespace std;
 string  OPT_BankName;                        // bank name parameter
 bool    OPT_IncludeIIDs = false;             // include IIDs in the output
 bool    OPT_IsExtractCodes = false;          // extract codes or not
-IDMap_t OPT_ExtractCodes(1000);              // extract message type map
 bool    OPT_IsExtractIIDs = false;           // extract iids or not
-IDMap_t OPT_ExtractIIDs (1000);              // extract message iid map
 bool    OPT_IsExtractEIDs = false;           // extract eids or not
-IDMap_t OPT_ExtractEIDs (1000);              // extract message eid map
 bool    OPT_IsExtractComments = false;       // extract comments or not
+
+IDMap_t OPT_ExtractCodes(1000);              // extract message type map
+IDMap_t OPT_ExtractIDs (1000);               // extract message iid map
 map<string, bool> OPT_ExtractComments;       // extract message comment map
+
 
 
 //========================================================== Fuction Decs ====//
@@ -207,6 +208,14 @@ int main (int argc, char ** argv)
 	   OPT_ExtractCodes . exists (bankp -> getBankCode( )) )
       for ( id = 1; id <= bankp -> getLastIID( ); id ++ )
 	{
+	  //-- If extracting by ID, skip if not selected
+	  if ( (OPT_IsExtractIIDs  &&
+		! OPT_ExtractIDs . exists (id))
+	       ||
+	       (OPT_IsExtractEIDs  &&
+		! OPT_ExtractIDs . exists (invmaps [ti] -> lookup (id))) )
+	    continue;
+
 	  //-- Fetch the next object
 	  typep -> setIID (id);
 	  bankp -> fetch (*typep);
@@ -318,24 +327,14 @@ int main (int argc, char ** argv)
 	    continue;
 	  }
 
-	  showrecord = false;
-	  if ( ! OPT_IsExtractIIDs  &&
-	       ! OPT_IsExtractEIDs  &&
-	       ! OPT_IsExtractComments )
-	    showrecord = true;
-	  if ( OPT_IsExtractIIDs  &&
-	       OPT_ExtractIIDs . exists (typep -> getIID( )) )
-	    showrecord = true;
-	  if ( OPT_IsExtractEIDs  &&
-	       OPT_ExtractEIDs . exists (typep -> getEID( )) )
-	    showrecord = true;
+	  showrecord = true;
 	  if ( OPT_IsExtractComments )
 	    {
 	      nl = typep -> getComment( ) . find ('\n');
 	      string temps (typep -> getComment( ), 0, nl);
-	      if ( OPT_ExtractComments . find (temps) !=
+	      if ( OPT_ExtractComments . find (temps) ==
 		   OPT_ExtractComments . end( ) )
-		showrecord = true;
+		showrecord = false;
 	    }
 
 	  if ( showrecord )
@@ -401,24 +400,32 @@ void ParseArgs (int argc, char ** argv)
         break;
 
       case 'c':
-	OPT_IsExtractComments = true;
-	if ( ! (OPT_ExtractComments .
-		insert (map<string,bool>::value_type(optarg,true))) . second )
-	  cerr << "WARNING: Cannot insert multiple map keys - Comment "
-	       << optarg << " ignored" << endl;
+	if ( OPT_IsExtractEIDs  ||  OPT_IsExtractIIDs )
+	  cerr << "WARNING: -c -e -i are mutually exlusive, -c ignored\n";
+	else
+	  {
+	    OPT_IsExtractComments = true;
+	    if ( !(OPT_ExtractComments .
+		   insert (map<string,bool>::value_type(optarg,true))).second )
+	      cerr << "WARNING: Cannot insert multiple map keys - Comment "
+		   << optarg << " ignored" << endl;
+	  }
 	break;
 
       case 'e':
-	OPT_IsExtractEIDs = true;
-	try {
-
-	  OPT_ExtractEIDs . insert (atoi (optarg), 1);
-	}
-	catch (Exception_t & e) {
-	  
-	  cerr << "WARNING: " << e . what( )
-	       << " - EID " << optarg << " ignored" << endl;
-	}
+	if ( OPT_IsExtractIIDs  ||  OPT_IsExtractComments )
+	  cerr << "WARNING: -c -e -i are mutually exlusive, -e ignored\n";
+	else
+	  {
+	    OPT_IsExtractEIDs = true;
+	    try {
+	      OPT_ExtractIDs . insert (atoi (optarg), 1);
+	    }
+	    catch (Exception_t & e) {
+	      cerr << "WARNING: " << e . what( )
+		   << " - EID " << optarg << " ignored" << endl;
+	    }
+	  }
 	break;
 
       case 'h':
@@ -427,16 +434,19 @@ void ParseArgs (int argc, char ** argv)
         break;
 
       case 'i':
-	OPT_IsExtractIIDs = true;
-	try {
-
-	  OPT_ExtractIIDs . insert (atoi (optarg), 1);
-	}
-	catch (Exception_t & e) {
-	  
-	  cerr << "WARNING: " << e . what( )
-	       << " - IID " << optarg << " ignored" << endl;
-	}
+	if ( OPT_IsExtractEIDs  ||  OPT_IsExtractComments )
+	  cerr << "WARNING: -c -e -i are mutually exlusive, -i ignored\n";
+	else
+	  {
+	    OPT_IsExtractIIDs = true;
+	    try {
+	      OPT_ExtractIDs . insert (atoi (optarg), 1);
+	    }
+	    catch (Exception_t & e) {
+	      cerr << "WARNING: " << e . what( )
+		   << " - IID " << optarg << " ignored" << endl;
+	    }
+	  }
 	break;
 
       case 'I':
@@ -469,15 +479,12 @@ void ParseArgs (int argc, char ** argv)
   if ( optind != argc )
     {
       OPT_IsExtractCodes = true;
-
       while ( optind != argc )
 	{
 	  try {
-	    
 	    OPT_ExtractCodes . insert (Encode (argv [optind ++]), 1);
 	  }
-	  catch (Exception_t & e) {
-	    
+	  catch (Exception_t & e) {  
 	    cerr << "WARNING: " << e . what( )
 		 << " - NCode " << argv [optind - 1] << " ignored" << endl;
 	  }
@@ -494,10 +501,10 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-b path       The directory path of the bank to report\n"
-    << "-c string     Report objects matching this comment\n"
-    << "-e uint       Report objects matching this eid\n"
+    << "-c string     Report objects matching this comment, excludes -e -i\n"
+    << "-e uint       Report objects matching this eid, excludes -c -i\n"
     << "-h            Display help information\n"
-    << "-i uint       Report objects matching this iid\n"
+    << "-i uint       Report objects matching this iid, excludes -c -e\n"
     << "-I            Include IIDs in the output\n"
     << endl;
 
