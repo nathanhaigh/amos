@@ -8,13 +8,16 @@
 using namespace AMOS;
 using namespace std;
 
+const int MIN_QUAL = 4;
+
+
 bool USE_EID = 1;
 
 inline bool hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
-                Pos_t rangeEnd,   // 0-based exact end of range
-                Pos_t seqOffset,  // 0-bases exact offset of seq
-                Pos_t seqLen,     // count of bases of seq (seqend+1)
-                Pos_t contigLen)  // count of bases in contig (contigend+1)
+                       Pos_t rangeEnd,   // 0-based exact end of range
+                       Pos_t seqOffset,  // 0-bases exact offset of seq
+                       Pos_t seqLen,     // count of bases of seq (seqend+1)
+                       Pos_t contigLen)  // count of bases in contig (contigend+1)
 {
   int retval = 1;
 
@@ -52,7 +55,6 @@ Pos_t getUngappedPos(const string & str, Pos_t offset)
 
   return retval;
 }
-
 
 class Render_t
 {
@@ -115,6 +117,30 @@ void Render_t::load(Bank_t & read_bank, vector<Tile_t>::const_iterator tile)
   }
 }
 
+struct TilingOrderCmp
+{
+  bool operator() (const Tile_t & a, const Tile_t & b)
+  {
+    int offdiff = b.offset - a.offset;
+
+    if (offdiff)
+    {
+      if (offdiff < 0) { return false; }
+      return true;
+    }
+
+    int lendiff = (b.range.getLength() + b.gaps.size()) -
+                  (a.range.getLength() + a.gaps.size());
+
+    if (lendiff)
+    {
+      if (lendiff < 0) { return false; }
+      return true;
+    }
+
+    return (a.source < b.source);
+  }
+};
 
 
 int main (int argc, char ** argv)
@@ -142,9 +168,14 @@ int main (int argc, char ** argv)
     
     while (contig_bank >> contig)
     {
-      const std::vector<Tile_t> & tiling = contig.getReadTiling();
+      std::vector<Tile_t> & tiling = contig.getReadTiling();
       const string & consensus = contig.getSeqString();
       const Pos_t clen = consensus.size();
+
+      sort(tiling.begin(), tiling.end(), TilingOrderCmp());
+
+      Pos_t grangeStart = 0;
+      Pos_t grangeEnd = clen-1;
 
       // Render the aligned sequences
       int vectorpos;
@@ -165,13 +196,15 @@ int main (int argc, char ** argv)
 
       libSlice_Slice s;
       int dcov;
-      dcov = tiling.size();
+      dcov = tiling.size(); // trivially, this is the largest dcov in the contig
       s.bc = new char [dcov+1];
       s.qv = new char [dcov];
       s.rc = new char [dcov];
 
       Pos_t gindex, index;
-      for (gindex = 0, index = 1; gindex < clen; gindex++)
+      for (gindex = grangeStart, index = getUngappedPos(consensus, grangeStart); 
+           gindex <= grangeEnd; 
+           gindex++)
       {
         // Figure out which reads tile this position
         vector<Render_t>::const_iterator ri;
@@ -187,6 +220,7 @@ int main (int argc, char ** argv)
           {
             s.bc[dcov]  = ri->m_nucs[gindex - ri->m_offset];
             s.qv[dcov]  = ri->m_qual[gindex - ri->m_offset]-AMOS::MIN_QUALITY;
+            if (s.qv[dcov] < MIN_QUAL) { s.qv[dcov] = MIN_QUAL; }
             s.rc[dcov]  = ri->m_rc;
             reads[dcov] = vectorpos+vectoroffset;
 
@@ -212,6 +246,7 @@ int main (int argc, char ** argv)
         // Print Slice
 
         cout << contig_count << " "
+             << gindex+1 << " "
              << coordinate << " " 
              << consensus[gindex] << " "
              << cqv;
@@ -226,7 +261,6 @@ int main (int argc, char ** argv)
           for (j = 0; j < dcov; j++)
           {
             if (j) { cout << ":"; }
-
             cout << (int) s.qv[j];
           }
 
@@ -235,7 +269,6 @@ int main (int argc, char ** argv)
           for (j = 0; j < dcov; j++)
           {
             if (j) { cout << ":"; }
-
             cout << (int) reads[j];
           }
         }
