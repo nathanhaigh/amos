@@ -13,7 +13,6 @@ using namespace std;
 
 
 
-
 //================================================ Message_t ===================
 inline bool skipto (istream & in, char ch)
 {
@@ -36,9 +35,8 @@ inline bool skipto (istream & in, char ch)
 //----------------------------------------------------- getField ---------------
 const string & Message_t::getField (NCode_t fcode) const
 {
-  map<NCode_t,string>::const_iterator mi;
-  
-  mi = fields_m . find (fcode);
+  map<NCode_t,string>::const_iterator mi = fields_m . find (fcode);
+
   if ( mi == fields_m . end( ) )
     AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " + Decode (fcode));
   
@@ -200,13 +198,12 @@ NCode_t Message_t::skip (istream & in) // static const
 void Message_t::write (ostream & out) const
 {
   bool mline = false;
-  map<NCode_t, string>::const_iterator mi;
-  vector<Message_t>::const_iterator vi;
 
   //-- Write opening of message
   out << '{' << Decode (mcode_m) << endl;
 
   //-- Write all fields
+  map<NCode_t,string>::const_iterator mi;
   for ( mi = fields_m . begin( ); mi != fields_m . end( ); mi ++ )
     {
       //-- Set multi-line message flag
@@ -222,6 +219,7 @@ void Message_t::write (ostream & out) const
     }
 
   //-- Write all sub-messages
+ vector<Message_t>::const_iterator vi;
   for ( vi = subs_m . begin( ); vi != subs_m . end( ); vi ++ )
     vi -> write (out);
 

@@ -1,7 +1,7 @@
 // $Id$ 
 
-// This program uses DST, MTP, and CTG records from a bank in order to generate a set of 
-// contig links (CLK).
+// This program uses DST, MTP, and CTG records from a bank in order to generate
+// a set of contig links (CLK).
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -12,40 +12,11 @@
 #include <set>
 #include <list>
 #include <functional>
-#include "datatypes_AMOS.hh"
-#include "Bank_AMOS.hh"
-#include "BankStream_AMOS.hh"
-#include "ContigLink_AMOS.hh"
-#include "Contig_AMOS.hh"
-#include "Matepair_AMOS.hh"
-#include "Library_AMOS.hh"
-#include "Fragment_AMOS.hh"
-#include "Read_AMOS.hh"
+#include "foundation_AMOS.hh"
 
-#ifdef __GNUC__
-#if __GNUC__ < 3
-  #include <hash_map.h>
-  namespace Sgi { using ::hash_map; }; // inherit globals
-  #define HASHMAP_NAMESPACE std
-#else
-  #include <ext/hash_map>
-  #if __GNUC_MINOR__ == 0
-    namespace Sgi = std;               // GCC 3.0
-    #define HASHMAP_NAMESPACE std
-  #else
-    namespace Sgi = ::__gnu_cxx;       // GCC 3.1 and later
-    #define HASHMAP_NAMESPACE __gnu_cxx
-  #endif
-#endif
-#else      // ...  there are other compilers, right?
-  namespace Sgi = std;
-  #define HASHMAP_NAMESPACE std
-#endif
-
-
-using namespace AMOS;
 using namespace std;
-using namespace HASHMAP_NAMESPACE;
+using namespace AMOS;
+using namespace HASHMAP;
 
 map<string, string> globals; // global variables
 

@@ -12,11 +12,10 @@
 #define __Message_AMOS_HH 1
 
 #include "utility_AMOS.hh"
-#include <map>
 #include <string>
 #include <vector>
 #include <iostream>
-
+#include <map>
 
 
 
@@ -103,11 +102,14 @@ class Message_t
 private:
 
   NCode_t mcode_m;                            //!< message NCode type
-  std::map<NCode_t,std::string> fields_m;     //!< message fields
   std::vector<Message_t> subs_m;              //!< vector of submessages
+  std::map<NCode_t,std::string> fields_m;     //!< message fields
 
 
 public:
+
+  typedef std::map<NCode_t,std::string>::const_iterator const_iterator;
+
 
   //--------------------------------------------------- Message_t --------------
   //! \brief Constructs an empty Message_t
@@ -124,6 +126,34 @@ public:
   ~Message_t ( )
   {
 
+  }
+
+
+  //--------------------------------------------------- begin ------------------
+  //! \brief Returns a const_iterator to the beginning of the field map
+  //!
+  //! Iterator is of the type map<NCode_t,std::string>::const_iterator.
+  //! Access NCode with `itr -> first` and data with `itr -> second`.
+  //!
+  //! \return A const_iterator to the beginning of the field map
+  //!
+  const_iterator begin ( ) const
+  {
+    return fields_m . begin( );
+  }
+
+
+  //--------------------------------------------------- end --------------------
+  //! \brief Returns a const_iterator to the end of the field map
+  //!
+  //! Iterator is of the type map<NCode_t,std::string>::const_iterator.
+  //! Access NCode with `itr -> first` and data with `itr -> second`.
+  //!
+  //! \return A const_iterator to the end of the field map
+  //!
+  const_iterator end ( ) const
+  {
+    return fields_m . end( );
   }
 
 
@@ -196,7 +226,7 @@ public:
 
 
   //--------------------------------------------------- getSubMessages ---------
-  //! \brief Get a the vector of submessages for this message
+  //! \brief Get the vector of submessages for this message
   //!
   //! \return The vector of submessages for this message
   //!
@@ -207,7 +237,7 @@ public:
 
 
   //--------------------------------------------------- getSubMessages ---------
-  //! \brief Get a the vector of submessages for this message
+  //! \brief Get the vector of submessages for this message
   //!
   //! \return The vector of submessages for this message
   //!

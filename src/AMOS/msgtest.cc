@@ -4,6 +4,8 @@
 using namespace std;
 using namespace AMOS;
 
+#define ITERS 500000
+
 int main (int argc, char ** argv)
 {
   Message_t msg;
@@ -53,20 +55,25 @@ int main (int argc, char ** argv)
     ctg . setReadTiling (tlevec);
 
     clocka = clock( );
-    for ( int i = 0; i < 1000000; i ++ )
-      ctg . writeMessage (msg);
+    for ( int i = 0; i < ITERS; i ++ )
+      red . writeMessage (msg);
     clockb = clock( );
     loopa = (double)(clockb - clocka);
 
     clocka = clock( );
-    for ( int i = 0; i < 1000000; i ++ )
-      ctg . readMessage (msg);
+    for ( int i = 0; i < ITERS; i ++ )
+      red . readMessage (msg);
     clockb = clock( );
     loopb = (double)(clockb - clocka);
 
     msg . setField ("eid", "hello");
     msg . setField ("bla", "foo");
     msg . write (cerr);
+
+    Message_t::const_iterator mi;
+    cerr << "\nField List\n";
+    for ( mi = msg . begin( ); mi != msg . end( ); ++ mi )
+      cerr << Decode (mi -> first) << endl;
 
     cerr << endl
 	 << "loopa: " << (double)loopa / CLOCKS_PER_SEC << " sec.\n"

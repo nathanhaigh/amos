@@ -21,6 +21,7 @@
 #include <unistd.h>
 using namespace AMOS;
 using namespace std;
+using namespace HASHMAP;
 
 
 
@@ -84,10 +85,10 @@ int main (int argc, char ** argv)
   long int cntc = 0;
   Message_t msg;
   NCode_t ncode;
-  map<NCode_t, obpair> obps;     // object,bank pair NCode-keyed map
-  ifstream msgfile;              // the message file stream
-  char act;                      // action enumeration
-  obpair * obp;                  // object,bank pair pointer
+  hash_map<NCode_t, obpair> obps;   // object,bank pair NCode-keyed map
+  ifstream msgfile;                 // the message file stream
+  char act;                         // action enumeration
+  obpair * obp;                     // object,bank pair pointer
 
   //-- The KNOWN types to put in the banks
   //   note: node constants are part of the AMOS namespace
@@ -246,7 +247,7 @@ int main (int argc, char ** argv)
     //-- Close all the banks and free the objects
     msgfile . close( );
 
-    map<NCode_t, obpair>::iterator mi;
+    hash_map<NCode_t, obpair>::iterator mi;
     for ( mi = obps . begin( ); mi != obps . end( ); ++ mi )
       {
 	if ( mi -> second . bank != NULL )

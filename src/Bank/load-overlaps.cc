@@ -11,6 +11,7 @@
 #include "amp.hh"
 #include "delta.hh"
 #include <list>
+#include <map>
 #include <algorithm>
 #include <iostream>
 #include <cassert>

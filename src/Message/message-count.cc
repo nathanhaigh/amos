@@ -14,10 +14,10 @@
 #include <string>
 #include <fstream>
 #include <cstdio>
-#include <map>
 #include <unistd.h>
-using namespace AMOS;
 using namespace std;
+using namespace AMOS;
+using namespace HASHMAP;
 
 
 //=============================================================== Globals ====//
@@ -67,7 +67,7 @@ int main (int argc, char ** argv)
   Message_t msg;                           // the current message
   NCode_t msgcode = NULL_NCODE;            // current message NCode
   streampos lastpos;                       // last tellg pos
-  map<NCode_t, LongPair_t> sums;           // message count and size sums
+  hash_map<NCode_t, LongPair_t> sums;           // message count and size sums
   long int c1, c2;
 
 
@@ -108,7 +108,7 @@ int main (int argc, char ** argv)
   printf ("%5s %9s %12s %12s\n", "NCODE", "COUNT", "SIZE", "AVG");
   printf ("-----------------------------------------\n");
   c1 = c2 = 0;
-  map<NCode_t, LongPair_t>::iterator mi;
+  hash_map<NCode_t, LongPair_t>::iterator mi;
   for ( mi = sums . begin( ); mi != sums . end( ); mi ++ )
     {
       printf ("%5s %9ld %12ld %12ld\n",
