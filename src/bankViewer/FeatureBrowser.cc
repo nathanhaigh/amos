@@ -17,14 +17,16 @@ class FeatureListItem : public QListViewItem
 {
 public:
   FeatureListItem(QListView * parent, 
+                  QString contigid,
                   QString eid,
                   QString type,
                   QString group,
+                  QString offset,
                   QString end5,
                   QString end3,
                   QString comment)
                
-    : QListViewItem(parent, eid, type, group, end5, end3, comment)
+    : QListViewItem(parent, contigid, eid, type, group, offset, end5, end3, comment)
     {
       
     }
@@ -33,7 +35,7 @@ public:
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 3 || col == 4)
+    if (col == 0 || col == 4 || col == 5 || col == 6)
     {
       return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
     }
@@ -73,52 +75,75 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
   connect(eidpick, SIGNAL(returnPressed()),
           this,    SLOT(acceptSelected()));
 
+  m_table->addColumn("Contig ID");
   m_table->addColumn("EID");
   m_table->addColumn("Type");
   m_table->addColumn("Group");
+  m_table->addColumn("Offset");
   m_table->addColumn("End5");
   m_table->addColumn("End3");
   m_table->addColumn("Comment");
+
+  m_datastore = datastore;
 
   m_table->setShowSortIndicator(true);
   m_table->setRootIsDecorated(true);
   m_table->setAllColumnsShowFocus(true);
 
+  QCursor orig = cursor();
+  setCursor(Qt::waitCursor);
+
   try
   {
-    QCursor orig = cursor();
-    setCursor(Qt::waitCursor);
+    int featcount = 0;
+    int contigid = 1;
+    datastore->contig_bank.seekg(1);
+    AMOS::Contig_t contig;
 
-    QString status = "Select from " ;
-    status += QString::number(datastore->m_contig.getFeatures().size()) 
-           + " features";
-    statusBar()->message(status);
-
-    vector<AMOS::Feature_t>::iterator ti;
-    for (ti =  datastore->m_contig.getFeatures().begin();
-         ti != datastore->m_contig.getFeatures().end();
-         ti++)
+    while (datastore->contig_bank >> contig)
     {
-      new FeatureListItem(m_table,
-                          QString(ti->eid),
-                          QString((QChar)(char)ti->type),
-                          QString(ti->group),
-                          QString::number(ti->range.begin),
-                          QString::number(ti->range.end),
-                          QString(ti->comment));
+      vector<AMOS::Feature_t>::iterator fi;
+      for (fi =  contig.getFeatures().begin();
+           fi != contig.getFeatures().end();
+           fi++)
+      {
+        featcount++;
+        new FeatureListItem(m_table,
+                            QString::number(contigid),
+                            QString(fi->eid),
+                            QString((QChar)(char)fi->type),
+                            QString(fi->group),
+                            QString::number(fi->range.isReverse() ? fi->range.end : fi->range.begin),
+                            QString::number(fi->range.begin),
+                            QString::number(fi->range.end),
+                            QString(fi->comment));
+      }
+      contigid++;
     }
 
-    setCursor(orig);
+    QString status = "Select from " ;
+    status += QString::number(featcount) + " features";
+    statusBar()->message(status);
   }
   catch (AMOS::Exception_t & e)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
+
+  setCursor(orig);
 }
 
 void FeatureBrowser::itemSelected(QListViewItem * item)
 {
-  emit setGindex(atoi(item->text(3)));
+  int contigid = atoi(item->text(0));
+  int gindex = atoi(item->text(4));
+
+  if (contigid != m_datastore->m_contigId)
+  {
+    emit setContigId(contigid);
+  }
+
+  emit setGindex(gindex);
 }
 
 void FeatureBrowser::selecteid(const QString & eid)

@@ -19,18 +19,22 @@ public:
 public slots:
   void contigChanged();
   void toggleItem(int id);
+
   void toggleConnectMates();
   void togglePartitionTypes();
   void toggleCoveragePlot();
+  void toggleFeatures();
 
 signals:
   void setGindex(int gindex);
   void visibleRange(int, int);
   void setTilingVisibleRange(int, int);
   void refreshCanvas();
+
   void setConnectMates(bool);
   void setPartitionTypes(bool);
   void setCoveragePlot(bool);
+  void setFeatures(bool);
 
 private:
 
@@ -44,6 +48,7 @@ private:
   int m_connectmatesid;
   int m_partitiontypesid;
   int m_coverageid;
+  int m_featid;
 };
 
 #endif

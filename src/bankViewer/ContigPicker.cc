@@ -147,17 +147,14 @@ void ContigPicker::loadTable(bool jumpToCurrent)
   try
   {
     AMOS::Contig_t contig;
-    AMOS::BankStream_t contig_bank(AMOS::Contig_t::NCODE);
-
-    contig_bank.open(m_datastore->m_bankname, AMOS::B_SPY);
-
     QString status = "Select from " + 
-                     QString::number(contig_bank.getSize()) + 
+                     QString::number(m_datastore->contig_bank.getSize()) + 
                      " contigs in " + m_datastore->m_bankname.c_str();
     statusBar()->message(status);
 
     int contigid = 1;
-    while (contig_bank >> contig)
+    m_datastore->contig_bank.seekg(1);
+    while (m_datastore->contig_bank >> contig)
     {
       int contiglen = contig.getSeqString().length();
       int numreads = contig.getReadTiling().size();

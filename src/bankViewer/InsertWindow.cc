@@ -75,6 +75,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
   m_optionsmenu->setItemChecked(m_coverageid, true);
 
+  m_featid = m_optionsmenu->insertItem("Show F&eatures", this, SLOT(toggleFeatures()));
+  m_optionsmenu->setItemChecked(m_featid, true);
+
   // Main Widget
   InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
   setCentralWidget(iw);
@@ -111,6 +114,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(setCoveragePlot(bool)),
           iw,   SLOT(setCoveragePlot(bool)));
+
+  connect(this, SIGNAL(setFeatures(bool)),
+          iw,   SLOT(setFeatures(bool)));
 }
 
 void InsertWindow::contigChanged()
@@ -157,4 +163,12 @@ void InsertWindow::toggleCoveragePlot()
   m_optionsmenu->setItemChecked(m_coverageid, b);
 
   emit setCoveragePlot(b);
+}
+
+void InsertWindow::toggleFeatures()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_featid);
+  m_optionsmenu->setItemChecked(m_featid, b);
+
+  emit setFeatures(b);
 }

@@ -6,12 +6,42 @@
 #include "RenderSeq.hh"
 #include "InsertCanvasItem.hh"
 #include "CoverageCanvasItem.hh"
+#include "FeatureCanvasItem.hh"
 #include <set>
 
 
 using namespace AMOS;
 using namespace std;
 typedef std::map<ID_t, Tile_t *> SeqTileMap_t;
+
+struct FeatOrderCmp
+{
+  bool operator() (const AMOS::Feature_t & a, const AMOS::Feature_t & b)
+  {
+    int aoffset = a.range.isReverse() ? a.range.end : a.range.begin;
+    int boffset = b.range.isReverse() ? b.range.end : b.range.begin;
+
+    int offdiff = boffset - aoffset;
+
+    if (offdiff)
+    {
+      if (offdiff < 0) { return false; }
+      return true;
+    }
+
+    int lendiff = (b.range.getLength()) -
+                  (a.range.getLength());
+
+    if (lendiff)
+    {
+      if (lendiff < 0) { return false; }
+      return true;
+    }
+
+    return true;
+  }
+};
+
 
 
 InsertWidget::InsertWidget(DataStore * datastore,
@@ -33,6 +63,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_connectMates = 1;
   m_partitionTypes = 1;
   m_coveragePlot = 1;
+  m_showFeatures = 1;
 
   refreshCanvas();
 
@@ -316,9 +347,11 @@ void InsertWidget::refreshCanvas()
     }
   }
 
+  cerr << "Paint:";
+
   if (m_coveragePlot)
   {
-    cerr << "Paint coverage" << endl;
+    cerr << " coverage";
     int maxdepth = 0;
     int maxroffset = 0;
 
@@ -382,9 +415,15 @@ void InsertWidget::refreshCanvas()
       coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + tileoffset);
     }
 
-    CoverageBackgroundCanvasItem * bg = new CoverageBackgroundCanvasItem(0, tileoffset, maxroffset + m_hoffset + 1, maxdepth, m_icanvas);
-    bg->show();
+    QCanvasRectangle * bg = new QCanvasRectangle(0, tileoffset, maxroffset + m_hoffset + 1, maxdepth, m_icanvas);
+    bg->setBrush(QColor(60,60,60));
     bg->setZ(-2);
+    bg->show();
+
+    QCanvasLine * base = new QCanvasLine(m_icanvas);
+    base->setPoints(0, tileoffset+maxdepth, maxroffset+m_hoffset+1, tileoffset+maxdepth);
+    base->setPen(Qt::white);
+    base->show();
 
     CoverageCanvasItem * citem = new CoverageCanvasItem(0, tileoffset,
                                                         maxroffset + m_hoffset + 1, maxdepth,
@@ -392,6 +431,49 @@ void InsertWidget::refreshCanvas()
     citem->show();
 
     tileoffset += maxdepth + gutter;
+  }
+
+  if (m_showFeatures)
+  {
+    cerr << " features";
+    vector<AMOS::Feature_t> & feats = m_datastore->m_contig.getFeatures();
+    sort(feats.begin(), feats.end(), FeatOrderCmp());
+
+    int layoutpos;
+    vector<int> layout;
+    vector<int>::iterator li;
+
+    vector<AMOS::Feature_t>::iterator fi;
+    for (fi = feats.begin(); fi != feats.end(); fi++)
+    {
+      int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
+
+      // First fit into the layout
+      for (li =  layout.begin(), layoutpos = 0;
+           li != layout.end();
+           li++, layoutpos++)
+      {
+        if (*li < offset)
+        {
+          break;
+        }
+      }
+
+      if (li == layout.end()) { layout.push_back(0); }
+      layout[layoutpos] = offset + fi->range.getLength() + layoutgutter;
+
+      int vpos = tileoffset + layoutpos * lineheight;
+
+      FeatureCanvasItem * fitem = new FeatureCanvasItem(m_hoffset+offset, vpos,
+                                                        fi->range.getLength(), m_seqheight,
+                                                        *fi, m_icanvas);
+      fitem->show();
+    }
+
+    if (!layout.empty())
+    {
+      tileoffset += (layout.size() + 1) * lineheight;
+    }
   }
 
   // bubblesort the types by the order they appear in the popup menu
@@ -419,7 +501,7 @@ void InsertWidget::refreshCanvas()
   }
 
 
-  cerr << "paint inserts" << endl;
+  cerr << " inserts" << endl;
   int layoutoffset = 0;
 
   vector<int>::iterator li;
@@ -482,7 +564,25 @@ void InsertWidget::refreshCanvas()
     }
   }
 
-  m_icanvas->resize(rightmost - leftmost + 1000, tileoffset+layoutoffset*lineheight);
+  int newheight = tileoffset+layoutoffset*lineheight;
+
+  if (m_showFeatures)
+  {
+    vector<AMOS::Feature_t> & feats = m_datastore->m_contig.getFeatures();
+    vector<AMOS::Feature_t>::iterator fi;
+    for (fi = feats.begin(); fi != feats.end(); fi++)
+    {
+      int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
+
+      QCanvasRectangle * rect = new QCanvasRectangle(offset, 0, fi->range.getLength(), newheight, m_icanvas);
+      rect->setBrush(QColor(139,119,101));
+      rect->setPen(QColor(169,149,131));
+      rect->setZ(-2);
+      rect->show();
+    }
+  }
+
+  m_icanvas->resize(rightmost - leftmost + 1000, newheight);
   m_icanvas->update();
 }
 
@@ -501,5 +601,11 @@ void InsertWidget::setPartitionTypes(bool b)
 void InsertWidget::setCoveragePlot(bool b)
 {
   m_coveragePlot = b;
+  refreshCanvas();
+}
+
+void InsertWidget::setFeatures(bool b)
+{
+  m_showFeatures = b;
   refreshCanvas();
 }

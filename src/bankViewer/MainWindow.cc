@@ -47,12 +47,12 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QPopupMenu* file = new QPopupMenu(this);
   menuBar()->insertItem("&File", file);
   file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()));
+  file->insertItem("Chromatogram P&aths...",   this,  SLOT(showChromoPicker()));
   file->insertSeparator();
   file->insertItem("&Contig Picker...", this,  SLOT(chooseContig()));
   file->insertItem("&Read Information...",   this,  SLOT(showReadPicker()));
   file->insertItem("&Feature Browser...",   this,  SLOT(showFeatureBrowser()));
   file->insertItem("&Library Information...",   this,  SLOT(showLibPicker()));
-  file->insertItem("&Chromatogram Paths...",   this,  SLOT(showChromoPicker()));
   file->insertSeparator();
   file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 
@@ -269,12 +269,6 @@ void MainWindow::setContigId(int contigId)
       m_readPicker->close();
       m_readPicker = NULL;
     }
-
-    if (m_featPicker)
-    {
-      m_featPicker->close();
-      m_featPicker = NULL;
-    }
   }
 }
 
@@ -424,6 +418,9 @@ void MainWindow::showFeatureBrowser()
   m_featPicker = new FeatureBrowser(&m_datastore, this, "featPicker");
   connect(m_featPicker,   SIGNAL(setGindex(int)),
           this,           SLOT(setGindex(int)));
+
+  connect(m_featPicker,   SIGNAL(setContigId(int)),
+          this,           SLOT(setContigId(int)));
 }
 
 void MainWindow::addChromoPath(const QString & path)

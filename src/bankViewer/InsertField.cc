@@ -1,6 +1,7 @@
 #include "InsertField.hh"
 #include <qwmatrix.h>
 #include "InsertCanvasItem.hh"
+#include "FeatureCanvasItem.hh"
 
 #include <iostream>
 using namespace std;
@@ -110,7 +111,20 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
       highlightInsert(iitem, highlight, highlightBuddy);
       found = true;
-      break;
+    }
+    else if ((*it)->rtti() == FeatureCanvasItem::RTTI)
+    {
+      FeatureCanvasItem * fitem = (FeatureCanvasItem *) * it;
+      QString s = "EID: ";
+      s += fitem->m_feat.eid + " Group:";
+      s += fitem->m_feat.group + " Comment:";
+      s += fitem->m_feat.comment + " Type:";
+      s += (char)fitem->m_feat.type;
+      s += " [" +  QString::number(fitem->m_feat.range.begin) + ",";
+      s += QString::number(fitem->m_feat.range.end) + "]";
+
+      emit setStatus(s);
+      found = true;
     }
   }
 

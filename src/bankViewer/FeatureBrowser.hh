@@ -22,6 +22,7 @@ public slots:
 
 signals:
   void setGindex(int);
+  void setContigId(int);
 
 private:
   DataStore * m_datastore;

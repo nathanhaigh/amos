@@ -3,20 +3,6 @@
 
 #include <qcanvas.h>
 
-class CoverageBackgroundCanvasItem : public QCanvasRectangle
-{
-public:
-  CoverageBackgroundCanvasItem(int x, int y, int width, int height,
-                               QCanvas * canvas);
-
-  static const int RTTI;
-  int rtti () const { return RTTI; }
-
-protected:
-  void drawShape (QPainter & p);
-};
-
-
 class CoverageCanvasItem : public QCanvasRectangle
 {
 public:
