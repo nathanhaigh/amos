@@ -135,6 +135,30 @@ public:
   }
 
 
+  //--------------------------------------------------- flip -------------------
+  //! \brief Flip the orientation of the link
+  //!
+  //! Reverses the order of the contig IDs and changes the adjacency as
+  //! altered by the new orientation of the contigs. Has no effect if both
+  //! contigs have a NULL_ID, and does not alter adjacency if it is currently
+  //! a NULL_ADJACENCY.
+  //!
+  //! \return void
+  //!
+  void flip ( )
+  {
+    if ( contigs_m . first != NULL_ID  &&  contigs_m . second != NULL_ID )
+      {
+	LinkAdjacency_t la = getAdjacency( );
+	if ( la == INNIE  ||  la == OUTIE )
+	  setAdjacency (la == INNIE ? OUTIE : INNIE);
+
+	contigs_m =
+	  std::pair<ID_t, ID_t> (contigs_m . second, contigs_m . first);
+      }
+  }
+
+
   //--------------------------------------------------- getAdjacency -----------
   //! \brief Get the adjacent ends of the two contigs
   //!
