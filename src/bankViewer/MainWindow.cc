@@ -13,6 +13,9 @@
 #include "TilingFrame.hh"
 #include "InsertWindow.hh"
 
+#include "icons/fontdecrease.xpm"
+#include "icons/fontincrease.xpm"
+
 using namespace std;
 
 MainWindow::MainWindow( QWidget *parent, const char *name )
@@ -21,7 +24,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_gindex = -1;
 
   m_contigPicker = NULL;
-  m_fontsize = 12;
+  m_fontsize = 10;
   m_insertWindow = NULL;
   m_cgraphWindow = NULL;
 
@@ -65,10 +68,13 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QToolButton * bPrevDisc = new QToolButton(Qt::LeftArrow, status, "prev");
   bPrevDisc->setTextLabel("Previous Discrepancy");
   bPrevDisc->setAccel(Key_PageDown);
+  bPrevDisc->setMinimumWidth(20);
 
   QToolButton * bNextDisc = new QToolButton(Qt::RightArrow, status, "next");
   bNextDisc->setTextLabel("Next Discrepancy");
   bNextDisc->setAccel(Key_PageUp);
+  bNextDisc->setMinimumWidth(20);
+
 
   new QLabel("   Contig ID", status, "contiglbl");
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
@@ -84,8 +90,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
                                                this, SLOT(showCGraph()), status );
   bShowCGraph->setText("Contig Graph");
 
-  QIconSet icon_fontminus(QPixmap("icons/fontdecrease.xpm"));
-  QIconSet icon_fontplus(QPixmap("icons/fontincrease.xpm"));
+  QIconSet icon_fontminus(QPixmap((const char ** )fontdecrease_xpm));
+  QIconSet icon_fontplus(QPixmap((const char **)fontincrease_xpm));
 
   new QToolButton(icon_fontplus, "Font Increase", "Font Increase",
                   this, SLOT(fontIncrease()), status);

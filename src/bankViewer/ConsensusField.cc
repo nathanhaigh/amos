@@ -90,7 +90,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   int displaywidth = (width-m_tilehoffset)/m_basewidth;
 
   p.drawText(m_seqnamehoffset, m_consoffset,
-             200, m_lineheight,
+             m_tilehoffset - m_seqnamehoffset, m_lineheight,
              Qt::AlignLeft | Qt::AlignBottom, "Consensus");
 
   int grangeStart = m_gindex;
@@ -146,8 +146,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       // Numbers
       s = QString::number(n);
       p.drawText(xcoord, m_posoffset, 
-                 m_fontsize, m_fontsize,
-                 Qt::AlignHCenter | Qt::AlignBottom, s);
+                 m_fontsize, 2*m_fontsize,
+                 Qt::AlignHCenter | Qt::AlignCenter, s);
     }
 
     // ticks and labels
@@ -158,9 +158,9 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
                  xcoord+m_fontsize/2, m_lineoffset+2);
 
-      p.drawText(xcoord+m_fontsize/2-30, 2,
-                 60, m_fontsize, 
-                 Qt::AlignHCenter | Qt::AlignBottom, s);
+      p.drawText(xcoord+m_fontsize/2-50, 2,
+                 100, m_fontsize*2, 
+                 Qt::AlignHCenter | Qt::AlignCenter, s);
     }
     else if (n==5)
     {
