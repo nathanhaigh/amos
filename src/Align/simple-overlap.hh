@@ -41,6 +41,9 @@ static void  Output
     (FILE * fp, const Simple_Overlap_t & olap);
 static void  Parse_Command_Line
     (int argc, char * argv []);
+static void  Read_Fasta_Strings
+    (vector <char *> & s, vector <ID_t> & id_list,
+     vector <char *> & tag_list, const string & fn);
 static void  Usage
     (const char * command);
 

@@ -18,8 +18,12 @@ static double  Error_Rate = DEFAULT_ERROR_RATE;
 static bool  Fasta_Input = false;
   // If true, then input comes from the multifasta file named
   // on the command line
+static int  Lo_ID = 0, Hi_ID = INT_MAX;
+  // Range of indices for which to compute overlaps
 static int  Min_Overlap_Len = DEFAULT_MIN_OVERLAP_LEN;
   // Minimum number of bases by which two sequences must overlap
+static bool  Show_Alignment = false;
+  // If true, then also output the overlap alignments
 
 
 int  main
@@ -32,6 +36,7 @@ int  main
    vector <char *>  tag_list;
    vector <ID_t> id_list;
    vector <Range_t>  clr_list;
+   Alignment_t  ali;
    time_t  now;
    iostream :: fmtflags  status;
    int  i, j, n;
@@ -58,36 +63,7 @@ int  main
       cerr << "Minimum overlap bases is " << Min_Overlap_Len << endl;
 
       if  (Fasta_Input)
-          {
-           FILE  * fp;
-           std :: string  seq, hdr;
-           Alignment_t  ali;
-
-           fp = File_Open (Bank_Name . c_str(), "r");
-           while  (Fasta_Read (fp, seq, hdr))
-             string_list . push_back (strdup (seq . c_str ()));
-
-           char  line [MAX_LINE];
-
-           while  (fgets (line, MAX_LINE, stdin) != NULL)
-             {
-              char  ori [10];
-              int  a, b, hang, lo, hi;
-
-              sscanf (line, "%d %d %s %d", & a, & b, ori, & hang);
-              hang *= -1;
-              lo = Max (hang - 5, 0);
-              hi = hang + 5;
-
-              Overlap_Align (string_list [a - 1], strlen (string_list [a - 1]),
-                   string_list [b - 1], lo, hi, strlen (string_list [b - 1]),
-                   1, -3, -2, -2, ali);
-
-              printf ("\n>>> %5d %5d %3d\n", a, b, hang);
-              ali . Print (stdout, string_list [a - 1], string_list [b - 1]);
-             }
-           exit (-1);
-          }
+          Read_Fasta_Strings (string_list, id_list, tag_list, Bank_Name);
         else
           {
            read_bank . open (Bank_Name, B_READ);
@@ -99,6 +75,7 @@ int  main
       for  (i = 0;  i < n - 1;  i ++)
         {
          double  erate;
+         int  lo, hi;
 
          for  (j = i + 1;  j < n;  j ++)
            {
@@ -115,6 +92,35 @@ int  main
                  olap . b_id = id_list [j];
                  olap . flipped = false;
                  Output (stdout, olap);
+                 if  (Show_Alignment)
+                     {
+                      if  (olap . a_hang <= 0)
+                          {
+                           lo = Max (- olap . a_hang - 5, 0);
+                           hi = - olap . a_hang + 5;
+                           Overlap_Align (string_list [i], strlen (string_list [i]),
+                                string_list [j], lo, hi, strlen (string_list [j]),
+                                1, -3, -2, -2, ali);
+                           printf (
+                           "\nOverlap  a: %d .. %d of %d (%s)  b: %d .. %d of %d (%s)\n",
+                                ali . a_lo, ali . a_hi, id_list [i], tag_list [i],
+                                ali . b_lo, ali . b_hi, id_list [j], tag_list [j]);
+                           ali . Print (stdout, string_list [i], string_list [j]);
+                          }
+                        else
+                          {
+                           lo = Max (olap . a_hang - 5, 0);
+                           hi = olap . a_hang + 5;
+                           Overlap_Align (string_list [j], strlen (string_list [j]),
+                                string_list [i], lo, hi, strlen (string_list [i]),
+                                1, -3, -2, -2, ali);
+                           printf (
+                           "\nOverlap  a: %d .. %d of %d (%s)  b: %d .. %d of %d (%s)\n",
+                                ali . a_lo, ali . a_hi, id_list [j], tag_list [j],
+                                ali . b_lo, ali . b_hi, id_list [i], tag_list [i]);
+                           ali . Print (stdout, string_list [j], string_list [i]);
+                          }
+                     }
                 }
            }
 
@@ -132,6 +138,36 @@ int  main
             if  (erate <= Error_Rate)
                 {
                  int  save;
+
+                 if  (Show_Alignment)
+                     {
+                      if  (olap . a_hang <= 0)
+                          {
+                           lo = Max (- olap . a_hang - 5, 0);
+                           hi = - olap . a_hang + 5;
+                           Overlap_Align (string_list [i], strlen (string_list [i]),
+                                string_list [j], lo, hi, strlen (string_list [j]),
+                                1, -3, -2, -2, ali);
+                           printf (
+   "\nOverlap  a: %d .. %d of complement %d (%s)  b: %d .. %d of %d (%s)\n",
+                                ali . a_lo, ali . a_hi, id_list [i], tag_list [i],
+                                ali . b_lo, ali . b_hi, id_list [j], tag_list [j]);
+                           ali . Print (stdout, string_list [i], string_list [j]);
+                          }
+                        else
+                          {
+                           lo = Max (olap . a_hang - 5, 0);
+                           hi = olap . a_hang + 5;
+                           Overlap_Align (string_list [j], strlen (string_list [j]),
+                                string_list [i], lo, hi, strlen (string_list [i]),
+                                1, -3, -2, -2, ali);
+                           printf (
+   "\nOverlap  a: %d .. %d of %d (%s)  b: %d .. %d of complement %d (%s)\n",
+                                ali . a_lo, ali . a_hi, id_list [j], tag_list [j],
+                                ali . b_lo, ali . b_hi, id_list [i], tag_list [i]);
+                           ali . Print (stdout, string_list [j], string_list [i]);
+                          }
+                     }
 
                  // Re-orient with a forward and b reversed
                  save = olap . a_hang;
@@ -272,10 +308,14 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "fho:v:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "E:Fho:v:")) != EOF))
      switch  (ch)
        {
-        case  'f' :
+        case  'E' :
+          Error_Rate = strtod (optarg, NULL);
+          break;
+
+        case  'F' :
           Fasta_Input = true;
           break;
 
@@ -317,6 +357,49 @@ static void  Parse_Command_Line
 
 
 
+static void  Read_Fasta_Strings
+     (vector <char *> & s, vector <ID_t> & id_list,
+      vector <char *> & tag_list, const std :: string & fn)
+
+//  Open file named  fn  and read FASTA-format sequences from it
+//  into  s  and their tags into  tag_list .
+
+  {
+   FILE  * fp;
+   std :: string  seq, hdr;
+
+   fp = File_Open (fn . c_str (), "r", __FILE__, __LINE__);
+   s . clear ();
+   id_list . clear();
+   tag_list . clear ();
+
+   char  tag [MAX_LINE];
+   char  * tmp;
+   int  j, len;
+   int cnt = 0;
+
+   while  (Fasta_Read (fp, seq, hdr))
+     {
+       if ( cnt >= Lo_ID  &&  cnt < Hi_ID )
+	 {
+	   tmp = strdup (seq . c_str ());
+	   len = seq . length ();
+	   for  (j = 0;  j < len;  j ++)
+	     tmp [j] = tolower (tmp [j]);
+	   s . push_back (tmp);
+	   
+	   sscanf (hdr . c_str (), "%s", tag);
+	   tag_list . push_back (strdup (tag));
+	   id_list . push_back (cnt);
+	 }
+       ++ cnt;
+     }
+
+   return;
+  }
+
+
+
 static void  Usage
     (const char * command)
 
@@ -333,7 +416,9 @@ static void  Usage
            "from <bank-name>\n"
            "\n"
            "Options:\n"
-           "  -f       Input is a fasta file\n"
+           "  -E <x>   Maximum error rate for overlaps is <x>\n"
+           "           e.g., -E 0.06 for 6% error rate\n"
+           "  -F       Input is a fasta file\n"
            "  -h       Print this usage message\n"
            "  -o <n>   Set minimum overlap length to <n>\n"
            "  -v <n>   Set verbose level to <n>.  Higher produces more output.\n"
