@@ -8,6 +8,7 @@
 #include <list>
 #include "IGraph.hh"
 #include "Node.hh"
+#include "CompositeNode.hh"
 #include "Edge.hh"
 
 class IEdge;
@@ -15,7 +16,7 @@ class INode;
 
 class Edge;
 class Node;
-
+class CompositeNode;
 
 /**
  * The <b>Graph</b> class
@@ -108,6 +109,10 @@ public:
   std::list< INode* > in_adjacent(INode* p_node);
 
   bool isDirected();
+
+  /////
+
+  //  CompositeNode* reduce(IEdge *);
 };
 
 

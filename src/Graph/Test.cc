@@ -1,6 +1,8 @@
 #include "IGraph.hh"
 #include "Graph.hh"
 #include "SubGraph.hh"
+#include "CompositeNode.hh"
+
 
 using namespace std;
 
@@ -119,7 +121,18 @@ Graph* genLinearGraph(int p_size) {
   return (Graph*) sg;
 }
 
+void testCompositeNode(Graph* g) {
+  void* nothing;
+  //  CompositeNode cn(nothing);
+
+  INode* n = g->aNode();
+  IEdge* e = *(g->incident_edges(n).begin());
+  CompositeNode* cn = g->reduce(e);
+
+  cout << " Composite Node key is " << cn->getKey() << endl;
+}
 
 int main() {
-  genLinearGraph(12);
+  Graph* g = genLinearGraph(12);
+  testCompositeNode(g);
 }

@@ -23,7 +23,8 @@ amosinclude_HEADERS = \
 	Edge.hh \
 	Graph.hh \
 	IGraph.hh \
-	SubGraph.hh
+	SubGraph.hh \
+	CompositeNode.hh
 
 
 
@@ -32,7 +33,8 @@ libGraph_a_SOURCES = \
 	Edge.cc \
 	Graph.cc \
 	Node.cc \
-	SubGraph.cc
+	SubGraph.cc \
+	CompositeNode.cc
 
 
 ##-- END OF MAKEFILE --##

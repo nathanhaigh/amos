@@ -176,6 +176,22 @@ INode* Graph::new_node(int p_key, void* p_element) {
   return n;
 }
 
+
+// CompositeNode* Graph::reduce(IEdge* p_e) {
+//   // create composite node
+//   CompositeNode* cn = new CompositeNode();
+
+//   // need to add nodes to composite
+//   INode* source = p_e->getSource();
+//   INode* target = p_e->getTarget();
+
+//   //
+
+  
+
+// }
+
+
 INode* Graph::get_node(int p_key) {
   return nodes[p_key];
 }

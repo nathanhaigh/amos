@@ -164,8 +164,6 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     Layout_t layout;
     vector<Tile_t> tiles;
 
-    cout << " ** Output " << ctg->sg->name << endl;
-
     // loop over every node in subgraph
     for(INodeIterator nodeIter = ctg->sg->nodes_begin(); nodeIter != ctg->sg->nodes_end(); ++nodeIter) {
       INode* node = (*nodeIter).second;
