@@ -1280,8 +1280,8 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
   {
    vector <Gapped_MA_Bead_t>  active_bead;
    string  seq_column, qual_column;
-   Consensus  * cns;
-   static slice  sl;
+   libSlice_Consensus  * cns;
+   static libSlice_Slice  sl;
    int  col_len;
    static int  max_len = 0;
    int  len, next;
@@ -1360,7 +1360,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
            memset (sl . rc, 0, max_len);
           }
       sl . dcov = col_len;
-      getConsensus (& sl, & cns, NULL, 0);
+      libSlice_getConsensus (& sl, & cns, NULL, 0);
 
       consensus [i] = cns -> consensus;
       con_qual [i] = QUALITY_OFFSET
