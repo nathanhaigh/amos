@@ -610,6 +610,15 @@ void  Celera_Msg_Body_t :: setAccession
   }
 
 
+void  Celera_Msg_Body_t :: setAccession
+    (const string & s)
+  {
+   sprintf (Clean_Exit_Msg_Line, "setAccession illegal for %s message",
+            id_string ());
+   throw IOException_t (Clean_Exit_Msg_Line);
+  }
+
+
 void  Celera_Msg_Body_t :: setClearRange
     (Pos_t a, Pos_t b)
   {
@@ -1702,6 +1711,17 @@ const vector <Celera_UPS_Sub_Msg_t> &  Celera_Message_t :: getUPSList
     
 void  Celera_Message_t :: setAccession
     (const char * s)
+
+//  Set the  accession  field of this message to  s  if it's valid
+
+  {
+   body -> setAccession (s);
+  }
+
+
+
+void  Celera_Message_t :: setAccession
+    (const string & s)
 
 //  Set the  accession  field of this message to  s  if it's valid
 

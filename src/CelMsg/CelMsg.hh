@@ -343,6 +343,8 @@ class  Celera_Msg_Body_t
 
    virtual  void  setAccession
        (const char * s);
+   virtual  void  setAccession
+       (const string & s);
    virtual  void  setClearRange
        (Pos_t a, Pos_t b);
    virtual  void  setIMPs
@@ -660,6 +662,9 @@ class  Celera_IUM_Msg_Body_t  :  public Celera_Msg_Body_t
    void  setAccession
        (const char * s)
      { accession = s; }
+   void  setAccession
+       (const string & s)
+     { accession = s; }
    void  setIMPs
        (const vector <int> & f, const vector <AMOS::Ordered_Range_t> & p);
    void  setQuality
@@ -784,6 +789,8 @@ class  Celera_Message_t
 
    void  setAccession
       (const char * s);
+   void  setAccession
+      (const string & s);
    void  setClearRange
        (Pos_t a, Pos_t b);
    void  setIMPs
