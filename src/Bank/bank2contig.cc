@@ -38,8 +38,8 @@ int main (int argc, char ** argv)
 
   try
   {
-    read_bank.open(bank_name);
-    contig_bank.open(bank_name);
+    read_bank.open(bank_name, B_READ);
+    contig_bank.open(bank_name, B_READ);
 
     Contig_t contig;
     Read_t read; 
@@ -58,11 +58,13 @@ int main (int argc, char ** argv)
       }
       else { cout << contig.getIID(); }
 
+      const string & cons = contig.getSeqString();
+
       cout << " "  << tiling.size()
-           << " "  << contig.getSeqString().length()
+           << " "  << cons.length()
            << " bases, 00000000 checksum." << endl;
 
-      Fasta_Print(stdout, contig.getSeqString().c_str(), NULL, 60);
+      Fasta_Print(stdout, cons.c_str(), NULL, 60);
 
       vector<Tile_t>::const_iterator i;
       for (i =  tiling.begin();
@@ -93,8 +95,8 @@ int main (int argc, char ** argv)
              << ((rc) ? ") [RC] " : ") [] ") << gappedLen
              << " bases, 00000000 checksum."
              << " {" << clr.begin << " " << clr.end << "}"
-             << " <" << getUngappedPos(contig.getSeqString(), i->offset)
-             << " "  << getUngappedPos(contig.getSeqString(), i->offset + gappedLen - 1)
+             << " <" << getUngappedPos(cons, i->offset)
+             << " "  << getUngappedPos(cons, i->offset + gappedLen - 1)
              << ">"  << endl;
 
         if (rc) { range.swap(); }
