@@ -9,6 +9,13 @@ my $version = '$Revision$ ';
 my $helptext = qq~
     ca2mates [-a asmfile] prefix
 
+    Extracts BAMBUS .mates information from a .frg file.  If a .asm file
+    is provided as well, it uses the library sizes specified in this file.
+
+    if prefix ends in .frg program assumes that it represents the .frg file
+    otherwise the program attaches the .frg extension when looking for the 
+    input file.
+
     ~;
 
 my $base = new TIGR::Foundation;
@@ -35,7 +42,13 @@ if (! defined $infile){
 }
 
 #my $asmfile = $infile . ".asm";
-my $frgfile = $infile . ".frg";
+my $frgfile;
+if ($infile =~ /\.frg$/){
+    $frgfile = $infile;
+} else {
+    $frgfile = $infile . ".frg";
+}
+
 my $outfile = $infile . ".mates";
 
 my %sequences;
