@@ -11,13 +11,15 @@ bin_PROGRAMS = \
 	dumpreads \
 	grow-readbank \
 	load-overlaps \
-	bank2contig
+	bank2contig  \
+    bank2coverage
 
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/CelMsg \
 	-I$(top_srcdir)/src/Common \
+	-I$(top_srcdir)/src/Slice \
 	-I$(top_srcdir)/src/AMOS
 
 
@@ -33,6 +35,14 @@ bank2contig_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 bank2contig_SOURCES = \
 	bank2contig.cc
+
+##-- bank2coverage
+bank2coverage_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Slice/libSlice.a
+bank2coverage_SOURCES = \
+	bank2coverage.cc
 
 
 ##-- bank-report
