@@ -259,6 +259,14 @@ void TilingFrame::showInserts()
 {
   InsertWindow * insertWindow = new InsertWindow(m_bankname, m_contigId, this, "insertWindow");
   insertWindow->show();
+
+  connect(insertWindow, SIGNAL(setGindex(int)),
+          this,         SLOT(setGindex(int)));
+
+  connect(m_tilingfield, SIGNAL(setTilingVisibleRange(int, int)),
+          insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
+
+  m_tilingfield->repaint();
 }
 
 

@@ -1,6 +1,8 @@
 #include "InsertWindow.hh"
 #include "InsertWidget.hh"
 
+#include <qstatusbar.h>
+
 using namespace std;
 
 InsertWindow::InsertWindow(const std::string & bankname,
@@ -13,5 +15,14 @@ InsertWindow::InsertWindow(const std::string & bankname,
 
   InsertWidget * iw = new InsertWidget(bankname, contigId, this, "iw");
   setCentralWidget(iw);
-}
+  statusBar()->message("Ready", 2000);
 
+  connect(iw,          SIGNAL(setStatus(const QString &)),
+          statusBar(), SLOT(message(const QString &)));
+
+  connect(iw,   SIGNAL(setGindex(int)),
+          this, SIGNAL(setGindex(int)));
+
+  connect(this, SIGNAL(setTilingVisibleRange(int, int)),
+          iw,   SLOT(setTilingVisibleRange(int, int)));
+}

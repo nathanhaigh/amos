@@ -7,6 +7,7 @@
 #include "Insert.hh"
 #include <algorithm>
 #include "UIElements.hh"
+#include "InsertCanvasItem.hh"
 
 using namespace AMOS;
 using namespace std;
@@ -76,7 +77,6 @@ InsertCanvas::InsertCanvas(const string & bankname,
 
   cerr << "Loading mates" << endl;
   Matepair_t mates;
-  vector<Insert> inserts;
 
   while (mate_bank >> mates)
   {
@@ -95,7 +95,7 @@ InsertCanvas::InsertCanvas(const string & bankname,
 
       if (i.m_state == Insert::Happy)
       {
-        inserts.push_back(i);
+        m_inserts.push_back(i);
       }
       else
       {
@@ -104,13 +104,13 @@ InsertCanvas::InsertCanvas(const string & bankname,
         if (a)
         {
           i.setActive(0);
-          inserts.push_back(i);
+          m_inserts.push_back(i);
         }
         
         if (b)
         {
           j.setActive(1);
-          inserts.push_back(j);
+          m_inserts.push_back(j);
         }
       }
     }
@@ -126,7 +126,7 @@ InsertCanvas::InsertCanvas(const string & bankname,
     if (si->second)
     {
       Insert i(si->second, m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
-      inserts.push_back(i);
+      m_inserts.push_back(i);
       unmated++;
     }
   }
@@ -134,12 +134,12 @@ InsertCanvas::InsertCanvas(const string & bankname,
   cerr << "unmated: " << unmated << endl;
 
 
-  sort(inserts.begin(), inserts.end(), Insert::TilingOrderCmp());
+  sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
 
   QCanvasLine * line = new QCanvasLine(this);
   line->setPoints(m_hoffset,        posoffset, 
                   m_hoffset + clen, posoffset);
-  line->setPen(Qt::white);
+  line->setPen(QPen(Qt::white, 2));
   line->show();
 
   for (unsigned int i = 0; i < clen; i ++)
@@ -165,12 +165,13 @@ InsertCanvas::InsertCanvas(const string & bankname,
   for (int type = 0; type < strlen(types); type++)
   {
     vector<Insert>::iterator ii;
+
     vector<int> layout;
     vector<int>::iterator li;
     
     cerr << types[type];
 
-    for (ii = inserts.begin(); ii != inserts.end(); ii++)
+    for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
     {
       if (ii->m_state != types[type]) { continue; }
 
@@ -194,44 +195,16 @@ InsertCanvas::InsertCanvas(const string & bankname,
 
       int inserthpos = m_hoffset + ii->m_loffset; 
       int insertlength = ii->m_length;
-      int actuallength = ii->m_actual;
 
-      //cerr << (char) ii->m_state << " " << inserthpos << "," << insertlength;
-
-      line = new QCanvasLine(this);
-
-      line->setPoints(inserthpos,              vpos+m_seqheight, 
-                      inserthpos+insertlength, vpos+m_seqheight);
-      line->setPen(UIElements::getInsertColor(ii->m_state));
-      line->show();
-
-      QString s = "Actual: " + QString::number(actuallength) +
-                  "\nExpected: " + QString::number(ii->m_dist.mean-3*ii->m_dist.sd) +
-                  " - "          + QString::number(ii->m_dist.mean+3*ii->m_dist.sd);
-//      QToolTip::add(this, QRect(inserthpos, vpos,
-//                                insertlength, m_seqheight), s);
-
-
-      if (ii->m_state == Insert::Happy)
-      {
-        drawTile(ii->m_atile, this, m_hoffset, vpos, ii->m_state);
-        drawTile(ii->m_btile, this, m_hoffset, vpos, ii->m_state);
-      }
-      else if (ii->m_active == 0)
-      {
-        drawTile(ii->m_atile, this, m_hoffset, vpos, ii->m_state);
-      }
-      else
-      {
-        drawTile(ii->m_btile, this, m_hoffset, vpos, ii->m_state);
-      }
-
-      //cerr << endl;
+      InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
+                                                      insertlength, m_seqheight,
+                                                      ii, this);
+      iitem->show();
     }
 
     if (!layout.empty()) 
     { 
-      layoutoffset += 2; 
+      layoutoffset++;
       layoutoffset += layout.size();
     }
   }
@@ -239,38 +212,6 @@ InsertCanvas::InsertCanvas(const string & bankname,
   cerr << endl;
 
   resize(width(), tileoffset+(layoutpos + layoutoffset)*lineheight);
-
-}
-
-void InsertCanvas::drawTile(Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state)
-{
-  if (!tile) { return; }
-
-  int hpos = hoffset + tile->offset;
-  int readLength = tile->range.getLength() + tile->gaps.size();
-
-  //cerr << " " << hpos << " " << readLength;
-
-  QCanvasRectangle * rect = new QCanvasRectangle(hpos, vpos, 
-                                                 readLength, m_seqheight, p);
-  rect->setBrush(UIElements::getInsertColor(state));
-  rect->setPen(UIElements::getInsertColor(state));
-  rect->show();
-
-  const char * seqname = read_bank.lookupEID(tile->source);
-  QString tip = seqname;
-
-  tip += " [" + QString::number(tile->offset) 
-       +  "," + QString::number(tile->offset + tile->range.getLength() + tile->gaps.size() -1)
-       + "]";
-
-  if (tile->range.end < tile->range.begin)
-  {
-    tip += " [RC]";
-  }
-
- // QToolTip::add(this, QRect(hpos, vpos, 
- //               readLength, m_seqheight), tip);
 }
 
 AMOS::Distribution_t InsertCanvas::getLibrarySize(ID_t readid)

@@ -173,6 +173,8 @@ void TilingField::paintEvent( QPaintEvent * )
   Pos_t grangeStart = m_gindex;
   Pos_t grangeEnd = imin(m_gindex + displaywidth, m_consensus.size()-1);
 
+  emit setTilingVisibleRange(grangeStart, grangeEnd);
+
   #if DEBUG
   cerr << "paintTField:" << m_renderedSeqs.size()
        << " [" << grangeStart << "," << grangeEnd << "]" << endl;

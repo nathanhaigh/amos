@@ -42,6 +42,7 @@ signals:
     void setShowNumbers(bool);
     void setHighlightDiscrepancy(bool);
     void setDisplayQV(bool);
+    void setVisibleRange(int, int);
 
 protected:
     void paintEvent(QPaintEvent *);

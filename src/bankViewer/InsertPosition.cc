@@ -24,7 +24,7 @@ void InsertPosition::setVisibleRange(int start, double scale)
 
 void InsertPosition::paintEvent(QPaintEvent * e)
 {
-  int linepos = 25;
+  int linepos = 21;
 
   QPainter p(this);
   p.setBrush(Qt::black);
@@ -48,7 +48,7 @@ void InsertPosition::paintEvent(QPaintEvent * e)
       {
         pos = QString::number(i/1000);
         pos += "k";
-        p.drawText((i-m_start) * m_scale - 20, 8, 40, 15,  
+        p.drawText((i-m_start) * m_scale - 20, 4, 40, 15,  
                    Qt::AlignHCenter | Qt::AlignBottom, pos);
       }
     }

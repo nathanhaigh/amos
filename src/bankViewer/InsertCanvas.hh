@@ -37,6 +37,7 @@ private:
 
   std::string m_consensus;
   std::vector<AMOS::Tile_t> m_tiling;
+  std::vector<Insert> m_inserts;
 };
 
 

@@ -1,5 +1,6 @@
 #include "InsertField.hh"
 #include <qwmatrix.h>
+#include "InsertCanvasItem.hh"
 
 #include <iostream>
 using namespace std;
@@ -18,14 +19,35 @@ InsertField::InsertField(QCanvas * canvas, QWidget * parent, const char * name)
 void InsertField::contentsMousePressEvent( QMouseEvent* e )
 {
   QPoint real = inverseWorldMatrix().map(e->pos());
-  cerr << "position is " << real.x() << endl;
-
   QCanvasItemList l = canvas()->collisions(real);
 
-  for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
+  if (l.empty())
   {
-    if ( (*it)->rtti() == QCanvasRectangle::RTTI )
-    qDebug("A QCanvasRectangle lies somewhere at this point");
+    emit setStatus(QString("Position is ") + QString::number(real.x()));
+    emit setGindex(real.x());
+  }
+  else
+  {
+    for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
+    {
+      if ((*it)->rtti() == InsertCanvasItem::RTTI)
+      {
+        InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
+        QString s = "Insert ";
+
+        if (iitem->m_insert->m_atile)
+        {
+          s += "atile: " + QString::number(iitem->m_insert->m_atile->source);
+        }
+
+        if (iitem->m_insert->m_btile)
+        {
+          s += "btile: " + QString::number(iitem->m_insert->m_btile->source);
+        }
+
+        emit setStatus(s);
+      }
+    }
   }
 }
 
@@ -39,5 +61,6 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
 
   emit visibleRange(canvasRect.x(), worldMatrix().m11());
 }
+
 
 

@@ -12,6 +12,8 @@ public:
 
 signals:
   void visibleRange(int, double);
+  void setStatus(const QString & message);
+  void setGindex(int gindex);
 
 protected:
   void contentsMousePressEvent(QMouseEvent* e);

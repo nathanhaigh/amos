@@ -30,6 +30,9 @@ public slots:
     void toggleDisplayQV(bool);
     void singleClick();
 
+signals:
+    void setTilingVisibleRange(int, int);
+
 protected:
     void paintEvent( QPaintEvent * );
 

@@ -12,6 +12,11 @@ class InsertWindow : public QMainWindow
 public:
   InsertWindow(const std::string & bankname, int contigId,
                QWidget* parent=0, const char* name=0);
+
+signals:
+  void setGindex(int gindex);
+  void visibleRange(int, int);
+  void setTilingVisibleRange(int, int);
 };
 
 #endif
