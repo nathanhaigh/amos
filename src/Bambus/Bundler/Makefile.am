@@ -25,8 +25,7 @@ Bundler_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 Bundler_SOURCES = \
-	Bundler.cc \
-	Bundler.hh
+	Bundler.cc
 
 
 ##-- CLK
