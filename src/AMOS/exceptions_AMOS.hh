@@ -30,42 +30,13 @@ class Exception_t : public exception
 
 private:
 
-  std::string file_m;    //!< file name of exception
-  int line_m;            //!< line number of exception
   std::string what_m;    //!< description of exception
+  int line_m;            //!< line number of exception
+  std::string file_m;    //!< file name of exception
+
+
 
 public:
-
-  //---------------------------------------------- Exception_t -----------------
-  //! \brief Default constructor
-  //!
-  Exception_t ( )
-  { }
-
-
-  //---------------------------------------------- Exception_t -----------------
-  //! \brief Informative constructor
-  //!
-  //! \param what Brief description of the exception
-  //!
-  Exception_t (const std::string & what)
-  {
-    what_m = what;
-  }
-
-
-  //---------------------------------------------- Exception_t -----------------
-  //! \brief Informative constructor
-  //!
-  //! \param what Brief description of the exception
-  //! \param line Line number of the exception
-  //!
-  Exception_t (const std::string & what, int line)
-  {
-    what_m = what;
-    line_m = line;
-  }
-
 
   //---------------------------------------------- Exception_t -----------------
   //! \brief Informative constructor
@@ -74,7 +45,8 @@ public:
   //! \param line Line number of the exception
   //! \param file File name of the exception
   //!
-  Exception_t (const std::string & what, int line, const std::string & file)
+  Exception_t (const std::string & what, int line = 0,
+	       const std::string & file = "")
   {
     what_m = what;
     line_m = line;
@@ -129,42 +101,14 @@ class ArgumentException_t : public Exception_t
 public:
 
   //---------------------------------------------- ArgumentException_t ---------
-  //! \brief Default constructor
-  //!
-  ArgumentException_t ( )
-  { }
-
-
-  //---------------------------------------------- ArgumentException_t ---------
-  //! \brief Informative constructor
-  //!
-  //! \param what Brief description of the exception
-  //!
-  ArgumentException_t (const std::string & what)
-    : Exception_t (what)
-  { }
-
-
-  //---------------------------------------------- ArgumentException_t ---------
-  //! \brief Informative constructor
-  //!
-  //! \param what Brief description of the exception
-  //! \param line Line number of the exception
-  //!
-  ArgumentException_t (const std::string & what, int line)
-    : Exception_t (what, line)
-  { }
-
-
-  //---------------------------------------------- ArgumentException_t ---------
   //! \brief Informative constructor
   //!
   //! \param what Brief description of the exception
   //! \param line Line number of the exception
   //! \param file File name of the exception
   //!
-  ArgumentException_t (const std::string & what, int line,
-		       const std::string & file)
+  ArgumentException_t (const std::string & what, int line = 0,
+		       const std::string & file = "")
     : Exception_t (what, line, file)
   { }
 
@@ -187,47 +131,26 @@ class IOException_t : public Exception_t
 public:
 
   //---------------------------------------------- IOException_t ---------------
-  //! \brief Default constructor
-  //!
-  IOException_t ( )
-  { }
-
-
-  //---------------------------------------------- IOException_t ---------------
-  //! \brief Informative constructor
-  //!
-  //! \param what Brief description of the exception
-  //!
-  IOException_t (const std::string & what)
-    : Exception_t (what)
-  { }
-
-
-  //---------------------------------------------- IOException_t ---------------
-  //! \brief Informative constructor
-  //!
-  //! \param what Brief description of the exception
-  //! \param line Line number of the exception
-  //!
-  IOException_t (const std::string & what, int line)
-    : Exception_t (what, line)
-  { }
-  
-  
-  //---------------------------------------------- IOException_t ---------------
   //! \brief Informative constructor
   //!
   //! \param what Brief description of the exception
   //! \param line Line number of the exception
   //! \param file File name of the exception
   //!
-  IOException_t (const std::string & what, int line,
-		 const std::string & file)
+  IOException_t (const std::string & what, int line = 0,
+		 const std::string & file = "")
     : Exception_t (what, line, file)
   { }
 
 };
 
 } // namespace AMOS
+
+
+//-- Helpful exception throw macros
+#define AMOS_THROW(A) throw Exception_t(A,__LINE__,__FILE__)
+#define AMOS_THROW_IO(A) throw IOException_t(A,__LINE__,__FILE__)
+#define AMOS_THROW_ARGUMENT(A) throw ArgumentException_t(A,__LINE__,__FILE__)
+
 
 #endif // #ifndef __exceptions_AMOS_HH

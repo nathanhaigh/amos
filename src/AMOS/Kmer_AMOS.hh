@@ -10,6 +10,8 @@
 #ifndef __Kmer_AMOS_HH
 #define __Kmer_AMOS_HH 1
 
+#include "alloc.hh"
+#include "exceptions_AMOS.hh"
 #include "Bankable_AMOS.hh"
 #include <vector>
 #include <string>
@@ -31,15 +33,73 @@ class Kmer_t : public Bankable_t
   
 private:
 
-  friend inline Kmer_t & operator++ (Kmer_t &, int);
-
   uint8_t * seq_m;              //!< the compressed string of A, C, G and T's
   uint32_t count_m;             //!< the number of occurrences of this Kmer
-  uint8_t len_m;                //!< the length of the Kmer (value of K)
+  uint8_t length_m;             //!< the length of the Kmer (value of K)
   std::vector<ID_t> reads_m;    //!< list of Read_t types that contain this Kmer
 
 
 protected:
+
+  static const uint8_t ADENINE_BITS  = 0x0;   //!< 'A' bit
+  static const uint8_t CYTOSINE_BITS = 0x40;  //!< 'C' bit
+  static const uint8_t GUANINE_BITS  = 0x80;  //!< 'G' bit
+  static const uint8_t THYMINE_BITS  = 0xC0;  //!< 'T' bit
+  static const uint8_t SEQ_BITS      = 0xC0;  //!< sequence bit mask
+
+
+  //--------------------------------------------------- compress ---------------
+  //! \brief Compresses a sequence char into two bits
+  //!
+  //! \note Must work with uncompress(uint8_t) method
+  //!
+  //! \param seqchar The sequence base character
+  //! \pre seqchar is A,C,G,T (case insensitive)
+  //! \return The compressed 2 bits (in upper two bit positions)
+  //!
+  static uint8_t compress (char seqchar)
+  {
+    switch ( std::toupper(seqchar) )
+      {
+      case 'A':
+        return ADENINE_BITS;
+      case 'C':
+        return CYTOSINE_BITS;
+      case 'G':
+        return GUANINE_BITS;
+      case 'T':
+        return THYMINE_BITS;
+      default:
+	throw ArgumentException_t ("Invalid Kmer character: " + seqchar);
+      }
+  }
+
+
+  //--------------------------------------------------- uncompress -------------
+  //! \brief Uncompresses two bits into a sequence char
+  //!
+  //! \note Must work with compress(char)
+  //!
+  //! \param byte The compressed sequence bits (in upper two bit positions)
+  //! \return The sequence char
+  //!
+  static char uncompress (uint8_t byte)
+  {
+    switch ( byte & SEQ_BITS )
+      {
+      case ADENINE_BITS:
+	return 'A';
+      case CYTOSINE_BITS:
+	return 'C';
+      case GUANINE_BITS:
+	return 'G';
+      case THYMINE_BITS:
+	return 'T';
+      default:
+	throw Exception_t ("Unknown logic error");
+      }
+  }
+
 
   //--------------------------------------------------- readRecord -------------
   //! \brief Read all the class members from a biserial record
@@ -87,6 +147,9 @@ public:
   static const BankType_t BANKTYPE = Bankable_t::KMER;
   //!< Bank type, MUST BE UNIQUE for all derived Bankable classes!
 
+  static const uint8_t MAX_LENGTH    = 255;
+  //!< Maximum Kmer length
+
 
   //--------------------------------------------------- Kmer_t -----------------
   //! \brief Constructs an empty Kmer_t object
@@ -97,7 +160,7 @@ public:
     : Bankable_t ( )
   {
     seq_m = NULL;
-    count_m = len_m = 0;
+    count_m = length_m = 0;
   }
 
 
@@ -106,6 +169,8 @@ public:
   //!
   Kmer_t (const Kmer_t & source)
   {
+    seq_m = NULL;
+
     *this = source;
   }
 
@@ -121,6 +186,22 @@ public:
   }
 
 
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears the sequence, count and read list
+  //!
+  //! Effectively re-initializes the Kmer
+  //!
+  //! \return void
+  //!
+  void clear ( )
+  {
+    free (seq_m);
+    seq_m = NULL;
+    count_m = length_m = 0;
+    reads_m . clear( );
+  }
+
+
   //--------------------------------------------------- getBankType ------------
   //! \brief Get the unique bank type identifier
   //!
@@ -129,6 +210,25 @@ public:
   BankType_t getBankType ( ) const
   {
     return BANKTYPE;
+  }
+
+
+  //--------------------------------------------------- getBase ----------------
+  //! \brief Get a single sequence base from the kmer
+  //!
+  //! Retrieves and uncompresses the sequence base for the requested index.
+  //!
+  //! \param index The index of the requested base
+  //! \pre index >= 0 && index < length
+  //! \throws ArgumentException_t
+  //! \return The requested (uppercase) base character
+  //!
+  char getBase (Pos_t index) const
+  {
+    if ( index < 0 || index >= length_m )
+      throw ArgumentException_t ("Requested index is out of range");
+
+    return uncompress ((seq_m [index / 4]) << (index % 4 * 2));
   }
 
 
@@ -150,7 +250,7 @@ public:
   //!
   uint8_t getLength ( ) const
   {
-    return len_m;
+    return length_m;
   }
 
 
@@ -175,6 +275,32 @@ public:
   std::string getSeqString ( ) const;
 
 
+  //--------------------------------------------------- setBase ----------------
+  //! \brief Set a single sequence base for the kmer
+  //!
+  //! Only the characters A,C,G,T are allowed, all other characters will throw
+  //! an exception.
+  //!
+  //! \param seqchar The sequence base character
+  //! \param index The index to assign this character
+  //! \pre index >= 0 && index < length
+  //! \pre seqchar is A,C,G,T (case insensitive)
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void setBase (char seqchar,
+                Pos_t index)
+  {
+    if ( index < 0 || index >= length_m )
+      throw ArgumentException_t ("Requested index is out of range");
+
+    int offset = index % 4 * 2;
+    uint8_t * seqp = seq_m + index / 4;
+    *seqp &= ~(SEQ_BITS >> offset);
+    *seqp |= compress (seqchar) >> offset;
+  }
+
+
   //--------------------------------------------------- setCount ---------------
   //! \brief Set the number of this Kmer's occurrences
   //!
@@ -184,18 +310,6 @@ public:
   void setCount (uint32_t count)
   {
     count_m = count;
-  }
-
-
-  //--------------------------------------------------- setLength --------------
-  //! \brief Set the length of the Kmer
-  //!
-  //! \param len The new Kmer length
-  //! \return void
-  //!
-  void setLength (uint8_t len)
-  {
-    len_m = len;
   }
 
 
@@ -214,40 +328,40 @@ public:
   //--------------------------------------------------- setSeqString -----------
   //! \brief Set the Kmer sequence string
   //!
-  //! Compresses the string and updates the Kmer sequence.
+  //! Compresses the string and updates the Kmer sequence. Does not alter
+  //! Kmer count or read list, these must be reset manually.
   //!
-  //! \param str The new Kmer sequence string
+  //! \param seq The new Kmer sequence string
+  //! \pre seq can be longer than MAX_LENGTH (255) bases
   //! \return void
   //!
-  void setSeqString (const std::string & str);
+  void setSeqString (const std::string & seq);
+
+
+  //--------------------------------------------------- operator++ -------------
+  //! \brief Increments kmer count by 1 (postfix)
+  //!
+  //! Increment the kmer count by 1 using postfix notation, i.e. mykmer ++;
+  //!
+  //! \return This kmer, after incrementation
+  //!
+  Kmer_t & operator++ (int)
+  {
+    count_m ++;
+    return *this;
+  }
 
 
   //--------------------------------------------------- operator= --------------
   //! \brief Assignment (copy) operator
+  //!
+  //! Efficiently copies the compressed data from the another Kmer_t.
   //!
   //! \param source The Kmer_t object to copy
   //! \return The resulting Kmer_t object
   //!
   Kmer_t & operator= (const Kmer_t & source);
 };
-
-
-
-
-//================================================ Helper Functions ============
-//--------------------------------------------------- operator++ -------------
-//! \brief Increments a Kmer count by 1 (postfix)
-//!
-//! Increment a Kmer count by 1 using postfix notation, i.e. mykmer ++;
-//!
-//! \param k The Kmer to increment
-//! \return The incremented Kmer
-//!
-inline Kmer_t & operator++ (Kmer_t & k, int)
-{
-  k.count_m ++;
-  return k;
-}
 
 } // namespace AMOS
 
