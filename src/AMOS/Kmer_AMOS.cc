@@ -20,6 +20,7 @@ std::string Kmer_t::getSeqString ( ) const
   std::string retval;
   retval . reserve (length_m);
 
+  //-- See comments for getBase regarding the compressed sequence
   Pos_t ci = -1;
   uint8_t byte = 0;
   for ( Pos_t ui = 0; ui < length_m; ui ++ )
@@ -98,6 +99,7 @@ void Kmer_t::setSeqString (const std::string & seq)
   size = length_m / 4 + (length_m % 4 ? 1 : 0);
   seq_m = (uint8_t *) SafeRealloc (seq_m, size);
 
+  //-- See comments for setBase regarding the compressed sequence
   Pos_t ci = -1;
   int offset = 0;
   for ( Pos_t ui = 0; ui < length_m; ui ++ )

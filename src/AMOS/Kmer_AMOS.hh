@@ -225,6 +225,15 @@ public:
   //! \throws ArgumentException_t
   //! \return The requested (uppercase) base character
   //!
+  //  ---- developers note ----
+  //  If we imagine consecutive bytes stored left-to-right and big-endian,
+  //  then we can index each 2bit sequence character as follows:
+  //  [0 1 2 3] [4 5 6 7] ...
+  //  [byte 0 ] [byte 1 ] ...
+  //  Thus, to set seqchar 6, we fetch the bits at the 2^2 and 2^3 positions
+  //  of byte 1. Since uncompress expects the sequence bits in the big-end
+  //  of the byte, this is done by left-shifting byte 1 4bits.
+  //
   char getBase (Pos_t index) const
   {
     if ( index < 0 || index >= length_m )
@@ -290,14 +299,26 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
+  //  ---- developers note ----
+  //  If we imagine consecutive bytes stored left-to-right and big-endian,
+  //  then we can index each 2bit sequence character as follows:
+  //  [0 1 2 3] [4 5 6 7] ...
+  //  [byte 0 ] [byte 1 ] ...
+  //  Thus, to set seqchar 6, we overwrite the bits at the 2^2 and 2^3
+  //  positions of byte 1. Since compress returns the sequence bits in the
+  //  big-end of the byte, we right-shift the return value 4bits and OR it
+  //  with the stored byte (making sure to clear those two bits first).
+  //
   void setBase (char seqchar,
                 Pos_t index)
   {
     if ( index < 0 || index >= length_m )
       AMOS_THROW_ARGUMENT ("Requested index is out of range");
 
-    int offset = index % 4 * 2;
-    uint8_t * seqp = seq_m + index / 4;
+    int offset = index % 4 * 2;              // the bitmask offset
+    uint8_t * seqp = seq_m + index / 4;      // the required byte
+
+    //-- Delete the previous two bits, then set the two new bits
     *seqp &= ~(SEQ_BITS >> offset);
     *seqp |= compress (seqchar) >> offset;
   }
