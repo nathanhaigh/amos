@@ -2,6 +2,7 @@
 #define TiggerIO_HH 1
 
 #include <iostream>
+#include <unistd.h>
 #include "foundation_AMOS.hh"
 #include "Read.hh"
 #include "Overlap.hh"
