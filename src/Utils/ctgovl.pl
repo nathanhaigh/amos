@@ -22,11 +22,13 @@ my $ctgfile;
 my $ovlfile;
 my $frgfile;
 my $xmlfile;
+my $uidmap;
 
 my $err = $base->TIGR_GetOptions("c=s" => \$ctgfile,
 				 "o=s" => \$ovlfile,
 				 "a=s" => \$asmfile,
-				 "x=s" => \$xmlfile);
+				 "x=s" => \$xmlfile,
+				 "map=s" => \$uidmap);
 
 my $contig;
 my %readctg;
@@ -35,6 +37,16 @@ my $contiglen = 0;
 my %contiglen;
 my %uid2iid;
 my $linkid = 1;
+
+if (defined $uidmap){
+    open(UID, $uidmap) || $base->bail("Cannot open $uidmap: $!\n");
+    while (<UID>){
+	chomp;
+	my ($name, $id) = split(' ', $_);
+	$uid2iid{$name} = $id;
+    }
+    close(UID);
+}
 
 if (defined $asmfile){
     print STDERR "Doing $asmfile\n";
@@ -93,7 +105,7 @@ if (defined $ctgfile){
 	    }
 	}
 	if (/\#(\S+)\((\d+)\).*\{(\d+) (\d+)\} <(\d+) (\d+)>/){
-	    my $id = $1;
+	    my $id = $uid2iid{$1};
 	    $readctg{$id} .= "$contig,";
 	    if ($3 < $4){
 		$readctg{$id} .= "$5,$6 ";
@@ -236,16 +248,7 @@ while (my ($pair, $evidence) = each %pair){
 	print "$aori $bori $ohangA $ohangB\n";
 	
     }
-#     if (defined $xmlfile && ! exists $seenpair{"$ctgA $ctgB"} && ! exists $seenpair{"$ctgB $ctgA"}){
-# 	my $lnksize = $contiglen{$ctgA} - $ohangA;
-# 	my $oriB = ($bori eq ">") ? "BE" : "EB";
-# 	print XML "    <LINK ID = \"link_$linkid\" SIZE = \"$lnksize\" TYPE = \"OVL\">\n";
-# 	print XML "        <CONTIG ID = \"contig_$ctgA\" ORI = \"BE\"/>\n";
-# 	print XML "        <CONTIG ID = \"contig_$ctgB\" ORI = \"$oriB\"/>\n";
-# 	print XML "    </LINK>\n";
-# 	$linkid++;
-# 	$seenpair{"$ctgA $ctgB"} = 1;
-#     }
+
     if (defined $xmlfile && ! exists $seenpair{"$ctgA $ctgB"} && ! exists $seenpair{"$ctgB $ctgA"}){
 	my $lnksize = $contiglen{$ctgA} - $ohangA;
 	my $oriB = ($bori eq ">") ? "BE" : "EB";
@@ -258,7 +261,10 @@ while (my ($pair, $evidence) = each %pair){
     }
     print "\n";
 }
+
 if (defined $xmlfile){
     print XML "</EVIDENCE>\n";
     close(XML);
 }
+
+exit(0);
