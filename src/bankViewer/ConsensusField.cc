@@ -19,13 +19,13 @@ ConsensusField::ConsensusField(string & cons,
     m_gindex(gindex),
     m_fontsize(fontsize)
 {
-  setMinimumHeight(50);
+  setMinimumHeight(4*m_fontsize);
   setPalette( QPalette( QColor( 200, 200, 200) ) );
 }
 
 void ConsensusField::paintEvent(QPaintEvent * event)
 {
-  cerr << "paintCons" << endl;
+  //cerr << "paintCons" << endl;
   if (m_consensus.empty()) { return; }
 
   QPixmap pix(width(), height());

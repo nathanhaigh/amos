@@ -14,27 +14,28 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
    read_bank(Read_t::NCODE),
    contig_bank(Contig_t::NCODE)
 {
+  m_fontsize = 12;
   resize(500, 500);
   setFrameShadow(QFrame::Raised);
   m_db = "DMG";
-//  QScrollView * sv = new QScrollView(this, "tilingscroll");
+  QScrollView * sv = new QScrollView(this, "tilingscroll");
+  sv->setHScrollBarMode(QScrollView::AlwaysOff);
+
   m_tilingfield = new TilingField(m_renderedSeqs,
                                   m_consensus,
                                   m_db,
                                   m_gindex,
                                   m_fontsize,
-                                  this, //sv->viewport(),
+                                  sv->viewport(),
                                   "tiling" );
- // sv->addChild(tiling);
- // sv->setHScrollBarMode(QScrollView::AlwaysOff);
- // sv->setResizePolicy(QScrollView::AutoOneFit);
 
+  sv->addChild(m_tilingfield);
   m_consfield = new ConsensusField(m_consensus, m_gindex, m_fontsize,
                                    this, "cons");
 
   QGridLayout * layout = new QGridLayout(this, 2, 1);
   layout->addWidget(m_consfield, 0,0);
-  layout->addWidget(m_tilingfield,1,0);
+  layout->addWidget(sv,1,0);
   layout->setRowStretch(1,10);
 }
 

@@ -21,7 +21,7 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
           m_consensus(consensus),
           m_renderedSeqs(renderedSeqs)
 {
-  setMinimumSize(width(), 200);
+  setMinimumSize(500, 100);
   setPalette( QPalette( QColor( 200, 200, 200) ) );
 }
 
@@ -49,12 +49,13 @@ int imin (int a, int b)
 
 void TilingField::paintEvent( QPaintEvent * )
 {
-  cerr << "paintTF" << endl;
+  //cerr << "paintTF" << endl;
   if (m_renderedSeqs.empty()) { return; }
 
   int height = 1000;
 
-  QPixmap pix(this->width(), height);
+  int width = this->width();
+  QPixmap pix(width, height);
   pix.fill(this, 0,0);
 
   QPainter p( &pix );
@@ -67,7 +68,6 @@ void TilingField::paintEvent( QPaintEvent * )
   int seqnamehoffset = 10;
   int rchoffset = m_fontsize*8;
 
-  int width = this->width();
   int displaywidth = (width-tilehoffset)/m_fontsize;
 
   p.setFont(QFont("Courier", m_fontsize));
@@ -146,9 +146,9 @@ void TilingField::paintEvent( QPaintEvent * )
 
   p.end();
   p.begin(this);
-  pix.resize(this->width(), height);
-
+  pix.resize(width, height);
   p.drawPixmap(0, 0, pix);
+  resize(width, height);
 }
 
 
