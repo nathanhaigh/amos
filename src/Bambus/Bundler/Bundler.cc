@@ -316,8 +316,8 @@ int main(int argc, char *argv[])
     newSD = 1 / sqrt(q);
 
     // set size as aggregate of all links
-    cte.setSize(newMean);
-    cte.setSD(newSD);
+    cte.setSize((int)newMean);
+    cte.setSD((int)newSD);
     
     // set contig link IDs
     cte.setContigLinks(linkIds);
