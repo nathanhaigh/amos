@@ -99,7 +99,7 @@ int main (int argc, char ** argv)
       for ( BankSet_t::iterator i = bnks . begin( ); i != bnks . end( ); ++ i )
         if ( i -> exists (OPT_BankName) )
           {
-            i -> open (OPT_BankName, B_WRITE);
+            i -> open (OPT_BankName);
             i -> destroy ( );
           }
 
@@ -163,9 +163,9 @@ int main (int argc, char ** argv)
           if ( ! bp -> isOpen( ) )
             {
               if ( ! bp -> exists (OPT_BankName) )
-                bp -> create (OPT_BankName, B_WRITE);
+                bp -> create (OPT_BankName);
               else
-                bp -> open (OPT_BankName, B_WRITE);
+                bp -> open (OPT_BankName);
             }
         }
         catch (const Exception_t & e) {
