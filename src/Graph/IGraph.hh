@@ -9,10 +9,8 @@
 class IEdge;
 class INode;
 
-typedef map< int, IEdge* >::iterator IEdgeIterator;
-typedef map< int, INode* >::iterator INodeIterator;
-
-using namespace std;
+typedef std::map< int, IEdge* >::iterator IEdgeIterator;
+typedef std::map< int, INode* >::iterator INodeIterator;
 
 
 /**
@@ -61,9 +59,9 @@ public:
   virtual   int out_degree(INode* p_node) const = 0;
   virtual   int in_degree(INode* p_node) const = 0;
   
-  virtual   list< IEdge* > incident_edges(INode* p_node) = 0;
-  virtual   list< IEdge* > in_edges(INode* p_node) const = 0;
-  virtual   list< IEdge* > out_edges(INode* p_node) const = 0;
+  virtual   std::list< IEdge* > incident_edges(INode* p_node) = 0;
+  virtual   std::list< IEdge* > in_edges(INode* p_node) const = 0;
+  virtual   std::list< IEdge* > out_edges(INode* p_node) const = 0;
 
   virtual   INode* aNode() = 0;
   virtual   void clear_flags() = 0;
@@ -83,9 +81,9 @@ public:
   virtual   INode* source(IEdge* p_edge) = 0;
   virtual   INode* target(IEdge* p_edge) = 0;
 
-  virtual   list< INode* > adjacent_nodes(INode* p_node) = 0;
-  virtual   list< INode* > out_adjacent(INode* p_node) = 0;
-  virtual   list< INode* > in_adjacent(INode* p_node) = 0;
+  virtual   std::list< INode* > adjacent_nodes(INode* p_node) = 0;
+  virtual   std::list< INode* > out_adjacent(INode* p_node) = 0;
+  virtual   std::list< INode* > in_adjacent(INode* p_node) = 0;
 
   virtual   bool isDirected() = 0;
 

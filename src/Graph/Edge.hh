@@ -1,12 +1,11 @@
 #ifndef __Edge_HH
 #define __Edge_HH 1
 
+#include <string>
 #include <iostream>
 #include <sstream>
 #include "INode.hh"
 #include "IEdge.hh"
-
-using namespace std;
 
 const unsigned long DIRECT_MASK = 0x1;
 const unsigned long WEIGHT_MASK = 0x2;
@@ -38,7 +37,7 @@ public:
 
   bool hidden;
   
-  string color;
+  std::string color;
 
   /* nodes that the edge is connected */
   /** source if node is directed */
@@ -58,8 +57,8 @@ public:
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }
 
-  void setColor(string p_color) { color = p_color; }
-  string getColor() const { return color; }
+  void setColor(std::string p_color) { color = p_color; }
+  std::string getColor() const { return color; }
 
   int getHidden() const { return hidden; }
   void setHidden(bool p_hidden) { hidden = p_hidden; }

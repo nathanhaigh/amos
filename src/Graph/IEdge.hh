@@ -2,10 +2,9 @@
 #define __IEdge_HH 1
 
 #include <list>
+#include <string>
 
 #include "INode.hh"
-
-using namespace std;
 
 class IEdge;
 class INode;
@@ -30,8 +29,8 @@ class IEdge {
 
 public:
 
-  virtual void setColor(string p_color) = 0;
-  virtual string getColor() const = 0;
+  virtual void setColor(std::string p_color) = 0;
+  virtual std::string getColor() const = 0;
 
   virtual   void* getElement() const = 0;
   virtual   void setElement(void* p_element) = 0;

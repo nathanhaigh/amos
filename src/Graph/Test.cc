@@ -2,6 +2,8 @@
 #include "Graph.hh"
 #include "SubGraph.hh"
 
+using namespace std;
+
 // void testLinearGraph() {
 //   Graph* g = genLinearGraph(200);
 //   g->name = "easy200";

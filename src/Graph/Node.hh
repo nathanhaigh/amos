@@ -2,13 +2,12 @@
 #define Node_HH 1
 
 #include <map>
+#include <string>
 #include "INode.hh"
 #include "IEdge.hh"
 
 // Declarations need to Node
 class IEdge;
-
-using namespace std;
 
 /**
  * The <b>Node</b> class
@@ -32,8 +31,8 @@ public:
   void* element;
 
   // 
-  map< int, IEdge* > oedges;
-  map< int, IEdge* > iedges;
+  std::map< int, IEdge* > oedges;
+  std::map< int, IEdge* > iedges;
 
   // identitfier or position
   int key;
@@ -47,7 +46,7 @@ public:
 
   int parent;
 
-  string color;
+  std::string color;
 
   unsigned long flags;
 
@@ -63,8 +62,8 @@ public:
   void* getElement() const { return element; }
   void setElement(void* p_element) { element = p_element; }
 
-  void setColor(const string p_color) { color = p_color; }
-  string getColor() const { return color; }
+  void setColor(const std::string p_color) { color = p_color; }
+  std::string getColor() const { return color; }
   
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }

@@ -1,6 +1,7 @@
 #ifndef Graph_HH
 #define Graph_HH 1
 
+#include <string>
 #include <iostream>
 #include <sstream>
 #include <map>
@@ -14,8 +15,6 @@ class INode;
 
 class Edge;
 class Node;
-
-using namespace std;
 
 
 /**
@@ -42,18 +41,18 @@ public:
   bool directed;
 
   /** map of edges */
-  map< int, IEdge* > edges;
+  std::map< int, IEdge* > edges;
 
   /** map of nodes */
-  map< int, INode* > nodes;
+  std::map< int, INode* > nodes;
   
   /** <code> name </code> of graph */
-  string name;
+  std::string name;
 
   /** */
   int keys;
   
-  Graph(string p_name="noname");
+  Graph(std::string p_name="noname");
 
   /**
    * output dot file for the graph
@@ -85,9 +84,9 @@ public:
   int out_degree(INode* p_node) const;
   int in_degree(INode* p_node) const;
   
-  list< IEdge* > incident_edges(INode* p_node);
-  list< IEdge* > in_edges(INode* p_node) const;
-  list< IEdge* > out_edges(INode* p_node) const;
+  std::list< IEdge* > incident_edges(INode* p_node);
+  std::list< IEdge* > in_edges(INode* p_node) const;
+  std::list< IEdge* > out_edges(INode* p_node) const;
 
   INode* aNode() { return (nodes.begin())->second; }
 
@@ -104,9 +103,9 @@ public:
   INode* source(IEdge* p_edge);
   INode* target(IEdge* p_edge);
 
-  list< INode* > adjacent_nodes(INode* p_node);
-  list< INode* > out_adjacent(INode* p_node);
-  list< INode* > in_adjacent(INode* p_node);
+  std::list< INode* > adjacent_nodes(INode* p_node);
+  std::list< INode* > out_adjacent(INode* p_node);
+  std::list< INode* > in_adjacent(INode* p_node);
 
   bool isDirected();
 };

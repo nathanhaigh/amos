@@ -34,9 +34,9 @@ public:
   /** <code> g </code> overlap graph */
   Graph* graph;
   
-  vector<string> colors;
-  vector< Contig* > contigs;
-  queue< IEdge* > containment;
+  std::vector<std::string> colors;
+  std::vector< Contig* > contigs;
+  std::queue< IEdge* > containment;
 
   void Unitigger::error(const char* m, const char* c = "");
 
@@ -50,7 +50,7 @@ public:
   void Unitigger::layout_read(IEdge* p_edge, INode* p_node);
 
   void Unitigger::output_umd_contigs(IGraph* g, INode* p_node);
-  void Unitigger::output_amos_contigs(const string p_bankdir);
+  void Unitigger::output_amos_contigs(const std::string p_bankdir);
 
   void Unitigger::hide_transitive_overlaps(IGraph *g);
 

@@ -5,8 +5,6 @@
 #include <sstream>
 #include "IGraph.hh"
 
-using namespace std;
-
 
 /**
  * The <b>DFtraversal</b> class

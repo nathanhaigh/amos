@@ -16,8 +16,6 @@ class INode;
 class Edge;
 class Node;
 
-using namespace std;
-
 
 /**
  * The <b>SubGraph</b> class
@@ -41,7 +39,7 @@ public:
   
   IGraph& parent;
 
-  SubGraph(IGraph& p_parent, string name="noname");
+  SubGraph(IGraph& p_parent, std::string name="noname");
 
   virtual bool contains(IEdge* p_edge);
   virtual bool contains(INode* p_node);
