@@ -91,7 +91,7 @@ int  main
                ct ++;
                read . setClearRange (msg . getClearRange ());
                read . setComment (msg . getSource ());
-               read . setEID (msg . getAccession ());
+	       //               read . setEID (msg . getAccession ());
                read . setSequence (msg . getSequence (), msg . getQuality ());
 	       if ( Compress_Reads )
 		 read . compress( );
@@ -136,7 +136,7 @@ int  main
            read . setClearRange (Range_t(0, len));
            read . setComment (p1);
            sprintf (id1, "%d", ct);
-           read . setEID (id1);
+	   //           read . setEID (id1);
            read . setSequence (s . c_str (), q . c_str ());
 	   if ( Compress_Reads )
 	     read . compress( );

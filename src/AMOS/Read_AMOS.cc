@@ -33,10 +33,6 @@ Size_t Read_t::readRecord (istream & fix,
   fix . read ((char *)&vclear_m, sizeof (Range_t));
   streamsize += sizeof (Range_t);
 
-  //-- Read VAR data
-  getline (var, eid_m, '\0');
-  streamsize += eid_m . size( ) + 1;
-
   return streamsize;
 }
 
@@ -58,10 +54,6 @@ Size_t Read_t::writeRecord (ostream & fix,
   streamsize += sizeof (ReadType_t);
   fix . write ((char *)&vclear_m, sizeof (Range_t));
   streamsize += sizeof (Range_t);
-
-  //-- Write VAR data
-  var . write (eid_m . c_str( ), eid_m . size( ) + 1);
-  streamsize += eid_m . size( ) + 1;
 
   return streamsize;
 }
@@ -94,7 +86,6 @@ ostream & AMOS::operator<< (ostream & out, Read_t & read)
   string s;
 
   out << "#iid:" << read.getIID( ) << endl;
-  out << "#eid:" << read.getEID( ) << endl;
   out << "#comment:" << endl;
   out << read.getComment( ) << endl;
   out << "#clear:" << read.getClearRange( ).begin << ","

@@ -48,7 +48,6 @@ public:
 private:
 
   Range_t clear_m;                 //!< generic clear range
-  std::string eid_m;               //!< the external string ID
   ID_t frag_m;                     //!< the ID of the parent fragment
   Range_t qclear_m;                //!< the quality score clear range
   ReadType_t type_m;               //!< the read type
@@ -141,7 +140,6 @@ public:
   {
     Sequence_t::clear( );
     clear_m . clear( );
-    eid_m . erase( );
     frag_m = NULL_ID;
     qclear_m . clear( );
     type_m = NULL_READ;
@@ -168,17 +166,6 @@ public:
   Range_t getClearRange ( )
   {
     return clear_m;
-  }
-
-
-  //--------------------------------------------------- getEID -----------------
-  //! \brief Get the external ID string
-  //!
-  //! \return The external ID string
-  //!
-  std::string & getEID ( )
-  {
-    return eid_m;
   }
 
 
@@ -235,18 +222,6 @@ public:
   void setClearRange (Range_t clear)
   {
     clear_m = clear;
-  }
-
-
-  //--------------------------------------------------- setEID -----------------
-  //! \brief Set the external ID string
-  //!
-  //! \param eid The new external ID string
-  //! \return void
-  //!
-  void setEID (const std::string & eid)
-  {
-    eid_m = eid;
   }
 
 
