@@ -3976,7 +3976,7 @@ void Gapped_Multi_Alignment_t :: Make_AMOS_Contig
   // returns a Contig_t representation of the multi-alignment
 {
   out . setSequence(consensus, con_qual);
-  out . setEID(id);
+  out . setIID(id);
 
   int n = align . size();
 
