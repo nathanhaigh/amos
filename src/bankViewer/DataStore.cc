@@ -43,6 +43,7 @@ int DataStore::openBank(const string & bankname)
     frag_bank.open(bankname, B_SPY);
     lib_bank.open(bankname, B_SPY);
     loadMates();
+    loadLibraries();
   }
   catch (Exception_t & e)
   {
@@ -54,12 +55,11 @@ int DataStore::openBank(const string & bankname)
   {
     edge_bank.open(bankname);
     link_bank.open(bankname);
-    loadLibraries();
   }
   catch (Exception_t & e)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
-    cerr << "Libraries not available\n";
+    cerr << "Contig Graph not available\n";
   }
 
   return retval;
