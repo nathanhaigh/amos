@@ -19,6 +19,7 @@
 #include <cassert>
 #include <ctime>
 #include <vector>
+#include <map>
 #include <unistd.h>
 using namespace AMOS;
 using namespace Message_k;
@@ -26,9 +27,15 @@ using namespace std;
 
 
 //=============================================================== Globals ====//
-string  OPT_BankName;                // bank name parameter
-bool    OPT_IsExtractCodes = false;  // extract codes or not
-IDMap_t OPT_ExtractCodes(1000);      // extract message type map
+string  OPT_BankName;                        // bank name parameter
+bool    OPT_IsExtractCodes = false;          // extract codes or not
+IDMap_t OPT_ExtractCodes(1000);              // extract message type map
+bool    OPT_IsExtractIIDs = false;           // extract iids or not
+IDMap_t OPT_ExtractIIDs (1000);              // extract message iid map
+bool    OPT_IsExtractEIDs = false;           // extract eids or not
+IDMap_t OPT_ExtractEIDs (1000);              // extract message eid map
+bool    OPT_IsExtractComments = false;       // extract comments or not
+map<string, bool> OPT_ExtractComments;       // extract message comment map
 
 
 //========================================================== Fuction Decs ====//
@@ -70,6 +77,8 @@ int main (int argc, char ** argv)
   long int cnts = 0;             // seen object count
   long int cntw = 0;             // written object count
 
+  unsigned int nl;
+  bool showrecord;
   ID_t id;                       // id holder
   pair<ID_t, ID_t> idp;          // id pair
   pair<ID_t, NCode_t> scp;       // source pair
@@ -306,9 +315,32 @@ int main (int argc, char ** argv)
 	    continue;
 	  }
 
-	  typep -> writeMessage (msg);
-	  msg . write (cout);
-	  cntw ++;
+	  showrecord = false;
+	  if ( ! OPT_IsExtractIIDs  &&
+	       ! OPT_IsExtractEIDs  &&
+	       ! OPT_IsExtractComments )
+	    showrecord = true;
+	  if ( OPT_IsExtractIIDs  &&
+	       OPT_ExtractIIDs . exists (typep -> getIID( )) )
+	    showrecord = true;
+	  if ( OPT_IsExtractEIDs  &&
+	       OPT_ExtractEIDs . exists (typep -> getEID( )) )
+	    showrecord = true;
+	  if ( OPT_IsExtractComments )
+	    {
+	      nl = typep -> getComment( ) . find ('\n');
+	      string temps (typep -> getComment( ), 0, nl);
+	      if ( OPT_ExtractComments . find (temps) !=
+		   OPT_ExtractComments . end( ) )
+		showrecord = true;
+	    }
+
+	  if ( showrecord )
+	    {
+	      typep -> writeMessage (msg);
+	      msg . write (cout);
+	      cntw ++;
+	    }
 	}
 
       //-- Close the bank, only its inverted ID map are needed now
@@ -352,16 +384,52 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:cfhm:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:c:e:hi:")) != EOF) )
     switch (ch)
       {
       case 'b':
         OPT_BankName = optarg;
         break;
+
+      case 'c':
+	OPT_IsExtractComments = true;
+	if ( ! (OPT_ExtractComments .
+		insert (map<string,bool>::value_type(optarg,true))) . second )
+	  cerr << "WARNING: Cannot insert multiple map keys - Comment "
+	       << optarg << " ignored" << endl;
+	break;
+
+      case 'e':
+	OPT_IsExtractEIDs = true;
+	try {
+
+	  OPT_ExtractEIDs . insert (atoi (optarg), 1);
+	}
+	catch (Exception_t & e) {
+	  
+	  cerr << "WARNING: " << e . what( )
+	       << " - EID " << optarg << " ignored" << endl;
+	}
+	break;
+
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
         break;
+
+      case 'i':
+	OPT_IsExtractIIDs = true;
+	try {
+
+	  OPT_ExtractIIDs . insert (atoi (optarg), 1);
+	}
+	catch (Exception_t & e) {
+	  
+	  cerr << "WARNING: " << e . what( )
+	       << " - IID " << optarg << " ignored" << endl;
+	}
+	break;
+
       default:
         errflg ++;
       }
@@ -413,7 +481,11 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-b path       The directory path of the bank to report\n"
-    << "-h            Display help information\n\n";
+    << "-c string     Report objects matching this comment\n"
+    << "-e uint       Report objects matching this eid\n"
+    << "-h            Display help information\n"
+    << "-i uint       Report objects matching this iid\n"
+    << endl;
 
   cerr
     << "Takes an AMOS bank directory as input. Will output the information\n"
