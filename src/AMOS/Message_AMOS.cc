@@ -56,7 +56,7 @@ bool Message_t::read (istream & in)
 
 	//-- Throw if bad format
 	if ( line . size( ) < 4  ||  line [3] != ':' )
-	  AMOS_THROW_IO ("Invalid message format, line: " + line);
+	  AMOS_THROW_IO ("Message read failure, line: " + line);
 
 	//-- Read in first line of field
 	name = line . substr (0,3);
