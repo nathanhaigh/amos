@@ -1270,10 +1270,10 @@ void ParseMates (Mapping_t & mapping)
     > rmpip;
 
   try {
-    mtp_bank . open (OPT_BankName);
-    red_bank . open (OPT_BankName);
-    frg_bank . open (OPT_BankName);
-    lib_bank . open (OPT_BankName);
+    mtp_bank . open (OPT_BankName, B_READ);
+    red_bank . open (OPT_BankName, B_READ);
+    frg_bank . open (OPT_BankName, B_READ);
+    lib_bank . open (OPT_BankName, B_READ);
 
     //-- Populate the mate records
     while ( mtp_bank >> mtp )

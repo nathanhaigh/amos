@@ -35,7 +35,7 @@ void get_amos_reads(const string p_bankdir) {
   try {
     if(bank.exists(p_bankdir)) {
       cout << " Pulling reads from bank " << p_bankdir << endl;
-      bank.open(p_bankdir);
+      bank.open(p_bankdir, B_READ);
 
       if(bank.empty()) {
 	cerr << p_bankdir << " bank is empty" << endl;
@@ -66,7 +66,7 @@ void get_amos_overlaps(const string p_bankdir) {
   try {
     if(bank.exists(p_bankdir)) {
       cout << " Pulling overlaps from bank " << p_bankdir << endl;
-      bank.open(p_bankdir);
+      bank.open(p_bankdir, B_READ);
       if(bank.empty()) {
 	cout << " bank is empty" << endl;
 	return;

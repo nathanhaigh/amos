@@ -189,7 +189,7 @@ int  main
 
    coords_fp = File_Open (Coords_File_Name . c_str (), "r");
    cco_fp = File_Open (CCO_File_Name . c_str (), "r");
-   read_bank . open (Bank_Name);
+   read_bank . open (Bank_Name, B_READ);
 
    sprintf (buff, "%s.rpos", Output_Prefix . c_str ());
    rpos_fp = File_Open (buff, "w");

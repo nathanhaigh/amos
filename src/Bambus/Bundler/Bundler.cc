@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
       cerr << "Cannot find a contig link account in bank: " << globals["bank"] << endl;
       exit(1);
     }
-    link_bank.open(globals["bank"]);
+    link_bank.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
       cerr << "Failed to open link account in bank " << globals["bank"] 

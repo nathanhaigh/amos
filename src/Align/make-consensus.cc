@@ -156,7 +156,7 @@ int  main
            cerr << " messages from file " << Tig_File_Name << endl;
 
            input_fp = File_Open (Tig_File_Name . c_str (), "r");
-           read_bank . open (Bank_Name);
+           read_bank . open (Bank_Name, B_READ);
 
            unitig_ct = contig_ct = 0;
            while  (msg . read (input_fp))
@@ -213,7 +213,7 @@ int  main
 
 	   cerr << "Input is being read from the bank " << endl;
 
-           read_bank . open (Bank_Name);
+           read_bank . open (Bank_Name, B_READ);
 	   layout_bank . open (Bank_Name);
 
            msg . setType (IUM_MSG);
@@ -275,7 +275,7 @@ int  main
            int  fid;
 
            input_fp = File_Open (Tig_File_Name . c_str (), "r");
-           read_bank . open (Bank_Name);
+           read_bank . open (Bank_Name, B_READ);
 
            msg . setType (IUM_MSG);
            msg . setStatus (UNASSIGNED_UNITIG);

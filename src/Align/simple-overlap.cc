@@ -90,7 +90,7 @@ int  main
           }
         else
           {
-           read_bank . open (Bank_Name);
+           read_bank . open (Bank_Name, B_READ);
            Get_Strings_From_Bank (string_list, qual_list, clr_list,
 				  id_list, tag_list, read_bank);
           }

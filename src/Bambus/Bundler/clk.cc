@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     exit(1);
   }
   try {
-    library_bank.open(globals["bank"]);
+    library_bank.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
       cerr << "Failed to open library account in bank " << globals["bank"] 
@@ -100,8 +100,8 @@ int main(int argc, char **argv)
     exit(1);
   }
   try {
-    contig_bank.open(globals["bank"]);
-    contig_stream.open(globals["bank"]);
+    contig_bank.open(globals["bank"], B_READ);
+    contig_stream.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
       cerr << "Failed to open contig account in bank " << globals["bank"] 
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
     exit(1);
   }
   try {
-    mate_bank.open(globals["bank"]);
+    mate_bank.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
       cerr << "Failed to open mate account in bank " << globals["bank"] 
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
     exit(1);
   }
   try {
-    read_bank.open(globals["bank"]);
+    read_bank.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
       cerr << "Failed to open read account in bank " << globals["bank"] 
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
     exit(1);
   }
   try {
-    frag_bank.open(globals["bank"]);
+    frag_bank.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
       cerr << "Failed to open fragment account in bank " << globals["bank"] 

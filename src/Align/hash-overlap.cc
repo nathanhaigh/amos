@@ -79,7 +79,7 @@ int  main
           }
         else
           {
-           read_bank . open (Input_Name);
+           read_bank . open (Input_Name, B_READ);
            Get_Strings_From_Bank (string_list, qual_list, clr_list,
 				  id_list, tag_list, read_bank);
 	   read_bank . close ();
