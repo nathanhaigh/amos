@@ -42,6 +42,8 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
         QString s = "Insert " + QString::number(ins->m_active);
 
+        s += QString(" [") + (char)ins->m_state + "] ";
+
         getInsertString(s, ins->m_active, ins);
         getInsertString(s, !ins->m_active, ins);
 

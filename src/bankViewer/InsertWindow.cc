@@ -31,13 +31,13 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_display = new QPopupMenu(this);
   bShowTypes->setPopup(m_display);
 
-  m_types['H'].first = m_display->insertItem("Happy",        this, SLOT(toggleHappy()));
-  m_types['S'].first = m_display->insertItem("Stretched",    this, SLOT(toggleStretched()));
-  m_types['O'].first = m_display->insertItem("Orientation",  this, SLOT(toggleOrientation()));
-  m_types['M'].first = m_display->insertItem("Missing Mate", this, SLOT(toggleMissing()));
-  m_types['L'].first = m_display->insertItem("Linking Mate", this, SLOT(toggleLinking()));
-  m_types['N'].first = m_display->insertItem("No Mate",      this, SLOT(toggleNone()));
-  m_types['U'].first = m_display->insertItem("Unknown",      this, SLOT(toggleUnknown()));
+  m_types['H'].first = m_display->insertItem("Happy (Green)",          this, SLOT(toggleHappy()));
+  m_types['S'].first = m_display->insertItem("Stretched (Blue)",       this, SLOT(toggleStretched()));
+  m_types['O'].first = m_display->insertItem("Orientation (Red)",   this, SLOT(toggleOrientation()));
+  m_types['M'].first = m_display->insertItem("Missing Mate (Magenta)", this, SLOT(toggleMissing()));
+  m_types['L'].first = m_display->insertItem("Linking Mate (Yellow)",  this, SLOT(toggleLinking()));
+  m_types['N'].first = m_display->insertItem("No Mate (Cyan)",         this, SLOT(toggleNone()));
+  m_types['U'].first = m_display->insertItem("Unknown (White)",        this, SLOT(toggleUnknown()));
 
   map<char, pair<int, bool> >::iterator mi;
 

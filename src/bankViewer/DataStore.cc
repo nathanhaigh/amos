@@ -97,7 +97,8 @@ void DataStore::loadContigs()
   cerr << "Loading contigs\n";
   m_readcontiglookup.clear();
 
-  contig_bank.seekg(1);
+  int contigid = 1;
+  contig_bank.seekg(contigid);
 
   Contig_t contig;
   while (contig_bank >> contig)
@@ -109,8 +110,10 @@ void DataStore::loadContigs()
          ti != tiling.end();
          ti++)
     {
-      m_readcontiglookup[ti->source] = contig.getIID();
+      m_readcontiglookup[ti->source] = contigid;
     }
+
+    contigid++;
   }
 
   cerr << "Loaded contig id mapping for " << m_readcontiglookup.size() << " reads" << endl;
