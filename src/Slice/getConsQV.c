@@ -526,11 +526,10 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
               qvMultGap += s->qv[j] ? s->qv[j] : GAP_QUALITY_VALUE;
               break;
 
-          default:
+	      //          default:
               // fprintf(stderr, "Bad input=%c\n", a);
               // Ambiguity codes cannot be processed
-	    break;
-        };
+        }
       }
     }
     else
@@ -968,11 +967,10 @@ int libSlice_updateAmbiguity(const libSlice_Slice * s,
           case 'T': addT = 1;   break;
           case '-': addGap = 1; break;
 
-          default:
+	    //          default:
               // fprintf(stderr, "Bad input=%c\n", a);
               // Ambiguity codes cannot be processed
-	    break;
-        };
+        }
       }
     }
 

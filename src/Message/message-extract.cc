@@ -11,7 +11,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "messages_AMOS.hh"
-#include "alloc.hh"
+#include "utility_AMOS.hh"
 #include <set>
 #include <fstream>
 #include <unistd.h>

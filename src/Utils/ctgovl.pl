@@ -2,7 +2,7 @@
 
 use POSIX qw(strftime);
 use TIGR::Foundation;
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 
 my $VERSION = '$Revision$';
 my $HELPTEXT = "ctgovl -o <ovlfile> (-c <ctgfile> | -a <asmfile>) [-x <xmlfile>]";

@@ -4,9 +4,9 @@
 // coordinates
 
 //#include <Overlap_AMOS.hh>
+#include "datatypes_AMOS.hh"
 #include <iostream>
 #include <fstream>
-#include <datatypes_AMOS.hh>
 #include <map>
 #include <vector>
 #include <stdio.h>

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 use TIGR::Foundation;
 use POSIX;
 use strict;

@@ -6,9 +6,7 @@
 
 class IEdge;
 
-using namespace std;
-
-typedef list< IEdge* >::iterator IEdgeIterator;
+typedef std::list< IEdge* >::iterator IEdgeIterator;
 
 
 /**

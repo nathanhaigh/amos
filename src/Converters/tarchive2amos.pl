@@ -2,8 +2,8 @@
 
 use strict;
 
-use TIGR::AmosLib;
-use TIGR::ParseFasta;
+use AMOS::AmosLib;
+use AMOS::ParseFasta;
 use TIGR::Foundation;
 use XML::Parser;
 use IO::Handle;
@@ -225,8 +225,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	print STDERR "Parsing $seqname and $qualname\n";
     }
 
-    my $seqparse = new TIGR::ParseFasta(\*SEQ);
-    my $qualparse = new TIGR::ParseFasta(\*QUAL, ">", " ");
+    my $seqparse = new AMOS::ParseFasta(\*SEQ);
+    my $qualparse = new AMOS::ParseFasta(\*QUAL, ">", " ");
 
     my $fhead; my $frec;
     my $qhead; my $qrec;

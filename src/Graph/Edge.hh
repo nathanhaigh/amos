@@ -6,9 +6,7 @@
 #include "INode.hh"
 #include "IEdge.hh"
 
-using namespace std;
-
-typedef list< IEdge* >::iterator IEdgeIterator;
+typedef std::list< IEdge* >::iterator IEdgeIterator;
 
 const unsigned long DIRECT_MASK = 0x1;
 const unsigned long WEIGHT_MASK = 0x2;

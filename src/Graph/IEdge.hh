@@ -4,12 +4,10 @@
 #include <list>
 #include "INode.hh"
 
-using namespace std;
-
 class IEdge;
 class INode;
 
-typedef list< IEdge* >::iterator IEdgeIterator;
+typedef std::list< IEdge* >::iterator IEdgeIterator;
 
 /**
  * The <b>IEdge</b> class

@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 use TIGR::Foundation;
-use TIGR::ParseFasta;
+use AMOS::ParseFasta;
 
 $tf = new TIGR::Foundation;
 
@@ -10,7 +10,7 @@ if (!defined $tf){
 }
 
 open(IN, $ARGV[0]) || $tf->bail("Cannot open $ARGV[0]: $!\n");
-$fr = new TIGR::ParseFasta(\*IN);
+$fr = new AMOS::ParseFasta(\*IN);
 
 if (!defined $fr){
     die ("Bad reader\n");

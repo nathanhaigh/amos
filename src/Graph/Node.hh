@@ -10,11 +10,9 @@
 // Declarations need to Node
 class IEdge;
 
-using namespace std;
-
-typedef list< IEdge* >::iterator IEdgeIterator;
-//typedef list< Node* >::iterator NodeIterator;
-//typedef map< int, Node* >::iterator PairIterator;
+typedef std::list< IEdge* >::iterator IEdgeIterator;
+//typedef std::list< Node* >::iterator NodeIterator;
+//typedef std::map< int, Node* >::iterator PairIterator;
 
 
 /**
@@ -39,8 +37,8 @@ public:
   void* element;
 
   // 
-  list< IEdge* > oedges;
-  list< IEdge* > iedges;
+  std::list< IEdge* > oedges;
+  std::list< IEdge* > iedges;
 
   // identitfier or position
   int key;

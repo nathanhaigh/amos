@@ -3,7 +3,7 @@
 use strict;
 
 use TIGR::Foundation;
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 
 my $ID = 1;
 

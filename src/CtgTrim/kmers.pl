@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 
 $N = 8;
 $START = 60;

@@ -15,11 +15,9 @@ class INode;
 class Edge;
 class Node;
 
-typedef list< IEdge* >::iterator IEdgeIterator;
-typedef list< INode* >::iterator INodeIterator;
-typedef map< int, INode* >::iterator PairIterator;
-
-using namespace std;
+typedef std::list< IEdge* >::iterator IEdgeIterator;
+typedef std::list< INode* >::iterator INodeIterator;
+typedef std::map< int, INode* >::iterator PairIterator;
 
 
 /**
@@ -49,23 +47,23 @@ public:
   bool simple;
   
   /** map of edges */
-  list< IEdge* > edges;
+  std::list< IEdge* > edges;
 
   /** map of nodes */
-  map< int, INode* > nodes;
+  std::map< int, INode* > nodes;
   
   /** <code> name </code> of graph */
-  string name;
+  std::string name;
 
   /** */
   int keys;
   
-  Graph(string p_name="noname");
+  Graph(std::string p_name="noname");
 
   /**
    * output dot file for the graph
    */
-  void create_dot_file(string p_name);
+  void create_dot_file(std::string p_name);
   
   /**
    * create new INode
@@ -85,9 +83,9 @@ public:
   int out_degree(INode* p_node) const;
   int in_degree(INode* p_node) const;
   
-  list< IEdge* > incident_edges(INode* p_node) const;
-  list< IEdge* > in_edges(INode* p_node) const;
-  list< IEdge* > out_edges(INode* p_node) const;
+  std::list< IEdge* > incident_edges(INode* p_node) const;
+  std::list< IEdge* > in_edges(INode* p_node) const;
+  std::list< IEdge* > out_edges(INode* p_node) const;
 
   INode* aNode() { return (nodes.begin())->second; }
 
@@ -104,9 +102,9 @@ public:
   INode* source(IEdge* p_edge);
   INode* target(IEdge* p_edge);
 
-  list< INode* > adjacent_nodes(INode* p_node);
-  list< INode* > out_adjacent(INode* p_node);
-  list< INode* > in_adjacent(INode* p_node);
+  std::list< INode* > adjacent_nodes(INode* p_node);
+  std::list< INode* > out_adjacent(INode* p_node);
+  std::list< INode* > in_adjacent(INode* p_node);
 };
 
 

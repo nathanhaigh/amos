@@ -3,7 +3,7 @@
 use strict;
 use Fcntl;
 use TIGR::Foundation;
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 use IO::Handle;
 
 my $FILEBUF;

@@ -2,7 +2,7 @@
 
 use strict;
 
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 use TIGR::Foundation;
 use XML::Parser;
 use IO::Handle;

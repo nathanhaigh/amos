@@ -1,10 +1,10 @@
 #!/usr/local/bin/perl
 
 use strict;
-use TIGR::AmosLib;
-use TIGR::ParseFasta;
+use AMOS::AmosLib;
+use AMOS::ParseFasta;
 
-my $parser = new TIGR::ParseFasta(\*STDIN, '#', '');
+my $parser = new AMOS::ParseFasta(\*STDIN, '#', '');
 
 while (my ($head, $data) = $parser->getRecord()){
 

@@ -3,7 +3,7 @@
 use strict;
 
 use TIGR::Foundation;
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 
 my $MINSEQ = 100;
 my $MAXSEQ = 2048;

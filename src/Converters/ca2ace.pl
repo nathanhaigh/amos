@@ -28,7 +28,7 @@ use strict;
 use TIGR::Foundation;
 use TIGR::FASTAreader;
 use TIGR::FASTArecord;
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 
 my $base = new TIGR::Foundation;
 my $GREP = "/bin/grep";

@@ -7,7 +7,7 @@
 #  Copyright @ 2002, The Institute for Genomic Research (TIGR). 
 
 use strict;
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 use TIGR::Foundation;
 
 my $base = new TIGR::Foundation;

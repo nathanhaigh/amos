@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-use TIGR::AmosLib;
+use AMOS::AmosLib;
 
 $seqfile = $ARGV[0];
 $frgfile = $ARGV[1];

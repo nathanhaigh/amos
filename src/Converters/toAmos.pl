@@ -1,8 +1,8 @@
 #!/usr/local/bin/perl
 
 use TIGR::Foundation;
-use TIGR::AmosLib;
-use TIGR::ParseFasta;
+use AMOS::AmosLib;
+use AMOS::ParseFasta;
 use XML::Parser;
 use POSIX qw(tmpnam);
 $ENV{TMPDIR} = ".";
@@ -490,10 +490,10 @@ sub parseFastaFile
     my $seqfile = shift;
     my $qualfile = shift;
 
-    my $pf = new TIGR::ParseFasta($seqfile);
+    my $pf = new AMOS::ParseFasta($seqfile);
     my $qf;
     if (defined $qualfile){
-	$qf = new TIGR::ParseFasta($qualfile, '>', ' ');
+	$qf = new AMOS::ParseFasta($qualfile, '>', ' ');
     }
     while (my ($head, $data) = $pf->getRecord()){
 	my $seqname;
