@@ -9,6 +9,10 @@ $ENV{TMPDIR} = ".";
 
 use strict;
 
+# more to do
+# 1. allow to specify clear ranges from a separate file
+# 2. error if multiple sequence or multiple contig files provided
+
 my $VERSION = '$Revision$ ';
 my $HELP = q~
     toAmos (-m mates|-x traceinfo.xml|-f frg) 
@@ -139,6 +143,8 @@ if (defined $ctgfile){
 }
 
 if (defined $tasmfile) {
+    die("This option is not yet fully functional\n");
+    
     $outprefix = $tasmfile;
     open(IN, $tasmfile) || $base->bail("Cannot open $tasmfile: $!\n");
     parseTAsmFile(\*IN);
@@ -146,6 +152,8 @@ if (defined $tasmfile) {
 }
 
 if (defined $acefile){
+    die("This option is not yet fully functional\n");
+
     $outprefix = $acefile;
     open(IN, $acefile) || $base->bail("Cannot open $acefile: $!\n");
     parseACEFile(\*IN);
@@ -182,6 +190,7 @@ if (defined $libmap){
     parseLibMapFile(\*IN);
     close(IN);
 }
+
 close(TMPSEQ);
 close(TMPCTG);
 close(TMPSCF);
@@ -193,6 +202,7 @@ my $ll = $minSeqId++;
 $libraries{$ll} = "0 0"; # dummy library for unmated guys
 $libnames{$ll} = "unmated";
 $libid{$ll} = $ll;
+
 while (my ($sid, $sname) = each %seqnames){
     if (! exists $seqinsert{$sid}){
 	my $id = $minSeqId++;
@@ -204,11 +214,7 @@ while (my ($sid, $sname) = each %seqnames){
     }
 }
 
-
-
 ## here's where we output all the stuff
-
-
 
 # first print out a pretty header message
 my $date = localtime();
@@ -348,11 +354,14 @@ while (<TMPCTG>){
 	    if (! exists $asm_range{$rid}){
 		die ("No asm range for read $rid\n");
 	    }
+	    my $tmp;
 	    if ($len > $ren){
+		$tmp = $len;
 		$len = $ren;
-		$ren = $cr;
+		$ren = $tmp;
+		$tmp = $cr;
 		$cr = $cl;
-		$cl = $ren;
+		$cl = $tmp;
 	    }
 	    print OUT "{TLE\n";
 	    print OUT "src:$rid\n";
@@ -373,7 +382,7 @@ while (<TMPCTG>){
 	}
 	print OUT "}\n";
     } else {
-	$base->bail("Weird error at line $. in $tmprefix.seq");
+	$base->bail("Weird error at line $. in $tmprefix.ctg");
     }
 }
 
@@ -523,10 +532,13 @@ sub parseFastaFile
 	my $cll;
 	my $clr;
 	if ($head =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
+	    # TIGR format
 	    $seqname = $1; $cll = $2; $clr = $3;
 	} elsif ($head =~ /^(\S+)\s+(\d+)\s+(\d+)/){
+	    # just name and clear range
 	    $seqname = $1; $cll = $2; $clr = $3;
 	} elsif ($head =~ /^(\S+)/){
+	    # just name
 	    $seqname = $1;
 	}
 
@@ -538,6 +550,8 @@ sub parseFastaFile
 	my $id = $minSeqId++;
 	$seqnames{$id} = $seqname;
 	$seqids{$seqname} = $id;
+
+	# so we don't overwrite an externally provided clear range
 	if (! exists $seq_range{$id}){
 	    $seq_range{$id} = "$cll $clr";
 	} else {
@@ -593,6 +607,7 @@ sub parseMatesFile {
     my @libids;
     my @pairregexp;
     my $insname = 1;
+
     while (<$IN>){
 	chomp;
 	if (/^library/){
@@ -612,6 +627,7 @@ sub parseMatesFile {
 	    $libraries{$recs[1]} = "$mean $stdev";
 	    next;
 	} # if library
+
 	if (/^pair/){
 	    my @recs = split('\t', $_);
 	    if ($#recs != 2){
@@ -637,11 +653,11 @@ sub parseMatesFile {
 	
 # make sure we've seen these sequences
 	if (! defined $seqids{$recs[0]}){
-	    $base->logError("No contig contains sequence $recs[0] at line $. in \"$matesfile\"");
+	    $base->logError("Sequence $recs[0] has no ID at line $. in \"$matesfile\"");
 	    next;
 	}
 	if (! defined $seqids{$recs[1]} ){
-	    $base->logError("No contig contains sequence $recs[1] at line $. in \"$matesfile\"");
+	    $base->logError("Sequence $recs[1] has no ID at line $. in \"$matesfile\"");
 	    next;
 	}
 	
@@ -1046,53 +1062,95 @@ sub parseContigFile {
     my $sid;
     my $incontig = 0;
     my $consensus = "";
+    my @sdels;
+    my $ndel;
+    my $slen;
+
+    my $first = 1;
     while (<$IN>){
 	if (/^\#\#(\S+) \d+ (\d+)/ ){
-	    if (defined $consensus){
-		$consensus =~ s/-//g;
+	    if ($first != 1){
+		print TMPCTG "#\n";
 	    }
+	    $first = 0;
 	    $consensus = "";
 	    $ctg = $1;
 	    $contigs{$ctg} = $2;
 	    $incontig = 1;
+	    $slen = 0;
 	    next;
 	}
 
-	if (/^\#(\S+)\(\d+\) .*\{(\d+) (\d+)\} <(\d+) (\d+)>/){
+	if (/^\#(\S+)\((\d+)\) .*\{(\d+) (\d+)\} <(\d+) (\d+)>/){
+	    if ($incontig == 1){
+		print TMPCTG "#$ctg\n";
+		for (my $c = 0; $c < length($consensus); $c+=60){
+		    print TMPCTG substr($consensus, $c, 60), "\n";
+		}
+#		print TMPCTG "$consensus\n";
+		print TMPCTG "#\n";
+		for (my $c = 0; $c < length($consensus); $c+=60){
+		    for ($b = 0; $b < 60; $b++){
+			if ($b + $c >= length($consensus)){last;}
+			print TMPCTG "X";
+		    }
+		    print TMPCTG "\n";
+		}
+#		print TMPCTG "\n";
+	    } else {
+		print TMPCTG "#$sid\n";
+		print TMPCTG join(" ", @sdels), "\n";
+		$arend = $alend + $slen;
+		$asm_range{$sid} = "$alend $arend";
+		$slen = 0;
+	    }
 	    $incontig = 0;
 	    $sname = $1;
+	    @sdels = ();
+	    $ndel = 0;
 	    if (! exists $seqids{$sname}){
-		$sid = $minSeqId++;
-		$seqids{$sname} = $sid;
-		$seqnames{$sid} = $sname;
+		die ("Cannot find ID for sequence $sname\n");
 	    } else {
 		$sid = $seqids{$sname};
 	    }
+	    
 	    $seqcontig{$sid} = $ctg;
 	    $contigseq{$ctg} .= "$sid ";
-#	    print STDERR "adding $sname to $ctg\n";
-	    $alend = $4 - 1;
-	    $arend = $5;
-	    $slend = $2 - 1;
-	    $srend = $3;
+	    
+	    $alend = $2;
+	    
+	    if ($3 < $4){
+		$slend = $3 - 1;
+		$srend = $4;
+	    } else {
+		$slend = $3;
+		$srend = $4 - 1;
+	    }
 	    $seq_range{$sid} = "$slend $srend";
-	    $asm_range{$sid} = "$alend $arend";
 	    next;
 	}
 
 	if ($incontig){
-	    # here I try to get rid of dashes when computing contig sizes
-	    my $ind = -1;
-	    while (($ind = index($_ ,"-", $ind + 1)) != -1){
-		$contigs{$ctg}--;
-	    }
 	    chomp;
 	    $consensus .= $_;
+	} else { # sequence record
+	    chomp;
+	    $slen += length($_);
+	    for (my $s = 0; $s < length($_); $s++){
+		if (substr($_, $s, 1) eq "-"){
+		    push @sdels, $ndel;
+		} else {
+		    $ndel++;
+		}
+	    }
 	}
-    }
-    if (defined $consensus){
-	$consensus =~ s/-//g;
-    }
+    } # while in
+    # process last sequence
+    print TMPCTG "#$sid\n";
+    print TMPCTG join(" ", @sdels), "\n";
+    print TMPCTG "#\n";
+    $arend = $alend + $slen;
+    $asm_range{$sid} = "$alend $arend";
 
 } # parseContigFile
 
