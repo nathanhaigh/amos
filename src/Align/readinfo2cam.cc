@@ -452,7 +452,7 @@ fprintf (stderr, "### %d unitigs\n", n);
              }
 
            k = Uni_Data_Search (uni_data, unitig [i] . unitig_id);
-           if  (k <= 0)
+           if  (k < 0)
                {
                 fprintf (stderr, "ERROR:  Missing unitig %d in uni_data\n",
                     unitig [i] . unitig_id);
