@@ -329,7 +329,7 @@ void ParseArgs (int argc, char ** argv)
 
   if ( access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
-      cerr << "ERROR: Bank path is not accessible\n";
+      cerr << "ERROR: Bank directory is not accessible\n";
       errflg ++;
     }
 

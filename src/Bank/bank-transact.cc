@@ -12,7 +12,6 @@
 //! a duplicate id, will cause the violating message to be ignored and the
 //! user will be warned of the inconsistency.
 //!
-//! \note problem with exception catch
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "foundation_AMOS.hh"
@@ -39,13 +38,14 @@ struct obpair
 {
   Universal_t * obj;
   Bank_t * bank;
+  bool warned;
 
   obpair ( )
-    : obj(NULL), bank(NULL)
+    : obj(NULL), bank(NULL), warned(false)
   {}
 
   obpair (Bank_t * bank_p, Universal_t * obj_p)
-    : obj(obj_p), bank(bank_p)
+    : obj(obj_p), bank(bank_p), warned(false)
   {}
 };
 
@@ -87,9 +87,11 @@ int main (int argc, char ** argv)
   map<NCode_t, obpair> obps;     // object,bank pair NCode-keyed map
   ifstream msgfile;              // the message file stream
   char act;                      // action enumeration
-  obpair obp;                    // object,bank pair pointer
+  obpair * obp;                  // object,bank pair pointer
 
   //-- The KNOWN types to put in the banks
+  //   note: node constants are part of the AMOS namespace
+  //    e.g. AMOS::M_UNIVERSAL == Encode ("UNV")
   obps [M_UNIVERSAL]  = obpair (new Bank_t (M_UNIVERSAL),  new Universal_t);
   obps [M_SEQUENCE]   = obpair (new Bank_t (M_SEQUENCE),   new Sequence_t);
   obps [M_LIBRARY]    = obpair (new Bank_t (M_LIBRARY),    new Library_t);
@@ -134,9 +136,9 @@ int main (int argc, char ** argv)
 
 	//-- Get the message NCode and figure out the type array index
 	ncode = msg . getMessageCode( );
-	obp = obps [ncode];
+	obp = &(obps [ncode]);
 
-	if ( obp . bank == NULL )
+	if ( obp -> bank == NULL )
 	  {
 	    cerr << "WARNING: Unrecognized message type "
 		 << Decode (ncode) << " ignored\n";
@@ -145,7 +147,7 @@ int main (int argc, char ** argv)
 
 	//-- Parse the message
 	try {
-	  obp . obj -> readMessage (msg);
+	  obp -> obj -> readMessage (msg);
 	}
 	catch (Exception_t & e) {
 	  cerr << "WARNING: " << e . what( ) << endl
@@ -157,18 +159,26 @@ int main (int argc, char ** argv)
 
 	//-- Open the bank if necessary
 	try {
-	  if ( ! obp . bank -> isOpen( ) )
+	  if ( ! obp -> bank -> isOpen( ) )
 	    {
 	      if ( OPT_Create )
-		obp . bank -> create (OPT_BankName);
+		{
+		  if ( !OPT_ForceCreate  &&  obp->bank->exists (OPT_BankName) )
+		    AMOS_THROW_IO ("Bank already exists");
+		  obp -> bank -> create (OPT_BankName);
+		}
 	      else
-		obp . bank -> open (OPT_BankName);
+		obp -> bank -> open (OPT_BankName);
 	    }
 	}
 	catch (Exception_t & e) {
-	  cerr << "WARNING: " << e . what( ) << endl
-	       << "  could not open " << Decode (ncode)
-	       << " bank, message ignored\n";
+	  if ( ! obp -> warned )
+	    {
+	      cerr << "WARNING: " << e . what( ) << endl
+		   << "  could not open " << Decode (ncode)
+		   << " bank, all messages ignored\n";
+	      obp -> warned = true;
+	    }
 	  continue;
 	}
 
@@ -184,26 +194,26 @@ int main (int argc, char ** argv)
 	    {
 	    case E_ADD:
 	      //-- Append a new object to the bank
-	      obp . bank -> append (*(obp . obj));
+	      obp -> bank -> append (*(obp -> obj));
 	      break;
 
 	    case E_DELETE:
 	      //-- Flag an existing object for removal from the bank
-	      if ( obp . obj -> getIID( ) != NULL_ID )
-		obp . bank -> remove (obp . obj -> getIID( ));
-	      else if ( ! obp . obj -> getEID( ) . empty( ) )
-		obp . bank -> remove (obp . obj -> getEID( ) . c_str( ));
+	      if ( obp -> obj -> getIID( ) != NULL_ID )
+		obp -> bank -> remove (obp -> obj -> getIID( ));
+	      else if ( ! obp -> obj -> getEID( ) . empty( ) )
+		obp -> bank -> remove (obp -> obj -> getEID( ) . c_str( ));
 	      else
 		AMOS_THROW_ARGUMENT ("Cannot remove object w/o IID or EID");
 	      break;
 
 	    case E_REPLACE:
 	      //-- Replace an existing object in the bank
-	      if ( obp . obj -> getIID( ) != NULL_ID )
-		obp . bank -> replace (obp . obj -> getIID( ), *(obp . obj));
-	      else if ( ! obp . obj -> getEID( ) . empty( ) )
-		obp . bank -> replace
-		  (obp . obj -> getEID( ) . c_str( ), *(obp . obj));
+	      if ( obp -> obj -> getIID( ) != NULL_ID )
+		obp -> bank -> replace (obp -> obj -> getIID( ), *(obp -> obj));
+	      else if ( ! obp -> obj -> getEID( ) . empty( ) )
+		obp -> bank -> replace
+		  (obp -> obj -> getEID( ) . c_str( ), *(obp -> obj));
 	      else
 		AMOS_THROW_ARGUMENT ("Cannot edit object w/o IID or EID");
 	      break;
@@ -245,11 +255,12 @@ int main (int argc, char ** argv)
   catch (Exception_t & e) {
 
     //-- On error, print debugging information
-    cerr << "Current message: " << Decode (ncode)
-	 << " iid:" << msg . getField (F_IID) << endl
-	 << "Messages seen: " << cnts << endl
-	 << "Messages committed: " << cntc << endl
-      	 << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    cerr << "Current message: " << Decode (ncode) << " iid:";
+    if ( msg . exists (F_IID) )
+      cerr << msg . getField (F_IID);
+    cerr << "\nMessages seen: " << cnts
+	 << "\nMessages committed: " << cntc
+      	 << "\nERROR: -- Fatal AMOS Exception --\n" << e;
     return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
@@ -311,18 +322,9 @@ void ParseArgs (int argc, char ** argv)
       errflg ++;
     }
 
-  if ( OPT_Create  &&
-       ! OPT_ForceCreate  &&
-       ! access (OPT_BankName . c_str( ), F_OK) )
+  if ( !OPT_Create  &&  access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
-      cerr << "ERROR: Bank path already exists\n";
-      errflg ++;
-    }
-
-  if ( ! OPT_Create  &&
-       access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
-    {
-      cerr << "ERROR: Bank path is not accessible\n";
+      cerr << "ERROR: Bank directory is not accessible\n";
       errflg ++;
     }
 

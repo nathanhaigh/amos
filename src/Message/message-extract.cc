@@ -99,16 +99,15 @@ int main (int argc, char ** argv)
   catch (Exception_t & e) {
 
   //-- On error, print debugging information
-  cerr << "Last message: " << Decode (msgcode) << " eid:";
-  if ( msg . exists (F_EID) )
-    cerr << msg . getField (F_EID);
+  cerr << "Last message: " << Decode (msgcode) << " iid:";
+  if ( msg . exists (F_IID) )
+    cerr << msg . getField (F_IID);
   cerr << "\nERROR: -- Fatal AMOS Exception --\n" << e;
   return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
   msgfile . close( );
-
 
   return EXIT_SUCCESS;
 }

@@ -37,7 +37,7 @@ bool Message_t::read (istream & in)
     for ( i = 0; i < NCODE_SIZE; i ++ )
       name [i] = in . get( );
     in . ignore( );
-    setMessageCode (name);    // will assert that name . size == NCODE_SIZE
+    setMessageCode (name);
 
     //-- Until end of message
     while (true)
@@ -70,7 +70,7 @@ bool Message_t::read (istream & in)
 
 	//-- Throw if bad format
 	if ( ch != ':'  ||  !in . good( ) )
-	  AMOS_THROW_IO ("Message read failure, line: " + name + ch + data);
+	  AMOS_THROW_IO ("Message read failure, data: " + data);
 
 	//-- If multi-line field, read the rest
 	if ( data . empty( ) )
@@ -86,7 +86,7 @@ bool Message_t::read (istream & in)
 
 		if ( !in . good( ) )
 		  AMOS_THROW_IO
-		    ("Message read failure, line: " + name + ':' + data);
+		    ("Message read failure, data: " + data);
 
 		data += chpp;
 	      }
@@ -96,7 +96,7 @@ bool Message_t::read (istream & in)
 	setField (name, data);
       }
   }
-  catch (IOException_t) {
+  catch (Exception_t) {
 
     //-- Clean up and rethrow
     clear( );
@@ -221,8 +221,7 @@ NCode_t Message_t::skip (istream & in) // static const
 		ch = in . get( );
 
 		if ( !in . good( ) )
-		  AMOS_THROW_IO
-		    ("Message skip failure");
+		  AMOS_THROW_IO ("Message skip failure");
 	      }
 	  }
 	else
@@ -233,7 +232,7 @@ NCode_t Message_t::skip (istream & in) // static const
 	  }
       }
   }
-  catch (IOException_t) {
+  catch (Exception_t) {
 
     throw;
   }
