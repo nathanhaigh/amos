@@ -78,24 +78,25 @@ void Read_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Read_t::readRecord (istream & fix,
-			   istream & var)
+void Read_t::readRecord (istream & fix,
+			 istream & var)
 {
-  Size_t streamsize = Sequence_t::readRecord (fix, var);
+  //-- Read parent object data
+  Sequence_t::readRecord (fix, var);
 
-  //-- Read FIX data
+  //-- Read object data
   fix . read ((char *)&clear_m, sizeof (Range_t));
-  streamsize += sizeof (Range_t);
   fix . read ((char *)&frag_m, sizeof (ID_t));
-  streamsize += sizeof (ID_t);
   fix . read ((char *)&qclear_m, sizeof (Range_t));
-  streamsize += sizeof (Range_t);
   fix . read ((char *)&type_m, sizeof (ReadType_t));
-  streamsize += sizeof (ReadType_t);
   fix . read ((char *)&vclear_m, sizeof (Range_t));
-  streamsize += sizeof (Range_t);
+}
 
-  return streamsize;
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t Read_t::sizeVar ( ) const
+{
+  return Sequence_t::sizeVar( );
 }
 
 
@@ -144,24 +145,18 @@ void Read_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Read_t::writeRecord (ostream & fix,
-			    ostream & var) const
+void Read_t::writeRecord (ostream & fix,
+			  ostream & var) const
 {
-  Size_t streamsize = Sequence_t::writeRecord (fix, var);
+  //-- Write parent object data
+  Sequence_t::writeRecord (fix, var);
 
-  //-- Write FIX data
+  //-- Write object data
   fix . write ((char *)&clear_m, sizeof (Range_t));
-  streamsize += sizeof (Range_t);
   fix . write ((char *)&frag_m, sizeof (ID_t));
-  streamsize += sizeof (ID_t);
   fix . write ((char *)&qclear_m, sizeof (Range_t));
-  streamsize += sizeof (Range_t);
   fix . write ((char *)&type_m, sizeof (ReadType_t));
-  streamsize += sizeof (ReadType_t);
   fix . write ((char *)&vclear_m, sizeof (Range_t));
-  streamsize += sizeof (Range_t);
-
-  return streamsize;
 }
 
 

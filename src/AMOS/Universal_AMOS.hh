@@ -64,22 +64,27 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  virtual Size_t readRecord (std::istream & fix,
-			     std::istream & var)
+  virtual void readRecord (std::istream & fix,
+			   std::istream & var)
   {
     fix . read ((char *)&eid_m, sizeof (ID_t));
     std::getline (var, comment_m, '\0');
-    return (comment_m . size( ) + 1 + sizeof (ID_t));
+  }
+
+
+  //--------------------------------------------------- sizeVar ----------------
+  virtual Size_t sizeVar ( ) const
+  {
+    return comment_m . size( ) + 1;
   }
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual Size_t writeRecord (std::ostream & fix,
-			      std::ostream & var) const
+  virtual void writeRecord (std::ostream & fix,
+			    std::ostream & var) const
   {
     fix . write ((char *)&eid_m, sizeof (ID_t));
     var . write (comment_m . c_str( ), comment_m . size( ) + 1);
-    return (comment_m . size( ) + 1 + sizeof (ID_t));
   }
 
 

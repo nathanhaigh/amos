@@ -243,7 +243,10 @@ void Bank_t::concat (Bank_t & source)
 
   Size_t size;
   IBankable_t::BankableFlags_t flags;
-  Size_t tail = source . netFixSize( ) + sizeof (Size_t);
+  Size_t tail =
+    source . fix_size_m -
+    sizeof (std::streampos) -
+    sizeof (IBankable_t::BankableFlags_t);
 
   Size_t buffer_size = source . fix_size_m;
   char * buffer = (char *) SafeMalloc (buffer_size);
@@ -703,11 +706,8 @@ void Bank_t::replace (IBankable_t & obj)
 			    (streamoff)sizeof (Size_t));
   partition -> fix . read ((char *)&oldsize, sizeof (Size_t));
 
-  //-- Check the new size of VAR record
-  newsize = obj . writeRecord (nullfix, nullvar) - netFixSize( );
-
   //-- If new VAR is <= than old VAR, replace it, else append it
-  if ( newsize <= oldsize )
+  if ( obj . sizeVar( ) <= oldsize )
     partition -> var . seekp (vpos);
   else
     partition -> var . seekp (0, ios::end);
@@ -773,7 +773,10 @@ void Bank_t::transform (vector<ID_t> id_map)
 
   Size_t size;
   IBankable_t::BankableFlags_t flags;
-  Size_t tail = netFixSize( ) + sizeof (Size_t);
+  Size_t tail =
+    fix_size_m -
+    sizeof (std::streampos) -
+    sizeof (IBankable_t::BankableFlags_t);
 
   Size_t buffer_size = fix_size_m;
   char * buffer = (char *) SafeMalloc (buffer_size);

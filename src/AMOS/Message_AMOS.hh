@@ -368,6 +368,23 @@ public:
   }
 
 
+  //--------------------------------------------------- skip -------------------
+  //! \brief Skips a message in an input stream, returning its NCode
+  //!
+  //! Skips a message in an input stream, returning its NCode. Will throw an
+  //! exception if a message is found, but its message code or nesting is not
+  //! properly formatted. This validation is not entirely sound, and message
+  //! errors may slip through unnoticed.
+  //!
+  //! \param in The input stream to read from
+  //! \pre The incoming message code and nesting are properly formatted
+  //! \post Information already stored in the message object will not be changed
+  //! \throws IOException_t
+  //! \return NCode of the skipped message, or NULL_NCODE if no message found
+  //!
+  static NCode_t skip (std::istream & in); // const
+
+
   //--------------------------------------------------- write ------------------
   //! \brief Write the message object to an output stream
   //!

@@ -64,22 +64,24 @@ void Fragment_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Fragment_t::readRecord (istream & fix,
-			       istream & var)
+void Fragment_t::readRecord (istream & fix,
+			     istream & var)
 {
-  Size_t streamsize = Universal_t::readRecord (fix, var);
+  //-- Read parent object data
+  Universal_t::readRecord (fix, var);
 
-  //-- Read FIX data
+  //-- Read object data
   fix . read ((char *)&library_m, sizeof (ID_t));
-  streamsize += sizeof (ID_t);
   fix . read ((char *)&size_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . read ((char *)&source_m, sizeof (ID_t));
-  streamsize += sizeof (ID_t);
   fix . read ((char *)&type_m, sizeof (FragmentType_t));
-  streamsize += sizeof (FragmentType_t);
+}
 
-  return streamsize;
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t Fragment_t::sizeVar ( ) const
+{
+  return Universal_t::sizeVar( );
 }
 
 
@@ -130,20 +132,15 @@ void Fragment_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Fragment_t::writeRecord (ostream & fix,
-				ostream & var) const
+void Fragment_t::writeRecord (ostream & fix,
+			      ostream & var) const
 {
-  Size_t streamsize = Universal_t::writeRecord (fix, var);
+  //-- Write parent object data
+  Universal_t::writeRecord (fix, var);
 
-  //-- Write FIX data
+  //-- Write object data
   fix . write ((char *)&library_m, sizeof (ID_t));
-  streamsize += sizeof (ID_t);
   fix . write ((char *)&size_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . write ((char *)&source_m, sizeof (ID_t));
-  streamsize += sizeof (ID_t);
   fix . write ((char *)&type_m, sizeof (FragmentType_t));
-  streamsize += sizeof (FragmentType_t);
-
-  return streamsize;
 }

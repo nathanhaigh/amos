@@ -31,6 +31,8 @@ class IDMap_t : public IMessagable_t
 
 private:
 
+  friend class Bank_t;         //!< so the bank class can use the read/writes
+
   static const Size_t DEFAULT_BUCKETS = 100000;  //!< default size of hash
 
 
@@ -95,6 +97,28 @@ private:
   {
     return table_m + (key % buckets_m);
   }
+
+
+  //--------------------------------------------------- read -------------------
+  //! \brief Read the ID map from a binary input stream
+  //!
+  //! \param in The binary input stream
+  //! \pre in is a valid, readable stream
+  //! \post in will have error flags set if there was a failure
+  //! \return void
+  //!
+  void read (std::istream & in);
+
+
+  //--------------------------------------------------- write ------------------
+  //! \brief Write the ID map to a binary stream
+  //!
+  //! \param out The binary output stream
+  //! \pre out is a valid, writeable stream
+  //! \post out will have error flags set if there was a failure
+  //! \return void
+  //!
+  void write (std::ostream & out) const;
 
 
   Size_t buckets_m;                  //!< number of hash table buckets
@@ -177,21 +201,21 @@ public:
   }
 
 
+  //--------------------------------------------------- exists -----------------
+  //! \brief Check if a certain key exists in the map
+  //!
+  //! Returns true if the key exists, otherwise false
+  //!
+  //! \param key The key to check
+  //! \return true if key exists, otherwise false
+  //!
+  bool exists (ID_t key);
+
+
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
     return IDMap_t::NCode( );
-  }
-
-
-  //--------------------------------------------------- size -------------------
-  //! \brief Get the number of key/value pairs in the mapping
-  //!
-  //! \return The number of key/value pairs in the mapping
-  //!
-  ID_t size ( )
-  {
-    return size_m;
   }
 
 
@@ -245,17 +269,6 @@ public:
   IDMap_t & operator= (const IDMap_t & source);
 
 
-  //--------------------------------------------------- read -------------------
-  //! \brief Read the ID map from a binary input stream
-  //!
-  //! \param in The binary input stream
-  //! \pre in is a valid, readable stream
-  //! \post in will have error flags set if there was a failure
-  //! \return void
-  //!
-  void read (std::istream & in);
-
-
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
 
@@ -272,15 +285,15 @@ public:
   void remove (ID_t key);
 
 
-  //--------------------------------------------------- write ------------------
-  //! \brief Write the ID map to a binary stream
+  //--------------------------------------------------- size -------------------
+  //! \brief Get the number of key/value pairs in the mapping
   //!
-  //! \param out The binary output stream
-  //! \pre out is a valid, writeable stream
-  //! \post out will have error flags set if there was a failure
-  //! \return void
+  //! \return The number of key/value pairs in the mapping
   //!
-  void write (std::ostream & out) const;
+  ID_t size ( )
+  {
+    return size_m;
+  }
 
 
   //--------------------------------------------------- writeMessage -----------

@@ -142,8 +142,7 @@ protected:
   //! Reads the fixed and variable length streams from a biserial record and
   //! initializes the class members to the values stored within. Used in
   //! translating a biserial IBankable object, and needed to retrieve objects
-  //! from a Bank. Returned size of the record will only be valid if the read
-  //! was successful, i.e. fix.good( ) and var.good( ).
+  //! from a Bank.
   //!
   //! \note This method must be able to interpret the biserial record
   //! produced by its related function writeRecord.
@@ -152,9 +151,17 @@ protected:
   //! \param var The variable length stream (stores all var length members)
   //! \pre The get pointer of fix is at the beginning of the record
   //! \pre The get pointer of var is at the beginning of the record
-  //! \return size of read record (size of fix + size of var)
+  //! \return void
   //!
-  virtual Size_t readRecord (std::istream & fix, std::istream & var) = 0;
+  virtual void readRecord (std::istream & fix, std::istream & var) = 0;
+
+
+  //--------------------------------------------------- sizeVar ----------------
+  //! \brief Returns the current size of the variable length record
+  //!
+  //! \return Size of the variable length record (var stream)
+  //!
+  virtual Size_t sizeVar ( ) const = 0;
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -171,9 +178,9 @@ protected:
   //!
   //! \param fix The fixed length stream (stores all fixed length members)
   //! \param var The variable length stream (stores all var length members)
-  //! \return size of written record (size of fix + size of var)
+  //! \return void
   //!
-  virtual Size_t writeRecord (std::ostream & fix, std::ostream & var) const = 0;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const = 0;
 
 
 public:
@@ -519,21 +526,6 @@ protected:
     lid = iid - 1;
     pid = lid / partition_size_m + 1;
     lid -= (pid - 1) * partition_size_m;
-  }
-
-
-  //--------------------------------------------------- netFixSize -------------
-  //! \brief Returns the net fix size, i.e. size of only the object FIX data
-  //!
-  //! \return The net fix size
-  //!
-  Size_t netFixSize ( )
-  {
-    return
-      fix_size_m -
-      sizeof (std::streampos) -
-      sizeof (IBankable_t::BankableFlags_t) -
-      sizeof (Size_t);
   }
 
 

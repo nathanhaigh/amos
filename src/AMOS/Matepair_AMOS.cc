@@ -56,18 +56,22 @@ void Matepair_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Matepair_t::readRecord (istream & fix,
-			       istream & var)
+void Matepair_t::readRecord (istream & fix,
+			     istream & var)
 {
-  Size_t streamsize = Universal_t::readRecord (fix, var);
+  //-- Read parent object data
+  Universal_t::readRecord (fix, var);
 
-  //-- Read the FIX data
+  //-- Read object data
   fix . read ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . read ((char *)&type_m, sizeof (MateType_t));
-  streamsize += sizeof (MateType_t);
+}
 
-  return streamsize;
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t Matepair_t::sizeVar ( ) const
+{
+  return Universal_t::sizeVar( );
 }
 
 
@@ -111,16 +115,13 @@ void Matepair_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Matepair_t::writeRecord (ostream & fix,
-				ostream & var) const
+void Matepair_t::writeRecord (ostream & fix,
+			      ostream & var) const
 {
-  Size_t streamsize = Universal_t::writeRecord (fix, var);
+  //-- Write parent object data
+  Universal_t::writeRecord (fix, var);
 
-  //-- Write the FIX data
+  //-- Write object data
   fix . write ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . write ((char *)&type_m, sizeof (MateType_t));
-  streamsize += sizeof (MateType_t);
-
-  return streamsize;
 }

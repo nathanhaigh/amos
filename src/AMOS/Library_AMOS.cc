@@ -41,16 +41,21 @@ void Library_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Library_t::readRecord (istream & fix,
-			      istream & var)
+void Library_t::readRecord (istream & fix,
+			    istream & var)
 {
-  Size_t streamsize = Universal_t::readRecord (fix, var);
+  //-- Read parent object data
+  Universal_t::readRecord (fix, var);
 
-  //-- Read FIX data
+  //-- Read object data
   fix . read ((char *)&dist_m, sizeof (Distribution_t));
-  streamsize += sizeof (Distribution_t);
+}
 
-  return streamsize;
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t Library_t::sizeVar ( ) const
+{
+  return Universal_t::sizeVar( );
 }
 
 
@@ -75,14 +80,12 @@ void Library_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Library_t::writeRecord (ostream & fix,
-			       ostream & var) const
+void Library_t::writeRecord (ostream & fix,
+			     ostream & var) const
 {
-  Size_t streamsize = Universal_t::writeRecord (fix, var);
+  //-- Write parent object data
+  Universal_t::writeRecord (fix, var);
 
-  //-- Write FIX data
+  //-- Write object data
   fix . write ((char *)&dist_m, sizeof (Distribution_t));
-  streamsize += sizeof (Distribution_t);
-
-  return streamsize;
 }

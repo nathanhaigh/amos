@@ -99,38 +99,49 @@ void Contig_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Contig_t::readRecord (istream & fix,
-			     istream & var)
+void Contig_t::readRecord (istream & fix,
+			   istream & var)
 {
-  Size_t streamsize = Sequence_t::readRecord (fix, var);
   Size_t size, tsize;
 
-  //-- Read FIX data
-  fix . read ((char *)&size, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
-  fix . read ((char *)&poly_m, sizeof (null_t));
-  streamsize += sizeof (null_t);
+  //-- Read the parent object data
+  Sequence_t::readRecord (fix, var);
 
-  //-- Read VAR data
+  //-- Read the object data
+  fix . read ((char *)&size, sizeof (Size_t));
+  fix . read ((char *)&poly_m, sizeof (null_t));
+
   reads_m . resize (size);
   for ( Pos_t i = 0; i < size; i ++ )
     {
       var . read ((char *)&tsize, sizeof (Size_t));
-      streamsize += sizeof (Size_t);
       reads_m [i] . gaps . resize (tsize);
       for ( Pos_t j = 0; j < tsize; j ++ )
 	var . read ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
-      streamsize += tsize * sizeof (int32_t);
 
       var . read ((char *)&reads_m [i] . id, sizeof (ID_t));
-      streamsize += sizeof (ID_t);
       var . read ((char *)&reads_m [i] . offset, sizeof (Pos_t));
-      streamsize += sizeof (Pos_t);
       var . read ((char *)&reads_m [i] . range, sizeof (Range_t));
-      streamsize += sizeof (Range_t);
+    }
+}
+
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t Contig_t::sizeVar ( ) const
+{
+  Size_t varsize = Sequence_t::sizeVar( );
+  Size_t size = reads_m . size( );
+
+  for ( Pos_t i = 0; i < size; i ++ )
+    {
+      varsize += sizeof (Size_t);
+      varsize += reads_m [i] . gaps . size( ) * sizeof (int32_t);
+      varsize += sizeof (ID_t);
+      varsize += sizeof (Pos_t);
+      varsize += sizeof (Range_t);
     }
 
-  return streamsize;
+  return varsize;
 }
 
 
@@ -164,36 +175,29 @@ void Contig_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Contig_t::writeRecord (ostream & fix,
-			      ostream & var) const
+void Contig_t::writeRecord (ostream & fix,
+			    ostream & var) const
 {
-  Size_t streamsize = Sequence_t::writeRecord (fix, var);
   Size_t size, tsize;
 
-  //-- Write FIX data
+  //-- Write parent object data
+  Sequence_t::writeRecord (fix, var);
+
+  //-- Write object data
   size = reads_m . size( );
   fix . write ((char *)&size, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . write ((char *)&poly_m, sizeof (null_t));
-  streamsize += sizeof (null_t);
 
-  //-- Write VAR data
   for ( Pos_t i = 0; i < size; i ++ )
     {
       tsize = reads_m [i] . gaps . size( );
       var . write ((char *)&tsize, sizeof (Size_t));
-      streamsize += sizeof (Size_t);
+
       for ( Pos_t j = 0; j < tsize; j ++ )
 	var . write ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
-      streamsize += tsize * sizeof (int32_t);
 
       var . write ((char *)&reads_m [i] . id, sizeof (ID_t));
-      streamsize += sizeof (ID_t);
       var . write ((char *)&reads_m [i] . offset, sizeof (Pos_t));
-      streamsize += sizeof (Pos_t);
       var . write ((char *)&reads_m [i] . range, sizeof (Range_t));
-      streamsize += sizeof (Range_t);
     }
-
-  return streamsize;
 }

@@ -25,9 +25,19 @@ OverlapAdjacency_t Overlap_t::getAdjacency ( ) const
   if ( flags_m . extra & 0x4 )
     {
       if ( flags_m . extra & 0x1 )
-	return flags_m . extra & 0x2 ? INNIE : NORMAL;
+	{
+	  if ( flags_m . extra & 0x2 )
+	    return INNIE;
+	  else
+	    return NORMAL;
+	}
       else
-	return flags_m . extra & 0x2 ? ANTINORMAL : OUTIE;
+	{
+	  if ( flags_m . extra & 0x2 )
+	    return ANTINORMAL;
+	  else
+	    return OUTIE;
+	}
     }
   return NULL_ADJACENCY;
 }
@@ -89,20 +99,23 @@ void Overlap_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Overlap_t::readRecord (istream & fix,
-			      istream & var)
+void Overlap_t::readRecord (istream & fix,
+			    istream & var)
 {
-  Size_t streamsize = Universal_t::readRecord (fix, var);
+  //-- Read parent object data
+  Universal_t::readRecord (fix, var);
 
-  //-- Read FIX data
+  //-- Read object data
   fix . read ((char *)&aHang_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . read ((char *)&bHang_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . read ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
+}
 
-  return streamsize;
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t Overlap_t::sizeVar ( ) const
+{
+  return Universal_t::sizeVar( );
 }
 
 
@@ -182,18 +195,14 @@ void Overlap_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Overlap_t::writeRecord (ostream & fix,
-			       ostream & var) const
+void Overlap_t::writeRecord (ostream & fix,
+			     ostream & var) const
 {
-  Size_t streamsize = Universal_t::writeRecord (fix, var);
+  //-- Write parent object data
+  Universal_t::writeRecord (fix, var);
 
-  //-- Write FIX data
+  //-- Write object data
   fix . write ((char *)&aHang_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . write ((char *)&bHang_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . write ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
-
-  return streamsize;
 }

@@ -25,9 +25,19 @@ LinkAdjacency_t ContigLink_t::getAdjacency ( ) const
   if ( flags_m . extra & 0x4 )
     {
       if ( flags_m . extra & 0x1 )
-	return flags_m . extra & 0x2 ? INNIE : NORMAL;
+	{
+	  if ( flags_m . extra & 0x2 )
+	    return INNIE;
+	  else
+	    return NORMAL;
+	}
       else
-	return flags_m . extra & 0x2 ? ANTINORMAL : OUTIE;
+	{
+	  if ( flags_m . extra & 0x2 )
+	    return ANTINORMAL;
+	  else
+	    return OUTIE;
+	}
     }
   return NULL_ADJACENCY;
 }
@@ -109,24 +119,18 @@ void ContigLink_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t ContigLink_t::readRecord (istream & fix,
-				 istream & var)
+void ContigLink_t::readRecord (istream & fix,
+			       istream & var)
 {
-  Size_t streamsize = Universal_t::readRecord (fix, var);
+  //-- Read the parent object data
+  Universal_t::readRecord (fix, var);
 
-  //-- Read the FIX data
+  //-- Read the object data
   fix . read ((char *)&contigs_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . read ((char *)&sd_m, sizeof (SD_t));
-  streamsize += sizeof (SD_t);
   fix . read ((char *)&size_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . read ((char *)&source_m, sizeof (pair<ID_t, NCode_t>));
-  streamsize += sizeof (pair<ID_t, NCode_t>);
   fix . read ((char *)&type_m, sizeof (LinkType_t));
-  streamsize += sizeof (LinkType_t);
-
-  return streamsize;
 }
 
 
@@ -155,6 +159,13 @@ void ContigLink_t::setAdjacency (LinkAdjacency_t adj)
     default:
       AMOS_THROW_ARGUMENT ((string)"Invalid adjacency " + adj);
     }
+}
+
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t ContigLink_t::sizeVar ( ) const
+{
+  return Universal_t::sizeVar( );
 }
 
 
@@ -220,22 +231,16 @@ void ContigLink_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t ContigLink_t::writeRecord (ostream & fix,
-				  ostream & var) const
+void ContigLink_t::writeRecord (ostream & fix,
+				ostream & var) const
 {
-  Size_t streamsize = Universal_t::writeRecord (fix, var);
+  //-- Write the parent object data
+  Universal_t::writeRecord (fix, var);
 
-  //-- Write the FIX data
+  //-- Write the object data
   fix . write ((char *)&contigs_m, sizeof (pair<ID_t, ID_t>));
-  streamsize += sizeof (pair<ID_t, ID_t>);
   fix . write ((char *)&sd_m, sizeof (SD_t));
-  streamsize += sizeof (SD_t);
   fix . write ((char *)&size_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . write ((char *)&source_m, sizeof (pair<ID_t, NCode_t>));
-  streamsize += sizeof (pair<ID_t, NCode_t>);
   fix . write ((char *)&type_m, sizeof (LinkType_t));
-  streamsize += sizeof (LinkType_t);
-
-  return streamsize;
 }

@@ -32,26 +32,26 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  virtual Size_t readRecord (std::istream & fix,
-			     std::istream & var)
+  virtual void readRecord (std::istream & fix,
+			   std::istream & var)
   {
-    Size_t streamsize = IBankable_t::readRecord (fix, var);
-
     // write class data here
+  }
 
-    return streamsize;
+
+  //--------------------------------------------------- sizeVar ----------------
+  virtual Size_t sizeVar ( ) const
+  {
+    // return size of variable length data here
+    return 0;
   }
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual Size_t writeRecord (std::ostream & fix,
-			      std::ostream & var) const
+  virtual void writeRecord (std::ostream & fix,
+			    std::ostream & var) const
   {
-    Size_t streamsize = IBankable_t::writeRecord (fix, var);
-
     // write class data here
-
-    return streamsize;
   }
 
 

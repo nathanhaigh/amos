@@ -37,13 +37,17 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  virtual Size_t readRecord (std::istream & fix,
-			     std::istream & var);
+  virtual void readRecord (std::istream & fix,
+			   std::istream & var);
+
+
+  //--------------------------------------------------- sizeVar ----------------
+  virtual Size_t sizeVar ( ) const;
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual Size_t writeRecord (std::ostream & fix,
-			      std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix,
+			    std::ostream & var) const;
 
 
 public:

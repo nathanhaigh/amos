@@ -130,27 +130,23 @@ void Sequence_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-Size_t Sequence_t::readRecord (istream & fix,
-			       istream & var)
+void Sequence_t::readRecord (istream & fix,
+			     istream & var)
 {
-  Size_t streamsize = Universal_t::readRecord (fix, var);
+  //-- Read parent object data
+  Universal_t::readRecord (fix, var);
 
-  //-- Read FIX data
+  //-- Read object data
   fix . read ((char *)&length_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
 
-  //-- Read VAR data
   seq_m = (uint8_t *) SafeRealloc (seq_m, length_m);
   var . read ((char *)seq_m, length_m);
-  streamsize += length_m;
+
   if ( !isCompressed( ) )
     {
       qual_m = (uint8_t *) SafeRealloc (qual_m, length_m);
       var . read ((char *)qual_m, length_m);
-      streamsize += length_m;
     }
-
-  return streamsize;
 }
 
 
@@ -224,6 +220,14 @@ void Sequence_t::setSequence (const string & seq,
 }
 
 
+//----------------------------------------------------- sizeVar ----------------
+Size_t Sequence_t::sizeVar ( ) const
+{
+  return Universal_t::sizeVar( ) +
+    (isCompressed( ) ? length_m : length_m + length_m);
+}
+
+
 //----------------------------------------------------- uncompress -------------
 void Sequence_t::uncompress ( )
 {
@@ -290,23 +294,16 @@ void Sequence_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Sequence_t::writeRecord (ostream & fix,
-				ostream & var) const
+void Sequence_t::writeRecord (ostream & fix,
+			      ostream & var) const
 {
-  Size_t streamsize = Universal_t::writeRecord (fix, var);
+  //-- Write parent object data
+  Universal_t::writeRecord (fix, var);
 
-  //-- Write FIX data
+  //-- Write object data
   fix . write ((char *)&length_m, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
-
-  //-- Write VAR data
   var . write ((char *)seq_m, length_m);
-  streamsize += length_m;
-  if ( !isCompressed( ) )
-    {
-      var . write ((char *)qual_m, length_m);
-      streamsize += length_m;
-    }
 
-  return streamsize;
+  if ( !isCompressed( ) )
+    var . write ((char *)qual_m, length_m);
 }

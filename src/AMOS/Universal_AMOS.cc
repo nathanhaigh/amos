@@ -62,7 +62,7 @@ void Universal_t::writeMessage (Message_t & msg) const
 	ss . str("");
       }
 
-    if ( comment_m . size( ) != 0 )
+    if ( !comment_m . empty( ) )
       msg . setField (F_COMMENT, comment_m);
   }
   catch (ArgumentException_t) {

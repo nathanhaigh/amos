@@ -284,7 +284,7 @@ void AMOS::WrapString (ostream & out, const string & s, int per)
 {
   int  i, n;
   
-  n = s . length ();
+  n = s . size ( );
   for  (i = 0;  i < n;  i += per)
     {
       int  j, last;

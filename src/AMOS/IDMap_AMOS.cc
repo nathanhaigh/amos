@@ -16,6 +16,22 @@ using namespace std;
 
 
 //================================================ IDMap_t =====================
+//----------------------------------------------------- exists -----------------
+bool IDMap_t::exists (ID_t key)
+{
+  HashNode_t * curr = hashfunc (key);
+
+  while ( curr -> key != key )
+    {
+      if ( curr -> next == NULL )
+	return false;
+      curr = curr -> next;
+    }
+
+  return true;
+}
+
+
 //----------------------------------------------------- insert -----------------
 void IDMap_t::insert (ID_t key, ID_t val)
 {

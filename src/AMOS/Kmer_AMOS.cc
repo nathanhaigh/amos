@@ -107,39 +107,36 @@ void Kmer_t::readMessage (const Message_t & msg)
   }
 }
 
+
 //----------------------------------------------------- readRecord -------------
-Size_t Kmer_t::readRecord (istream & fix,
-			   istream & var)
+void Kmer_t::readRecord (istream & fix,
+			 istream & var)
 {
-  Size_t streamsize = Universal_t::readRecord (fix, var);
   Size_t size;
 
-  //-- Read FIX data
-  fix . read ((char *)&count_m, sizeof (uint32_t));
-  streamsize += sizeof (uint32_t);
-  fix . read ((char *)&size, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
-  fix . read ((char *)&length_m, sizeof (uint8_t));
-  streamsize += sizeof (uint8_t);
+  //-- Read parent object data
+  Universal_t::readRecord (fix, var);
 
-  //-- Read VAR data
+  //-- Read object data
+  fix . read ((char *)&count_m, sizeof (uint32_t));
+  fix . read ((char *)&size, sizeof (Size_t));
+  fix . read ((char *)&length_m, sizeof (uint8_t));
+
   reads_m . resize (size, NULL_ID);
   for ( Pos_t i = 0; i < size; i ++ )
     var . read ((char *)&reads_m [i], sizeof (ID_t));
-  streamsize += size * sizeof (ID_t);
+
   size = length_m / 4 + (length_m % 4 ? 1 : 0);
   seq_m = (uint8_t *) SafeRealloc (seq_m, size);
   var . read ((char *)seq_m, size);
-  streamsize += size;
-
-  return streamsize;
 }
 
 
 //----------------------------------------------------- setSeqString -----------
 void Kmer_t::setSeqString (const string & seq)
 {
-  Size_t size = seq . size( );
+  Size_t osize = seq . size( );
+  Size_t size = osize;
   if ( size > Kmer_t::MAX_LENGTH )
     AMOS_THROW_ARGUMENT ("Invalid kmer sequence is too long");
 
@@ -150,7 +147,7 @@ void Kmer_t::setSeqString (const string & seq)
   Pos_t ci = -1;
   int offset = 8;
   length_m = 0;
-  for ( string::size_type ui = 0; ui < seq . size( ); ui ++ )
+  for ( Size_t ui = 0; ui < osize; ui ++ )
     {
       if ( seq [ui] == '\n' )
 	continue;
@@ -165,11 +162,20 @@ void Kmer_t::setSeqString (const string & seq)
       offset += 2;
     }
 
-  if ( length_m != seq . size( ) )
+  if ( length_m != osize )
     {
       size = length_m / 4 + (length_m % 4 ? 1 : 0);
       seq_m = (uint8_t *) SafeRealloc (seq_m, size);
     }
+}
+
+
+//----------------------------------------------------- sizeVar ----------------
+Size_t Kmer_t::sizeVar ( ) const
+{
+  return Universal_t::sizeVar( ) +
+    (reads_m . size( ) * sizeof (ID_t)) +
+    (length_m / 4 + (length_m % 4 ? 1 : 0));
 }
 
 
@@ -210,27 +216,22 @@ void Kmer_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-Size_t Kmer_t::writeRecord (ostream & fix,
-			    ostream & var) const
+void Kmer_t::writeRecord (ostream & fix,
+			  ostream & var) const
 {
-  Size_t streamsize = Universal_t::writeRecord (fix, var);
   Size_t size = reads_m . size( );
 
-  //-- Write FIX data
-  fix . write ((char *)&count_m, sizeof (uint32_t));
-  streamsize += sizeof (uint32_t);
-  fix . write ((char *)&size, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
-  fix . write ((char *)&length_m, sizeof (uint8_t));
-  streamsize += sizeof (uint8_t);
+  //-- Write parent object data
+  Universal_t::writeRecord (fix, var);
 
-  //-- Write VAR data
+  //-- Write the object data
+  fix . write ((char *)&count_m, sizeof (uint32_t));
+  fix . write ((char *)&size, sizeof (Size_t));
+  fix . write ((char *)&length_m, sizeof (uint8_t));
+
   for ( Pos_t i = 0; i < size; i ++ )
     var . write ((char *)&reads_m [i], sizeof (ID_t));
-  streamsize += size * sizeof (ID_t);
+
   size = length_m / 4 + (length_m % 4 ? 1 : 0);
   var . write ((char *)seq_m, size);
-  streamsize += size;
-
-  return streamsize;
 }
