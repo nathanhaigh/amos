@@ -20,10 +20,9 @@ using namespace std;
 bool Message_t::read (istream & in)
 {
   uint8_t i;
-  char ch;
-  string line, name, data;
+  char ch, chp, chpp;
+  string name, data;
   name . reserve (NCODE);
-  line . reserve (100);
 
   //-- Search for the beginning of the message
   while ( in . get( ) != '{' )
@@ -65,32 +64,32 @@ bool Message_t::read (istream & in)
 	  name [i] = in . get( );
 	ch = in . get( );
 
-	//-- Throw if bad format
-	if ( ch != ':' )
-	  {
-	    getline (in, line);
-	    AMOS_THROW_IO ("Message read failure, line: " + name + ch + line);
-	  }
-
 	//-- Read in first line of field
 	getline (in, data);
 
+	//-- Throw if bad format
+	if ( ch != ':'  ||  !in . good( ) )
+	  AMOS_THROW_IO ("Message read failure, line: " + name + ch + data);
+
 	//-- If multi-line field, read the rest
 	if ( data . empty( ) )
-	  while (true)
-	    {
-	      ch = in . peek( );
-	      getline (in, line);
+	  {
+	    chpp = '\n';
+	    chp = in . get( );
+	    ch = in . get( );
+	    while (chpp != '\n'  ||  chp != '.'  ||  ch != '\n')
+	      {
+		chpp = chp;
+		chp = ch;
+		ch = in . get( );
 
-	      if ( !in . good( ) )
-		AMOS_THROW_IO ("Message read failure, line: " + line);
+		if ( !in . good( ) )
+		  AMOS_THROW_IO
+		    ("Message read failure, line: " + name + ':' + data);
 
-	      if ( ch == '.'  &&  line . size( ) == 1 )
-		break;
-
-	      data += line;
-	      data += '\n';
-	    }
+		data += chpp;
+	      }
+	  }
 
 	//-- Set field data
 	setField (name, data);
@@ -214,20 +213,21 @@ NCode_t Message_t::skip (istream & in) // static const
 	if ( in . get( ) != ':' )
 	  AMOS_THROW_IO ("Message skip failure");
 
-	ch = in . get( );
-	if ( ch == '\n' )
+	//-- If multi-line field, read the rest
+	chpp = in . get( );
+	if ( chpp == '\n' )
 	  {
-	    chpp = ch;
 	    chp = in . get( );
-	    while ( 1 )
+	    ch = in . get( );
+	    while (chpp != '\n'  ||  chp != '.'  ||  ch != '\n')
 	      {
-		if ( !in . good( ) )
-		  AMOS_THROW_IO ("Message skip failure");
-		ch = in . get( );
-		if ( chp == '.' && ch == '\n' && chpp == '\n' )
-		  break;
 		chpp = chp;
 		chp = ch;
+		ch = in . get( );
+
+		if ( !in . good( ) )
+		  AMOS_THROW_IO
+		    ("Message skip failure");
 	      }
 	  }
 	else
