@@ -61,6 +61,7 @@ void printHelpText()
     "-samecvg <n>  report regions with coverage by mates with same orientation\n"
     "              greater than <n>\n"
     "-outiecvg <n> report regions with outie coverage greater than <n>\n"
+    "-debug        output status for each mate-pair to STDERR\n"
     "\n.DESCRIPTION.\n"
     "\n.KEYWORDS.\n"
     "AMOS bank, Validation, Mate pairs\n"
@@ -85,6 +86,7 @@ bool GetOptions(int argc, char ** argv)
     {"recompute", 0, 0, 'r'},
     {"update",    0, 0, 'u'},
     {"feat",      0, 0, 'f'},
+    {"debug",     0, 0, 'd'},
     {0, 0, 0, 0}
   };
   
@@ -128,6 +130,9 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'f':
       globals["feat"] = string("true");
+      break;
+    case 'd':
+      globals["debug"] = string("true");
       break;
     case '?':
       return false;
@@ -304,6 +309,12 @@ int main(int argc, char **argv)
   bool recompute = false; // recompute library sizes
   bool update = false;    // update library sizes in bank
   bool feats = false;     // add features to bank
+  bool debug = false;     // write debugging info to STDERR
+
+  if (globals.find("debug") != globals.end()){
+    debug = true;
+    cout << "Debugging mode: additional information written to STDERR" << endl;
+  }
 
   if (globals.find("recompute") != globals.end()){
     recompute = true;
@@ -475,13 +486,14 @@ int main(int argc, char **argv)
 
   AnnotatedMatePair mtp;
   list<AnnotatedMatePair> mtl;
-  Read_t rd1;
+  Read_t rd1, rd2;
   Fragment_t frg;
   set<ID_t> libIDs;
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2lib;
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2frg;
   hash_map<ID_t, list<list<AnnotatedMatePair>::iterator>, hash<ID_t>, equal_to<ID_t> > lib2mtp;
   hash_map<ID_t, list<list<AnnotatedMatePair>::iterator>, hash<ID_t>, equal_to<ID_t> > ctg2mtp;
+  hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > rd2name;
 
   while (mate_bank >> mtp)
     if (rd2ctg[mtp.getReads().first] == rd2ctg[mtp.getReads().second]){
@@ -491,12 +503,27 @@ int main(int argc, char **argv)
       //      ctgIDs.insert(rd2ctg[mtp.getReads().first]);
       ti = mtl.insert(mtl.end(), mtp);
       read_bank.fetch(mtp.getReads().first, rd1); // get the read
+      read_bank.fetch(mtp.getReads().second, rd2);
+      rd2name[rd1.getIID()] = rd1.getEID();
+      rd2name[rd2.getIID()] = rd2.getEID();
+
       frag_bank.fetch(rd1.getFragment(), frg); // get the fragment
       rd2frg[mtp.getReads().first] = rd1.getFragment();
       libIDs.insert(frg.getLibrary());
       rd2lib[mtp.getReads().first] = frg.getLibrary();
       lib2mtp[frg.getLibrary()].push_back(ti);
       ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
+    } else {
+      if (debug)
+	cerr << "Mates " 
+	     << mtp.getReads().first 
+	     << "(" << rd2name[mtp.getReads().first] << ") " 
+	     << mtp.getReads().second 
+	     << "(" << rd2name[mtp.getReads().second] << ") "
+	     << "not in same contig: "
+	     <<	 rd2ctg[mtp.getReads().first] << ", "
+	     <<	 rd2ctg[mtp.getReads().second] 
+	     << endl;
     }
 	
   
@@ -519,17 +546,16 @@ int main(int argc, char **argv)
     list<Pos_t> sizes;
     pair<Pos_t, SD_t> libsize = lib2size[*li];
     
-    if (recompute) {
-      for (list<list<AnnotatedMatePair>::iterator>::iterator 
-	     mi = lib2mtp[*li].begin(); mi != lib2mtp[*li].end(); mi++){
-	// for each mate pair
-	Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getReads().first], 
-			   rd2posn[(*mi)->getReads().second], 
-			   ctglen[rd2ctg[(*mi)->getReads().first]], 
-			   libsize.first + 3 * libsize.second);
-	if (sz != 0) {
-	  sizes.push_back(sz);
-	}
+    for (list<list<AnnotatedMatePair>::iterator>::iterator 
+	   mi = lib2mtp[*li].begin(); mi != lib2mtp[*li].end(); mi++){
+      // for each mate pair
+      Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getReads().first], 
+			 rd2posn[(*mi)->getReads().second], 
+			 ctglen[rd2ctg[(*mi)->getReads().first]], 
+			 libsize.first + 3 * libsize.second);
+
+      if (recompute && sz != 0) {
+	sizes.push_back(sz);
       }
     } // if recomputing library sizes
 
@@ -576,19 +602,43 @@ int main(int argc, char **argv)
       Pos_t sz = mateLen(**mi, rd2posn[((*mi)->getReads()).first], 
 			 rd2posn[((*mi)->getReads()).second], 
 			 ctglen[rd2ctg[((*mi)->getReads()).first]], 0);
+
+      if (debug && sz != 0)
+	cerr << "MATE " << *li << " " << sz << endl;
+      
       // sz == 0 implies mis-orientation
       if (abs(sz - newSize.first) > newSize.second * NUM_SD) {
 	// farther than NUM_SD standard deviations from the mean
 	if (sz < newSize.first){
 	  (*mi)->status = MP_SHORT; // too short
 	  (*mi)->deviation = newSize.first - sz;
+	  if (debug)
+	    cerr << "Short mate " 
+		 << ((*mi)->getReads()).first 
+		 << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+		 << ((*mi)->getReads()).second 
+		 << "(" << rd2name[((*mi)->getReads()).second] << ") "
+		 << (*mi)->deviation << " shorter than " << newSize.first
+		 << endl;
+		
 	} else { 
 	  (*mi)->status = MP_LONG; // too long
 	  (*mi)->deviation = sz - newSize.first;
+	  if (debug)
+	    cerr << "Long mate " 
+		 << ((*mi)->getReads()).first 
+		 << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+		 << ((*mi)->getReads()).second 
+		 << "(" << rd2name[((*mi)->getReads()).second] << ") "
+		 << (*mi)->deviation << " longer than " << newSize.first
+		 << endl;
 	}
       }
     }
   }// for each library
+
+  if (recompute) 
+    cout << endl;
 
   if (feats)
     contig_bank.open(globals["bank"], B_READ|B_WRITE);
@@ -598,7 +648,7 @@ int main(int argc, char **argv)
     list<pair<Pos_t, Pos_t> > ranges;  // ranges we are interested in
     list<pair<Pos_t, Pos_t> > interest;
 
-    cout << ">Contig " << *ctg << endl;
+    cout << ">Contig_" << *ctg << " " << ctglen[*ctg] << " bases" << endl;
 
     Contig_t newcontig;
     vector<Feature_t> features;
@@ -623,14 +673,19 @@ int main(int argc, char **argv)
 	Pos_t left, right;
 	left = rd2posn[((*mi)->getReads()).first].getEnd(); // use end of reads
 	right = rd2posn[((*mi)->getReads()).second].getEnd(); 
-	//	cout << "Adding reads " << (*mi)->getReads().first << " " << left << " and " 
-	//	     << (*mi)->getReads().second << " " << right << endl;
-	// ranges must be properly oriented
-	//	cout << "Adding " << left << ", " << right << endl;
+
 	if (left < right)
 	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
 	else
 	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
+
+	if (debug)
+	  cerr << "Good mate " 
+	       << ((*mi)->getReads()).first 
+	       << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+	       << ((*mi)->getReads()).second 
+	       << "(" << rd2name[((*mi)->getReads()).second] << ") "
+	       << endl;
       }
     } // for each mate in the contig
 
@@ -758,6 +813,13 @@ int main(int argc, char **argv)
 	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
 	else
 	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
+	if (debug)
+	  cerr << "Same orientation mates " 
+	       << ((*mi)->getReads()).first 
+	       << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+	       << ((*mi)->getReads()).second 
+	       << "(" << rd2name[((*mi)->getReads()).second] << ") "
+	       << endl;
       }
     } // for each mate in the contig
 
@@ -806,6 +868,14 @@ int main(int argc, char **argv)
 	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
 	else
 	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
+
+	if (debug)
+	  cerr << "Outie mates " 
+	       << ((*mi)->getReads()).first 
+	       << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+	       << ((*mi)->getReads()).second 
+	       << "(" << rd2name[((*mi)->getReads()).second] << ") "
+	       << endl;
       }
     } // for each mate in the contig
 
