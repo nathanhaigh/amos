@@ -221,6 +221,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   }
 
   toggleShowIndicator();
+  toggleHighlightDiscrepancy();
 }
 
 
