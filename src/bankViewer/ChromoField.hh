@@ -2,6 +2,7 @@
 #define CHROMOFIELD_HH_
 
 #include <qwidget.h>
+#include <qpixmap.h>
 #include <string>
 #include "RenderSeq.hh"
 
@@ -28,6 +29,7 @@ protected:
 private:
     Read * m_rawread;
     RenderSeq_t * m_render;
+    QPixmap * m_pix;
 
 };
 

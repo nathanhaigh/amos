@@ -4,6 +4,7 @@
 #include <math.h>
 #include <qstring.h>
 #include <string>
+#include <qpixmap.h>
 
 
 ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const char *name)
@@ -20,35 +21,42 @@ ChromoField::ChromoField(RenderSeq_t * read, string & db, QWidget *parent, const
                            + readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/" 
                            + readname;
 
-  //cerr << readname << " from " << db << endl;
-  //cerr << "path: " << path << endl;
-
   m_render = read;
   m_rawread = read_reading((char *)path.c_str(), TT_ANY);
 
   resize (m_rawread->NPoints+100,160);
-}
 
-void ChromoField::paintEvent(QPaintEvent * event)
-{
-  QPainter painter(this);
+  m_pix = new QPixmap(width(), height());
+  m_pix->fill(this, 0, 0);
+
+  QPainter painter(m_pix);
 
   int baseline = 100;
   int offset = 20;
 
   int i=0;
   int vscale=24;
+  int tickwidth = 5;
+  int maxy = 2000;
 
-  // x-axis
+  // axis
   painter.drawLine(offset,baseline,m_rawread->NPoints+offset,baseline);
+  painter.drawLine(offset,baseline,offset,baseline-(maxy/vscale));
+
+  // y-ticks
+  for (i = 0; i < maxy; i+=100)
+  {
+    int y = baseline-(i/vscale);
+    painter.drawLine(offset,y,offset+tickwidth,y);
+  }
 
   // x-ticks
   for (i = 0; i < m_rawread->NPoints; i+=10)
   {
-    painter.drawLine(i+offset,baseline,i+offset,baseline-5);
+    painter.drawLine(i+offset,baseline,i+offset,baseline-tickwidth);
     if (!(i % 50))
     {
-      painter.drawLine(i+offset, baseline+5, i+offset, baseline);
+      painter.drawLine(i+offset, baseline+tickwidth, i+offset, baseline);
     }
   }
 
@@ -89,5 +97,11 @@ void ChromoField::paintEvent(QPaintEvent * event)
   }
 
   painter.end();
+}
+
+void ChromoField::paintEvent(QPaintEvent * event)
+{
+  QPainter painter(this);
+  painter.drawPixmap(0, 0, *m_pix);
 }
 

@@ -3,6 +3,7 @@
 
 #include <qwidget.h>
 #include <qspinbox.h>
+#include <qslider.h>
 #include <string>
 
 class MainWindow: public QWidget
@@ -15,12 +16,16 @@ public:
 public slots:
   void openBank();
   void setContigRange(int, int);
+  void setGindexRange(int, int);
 
 signals:
   void bankSelected(string bankname);
 
 private:
   QSpinBox * m_contigid;
+  QSpinBox * m_gindex;
+  QSlider * m_slider;
+
 
 };
 

@@ -92,7 +92,7 @@ TilingField::TilingField( QWidget *parent, const char *name )
 {
   m_gindex = 0;
   m_db = "DMG";
-  setPalette( QPalette( QColor( 250, 250, 200) ) );
+  setPalette( QPalette( QColor( 250, 250, 250) ) );
   m_loaded = 0;
   m_displaywidth=0;
   m_desiredheight = 0;
@@ -148,9 +148,24 @@ void TilingField::setContigId(int contigId)
         m_renderedSeqs[vectorpos].load(read_bank, vi);
       }
 
-      emit setRange(0, (int)m_consensus.size()-1);
+      emit setGindexRange(0, (int)m_consensus.size()-1);
       emit contigLoaded(contigId);
       m_loaded = 1;
+
+      QString s = "Viewing ";
+      s += m_bankname.c_str();
+      s += " with ";
+      s += QString::number(contig_bank.getSize());
+      s += " contigs";
+
+      s += " Contig Id:";
+      s += QString::number(contigId);
+      s += " Size: ";
+      s += QString::number(m_consensus.size());
+      s += " Reads: ";
+      s += QString::number(m_tiling.size());
+
+      emit setStatus(s);
 
       repaint();
     }
@@ -240,7 +255,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
   int lineheight  = m_fontsize+5;
   int tilevoffset = lineheight*4;
-  int tilehoffset = m_fontsize*4;
+  int tilehoffset = m_fontsize*10;
   int seqnamehoffset = 10;
 
   int width = this->width();
@@ -258,7 +273,6 @@ void TilingField::paintEvent( QPaintEvent * )
   // Figure out which reads tile this range
   vector<RenderSeq_t>::iterator ri;
   int dcov = 0;
-  int vectorpos = 0;
   
   int clen = m_consensus.size();
 
@@ -275,15 +289,16 @@ void TilingField::paintEvent( QPaintEvent * )
 
   m_currentReads.clear();
 
-  for (ri =  m_renderedSeqs.begin(), vectorpos = 0; 
+  for (ri =  m_renderedSeqs.begin();
        ri != m_renderedSeqs.end(); 
-       ri++, vectorpos++)
+       ri++)
   {
     if (hasOverlap(grangeStart, grangeEnd, 
                    ri->m_offset, ri->m_nucs.size(), 
                    clen))
     {
-      QString s = QString::number(vectorpos);
+//      QString s = QString::number(ri->m_vectorpos);
+      QString s = ri->m_read.getEID().c_str();
       p.drawText(seqnamehoffset, lineheight*dcov + tilevoffset, s);
 
       s = "";

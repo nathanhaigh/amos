@@ -23,7 +23,7 @@ public slots:
 
 signals:
     void gindexChanged( int );
-    void setRange( int, int );
+    void setGindexRange( int, int );
     void contigRange(int, int);
     void contigLoaded(int);
     void setStatus(const QString &);
