@@ -29,7 +29,7 @@ OUTPUTS = $(CONTIG) $(FASTA)
 30: $(NUCMER) --maxmatch --prefix=$(PREFIX) $(REF) $(SEQS)
 
 ## Running layout
-40: $(BINDIR)/layout-align -s 1 -c -r -U -b $(BANK) $(ALIGN) > $(LAYOUT)
+40: $(BINDIR)/layout-align -U -b $(BANK) $(ALIGN) > $(LAYOUT)
 
 ## Running consensus
 50: $(BINDIR)/make-consensus -s -S -T $(LAYOUT) $(BANK) > $(CONTIG)
