@@ -65,7 +65,6 @@ private:
     bool m_basecolors;
 
     std::vector<RenderSeq_t> & m_renderedSeqs;
-    std::vector<RenderSeq_t *> m_currentReads;
 
     DataStore * m_datastore;
 };

@@ -8,11 +8,11 @@
 
 #define DEBUG 0
 
-int imin (int a, int b)
+static int min (int a, int b)
 {
   return a < b ? a : b;
 }
-int imax (int a, int b)
+static int max (int a, int b)
 {
   return a > b ? a : b;
 }
@@ -64,15 +64,16 @@ void TilingField::toggleStable(bool stable)
 int TilingField::getReadCov(int y)
 {
   int dcov;
-  vector<RenderSeq_t *>::iterator i;
-  for (i =  m_currentReads.begin(), dcov = 0;
-       i != m_currentReads.end();
-       i++, dcov++)
+  vector<RenderSeq_t>::iterator ri;
+
+  for (ri =  m_renderedSeqs.begin(), dcov = 0;
+       ri != m_renderedSeqs.end();
+       ri++, dcov++)
   {
-    if (y >= (*i)->m_displaystart && y < (*i)->m_displayend)
+    if (y >= ri->m_displaystart && y < ri->m_displayend)
     {
       #if DEBUG
-      cerr << "Hit " << (*i)->m_read.getEID() << " [" << dcov << "]" << endl;
+      cerr << "Hit " << ri->m_read.getEID() << " [" << dcov << "]" << endl;
       #endif
 
       return dcov;
@@ -95,11 +96,11 @@ void TilingField::singleClick()
   int dcov = getReadCov(m_yclick);
   if (dcov == -1) { return; }
 
-  m_currentReads[dcov]->m_displayTrace = !m_currentReads[dcov]->m_displayTrace;
+  m_renderedSeqs[dcov].m_displayTrace = !m_renderedSeqs[dcov].m_displayTrace;
 
-  if (m_currentReads[dcov]->m_displayTrace)
+  if (m_renderedSeqs[dcov].m_displayTrace)
   {
-    m_currentReads[dcov]->loadTrace(m_datastore->m_db);
+    m_renderedSeqs[dcov].loadTrace(m_datastore->m_db);
   }
 
   repaint();
@@ -127,8 +128,8 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
   int dcov = getReadCov(e->y());
   if (dcov == -1) { return; }
 
-  m_currentReads[dcov]->loadTrace(m_datastore->m_db);
-  ReadInfo * readinfo = new ReadInfo(m_currentReads[dcov], 
+  m_renderedSeqs[dcov].loadTrace(m_datastore->m_db);
+  ReadInfo * readinfo = new ReadInfo(&m_renderedSeqs[dcov], 
                                      m_datastore->m_db, 
                                      m_consensus,
                                      m_cstatus,
@@ -155,39 +156,14 @@ void TilingField::paintEvent( QPaintEvent * )
   int basewidth      = m_fontsize+basespace;
 
   double tracevscale = 1500.0 / m_traceheight;
-
   int displaywidth = (m_width-tilehoffset)/basewidth;
 
-  int height = 10000; // max height
-
-  QPixmap pix(m_width, height);
-  pix.fill(this, 0,0);
-
-  QPainter p(&pix);
-  QPen pen;
-  pen.setColor(black);
-  p.setPen(pen);
-  p.setFont(QFont("Helvetica", m_fontsize));
-  p.setBrush(Qt::SolidPattern);
-
-
-  QPointArray rcflag(3);
-  int tridim = m_fontsize/2;
-  int trioffset = m_fontsize/3;
-
-  // Figure out which reads tile this range
-  m_currentReads.clear();
-
   Pos_t grangeStart = m_gindex;
-  Pos_t grangeEnd = imin(m_gindex + displaywidth, m_consensus.size()-1);
+  Pos_t grangeEnd = min(m_gindex + displaywidth, m_consensus.size()-1);
 
-  emit setTilingVisibleRange(grangeStart, grangeEnd);
 
-  #if DEBUG
-  cerr << "paintTField:" << m_renderedSeqs.size()
-       << " [" << grangeStart << "," << grangeEnd << "]" << endl;
-  #endif
 
+  // Compute the exact height we want
   vector<RenderSeq_t>::iterator ri;
   int dcov = 0;
   int ldcov = 0;
@@ -208,6 +184,54 @@ void TilingField::paintEvent( QPaintEvent * )
       int readheight = lineheight; // seqname
       if (m_displayqv)        { readheight += lineheight; }
       if (ri->m_displayTrace) { readheight += m_tracespace; }
+
+      ldcov += readheight;
+      ri->m_displayend = ldcov;
+    }
+    else
+    {
+      ri->m_displaystart = -1;
+      ri->m_displayend = -1;
+    }
+  }
+
+  int height = ldcov;
+
+  QPixmap pix(m_width, height);
+  pix.fill(this, 0,0);
+
+  QPainter p(&pix);
+  QPen pen;
+  pen.setColor(black);
+  p.setPen(pen);
+  p.setFont(QFont("Helvetica", m_fontsize));
+  p.setBrush(Qt::SolidPattern);
+
+  QPointArray rcflag(3);
+  int tridim = m_fontsize/2;
+  int trioffset = m_fontsize/2;
+
+  emit setTilingVisibleRange(grangeStart, grangeEnd);
+
+  #if DEBUG
+  cerr << "paintTField:" << m_renderedSeqs.size()
+       << " [" << grangeStart << "," << grangeEnd << "]" << endl;
+  #endif
+
+  for (ri =  m_renderedSeqs.begin();
+       ri != m_renderedSeqs.end(); 
+       ri++)
+  {
+    if (ri->m_displaystart != -1)
+    {
+      int hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+                                               ri->m_loffset, ri->gappedLen(),
+                                               clen);
+      ldcov = ri->m_displaystart;
+
+      int readheight = lineheight; // seqname
+      if (m_displayqv)        { readheight += lineheight; }
+      if (ri->m_displayTrace) { readheight += m_tracespace; }
     
       // background rectangle
       if (dcov % 2)
@@ -216,6 +240,8 @@ void TilingField::paintEvent( QPaintEvent * )
         p.setBrush(UIElements::color_tilingoffset);
         p.drawRect(0, ldcov, m_width, readheight);
       }
+
+      dcov++;
 
       // black pen
       p.setPen(black);
@@ -289,8 +315,8 @@ void TilingField::paintEvent( QPaintEvent * )
               p.setFont(QFont("Helvetica", (int)(m_fontsize*.75)));
               p.setPen(black);
               p.drawText(hoffset, ldcov+lineheight,
-                         m_fontsize, m_fontsize,
-                         Qt::AlignHCenter | Qt::AlignBottom, s);
+                         m_fontsize, 2*m_fontsize,
+                         Qt::AlignHCenter | Qt::AlignVCenter, s);
             }
           }
         }
@@ -334,8 +360,8 @@ void TilingField::paintEvent( QPaintEvent * )
               bool first = true;
 
               // go beyond the range so the entire peak will be drawn
-              for (int gindex =  imax(ri->m_loffset, grangeStart-1); 
-                       gindex <= imin(ri->m_roffset, grangeEnd+1); 
+              for (int gindex =  max(ri->m_loffset, grangeStart-1); 
+                       gindex <= min(ri->m_roffset, grangeEnd+1); 
                        gindex++)
               {
                 int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
@@ -387,28 +413,20 @@ void TilingField::paintEvent( QPaintEvent * )
 
           p.setPen(black);
           p.drawLine(tilehoffset-basewidth, baseline, m_width, baseline);
-          ldcov += m_tracespace;
         }
       }
-      else
-      {
-        // just the seqname
-        ldcov += lineheight;
-      }
-
-      ri->m_displayend = ldcov;
-
-      dcov++;
-      m_currentReads.push_back(&(*ri));
     }
   }
 
   p.end();
   p.begin(this);
 
-  pix.resize(m_width, ldcov);
   p.drawPixmap(0, 0, pix);
-  resize(m_width, ldcov);
+
+  if (m_width != this->width() || height != this->height())
+  {
+    resize(m_width, height);
+  }
 }
 
 
