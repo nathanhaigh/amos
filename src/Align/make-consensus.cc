@@ -2,10 +2,10 @@
 //
 //  File:  make-consensus.cc
 //
-//  Last Modified:  10 March 2003
+//  Last Modified:  22 March 2004
 //
-//  Read Celera-format unitigs/contigs and create multialignments and/or
-//  consensus sequences for them.
+//  Read layout information for reads in unitigs/contigs and create
+//  multialignments and/or consensus sequences for them.
 
 
 #include  "universals_AMOS.hh"
@@ -52,6 +52,8 @@ static string  Tig_File_Name;
   // Name of file containing input contig/unitig messages
 
 
+static bool  By_Lo_Position
+    (const Celera_IMP_Sub_Msg_t & a, const Celera_IMP_Sub_Msg_t & b);
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <Range_t> & clr_list,
      vector <char *> & tag_list, vector <int> & offset,
@@ -94,197 +96,279 @@ int  main
    int  contig_ct, unitig_ct;
 
    
-   now = time (NULL);
-   cerr << "Starting on " << ctime (& now) << endl;
+   try
+     {
+      now = time (NULL);
+      cerr << "Starting on " << ctime (& now) << endl;
 
-   Verbose = 1;
+      Verbose = 1;
 
-   Parse_Command_Line (argc, argv);
+      Parse_Command_Line (argc, argv);
 
-   cerr << "Read bank is " << Bank_Name << endl;
+      cerr << "Read bank is " << Bank_Name << endl;
 
-   gma . setPrintFlag (PRINT_WITH_DIFFS);
+      gma . setPrintFlag (PRINT_WITH_DIFFS);
 
-   if  (Input_Format == CELERA_MSG_INPUT)
-       {
-        cerr << "Processing ";
-        if  (Do_Contig_Messages)
-            cerr << "contig";
-          else
-            {
-             cerr << "unitig";
-             label = "Unitig";
-            }
-        cerr << " messages from file " << Tig_File_Name << endl;
-
-        input_fp = File_Open (Tig_File_Name . c_str (), "r");
-        read_bank . open (Bank_Name);
-
-        unitig_ct = contig_ct = 0;
-        while  (msg . read (input_fp))
+      if  (Input_Format == CELERA_MSG_INPUT)
           {
-           if  (msg . getMsgType () == IUM_MSG && Do_Unitig_Messages)
+           cerr << "Processing ";
+           if  (Do_Contig_Messages)
+               cerr << "contig";
+             else
                {
-                cerr << "Process unitig " << msg . getAccession () << endl;
-                Get_Strings_And_Offsets
-                    (string_list, qual_list, clr_list, tag_list, offset,
-                     msg, read_bank);
+                cerr << "unitig";
+                label = "Unitig";
+               }
+           cerr << " messages from file " << Tig_File_Name << endl;
 
-                Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04, gma, & ref);
+           input_fp = File_Open (Tig_File_Name . c_str (), "r");
+           read_bank . open (Bank_Name);
+
+           unitig_ct = contig_ct = 0;
+           while  (msg . read (input_fp))
+             {
+              if  (msg . getMsgType () == IUM_MSG && Do_Unitig_Messages)
+                  {
+                   cerr << "Process unitig " << msg . getAccession () << endl;
+                   Get_Strings_And_Offsets
+                       (string_list, qual_list, clr_list, tag_list, offset,
+                        msg, read_bank);
+
+                   try
+                     {
+                      Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04, gma, & ref);
+                     }
+                   catch (AlignmentException_t)
+                     {
+                      cerr << "Failed on unitig " << msg . getAccession () << endl;
+                      throw;
+                     }
+
+                   Permute (qual_list, ref);
+                   Permute (clr_list, ref);
+                   Permute (tag_list, ref);
+
+                   gma . Set_Flipped (clr_list);
+                   gma . Get_Positions (pos);
+                   gma . Extract_IMP_Dels (del_list);
+                   msg . Update_IMPs (pos, ref, del_list);
+
+                   Output_Unit (label, msg . getAccession (),
+                        msg . getNumFrags (), gma, msg, string_list,
+                        qual_list, clr_list, tag_list);
+
+                   unitig_ct ++;
+                  }
+              if  (msg . getMsgType () == ICM_MSG && Do_Contig_Messages)
+                  {
+                   contig_ct ++;
+                  }
+             }
+           if  (Do_Unitig_Messages)
+               cerr << unitig_ct << " IUM messages processed" << endl;
+           if  (Do_Contig_Messages)
+               cerr << contig_ct << " ICM messages processed" << endl;
+          }
+      else if  (Input_Format == SIMPLE_CONTIG_INPUT
+                  || Input_Format == PARTIAL_READ_INPUT)
+          {
+           char  line [MAX_LINE];
+           string  cid;
+           vector <Ordered_Range_t>  pos_list, seg_list;
+           vector <int>  frg_id_list;
+           int  fid;
+
+           input_fp = File_Open (Tig_File_Name . c_str (), "r");
+           read_bank . open (Bank_Name);
+
+           msg . setType (IUM_MSG);
+           msg . setStatus (UNASSIGNED_UNITIG);
+
+           contig_ct = 0;
+
+           while  (fgets (line, MAX_LINE, input_fp) != NULL)
+             {
+              char  * p;
+
+              p = strtok (line, " \t\n");
+              if  (p == NULL)
+                  continue;
+
+              if  (strcmp (p, "C") == 0)
+                  {
+                   if  (frg_id_list . size () > 0)
+                       {
+                        Get_Strings_And_Offsets (string_list, qual_list, clr_list,
+                             tag_list, offset, frg_id_list, pos_list, seg_list,
+                             read_bank);
+
+                        msg . setAccession (cid);
+                        msg . setIMPs (frg_id_list, pos_list);
+                        try
+                          {
+                           Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04,
+                                gma, & ref);
+                          }
+                        catch (AlignmentException_t & e)
+                          {
+                           int  b = e . b_id ();
+
+                           cerr << "Failed on contig " << contig_ct << endl;
+                           cerr << "Could not align string "
+                                << tag_list [b] << " subscript " << b << endl;
+                           throw;
+                          }
+                        Permute (qual_list, ref);
+                        Permute (clr_list, ref);
+                        Permute (tag_list, ref);
+                        Permute (frg_id_list, ref);
+
+                        gma . Set_Flipped (clr_list);
+                        gma . Get_Positions (pos);
+                        gma . Extract_IMP_Dels (del_list);
+                        msg . Update_IMPs (pos, ref, del_list);
+
+                        gma . Set_Consensus_And_Qual (string_list, qual_list);
+                        msg . setSequence (gma . getConsensusString ());
+                        msg . setQuality (gma . getQualityString ());
+                        msg . setUniLen (strlen (gma . getConsensusString ()));
+
+                        Output_Unit (label, msg . getAccession (),
+                             msg . getNumFrags (), gma, msg, string_list,
+                             qual_list, clr_list, tag_list);
+
+                        contig_ct ++;
+                       }
+
+                   frg_id_list . clear ();
+                   pos_list . clear ();
+                   seg_list . clear ();
+
+                   p = strtok (NULL, " \t\n");
+                   cid = p;
+                  }
+                else
+                  {
+                   Ordered_Range_t  ps;
+                   int  a, b;
+
+                   fid = strtol (p, NULL, 10);
+                   p = strtok (NULL, " \t\n");
+                   a = strtol (p, NULL, 10);
+                   p = strtok (NULL, " \t\n");
+                   b = strtol (p, NULL, 10);
+                   ps . setRange (a, b);
+                   frg_id_list . push_back (fid);
+                   pos_list . push_back (ps);
+                   if  (Input_Format == PARTIAL_READ_INPUT)
+                       {
+                        p = strtok (NULL, " \t\n");
+                        a = strtol (p, NULL, 10);
+                        p = strtok (NULL, " \t\n");
+                        b = strtol (p, NULL, 10);
+                        ps . setRange (a, b);
+                        seg_list . push_back (ps);
+                       }
+                  }
+             }
+
+           // Process the last contig here
+           if  (frg_id_list . size () > 0)
+               {
+                Get_Strings_And_Offsets (string_list, qual_list, clr_list,
+                     tag_list, offset, frg_id_list, pos_list, seg_list, read_bank);
+
+                msg . setAccession (cid);
+                msg . setIMPs (frg_id_list, pos_list);
+                try
+                  {
+                   Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04, gma, & ref);
+                  }
+                catch (AlignmentException_t & e)
+                  {
+                   int  b = e . b_id ();
+
+                   cerr << "Failed on contig " << contig_ct << endl;
+                   cerr << "Could not align string "
+                        << tag_list [b] << " subscript " << b << endl;
+                   throw;
+                  }
+
                 Permute (qual_list, ref);
                 Permute (clr_list, ref);
                 Permute (tag_list, ref);
+                Permute (frg_id_list, ref);
 
                 gma . Set_Flipped (clr_list);
                 gma . Get_Positions (pos);
                 gma . Extract_IMP_Dels (del_list);
                 msg . Update_IMPs (pos, ref, del_list);
 
+                gma . Set_Consensus_And_Qual (string_list, qual_list);
+                msg . setSequence (gma . getConsensusString ());
+                msg . setQuality (gma . getQualityString ());
+                msg . setUniLen (strlen (gma . getConsensusString ()));
+
                 Output_Unit (label, msg . getAccession (),
                      msg . getNumFrags (), gma, msg, string_list,
                      qual_list, clr_list, tag_list);
 
-                unitig_ct ++;
-               }
-           if  (msg . getMsgType () == ICM_MSG && Do_Contig_Messages)
-               {
                 contig_ct ++;
                }
-          }
-        if  (Do_Unitig_Messages)
-            cerr << unitig_ct << " IUM messages processed" << endl;
-        if  (Do_Contig_Messages)
-            cerr << contig_ct << " ICM messages processed" << endl;
-       }
-   else if  (Input_Format == SIMPLE_CONTIG_INPUT
-               || Input_Format == PARTIAL_READ_INPUT)
-       {
-        char  line [MAX_LINE];
-        string  cid;
-        vector <Ordered_Range_t>  pos_list, seg_list;
-        vector <int>  frg_id_list;
-        int  fid;
 
-        input_fp = File_Open (Tig_File_Name . c_str (), "r");
-        read_bank . open (Bank_Name);
-
-        msg . setType (IUM_MSG);
-        msg . setStatus (UNASSIGNED_UNITIG);
-
-        contig_ct = 0;
-
-        while  (fgets (line, MAX_LINE, input_fp) != NULL)
-          {
-           char  * p;
-
-           p = strtok (line, " \t\n");
-           if  (p == NULL)
-               continue;
-
-           if  (strcmp (p, "C") == 0)
-               {
-                if  (frg_id_list . size () > 0)
-                    {
-                     Get_Strings_And_Offsets (string_list, qual_list, clr_list,
-                          tag_list, offset, frg_id_list, pos_list, seg_list,
-                          read_bank);
-
-                     msg . setAccession (cid);
-                     msg . setIMPs (frg_id_list, pos_list);
-                     Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04,
-                          gma, & ref);
-                     Permute (qual_list, ref);
-                     Permute (clr_list, ref);
-                     Permute (tag_list, ref);
-                     Permute (frg_id_list, ref);
-
-                     gma . Set_Flipped (clr_list);
-                     gma . Get_Positions (pos);
-                     gma . Extract_IMP_Dels (del_list);
-                     msg . Update_IMPs (pos, ref, del_list);
-
-                     gma . Set_Consensus_And_Qual (string_list, qual_list);
-                     msg . setSequence (gma . getConsensusString ());
-                     msg . setQuality (gma . getQualityString ());
-                     msg . setUniLen (strlen (gma . getConsensusString ()));
-
-                     Output_Unit (label, msg . getAccession (),
-                          msg . getNumFrags (), gma, msg, string_list,
-                          qual_list, clr_list, tag_list);
-
-                     contig_ct ++;
-                    }
-
-                frg_id_list . clear ();
-                pos_list . clear ();
-                seg_list . clear ();
-
-                p = strtok (NULL, " \t\n");
-                cid = p;
-               }
-             else
-               {
-                Ordered_Range_t  ps;
-                int  a, b;
-
-                fid = strtol (p, NULL, 10);
-                p = strtok (NULL, " \t\n");
-                a = strtol (p, NULL, 10);
-                p = strtok (NULL, " \t\n");
-                b = strtol (p, NULL, 10);
-                ps . setRange (a, b);
-                frg_id_list . push_back (fid);
-                pos_list . push_back (ps);
-                if  (Input_Format == PARTIAL_READ_INPUT)
-                    {
-                     p = strtok (NULL, " \t\n");
-                     a = strtol (p, NULL, 10);
-                     p = strtok (NULL, " \t\n");
-                     b = strtol (p, NULL, 10);
-                     ps . setRange (a, b);
-                     seg_list . push_back (ps);
-                    }
-               }
+           cerr << "Processed " << contig_ct << " contigs" << endl;
           }
 
-        // Process the last contig here
-        if  (frg_id_list . size () > 0)
-            {
-             Get_Strings_And_Offsets (string_list, qual_list, clr_list,
-                  tag_list, offset, frg_id_list, pos_list, seg_list, read_bank);
-
-             msg . setAccession (cid);
-             msg . setIMPs (frg_id_list, pos_list);
-             Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04, gma, & ref);
-             Permute (qual_list, ref);
-             Permute (clr_list, ref);
-             Permute (tag_list, ref);
-             Permute (frg_id_list, ref);
-
-             gma . Set_Flipped (clr_list);
-             gma . Get_Positions (pos);
-             gma . Extract_IMP_Dels (del_list);
-             msg . Update_IMPs (pos, ref, del_list);
-
-             gma . Set_Consensus_And_Qual (string_list, qual_list);
-             msg . setSequence (gma . getConsensusString ());
-             msg . setQuality (gma . getQualityString ());
-             msg . setUniLen (strlen (gma . getConsensusString ()));
-
-             Output_Unit (label, msg . getAccession (),
-                  msg . getNumFrags (), gma, msg, string_list,
-                  qual_list, clr_list, tag_list);
-
-             contig_ct ++;
-            }
-
-        cerr << "Processed " << contig_ct << " contigs" << endl;
-       }
-
-   fclose (input_fp);
-   read_bank . close ();
+      fclose (input_fp);
+      read_bank . close ();
+     }
+   catch (Exception_t & e)
+     {
+      cerr << "** AMOS Exception **" << endl;
+      cerr << e << endl;
+      exit (EXIT_FAILURE);
+     }
+   catch (std :: exception & e)
+     {
+      cerr << "** Standard Exception **" << endl;
+      cerr << e << endl;
+      exit (EXIT_FAILURE);
+     }
 
    return  0;
+  }
+
+
+
+bool  By_Lo_Position
+    (const Celera_IMP_Sub_Msg_t & a, const Celera_IMP_Sub_Msg_t & b)
+
+//  Return true iff the region in  a  comes before the region in  b
+//  in the uni/contig that contains them.  Used for sorting.
+
+  {
+   Ordered_Range_t  position;
+   int  start, stop;
+   int  a_lo, a_hi, b_lo, b_hi;
+
+   position = a . getPosition ();
+   start = position . getBegin ();
+   stop = position . getEnd ();
+   a_lo = Min (start, stop);
+   a_hi = Max (start, stop);
+
+   position = b . getPosition ();
+   start = position . getBegin ();
+   stop = position . getEnd ();
+   b_lo = Min (start, stop);
+   b_hi = Max (start, stop);
+
+   if  (a_lo < b_lo)
+       return  true;
+   else if  (a_lo == b_lo && a_hi < b_hi)
+       return  true;
+
+   return  false;
   }
 
 
@@ -303,7 +387,7 @@ static void  Get_Strings_And_Offsets
 //  in  tag_list .
 
   {
-   const vector <Celera_IMP_Sub_Msg_t> &  frgs = msg . getIMPList ();
+   vector <Celera_IMP_Sub_Msg_t>  frgs = msg . getIMPList ();
    Read_t  read;
    Ordered_Range_t  position;
    int  prev_offset;
@@ -326,6 +410,8 @@ static void  Get_Strings_And_Offsets
 
    clr_list . clear ();
    offset . clear ();
+
+   sort (frgs . begin (), frgs . end (), By_Lo_Position);
 
    prev_offset = 0;
    n = msg . getNumFrags ();
@@ -650,9 +736,9 @@ static void  Usage
    fprintf (stderr,
            "USAGE:  %s  <tig-file> <bank-name>\n"
            "\n"
-           "Read unitigs/contigs from <tig-file> and create\n"
-           "multialignments and/or consensus sequences for them.  Reads are\n"
-           "obtained from <bank-name>\n"
+           "Read layout information from <tig-file> describing positions\n"
+           "of reads, and create multialignments and/or consensus sequences\n"
+           "for them.  Read sequences are obtained from <bank-name>\n"
            "\n"
            "Options:\n"
            "  -a    Output alignments instead of consensus messages\n"

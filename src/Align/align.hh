@@ -46,6 +46,8 @@ const int  MATCH_FROM_NW = 1;
 const int  MATCH_FROM_NE = -1;
 const int  MATRIX_SIZE_LIMIT = 100000;
   // Largest matrix that will be used for full alignment computations
+const int  MAX_ALIGN_ATTEMPTS = 3;
+  // Number of times to try alignments, loosening constraints each time
 const char  MAX_QUALITY_CHAR = 60;
 
 

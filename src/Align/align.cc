@@ -1635,7 +1635,6 @@ void  Multi_Alignment_t :: Reset_From_Votes
 //  consensus string differs from the previous one.
 
   {
-   const int  MAX_ATTEMPTS = 3;
    string  new_cons;
    char  * cons;
    int  adj, attempts, cons_len, wiggle;
@@ -1728,7 +1727,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
                   ok = false;
              }
 
-        }  while  (! ok && attempts ++ < MAX_ATTEMPTS);
+        }  while  (! ok && attempts ++ < MAX_ALIGN_ATTEMPTS);
 
       if  (! ok)
           {
@@ -1804,23 +1803,49 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    for  (i = 1;  i < num_strings;  i ++)
      {
       bool  matched;
-      int  lo, hi;
       int  error_limit, len, exp_olap_len;
+      int  attempts, wiggle;
+      int  lo, hi;
 
       len = strlen (s [i]);
-      exp_olap_len = Min (cons_len - prev_off - offset [i], len);
+      attempts = 0;
+      wiggle = offset_delta;
 
-      error_limit = Binomial_Cutoff (exp_olap_len, error_rate, 1e-6);
+      do
+        {
+         lo = Max (0, prev_off + offset [i] - wiggle);
+         hi = Min (cons_len, prev_off + offset [i] + wiggle);
+         exp_olap_len = Min (cons_len - lo, len);
 
-      lo = Max (0, prev_off + offset [i] - offset_delta);
-      hi = prev_off + offset [i] + offset_delta;
-      matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
-                     0, error_limit, ali);
+         error_limit = Binomial_Cutoff (exp_olap_len, error_rate, 1e-6);
+
+         matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
+                        0, error_limit, ali);
+
+         if  (! matched)
+             {
+              if  (Verbose > 0)
+                  cerr << "Failed with wiggle = " << wiggle
+                       << "  error_limit = " << error_limit << endl;
+              wiggle *= 2;
+             }
+        }  while  (! matched && attempts ++ < MAX_ALIGN_ATTEMPTS);
+
 
       if  (! matched)
           {
-           fprintf (stderr, "Failed on string %d in  Set_Initial_Consensus\n", i);
-           exit (EXIT_FAILURE);
+           fprintf (stderr,
+                "\nERROR:  Failed to find overlap between this string:\n");
+           Fasta_Print (stderr, s [i]);
+           fprintf (stderr, "\nand this portion of prior consensus:\n");
+           Fasta_Print (stderr, cons + lo);
+           fprintf (stderr,
+                "\nstarting in the first %d bases with at most %d errors\n\n",
+                hi - lo, error_limit);
+           sprintf (Clean_Exit_Msg_Line,
+                "Failed on string %d in  Set_Initial_Consensus", i);
+           throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
+                -1, i);
           }
 
       ali . Incr_Votes (vote, s [i]);
