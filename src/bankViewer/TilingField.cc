@@ -76,9 +76,6 @@ int TilingField::getReadCov(int y)
 
 void TilingField::mousePressEvent(QMouseEvent *e)
 {
-  m_clickstate = 1;
-  m_clickTimer->start(1000, true);
-  m_yclick = e->y();
 }
 
 void TilingField::singleClick()
@@ -101,13 +98,14 @@ void TilingField::singleClick()
 void TilingField::mouseReleaseEvent( QMouseEvent * e)
 {
   //cerr << "mouserelease state:" << m_clickstate << endl;
+  m_clickTimer->start(400, true);
+  m_yclick = e->y();
 }
 
 
 void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 {
   //cerr << "doubleclick, stop timer" << endl;
-  m_clickstate = 2;
   m_clickTimer->stop();
 
   int dcov = getReadCov(e->y());
@@ -178,17 +176,10 @@ void TilingField::paintEvent( QPaintEvent * )
     if (hasOverlap || m_stabletiling)
     {
       ri->m_displaystart = ldcov;
+
       int readheight = lineheight; // seqname
-
-      if (ri->m_displayTrace) 
-      { 
-        readheight += m_traceheight; 
-      }
-
-      if (m_displayqv)
-      {
-        readheight += lineheight;
-      }
+      if (m_displayqv)        { readheight += lineheight; }
+      if (ri->m_displayTrace) { readheight += m_traceheight; }
     
       // offset rectangle
       if (dcov % 2)
@@ -203,6 +194,7 @@ void TilingField::paintEvent( QPaintEvent * )
       pen.setColor(black);
       p.setPen(pen);
       p.setBrush(black);
+      p.setFont(QFont("Helvetica", m_fontsize));
 
       // RC Flag
       if (ri->m_rc)
@@ -225,42 +217,41 @@ void TilingField::paintEvent( QPaintEvent * )
                  rchoffset-seqnamehoffset, lineheight,
                  Qt::AlignLeft | Qt::AlignBottom, s);
 
-      // Bases
       if (hasOverlap)
       {
         for (int j = grangeStart; j <= grangeEnd; j++)
         {
+          int hoffset = tilehoffset + (j-grangeStart)*basewidth;
+
+          // Bases
           char b = ri->base(j);
-          UIElements::setBasePen(pen, b);
-          p.setPen(pen);
           s = b;
 
-          p.drawText(tilehoffset + (j-grangeStart)*basewidth, ldcov, 
+          p.setPen(UIElements::getBaseColor(b));
+          p.setFont(QFont("Helvetica", m_fontsize));
+          p.drawText(hoffset, ldcov, 
                      m_fontsize, lineheight,
                      Qt::AlignHCenter | Qt::AlignBottom, s);
 
+          // QV
           if (m_displayqv)
           {
             int qv = ri->qv(j);
             if (qv != -1)
             {
-              p.setPen(black);
               s = QString::number(qv);
 
               p.setFont(QFont("Helvetica", (int)(m_fontsize*.75)));
-              p.drawText(tilehoffset + (j-grangeStart)*basewidth, ldcov+lineheight,
+              p.setPen(black);
+              p.drawText(hoffset, ldcov+lineheight,
                          m_fontsize, m_fontsize,
                          Qt::AlignHCenter | Qt::AlignBottom, s);
-              p.setFont(QFont("Helvetica", m_fontsize));
             }
           }
         }
 
         ldcov += lineheight;
-        if (m_displayqv)
-        {
-          ldcov += lineheight;
-        }
+        if (m_displayqv) { ldcov += lineheight; }
 
         if (ri->m_displayTrace) 
         { 
@@ -284,7 +275,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
                 p.setPen(pen);
 
-                p.moveTo(tilehoffset + m_fontsize/2, baseline);
+                bool first = true;
 
                 for (int j = grangeStart-1; j <= grangeEnd+1; j++)
                 {
@@ -312,8 +303,15 @@ void TilingField::paintEvent( QPaintEvent * )
                     }
 
                     int tval = trace[t]/vscale;
-                    p.lineTo(hoffset + (t-peakposition)*hscale,
-                             baseline-tval);
+                    int hval = hoffset + (t-peakposition)*hscale; 
+
+                    if (first)
+                    {
+                      p.moveTo(hval, baseline - tval);
+                      first = false;
+                    }
+
+                    p.lineTo(hval, baseline-tval);
                   }
                 }
               }
@@ -333,7 +331,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
                 p.setPen(pen);
 
-                p.moveTo(tilehoffset + m_fontsize/2, baseline);
+                bool first = true;
 
                 for (int j = grangeStart-1; j <= grangeEnd+1; j++)
                 {
@@ -361,8 +359,15 @@ void TilingField::paintEvent( QPaintEvent * )
                     }
 
                     int tval = trace[t]/vscale;
-                    p.lineTo(hoffset + (peakposition-t)*hscale,
-                             baseline-tval);
+                    int hval = hoffset + (peakposition-t)*hscale;
+
+                    if (first)
+                    {
+                      p.moveTo(hval, baseline - tval);
+                      first = false;
+                    }
+
+                    p.lineTo(hval, baseline-tval);
                   }
                 }
               }
@@ -375,6 +380,7 @@ void TilingField::paintEvent( QPaintEvent * )
       }
       else
       {
+        // just the seqname
         ldcov += lineheight;
       }
 
@@ -405,7 +411,6 @@ void TilingField::paintEvent( QPaintEvent * )
 
   pix.resize(m_width, ldcov);
   p.drawPixmap(0, 0, pix);
-//  resize(m_width, imax(ldcov, m_height));
   resize(m_width, ldcov);
 }
 
