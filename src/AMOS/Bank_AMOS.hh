@@ -618,8 +618,8 @@ public:
 
   static const std::string TMP_STORE_SUFFIX;  //!< the temporary store
 
-  static const char WRITE_LOCK_CHAR    = 'w'; //!< write lock char
-  static const char READ_LOCK_CHAR     = 'r'; //!< read lock char
+  static const char WRITE_LOCK_CHAR;          //!< write lock char
+  static const char READ_LOCK_CHAR;           //!< read lock char
 
 
   //--------------------------------------------------- Bank_t -----------------

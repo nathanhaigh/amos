@@ -52,6 +52,9 @@ const string Bank_t::VAR_STORE_SUFFIX = ".var";
 const string Bank_t::MAP_STORE_SUFFIX = ".map";
 const string Bank_t::TMP_STORE_SUFFIX = ".tmp";
 
+const char Bank_t::WRITE_LOCK_CHAR    = 'w';
+const char Bank_t::READ_LOCK_CHAR     = 'r';
+
 
 //----------------------------------------------------- addPartition -----------
 void Bank_t::addPartition (bool create)
