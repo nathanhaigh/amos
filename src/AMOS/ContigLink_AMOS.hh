@@ -81,8 +81,8 @@ protected:
   //! \pre The get pointer of var is at the beginning of the record
   //! \return size of read record (size of fix + size of var)
   //!
-  Size_t readRecord (std::istream & fix,
-		     std::istream & var);
+  virtual Size_t readRecord (std::istream & fix,
+			     std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -100,8 +100,8 @@ protected:
   //! \param var The variable length stream (stores all var length members)
   //! \return size of written record (size of fix + size of var)
   //!
-  Size_t writeRecord (std::ostream & fix,
-		      std::ostream & var) const;
+  virtual Size_t writeRecord (std::ostream & fix,
+			      std::ostream & var) const;
 
   
 public:
@@ -136,7 +136,7 @@ public:
   //--------------------------------------------------- ~ContigLink_t ----------
   //! \brief Destroys a ContigLink_t object
   //!
-  ~ContigLink_t ( )
+  virtual ~ContigLink_t ( )
   {
 
   }
@@ -145,7 +145,7 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     Bankable_t::clear( );
     contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
@@ -172,7 +172,7 @@ public:
   //!
   //! \return The unique bank type identifier
   //!
-  BankType_t getBankType ( ) const
+  virtual BankType_t getBankType ( ) const
   {
     return BANKTYPE;
   }

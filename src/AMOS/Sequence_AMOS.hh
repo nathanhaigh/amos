@@ -155,8 +155,8 @@ protected:
   //! \pre The get pointer of var is at the beginning of the record
   //! \return size of read record (size of fix + size of var)
   //!
-  Size_t readRecord (std::istream & fix,
-		     std::istream & var);
+  virtual Size_t readRecord (std::istream & fix,
+			     std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -174,8 +174,8 @@ protected:
   //! \param var The variable length stream (stores all var length members)
   //! \return size of written record (size of fix + size of var)
   //!
-  Size_t writeRecord (std::ostream & fix,
-		      std::ostream & var) const;
+  virtual Size_t writeRecord (std::ostream & fix,
+			      std::ostream & var) const;
 
 
 public:
@@ -215,21 +215,10 @@ public:
   //!
   //! Frees the memory used for storing the sequence and quality data.
   //!
-  ~Sequence_t ( )
+  virtual ~Sequence_t ( )
   {
     free (seq_m);
     free (qual_m);
-  }
-
-
-  //--------------------------------------------------- getBankType ------------
-  //! \brief Get the unique bank type identifier
-  //!
-  //! \return The unique bank type identifier
-  //!
-  BankType_t getBankType ( ) const
-  {
-    return BANKTYPE;
   }
 
 
@@ -238,13 +227,24 @@ public:
   //!
   //! \post Object will revert back to uncompressed mode
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     Bankable_t::clear( );
     free (seq_m);
     free (qual_m);
     seq_m = qual_m = NULL;
     length_m = 0;
+  }
+
+
+  //--------------------------------------------------- getBankType ------------
+  //! \brief Get the unique bank type identifier
+  //!
+  //! \return The unique bank type identifier
+  //!
+  virtual BankType_t getBankType ( ) const
+  {
+    return BANKTYPE;
   }
 
 
