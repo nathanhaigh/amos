@@ -196,7 +196,8 @@ int  main
                      else if  (Output_FASTA)
                          {
                           cout << ">" << cid << endl;
-                          Fasta_Print (stdout, gma . getConsensusString (), NULL);
+                          Fasta_Print_Skip (stdout, gma . getConsensusString (),
+                               "-", NULL);
                          }
                        else
                          {
@@ -255,7 +256,8 @@ int  main
              else if  (Output_FASTA)
                  {
                   cout << ">" << cid << endl;
-                  Fasta_Print (stdout, gma . getConsensusString (), NULL);
+                  Fasta_Print_Skip (stdout, gma . getConsensusString (),
+                       "-", NULL);
                  }
                else
                  {
