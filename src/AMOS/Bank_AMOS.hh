@@ -34,8 +34,7 @@ namespace AMOS {
 typedef uint8_t BankMode_t;
 const BankMode_t B_READ   = 0x1;  //!< protected reading mode
 const BankMode_t B_WRITE  = 0x2;  //!< protected writing mode
-const BankMode_t B_FORCE  = 0x4;  //!< clears bank locks on open, experts only
-const BankMode_t B_SPY    = 0x8;
+const BankMode_t B_SPY    = 0x4;
 //!< unprotected reading mode, overrides all other modes
 
 
@@ -513,7 +512,7 @@ protected:
   //!
   void setMode (BankMode_t mode)
   {
-    if ( mode & ~(B_READ | B_WRITE | B_FORCE | B_SPY) )
+    if ( mode & ~(B_READ | B_WRITE | B_SPY) )
       AMOS_THROW_ARGUMENT ("Invalid BankMode: unknown mode");
 
     if ( ! mode & (B_READ | B_WRITE | B_SPY) )

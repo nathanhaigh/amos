@@ -23,7 +23,6 @@ using namespace std;
 
 //=============================================================== Globals ====//
 string  OPT_BankName;                        // bank name parameter
-bool    OPT_ForceClean = false;              // force clean
 bool    OPT_IsCleanCodes = false;            // clean certain codes
 set<NCode_t> OPT_CleanCodes;                 // NCodes to clean
 
@@ -99,10 +98,7 @@ int main (int argc, char ** argv)
         try {
           cerr << Decode (ncode) << " ... ";
 
-          if ( OPT_ForceClean )
-            bi -> open (OPT_BankName, B_READ | B_WRITE | B_FORCE);
-          else
-            bi -> open (OPT_BankName, B_READ | B_WRITE);
+          bi -> open (OPT_BankName);
           bi -> clean( );
           bi -> close( );
 
@@ -153,15 +149,11 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:fhv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:hv")) != EOF) )
     switch (ch)
       {
       case 'b':
         OPT_BankName = optarg;
-        break;
-
-      case 'f':
-        OPT_ForceClean = true;
         break;
 
       case 'h':
@@ -215,7 +207,6 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-b path       The directory path of the bank to clean\n"
-    << "-f            Forcibly clean the banks by removing all file locks\n"
     << "-h            Display help information\n"
     << endl;
   cerr
@@ -223,12 +214,7 @@ void PrintHelp (const char * s)
     << "command line, all bank types will be cleaned of deleted records.\n"
     << "Otherwise, only the listed bank types will be cleaned. Cleaning the\n"
     << "deleted records may dramatically reduce the size of the bank if\n"
-    << "numerous remove or replace operations have been performed. The -f\n"
-    << "option will cause the program to remove any active bank locks\n"
-    << "preventing the clean, but this option should be used with great\n"
-    << "caution as it will interfere with any user currently accessing the\n"
-    << "bank. In addition, a stale write lock may indicate that the bank\n"
-    << "has been corrupted by an uncompleted write operation.\n"
+    << "numerous remove or replace operations have been performed.\n"
     << endl;
   return;
 }

@@ -193,10 +193,6 @@ void Bank_t::clean ( )
   if ( ! is_open_m  ||  ! (mode_m & B_READ  &&  mode_m & B_WRITE) )
     AMOS_THROW_IO ("Cannot clean, bank not open for reading and writing");
 
-  //-- Nothing to be cleaned if no "holes" in the index
-  if ( getIndexSize( ) == getSize( ) )
-    return;
-
   //-- Create a temporary bank of similar type and concat this bank to it
   Bank_t tmpbnk (banktype_m);
 
@@ -844,13 +840,7 @@ void Bank_t::syncIFO (IFOMode_t mode)
         while ( ifo_stream . good( ) )
           {
             if ( noskip  ||  line != lock )
-              {
-                if ( mode == I_OPEN  &&  mode_m & B_FORCE )
-                  cerr << "WARNING: Clearing '" << Decode (banktype_m)
-                       << "' bank lock, locked by '" + line + "'" << endl;
-                else
-                  locks . push_back (line);      // add bank lock
-              }
+              locks . push_back (line);        // add bank lock
             else
               noskip = true;                   // skipped self lock
             getline (ifo_stream, line);
