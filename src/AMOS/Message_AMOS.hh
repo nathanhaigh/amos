@@ -184,7 +184,7 @@ public:
   //--------------------------------------------------- setSubMessages ---------
   //! \brief Set the vector of submessages for this message
   //!
-  //! \param The new vector of submessages
+  //! \param subs The new vector of submessages
   //! \return void
   //!
   void setSubMessages (const std::vector<Message_t> & subs)
