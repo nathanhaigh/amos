@@ -4,7 +4,8 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	Bundler
+	Bundler \
+	clk
 
 dist_bin_SCRIPTS = \
 	Chainer.pl \
@@ -25,5 +26,12 @@ Bundler_SOURCES = \
 	Bundler.cc \
 	Bundler.hh
 
+
+##-- CLK
+clk_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+clk_SOURCES = \
+	clk.cc
 
 ##-- END OF MAKEFILE --##
