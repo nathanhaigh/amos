@@ -21,19 +21,19 @@ void InsertCanvasItem::drawShape (QPainter & p)
 
   if (m_insert->m_state == Insert::Happy)
   {
-    drawTile(m_insert->m_atile, p);
-    drawTile(m_insert->m_btile, p);
+    drawTile(m_insert->m_atile, p, 'A');
+    drawTile(m_insert->m_btile, p, 'B');
   }
   else if (m_insert->m_active == 0)
   {
-    drawTile(m_insert->m_atile, p);
+    drawTile(m_insert->m_atile, p, 'a');
   }
   else
   {
-    drawTile(m_insert->m_btile, p);
+    drawTile(m_insert->m_btile, p, 'b');
   }
 
-  p.drawLine((int) x(),            (int) (y() + height()),
+  p.drawLine((int)(x()),           (int) (y() + height()),
              (int)(x() + width()), (int) (y() + height()));
 
   if (m_highlight)
@@ -45,7 +45,7 @@ void InsertCanvasItem::drawShape (QPainter & p)
   }
 }
 
-void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p)
+void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p, char type)
 {
   if (!tile) { return; }
 
@@ -53,4 +53,9 @@ void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p)
 
   int readLength = tile->range.getLength() + tile->gaps.size();
   p.drawRect(tile->offset+hoffset, (int) y(), readLength, height());
+
+  if (tile->offset+hoffset < x())
+  {
+    cerr << type << " " << tile->source << " tile->offset: " << tile->offset << " hoffset: " << hoffset << " x:" << x() << endl;
+  }
 }

@@ -20,7 +20,7 @@ protected:
   void drawShape (QPainter & p);
 
 private:
-  void drawTile(AMOS::Tile_t * tile, QPainter & p);
+  void drawTile(AMOS::Tile_t * tile, QPainter & p, char type);
 
 private:
 };
