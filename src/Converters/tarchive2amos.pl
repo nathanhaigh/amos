@@ -8,9 +8,9 @@ use TIGR::Foundation;
 use XML::Parser;
 use IO::Handle;
 
-my $ENDTRIM = 40;
 my $MINSEQ = 100;
 my $MAXSEQ = 2048;
+my $DEFAULT_QUAL = 20;
 
 my $tag; # XML tag
 my $library;
@@ -53,7 +53,9 @@ my $HELPTEXT = qq~
            from the output.
    fasta1 ... fastan - list of files to be converted.
            The program assumes that for each program called <file>.seq there
-           is a <file>.qual and a <file>.xml.  
+           is a <file>.qual and a <file>.xml.  If no .xml file is present the program
+           will only produce a set of RED (read) records.  If no quality file is provided
+           the program assumes a quality value of $DEFAULT_QUAL for every base.
     ~;
 
 $base->setHelpInfo($HELPTEXT);
@@ -103,6 +105,9 @@ if (defined $clears){
 open(FRAG, ">$fragname") || die ("Cannot open $fragname: $!");
 printFragHeader(\*FRAG);
 
+my $numxml = 0;
+my $hasxml;
+my $hasqual;
 
 for (my $f = 0; $f <= $#ARGV; $f++){
 # for each file
@@ -129,8 +134,10 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     } elsif ( -e "$prefix.xml.gz") {
 	$xmlname = "$prefix.xml.gz";
     } else {
+	next;
 	$base->bail("Cannot find the xml file corresponding to $seqname");
     }
+    $numxml++;
 
     my $XML = new IO::Handle;
 
@@ -147,6 +154,11 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     close($XML);
 }
 
+if ($numxml <= $#ARGV) { # fewer XML files than inputs
+    $hasxml = 0;
+} else {
+    $hasxml = 1;
+}
 
 # now we are ready to print the library information
 while (my ($lib, $mean) = each %means){
@@ -194,14 +206,19 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     
     if (-e "qual.$prefix"){
 	$qualname = "qual.$prefix";
+	$hasqual = 1;
     } elsif (-e "qual.$prefix.gz") {
 	$qualname = "qual.$prefix.gz";
+	$hasqual = 1;
     } elsif (-e "$prefix.qual"){
 	$qualname = "$prefix.qual";
+	$hasqual = 1;
     } elsif ( -e "$prefix.qual.gz") {
 	$qualname = "$prefix.qual.gz";
+	$hasqual = 1;
     } else {
-	$base->bail("Cannot find the quality file corresponding to $seqname");
+	$hasqual = 0;
+#	$base->bail("Cannot find the quality file corresponding to $seqname");
     }
 
 
@@ -211,14 +228,16 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     } else {
 	open(SEQ, "$seqname") ||
 	    $base->bail("Cannot open $seqname: $!\n");
-    }
+   }
     
-    if ($qualname =~ /\.gz$/){
-	open(QUAL, "$gzip -dc $qualname |") ||
-	    $base->bail("Cannot open $qualname: $!\n");
-    } else {
-	open(QUAL, "$qualname") ||
-	    $base->bail("Cannot open $qualname: $!\n");
+    if ($hasqual == 1){
+	if ($qualname =~ /\.gz$/){
+	    open(QUAL, "$gzip -dc $qualname |") ||
+		$base->bail("Cannot open $qualname: $!\n");
+	} else {
+	    open(QUAL, "$qualname") ||
+		$base->bail("Cannot open $qualname: $!\n");
+	}
     }
     
     if (! defined $silent){
@@ -226,43 +245,72 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     }
 
     my $seqparse = new AMOS::ParseFasta(\*SEQ);
-    my $qualparse = new AMOS::ParseFasta(\*QUAL, ">", " ");
+    my $qualparse;
+    if ($hasqual == 1) {
+	$qualparse = new AMOS::ParseFasta(\*QUAL, ">", " ");
+    }
 
     my $fhead; my $frec;
     my $qhead; my $qrec;
 
     while (($fhead, $frec) = $seqparse->getRecord()) {
-	($qhead, $qrec) = $qualparse->getRecord();
-	$fhead =~ /^(\S+) ?(\S+)?/;
-	my $fid = $1;
-	my $fidname = $2;
-
-	if (! defined $fidname || $fidname eq "bases"){
-	    $fidname = $fid;
-	}
+	my $qid;
+	my $fid; 
+	my $fidname;
 	
-	$qhead =~ /^(\S+)/;
-	my $qid = $1;
-	
-	if ($fid != $qid){
-	    die ("fasta and qual records have different IDs: $fid vs $qid\n");
-	}
-
-	# if TIGR formatted, fetch the clear range
-	if ($fhead =~ /^(\S+) \d+ \d+ \d+ (\d+) (\d+)/){
+	if ($fhead =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
+# if TIGR formatted, fetch the clear range
+#	    print STDERR "got TIGR: $1 $2 $3\n";
 	    my $l = $2;
 	    my $r = $3;
 	    $l--;
 	    $fidname = $1;
-	    $clr{$fidname} = "$l,$r";
+	    $fid = $1;
+	    if (defined $clears && ! exists $clr{$fid}){
+		# clear range file decides which sequences stay and which go
+		next;
+	    }
+	    # allow XML or clear file to override the clear range info
+	    if (! exists $clr{$fid}) {$clr{$fid} = "$l,$r";}
+	} elsif ($fhead =~ /^(\S+) ?(\S+)?/){
+#	    print STDERR "got ncbi: $1 $2\n";
+# NCBI formatted, first is the trace id then the trace name
+	    $fid = $1;
+	    $fidname = $2;
+
+	    if (! defined $fidname || $fidname eq "bases"){
+		$fidname = $fid;
+	    }
+	    if (defined $clears && (! exists $clr{$fid} && ! exists $clr{$fidname})) {
+		# clear range file decides which sequences stay and which go
+		next;
+	    }
+	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {$clr{$fid} = $clr{$fidname};}
+	}
+
+	if ($hasqual == 1){
+	    ($qhead, $qrec) = $qualparse->getRecord();
+	    $qhead =~ /^(\S+)/;
+	    my $qid = $1;
+	    
+	    if ($fid != $qid){
+		die ("fasta and qual records have different IDs: $fid vs $qid\n");
+	    }
 	}
 
 	my $recId = getId();
 
 	my $seqlen = length($frec);
-	my @quals = split(' ', $qrec);
-	if ($#quals + 1 != $seqlen) {
-	    die ("Fasta and quality disagree: $seqlen vs " . $#quals + 1 . "\n");
+	my @quals;
+	if ($hasqual == 1){
+	    @quals = split(' ', $qrec);
+	    if ($#quals + 1 != $seqlen) {
+		die ("Fasta and quality disagree: $seqlen vs " . $#quals + 1 . "\n");
+	    }
+	} else {
+	    for (my $q = 0; $q < $seqlen; $q++){ # fill in qualities with 20
+		$quals[$q] = $DEFAULT_QUAL;
+	    }
 	}
 
 	my $caqual = "";
@@ -279,33 +327,17 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    print STDERR "$recId $fidname\r";
 	}
 	
-	if (! exists $clr{$fidname}){
-	    if (defined $clears){
-		next;
-	    }
-	    if (! defined $silent){
-		print "$fid has no clear range\n";
-	    }
-	    $clr{$fidname} = "0,$seqlen";
-	} 
+	if (! exists $clr{$fid}){
+	    $clr{$fid} = "0,$seqlen";
+	}
 
 	$seqId{$fidname} = $recId;
 
 	my $seq_lend;
 	my $seq_rend;
-	if (! defined $clears){
-	    ($seq_lend, $seq_rend) = split(',', $clr{$fidname});
-	} else {
-	    if (! exists $clr{$fid}) {
-		if (! defined $silent) {
-		    print "sequence $fidname has no clear range\n";
-		}
-		delete $seqId{$fidname};
-		next;
-	    }
-	    ($seq_lend, $seq_rend) = split(',', $clr{$fid});
-	}
-
+	
+	($seq_lend, $seq_rend) = split(',', $clr{$fid});
+	
 	if ($seqlen > $MAXSEQ){
 	    $frec = substr($frec, 0, $seq_rend + 1);
 	    $caqual = substr($caqual, 0, $seq_rend + 1);
@@ -328,9 +360,17 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 
 	if (! exists $seq2ins{$fidname} ||
 	    ! exists $ins2id{$seq2ins{$fidname}}){
-	    $base->logError("Found a sequence without a template - probably not in XML file: $fidname\n");
-	    next;
+	    if ($hasxml){
+		$base->logError("Found a sequence without a template - probably not in XML file: $fidname\n");
+		next;
+	    } else {
+#		my $insid = getId();
+		$seq2ins{$fidname} = 0; #$insid;
+		$ins2id{0} = 0; #$insid;
+	    }
 	}
+
+#	print STDERR "printing $fid $fidname\n";
 
 	print FRAG "{RED\n";                # read
 	print FRAG "act:A\n";               # ADD
@@ -351,7 +391,9 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    $seq_rend = $seqlen;
 	}
 	print FRAG ".\n";
-	print FRAG "frg:$ins2id{$seq2ins{$fidname}}\n";
+	if ($ins2id{$seq2ins{$fidname}} != 0){
+	    print FRAG "frg:$ins2id{$seq2ins{$fidname}}\n";
+	}
 	print FRAG "clr:$seq_lend,$seq_rend\n";
 	print FRAG "}\n";
 
@@ -496,7 +538,8 @@ sub EndTag
 	
 	if (defined $clipl && defined $clipr){
 	    $clipr--;
-	    $clr{$seqId} = "$clipl,$clipr";
+	    # we don't care about clear ranges if defined elsewhere
+	    if (! defined $clears) {$clr{$seqId} = "$clipl,$clipr";}
 	}
 	$seq2ins{$seqId} = $template;
 	$ins2lib{$template} = $library;
