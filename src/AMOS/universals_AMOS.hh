@@ -142,11 +142,7 @@ public:
   //!
   //! \return void
   //!
-  void clearAll ( )
-  {
-    for ( iterator i = begin( ); i != end( ); ++ i )
-      i -> clear( );
-  }
+  void clearAll ( );
 
 
   //--------------------------------------------------- end --------------------
@@ -332,11 +328,7 @@ public:
   //!
   //! \return void
   //!
-  void clearAll ( )
-  {
-    for ( iterator i = begin( ); i != end( ); ++ i )
-      i -> clear( );
-  }
+  void clearAll ( );
 
 
   //--------------------------------------------------- closeAll ---------------
@@ -344,11 +336,7 @@ public:
   //!
   //! \return void
   //!
-  void closeAll ( )
-  {
-    for ( iterator i = begin( ); i != end( ); ++ i )
-      i -> close( );
-  }
+  void closeAll ( );
 
 
   //--------------------------------------------------- end --------------------
@@ -530,11 +518,15 @@ public:
   //!
   //! \return void
   //!
-  void clearAll ( )
-  {
-    for ( iterator i = begin( ); i != end( ); ++ i )
-      i -> clear( );
-  }
+  void clearAll ( );
+
+
+  //--------------------------------------------------- closeAll ---------------
+  //! \brief Issues a close command to each bank in the set
+  //!
+  //! \return void
+  //!
+  void closeAll ( );
 
 
   //--------------------------------------------------- end --------------------

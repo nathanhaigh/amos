@@ -20,6 +20,7 @@
 #include <ctime>
 #include <cstring>
 #include <sstream>
+#include <iostream>
 using namespace AMOS;
 using namespace std;
 
@@ -558,6 +559,10 @@ void Bank_t::open (const string & dir, BankMode_t mode)
     store_dir_m = dir;
     store_pfx_m = dir + '/' + Decode (banktype_m);
 
+    //-- Try to open the IFO and MAP partition files
+    touchFile (store_pfx_m + IFO_STORE_SUFFIX, FILE_MODE, false);
+    touchFile (store_pfx_m + MAP_STORE_SUFFIX, FILE_MODE, false);
+
     //-- Read the IFO partition
     syncIFO (I_OPEN);
 
@@ -834,10 +839,6 @@ void Bank_t::syncIFO (IFOMode_t mode)
       }
 
 
-    //-- B_SPY sneak out
-    if ( (mode_m & B_SPY) ) return;
-
-
     //-- Validate existing locks
     char ltype = NULL_CHAR;
     vector<string>::iterator vj;
@@ -857,6 +858,16 @@ void Bank_t::syncIFO (IFOMode_t mode)
 	  }
       }
 
+
+    //-- B_SPY sneak out
+    if ( mode_m & B_SPY )
+      {
+	if ( ltype == WRITE_LOCK_CHAR )
+	  cerr << endl << "WARNING: Disregarding '" << Decode (banktype_m)
+	       << "' bank write lock!" << endl;
+	return;
+      }
+
     //-- Check existing locks
     if ( (mode_m & B_READ)   &&  ltype == WRITE_LOCK_CHAR )
       AMOS_THROW_IO
@@ -867,6 +878,8 @@ void Bank_t::syncIFO (IFOMode_t mode)
     if ( (mode_m & B_WRITE)  &&  ltype == READ_LOCK_CHAR )
       AMOS_THROW_IO
 	("Could not open bank for writing, locked by '" + *vj + "'");
+
+
 
     //-- Add new lock
     if ( mode != I_CLOSE )

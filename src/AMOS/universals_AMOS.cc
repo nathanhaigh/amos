@@ -51,7 +51,15 @@ UniversalSet_t::UniversalSet_t ( )
 UniversalSet_t::~UniversalSet_t ( )
 {
   for ( iterator i = begin( ); i != end( ); ++ i )
-    delete i;
+    delete (Universal_t *)i;
+}
+
+
+//----------------------------------------------------- clearAll ---------------
+void UniversalSet_t::clearAll ( )
+{
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    i -> clear( );
 }
 
 
@@ -61,15 +69,16 @@ UniversalSet_t::~UniversalSet_t ( )
 BankSet_t::BankSet_t ( )
 {
   UniversalSet_t objs;
-  UniversalSet_t::iterator i;
+  UniversalSet_t::iterator ui;
+  iterator bi;
 
   //-- Set up the banks
-  for ( i = objs . begin( ); i != objs . end( ); ++ i )
-    bnks_m . push_back (new Bank_t (i -> getNCode( )));
+  for ( ui = objs . begin( ); ui != objs . end( ); ++ ui )
+    bnks_m . push_back (new Bank_t (ui -> getNCode( )));
 
   //-- Set up the hash
-  for ( iterator i = begin( ); i != end( ); ++ i )
-    hash_m [i -> getType( )] = i;
+  for ( bi = begin( ); bi != end( ); ++ bi )
+    hash_m [bi -> getType( )] = bi;
 
   //-- Make sure everything went OK, e.g. all the NCodes were unique
   assert ( bnks_m . size( ) == hash_m . size( ) );
@@ -82,8 +91,24 @@ BankSet_t::~BankSet_t ( )
   for ( iterator i = begin( ); i != end( ); ++ i )
     {
       i -> close( );
-      delete i;
+      delete (Bank_t *)i;
     }
+}
+
+
+//----------------------------------------------------- clearAll ---------------
+void BankSet_t::clearAll ( )
+{
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    i -> clear( );
+}
+
+
+//----------------------------------------------------- closeAll ---------------
+void BankSet_t::closeAll ( )
+{
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    i -> close( );
 }
 
 
@@ -93,15 +118,16 @@ BankSet_t::~BankSet_t ( )
 BankStreamSet_t::BankStreamSet_t ( )
 {
   UniversalSet_t objs;
-  UniversalSet_t::iterator i;
+  UniversalSet_t::iterator ui;
+  iterator bi;
 
   //-- Set up the banks
-  for ( i = objs . begin( ); i != objs . end( ); ++ i )
-    bnks_m . push_back (new BankStream_t (i -> getNCode( )));
+  for ( ui = objs . begin( ); ui != objs . end( ); ++ ui )
+    bnks_m . push_back (new BankStream_t (ui -> getNCode( )));
 
   //-- Set up the hash
-  for ( iterator i = begin( ); i != end( ); ++ i )
-    hash_m [i -> getType( )] = i;
+  for ( bi = begin( ); bi != end( ); ++ bi )
+    hash_m [bi -> getType( )] = bi;
 
   //-- Make sure everything went OK, e.g. all the NCodes were unique
   assert ( bnks_m . size( ) == hash_m . size( ) );
@@ -114,6 +140,22 @@ BankStreamSet_t::~BankStreamSet_t ( )
   for ( iterator i = begin( ); i != end( ); ++ i )
     {
       i -> close( );
-      delete i;
+      delete (BankStream_t *)i;
     }
+}
+
+
+//----------------------------------------------------- clearAll ---------------
+void BankStreamSet_t::clearAll ( )
+{
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    i -> clear( );
+}
+
+
+//----------------------------------------------------- closeAll ---------------
+void BankStreamSet_t::closeAll ( )
+{
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    i -> close( );
 }
