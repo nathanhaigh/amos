@@ -120,12 +120,8 @@ void Message_t::setField (NCode_t fcode, const string & data)
       return;
     }
 
-  pair<map<NCode_t,string>::iterator,bool> ret;
-
   //-- Insert new field, overwrite if already exists
-  ret = fields_m . insert (map<NCode_t,string>::value_type(fcode, data));
-  if ( !ret . second )
-    (ret . first) -> second = data;
+  fields_m [fcode] = data;
 }
 
 
