@@ -84,110 +84,92 @@ int main (int argc, char ** argv)
 
     idmap iidsToPrint;
 
-    if (!OPT_EIDList.empty())
+    ifstream eidfile;
+    eidfile.open(OPT_EIDList.c_str());
+
+    if (!eidfile)
     {
-      ifstream eidfile;
-      eidfile.open(OPT_EIDList.c_str());
-
-      if (!eidfile)
-      {
-        throw Exception_t("Couldn't open EID File",
-                          __LINE__, __FILE__);
-      }
-
-      string eid;
-      while (eidfile >> eid)
-      {
-        ID_t iid = red_bank.lookupIID(eid.c_str());
-        if (iid != AMOS::NULL_ID)
-        {
-          iidsToPrint[iid] = 0;
-        }
-        else
-        {
-          cerr << "ERROR: EID:" << eid << " not found in bank, skipping" << endl;
-        }
-      }
-      cerr << "Loaded " << iidsToPrint.size() << " reads to select from " << OPT_EIDList << endl;
+      throw Exception_t("Couldn't open EID File",
+                        __LINE__, __FILE__);
     }
+
+    string eid;
+    while (eidfile >> eid)
+    {
+      ID_t iid = red_bank.lookupIID(eid.c_str());
+      if (iid != AMOS::NULL_ID)
+      {
+        iidsToPrint[iid] = 0;
+      }
+      else
+      {
+        cerr << "ERROR: EID:" << eid << " not found in bank, skipping" << endl;
+      }
+    }
+    cerr << "Loaded " << iidsToPrint.size() << " reads to select from " << OPT_EIDList << endl;
 
     Message_t msg;
 
     //-- Iterate through each library in the bank
     while ( lib_bank >> lib )
-      {
-        lib.writeMessage(msg);
-        msg.write(cout);
-      }
+    {
+      lib.writeMessage(msg);
+      msg.write(cout);
+    }
 
     int extra;   
 
     //-- Iterate through each object in the mate bank
     while ( mtp_bank >> mtp )
+    {
+      idmap::iterator r1 = iidsToPrint.find(mtp.getReads().first);
+      idmap::iterator r2 = iidsToPrint.find(mtp.getReads().second);
+
+      if (r1 != iidsToPrint.end() || r2 != iidsToPrint.end())
       {
-        idmap::iterator r1 = iidsToPrint.find(mtp.getReads().first);
-        idmap::iterator r2 = iidsToPrint.find(mtp.getReads().second);
-
-        if (OPT_EIDList.empty() || 
-            r1 != iidsToPrint.end() || 
-            r2 != iidsToPrint.end())
+        // Always print r1
+        if (r1 == iidsToPrint.end())
         {
-
-          if (r1 == iidsToPrint.end())
-          {
-            mtp.flip();
-            r1 = r2;
-            r2 = iidsToPrint.end();
-          }
-
-          red_bank . fetch (mtp . getReads( ) . first, red1);
-          frg_bank . fetch (red1 . getFragment( ), frg);
-
-          frg.writeMessage(msg);
-          msg.write(cout);
-
-          if (OPT_EIDList.empty() || 
-              r1 != iidsToPrint.end() || 
-              OPT_AutoIncludeMates)
-          {
-            iidsToPrint[red1.getIID()] = 1;
-            red1.writeMessage(msg);
-            msg.write(cout);
-            cntw++;
-
-            if (r1 == iidsToPrint.end() && !OPT_EIDList.empty())
-            {
-              extra++;
-            }
-          }
-
-          if (OPT_EIDList.empty() || 
-              r2 != iidsToPrint.end() || 
-              OPT_AutoIncludeMates)
-          {
-            red_bank . fetch (mtp . getReads( ) . second, red2);
-            iidsToPrint[red2.getIID()] = 1;
-            red2.writeMessage(msg);
-            msg.write(cout);
-            cntw++;
-
-            if (r2 == iidsToPrint.end() && !OPT_EIDList.empty())
-            {
-              extra++;
-            }
-          }
-
-          mtp.writeMessage(msg);
-          msg.write(cout);
+          mtp.flip();
+          r1 = r2;
+          r2 = iidsToPrint.end();
         }
+
+        red_bank.fetch(mtp.getReads().first, red1);
+        frg_bank.fetch(red1.getFragment(), frg);
+
+        frg.writeMessage(msg);
+        msg.write(cout);
+
+        iidsToPrint[red1.getIID()] = 1;
+        red1.writeMessage(msg);
+        msg.write(cout);
+        cntw++;
+
+        if (r2 != iidsToPrint.end() || OPT_AutoIncludeMates)
+        {
+          red_bank . fetch (mtp . getReads( ) . second, red2);
+          iidsToPrint[red2.getIID()] = 1;
+          red2.writeMessage(msg);
+          msg.write(cout);
+          cntw++;
+
+          if (r2 == iidsToPrint.end())
+          {
+            extra++;
+          }
+        }
+
+        mtp.writeMessage(msg);
+        msg.write(cout);
       }
+    }
 
     if (OPT_AutoIncludeMates)
     {
       cerr << "Included " << extra << " extra mates" << endl;
     }
 
-    if (!OPT_EIDList.empty())
     {
       // Check that all reads (including unmated) have been printed
       int unmated = 0;
@@ -198,8 +180,8 @@ int main (int argc, char ** argv)
       {
         if (ii->second == 0)
         {
-          red_bank . fetch (ii->first, red1);
-          frg_bank . fetch (red1 . getFragment( ), frg);
+          red_bank.fetch(ii->first, red1);
+          frg_bank.fetch(red1.getFragment(), frg);
 
           frg.writeMessage(msg);
           msg.write(cout);
@@ -215,12 +197,13 @@ int main (int argc, char ** argv)
       cerr << "Included " << unmated << " unmated reads" << endl;
     }
 
-    mtp_bank . close( );
-    red_bank . close( );
-    frg_bank . close( );
-    lib_bank . close( );
+    mtp_bank.close();
+    red_bank.close();
+    frg_bank.close();
+    lib_bank.close();
   }
-  catch (const Exception_t & e) {
+  catch (const Exception_t & e) 
+  {
     cerr << "FATAL: " << e . what( ) << endl
          << "  there has been a fatal error, abort" << endl;
     exitcode = EXIT_FAILURE;
@@ -242,23 +225,23 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-
   while ( !errflg && ((ch = getopt (argc, argv, "hsvEM")) != EOF) )
+  {
     switch (ch)
-      {
+    {
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
         break;
 
       case 's':
-	OPT_BankSpy = true;
-	break;
+	    OPT_BankSpy = true;
+        break;
 
       case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
+       PrintBankVersion (argv[0]);
+	   exit (EXIT_SUCCESS);
+	   break;
 
       case 'E':
         OPT_EIDList = argv[optind++];
@@ -271,13 +254,14 @@ void ParseArgs (int argc, char ** argv)
       default:
         errflg ++;
       }
+  }
 
   if ( errflg > 0 || optind != argc - 1 )
-    {
-      PrintUsage (argv[0]);
-      cerr << "Try '" << argv[0] << " -h' for more information.\n";
-      exit (EXIT_FAILURE);
-    }
+  {
+    PrintUsage (argv[0]);
+    cerr << "Try '" << argv[0] << " -h' for more information.\n";
+    exit (EXIT_FAILURE);
+  }
 
   OPT_BankName = argv [optind ++];
 }
