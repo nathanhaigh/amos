@@ -518,12 +518,14 @@ sub Text
 	} elsif ($tag eq "trace_end"){
 	    $end = $_;
 	} elsif ($tag eq "clip_quality_left" ||
-		 $tag eq "clip_vector_left"){
+		 $tag eq "clip_vector_left" ||
+		 $tag eq "clip_left"){
 	    if (! defined $clipl || $_ > $clipl){
 		$clipl = $_;
 	    }
 	} elsif ($tag eq "clip_quality_right" ||
-		 $tag eq "clip_vector_right"){
+		 $tag eq "clip_vector_right" ||
+		 $tag eq "clip_right"){
 	    if (! defined $clipr || $_ < $clipr){
 		$clipr = $_;
 	    }
