@@ -33,6 +33,7 @@ public slots:
     void toggleDisplayAllChromo(bool);
     void showInserts();
     void advanceNextDiscrepancy();
+    void advancePrevDiscrepancy();
 
 signals:
     void gindexChanged( int );

@@ -31,6 +31,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 {
 
   m_contigPicker = NULL;
+  m_fontsize = 12;
 
   QVBox * vbox = new QVBox(this, "vbox");
 
@@ -52,7 +53,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
   m_posid    = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
-  m_qvid     = m_options->insertItem("&Show Quality Values",     this, SLOT(toggleShowQV()));
+  m_qvid     = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleShowQV()));
   m_highid   = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
   m_prefetch = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(togglePrefetchChromatograms()));
 
@@ -65,9 +66,13 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   QLabel * lbl = new QLabel("Position", status, "gindexlbl");
   m_gindex     = new QSpinBox(0,100, 1, status, "gindexspin");
-  m_gindex->setMinimumWidth(50);
+  m_gindex->setMinimumWidth(100);
+
+  QToolButton * bPrevDisc = new QToolButton(Qt::LeftArrow, status, "prev");
+  bPrevDisc->setTextLabel("Previous Discrepancy");
 
   QToolButton * bNextDisc = new QToolButton(Qt::RightArrow, status, "next");
+  bNextDisc->setTextLabel("Next Discrepancy");
 
   new QLabel("   Contig ID", status, "contiglbl");
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
@@ -79,9 +84,14 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
                                                m_tiling, SLOT(showInserts()), status );
   bShowInserts->setText("Show Inserts");
 
-  new QLabel("   Font Size", status, "fontlbl");
-  QSpinBox * fontsize  = new QSpinBox(6, 24, 1, status, "fontsize");
+  QIconSet icon_fontminus(QPixmap("icons/fontdecrease.xpm"));
+  QIconSet icon_fontplus(QPixmap("icons/fontincrease.xpm"));
 
+  QToolButton * bFontIncrease = new QToolButton(icon_fontplus, "Font Increase", "Font Increase",
+                                                this, SLOT(fontIncrease()), status);
+
+  QToolButton * bFontDecrease = new QToolButton(icon_fontminus, "Font Decrease", "Font Decrease",
+                                                this, SLOT(fontDecrease()), status);
 
   // slider <-> tiling
   connect(m_slider, SIGNAL(valueChanged(int)),
@@ -103,16 +113,14 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(m_gindex, SIGNAL(valueChanged(int)),
           m_tiling, SLOT(setGindex(int)));
 
-  // fontsize <-> tiling
-  connect(fontsize, SIGNAL(valueChanged(int)), 
-          m_tiling,   SLOT(setFontSize(int)));
-
   // checkboxes <-> tiling
 //  connect(stable, SIGNAL(toggled(bool)),
 //          tiling, SLOT(toggleStable(bool)));
 
   connect(bNextDisc, SIGNAL(clicked()),
           m_tiling,    SLOT(advanceNextDiscrepancy()));
+  connect(bPrevDisc, SIGNAL(clicked()),
+          m_tiling,    SLOT(advancePrevDiscrepancy()));
 
 
   // contigid <-> tiling
@@ -150,7 +158,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   
 
   // Set defaults
-  fontsize->setValue(12);
   m_gindex->setValue(0);
   m_slider->setFocus();
 }
@@ -198,118 +205,24 @@ void MainWindow::setGindexRange(int a, int b)
   m_slider->setRange(a,b);
 }
 
-class ContigListItem : public QListViewItem
-{
-public:
-  ContigListItem(QListView * parent, 
-                 QString id,
-                 QString type,
-                 QString offset,
-                 QString length,
-                 QString elements)
-               
-    : QListViewItem(parent, id, type, offset, length, elements) {}
-
-  ContigListItem(QListViewItem * parent, 
-                 QString id,
-                 QString type,
-                 QString offset,
-                 QString length,
-                 QString elements)
-               
-    : QListViewItem(parent, id, type, offset, length, elements) {}
-
-  int compare(QListViewItem *i, int col,
-              bool ascending ) const
-  {
-    return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
-  }
-};
-
 void MainWindow::chooseContig()
 {
-  if (m_contigPicker) { delete m_contigPicker; }
+  if (m_contigPicker) { m_contigPicker->close(); }
 
-  m_contigPicker = new QMainWindow(this);
-
-  QListView * table = new QListView(m_contigPicker, "contigpicker");
-  table->resize(500,500);
-  m_contigPicker->setCentralWidget(table);
-  m_contigPicker->resize(300,300);
-  m_contigPicker->show();
-
-  connect(table, SIGNAL(doubleClicked(QListViewItem *)),
-          this,  SLOT(contigSelected(QListViewItem *)));
-
-  table->addColumn("Id");
-  table->addColumn("Type");
-  table->addColumn("Offset");
-  table->addColumn("Length");
-  table->addColumn("Elements");
-  table->setShowSortIndicator(true);
-  table->setRootIsDecorated(true);
-
-  try
-  {
-    QCursor orig = m_contigPicker->cursor();
-    m_contigPicker->setCursor(Qt::waitCursor);
-    AMOS::Contig_t contig;
-    AMOS::BankStream_t contig_bank(AMOS::Contig_t::NCODE);
-
-    contig_bank.open(m_bankname);
-
-    QString status = "Select from " + 
-                     QString::number(contig_bank.getSize()) + 
-                     " contigs in " + m_bankname.c_str();
-    m_contigPicker->statusBar()->message(status);
-
-    vector<ContigListItem> contigs;
-
-    int contigid = 1;
-    while (contig_bank >> contig)
-    {
-      int contiglen = contig.getSeqString().length();
-      int numreads = contig.getReadTiling().size();
-
-      //ContigListItem * contigitem = new ContigListItem(table,  
-      new ContigListItem(table,  
-                         QString::number(contigid), 
-                         "Contig",
-                         "0",
-                         QString::number(contiglen), 
-                         QString::number(numreads));
-
-      /*
-      vector<AMOS::Tile_t>::iterator ti;
-      for (ti =  contig.getReadTiling().begin();
-           ti != contig.getReadTiling().end();
-           ti++)
-      {
-        new ContigListItem(contigitem,
-                           QString::number(ti->source),
-                           "Read",
-                           QString::number(ti->offset),
-                           QString::number(ti->range.getLength() + ti->gaps.size()),
-                           " ");
-      }
-      */
-      
-      contigid++;
-    }
-    m_contigPicker->setCursor(orig);
-
-  }
-  catch (AMOS::Exception_t & e)
-  {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
-  }
+  m_contigPicker = new ContigPicker(m_bankname, this, "contigpicker");
+  connect(m_contigPicker, SIGNAL(contigSelected(int)),
+          this,           SLOT(contigSelected(int)));
 }
 
-void MainWindow::contigSelected(QListViewItem * item)
+void MainWindow::contigSelected(int contigid)
 {
-  emit contigIdSelected(atoi(item->text(0)));
-  m_contigPicker->close();
-  m_contigPicker = NULL;
+  emit contigIdSelected(contigid);
+
+  if (m_contigPicker)
+  {
+    m_contigPicker->close();
+    m_contigPicker = NULL;
+  }
 }
 
 void MainWindow::toggleShowPositions()
@@ -342,5 +255,18 @@ void MainWindow::togglePrefetchChromatograms()
   m_options->setItemChecked(m_prefetch, b);
 
   m_tiling->toggleDisplayAllChromo(b);
+}
+
+void MainWindow::fontIncrease()
+{
+  m_fontsize++;
+  m_tiling->setFontSize(m_fontsize);
+}
+
+void MainWindow::fontDecrease()
+{
+  if (m_fontsize <= 6) { return; }
+  m_fontsize--;
+  m_tiling->setFontSize(m_fontsize);
 }
 

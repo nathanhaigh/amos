@@ -266,6 +266,9 @@ void TilingFrame::loadContigRange(int gindex)
 
 void TilingFrame::setGindex(int gindex)
 {
+  if      (gindex < 0)                    { gindex = 0; }
+  else if (gindex > m_consensus.length()) { gindex = m_consensus.length(); }
+
   loadContigRange(gindex);
   repaint();
   emit gindexChanged(gindex);
@@ -306,6 +309,34 @@ void TilingFrame::advanceNextDiscrepancy()
       }
 
       gindex++;
+    }
+  }
+
+  setGindex(gindex);
+}
+
+void TilingFrame::advancePrevDiscrepancy()
+{
+  int nextDiscrepancyBuffer = 10;
+
+  int gindex = m_gindex+nextDiscrepancyBuffer-1;
+
+  while (gindex >=0 )
+  {
+    if (gindex < m_loadedStart)
+    {
+      loadContigRange(gindex);
+    }
+
+    while (gindex >= m_loadedStart)
+    {
+      if (m_cstatus[gindex] == 'X')
+      {
+        setGindex(gindex-nextDiscrepancyBuffer);
+        return;
+      }
+
+      gindex--;
     }
   }
 

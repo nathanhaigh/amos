@@ -13,14 +13,7 @@ InsertWidget::InsertWidget(const string & bankname, int contigId,
   m_bankname = bankname;
   m_contigId = contigId;
 
-  QBoxLayout * outer = new QHBoxLayout(this);
-
-  QBoxLayout * vbox = new QVBoxLayout(0);
-  QBoxLayout * controlbox = new QVBoxLayout(0);
-
-  m_zoom = new QSlider(1, 500, 10, 20, Qt::Horizontal, this, "m_zoom");
-  QLabel * z_lbl = new QLabel(m_zoom, "Zoom", this, "z_lbl");
-  z_lbl->setMinimumWidth(100);
+  QBoxLayout * vbox = new QVBoxLayout(this);
 
   m_iposition = new InsertPosition(this, "insertposition");
   m_icanvas   = new InsertCanvas(m_bankname, m_contigId, this, "icanvas");
@@ -30,15 +23,6 @@ InsertWidget::InsertWidget(const string & bankname, int contigId,
   vbox->addWidget(m_iposition);
   vbox->addWidget(m_ifield, 10);
   vbox->activate();
-
-  controlbox->addWidget(z_lbl);
-  controlbox->addWidget(m_zoom);
-  controlbox->addStretch(10);
-
-  outer->addSpacing(5);
-  outer->addLayout(controlbox);
-  outer->addSpacing(5);
-  outer->addLayout(vbox);
 
   m_tilingVisible = new QCanvasRectangle(m_icanvas);
   m_tilingVisible->setZ(-1);
@@ -53,9 +37,6 @@ InsertWidget::InsertWidget(const string & bankname, int contigId,
 
   connect(m_ifield, SIGNAL(setGindex(int)),
           this,     SIGNAL(setGindex(int)));
-
-  connect(m_zoom,   SIGNAL(valueChanged(int)),
-          this,     SLOT(setZoom(int)));
 }
 
 void InsertWidget::setTilingVisibleRange(int gstart, int gend)

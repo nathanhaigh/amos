@@ -5,34 +5,38 @@
 #include <qspinbox.h>
 #include <qslider.h>
 #include <qscrollbar.h>
-#include <qlistview.h>
 #include <qmainwindow.h>
 #include <string>
 #include <qpopupmenu.h>
 
 #include "TilingFrame.hh"
+#include "ContigPicker.hh"
 
 class MainWindow: public QMainWindow
 {
   Q_OBJECT
-public:
-    MainWindow(QWidget *parent=0, const char *name=0 );
 
-    void setBankname(std::string bankname);
-    void setContigId(int contigID);
-    void setGindex(int gindex);
+public:
+  MainWindow(QWidget *parent=0, const char *name=0 );
+
+  void setBankname(std::string bankname);
+  void setContigId(int contigID);
+  void setGindex(int gindex);
 
 public slots:
   void chooseBank();
   void chooseContig();
   void setContigRange(int, int);
   void setGindexRange(int, int);
-  void contigSelected(QListViewItem * item);
+  void contigSelected(int);
 
   void toggleShowPositions();
   void toggleShowQV();
   void toggleHighlightDiscrepancy();
   void togglePrefetchChromatograms();
+
+  void fontIncrease();
+  void fontDecrease();
 
 signals:
   void bankSelected(std::string bankname);
@@ -50,6 +54,7 @@ private:
   int m_qvid;
   int m_highid;
   int m_prefetch;
+  int m_fontsize;
 
   std::string m_bankname;
   TilingFrame * m_tiling;

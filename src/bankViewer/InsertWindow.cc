@@ -2,6 +2,8 @@
 #include "InsertWidget.hh"
 
 #include <qstatusbar.h>
+#include <qlabel.h>
+#include <qslider.h>
 
 using namespace std;
 
@@ -12,6 +14,12 @@ InsertWindow::InsertWindow(const std::string & bankname,
   : QMainWindow(parent, name)
 {
   resize(600, 300);
+
+  QToolBar * options = new QToolBar(this, "options");
+  options->setLabel("Options");
+
+  new QLabel("Zoom", options, "zoomlbl");
+  QSlider * zoom = new QSlider(1, 500, 10, 20, Qt::Horizontal, options, "zoom");
 
   InsertWidget * iw = new InsertWidget(bankname, contigId, this, "iw");
   setCentralWidget(iw);
@@ -27,4 +35,7 @@ InsertWindow::InsertWindow(const std::string & bankname,
 
   connect(this, SIGNAL(setTilingVisibleRange(int, int)),
           iw,   SLOT(setTilingVisibleRange(int, int)));
+
+  connect(zoom, SIGNAL(valueChanged(int)),
+          iw,   SLOT(setZoom(int)));
 }
