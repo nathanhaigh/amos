@@ -96,6 +96,68 @@ public:
 
 
 
+//================================================ AlignmentException_t ========
+//! \brief An exception for alignment failures
+//!
+//! Thrown when an alignment cannot be found between two strings
+//! that are supposed to align
+//!
+//==============================================================================
+class AlignmentException_t : public Exception_t
+{
+
+private:
+
+  int  a_id_m;           //!< id or subscript of first string
+  int  b_id_m;           //!< id or subscript of second string
+
+
+public:
+
+  //---------------------------------------------- AlignmentException_t --------
+  //! \brief Constructor
+  //!
+  //! \param what Brief description of the exception
+  //! \param line Line number of the exception
+  //! \param file File name of the exception
+  //! \param a_id ID or subscript of first string involved
+  //! \param b_id ID or subscript of second string involved
+  //!
+  AlignmentException_t (const std::string & what,
+       int line = 0,
+       const std::string & file = "",
+       int a_id = -1,
+       int b_id = -1)
+    : Exception_t (what, line, file)
+  {
+   a_id_m = a_id;
+   b_id_m = b_id;
+  }
+
+
+  //---------------------------------------------- a_id ------------------------
+  //! \brief Returns the id or subscript of the first string
+  //!
+  virtual const int a_id ( ) const
+  {
+    return a_id_m;
+  }
+
+
+  //---------------------------------------------- b_id ------------------------
+  //! \brief Returns the id or subscript of the first string
+  //!
+  virtual const int b_id ( ) const
+  {
+    return b_id_m;
+  }
+
+
+};
+
+
+
+
 //================================================ AllocException_t ============
 //! \brief An exception for alloc failures, better than std::bad_alloc
 //!
