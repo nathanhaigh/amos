@@ -23,7 +23,6 @@ void Fragment_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    ID_t iid;
     stringstream ss;
 
     if ( msg . exists (F_LIBRARY) )
@@ -55,21 +54,6 @@ void Fragment_t::readMessage (const Message_t & msg)
         ss . str (msg . getField (F_TYPE));
         setType (ss . get( ));
       }
-
-    if ( msg . exists (F_READS) )
-      {
-	ss . str (msg . getField (F_READS));
-
-	while ( ss )
-	  {
-	    ss >> iid;
-	    if ( ! ss . fail( ) )
-	      reads_m . push_back (iid);
-	  }
-
-	if ( !ss . eof( ) )
-	  AMOS_THROW_ARGUMENT ("Invalid rds format");
-      }
   }
   catch (ArgumentException_t) {
     
@@ -84,23 +68,14 @@ Size_t Fragment_t::readRecord (istream & fix,
 			       istream & var)
 {
   Size_t streamsize = Universal_t::readRecord (fix, var);
-  Size_t size;
 
   //-- Read FIX data
-  fix . read ((char *)&size, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . read ((char *)&ends_m, sizeof (pair<ID_t, ID_t>));
   streamsize += sizeof (pair<ID_t, ID_t>);
   fix . read ((char *)&library_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . read ((char *)&type_m, sizeof (FragmentType_t));
   streamsize += sizeof (FragmentType_t);
-
-  //-- Read VAR data
-  reads_m . resize (size, NULL_ID);
-  for ( Pos_t i = 0; i < size; i ++ )
-    var . read ((char *)&reads_m [i], sizeof (ID_t));
-  streamsize += size * sizeof (ID_t);
 
   return streamsize;
 }
@@ -112,7 +87,6 @@ void Fragment_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    vector<ID_t>::const_iterator vi;
     stringstream ss;
 
     msg . setMessageCode (NCode( ));
@@ -144,14 +118,6 @@ void Fragment_t::writeMessage (Message_t & msg) const
         msg . setField (F_TYPE, ss . str( ));
         ss . str("");
       }
-
-    if ( reads_m . size( ) != 0 )
-      {
-	for ( vi = reads_m . begin( ); vi != reads_m . end( ); vi ++ )
-	  ss << *vi << '\n';
-	msg . setField (F_READS, ss . str( ));
-	ss . str("");
-      }
   }
   catch (ArgumentException_t) {
 
@@ -166,22 +132,14 @@ Size_t Fragment_t::writeRecord (ostream & fix,
 				ostream & var) const
 {
   Size_t streamsize = Universal_t::writeRecord (fix, var);
-  Size_t size = reads_m . size( );
 
   //-- Write FIX data
-  fix . write ((char *)&size, sizeof (Size_t));
-  streamsize += sizeof (Size_t);
   fix . write ((char *)&ends_m, sizeof (pair<ID_t, ID_t>));
   streamsize += sizeof (pair<ID_t, ID_t>);
   fix . write ((char *)&library_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . write ((char *)&type_m, sizeof (FragmentType_t));
   streamsize += sizeof (FragmentType_t);
-
-  //-- Write VAR data
-  for ( Pos_t i = 0; i < size; i ++ )
-    var . write ((char *)&reads_m [i], sizeof (ID_t));
-  streamsize += size * sizeof (ID_t);
 
   return streamsize;
 }

@@ -11,7 +11,6 @@
 #define __Fragment_AMOS_HH 1
 
 #include "Universal_AMOS.hh"
-#include <vector>
 
 
 
@@ -44,7 +43,6 @@ private:
 
   std::pair<ID_t, ID_t> ends_m;    //!< The forward and reverse fragment ends
   ID_t library_m;                  //!< ID of the parent library
-  std::vector<ID_t> reads_m;       //!< the list of associated read IDs
   FragmentType_t type_m;           //!< type of fragment
 
 
@@ -111,7 +109,6 @@ public:
   {
     Universal_t::clear( );
     ends_m . first = ends_m . second = library_m = NULL_ID;
-    reads_m . clear( );
     type_m = NULL_FRAGMENT;
   }
 
@@ -145,17 +142,6 @@ public:
   ID_t getLibrary ( ) const
   {
     return library_m;
-  }
-
-
-  //--------------------------------------------------- getReads ---------------
-  //! \brief Get the child read IDs
-  //!
-  //! \return The vector of child read IDs
-  //!
-  const std::vector<ID_t> & getReads ( ) const
-  {
-    return reads_m;
   }
 
 
@@ -198,18 +184,6 @@ public:
   void setLibrary (ID_t library)
   {
     library_m = library;
-  }
-
-
-  //--------------------------------------------------- setReads ---------------
-  //! \brief Set the child read IDs
-  //!
-  //! \param reads The new vector of child read IDs
-  //! \return void
-  //!
-  void setReads (const std::vector<ID_t> & reads)
-  {
-    reads_m = reads;
   }
 
 
