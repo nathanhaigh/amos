@@ -105,17 +105,25 @@ void Contig_t::readMessage (const Message_t & msg)
   Sequence_t::readMessage (msg);
 
   try {
-    vector<Message_t>::const_iterator vi;
+    vector<Message_t>::const_iterator i;
 
-    for ( vi  = msg . getSubMessages( ) . begin( );
-          vi != msg . getSubMessages( ) . end( ); vi ++ )
+    for ( i  = msg . getSubMessages( ) . begin( );
+          i != msg . getSubMessages( ) . end( ); i ++ )
       {
 	Tile_t tile;
 
-        if ( vi -> getMessageCode( ) != M_TILE )
-          AMOS_THROW_ARGUMENT ("Invalid submessage");
-        tile . readMessage (*vi);
-        reads_m . push_back (tile);
+	if ( i -> getMessageCode( ) == M_TILE )
+	  {
+	    reads_m . push_back (Tile_t( ));
+	    reads_m . back( ) . readMessage (*i);
+	  }
+	else if ( i -> getMessageCode( ) == M_FEATURE )
+	  {
+	    feats_m . push_back (Feature_t( ));
+	    feats_m . back( ) . readMessage (*i);
+	  }
+	else
+	  AMOS_THROW_ARGUMENT ("Invalid submessage");
       }
   }
   catch (ArgumentException_t) {
@@ -132,12 +140,17 @@ void Contig_t::readRecord (istream & fix, istream & var)
 {
   Sequence_t::readRecord (fix, var);
 
-  Size_t size;
-  readLE (fix, &size);
+  Size_t sizet, sizef;
+  readLE (fix, &sizet);
+  readLE (fix, &sizef);
 
-  reads_m . resize (size);
-  for ( Pos_t i = 0; i < size; i ++ )
+  reads_m . resize (sizet);
+  for ( Pos_t i = 0; i < sizet; i ++ )
     reads_m [i] . readRecord (var);
+
+  feats_m . resize (sizef);
+  for ( Pos_t i = 0; i < sizef; i ++ )
+    feats_m [i] . readRecord (var);
 }
 
 
@@ -206,18 +219,24 @@ void Contig_t::writeMessage (Message_t & msg) const
   Sequence_t::writeMessage (msg);
 
   try {
+    Pos_t begin = msg . getSubMessages( ) . size( );
+    msg . getSubMessages( ) . resize
+      (begin + reads_m . size( ) + feats_m . size( ));
 
     msg . setMessageCode (Contig_t::NCODE);
 
     if ( !reads_m . empty( ) )
       {
 	vector<Tile_t>::const_iterator tvi;
-	Pos_t begin = msg . getSubMessages( ) . size( );
-	Pos_t end = begin + reads_m . size( );
-	msg . getSubMessages( ) . resize (end);
-
-        for ( tvi = reads_m . begin( ); tvi != reads_m . end( ); tvi ++ )
+        for ( tvi = reads_m . begin( ); tvi != reads_m . end( ); ++ tvi )
 	  tvi -> writeMessage (msg . getSubMessages( ) [begin ++]);
+      }
+
+    if ( !feats_m . empty( ) )
+      {
+	vector<Feature_t>::const_iterator fvi;
+	for ( fvi = feats_m . begin( ); fvi != feats_m . end( ); ++ fvi )
+	  fvi -> writeMessage (msg . getSubMessages( ) [begin ++]);
       }
   }
   catch (ArgumentException_t) {
@@ -233,11 +252,16 @@ void Contig_t::writeRecord (ostream & fix, ostream & var) const
 {
   Sequence_t::writeRecord (fix, var);
 
-  Size_t size = reads_m . size( );
-  writeLE (fix, &size);
+  Size_t sizet = reads_m . size( );
+  Size_t sizef = feats_m . size( );
+  writeLE (fix, &sizet);
+  writeLE (fix, &sizef);
 
-  for ( Pos_t i = 0; i < size; i ++ )
+  for ( Pos_t i = 0; i < sizet; i ++ )
     reads_m [i] . writeRecord (var);
+
+  for ( Pos_t i = 0; i < sizef; i ++ )
+    feats_m [i] . writeRecord (var);
 }
 
 

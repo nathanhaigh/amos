@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <map>
 
 
 
@@ -42,6 +41,7 @@ const NCode_t   F_COUNT        = Encode ("cnt");
 const NCode_t   F_EID          = Encode ("eid");
 const NCode_t   F_FRAGMENT     = Encode ("frg");
 const NCode_t   F_GAPS         = Encode ("gap");
+const NCode_t   F_GROUP        = Encode ("grp");
 const NCode_t   F_IID          = Encode ("iid");
 const NCode_t   F_LIBRARY      = Encode ("lib");
 const NCode_t   F_MAP          = Encode ("map");
@@ -70,6 +70,7 @@ const NCode_t   M_CONTIG       = Encode ("CTG");
 const NCode_t   M_CONTIGEDGE   = Encode ("CTE");
 const NCode_t   M_CONTIGLINK   = Encode ("CTL");
 const NCode_t   M_DISTRIBUTION = Encode ("DST");
+const NCode_t   M_FEATURE      = Encode ("FEA");
 const NCode_t   M_FRAGMENT     = Encode ("FRG");
 const NCode_t   M_KMER         = Encode ("KMR");
 const NCode_t   M_LAYOUT       = Encode ("LAY");
@@ -103,12 +104,12 @@ private:
 
   NCode_t mcode_m;                            //!< message NCode type
   std::vector<Message_t> subs_m;              //!< vector of submessages
-  std::map<NCode_t,std::string> fields_m;     //!< message fields
+  HASHMAP::hash_map<NCode_t,std::string> fields_m;     //!< message fields
 
 
 public:
 
-  typedef std::map<NCode_t,std::string>::const_iterator const_iterator;
+  typedef HASHMAP::hash_map<NCode_t,std::string>::const_iterator const_iterator;
 
 
   //--------------------------------------------------- Message_t --------------
@@ -132,7 +133,7 @@ public:
   //--------------------------------------------------- begin ------------------
   //! \brief Returns a const_iterator to the beginning of the field map
   //!
-  //! Iterator is of the type map<NCode_t,std::string>::const_iterator.
+  //! Iterator is of the type hash_map<NCode_t,std::string>::const_iterator.
   //! Access NCode with `itr -> first` and data with `itr -> second`.
   //!
   //! \return A const_iterator to the beginning of the field map
@@ -146,7 +147,7 @@ public:
   //--------------------------------------------------- end --------------------
   //! \brief Returns a const_iterator to the end of the field map
   //!
-  //! Iterator is of the type map<NCode_t,std::string>::const_iterator.
+  //! Iterator is of the type hash_map<NCode_t,std::string>::const_iterator.
   //! Access NCode with `itr -> first` and data with `itr -> second`.
   //!
   //! \return A const_iterator to the end of the field map
@@ -207,7 +208,8 @@ public:
   //!
   const std::string & getField (NCode_t fcode) const
   {
-    std::map<NCode_t,std::string>::const_iterator mi = fields_m . find (fcode);
+    HASHMAP::hash_map<NCode_t,std::string>::const_iterator
+      mi = fields_m . find (fcode);
     if ( mi == fields_m . end( ) )
       AMOS_THROW_ARGUMENT
 	("Cannot retrieve absent field '" + Decode (fcode) + "'");

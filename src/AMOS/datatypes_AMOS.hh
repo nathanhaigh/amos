@@ -5,6 +5,10 @@
 //!
 //! \brief Include file for some simple AMOS type definitions and structs
 //!
+//! These are objects that cannot be stored by themselves in a Bank, however
+//! are capable of writing messages and records. Mostly used as ID-less
+//! submessages.
+//!
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef __datatypes_AMOS_HH
@@ -252,6 +256,101 @@ struct Range_t
    begin = end;
    end = save;
   }
+
+};
+
+
+
+
+typedef char FeatureType_t;
+
+//================================================ Feature_t ===================
+//! \brief A set of statistics that define a distribution
+//!
+//! Additional parameters may be added to this class if more complex
+//! distributions need to be represented. The contained parameters should
+//! suffice to represent normal distributions.
+//!
+//! \todo make more general for more complex distributions
+//==============================================================================
+struct Feature_t : public IMessagable_t
+{
+  std::string eid;            //!< string ID (name)
+  std::string comment;        //!< description of the feature
+  std::string group;          //!< feature grouping
+
+  Range_t range;              //!< feature extent
+  FeatureType_t type;         //!< feature type
+
+
+  static const NCode_t NCODE;
+  //!< The NCode type identifier for this object
+
+  static const FeatureType_t NULL_FEATURE;
+  static const FeatureType_t REPEAT;
+  static const FeatureType_t UNITIG;
+  static const FeatureType_t JOIN;
+  static const FeatureType_t COVERAGE;
+  static const FeatureType_t ORF;
+
+
+  //--------------------------------------------------- Feature_t --------------
+  //! \brief Constructs an empty Feature_t object
+  //!
+  Feature_t( )
+  {
+    clear( );
+  }
+
+
+  //--------------------------------------------------- ~Feature_t -------------
+  //! \brief Destroys a Feature_t object
+  //!
+  ~Feature_t ( )
+  {
+
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
+  {
+    eid . clear( );
+    comment . clear( );
+    group . clear( );
+
+    range . clear( );
+    type = NULL_FEATURE;
+  }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  virtual NCode_t getNCode ( ) const
+  {
+    return Feature_t::NCODE;
+  }
+
+
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
+  //--------------------------------------------------- readRecord -------------
+  //! \brief Read a binary record
+  //!
+  void readRecord (std::istream & in);
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
+
+
+  //--------------------------------------------------- writeRecord ------------
+  //! \brief Write a binary record
+  //!
+  void writeRecord (std::ostream & out) const;
 
 };
 

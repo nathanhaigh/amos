@@ -10,6 +10,7 @@
 #include "Message_AMOS.hh"
 using namespace AMOS;
 using namespace std;
+using namespace HASHMAP;
 
 
 
@@ -192,7 +193,7 @@ void Message_t::write (ostream & out) const
   out << '{' << Decode (mcode_m) << endl;
 
   //-- Write all fields
-  map<NCode_t,string>::const_iterator mi;
+  hash_map<NCode_t,string>::const_iterator mi;
   for ( mi = fields_m . begin( ); mi != fields_m . end( ); mi ++ )
     {
       //-- Set multi-line message flag

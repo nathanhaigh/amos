@@ -30,7 +30,9 @@ namespace AMOS {
 //! The ungapped version of the consensus can be generated with the
 //! getUngapped... methods. Gap characters can be any non-alpha, usu. '-'.
 //! The compress and uncompress methods inherited from Sequence_t are made
-//! private because they would corrupt the gap characters.
+//! private because they would corrupt the gap characters. In addition, a
+//! vector of customizable "features" is available for storing repeat boundries,
+//! ORF locations, etc.
 //!
 //==============================================================================
 class Contig_t : public Sequence_t
@@ -38,7 +40,8 @@ class Contig_t : public Sequence_t
   
 private:
 
-  std::vector<Tile_t> reads_m;     //!< read tiling
+  std::vector<Tile_t> reads_m;        //!< read tiling
+  std::vector<Feature_t> feats_m;     //!< features
 
 
   //--------------------------------------------------- compress ---------------
@@ -107,6 +110,7 @@ public:
   {
     Sequence_t::clear( );
     reads_m . clear( );
+    feats_m . clear( );
   }
 
 
@@ -114,6 +118,24 @@ public:
   virtual NCode_t getNCode ( ) const
   {
     return Contig_t::NCODE;
+  }
+
+
+  //--------------------------------------------------- getFeatures ------------
+  //! \brief Get the associated features
+  //!
+  //! \return The vector of associated features
+  //!
+  const std::vector<Feature_t> & getFeatures ( ) const
+  {
+    return feats_m;
+  }
+
+
+  //--------------------------------------------------- getFeatures ------------
+  std::vector<Feature_t> & getFeatures ( )
+  {
+    return feats_m;
   }
 
 
@@ -129,10 +151,6 @@ public:
 
 
   //--------------------------------------------------- getReadTiling ----------
-  //! \brief Get the tiling of underlying reads
-  //!
-  //! \return The vector of underlying reads
-  //!
   std::vector<Tile_t> & getReadTiling ( )
   {
     return reads_m;
@@ -228,6 +246,18 @@ public:
   //! \return true if a message was read, false if no message read (EOF)
   //!
   bool readUMD (std::istream & in);
+
+
+  //--------------------------------------------------- setFeatures ------------
+  //! \brief Set the associated features
+  //!
+  //! \param feats The new vector of associated features
+  //! \return void
+  //!
+  void setFeatures (const std::vector<Feature_t> & feats)
+  {
+    feats_m = feats;
+  }
 
 
   //--------------------------------------------------- setReadTiling ----------
