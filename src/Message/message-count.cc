@@ -195,5 +195,5 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  <message path>\n\n";
+    << "\nUSAGE: " << s << "  [options]  [message path]\n\n";
 }
