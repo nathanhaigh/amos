@@ -168,14 +168,6 @@ public:
     frags_m = frags;
   }
 
-
-  //--------------------------------------------------- operator= --------------
-  //! \brief Assignment (copy) operator
-  //!
-  //! \param source The Library_t object to copy
-  //! \return The resulting Library_t object
-  //!
-  Library_t & operator= (const Library_t & source);
 };
 
 } // namespace AMOS
