@@ -4,6 +4,7 @@
 #include <qlayout.h>
 #include "ConsensusField.hh"
 #include "RenderSeq.hh"
+#include "UIElements.hh"
 
 using namespace std;
 using namespace AMOS;
@@ -56,7 +57,7 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
                                   "tiling" );
 
   m_sv->addChild(m_tilingfield);
-  m_sv->setPaletteBackgroundColor(QColor(170,170,170));
+  m_sv->setPaletteBackgroundColor(UIElements::color_tiling);
 
   m_consfield = new ConsensusField(m_consensus, m_cstatus,
                                    m_gindex, this, "cons");

@@ -12,6 +12,7 @@ class UIElements
 public:
   static void setBasePen(QPen & pen, char base);
   static QColor & getBaseColor(char base);
+  static QColor & getSNPColoring(char base, bool dark=false);
 
 
   static QColor color_tiling;
@@ -25,6 +26,7 @@ public:
   static QColor color_default;
 
   static QColor color_discrepancy;
+  static QColor color_snpgap;
 
   static QColor & getInsertColor(Insert::MateState state);
 

@@ -17,14 +17,12 @@ QColor UIElements::color_NoMate(Qt::cyan);
 QColor UIElements::color_Unknown(Qt::white);
 
 QColor UIElements::color_tiling(180,180,180);
-//QColor UIElements::color_tilingoffset(160,160,160);
 QColor UIElements::color_tilingoffset(100,100,100);
 QColor UIElements::color_tilingtrim(204, 153, 153);
 
-QColor color_gap(Qt::cyan);
+QColor UIElements::color_snpgap(Qt::cyan);
 
-
-QColor & UIElements::getBaseColor(char base)
+QColor & UIElements::getSNPColoring(char base, bool dark)
 {
   switch (base)
   {
@@ -41,7 +39,27 @@ QColor & UIElements::getBaseColor(char base)
     case 't': return color_t;
 
     case ' ': return color_tilingoffset;
-    case '-': return color_gap;
+    case '-': return color_snpgap;
+
+    default: return color_default;
+  };
+}
+
+QColor & UIElements::getBaseColor(char base)
+{
+  switch (base)
+  {
+    case 'A':
+    case 'a': return color_a;
+
+    case 'C':
+    case 'c': return color_c;
+    
+    case 'G':
+    case 'g': return color_g;
+
+    case 'T':
+    case 't': return color_t;
 
     default: return color_default;
   };

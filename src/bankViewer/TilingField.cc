@@ -249,7 +249,7 @@ void TilingField::paintEvent( QPaintEvent * )
       QColor bgcolor;
       if (m_snpcoloring)
       {
-        bgcolor = UIElements::getBaseColor(ri->bgcolor);
+        bgcolor = UIElements::getSNPColoring(ri->bgcolor);
       }
       else
       {
