@@ -1,6 +1,7 @@
 // $Id$
 
 #include "Bundler.hh"
+#include <math.h>
 #include <stdio.h>
 #include <list>
 #include <iostream>

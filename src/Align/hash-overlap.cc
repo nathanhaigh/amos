@@ -871,8 +871,8 @@ Minimizer_t :: Minimizer_t
    assert (signature_len <= two_bit_ct);
 
    window_len = wl;
-   signature = new (unsigned int) [1 + window_len - signature_len];
-   delay = new (int) [1 + window_len - signature_len];
+   signature = new unsigned int [1 + window_len - signature_len];
+   delay = new int [1 + window_len - signature_len];
 
    signature_mask = order_mask = 0;
    for  (i = 0;  i < signature_len;  i ++)
