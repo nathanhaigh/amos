@@ -96,6 +96,7 @@ AC_CONFIG_FILES(
    src/Message/Makefile \
    src/Bank/Makefile \
    src/Align/Makefile \
+   src/Tigger/Makefile \
    src/Compare/Makefile \
    src/Bundler/Makefile \
    src/Casm/Makefile \

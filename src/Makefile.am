@@ -8,6 +8,7 @@ SUBDIRS = \
 	Message \
 	Bank \
 	Align \
+        Tigger \
 	Compare \
 	Bundler \
 	Casm \
