@@ -17,6 +17,6 @@ QMAKE_CXX = /usr/bin/g++
 QMAKE_LINK  = /usr/bin/g++
 
 
-INCLUDEPATH	+= ../AMOS ../Common ../Slice /local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/i386-linux/include/io_lib/
-LIBS	+= -L../AMOS -L../Common -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/i386-linux/lib -lAMOS -lCommon -lread
+INCLUDEPATH	+= ../AMOS ../Common ../Slice /local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/include/io_lib/
+LIBS	+= -L../AMOS -L../Common -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/lib -lAMOS -lCommon -lread
 

@@ -5,6 +5,7 @@
 const int CGraphContig::RTTI = 132546;
 
 using namespace AMOS;
+using namespace std;
 
 CGraphContig::CGraphContig(ID_t id, ContigEdge_t * edge, bool rc,
                            int x, int y, int width, int height,

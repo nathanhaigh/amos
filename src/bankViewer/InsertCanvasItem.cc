@@ -4,6 +4,8 @@
 
 const int InsertCanvasItem::RTTI = 132545;
 
+using namespace std;
+
 InsertCanvasItem::InsertCanvasItem(int x, int y, int width, int height,
                                    Insert * insert, QCanvas * canvas)
   : QCanvasRectangle(x, y, width, height, canvas)

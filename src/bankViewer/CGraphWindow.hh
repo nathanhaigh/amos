@@ -6,6 +6,9 @@
 #include <qlistview.h>
 
 #include "DataStore.hh"
+#include "vector"
+
+using std::vector;
 
 class CGraphWindow : public QMainWindow
 {

@@ -1,6 +1,7 @@
 #include "Insert.hh"
 
 using namespace AMOS;
+using namespace std;
 
 int omin (int a, int b)
 {

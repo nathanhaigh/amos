@@ -17,6 +17,11 @@
 #include "Insert.hh"
 #include "DataStore.hh"
 
+#include <map>
+
+using std::map;
+using std::pair;
+
 
 
 class InsertWidget : public QWidget

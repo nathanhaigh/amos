@@ -2,6 +2,8 @@
 #include "CGraphContig.hh"
 #include <qwmatrix.h>
 
+using namespace std;
+
 CGraphView::CGraphView(QCanvas * canvas, QWidget * parent, const char * name)
   : QCanvasView(canvas, parent, name)
 {

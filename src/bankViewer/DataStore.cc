@@ -1,6 +1,7 @@
 #include "DataStore.hh"
 
 using namespace AMOS;
+using namespace std;
 
 DataStore::DataStore()
   : contig_bank(Contig_t::NCODE),

@@ -8,6 +8,7 @@
 #include "CGraphEdge.hh"
 
 using namespace AMOS;
+using namespace std;
 
 CGraphWindow::CGraphWindow(DataStore * datastore, 
                            QWidget * parent, 

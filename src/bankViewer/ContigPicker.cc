@@ -4,6 +4,10 @@
 
 #include "foundation_AMOS.hh"
 
+#include <vector>
+
+using namespace std;
+
 
 
 class ContigListItem : public QListViewItem

@@ -5,8 +5,7 @@
 #include <qmainwindow.h>
 #include <qlistview.h>
 
-
-
+using std::string;
 
 class ContigPicker : public QMainWindow
 {

@@ -35,7 +35,7 @@ signals:
 
 private:
   void toggleItem(char c);
-  std::map<char, pair<int, bool> > m_types;
+  std::map<char, std::pair<int, bool> > m_types;
 
   QPopupMenu * m_display;
 };
