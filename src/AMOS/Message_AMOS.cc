@@ -45,7 +45,7 @@ bool Message_t::read (istream & in)
 
   try {
 
-    name = line . substr (1,3);
+    name = line . substr (1);
     setType (name);
 
     while (true)
@@ -133,13 +133,13 @@ void Message_t::write (ostream & out)
     {
       mline = *(mi -> second . rbegin( )) == '\n' ? true : false;
 
-      cout << mi -> first << ':';
+      out << mi -> first << ':';
       if ( mline )
-	cout . put ('\n');
-      cout << mi -> second;
+	out . put ('\n');
+      out << mi -> second;
       if ( mline )
-	cout . put ('.');
-      cout . put ('\n');
+	out . put ('.');
+      out . put ('\n');
     }
 
   for ( vi = subs_m . begin( ); vi != subs_m . end( ); vi ++ )
