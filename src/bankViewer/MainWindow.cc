@@ -25,6 +25,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   m_contigPicker = NULL;
   m_readPicker = NULL;
+  m_libPicker = NULL;
   m_fontsize = 10;
   m_insertWindow = NULL;
   m_cgraphWindow = NULL;
@@ -45,6 +46,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()));
   file->insertItem("&Contig Picker...", this,  SLOT(chooseContig()));
   file->insertItem("&Read Information...",   this,  SLOT(showReadPicker()));
+  file->insertItem("&Library Information...",   this,  SLOT(showLibPicker()));
   file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 
   m_options = new QPopupMenu(this);
@@ -368,4 +370,11 @@ void MainWindow::showReadPicker()
   m_readPicker = new ReadPicker(&m_datastore, this, "readPicker");
   connect(m_readPicker, SIGNAL(highlightRead(int)),
           this,         SIGNAL(highlightRead(int)));
+}
+
+void MainWindow::showLibPicker()
+{
+  if (m_libPicker) { m_libPicker->close(); }
+
+  m_libPicker = new LibraryPicker(&m_datastore, this, "libPicker");
 }

@@ -152,19 +152,22 @@ int DataStore::setContigId(int id)
 
 Distribution_t DataStore::getLibrarySize(ID_t readid)
 {
-  try
+  if (!m_libdistributionlookup.empty())
   {
-    Read_t read;
-    read_bank.fetch(readid, read);
+    try
+    {
+      Read_t read;
+      read_bank.fetch(readid, read);
 
-    Fragment_t frag;
-    frag_bank.fetch(read.getFragment(), frag);
+      Fragment_t frag;
+      frag_bank.fetch(read.getFragment(), frag);
 
-    return m_libdistributionlookup[frag.getLibrary()];
-  }
-  catch (Exception_t & e)
-  {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+      return m_libdistributionlookup[frag.getLibrary()];
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    }
   }
 
   return Distribution_t();

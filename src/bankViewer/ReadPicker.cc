@@ -24,9 +24,14 @@ public:
                  QString len,
                  QString dir,
                  QString seql,
-                 QString seqr)
+                 QString seqr,
+                 QString mean)
                
-    : QListViewItem(parent, iid, eid, offset, endoffset, len, dir, seql, seqr) {}
+    : QListViewItem(parent, iid, eid, offset, endoffset, len, dir, seql, seqr) 
+    {
+      setText(8, mean);
+      
+    }
 
 
   int compare(QListViewItem *i, int col,
@@ -89,6 +94,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
   m_table->addColumn("Dir");
   m_table->addColumn("CLR Begin");
   m_table->addColumn("CLR End");
+  m_table->addColumn("Lib Mean");
 
   m_table->setShowSortIndicator(true);
   m_table->setRootIsDecorated(true);
@@ -109,6 +115,8 @@ ReadPicker::ReadPicker(DataStore * datastore,
          ti != datastore->m_contig.getReadTiling().end();
          ti++)
     {
+      AMOS::Distribution_t dist = datastore->getLibrarySize(ti->source);
+
       int len = ti->range.getLength() + ti->gaps.size();
       new ContigListItem(m_table,
                          QString::number(ti->source),
@@ -118,7 +126,8 @@ ReadPicker::ReadPicker(DataStore * datastore,
                          QString::number(len),
                          ((ti->range.isReverse())?"R":"F"),
                          QString::number(ti->range.begin),
-                         QString::number(ti->range.end));
+                         QString::number(ti->range.end),
+                         QString::number(dist.mean));
     }
 
     setCursor(orig);
