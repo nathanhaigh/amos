@@ -196,7 +196,7 @@ int main (int argc, char ** argv)
 
       libSlice_Slice s;
       int dcov;
-      dcov = tiling.size(); // trivially, this is the largest dcov in the contig
+      dcov = tiling.size(); // trivially, this is the greatest dcov in the contig
       s.bc = new char [dcov+1];
       s.qv = new char [dcov];
       s.rc = new char [dcov];
@@ -218,10 +218,12 @@ int main (int argc, char ** argv)
                          ri->m_offset, ri->m_nucs.size(), 
                          clen))
           {
+            s.rc[dcov]  = ri->m_rc;
             s.bc[dcov]  = ri->m_nucs[gindex - ri->m_offset];
+
             s.qv[dcov]  = ri->m_qual[gindex - ri->m_offset]-AMOS::MIN_QUALITY;
             if (s.qv[dcov] < MIN_QUAL) { s.qv[dcov] = MIN_QUAL; }
-            s.rc[dcov]  = ri->m_rc;
+
             reads[dcov] = vectorpos+vectoroffset;
 
             dcov++;
