@@ -14,6 +14,7 @@ using namespace std;
 
 
 //================================================ Message_t ===================
+//----------------------------------------------------- skipto -----------------
 inline bool skipto (istream & in, char ch)
 {
   static const int chunk = 1024;
@@ -29,18 +30,6 @@ inline bool skipto (istream & in, char ch)
 
       in . unget( );
     }
-}
-
-
-//----------------------------------------------------- getField ---------------
-const string & Message_t::getField (NCode_t fcode) const
-{
-  map<NCode_t,string>::const_iterator mi = fields_m . find (fcode);
-
-  if ( mi == fields_m . end( ) )
-    AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " + Decode (fcode));
-  
-  return mi -> second;
 }
 
 

@@ -158,6 +158,17 @@ public:
   const_iterator end ( ) const { return const_iterator (objs_m . end( )); }
 
 
+  //--------------------------------------------------- exists -----------------
+  //! \brief Checks if an object with a given NCode exists in the set
+  //!
+  //! \return true if it exists, false otherwise
+  //!
+  bool exists (NCode_t ncode)
+  {
+    return ( hash_m . find (ncode) != hash_m . end( ) );
+  }
+
+
   //--------------------------------------------------- getSize ----------------
   //! \brief Returns the number of known universal objects
   //!

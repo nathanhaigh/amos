@@ -26,12 +26,6 @@ void Universal_t::readMessage (const Message_t & msg)
   try {
     istringstream ss;
 
-    if ( msg . exists (F_COMMENT) )
-      comment_m = msg . getField (F_COMMENT);
-
-    if ( msg . exists (F_EID) )
-      eid_m = msg . getField (F_EID);
-
     if ( msg . exists (F_IID) )
       {
 	ss . str (msg . getField (F_IID));
@@ -40,6 +34,12 @@ void Universal_t::readMessage (const Message_t & msg)
 	  AMOS_THROW_ARGUMENT ("Invalid iid format");
 	ss . clear( );
       }
+
+    if ( msg . exists (F_EID) )
+      eid_m = msg . getField (F_EID);
+
+    if ( msg . exists (F_COMMENT) )
+      comment_m = msg . getField (F_COMMENT);
   }
   catch (ArgumentException_t) {
     
@@ -59,18 +59,18 @@ void Universal_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Universal_t::NCODE);
 
-    if ( !comment_m . empty( ) )
-      msg . setField (F_COMMENT, comment_m);
-
-    if ( !eid_m . empty( ) )
-      msg . setField (F_EID, eid_m);
-
     if ( iid_m != NULL_ID )
       {
 	ss << iid_m;
 	msg . setField (F_IID, ss . str( ));
 	ss . str (NULL_STRING);
       }
+
+    if ( !eid_m . empty( ) )
+      msg . setField (F_EID, eid_m);
+
+    if ( !comment_m . empty( ) )
+      msg . setField (F_COMMENT, comment_m);
   }
   catch (ArgumentException_t) {
 

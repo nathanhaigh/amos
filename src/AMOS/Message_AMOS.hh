@@ -205,7 +205,13 @@ public:
   //! \throws ArgumentException_t
   //! \return The field data for fcode
   //!
-  const std::string & getField (NCode_t fcode) const;
+  const std::string & getField (NCode_t fcode) const
+  {
+    std::map<NCode_t,std::string>::const_iterator mi = fields_m . find (fcode);
+    if ( mi == fields_m . end( ) )
+      AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " + Decode (fcode));
+    return mi -> second;
+  }
 
 
   //--------------------------------------------------- getField ---------------
@@ -260,6 +266,20 @@ public:
     return mcode_m;
   }
 
+
+  //--------------------------------------------------- operator[] -------------
+  //! \brief operator for getField method
+  //!
+  const std::string & operator[] (NCode_t fcode) const
+  {
+    return getField (fcode);
+  }
+
+  const std::string & operator[] (const std::string & fname) const
+  {
+    return getField (fname);
+  }
+  
 
   //--------------------------------------------------- read -------------------
   //! \brief Read a message from an input stream
