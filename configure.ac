@@ -103,7 +103,7 @@ AC_CANONICAL_HOST
 
 # set the automake build conditionals, e.g. BUILD_AMOScmp
 AMOS_BUILD_CONDITIONAL([AMOScmp], [no])
-AMOS_BUILD_CONDITIONAL([AMOSmini], [no])
+AMOS_BUILD_CONDITIONAL([minimus], [no])
 AMOS_BUILD_CONDITIONAL([all], [yes])
 
 # makefiles to configure

@@ -5,11 +5,11 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 dist_doc_DATA = \
 	AMOScmp.README \
-	AMOSmini.README \
 	runAmos.README \
 	libAMOS_quickref.rtf \
 	message_grammar.rtf \
-	message_types.rtf
+	message_types.rtf \
+	minimus.README
 
 
 ##-- END OF MAKEFILE --##

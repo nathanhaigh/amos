@@ -42,7 +42,7 @@ SUBDIRS += \
 	Pipeline
 endif BUILD_AMOScmp
 
-if BUILD_AMOSmini
+if BUILD_minimus
 SUBDIRS += \
 	GNU \
 	AMOS \
@@ -58,7 +58,7 @@ SUBDIRS += \
 	Utils \
 	PerlModules \
 	Pipeline
-endif BUILD_AMOSmini
+endif BUILD_minimus
 
 
 ##-- END OF MAKEFILE --##

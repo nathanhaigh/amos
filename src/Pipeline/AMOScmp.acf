@@ -1,4 +1,4 @@
-#---- AMOS Comparative Assembler Pipeline
+# `AMOScmp' - The AMOS Comparative Assembler Pipeline
 
 #--------------------------------------- USER DEFINED VALUES ------------------#
 TGT = $(PREFIX).afg

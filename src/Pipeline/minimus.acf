@@ -1,4 +1,4 @@
-#---- AMOS Small-scale Assembler Pipeline
+# `minimus' - The AMOS Lightweight Assembler Pipeline
 
 #--------------------------------------- USER DEFINED VALUES ------------------#
 TGT = $(PREFIX).afg

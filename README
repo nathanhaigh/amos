@@ -52,20 +52,21 @@ information.
 
    Listed here are non-default FEATURES to the `configure' script
 included with this distribution. These options are not documented in
-the `INSTALL' file and are unique to the AMOS distribution.
+the `INSTALL' file and are unique to the AMOS distribution. They can
+be set with the `--enable-FEATURE' `--disable-FEATURE' switches.
 
-   - AMOScmp        build AMOScmp dependencies [ARG=no]
-   - AMOSmini       build AMOSmini dependencies [ARG=no]
+   - AMOScmp        build `AMOScmp' pipeline dependencies [ARG=no]
+   - minimus        build `minimus' pipeline dependencies [ARG=no]
    - all            build all dependencies [ARG=yes]
 
 By default, the entire source base is built and installed as specified
 by the `--enable-all' feature. However, by turning this feature off
 and specifying a particular set of packages, build and install times
-can be reduced. For instance, to only build the AMOSmini assembler
-pipeline, we can type the following to ensure only the AMOSmini
+can be reduced. For instance, to only build the `minimus' assembler
+pipeline, we can type the following to ensure only the `minimus'
 dependencies are built and installed:
 
-   `configure --disable-all --enable-AMOSmini'
+   `configure --disable-all --enable-minimus'
 
 
 Dependencies
@@ -115,7 +116,7 @@ details.
    to a finished reference sequence and their alignments are used to
    determine their layout position.
 
-   - AMOSmini -
+   - minimus -
    Provides a lightweight overlap-layout-consensus pipeline for
    assembly. This pipeline is only meant to handle inputs with read
    counts in the 100's and is therefore named "mini". This pipeline is

@@ -4,7 +4,7 @@ include $(top_srcdir)/config/amos.mk
 ##-- AVAILABLE CONDITIONALS
 ##   BUILD_all - build everything
 ##   BUILD_AMOScmp - build AMOScmp
-##   BUILD_AMOSmini - build AMOSmini
+##   BUILD_minimus - build minimus
 
 ##-- SUBDIRS TO RECURSE
 SUBDIRS =

@@ -8,16 +8,16 @@ dist_bin_SCRIPTS =
 if BUILD_all
 dist_bin_SCRIPTS += \
 	AMOScmp.acf \
-	AMOSmini.acf
+	minimus.acf
 endif BUILD_all
 
 if BUILD_AMOScmp
 dist_bin_SCRIPTS += AMOScmp.acf
 endif BUILD_AMOScmp
 
-if BUILD_AMOSmini
-dist_bin_SCRIPTS += AMOSmini.acf
-endif BUILD_AMOSmini
+if BUILD_minimus
+dist_bin_SCRIPTS += minimus.acf
+endif BUILD_minimus
 
 
 ##-- END OF MAKEFILE --##
