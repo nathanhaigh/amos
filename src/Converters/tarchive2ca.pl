@@ -433,36 +433,33 @@ sub EndTag
 		print "trace $seqId has no library\n";
 	    }
 	}
-	if (! defined $mean){
-	    if (! defined $silent){
-		print "library $library has no mean - replacing with 33333\n";
-	    }
-	    if (! exists $means{$library}){
-		$means{$library} = 33333; 
-		$mean = 33333;
-	    } else {
-		$mean = $means{$library};
-	    }
-	} else {
-	    if (! exists $means{$library}){
-		$means{$library} = $mean;
-	    } else {
-		$mean = $means{$library};
-	    }
-	}
-	
-	if (! defined $stdev){
-	    if (! defined $silent){
-		print "library $library has no stdev - replacing with 10% of $mean\n";
-	    }
-	    if (! exists $stdevs{$library}){
-		$stdevs{$library} = $mean * 0.1;
-	    }
-	} else {
-	    if (! exists $stdevs{$library}){
-		$stdevs{$library} = $stdev;
-	    }
-	}
+        if (! defined $mean  &&  ! exists $means{$library}){
+            if (! defined $silent){
+                print "library $library has no mean - replacing with 33333\n";
+            }
+            $means{$library} = 33333; 
+            $mean = 33333;
+        } else {
+            if (! exists $means{$library}){
+                $means{$library} = $mean;
+            } else {
+                $mean = $means{$library};
+            }
+        }
+        
+        if (! defined $stdev  &&  ! exists $stdevs{$library}){
+            if (! defined $silent){
+                print "library $library has no stdev - replacing with 10% of $mean\n";
+            }
+            $stdevs{$library} = $mean * 0.1;
+            $stdev = $mean * 0.1;
+        } else {
+            if (! exists $stdevs{$library}){
+                $stdevs{$library} = $stdev;
+            } else {
+                $stdev = $stdevs{$library};
+            }
+        }
 	
 	if (! defined $template){
 	    if (! defined $silent){
