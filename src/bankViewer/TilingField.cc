@@ -130,6 +130,9 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
                                      this, 
                                      "readinfo");
   readinfo->show();
+
+  connect(this, SIGNAL(setTilingVisibleRange(int, int)),
+          readinfo, SLOT(setTilingVisibleRange(int, int)));
 }
 
 

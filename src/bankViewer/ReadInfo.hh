@@ -4,9 +4,13 @@
 #include <qdialog.h>
 #include "RenderSeq.hh"
 #include <string>
+#include <qscrollview.h>
+#include "ChromoField.hh"
 
 class ReadInfo: public QDialog
 {
+  Q_OBJECT
+
 public:
   ReadInfo(RenderSeq_t * read, 
            const std::string & db, 
@@ -15,10 +19,12 @@ public:
            QWidget * parent=0, 
            const char *name=0);
 
+public slots:
+  void setTilingVisibleRange(int grangeStart, int grangeEnd);
 
-
+private:
+  QScrollView * m_sv;
+  ChromoField * m_chromo;
 };
-
-
 
 #endif

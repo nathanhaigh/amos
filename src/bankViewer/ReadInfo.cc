@@ -1,8 +1,6 @@
 #include "ReadInfo.hh"
 #include <qlabel.h>
-#include <qscrollview.h>
 #include <qlayout.h>
-#include "ChromoField.hh"
 
 using namespace std;
 
@@ -14,7 +12,7 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
                    const char * name)
   : QDialog(parent, name)
 {
-  resize(1000,250);
+  resize(1000,256);
 
   QBoxLayout * layout = new QVBoxLayout(this);
 
@@ -28,10 +26,18 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
   label->setText(s);
   label->setAlignment( AlignTop | AlignLeft );
 
-  QScrollView * sv = new QScrollView(this, "scroll");
+  m_sv = new QScrollView(this, "scroll");
   layout->addWidget(label);
-  layout->addWidget(sv);
+  layout->addWidget(m_sv);
 
-  ChromoField* child1 = new ChromoField(read, db, cons, cstatus, sv->viewport(), "chromo");
-  sv->addChild(child1);
+  m_chromo = new ChromoField(read, db, cons, cstatus, 
+                             m_sv->viewport(), "chromo");
+  m_sv->addChild(m_chromo);
 }
+
+void ReadInfo::setTilingVisibleRange(int grangeStart, int grangeEnd)
+{
+  int pos = m_chromo->getWindowPos((int) ((grangeStart+grangeEnd)/2));
+  m_sv->ensureVisible(pos, 0);
+}
+

@@ -4,6 +4,7 @@
 #include <qwidget.h>
 #include <qpixmap.h>
 #include <string>
+#include <vector>
 
 #ifdef __cplusplus
 extern "C"
@@ -22,20 +23,26 @@ class ChromoField: public QWidget
 {
   Q_OBJECT
 public:
-    ChromoField(RenderSeq_t * read, 
-                const std::string & db,
-                const std::string & cons,
-                const std::string & cstatus,
-                QWidget *parent=0, 
-                const char *name=0);
+  ChromoField(RenderSeq_t * read, 
+              const std::string & db,
+              const std::string & cons,
+              const std::string & cstatus,
+              QWidget *parent=0, 
+              const char *name=0);
+
+  int getWindowPos(int gindex);
 
 protected:
-    void paintEvent( QPaintEvent * );
+  void paintEvent( QPaintEvent * );
 
 private:
-    Read * m_trace;
-    RenderSeq_t * m_render;
-    QPixmap * m_pix;
+  Read * m_trace;
+  RenderSeq_t * m_render;
+  QPixmap * m_pix;
+  std::vector<int> m_pos;
+  double m_hscale;
+  int m_hoffset;
+  bool m_contigView;
 };
 
 
