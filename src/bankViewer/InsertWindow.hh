@@ -4,6 +4,9 @@
 #include <qmainwindow.h>
 #include <string>
 #include "DataStore.hh"
+#include <qpopupmenu.h>
+
+#include <map>
 
 
 class InsertWindow : public QMainWindow
@@ -16,11 +19,25 @@ public:
 public slots:
   void contigChanged();
 
+  void toggleHappy();
+  void toggleUnknown();
+  void toggleStretched();
+  void toggleOrientation();
+  void toggleMissing();
+  void toggleLinking();
+  void toggleNone();
+
 signals:
   void setGindex(int gindex);
   void visibleRange(int, int);
   void setTilingVisibleRange(int, int);
   void refreshCanvas();
+
+private:
+  void toggleItem(char c);
+  std::map<char, pair<int, bool> > m_types;
+
+  QPopupMenu * m_display;
 };
 
 #endif

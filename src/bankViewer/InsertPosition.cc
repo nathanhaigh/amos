@@ -62,7 +62,7 @@ void InsertPosition::paintEvent(QPaintEvent * e)
       p.drawLine((i-m_start) * m_scale, linepos-2,
                  (i-m_start) * m_scale, linepos+2);
 
-      if (i > 1000)
+      if (abs(i) > 1000)
       {
         pos = QString::number(i/1000.0) + "k";
       }

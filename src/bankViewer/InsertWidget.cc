@@ -12,8 +12,10 @@ typedef std::map<ID_t, Tile_t *> SeqTileMap_t;
 
 
 InsertWidget::InsertWidget(DataStore * datastore,
+                           map<char, pair<int, bool> > & types,
                            QWidget * parent, const char * name)
- : QWidget(parent, name)
+ : QWidget(parent, name),
+   m_types(types)
 {
   m_datastore = datastore;
   m_tilingVisible = NULL;
@@ -21,12 +23,14 @@ InsertWidget::InsertWidget(DataStore * datastore,
   QBoxLayout * vbox = new QVBoxLayout(this);
 
   m_iposition = new InsertPosition(this, "insertposition");
-  m_icanvas   = new QCanvas(this, "icanvas");
+  m_icanvas = new QCanvas(this, "icanvas");
   m_icanvas->setBackgroundColor(Qt::black);
+
+  m_hoffset = 0;
 
   refreshCanvas();
 
-  m_ifield    = new InsertField(datastore, m_icanvas, this, "qcv");
+  m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, this, "qcv");
   m_ifield->show();
 
   vbox->addWidget(m_iposition);
@@ -78,7 +82,7 @@ void InsertWidget::setTilingVisibleRange(int gstart, int gend)
   QRect canvasRect = m_ifield->inverseWorldMatrix().mapRect(rc);
 
   m_tilingVisible->setSize(gend - gstart +1, m_icanvas->height());
-  m_tilingVisible->move(gstart, 0);
+  m_tilingVisible->move(gstart+m_hoffset, 0);
   m_tilingVisible->show();
 
   // ensure visible
@@ -86,7 +90,7 @@ void InsertWidget::setTilingVisibleRange(int gstart, int gend)
   m_ifield->worldMatrix().map((gstart + gend)/2, 
                               canvasRect.y() + canvasRect.height()/2,
                               &mapx, &mapy);
-  m_ifield->ensureVisible(mapx, mapy);
+  m_ifield->ensureVisible(mapx+m_hoffset, mapy);
 
   m_icanvas->update();
 }
@@ -125,7 +129,7 @@ void InsertWidget::refreshCanvas()
   if (!m_datastore->m_loaded) { return; }
 
   m_seqheight = 3;
-  m_hoffset = 0; // 20
+  m_hoffset = 0; 
 
   int posoffset = 5;
   int gutter = 5;
@@ -241,6 +245,13 @@ void InsertWidget::refreshCanvas()
 
   sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
 
+  int leftmost = (*m_inserts.begin())->m_loffset;
+  if (leftmost > 0) { leftmost = 0; }
+  int rightmost = clen;
+
+  cerr << "leftmost: " << leftmost << endl;
+  m_hoffset = -leftmost;
+
   QCanvasLine * line = new QCanvasLine(m_icanvas);
   line->setPoints(m_hoffset,        posoffset, 
                   m_hoffset + clen, posoffset);
@@ -261,15 +272,40 @@ void InsertWidget::refreshCanvas()
   }
 
 
-  cerr << "paint inserts: ";
-  char types [] = "HSMNOLU";
-  int numtypes = strlen(types);
 
+  // bubblesort the types by the order they appear in the popup menu
+  vector<char> types;
+  map<char, pair<int, bool> >::iterator ti;
+
+  for (ti = m_types.begin(); ti != m_types.end(); ti++)
+  {
+    types.push_back(ti->first);
+  }
+
+  for (int i = 0; i < types.size(); i++)
+  {
+    for (int j = i+1; j < types.size(); j++)
+    {
+      if (m_types[types[j]].first > m_types[types[i]].first)
+      {
+        char swap = types[i];
+        types[i] = types[j];
+        types[j] = swap;
+      }
+    }
+  }
+
+
+  cerr << "paint inserts: ";
   int layoutoffset = 0;
 
   // For all types
-  for (int type = 0; type < numtypes; type++)
+  for (int type = 0; type < types.size(); type++)
   {
+    cerr << (char)(types[type] - 'A' + 'a');
+
+    if (!m_types[types[type]].second) { continue; }
+
     vector<Insert *>::iterator ii;
 
     vector<int> layout;
@@ -294,10 +330,9 @@ void InsertWidget::refreshCanvas()
         }
       }
 
-      if (li == layout.end())
-      {
-        layout.push_back(0);
-      }
+      if (li == layout.end()) { layout.push_back(0); }
+
+      if ((*ii)->m_roffset > rightmost) { rightmost = (*ii)->m_roffset; }
 
       int vpos = tileoffset+(layoutpos + layoutoffset)*lineheight;
       layout[layoutpos] = (*ii)->m_roffset + layoutgutter;
@@ -319,6 +354,6 @@ void InsertWidget::refreshCanvas()
 
   cerr << endl;
 
-  m_icanvas->resize(clen+1000, tileoffset+layoutoffset*lineheight);
+  m_icanvas->resize(rightmost - leftmost + 1000, tileoffset+layoutoffset*lineheight);
   m_icanvas->update();
 }

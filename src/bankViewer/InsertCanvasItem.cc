@@ -49,6 +49,8 @@ void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p)
 {
   if (!tile) { return; }
 
+  int hoffset = x() - m_insert->m_loffset;
+
   int readLength = tile->range.getLength() + tile->gaps.size();
-  p.drawRect(tile->offset, (int) y(), readLength, height());
+  p.drawRect(tile->offset+hoffset, (int) y(), readLength, height());
 }

@@ -31,8 +31,6 @@ Insert::Insert(Tile_t * atile,
 
   m_length = m_dist.mean;
 
-  int READLEN = 500;
-
   m_arc = 0;
   m_brc = 0;
   if (atile) { m_arc = (atile->range.end < atile->range.begin); }
@@ -45,7 +43,7 @@ Insert::Insert(Tile_t * atile,
     m_roffset = omax(atile->offset + atile->range.getLength() + atile->gaps.size() -1,
                      btile->offset + btile->range.getLength() + btile->gaps.size() -1);
 
-    m_length = m_roffset - m_loffset;
+    m_length = m_roffset - m_loffset + 1;
 
     if (abs(m_length - dist.mean) <= 3*dist.sd)
     {
@@ -76,25 +74,12 @@ Insert::Insert(Tile_t * atile,
     }
     else
     {
-      if (atile->range.end < atile->range.begin)
-      {
-        // rc
-        
-        int projected = m_roffset - m_dist.mean - 3*m_dist.sd - READLEN;
-        
-        if (projected > 0)
-        {
-          m_state = MissingMate;
-        }
-      }
+      int projected = getProjectedPosition(atile, m_dist);
+
+      if (m_arc)
+      { if (projected > 0)       { m_state = MissingMate; } }
       else
-      {
-        //forward
-        if (m_loffset + m_dist.mean + 3*m_dist.sd + READLEN < conslen)
-        {
-          m_state = MissingMate;
-        }
-      }
+      { if (projected < conslen) { m_state = MissingMate; } }
     }
   }
   else if (btile)
@@ -103,25 +88,12 @@ Insert::Insert(Tile_t * atile,
     m_loffset = btile->offset;
     m_roffset = btile->offset + btile->range.getLength() + btile->gaps.size() -1;
 
-    if (btile->range.end < btile->range.begin)
-    {
-      // rc
-      
-      int projected = m_roffset - m_dist.mean - 3*m_dist.sd - READLEN;
-      
-      if (projected > 0)
-      {
-        m_state = MissingMate;
-      }
-    }
+    int projected = getProjectedPosition(btile, m_dist);
+
+    if (m_brc)
+    { if (projected > 0)       { m_state = MissingMate; } }
     else
-    {
-      //forward
-      if (m_loffset + m_dist.mean + 3*m_dist.sd + READLEN < conslen)
-      {
-        m_state = MissingMate;
-      }
-    }
+    { if (projected < conslen) { m_state = MissingMate; } }
   }
   else
   {
@@ -131,6 +103,20 @@ Insert::Insert(Tile_t * atile,
   m_actual = m_roffset - m_loffset + 1;
   m_other = NULL;
   m_canvasItem = NULL;
+}
+
+int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
+{
+  const int READLEN = 500;
+
+  if (tile->range.end < tile->range.begin)
+  {
+    return tile->offset + tile->range.getLength() + tile->gaps.size() - 1 - dist.mean - 3*dist.sd - READLEN;
+  }
+  else
+  {
+    return tile->offset + dist.mean + 3*dist.sd + READLEN;
+  }
 }
 
 void Insert::setActive(int i, Insert * other)
@@ -146,14 +132,15 @@ void Insert::setActive(int i, Insert * other)
   if (tile->range.end < tile->range.begin)
   {
     //rc
-    m_loffset = tile->offset - (m_dist.mean - tile->range.getLength() - tile->gaps.size());
+    m_roffset = tile->offset + tile->range.getLength() + tile->gaps.size()-1;
+    m_loffset = m_roffset - m_dist.mean;
   }
   else
   {
     //forward
     m_loffset = tile->offset;
+    m_roffset = m_loffset + m_dist.mean;
   }
 
-  m_roffset = tile->offset + m_dist.mean;
   m_length = m_dist.mean;
 }

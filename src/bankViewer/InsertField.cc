@@ -6,11 +6,13 @@
 using namespace std;
 
 InsertField::InsertField(DataStore * datastore,
+                         int & hoffset,
                          QCanvas * canvas, 
                          QWidget * parent, 
                          const char * name)
  : QCanvasView(canvas, parent, name),
-   m_datastore(datastore)
+   m_datastore(datastore),
+   m_hoffset(hoffset)
 {
 
    QWMatrix m = worldMatrix();
@@ -27,7 +29,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
   if (l.empty())
   {
-    emit setGindex(real.x());
+    emit setGindex(real.x()-m_hoffset);
   }
   else
   {
@@ -38,7 +40,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
         InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
         Insert * ins = iitem->m_insert;
 
-        QString s = "Insert";
+        QString s = "Insert " + QString::number(ins->m_active);
         if (ins->m_atile)
         {
           s += " atile: ";
@@ -84,7 +86,7 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
 
   QCanvasView::viewportPaintEvent(e);
 
-  emit visibleRange(canvasRect.x(), worldMatrix().m11());
+  emit visibleRange(canvasRect.x()-m_hoffset, worldMatrix().m11());
 }
 
 

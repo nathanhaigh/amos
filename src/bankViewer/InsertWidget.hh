@@ -26,6 +26,7 @@ class InsertWidget : public QWidget
 public:
 
   InsertWidget(DataStore * datastore,
+               map<char, pair<int, bool> > & types,
                QWidget * parent = 0, const char * name = 0);
   ~InsertWidget();
 
@@ -58,6 +59,8 @@ private:
 
   std::vector<AMOS::Tile_t> m_tiling;
   std::vector<Insert *> m_inserts;
+
+  std::map<char, std::pair<int, bool> > & m_types;
 };
 
 #endif

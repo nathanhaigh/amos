@@ -10,6 +10,7 @@ class InsertField : public QCanvasView
 
 public:
   InsertField(DataStore * datastore,
+              int & hoffset,
               QCanvas * canvas, 
               QWidget * parent = 0, 
               const char * name = 0);
@@ -25,6 +26,7 @@ protected:
 
 private:
   DataStore * m_datastore;
+  int & m_hoffset;
 
 };
 
