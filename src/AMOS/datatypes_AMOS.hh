@@ -285,29 +285,7 @@ struct Tile_t
 //! \param b Range B
 //! \return The intersection of Range A and B or [0,0) if no overlap
 //!
-inline Range_t operator& (Range_t a, Range_t b)
-{
-  if ( a . begin > a . end )
-    {
-      Pos_t tmp = a . begin;
-      a . begin = a . end;
-      a . end = tmp;
-    }
-
-  if ( b . begin > b . end )
-    {
-      Pos_t tmp = b . begin;
-      b . begin = b . end;
-      b . end = tmp;
-    }
-
-  if ( a . begin > b . end  ||  a . end < b . begin )
-    return Range_t (0,0);
-  else if ( a . end <= b . end )
-    return Range_t (a . begin > b . begin ? a . begin : b . begin, a . end);
-  else
-    return Range_t (a . begin, a . end < b . end ? a . end : b . end);
-}
+Range_t operator& (Range_t a, Range_t b);
 
 
 //----------------------------------------------------- operator| --------------
@@ -319,29 +297,8 @@ inline Range_t operator& (Range_t a, Range_t b)
 //! \param b Range B
 //! \return The union of Range A and B or [0,0) if no overlap
 //!
-inline Range_t operator| (Range_t a, Range_t b)
-{
-  if ( a . begin > a . end )
-    {
-      Pos_t tmp = a . begin;
-      a . begin = a . end;
-      a . end = tmp;
-    }
+Range_t operator| (Range_t a, Range_t b);
 
-  if ( b . begin > b . end )
-    {
-      Pos_t tmp = b . begin;
-      b . begin = b . end;
-      b . end = tmp;
-    }
-
-  if ( a . begin > b . end  ||  a . end < b . begin )
-    return Range_t (0,0);
-  else if ( a . end <= b . end )
-    return Range_t (a . begin > b . begin ? a . begin : b . begin, a . end);
-  else
-    return Range_t (a . begin, a . end < b . end ? a . end : b . end);
-}
 
 //--TEMPORARY
 typedef Range_t Ordered_Range_t;

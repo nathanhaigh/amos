@@ -66,7 +66,7 @@ Size_t Read_t::writeRecord (std::ostream & fix,
 }
 
 
-//----------------------------------------------------- operator<< -------------
+//================================================ Helper Functions ============
 //----------------------------------------------------- WrapStirng -------------
 void AMOS::WrapString (ostream & o, const string & s, int per)
 {
@@ -87,6 +87,7 @@ void AMOS::WrapString (ostream & o, const string & s, int per)
 }
 
 
+//----------------------------------------------------- operator<< -------------
 ostream & AMOS::operator<< (ostream & o, Read_t & read)
 {
   std::string s;
