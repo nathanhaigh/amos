@@ -10,22 +10,13 @@
 #ifndef __IDMap_AMOS_HH
 #define __IDMap_AMOS_HH 1
 
-#include "Bank_AMOS.hh"
 #include "Message_AMOS.hh"
+#include <sstream>
 
 
 
 
 namespace AMOS {
-
-namespace Bank_k {
-
-  const NCode_t IDMAP = Message_k::M_IDMAP;
-
-} // namespace Bank_k
-
-
-
 
 //================================================ IDMap_t =====================
 //! \brief A one-to-one mapping of IDs
@@ -34,7 +25,7 @@ namespace Bank_k {
 //! in an AMOS Bank.
 //!
 //==============================================================================
-class IDMap_t : public IBankable_t, public IMessagable_t
+class IDMap_t : public IMessagable_t
 {
 
 private:
@@ -93,11 +84,6 @@ private:
   };
 
 
-  HashNode_t table_m [BUCKETS];      //!< the hash table
-
-  ID_t size_m;                       //!< the number of entries
-
-
   //--------------------------------------------------- hashfunc ---------------
   //! \brief Simple division method hash function
   //!
@@ -110,16 +96,9 @@ private:
   }
 
 
-protected:
+  HashNode_t table_m [BUCKETS];      //!< the hash table
 
-  //--------------------------------------------------- readRecord -------------
-  virtual Size_t readRecord (std::istream & fix,
-			     std::istream & var);
-
-
-  //--------------------------------------------------- writeRecord ------------
-  virtual Size_t writeRecord (std::ostream & fix,
-			      std::ostream & var) const;
+  ID_t size_m;                       //!< the number of entries
 
 
 public:
@@ -134,7 +113,7 @@ public:
   //!
   static NCode_t NCode ( )
   {
-    return Bank_k::IDMAP;
+    return Message_k::M_IDMAP;
   }
 
 
@@ -168,10 +147,10 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  virtual void clear ( )
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  void clear ( )
   {
-    IBankable_t::clear( );
-
     for ( Size_t i = 0; i < BUCKETS; i ++ )
       table_m [i] . clear( );
     size_m = 0;
@@ -185,12 +164,12 @@ public:
   }
 
 
-  //--------------------------------------------------- getSize ----------------
+  //--------------------------------------------------- size -------------------
   //! \brief Get the number of key/value pairs in the mapping
   //!
   //! \return The number of key/value pairs in the mapping
   //!
-  ID_t getSize ( )
+  ID_t size ( )
   {
     return size_m;
   }
@@ -222,10 +201,6 @@ public:
   ID_t lookup (ID_t key);
 
 
-  //--------------------------------------------------- readMessage ------------
-  virtual void readMessage (const Message_t & msg);
-
-
   //--------------------------------------------------- operator= --------------
   //! \brief Assignment (copy) operator
   //!
@@ -235,6 +210,21 @@ public:
   //! \return The resulting map object
   //!
   IDMap_t & operator= (const IDMap_t & source);
+
+
+  //--------------------------------------------------- read -------------------
+  //! \brief Read the ID map from a binary input stream
+  //!
+  //! \param in The binary input stream
+  //! \pre in is a valid, readable stream
+  //! \post in will have error flags set if there was a failure
+  //! \return void
+  //!
+  void read (std::istream & in);
+
+
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
 
 
   //--------------------------------------------------- remove -----------------
@@ -247,6 +237,17 @@ public:
   //! \return void
   //!
   void remove (ID_t key);
+
+
+  //--------------------------------------------------- write ------------------
+  //! \brief Write the ID map to a binary stream
+  //!
+  //! \param out The binary output stream
+  //! \pre out is a valid, writeable stream
+  //! \post out will have error flags set if there was a failure
+  //! \return void
+  //!
+  void write (std::ostream & out) const;
 
 
   //--------------------------------------------------- writeMessage -----------

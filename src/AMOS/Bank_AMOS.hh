@@ -13,6 +13,7 @@
 #include "alloc.hh"
 #include "exceptions_AMOS.hh"
 #include "inttypes_AMOS.hh"
+#include "IDMap_AMOS.hh"
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -44,7 +45,7 @@ namespace Bank_k {
   const Size_t BUFFER_SIZE = 1024;
   //!< IO buffer size
 
-  const std::string BANK_VERSION ("1.04");
+  const std::string BANK_VERSION ("1.05");
   //!< Current Bank version, may not be able to read from other versions
 
   const std::string FIX_STORE_SUFFIX (".fix");
@@ -55,6 +56,9 @@ namespace Bank_k {
   
   const std::string VAR_STORE_SUFFIX (".var");
   //!< Suffix for the variable length store
+
+  const std::string MAP_STORE_SUFFIX (".map");
+  //!< Suffix for the ID map store
 
 
   const NCode_t NULL_BANK = Encode ("NUL");   //!< NULL bank NCode
@@ -431,6 +435,8 @@ protected:
   std::string store_dir_m;   //!< the disk store directory
   std::string store_pfx_m;   //!< the disk store prefix (including dir)
 
+  IDMap_t idmap_m;           //!< the ID map
+
 
   //--------------------------------------------------- addPartition -----------
   //! \brief Adds (appends) a new partition to the Bank
@@ -496,6 +502,7 @@ protected:
     partition_size_m = 0;
     store_dir_m  . erase( );
     store_pfx_m  . erase( );
+    idmap_m . clear( );
   }
 
 
@@ -643,7 +650,7 @@ public:
   //! \brief Clears a Bank by erasing all it's objects
   //!
   //! Erases all the objects in a Bank, but keeps the Bank open at the current
-  //! location. Has no effect on a closed Bank.
+  //! location. Also clears the Bank's ID map. Has no effect on a closed Bank.
   //!
   //! \return void
   //!
@@ -653,8 +660,8 @@ public:
   //--------------------------------------------------- close ------------------
   //! \brief Closes a Bank on disk
   //!
-  //! Flushes all buffers, closes all files and re-initializes members. Has
-  //! no effect on an already closed Bank.
+  //! Flushes all buffers, closes all files and re-initializes members. Clears
+  //! the ID map. Has no effect on an already closed Bank.
   //!
   //! \return void
   //!
@@ -704,8 +711,8 @@ public:
   //--------------------------------------------------- destroy ----------------
   //! \brief Closes and removes a Bank from disk
   //!
-  //! Closes the Bank and unlinks all files and directories (if empty). Has
-  //! no effect on a closed Bank.
+  //! Closes the Bank and unlinks all files and directories (if empty). Clears
+  //! the ID map. Has no effect on a closed Bank.
   //!
   //! \return void
   //!
@@ -746,8 +753,10 @@ public:
   //--------------------------------------------------- flush ------------------
   //! \brief Flushes the Bank output buffer
   //!
-  //! Flushes the output buffer to disk. This operation is automatically
-  //! performed during the close operation. Has no effect on a closed Bank.
+  //! Flushes the open partition output buffers. This operation is automatically
+  //! performed during the close operation. Does not flush ID map information,
+  //! but does update the info store with latest bank status variables. Has no
+  //! effect on a closed Bank.
   //!
   //! \throws IOException_t
   //! \return void
@@ -779,6 +788,25 @@ public:
   bool isOpen ( ) const
   {
     return is_open_m;
+  }
+
+
+  //--------------------------------------------------- map --------------------
+  //! \brief Return the ID map associated with this Bank
+  //!
+  //! Returns a reference to the associated ID map. This reference is mutable
+  //! and is to be used to perform operations on the ID map, i.e.
+  //! 'mybank.map( ).insert(1,2)' etc. It is up to the user to maintain the map
+  //! as needed, the Bank will only store and retrieve the map, it will NOT
+  //! make any changes to the map on its own (other than clear, open, close and
+  //! destroy). Map is only flushed to disk on Bank_t::close operation. If
+  //! 'mybank.map( ).size( ) == 0', there is no ID map for this Bank.
+  //!
+  //! \return The ID map of for this Bank
+  //!
+  IDMap_t & map ( )
+  {
+    return idmap_m;
   }
 
 

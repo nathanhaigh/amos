@@ -80,7 +80,6 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & source)
       const HashNode_t * scurr;
 
       clear( );
-      IBankable_t::operator= (source);
 
       for ( Size_t i = 0; i < BUCKETS; i ++ )
 	{
@@ -136,6 +135,24 @@ void IDMap_t::remove (ID_t key)
 }
 
 
+//----------------------------------------------------- read -------------------
+void IDMap_t::read (istream & in)
+{
+  ID_t key, val, size;
+
+  clear( );
+
+  in . read ((char *)&size, sizeof (ID_t));
+
+  for ( ID_t i = 0; i < size; i ++ )
+    {
+      in . read ((char *)&key, sizeof (ID_t));
+      in . read ((char *)&val, sizeof (ID_t));
+      insert (key, val);
+    }
+}
+
+
 //----------------------------------------------------- readMessage ------------
 void IDMap_t::readMessage (const Message_t & msg)
 {
@@ -182,24 +199,24 @@ void IDMap_t::readMessage (const Message_t & msg)
 }
 
 
-//----------------------------------------------------- readRecord -------------
-Size_t IDMap_t::readRecord (istream & fix,
-			    istream & var)
+//----------------------------------------------------- write ------------------
+void IDMap_t::write (ostream & out) const
 {
-  ID_t key, val, size;
+  const HashNode_t * curr;
 
-  clear( );
+  out . write ((char *)&size_m, sizeof (ID_t));
 
-  fix . read ((char *)&size, sizeof (ID_t));
-
-  for ( ID_t i = 0; i < size; i ++ )
-    {
-      var . read ((char *)&key, sizeof (ID_t));
-      var . read ((char *)&val, sizeof (ID_t));
-      insert (key, val);
-    }
-
-  return sizeof (ID_t) + size_m * sizeof (ID_t) * 2;
+  for ( Size_t i = 0; i < BUCKETS; i ++ )
+    if ( table_m [i] . key != NULL_ID )
+      {
+	curr = table_m + i;
+	while ( curr != NULL )
+	  {
+	    out . write ((char *)&(curr -> key), sizeof (ID_t));
+	    out . write ((char *)&(curr -> val), sizeof (ID_t));
+	    curr = curr -> next;
+	  }
+      }
 }
 
 
@@ -240,28 +257,4 @@ void IDMap_t::writeMessage (Message_t & msg) const
     msg . clear( );
     throw;
   }
-}
-
-
-//----------------------------------------------------- writeRecord ------------
-Size_t IDMap_t::writeRecord (ostream & fix,
-			     ostream & var) const
-{
-  const HashNode_t * curr;
-
-  fix . write ((char *)&size_m, sizeof (ID_t));
-
-  for ( Size_t i = 0; i < BUCKETS; i ++ )
-    if ( table_m [i] . key != NULL_ID )
-      {
-	curr = table_m + i;
-	while ( curr != NULL )
-	  {
-	    var . write ((char *)&(curr -> key), sizeof (ID_t));
-	    var . write ((char *)&(curr -> val), sizeof (ID_t));
-	    curr = curr -> next;
-	  }
-      }
-
-  return sizeof (ID_t) + size_m * sizeof (ID_t) * 2;
 }

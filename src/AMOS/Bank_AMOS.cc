@@ -126,6 +126,7 @@ void Bank_t::clean ( )
   //-- Concat this bank to a temporary bank (cleans the bank as a side effect)
   try {
     nullbank . create (store_dir_m);
+    nullbank . idmap_m = idmap_m;
     nullbank . concat (*this);
 
     //-- Reset this bank
@@ -150,6 +151,7 @@ void Bank_t::clean ( )
     //-- Set up the appropriate fix_size and last_iid values
     fix_size_m = nullbank . fix_size_m;
     last_iid_m = nullbank . last_iid_m;
+    idmap_m    = nullbank . idmap_m;
     flush( );
   }
   catch (IOException_t) {
@@ -183,6 +185,7 @@ void Bank_t::clear ( )
   string dir = store_dir_m;
   string pfx = store_pfx_m;
 
+  idmap_m . clear( );
   close( );
 
   is_open_m = true;
@@ -197,6 +200,27 @@ void Bank_t::clear ( )
 void Bank_t::close ( )
 {
   flush( );
+
+  //-- Flush the ID map
+  if ( idmap_m . size( ) == 0 )
+    unlink ((store_pfx_m + MAP_STORE_SUFFIX) . c_str( ));
+  else
+    {
+      ofstream mapout;
+      mapout . open ((store_pfx_m + MAP_STORE_SUFFIX) . c_str( ));
+
+      if ( !mapout )
+	AMOS_THROW_IO ("Could not open partition: " +
+		       store_pfx_m + MAP_STORE_SUFFIX);
+
+      idmap_m . write (mapout);
+
+      if ( !mapout )
+	AMOS_THROW_IO ("Error writing to partition: " +
+		       store_pfx_m + MAP_STORE_SUFFIX);
+
+      mapout . close( );
+    }
 
   //-- Close/free the partitions
   for ( ID_t i = 1; i <= last_partition_m; i ++ )
@@ -478,16 +502,35 @@ void Bank_t::open (const string & dir)
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK) )
     AMOS_THROW_IO ("Insufficient permissions in directory: " + dir);
   if ( access (ss . str( ) . c_str( ), R_OK|W_OK) )
-    AMOS_THROW_IO ("Cannot find partition: " + ss . str( ));
+    AMOS_THROW_IO ("Cannot open partition: " + ss . str( ));
 
-  //-- Open INFO partition
-  ifstream ifo;
-  ifo . open (ss . str( ) . c_str( ));
-  if ( !ifo )
-    AMOS_THROW_IO ("Could not open partition: " + ss . str( ));
-
-  //-- Parse the INFO partition
   try {
+    
+    //-- Open INFO partition
+    ifstream ifo;
+    ifo . open (ss . str( ) . c_str( ));
+    if ( !ifo )
+      AMOS_THROW_IO ("Could not open partition: " + ss . str( ));
+    
+    //-- Open MAP partition (if exists)
+    if ( !access ((pfx + MAP_STORE_SUFFIX) . c_str( ), F_OK) )
+      {
+	ifstream mapin;
+	mapin . open ((pfx + MAP_STORE_SUFFIX) . c_str( ));
+	if ( !mapin )
+	  AMOS_THROW_IO ("Could not open partition: " +
+			 pfx + MAP_STORE_SUFFIX);
+
+	idmap_m . read (mapin);
+
+	if ( !mapin )
+	  AMOS_THROW_IO ("Error reading partition: " +
+			 pfx + MAP_STORE_SUFFIX);
+
+	mapin . close( );
+      }
+    
+    //-- Parse the INFO partition
     getline (ifo, line, '=');
     ifo >> line;
     if ( line != BANK_VERSION )
