@@ -254,7 +254,7 @@ int  main
 
            if  (Read [id1] . mate != -1 || Read [id2] . mate != -1)
                {
-                fprintf (stderr, "ERROR:  Missing mate\n");
+                fprintf (stderr, "ERROR:  Duplicate mate\n");
                 fprintf (stderr, "id1 = %d  mate = %d\n", id1, Read [id1] . mate);
                 fprintf (stderr, "id2 = %d  mate = %d\n", id2, Read [id2] . mate);
                 exit (EXIT_FAILURE);
@@ -400,6 +400,7 @@ int  main
    Print_Colour_Headers ();
 
 
+   // Still Need to Do:
    // Add to  contig_pos  contigs that are not there already but
    // are in the same scaffold as contigs that are in it.
 
