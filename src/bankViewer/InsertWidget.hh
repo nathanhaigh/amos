@@ -40,6 +40,7 @@ public slots:
   void setZoom(int);
   void refreshCanvas();
   void setConnectMates(bool);
+  void setPartitionTypes(bool);
 
 signals:
   void setStatus(const QString & message);
@@ -59,6 +60,7 @@ private:
   QCanvasRectangle * m_tilingVisible;
 
   int m_connectMates;
+  int m_partitionTypes;
 
   // from insert canvas
   void drawTile(AMOS::Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state);

@@ -20,6 +20,7 @@ public slots:
   void contigChanged();
   void toggleItem(int id);
   void toggleConnectMates();
+  void togglePartitionTypes();
 
 signals:
   void setGindex(int gindex);
@@ -27,6 +28,7 @@ signals:
   void setTilingVisibleRange(int, int);
   void refreshCanvas();
   void setConnectMates(bool);
+  void setPartitionTypes(bool);
 
 private:
 
@@ -38,6 +40,7 @@ private:
   QPopupMenu * m_optionsmenu;
 
   int m_connectmatesid;
+  int m_partitiontypesid;
 };
 
 #endif

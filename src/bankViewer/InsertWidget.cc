@@ -28,6 +28,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_hoffset = 0;
   m_connectMates = 1;
+  m_partitionTypes = 1;
 
   refreshCanvas();
 
@@ -340,14 +341,14 @@ void InsertWidget::refreshCanvas()
   // For all types, or when !m_connectMates, do exactly 1 pass
   for (unsigned int type = 0; type < types.size(); type++)
   {
-    if (m_connectMates && !m_types[types[type]].second) { continue; }
+    if (m_partitionTypes && !m_types[types[type]].second) { continue; }
 
     vector<int> layout;
 
     // For all inserts of this type (or if type enabled)
     for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
     {
-      if (m_connectMates)
+      if (m_partitionTypes)
       {
         if ((*ii)->m_state != types[type]) { continue; }
       }
@@ -388,7 +389,7 @@ void InsertWidget::refreshCanvas()
       layoutoffset += layout.size() + 1;
     }
 
-    if (!m_connectMates)
+    if (!m_partitionTypes)
     {
       break;
     }
@@ -401,6 +402,12 @@ void InsertWidget::refreshCanvas()
 void InsertWidget::setConnectMates(bool b)
 {
   m_connectMates = b;
+  refreshCanvas();
+}
+
+void InsertWidget::setPartitionTypes(bool b)
+{
+  m_partitionTypes = b;
   refreshCanvas();
 }
 

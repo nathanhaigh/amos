@@ -69,6 +69,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_connectmatesid = m_optionsmenu->insertItem("&Connect Mates", this, SLOT(toggleConnectMates()));
   m_optionsmenu->setItemChecked(m_connectmatesid, true);
 
+  m_partitiontypesid = m_optionsmenu->insertItem("&Partition Types", this, SLOT(togglePartitionTypes()));
+  m_optionsmenu->setItemChecked(m_partitiontypesid, true);
+
   // Main Widget
   InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
   setCentralWidget(iw);
@@ -99,6 +102,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(setConnectMates(bool)),
           iw,   SLOT(setConnectMates(bool)));
+
+  connect(this, SIGNAL(setPartitionTypes(bool)),
+          iw,   SLOT(setPartitionTypes(bool)));
 }
 
 void InsertWindow::contigChanged()
@@ -129,4 +135,12 @@ void InsertWindow::toggleConnectMates()
   m_optionsmenu->setItemChecked(m_connectmatesid, b);
 
   emit setConnectMates(b);
+}
+
+void InsertWindow::togglePartitionTypes()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_partitiontypesid);
+  m_optionsmenu->setItemChecked(m_partitiontypesid, b);
+
+  emit setPartitionTypes(b);
 }
