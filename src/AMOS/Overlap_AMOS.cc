@@ -117,6 +117,19 @@ void Overlap_t::readMessage (const Message_t & msg)
 	  AMOS_THROW_ARGUMENT ("Invalid score format");
 	ss . clear( );
       }
+
+    if ( msg . exists (F_FLAG) )
+      {
+	char fA, fB, fC;
+	ss . str (msg . getField (F_FLAG));
+	ss >> fA >> fB >> fC;
+	setFlagA ( fA == '1' );
+	setFlagB ( fB == '1' );
+	setFlagC ( fC == '1' );
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid flag format");
+	ss . clear( );
+      }
   }
   catch (ArgumentException_t) {
     
@@ -204,6 +217,13 @@ void Overlap_t::writeMessage (Message_t & msg) const
     ss << score_m;
     msg . setField (F_SCORE, ss . str( ));
     ss . str (NULL_STRING);
+
+    if ( isFlagA( )  ||  isFlagB( )  ||  isFlagC( ) )
+      {
+	ss << isFlagA( ) << isFlagB( ) << isFlagC( );
+	msg . setField (F_FLAG, ss . str( ));
+	ss . str (NULL_STRING);
+      }
   }
   catch (ArgumentException_t) {
 

@@ -39,6 +39,7 @@ const NCode_t   F_CONTIGEDGE   = Encode ("cte");
 const NCode_t   F_CONTIGLINK   = Encode ("ctl");
 const NCode_t   F_COUNT        = Encode ("cnt");
 const NCode_t   F_EID          = Encode ("eid");
+const NCode_t   F_FLAG         = Encode ("flg");
 const NCode_t   F_FRAGMENT     = Encode ("frg");
 const NCode_t   F_GAPS         = Encode ("gap");
 const NCode_t   F_GROUP        = Encode ("grp");

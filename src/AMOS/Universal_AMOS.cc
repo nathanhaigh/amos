@@ -40,6 +40,18 @@ void Universal_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_COMMENT) )
       comment_m = msg . getField (F_COMMENT);
+
+    if ( msg . exists (F_FLAG) )
+      {
+	char fA, fB;
+	ss . str (msg . getField (F_FLAG));
+	ss >> fA >> fB;
+	setFlagA ( fA == '1' );
+	setFlagB ( fB == '1' );
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid flag format");
+	ss . clear( );
+      }
   }
   catch (ArgumentException_t) {
     
@@ -71,6 +83,13 @@ void Universal_t::writeMessage (Message_t & msg) const
 
     if ( !comment_m . empty( ) )
       msg . setField (F_COMMENT, comment_m);
+
+    if ( isFlagA( )  ||  isFlagB( ) )
+      {
+	ss << isFlagA( ) << isFlagB( );
+	msg . setField (F_FLAG, ss . str( ));
+	ss . str (NULL_STRING);
+      }
   }
   catch (ArgumentException_t) {
 
