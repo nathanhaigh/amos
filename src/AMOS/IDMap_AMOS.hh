@@ -191,11 +191,9 @@ public:
   //--------------------------------------------------- lookup -----------------
   //! \brief Lookup the value of a certain key
   //!
-  //! Returns NULL_ID if key == NULL_ID
+  //! Returns the value of a certain key, or NULL_ID if the key does not exist.
   //!
   //! \param key The key of the value to lookup
-  //! \pre key exists in the map
-  //! \throws ArgumentException_t
   //! \return The ID of the lookup value
   //!
   ID_t lookup (ID_t key);

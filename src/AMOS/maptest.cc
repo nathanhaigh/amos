@@ -21,6 +21,11 @@ int main ( )
 
     bnk . open ("__testbank__");
     msg . clear( );
+
+    cerr << bnk . map( ) . lookup (0) << endl;
+    cerr << bnk . map( ) . lookup (1) << endl;
+    cerr << bnk . map( ) . lookup (10000) << endl;
+
     bnk . map( ) . writeMessage (msg);
     msg . write (cout);
     bnk . close( );

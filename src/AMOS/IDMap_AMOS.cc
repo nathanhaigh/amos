@@ -55,15 +55,12 @@ void IDMap_t::insert (ID_t key, ID_t val)
 //----------------------------------------------------- lookup -----------------
 ID_t IDMap_t::lookup (ID_t key)
 {
-  if ( key == NULL_ID )
-    return NULL_ID;
-
   HashNode_t * curr = hashfunc (key);
 
   while ( curr -> key != key )
     {
       if ( curr -> next == NULL )
-	AMOS_THROW_ARGUMENT ("key does not exist");
+	return NULL_ID;
       curr = curr -> next;
     }
 
