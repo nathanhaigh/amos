@@ -7,8 +7,8 @@
 //!
 //! \todo validity checking?
 //! \todo stream error checking?
-//! \todo file locking? esp. for temporary banks?
 //! \todo logging?
+//! \todo thread-safe?
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "Bank_AMOS.hh"
@@ -220,7 +220,7 @@ void Bank_t::concat (Bank_t & source)
   Bankable_t::BankableFlags_t flags;
   Size_t tail = source . netFixSize( ) + sizeof (Size_t);
 
-  Size_t buffer_size = fix_size_m;
+  Size_t buffer_size = source . fix_size_m;
   char * buffer = (char *) SafeMalloc (buffer_size);
 
   std::streampos vpos;
