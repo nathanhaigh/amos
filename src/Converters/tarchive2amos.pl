@@ -155,10 +155,8 @@ while (my ($lib, $mean) = each %means){
 
     print FRAG "{LIB\n";
     print FRAG "act:A\n";
-    print FRAG "eid:$libid\n";
-    print FRAG "com:\n";
-    print FRAG "$lib\n";
-    print FRAG ".\n";
+    print FRAG "iid:$libid\n";
+    print FRAG "eid:$lib\n";
     print FRAG "{DST\n";
     print FRAG "mea:$mean\n";
     print FRAG "std:$stdevs{$lib}\n";
@@ -172,10 +170,8 @@ while (my ($frg, $lib) = each %ins2lib){
     $ins2id{$frg} = $insid;
     print FRAG "{FRG\n";
     print FRAG "act:A\n";              # ADD
-    print FRAG "eid:$insid\n";     
-    print FRAG "com:\n";
-    print FRAG "$frg\n";               # original fragment id
-    print FRAG ".\n";
+    print FRAG "iid:$insid\n";     
+    print FRAG "eid:$frg\n";           # external fragment id
     print FRAG "lib:$lib2id{$lib}\n";  
     print FRAG "typ:I\n";              # INSERT
     print FRAG "}\n";
@@ -232,10 +228,11 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     my $seqparse = new TIGR::ParseFasta(\*SEQ);
     my $qualparse = new TIGR::ParseFasta(\*QUAL, ">", " ");
 
-    my ($fhead, $frec) = $seqparse->getRecord(); 
-    my ($qhead, $qrec) = $qualparse->getRecord();
+    my $fhead; my $frec;
+    my $qhead; my $qrec;
 
-    do {
+    while (($fhead, $frec) = $seqparse->getRecord()) {
+	($qhead, $qrec) = $qualparse->getRecord();
 	$fhead =~ /^(\S+) ?(\S+)?/;
 	my $fid = $1;
 	my $fidname = $2;
@@ -321,8 +318,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		next;
 	    }
 	}
-	    if ($seq_rend - $seq_lend < $MINSEQ){
-		if (! defined $silent){
+	if ($seq_rend - $seq_lend < $MINSEQ){
+	    if (! defined $silent){
 		print "skipping sequence $fidname since it's short\n";
 	    }
 	    delete $seqId{$fidname};
@@ -337,8 +334,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 
 	print FRAG "{RED\n";                # read
 	print FRAG "act:A\n";               # ADD
-	print FRAG "eid:$recId\n";          
-	print FRAG "com:\n$fidname\n.\n";
+	print FRAG "iid:$recId\n";          
+	print FRAG "eid:$fidname\n";
 	print FRAG "seq:\n";
 	$frec =~ s/[^actgnACTGN]/N/g;
 	for (my $s = 0; $s < $seqlen; $s += 60){
@@ -358,7 +355,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	print FRAG "clr:$seq_lend,$seq_rend\n";
 	print FRAG "}\n";
 
-    } while (($fhead, $frec) = $seqparse->getRecord(), ($qhead, $qrec) = $qualparse->getRecord());
+    }
     
     if (! defined $silent){
 	print STDERR "done\n";
@@ -379,7 +376,7 @@ while (my ($ins, $lib) = each %ins2lib){
 	}
 	my $id = getId();
 	print FRAG "{MTP\n";
-	print FRAG "eid:$id\n";
+	print FRAG "iid:$id\n";
 	print FRAG "rd1:$seqId{$end5{$ins}}\n";
 	print FRAG "rd2:$seqId{$end3{$ins}}\n";
 	print FRAG "com:\n";
@@ -441,6 +438,9 @@ sub EndTag
 	    if (! defined $silent){
 		print "trace has no name???\n";
 	    }
+	}
+	if (defined $clears && ! defined $clr{$seqId}){
+	    return; # only handle reads with a clear range
 	}
 	if (! defined $library){
 	    if (! defined $silent){
