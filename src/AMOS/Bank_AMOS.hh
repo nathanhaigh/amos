@@ -563,7 +563,9 @@ public:
   //! Once a Bank is created with a certain NCode, only objects compatible
   //! with that NCode can be used with that Bank. For instance, if a Bank
   //! is constructed with 'Bank_t mybank (Bank_k::READ);', only Read_t
-  //! objects could be used with mybank.
+  //! objects could be used with mybank. Also, if the IBankable object has
+  //! a static 'BankCode( )' function included, the user can construct a Bank
+  //! of these objects with 'Bank_t mybank (Read_t::BankCode( ))'.
   //!
   //! \param type The type of Bank to construct
   //! \return void
