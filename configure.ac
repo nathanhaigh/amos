@@ -186,7 +186,7 @@ case "${host}" in
   *x86_64*)
     case "${gcc_version}" in
       *3.3.*)
-        echo "WARNING! GCC ${gcc_version} has bugs that effect 64bit computing"
+        echo "WARNING! GCC ${gcc_version} has bugs that affect x86_64 AMOS"
         echo "   please install a newer version of GCC and reconfigure"
         ;;
     esac
