@@ -1926,13 +1926,14 @@ void  Multi_Alignment_t :: Reset_From_Votes
 
    if  (max_b_hi < cons_len)
        consensus . resize (max_b_hi);
+
    if  (min_b_lo > 0)
        {
+        consensus . erase (0, min_b_lo);
         for  (i = 0;  i < n;  i ++)
           {
            align [i] . b_lo -= min_b_lo;
            align [i] . b_hi -= min_b_lo;
-           consensus . erase (0, min_b_lo);
           }
        }
 
