@@ -154,12 +154,12 @@ public:
 
 
   //--------------------------------------------------- getEnds ----------------
-  //! \brief Returns the IDs of the forward and reverse ends of the Fragment
+  //! \brief Returns the IDs of the 5' and 3' ends of the Fragment
   //!
-  //! Returns the IDs of the reads that represent the forward and reverse
-  //! ends of the fragment. Useful for retrieving mate-pair information.
+  //! Returns the IDs of the reads that represent the 5' and 3' ends of the
+  //! fragment. Useful for retrieving mate-pair information.
   //!
-  //! \return The forward and reverse ends respectively
+  //! \return The 5' and 3' ends respectively
   //!
   std::pair<ID_t, ID_t> getEnds ( ) const
   {
@@ -201,12 +201,12 @@ public:
 
 
   //--------------------------------------------------- setEnds ----------------
-  //! \brief Sets the IDs of the forward and reverse ends of the Fragment
+  //! \brief Sets the IDs of the 5' and 3' ends of the Fragment
   //!
-  //! Set the IDs of the reads that represent the forward and reverse
-  //! ends of the Fragment. Useful in storing mate-pair information.
+  //! Set the IDs of the reads that represent the 5' and 3' ends of the
+  //! Fragment. Useful in storing mate-pair information.
   //!
-  //! \param ends The foward and reverse ends respectively
+  //! \param ends The 5' and 3' ends respectively
   //! \return void
   //!
   void setEnds (std::pair<ID_t, ID_t> ends)
