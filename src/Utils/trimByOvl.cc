@@ -68,13 +68,13 @@ int main(int argc, char **argv)
   // main assumption here is that the incoming ids are a contiguous set of 
   // integers starting at 0 (or 1)
   vector<vector<olap_t> > olapmap;
-  vector<long int> howmany(0);
+  vector<long int> how_many(0);
 
   if (argc == 3){
     olapmap.reserve(strtol(argv[2], NULL, 10) + 1);
     olapmap.resize(strtol(argv[2], NULL, 10) + 1);
-    howmany.reserve(strtol(argv[2], NULL, 10) + 1);
-    howmany.resize(strtol(argv[2], NULL, 10) + 1, 0);
+    how_many.reserve(strtol(argv[2], NULL, 10) + 1);
+    how_many.resize(strtol(argv[2], NULL, 10) + 1, 0);
   }
 
   ifstream inFile(argv[1]);
@@ -107,15 +107,15 @@ int main(int argc, char **argv)
       continue;
     }
     
-    howmany[idA]++;
-    howmany[idB]++;
+    how_many[idA]++;
+    how_many[idB]++;
   }
 
 
   cerr << "Reserving memory" << endl;
-  for (int i = 0; i < howmany.size(); i++){
-    olapmap[i].reserve(howmany[i]);
-    //    olapmap[i].resize(howmany[i]);
+  for (int i = 0; i < how_many.size(); i++){
+    olapmap[i].reserve(how_many[i]);
+    //    olapmap[i].resize(how_many[i]);
   }
   
 
