@@ -13,6 +13,237 @@
 
 
 
+void  Vote_t :: Incr_After
+    (char ch)
+
+//  Add 1 to the  after  count in this  Vote_t  for  ch .
+
+  {
+   char  * p;
+
+   p = strchr (ALPHABET, tolower (ch));
+   if  (p == NULL)
+       {
+        sprintf (Clean_Exit_Msg_Line, "ERROR:  Bad character %c (ASCII %d)\n",
+                 ch, ch);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   after [p - ALPHABET] ++;
+
+   return;
+  }
+
+
+
+void  Vote_t :: Incr_Blank
+    (void)
+
+//  Add 1 to the blank entry in the  here  counts of this  Vote_t .
+
+  {
+   here [ALPHABET_SIZE] ++;
+
+   return;
+  }
+
+
+
+void  Vote_t :: Incr_By
+    (char ch, bool with_blank)
+
+//  Add 1 to the  here  count in this  Vote_t  for  ch .
+//  If  with_blank  is true then also add 1 to the after
+//  count for a blank.
+
+  {
+   char  * p;
+
+   p = strchr (ALPHABET, tolower (ch));
+   if  (p == NULL)
+       {
+        sprintf (Clean_Exit_Msg_Line, "ERROR:  Bad character %c (ASCII %d)\n",
+                 ch, ch);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   here [p - ALPHABET] ++;
+   if  (with_blank)
+       after [ALPHABET_SIZE] ++;
+
+   return;
+  }
+
+
+
+char  Vote_t :: Max_After_Char
+    (void)
+
+//  Return the character corresponding to the maximum count
+//  in  here .  If all zeroes, return a blank.
+
+  {
+   int  i, max;
+
+   max = 0;
+   for  (i = 1;  i <= ALPHABET_SIZE;  i ++)
+     if  (after [max] < after [i])
+         max = i;
+
+   if  (after [max] == 0 || max == ALPHABET_SIZE)
+       return  ' ';
+     else
+       return  ALPHABET [max];
+  }
+
+
+
+char  Vote_t :: Max_Here_Char
+    (void)
+
+//  Return the character corresponding to the maximum count
+//  in  after .  If all zeroes, return a blank.
+
+  {
+   int  i, max;
+
+   max = 0;
+   for  (i = 1;  i <= ALPHABET_SIZE;  i ++)
+     if  (here [max] < here [i])
+         max = i;
+
+   if  (here [max] == 0 || max == ALPHABET_SIZE)
+       return  ' ';
+     else
+       return  ALPHABET [max];
+  }
+
+
+
+void  Vote_t :: Set_To
+    (char ch, bool with_blank)
+
+//  Make the counts in this  Vote_t  all zero except set the
+//   here  count for  ch  to  1 .  If  with_blank  is true then
+//  also set the  after  count for a blank to  1 .
+
+  {
+   int  i;
+   char  * p;
+
+   for  (i = 0;  i <= ALPHABET_SIZE;  i ++)
+     here [i] = after [i] = 0;
+
+   p = strchr (ALPHABET, tolower (ch));
+   if  (p == NULL)
+       {
+        sprintf (Clean_Exit_Msg_Line, "ERROR:  Bad character %c (ASCII %d)\n",
+                 ch, ch);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   here [p - ALPHABET] = 1;
+   if  (with_blank)
+       after [ALPHABET_SIZE] = 1;
+
+   return;
+  }
+
+
+
+void  Vote_t :: Set_Zero
+    (void)
+
+//  Make the counts in this  Vote_t  all zero.
+
+  {
+   int  i;
+
+   for  (i = 0;  i <= ALPHABET_SIZE;  i ++)
+     here [i] = after [i] = 0;
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Incr_Votes
+    (vector <Vote_t> & vote, char * a)
+
+//  Use the entries in the alignemnt to increment the entries in  vote
+//  that correspond to the  b  string in the alignment.
+//  Vote values are from the string  a .
+
+  {
+   int  d, i, j, k, n;
+
+
+   i = a_lo;
+   j = b_lo;
+   n = delta . size ();
+
+   // First do the entries in the delta encoding
+   for  (d = 0;  d < n;  d ++)
+     {
+      int  extent;
+
+      if  (Verbose > 3)
+          fprintf (stderr, "d = %d  delta = %d\n", d, delta [d]);
+
+      extent = abs (delta [d]) - 1;
+
+      for  (k = 0;  k < extent;  k ++)
+        {
+         vote [j] . Incr_By (a [i], (k < extent - 1));
+         i ++;
+         j ++;
+        }
+
+      if  (delta [d] < 0)
+          {
+           if  (extent > 0)
+               vote [j - 1] . Incr_After (a [i]);
+           i ++;
+          }
+        else
+          {
+           vote [j] . Incr_Blank ();
+           j ++;
+          }
+     }
+
+   if  (Verbose > 3)
+       {
+        fprintf (stderr, "i = %d  a_hi = %d  j = %d  b_hi = %d\n",
+                 i, a_hi, j, b_hi);
+       }
+
+   // Now finish off what's left
+   while  (i < a_hi && j < b_hi)
+     {
+      vote [j] . Incr_By (a [i], (j < b_hi - 1));
+      i ++;
+      j ++;
+     }
+
+   if  (i != a_hi)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+                 "ERROR:  Bad alignment end  i = %d  a_hi = %d", i, a_hi);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+   if  (j != b_hi)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+                 "ERROR:  Bad alignment end  j = %d  b_hi = %d", j, b_hi);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   return;
+  }
+
+
+
 void  Alignment_t :: Print
     (FILE * fp, const char * a, const char * b, int width)
 
@@ -40,7 +271,7 @@ void  Alignment_t :: Print
      {
       int  extent;
 
-      if  (Verbose > 1)
+      if  (Verbose > 3)
           fprintf (stderr, "d = %d  delta = %d\n", d, delta [d]);
 
       extent = abs (delta [d]) - 1;
@@ -226,6 +457,711 @@ void  Alignment_t :: Set_From_VS_Matrix
 
 
 
+void  Alignment_t :: Set_Inserts
+    (vector <short> & v)  const
+
+//  Make sure the values in  v  are large enough to hold the number
+//  of inserts specified in this alignment.
+
+  {
+   int  ct;
+   int  d, j, n;
+
+   j = b_lo;
+   n = delta . size ();
+   ct = 0;
+
+   for  (d = 0;  d < n;  d ++)
+     {
+      j += abs (delta [d]) - 1;
+
+      if  (delta [d] != -1)
+          ct = 0;
+      if  (delta [d] < 0)
+          {
+           ct ++;
+           if  (ct > v [j])
+               v [j] = ct;
+          }
+        else
+          j ++;
+     }
+
+   return;
+  }
+
+
+
+void  Alignment_t :: Set_To_Identity
+    (int len)
+
+//  Set this alignment to represent an identity between
+//  two strings of length  len .
+
+  {
+   a_lo = b_lo = 0;
+   a_hi = b_hi = len;
+   errors = 0;
+
+   delta . clear ();
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Convert_From
+    (const Alignment_t & ali, vector <int> & tr)
+
+//  Convert the alignment in  ali  (which represents
+//  indels w.r.t. an ungapped sequence) to one
+//  representing positions w.r.t. a consensus
+//  with gaps inserted.  Thus the delta will be
+//  a sequence of positive numbers indicating
+//  the positions in the b string that have no
+//  match to the a string.
+//   tr  is a translation vector that maps the ungapped
+//  positions in the b string to the positions after
+//  gaps are inserted.
+
+  {
+   int  ct;
+   int  d, i, j, k, n, p, q, r;
+
+   i = a_lo = ali . a_lo;
+   j = ali . b_lo;
+   a_hi = ali . a_hi;
+   p = b_lo = tr [ali . b_lo];
+   errors = ali . errors;
+
+   skip . clear ();
+
+   n = ali . delta . size ();
+   ct = 0;
+
+   if  (Verbose > 2)
+       {
+        int  i;
+
+        fprintf (stderr, "Convert_From:  a_lo = %d  a_hi = %d\n", a_lo, a_hi);
+        fprintf (stderr, "  Delta:\n");
+        for  (i = 0;  i < n;  i ++)
+          fprintf (stderr, "  %3d:  %5d\n", i, ali . delta [i]);
+        for  (i = ali . b_lo;  i < ali . b_hi;  i ++)
+          fprintf (stderr, "  tr [%3d] = %5hd\n", i, tr [i]);
+       }
+
+   // adjust b_lo if alignment begins with insertions
+   for  (d = 0;  d < n && ali . delta [d] == -1;  d ++)
+     {
+      i ++;
+      b_lo --;
+     }
+   if  (d > 0 && (j == 0 || tr [j] - d <= tr [j - 1]))
+       {
+        sprintf (Clean_Exit_Msg_Line,
+                 "ERROR:  Convert_From had too many initial inserts\n"
+                 "  d = %d  j = %d  tr [j] = %d  tr [j - 1] = %d\n",
+                 d, j, tr [j], j > 0 ? tr [j - 1] : 0);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   for  ( ;  d < n;  d ++)
+     {
+      k = abs (ali . delta [d]) - 1;
+      for  (q = 0;  q < k;  q ++)
+        {
+         if  (j > ali . b_lo)
+             for  (r = tr [j - 1] + 1 + ct;  r < tr [j];  r ++)
+               {
+                skip . push_back (p);
+                p ++;
+               }
+         i ++;
+         j ++;
+         p ++;
+         ct = 0;
+        }
+
+      if  (ali . delta [d] != -1)
+          ct = 0;
+      if  (ali . delta [d] < 0)
+          {
+           ct ++;
+           i ++;
+           p ++;
+          }
+        else
+          {
+           for  (q = tr [j - 1];  q < tr [j];  q ++)
+             {
+              skip . push_back (p);
+              p ++;
+             }
+           j ++;
+          }
+     }
+
+   // Now finish off the remaining indel-free tail
+   while  (i < a_hi && j < ali . b_hi)
+     {
+      if  (j > ali . b_lo)
+          for  (q = tr [j - 1] + 1 + ct;  q < tr [j];  q ++)
+            {
+             skip . push_back (p);
+             p ++;
+            }
+      i ++;
+      j ++;
+      p ++;
+      ct = 0;
+     }
+
+   b_hi = p;
+
+   if  (Verbose > 2)
+       {
+        int  i, n;
+
+        fprintf (stderr, "Convert_From:  a_lo = %d  a_hi = %d\n", a_lo, a_hi);
+        fprintf (stderr, "  b_lo = %d  b_hi = %d\n", b_lo, b_hi);
+        fprintf (stderr, "  Skip:\n");
+        n = skip . size ();
+        for  (i = 0;  i < n;  i ++)
+          fprintf (stderr, "  %3d:  %5d\n", i, skip [i]);
+       }
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Dump
+    (FILE * fp)
+
+//  Print to  fp  the entries of this alignment.
+
+  {
+   fprintf (fp, "### a_lo = %d  a_hi = %d  b_lo = %d  b_hi = %d  error = %d\n",
+            a_lo, a_hi, b_lo, b_hi, errors);
+   fprintf (fp, "Skip:\n");
+   Dump_Skip (fp);
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Dump_Skip
+    (FILE * fp)
+
+//  Print to  fp  the  skip  entries of this alignment.
+
+  {
+   int  i, n;
+
+   n = skip . size ();
+   for  (i = 0;  i < n;  i ++)
+     fprintf (fp, "  %3d: %5d\n", i, skip [i]);
+
+   return;
+  }
+
+
+
+void  Gapped_Alignment_t :: Print_Subalignment_Line
+    (char * buff, int b1, int b2, char * s, int & a1, int & a2)
+
+//  Write into  buff  the portion of this alignment of string  s
+//  that lies over subrange  b1 .. b2  of a gapped consensus string.
+//  Set  a1  and  a2  to the range of this sequence that corresponds
+//  to what is printed.
+
+  {
+   int  ct, limit;
+   int  d, i, n;
+
+   ct = 0;   // keep track of what's been written into  buff
+   a1 = a2 = -1;  // indicate no match unless changed
+   
+   // fill buff with blanks to get to the start of characters
+   limit = Min (b_lo, b2);
+   while  (b1 < limit)
+     {
+      buff [ct ++] = ' ';
+      b1 ++;
+     }
+
+   if  (b1 == b2)
+       return;
+
+   n = skip . size ();
+
+   for  (d = 0;  d < n && skip [d] < b1;  d ++)
+     ;
+   
+   i = a1 = a_lo + b1 - b_lo - d;
+
+   limit = Min (b_hi, b2);
+   while  (b1 < limit)
+     {
+      if  (d < n && b1 == skip [d])
+          {
+           buff [ct ++] = '-';
+           d ++;
+          }
+        else
+          buff [ct ++] = s [i ++];
+      b1 ++;
+     }
+
+   a2 = i;
+
+   // pad with spaces if alignment ends before b2
+   while  (b1 < b2)
+     {
+      buff [ct ++] = ' ';
+      b1 ++;
+     }
+
+   buff [ct] = '\0';
+
+   return;
+  }
+
+
+
+void  Multi_Alignment_t :: Clear
+    (void)
+
+//  Make this multi-alignment empty.
+
+  {
+   consensus . assign ("");
+   align . clear ();
+
+   return;
+  }
+
+
+
+void  Multi_Alignment_t :: Print_Alignments_To_Consensus
+    (FILE * fp, vector <char *> s)
+
+//  Show the individual alignments of the strings in  s  to
+//  the consensus sequence of this alignment
+
+  {
+   const char  * con;
+   int  i, n;
+
+   n = align . size ();
+   con = consensus . c_str ();
+
+   for  (i = 0;  i < n;  i ++)
+     {
+      fprintf (fp, "\nString #%d:\n", i);
+
+      align [i] . Print (fp, s [i], con);
+     }
+
+   return;
+  }
+
+
+
+void  Multi_Alignment_t :: Reset_From_Votes
+    (const vector <char *> & s,
+     int offset_delta, double error_rate,
+     vector <Vote_t> & vote, bool & changed)
+
+//  Reset the consensus string in this multialignment from the
+//  votes in  vote .  Redo the individual alignments of the
+//  strings, which are in  s .  Allow  offset_delta  play either
+//  direction at the start when re-doing the alignments and
+//  assume an error-rate of  error_rate .  Save the votes of
+//  the new alignments in  vote .  Set  changed  true  iff the new
+//  consensus string differs from the previous one.
+
+  {
+   string  new_cons;
+   char  * cons;
+   int  adj, cons_len;
+   int  i, n;
+
+   n = vote . size ();
+
+   vector <short>  adjust (n + 1, 0);
+   adj = 0;
+       // Keep track of adjustments in positions caused by indels so
+       // that when alignments are recalculated, we can start at
+       // the correct place
+
+   for  (i = 0;  i < n;  i ++)
+     {
+      char  ch;
+
+      adjust [i] = adj;
+
+      ch = vote [i] . Max_Here_Char ();
+      if  (ch != ' ')
+          new_cons . push_back (ch);
+        else
+          adj --;
+
+      ch = vote [i] . Max_After_Char ();
+      if  (ch != ' ')
+          {
+           new_cons . push_back (ch);
+           adj ++;
+          }
+     }
+
+   changed = (consensus != new_cons);
+   if  (! changed)
+       return;
+
+   consensus = new_cons;
+   cons = strdup (new_cons . c_str ());
+   cons_len = new_cons . length ();
+
+   vote . resize (cons_len);
+   for  (i = 0;  i < cons_len;  i ++)
+     vote [i] . Set_Zero ();
+
+   n = s . size ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      bool  matched;
+      int  error_limit, len, off;
+
+      len = strlen (s [i]);
+      error_limit = Binomial_Cutoff (len, error_rate, 1e-6);
+
+      // need to adjust b_lo here because of indels ****
+
+      if  (Verbose > 3)
+          {
+           char  tag [1000];
+
+           sprintf (tag, "cons");
+           Fasta_Print (stderr, cons, tag);
+
+           sprintf (tag, "s[%d]  offset = %d", i, align [i] . b_lo);
+           Fasta_Print (stderr, s [i], tag);
+
+           fprintf (stderr, "error_limit = %d  b_lo = %d\n",
+                    error_limit, align [i] . b_lo);
+          }
+
+      off = align [i] . b_lo + adjust [align [i] . b_lo];
+      matched
+          = Substring_Match_VS
+                (s [i], len, cons, cons_len,
+                 off - offset_delta, off + offset_delta,
+                 error_limit, align [i]);
+      
+      if  (! matched)
+          {
+           fprintf (stderr, "Failed on string %d in  Reset_From_Votes\n", i);
+           exit (EXIT_FAILURE);
+          }
+
+      align [i] . Incr_Votes (vote, s [i]);
+     }
+
+   free (cons);
+
+   return;
+  }
+
+
+
+void  Multi_Alignment_t :: Set_Consensus
+    (char * s)
+
+//  Make this multialignment's  consensus  string be  s .
+
+  {
+   consensus . assign (s);
+  }
+
+
+
+void  Multi_Alignment_t :: Set_Initial_Consensus
+    (const vector <char *> & s, const vector <int> & offset,
+     int offset_delta, double error_rate,
+     vector <Vote_t> & vote)
+
+//  Create an initial consensus string in this multialignment from the
+//  strings in  s  with nominal relative offsets in  offset .  Offsets
+//  are allowed to vary by +/-  offset_delta  and the allowed error rate
+//  in alignments is  error_rate .  Set  vote  to the votes of the strings
+//  at each position of the consensus.  Create the consensus by greedily
+//  tiling the strings in order, appending the extension of any
+//  string that aligns past the end of the consensus.  Store the
+//  initial alignments in this consensus, too.
+
+  {
+   Vote_t  v;
+   Alignment_t  ali;
+   char  * cons;
+   int  cons_len;
+   int  num_strings;
+   int  prev_off;
+   int  i, j;
+
+   Clear ();
+   vote . clear ();
+
+   cons = strdup (s [0]);
+   cons_len = strlen (cons);
+   for  (j = 0;  j < cons_len - 1;  j ++)
+     {
+      v . Set_To (s [0] [j], true);
+      vote . push_back (v);
+     }
+   v . Set_To (s [0] [cons_len - 1], false);
+   vote . push_back (v);
+
+   ali . Set_To_Identity (cons_len);
+   align . push_back (ali);
+
+   num_strings = s . size ();
+   prev_off = 0;
+       // where the last string started in the consensus
+
+
+   for  (i = 1;  i < num_strings;  i ++)
+     {
+      bool  matched;
+      int  error_limit, len, exp_olap_len;
+
+      len = strlen (s [i]);
+      exp_olap_len = Min (cons_len - prev_off - offset [i], len);
+
+      error_limit = Binomial_Cutoff (exp_olap_len, error_rate, 1e-6);
+
+      matched = Overlap_Match_VS
+              (s [i], len, cons, cons_len,
+               prev_off + offset [i] - offset_delta,
+               prev_off + offset [i] + offset_delta, 0, error_limit, ali);
+
+      if  (! matched)
+          {
+           fprintf (stderr, "Failed on string %d in  Set_Initial_Consensus\n", i);
+           exit (EXIT_FAILURE);
+          }
+
+      ali . Incr_Votes (vote, s [i]);
+
+      if  (ali . a_hi < len)
+          {  // s [i] extends past the end of the current consensus
+           int  extra;
+
+           extra = len - ali . a_hi;
+           cons = (char *) Safe_realloc (cons, cons_len + extra + 1,
+                                         __FILE__, __LINE__);
+           strcpy (cons + cons_len, s [i] + ali . a_hi);
+           cons_len += extra;
+
+           for  (j = ali . a_hi;  j < len - 1;  j ++)
+             {
+              v . Set_To (s [i] [j], true);
+              vote . push_back (v);
+             }
+           v . Set_To (s [i] [len - 1], false);
+           vote . push_back (v);
+
+           ali . a_hi = len;
+           ali . b_hi = cons_len;
+          }
+
+      align . push_back (ali);
+
+      prev_off = ali . b_lo;
+     }
+
+   if  (Verbose > 1)
+       {
+        fprintf (stderr, "*** Votes ***\n");
+        fprintf (stderr, "%5s: %2s  ------ Here -------  ------ After ------\n",
+                 "Pos", "Ch");
+        for  (j = 0;  j < cons_len;  j ++)
+          fprintf (stderr, "%5d:  %c  %3d %3d %3d %3d %3d  %3d %3d %3d %3d %3d\n",
+                   j, cons [j],
+                   vote [j] . here [0], vote [j] . here [1], 
+                   vote [j] . here [2], vote [j] . here [3], 
+                   vote [j] . here [4],
+                   vote [j] . after [0], vote [j] . after [1], 
+                   vote [j] . after [2], vote [j] . after [3], 
+                   vote [j] . after [4]);
+       }
+
+   consensus . assign (cons);
+   free (cons);
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Convert_Consensus
+    (const Multi_Alignment_t & ma, const vector <short> & v)
+
+//  Convert the (ungapped) consensus string in  ma  to a gapped
+//  one in this gapped multialignment by inserting extra '-'s.
+//  The number of hyphens to insert at each position is specified
+//  in  v .
+
+  {
+   int  len;
+   int  i, j, n;
+
+   len = ma . consensus . length ();
+   n = v . size ();
+
+   if  (n <= len)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Gapped_Multi_Alignment_t :: Convert_Consensus\n"
+            "  insert vector shorter than consensus string\n"
+            "  len = %d  insert size = %d",
+            len, int (v . size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   consensus . assign ("");
+   for  (i = 0;  i < len;  i ++)
+     {
+      for  (j = 0;  j < v [i];  j ++)
+        consensus . push_back ('-');
+      consensus . push_back (ma . consensus [i]);
+     }
+
+   for  (j = 0;  j < v [len];  j ++)
+     consensus . push_back ('-');
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Convert_From
+    (const Multi_Alignment_t & ma)
+
+//  Convert the mulitalignment  ma  (where the consensus has no gaps)
+//  to a gapped multialignment where the consensus has gaps (enough
+//  to hold all insertions of all strings in the multialignment).
+
+  {
+   Gapped_Alignment_t  ga;
+   int  len;
+   int  i, n;
+
+   len = 1 + ma . consensus . length ();
+
+   vector <short>  insert (len, 0);
+   vector <int>  tr (len, 0);
+
+   n = ma . align . size ();
+   for  (i = 0;  i < n;  i ++)
+     ma . align [i] . Set_Inserts (insert);
+
+   Convert_Consensus (ma, insert);
+
+   // build translation table for each position in ungapped consensus
+   // to its corresponding position in the gapped consensus
+   tr [0] = insert [0];
+   for  (i = 1;  i < len;  i ++)
+     tr [i] = tr [i - 1] + insert [i] + 1;
+
+   align . clear ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      ga . Convert_From (ma . align [i], tr);
+      align . push_back (ga);
+     }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Print
+    (FILE * fp, const vector <char *> & s, int width)
+
+//  Display this multialignment to file  fp  using
+//   width  characters per line.   s  holds the strings
+//  the alignment references.
+
+  {
+   char  * buff;
+   int  lo, hi, len;
+   int  i, n;
+
+   if  (s . size () != align . size ())
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Multi_Align . Print called with %d strings and %d alignments",
+            int (s . size ()), int (align . size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   n = s . size ();
+   len = consensus . length ();
+   buff = (char *) Safe_malloc (5 + len, __FILE__, __LINE__);
+
+   // assume for now the alignments are sorted in ascending order by
+   // b_lo value
+
+   for  (lo = 0;  lo < len;  lo += width)
+     {
+      int  a_lo, a_hi;
+
+      hi = Min (lo + width, len);
+
+      for  (i = 0;  i < n;  i ++)
+        if  (Range_Intersect (align [i] . b_lo, align [i] . b_hi, lo, hi))
+            {
+             align [i] . Print_Subalignment_Line
+                           (buff, lo, hi, s [i], a_lo, a_hi);
+             fprintf (fp, "%4d:  %s  (%d-%d)\n", i, buff, a_lo, a_hi);
+            }
+
+      Print_Consensus (buff, lo, hi);
+      fprintf (fp, "%4s:  %s  (%d-%d)\n", "cons", buff, lo, hi);
+      if  (hi < len)
+          fprintf (fp, "\n");
+     }
+   
+   free (buff);
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Print_Consensus
+    (char * buff, int b1, int b2)
+
+//  Write into  buff  the portion of this consensus string
+//  that lies within the subrange  b1 .. b2 .
+
+  {
+   int  i, ct;
+
+   ct = 0;
+   for  (i = b1;  i < b2;  i ++)
+     buff [ct ++] = consensus [i];
+
+   buff [ct] = '\0';
+
+   return;
+  }
+
+
+
 int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len)
 
@@ -238,9 +1174,9 @@ int  Exact_Prefix_Match
    if  (Verbose > 3)
        {
         fprintf (stderr, "In Exact_Prefix_Match  max_len = %d\n", max_len);
-        printf ("s :\n");
+        fprintf (stderr, "s :\n");
         Fasta_Print (stderr, s, NULL);
-        printf ("t :\n");
+        fprintf (stderr, "t :\n");
         Fasta_Print (stderr, t, NULL);
        }
 
@@ -253,6 +1189,280 @@ int  Exact_Prefix_Match
        }
 
    return  i;
+  }
+
+
+
+void  Multi_Align
+    (vector <char *> s, vector <int> offset, int offset_delta, double error_rate,
+     Gapped_Multi_Alignment_t & gma)
+
+//  Create multialignment in  ma  of strings  s  each of which has
+//  a nominal offset from its predecessor of  offset .   offset_delta  is
+//  the number of positions by which the offset is allowed to vary in
+//  either direction.   error_rate  is the maximum expected error rate
+//  in alignments between strings.  It should be twice the expected error
+//  rate to the real reference string to allow for independent errors
+//  in separate strings.  The value of  offset [0]  must be zero.
+
+  {
+   Multi_Alignment_t  ma;
+   vector <Vote_t>  vote;
+   bool  changed;
+   int  ct, n;
+
+   n = s . size ();
+   if  (n == 0)
+       Clean_Exit ("ERROR:  Multi_Align called with no strings", __FILE__, __LINE__);
+   if  (n != int (offset . size ()))
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Multi_Align called with %d strings and %d offsets",
+            n, int (offset . size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+   if  (offset [0] != 0)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Multi_Align called with non-zero  offset [0] = %d",
+            offset [0]);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote);
+
+   ct = 0;
+   do
+     {
+      ma . Reset_From_Votes (s, 5, error_rate, vote, changed);
+      ct ++;
+     }  while  (ct < 3 && changed);
+
+   if  (Verbose > 3)
+       ma . Print_Alignments_To_Consensus (stderr, s);
+
+   gma . Convert_From (ma);
+
+   return;
+  }
+
+
+
+bool  Overlap_Match_VS
+    (const char * s, int s_len, const char * t, int t_len,
+     int lo_off, int hi_off, int min_len, int max_errors,
+     Alignment_t & align)
+
+//  Return whether there is an overlap between string  s  and string
+//   t  starting at a position in the range  lo_off .. hi_off  wrt
+//  string  t .  These values must be non-negative.  The overlap region
+//  can have at most  max_errors  errors and must be at least  min_len
+//  long in both  s  and  t  (length can differ because of indels).
+//  The length of  s  is  s_len  and the length of  t  is  t_len .
+//  If successful, the alignment is stored in  align .
+//  Uses  Vishkin_Schieber (e * n)  algorithm.  Errors are inserts,
+//  deletes or substitutions.  Returns the best match found, i.e.,
+//  the match with the lowest errors/overlap_len ratio, where
+//  overlap_len is the average of the lengths of the two strings'
+//  overlap regions.
+
+  {
+   static Match_Extent_Entry_t  * space = NULL;
+   static int  space_size = 0;
+   static Match_Extent_Entry_t  * * tab = NULL;
+   static int  tab_size = 0;
+   int  space_needed;
+   bool  found;
+   int  complete_match, possible_len;
+   int  e, i, best_i;
+
+   if  (Verbose > 3)
+       {
+        fprintf (stderr, "In Overlap_Match_VS  lo_off = %d  hi_off = %d\n",
+                 lo_off, hi_off);
+       }
+
+   lo_off = Max (0, lo_off);
+   hi_off = Min (hi_off, t_len - min_len);
+   
+   if  (hi_off < lo_off || s_len < min_len)
+       return  false;     // No match possible
+
+   if  (max_errors < 0)
+       {
+        sprintf (Clean_Exit_Msg_Line, "ERROR:  max_errors = %d < 0", max_errors);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   // allocate more memory if necessary
+   space_needed = (1 + max_errors) * (max_errors + 1 + hi_off - lo_off);
+   if  (space_needed > space_size)
+       {
+        space_size = space_needed;
+        space = (Match_Extent_Entry_t *) Safe_realloc
+                    (space, space_size * sizeof (Match_Extent_Entry_t),
+                     __FILE__, __LINE__);
+       }
+   if  (1 + max_errors > tab_size)
+       {
+        tab_size = 1 + max_errors;
+        tab = (Match_Extent_Entry_t * *) Safe_realloc
+                    (tab, tab_size * sizeof (Match_Extent_Entry_t *),
+                     __FILE__, __LINE__);
+       }
+
+   // tab  points to the logical start of each row of
+   // (truncated) pyramidal array with entries for  (lo_off .. hi_off)
+   // in the zeroth row and extending one to the left and one to the
+   // right every row after that
+
+   tab [0] = space - lo_off;
+
+   // find how far can match at each spot with zero errors
+   // Could do better maybe using KMP here
+   for  (i = lo_off;  i <= hi_off;  i ++)
+     {
+      possible_len = Min (s_len, t_len - i);
+      tab [0] [i] . len = Exact_Prefix_Match (s, t + i, possible_len);
+      tab [0] [i] . from = MATCH_FROM_TOP;
+      if  (tab [0] [i] . len == possible_len)
+          {   // match found
+           align . Set_Exact (0, i, possible_len);
+           return  true;
+          }
+     }
+
+   // now progressively try more errors
+   found = false;
+   best_i = lo_off - max_errors - 2;
+
+   for  (e = 1;  e <= max_errors && ! found;  e ++)
+     {
+      int  prev_match;
+
+      tab [e] = tab [e - 1] + hi_off - lo_off + 2 * e;
+
+      i = lo_off - e;
+      complete_match = Min (s_len, t_len - i);
+      prev_match = tab [e - 1] [i + 1] . len;
+      possible_len = Min (s_len - prev_match - 1,
+                                     t_len - i - prev_match - 1);
+      tab [e] [i] . len = prev_match + 1
+          + Exact_Prefix_Match (s + prev_match + 1, t + i + prev_match + 1,
+                                possible_len);
+      tab [e] [i] . from = MATCH_FROM_NE;
+      if  (tab [e] [i] . len == complete_match)
+          {
+           found = true;
+           best_i = i;
+          }
+      if  (Verbose > 3)
+          fprintf (stderr, "e = %d  i = %d  NE  len = %d  poss_len = %d\n",
+                   e, i, tab [e] [i] . len, possible_len);
+
+      for  (i = lo_off - e + 1;  i <= hi_off + e - 1;  i ++)
+        {
+         int  next;
+
+         complete_match = Min (s_len, t_len - i);
+
+         prev_match = tab [e - 1] [i] . len;
+         possible_len = Min (s_len - prev_match - 1,
+                             t_len - i - prev_match - 1);
+         tab [e] [i] . len = prev_match + 1
+             + Exact_Prefix_Match (s + prev_match + 1, t + i + prev_match + 1,
+                                   possible_len);
+         tab [e] [i] . from = MATCH_FROM_TOP;
+         if  (Verbose > 3)
+             fprintf (stderr, "e = %d  i = %d  TOP  len = %d  poss_len = %d\n",
+                      e, i, tab [e] [i] . len, possible_len);
+         
+         if  (i > lo_off - e + 1)
+             {
+              prev_match = tab [e - 1] [i - 1] . len;
+              possible_len = Min (s_len - prev_match,
+                                    t_len - i - prev_match);
+              next = prev_match
+                        + Exact_Prefix_Match
+                              (s + prev_match, t + i + prev_match,
+                               possible_len);
+              if  (Verbose > 3)
+                  fprintf (stderr, "e = %d  i = %d  NW  len = %d  poss_len = %d\n",
+                           e, i, next, possible_len);
+              if  (next > tab [e] [i] . len)
+                  {
+                   tab [e] [i] . len = next;
+                   tab [e] [i] . from = MATCH_FROM_NW;
+                  }
+             }
+
+         if  (i < hi_off + e - 1)
+             {
+              prev_match = tab [e - 1] [i + 1] . len;
+              possible_len = Min (s_len - prev_match - 1,
+                                    t_len - i - prev_match - 1);
+              next = prev_match + 1
+                        + Exact_Prefix_Match
+                              (s + prev_match + 1, t + i + prev_match + 1,
+                               possible_len);
+              if  (Verbose > 3)
+                  fprintf (stderr, "e = %d  i = %d  NE  len = %d  poss_len = %d\n",
+                           e, i, next, possible_len);
+              if  (next > tab [e] [i] . len)
+                  {
+                   tab [e] [i] . len = next;
+                   tab [e] [i] . from = MATCH_FROM_NE;
+                  }
+             }
+
+         // Prefer MATCH_FROM_TOP if there are consecutive matches
+         if  (tab [e] [i] . len == complete_match)
+             {
+              if  (tab [e] [i] . from == MATCH_FROM_TOP)
+                  {
+                   best_i = i;
+                   found = true;
+                   break;
+                  }
+              else if  (! found)
+                  {
+                   found = true;
+                   best_i = i;
+                  }
+             }
+         else if  (found)
+            break;
+        }
+
+      if  (! found)
+          {
+           i = hi_off + e;
+           complete_match = Min (s_len, t_len - i);
+           prev_match = tab [e - 1] [i - 1] . len;
+           possible_len = Min (s_len - prev_match,
+                                          t_len - i - prev_match);
+           tab [e] [i] . len = prev_match
+               + Exact_Prefix_Match (s + prev_match, t + i + prev_match,
+                                     possible_len);
+           tab [e] [i] . from = MATCH_FROM_NW;
+           if  (tab [e] [i] . len == complete_match)
+               {
+                best_i = i;
+                found = true;
+               }
+          }
+     }
+
+   if  (Verbose > 1)
+       Print_VS_Table (stderr, tab, lo_off, hi_off + 1, e, best_i, found);
+
+   if  (found)
+       {
+        align . Set_From_VS_Matrix (tab, e - 1, best_i);
+        return  true;
+       }
+
+   return  false;
   }
 
 
@@ -356,6 +1566,23 @@ void  Print_VS_Table
      }
   }
 
+
+
+bool  Range_Intersect
+    (int a_lo, int a_hi, int b_lo, int b_hi)
+
+//  Return true iff the substring range  a_lo .. a_hi  overlaps the
+//  substring range  b_lo .. b_hi .
+
+  {
+   if  (a_lo == a_hi)
+       return  false;    // a is empty
+
+   if  (a_hi <= b_lo || a_lo >= b_hi)
+       return  false;
+
+   return  true;
+  }
 
 
 
@@ -556,3 +1783,6 @@ bool  Substring_Match_VS
 
    return  false;
   }
+
+
+
