@@ -69,18 +69,16 @@ public:
     { i_m = i; }
     Universal_t & operator*() const
     { return **i_m; }
-    operator Universal_t * () const
-    { return *i_m; }
     Universal_t * operator->() const
     { return *i_m; }
     iterator & operator++()
-    { ++ i_m; }
+    { ++ i_m; return *this; }
     iterator operator++(int)
-    {
-      iterator tmp = *this;
-      this->operator++();
-      return tmp;
-    }
+    { iterator tmp = *this; this->operator++(); return tmp; }
+    bool operator== (iterator x)
+    { return i_m == x . i_m; }
+    bool operator!= (iterator x)
+    { return i_m != x . i_m; }
   };
 
   class const_iterator
@@ -95,18 +93,16 @@ public:
     { i_m = i; }
     const Universal_t & operator*() const
     { return **i_m; }
-    operator const Universal_t * () const
-    { return *i_m; }
     const Universal_t * operator->() const
     { return *i_m; }
     const_iterator & operator++()
-    { ++ i_m; }
+    { ++ i_m; return *this; }
     const_iterator operator++(int)
-    {
-      const_iterator tmp = *this;
-      this->operator++();
-      return tmp;
-    }
+    { const_iterator tmp = *this; this->operator++(); return tmp; }
+    bool operator== (const_iterator x)
+    { return i_m == x . i_m; }
+    bool operator!= (const_iterator x)
+    { return i_m != x . i_m; }
   };
 
   
@@ -150,7 +146,7 @@ public:
   //!
   //! \return An iterator to the end of the set
   //!
-  iterator end ( ) { return iterator (objs_m . end ( )); }
+  iterator end ( ) { return iterator (objs_m . end( )); }
   const_iterator end ( ) const { return const_iterator (objs_m . end( )); }
 
 
@@ -197,6 +193,8 @@ public:
     return *(i -> second);
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   const Universal_t & operator[] (NCode_t ncode) const
   {
     HASHMAP::hash_map<NCode_t, Universal_t *>::const_iterator i;
@@ -206,11 +204,15 @@ public:
     return *(i -> second);
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   Universal_t & operator[] (const std::string & ncode)
   {
     return operator[] (Encode (ncode));
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   const Universal_t & operator[] (const std::string & ncode) const
   {
     return operator[] (Encode (ncode));
@@ -255,18 +257,16 @@ public:
     { i_m = i; }
     Bank_t & operator*() const
     { return **i_m; }
-    operator Bank_t * () const
-    { return *i_m; }
     Bank_t * operator->() const
     { return *i_m; }
     iterator & operator++()
-    { ++ i_m; }
+    { ++ i_m; return *this; }
     iterator operator++(int)
-    {
-      iterator tmp = *this;
-      this->operator++();
-      return tmp;
-    }
+    { iterator tmp = *this; this->operator++(); return tmp; }
+    bool operator== (iterator x)
+    { return i_m == x . i_m; }
+    bool operator!= (iterator x)
+    { return i_m != x . i_m; }
   };
 
   class const_iterator
@@ -281,18 +281,16 @@ public:
     { i_m = i; }
     const Bank_t & operator*() const
     { return **i_m; }
-    operator const Bank_t * () const
-    { return *i_m; }
     const Bank_t * operator->() const
     { return *i_m; }
     const_iterator & operator++()
-    { ++ i_m; }
+    { ++ i_m; return *this; }
     const_iterator operator++(int)
-    {
-      const_iterator tmp = *this;
-      this->operator++();
-      return tmp;
-    }
+    { const_iterator tmp = *this; this->operator++(); return tmp; }
+    bool operator== (const_iterator x)
+    { return i_m == x . i_m; }
+    bool operator!= (const_iterator x)
+    { return i_m != x . i_m; }
   };
 
   
@@ -386,6 +384,8 @@ public:
     return *(i -> second);
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   const Bank_t & operator[] (NCode_t ncode) const
   {
     HASHMAP::hash_map<NCode_t, Bank_t *>::const_iterator i;
@@ -395,16 +395,19 @@ public:
     return *(i -> second);
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   Bank_t & operator[] (const std::string & ncode)
   {
     return operator[] (Encode (ncode));
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   const Bank_t & operator[] (const std::string & ncode) const
   {
     return operator[] (Encode (ncode));
   }
-
 };
 
 
@@ -445,18 +448,16 @@ public:
     { i_m = i; }
     BankStream_t & operator*() const
     { return **i_m; }
-    operator BankStream_t * () const
-    { return *i_m; }
     BankStream_t * operator->() const
     { return *i_m; }
     iterator & operator++()
-    { ++ i_m; }
+    { ++ i_m; return *this; }
     iterator operator++(int)
-    {
-      iterator tmp = *this;
-      this->operator++();
-      return tmp;
-    }
+    { iterator tmp = *this; this->operator++(); return tmp; }
+    bool operator== (iterator x)
+    { return i_m == x . i_m; }
+    bool operator!= (iterator x)
+    { return i_m != x . i_m; }
   };
 
   class const_iterator
@@ -471,18 +472,16 @@ public:
     { i_m = i; }
     const BankStream_t & operator*() const
     { return **i_m; }
-    operator const BankStream_t * () const
-    { return *i_m; }
     const BankStream_t * operator->() const
     { return *i_m; }
     const_iterator & operator++()
-    { ++ i_m; }
+    { ++ i_m; return *this; }
     const_iterator operator++(int)
-    {
-      const_iterator tmp = *this;
-      this->operator++();
-      return tmp;
-    }
+    { const_iterator tmp = *this; this->operator++(); return tmp; }
+    bool operator== (const_iterator x)
+    { return i_m == x . i_m; }
+    bool operator!= (const_iterator x)
+    { return i_m != x . i_m; }
   };
 
   
@@ -576,6 +575,8 @@ public:
     return *(i -> second);
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   const BankStream_t & operator[] (NCode_t ncode) const
   {
     HASHMAP::hash_map<NCode_t, BankStream_t *>::const_iterator i;
@@ -585,16 +586,19 @@ public:
     return *(i -> second);
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   BankStream_t & operator[] (const std::string & ncode)
   {
     return operator[] (Encode (ncode));
   }
 
+
+  //--------------------------------------------------- operator[] -------------
   const BankStream_t & operator[] (const std::string & ncode) const
   {
     return operator[] (Encode (ncode));
   }
-
 };
 
 } // namespace AMOS

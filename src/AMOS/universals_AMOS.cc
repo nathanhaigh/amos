@@ -39,7 +39,7 @@ UniversalSet_t::UniversalSet_t ( )
 
   //-- Set up the hash
   for ( iterator i = begin( ); i != end( ); ++ i )
-    hash_m [i -> getNCode( )] = i;
+    hash_m [i -> getNCode( )] = &(*i);
 
   //-- Make sure everything went OK, e.g. all the NCodes were unique
   assert ( objs_m . size( ) == hash_m . size( ) );
@@ -51,7 +51,7 @@ UniversalSet_t::UniversalSet_t ( )
 UniversalSet_t::~UniversalSet_t ( )
 {
   for ( iterator i = begin( ); i != end( ); ++ i )
-    delete (Universal_t *)i;
+    delete &(*i);
 }
 
 
@@ -78,7 +78,7 @@ BankSet_t::BankSet_t ( )
 
   //-- Set up the hash
   for ( bi = begin( ); bi != end( ); ++ bi )
-    hash_m [bi -> getType( )] = bi;
+    hash_m [bi -> getType( )] = &(*bi);
 
   //-- Make sure everything went OK, e.g. all the NCodes were unique
   assert ( bnks_m . size( ) == hash_m . size( ) );
@@ -91,7 +91,7 @@ BankSet_t::~BankSet_t ( )
   for ( iterator i = begin( ); i != end( ); ++ i )
     {
       i -> close( );
-      delete (Bank_t *)i;
+      delete &(*i);
     }
 }
 
@@ -127,7 +127,7 @@ BankStreamSet_t::BankStreamSet_t ( )
 
   //-- Set up the hash
   for ( bi = begin( ); bi != end( ); ++ bi )
-    hash_m [bi -> getType( )] = bi;
+    hash_m [bi -> getType( )] = &(*bi);
 
   //-- Make sure everything went OK, e.g. all the NCodes were unique
   assert ( bnks_m . size( ) == hash_m . size( ) );
@@ -140,7 +140,7 @@ BankStreamSet_t::~BankStreamSet_t ( )
   for ( iterator i = begin( ); i != end( ); ++ i )
     {
       i -> close( );
-      delete (BankStream_t *)i;
+      delete &(*i);
     }
 }
 
