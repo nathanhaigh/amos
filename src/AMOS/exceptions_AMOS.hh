@@ -248,7 +248,7 @@ public:
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump Exception_t info to an ostream
 //!
-inline std::ostream & operator<< (std::ostream & out, Exception_t & e)
+inline std::ostream & operator<< (std::ostream & out, const Exception_t & e)
 {
   out << "WHAT: " << e . what( ) << std::endl;
   out << "LINE: " << e . line( ) << std::endl;
@@ -260,7 +260,7 @@ inline std::ostream & operator<< (std::ostream & out, Exception_t & e)
 //----------------------------------------------------- operator<< -------------
 //! \brief Dump exception info to an ostream
 //!
-inline std::ostream & operator<< (std::ostream & out, std::exception & e)
+inline std::ostream & operator<< (std::ostream & out, const std::exception & e)
 {
   out << "WHAT: " << e . what( ) << std::endl;
   return out;

@@ -14,7 +14,6 @@ using namespace std;
 
 
 
-
 //================================================ BankStream_t ================
 const Size_t BankStream_t::DEFAULT_BUFFER_SIZE = 1024;
 const Size_t BankStream_t::MAX_OPEN_PARTITIONS = 2;
@@ -23,8 +22,8 @@ const Size_t BankStream_t::MAX_OPEN_PARTITIONS = 2;
 //----------------------------------------------------- ignore -----------------
 BankStream_t & BankStream_t::ignore (bankstreamoff n)
 {
-  if ( !is_open_m )
-    return *this;
+  if ( ! is_open_m  ||  ! (mode_m & B_READ) )
+    AMOS_THROW_IO ("Cannot ignore: bank not open for reading");
 
   ID_t lid;
   bankstreamoff off;
@@ -38,7 +37,7 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
       partition = localizeBID (lid);
       off = lid * fix_size_m;
       if ( (std::streamoff)partition -> fix . tellg( ) != off )
-	partition -> fix . seekg (off, fstream::beg);
+	partition -> fix . seekg (off, ios::beg);
  
       partition -> fix . ignore (sizeof (bankstreamoff));
       readLE (partition -> fix, &bf);
@@ -55,9 +54,9 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
 
 
 //----------------------------------------------------- open -------------------
-void BankStream_t::open (const std::string & dir)
+void BankStream_t::open (const std::string & dir, BankMode_t mode)
 {
-  Bank_t::open (dir);
+  Bank_t::open (dir, mode);
   init( );
   
   const IDMap_t::HashTriple_t * tp = NULL;
@@ -70,12 +69,12 @@ void BankStream_t::open (const std::string & dir)
 //----------------------------------------------------- operator>> -------------
 BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 {
-  if ( ! is_open_m )
-    AMOS_THROW_IO ("Cannot fetch from closed bank");
+  if ( ! is_open_m  ||  ! (mode_m & B_READ) )
+    AMOS_THROW_IO ("Cannot stream fetch: bank not open for reading");
   if ( banktype_m != obj.getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot stream fetch: incompatible object type");
   if ( eof( ) )
-    AMOS_THROW_ARGUMENT ("Cannot fetch from stream with eof flag raised");
+    AMOS_THROW_ARGUMENT ("Cannot stream fetch: beyond end of stream");
 
   ID_t lid;
   BankFlags_t flags;
@@ -98,7 +97,7 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
       partition = localizeBID (lid);
       off = lid * fix_size_m;
       if ( (std::streamoff)partition -> fix . tellg( ) != off )
-	partition -> fix . seekg (off, fstream::beg);
+	partition -> fix . seekg (off, ios::beg);
 
       readLE (partition -> fix, &vpos);
       readLE (partition -> fix, &flags);
@@ -121,6 +120,9 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
   obj . flags_m = flags;
   obj . readRecord (partition -> fix, partition -> var);
 
+  if ( ! partition -> fix . good( )  ||  ! partition -> var . good( ) )
+    AMOS_THROW_IO ("Unknown file read error in stream fetch, bank corrupted");
+
   return *this;
 }
 
@@ -128,10 +130,10 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 //--------------------------------------------------- operator<< -------------
 BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
 {
-  if ( ! is_open_m )
-    AMOS_THROW_IO ("Cannot append to closed bank");
+  if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
+    AMOS_THROW_IO ("Cannot stream append: bank not open for writing");
   if ( banktype_m != obj.getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot stream append: incompatible object type");
 
   //-- Insert the ID triple into the map (may throw exception)
   triples_m . push_back
@@ -140,7 +142,7 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
   try {
     //-- Add another partition if necessary
     if ( last_bid_m == max_bid_m )
-      addPartition( );
+      addPartition (true);
 
     BankPartition_t * partition = getLastPartition( );
 
@@ -161,10 +163,15 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
     writeLE (partition -> fix, &vsize);
 
     //-- If fix_size is not yet known, calculate it
+    Size_t fsize = (std::streamoff)partition -> fix . tellp( ) - fpos;
     if ( fix_size_m == 0 )
-      fix_size_m = (std::streamoff)partition -> fix . tellp( ) - fpos;
-    else if ( fix_size_m != (std::streamoff)partition -> fix . tellp( ) - fpos )
-      AMOS_THROW_IO ("Unknown write error in bank stream append");
+      fix_size_m = fsize;
+
+    if ( fix_size_m != fsize  ||
+	 ! partition -> fix . good( )  ||
+	 ! partition -> var . good( ) )
+      AMOS_THROW_IO
+	("Unknown file write error in stream append, bank corrupted");
 
     ++ nbids_m;
     ++ last_bid_m;
@@ -175,5 +182,6 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
     idmap_m . remove (obj . eid_m . c_str( ));
     throw;
   }
+
   return *this;
 }

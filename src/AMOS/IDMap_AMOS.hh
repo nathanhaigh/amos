@@ -342,7 +342,7 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  //! \brief Clears all object data, reinitializes the object
+  //! \brief Clears all object data
   //!
   //! Clears data, but does not resize the hash table.
   //!

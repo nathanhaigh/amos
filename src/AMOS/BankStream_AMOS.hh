@@ -125,9 +125,9 @@ public:
 
 
   //--------------------------------------------------- create -----------------
-  void create (const std::string & dir)
+  void create (const std::string & dir, BankMode_t mode = B_READ | B_WRITE)
   {
-    Bank_t::create (dir);
+    Bank_t::create (dir, mode);
     init( );
   }
 
@@ -144,6 +144,22 @@ public:
   bool empty ( ) const { return Bank_t::empty( ); }
 
 
+  //--------------------------------------------------- eof --------------------
+  //! \brief Checks if the end of stream flag has been set
+  //!
+  //! Returns true if a previous IO operation set the end of stream flag,
+  //! returns false if there have been no previous end of stream failures. The
+  //! eof flag only applies to fetch operations, append operations will never
+  //! raise the eof flag. Will return true if bank is closed.
+  //!
+  //! \return true if eof flag has been set, false otherwise
+  //!
+  bool eof ( ) const
+  {
+    return ( is_open_m ? eof_m : true );
+  }
+
+
   //--------------------------------------------------- exists -----------------
   bool exists (const std::string & dir) { return Bank_t::exists(dir); }
 
@@ -154,10 +170,6 @@ public:
 
   //--------------------------------------------------- existsIID --------------
   bool existsIID (ID_t iid) const { return Bank_t::existsIID(iid); }
-
-
-  //--------------------------------------------------- flush ------------------
-  void flush ( ) { Bank_t::flush( ); }
 
 
   //--------------------------------------------------- getIDMap ---------------
@@ -172,29 +184,15 @@ public:
   NCode_t getType ( ) const { return Bank_t::getType( ); }
 
 
-  //--------------------------------------------------- eof --------------------
-  //! \brief Checks if the end of stream flag has been set
-  //!
-  //! Returns true if a previous IO operation set the end of stream flag,
-  //! returns false if there have been no previous end of stream failures. The
-  //! eof flag only applies to fetch operations, append operations will never
-  //! raise the eof flag.
-  //!
-  //! \return true if eof flag has been set, false otherwise
-  //!
-  bool eof ( ) const
-  {
-    return eof_m;
-  }
-
-
   //--------------------------------------------------- ignore -----------------
   //! \brief Ignores the next n stream objects
   //!
   //! Only slightly more efficient than fetching n records. Seeking past the
   //! end of stream will set the eof flag.
   //!
+  //! \pre The bank is open for reading
   //! \param n The number of objects to skip in the stream
+  //! \throws IOException_t
   //! \return The updated BankStream
   //!
   BankStream_t & ignore (bankstreamoff n);
@@ -213,7 +211,7 @@ public:
 
 
   //--------------------------------------------------- open -------------------
-  void open (const std::string & dir);
+  void open (const std::string & dir, BankMode_t mode = B_READ | B_WRITE);
 
 
   //--------------------------------------------------- seekg ------------------
@@ -223,22 +221,23 @@ public:
   //! BEGIN,CURR,END. Where BEGIN is the start of the stream, CURR is the
   //! current position in the stream and END is one past the last record in
   //! the stream. Only slightly more efficient than fetching the same number
-  //! of records. Seeking past the end of stream will set the eof flag. Has no
-  //! effect on a closed bank.
+  //! of records. Seeking past the end of stream will set the eof flag.
   //!
+  //! \pre The bank is open for reading
   //! \param off Number of records to offset from dir
   //! \param dir The position from which to begin offest
+  //! \throws IOException_t
   //! \return The updated BankStream
   //!
   BankStream_t & seekg (bankstreamoff off, bankseekdir dir)
   {
-    if ( is_open_m )
-      {
-	if ( dir == BEGIN ) curr_bid_m = 1;
-	else if ( dir == END ) curr_bid_m = last_bid_m + 1;
-	// else dir == CURR, do nothing
-	ignore (off);
-      }
+    if ( ! is_open_m  ||  ! (mode_m & B_READ) )
+      AMOS_THROW_IO ("Cannot seekg: bank not open for reading");
+    
+    if ( dir == BEGIN ) curr_bid_m = 1;
+    else if ( dir == END ) curr_bid_m = last_bid_m + 1;
+    // else dir == CURR, do nothing
+    ignore (off);
     return *this;
   }
 
@@ -247,16 +246,20 @@ public:
   //! \brief Seeks to a different position in the BankStream
   //!
   //! This function is constant time. Seeking past the end of stream will set
-  //! the eof flag. Has no effect on a closed bank. The get pointer is the bank
-  //! index (BID) of the next object to be fetched.
+  //! the eof flag. The get pointer is the bank index (BID) of the next object
+  //! to be fetched.
   //!
+  //! \pre The bank is open for reading
   //! \param pos The stream position to seek to (1 based bank index)
+  //! \throws IOException_t
   //! \return The updated BankStream
   //!
   BankStream_t & seekg (ID_t pos)
   {
-    if ( is_open_m )
-      curr_bid_m = pos;
+    if ( ! is_open_m  ||  ! (mode_m & B_READ) )
+      AMOS_THROW_IO ("Cannot seekg: bank not open for reading");
+
+    curr_bid_m = pos;
     eof_m = !inrange( );
     return *this;
   }
@@ -301,7 +304,7 @@ public:
   //!
   operator bool ( ) const
   {
-    return !eof( );
+    return ! eof( );
   }
 
 
@@ -312,7 +315,7 @@ public:
   //!
   bool operator! ( ) const
   {
-    return eof( );
+    return eof ( );
   }
 
 
@@ -325,7 +328,7 @@ public:
   //! suffice since the stream returned from the fetch will be cast to a bool
   //! reflecting the success/failure of the operation.
   //!
-  //! \pre The bank is open
+  //! \pre The bank is open for reading
   //! \pre obj is compatible with the banktype
   //! \pre The eof flag is not set
   //! \throws ArgumentException_t
@@ -338,7 +341,7 @@ public:
   //--------------------------------------------------- operator<< -------------
   //! \brief Append a new object to the BankStream
   //!
-  //! \pre The bank is open
+  //! \pre The bank is open for writing
   //! \pre obj is compatible with the banktype
   //! \throws ArgumentException_t
   //! \throws IOException_t

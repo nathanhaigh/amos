@@ -83,10 +83,6 @@ int main (int argc, char ** argv)
     cerr << "done.\n" << Date( ) << endl << endl;
 
 
-    readbank . flush( );
-    readstream . flush( );
-
-
     cerr << "FETCH " << N
  	 << " random reads\n" << Date( ) << endl << "begin";
     for ( i = 1; i <= N; i ++ )

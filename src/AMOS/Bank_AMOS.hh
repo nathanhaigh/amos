@@ -8,12 +8,11 @@
 //-- IMPORTANT DEVELOPERS NOTE
 //! \note In an effort to ensure the binary-compatibility of AMOS banks
 //! all disk I/O should be independent of any system-dependent sizes or byte
-//! orders (endian-ness), such as 'int' which can vary in size and uint64_t
-//! which can be stored in either big- or little-endian byte order. To avoid
-//! these issues, only use types with known sizes (int32_t for example) and
-//! write/read atomic data with the readLE and writeLE methods which convert
-//! strongly-typed ints to and from little-endian byte order before writing/
-//! reading.
+//! orders (endian-ness), such as 'int' which can vary in size and be stored
+//! in either big- or little-endian byte order. To avoid these issues, use only
+//! types with known sizes (int32_t for example) and read/write atomic data
+//! with the readLE and writeLE methods which convert strongly-typed ints to
+//! and from little-endian byte order before reading/writing.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -25,24 +24,20 @@
 #include <cstdlib>
 #include <string>
 #include <fstream>
-#include <sstream>
 #include <vector>
 #include <deque>
 
 
-//-- DEVELOPERS NOTE
-// In an effort to ensure the binary-compatibility of AMOS banks:
-//
-// All disk I/O should be independent of any system-dependent sizes or byte
-// orders (endian-ness), such as 'int' which can vary in size and uint64_t
-// which can be stored in either big- or little-endian byte order. To avoid
-// these issues, only use types with known sizes (int32_t for example) and
-// write/read atomic data with the readLE and writeLE methods which convert
-// strongly-typed ints to and from little-endian byte order before writing/
-// reading.
-//
 
 namespace AMOS {
+
+typedef uint8_t BankMode_t;
+const BankMode_t B_READ  = 0x1;  //!< bank mode for reading from bank
+const BankMode_t B_WRITE = 0x2;  //!< bank mode for writing to bank
+const BankMode_t B_FORCE = 0x3;  //!< bank mode for ignoring bank locks
+
+
+
 
 //================================================ IBankable_t =================
 //! \brief Interface for classes that can be stored in an AMOS bank
@@ -295,7 +290,6 @@ public:
 
 
 
-
 //================================================ Bank_t ======================
 //! \brief An AMOS data bank for efficiently storing Bankable data types
 //!
@@ -324,14 +318,9 @@ class Bank_t
 
 protected:
 
-  static const Size_t DEFAULT_BUFFER_SIZE;
-  //!< IO buffer size
-
-  static const Size_t DEFAULT_PARTITION_SIZE;
-  //!< Default number of records per partition
-
-  static const Size_t MAX_OPEN_PARTITIONS;
-  //!< Allowable simultaneously open partitions
+  static const Size_t DEFAULT_BUFFER_SIZE;     //!< IO buffer size
+  static const Size_t DEFAULT_PARTITION_SIZE;  //!< records per partition
+  static const Size_t MAX_OPEN_PARTITIONS;     //!< open partitions
 
 
   //================================================ BankPartition_t ===========
@@ -371,6 +360,46 @@ protected:
   };
 
 
+  //--------------------------------------------------- addPartition -----------
+  //! \brief Adds a new partition to the partition list
+  //!
+  //! Simply appends a new partition to the list, and leaves it unopened. Will
+  //! throw an exception if unable to create/open partition. If the create flag
+  //! is set, new files will be created and truncated to zero, otherwise its
+  //! contents will be left undisturbed.
+  //!
+  //! \param create Create new file or truncate existing
+  //! \pre There are adequate permissions in the bank directory
+  //! \post npartitions_m and max_iid_m reflect new partitioning
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void addPartition (bool create);
+
+
+  //--------------------------------------------------- appendBID --------------
+  //! \brief Append an object, thus assigning it the last BID
+  //!
+  void appendBID (IBankable_t & obj);
+
+
+  //--------------------------------------------------- checkMode --------------
+  //! \brief validates a BankMode
+  //!
+  //! \param mode BankMode_t to check
+  //! \pre mode is a valid BankMode_t
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void checkMode (BankMode_t mode)
+  {
+    if ( ! mode & B_READ  &&  ! mode & B_WRITE )
+      AMOS_THROW_ARGUMENT ("Invalid BankMode: read and write not specified");
+    if ( mode & ~(B_READ | B_WRITE | B_FORCE) )
+      AMOS_THROW_ARGUMENT ("Invalid BankMode: unknown mode");
+  }
+
+
   //--------------------------------------------------- EIDtoBID ---------------
   //! \brief Converts an EID to a BID
   //!
@@ -379,49 +408,29 @@ protected:
   ID_t EIDtoBID (const char * eid) const;
 
 
-  //--------------------------------------------------- IIDtoBID ---------------
-  //! \brief Converts an IID to a BID
+  //--------------------------------------------------- fetchBID ---------------
+  //! \brief Fetch an object by BID
   //!
-  //! \throws ArgumentException_t
-  //!
-  ID_t IIDtoBID (ID_t iid) const;
-
-
-  //--------------------------------------------------- addPartition -----------
-  //! \brief Adds (appends) a new partition to the bank
-  //!
-  //! Simply appends a new partition to the bank, and leaves it unopened. Has
-  //! no effect on a closed bank.
-  //!
-  //! \param nuke Truncate existing partition file to zero
-  //! \pre There are adequate permissions in the bank directory
-  //! \post npartitions_m and max_iid_m reflect new partitioning
-  //! \throws IOException_t
-  //! \return void
-  //!
-  void addPartition (bool nuke = true);
+  void fetchBID (ID_t bid, IBankable_t & obj);
 
 
   //--------------------------------------------------- getPartition -----------
   //! \brief Returns the requested BankPartition, opening it if necessary
   //!
   //! Returns the requested (pre-existing) partition, opening it if necessary.
-  //! Basically does the same as the openPartition function, but is more
-  //! efficient if the partition has already been opened. If the requested
-  //! partition is greater than the current last partition, as many partitions
-  //! will be opened as necessary to fill the space between the new partition
-  //! and the old last partition.
   //!
   //! \param id The ID of the requested partition
   //! \pre There are adequate permissions in the bank directory
-  //! \post The requested partition is open and on the open queue
+  //! \pre The requested partition is within range (not checked)
+  //! \post The requested partition is open and on the queue
   //! \post A previously opened partition may have been closed to make room
   //! \throws IOException_t
+  //! \throws ArgumentException_t
+  //! \return The requested, opened partition
   //!
   BankPartition_t * getPartition (ID_t id)
   {
-    //-- If partition is in the partition list
-    if ( (Size_t)id < npartitions_m  &&  partitions_m [id] -> fix . is_open( ) )
+    if ( partitions_m [id] -> fix . is_open( ) )
       return partitions_m [id];
     else
       return openPartition (id);
@@ -440,35 +449,25 @@ protected:
   }
 
 
+  //--------------------------------------------------- IIDtoBID ---------------
+  //! \brief Converts an IID to a BID
+  //!
+  //! \throws ArgumentException_t
+  //!
+  ID_t IIDtoBID (ID_t iid) const;
+
+
   //--------------------------------------------------- init -------------------
   //! \brief Initializes bank variables
   //!
   void init ( );
 
 
-  //--------------------------------------------------- openPartition ----------
-  //! \brief Returns the requested BankPartition, opening it if necessary
-  //!
-  //! Opens a pre-existing, but perhaps closed BankPartition. If the requested
-  //! partition is greater than the current last partition, as many partitions
-  //! will be opened as necessary to fill the space between the new partition
-  //! and the old last partition.
-  //!
-  //! \param id The ID of the requested partition
-  //! \pre There are adequate permissions in the bank directory
-  //! \post The requested partition is open and on the queue
-  //! \post Put pointers are positioned at the end of the file
-  //! \post A previously opened partition may have been closed to make room
-  //! \throws IOException_t
-  //! \return The requested, opened partition
-  //!
-  BankPartition_t * openPartition (ID_t id);
-
-
   //--------------------------------------------------- localizeBID ------------
   //! \brief Gets the partition and local identifier
   //!
   //! \param bid Lookup the location of this BID (1 based index))
+  //! \pre bid is within range (not checked)
   //! \post bid will be adjusted to reference the returned partition
   //! \return The opened bank partition
   //!
@@ -480,16 +479,25 @@ protected:
   }
 
 
-  //--------------------------------------------------- appendBID --------------
-  //! \brief Append an object, thus assigning it the last BID
+  //--------------------------------------------------- lockIFO ----------------
+  //! \brief Obtains a file lock on the info store of the current Bank
   //!
-  void appendBID (IBankable_t & obj);
+  //! Obtains a file lock on the info store of the current Bank. Will throw an
+  //! exception if the lock failed either because the info store does not exist
+  //! or it took too long to obtain the lock. Has no effect if BankMode is not
+  //! set for file locks.
+  //!
+  //! \post The info store is locked
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void lockIFO ( );
 
 
-  //--------------------------------------------------- fetchBID ---------------
-  //! \brief Fetch an object by BID
+  //--------------------------------------------------- openPartition ----------
+  //! \brief Do not use this function, use getPartition instead
   //!
-  void fetchBID (ID_t bid, IBankable_t & obj);
+  BankPartition_t * openPartition (ID_t id);
 
 
   //--------------------------------------------------- removeBID --------------
@@ -502,6 +510,28 @@ protected:
   //! \brief Replace an object by BID
   //!
   void replaceBID (ID_t bid, IBankable_t & obj);
+
+
+  //--------------------------------------------------- touchFile --------------
+  //! \brief Opens or creates a file, throwing exception on failure
+  //!
+  void touchFile (const std::string & path, int mode, bool create);
+
+
+  //--------------------------------------------------- unlockIFO --------------
+  //! \brief Releases the file lock on the info store of the current Bank
+  //!
+  //! Releases the file lock on the info store of the current Bank. Will throw
+  //! an exception if the unlock failed either because the lock did not exist
+  //! or could not be released. Has no effect if BankMode is not set for file
+  //! locks.
+  //!
+  //! \pre The Bank is open
+  //! \pre The info store is currently locked
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void unlockIFO ( );
 
 
   //--------------------------------------------------- Bank_t -----------------
@@ -520,20 +550,30 @@ protected:
   Bank_t & operator= (const Bank_t & source);
 
 
+  //--------------------------------------------------- flush ------------------
+  void flush ( );
+
+
   NCode_t banktype_m;        //!< the type of objects stored in this bank
+
   Size_t buffer_size_m;      //!< size of the I/O buffer
   Size_t max_partitions_m;   //!< maximum number of open partitions
-  Size_t fix_size_m;         //!< size of entire fixed length record
+
   bool is_open_m;            //!< open status of the bank
+  BankMode_t mode_m;         //!< mode of the bank, B_READ | B_WRITE | B_FORCE
+
+  std::string store_dir_m;   //!< the disk store directory
+  std::string store_pfx_m;   //!< the disk store prefix (including dir)
+  Size_t fix_size_m;         //!< size of entire fixed length record
+  Size_t partition_size_m;   //!< records per disk store partition
+
   ID_t last_bid_m;           //!< the last bank bid (1 based)
   ID_t max_bid_m;            //!< maximum bid given the current partitioning
   ID_t nbids_m;              //!< number of non-deleted bids
+  Size_t npartitions_m;      //!< number of partitions
   std::deque <BankPartition_t *> opened_m;      //!< opened partitions
   std::vector<BankPartition_t *> partitions_m;  //!< all partitions
-  Size_t npartitions_m;      //!< number of partitions
-  Size_t partition_size_m;   //!< records per disk store partition
-  std::string store_dir_m;   //!< the disk store directory
-  std::string store_pfx_m;   //!< the disk store prefix (including dir)
+
   IDMap_t idmap_m;           //!< the IDMap IID <-> EID to BID
 
 
@@ -541,20 +581,20 @@ public:
 
   typedef int64_t bankstreamoff;  //!< 64-bit stream offset for largefiles
 
-  static const std::string BANK_VERSION;
-  //!< Current Bank version, may not be able to read from other versions
+  static const std::string BANK_VERSION;      //!< current bank version
 
-  static const std::string FIX_STORE_SUFFIX;
-  //!< Suffix for the fixed length store
-  
-  static const std::string IFO_STORE_SUFFIX;
-  //!< Suffix for the informational store
-  
-  static const std::string VAR_STORE_SUFFIX;
-  //!< Suffix for the variable length store
+  static const std::string FIX_STORE_SUFFIX;  //!< the fixed length store
+  static const std::string IFO_STORE_SUFFIX;  //!< the informational store
+  static const std::string LCK_STORE_SUFFIX;  //!< the ifo store file lock
+  static const std::string VAR_STORE_SUFFIX;  //!< the variable length store
+  static const std::string MAP_STORE_SUFFIX;  //!< the ID map store
+  static const std::string TMP_STORE_SUFFIX;  //!< the temporary store
 
-  static const std::string MAP_STORE_SUFFIX;
-  //!< Suffix for the ID map store
+  static const char WRITE_LOCK_CHAR    = 'w'; //!< write lock char
+  static const char READ_LOCK_CHAR     = 'r'; //!< read lock char
+  static const char OPEN_LOCK_CHAR     = 'o'; //!< open lock char
+  static const char VALID_STATE_CHAR   = '0'; //!< valid bank state char
+  static const char INVALID_STATE_CHAR = '1'; //!< invalid bank state char
 
 
   //--------------------------------------------------- Bank_t -----------------
@@ -604,7 +644,7 @@ public:
   //! it accessible only by iteration via a BankStream_t.
   //!
   //! \param obj The Bankable object to append
-  //! \pre The Bank is open
+  //! \pre The Bank is open for writing
   //! \pre obj is compatible with the current NCode Bank type
   //! \pre There is no IID/EID of this object already in the bank
   //! \post obj's modified and removed flags are cleared
@@ -619,11 +659,11 @@ public:
   //--------------------------------------------------- clean ------------------
   //! \brief Reorganizes the bank and removes all residual deleted objects
   //!
-  //! Removes all objects waiting for deletion. Also cleans up rubbish data
-  //! left over from past replace operations. Please note that this operation
-  //! may reorder the objects in the bank, thus affecting all iterations
-  //! through the bank. Has no effect on a closed bank.
+  //! Removes all objects waiting for deletion from disk. Also cleans up
+  //! rubbish data left over from past replace operations. This is a costly
+  //! operation, as it requires the entire bank be copied to a temporary store.
   //!
+  //! \pre The Bank is open for read/writing
   //! \throws IOException_t
   //! \return void
   //!
@@ -634,8 +674,11 @@ public:
   //! \brief Clears a bank by erasing all it's objects and its ID map
   //!
   //! Erases all the objects in a bank, but keeps the bank open at the current
-  //! location. Has no effect on a closed bank.
+  //! location. Only throws an exception if the bank is not open for writing.
+  //! Won't complain if some of the partitions won't unlink etc.
   //!
+  //! \pre The Bank is open for writing
+  //! \throws IOException_t
   //! \return void
   //!
   void clear ( );
@@ -645,8 +688,9 @@ public:
   //! \brief Closes a bank on disk
   //!
   //! Flushes all files, closes all files and re-initializes members. Has no
-  //! effect on an already closed bank.
+  //! effect on a closed bank.
   //!
+  //! \throws IOException_t
   //! \return void
   //!
   void close ( );
@@ -657,18 +701,17 @@ public:
   //!
   //! Conceptually performs an append operation on every object in the source
   //! bank, but with more efficiency. As a side effect, incoming source records
-  //! are cleaned (see Bank_t::clean() method), therefore affecting all
-  //! iterations through the bank and removing all objects waiting for deletion.
-  //! The two banks must have entirely disjoint IDMaps.
+  //! are cleaned (see Bank_t::clean() method), therefore removing all objects
+  //! waiting for deletion. The two banks must have entirely disjoint IDMaps.
   //!
   //! \note The source bank is unchanged by this operation, however it cannot
   //! be made a const because of I/O open/close operations.
   //!
   //! \param source The bank to concat to the end of the current bank
-  //! \pre The bank is open
-  //! \pre The source bank is open
+  //! \pre The bank is open for writing
+  //! \pre The source bank is open for reading
   //! \pre source is compatible with the current NCode bank type
-  //! \pre The current and source IDMaps are entirely disjoint
+  //! \pre The current and source IDMaps are disjoint
   //! \post The source bank is unaffected
   //! \throws IOException_t
   //! \throws ArgumentException_t
@@ -687,19 +730,25 @@ public:
   //! bank will first be closed before the new one is created.
   //!
   //! \param dir The directory in which to create the bank
+  //! \param mode The mode of the bank (B_READ | B_WRITE | B_FORCE)
+  //! \pre mode includes B_WRITE
   //! \pre sufficient read/write/exe permissions for dir and bank files
   //! \throws IOException_t
+  //! \throws ArgumentException_t
   //! \return void
   //!
-  void create (const std::string & dir);
+  void create (const std::string & dir, BankMode_t mode = B_READ | B_WRITE);
 
 
   //--------------------------------------------------- destroy ----------------
   //! \brief Closes and removes a bank from disk
   //!
-  //! Closes the bank and unlinks all files and empty directories. Has no
-  //! effect on a closed bank.
+  //! Closes the bank and unlinks all files and empty directories. Only throws
+  //! an exception if the bank is not open for writing. Won't complain if some
+  //! of the partitions won't unlink etc.
   //!
+  //! \pre The bank is open for writing
+  //! \throws IOException_t
   //! \return void
   //!
   void destroy ( );
@@ -710,19 +759,19 @@ public:
   //!
   bool empty ( ) const
   {
-    return (getSize( ) == 0);
+    return ( getSize( ) == 0 );
   }
 
 
   //--------------------------------------------------- exists -----------------
-  //! \brief Checks for the accessibility of a another bank with similar type
+  //! \brief Checks for the existence of a another bank with similar type
   //!
-  //! Only checks for the existence and read/write-ability of the informational
-  //! store, does not do any validity checking on the other partitions. Can be
-  //! performed while a bank is open or closed.
+  //! Only checks for the existence and readability of the info store, does
+  //! not perform any validity checking on the other partitions. Can be called
+  //! while a bank is open or closed.
   //!
   //! \param dir The directory in which to look
-  //! \return true if IFO store exists and is r/w, false if otherwise
+  //! \return true if IFO store exists with read permissions, else false
   //!
   bool exists (const std::string & dir) const;
 
@@ -753,7 +802,7 @@ public:
   //!
   //! \param iid The IID of the object to fetch
   //! \param obj A Bankable object to store the data
-  //! \pre The bank is open
+  //! \pre The Bank is open for reading
   //! \pre The requested IID exists in the bank
   //! \pre obj is compatible with the current NCode bank type
   //! \post The desired object data will be loaded into obj
@@ -780,28 +829,13 @@ public:
   }
 
 
-  //--------------------------------------------------- flush ------------------
-  //! \brief Flushes the bank info, data and IDMap
-  //!
-  //! Flushes the open data partitions, the bank informational store and the
-  //! current IDMap. This operation is automatically performed during the
-  //! close operation. Because the entire IDMap is rewritten to disk, this
-  //! operation could be costly for a bank storing many objects with IDs, thus
-  //! use sparingly. Has no effect on a closed bank.
-  //!
-  //! \throws IOException_t
-  //! \return void
-  //!
-  void flush ( );
-
-
   //--------------------------------------------------- getIDMap ---------------
   //! \brief Get the current (IID <-> EID) -> BID map for the bank
   //!
-  //! Access to the bank's IDMap for quick ID conversion. For example, convert
-  //! an IID to an EID: 'mybank . getIDMap( ) . lookupEID (myiid)'. Users may
-  //! not directly modify the bank's IDMap, because the bank will automatically
-  //! update the IDMap based on the IDs of the objects appended to it.
+  //! Access to the bank's IDMap. One may iterate through the IDMap for a list
+  //! of IDs in the bank. Users may not however directly modify the IDMap,
+  //! because the bank will automatically update the IDMap based on the IDs of
+  //! the objects appended to it. See IDMap_t API for more available methods.
   //!
   //! \return A const reference to the bank's IDMap
   //!
@@ -823,7 +857,7 @@ public:
   //! the index size will be greater than or equal to the size of the bank. The
   //! bigger the gap, the more empty indices there will be and the more
   //! efficiency problems the bank will suffer. A clean operation will fix all
-  //! this, and make index size equal size.
+  //! this, and make index-size equal size.
   //!
   //! \return The number of indices being used
   //!
@@ -899,11 +933,15 @@ public:
   //! method) before opening to avoid an exception.
   //!
   //! \param dir The resident directory of the bank
-  //! \pre The specified directory contains a bank this type
+  //! \param mode The mode of the bank (B_READ | B_WRITE | B_FORCE)
+  //! \pre mode most includes B_READ
+  //! \pre The specified directory contains a bank of this type
+  //! \pre sufficient read/write/exe permissions for dir and bank files
   //! \throws IOException_t
+  //! \throws ArgumentException_t
   //! \return void
   //!
-  void open (const std::string & dir);
+  void open (const std::string & dir, BankMode_t mode = B_READ | B_WRITE);
 
 
   //--------------------------------------------------- remove -----------------
@@ -916,7 +954,7 @@ public:
   //! size of the bank.
   //!
   //! \param iid The IID of the object to remove
-  //! \pre The bank is open
+  //! \pre The Bank is open for read/writing
   //! \pre The IID exists in the bank
   //! \post The object is conceptually removed from the bank
   //! \throws IOException_t
@@ -953,7 +991,7 @@ public:
   //!
   //! \param iid The IID of the object to replace
   //! \param obj The Bankable object to replace old object
-  //! \pre The bank is open
+  //! \pre The Bank is open for read/writing
   //! \pre The specified IID exists in the bank
   //! \pre obj is compatible with the current NCode bank type
   //! \pre The new object EID does not exist in the bank
@@ -977,12 +1015,12 @@ public:
 //--------------------------------------------------- BankExists ---------------
 //! \brief Checks for the accessibility of a bank with certain type
 //!
-//! Only checks for the existence and read/write-ability of the informational
-//! store, does not do any validity checking on the other partitions.
+//! Only checks for the existence and readability of the info store, does not
+//! perform any validity checking on the other partitions.
 //!
 //! \param ncode The type of bank to look for
 //! \param dir The directory in which to look
-//! \return true if IFO store exists and is r/w, false if otherwise
+//! \return true if IFO store exists with read permissions, else false
 //!
 bool BankExists (NCode_t ncode, const std::string & dir);
 
