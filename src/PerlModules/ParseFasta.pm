@@ -94,7 +94,7 @@ sub getRecord()
     my $data;
     my $file = $self->{file};
     
-    if ($self->{buf} !~ /^$self->{headsep}/){ # record must start with a separator
+    if (! defined $self->{buf} || $self->{buf} !~ /^$self->{headsep}/){ # record must start with a separator
 	return ();
     }
     $head = $self->{buf};
@@ -104,7 +104,7 @@ sub getRecord()
     while (defined $self->{buf} && $self->{buf} !~ /^$self->{headsep}/){
 	$data .= $self->{buf} . $self->{linesep};
 	$self->{buf} = <$file>;
-	chomp $self->{buf};
+	if (defined $self->{buf}){chomp $self->{buf}};
     }
     return ($head, $data);
 }
