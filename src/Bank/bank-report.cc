@@ -20,6 +20,7 @@
 #include <ctime>
 #include <vector>
 #include <map>
+#include <sstream>
 #include <unistd.h>
 using namespace AMOS;
 using namespace Message_k;
@@ -28,6 +29,7 @@ using namespace std;
 
 //=============================================================== Globals ====//
 string  OPT_BankName;                        // bank name parameter
+bool    OPT_IncludeIIDs = false;             // include IIDs in the output
 bool    OPT_IsExtractCodes = false;          // extract codes or not
 IDMap_t OPT_ExtractCodes(1000);              // extract message type map
 bool    OPT_IsExtractIIDs = false;           // extract iids or not
@@ -77,6 +79,7 @@ int main (int argc, char ** argv)
   long int cnts = 0;             // seen object count
   long int cntw = 0;             // written object count
 
+  ostringstream ss;
   unsigned int nl;
   bool showrecord;
   ID_t id;                       // id holder
@@ -338,6 +341,12 @@ int main (int argc, char ** argv)
 	  if ( showrecord )
 	    {
 	      typep -> writeMessage (msg);
+	      if ( OPT_IncludeIIDs )
+		{
+		  ss . str("");
+		  ss << typep -> getIID( );
+		  msg . setField (F_IID, ss . str( ));
+		}
 	      msg . write (cout);
 	      cntw ++;
 	    }
@@ -384,7 +393,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:c:e:hi:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:c:e:hi:I")) != EOF) )
     switch (ch)
       {
       case 'b':
@@ -428,6 +437,10 @@ void ParseArgs (int argc, char ** argv)
 	  cerr << "WARNING: " << e . what( )
 	       << " - IID " << optarg << " ignored" << endl;
 	}
+	break;
+
+      case 'I':
+	OPT_IncludeIIDs = true;
 	break;
 
       default:
@@ -485,6 +498,7 @@ void PrintHelp (const char * s)
     << "-e uint       Report objects matching this eid\n"
     << "-h            Display help information\n"
     << "-i uint       Report objects matching this iid\n"
+    << "-I            Include IIDs in the output\n"
     << endl;
 
   cerr
