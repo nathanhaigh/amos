@@ -7,11 +7,15 @@
 #include  <cstdlib>
 #include  <cmath>
 #include  <vector>
+#include  <queue>
 #include  <algorithm>
 #include  <cassert>
 using namespace std;
 
+
 const int  MAX_LINE = 1000;
+const int  SINGLE_READ_LEN = 2500;
+
 const char  Unique_Col_Id [] = "1UniUtgCol";
 const char  Unique_Col_Def [] = "CFF00FF";  // pink
 const char  Rock_Col_Id [] = "1RockUtgCol";
@@ -44,7 +48,17 @@ const char  Infer_Read_Col_Id [] = "5InferRead";
 const char  Infer_Read_Col_Def [] = "CFF7F00";    // orange
 const char  Infer_Mate_Col_Id [] = "5InferMate";
 const char  Infer_Mate_Col_Def [] = "CBF7500";    // orange
+const char  Repeat_Col_Id [] = "6RepeatCol";
+const char  Repeat_Col_Def [] = "CFFAF00";    // yellow-orange
+const char  Repeat_Ext_Id [] = "6RepeatExt";
+const char  Repeat_Ext_Def [] = "CFFAF00";    // yellow-orange
 
+
+
+struct  Extent_t
+  {
+   int  lo, hi, category;
+  };
 
 
 struct  Read_Info_t
@@ -147,6 +161,10 @@ struct  Con_Data_t
 
 
 
+static int  Bad_Start_Row;
+static int  Good_Start_Row = 10;
+static int  Missing_Start_Row;
+
 static vector <Dst_Info_t>  Dst;
 static vector <Read_Info_t>  Read;
 
@@ -160,6 +178,17 @@ bool  Contig_Pos_Cmp
     (const Contig_Pos_t & a, const Contig_Pos_t & b)
   { return  a . contig_id < b . contig_id; }
 
+bool  Extent_Cmp
+    (const Extent_t & a, const Extent_t & b)
+  {
+   return  (a . category < b . category
+             || (a . category == b . category && a . lo < b . lo));
+  }
+
+bool  PQ_Cmp
+    (int a, int b)
+  { return  b < a; }
+
 bool  Unitig_Cmp
     (const Unitig_Info_t & a, const Unitig_Info_t & b)
   { return  a . unitig_id < b . unitig_id; }
@@ -169,20 +198,28 @@ bool  Uni_Data_Cmp
   { return  a . unitig_id < b . unitig_id; }
 
 
+static void  Add_Pair_Extent
+    (int i, int j, vector <Extent_t> & extent);
+static void  Add_Single_Extent
+    (int i, int len, int cat, vector <Extent_t> & extent);
 static void  Output_Mates
     (int i, int j);
 static void  Output_Pair
     (int i, int j, const char * read_colour, const char * mate_colour,
-     const char * tag);
+     int start_row, const char * tag);
+static void  Output_Repeats
+    (const char * filename, const vector <Contig_Pos_t> & contig_pos);
 static void  Output_Single_Read
     (int i, const char * read_colour, const char * mate_colour,
-     int len, const char * tag);
+     int len, int start_row, const char * tag);
 static void  Print_Colour_Headers
     (void);
 static int  Search
     (const vector <Contig_Pos_t> & pos, long long int id);
 static void  Set_Position
     (int & x, int & y, int a, int b, int c, int d, int len);
+static void  Set_Starting_Rows
+    (void);
 static int  Uni_Data_Search
     (const vector <Uni_Data_t> & u, long long int id);
 static int  Unitig_Search
@@ -212,7 +249,7 @@ int  main
 
    if  (argc < 2)
        {
-        fprintf (stderr, "USAGE:  %s <config-info-file>\n",
+        fprintf (stderr, "USAGE:  %s <contig-info-file> [<repeat-coord-file>]\n",
             argv [0]);
         exit (EXIT_FAILURE);
        }
@@ -229,6 +266,10 @@ int  main
       c . tag = strdup (line);
       contig_pos . push_back (c);
      }
+   fclose (fp);
+
+   if  (argc > 2)
+       Output_Repeats (argv [2], contig_pos);
 
    while  (fgets (line, MAX_LINE, stdin) != NULL)
      {
@@ -601,6 +642,8 @@ fprintf (stderr, "### %d reads\n", n);
           }
      }
 
+   Set_Starting_Rows ();
+
    for  (i = 0;  i < n;  i ++)
      {
       if  (Read [i] . cam_a > 0 && ! Read [i] . mark)
@@ -612,7 +655,7 @@ fprintf (stderr, "### %d reads\n", n);
                {
                 sprintf (tag, "Single read %d (Utg%lld)", i, Read [i] . unitig_id);
                 Output_Single_Read (i, Single_Read_Col_Id, Single_Mate_Col_Id,
-                    2500, tag);
+                    SINGLE_READ_LEN, Good_Start_Row, tag);
                }
              else 
                {
@@ -627,7 +670,7 @@ fprintf (stderr, "### %d reads\n", n);
                          i, Read [i] . unitig_id, j, Read [j] . unitig_id);
                      mean = int (Dst [Read [i] . dst] . mean);
                      Output_Single_Read (i, Infer_Read_Col_Id, Infer_Mate_Col_Id,
-                          mean, tag);
+                          mean, Missing_Start_Row, tag);
                     }
                 Read [j] . mark = true;
                }
@@ -636,6 +679,95 @@ fprintf (stderr, "### %d reads\n", n);
      }
 
    return  0;
+  }
+
+
+
+static void  Add_Pair_Extent
+    (int i, int j, vector <Extent_t> & extent)
+
+//  Add one or two entries to  extent  reprenting the position(s)
+//  of the mate pair  Read [i]  and  Read [j] .
+
+  {
+   Extent_t  ext;
+   int  mean, sd, diff;
+
+   mean = int (Dst [Read [i] . dst] . mean);
+   sd = int (Dst [Read [i] . dst] . stddev);
+
+   if  (Read [i] . cam_a <= Read [i] . cam_b)
+       {
+        if  (Read [j] . cam_a <= Read [j] . cam_b
+               || Read [j] . cam_a < Read [i] . cam_a + 200
+               || Read [j] . cam_a > Read [i] . cam_a + mean + 10 * sd)
+            {
+             Add_Single_Extent (i, mean, 1, extent);
+             Add_Single_Extent (j, mean, 1, extent);
+            }
+          else
+            {
+             ext . lo = Read [i] . cam_a;
+             ext . hi = Read [j] . cam_a;
+             diff = Read [j] . cam_a - Read [i] . cam_a;
+             if  (mean - 3 * sd <= diff && diff <= mean + 3 * sd)
+                 ext . category = 0;  // good
+               else
+                 ext . category = 1;  // stretched
+             extent . push_back (ext);
+            }
+       }
+     else
+       {
+        if  (Read [j] . cam_a > Read [j] . cam_b
+               || Read [i] . cam_a < Read [j] . cam_a + 200
+               || Read [i] . cam_a > Read [j] . cam_a + mean + 10 * sd)
+            {
+             Add_Single_Extent (i, mean, 1, extent);
+             Add_Single_Extent (j, mean, 1, extent);
+            }
+          else
+            {
+             ext . lo = Read [j] . cam_a;
+             ext . hi = Read [i] . cam_a;
+             diff = Read [i] . cam_a - Read [j] . cam_a;
+             if  (mean - 3 * sd <= diff && diff <= mean + 3 * sd)
+                 ext . category = 0;  // good
+               else
+                 ext . category = 1;  // stretched
+             extent . push_back (ext);
+            }
+       }
+
+   return;
+  }
+
+
+
+static void  Add_Single_Extent
+    (int i, int len, int cat, vector <Extent_t> & extent)
+
+//  Add an entry to  extent  representing the position of  Read [i]
+//  with a mate of length  len  and category  cat .
+
+  {
+   Extent_t  ext;
+
+   ext . category = cat;
+   if  (Read [i] . cam_a < Read [i] . cam_b)
+       {
+        ext . lo = Read [i] . cam_a;
+        ext . hi = Read [i] . cam_a + len;
+       }
+     else
+       {
+        ext . lo = Read [i] . cam_a - len;
+        ext . hi = Read [i] . cam_a;
+       }
+
+   extent . push_back (ext);
+
+   return;
   }
 
 
@@ -660,12 +792,14 @@ static void  Output_Mates
              sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  i, Read [i] . unitig_id, j, Read [j] . unitig_id,
                  (Read [j] . cam_a + Read [j] . cam_b) / 2);
-             Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
+             Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
+                  Bad_Start_Row, tag);
                  
              sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  j, Read [j] . unitig_id, i, Read [j] . unitig_id,
                  (Read [i] . cam_a + Read [i] . cam_b) / 2);
-             Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
+             Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
+                  Bad_Start_Row, tag);
             }
         else if  (Read [j] . cam_a > Read [j] . cam_b)
             {
@@ -675,9 +809,11 @@ static void  Output_Mates
                  i, Read [i] . unitig_id, j, Read [j] . unitig_id,
                  diff, mean, sd, double (diff - mean) / sd);
              if  (mean - 3 * sd <= diff && diff <= mean + 3 * sd)
-                 Output_Pair (i, j, Good_Read_Col_Id, Good_Mate_Col_Id, tag);
+                 Output_Pair (i, j, Good_Read_Col_Id, Good_Mate_Col_Id,
+                      Good_Start_Row, tag);
                else
-                 Output_Pair (i, j, Stretch_Read_Col_Id, Stretch_Mate_Col_Id, tag);
+                 Output_Pair (i, j, Stretch_Read_Col_Id, Stretch_Mate_Col_Id,
+                      Bad_Start_Row, tag);
             }
        }
      else
@@ -689,12 +825,14 @@ static void  Output_Mates
              sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  i, Read [i] . unitig_id, j, Read [j] . unitig_id,
                  (Read [j] . cam_a + Read [j] . cam_b) / 2);
-             Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
+             Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
+                  Bad_Start_Row, tag);
                  
              sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
                  j, Read [j] . unitig_id, i, Read [i] . unitig_id,
                  (Read [i] . cam_a + Read [i] . cam_b) / 2);
-             Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean, tag);
+             Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
+                  Bad_Start_Row, tag);
             }
         else if  (Read [j] . cam_a <= Read [j] . cam_b)
             {
@@ -704,9 +842,11 @@ static void  Output_Mates
                  j, Read [j] . unitig_id, i, Read [i] . unitig_id,
                  diff, mean, sd, double (diff - mean) / sd);
              if  (mean - 3 * sd <= diff && diff <= mean + 3 * sd)
-                 Output_Pair (j, i, Good_Read_Col_Id, Good_Mate_Col_Id, tag);
+                 Output_Pair (j, i, Good_Read_Col_Id, Good_Mate_Col_Id,
+                      Good_Start_Row, tag);
                else
-                 Output_Pair (j, i, Stretch_Read_Col_Id, Stretch_Mate_Col_Id, tag);
+                 Output_Pair (j, i, Stretch_Read_Col_Id, Stretch_Mate_Col_Id,
+                      Bad_Start_Row, tag);
             }
        }
    return;
@@ -716,11 +856,12 @@ static void  Output_Mates
 
 static void  Output_Pair
     (int i, int j, const char * read_colour, const char * mate_colour,
-     const char * tag)
+     int start_row, const char * tag)
 
 //  Output a celamy line for mated reads  Read [i]  and  Read [j] ,
 //  where  i   is on the left.  Use read_colour  for the read parts and
-//   mate_colour  for the gap.  Use  tag  as the celamy comment.
+//   mate_colour  for the gap.  Position the line at celamy row  start_row
+//  (or below, i.e., higher row number).  Use  tag  as the celamy comment.
 
   {
    static int  pair_ct = 0;
@@ -733,13 +874,104 @@ static void  Output_Pair
 
    if  (Read [j] . cam_b <= Read [i] . cam_b)
        // no gap
-       printf ("%dReadPair: %d A%s %d R10 # %s\n", pair_ct, Read [i] . cam_a,
-           read_colour, Read [j] . cam_a, tag);
+       printf ("%dReadPair: %d A%s %d R%d # %s\n", pair_ct, Read [i] . cam_a,
+           read_colour, Read [j] . cam_a, start_row, tag);
      else
-       printf ("%dReadPair: %d A%s %d A%s %d A%s %d R10 # %s\n", pair_ct,
+       printf ("%dReadPair: %d A%s %d A%s %d A%s %d R%d # %s\n", pair_ct,
            Read [i] . cam_a, read_colour, Read [i] . cam_b,
            mate_colour, Read [j] . cam_b, read_colour, Read [j] . cam_a,
-           tag);
+           start_row, tag);
+
+   return;
+  }
+
+
+
+static void  Output_Repeats
+    (const char * filename, const vector <Contig_Pos_t> & contig_pos)
+
+//  Read nucmer matches from  filename  (format is from  show-coords -cHlT )
+//  and output celamy lines for the ones that match entries in
+//   contig_pos .
+
+  {
+   FILE  * fp;
+   char  rpt_tag [100];
+   double  percent_id, x_junk;
+   long long int  ctg_id;
+   bool  fwd_rpt;
+   int  ctg_a, ctg_b, rpt_a, rpt_b, ctg_len, rpt_len, junk;
+   int  left, right, ext_left, ext_right;
+   static int  repeat_ct = 0;
+   int  x, y;
+   int  i, n;
+
+   fp = fopen (filename, "r");
+   assert (fp != NULL);
+
+   // output repeat header line
+   printf ("%s: %s T5 S # %s\n",
+       Repeat_Col_Id, Repeat_Col_Def, "RepeatMatch");
+   printf ("%s: %s T2 S # %s\n",
+       Repeat_Ext_Id, Repeat_Ext_Def, "RepeatExt");
+
+   n = contig_pos . size ();
+
+   while  (fscanf (fp, "%d %d %d %d %d %d %lf %d %d %lf %lf %lld %s",
+        & ctg_a, & ctg_b, & rpt_a, & rpt_b, & junk, & junk, & percent_id,
+        & ctg_len, & rpt_len, & x_junk, & x_junk, & ctg_id, rpt_tag) == 13)
+     {
+      for  (i = 0;  i < n;  i ++)
+        if  (contig_pos [i] . contig_id == ctg_id)
+            { // output repeat line
+             if  (contig_pos [i] . a < contig_pos [i] . b)
+                 {
+                  left = contig_pos [i] . a + ctg_a - 1;
+                  right = left + 1 + ctg_b - ctg_a;
+                  if  (rpt_a < rpt_b)
+                      {
+                       ext_left = left - (rpt_a - 1);
+                       ext_right = right + rpt_len - rpt_b;
+                       fwd_rpt = true;
+                      }
+                    else
+                      {
+                       ext_left = left - (rpt_len - rpt_a);
+                       ext_right = right + rpt_b - 1;
+                       fwd_rpt = false;
+                      }
+                 }
+               else
+                 {
+                  right = contig_pos [i] . a + 1 - ctg_a;
+                  left = right - (1 + ctg_b - ctg_a);
+                  if  (rpt_a < rpt_b)
+                      {
+                       ext_left = left - (rpt_len - rpt_b);
+                       ext_right = right + rpt_a - 1;
+                       fwd_rpt = false;
+                      }
+                    else
+                      {
+                       ext_left = left - (rpt_b - 1);
+                       ext_right = right + rpt_len - rpt_a;
+                       fwd_rpt = true;
+                      }
+                 }
+
+             printf ("%dRepeat:", ++ repeat_ct);
+             if  (ext_left < left)
+                 printf (" %d A%s", ext_left, Repeat_Ext_Id);
+             printf (" %d A%s %d", left, Repeat_Col_Id, right);
+             if  (right < ext_right)
+                 printf (" A%s %d", Repeat_Ext_Id, ext_right);
+             printf (" R4 # %s %s\n", rpt_tag, fwd_rpt ? "fwd" : "rev");
+
+             break;
+            }
+     }
+
+   fclose (fp);
 
    return;
   }
@@ -748,27 +980,28 @@ static void  Output_Pair
 
 static void  Output_Single_Read
     (int i, const char * read_colour, const char * mate_colour, int len,
-     const char * tag)
+     int start_row, const char * tag)
 
 //  Output a celamy line for just read  Read [i]  without a mate
 //  using  read_colour  for the read part and  mate_colour
 //  for where the mate should be,  len  away from the beginning of the
-//  read.  Use  tag  as the celamy comment
+//  read.  Line is positioned at  start_row  (or below, i.e., higher row
+//  number) on the screen.  Use  tag  as the celamy comment
 
   {
    static int  single_ct = 0;
 
    single_ct ++;
    if  (Read [i] . cam_a < Read [i] . cam_b)
-       printf ("%dSingRead: %d A%s %d A%s %d R10 # %s\n",
+       printf ("%dSingRead: %d A%s %d A%s %d R%d # %s\n",
            single_ct, Read [i] . cam_a, read_colour,
            Read [i] . cam_b, mate_colour,
-           Read [i] . cam_a + len, tag);
+           Read [i] . cam_a + len, start_row, tag);
      else
-       printf ("%dSingRead: %d A%s %d A%s %d R10 # %s\n",
+       printf ("%dSingRead: %d A%s %d A%s %d R%d # %s\n",
            single_ct, Read [i] . cam_a - len, mate_colour,
            Read [i] . cam_b, read_colour,
-           Read [i] . cam_a, tag);
+           Read [i] . cam_a, start_row, tag);
 
    return;
   }
@@ -874,6 +1107,77 @@ static void  Set_Position
 
    return;
   }
+
+
+
+static void  Set_Starting_Rows
+    (void)
+
+//  Determine the starting celamy row of bad and stretched mates
+//  and missing mates.  Use placement information in global  Read .
+//  Save results in globals  Bad_Start_Row  and  Missing_Start_Row .
+
+  {
+   priority_queue <int, vector <int>, greater <int> >  pq;
+   vector <Extent_t>  extent;
+   int  i, j, k, n;
+
+   n = Read . size ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      if  (Read [i] . cam_a > 0 && ! Read [i] . mark)
+          {
+           j = Read [i] . mate;
+           if  (j < 0)
+               Add_Single_Extent (i, SINGLE_READ_LEN, 0, extent);
+             else
+               {
+                if  (Read [j] . cam_a > 0)
+                    Add_Pair_Extent (i, j, extent);
+                  else
+                    Add_Single_Extent (i, int (Dst [Read [i] . dst] . mean),
+                         2, extent);
+                Read [j] . mark = true;
+               }
+          }
+      Read [i] . mark = true;
+     }
+
+   // restore marks
+   for  (i = 0;  i < n;  i ++)
+     Read [i] . mark = false;
+
+   sort (extent . begin (), extent . end (), Extent_Cmp);
+
+   n = extent . size ();
+
+   // Get number of rows used by good and single mates
+   pq . push (-1);
+   for  (i = 0;  i < n && extent [i] . category == 0;  i ++)
+     {
+      if  (pq . top () < extent [i] . lo)
+          pq . pop ();
+      pq . push (extent [i] . hi);
+     }
+   k = pq . size ();
+   Bad_Start_Row = Good_Start_Row + k;
+   for  (j = 0;  j < k;  j ++)
+     pq . pop ();
+
+   // Get number of rows used by bad and stretched mates
+   pq . push (-1);
+   for  ( ;  i < n && extent [i] . category == 1;  i ++)
+     {
+      if  (pq . top () < extent [i] . lo)
+          pq . pop ();
+      pq . push (extent [i] . hi);
+     }
+   k = pq . size ();
+   Missing_Start_Row = Bad_Start_Row + k;
+
+   return;
+  }
+
 
 
 
