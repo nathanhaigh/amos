@@ -70,7 +70,7 @@ if (! defined $prefix){
 }
 
 $base->setLogFile("$prefix.runAmos.log");
-$base->setDebugLevel(1);
+if ($base->getDebugLevel() <= 1) {$base->setDebugLevel(1);}
 
 
 if (! defined $conffile){
@@ -83,6 +83,16 @@ if (! defined $conffile){
 
 if (defined $start && defined $end && $end < $start){
     $base->bail("Start must be less than end!");
+}
+
+if (defined $start){
+    print "Starting at step $start\n";
+    $base->logLocal("Starting at step $start\n", 1);
+}
+
+if (defined $end){
+    print "Stopping before step $end\n";
+    $base->logLocal("Stopping before step $end\n", 1);
 }
 
 my %variables;
@@ -239,7 +249,7 @@ sub doCommand
     my $command = shift;
     my $checkRet = 1;
     return if (! defined $step);
-    return if ($noop);
+    return if ($noop == 1);
 
     if ($command =~ /^-.*/){
 	$checkRet = 0;
@@ -285,17 +295,6 @@ sub substituteVars
 	}
 	$outstring .= $tokens[$i];
     }
-#    while ($string =~ /\G([^\$]*)\$\((\w+)\)/gc){
-#	$outstring .= "$1";
-#	print "before is $1 variable is $2 and subst is $variables{$2}\n";
-#	if (! exists $variables{$2}){
-#	    $base->bail("Don't recognize variable $2 at line $.");
-#	}
-#	$outstring .= $variables{$2};
-#    }
-#    $string =~ /\G(.*)$/;
-#    $outstring .= $1;
-#    print "Into $outstring\n";
     return $outstring;
 }
 
