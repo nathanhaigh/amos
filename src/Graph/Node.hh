@@ -50,8 +50,8 @@ public:
   int depth;
 
   int parent;
-
-  string color;
+  
+  int color;
 
   unsigned long flags;
 
@@ -60,15 +60,15 @@ public:
     depth = 0;
     parent = -1;
     hidden = false;
-    color = "black";
+    color = 0x0;
   }
 
   /* Setters & Getters */
   void* getElement() const { return element; }
   void setElement(void* p_element) { element = p_element; }
 
-  void setColor(const string p_color) { color = p_color; }
-  string getColor() const { return color; }
+  void setColor(const int p_color) { color = p_color; }
+  int getColor() const { return color; }
   
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }

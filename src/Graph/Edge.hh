@@ -40,7 +40,7 @@ public:
 
   bool hidden;
   
-  string color;
+  int color;
 
   /* nodes that the edge is connected */
   /** source if node is directed */
@@ -60,8 +60,8 @@ public:
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }
 
-  void setColor(string p_color) { color = p_color; }
-  string getColor() const { return color; }
+  void setColor(int p_color) { color = p_color; }
+  int getColor() const { return color; }
 
   int getHidden() const { return hidden; }
   void setHidden(bool p_hidden) { hidden = p_hidden; }

@@ -30,8 +30,6 @@ public:
   /** <code> g </code> overlap graph */
   Graph* graph;
   
-  vector<string> colors;
-
   void Unitigger::error(const char* m, const char* c = "");
   void Unitigger::add_read(AMOS::Read_t p_read);
   void Unitigger::add_overlap(AMOS::Overlap_t p_olap);

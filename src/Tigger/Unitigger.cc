@@ -14,15 +14,11 @@ using namespace AMOS;
 
 static bool VERBOSE = false;
 
+static int CCOLOR = 0x100000;
+
 Unitigger::Unitigger() {
   if(VERBOSE) cout << " construct new unitigger" << endl;
   graph = new Graph();
-  
-  colors.push_back("green");
-  colors.push_back("red");
-  colors.push_back("orange");
-  colors.push_back("yellow");
-  
 }
 
 
@@ -291,7 +287,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     }
     
     cout << " ------------------------------------------------- " << endl;
-    contig_count++;  
+    CCOLOR += 0x000008;
     graph->clear_edge_flags();
   for(int i = 0; i < 2; i++) {
     bool backtrack = false;
@@ -303,7 +299,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     // first forward
     while(cur_node->getFlags() != 1) {
       cur_node->setFlags(1);
-      cur_node->setColor(colors[contig_count]);
+      cur_node->setColor(CCOLOR);
       IEdge* edge;
       Overlap* ovl;
       int matches = 0;
@@ -418,7 +414,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
 	  contig.push_back(path);
 	else 
 	  contig.push_front(path);
-	path->setColor(colors[contig_count]);
+	path->setColor(CCOLOR);
 	first_node = cur_node;
 	cur_node = path->opposite(cur_node);
 	need_suffix = next_suffix;
@@ -532,9 +528,9 @@ void Unitigger::add_containment(IGraph* g) {
       if(node->getHidden()) {
 	count++;
 	edge->setHidden(false);
-	edge->setColor("purple");
+	edge->setColor(0x444444);
 	node->setNodeHidden(false);
-	node->setColor("purple");
+	node->setColor(0x444444);
       }
     }
   }
