@@ -17,6 +17,8 @@ using namespace AMOS;
 
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
+bool   OPT_BankSpy = false;          // read or read-only spy
+
 
 
 //========================================================== Fuction Decs ====//
@@ -46,6 +48,16 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
+//----------------------------------------------------- PrintVersion -----------
+//! \brief Prints version information to cerr
+//!
+//! \param s The program name, i.e. argv[0]
+//! \return void
+//!
+void PrintVersion (const char * s);
+
+
+
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
@@ -59,7 +71,6 @@ int main (int argc, char ** argv)
   BankStream_t lib_bank (Library_t::NCODE);
   BankStream_t mtp_bank (Matepair_t::NCODE);
 
-  long int cnts = 0;             // seen object count
   long int cntw = 0;             // written object count
 
   //-- Parse the command line arguments
@@ -68,10 +79,11 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
-    mtp_bank . open (OPT_BankName);
-    red_bank . open (OPT_BankName);
-    frg_bank . open (OPT_BankName);
-    lib_bank . open (OPT_BankName);
+    BankMode_t bm = OPT_BankSpy ? B_SPY : B_READ;
+    mtp_bank . open (OPT_BankName, bm);
+    red_bank . open (OPT_BankName, bm);
+    frg_bank . open (OPT_BankName, bm);
+    lib_bank . open (OPT_BankName, bm);
 
     //-- Iterate through each library in the bank
     while ( lib_bank >> lib )
@@ -86,8 +98,6 @@ int main (int argc, char ** argv)
     //-- Iterate through each object in the bank
     while ( mtp_bank >> mtp )
       {
-	cnts ++;
-
 	//-- Get the library record for this insert
 	red_bank . fetch (mtp . getReads( ) . first, red);
 	frg_bank . fetch (red . getFragment( ), frg);
@@ -104,16 +114,15 @@ int main (int argc, char ** argv)
     frg_bank . close( );
     lib_bank . close( );
   }
-  catch (Exception_t & e) {
-
-  //-- On error, print debugging information
-  cerr << "Objects seen: " << cnts << endl
-       << "Objects written: " << cntw << endl
-       << "ERROR: -- Fatal AMOS Exception --\n" << e;
-  return EXIT_FAILURE;
+  catch (const Exception_t & e) {
+    cerr << "FATAL: " << e . what( ) << endl
+	 << "  could not perform dump, abort" << endl
+	 << "Objects written: " << cntw << endl;
+    return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
+  cerr << "Objects written: " << cntw << endl;
   return EXIT_SUCCESS;
 }
 
@@ -126,13 +135,23 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "h")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsv")) != EOF) )
     switch (ch)
       {
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
         break;
+
+      case 's':
+	OPT_BankSpy = true;
+	break;
+
+      case 'v':
+	PrintVersion (argv[0]);
+	exit (EXIT_SUCCESS);
+	break;
+
       default:
         errflg ++;
       }
@@ -155,8 +174,10 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h            Display help information\n\n";
-
+    << "-h            Display help information\n"
+    << "-s            Disregard bank locks and write permissions (spy mode)\n"
+    << "-v            Display the compatible bank version\n"
+    << endl;
   cerr
     << "Takes an AMOS bank directory and dumps a bambus .mates files to\n"
     << "stdout\n\n";
@@ -171,5 +192,15 @@ void PrintUsage (const char * s)
 {
   cerr
     << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  return;
+}
+
+
+
+
+//---------------------------------------------------------- PrintVersion ----//
+void PrintVersion (const char * s)
+{
+  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

@@ -63,6 +63,15 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
+//----------------------------------------------------- PrintVersion -----------
+//! \brief Prints version information to cerr
+//!
+//! \param s The program name, i.e. argv[0]
+//! \return void
+//!
+void PrintVersion (const char * s);
+
+
 
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
@@ -111,11 +120,13 @@ int main (int argc, char ** argv)
     //-- Open the message file
     msgfile . open (OPT_MessageName . c_str( ));
     msgfile . seekg (0, ios::end);
-    ProgressDots_t dots (msgfile . tellg( ));
+    ProgressDots_t dots (msgfile . tellg( ), 50);
     msgfile . seekg (0, ios::beg);
 
     if ( ! msgfile )
       AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
+
+    cerr << "0%                                            100%" << endl;
 
     //-- Read the message file
     while ( msg . read (msgfile) )
@@ -263,29 +274,40 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:cfhm:z")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:cfhm:vz")) != EOF) )
     switch (ch)
       {
       case 'b':
 	OPT_BankName = optarg;
 	break;
+
       case 'c':
 	OPT_Create = true;
 	break;
+
       case 'f':
 	OPT_Create = true;
 	OPT_ForceCreate = true;
 	break;
+
       case 'h':
 	PrintHelp (argv[0]);
 	exit (EXIT_SUCCESS);
 	break;
+
       case 'm':
 	OPT_MessageName = optarg;
 	break;
+
+      case 'v':
+	PrintVersion (argv[0]);
+	exit (EXIT_SUCCESS);
+	break;
+
       case 'z':
 	OPT_Compress = true;
 	break;
+
       default:
 	errflg ++;
       }
@@ -341,6 +363,7 @@ void PrintHelp (const char * s)
     << "-m path       The file path of the input message\n"
     << "-z            Compress sequence and quality values for SEQ and RED\n"
     << "              (only allows [ACGTN] sequence and [0,63] quality)\n"
+    << "-v            Display the compatible bank version\n"
     << endl;
   cerr
     << "Takes an AMOS bank directory and message file as input. Alters the\n"
@@ -362,5 +385,15 @@ void PrintUsage (const char * s)
   cerr
     << "\nUSAGE: " << s << "  [options]  -b <bank path>  -m <message path>\n"
     << endl;
+  return;
+}
+
+
+
+
+//---------------------------------------------------------- PrintVersion ----//
+void PrintVersion (const char * s)
+{
+  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

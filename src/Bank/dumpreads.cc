@@ -16,7 +16,8 @@ using namespace AMOS;
 
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
-bool   OPT_UseSeqNames = false;          // print EIDs instead of IIDs
+bool   OPT_BankSpy = false;          // read or read-only spy
+bool   OPT_UseEIDs = false;          // print EIDs instead of IIDs
 
 
 //========================================================== Fuction Decs ====//
@@ -46,6 +47,16 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
+//----------------------------------------------------- PrintVersion -----------
+//! \brief Prints version information to cerr
+//!
+//! \param s The program name, i.e. argv[0]
+//! \return void
+//!
+void PrintVersion (const char * s);
+
+
+
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
@@ -61,7 +72,10 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
-    red_bank . open (OPT_BankName);
+    if ( OPT_BankSpy )
+      red_bank . open (OPT_BankName, B_SPY);
+    else
+      red_bank . open (OPT_BankName, B_READ);
 
     //-- Iterate through each object in the bank
     while ( red_bank >> red )
@@ -74,7 +88,7 @@ int main (int argc, char ** argv)
 		 << " has no clear range sequence, skipped\n";
 	    continue;
 	  }
-	if ( OPT_UseSeqNames )
+	if ( OPT_UseEIDs )
 	  cout << ">" << red . getEID( ) << endl;
 	else
 	  cout << ">" << red . getIID( ) << endl;
@@ -83,16 +97,17 @@ int main (int argc, char ** argv)
 	cntw ++;
       }
   }
-  catch (Exception_t & e) {
-
-  //-- On error, print debugging information
-  cerr << "Objects seen: " << cnts << endl
-       << "Objects written: " << cntw << endl
-       << "ERROR: -- Fatal AMOS Exception --\n" << e;
+  catch (const Exception_t & e) {
+    cerr << "FATAL: " << e . what( ) << endl
+	 << "  could not perform dump, abort" << endl
+	 << "Objects seen: " << cnts << endl
+	 << "Objects written: " << cntw << endl;
   return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
+    cerr << "Objects seen: " << cnts << endl
+	 << "Objects written: " << cntw << endl;
   return EXIT_SUCCESS;
 }
 
@@ -105,16 +120,27 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "sh")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "ehsv")) != EOF) )
     switch (ch)
       {
+      case 'e':
+	OPT_UseEIDs = true;
+	break;
+
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
         break;
+
       case 's':
-	OPT_UseSeqNames = true;
+	OPT_BankSpy = true;
 	break;
+
+      case 'v':
+	PrintVersion (argv[0]);
+	exit (EXIT_SUCCESS);
+	break;
+
       default:
         errflg ++;
       }
@@ -137,9 +163,12 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
+    << "-e            Use EIDs for FastA header instead of IIDs\n"
     << "-h            Display help information\n"
-    << "-s            Use EID seqnames for FastA header instead of IIDs\n\n";
-
+    << "-s            Disregard bank locks and write permissions (spy mode)\n"
+    << "-v            Display the compatible bank version\n"
+    << endl;
+  
   cerr
     << "Takes an AMOS bank directory and dumps all contained reads listed by\n"
     << "IID to stdout (clear range sequence only)\n\n";
@@ -154,5 +183,15 @@ void PrintUsage (const char * s)
 {
   cerr
     << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  return;
+}
+
+
+
+
+//---------------------------------------------------------- PrintVersion ----//
+void PrintVersion (const char * s)
+{
+  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

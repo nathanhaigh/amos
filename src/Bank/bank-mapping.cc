@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //! \file
 //! \author Adam M Phillippy
 //! \date 06/24/04
@@ -24,8 +24,8 @@ using namespace AMOS;
 
 //=============================================================== Globals ====//
 string  OPT_BankName;                        // bank name parameter
-bool    OPT_BankSpy;                         // read or read-only spy
 bool    OPT_IsExtractCodes = false;          // extract only certain NCodes
+bool    OPT_BankSpy = false;                 // read or read-only spy
 set<NCode_t> OPT_ExtractCodes;               // NCodes to extract
 
 
@@ -57,12 +57,20 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
+//----------------------------------------------------- PrintVersion -----------
+//! \brief Prints version information to cerr
+//!
+//! \param s The program name, i.e. argv[0]
+//! \return void
+//!
+void PrintVersion (const char * s);
+
+
 
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
   long int cntc = 0;       // mappings output
-  long int cnts = 0;       // mappings checked
   NCode_t ncode;           // current bank type
   Message_t msg;           // output message
   BankSet_t bnks;          // all the banks
@@ -76,8 +84,6 @@ int main (int argc, char ** argv)
 
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
-    ProgressDots_t dots (OPT_IsExtractCodes ?
-			 OPT_ExtractCodes . size( ) : bnks . getSize( ));
 
     //-- Iterate through each bank and dump its map
     for ( BankSet_t::iterator i = bnks . begin( ); i != bnks . end( ); ++ i )
@@ -85,14 +91,11 @@ int main (int argc, char ** argv)
 	ncode = i -> getType( );
 
 	//-- Skip if we're not looking at this one or it doesn't exist
-	if ((OPT_IsExtractCodes  &&
-	     OPT_ExtractCodes . find (ncode) == OPT_ExtractCodes . end( ))
-	    ||
-	    (!OPT_IsExtractCodes  &&  !i -> exists (OPT_BankName)) )
+	if ( (OPT_IsExtractCodes  &&
+	      OPT_ExtractCodes . find (ncode) == OPT_ExtractCodes . end( ))
+	     ||
+	     (!OPT_IsExtractCodes  &&  !i -> exists (OPT_BankName)) )
 	  continue;
-
-	//-- Update seen mappings
-	dots . update (cnts ++);
 
 	//-- Try and open the bank
 	try {
@@ -102,8 +105,7 @@ int main (int argc, char ** argv)
 	    i -> open (OPT_BankName, B_READ);
 	}
 	catch (const Exception_t & e) {
-          cerr << endl
-	       << "WARNING: " << e . what( ) << endl
+          cerr << "WARNING: " << e . what( ) << endl
                << "  could not open '" << Decode (ncode)
                << "' bank, mapping ignored" << endl;
           continue;
@@ -125,14 +127,10 @@ int main (int argc, char ** argv)
 
 	cntc ++;
       }
-
-    dots . end( );
   }
-  catch (Exception_t & e) {
-    cerr << endl
-	 << "FATAL: " << e . what( ) << endl
+  catch (const Exception_t & e) {
+    cerr << "FATAL: " << e . what( ) << endl
 	 << "  could not report mapping, abort" << endl
-	 << "Mappings checked: " << cnts << endl
 	 << "Mappings reported: " << cntc << endl;
     return EXIT_FAILURE;
   }
@@ -143,18 +141,14 @@ int main (int argc, char ** argv)
   for ( set<NCode_t>::iterator i = OPT_ExtractCodes . begin( );
 	i != OPT_ExtractCodes . end( ); ++ i )
     {
-      cnts ++;
-      cerr << endl
-	   << "WARNING: Unrecognized bank type" << endl
+      cerr << "WARNING: Unrecognized bank type" << endl
 	   << "  unknown bank type '" << Decode (*i)
-	   << "', mapping ignored" << endl;
+	   << "', bank ignored" << endl;
     }
 
   //-- Output the end time
-  cerr << "Mappings checked: " << cnts << endl
-       << "Mappings reported: " << cntc << endl
+  cerr << "Mappings reported: " << cntc << endl
        << "END DATE:   " << Date( ) << endl;
-
   return EXIT_SUCCESS;
 }
 
@@ -167,7 +161,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:hs")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:hsv")) != EOF) )
     switch (ch)
       {
       case 'b':
@@ -181,6 +175,11 @@ void ParseArgs (int argc, char ** argv)
 
       case 's':
 	OPT_BankSpy = true;
+	break;
+
+      case 'v':
+	PrintVersion (argv[0]);
+	exit (EXIT_SUCCESS);
 	break;
 
       default:
@@ -227,6 +226,7 @@ void PrintHelp (const char * s)
     << "-b path       The directory path of the bank to report\n"
     << "-h            Display help information\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
+    << "-v            Display the compatible bank version\n"
     << endl;
   cerr
     << "Takes an AMOS bank directory as input. Will output the ID map\n"
@@ -248,5 +248,15 @@ void PrintUsage (const char * s)
   cerr
     << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n"
     << endl;
+  return;
+}
+
+
+
+
+//---------------------------------------------------------- PrintVersion ----//
+void PrintVersion (const char * s)
+{
+  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

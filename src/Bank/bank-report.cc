@@ -25,7 +25,6 @@ using namespace std;
 
 
 
-
 //=============================================================== Globals ====//
 string  OPT_BankName;                        // bank name parameter
 string  OPT_IIDExtractName;                  // extract by IID file
@@ -33,9 +32,11 @@ string  OPT_EIDExtractName;                  // extract by EID file
 bool    OPT_IsBIDs = false;                  // include BIDs in the output
 bool    OPT_IsExtractCodes = false;          // extract only certain NCodes
 bool    OPT_IsExtractIDs = false;            // extract only certain IDs
+bool    OPT_BankSpy = false;                 // read or read-only spy
 set<NCode_t> OPT_ExtractCodes;               // NCodes to extract
 vector<ID_t> OPT_ExtractIIDs;                // IIDs to extract
 vector<string> OPT_ExtractEIDs;              // EIDs to extract
+
 
 
 //========================================================== Fuction Decs ====//
@@ -81,10 +82,23 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
+//----------------------------------------------------- PrintVersion -----------
+//! \brief Prints version information to cerr
+//!
+//! \param s The program name, i.e. argv[0]
+//! \return void
+//!
+void PrintVersion (const char * s);
+
+
+
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  long int cnt = 0;
+  long int cntc = 0;       // objects reported
+  NCode_t ncode;           // current object type
+  UniversalSet_t objs;     // all the universal objects
+  ID_t bid;                // bank index
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -95,59 +109,35 @@ int main (int argc, char ** argv)
 
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
-    //-- The KNOWN types to pull from the banks
-    //   Order of the list is important to maintain definition before
-    //   reference rule (def must come before ref in output message)
-    const Size_t N_TYPES = 15;
-    Universal_t * types [N_TYPES] =
-      {
-	new Universal_t( ),
-	new Sequence_t( ),
-	new Library_t( ),
-	new Fragment_t( ),
-	new Read_t( ),
-	new Matepair_t( ),
-	new Overlap_t( ),
-	new Kmer_t( ),
-	new Layout_t( ),
-	new Contig_t( ),
-	new ContigLink_t( ),
-	new ContigEdge_t( ),
-	new Scaffold_t( ),
-	new ScaffoldLink_t( ),
-	new ScaffoldEdge_t( ),
-      };
-
-    Universal_t * obj = NULL;
-    NCode_t ncode;
 
     //-- Iterate through each known object and dump if its got bank
-    for ( int ti = 0; ti < N_TYPES; ++ ti )
+    for ( UniversalSet_t::iterator i = objs.begin( ); i != objs.end( ); ++ i )
       {
-	delete obj;
-	obj = types [ti];
+	ncode = i -> getNCode( );
 
-	ncode = obj -> getNCode( );
-	if ( OPT_IsExtractCodes  &&
-	     OPT_ExtractCodes . find (ncode) == OPT_ExtractCodes . end( ) )
+	//-- Skip if we're not looking at this one or it doesn't exist
+	if ( (OPT_IsExtractCodes  &&
+	      OPT_ExtractCodes . find (ncode) == OPT_ExtractCodes . end( ))
+	     ||
+	     (!OPT_IsExtractCodes  &&  !BankExists (ncode, OPT_BankName)) )
 	  continue;
 
-	if ( !BankExists (ncode, OPT_BankName) )
-	  continue;
 
 	if ( OPT_IsExtractIDs )
 	  {
-	    ID_t bid;
 	    Bank_t bank (ncode);
-	    
-	    //-- Open the bank if it exists
+
+	    //-- Try and open the bank
 	    try {
-	      bank . open (OPT_BankName);
+	      if ( OPT_BankSpy )
+		bank . open (OPT_BankName, B_SPY);
+	      else
+		bank . open (OPT_BankName, B_READ);
 	    }
-	    catch (Exception_t & e) {
+	    catch (const Exception_t & e) {
 	      cerr << "WARNING: " << e . what( ) << endl
-		   << "  could not open " << Decode (ncode)
-		   << " bank, all objects ignored\n";
+		   << "  could not open '" << Decode (ncode)
+		   << "' bank, all objects ignored" << endl;
 	      continue;
 	    }
 
@@ -158,9 +148,9 @@ int main (int argc, char ** argv)
 		bid = bank . getIDMap( ) . lookupBID (*ii);
 		if ( bid == NULL_ID )
 		  continue;
-		bank . fetch (*ii, *obj);
-		PrintObject (obj, bid);
-		++ cnt;
+		bank . fetch (*ii, *i);
+		PrintObject (i, bid);
+		cntc ++;
 	      }
 
 	    //-- Get all of the requested EIDs
@@ -170,9 +160,9 @@ int main (int argc, char ** argv)
 		bid = bank . getIDMap( ) . lookupBID (ei -> c_str( ));
 		if ( bid == NULL_ID )
 		  continue;
-		bank . fetch (ei -> c_str( ), *obj);
-		PrintObject (obj, bid);
-		++ cnt;
+		bank . fetch (ei -> c_str( ), *i);
+		PrintObject (i, bid);
+		cntc ++;
 	      }
 
 	    bank . close( );
@@ -183,42 +173,54 @@ int main (int argc, char ** argv)
 	    
 	    //-- Open the bankstream if it exists
 	    try {
-	      bankstream . open (OPT_BankName);
+	      if ( OPT_BankSpy )
+		bankstream . open (OPT_BankName, B_SPY);
+	      else
+		bankstream . open (OPT_BankName, B_READ);
 	    }
-	    catch (Exception_t & e) {
+	    catch (const Exception_t & e) {
 	      cerr << "WARNING: " << e . what( ) << endl
-		   << "  could not open " << Decode (ncode)
-		   << " bankstream, all objects ignored\n";
+		   << "  could not open '" << Decode (ncode)
+		   << "' bankstream, all objects ignored" << endl;
 	      continue;
 	    }
 	    
 	    //-- Get ALL of the objects
-	    while ( bankstream >> *obj )
+	    while ( bankstream >> *i )
 	      {
-		PrintObject (obj, bankstream . tellg( ) - 1);
-		++ cnt;
+		PrintObject (i, bankstream . tellg( ) - 1);
+		cntc ++;
 	      }
 
 	    bankstream . close( );
 	  }
+
+	//-- Remove the code
+	if ( OPT_IsExtractCodes )
+	  OPT_ExtractCodes . erase (ncode);
       }
-
-    delete obj;
   }
-  catch (Exception_t & e) {
-
-  //-- On error, print debugging information
-  cerr << "Objects written: " << cnt << endl
-       << "ERROR: -- Fatal AMOS Exception --\n" << e;
-  return EXIT_FAILURE;
+  catch (const Exception_t & e) {
+    cerr << "FATAL: " << e . what( ) << endl
+	 << "  could not perform report, abort" << endl
+	 << "Objects reported: " << cntc << endl;
+    return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
 
-  //-- Output the end time
-  cerr << "Objects written: " << cnt << endl
-       << "END DATE:   " << Date( ) << endl;
+  //-- Any codes unrecognized?
+  for ( set<NCode_t>::iterator i = OPT_ExtractCodes . begin( );
+	i != OPT_ExtractCodes . end( ); ++ i )
+    {
+      cerr << "WARNING: Unrecognized bank type" << endl
+	   << "  unknown bank type '" << Decode (*i)
+	   << "',  bank ignored" << endl;
+    }
 
+  //-- Output the end time
+  cerr << "Objects reported: " << cntc << endl
+       << "END DATE:   " << Date( ) << endl;
   return EXIT_SUCCESS;
 }
 
@@ -294,7 +296,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:BE:hI:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:BE:hI:sv")) != EOF) )
     switch (ch)
       {
       case 'b':
@@ -320,6 +322,15 @@ void ParseArgs (int argc, char ** argv)
 	OPT_IIDExtractName = optarg;
 	break;
 
+      case 's':
+	OPT_BankSpy = true;
+	break;
+
+      case 'v':
+	PrintVersion (argv[0]);
+	exit (EXIT_SUCCESS);
+	break;
+
       default:
         errflg ++;
       }
@@ -330,9 +341,11 @@ void ParseArgs (int argc, char ** argv)
       errflg ++;
     }
 
-  if ( access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
+  if ( ( OPT_BankSpy  &&  access (OPT_BankName . c_str( ), R_OK|X_OK))  ||
+       (!OPT_BankSpy  &&  access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK)) )
     {
-      cerr << "ERROR: Bank directory is not accessible\n";
+      cerr << "ERROR: Bank directory is not accessible, "
+	   << strerror (errno) << endl;
       errflg ++;
     }
 
@@ -363,10 +376,12 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-b path       The directory path of the bank to report\n"
-    << "-B            Include BIDs in the output messages (debugging)\n"
+    << "-B            Include BIDs in the output messages (for debugging)\n"
     << "-E file       Report only objects matching EIDs in file\n"
     << "-h            Display help information\n"
     << "-I file       Report only objects matching IIDs in file\n"
+    << "-s            Disregard bank locks and write permissions (spy mode)\n"
+    << "-v            Display the compatible bank version\n"
     << endl;
   cerr
     << "Takes an AMOS bank directory as input. Will output the information\n"
@@ -388,7 +403,16 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s
-    << "  [options]  -b <bank path>  [NCodes]\n\n";
+    << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n\n";
+  return;
+}
+
+
+
+
+//---------------------------------------------------------- PrintVersion ----//
+void PrintVersion (const char * s)
+{
+  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }
