@@ -65,15 +65,13 @@ void Matepair_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Matepair_t::readRecord (istream & fix,
-			     istream & var)
+void Matepair_t::readRecord (istream & fix, istream & var)
 {
-  //-- Read parent object data
   Universal_t::readRecord (fix, var);
 
-  //-- Read object data
-  fix . read ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  fix . read ((char *)&type_m, sizeof (MateType_t));
+  readLE (fix, &(reads_m . first));
+  readLE (fix, &(reads_m . second));
+  type_m = fix . get( );
 }
 
 
@@ -89,7 +87,7 @@ void Matepair_t::setType (MateType_t type)
       type_m = type;
       break;
     default:
-      AMOS_THROW_ARGUMENT ((std::string)"Invalid mate type " + type);
+      AMOS_THROW_ARGUMENT ((string)"Invalid mate type " + type);
     }
   type_m = type;
 }
@@ -135,13 +133,11 @@ void Matepair_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Matepair_t::writeRecord (ostream & fix,
-			      ostream & var) const
+void Matepair_t::writeRecord (ostream & fix, ostream & var) const
 {
-  //-- Write parent object data
   Universal_t::writeRecord (fix, var);
 
-  //-- Write object data
-  fix . write ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  fix . write ((char *)&type_m, sizeof (MateType_t));
+  writeLE (fix, &(reads_m . first));
+  writeLE (fix, &(reads_m . second));
+  fix . put (type_m);
 }

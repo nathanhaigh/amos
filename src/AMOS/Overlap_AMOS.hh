@@ -26,9 +26,8 @@ typedef char OverlapAdjacency_t;
 //! location (to one another) in the original sequence. If storing a large
 //! number of overlaps in an AMOS bank, it is wise to omit the IID and EID
 //! fields from the objects as these values will only be written to the bank
-//! if they are non-NULL. Also, 2 extra bit flags are available for user-defined
-//! purposes, FlagC and FlagD, in addition to FlagA and FlagB which are
-//! inherited from the parent classes.
+//! if they are non-NULL. Also, an extra bit flag (FlagC) is provided in
+//! addition to FlagA and FlagB which are inherited.
 //!
 //==============================================================================
 class Overlap_t : public Universal_t
@@ -44,20 +43,21 @@ private:
 
 protected:
 
-  static const uint8_t FIRST_BIT;   //!< adjacency info for 1st read
-  static const uint8_t SECOND_BIT;  //!< adjacency info for 2nd read
-  static const uint8_t FLAGC_BIT;   //!< C flag
-  static const uint8_t FLAGD_BIT;   //!< D flag
+  static const uint8_t NORMAL_BITS     = 0x1;
+  static const uint8_t ANTINORMAL_BITS = 0x2;
+  static const uint8_t INNIE_BITS      = 0x3;
+  static const uint8_t OUTIE_BITS      = 0x0;
+  static const uint8_t ADJACENCY_BITS  = 0x3;  //!< adjacency info mask
+  static const uint8_t ADJACENCY_BIT   = 0x4;  //!< adjacency exists flag
+  static const uint8_t FLAGC_BIT       = 0x8;  //!< C flag
 
 
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
+  virtual void readRecord (std::istream & fix, std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
 
 
 public:
@@ -124,16 +124,7 @@ public:
   //!
   //! \return void
   //!
-  void flip ( )
-  {
-    OverlapAdjacency_t oa = getAdjacency( );
-    if ( oa == NORMAL ) setAdjacency (ANTINORMAL);
-    else if ( oa == ANTINORMAL ) setAdjacency (NORMAL);
-
-    Size_t tHang = aHang_m; aHang_m = bHang_m; bHang_m = tHang;
-
-    reads_m = std::make_pair (reads_m . second, reads_m . first);
-  }
+  void flip ( );
 
 
   //--------------------------------------------------- getAdjacency -----------
@@ -215,17 +206,6 @@ public:
   }
 
 
-  //--------------------------------------------------- isFlagD ----------------
-  //! \brief Check the value of flag D
-  //!
-  //! \return The value of flag D
-  //!
-  bool isFlagD ( ) const
-  {
-    return flags_m . nibble & FLAGD_BIT;
-  }
-
-
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
 
@@ -288,21 +268,6 @@ public:
       flags_m . nibble |= FLAGC_BIT;
     else
       flags_m . nibble &= ~FLAGC_BIT;
-  }
-
-
-  //--------------------------------------------------- setFlagD ---------------
-  //! \brief Set the value of flag D
-  //!
-  //! \param flag The new flag D value
-  //! \return void
-  //!
-  void setFlagD (bool flag)
-  {
-    if ( flag )
-      flags_m . nibble |= FLAGD_BIT;
-    else
-      flags_m . nibble &= ~FLAGD_BIT;
   }
 
 

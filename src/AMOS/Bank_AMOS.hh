@@ -5,6 +5,16 @@
 //!
 //! \brief Header for Bank_t
 //!
+//-- IMPORTANT DEVELOPERS NOTE
+//! \note In an effort to ensure the binary-compatibility of AMOS banks
+//! all disk I/O should be independent of any system-dependent sizes or byte
+//! orders (endian-ness), such as 'int' which can vary in size and uint64_t
+//! which can be stored in either big- or little-endian byte order. To avoid
+//! these issues, only use types with known sizes (int32_t for example) and
+//! write/read atomic data with the readLE and writeLE methods which convert
+//! strongly-typed ints to and from little-endian byte order before writing/
+//! reading.
+//!
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef __Bank_AMOS_HH
@@ -13,72 +23,26 @@
 #include "utility_AMOS.hh"
 #include "IDMap_AMOS.hh"
 #include <cstdlib>
-#include <fstream>
 #include <string>
+#include <fstream>
 #include <sstream>
 #include <vector>
 #include <deque>
 
-#define __PUBSETBUF pubsetbuf
-#ifdef __GNUC__
-# if __GNUC__ < 3
-#  undef __PUBSETBUF
-#  define __PUBSETBUF setbuf
-# endif
-#endif
 
-
-
+//-- DEVELOPERS NOTE
+// In an effort to ensure the binary-compatibility of AMOS banks:
+//
+// All disk I/O should be independent of any system-dependent sizes or byte
+// orders (endian-ness), such as 'int' which can vary in size and uint64_t
+// which can be stored in either big- or little-endian byte order. To avoid
+// these issues, only use types with known sizes (int32_t for example) and
+// write/read atomic data with the readLE and writeLE methods which convert
+// strongly-typed ints to and from little-endian byte order before writing/
+// reading.
+//
 
 namespace AMOS {
-
-//================================================ BankFlags_t =================
-//! \brief 8 bit flag set for IBankable types
-//!
-//! The flag set object provides 4 flags in a bit field, and can be directly
-//! accessed. In addition, 4 bits are left available for misc use.
-//!
-//==============================================================================
-struct BankFlags_t
-{
-  uint8_t is_removed  : 1;        //!< removed flag
-  uint8_t is_modified : 1;        //!< modified flag
-  uint8_t is_flagA    : 1;        //!< generic user flag A
-  uint8_t is_flagB    : 1;        //!< generic user flag B
-  uint8_t nibble      : 4;        //!< extra class-specific bits
-  
-  //------------------------------------------------- BankFlags_t --------------
-  //! \brief Constructs an empty Flags_t object
-  //!
-  //! Initializes all flag bits to zero (false)
-  //!
-  BankFlags_t ( )
-  {
-    clear( );
-  }
-  
-  
-  //------------------------------------------------- ~BankFlags_t -------------
-  //! \brief Destroys a Flags_t object
-  //!
-  ~BankFlags_t ( )
-  {
-    
-  }
-
-
-  //------------------------------------------------- clear --------------------
-  //! \brief Sets everything to zero
-  //!
-  void clear ( )
-  {
-    is_removed = is_modified = is_flagA = is_flagB = 0; nibble = 0;
-  }
-};
-
-
-
-
 
 //================================================ IBankable_t =================
 //! \brief Interface for classes that can be stored in an AMOS bank
@@ -98,7 +62,7 @@ struct BankFlags_t
 class IBankable_t
 {
   friend class Bank_t;       //!< so the bank class can use the read/writes
-  friend class BankStream_t; //!< ditto
+  friend class BankStream_t; //!< so the bank class can use the read/writes
 
 
 protected:
@@ -127,8 +91,7 @@ protected:
   //! \pre The get pointer of var is at the beginning of the record
   //! \return void
   //!
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var) = 0;
+  virtual void readRecord (std::istream & fix, std::istream & var) = 0;
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -146,8 +109,7 @@ protected:
   //! \param var The variable length stream (stores all var length members)
   //! \return void
   //!
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const = 0;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const = 0;
 
 
 public:
@@ -368,7 +330,7 @@ protected:
   static const Size_t DEFAULT_PARTITION_SIZE;
   //!< Default number of records per partition
 
-  static const uint8_t MAX_OPEN_PARTITIONS;
+  static const Size_t MAX_OPEN_PARTITIONS;
   //!< Allowable simultaneously open partitions
 
 
@@ -395,47 +357,34 @@ protected:
     std::fstream fix;  //!< The fstream for this partition's fix len store
     std::fstream var;  //!< The fstream for this partition's var len store
 
-    BankPartition_t (Size_t buffer_size)
-    {
-      //-- Allocate and assign the IO buffers
-      fix_buff = (char *) SafeMalloc (buffer_size);
-      var_buff = (char *) SafeMalloc (buffer_size);
+    //------------------------------------------------- BankPartition_t --------
+    //! \brief Allocates stream buffers for fix and var streams
+    //!
+    BankPartition_t (Size_t buffer_size);
 
-      fix . rdbuf( ) -> __PUBSETBUF (fix_buff, buffer_size);
-      var . rdbuf( ) -> __PUBSETBUF (var_buff, buffer_size);
-    }
 
-    ~BankPartition_t ( )
-    {
-      //-- Close streams and free buffer memory
-      fix . close( );
-      var . close( );
+    //------------------------------------------------- BankPartition_t --------
+    //! \brief Closes fix and var streams and frees buffer memory
+    //!
+    ~BankPartition_t ( );
 
-      free (fix_buff);
-      free (var_buff);
-    }
   };
 
 
-  //--------------------------------------------------- init -------------------
-  //! \brief Initializes bank variables
+  //--------------------------------------------------- EIDtoBID ---------------
+  //! \brief Converts an EID to a BID
   //!
-  void init ( )
-  {
-    fix_size_m       = 0;
-    is_open_m        = false;
-    last_bid_m       = NULL_ID;
-    max_bid_m        = NULL_ID;
-    nbids_m          = NULL_ID;
-    npartitions_m    = 0;
-    partition_size_m = 0;
-    opened_m     . clear( );
-    partitions_m . clear( );
-    store_dir_m  . erase( );
-    store_pfx_m  . erase( );
-    idmap_m      . clear( );
-    idmap_m      . setType (banktype_m);
-  }
+  //! \throws ArgumentException_t
+  //!
+  ID_t EIDtoBID (const char * eid) const;
+
+
+  //--------------------------------------------------- IIDtoBID ---------------
+  //! \brief Converts an IID to a BID
+  //!
+  //! \throws ArgumentException_t
+  //!
+  ID_t IIDtoBID (ID_t iid) const;
 
 
   //--------------------------------------------------- addPartition -----------
@@ -491,6 +440,12 @@ protected:
   }
 
 
+  //--------------------------------------------------- init -------------------
+  //! \brief Initializes bank variables
+  //!
+  void init ( );
+
+
   //--------------------------------------------------- openPartition ----------
   //! \brief Returns the requested BankPartition, opening it if necessary
   //!
@@ -522,42 +477,6 @@ protected:
     ID_t pid = (-- bid) / partition_size_m;
     bid -= pid * partition_size_m;
     return getPartition (pid);
-  }
-
-
-  //--------------------------------------------------- IIDtoBID ---------------
-  //! \brief Converts an IID to a BID
-  //!
-  //! \throws ArgumentException_t
-  //!
-  ID_t IIDtoBID (ID_t iid) const
-  {
-    ID_t bid = idmap_m . lookupBID (iid);
-    if ( bid == NULL_ID || bid > last_bid_m )
-      {
-	std::stringstream ss;
-	ss << "IID '" << iid << "' does not exist in bank";
-	AMOS_THROW_ARGUMENT (ss . str( ));
-      }
-    return bid;
-  }
-
-
-  //--------------------------------------------------- EIDtoBID ---------------
-  //! \brief Converts an EID to a BID
-  //!
-  //! \throws ArgumentException_t
-  //!
-  ID_t EIDtoBID (const char * eid) const
-  {
-    ID_t bid = idmap_m . lookupBID (eid);
-    if ( bid == NULL_ID || bid > last_bid_m )
-      {
-	std::stringstream ss;
-	ss << "EID '" << eid << "' does not exist in bank";
-	AMOS_THROW_ARGUMENT (ss . str( ));
-      }
-    return bid;
   }
 
 
@@ -619,6 +538,8 @@ protected:
 
 
 public:
+
+  typedef int64_t bankstreamoff;  //!< 64-bit stream offset for largefiles
 
   static const std::string BANK_VERSION;
   //!< Current Bank version, may not be able to read from other versions
@@ -692,20 +613,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void append (IBankable_t & obj)
-  {
-    //-- Insert the ID triple into the map (may throw exception)
-    idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), last_bid_m + 1);
-
-    try {
-      appendBID (obj);
-    }
-    catch (Exception_t) {
-      idmap_m . remove (obj . iid_m);
-      idmap_m . remove (obj . eid_m . c_str( ));
-      throw;
-    }
-  }
+  void append (IBankable_t & obj);
 
 
   //--------------------------------------------------- clean ------------------
@@ -1055,41 +963,14 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void replace (ID_t iid, IBankable_t & obj)
-  {
-    ID_t bid = IIDtoBID (iid);
-    std::string peid (idmap_m . lookupEID (iid));
-    idmap_m . remove (iid);
-
-    try {
-      idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), bid);
-      replaceBID (bid, obj);
-    }
-    catch (Exception_t) {
-      idmap_m . insert (iid, peid . c_str( ), bid);
-      throw;
-    }
-  }
+  void replace (ID_t iid, IBankable_t & obj);
 
 
   //--------------------------------------------------- replace ----------------
   //! \brief Replaces an object in the bank by its EID
   //!
-  void replace (const char * eid, IBankable_t & obj)
-  {
-    ID_t bid = EIDtoBID (eid);
-    ID_t piid = idmap_m . lookupIID (eid);
-    idmap_m . remove (eid);
+  void replace (const char * eid, IBankable_t & obj);
 
-    try {
-      idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), bid);
-      replaceBID (bid, obj);
-    }
-    catch (Exception_t) {
-      idmap_m . insert (piid, eid, bid);
-      throw;
-    }
-  }
 };
 
 

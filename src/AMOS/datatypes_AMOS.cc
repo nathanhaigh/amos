@@ -15,8 +15,7 @@ using namespace std;
 
 
 
-
-const NCode_t Tile_t::NCODE = M_TILE;
+//================================================ Distribution_t ==============
 const NCode_t Distribution_t::NCODE = M_DISTRIBUTION;
 
 
@@ -45,21 +44,70 @@ void Distribution_t::readMessage (const Message_t & msg)
 	  AMOS_THROW_ARGUMENT ("Invalid standard deviation format");
 	ss . clear( );
       }
-
-    if ( msg . exists (F_SKEWNESS) )
-      {
-	ss . str (msg . getField (F_SKEWNESS));
-	ss >> skew;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid skewness format");
-	ss . clear( );
-      }
   }
   catch (ArgumentException_t) {
     
     clear( );
     throw;
   }
+}
+
+
+//--------------------------------------------------- readRecord -------------
+void Distribution_t::readRecord (std::istream & in)
+{
+  readLE (in, &mean);
+  readLE (in, &sd);
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Distribution_t::writeMessage (Message_t & msg) const
+{
+  msg . clear( );
+
+  try {
+    ostringstream ss;
+
+    msg . setMessageCode (Distribution_t::getNCode( ));
+
+    ss << mean;
+    msg . setField (F_MEAN, ss . str( ));
+    ss . str (NULL_STRING);
+
+    ss << sd;
+    msg . setField (F_SD, ss . str( ));
+    ss . str (NULL_STRING);
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
+}
+
+
+//--------------------------------------------------- writeRecord ------------
+void Distribution_t::writeRecord (std::ostream & out) const
+{
+  writeLE (out, &mean);
+  writeLE (out, &sd);
+}
+
+
+
+
+//================================================ Tile_t ======================
+const NCode_t Tile_t::NCODE = M_TILE;
+
+
+//----------------------------------------------------- clear ------------------
+void Tile_t::clear ( )
+{
+  source = NULL_ID;
+  gaps . clear( );
+  offset = 0;
+  range . clear( );
 }
 
 
@@ -125,33 +173,19 @@ void Tile_t::readMessage (const Message_t & msg)
 }
 
 
-//----------------------------------------------------- writeMessage -----------
-void Distribution_t::writeMessage (Message_t & msg) const
+//----------------------------------------------------- readRecord -------------
+void Tile_t::readRecord (istream & in)
 {
-  msg . clear( );
+  Size_t size;
 
-  try {
-    ostringstream ss;
-
-    msg . setMessageCode (Distribution_t::getNCode( ));
-
-    ss << mean;
-    msg . setField (F_MEAN, ss . str( ));
-    ss . str (NULL_STRING);
-
-    ss << sd;
-    msg . setField (F_SD, ss . str( ));
-    ss . str (NULL_STRING);
-
-    ss << skew;
-    msg . setField (F_SKEWNESS, ss . str( ));
-    ss . str (NULL_STRING);
-  }
-  catch (ArgumentException_t) {
-
-    msg . clear( );
-    throw;
-  }
+  readLE (in, &size);
+  gaps . resize (size);
+  for ( Pos_t i = 0; i < size; i ++ )
+    readLE (in, &(gaps [i]));
+  readLE (in, &source);
+  readLE (in, &offset);
+  readLE (in, &(range . begin));
+  readLE (in, &(range . end));
 }
 
 
@@ -194,6 +228,22 @@ void Tile_t::writeMessage (Message_t & msg) const
     msg . clear( );
     throw;
   }
+}
+
+
+//----------------------------------------------------- writeRecord ------------
+void Tile_t::writeRecord (ostream & out) const
+{
+  Size_t size;
+
+  size = gaps . size( );
+  writeLE (out, &size);
+  for ( Pos_t i = 0; i < size; i ++ )
+    writeLE (out, &(gaps [i]));
+  writeLE (out, &source);
+  writeLE (out, &offset);
+  writeLE (out, &(range . begin));
+  writeLE (out, &(range . end));
 }
 
 
@@ -266,8 +316,7 @@ bool AMOS::operator!= (const Range_t & a, const Range_t & b)
 bool AMOS::operator== (const Distribution_t & a, const Distribution_t & b)
 {
   return ( a . mean == b . mean  &&
-	   a . sd == b . sd  &&
-	   a . skew == b . skew );
+	   a . sd == b . sd );
 }
 bool AMOS::operator!= (const Distribution_t & a, const Distribution_t & b)
 {

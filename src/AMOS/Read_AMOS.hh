@@ -26,7 +26,6 @@ typedef char ReadType_t;
 //! DNA sequencing reads. Retains all the functionality of a Sequence with
 //! added fields for clear ranges, mate pairs, etc.
 //!
-//! \todo add more clear range flexibility
 //==============================================================================
 class Read_t : public Sequence_t
 {
@@ -43,13 +42,11 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
+  virtual void readRecord (std::istream & fix, std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
 
 
 public:
@@ -96,15 +93,7 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  virtual void clear ( )
-  {
-    Sequence_t::clear( );
-    clear_m . clear( );
-    frag_m = NULL_ID;
-    qclear_m . clear( );
-    type_m = NULL_READ;
-    vclear_m . clear( );
-  }
+  virtual void clear ( );
 
 
   //--------------------------------------------------- getClearRange ----------

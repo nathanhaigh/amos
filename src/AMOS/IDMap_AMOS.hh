@@ -72,17 +72,8 @@ public:
     //------------------------------------------------- operator= --------------
     //! \brief Deep copy of the HashTriple
     //!
-    HashTriple_t & operator= (const HashTriple_t & s)
-    {
-      if ( this != &s )
-	{
-	  c = s.c;
-	  iid = s.iid;
-	  bid = s.bid;
-	  eid = SafeStrdup (s.eid);
-	}
-      return *this;
-    }
+    HashTriple_t & operator= (const HashTriple_t & s);
+
   };
 
 
@@ -124,16 +115,7 @@ private:
     //! Deletes its triple if reference count falls to zero and deletes the
     //! next pointer. Resets both pointers to NULL.
     //!
-    void clear ( )
-    {
-      if ( triple != NULL )
-	if ( -- (triple -> c) == 0 )
-	  delete triple;
-      delete next;
-
-      triple = NULL;
-      next = NULL;
-    }
+    void clear ( );
 
 
     //------------------------------------------------- clearchain -------------
@@ -366,19 +348,7 @@ public:
   //!
   //! \return void
   //!
-  void clear ( )
-  {
-    if ( size_m > 0 )
-      {
-	std::vector<HashNode_t>::iterator hni;
-	for ( hni = iid_bucs_m . begin( ); hni != iid_bucs_m . end( ); hni ++ )
-	  hni -> clearchain( );
-	for ( hni = eid_bucs_m . begin( ); hni != eid_bucs_m . end( ); hni ++ )
-	  hni -> clearchain( );
-	size_m = 0;
-      }
-    type_m = NULL_NCODE;
-  }
+  void clear ( );
 
 
   //--------------------------------------------------- concat -----------------

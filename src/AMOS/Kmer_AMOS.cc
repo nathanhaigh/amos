@@ -19,13 +19,24 @@ const NCode_t Kmer_t::NCODE = M_KMER;
 const uint8_t Kmer_t::MAX_LENGTH    = 255;
 
 
+//----------------------------------------------------- clear ------------------
+void Kmer_t::clear ( )
+{
+  Universal_t::clear( );
+  free (seq_m);
+  seq_m = NULL;
+  count_m = length_m = 0;
+  reads_m . clear( );
+}
+
+
 //----------------------------------------------------- getSeqString -----------
 string Kmer_t::getSeqString ( ) const
 {
   string retval;
   retval . reserve (length_m);
 
-  //-- See comments for getBase regarding the compressed sequence
+  //-- See developer comments for getBase
   Pos_t ci = -1;
   uint8_t byte = 0;
   for ( Pos_t ui = 0; ui < length_m; ui ++ )
@@ -90,22 +101,18 @@ void Kmer_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Kmer_t::readRecord (istream & fix,
-			 istream & var)
+void Kmer_t::readRecord (istream & fix, istream & var)
 {
-  Size_t size;
-
-  //-- Read parent object data
   Universal_t::readRecord (fix, var);
 
-  //-- Read object data
-  fix . read ((char *)&count_m, sizeof (uint32_t));
-  fix . read ((char *)&size, sizeof (Size_t));
-  fix . read ((char *)&length_m, sizeof (uint8_t));
+  Size_t size;
+  readLE (fix, &count_m);
+  readLE (fix, &length_m);
+  readLE (fix, &size);
 
   reads_m . resize (size, NULL_ID);
   for ( Pos_t i = 0; i < size; i ++ )
-    var . read ((char *)&reads_m [i], sizeof (ID_t));
+    readLE (var, &(reads_m [i]));
 
   size = length_m / 4 + (length_m % 4 ? 1 : 0);
   seq_m = (uint8_t *) SafeRealloc (seq_m, size);
@@ -124,7 +131,7 @@ void Kmer_t::setSeqString (const string & seq)
   size = size / 4 + (size % 4 ? 1 : 0);
   seq_m = (uint8_t *) SafeRealloc (seq_m, size);
 
-  //-- See comments for setBase regarding the compressed sequence
+  //-- See developer comments for setBase
   Pos_t ci = -1;
   int offset = 8;
   length_m = 0;
@@ -188,21 +195,17 @@ void Kmer_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Kmer_t::writeRecord (ostream & fix,
-			  ostream & var) const
+void Kmer_t::writeRecord (ostream & fix, ostream & var) const
 {
-  Size_t size = reads_m . size( );
-
-  //-- Write parent object data
   Universal_t::writeRecord (fix, var);
 
-  //-- Write the object data
-  fix . write ((char *)&count_m, sizeof (uint32_t));
-  fix . write ((char *)&size, sizeof (Size_t));
-  fix . write ((char *)&length_m, sizeof (uint8_t));
+  Size_t size = reads_m . size( );
+  writeLE (fix, &count_m);
+  writeLE (fix, &length_m);
+  writeLE (fix, &size);
 
   for ( Pos_t i = 0; i < size; i ++ )
-    var . write ((char *)&reads_m [i], sizeof (ID_t));
+    writeLE (var, &(reads_m [i]));
 
   size = length_m / 4 + (length_m % 4 ? 1 : 0);
   var . write ((char *)seq_m, size);
@@ -214,12 +217,9 @@ Kmer_t & Kmer_t::operator= (const Kmer_t & source)
 {
   if ( this != &source )
     {
-      //-- Make sure parent data is copied
       Universal_t::operator= (source);
 
       Size_t size = source . length_m / 4 + (source . length_m % 4 ? 1 : 0);
-
-      //-- Copy object data
       seq_m = (uint8_t *) SafeRealloc (seq_m, size);
       memcpy (seq_m, source . seq_m, size);
 

@@ -62,13 +62,11 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
+  virtual void readRecord (std::istream & fix, std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
 
 
 public:

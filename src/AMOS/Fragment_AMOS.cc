@@ -24,6 +24,16 @@ const FragmentType_t Fragment_t::TRANSPOSON     = 'T';
 const FragmentType_t Fragment_t::WALK           = 'W';
 
 
+//----------------------------------------------------- clear ------------------
+void Fragment_t::clear ( )
+{
+  Universal_t::clear( );
+  size_m = 0;
+  library_m = source_m = NULL_ID;
+  type_m = NULL_FRAGMENT;
+}
+
+
 //----------------------------------------------------- readMessage-------------
 void Fragment_t::readMessage (const Message_t & msg)
 {
@@ -78,14 +88,12 @@ void Fragment_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void Fragment_t::readRecord (istream & fix, istream & var)
 {
-  //-- Read parent object data
   Universal_t::readRecord (fix, var);
 
-  //-- Read object data
-  fix . read ((char *)&library_m, sizeof (ID_t));
-  fix . read ((char *)&size_m, sizeof (Size_t));
-  fix . read ((char *)&source_m, sizeof (ID_t));
-  fix . read ((char *)&type_m, sizeof (FragmentType_t));
+  readLE (fix, &library_m);
+  readLE (fix, &size_m);
+  readLE (fix, &source_m);
+  type_m = fix . get( );
 }
 
 
@@ -103,7 +111,7 @@ void Fragment_t::setType (FragmentType_t type)
       type_m = type;
       break;
     default:
-      AMOS_THROW_ARGUMENT ((std::string)"Invalid fragment type " + type);
+      AMOS_THROW_ARGUMENT ((string)"Invalid fragment type " + type);
     }
 }
 
@@ -157,12 +165,10 @@ void Fragment_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Fragment_t::writeRecord (ostream & fix, ostream & var) const
 {
-  //-- Write parent object data
   Universal_t::writeRecord (fix, var);
 
-  //-- Write object data
-  fix . write ((char *)&library_m, sizeof (ID_t));
-  fix . write ((char *)&size_m, sizeof (Size_t));
-  fix . write ((char *)&source_m, sizeof (ID_t));
-  fix . write ((char *)&type_m, sizeof (FragmentType_t));
+  writeLE (fix, &library_m);
+  writeLE (fix, &size_m);
+  writeLE (fix, &source_m);
+  fix . put (type_m);
 }

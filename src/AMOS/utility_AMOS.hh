@@ -15,7 +15,8 @@
 #include <new>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
+#include <iostream>
+#include <cassert>
 
 
 
@@ -109,74 +110,170 @@ inline char * SafeStrdup (const char * str)
 }
 
 
-
-
-//================================================ AMOStream_t =================
-//! \brief An extension of std::fstream that writes network order bytes
+//------------------------------------------------- writeLE ------------------
+//! \brief Writes an 8-bit int in little-endian byte order
 //!
-//==============================================================================
-class AMOStream_t : public std::fstream
+//! \param out The ostream to write to
+//! \param i A pointer to the int to write
+//! \pre Same preconditions as ostream::write
+//! \return void
+//!
+inline void writeLE (std::ostream & out, const uint8_t * i)
 {
-
-private:
-
-  static const size_t BITS16 = 2;
-  static const size_t BITS32 = 4;
-  static const size_t BITS64 = 8;
-
-  union u16_t {uint16_t i; char c[BITS16];};
-  union u32_t {uint32_t i; char c[BITS32];};
-  union u64_t {uint64_t i; char c[BITS64];};
-
-  u16_t u16;
-  u32_t u32;
-  u64_t u64;
+  out . put ((char)(*i));
+}
+inline void writeLE (std::ostream & out, const int8_t * i)
+{
+  writeLE (out, (const uint8_t *)(i));
+}
+inline void writeLE (std::ostream & out, const BankFlags_t * i)
+{
+  assert ( sizeof (BankFlags_t) == 1 );
+  writeLE (out, (const uint8_t *)(i));
+}
 
 
-public:
-
-  void writeInt (const uint8_t * i)
-  { put ((char)(*i)); }
-  void writeInt (const int8_t * i)
-  { writeInt ((const uint8_t *)i); }
-
-  void writeInt (const uint16_t * i)
-  { u16.i = htol16 (*i); write (u16.c, BITS16); }
-  void writeInt (const int16_t * i)
-  { writeInt ((const uint16_t *)i); }
-
-  void writeInt (const uint32_t * i)
-  { u32.i = htol32 (*i); write (u32.c, BITS32); }
-  void writeInt (const int32_t * i)
-  { writeInt ((const uint32_t *)i); }
-
-  void writeInt (const uint64_t * i)
-  { u64.i = htol64 (*i); write (u64.c, BITS64); }
-  void writeInt (const int64_t * i)
-  { writeInt ((const uint64_t *)i); }
+//------------------------------------------------- writeLE ------------------
+//! \brief Writes a 16-bit int in little-endian byte order
+//!
+//! \param out The ostream to write to
+//! \param i A pointer to the int to write
+//! \pre Same preconditions as ostream::write
+//! \return void
+//!
+inline void writeLE (std::ostream & out, const uint16_t * i)
+{
+  union {uint16_t i; char c[sizeof (uint16_t)];} u16;
+  u16.i = htol16 (*i);
+  out . write (u16.c, sizeof (uint16_t));
+}
+inline void writeLE (std::ostream & out, const int16_t * i)
+{
+  writeLE (out, (const uint16_t *)(i));
+}
 
 
-  void readInt (uint8_t * i)
-  { get ((char)(*i)); }
-  void readInt (int8_t * i)
-  { readInt ((uint8_t *)i); }
+//------------------------------------------------- writeLE ------------------
+//! \brief Writes a 32-bit int in little-endian byte order
+//!
+//! \param out The ostream to write to
+//! \param i A pointer to the int to write
+//! \pre Same preconditions as ostream::write
+//! \return void
+//!
+inline void writeLE (std::ostream & out, const uint32_t * i)
+{
+  union {uint32_t i; char c[sizeof (uint32_t)];} u32;
+  u32.i = htol32 (*i);
+  out . write (u32.c, sizeof (uint32_t));
+}
+inline void writeLE (std::ostream & out, const int32_t * i)
+{
+  writeLE (out, (const uint32_t *)(i));
+}
 
-  void readInt (uint16_t * i)
-  { read (u16.c, BITS16); *i = ltoh16 (u16.i); }
-  void readInt (int16_t * i)
-  { readInt ((uint16_t *)i); }
 
-  void readInt (uint32_t * i)
-  { read (u32.c, BITS32); *i = ltoh32 (u32.i); }
-  void readInt (int32_t * i)
-  { readInt ((uint32_t *)i); }
+//------------------------------------------------- writeLE ------------------
+//! \brief Writes a 64-bit int in little-endian byte order
+//!
+//! \param out The ostream to write to
+//! \param i A pointer to the int to write
+//! \pre Same preconditions as ostream::write
+//! \return void
+//!
+inline void writeLE (std::ostream & out, const uint64_t * i)
+{
+  union {uint64_t i; char c[sizeof (uint64_t)];} u64;
+  u64.i = htol64 (*i);
+  out . write (u64.c, sizeof (uint64_t));
+}
+inline void writeLE (std::ostream & out, const int64_t * i)
+{
+  writeLE (out, (const uint64_t *)(i));
+}
 
-  void readInt (uint64_t * i)
-  { read (u64.c, BITS64); *i = ltoh64 (u64.i); }
-  void readInt (int64_t * i)
-  { readInt ((uint64_t *)i); }
 
-};
+//------------------------------------------------- readLE -------------------
+//! \brief Reads a little-endian 8-bit int
+//!
+//! \param in The istream to read from
+//! \param i A pointer to the int storage
+//! \pre Same preconditions as istream::read
+//! \return void
+//!
+inline void readLE (std::istream & in, uint8_t * i)
+{
+  *i = in . get( );
+}
+inline void readLE (std::istream & in, int8_t * i)
+{
+  readLE (in, (uint8_t *)(i));
+}
+inline void readLE (std::istream & in, BankFlags_t * i)
+{
+  assert ( sizeof (BankFlags_t) == 1 );
+  readLE (in, (uint8_t *)(i));
+}
+
+
+//------------------------------------------------- readLE -------------------
+//! \brief Reads a little-endian 16-bit int
+//!
+//! \param in The istream to read from
+//! \param i A pointer to the int storage
+//! \pre Same preconditions as istream::read
+//! \return void
+//!
+inline void readLE (std::istream & in, uint16_t * i)
+{
+  union {uint16_t i; char c[sizeof (uint16_t)];} u16;
+  in . read (u16.c, sizeof (uint16_t));
+  *i = ltoh16 (u16.i);
+}
+inline void readLE (std::istream & in, int16_t * i)
+{
+  readLE (in, (uint16_t *)(i));
+}
+
+
+//------------------------------------------------- readLE -------------------
+//! \brief Reads a little-endian 32-bit int
+//!
+//! \param in The istream to read from
+//! \param i A pointer to the int storage
+//! \pre Same preconditions as istream::read
+//! \return void
+//!
+inline void readLE (std::istream & in, uint32_t * i)
+{
+  union {uint32_t i; char c[sizeof (uint32_t)];} u32;
+  in . read (u32.c, sizeof (uint32_t));
+  *i = ltoh32 (u32.i);
+}
+inline void readLE (std::istream & in, int32_t * i)
+{
+  readLE (in, (uint32_t *)(i));
+}
+
+
+//------------------------------------------------- readLE -------------------
+//! \brief Reads a little-endian 64-bit int
+//!
+//! \param in The istream to read from
+//! \param i A pointer to the int storage
+//! \pre Same preconditions as istream::read
+//! \return void
+//!
+inline void readLE (std::istream & in, uint64_t * i)
+{
+  union {uint64_t i; char c[sizeof (uint64_t)];} u64;
+  in . read (u64.c, sizeof (uint64_t));
+  *i = ltoh64 (u64.i);
+}
+inline void readLE (std::istream & in, int64_t * i)
+{
+  readLE (in, (uint64_t *)(i));
+}
 
 } // namespace AMOS
 

@@ -24,6 +24,18 @@ const ReadType_t Read_t::BAC        = 'B';
 const ReadType_t Read_t::WALK       = 'W';
 
 
+//----------------------------------------------------- clear ------------------
+void Read_t::clear ( )
+{
+  Sequence_t::clear( );
+  clear_m . clear( );
+  frag_m = NULL_ID;
+  qclear_m . clear( );
+  type_m = NULL_READ;
+  vclear_m . clear( );
+}
+
+
 //----------------------------------------------------- readMessage-------------
 void Read_t::readMessage (const Message_t & msg)
 {
@@ -91,18 +103,18 @@ void Read_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Read_t::readRecord (istream & fix,
-			 istream & var)
+void Read_t::readRecord (istream & fix, istream & var)
 {
-  //-- Read parent object data
   Sequence_t::readRecord (fix, var);
 
-  //-- Read object data
-  fix . read ((char *)&clear_m, sizeof (Range_t));
-  fix . read ((char *)&frag_m, sizeof (ID_t));
-  fix . read ((char *)&qclear_m, sizeof (Range_t));
-  fix . read ((char *)&type_m, sizeof (ReadType_t));
-  fix . read ((char *)&vclear_m, sizeof (Range_t));
+  readLE (fix, &(clear_m . begin));
+  readLE (fix, &(clear_m . end));
+  readLE (fix, &frag_m);
+  readLE (fix, &(qclear_m . begin));
+  readLE (fix, &(qclear_m . end));
+  type_m = fix . get( );
+  readLE (fix, &(vclear_m . begin));
+  readLE (fix, &(vclear_m . end));
 }
 
 
@@ -120,7 +132,7 @@ void Read_t::setType (ReadType_t type)
       type_m = type;
       break;
     default:
-      AMOS_THROW_ARGUMENT ((std::string)"Invalid read type " + type);
+      AMOS_THROW_ARGUMENT ((string)"Invalid read type " + type);
     }
 }
 
@@ -170,18 +182,18 @@ void Read_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Read_t::writeRecord (ostream & fix,
-			  ostream & var) const
+void Read_t::writeRecord (ostream & fix, ostream & var) const
 {
-  //-- Write parent object data
   Sequence_t::writeRecord (fix, var);
 
-  //-- Write object data
-  fix . write ((char *)&clear_m, sizeof (Range_t));
-  fix . write ((char *)&frag_m, sizeof (ID_t));
-  fix . write ((char *)&qclear_m, sizeof (Range_t));
-  fix . write ((char *)&type_m, sizeof (ReadType_t));
-  fix . write ((char *)&vclear_m, sizeof (Range_t));
+  writeLE (fix, &(clear_m . begin));
+  writeLE (fix, &(clear_m . end));
+  writeLE (fix, &frag_m);
+  writeLE (fix, &(qclear_m . begin));
+  writeLE (fix, &(qclear_m . end));
+  fix . put (type_m);
+  writeLE (fix, &(vclear_m . begin));
+  writeLE (fix, &(vclear_m . end));
 }
 
 
@@ -189,7 +201,7 @@ void Read_t::writeRecord (ostream & fix,
 //----------------------------------------------------- operator<< -------------
 ostream & AMOS::operator<< (ostream & out, Read_t & read)
 {
-  std::string s;
+  string s;
 
   out << "#iid:" << read.getIID( ) << endl;
   out << "#comment:" << endl;

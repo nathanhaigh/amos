@@ -24,33 +24,47 @@ const LinkType_t ContigLink_t::PHYSICAL   = 'P';
 const LinkType_t ContigLink_t::ALIGNMENT  = 'A';
 const LinkType_t ContigLink_t::SYNTENY    = 'S';
 const LinkAdjacency_t ContigLink_t::NULL_ADJACENCY = 0;
-extern const LinkAdjacency_t ContigLink_t::NORMAL         = 'N';
+const LinkAdjacency_t ContigLink_t::NORMAL         = 'N';
 const LinkAdjacency_t ContigLink_t::ANTINORMAL     = 'A';
 const LinkAdjacency_t ContigLink_t::INNIE          = 'I';
 const LinkAdjacency_t ContigLink_t::OUTIE          = 'O';
 
 
+//----------------------------------------------------- clear ------------------
+void ContigLink_t::clear ( )
+{
+  Universal_t::clear( );
+  contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
+  source_m . second = NULL_NCODE;
+  sd_m = size_m = 0;
+  type_m = NULL_LINK;
+}
+
+
+//----------------------------------------------------- flip -------------------
+void ContigLink_t::flip ( )
+{
+  LinkAdjacency_t la = getAdjacency( );
+  if ( la == NORMAL )
+    setAdjacency (ANTINORMAL);
+  else if ( la == ANTINORMAL )
+    setAdjacency (NORMAL);
+
+  contigs_m = std::make_pair (contigs_m . second, contigs_m . first);
+}
+
+
 //----------------------------------------------------- getAdjacency -----------
 LinkAdjacency_t ContigLink_t::getAdjacency ( ) const
 {
-  //-- first and second adjacency information is stored respectively in bits
-  //   0x1 and 0x2. A 0 bit means 'B' and a 1 bit means 'E'. If 0x4 = 0, then
-  //   no adjacency information exists.
-  if ( flags_m . nibble & 0x4 )
+  if ( flags_m . nibble & ADJACENCY_BIT )
     {
-      if ( flags_m . nibble & 0x1 )
+      switch (flags_m . nibble & ADJACENCY_BITS)
 	{
-	  if ( flags_m . nibble & 0x2 )
-	    return INNIE;
-	  else
-	    return NORMAL;
-	}
-      else
-	{
-	  if ( flags_m . nibble & 0x2 )
-	    return ANTINORMAL;
-	  else
-	    return OUTIE;
+	case NORMAL_BITS     : return NORMAL;
+	case ANTINORMAL_BITS : return ANTINORMAL;
+	case INNIE_BITS      : return INNIE;
+	case OUTIE_BITS      : return OUTIE;
 	}
     }
   return NULL_ADJACENCY;
@@ -142,41 +156,36 @@ void ContigLink_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void ContigLink_t::readRecord (istream & fix, istream & var)
 {
-  //-- Read the parent object data
   Universal_t::readRecord (fix, var);
 
-  //-- Read the object data
-  fix . read ((char *)&contigs_m, sizeof (pair<ID_t, ID_t>));
-  fix . read ((char *)&sd_m, sizeof (SD_t));
-  fix . read ((char *)&size_m, sizeof (Size_t));
-  fix . read ((char *)&source_m, sizeof (pair<ID_t, NCode_t>));
-  fix . read ((char *)&type_m, sizeof (LinkType_t));
+  readLE (fix, &(contigs_m . first));
+  readLE (fix, &(contigs_m . second));
+  readLE (fix, &sd_m);
+  readLE (fix, &size_m);
+  readLE (fix, &(source_m . first));
+  readLE (fix, &(source_m . second));
+  type_m = fix . get( );
 }
 
 
 //----------------------------------------------------- setAdjacency -----------
 void ContigLink_t::setAdjacency (LinkAdjacency_t adj)
 {
-  //-- first and second adjacency information is stored respectively in bits
-  //   0x1 and 0x2. A 0 bit means 'B' and a 1 bit means 'E'. If 0x4 = 0, then
-  //   no adjacency information exists.
+  uint8_t bits = flags_m . nibble;
+  flags_m . nibble &= ~ADJACENCY_BITS;
+  flags_m . nibble |=  ADJACENCY_BIT;
+
   switch (adj)
     {
-    case NORMAL:
-    case ANTINORMAL:
-    case INNIE:
-    case OUTIE:
-      flags_m . nibble &= ~0x7;
-      if ( adj == NORMAL || adj == INNIE )
-	flags_m . nibble |= 0x1;
-      if ( adj == INNIE || adj == ANTINORMAL )
-	flags_m . nibble |= 0x2;
-      flags_m . nibble |= 0x4;
-      break;
+    case NORMAL     : flags_m . nibble |= NORMAL_BITS;     break;
+    case ANTINORMAL : flags_m . nibble |= ANTINORMAL_BITS; break;
+    case INNIE      : flags_m . nibble |= INNIE_BITS;      break;
+    case OUTIE      : flags_m . nibble |= OUTIE_BITS;      break;
     case NULL_ADJACENCY:
-      flags_m . nibble &= ~0x7;
+      flags_m . nibble &= ~ADJACENCY_BIT;
       break;
     default:
+      flags_m . nibble = bits;
       AMOS_THROW_ARGUMENT ((string)"Invalid adjacency " + adj);
     }
 }
@@ -197,7 +206,7 @@ void ContigLink_t::setType (LinkType_t type)
       type_m = type;
       break;
     default:
-      AMOS_THROW_ARGUMENT ((std::string)"Invalid contig link type " + type);
+      AMOS_THROW_ARGUMENT ((string)"Invalid contig link type " + type);
     }
   type_m = type;
 }
@@ -267,13 +276,13 @@ void ContigLink_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void ContigLink_t::writeRecord (ostream & fix, ostream & var) const
 {
-  //-- Write the parent object data
   Universal_t::writeRecord (fix, var);
 
-  //-- Write the object data
-  fix . write ((char *)&contigs_m, sizeof (pair<ID_t, ID_t>));
-  fix . write ((char *)&sd_m, sizeof (SD_t));
-  fix . write ((char *)&size_m, sizeof (Size_t));
-  fix . write ((char *)&source_m, sizeof (pair<ID_t, NCode_t>));
-  fix . write ((char *)&type_m, sizeof (LinkType_t));
+  writeLE (fix, &(contigs_m . first));
+  writeLE (fix, &(contigs_m . second));
+  writeLE (fix, &sd_m);
+  writeLE (fix, &size_m);
+  writeLE (fix, &(source_m . first));
+  writeLE (fix, &(source_m . second));
+  fix . put (type_m);
 }

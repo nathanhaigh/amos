@@ -57,7 +57,6 @@ const NCode_t   F_SCORE        = Encode ("scr");
 const NCode_t   F_SEQUENCE     = Encode ("seq");
 const NCode_t   F_SD           = Encode ("std");
 const NCode_t   F_SIZE         = Encode ("sze");
-const NCode_t   F_SKEWNESS     = Encode ("skw");
 const NCode_t   F_SOURCE       = Encode ("src");
 const NCode_t   F_TYPE         = Encode ("typ");
 const NCode_t   F_VECTORCLEAR  = Encode ("vcr");
@@ -169,16 +168,7 @@ public:
   //! \throws ArgumentException_t
   //! \return The field data for fcode
   //!
-  const std::string & getField (NCode_t fcode) const
-  {
-    std::map<NCode_t,std::string>::const_iterator mi;
-
-    mi = fields_m . find (fcode);
-    if ( mi == fields_m . end( ) )
-      AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " + Decode (fcode));
-
-    return mi -> second;
-  }
+  const std::string & getField (NCode_t fcode) const;
 
 
   //--------------------------------------------------- getField ---------------

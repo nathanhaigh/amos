@@ -34,7 +34,7 @@ Size_t Scaffold_t::getSpan ( ) const
       lo = MAX_POS;
     }
 
-  std::vector<Tile_t>::const_iterator ti;
+  vector<Tile_t>::const_iterator ti;
   for ( ti = contigs_m . begin( ); ti != contigs_m . end( ); ++ ti )
     {
       if ( ti -> offset < lo )
@@ -94,35 +94,21 @@ void Scaffold_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Scaffold_t::readRecord (istream & fix,
-			     istream & var)
+void Scaffold_t::readRecord (istream & fix, istream & var)
 {
-  Size_t size, tsize;
-
-  //-- Read parent object data
   Universal_t::readRecord (fix, var);
 
-  //-- Read object data
-  fix . read ((char *)&size, sizeof (Size_t));
+  Size_t csize, esize;
+  readLE (fix, &csize);
+  readLE (fix, &esize);
 
-  contigs_m . resize (size);
-  for ( Pos_t i = 0; i < size; i ++ )
-    {
-      var . read ((char *)&tsize, sizeof (Size_t));
+  contigs_m . resize (csize);
+  for ( Pos_t i = 0; i < csize; i ++ )
+    contigs_m [i] . readRecord (var);
 
-      contigs_m [i] . gaps . resize (tsize);
-      for ( Pos_t j = 0; j < tsize; j ++ )
-	var . read ((char *)&(contigs_m [i] . gaps [j]), sizeof (int32_t));
-
-      var . read ((char *)&contigs_m [i] . source, sizeof (ID_t));
-      var . read ((char *)&contigs_m [i] . offset, sizeof (Pos_t));
-      var . read ((char *)&contigs_m [i] . range, sizeof (Range_t));
-    }
-
-  fix . read ((char *)&size, sizeof (Size_t));
-  edges_m . resize (size);
-  for ( Pos_t i = 0; i < size; i ++ )
-    var . read ((char *)&edges_m [i], sizeof (ID_t));
+  edges_m . resize (esize);
+  for ( Pos_t i = 0; i < esize; i ++ )
+    readLE (var, &(edges_m [i]));
 }
 
 
@@ -171,33 +157,18 @@ void Scaffold_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Scaffold_t::writeRecord (ostream & fix,
-			      ostream & var) const
+void Scaffold_t::writeRecord (ostream & fix, ostream & var) const
 {
-  Size_t size, tsize;
-
-  //-- Write parent object data
   Universal_t::writeRecord (fix, var);
 
-  //-- Write object data
-  size = contigs_m . size( );
-  fix . write ((char *)&size, sizeof (Size_t));
+  Size_t csize = contigs_m . size( );
+  Size_t esize = edges_m . size( );
+  writeLE (fix, &csize);
+  writeLE (fix, &esize);
 
-  for ( Pos_t i = 0; i < size; i ++ )
-    {
-      tsize = contigs_m [i] . gaps . size( );
-      var . write ((char *)&tsize, sizeof (Size_t));
+  for ( Pos_t i = 0; i < csize; i ++ )
+    contigs_m [i] . writeRecord (var);
 
-      for ( Pos_t j = 0; j < tsize; j ++ )
-	var . write ((char *)&(contigs_m [i] . gaps [j]), sizeof (int32_t));
-
-      var . write ((char *)&contigs_m [i] . source, sizeof (ID_t));
-      var . write ((char *)&contigs_m [i] . offset, sizeof (Pos_t));
-      var . write ((char *)&contigs_m [i] . range, sizeof (Range_t));
-    }
-
-  size = edges_m . size( );
-  fix . write ((char *)&size, sizeof (Size_t));
-  for ( Pos_t i = 0; i < size; i ++ )
-    var . write ((char *)&edges_m [i], sizeof (ID_t));
+  for ( Pos_t i = 0; i < esize; i ++ )
+    writeLE (var, &(edges_m [i]));
 }

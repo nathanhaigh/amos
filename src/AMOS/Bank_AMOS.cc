@@ -23,17 +23,78 @@
 using namespace AMOS;
 using namespace std;
 
+#define _PUBSETBUF_ pubsetbuf
+#ifdef __GNUC__
+# if __GNUC__ < 3
+#  undef _PUBSETBUF_
+#  define _PUBSETBUF_ setbuf
+# endif
+#endif
+
+
+
+//================================================ BankPartition_t =============
+//----------------------------------------------------- BankPartition_t --------
+Bank_t::BankPartition_t::BankPartition_t (Size_t buffer_size)
+{
+  fix_buff = (char *) SafeMalloc (buffer_size);
+  var_buff = (char *) SafeMalloc (buffer_size);
+
+  fix . rdbuf( ) -> _PUBSETBUF_ (fix_buff, buffer_size);
+  var . rdbuf( ) -> _PUBSETBUF_ (var_buff, buffer_size);
+}
+
+
+//----------------------------------------------------- ~BankPartition_t -------
+Bank_t::BankPartition_t::~BankPartition_t ( )
+{
+  fix . close( );
+  var . close( );
+
+  free (fix_buff);
+  free (var_buff);
+}
+
+
 
 
 //================================================ Bank_t ======================
-const string  Bank_t::BANK_VERSION     = "1.4";
+const string  Bank_t::BANK_VERSION     = "2.0";
 const string  Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string  Bank_t::IFO_STORE_SUFFIX = ".ifo";
 const string  Bank_t::VAR_STORE_SUFFIX = ".var";
 const string  Bank_t::MAP_STORE_SUFFIX = ".map";
 const Size_t  Bank_t::DEFAULT_BUFFER_SIZE    = 1024;
 const Size_t  Bank_t::DEFAULT_PARTITION_SIZE = 1000000;
-const uint8_t Bank_t::MAX_OPEN_PARTITIONS    = 20;
+const Size_t  Bank_t::MAX_OPEN_PARTITIONS    = 20;
+
+
+//----------------------------------------------------- IIDtoBID ---------------
+ID_t Bank_t::IIDtoBID (ID_t iid) const
+{
+  ID_t bid = idmap_m . lookupBID (iid);
+  if ( bid == NULL_ID || bid > last_bid_m )
+    {
+      stringstream ss;
+      ss << "IID '" << iid << "' does not exist in bank";
+      AMOS_THROW_ARGUMENT (ss . str( ));
+    }
+  return bid;
+}
+
+
+//----------------------------------------------------- EIDtoBID ---------------
+ID_t Bank_t::EIDtoBID (const char * eid) const
+{
+  ID_t bid = idmap_m . lookupBID (eid);
+  if ( bid == NULL_ID || bid > last_bid_m )
+    {
+      stringstream ss;
+      ss << "EID '" << eid << "' does not exist in bank";
+      AMOS_THROW_ARGUMENT (ss . str( ));
+    }
+  return bid;
+}
 
 
 //----------------------------------------------------- addPartition -----------
@@ -85,6 +146,23 @@ void Bank_t::addPartition (bool nuke)
 }
 
 
+//----------------------------------------------------- append -----------------
+void Bank_t::append (IBankable_t & obj)
+{
+  //-- Insert the ID triple into the map (may throw exception)
+  idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), last_bid_m + 1);
+
+  try {
+    appendBID (obj);
+  }
+  catch (Exception_t) {
+    idmap_m . remove (obj . iid_m);
+    idmap_m . remove (obj . eid_m . c_str( ));
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- appendBID --------------
 void Bank_t::appendBID (IBankable_t & obj)
 {
@@ -108,18 +186,18 @@ void Bank_t::appendBID (IBankable_t & obj)
   //   VAR = [OBJECT VAR]
   partition -> fix . seekp (0, fstream::end);
   partition -> var . seekp (0, fstream::end);
-  std::streampos fpos = partition -> fix . tellp( );
-  std::streampos vpos = partition -> var . tellp( );
-  partition -> fix . write ((char *)&vpos, sizeof (std::streampos));
-  partition -> fix . write ((char *)&(obj . flags_m), sizeof (BankFlags_t));
+  bankstreamoff fpos = partition -> fix . tellp( );
+  bankstreamoff vpos = partition -> var . tellp( );
+  writeLE (partition -> fix, &vpos);
+  writeLE (partition -> fix, &(obj . flags_m));
   obj . writeRecord (partition -> fix, partition -> var);
-  Size_t vsize = partition -> var . tellp( ) - vpos;
-  partition -> fix . write ((char *)&vsize, sizeof (Size_t));
+  Size_t vsize = (std::streamoff)partition -> var . tellp( ) - vpos;
+  writeLE (partition -> fix, &vsize);
 
   //-- If fix_size is not yet known, calculate it
   if ( fix_size_m == 0 )
-    fix_size_m = partition -> fix . tellp( ) - fpos;
-  else if ( fix_size_m != partition -> fix . tellp( ) - fpos )
+    fix_size_m = (std::streamoff)partition -> fix . tellp( ) - fpos;
+  else if ( fix_size_m != (std::streamoff)partition -> fix . tellp( ) - fpos )
     AMOS_THROW_IO ("Unknown write error in bank append");
 
   ++ nbids_m;
@@ -138,8 +216,12 @@ void Bank_t::clean ( )
   try {
     //-- Concat this bank to a temporary bank (cleans as a side effect)
     char tname [1024];
-    snprintf (tname, 1024, "%s%ld%d",
-	      store_pfx_m . c_str( ), time(NULL), rand( ));
+    char ch = 'A';
+    pid_t pid = getpid( );
+    do {
+      snprintf (tname, 1024, "%s%d%c", store_pfx_m . c_str( ), pid, ch ++);
+    } while ( ! access (tname, F_OK)  &&  ch <= 'Z' );
+
     if ( mkdir (tname, 0755) == -1 )
       AMOS_THROW_IO ("Could not create temporary directory");
 
@@ -216,13 +298,13 @@ void Bank_t::concat (Bank_t & s)
     AMOS_THROW_ARGUMENT ("Cannot concat incompatible bank type");
 
   BankFlags_t flags;
-  Size_t tail = s . fix_size_m - sizeof (std::streampos) - sizeof (BankFlags_t);
+  Size_t tail = s . fix_size_m - sizeof (bankstreamoff) - sizeof (BankFlags_t);
   Size_t size;
 
   Size_t buffer_size = s . fix_size_m;
   char * buffer = (char *) SafeMalloc (buffer_size);
 
-  std::streampos vpos;
+  bankstreamoff vpos;
   BankPartition_t * sp;
   BankPartition_t * tp = getLastPartition( );
 
@@ -247,8 +329,8 @@ void Bank_t::concat (Bank_t & s)
       while ( true )
 	{
 	  //-- Read vpos and Bankable flags, break on EOF
-	  sp -> fix . read ((char *)&vpos, sizeof (std::streampos));
-	  sp -> fix . read ((char *)&flags, sizeof (BankFlags_t));
+	  readLE (sp -> fix, &vpos);
+	  readLE (sp -> fix, &flags);
 	  if ( sp -> fix . eof( ) )
 	    break;
 	  ++ sbid;
@@ -284,16 +366,17 @@ void Bank_t::concat (Bank_t & s)
 	    }
 
 	  //-- Write new vpos and copy Bankable flags
-	  vpos = tp -> var . tellp( );
-	  tp -> fix . write ((char *)&vpos, sizeof (std::streampos));
-	  tp -> fix . write ((char *)&flags, sizeof (BankFlags_t));
+	  vpos = (std::streamoff)tp -> var . tellp( );
+	  writeLE (tp -> fix, &vpos);
+	  writeLE (tp -> fix, &flags);
 
 	  //-- Copy object FIX data
-	  sp -> fix . read (buffer, tail);
-	  tp -> fix . write (buffer, tail);
+	  sp -> fix . read (buffer, tail - sizeof (Size_t));
+	  readLE (sp -> fix, &size);
+	  tp -> fix . write (buffer, tail - sizeof (Size_t));
+	  writeLE (tp -> fix, &size);
 
 	  //-- Make sure buffer is big enough for VAR data, realloc if needed
-	  memcpy (&size, buffer + (tail - sizeof (Size_t)), sizeof (Size_t));
 	  while ( size > buffer_size )
 	    {
 	      buffer_size <<= 1;
@@ -409,10 +492,11 @@ void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
   //-- Seek to the record and read the data
   BankPartition_t * partition = localizeBID (bid);
 
-  std::streampos vpos;
-  partition -> fix . seekg (bid * fix_size_m, fstream::beg);
-  partition -> fix . read  ((char *)&vpos, sizeof (std::streampos));
-  partition -> fix . read ((char *)&(obj . flags_m), sizeof (BankFlags_t));
+  bankstreamoff vpos;
+  bankstreamoff off = bid * fix_size_m;
+  partition -> fix . seekg (off, fstream::beg);
+  readLE (partition -> fix, &vpos);
+  readLE (partition -> fix, &(obj . flags_m));
   partition -> var . seekg (vpos);
   obj . readRecord (partition -> fix, partition -> var);
 }
@@ -463,6 +547,24 @@ void Bank_t::flush ( )
     AMOS_THROW_IO
       ("Error writing to bank partition " + store_pfx_m + IFO_STORE_SUFFIX);
   ifo . close( );
+}
+
+//----------------------------------------------------- init -------------------
+void Bank_t::init ( )
+{
+  fix_size_m       = 0;
+  is_open_m        = false;
+  last_bid_m       = NULL_ID;
+  max_bid_m        = NULL_ID;
+  nbids_m          = NULL_ID;
+  npartitions_m    = 0;
+  partition_size_m = 0;
+  opened_m     . clear( );
+  partitions_m . clear( );
+  store_dir_m  . erase( );
+  store_pfx_m  . erase( );
+  idmap_m      . clear( );
+  idmap_m      . setType (banktype_m);
 }
 
 
@@ -592,14 +694,50 @@ void Bank_t::removeBID (ID_t bid)
   BankPartition_t * partition = localizeBID (bid);
 
   BankFlags_t flags;
-  std::streamoff foff = bid * fix_size_m + sizeof (std::streampos);
-  partition -> fix . seekg (foff, fstream::beg);
-  partition -> fix . read ((char *)&flags, sizeof (BankFlags_t));
+  bankstreamoff off = bid * fix_size_m + sizeof (bankstreamoff);
+  partition -> fix . seekg (off, fstream::beg);
+  readLE (partition -> fix, &flags);
   flags . is_removed = true;
-  partition -> fix . seekp (foff, fstream::beg);
-  partition -> fix . write ((char *)&flags, sizeof (BankFlags_t));
+  partition -> fix . seekp (off, fstream::beg);
+  writeLE (partition -> fix, &flags);
 
   -- nbids_m;
+}
+
+
+//----------------------------------------------------- replace ----------------
+void Bank_t::replace (ID_t iid, IBankable_t & obj)
+{
+  ID_t bid = IIDtoBID (iid);
+  string peid (idmap_m . lookupEID (iid));
+  idmap_m . remove (iid);
+
+  try {
+    idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), bid);
+    replaceBID (bid, obj);
+  }
+  catch (Exception_t) {
+    idmap_m . insert (iid, peid . c_str( ), bid);
+    throw;
+  }
+}
+
+
+//----------------------------------------------------- replace ----------------
+void Bank_t::replace (const char * eid, IBankable_t & obj)
+{
+  ID_t bid = EIDtoBID (eid);
+  ID_t piid = idmap_m . lookupIID (eid);
+  idmap_m . remove (eid);
+
+  try {
+    idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), bid);
+    replaceBID (bid, obj);
+  }
+  catch (Exception_t) {
+    idmap_m . insert (piid, eid, bid);
+    throw;
+  }
 }
 
 
@@ -618,19 +756,20 @@ void Bank_t::replaceBID (ID_t bid, IBankable_t & obj)
   //-- Seek to and write new record
   BankPartition_t * partition = localizeBID (bid);
 
-  partition -> fix . seekp (bid * fix_size_m, fstream::beg);
+  bankstreamoff off = bid * fix_size_m;
+  partition -> fix . seekp (off, fstream::beg);
   partition -> var . seekp (0, fstream::end);
-  std::streampos vpos = partition -> var . tellp( );
-  partition -> fix . write ((char *)&vpos, sizeof (std::streampos));
-  partition -> fix . write ((char *)&(obj . flags_m), sizeof (BankFlags_t));
+  bankstreamoff vpos = partition -> var . tellp( );
+  writeLE (partition -> fix, &vpos);
+  writeLE (partition -> fix, &(obj . flags_m));
   obj . writeRecord (partition -> fix, partition -> var);
-  Size_t vsize = partition -> var . tellp( ) - vpos;
-  partition -> fix . write ((char *)&vsize, sizeof (Size_t));
+  Size_t vsize = (std::streamoff)partition -> var . tellp( ) - vpos;
+  writeLE (partition -> fix, &vsize);
 }
 
 
 //--------------------------------------------------- BankExists ---------------
-bool AMOS::BankExists (NCode_t ncode, const std::string & dir)
+bool AMOS::BankExists (NCode_t ncode, const string & dir)
 {
   //-- Generate the IFO path
   ostringstream ss;

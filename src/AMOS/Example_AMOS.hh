@@ -32,24 +32,28 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var)
+  virtual void readRecord (std::istream & fix, std::istream & var)
   {
     // write parent class data first, e.g. Parent_t::writeRecord (fix,var)
-    // write class data here
+
+    // write class data here in little-endian byte order (see readLE/writeLE)
   }
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const
   {
     // write parent class data first, e.g. Parent_t::writeRecord (fix,var)
-    // write class data here
+
+    // write class data here in little-endian byte order (see readLE/writeLE)
   }
 
 
 public:
+
+  static const NCode_t NCODE;   // set value in source file
+  //!< The NCode type identifier for this object
+
 
   //--------------------------------------------------- Example_t --------------
   //! \brief Constructs an empty Example_t object
@@ -82,6 +86,7 @@ public:
   virtual void clear ( )
   {
     // clear parent items, e.g. Parent_t::clear( )
+
     // clear local items
   }
 
@@ -89,7 +94,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {
-    return Encode ("EXX");
+    return Example_t::NCODE;
   }
 
 
@@ -104,6 +109,7 @@ public:
     if ( this != &source )
       {
 	// copy parent items, e.g. Parent_t::operator= (source)
+
 	// copy local items
       }
 

@@ -56,16 +56,14 @@ void ContigEdge_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void ContigEdge_t::readRecord (istream & fix, istream & var)
 {
-  //-- Read parent object data
   ContigLink_t::readRecord (fix, var);
 
-  //-- Read object data
   Size_t size;
-  fix . read ((char *)&size, sizeof (Size_t));
+  readLE (fix, &size);
 
   links_m . resize (size, NULL_ID);
   for ( Pos_t i = 0; i < size; i ++ )
-    var . read ((char *)&links_m [i], sizeof (ID_t));
+    readLE (var, &(links_m [i]));
 }
 
 
@@ -105,13 +103,11 @@ void ContigEdge_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void ContigEdge_t::writeRecord (ostream & fix, ostream & var) const
 {
-  //-- Write parent object data
   ContigLink_t::writeRecord (fix, var);
 
-  //-- Write object data
   Size_t size = links_m . size( );
-  fix . write ((char *)&size, sizeof (Size_t));
+  writeLE (fix, &size);
 
   for ( Pos_t i = 0; i < size; i ++ )
-    var . write ((char *)&links_m [i], sizeof (ID_t));
+    writeLE (var, &(links_m [i]));
 }

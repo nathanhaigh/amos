@@ -34,7 +34,7 @@ Size_t Layout_t::getSpan ( ) const
       lo = MAX_POS;
     }
 
-  std::vector<Tile_t>::const_iterator ti;
+  vector<Tile_t>::const_iterator ti;
   for ( ti = tiles_m . begin( ); ti != tiles_m . end( ); ++ ti )
     {
       if ( ti -> offset < lo )
@@ -78,21 +78,13 @@ void Layout_t::readMessage (const Message_t & msg)
 void Layout_t::readRecord (istream & fix, istream & var)
 {
   Universal_t::readRecord (fix, var);
-  Size_t size, tsize;
 
-  fix . read ((char *)&size, sizeof (Size_t));
+  Size_t size;
+  readLE (fix, &size);
+
   tiles_m . resize (size);
   for ( Pos_t i = 0; i < size; i ++ )
-    {
-      var . read ((char *)&tsize, sizeof (Size_t));
-      tiles_m [i] . gaps . resize (tsize);
-      for ( Pos_t j = 0; j < tsize; j ++ )
-	var . read ((char *)&(tiles_m [i] . gaps [j]), sizeof (int32_t));
-
-      var . read ((char *)&tiles_m [i] . source, sizeof (ID_t));
-      var . read ((char *)&tiles_m [i] . offset, sizeof (Pos_t));
-      var . read ((char *)&tiles_m [i] . range, sizeof (Range_t));
-    }
+    tiles_m [i] . readRecord (var);
 }
 
 
@@ -128,21 +120,10 @@ void Layout_t::writeMessage (Message_t & msg) const
 void Layout_t::writeRecord (ostream & fix, ostream & var) const
 {
   Universal_t::writeRecord (fix, var);
-  Size_t size, tsize;
 
-  //-- Write object data
-  size = tiles_m . size( );
-  fix . write ((char *)&size, sizeof (Size_t));
+  Size_t size = tiles_m . size( );
+  writeLE (fix, &size);
+
   for ( Pos_t i = 0; i < size; i ++ )
-    {
-      tsize = tiles_m [i] . gaps . size( );
-      var . write ((char *)&tsize, sizeof (Size_t));
-
-      for ( Pos_t j = 0; j < tsize; j ++ )
-	var . write ((char *)&(tiles_m [i] . gaps [j]), sizeof (int32_t));
-
-      var . write ((char *)&tiles_m [i] . source, sizeof (ID_t));
-      var . write ((char *)&tiles_m [i] . offset, sizeof (Pos_t));
-      var . write ((char *)&tiles_m [i] . range, sizeof (Range_t));
-    }
+    tiles_m [i] . writeRecord (var);
 }

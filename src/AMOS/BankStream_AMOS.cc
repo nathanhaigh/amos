@@ -15,8 +15,8 @@ using namespace std;
 
 
 
-//================================================ Bank_t ======================
-const Size_t BankStream_t::DEFAULT_BUFFER_SIZE = 131072;
+//================================================ BankStream_t ================
+const Size_t BankStream_t::DEFAULT_BUFFER_SIZE = 1024;
 const Size_t BankStream_t::MAX_OPEN_PARTITIONS = 2;
 
 
@@ -27,21 +27,22 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
     return *this;
 
   ID_t lid;
+  bankstreamoff off;
   BankFlags_t bf;
   BankPartition_t * partition;
-  Size_t skipsize = fix_size_m - sizeof (std::streampos) - sizeof (BankFlags_t);
+  Size_t skip = fix_size_m - sizeof (bankstreamoff) - sizeof (BankFlags_t);
 
   while ( n > 0  &&  inrange( ) )
     {
       lid = curr_bid_m;
       partition = localizeBID (lid);
-      lid *= fix_size_m;
-      if ( partition -> fix . tellg( ) != (std::streampos)lid )
-	partition -> fix . seekg (lid, fstream::beg);
+      off = lid * fix_size_m;
+      if ( (std::streamoff)partition -> fix . tellg( ) != off )
+	partition -> fix . seekg (off, fstream::beg);
  
-      partition -> fix . ignore (sizeof (std::streampos));
-      partition -> fix . read ((char *)&(bf), sizeof (BankFlags_t));
-      partition -> fix . ignore (skipsize);
+      partition -> fix . ignore (sizeof (bankstreamoff));
+      readLE (partition -> fix, &bf);
+      partition -> fix . ignore (skip);
 
       if ( ! bf . is_removed )
 	-- n;
@@ -53,21 +54,35 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
 }
 
 
+//----------------------------------------------------- open -------------------
+void BankStream_t::open (const std::string & dir)
+{
+  Bank_t::open (dir);
+  init( );
+  
+  const IDMap_t::HashTriple_t * tp = NULL;
+  triples_m . resize (last_bid_m + 1, tp);
+  for ( IDMap_t::const_iterator idmi = getIDMap( ) . begin( ); idmi; ++ idmi )
+    triples_m [idmi -> bid] = idmi;
+}
+
+
 //----------------------------------------------------- operator>> -------------
 BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 {
-  if (!is_open_m)
+  if ( ! is_open_m )
     AMOS_THROW_IO ("Cannot fetch from closed bank");
-  if (banktype_m != obj.getNCode( ))
+  if ( banktype_m != obj.getNCode( ) )
     AMOS_THROW_ARGUMENT ("Cannot fetch incompatible object type");
   if ( eof( ) )
     AMOS_THROW_ARGUMENT ("Cannot fetch from stream with eof flag raised");
 
   ID_t lid;
   BankFlags_t flags;
-  std::streampos vpos;
+  bankstreamoff off;
+  bankstreamoff vpos;
   BankPartition_t * partition;
-  Size_t skipsize = fix_size_m - sizeof (std::streampos) - sizeof (BankFlags_t);
+  Size_t skip = fix_size_m - sizeof (bankstreamoff) - sizeof (BankFlags_t);
 
   //-- Seek to the record and read the data
   flags . is_removed = true;
@@ -81,27 +96,28 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 
       lid = curr_bid_m;
       partition = localizeBID (lid);
-      lid *= fix_size_m;
-      if ( partition -> fix . tellg( ) != (std::streampos)lid )
-	partition -> fix . seekg (lid, fstream::beg);
+      off = lid * fix_size_m;
+      if ( (std::streamoff)partition -> fix . tellg( ) != off )
+	partition -> fix . seekg (off, fstream::beg);
 
-      partition -> fix . read ((char *)&vpos, sizeof (std::streampos));
-      partition -> fix . read ((char *)&flags, sizeof (BankFlags_t));
+      readLE (partition -> fix, &vpos);
+      readLE (partition -> fix, &flags);
       if ( flags . is_removed )
-	partition -> fix . ignore (skipsize);
+	partition -> fix . ignore (skip);
 
       ++ curr_bid_m;
     }
 
-  if ( partition -> var . tellg( ) != vpos )
+  if ( (std::streamoff)partition -> var . tellg( ) != vpos )
     partition -> var . seekg (vpos);
-      
+
   const IDMap_t::HashTriple_t * trip = triples_m [curr_bid_m - 1];
   if ( trip != NULL )
     {
       obj . iid_m = trip -> iid;
       obj . eid_m = trip -> eid;
     }
+
   obj . flags_m = flags;
   obj . readRecord (partition -> fix, partition -> var);
 
@@ -112,9 +128,9 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 //--------------------------------------------------- operator<< -------------
 BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
 {
-  if (!is_open_m)
+  if ( ! is_open_m )
     AMOS_THROW_IO ("Cannot append to closed bank");
-  if (banktype_m != obj.getNCode( ))
+  if ( banktype_m != obj.getNCode( ) )
     AMOS_THROW_ARGUMENT ("Cannot append incompatible object type");
 
   //-- Insert the ID triple into the map (may throw exception)
@@ -136,18 +152,18 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
     //-- data is written in the following order to the FIX and VAR streams
     //   FIX = [VAR streampos] [BankableFlags] [OBJECT FIX] [VAR size]
     //   VAR = [OBJECT VAR]
-    std::streampos fpos = partition -> fix . tellp( );
-    std::streampos vpos = partition -> var . tellp( );
-    partition -> fix . write ((char *)&vpos, sizeof (std::streampos));
-    partition -> fix . write ((char *)&(obj . flags_m), sizeof (BankFlags_t));
+    bankstreamoff fpos = (std::streamoff)partition -> fix . tellp( );
+    bankstreamoff vpos = (std::streamoff)partition -> var . tellp( );
+    writeLE (partition -> fix, &vpos);
+    writeLE (partition -> fix, &(obj . flags_m));
     obj . writeRecord (partition -> fix, partition -> var);
-    Size_t vsize = partition -> var . tellp( ) - vpos;
-    partition -> fix . write ((char *)&vsize, sizeof (Size_t));
+    Size_t vsize = (std::streamoff)partition -> var . tellp( ) - vpos;
+    writeLE (partition -> fix, &vsize);
 
     //-- If fix_size is not yet known, calculate it
     if ( fix_size_m == 0 )
-      fix_size_m = partition -> fix . tellp( ) - fpos;
-    else if ( fix_size_m != partition -> fix . tellp( ) - fpos )
+      fix_size_m = (std::streamoff)partition -> fix . tellp( ) - fpos;
+    else if ( fix_size_m != (std::streamoff)partition -> fix . tellp( ) - fpos )
       AMOS_THROW_IO ("Unknown write error in bank stream append");
 
     ++ nbids_m;

@@ -41,13 +41,11 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
+  virtual void readRecord (std::istream & fix, std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
 
 
 public:
@@ -95,13 +93,7 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  virtual void clear ( )
-  {
-    Universal_t::clear( );
-    size_m = 0;
-    library_m = source_m = NULL_ID;
-    type_m = NULL_FRAGMENT;
-  }
+  virtual void clear ( );
 
 
   //--------------------------------------------------- getNCode ---------------

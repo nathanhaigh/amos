@@ -21,34 +21,37 @@ const OverlapAdjacency_t Overlap_t::NORMAL     = 'N';
 const OverlapAdjacency_t Overlap_t::ANTINORMAL = 'A';
 const OverlapAdjacency_t Overlap_t::INNIE      = 'I';
 const OverlapAdjacency_t Overlap_t::OUTIE      = 'O';
-const uint8_t Overlap_t::FIRST_BIT  = 0x1;
-const uint8_t Overlap_t::SECOND_BIT = 0x2;
-const uint8_t Overlap_t::FLAGC_BIT  = 0x4;
-const uint8_t Overlap_t::FLAGD_BIT  = 0x8;
+
+
+//----------------------------------------------------- flip -------------------
+void Overlap_t::flip ( )
+{
+  OverlapAdjacency_t oa = getAdjacency( );
+  if ( oa == NORMAL )
+    setAdjacency (ANTINORMAL);
+  else if ( oa == ANTINORMAL )
+    setAdjacency (NORMAL);
+
+  Size_t tHang = aHang_m;
+  aHang_m = bHang_m;
+  bHang_m = tHang;
+
+  reads_m = std::make_pair (reads_m . second, reads_m . first);
+}
 
 
 //----------------------------------------------------- getAdjacency -----------
 OverlapAdjacency_t Overlap_t::getAdjacency ( ) const
 {
-  //-- first and second adjacency information is stored respectively in bits
-  //   0x1 and 0x2. A 0 bit means 'B' and a 1 bit means 'E'. If 0x4 = 0, then
-  //   no adjacency information exists.
-  if ( flags_m . nibble & 0x4 )
+  if ( flags_m . nibble & ADJACENCY_BIT )
     {
-      if ( flags_m . nibble & 0x1 )
-	{
-	  if ( flags_m . nibble & 0x2 )
-	    return INNIE;
-	  else
-	    return NORMAL;
-	}
-      else
-	{
-	  if ( flags_m . nibble & 0x2 )
-	    return ANTINORMAL;
-	  else
-	    return OUTIE;
-	}
+      switch (flags_m . nibble & ADJACENCY_BITS)
+        {
+        case NORMAL_BITS     : return NORMAL;
+        case ANTINORMAL_BITS : return ANTINORMAL;
+        case INNIE_BITS      : return INNIE;
+        case OUTIE_BITS      : return OUTIE;
+        }
     }
   return NULL_ADJACENCY;
 }
@@ -124,44 +127,37 @@ void Overlap_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Overlap_t::readRecord (istream & fix,
-			    istream & var)
+void Overlap_t::readRecord (istream & fix, istream & var)
 {
-  //-- Read parent object data
   Universal_t::readRecord (fix, var);
 
-  //-- Read object data
-  fix . read ((char *)&aHang_m, sizeof (Size_t));
-  fix . read ((char *)&bHang_m, sizeof (Size_t));
-  fix . read ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  fix . read ((char *)&score_m, sizeof (uint32_t));
+  readLE (fix, &aHang_m);
+  readLE (fix, &bHang_m);
+  readLE (fix, &(reads_m . first));
+  readLE (fix, &(reads_m . second));
+  readLE (fix, &score_m);
 }
 
 
 //----------------------------------------------------- setAdjacency -----------
 void Overlap_t::setAdjacency (OverlapAdjacency_t adj)
 {
-  //-- first and second adjacency information is stored respectively in bits
-  //   0x1 and 0x2. A 0 bit means 'B' and a 1 bit means 'E'. If 0x4 = 0, then
-  //   no adjacency information exists.
+  uint8_t bits = flags_m . nibble;
+  flags_m . nibble &= ~ADJACENCY_BITS;
+  flags_m . nibble |=  ADJACENCY_BIT;
+
   switch (adj)
     {
-    case NORMAL:
-    case ANTINORMAL:
-    case INNIE:
-    case OUTIE:
-      flags_m . nibble &= ~0x7;
-      if ( adj == NORMAL || adj == INNIE )
-	flags_m . nibble |= 0x1;
-      if ( adj == INNIE || adj == ANTINORMAL )
-	flags_m . nibble |= 0x2;
-      flags_m . nibble |= 0x4;
-      break;
+    case NORMAL     : flags_m . nibble |= NORMAL_BITS;     break;
+    case ANTINORMAL : flags_m . nibble |= ANTINORMAL_BITS; break;
+    case INNIE      : flags_m . nibble |= INNIE_BITS;      break;
+    case OUTIE      : flags_m . nibble |= OUTIE_BITS;      break;
     case NULL_ADJACENCY:
-      flags_m . nibble &= ~0x7;
+      flags_m . nibble &= ~ADJACENCY_BIT;
       break;
     default:
-      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency type " + adj);
+      flags_m . nibble = bits;
+      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency " + adj);
     }
 }
 
@@ -218,15 +214,13 @@ void Overlap_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Overlap_t::writeRecord (ostream & fix,
-			     ostream & var) const
+void Overlap_t::writeRecord (ostream & fix, ostream & var) const
 {
-  //-- Write parent object data
   Universal_t::writeRecord (fix, var);
 
-  //-- Write object data
-  fix . write ((char *)&aHang_m, sizeof (Size_t));
-  fix . write ((char *)&bHang_m, sizeof (Size_t));
-  fix . write ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
-  fix . write ((char *)&score_m, sizeof (uint32_t));
+  writeLE (fix, &aHang_m);
+  writeLE (fix, &bHang_m);
+  writeLE (fix, &(reads_m . first));
+  writeLE (fix, &(reads_m . second));
+  writeLE (fix, &score_m);
 }

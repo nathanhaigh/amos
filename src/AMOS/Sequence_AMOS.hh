@@ -59,11 +59,11 @@ protected:
   //!
   //! \note Must work with uncompress(uint8_t) method
   //!
-  //! \param seqchar The sequence base character
+  //! \param seqchar The sequence base character (case insensitive)
   //! \param qualchar The quality score character
   //! \return The compressed byte
   //!
-  static uint8_t compress (char seqchar, char qualchar)
+  static inline uint8_t compress (char seqchar, char qualchar)
   {
     //-- Force quality score into its bits
     qualchar -= MIN_QUALITY;
@@ -73,8 +73,7 @@ protected:
 	return 0;
       }
 
-    //-- Force seq into its bits
-    switch ( seqchar )
+    switch ( toupper (seqchar) )
       {
       case 'A': return (uint8_t)qualchar | ADENINE_BITS;
       case 'C': return (uint8_t)qualchar | CYTOSINE_BITS;
@@ -96,7 +95,7 @@ protected:
   //! \param byte The compressed sequence and quality byte
   //! \return The sequence and quality char respectively
   //!
-  static std::pair<char, char> uncompress (uint8_t byte)
+  static inline std::pair<char, char> uncompress (uint8_t byte)
   {
     std::pair<char, char> retval;
 
@@ -118,13 +117,11 @@ protected:
 
 
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
+  virtual void readRecord (std::istream & fix, std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
 
 
 public:
@@ -140,9 +137,7 @@ public:
   //!
   Sequence_t ( )
   {
-    seq_m = NULL;
-    qual_m = NULL;
-
+    seq_m = qual_m = NULL;
     length_m = 0;
   }
 
@@ -152,9 +147,7 @@ public:
   //!
   Sequence_t (const Sequence_t & source)
   {
-    seq_m = NULL;
-    qual_m = NULL;
-
+    seq_m = qual_m = NULL;
     *this = source;
   }
 
@@ -177,17 +170,7 @@ public:
   //! All data will be cleared, but object compression status will remain
   //! unchanged. Use the compress/uncompress members to change this info.
   //!
-  virtual void clear ( )
-  {
-    bool compress = flags_m . nibble & COMPRESS_BIT;
-    Universal_t::clear( );
-    free (seq_m);
-    free (qual_m);
-    seq_m = qual_m = NULL;
-    length_m = 0;
-    if ( compress )
-      flags_m . nibble |= COMPRESS_BIT;
-  }
+  virtual void clear ( );
 
 
   //--------------------------------------------------- compress ---------------
@@ -340,14 +323,10 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setBase (char seqchar,
-		char qualchar,
-		Pos_t index)
+  void setBase (char seqchar, char qualchar, Pos_t index)
   {
     if ( index < 0 || index >= length_m )
       AMOS_THROW_ARGUMENT ("Requested sequence index is out of range");
-
-    seqchar = toupper (seqchar);
 
     if ( isCompressed( ) )
       seq_m [index] = compress (seqchar, qualchar);
@@ -374,8 +353,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setSequence (const char * seq,
-		    const char * qual);
+  void setSequence (const char * seq, const char * qual);
 
 
   //--------------------------------------------------- setSequence ------------
@@ -393,8 +371,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setSequence (const std::string & seq,
-		    const std::string & qual);
+  void setSequence (const std::string & seq, const std::string & qual);
 
 
   //--------------------------------------------------- uncompress -------------

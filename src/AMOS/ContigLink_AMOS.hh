@@ -44,14 +44,20 @@ private:
 
 protected:
 
+  static const uint8_t ADJACENCY_BIT   = 0x4;  //!< adjacency exists flag
+  static const uint8_t ADJACENCY_BITS  = 0x3;  //!< adjacency info mask
+  static const uint8_t NORMAL_BITS     = 0x1;
+  static const uint8_t ANTINORMAL_BITS = 0x2;
+  static const uint8_t INNIE_BITS      = 0x3;
+  static const uint8_t OUTIE_BITS      = 0x0;
+
+
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
+  virtual void readRecord (std::istream & fix, std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
 
   
 public:
@@ -107,14 +113,7 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  virtual void clear ( )
-  {
-    Universal_t::clear( );
-    contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
-    source_m . second = NULL_NCODE;
-    sd_m = size_m = 0;
-    type_m = NULL_LINK;
-  }
+  virtual void clear ( );
 
 
   //--------------------------------------------------- flip -------------------
@@ -127,14 +126,7 @@ public:
   //!
   //! \return void
   //!
-  void flip ( )
-  {
-    LinkAdjacency_t la = getAdjacency( );
-    if ( la == NORMAL ) setAdjacency (ANTINORMAL);
-    else if ( la == ANTINORMAL ) setAdjacency (NORMAL);
-
-    contigs_m = std::make_pair (contigs_m . second, contigs_m . first);
-  }
+  void flip ( );
 
 
   //--------------------------------------------------- getAdjacency -----------

@@ -35,7 +35,7 @@ Size_t Contig_t::getSpan ( ) const
       lo = MAX_POS;
     }
 
-  std::vector<Tile_t>::const_iterator ti;
+  vector<Tile_t>::const_iterator ti;
   for ( ti = reads_m . begin( ); ti != reads_m . end( ); ++ ti )
     {
       if ( ti -> offset < lo )
@@ -130,31 +130,19 @@ void Contig_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void Contig_t::readRecord (istream & fix, istream & var)
 {
-  Size_t size, tsize;
-
-  //-- Read the parent object data
   Sequence_t::readRecord (fix, var);
 
-  //-- Read the object data
-  fix . read ((char *)&size, sizeof (Size_t));
+  Size_t size;
+  readLE (fix, &size);
 
   reads_m . resize (size);
   for ( Pos_t i = 0; i < size; i ++ )
-    {
-      var . read ((char *)&tsize, sizeof (Size_t));
-      reads_m [i] . gaps . resize (tsize);
-      for ( Pos_t j = 0; j < tsize; j ++ )
-	var . read ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
-
-      var . read ((char *)&reads_m [i] . source, sizeof (ID_t));
-      var . read ((char *)&reads_m [i] . offset, sizeof (Pos_t));
-      var . read ((char *)&reads_m [i] . range, sizeof (Range_t));
-    }
+    reads_m [i] . readRecord (var);
 }
 
 
 //----------------------------------------------------- readUMD ----------------
-bool Contig_t::readUMD (std::istream & in)
+bool Contig_t::readUMD (istream & in)
 {
   string eid;
   Tile_t tile;
@@ -243,32 +231,18 @@ void Contig_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Contig_t::writeRecord (ostream & fix, ostream & var) const
 {
-  Size_t size, tsize;
-
-  //-- Write parent object data
   Sequence_t::writeRecord (fix, var);
 
-  //-- Write object data
-  size = reads_m . size( );
-  fix . write ((char *)&size, sizeof (Size_t));
+  Size_t size = reads_m . size( );
+  writeLE (fix, &size);
 
   for ( Pos_t i = 0; i < size; i ++ )
-    {
-      tsize = reads_m [i] . gaps . size( );
-      var . write ((char *)&tsize, sizeof (Size_t));
-
-      for ( Pos_t j = 0; j < tsize; j ++ )
-	var . write ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
-
-      var . write ((char *)&reads_m [i] . source, sizeof (ID_t));
-      var . write ((char *)&reads_m [i] . offset, sizeof (Pos_t));
-      var . write ((char *)&reads_m [i] . range, sizeof (Range_t));
-    }
+    reads_m [i] . writeRecord (var);
 }
 
 
 //----------------------------------------------------- writeUMD ---------------
-void Contig_t::writeUMD (std::ostream & out) const
+void Contig_t::writeUMD (ostream & out) const
 {
   vector<Tile_t>::const_iterator ti;
 

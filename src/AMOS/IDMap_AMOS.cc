@@ -18,9 +18,59 @@ using namespace std;
 
 
 
+//================================================ HashTriple_t ================
+//----------------------------------------------------- operator= --------------
+IDMap_t::HashTriple_t & IDMap_t::HashTriple_t::operator=
+(const HashTriple_t & s)
+{
+  if ( this != &s )
+    {
+      c = s.c;
+      iid = s.iid;
+      bid = s.bid;
+      eid = SafeStrdup (s.eid);
+    }
+  return *this;
+}
+
+
+
+
+//================================================ HashNode_t ==================
+//----------------------------------------------------- clear ------------------
+void IDMap_t::HashNode_t::clear ( )
+{
+  if ( triple != NULL )
+    if ( -- (triple -> c) == 0 )
+      delete triple;
+  delete next;
+  
+  triple = NULL;
+  next = NULL;
+}
+
+
+
+
 //================================================ IDMap_t =====================
 const NCode_t IDMap_t::NCODE = M_IDMAP;
 const Size_t IDMap_t::DEFAULT_NUM_BUCKETS = 1000;
+
+
+//----------------------------------------------------- clear ------------------
+void IDMap_t::clear ( )
+{
+  if ( size_m > 0 )
+    {
+      vector<HashNode_t>::iterator hni;
+      for ( hni = iid_bucs_m . begin( ); hni != iid_bucs_m . end( ); hni ++ )
+	hni -> clearchain( );
+      for ( hni = eid_bucs_m . begin( ); hni != eid_bucs_m . end( ); hni ++ )
+	hni -> clearchain( );
+      size_m = 0;
+    }
+  type_m = NULL_NCODE;
+}
 
 
 //----------------------------------------------------- minbuckets -------------
@@ -443,20 +493,20 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & s)
 
 
 //----------------------------------------------------- readRecord -------------
-void IDMap_t::readRecord (std::istream & in)
+void IDMap_t::readRecord (istream & in)
 {
   Size_t size;
   string eid;
   ID_t bid, iid;
 
   clear( );
-  in . read ((char *)&type_m, sizeof (NCode_t));
-  in . read ((char *)&size, sizeof (Size_t));
+  readLE (in, &type_m);
+  readLE (in, &size);
   resize (size);
   for ( Size_t i = 0; i < size; i ++ )
     {
-      in . read ((char *)&bid, sizeof (ID_t));
-      in . read ((char *)&iid, sizeof (ID_t));
+      readLE (in, &bid);
+      readLE (in, &iid);
       getline (in, eid, NULL_CHAR);
       insert (iid, eid . c_str( ), bid);
     }
@@ -464,14 +514,14 @@ void IDMap_t::readRecord (std::istream & in)
 
 
 //----------------------------------------------------- writeRecord ------------
-void IDMap_t::writeRecord (std::ostream & out) const
+void IDMap_t::writeRecord (ostream & out) const
 {
-  out . write ((char *)&type_m, sizeof (NCode_t));
-  out . write ((char *)&size_m, sizeof (Size_t));
+  writeLE (out, &type_m);
+  writeLE (out, &size_m);
   for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
     {
-      out . write ((char *)&(itr -> bid), sizeof (ID_t));
-      out . write ((char *)&(itr -> iid), sizeof (ID_t));
+      writeLE (out, &(itr -> bid));
+      writeLE (out, &(itr -> iid));
       out . write (itr -> eid, strlen (itr -> eid) + 1);
     }
 }
@@ -482,8 +532,8 @@ void IDMap_t::writeRecord (std::ostream & out) const
 
 //================================================ iterator ====================
 //------------------------------------------------ iterator --------------------
-IDMap_t::iterator::iterator (std::vector<HashNode_t> * iid_bucs_p,
-			     std::vector<HashNode_t> * eid_bucs_p)
+IDMap_t::iterator::iterator (vector<HashNode_t> * iid_bucs_p,
+			     vector<HashNode_t> * eid_bucs_p)
   : iid_bucs (iid_bucs_p), eid_bucs (eid_bucs_p)
 {
   if ( iid_bucs -> empty( ) )

@@ -19,6 +19,20 @@ using namespace std;
 const NCode_t Sequence_t::NCODE = M_SEQUENCE;
 
 
+//----------------------------------------------------- clear ------------------
+void Sequence_t::clear ( )
+{
+  bool compress = flags_m . nibble & COMPRESS_BIT;
+  Universal_t::clear( );
+  free (seq_m);
+  free (qual_m);
+  seq_m = qual_m = NULL;
+  length_m = 0;
+  if ( compress )
+    flags_m . nibble |= COMPRESS_BIT;
+}
+
+
 //----------------------------------------------------- compress ---------------
 void Sequence_t::compress ( )
 {
@@ -105,14 +119,11 @@ void Sequence_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Sequence_t::readRecord (istream & fix,
-			     istream & var)
+void Sequence_t::readRecord (istream & fix, istream & var)
 {
-  //-- Read parent object data
   Universal_t::readRecord (fix, var);
 
-  //-- Read object data
-  fix . read ((char *)&length_m, sizeof (Size_t));
+  readLE (fix, &length_m);
 
   seq_m = (uint8_t *) SafeRealloc (seq_m, length_m);
   var . read ((char *)seq_m, length_m);
@@ -126,8 +137,7 @@ void Sequence_t::readRecord (istream & fix,
 
 
 //----------------------------------------------------- setSequence ------------
-void Sequence_t::setSequence (const char * seq,
-			      const char * qual)
+void Sequence_t::setSequence (const char * seq, const char * qual)
 {
   //-- Check preconditions
   Size_t length = strlen (seq);
@@ -161,8 +171,7 @@ void Sequence_t::setSequence (const char * seq,
 
 
 //----------------------------------------------------- setSequence ------------
-void Sequence_t::setSequence (const string & seq,
-			      const string & qual)
+void Sequence_t::setSequence (const string & seq, const string & qual)
 {
   //-- Check preconditions
   Size_t length = seq . size( );
@@ -262,14 +271,12 @@ void Sequence_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Sequence_t::writeRecord (ostream & fix,
-			      ostream & var) const
+void Sequence_t::writeRecord (ostream & fix, ostream & var) const
 {
-  //-- Write parent object data
   Universal_t::writeRecord (fix, var);
 
-  //-- Write object data
-  fix . write ((char *)&length_m, sizeof (Size_t));
+  writeLE (fix, &length_m);
+
   var . write ((char *)seq_m, length_m);
 
   if ( !isCompressed( ) )
@@ -282,10 +289,8 @@ Sequence_t & Sequence_t::operator= (const Sequence_t & source)
 {
   if ( this != &source )
     {
-      //-- Make sure parent data is copied
       Universal_t::operator= (source);
 
-      //-- Copy object data
       seq_m = (uint8_t *) SafeRealloc (seq_m, source . length_m);
       memcpy (seq_m, source . seq_m, source . length_m);
 

@@ -54,7 +54,7 @@ protected:
   //! \param seqchar The sequence base character
   //! \pre seqchar is A,C,G,T (case insensitive)
   //! \throws ArgumentException_t
-  //! \return The compressed 2 bits (in upper two bit positions)
+  //! \return The compressed 2 bits (in the highest two bit positions)
   //!
   static uint8_t compress (char seqchar)
   {
@@ -75,7 +75,7 @@ protected:
   //!
   //! \note Must work with compress(char)
   //!
-  //! \param byte The compressed sequence bits (in upper two bit positions)
+  //! \param byte The compressed sequence bits (in highest two bit positions)
   //! \throws Exception_t
   //! \return The sequence char
   //!
@@ -92,13 +92,11 @@ protected:
 
 
   //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
+  virtual void readRecord (std::istream & fix, std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
+  virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
 
 
 public:
@@ -128,7 +126,6 @@ public:
   Kmer_t (const Kmer_t & source)
   {
     seq_m = NULL;
-
     *this = source;
   }
 
@@ -145,14 +142,7 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  virtual void clear ( )
-  {
-    Universal_t::clear( );
-    free (seq_m);
-    seq_m = NULL;
-    count_m = length_m = 0;
-    reads_m . clear( );
-  }
+  virtual void clear ( );
 
 
   //--------------------------------------------------- getBase ----------------
@@ -165,20 +155,21 @@ public:
   //! \throws ArgumentException_t
   //! \return The requested (uppercase) base character
   //!
-  //  ---- developers note ----
-  //  If we imagine consecutive bytes stored left-to-right and big-endian,
-  //  then we can index each 2bit sequence character as follows:
-  //  [0 1 2 3] [4 5 6 7] ...
-  //  [byte 0 ] [byte 1 ] ...
-  //  Thus, to set seqchar 6, we fetch the bits at the 2^2 and 2^3 positions
-  //  of byte 1. Since uncompress expects the sequence bits in the big-end
-  //  of the byte, this is done by left-shifting byte 1 4bits.
+  //  -- developers note --
+  //  If we imagine consecutive bytes stored left-to-right, then we can index
+  //  the seqchars left-to-right as follows:
+  //   [0] [1] [2] [3]   [4] [5] [6] [7]  ... seqchars
+  //  [7 6 5 4 3 2 1 0] [7 6 5 4 3 2 1 0] ... bits
+  //  [byte 0         ] [byte 1         ] ... bytes
+  //  Thus, to retrieve seqchar 5 we need to index byte 1. Since uncompress
+  //  expects the sequence bits in the high-order end of the byte, we left
+  //  shift 2-bits. The uncompress method will take care of the necessary
+  //  masking.
   //
   char getBase (Pos_t index) const
   {
     if ( index < 0 || index >= length_m )
       AMOS_THROW_ARGUMENT ("Requested kmer index is out of range");
-
     return uncompress ((seq_m [index / 4]) << (index % 4 * 2));
   }
 
@@ -261,18 +252,18 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  //  ---- developers note ----
-  //  If we imagine consecutive bytes stored left-to-right and big-endian,
-  //  then we can index each 2bit sequence character as follows:
-  //  [0 1 2 3] [4 5 6 7] ...
-  //  [byte 0 ] [byte 1 ] ...
-  //  Thus, to set seqchar 6, we overwrite the bits at the 2^2 and 2^3
-  //  positions of byte 1. Since compress returns the sequence bits in the
-  //  big-end of the byte, we right-shift the return value 4bits and OR it
-  //  with the stored byte (making sure to clear those two bits first).
+  //  -- developers note --
+  //  If we imagine consecutive bytes stored left-to-right, then we can index
+  //  the seqchars left-to-right as follows:
+  //   [0] [1] [2] [3]   [4] [5] [6] [7]  ... seqchars
+  //  [7 6 5 4 3 2 1 0] [7 6 5 4 3 2 1 0] ... bits
+  //  [byte 0         ] [byte 1         ] ... bytes
+  //  Thus, to set seqchar 2, we need overwrite the bits at the 2^3 and 2^2
+  //  positions of byte 0. Since compress returns the sequence bits in the
+  //  high-order end of the byte, we right-shift the return value 4-bits and
+  //  "OR" it with the stored byte (making sure to clear those two bits first).
   //
-  void setBase (char seqchar,
-                Pos_t index)
+  void setBase (char seqchar, Pos_t index)
   {
     if ( index < 0 || index >= length_m )
       AMOS_THROW_ARGUMENT ("Requested kmer index is out of range");

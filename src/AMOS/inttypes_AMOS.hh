@@ -20,13 +20,12 @@
 
 
 
-
 typedef uint32_t  ID_t;     //!< ID type for iid's
 typedef uint32_t  NCode_t;  //!< unique integer code for dynamic typing
 typedef uint32_t  SD_t;     //!< standard deviation type
 typedef int32_t   Size_t;   //!< size type (for links,etc)
-typedef int32_t   Pos_t;    //!< position type (in a sequence,etc)
-                            //-- Pos_t must be >= Size_t
+typedef Size_t    Pos_t;    //!< position type (in a sequence,etc)
+
 
 namespace AMOS {
 
@@ -71,13 +70,69 @@ inline NCode_t Encode (const std::string & str)
 }
 
 
-//-- byte swap macros
+//================================================ BankFlags_t =================
+//! \brief 8 bit flag set for IBankable types
+//!
+//! The flag set object provides 4 flags in a bit field, and can be directly
+//! accessed. In addition, 4 bits are left available for misc use.
+//!
+//==============================================================================
+struct BankFlags_t
+{
+//-- check which way we pack our bits, reverse order if machine is hi-to-lo
+//   we should also limit this to 1byte in size to avoid endian issues
+#ifdef BITFIELDS_HTOL
+  uint8_t nibble      : 4;        //!< extra class-specific bits
+  uint8_t is_flagB    : 1;        //!< generic user flag B
+  uint8_t is_flagA    : 1;        //!< generic user flag A
+  uint8_t is_modified : 1;        //!< modified flag
+  uint8_t is_removed  : 1;        //!< removed flag
+#else
+  uint8_t is_removed  : 1;        //!< removed flag
+  uint8_t is_modified : 1;        //!< modified flag
+  uint8_t is_flagA    : 1;        //!< generic user flag A
+  uint8_t is_flagB    : 1;        //!< generic user flag B
+  uint8_t nibble      : 4;        //!< extra class-specific bits
+#endif  
+
+  //------------------------------------------------- BankFlags_t --------------
+  //! \brief Constructs an empty Flags_t object
+  //!
+  //! Initializes all flag bits to zero (false)
+  //!
+  BankFlags_t ( )
+  {
+    clear( );
+  }
+  
+  
+  //------------------------------------------------- ~BankFlags_t -------------
+  //! \brief Destroys a Flags_t object
+  //!
+  ~BankFlags_t ( )
+  {
+    
+  }
+
+
+  //------------------------------------------------- clear --------------------
+  //! \brief Sets everything to zero
+  //!
+  void clear ( )
+  {
+    is_removed = is_modified = is_flagA = is_flagB = 0; nibble = 0;
+  }
+};
+
+
 #define swap16(x) \
      ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8))
+//!< swaps the bytes in a 16-bit value
 
 #define swap32(x) \
      ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8)    \
       | (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+//!< swaps the bytes in a 32-bit value
 
 #define swap64(x) \
      ((((x) & 0xff00000000000000ull) >> 56)    \
@@ -88,23 +143,41 @@ inline NCode_t Encode (const std::string & str)
       | (((x) & 0x0000000000ff0000ull) << 24)  \
       | (((x) & 0x000000000000ff00ull) << 40)  \
       | (((x) & 0x00000000000000ffull) << 56))
+//!< swaps the bytes in a 64-bit value
 
 
-//-- htol and ltoh (host to little-endian and little-endian to host)
+//-- check machine endian-ness, if host is big-endian we need to swap
 #ifdef WORDS_BIGENDIAN
-# define htol16(x)     swap16 (x) 
-# define htol32(x)     swap32 (x)
-# define htol64(x)     swap64 (x)
-# define ltoh16(x)     swap16 (x)
-# define ltoh32(x)     swap32 (x)
-# define ltoh64(x)     swap64 (x)
+# define htol16(x)     swap16(x)    //!< host to little-endian 16-bits
+# define htol32(x)     swap32(x)    //!< host to little-endian 32-bits
+# define htol64(x)     swap64(x)    //!< host to little-endian 64-bits
+# define ltoh16(x)     swap16(x)    //!< little-endian to host 16-bits
+# define ltoh32(x)     swap32(x)    //!< little-endian to host 32-bits
+# define ltoh64(x)     swap64(x)    //!< little-endian to host 64-bits
 #else
-# define htol16(x)     (x)
-# define htol32(x)     (x)
-# define htol64(x)     (x)
-# define ltoh16(x)     (x)
-# define ltoh32(x)     (x)
-# define ltoh64(x)     (x)
+# define htol16(x)     (x)          //!< host to little-endian 16-bits
+# define htol32(x)     (x)          //!< host to little-endian 32-bits
+# define htol64(x)     (x)          //!< host to little-endian 64-bits
+# define ltoh16(x)     (x)          //!< little-endian to host 16-bits
+# define ltoh32(x)     (x)          //!< little-endian to host 32-bits
+# define ltoh64(x)     (x)          //!< little-endian to host 64-bits
+#endif
+
+//-- check machine endian-ness, if host is little-endian we need to swap
+#ifdef WORDS_BIGENDIAN
+# define htob16(x)     (x)          //!< host to big-endian 16-bits
+# define htob32(x)     (x)          //!< host to big-endian 32-bits
+# define htob64(x)     (x)          //!< host to big-endian 64-bits
+# define btoh16(x)     (x)          //!< big-endian to host 16-bits
+# define btoh32(x)     (x)          //!< big-endian to host 32-bits
+# define btoh64(x)     (x)          //!< big-endian to host 64-bits
+#else
+# define htob16(x)     swap16(x)    //!< host to big-endian 16-bits
+# define htob32(x)     swap32(x)    //!< host to big-endian 32-bits
+# define htob64(x)     swap64(x)    //!< host to big-endian 64-bits
+# define btoh16(x)     swap16(x)    //!< big-endian to host 16-bits
+# define btoh32(x)     swap32(x)    //!< big-endian to host 32-bits
+# define btoh64(x)     swap64(x)    //!< big-endian to host 64-bits
 #endif
 
 } // namespace AMOS

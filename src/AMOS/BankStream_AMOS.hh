@@ -66,7 +66,6 @@ protected:
 
 public:
 
-  typedef uint32_t bankstreamoff;
   enum bankseekdir
     {
       BEGIN,
@@ -206,16 +205,7 @@ public:
 
 
   //--------------------------------------------------- open -------------------
-  void open (const std::string & dir)
-  {
-    Bank_t::open (dir);
-    init( );
-
-    const IDMap_t::HashTriple_t * tp = NULL;
-    triples_m . resize (last_bid_m + 1, tp);
-    for ( IDMap_t::const_iterator idmi = getIDMap( ) . begin( ); idmi; ++ idmi )
-      triples_m [idmi -> bid] = idmi;
-  }
+  void open (const std::string & dir);
 
 
   //--------------------------------------------------- seekg ------------------

@@ -26,17 +26,15 @@ namespace AMOS {
 //!
 //! Additional parameters may be added to this class if more complex
 //! distributions need to be represented. The contained parameters should
-//! suffice to represent normal and skewed distributions.
+//! suffice to represent normal distributions.
 //!
-//! \todo make more general, however poisson and binomials can be approximated
-//! with a normal distribution... so this might stay the same
+//! \todo make more general for more complex distributions
 //==============================================================================
 struct Distribution_t : public IMessagable_t
 {
 
-  uint32_t mean;        //!< the mean
+  Pos_t mean;           //!< the mean
   SD_t sd;              //!< the standard deviation
-  float skew;           //!< the skewness
 
 
   static const NCode_t NCODE;
@@ -68,7 +66,7 @@ struct Distribution_t : public IMessagable_t
   //!
   void clear ( )
   {
-    mean = 0; sd = 0; skew = 0;
+    mean = 0; sd = 0;
   }
 
 
@@ -83,8 +81,20 @@ struct Distribution_t : public IMessagable_t
   virtual void readMessage (const Message_t & msg);
 
 
+  //--------------------------------------------------- readRecord -------------
+  //! \brief Read a binary record
+  //!
+  void readRecord (std::istream & in);
+
+
   //--------------------------------------------------- writeMessage -----------
   virtual void writeMessage (Message_t & msg) const;
+
+
+  //--------------------------------------------------- writeRecord ------------
+  //! \brief Write a binary record
+  //!
+  void writeRecord (std::ostream & out) const;
 
 };
 
@@ -291,13 +301,7 @@ struct Tile_t : public IMessagable_t
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void Tile_t::clear ( )
-  {
-    source = NULL_ID;
-    gaps . clear( );
-    offset = 0;
-    range . clear( );
-  }
+  void clear ( );
 
 
   //--------------------------------------------------- getNCode ---------------
@@ -311,8 +315,20 @@ struct Tile_t : public IMessagable_t
   virtual void readMessage (const Message_t & msg);
 
 
+  //--------------------------------------------------- readRecord -------------
+  //! \brief Read a binary record
+  //!
+  void readRecord (std::istream & in);
+
+
   //--------------------------------------------------- writeMessage -----------
   virtual void writeMessage (Message_t & msg) const;
+
+
+  //--------------------------------------------------- writeRecord ------------
+  //! \brief Write a binary record
+  //!
+  void writeRecord (std::ostream & out) const;
 
 };
 

@@ -41,27 +41,27 @@ int main (int argc, char ** argv)
   int32_t s32;
   int64_t s64;
 
-  AMOStream_t as;
+  fstream as;
   as . open (argv[1], ios::out | ios::binary | ios::trunc);
-  as . writeInt (& u8c);
-  as . writeInt (& u16c);
-  as . writeInt (& u32c);
-  as . writeInt (& u64c);
-  as . writeInt (& s8c);
-  as . writeInt (& s16c);
-  as . writeInt (& s32c);
-  as . writeInt (& s64c);
+  writeLE (as, &u8c);
+  writeLE (as, &u16c);
+  writeLE (as, &u32c);
+  writeLE (as, &u64c);
+  writeLE (as, &s8c);
+  writeLE (as, &s16c);
+  writeLE (as, &s32c);
+  writeLE (as, &s64c);
   as . close( );
 
   as . open (argv[1], ios::in | ios::binary);
-  as . readInt (& u8);
-  as . readInt (& u16);
-  as . readInt (& u32);
-  as . readInt (& u64);
-  as . readInt (& s8);
-  as . readInt (& s16);
-  as . readInt (& s32);
-  as . readInt (& s64);
+  readLE (as, &u8);
+  readLE (as, &u16);
+  readLE (as, &u32);
+  readLE (as, &u64);
+  readLE (as, &s8);
+  readLE (as, &s16);
+  readLE (as, &s32);
+  readLE (as, &s64);
   as . close( );
 
   cout << "AFTER." << endl
