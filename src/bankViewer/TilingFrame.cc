@@ -3,7 +3,6 @@
 #include <qscrollview.h>
 #include <qlayout.h>
 #include "ConsensusField.hh"
-#include "InsertWindow.hh"
 #include "RenderSeq.hh"
 
 using namespace std;
@@ -65,6 +64,9 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f)
 
   connect(this,          SIGNAL(setHighlightDiscrepancy(bool)),
           m_tilingfield, SLOT(toggleHighlightDiscrepancy(bool)));
+
+  connect(m_tilingfield, SIGNAL(setTilingVisibleRange(int, int)),
+          this,          SIGNAL(setTilingVisibleRange(int, int)));
 }
 
 void TilingFrame::toggleHighlightDiscrepancy(bool show)
@@ -389,19 +391,3 @@ void TilingFrame::toggleDisplayAllChromo(bool display)
     m_loadedWidth = 5000;
   }
 }
-
-void TilingFrame::showInserts()
-{
-  InsertWindow * insertWindow = new InsertWindow(m_bankname, m_contigId, this, "insertWindow");
-  insertWindow->show();
-
-  connect(insertWindow, SIGNAL(setGindex(int)),
-          this,         SLOT(setGindex(int)));
-
-  connect(m_tilingfield, SIGNAL(setTilingVisibleRange(int, int)),
-          insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
-
-  m_tilingfield->repaint();
-}
-
-

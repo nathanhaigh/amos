@@ -30,6 +30,8 @@ public slots:
   void setGindexRange(int, int);
   void contigSelected(int);
 
+  void showInserts();
+
   void toggleShowPositions();
   void toggleShowQV();
   void toggleHighlightDiscrepancy();

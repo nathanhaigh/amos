@@ -23,6 +23,7 @@
 #include <qcursor.h>
 
 #include "TilingFrame.hh"
+#include "InsertWindow.hh"
 
 using namespace std;
 
@@ -64,7 +65,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QToolBar * status = new QToolBar(this, "Status");
   status->setLabel("Status");
 
-  QLabel * lbl = new QLabel("Position", status, "gindexlbl");
+  new QLabel("Position", status, "gindexlbl");
   m_gindex     = new QSpinBox(0,100, 1, status, "gindexspin");
   m_gindex->setMinimumWidth(100);
 
@@ -81,17 +82,17 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QLineEdit *  dbpick  = new QLineEdit("DMG", status, "dbpick");
 
   QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 
-                                               m_tiling, SLOT(showInserts()), status );
+                                               this, SLOT(showInserts()), status );
   bShowInserts->setText("Show Inserts");
 
   QIconSet icon_fontminus(QPixmap("icons/fontdecrease.xpm"));
   QIconSet icon_fontplus(QPixmap("icons/fontincrease.xpm"));
 
-  QToolButton * bFontIncrease = new QToolButton(icon_fontplus, "Font Increase", "Font Increase",
-                                                this, SLOT(fontIncrease()), status);
+  new QToolButton(icon_fontplus, "Font Increase", "Font Increase",
+                  this, SLOT(fontIncrease()), status);
 
-  QToolButton * bFontDecrease = new QToolButton(icon_fontminus, "Font Decrease", "Font Decrease",
-                                                this, SLOT(fontDecrease()), status);
+  new QToolButton(icon_fontminus, "Font Decrease", "Font Decrease",
+                  this, SLOT(fontDecrease()), status);
 
   // slider <-> tiling
   connect(m_slider, SIGNAL(valueChanged(int)),
@@ -127,8 +128,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(m_contigid, SIGNAL(valueChanged(int)),
           m_tiling,     SLOT(setContigId(int)));
 
-  connect(m_tiling,     SIGNAL(contigLoaded(int)),
-          m_contigid, SLOT(setValue(int)));
+  connect(m_tiling,   SIGNAL(contigLoaded(int)),
+          m_contigid,   SLOT(setValue(int)));
 
   // mainwindow <-> tiling
   connect(this,   SIGNAL(bankSelected(std::string)),
@@ -269,4 +270,22 @@ void MainWindow::fontDecrease()
   m_fontsize--;
   m_tiling->setFontSize(m_fontsize);
 }
+
+void MainWindow::showInserts()
+{
+  InsertWindow * insertWindow = new InsertWindow(m_bankname, 
+                                                 m_contigid->value(), 
+                                                 this, 
+                                                 "insertWindow");
+  insertWindow->show();
+
+  connect(insertWindow, SIGNAL(setGindex(int)),
+          this,         SIGNAL(gindexChanged(int)));
+
+  connect(m_tiling,      SIGNAL(setTilingVisibleRange(int, int)),
+          insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
+
+  m_tiling->repaint();
+}
+
 

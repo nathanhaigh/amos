@@ -31,7 +31,6 @@ public slots:
     void toggleHighlightDiscrepancy(bool);
     void toggleDisplayQV(bool);
     void toggleDisplayAllChromo(bool);
-    void showInserts();
     void advanceNextDiscrepancy();
     void advancePrevDiscrepancy();
 
@@ -45,7 +44,7 @@ signals:
     void setShowNumbers(bool);
     void setHighlightDiscrepancy(bool);
     void setDisplayQV(bool);
-    void setVisibleRange(int, int);
+    void setTilingVisibleRange(int, int);
 
 protected:
     void paintEvent(QPaintEvent *);
