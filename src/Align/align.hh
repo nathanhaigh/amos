@@ -549,6 +549,8 @@ bool  Overlap_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int min_len, int max_errors,
      Alignment_t & align);
+void  Permute
+    (vector <char *> & v, vector <int> & p);
 void  Print_Align_Lines_Pair
     (FILE * fp, const string & s, const string & t, int len,
      const char * s_label, const char * t_label,

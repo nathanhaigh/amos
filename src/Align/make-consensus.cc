@@ -110,6 +110,7 @@ int  main
                     (string_list, qual_list, offset, msg, read_bank);
 
                 Multi_Align (string_list, offset, 5, 0.04, gma, & ref);
+                Permute (qual_list, ref);
 
                 gma . Get_Positions (pos);
                 gma . Extract_IMP_Dels (del_list);
@@ -176,6 +177,7 @@ int  main
                      msg . setAccession (cid);
                      msg . setIMPs (frg_id_list, pos_list);
                      Multi_Align (string_list, offset, 5, 0.04, gma, & ref);
+                     Permute (qual_list, ref);
                      gma . Get_Positions (pos);
                      gma . Extract_IMP_Dels (del_list);
                      msg . Update_IMPs (pos, ref, del_list);
@@ -202,8 +204,9 @@ int  main
                          {
                           msg . print (stdout);
                          }
+
+                     contig_ct ++;
                     }
-                contig_ct ++;
 
                 frg_id_list . clear ();
                 pos_list . clear ();
@@ -236,6 +239,7 @@ int  main
              msg . setAccession (cid);
              msg . setIMPs (frg_id_list, pos_list);
              Multi_Align (string_list, offset, 5, 0.04, gma, & ref);
+             Permute (qual_list, ref);
              gma . Get_Positions (pos);
              gma . Extract_IMP_Dels (del_list);
              msg . Update_IMPs (pos, ref, del_list);
@@ -262,8 +266,8 @@ int  main
                  {
                   msg . print (stdout);
                  }
+             contig_ct ++;
             }
-        contig_ct ++;
 
         cerr << "Processed " << contig_ct << " contigs" << endl;
        }

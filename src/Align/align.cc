@@ -1493,6 +1493,7 @@ void  Gapped_MA_Bead_t :: Advance
 
   {
    b_pos ++;
+
    if  (b_pos == skip_pos)
        {
         seq_ch = '-';
@@ -3211,6 +3212,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 
    if  (Verbose > 3)
        {
+        printf ("consensus . length () = %d   n = %d\n", len, n);
         for  (i = 0;  i < n;  i ++)
           {
            printf ("> Sequence %d\n", i);
@@ -3234,6 +3236,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 
       seq_column . erase ();
       qual_column . erase ();
+
       for  (bp = active_bead . begin ();  bp != active_bead . end (); )
         {
          bp -> Advance ();
@@ -3287,9 +3290,15 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
           {
            printf ("%6d:  ", i);
            cout << seq_column << "  col_len = " << col_len << endl;
+           printf ("         ");
            for  (j = 0;  j < col_len;  j ++)
-             qual_column [j] += MIN_QUALITY;
-           cout << "         " << qual_column << endl;
+             putchar (qual_column [j] + MIN_QUALITY);
+           putchar ('\n');
+           printf ("         ");
+           for  (j = 0;  j < col_len;  j ++)
+             printf (" %02d", (signed) qual_column [j]);
+           putchar ('\n');
+
            cout << "         cons = " << cns -> consensus << "  qv = "
                 << Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR)) << endl;
           }
@@ -5107,6 +5116,47 @@ bool  Overlap_Match_VS
        }
 
    return  false;
+  }
+
+
+
+void  Permute
+    (vector <char *> & v, vector <int> & p)
+
+//  Permute the entries in  v  according to the values in  p
+//  and in the process, restore  p  to the identity permutation.
+
+  {
+   int  i, m, n;
+   char  * save;
+
+   m = v . size ();
+   n = p . size ();
+   if  (m != n)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+             "ERROR:  Permute size mismatch.  v.size = %d  p.size = %d\n",
+             m, n);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   for  (i = 0;  i < n;  i ++)
+     if  (p [i] != i)
+         {
+          int  j, k;
+
+          save = v [i];
+          for  (j = i;  p [j] != i;  j = k)
+            {
+             k = p [j];
+             v [j] = v [k];
+             p [j] = j;
+            }
+          v [j] = save;
+          p [j] = j;
+         }
+
+   return;
   }
 
 
