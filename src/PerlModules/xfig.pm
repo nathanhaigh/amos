@@ -4,7 +4,7 @@
 # Routines that print out xfig output.
 #
 
-package xfig;
+package TIGR::xfig;
 
 use strict;
 

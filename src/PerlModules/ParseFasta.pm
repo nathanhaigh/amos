@@ -3,7 +3,7 @@
 # ParseFasta.pm
 #
 
-package ParseFasta;
+package TIGR::ParseFasta;
 {
 
 =head1 NAME

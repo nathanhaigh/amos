@@ -24,7 +24,7 @@ and Fasta files as well as the creation of TIGR .asm and .contig files.
 
 =cut
 
-package AmosLib;
+package TIGR::AmosLib;
 
 use strict;
 
