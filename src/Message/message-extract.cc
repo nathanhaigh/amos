@@ -5,8 +5,8 @@
 //!
 //! \brief Reads an AMOS message and extracts the requested message types
 //!
-//! message-extract reads an AMOS message and extracts the requested message
-//! types to stdout.
+//! message-extract reads an AMOS message and extracts the requested top-level
+//! message types to stdout.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -170,10 +170,10 @@ void PrintHelp (const char * s)
 
   cerr
     << "Takes an AMOS message file as input, either from the -m option or\n"
-    << "from stdin. All messages matching one of the NCodes specified on the\n"
-    << "command line will be extracted and reported to stdout. Each message\n"
-    << "will be lightly checked for correct AMOS format, but their NCode and\n"
-    << "fields will not be validated.\n\n";
+    << "from stdin. All top-level messages matching one of the NCodes\n"
+    << "specified on the command line will be extracted and reported to\n"
+    << "stdout. Each message will be lightly checked for correct AMOS\n"
+    << "format, but their NCode and fields will not be validated.\n\n";
 }
 
 
