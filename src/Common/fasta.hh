@@ -39,6 +39,10 @@ void  Reverse_Complement
     (char * s);
 void  Reverse_Complement
     (string & s);
+void  Reverse_String
+    (char * s);
+void  Reverse_String
+    (string & s);
 
 
 #endif

@@ -293,3 +293,49 @@ void  Reverse_Complement
 
 
 
+void  Reverse_String
+    (char * s)
+
+//  Reverse the order of characters in string  s .
+
+  {
+   int  i, j, n;
+
+   n = strlen (s);
+   for  (i = 0, j = n - 1;  i < j;  i ++, j --)
+     {
+      char  ch;
+
+      ch = s [i];
+      s [i] = s [j];
+      s [j] = ch;
+     }
+
+   return;
+  }
+
+
+
+void  Reverse_String
+    (string & s)
+
+//  Reverse the order of characters in string  s .
+
+  {
+   int  i, j, n;
+
+   n = s . length ();
+   for  (i = 0, j = n - 1;  i < j;  i ++, j --)
+     {
+      char  ch;
+
+      ch = s [i];
+      s [i] = s [j];
+      s [j] = ch;
+     }
+
+   return;
+  }
+
+
+
