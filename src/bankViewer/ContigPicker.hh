@@ -30,7 +30,7 @@ signals:
 private:
   QListView * m_table;
 
-  void loadTable();
+  void loadTable(bool jumpToCurrent);
   bool m_showReads;
   int m_showreadsid;
   QPopupMenu * m_options;

@@ -104,10 +104,10 @@ ContigPicker::ContigPicker(DataStore * datastore,
   m_table->setAllColumnsShowFocus(true);
 
 
-  loadTable();
+  loadTable(true);
 }
 
-void ContigPicker::loadTable()
+void ContigPicker::loadTable(bool jumpToCurrent)
 {
   m_table->clear();
   int c = m_table->columns();
@@ -118,6 +118,8 @@ void ContigPicker::loadTable()
 
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
+
+  ContigListItem * curItem = NULL;
 
   if (m_showReads)
   {
@@ -177,6 +179,11 @@ void ContigPicker::loadTable()
                                         QString::number(numreads));
       }
 
+      if (contigid == m_datastore->m_contigId)
+      {
+        curItem = contigitem;
+      }
+
       contigid++;
 
       if (m_showReads)
@@ -202,8 +209,13 @@ void ContigPicker::loadTable()
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
 
-  setCursor(orig);
+  if (jumpToCurrent && curItem)
+  {
+    m_table->setSelected(curItem, true);
+    m_table->ensureItemVisible(curItem);
+  }
 
+  setCursor(orig);
 }
 
 void ContigPicker::itemSelected(QListViewItem * item)
@@ -255,6 +267,6 @@ void ContigPicker::toggleShowReads()
 
   m_showReads = b;
 
-  loadTable();
+  loadTable(false);
 }
 
