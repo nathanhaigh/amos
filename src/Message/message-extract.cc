@@ -154,7 +154,17 @@ void ParseArgs (int argc, char ** argv)
     }
 
   while ( optind != argc )
-    OPT_ExtractCodes . insert (Encode (argv [optind ++]), 1);
+    {
+      try {
+
+	OPT_ExtractCodes . insert (Encode (argv [optind ++]), 1);
+      }
+      catch (Exception_t & e) {
+
+	cerr << "WARNING: " << e . what( )
+	     << " - NCode " << argv [optind - 1] << " ignored" << endl;
+      }
+    }
 }
 
 
