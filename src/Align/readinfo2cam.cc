@@ -538,25 +538,31 @@ fprintf (stderr, "### %d reads\n", n);
            int  k, occurs;
 
            j = Unitig_Search (unitig, Read [i] . unitig_id, occurs);
-           done = false;
-           for  (k = j;  k < j + occurs && ! done;  k ++)
-             {
-              int  p;
-
-              p = Search (contig_pos, unitig [k] . contig_id);
-              if  (p >= 0)
+           if  (j < 0)
+               fprintf (stderr, "** Unitig %d not found\n",
+                    Read [i] . unitig_id);
+             else
+               {
+                done = false;
+                for  (k = j;  k < j + occurs && ! done;  k ++)
                   {
-                   int  x, y;
+                   int  p;
 
-                   Set_Position (x, y, unitig [k] . c_a_pos,
-                       unitig [k] . c_b_pos, contig_pos [p] . a,
-                       contig_pos [p] . b, contig_pos [p] . len);
-                   Set_Position (Read [i] . cam_a, Read [i] . cam_b,
-                       Read [i] . u_a_pos, Read [i] . u_b_pos,
-                       x, y, int (fabs (x - y)));
-                   done = true;
+                   p = Search (contig_pos, unitig [k] . contig_id);
+                   if  (p >= 0)
+                       {
+                        int  x, y;
+
+                        Set_Position (x, y, unitig [k] . c_a_pos,
+                            unitig [k] . c_b_pos, contig_pos [p] . a,
+                            contig_pos [p] . b, contig_pos [p] . len);
+                        Set_Position (Read [i] . cam_a, Read [i] . cam_b,
+                            Read [i] . u_a_pos, Read [i] . u_b_pos,
+                            x, y, int (fabs (x - y)));
+                        done = true;
+                       }
                   }
-             }
+               }
           }
      }
 
@@ -586,7 +592,7 @@ fprintf (stderr, "### %d reads\n", n);
                          i, Read [i] . unitig_id, j, Read [j] . unitig_id);
                      mean = int (Dst [Read [i] . dst] . mean);
                      Output_Single_Read (i, Infer_Read_Col_Id, Infer_Mate_Col_Id,
-                         mean, tag);
+                          mean, tag);
                     }
                 Read [j] . mark = true;
                }
