@@ -27,6 +27,10 @@ string OPT_MessageName;           // message name parameter
 
 
 //========================================================== Fuction Decs ====//
+uint64_t SafeIntDiv (uint64_t a, uint64_t b)
+{ return (uint64_t)(b == 0 ? 0 : (double)a / (double)b); }
+
+
 //----------------------------------------------------- ParseArgs --------------
 //! \brief Sets the global OPT_% values from the command line arguments
 //!
@@ -125,16 +129,16 @@ int main (int argc, char ** argv)
   for ( ID_t i = 1; i < sums . size( ); i ++ )
     {
       msgcode = typemap . lookup (i);
-      printf ("%5s %9ld %12ld %12ld\n",
+      printf ("%5s %9d %12d %12lld\n",
 	      Decode (msgcode) . c_str( ),
-	      (long)sums [i] . first,
-	      (long)sums [i] . second,
-	      (long)(sums [i] . second / sums [i] . first));
+	      sums [i] . first,
+	      sums [i] . second,
+	      SafeIntDiv (sums [i] . second, sums [i] . first));
       c1 += sums [i] . first;
       c2 += sums [i] . second;
     }
   printf ("-----------------------------------------\n");
-  printf ("      %9ld %12ld %12ld\n", (long)c1, (long)c2, (long)(c2 / c1));
+  printf ("      %9ld %12ld %12lld\n", (long)c1, (long)c2, SafeIntDiv (c2, c1));
 
   return EXIT_SUCCESS;
 }
