@@ -21,6 +21,7 @@ public slots:
   void toggleItem(int id);
   void toggleConnectMates();
   void togglePartitionTypes();
+  void toggleCoveragePlot();
 
 signals:
   void setGindex(int gindex);
@@ -29,6 +30,7 @@ signals:
   void refreshCanvas();
   void setConnectMates(bool);
   void setPartitionTypes(bool);
+  void setCoveragePlot(bool);
 
 private:
 
@@ -41,6 +43,7 @@ private:
 
   int m_connectmatesid;
   int m_partitiontypesid;
+  int m_coverageid;
 };
 
 #endif

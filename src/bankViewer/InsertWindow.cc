@@ -72,6 +72,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_partitiontypesid = m_optionsmenu->insertItem("&Partition Types", this, SLOT(togglePartitionTypes()));
   m_optionsmenu->setItemChecked(m_partitiontypesid, true);
 
+  m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
+  m_optionsmenu->setItemChecked(m_coverageid, true);
+
   // Main Widget
   InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
   setCentralWidget(iw);
@@ -105,6 +108,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(setPartitionTypes(bool)),
           iw,   SLOT(setPartitionTypes(bool)));
+
+  connect(this, SIGNAL(setCoveragePlot(bool)),
+          iw,   SLOT(setCoveragePlot(bool)));
 }
 
 void InsertWindow::contigChanged()
@@ -143,4 +149,12 @@ void InsertWindow::togglePartitionTypes()
   m_optionsmenu->setItemChecked(m_partitiontypesid, b);
 
   emit setPartitionTypes(b);
+}
+
+void InsertWindow::toggleCoveragePlot()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_coverageid);
+  m_optionsmenu->setItemChecked(m_coverageid, b);
+
+  emit setCoveragePlot(b);
 }

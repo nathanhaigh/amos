@@ -5,6 +5,9 @@
 #include <qwmatrix.h>
 #include "RenderSeq.hh"
 #include "InsertCanvasItem.hh"
+#include "CoverageCanvasItem.hh"
+#include <set>
+
 
 using namespace AMOS;
 using namespace std;
@@ -29,6 +32,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_hoffset = 0;
   m_connectMates = 1;
   m_partitionTypes = 1;
+  m_coveragePlot = 1;
 
   refreshCanvas();
 
@@ -270,6 +274,8 @@ void InsertWidget::refreshCanvas()
   int leftmost = 0;
   int rightmost = clen;
 
+  vector<Insert *>::iterator ii;
+
   if (!m_inserts.empty())
   {
     sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
@@ -277,6 +283,7 @@ void InsertWidget::refreshCanvas()
     leftmost = (*m_inserts.begin())->m_loffset;
     if (leftmost > 0) { leftmost = 0; }
   }
+
 
   cerr << "leftmost: " << leftmost << endl;
   m_hoffset = -leftmost;
@@ -303,6 +310,83 @@ void InsertWidget::refreshCanvas()
       // draw a tick at the end of the contig in the next round
       i = clen - 1 - 1000;
     }
+  }
+
+  if (m_coveragePlot)
+  {
+    int maxdepth = 0;
+    int maxroffset = 0;
+
+    multiset<int> endpoints;
+    multiset<int>::iterator vi, vi2;
+
+    // coverage will change at each endpoint of each insert
+    QPointArray coveragelevel(m_inserts.size()*4); 
+    int curcpos = 0;
+
+    for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
+    {
+      int curloffset = (*ii)->m_loffset;
+      int curroffset = (*ii)->m_roffset;
+
+      // find end points that have already passed
+      vi = endpoints.begin();
+      while (vi != endpoints.end())
+      {
+        if (*vi <= curloffset) 
+        { 
+          coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
+          coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
+          vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
+        }
+        else
+        { 
+          break; 
+        }
+      }
+
+      // Add this insert's beginning and end
+      coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size());
+      coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size()+1);
+      endpoints.insert(curroffset);
+
+      if (endpoints.size() > maxdepth) 
+      { 
+        maxdepth = endpoints.size(); 
+      }
+
+      if (curroffset > maxroffset)
+      {
+        maxroffset = curroffset;
+      }
+    }
+
+    // Handle remaining end points
+    vi = endpoints.begin();
+    while (vi != endpoints.end())
+    {
+      coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
+      coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
+      vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
+    }
+
+    // Adjust coordinates for painting
+    for (int i = 0; i < curcpos; i++)
+    {
+      coveragelevel[i].setX(coveragelevel[i].x()+m_hoffset);
+      coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + tileoffset);
+    }
+
+    CoverageBackgroundCanvasItem * bg = new CoverageBackgroundCanvasItem(0, tileoffset, maxroffset + m_hoffset + 1, maxdepth, m_icanvas);
+    bg->show();
+    bg->setZ(-2);
+
+    CoverageCanvasItem * citem = new CoverageCanvasItem(0, tileoffset,
+                                                        maxroffset + m_hoffset + 1, maxdepth,
+                                                        coveragelevel, m_icanvas);
+    citem->show();
+
+    tileoffset += maxdepth + gutter;
   }
 
   // bubblesort the types by the order they appear in the popup menu
@@ -333,7 +417,6 @@ void InsertWidget::refreshCanvas()
   cerr << "paint inserts" << endl;
   int layoutoffset = 0;
 
-  vector<Insert *>::iterator ii;
   vector<int>::iterator li;
   int layoutpos;
 
@@ -410,4 +493,8 @@ void InsertWidget::setPartitionTypes(bool b)
   refreshCanvas();
 }
 
-
+void InsertWidget::setCoveragePlot(bool b)
+{
+  m_coveragePlot = b;
+  refreshCanvas();
+}

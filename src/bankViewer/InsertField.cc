@@ -98,23 +98,25 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   QPoint real = inverseWorldMatrix().map(e->pos());
   QCanvasItemList l = canvas()->collisions(real);
 
-  if (l.empty())
+  bool found = false;
+
+  for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
+  {
+    if ((*it)->rtti() == InsertCanvasItem::RTTI)
+    {
+      InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
+      bool highlight = !iitem->m_highlight;
+      bool highlightBuddy = e->button() == RightButton;
+
+      highlightInsert(iitem, highlight, highlightBuddy);
+      found = true;
+      break;
+    }
+  }
+
+  if (!found)
   {
     emit setGindex(real.x()-m_hoffset);
-  }
-  else
-  {
-    for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
-    {
-      if ((*it)->rtti() == InsertCanvasItem::RTTI)
-      {
-        InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
-        bool highlight = !iitem->m_highlight;
-        bool highlightBuddy = e->button() == RightButton;
-
-        highlightInsert(iitem, highlight, highlightBuddy);
-      }
-    }
   }
 }
 

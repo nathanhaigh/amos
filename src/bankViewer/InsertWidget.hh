@@ -41,6 +41,7 @@ public slots:
   void refreshCanvas();
   void setConnectMates(bool);
   void setPartitionTypes(bool);
+  void setCoveragePlot(bool);
 
 signals:
   void setStatus(const QString & message);
@@ -61,6 +62,7 @@ private:
 
   int m_connectMates;
   int m_partitionTypes;
+  int m_coveragePlot;
 
   // from insert canvas
   void drawTile(AMOS::Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state);
