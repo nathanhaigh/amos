@@ -5,6 +5,8 @@ RenderSeq_t::RenderSeq_t(int vectorpos)
   m_vectorpos = vectorpos;
   m_trace = NULL;
   m_displayTrace = false;
+  m_displaystart = 0;
+  m_displayend = 0;
 }
 
 RenderSeq_t::~RenderSeq_t()
@@ -20,6 +22,18 @@ char RenderSeq_t::base(Pos_t gindex) const
   else
   {
     return m_nucs[gindex - m_offset];
+  }
+}
+
+int RenderSeq_t::qv(Pos_t gindex) const
+{
+  if (gindex < m_offset || gindex >= m_offset + m_nucs.size())
+  {
+    return -1;
+  }
+  else
+  {
+    return m_qual[gindex - m_offset] - AMOS::MIN_QUALITY;
   }
 }
 

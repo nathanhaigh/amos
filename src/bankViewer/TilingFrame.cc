@@ -210,3 +210,8 @@ void TilingFrame::toggleStable(bool stable)
   cerr << "frame::toggle " << (stable ? "true" : "false") << endl;
   m_tilingfield->toggleStable(stable);
 }
+
+void TilingFrame::toggleDisplayQV(bool show)
+{
+  m_tilingfield->toggleDisplayQV(show);
+}

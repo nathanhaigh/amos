@@ -29,6 +29,7 @@ public slots:
     void toggleStable(bool);
     void toggleShowNumbers(bool);
     void toggleHighlightDiscrepancy(bool);
+    void toggleDisplayQV(bool);
 
 signals:
     void gindexChanged( int );
@@ -39,6 +40,7 @@ signals:
     void fontSizeChanged(int);
     void setShowNumbers(bool);
     void setHighlightDiscrepancy(bool);
+    void setDisplayQV(bool);
 
 protected:
     void paintEvent(QPaintEvent *);

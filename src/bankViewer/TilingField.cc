@@ -38,6 +38,7 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
   m_stabletiling = 0;
   m_highlightdiscrepancy = 0;
   m_traceheight = 50;
+  m_displayqv = 0;
 
   setMinimumSize(m_width, m_height);
   setPalette(QPalette(QColor(170, 170, 170)));
@@ -51,26 +52,17 @@ void TilingField::toggleStable(bool stable)
 
 int TilingField::getReadCov(int y)
 {
-  int curoffset = 0;
-
-  int gutter      = m_fontsize/2;
-  int lineheight  = m_fontsize+gutter;
-
   int dcov;
   vector<RenderSeq_t *>::iterator i;
   for (i =  m_currentReads.begin(), dcov = 0;
        i != m_currentReads.end();
        i++, dcov++)
   {
-    int curheight = lineheight;
-    if ((*i)->m_displayTrace) { curheight += m_traceheight; }
-
-    if (y >= curoffset && y < curoffset+curheight)
+    if (y >= (*i)->m_displaystart && y < (*i)->m_displayend)
     {
+      cerr << "Hit " << (*i)->m_read.getEID() << " [" << dcov << "]" << endl;
       return dcov;
     }
-
-    curoffset += curheight;
   }
 
   return -1;
@@ -161,11 +153,17 @@ void TilingField::paintEvent( QPaintEvent * )
 
     if (hasOverlap || m_stabletiling)
     {
-      int readheight = lineheight;
+      ri->m_displaystart = ldcov;
+      int readheight = lineheight; // seqname
 
       if (ri->m_displayTrace) 
       { 
         readheight += m_traceheight; 
+      }
+
+      if (m_displayqv)
+      {
+        readheight += lineheight;
       }
     
       // offset rectangle
@@ -217,11 +215,33 @@ void TilingField::paintEvent( QPaintEvent * )
                      m_fontsize, lineheight,
                      Qt::AlignHCenter | Qt::AlignBottom, s);
 
+          if (m_displayqv)
+          {
+            int qv = ri->qv(j);
+            if (qv != -1)
+            {
+              p.setPen(black);
+              s = QString::number(qv);
+
+              p.setFont(QFont("Helvetica", (int)(m_fontsize*.75)));
+              p.drawText(tilehoffset + (j-grangeStart)*basewidth, ldcov+lineheight,
+                         m_fontsize, m_fontsize,
+                         Qt::AlignHCenter | Qt::AlignBottom, s);
+              p.setFont(QFont("Helvetica", m_fontsize));
+            }
+          }
+        }
+
+        ldcov += lineheight;
+        if (m_displayqv)
+        {
+          ldcov += lineheight;
         }
 
         if (ri->m_displayTrace) 
         { 
-          int baseline = ldcov + readheight - 10;
+          int baseline = ldcov + m_traceheight - 10;
+          ldcov += m_traceheight;
           
           if (ri->m_trace)
           {
@@ -255,8 +275,19 @@ void TilingField::paintEvent( QPaintEvent * )
                         
                   for (int t = peakposition; t < nextpeakposition; t++)
                   {
-                    int tval = trace[t]/vscale;
+                    if ((t % 5 == 0) && channel == 0)
+                    {
+                      QPoint current = p.pos();
+                      p.setPen(Qt::black);
 
+                      p.drawLine(hoffset + (t-peakposition) * hscale, baseline-1,
+                                 hoffset + (t-peakposition) * hscale, baseline+1);
+
+                      p.moveTo(current);
+                      p.setPen(pen);
+                    }
+
+                    int tval = trace[t]/vscale;
                     p.lineTo(hoffset + (t-peakposition)*hscale,
                              baseline-tval);
                   }
@@ -293,8 +324,19 @@ void TilingField::paintEvent( QPaintEvent * )
                         
                   for (int t = peakposition; t > nextpeakposition; t--)
                   {
-                    int tval = trace[t]/vscale;
+                    if ((t % 5 == 0) && channel == 0)
+                    {
+                      QPoint current = p.pos();
+                      p.setPen(Qt::black);
 
+                      p.drawLine(hoffset + (t-peakposition) * hscale, baseline-1,
+                                 hoffset + (t-peakposition) * hscale, baseline+1);
+
+                      p.moveTo(current);
+                      p.setPen(pen);
+                    }
+
+                    int tval = trace[t]/vscale;
                     p.lineTo(hoffset + (peakposition-t)*hscale,
                              baseline-tval);
                   }
@@ -307,8 +349,12 @@ void TilingField::paintEvent( QPaintEvent * )
           p.drawLine(tilehoffset, baseline, m_width, baseline);
         }
       }
+      else
+      {
+        ldcov += lineheight;
+      }
 
-      ldcov += readheight;
+      ri->m_displayend = ldcov;
 
       dcov++;
       m_currentReads.push_back(ri);
@@ -354,5 +400,11 @@ void TilingField::setSize(int width, int height)
 void TilingField::toggleHighlightDiscrepancy(bool show)
 {
   m_highlightdiscrepancy = show;
+  repaint();
+}
+
+void TilingField::toggleDisplayQV(bool show)
+{
+  m_displayqv = show;
   repaint();
 }

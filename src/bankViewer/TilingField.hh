@@ -25,6 +25,7 @@ public:
 public slots:
     void toggleStable(bool);
     void toggleHighlightDiscrepancy(bool);
+    void toggleDisplayQV(bool);
 
 protected:
     void paintEvent( QPaintEvent * );
@@ -35,6 +36,7 @@ private:
     int & m_fontsize;
     int & m_gindex;
     
+    int m_displayqv;
     int m_height;
     int m_width;
     int m_stabletiling;

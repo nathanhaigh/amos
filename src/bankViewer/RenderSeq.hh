@@ -18,6 +18,7 @@ public:
   ~RenderSeq_t();
   void load(AMOS::Bank_t & read_bank, AMOS::Tile_t * tile);
   char base(Pos_t gindex) const;
+  int qv(Pos_t gindex) const;
   Pos_t getGindex(Pos_t seqpos) const;
   void loadTrace(const string & db);
   int getGSeqPos(int gindex);
@@ -53,6 +54,9 @@ public:
     }
   };
 
+
+  int m_displaystart;
+  int m_displayend;
 
   int m_offset;
   int m_vectorpos;
