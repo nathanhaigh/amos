@@ -39,10 +39,8 @@ document, so any AMOS specific installation notes are listed below.
    Once `make install' is issued, the installed scripts and Perl
 modules must not be moved. Thus, convince yourself of the installation
 directory beforehand and set the $PREFIX variable for `configure'
-accordingly.
-
-   AMOS makes use of a few custom installation directories not
-mentioned in `INSTALL', they are as follows. $datadir, $libdir and
+accordingly. AMOS makes use of a few custom installation directories
+not mentioned in `INSTALL', they are as follows. $datadir, $libdir and
 $includedir are set by `configure', see `configure --help' for more
 information.
 
@@ -51,6 +49,23 @@ information.
    - TIGR libraries and Perl modules will be installed in $libdir/TIGR
    - AMOS headers will be installed in $includedir/AMOS
    - TIGR headers will be installed in $includedir/TIGR
+
+   Listed here are non-default FEATURES to the `configure' script
+included with this distribution. These options are not documented in
+the `INSTALL' file and are unique to the AMOS distribution.
+
+   - AMOScmp        build AMOScmp dependencies [ARG=no]
+   - AMOSmini       build AMOSmini dependencies [ARG=no]
+   - all            build all dependencies [ARG=yes]
+
+By default, the entire source base is built and installed as specified
+by the `--enable-all' feature. However, by turning this feature off
+and specifying a particular set of packages, build and install times
+can be reduced. For instance, to only build the AMOSmini assembler
+pipeline, we can type the following to ensure only the AMOSmini
+dependencies are built and installed:
+
+   `configure --disable-all --enable-AMOSmini'
 
 
 Dependencies
@@ -89,7 +104,9 @@ Pipeline
    Listed here are the current AMOS pipelines available. Source files
 for the pipelines are in `src/Pipeline' and will be installed in
 $bindir as executable scripts. Please see individual documentation for
-each pipeline in the `doc' directory.
+each pipeline in the `doc' directory. Individual pipelines can also be
+built and installed separately, see the `Install' section for more
+details.
 
    - AMOScmp -
    Provides a general overlap-layout-consensus pipeline for assembly,
@@ -97,6 +114,13 @@ each pipeline in the `doc' directory.
    an alignment to a reference, i.e. all sequencing reads are aligned
    to a finished reference sequence and their alignments are used to
    determine their layout position.
+
+   - AMOSmini -
+   Provides a lightweight overlap-layout-consensus pipeline for
+   assembly. This pipeline is only meant to handle inputs with read
+   counts in the 100's and is therefore named "mini". This pipeline is
+   perfect for assembling smaller data sets because it avoids the
+   large overhead imposed by whole genome (WGA) assemblers.
 
 
 August 2004
