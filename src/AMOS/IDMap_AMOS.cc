@@ -20,9 +20,9 @@ using namespace std;
 void IDMap_t::insert (ID_t key, ID_t val)
 {
   if ( key == NULL_ID )
-    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID key in map");
+    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID map key");
   if ( val == NULL_ID )
-    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID val in map");
+    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID map value");
 
   HashNode_t * curr = hashfunc (key);
 
@@ -36,11 +36,11 @@ void IDMap_t::insert (ID_t key, ID_t val)
       while ( curr -> next != NULL )
 	{
 	  if ( curr -> key == key )
-	    AMOS_THROW_ARGUMENT ("Cannot insert multiple keys in map");
+	    AMOS_THROW_ARGUMENT ("Cannot insert multiple map keys");
 	  curr = curr -> next;
 	}
       if ( curr -> key == key )
-	AMOS_THROW_ARGUMENT ("Cannot insert multiple keys in map");
+	AMOS_THROW_ARGUMENT ("Cannot insert multiple map keys");
   
       curr -> next = new HashNode_t( );
       curr = curr -> next;
@@ -121,7 +121,7 @@ ID_t IDMap_t::lookup (ID_t key)
   while ( curr -> key != key )
     {
       if ( curr -> next == NULL )
-	AMOS_THROW_ARGUMENT ("Could not lookup absent key in map");
+	AMOS_THROW_ARGUMENT ("Could not find map key");
       curr = curr -> next;
     }
 
@@ -173,7 +173,7 @@ void IDMap_t::remove (ID_t key)
   while ( curr -> key != key )
     {
       if ( curr -> next == NULL )
-	AMOS_THROW_ARGUMENT ("Could not remove absent key");
+	AMOS_THROW_ARGUMENT ("Could not find map key for removal");
       prev = curr;
       curr = curr -> next;
     }
@@ -249,7 +249,7 @@ void IDMap_t::readMessage (const Message_t & msg)
 	  AMOS_THROW_ARGUMENT ("Invalid size format");
 
 	if ( size != size_m )
-	  AMOS_THROW_ARGUMENT ("Size of map and size field do not agree");
+	  AMOS_THROW_ARGUMENT ("map and size fields do not agree");
       }
   }
   catch (ArgumentException_t) {
