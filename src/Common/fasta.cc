@@ -93,6 +93,142 @@ void  Fasta_Print_N
 
 
 
+bool  Fasta_Qual_Read
+    (FILE * fp, string & q, string & hdr)
+
+//  Read next fasta-like-format quality value sequence from
+//  file  fp  (which must already be open) into string  q 
+//  (encoded by adding the quality value to the  QUALITY_OFFSET  value).
+//  Put the faster header line (without the '>' and trailing spaces) into
+//  string  hdr .  Return  true  if a string is successfully,
+//  read; false, otherwise.
+
+  {
+   bool  have_value;
+   int  ch, val;
+
+   q . erase ();
+   hdr . erase ();
+
+   // skip till next '>' if necessary
+   while  ((ch = fgetc (fp)) != EOF && ch != '>')
+     ;
+
+   if  (ch == EOF)
+       return  false;
+
+   // skip spaces if any
+   while  ((ch = fgetc (fp)) != EOF && ch == ' ')
+     ;
+   if  (ch == EOF)
+       return  false;
+   ungetc (ch, fp);
+
+   // put rest of line into  hdr
+   while  ((ch = fgetc (fp)) != EOF && ch != '\n')
+     hdr . push_back (char (ch));
+
+   // put all numbers up till next '>' into  q
+   have_value = false;
+   val = 0;
+   while  ((ch = fgetc (fp)) != EOF && ch != '>')
+     {
+      if  (isspace (ch))
+          {
+           if  (have_value)
+               q . push_back (char (val + QUALITY_OFFSET));
+           have_value = false;
+           val = 0;
+          }
+      else if  (isdigit (ch))
+          {
+           have_value = true;
+           val = 10 * val + ch - '0';
+          }
+     }
+
+   if  (ch == '>')
+       ungetc (ch, fp);
+
+   return  true;
+  }
+
+
+
+bool  Fasta_Read
+    (FILE * fp, string & s, string & hdr)
+
+//  Read next fasta-format string from file  fp  (which must
+//  already be open) into string  s .  Put the faster
+//  header line (without the '>' and trailing spaces) into
+//  string  hdr .  Return  true  if a string is successfully,
+//  read; false, otherwise.
+
+  {
+   int  ch;
+
+   s . erase ();
+   hdr . erase ();
+
+   // skip till next '>' if necessary
+   while  ((ch = fgetc (fp)) != EOF && ch != '>')
+     ;
+
+   if  (ch == EOF)
+       return  false;
+
+   // skip spaces if any
+   while  ((ch = fgetc (fp)) != EOF && ch == ' ')
+     ;
+   if  (ch == EOF)
+       return  false;
+   ungetc (ch, fp);
+
+   // put rest of line into  hdr
+   while  ((ch = fgetc (fp)) != EOF && ch != '\n')
+     hdr . push_back (char (ch));
+
+   // put everything up till next '>' into  s
+   while  ((ch = fgetc (fp)) != EOF && ch != '>')
+     {
+      if  (! isspace (ch))
+          s . push_back (char (ch));
+     }
+
+   if  (ch == '>')
+       ungetc (ch, fp);
+
+   return  true;
+  }
+
+
+
+void  Reverse_Complement
+  (char * s)
+
+//  Set string  s  to its DNA Watson-Crick reverse complement
+
+  {
+   int  i, j, n;
+
+   n = strlen (s);
+   for  (i = 0, j = n - 1;  i < j;  i ++, j --)
+     {
+      char  ch;
+
+      ch = s [j];
+      s [j] = Complement (s [i]);
+      s [i] = Complement (ch);
+     }
+
+   if  (i == j)
+       s [i] = Complement (s [i]);
+
+   return;
+  }
+
+
+
 void  Reverse_Complement
   (string & s)
 

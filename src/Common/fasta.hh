@@ -11,7 +11,9 @@
 
 
 #include  "delcher.hh"
+#include  "WGA_datatypes.hh"
 #include  <string>
+#include  <vector>
 
 
 const int  DEFAULT_FASTA_WIDTH = 60;
@@ -26,6 +28,12 @@ void  Fasta_Print
 void  Fasta_Print_N
     (FILE * fp, const char * s, int n, const char * hdr = NULL,
      int fasta_width = DEFAULT_FASTA_WIDTH);
+bool  Fasta_Qual_Read
+    (FILE * fp, string & q, string & hdr);
+bool  Fasta_Read
+    (FILE * fp, string & s, string & hdr);
+void  Reverse_Complement
+    (char * s);
 void  Reverse_Complement
     (string & s);
 
