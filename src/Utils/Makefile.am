@@ -29,7 +29,12 @@ AM_CPPFLAGS = \
 trimByOvl_LDADD = \
         $(top_builddir)/src/AMOS/libAMOS.a
 trimByOvl_SOURCES = \
-	trimByOvl.cc \
+	trimByOvl.cc
+
+
+##-- runAmos
+runAmos_LDADD =
+runAmos_SOURCES = \
 	runAmos.cc
 
 
