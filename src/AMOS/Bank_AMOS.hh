@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <deque>
 
@@ -532,7 +533,11 @@ protected:
   {
     ID_t bid = idmap_m . lookupBID (iid);
     if ( bid == NULL_ID || bid > last_bid_m )
-      AMOS_THROW_ARGUMENT ("IID does not exist in bank");
+      {
+	std::stringstream ss;
+	ss << "IID '" << iid << "' does not exist in bank";
+	AMOS_THROW_ARGUMENT (ss . str( ));
+      }
     return bid;
   }
 
@@ -546,7 +551,11 @@ protected:
   {
     ID_t bid = idmap_m . lookupBID (eid);
     if ( bid == NULL_ID || bid > last_bid_m )
-      AMOS_THROW_ARGUMENT ("EID does not exist in bank");
+      {
+	std::stringstream ss;
+	ss << "EID '" << eid << "' does not exist in bank";
+	AMOS_THROW_ARGUMENT (ss . str( ));
+      }
     return bid;
   }
 
