@@ -289,20 +289,20 @@ void TilingField::paintEvent( QPaintEvent * )
                         
                   for (int t = peakposition; t < nextpeakposition; t++)
                   {
+                    int tval = (int)(trace[t]/vscale);
+                    int hval = (int)(hoffset + (t-peakposition)*hscale); 
+
                     if ((t % 5 == 0) && channel == 0)
                     {
                       QPoint current = p.pos();
                       p.setPen(Qt::black);
 
-                      p.drawLine(hoffset + (t-peakposition) * hscale, baseline-1,
-                                 hoffset + (t-peakposition) * hscale, baseline+1);
+                      p.drawLine(hval, baseline-1, hval, baseline+1);
 
                       p.moveTo(current);
                       p.setPen(pen);
                     }
 
-                    int tval = trace[t]/vscale;
-                    int hval = hoffset + (t-peakposition)*hscale; 
 
                     if (first)
                     {
@@ -345,20 +345,20 @@ void TilingField::paintEvent( QPaintEvent * )
                         
                   for (int t = peakposition; t > nextpeakposition; t--)
                   {
+                    int tval = (int)(trace[t]/vscale);
+                    int hval = (int)(hoffset + (peakposition-t)*hscale);
+
                     if ((t % 5 == 0) && channel == 0)
                     {
                       QPoint current = p.pos();
                       p.setPen(Qt::black);
 
-                      p.drawLine(hoffset + (t-peakposition) * hscale, baseline-1,
-                                 hoffset + (t-peakposition) * hscale, baseline+1);
+                      p.drawLine(hval, baseline-1, hval, baseline+1);
 
                       p.moveTo(current);
                       p.setPen(pen);
                     }
 
-                    int tval = trace[t]/vscale;
-                    int hval = hoffset + (peakposition-t)*hscale;
 
                     if (first)
                     {

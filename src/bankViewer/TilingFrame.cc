@@ -154,7 +154,6 @@ void TilingFrame::setFontSize(int fontsize )
 
 void TilingFrame::setGindex( int gindex )
 {
-  cerr << "setGindex:" << gindex << endl;
   if (!m_loaded) { return; }
 
   int basespace = 5;
