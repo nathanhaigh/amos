@@ -168,7 +168,7 @@ int  main
                    Get_Strings_And_Offsets
                        (string_list, qual_list, clr_list, tag_list, offset,
                         msg, read_bank);
-
+ 
                    try
                      {
                       cid = msg . getAccession ();
@@ -212,20 +212,32 @@ int  main
            vector <Ordered_Range_t>  pos_list;
            vector <int>  frg_id_list;
 
+	   cerr << "Input is being read from the bank " << endl;
+
            read_bank . open (Bank_Name);
 	   layout_bank . open (Bank_Name);
 
+           msg . setType (IUM_MSG);
+           msg . setStatus (UNASSIGNED_UNITIG);
+
            while  (layout_bank >> layout)
              {
-	       cid = layout_id++;
+	       char sid[256]; 
+	       sprintf(sid, "%ld", layout_id++);
+	       cid = string(sid);
 
 	       Get_Strings_And_Offsets
 		 (string_list, qual_list, clr_list, tag_list, offset,
 		  layout, frg_id_list, pos_list, read_bank);
 
+	       //	       cerr << "qual_list has " << qual_list.size() << " elements\n";
+	       //	       cerr << "clr_list has " << clr_list.size() << " elements\n";
+	       //	       cerr << "frg_id_list has " << frg_id_list.size() << " elements\n";
+
 	       msg . setAccession(cid);
 	       msg . setIMPs(frg_id_list, pos_list);
 
+	       //	       cerr << "got this far " << cid << endl;
 	       try
 		 {
 		   Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
@@ -237,6 +249,9 @@ int  main
 		   throw;
 		 }
 
+	       //	       cerr << "ref has " << ref.size() << " elements\n";
+	       //	       cerr << "Multialign succeeded" << endl;
+
 	       Permute (qual_list, ref);
 	       Permute (clr_list, ref);
 	       Permute (frg_id_list, ref);
@@ -246,17 +261,18 @@ int  main
 	       gma . Extract_IMP_Dels (del_list);
 	       msg . Update_IMPs (pos, ref, del_list);
 	       
-	       /*	       gma . Set_Consensus_And_Qual (string_list, qual_list);
+	       gma . Set_Consensus_And_Qual (string_list, qual_list);
 	       msg . setSequence (gma .  getConsensusString ());
 	       msg . setQuality (gma . getQualityString ());
-	       msg . setUniLen (strlen (gma . getConsensuString ())); */
+	       msg . setUniLen (strlen (gma . getConsensusString ())); 
 
 	       Output_Unit (label, msg . getAccession (),
 			    msg . getNumFrags (), gma, msg, string_list,
 			    qual_list, clr_list, tag_list, contig_bank);
 	       
 	       contig_ct ++;
-	     }
+	     } // while layout
+	   cerr << "Processed " << layout_id << " layouts" << endl;
           } // amos bank input
       else if  (Input_Format == SIMPLE_CONTIG_INPUT
                   || Input_Format == PARTIAL_READ_INPUT)
@@ -413,7 +429,9 @@ int  main
            cerr << "Processed " << contig_ct << " contigs" << endl;
           } // if PARTIAL_READ_INPUT || SIMPLE_CONTIG_INPUT
 
-      fclose (input_fp);
+      if (Input_Format != BANK_INPUT)
+	fclose (input_fp);
+
       read_bank . close ();
      }
    catch (Exception_t & e)
@@ -753,15 +771,15 @@ static void  Get_Strings_And_Offsets
 
    clr_list . clear ();
    offset . clear ();
+   fid . clear ();
 
    sort(layout . getTiling () . begin (), layout . getTiling () .end (), cmpTile ());
    
    
 
    prev_offset = 0;
-   //   int i = 0;
 
-   for  (vector<Tile_t>::iterator ti = layout . getTiling () . begin  ();
+   for  (vector<Tile_t>::iterator ti = layout . getTiling () . begin ();
 	 ti != layout . getTiling () . end() ; ti++)
      {
       char  * tmp, tag_buff [100];
@@ -770,8 +788,6 @@ static void  Get_Strings_And_Offsets
       Range_t  clear;
       int  this_offset;
       int  a, b, j, len, qlen;
-
-      //      i++;
 
       if ( ti -> range . getBegin () < ti -> range . getEnd () ){ // forward match
 	a = ti -> offset;
@@ -1004,13 +1020,15 @@ static void  Parse_Command_Line
         exit (EXIT_FAILURE);
        }
 
-   if  (optind > argc - 2)
+   if  ((Input_Format == BANK_INPUT && optind > argc - 1) || 
+	(Input_Format != BANK_INPUT && optind > argc - 2))
        {
         Usage (argv [0]);
         exit (EXIT_FAILURE);
        }
 
-   Tig_File_Name = argv [optind ++];
+   if (Input_Format != BANK_INPUT)
+     Tig_File_Name = argv [optind ++];
    Bank_Name = argv [optind ++];
 
    return;
