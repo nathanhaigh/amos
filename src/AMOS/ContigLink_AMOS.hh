@@ -63,42 +63,11 @@ private:
 protected:
 
   //--------------------------------------------------- readRecord -------------
-  //! \brief Read all the class members from a biserial record
-  //!
-  //! Reads the fixed and variable length streams from a biserial record and
-  //! initializes all the class members to the values stored within. Used in
-  //! translating a biserial Bankable object, and needed to retrieve objects
-  //! from a Bank. Returned size of the record will only be valid if the read
-  //! was successful, i.e. fix.good( ) and var.good( ).
-  //!
-  //! \note This method must be able to interpret the biserial record
-  //! produced by its related function writeRecord.
-  //!
-  //! \param fix The fixed length stream (stores all fixed length members)
-  //! \param var The variable length stream (stores all var length members)
-  //! \pre The get pointer of fix is at the beginning of the record
-  //! \pre The get pointer of var is at the beginning of the record
-  //! \return size of read record (size of fix + size of var)
-  //!
   virtual Size_t readRecord (std::istream & fix,
 			     std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
-  //! \brief Write all the class members to a biserial record
-  //!
-  //! Writes the fixed an variable length streams to a biserial record. Used in
-  //! generating a biserial Bankable object, and needed to commit objects to a
-  //! Bank. Will only write to the ready streams, but the size of the record
-  //! will always be returned.
-  //!
-  //! \note This method must be able to produce a biserial record that can
-  //! be read by its related funtion readRecord.
-  //!
-  //! \param fix The fixed length stream (stores all fixed length members)
-  //! \param var The variable length stream (stores all var length members)
-  //! \return size of written record (size of fix + size of var)
-  //!
   virtual Size_t writeRecord (std::ostream & fix,
 			      std::ostream & var) const;
 
@@ -152,8 +121,6 @@ public:
 
 
   //--------------------------------------------------- clear ------------------
-  //! \brief Clears all object data, reinitializes the object
-  //!
   virtual void clear ( )
   {
     Universal_t::clear( );
@@ -165,15 +132,6 @@ public:
 
 
   //--------------------------------------------------- fromMessage ------------
-  //! \brief Converts from a message
-  //!
-  //! Converts the data contained in a Message object to the Messagable object.
-  //! Will not complain if incoming message is of the wrong type, will only try
-  //! and suck out the fields it recognizes.
-  //!
-  //! \param msg The Message to read from
-  //! \return void
-  //!
   virtual void fromMessage (const Message_t & msg);
 
 
@@ -202,10 +160,6 @@ public:
 
 
   //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the AMOS NCode type identifier
-  //!
-  //! \return The AMOS NCode type identifier
-  //!
   virtual NCode_t getNCode ( ) const
   {
     return ContigLink_t::NCode( );
@@ -361,13 +315,6 @@ public:
 
 
   //--------------------------------------------------- toMessage --------------
-  //! \brief Converts to a message
-  //!
-  //! Converts the data contained in the Messagable object to a Message object.
-  //!
-  //! \param msg The Message to write to
-  //! \return void
-  //!
   virtual void toMessage (Message_t & msg) const;
 
 };

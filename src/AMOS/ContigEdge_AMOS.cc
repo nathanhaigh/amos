@@ -9,12 +9,20 @@
 
 #include "ContigEdge_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ ContigEdge_t ================
+//----------------------------------------------------- fromMessage ------------
+void ContigEdge_t::fromMessage (const Message_t & msg)
+{
+
+}
+
+
 //----------------------------------------------------- readRecord -------------
 Size_t ContigEdge_t::readRecord (istream & fix,
 				 istream & var)
@@ -33,6 +41,13 @@ Size_t ContigEdge_t::readRecord (istream & fix,
   streamsize += size * sizeof (ID_t);
 
   return streamsize;
+}
+
+
+//----------------------------------------------------- toMessage --------------
+void ContigEdge_t::toMessage (Message_t & msg) const
+{
+
 }
 
 

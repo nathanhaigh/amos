@@ -50,6 +50,14 @@ int main (int argc, char ** argv)
 
 	msg . write (cout);
       }
+
+    unv . clear( );
+    unv . toMessage (msg);
+    msg . write (cout);
+
+    ctl . clear( );
+    ctl . toMessage (msg);
+    msg . write (cout);
   }
   catch (Exception_t & e) {
     cerr << e;

@@ -156,7 +156,7 @@ protected:
   //--------------------------------------------------- writeRecord ------------
   //! \brief Write selected class members to a biserial record
   //!
-  //! Writes the fixed an variable length streams to a biserial record. Used in
+  //! Writes the fixed and variable length streams to a biserial record. Used in
   //! generating a biserial IBankable object, and needed to commit objects to a
   //! Bank. Will only write to the ready streams, but the size of the record
   //! will always be returned. Does not write the flags and IID of the object
