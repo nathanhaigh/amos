@@ -39,6 +39,7 @@ public slots:
   void toggleShowQV();
   void toggleHighlightDiscrepancy();
   void togglePrefetchChromatograms();
+  void toggleLowQualityLowerCase();
 
   void fontIncrease();
   void fontDecrease();
@@ -63,6 +64,7 @@ private:
   int m_highid;
   int m_prefetch;
   int m_fontsize;
+  int m_lowquallowerid;
 
   int m_gindex;
 

@@ -282,20 +282,24 @@ void ChromoField::paintEvent(QPaintEvent * event)
 
 int ChromoField::getWindowPos(int gindex)
 {
-  int gseqpos = m_read->getGSeqPos(gindex);
-  int retval; 
+  int retval = 1; 
 
-  if (m_read->m_rc)
+  if (m_pix)
   {
-    gseqpos = m_read->m_pos.size() - gseqpos;
-    retval = (int)((m_read->m_trace->NPoints-m_read->m_pos[gseqpos])* m_hscale);
-  }
-  else
-  {
-    retval = (int)(m_read->m_pos[gseqpos]*m_hscale);
-  }
+    int gseqpos = m_read->getGSeqPos(gindex);
 
-  retval += m_hoffset;
+    if (m_read->m_rc)
+    {
+      gseqpos = m_read->m_pos.size() - gseqpos;
+      retval = (int)((m_read->m_trace->NPoints-m_read->m_pos[gseqpos])* m_hscale);
+    }
+    else
+    {
+      retval = (int)(m_read->m_pos[gseqpos]*m_hscale);
+    }
+
+    retval += m_hoffset;
+  }
 
   return retval;
 }

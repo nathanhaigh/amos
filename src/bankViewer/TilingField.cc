@@ -42,6 +42,8 @@ TilingField::TilingField(DataStore * datastore,
   m_tracespace = 50;
   m_traceheight = m_tracespace - 10;
   m_displayqv = 0;
+  m_lowquallower = false;
+
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),
@@ -247,10 +249,15 @@ void TilingField::paintEvent( QPaintEvent * )
         {
           int hoffset = tilehoffset + (gindex-grangeStart)*basewidth;
 
+          int qv = ri->qv(gindex);
           char b = ri->base(gindex);
+
+          if (qv < 30 && m_lowquallower) { b = tolower(b); }
+          else                           { b = toupper(b); }
+
           s = b;
 
-          if (m_highlightdiscrepancy && b != ' ' && b != m_consensus[gindex])
+          if (m_highlightdiscrepancy && b != ' ' && toupper(b) != toupper(m_consensus[gindex]))
           {
             p.setBrush(UIElements::color_discrepancy);
             p.setPen(UIElements::color_discrepancy);
@@ -267,7 +274,6 @@ void TilingField::paintEvent( QPaintEvent * )
           // QV
           if (m_displayqv && b != ' ')
           {
-            int qv = ri->qv(gindex);
             if (qv != -1)
             {
               s = QString::number(qv);
@@ -418,5 +424,11 @@ void TilingField::toggleHighlightDiscrepancy(bool show)
 void TilingField::toggleDisplayQV(bool show)
 {
   m_displayqv = show;
+  repaint();
+}
+
+void TilingField::toggleLowQualityLowerCase(bool dolower)
+{
+  m_lowquallower = dolower;
   repaint();
 }

@@ -291,6 +291,11 @@ void TilingFrame::toggleDisplayQV(bool show)
   m_tilingfield->toggleDisplayQV(show);
 }
 
+void TilingFrame::toggleLowQualityLowerCase(bool dolower)
+{
+  m_tilingfield->toggleLowQualityLowerCase(dolower);
+}
+
 void TilingFrame::toggleDisplayAllChromo(bool display)
 {
   m_displayAllChromo = display;

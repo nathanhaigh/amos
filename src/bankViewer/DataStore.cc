@@ -95,6 +95,7 @@ void DataStore::loadMates()
 
 void DataStore::loadContigs()
 {
+  cerr << "Loading contigs\n";
   m_readcontiglookup.clear();
 
   contig_bank.seekg(1);
@@ -113,7 +114,7 @@ void DataStore::loadContigs()
     }
   }
 
-  cerr << "Loaded contig id for " << m_readcontiglookup.size() << " reads" << endl;
+  cerr << "Loaded contig id mapping for " << m_readcontiglookup.size() << " reads" << endl;
 }
 
 int DataStore::setContigId(int id)

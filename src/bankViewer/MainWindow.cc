@@ -46,6 +46,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   menuBar()->insertItem("&Options", m_options);
   m_posid    = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
   m_qvid     = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleShowQV()));
+  m_lowquallowerid = m_options->insertItem("Lower Case &Low QV", this, SLOT(toggleLowQualityLowerCase()));
   m_highid   = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
   m_prefetch = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(togglePrefetchChromatograms()));
 
@@ -276,6 +277,14 @@ void MainWindow::toggleShowQV()
   m_options->setItemChecked(m_qvid, b);
 
   m_tiling->toggleDisplayQV(b);
+}
+
+void MainWindow::toggleLowQualityLowerCase()
+{
+  bool b = !m_options->isItemChecked(m_lowquallowerid);
+  m_options->setItemChecked(m_lowquallowerid, b);
+
+  m_tiling->toggleLowQualityLowerCase(b);
 }
 
 void MainWindow::toggleHighlightDiscrepancy()
