@@ -13,6 +13,7 @@
 
 #include "Bank_AMOS.hh"
 using namespace AMOS;
+using namespace Bank_k;
 using namespace std;
 
 
@@ -36,7 +37,7 @@ void Bank_t::addPartition (bool nuke = true)
   try {
     //-- Add the FIX partition file
     stringstream ss;
-    ss << store_pfx_m << '.' << last_partition_m << Bank_k::FIX_STORE_SUFFIX;
+    ss << store_pfx_m << '.' << last_partition_m << FIX_STORE_SUFFIX;
     partition -> fix_name = ss . str( );
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
     if ( partition -> fix . fail( ) )
@@ -45,7 +46,7 @@ void Bank_t::addPartition (bool nuke = true)
     
     //-- Add the VAR partition file
     ss.str ("");
-    ss << store_pfx_m << '.' << last_partition_m << Bank_k::VAR_STORE_SUFFIX;
+    ss << store_pfx_m << '.' << last_partition_m << VAR_STORE_SUFFIX;
     partition -> var_name = ss . str( );
     partition -> var . open (partition -> var_name . c_str( ), mode);
     if ( partition -> var . fail( ) )
@@ -62,7 +63,7 @@ void Bank_t::addPartition (bool nuke = true)
 
   //-- If the first partition, set the records per partition size
   if ( partition_size_m <= 0 )
-    partition_size_m = Bank_k::DEFAULT_PARTITION_SIZE;
+    partition_size_m = DEFAULT_PARTITION_SIZE;
 
   //-- New partition, so new max index
   max_iid_m = last_partition_m * partition_size_m;
@@ -324,9 +325,9 @@ void Bank_t::create (const string & dir)
   mkdir (dir . c_str( ), 0755);
 
   //-- Generate the bank prefix and INFO path
-  ss << dir << '/' << Bank_k::BANK_NAMES [banktype_m];
+  ss << dir << '/' << BANK_NAMES [banktype_m];
   pfx = ss.str( );
-  ss << Bank_k::INFO_STORE_SUFFIX;
+  ss << INFO_STORE_SUFFIX;
 
   //-- Test the write-ability of the INFO partition
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK)  ||
@@ -358,7 +359,7 @@ void Bank_t::destroy ( )
   close( );
 
   //-- Nuke the INFO partition and the directory (if empty)
-  unlink ((pfx + Bank_k::INFO_STORE_SUFFIX) . c_str( ));
+  unlink ((pfx + INFO_STORE_SUFFIX) . c_str( ));
   rmdir (dir . c_str( ));
 }
 
@@ -369,8 +370,8 @@ bool Bank_t::exists (const string & dir)
   //-- Generate the INFO path
   stringstream ss;
   ss << dir << '/'
-     << Bank_k::BANK_NAMES [banktype_m]
-     << Bank_k::INFO_STORE_SUFFIX;
+     << BANK_NAMES [banktype_m]
+     << INFO_STORE_SUFFIX;
 
   //-- Return false if insufficient permissions or absent INFO partition
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK)  ||
@@ -432,16 +433,16 @@ void Bank_t::flush ( )
 
   //-- Open INFO partition
   ofstream ifo;
-  ifo . open ((store_pfx_m + Bank_k::INFO_STORE_SUFFIX) . c_str( ));
+  ifo . open ((store_pfx_m + INFO_STORE_SUFFIX) . c_str( ));
   ifo . precision (5);
 
   if ( ifo . fail( ) )
     AMOS_THROW_IO ("Could not open partition: " +
-		   store_pfx_m + Bank_k::INFO_STORE_SUFFIX);
+		   store_pfx_m + INFO_STORE_SUFFIX);
 
   //-- Flush updated INFO
   ifo << "____BANK INFORMATION____\n";
-  ifo << "bank version = "      << Bank_k::BANK_VERSION << "\n";
+  ifo << "bank version = "      << BANK_VERSION << "\n";
   ifo << "bank type = "         << (int)banktype_m      << "\n";
   ifo << "bytes/index = "       << fix_size_m           << "\n";
   ifo << "last index = "        << last_iid_m           << "\n";
@@ -450,7 +451,7 @@ void Bank_t::flush ( )
 
   if ( ifo . fail( ) )
     AMOS_THROW_IO ("Error writing to partition: " +
-		   store_pfx_m + Bank_k::INFO_STORE_SUFFIX);
+		   store_pfx_m + INFO_STORE_SUFFIX);
 
   ifo . close( );
 }
@@ -469,9 +470,9 @@ void Bank_t::open (const string & dir)
   stringstream ss;
 
   //-- Generate the INFO path
-  ss << dir << '/' << Bank_k::BANK_NAMES [banktype_m];
+  ss << dir << '/' << BANK_NAMES [banktype_m];
   pfx = ss.str( );
-  ss << Bank_k::INFO_STORE_SUFFIX;
+  ss << INFO_STORE_SUFFIX;
 
   //-- Check permissions and INFO read/write-ability
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK) )
@@ -489,7 +490,7 @@ void Bank_t::open (const string & dir)
   try {
     getline (ifo, line, '=');
     ifo >> line;
-    if ( line != Bank_k::BANK_VERSION )
+    if ( line != BANK_VERSION )
       AMOS_THROW_IO ("Incompatible Bank version");
     if ( !ifo . good( ) )
       AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
@@ -554,7 +555,7 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t iid)
     return partition;
 
   //-- If no more room in the open queue, make room
-  while ( opened_m . size ( ) >= Bank_k::MAX_OPEN_PARTITIONS )
+  while ( opened_m . size ( ) >= MAX_OPEN_PARTITIONS )
     {
       opened_m . front( ) -> fix . close( );
       opened_m . front( ) -> var . close( );
