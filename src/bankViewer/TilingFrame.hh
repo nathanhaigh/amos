@@ -20,7 +20,7 @@ public:
                            WFlags f = 0);
 public slots:
     void setGindex(int gindex);
-    void setContigId(int contigID);
+    void setContigId(int contigId);
     void setBankname(string bankname);
     void setFontSize(int);
     void setDB(const QString & db);
@@ -30,6 +30,7 @@ public slots:
     void toggleShowNumbers(bool);
     void toggleHighlightDiscrepancy(bool);
     void toggleDisplayQV(bool);
+    void showInserts();
 
 signals:
     void gindexChanged( int );
@@ -59,9 +60,12 @@ private:
     QScrollView * m_sv;
 
     string m_bankname;
+    int m_contigId;
+
     std::vector<AMOS::Tile_t> m_tiling;
     string m_consensus;
     string m_cstatus;
+
     AMOS::Bank_t read_bank;
     AMOS::Bank_t contig_bank;
     std::vector<RenderSeq_t> m_renderedSeqs;

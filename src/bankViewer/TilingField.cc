@@ -6,6 +6,8 @@
 #include <qpointarray.h>
 #include "UIElements.hh"
 
+#define DEBUG 0
+
 int imin (int a, int b)
 {
   return a < b ? a : b;
@@ -66,7 +68,10 @@ int TilingField::getReadCov(int y)
   {
     if (y >= (*i)->m_displaystart && y < (*i)->m_displayend)
     {
-      //cerr << "Hit " << (*i)->m_read.getEID() << " [" << dcov << "]" << endl;
+      #if DEBUG
+      cerr << "Hit " << (*i)->m_read.getEID() << " [" << dcov << "]" << endl;
+      #endif
+
       return dcov;
     }
   }
@@ -80,7 +85,9 @@ void TilingField::mousePressEvent(QMouseEvent *e)
 
 void TilingField::singleClick()
 {
-  //cerr << "Timer fired! single click" << endl;
+  #if DEBUG
+  cerr << "Timer fired! single click" << endl;
+  #endif
 
   int dcov = getReadCov(m_yclick);
   if (dcov == -1) { return; }
@@ -97,7 +104,10 @@ void TilingField::singleClick()
 
 void TilingField::mouseReleaseEvent( QMouseEvent * e)
 {
-  //cerr << "mouserelease state:" << m_clickstate << endl;
+  #if DEBUG
+  cerr << "mouserelease state:" << m_clickstate << endl;
+  #endif
+
   m_clickTimer->start(400, true);
   m_yclick = e->y();
 }
@@ -105,7 +115,10 @@ void TilingField::mouseReleaseEvent( QMouseEvent * e)
 
 void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 {
-  //cerr << "doubleclick, stop timer" << endl;
+  #if DEBUG
+  cerr << "doubleclick, stop timer" << endl;
+  #endif
+
   m_clickTimer->stop();
 
   int dcov = getReadCov(e->y());
@@ -160,8 +173,10 @@ void TilingField::paintEvent( QPaintEvent * )
   Pos_t grangeStart = m_gindex;
   Pos_t grangeEnd = imin(m_gindex + displaywidth, m_consensus.size()-1);
 
+  #if DEBUG
   cerr << "paintTField:" << m_renderedSeqs.size()
        << " [" << grangeStart << "," << grangeEnd << "]" << endl;
+  #endif
 
   vector<RenderSeq_t>::iterator ri;
   int dcov = 0;

@@ -13,6 +13,7 @@
 #include <qscrollview.h>
 #include <qlineedit.h>
 #include <qcheckbox.h>
+#include <qpushbutton.h>
 
 #include "TilingFrame.hh"
 
@@ -26,7 +27,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QPopupMenu* file = new QPopupMenu( menubar );
   Q_CHECK_PTR( file );
   menubar->insertItem( "&File", file );
-  file->insertItem( "&Open Bank...", this,  SLOT(openBank()) );
+  file->insertItem( "&Open Bank...", this,  SLOT(chooseBank()) );
   file->insertItem( "&Quit", qApp,  SLOT(quit()) );
 
   // Statusbar
@@ -41,6 +42,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QSpinBox * fontsize  = new QSpinBox(6, 24, 1, this, "fontsize");
   QLineEdit * dbpick   = new QLineEdit("DMG", this, "dbpick");
   TilingFrame * tiling = new TilingFrame(this, "tilingframe");
+  QPushButton * showinserts = new QPushButton("Show Inserts", this, "showinserts");
 
   QCheckBox * stable       = new QCheckBox("Stable Tiling", this, "stable");
   QCheckBox * shownumbers  = new QCheckBox("Show Position", this, "consnumbers");
@@ -91,6 +93,10 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
           tiling, SLOT(toggleHighlightDiscrepancy(bool)));
   connect(showqv, SIGNAL(toggled(bool)),
           tiling, SLOT(toggleDisplayQV(bool)));
+
+  connect(showinserts, SIGNAL(clicked()),
+          tiling,      SLOT(showInserts()));
+
 
   // contigid <-> tiling
   connect(m_contigid, SIGNAL(valueChanged(int)),
@@ -146,6 +152,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   //left
   leftgrid->addSpacing(gutter);
+  leftgrid->addWidget(showinserts);
   leftgrid->addWidget(db_lbl);
   leftgrid->addWidget(dbpick);
   leftgrid->addSpacing(gutter);
@@ -193,7 +200,7 @@ void MainWindow::setContigId(int contigId)
   emit contigIdSelected(contigId);
 }
 
-void MainWindow::openBank()
+void MainWindow::chooseBank()
 {
   QString s = QFileDialog::getExistingDirectory(
                    "/local/asmg/work/mschatz/AMOS",
@@ -218,4 +225,5 @@ void MainWindow::setGindexRange(int a, int b)
   m_gindex->setRange(a,b);
   m_slider->setRange(a,b);
 }
+
 

@@ -18,7 +18,7 @@ public:
     void setGindex(int gindex);
 
 public slots:
-  void openBank();
+  void chooseBank();
   void setContigRange(int, int);
   void setGindexRange(int, int);
 

@@ -3,6 +3,7 @@
 #include <qscrollview.h>
 #include <qlayout.h>
 #include "ConsensusField.hh"
+#include "InsertWindow.hh"
 
 int min (int a, int b)
 {
@@ -14,6 +15,7 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
    read_bank(Read_t::NCODE),
    contig_bank(Contig_t::NCODE)
 {
+  m_contigId = 1;
   m_gindex = 0;
   m_fontsize = 12;
   m_loadedWidth = 1000;
@@ -89,6 +91,7 @@ void TilingFrame::setContigId(int contigId)
 
       Contig_t contig;
       contig_bank.fetch(contigId, contig);
+      m_contigId = contigId;
 
       m_tiling = contig.getReadTiling();
       m_consensus = contig.getSeqString();
@@ -105,7 +108,7 @@ void TilingFrame::setContigId(int contigId)
       setGindex(0);
 
       emit setGindexRange(0, (int)m_consensus.size()-1);
-      emit contigLoaded(contigId);
+      emit contigLoaded(m_contigId);
 
       QString s = "Viewing ";
       s += m_bankname.c_str();
@@ -114,7 +117,7 @@ void TilingFrame::setContigId(int contigId)
       s += " contigs";
 
       s += " Contig Id:";
-      s += QString::number(contigId);
+      s += QString::number(m_contigId);
       s += " Size: ";
       s += QString::number(m_consensus.size());
       s += " Reads: ";
@@ -248,3 +251,11 @@ void TilingFrame::toggleDisplayQV(bool show)
 {
   m_tilingfield->toggleDisplayQV(show);
 }
+
+void TilingFrame::showInserts()
+{
+  InsertWindow * insertWindow = new InsertWindow(m_bankname, m_contigId, this, "insertWindow");
+  insertWindow->show();
+}
+
+
