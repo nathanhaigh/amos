@@ -13,7 +13,7 @@ int main (int argc, char ** argv)
       exit (1);
     }
 
-  msgfile . open (argv[1], ios::in);
+  msgfile . open (argv[1], fstream::in);
   if ( !msgfile . good( ) )
     {
       cerr << "bad file\n";

@@ -3,6 +3,7 @@
 #include "Bundler.hh"
 #include <stdio.h>
 #include <list>
+#include <iostream>
 
 using namespace AMOS;
 using namespace std;
@@ -121,13 +122,13 @@ int main(int argc, char *argv[])
   // now all the links should be in the linkMap, nicely grouped by the contigs
   // they connect.
 
+  map <LinkAdjacency_t, int> adjacencies;
   LinkMap_t::iterator li = linkMap.begin();
   while (li != linkMap.end()){
     pair<ID_t, ID_t> lastPair = (*li).first;
     cerr << "Doing contig pair (" << lastPair.first << ", " 
 	 << lastPair.second << ")" << endl; 
     list <ContigLink_t> linkList;
-    map <LinkAdjacency_t, int> adjacencies;
     map <LinkAdjacency_t, list<LinkMap_t::iterator> > adjList;
     map <LinkAdjacency_t, list<LinkMap_t::iterator> > bestList;
     while ((*li).first == lastPair){
@@ -137,11 +138,13 @@ int main(int argc, char *argv[])
       adjList[li->second.getAdjacency()].push_back(li);
       li++;
     }
-    cerr << "NORMALS: " << adjacencies[ContigLink_t::NORMAL]
-	 << " ANTINORMALS: " << adjacencies[ContigLink_t::ANTINORMAL]
-	 << " INNIES: " << adjacencies[ContigLink_t::INNIE]
-	 << " OUTIES: " << adjacencies[ContigLink_t::OUTIE]
+
+    cerr << "NORMALS: " << adjacencies[(LinkAdjacency_t)ContigLink_t::NORMAL]
+	 << " ANTINORMALS: " << adjacencies[(LinkAdjacency_t)ContigLink_t::ANTINORMAL]
+	 << " INNIES: " << adjacencies[(LinkAdjacency_t)ContigLink_t::INNIE]
+	 << " OUTIES: " << adjacencies[(LinkAdjacency_t)ContigLink_t::OUTIE]
 	 << "\n";
+
     // now, for each innie, outie and such we find a consistent subset of links
     // using as min and max mean -/+ 3*stdev
 
@@ -267,10 +270,10 @@ int main(int argc, char *argv[])
       }
     } // for each adjacency
     
-    cerr << "new NORMALS: " << adjacencies[ContigLink_t::NORMAL]
-	 << " ANTINORMALS: " << adjacencies[ContigLink_t::ANTINORMAL]
-	 << " INNIES: " << adjacencies[ContigLink_t::INNIE]
-	 << " OUTIES: " << adjacencies[ContigLink_t::OUTIE]
+    cerr << "new NORMALS: " << adjacencies[(LinkAdjacency_t)ContigLink_t::NORMAL]
+	 << " ANTINORMALS: " << adjacencies[(LinkAdjacency_t)ContigLink_t::ANTINORMAL]
+	 << " INNIES: " << adjacencies[(LinkAdjacency_t)ContigLink_t::INNIE]
+	 << " OUTIES: " << adjacencies[(LinkAdjacency_t)ContigLink_t::OUTIE]
 	 << "\n";
 
     // here we want to combine the gaussians described by the "good" links

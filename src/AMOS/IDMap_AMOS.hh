@@ -38,11 +38,60 @@ namespace AMOS {
 class IDMap_t : public IMessagable_t
 {
 
+public:
+
+  //============================================== HashTriple_t ================
+  //! \brief HashTriple for IDMap
+  //!
+  //! Contains the BID/EID/IID value triple. Also contains a reference counter
+  //! which displays the number of hash keys that point to this value triple.
+  //!
+  //============================================================================
+  struct HashTriple_t
+  {
+    uint8_t  c;               //!< reference counter
+    ID_t   iid;               //!< internal AMOS ID
+    ID_t   bid;               //!< bank index
+    char * eid;               //!< external ID
+
+    //------------------------------------------------- HashTriple_t -----------
+    //! \brief Constructs a HashTriple
+    //!
+    HashTriple_t (ID_t iid_p, const char * eid_p, ID_t bid_p)
+      : c (0), iid (iid_p), bid (bid_p)
+    {
+      eid = SafeStrdup ( (eid_p == NULL ? &NULL_CHAR : eid_p) );
+    }
+
+    //------------------------------------------------- ~HashTriple_t ----------
+    //! \brief Destroys a HashTriple and frees the string
+    //!
+    ~HashTriple_t ( )
+    {
+      free (eid);
+    }
+
+    //------------------------------------------------- operator= --------------
+    //! \brief Deep copy of the HashTriple
+    //!
+    HashTriple_t & operator= (const HashTriple_t & s)
+    {
+      if ( this != &s )
+	{
+	  c = s.c;
+	  iid = s.iid;
+	  bid = s.bid;
+	  eid = SafeStrdup (s.eid);
+	}
+      return *this;
+    }
+  };
+
+
 private:
 
   static const Size_t DEFAULT_NUM_BUCKETS = 1000;  //!< default min buckets
 
-  struct HashTriple_t;
   //============================================== HashNode_t ==================
   //! \brief HashNode for IDMap
   //!
@@ -214,59 +263,11 @@ private:
 
   std::vector<HashNode_t> iid_bucs_m;   //!< the iid hash buckets
   std::vector<HashNode_t> eid_bucs_m;   //!< the eid hash buckets
-  NCode_t type_m;                       //!< type of the IDs
   Size_t size_m;                        //!< number of value triples
+  NCode_t type_m;                       //!< type of the IDs
 
 
 public:
-
-  //============================================== HashTriple_t ================
-  //! \brief HashTriple for IDMap
-  //!
-  //! Contains the BID/EID/IID value triple. Also contains a reference counter
-  //! which displays the number of hash keys that point to this value triple.
-  //!
-  //============================================================================
-  struct HashTriple_t
-  {
-    uint8_t  c;               //!< reference counter
-    ID_t   iid;               //!< internal AMOS ID
-    ID_t   bid;               //!< bank index
-    char * eid;               //!< external ID
-
-    //------------------------------------------------- HashTriple_t -----------
-    //! \brief Constructs a HashTriple
-    //!
-    HashTriple_t (ID_t iid_p, const char * eid_p, ID_t bid_p)
-      : c (0), iid (iid_p), bid (bid_p)
-    {
-      eid = SafeStrdup ( (eid_p == NULL ? &NULL_CHAR : eid_p) );
-    }
-
-    //------------------------------------------------- ~HashTriple_t ----------
-    //! \brief Destroys a HashTriple and frees the string
-    //!
-    ~HashTriple_t ( )
-    {
-      free (eid);
-    }
-
-    //------------------------------------------------- operator= --------------
-    //! \brief Deep copy of the HashTriple
-    //!
-    HashTriple_t & operator= (const HashTriple_t & s)
-    {
-      if ( this != &s )
-	{
-	  c = s.c;
-	  iid = s.iid;
-	  bid = s.bid;
-	  eid = SafeStrdup (s.eid);
-	}
-      return *this;
-    }
-  };
-
 
   //============================================== const_iterator ==============
   //! \brief const_iterator for moving through the map
@@ -381,7 +382,7 @@ public:
   {
     if ( size_m > 0 )
       {
-	vector<HashNode_t>::iterator hni;
+	std::vector<HashNode_t>::iterator hni;
 	for ( hni = iid_bucs_m . begin( ); hni != iid_bucs_m . end( ); hni ++ )
 	  hni -> clearchain( );
 	for ( hni = eid_bucs_m . begin( ); hni != eid_bucs_m . end( ); hni ++ )

@@ -19,8 +19,10 @@
 #include <vector>
 #include <deque>
 
+#ifdef __GNUC__
 #if __GNUC__ < 3
 #define pubsetbuf setbuf
+#endif
 #endif
 
 
@@ -494,7 +496,7 @@ protected:
   BankPartition_t * getPartition (ID_t id)
   {
     //-- If partition is in the partition list
-    if ( id < npartitions_m  &&  partitions_m [id] -> fix . is_open( ) )
+    if ( (Size_t)id < npartitions_m  &&  partitions_m [id] -> fix . is_open( ) )
       return partitions_m [id];
     else
       return openPartition (id);
@@ -616,8 +618,8 @@ protected:
 
 
   NCode_t banktype_m;        //!< the type of objects stored in this bank
-  Size_t max_partitions_m;   //!< maximum number of open partitions
   Size_t buffer_size_m;      //!< size of the I/O buffer
+  Size_t max_partitions_m;   //!< maximum number of open partitions
   Size_t fix_size_m;         //!< size of entire fixed length record
   bool is_open_m;            //!< open status of the bank
   ID_t last_bid_m;           //!< the last bank bid (1 based)

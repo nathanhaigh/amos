@@ -125,7 +125,6 @@ void Contig_t::readRecord (istream & fix, istream & var)
 //----------------------------------------------------- readUMD ----------------
 bool Contig_t::readUMD (std::istream & in)
 {
-  char ch;
   string eid;
   Tile_t tile;
   istringstream ss;

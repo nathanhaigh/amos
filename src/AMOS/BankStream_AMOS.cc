@@ -33,8 +33,8 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
       lid = curr_bid_m;
       partition = localizeBID (lid);
       lid *= fix_size_m;
-      if ( partition -> fix . tellg( ) != lid )
-	partition -> fix . seekg (lid, ios::beg);
+      if ( partition -> fix . tellg( ) != (std::streampos)lid )
+	partition -> fix . seekg (lid, fstream::beg);
  
       partition -> fix . ignore (sizeof (std::streampos));
       partition -> fix . read ((char *)&(bf), sizeof (BankFlags_t));
@@ -79,8 +79,8 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
       lid = curr_bid_m;
       partition = localizeBID (lid);
       lid *= fix_size_m;
-      if ( partition -> fix . tellg( ) != lid )
-	partition -> fix . seekg (lid, ios::beg);
+      if ( partition -> fix . tellg( ) != (std::streampos)lid )
+	partition -> fix . seekg (lid, fstream::beg);
 
       partition -> fix . read ((char *)&vpos, sizeof (std::streampos));
       partition -> fix . read ((char *)&flags, sizeof (BankFlags_t));

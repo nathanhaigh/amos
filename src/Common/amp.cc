@@ -33,7 +33,7 @@ const char * Date
 const char * TempFile (const char * prefix)
 {
   static char name [MAX_FILE_NAME];
-  snprintf (name, MAX_FILE_NAME, "%s%ld%ld", prefix, time(NULL), rand( ));
+  snprintf (name, MAX_FILE_NAME, "%s%ld%d", prefix, time(NULL), rand( ));
   int fd = creat (name, 0644);
   if ( fd == -1 )
     throw std::exception();
@@ -44,7 +44,7 @@ const char * TempFile (const char * prefix)
 const char * TempDir (const char * prefix)
 {
   static char name [MAX_FILE_NAME];
-  snprintf (name, MAX_FILE_NAME, "%s%ld%ld", prefix, time(NULL), rand( ));
+  snprintf (name, MAX_FILE_NAME, "%s%ld%d", prefix, time(NULL), rand( ));
   if ( mkdir (name, 0755) == -1 )
     throw std::exception();
   return name;

@@ -4124,10 +4124,10 @@ void  Align_Row_Update_With_Errors
 void  Banded_Overlap
     (const char * s, int s_len, const char * t, int t_len,
      int  lo_offset, int hi_offset, Simple_Overlap_t & olap,
-     int match_score = DEFAULT_MATCH_SCORE,
-     int mismatch_score = DEFAULT_MISMATCH_SCORE,
-     int indel_score = DEFAULT_INDEL_SCORE,
-     int gap_score = DEFAULT_GAP_SCORE)
+     int match_score,
+     int mismatch_score,
+     int indel_score,
+     int gap_score)
 
 //  Find the highest-scoring overlap alignment between string  s  and
 //  string  t , restricted to a band between  lo_offset  and
@@ -5951,10 +5951,10 @@ bool  Range_Intersect
 
 void  Simple_Overlap
     (const char * s, int s_len, const char * t, int t_len,
-     Simple_Overlap_t & olap, int match_score = DEFAULT_MATCH_SCORE,
-     int mismatch_score = DEFAULT_MISMATCH_SCORE,
-     int indel_score = DEFAULT_INDEL_SCORE,
-     int gap_score = DEFAULT_GAP_SCORE)
+     Simple_Overlap_t & olap, int match_score,
+     int mismatch_score,
+     int indel_score,
+     int gap_score)
 
 //  Find the highest-scoring overlap alignment between string  s  and
 //  string  t , i.e., an alignment the extends to the end of either

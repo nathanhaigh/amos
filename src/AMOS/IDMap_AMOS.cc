@@ -237,7 +237,7 @@ void IDMap_t::concat (const IDMap_t & s)
 //----------------------------------------------------- insert -----------------
 const IDMap_t::HashTriple_t * IDMap_t::insert (ID_t iid,
 					       const char * eid,
-					       ID_t bid = NULL_ID)
+					       ID_t bid)
 {
   if ( iid == NULL_ID  &&  (eid == NULL || eid[0] == NULL_CHAR) ) return NULL;
 
@@ -448,7 +448,7 @@ void IDMap_t::resize (Size_t min)
     }
 
   //-- Resize the bucket vectors
-  if ( size_m != triples . size( ) )
+  if ( size_m != (Size_t)triples . size( ) )
     AMOS_THROW ("Unknown fatal error during hash resize");
   iid_bucs_m . resize (min);
   eid_bucs_m . resize (min);

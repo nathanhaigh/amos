@@ -52,7 +52,6 @@ int main (int argc, char ** argv)
   BankStream_t red_bank (READ);
   Read_t red;
 
-  ID_t id;                       // id holder
   long int cnts = 0;             // seen object count
   long int cntw = 0;             // written object count
 

@@ -57,7 +57,7 @@ public:
   //---------------------------------------------- ~Exception_t ----------------
   //! \brief Default destructor
   //!
-  ~Exception_t ( )
+  ~Exception_t ( ) throw()
   { }
 
 

@@ -118,7 +118,6 @@ int main (int argc, char ** argv)
 
     Universal_t * obj = NULL;
     NCode_t ncode;
-    ID_t bid;
 
     //-- Iterate through each known object and dump if its got bank
     for ( int ti = 0; ti < N_TYPES; ++ ti )
