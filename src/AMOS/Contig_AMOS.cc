@@ -69,7 +69,7 @@ Size_t Contig_t::readRecord (std::istream & fix,
                                std::istream & var)
 {
   Size_t streamsize = Sequence_t::readRecord (fix, var);
-  Size_t size;
+  Size_t size, tsize;
 
   //-- Read FIX data
   fix . read ((char *)&size, sizeof (Size_t));
@@ -78,9 +78,23 @@ Size_t Contig_t::readRecord (std::istream & fix,
   streamsize += sizeof (null_t);
 
   //-- Read VAR data
+  reads_m . resize (size);
   for ( Pos_t i = 0; i < size; i ++ )
-    var . read ((char *)&reads_m [i], sizeof (Tile_t));
-  streamsize += size * sizeof (Tile_t);
+    {
+      var . read ((char *)&tsize, sizeof (Size_t));
+      streamsize += sizeof (Size_t);
+      reads_m [i] . gaps . resize (tsize);
+      for ( Pos_t j = 0; j < tsize; j ++ )
+	var . read ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
+      streamsize += tsize * sizeof (int32_t);
+
+      var . read ((char *)&reads_m [i] . id, sizeof (ID_t));
+      streamsize += sizeof (ID_t);
+      var . read ((char *)&reads_m [i] . offset, sizeof (Pos_t));
+      streamsize += sizeof (Pos_t);
+      var . read ((char *)&reads_m [i] . range, sizeof (Range_t));
+      streamsize += sizeof (Range_t);
+    }
 
   return streamsize;
 }
@@ -91,9 +105,10 @@ Size_t Contig_t::writeRecord (std::ostream & fix,
 			      std::ostream & var) const
 {
   Size_t streamsize = Sequence_t::writeRecord (fix, var);
-  Size_t size = reads_m . size( );
+  Size_t size, tsize;
 
   //-- Write FIX data
+  size = reads_m . size( );
   fix . write ((char *)&size, sizeof (Size_t));
   streamsize += sizeof (Size_t);
   fix . write ((char *)&poly_m, sizeof (null_t));
@@ -101,8 +116,21 @@ Size_t Contig_t::writeRecord (std::ostream & fix,
 
   //-- Write VAR data
   for ( Pos_t i = 0; i < size; i ++ )
-    var . write ((char *)&reads_m [i], sizeof (Tile_t));
-  streamsize += size * sizeof (Tile_t);
+    {
+      tsize = reads_m [i] . gaps . size( );
+      var . write ((char *)&tsize, sizeof (Size_t));
+      streamsize += sizeof (Size_t);
+      for ( Pos_t j = 0; j < tsize; j ++ )
+	var . write ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
+      streamsize += tsize * sizeof (int32_t);
+
+      var . write ((char *)&reads_m [i] . id, sizeof (ID_t));
+      streamsize += sizeof (ID_t);
+      var . write ((char *)&reads_m [i] . offset, sizeof (Pos_t));
+      streamsize += sizeof (Pos_t);
+      var . write ((char *)&reads_m [i] . range, sizeof (Range_t));
+      streamsize += sizeof (Range_t);
+    }
 
   return streamsize;
 }
