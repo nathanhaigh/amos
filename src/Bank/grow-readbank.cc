@@ -8,14 +8,14 @@
 
 
 #include  "delcher.hh"
-#include  "WGA_databank.hh"
-#include  "WGA_datatypes.hh"
-#include  "CelMsgWGA.hh"
+#include  "datatypes_AMOS.hh"
+#include  "banktypes_AMOS.hh"
+#include  "CelMsg.hh"
 #include  <vector>
 #include  <string>
 
 using namespace std;
-
+using namespace AMOS;
 
 const int  MAX_LINE = 1000;
 const int  NEW_SIZE = 1000;
@@ -31,6 +31,8 @@ static bool  Create_New_Bank = false;
   // If true, then start a new read bank
 static bool  Force_New_Bank = false;
   // If true, then force a new read bank by deleting existing one first
+static bool  Compress_Reads = false;
+  // If true, then compress reads before appending them to bank
 static Input_Format_t  Input_Format = FASTA_FORMAT;
   // Type of input
 static char  * Input_File_1, * Input_File_2;
@@ -49,7 +51,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   ReadBank_t  read_bank;
+   Bank_t  read_bank (Read_t::BANKTYPE);
    ID_t  iid;
    Read_t  read;
    Celera_Message_t  msg;
@@ -63,15 +65,18 @@ int  main
 
    cout << "Bank is " << Bank_Name << endl;
 
-   if  (Force_New_Bank)
-       {
-        read_bank . openStore (Bank_Name);
-        read_bank . closeStore ();
-        read_bank . destroyStore ();
-       }
+   try {
 
-   if  (Create_New_Bank)
-       read_bank . createStore (Bank_Name, "silly comment");
+   if ( !Force_New_Bank  &&  read_bank . exists (Bank_Name) )
+   {
+     cerr << "Bank already exists: " << Bank_Name << endl;
+     exit (1);
+   }
+
+   if ( Create_New_Bank )
+     read_bank . create (Bank_Name);
+   else
+     read_bank . open (Bank_Name);
 
    ct = 0;
    if  (Input_Format == CELERA_MSG_FORMAT)
@@ -88,6 +93,8 @@ int  main
                read . setComment (msg . getSource ());
                read . setEID (msg . getAccession ());
                read . setSequence (msg . getSequence (), msg . getQuality ());
+	       if ( Compress_Reads )
+		 read . compress( );
                iid = read_bank . append (read);
               }
        }
@@ -126,33 +133,40 @@ int  main
                }
 
            ct ++;
-           read . setClearRange (0, len);
+           read . setClearRange (Range_t(0, len));
            read . setComment (p1);
            sprintf (id1, "%d", ct);
            read . setEID (id1);
            read . setSequence (s . c_str (), q . c_str ());
+	   if ( Compress_Reads )
+	     read . compress( );
            iid = read_bank . append (read);
           }
        }
    fprintf (stderr, "Processed %d reads\n", ct);
 
-   read_bank . commitStore ();
-   read_bank . closeStore ();
+   read_bank . close ();
 
 #if  0    // test random access reads from store
 {
  int  i, j;
 
-   read_bank . openStore (Bank_Name);
+   read_bank . open (Bank_Name);
    for  (i = 0;  i < 10;  i ++)
      {
       j = 1 + lrand48 () % ct;
-      read = read_bank . fetch (j);
-      read . Print (cout);
+      read . setIID (j);
+      read_bank . fetch (read);
+      cout << read;
      }
-   read_bank . closeStore ();
+   read_bank . close ();
 }
 #endif   
+
+   } catch ( Exception_t & e ) {
+     cerr << "ERROR: " << e . what( ) << endl;
+     return 1;
+   }
 
    return  0;
   }
@@ -171,7 +185,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "cCfh")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "cCfsh")) != EOF))
      switch  (ch)
        {
         case  'c' :
@@ -185,6 +199,10 @@ static void  Parse_Command_Line
         case  'f' :
           Force_New_Bank = true;
           break;
+
+       case 's' :
+	 Compress_Reads = true;
+	 break;
 
         case  'h' :
           errflg = true;
@@ -247,6 +265,7 @@ static void  Usage
            "  -c    Create a new read bank\n"
            "  -C    Input is Celera msg format, i.e., a .frg file\n"
            "  -f    Force new read bank by deleting existing one first\n"
+           "  -s    Compress reads in the Bank, only allows chars ACGTN\n"
            "  -h    Print this usage message\n"
            "\n",
            command);

@@ -10,7 +10,7 @@
 #ifndef __Bank_AMOS_HH
 #define __Bank_AMOS_HH 1
 
-#include "alloc_COMMON.hh"
+#include "alloc.hh"
 #include "datatypes_AMOS.hh"
 #include "exceptions_AMOS.hh"
 #include <cstdlib>
@@ -44,7 +44,7 @@ namespace Bank_k {
   const Size_t BUFFER_SIZE = 1024;
   //!< IO buffer size
 
-  const std::string BANK_VERSION = "1.00";
+  const std::string BANK_VERSION = "1.01";
   //!< Current Bank version, may not be able to read from other versions
 
   const std::string FIX_STORE_SUFFIX = ".fix";

@@ -10,13 +10,14 @@
 #ifndef __Sequence_AMOS_HH
 #define __Sequence_AMOS_HH 1
 
-#include "alloc_COMMON.hh"
+#include "alloc.hh"
 #include "exceptions_AMOS.hh"
 #include "Bankable_AMOS.hh"
 #include <cstdlib>
 #include <cctype>
 #include <string>
 #include <utility>
+#include <iostream>
 
 
 
@@ -73,7 +74,10 @@ protected:
     //-- Force quality score into its bits
     qualchar -= MIN_QUALITY;
     if ( qualchar & SEQ_BITS )
-      return 0;
+      {
+	std::cerr << "WARNING: qualscore '" << qualchar << "' cast to 0\n";
+	return 0;
+      }
 
     //-- Force seq into its bits
     switch ( seqchar )
@@ -86,7 +90,10 @@ protected:
 	return (uint8_t)qualchar | GUANINE_BITS;
       case 'T':
 	return (uint8_t)qualchar | THYMINE_BITS;
+      case 'N':
+	return 0;
       default:
+	std::cerr << "WARNING: seqchar '" << seqchar << "' cast to 'N'\n";
 	return 0;
       }
   }

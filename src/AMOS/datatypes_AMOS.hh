@@ -111,6 +111,17 @@ struct Range_t
 
 
   //--------------------------------------------------- Range_t ----------------
+  //! \brief Copy constructor
+  //!
+  //! \param source The range to be copied
+  //!
+  Range_t (const Range_t & source)
+  {
+    *this = source;
+  }
+
+
+  //--------------------------------------------------- Range_t ----------------
   //! \brief Constructs a Range_t object
   //!
   //! Sets begin and end to the parameter values
@@ -134,6 +145,33 @@ struct Range_t
   }
 
 
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears the range to an empty range [0,0)
+  //!
+  void clear ( )
+  {
+    begin = end = 0;
+  }
+
+
+  //--------------------------------------------------- getBegin ---------------
+  //! \brief Get the beginning of the range
+  //!
+  Pos_t getBegin ( ) const
+  {
+    return begin;
+  }
+
+
+  //--------------------------------------------------- getEnd -----------------
+  //! \brief Get the end of the range
+  //!
+  Pos_t getEnd ( ) const
+  {
+    return end;
+  }
+
+
   //--------------------------------------------------- getLength --------------
   //! \brief Get the length of the range
   //!
@@ -143,6 +181,35 @@ struct Range_t
   {
     return labs (end - begin);
   }
+
+
+  //--------------------------------------------------- setBegin ---------------
+  //! \brief Set the beginning of the range
+  //!
+  void setBegin (Pos_t b)
+  {
+    begin = b;
+  }
+
+
+  //--------------------------------------------------- setEnd -----------------
+  //! \brief Set the end of the range
+  //!
+  void setEnd (Pos_t e)
+  {
+    end = e;
+  }
+
+
+  //--------------------------------------------------- setRange ---------------
+  //! \brief Set the whole range
+  //!
+  void setRange (Pos_t b, Pos_t e)
+  {
+    begin = b;
+    end = e;
+  }
+
 };
 
 
@@ -275,6 +342,9 @@ inline Range_t operator| (Range_t a, Range_t b)
   else
     return Range_t (a . begin, a . end < b . end ? a . end : b . end);
 }
+
+//--TEMPORARY
+typedef Range_t Ordered_Range_t;
 
 } // namespace AMOS
 

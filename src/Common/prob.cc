@@ -1,3 +1,4 @@
+//  A. L. Delcher
 //
 //  File:  prob.cc
 //
@@ -80,6 +81,4 @@ int  Binomial_Cutoff
         return  i;
        }
   }
-
-
 

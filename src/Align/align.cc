@@ -8,7 +8,7 @@
 
 #include  "align.hh"
 #include  <stack>
-
+using namespace AMOS;
 
 
 // ###  Align_Score_Entry_t  methods  ###
@@ -2625,7 +2625,7 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
       ga . a_hi = slen [i];
       ga . a_len = slen [i];
       position = mps_list [i] . getPosition ();
-      x = position . getStart ();
+      x = position . getBegin ();
       y = position . getEnd ();
       if  (x < y)
           {
@@ -2663,7 +2663,7 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
            ga . a_len = slen [slen_sub];
            slen_sub ++;
            position = ups_list [i] . getPosition ();
-           x = position . getStart ();
+           x = position . getBegin ();
            y = position . getEnd ();
            if  (x < y)
                {
@@ -3242,7 +3242,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
            else
              {
               seq_column . push_back (bp -> seq_ch);
-              qual_column . push_back (bp -> qual_ch - QUALITY_OFFSET);
+              qual_column . push_back (bp -> qual_ch - MIN_QUALITY);
               bp ++;
              }
         }
@@ -3262,7 +3262,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
          active_bead . push_back (b);
 
          seq_column . push_back (b . seq_ch);
-         qual_column . push_back (b . qual_ch - QUALITY_OFFSET);
+         qual_column . push_back (b . qual_ch - MIN_QUALITY);
 
          next ++;
         }
@@ -3280,7 +3280,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
       libSlice_getConsensus (& sl, & cns, NULL, 0);
 
       consensus [i] = cns -> consensus;
-      con_qual [i] = QUALITY_OFFSET
+      con_qual [i] = MIN_QUALITY
           + Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR));
 
       if  (Verbose > 3)
@@ -3288,7 +3288,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
            printf ("%6d:  ", i);
            cout << seq_column << "  col_len = " << col_len << endl;
            for  (j = 0;  j < col_len;  j ++)
-             qual_column [j] += QUALITY_OFFSET;
+             qual_column [j] += MIN_QUALITY;
            cout << "         " << qual_column << endl;
            cout << "         cons = " << cns -> consensus << "  qv = "
                 << Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR)) << endl;

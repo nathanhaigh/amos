@@ -11,11 +11,11 @@
 
 
 #include  "delcher.hh"
-#include  "matrix.hh"
 #include  "fasta.hh"
-#include  "WGA_datatypes.hh"
-#include  "CelMsgWGA.hh"
 #include  "prob.hh"
+#include  "matrix.hh"
+#include  "datatypes_AMOS.hh"
+#include  "CelMsg.hh"
 #include  "Slice.h"
 #include  <string>
 #include  <vector>
@@ -440,7 +440,7 @@ class  Gapped_Multi_Alignment_t
    void  Get_Partial_Ungapped_Consensus
        (string & s, int lo, int hi)  const;
    void  Get_Positions
-       (vector <Range_t> & pos)  const;
+       (vector <AMOS::Range_t> & pos)  const;
    void  Get_Ungapped_Consensus
        (string & s);
    void  Haplo_Sep

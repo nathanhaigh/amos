@@ -9,9 +9,9 @@
 
 
 #include  "delcher.hh"
-#include  "WGA_databank.hh"
-#include  "WGA_datatypes.hh"
-#include  "CelMsgWGA.hh"
+#include  "banktypes_AMOS.hh"
+#include  "datatypes_AMOS.hh"
+#include  "CelMsg.hh"
 #include  "align.hh"
 #include  "prob.hh"
 #include  "fasta.hh"
@@ -21,7 +21,7 @@
 
 
 using namespace std;
-
+using namespace AMOS;
 
 const int  MAX_LINE = 1000;
 const int  NEW_SIZE = 1000;
@@ -53,11 +53,11 @@ static string  Tig_File_Name;
 
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <int> & offset,
-     const Celera_Message_t & msg, ReadBank_t & read_bank);
+     const Celera_Message_t & msg, Bank_t & read_bank);
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <int> & offset,
      const vector <int> & fid, const vector <Ordered_Range_t> pos,
-     ReadBank_t & read_bank);
+     Bank_t & read_bank);
 static void  Parse_Command_Line
     (int argc, char * argv []);
 static void  Usage
@@ -69,7 +69,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   ReadBank_t  read_bank;
+   Bank_t  read_bank (Read_t::BANKTYPE);
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * input_fp;
@@ -99,7 +99,7 @@ int  main
         cerr << " messages from file " << Tig_File_Name << endl;
 
         input_fp = File_Open (Tig_File_Name . c_str (), "r");
-        read_bank . openStore (Bank_Name);
+        read_bank . open (Bank_Name);
 
         unitig_ct = contig_ct = 0;
         while  (msg . read (input_fp))
@@ -152,7 +152,7 @@ int  main
         int  fid;
 
         input_fp = File_Open (Tig_File_Name . c_str (), "r");
-        read_bank . openStore (Bank_Name);
+        read_bank . open (Bank_Name);
 
         msg . setType (IUM_MSG);
         msg . setStatus (UNASSIGNED_UNITIG);
@@ -222,7 +222,7 @@ int  main
                 a = strtol (p, NULL, 10);
                 p = strtok (NULL, " \t\n");
                 b = strtol (p, NULL, 10);
-                ps . setOrderedRange (a, b);
+                ps . setRange (a, b);
                 frg_id_list . push_back (fid);
                 pos_list . push_back (ps);
                }
@@ -270,7 +270,7 @@ int  main
        }
 
    fclose (input_fp);
-   read_bank . closeStore ();
+   read_bank . close ();
 
    return  0;
   }
@@ -279,7 +279,7 @@ int  main
 
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <int> & offset,
-     const Celera_Message_t & msg, ReadBank_t & read_bank)
+     const Celera_Message_t & msg, Bank_t & read_bank)
 
 //  Populate  s  and  offset  with reads and their unitig positions
 //  for the unitig in  msg  with reads coming from  read_bank.
@@ -290,7 +290,7 @@ static void  Get_Strings_And_Offsets
    const vector <Celera_IMP_Sub_Msg_t> &  frgs = msg . getIMPList ();
    Read_t  read;
    Ordered_Range_t  position;
-   int  id, prev_offset;
+   int  prev_offset;
    int  i, n;
 
    n = s . size ();
@@ -316,15 +316,15 @@ static void  Get_Strings_And_Offsets
       int  this_offset;
       int  a, b, j, len, qlen;
 
-      id = frgs [i] . getId ();
+      read . setIID ( frgs [i] . getId () );
       position = frgs [i] . getPosition ();
-      a = position . getStart ();
+      a = position . getBegin ();
       b = position . getEnd ();
 
-      read = read_bank . fetch (id);
+      read_bank . fetch (read);
       clear = read . getClearRange ();
       if  (Verbose > 2)
-          read . Print (cerr);
+	cerr << read;
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
       if  (b < a)
@@ -345,7 +345,7 @@ static void  Get_Strings_And_Offsets
            sprintf
                (Clean_Exit_Msg_Line,
                 "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
-                    len, qlen, id);
+                    len, qlen, read . getIID( ));
            Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
           }
       tmp = strdup (qual . c_str ());
@@ -365,7 +365,7 @@ static void  Get_Strings_And_Offsets
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <int> & offset,
      const vector <int> & fid, const vector <Ordered_Range_t> pos,
-     ReadBank_t & read_bank)
+     Bank_t & read_bank)
 
 //  Populate  s  and  offset  with reads and their contig positions
 //  for the contig with read-ids in  fid  and  consensus positions
@@ -401,13 +401,14 @@ static void  Get_Strings_And_Offsets
       int  this_offset;
       int  a, b, j, len, qlen;
 
-      a = pos [i] . getStart ();
+      a = pos [i] . getBegin ();
       b = pos [i] . getEnd ();
 
-      read = read_bank . fetch (fid [i]);
+      read . setIID ( fid [i] );
+      read_bank . fetch (read);
       clear = read . getClearRange ();
       if  (Verbose > 2)
-          read . Print (cerr);
+	cerr << read;
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
       if  (b < a)

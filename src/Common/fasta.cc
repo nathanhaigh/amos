@@ -136,7 +136,7 @@ bool  Fasta_Qual_Read
 
 //  Read next fasta-like-format quality value sequence from
 //  file  fp  (which must already be open) into string  q 
-//  (encoded by adding the quality value to the  QUALITY_OFFSET  value).
+//  (encoded by adding the quality value to the  MIN_QUALITY  value).
 //  Put the faster header line (without the '>' and trailing spaces) into
 //  string  hdr .  Return  true  if a string is successfully,
 //  read; false, otherwise.
@@ -174,7 +174,7 @@ bool  Fasta_Qual_Read
       if  (isspace (ch))
           {
            if  (have_value)
-               q . push_back (char (val + QUALITY_OFFSET));
+               q . push_back (char (val + AMOS::MIN_QUALITY));
            have_value = false;
            val = 0;
           }

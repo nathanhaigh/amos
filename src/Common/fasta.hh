@@ -1,3 +1,4 @@
+//  A. L. Delcher
 //
 //  File:  fasta.h
 //
@@ -6,12 +7,12 @@
 //  Routines to manipulate FASTA format files
 
 
-#ifndef  __FASTA_H_INCLUDED
-#define  __FASTA_H_INCLUDED
+#ifndef  __FASTA_HH
+#define  __FASTA_HH
 
 
+#include  "datatypes_AMOS.hh"
 #include  "delcher.hh"
-#include  "WGA_datatypes.hh"
 #include  <string>
 #include  <vector>
 
@@ -45,4 +46,4 @@ void  Reverse_String
     (string & s);
 
 
-#endif
+#endif // #ifndef __FASTA_HH

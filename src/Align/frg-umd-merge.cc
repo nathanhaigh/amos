@@ -10,7 +10,7 @@
 
 
 #include  "delcher.hh"
-#include  "CelMsgWGA.hh"
+#include  "CelMsg.hh"
 #include  "fasta.hh"
 #include  <vector>
 #include  <string>
@@ -18,6 +18,7 @@
 
 
 using namespace std;
+using namespace AMOS;
 
 
 const int  MAX_LINE = 1000;
@@ -81,7 +82,7 @@ int  main
                 sprintf (Clean_Exit_Msg_Line,
                      "Could not read UMd sequence for frg %s",
                      msg . getAccession () . c_str ());
-                throw AssertFailureException (Clean_Exit_Msg_Line);
+                throw IOException_t (Clean_Exit_Msg_Line);
                }
            Fasta_Qual_Read (qual_fp, new_qual, qual_hdr);
            if  (! success)
@@ -89,7 +90,7 @@ int  main
                 sprintf (Clean_Exit_Msg_Line,
                      "Could not read UMd quality for frg %s",
                      msg . getAccession () . c_str ());
-                throw AssertFailureException (Clean_Exit_Msg_Line);
+                throw IOException_t (Clean_Exit_Msg_Line);
                }
            strcpy (seq_id, seq_hdr . c_str ());
            strcpy (qual_id, qual_hdr . c_str ());
@@ -100,7 +101,7 @@ int  main
                 sprintf (Clean_Exit_Msg_Line,
                      "Tag mismatch:  UMseq = %s  UMqual = %s  frg = %s",
                      p, q, frg_comment . c_str ());
-                throw AssertFailureException (Clean_Exit_Msg_Line);
+                throw IOException_t (Clean_Exit_Msg_Line);
                }
 
            s_len = new_seq . length ();
@@ -110,7 +111,7 @@ int  main
                 sprintf (Clean_Exit_Msg_Line,
                      "Seq len = %d != Qual len = %d for %s",
                      s_len, q_len, p);
-                throw AssertFailureException (Clean_Exit_Msg_Line);
+                throw IOException_t (Clean_Exit_Msg_Line);
                }
            for  (i = 0;  i < q_len;  i ++)
              new_qual [i] = Min (new_qual [i], MAX_CELERA_QUALITY_CHAR);

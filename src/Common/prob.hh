@@ -1,3 +1,4 @@
+//  A. L. Delcher
 //
 //  File:  prob.h
 //
@@ -6,8 +7,8 @@
 //  Routines to do probability things
 
 
-#ifndef  __PROB_H_INCLUDED
-#define  __PROB_H_INCLUDED
+#ifndef  __PROB_HH
+#define  __PROB_HH
 
 
 #include  "delcher.hh"
@@ -19,4 +20,4 @@ int  Binomial_Cutoff
 
 
 
-#endif
+#endif // #ifndef __PROB_HH

@@ -8,9 +8,9 @@
 
 
 #include  "delcher.hh"
-#include  "WGA_databank.hh"
-#include  "WGA_datatypes.hh"
-#include  "CelMsgWGA.hh"
+#include  "banktypes_AMOS.hh"
+#include  "datatypes_AMOS.hh"
+#include  "CelMsg.hh"
 #include  "align.hh"
 #include  "prob.hh"
 #include  "fasta.hh"
@@ -20,6 +20,7 @@
 
 
 using namespace std;
+using namespace AMOS;
 
 
 const int  END_FUDGE_BASES = 5;
@@ -88,9 +89,9 @@ static bool  Range_Precedes
   {
    int  a_start, a_end, b_start, b_end;
 
-   a_start = a . getStart ();
+   a_start = a . getBegin ();
    a_end = a . getEnd ();
-   b_start = b . getStart ();
+   b_start = b . getBegin ();
    b_end = b . getEnd ();
 
    if  (a_end < a_start)
@@ -116,7 +117,7 @@ static int  Find_Unitig
 static void  Get_Strings_And_Lengths
     (vector <char *> & s, vector <char *> & q, vector <int> & str_len,
      vector <char *> & tag, const Celera_Message_t & msg,
-     ReadBank_t & read_bank, const vector <ID_Pair_t> & map,
+     Bank_t & read_bank, const vector <ID_Pair_t> & map,
      const vector <Unitig_Ref_t> & uni_list);
 static void  Load_ID_Map
     (vector <ID_Pair_t> & map, const char * fn);
@@ -139,7 +140,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   ReadBank_t  read_bank;
+   Bank_t  read_bank (Read_t::BANKTYPE);
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * cco_fp, * coords_fp;
@@ -189,7 +190,7 @@ int  main
 
    coords_fp = File_Open (Coords_File_Name . c_str (), "r");
    cco_fp = File_Open (CCO_File_Name . c_str (), "r");
-   read_bank . openStore (Bank_Name);
+   read_bank . open (Bank_Name);
 
    sprintf (buff, "%s.rpos", Output_Prefix . c_str ());
    rpos_fp = File_Open (buff, "w");
@@ -445,7 +446,7 @@ int  main
        fclose (mali_fp);
    fclose (ref_fp);
    fclose (vary_fp);
-   read_bank . closeStore ();
+   read_bank . close ();
 
 
 if  (0)
@@ -562,7 +563,7 @@ static int  Find_Unitig
 static void  Get_Strings_And_Lengths
     (vector <char *> & s, vector <char *> & q, vector <int> & str_len,
      vector <char *> & tag, const Celera_Message_t & msg,
-     ReadBank_t & read_bank, const vector <ID_Pair_t> & map,
+     Bank_t & read_bank, const vector <ID_Pair_t> & map,
      const vector <Unitig_Ref_t> & uni_list)
 
 //  Populate  s  with reads for the contig in  msg  with reads coming
@@ -607,19 +608,19 @@ static void  Get_Strings_And_Lengths
       string  seq;
       string  qual;
       Range_t  clear;
-      int  iid, uid;
+      int  uid;
       int  qlen;
 
       position = frgs [i] . getPosition ();
-      a = position . getStart ();
+      a = position . getBegin ();
       b = position . getEnd ();
       
       uid = frgs [i] . getId ();
-      iid = Lookup (uid, map);
-      read = read_bank . fetch (iid);
+      read . setIID (Lookup (uid,map));
+      read_bank . fetch (read);
       clear = read . getClearRange ();
       if  (Verbose > 2)
-          read . Print (cerr);
+	cerr << read;
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
       if  (b < a)
@@ -660,7 +661,7 @@ static void  Get_Strings_And_Lengths
       int  uid;
 
       position = unis [i] . getPosition ();
-      a = position . getStart ();
+      a = position . getBegin ();
       b = position . getEnd ();
       
       uid = unis [i] . getId ();
@@ -687,8 +688,8 @@ static void  Get_Strings_And_Lengths
            s . push_back (tmp);
 
            // Make artificial quality string of all 10's
-           tmp = (char *) Safe_malloc (len + 1);
-           memset (tmp, QUALITY_OFFSET + 10, len);
+           tmp = (char *) SafeMalloc (len + 1);
+           memset (tmp, MIN_QUALITY + 10, len);
            tmp [len] = '\0';
            q . push_back (tmp);
 

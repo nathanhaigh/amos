@@ -46,6 +46,7 @@ public:
 
 private:
 
+  Range_t clear_m;                 //!< generic clear range
   std::string eid_m;               //!< the external string ID
   ID_t frag_m;                     //!< the ID of the parent fragment
   Range_t qclear_m;                //!< the quality score clear range
@@ -143,6 +144,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getClearRange ----------
+  //! \brief Get the generic clear range
+  //!
+  //! \return The generic clear range
+  //!
+  Range_t getClearRange ( )
+  {
+    return clear_m;
+  }
+
+
   //--------------------------------------------------- getEID -----------------
   //! \brief Get the external ID string
   //!
@@ -195,6 +207,18 @@ public:
   Range_t getVectorClearRange ( )
   {
     return vclear_m;
+  }
+
+
+  //--------------------------------------------------- setClearRange ----------
+  //! \brief Set the generic clear range
+  //!
+  //! \param clear The new generic clear range
+  //! \return void
+  //!
+  void setClearRange (Range_t clear)
+  {
+    clear_m = clear;
   }
 
 
@@ -258,6 +282,21 @@ public:
   }
 
 };
+
+
+
+
+//================================================ Helper Functions ============
+//----------------------------------------------------- WrapStirng -------------
+//! \brief Inserts a newline character every 'per' characters
+//!
+void WrapString (ostream & out, const string & s, int per);
+
+
+//----------------------------------------------------- operator<< -------------
+//! \brief Dump read object to ostream
+//!
+ostream & operator<< (ostream & out, Read_t & read);
 
 } // namespace AMOS
 

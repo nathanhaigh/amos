@@ -21,6 +21,8 @@ Size_t Read_t::readRecord (std::istream & fix,
   Size_t streamsize = Sequence_t::readRecord (fix, var);
 
   //-- Read FIX data
+  fix . read ((char *)&clear_m, sizeof (Range_t));
+  streamsize += sizeof (Range_t);
   fix . read ((char *)&frag_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . read ((char *)&qclear_m, sizeof (Range_t));
@@ -45,6 +47,8 @@ Size_t Read_t::writeRecord (std::ostream & fix,
   Size_t streamsize = Sequence_t::writeRecord (fix, var);
 
   //-- Write FIX data
+  fix . write ((char *)&clear_m, sizeof (Range_t));
+  streamsize += sizeof (Range_t);
   fix . write ((char *)&frag_m, sizeof (ID_t));
   streamsize += sizeof (ID_t);
   fix . write ((char *)&qclear_m, sizeof (Range_t));
@@ -59,4 +63,44 @@ Size_t Read_t::writeRecord (std::ostream & fix,
   streamsize += eid_m . size( ) + 1;
 
   return streamsize;
+}
+
+
+//----------------------------------------------------- operator<< -------------
+//----------------------------------------------------- WrapStirng -------------
+void AMOS::WrapString (ostream & out, const string & s, int per)
+{
+  int  i, n;
+  
+  n = s . length ();
+  for  (i = 0;  i < n;  i += per)
+    {
+      int  j, last;
+      
+      last = i + per;
+      if  (n < last)
+	last = n;
+      for  (j = i;  j < last;  j ++)
+        out << s [j];
+      out << endl;
+    }
+}
+
+
+ostream & AMOS::operator<< (ostream & out, Read_t & read)
+{
+  std::string s;
+
+  out << "#iid:" << read.getIID( ) << endl;
+  out << "#eid:" << read.getEID( ) << endl;
+  out << "#comment:" << endl;
+  out << read.getComment( ) << endl;
+  out << "#clear:" << read.getClearRange( ).begin << ","
+      << read.getClearRange( ).end << endl;
+  out << "#sequence:" << endl;
+  WrapString (out, read.getSeqString( ), 60);
+  out << "#quality:" << endl;
+  WrapString (out, read.getQualString( ), 60);
+  
+  return out;
 }

@@ -70,8 +70,8 @@ int  main
    slop = int (10 + base_len * 2.0 * error);
        // extra length to allow for indels
    ref_len = base_len + (num_strings - 1) * delta + slop;
-   a = (char *) Safe_malloc (1 + base_len + slop);
-   ref = (char *) Safe_malloc (1 + ref_len);
+   a = (char *) SafeMalloc (1 + base_len + slop);
+   ref = (char *) SafeMalloc (1 + ref_len);
    
    for  (i = 0;  i < ref_len;  i ++)
      ref [i] = Alphabet [lrand48 () % 4];

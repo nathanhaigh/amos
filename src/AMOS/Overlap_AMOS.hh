@@ -194,7 +194,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setAdjacency (std::pair<char, char> adjacency);
+  void setAdjacency (std::pair<char, char> adj);
 
 
   //--------------------------------------------------- setAhang ---------------
