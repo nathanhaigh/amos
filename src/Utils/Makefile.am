@@ -21,11 +21,12 @@ dist_bin_SCRIPTS = \
 
 
 ##-- GLOBAL INCLUDE
-AM_CPPFLAGS = \
-        -I$(top_srcdir)/src/AMOS
+AM_CPPFLAGS =
 
 
 ##-- trimByOvl
+trimByOvl_CPPFLAGS = \
+	-I$(top_srcdir)/src/AMOS
 trimByOvl_LDADD = \
         $(top_builddir)/src/AMOS/libAMOS.a
 trimByOvl_SOURCES = \
@@ -33,7 +34,12 @@ trimByOvl_SOURCES = \
 
 
 ##-- runAmos
-runAmos_LDADD =
+## note: this references top_builddir because getopt.h is built if needed
+runAmos_CPPFLAGS = \
+	-I$(top_builddir)/src/GNU
+        ## because some system headers will be built if necessary
+runAmos_LDADD = \
+	$(top_builddir)/src/GNU/libGNU.a
 runAmos_SOURCES = \
 	runAmos.cc
 

@@ -1,14 +1,13 @@
 /*** includes ***/
+#include <foundation_AMOS.hh>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include <foundation_AMOS.hh>
 #include "IGraph.hh"
 #include "Graph.hh"
 #include "Read.hh"
 #include "Overlap.hh"
 #include "Unitigger.hh"
-
 
 using namespace std;
 

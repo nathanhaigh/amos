@@ -1,5 +1,6 @@
 ##-- SUBDIRS TO RECURSE
 SUBDIRS = \
+	GNU \
 	AMOS \
 	Common \
 	Graph \

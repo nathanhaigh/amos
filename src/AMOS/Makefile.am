@@ -82,6 +82,10 @@ umdtest_SOURCES = \
 
 ##-- libAMOS.a
 libAMOS_a_CPPFLAGS =
+	-I$(top_builddir)/src/GNU
+        ## because some system headers will be built if necessary
+libAMOS_a_LIBADD = \
+	$(LIBOBJS:%=$(top_builddir)/src/GNU/%)
 libAMOS_a_SOURCES = \
 	BankStream_AMOS.cc \
 	Bank_AMOS.cc \

@@ -21,7 +21,7 @@ else
 fi
 
 echo "+ collecting m4 macros"
-${ACLOCAL} \
+${ACLOCAL} -I config \
 || { echo "ERROR: aclocal failed"; exit 1; }
 
 echo "+ generating configuration header"

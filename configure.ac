@@ -1,3 +1,7 @@
+# NOTE: we can use automake conditionals if we want to build only
+# specific directories etc. e.g. if someone only wants to build
+# AMOScmp and nothing else.
+
 # initialize
 AC_PREREQ(2.59)
 AC_INIT([AMOS Assembler],
@@ -8,6 +12,7 @@ AC_PREFIX_DEFAULT([`pwd`])
 AC_CONFIG_SRCDIR([src/AMOS/foundation_AMOS.hh])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_LIBOBJ_DIR([src/GNU])
 AM_INIT_AUTOMAKE(1.8)
 
 # declare some precious variables
@@ -19,15 +24,14 @@ AC_SUBST(tigrlibdir, [${libdir}/TIGR])
 AC_SUBST(amosincludedir, [${includedir}/AMOS])
 AC_SUBST(tigrincludedir, [${includedir}/TIGR])
 
-# set automake conditionals
-#AM_CONDITIONAL([COND_AMOSCMP], [test "${enable_AMOScmp}" = "yes"])
-
 # check for programs
-AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
+AC_PROG_CC
+AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
+AC_PROG_RANLIB
+AC_PROG_CPP
 AC_PATH_PROG(PERL, [perl], [:])
 if test "${PERL}" = ":" ; then
    AC_MSG_ERROR([perl required to run ${PACKAGE_NAME} scripts])
@@ -36,9 +40,12 @@ AC_PATH_PROG(NUCMER, [nucmer], [:])
 
 # check for libraries
 AC_CHECK_LIB(m, pow)
+AC_CHECK_LIB(c, fopen)
 
 # check for headers
+AC_HEADER_DIRENT
 AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(
    [ \
    fcntl.h \
@@ -52,28 +59,44 @@ AC_CHECK_HEADERS(
 )
 
 # check for typedefs, structures, and compiler characteristics
+AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
+AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+AC_STRUCT_TM
 AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
-AC_SYS_LONG_FILE_NAMES
 
-# check for library functions
+# check for functions which can be replaced with libGNU modules:
+#   getopt strtod strtol
+gl_GETOPT
+gl_FUNC_STRTOD
+gl_FUNC_STRTOL
+
+# check for functions not in libGNU
+AC_FUNC_FORK
+AC_FUNC_SELECT_ARGTYPES
+AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(
    [ \
+   dup2 \
    floor \
-   pow \
-   sqrt \
-   strtod \
+   gettimeofday \
+   gmtime \
+   localtime \
+   lstat \
    memmove \
    memset \
    mkdir \
+   pow \
    rmdir \
+   select \
+   sqrt \
+   stat \
    strchr \
    strdup \
    strstr \
-   strtol \
    ],
    [],
    AC_MSG_ERROR([required function not found please use a supported compiler])
@@ -88,6 +111,7 @@ AC_CONFIG_FILES(
    Makefile \
    doc/Makefile \
    src/Makefile \
+   src/GNU/Makefile \
    src/AMOS/Makefile \
    src/Common/Makefile \
    src/Graph/Makefile \
@@ -133,16 +157,28 @@ echo \
   Email <${PACKAGE_BUGREPORT}> with questions and bug reports.
 "
 
-case "${gcc_version}" in
-     *2.7.* | *3.2.*)
-     echo "warning! your GCC version has bugs that may affect ${PACKAGE_NAME}"
+case "${host}" in
+     *alpha*osf*)
+     case "${CFLAGS} ${CXXFLAGS}" in
+	  *-g*)
+	echo "Warning! TIGR alphas will bomb when -g flag is turned on"
+	echo "   use \`configure CFLAGS= CXXFLAGS=' to avoid"
+	  ;;
+     esac
      ;;
-     *)
+     *sparc*solaris*)
+     case "${gcc_version}" in
+	  *2.*.*)
+	echo "Warning! TIGR suns using GCC 2.x.x will bomb on largefile support"
+	echo "   use \`configure --disable-largefile' to avoid"
+          ;;
+     esac
      ;;
 esac
 
 if test "${NUCMER}" = ":" ; then
-   echo "warning! nucmer was not found, but is required to run AMOScmp"
+   echo "Warning! nucmer was not found, but is required to run AMOScmp"
+   echo "   install nucmer if planning on using AMOScmp"
 fi
 
 

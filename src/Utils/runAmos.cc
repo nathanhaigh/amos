@@ -1,21 +1,25 @@
-// $Id$
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include <getopt.h>
 #include <fstream>
 #include <map>
 #include <set>
 #include <sstream>
-#include <getopt.h>
 #include <string>
 #include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <iostream>
+
+
+
 
 using namespace std;
 
