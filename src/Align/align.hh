@@ -65,6 +65,11 @@ const unsigned int  PRINT_CONSENSUS_GAP_COORDS = 1 << 2;
   // if set true then print consensus range values counting gap positions
 
 
+//  Results for checking/fixing starts of alignments
+enum  Fix_Status_t
+  {NO_FIX_NEEDED, NEEDS_LEFT_SHIFT, SHIFTED_RIGHT};
+
+
 class  Align_Score_Entry_t
   {
   public:
@@ -211,6 +216,11 @@ class  Base_Alignment_t
    int  a_len : 31;
        // length of entire a string
 
+   Base_Alignment_t
+       ()  // default constructor
+     {
+      errors = string_sub = a_len = flipped = 0;
+     }
    void  Dump
        (FILE * fp)  const;
    void  Flip_AB
@@ -244,6 +254,12 @@ class  Alignment_t  :  public Base_Alignment_t
        (FILE * fp)  const;
    void  Dump_Delta
        (FILE * fp)  const;
+   void  Check_Fix_Start
+       (const char * s , int s_len, const char * t, int t_len,
+        Fix_Status_t & status);
+   void  Fix_Start
+       (const char * s , int s_len, const char * t, int t_len,
+        Fix_Status_t & status);
    void  Flip_AB
        (void);
    void  Incr_Votes
@@ -474,6 +490,8 @@ class  Gapped_Multi_Alignment_t
        (vector <char *> & s);
    void  Set_Consensus_And_Qual
        (const vector <char *> & s, const vector <char *> & q);
+   void  Set_Flipped
+       (const vector <AMOS :: Range_t> & clr);
    void  Set_Phase
        (vector <Distinguishing_Column_t> & dc);
    void  Set_String_Subs
@@ -484,6 +502,10 @@ class  Gapped_Multi_Alignment_t
        (FILE * fp);
    void  Sort
        (vector <char *> & s, vector <int> * ref = NULL);
+   void  Gapped_Multi_Alignment_t :: TA_Print
+       (FILE * fp, const vector <char *> & s,
+        const vector <AMOS :: Range_t> & clr_list,
+        int width, const vector <char *> * tag, const string & id);
    int  Ungapped_Consensus_Len
        (void)  const;
   };
@@ -551,8 +573,6 @@ bool  Overlap_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int min_len, int max_errors,
      Alignment_t & align);
-void  Permute
-    (vector <char *> & v, vector <int> & p);
 void  Print_Align_Lines_Pair
     (FILE * fp, const string & s, const string & t, int len,
      const char * s_label, const char * t_label,
@@ -584,6 +604,52 @@ void  UF_Union
     (int i, int j, vector <int> & uf);
 int  Ungapped_Positions
     (const string & s, int lo, int hi);
+
+
+
+template <class DT>
+void  Permute
+    (vector <DT> & v, const vector <int> & p)
+
+//  Permute the entries in  v  according to the values in  p .
+
+  {
+   int  i, m, n;
+   DT  save;
+
+   m = v . size ();
+   n = p . size ();
+   if  (m != n)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+             "ERROR:  Permute size mismatch.  v.size = %d  p.size = %d\n",
+             m, n);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   vector <bool>  done (n, false);
+
+   for  (i = 0;  i < n;  i ++)
+     if  (p [i] != i && ! done [i])
+         {
+          int  j, k;
+
+          save = v [i];
+
+          for  (j = i;  p [j] != i;  j = k)
+            {
+             k = p [j];
+             v [j] = v [k];
+             done [j] = true;
+            }
+
+          v [j] = save;
+          done [j] = true;
+         }
+
+   return;
+  }
+
 
 
 #endif

@@ -501,6 +501,65 @@ void  Alignment_t :: Dump_Delta
 
 
 
+void  Alignment_t :: Check_Fix_Start
+    (const char * s , int s_len, const char * t, int t_len,
+     Fix_Status_t & status)
+
+//  Check for errors/indels at the start of this alignment.
+//  If there aren't any, set  status  to  NO_FIX_NEEDED  and return.
+//  If there are gaps in  s  then shift the alignment to the
+//  right and set  status to  SHIFTED_RIGHT .  If there are
+//  gaps in  t  or suspiciously many errors, then set  status  to
+//   NEEDS_LEFT_SHIFT .
+//  The alignment aligns  s  as the a-string to  t  as the b-string.
+
+  {
+   int  i, j, n, shift;
+
+   n = delta . size ();
+
+   // if there are no indels or there isn't one at the beginning
+   // of the alignment, there's nothing to do
+   // This is oversimplified.  There may be a match for the first
+   // character or two, but then too many indels, which would
+   // indicate a shift is needed
+
+   if  (n == 0 || abs (delta [0]) > 1)
+       {
+        status = NO_FIX_NEEDED;
+        return;
+       }
+
+   if  (delta [0] == 1)
+       {  // shift the alignment to the right;
+
+        for  (j = 1;  j < n && delta [j] == 1;  j ++)
+          ;
+        // There are  j  consecutive  1 's at the start.
+        // Just remove them and shift the alignment  j  positions
+        // to the right
+
+        shift = j;
+        for  (i = 0;  j < n;  i++, j++)
+          delta [i] = delta [j];
+        delta . resize (n - shift);
+        b_lo += shift;
+
+        status = SHIFTED_RIGHT;
+        return;
+       }
+
+   if  (delta [0] == -1)
+       {
+        status = NEEDS_LEFT_SHIFT;
+        return;
+       }
+
+   return;
+  }
+
+
+
 void  Alignment_t :: Flip_AB
     (void)
 
@@ -869,6 +928,7 @@ void  Alignment_t :: Set_To_Identity
    a_lo = b_lo = 0;
    a_hi = b_hi = len;
    errors = 0;
+   a_len = len;
 
    delta . clear ();
 
@@ -938,6 +998,8 @@ void  Gapped_Alignment_t :: Convert_From
    a_hi = ali . a_hi;
    p = b_lo = tr [ali . b_lo];
    errors = ali . errors;
+   flipped = ali . flipped;
+   a_len = ali . a_len;
 
    skip . clear ();
 
@@ -1573,9 +1635,10 @@ void  Multi_Alignment_t :: Reset_From_Votes
 //  consensus string differs from the previous one.
 
   {
+   const int  MAX_ATTEMPTS = 3;
    string  new_cons;
    char  * cons;
-   int  adj, cons_len;
+   int  adj, attempts, cons_len, wiggle;
    int  i, n;
 
    n = vote . size ();
@@ -1621,7 +1684,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
    n = s . size ();
    for  (i = 0;  i < n;  i ++)
      {
-      bool  matched;
+      bool  ok;
       int  error_limit, len, off;
 
       len = strlen (s [i]);
@@ -1643,14 +1706,31 @@ void  Multi_Alignment_t :: Reset_From_Votes
                     error_limit, align [i] . b_lo);
           }
 
-      off = align [i] . b_lo + adjust [align [i] . b_lo];
-      matched
-          = Substring_Match_VS
-                (s [i], len, cons, cons_len,
-                 off - offset_delta, off + offset_delta,
-                 error_limit, align [i]);
-      
-      if  (! matched)
+      attempts = 0;
+      wiggle = offset_delta;
+      do
+        {
+         Fix_Status_t  status;
+         int  lo, hi;
+
+         off = align [i] . b_lo + adjust [align [i] . b_lo];
+         lo = Max (off - wiggle, 0);
+         hi = Min (off + wiggle, cons_len);
+         ok = Substring_Match_VS
+                   (s [i], len, cons, cons_len, lo, hi,
+                    error_limit, align [i]);
+         if  (! ok)
+             wiggle *= 2;
+           else
+             {
+              align [i] . Check_Fix_Start (s [i] , len, cons, cons_len, status);
+              if  (status == NEEDS_LEFT_SHIFT)
+                  ok = false;
+             }
+
+        }  while  (! ok && attempts ++ < MAX_ATTEMPTS);
+
+      if  (! ok)
           {
            fprintf (stderr, "Failed on string %d in  Reset_From_Votes\n", i);
            exit (EXIT_FAILURE);
@@ -1724,6 +1804,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    for  (i = 1;  i < num_strings;  i ++)
      {
       bool  matched;
+      int  lo, hi;
       int  error_limit, len, exp_olap_len;
 
       len = strlen (s [i]);
@@ -1731,10 +1812,10 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
       error_limit = Binomial_Cutoff (exp_olap_len, error_rate, 1e-6);
 
-      matched = Overlap_Match_VS
-              (s [i], len, cons, cons_len,
-               prev_off + offset [i] - offset_delta,
-               prev_off + offset [i] + offset_delta, 0, error_limit, ali);
+      lo = Max (0, prev_off + offset [i] - offset_delta);
+      hi = prev_off + offset [i] + offset_delta;
+      matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
+                     0, error_limit, ali);
 
       if  (! matched)
           {
@@ -1766,6 +1847,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
            ali . b_hi = cons_len;
           }
 
+      ali . a_len = len;
       align . push_back (ali);
 
       prev_off = ali . b_lo;
@@ -2496,7 +2578,7 @@ void  Gapped_Multi_Alignment_t :: Get_Partial_Ungapped_Consensus
 
 
 void  Gapped_Multi_Alignment_t :: Get_Positions
-    (vector <Range_t> & pos)  const
+    (vector <AMOS :: Range_t> & pos)  const
 
 //  Set  pos  to the list of  b_lo  and  b_hi  values in
 //  the  align  vector of this alignment
@@ -3327,6 +3409,34 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 
 
 
+void  Gapped_Multi_Alignment_t :: Set_Flipped
+    (const vector <AMOS :: Range_t> & clr)
+
+//  Set the flipped bit true for each alignment in this
+//  alignment iff the corresponding  clr  begin  value
+//  is greater than the  end  value.
+
+  {
+   int  i, n;
+
+   n = align . size ();
+   if  (int (clr . size ()) < n)
+       {
+        sprintf (Clean_Exit_Msg_Line,
+             "ERROR:  Number of clear ranges %d < number of aligns %d\n",
+             int (clr . size ()), n);
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   for  (i = 0;  i < n;  i ++)
+     if  (clr [i] . end < clr [i] . begin)
+         align [i] . flipped = 1;
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Set_Phase
     (vector <Distinguishing_Column_t> & dc)
 
@@ -3567,6 +3677,96 @@ void  Gapped_Multi_Alignment_t :: Sort
       align [j] = a_save;
       if  (ref != NULL)
           (* ref) [j] = r_save;
+     }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: TA_Print
+    (FILE * fp, const vector <char *> & s, const vector <AMOS :: Range_t> & clr_list,
+     int width, const vector <char *> * tag, const string & id)
+
+//  Display this multialignment to file  fp  in TIGR Assembler
+//  .contig format.  Use  width  characters per line of sequences.
+//    s  holds the strings the alignment references and  clr_list  holds
+//  the clear ranges of the original reads (in reverse order if the
+//  original read has been reversed complemented).  If  tag  is
+//  not NULL, it holds IID tags corresponding to the sequences  s
+//  to be used to label the sub-alignment lines.   id  is the
+//  id number of this contig.
+
+  {
+   vector <int>  lookup;
+   char  * buff;
+   bool  use_string_sub;
+   int  clr_begin = 0, clr_end = 0;
+   int  len;
+   int  i, n, sub;
+
+   use_string_sub = (print_flags & PRINT_USING_STRING_SUB);
+
+   if  (! use_string_sub && s . size () != align . size ())
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Multi_Align . Print called with %d strings and %d alignments",
+            int (s . size ()), int (align . size ()));
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
+
+   n = align . size ();
+   len = consensus . length ();
+   buff = (char *) Safe_malloc (5 + len, __FILE__, __LINE__);
+
+   Make_Gapped_Ungapped_Lookup (lookup);
+
+   // first print the header information and gapped consensus.
+   fprintf (fp, "##%s %d %d bases, 00000000 checksum.\n",
+        id . c_str (), n, len);
+   Fasta_Print (stdout, getConsensusString (), NULL);
+
+   // Then the gapped reads
+   for  (i = 0;  i < n;  i ++)
+     {
+      bool  flipped;
+      int  a_lo, a_hi;
+
+     if  (use_string_sub)
+         sub = align [i] . string_sub;
+       else
+         sub = i;
+
+      if  (tag == NULL)
+          sprintf (buff, "%d", i);
+        else
+          sprintf (buff, "%s", (* tag) [sub]);
+
+      clr_begin = clr_list [sub] . begin;
+      clr_end = clr_list [sub] . end;
+      if  (clr_begin < clr_end)
+          {
+           flipped = false;
+           clr_begin ++;
+          }
+        else
+          {
+           flipped = true;
+           clr_end ++;
+          }
+
+      fprintf (fp, "#%s(%d) [%s] %d bases, 00000000 checksum. {%d %d} <%d %d>\n",
+           buff, align [i] . b_lo,
+           flipped ? "RC" : "", align [i] . b_hi - align [i] . b_lo,
+           clr_begin, clr_end, 1 + lookup [align [i] . b_lo],
+           lookup [align [i] . b_hi]);
+
+      align [i] . Print_Subalignment_Line
+           (buff, align [i] . b_lo, align [i] . b_hi, s [sub],
+            a_lo, a_hi);
+
+      Uppercase (buff);
+      Fasta_Print (stdout, buff, NULL);
      }
 
    return;
@@ -4130,7 +4330,7 @@ int  Exact_Prefix_Match
   {
    int  i;
 
-   if  (Verbose > 3)
+   if  (Verbose > 5)
        {
         fprintf (stderr, "In Exact_Prefix_Match  max_len = %d\n", max_len);
         fprintf (stderr, "s :\n");
@@ -4583,7 +4783,7 @@ void  Multi_Align
    ct = 0;
    do
      {
-      ma . Reset_From_Votes (s, 5, error_rate, vote, changed);
+      ma . Reset_From_Votes (s, offset_delta, error_rate, vote, changed);
       ct ++;
      }  while  (ct < 3 && changed);
 
@@ -5134,47 +5334,6 @@ bool  Overlap_Match_VS
        }
 
    return  false;
-  }
-
-
-
-void  Permute
-    (vector <char *> & v, vector <int> & p)
-
-//  Permute the entries in  v  according to the values in  p
-//  and in the process, restore  p  to the identity permutation.
-
-  {
-   int  i, m, n;
-   char  * save;
-
-   m = v . size ();
-   n = p . size ();
-   if  (m != n)
-       {
-        sprintf (Clean_Exit_Msg_Line,
-             "ERROR:  Permute size mismatch.  v.size = %d  p.size = %d\n",
-             m, n);
-        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-       }
-
-   for  (i = 0;  i < n;  i ++)
-     if  (p [i] != i)
-         {
-          int  j, k;
-
-          save = v [i];
-          for  (j = i;  p [j] != i;  j = k)
-            {
-             k = p [j];
-             v [j] = v [k];
-             p [j] = j;
-            }
-          v [j] = save;
-          p [j] = j;
-         }
-
-   return;
   }
 
 
