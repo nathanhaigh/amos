@@ -14,6 +14,7 @@ while (<EXCL>){
     chomp;
     if (/^(\S+)/){
 	$contig = $1;
+	$exclude{$1} = 1;
     }
     if (/^\t(\S+)/){
 #	print STDERR "excluding \"$1\"\n";

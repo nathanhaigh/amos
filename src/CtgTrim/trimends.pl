@@ -14,7 +14,8 @@ $tasm        = "/usr/local/bin/run_TA";
 $casm        = "/local/asmg/bin/run_CA";
 $lucy        = "/usr/local/bin/lucy";
 $lucyparms   = "-error 0.025 0.02 -window 50 0.03 5 0.01 -bracket 10 0.02";
-$nucmum      = "/user/local/bin/nucmer";
+$nucmum      = "/usr/local/bin/nucmer";
+$show        = "/usr/local/bin/show-coords";
 $blast       = "/usr/local/bin/blastall";
 $format      = "/usr/local/bin/formatdb";
 $getlens     = "/local/asmg/bin/getlengths";
@@ -49,30 +50,30 @@ if (! -f "$infile.fasta"){
     die ("looks like CA died before creating $infile.fasta\n");
 }
 
-if (-s "$infile.blast"){
-    print "$infile.blast exists, skipping blast\n";
+if (-s "$infile.coords"){
+    print "$infile.delta exists, skipping nucmer\n";
 } else {
-    print "formatting db...";
-    system("$format -p F -i $infile.fasta");
+    print "running nucmer db...";
+    system("$nucmum -a max-match -p $infile $infile.fasta $infile.fasta");
     print "done\n";
-    print "Running blast...";
-    system("$blast -p blastn -F F -m 8 -d $infile.fasta -i $infile.fasta -o $infile.blast -W 32 > blast.log 2>&1");
+    print "Running show-coords...";
+    system("$show -HTcl $infile.delta > $infile.coords");
     print "done\n";
 }
 
 #find "grasta" ends
-if (! -s "$infile.blast"){
-    die ("looks like blast died before creating $infile.blast\n");
+if (! -s "$infile.coords"){
+    die ("looks like blast died before creating $infile.coords\n");
 }
 
 if (-s "$infile.ovlps"){
     print "$infile.ovlps exists, skipping overlap finding\n";
 } else {
-    print "getting seq lens...";
-    system("$getlens $infile.fasta > $infile.lens");
-    print "done\n";
+#    print "getting seq lens...";
+#    system("$getlens $infile.fasta > $infile.lens");
+#    print "done\n";
     print "finding overlaps...";
-    system("$ovlps $infile.blast $infile.lens tab > $infile.ovlps");
+    system("$ovlps $infile.coords nuc tab > $infile.ovlps");
     print "done\n";
 }
 

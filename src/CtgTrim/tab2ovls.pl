@@ -9,16 +9,18 @@ if (defined $ARGV[2] && $ARGV[2] eq "tab"){
 }
 
 # load in map of IDs to contig lengths
-open(LENS, $ARGV[1]) || die ("Cannot open $ARGV[1]: $!\n");
 
-while (<LENS>){
-    chomp;
+if ($ARGV[1] ne "nuc") {
+    open(LENS, $ARGV[1]) || die ("Cannot open $ARGV[1]: $!\n");
+    
+    while (<LENS>){
+	chomp;
 
-    ($id, $len) = split(' ', $_);
-    $lens{$id} = $len;
+	($id, $len) = split(' ', $_);
+	$lens{$id} = $len;
+    }
+    close(LENS);
 }
-close(LENS);
-
 
 $inhead = 1;
 open(TAB, $ARGV[0]) || die ("Cannot open $ARGV[0]: $!\n");
@@ -27,16 +29,32 @@ while (<TAB>){
 
 #    print join('|', @elements), "\n";
 # here we collect the data
-    $contig1 = $elements[0];
-    $contig2 = $elements[1];
+    if ($ARGV[1] ne "nuc"){
+	$contig1 = $elements[0];
+	$contig2 = $elements[1];
+    } else {
+	$contig1 = $elements[11];
+	$contig2 = $elements[12];
+    }
     if ($contig1 eq $contig2){ next;}
 
-    $reflen = $lens{$contig1}; 
-    $querylen = $lens{$contig2};
-    $refl = $elements[6];
-    $refr = $elements[7];
-    $queryl = $elements[8];
-    $queryr = $elements[9];
+    if ($ARGV[1] ne "nuc"){
+	$reflen = $lens{$contig1}; 
+	$querylen = $lens{$contig2};
+	$refl = $elements[6];
+	$refr = $elements[7];
+	$queryl = $elements[8];
+	$queryr = $elements[9];
+    } else {
+	$reflen = $elements[7]; 
+	$lens{$contig1} = $elements[7];
+	$querylen = $elements[8];
+	$lens{$contig2} = $elements[8];
+	$refl = $elements[0];
+	$refr = $elements[1];
+	$queryl = $elements[2];
+	$queryr = $elements[3];
+    }
 
 # keep track of where each query contig hits
 
@@ -58,15 +76,14 @@ while (<TAB>){
 
     # find out if the alignment is "proper".  
 		# only print matches that hit the end of the query
-    if (($refend && $querybeg && $queryforw) ||
-	($refend && $queryend && ! $queryforw) |
-	($refbeg && $queryend && $queryforw) ||
-	($refbeg && $querybeg && ! $queryforw)){
-	$matches{$contig1} .= 
-	    "$contig2 $queryl $queryr $refl $refr ";
-    }
     if ($querybeg && $queryend){
 	$matches{$contig1} .= "$contig2 $queryl $queryr 0 0 ";
+    } elsif (($refend && $querybeg && $queryforw) ||
+	     ($refend && $queryend && ! $queryforw) |
+	     ($refbeg && $queryend && $queryforw) ||
+	     ($refbeg && $querybeg && ! $queryforw)) {
+	$matches{$contig1} .= 
+	    "$contig2 $queryl $queryr $refl $refr ";
     }
 }
 close(NUCS);

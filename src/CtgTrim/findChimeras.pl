@@ -83,23 +83,20 @@ while (<OVLP>){
     # first check the beginning
     if ($start <= 0) { 
 	$start = 0;
-	push(@{$exts{"$this B"}}, $that);  # that extends this at the beginning
+	$exts{"$this B"} .= "$that ";  # that extends this at the beginning
     } 
 
     # then check the end
     if ($end >= 0) {
 	$end = $seqlens{$this};
-	push(@{$exts{"$this E"}}, $that); # that extends this at the end
+	$exts{"$this E"} .= "$that "; # that extends this at the end
     } else { # $end < 0
 	$end = $seqlens{$this} + $end;
     }
 
-    push(@{$olaps{$this}}, "$that $ori $start $end");
-    
     print "$this $that $seqnames{$this} $seqnames{$that} $start $end $seqlens{$this}\n";
 }
 
-close(OVLP);
 
 # now we look for "break points" - that is points through which no sequence
 # extends
@@ -118,57 +115,83 @@ my $i;
 my $a;
 my $ovls;
 
-while (($a, $ovls) = each %olaps){
+seek(OVLP, 0, 0); # rewind the file
+
+while (<OVLP>){
+    chomp;
+    @fields = split(/\s+/);
+
+    $a = $fields[1];
+    $b = $fields[2];
+    $bori = $fields[3];
+    $bs = $fields[4];
+    $be = $fields[5];
+
+    if ($bs <= 0 ) {
+	$bs = 0;
+    }
+    if ($be >=0 ) {
+	$be = $seqlens{$a};
+    } else {
+	$be += $seqlens{$a};
+    }
+
     print STDERR "$a\r";
-    for ($i = 0; $i <= $#{$ovls}; $i++){
-	($b, $bori, $bs, $be) = split(' ', $$ovls[$i]);
-	print "checking $a $seqnames{$a} $b $seqnames{$b} $bori $bs $be\n";
-	if ($be < $seqlens{$a}) { # we check extension to the right
-	    $end = ($bori eq 'N') ? "E" : "B";
-	    for ($j = 0; $j <= $#{$exts{"$b $end"}}; $j++){
-		# check all reads extending $b
-		$other = ${$exts{"$b $end"}}[$j];
-		print "end looking at $other\n";
-		if ($insert{$other} eq $insert{$a}) {
-		    # skip same insert reads
-		    next;
-		}
-		if (exists $ovl{"$a $other"} ||
-		    exists $ovl{"$other $a"}) {
-		    $nconflicts = 0;
-		    last; # we found an extension, this is not a conflict
-		} else {
-		    $nconflicts++;
-		}
-	    } # for my $j = ...
-	    if ($nconflicts != 0){
-		print "$a $seqnames{$a} has $nconflicts conflicts  with $b $seqnames{$b} at end $be\n";
+    
+    if ($insert{$a} eq $insert{$b}) {
+	next;
+    } # skip same insert overlaps
+    
+    print "checking $a $seqnames{$a} $b $seqnames{$b} $bori $bs $be\n";
+    if ($be < $seqlens{$a}) { # we check extension to the right
+	$end = ($bori eq 'N') ? "E" : "B";
+	my @ex = split(' ', $exts{"$b $end"});
+	for ($j = 0; $j <= $#ex; $j++){
+	    # check all reads extending $b
+	    $other = $ex[$j];
+	    print "end looking at $other\n";
+	    if ($insert{$other} eq $insert{$a}) {
+		# skip same insert reads
+		next;
 	    }
-	} # if $be < $seqlens
-	$nconflicts = 0;
-	if ($bs > 0 ) { # we check extension to the left
-	    $end = ($bori eq 'N') ? "B" : "E";
-	    for ($j = 0; $j <= $#{$exts{"$b $end"}}; $j++){
-		# check all reads extending $b
-		$other = ${$exts{"$b $end"}}[$j];
-		print "beginning looking at $other\n";
-		if ($insert{$other} eq $insert{$a}) {
-		    # skip same insert reads
-		    next;
-		}
-		if (exists $ovl{"$a $other"} ||
-		    exists $ovl{"$other $a"}) {
-		    $nconflicts = 0;
-		    last; # we found an extension, this is not a conflict
-		} else {
-		    $nconflicts++;
-		}
-	    } # for $j <= $#exts
-	    if ($nconflicts != 0){
-		print "$a $seqnames{$a} has $nconflicts conflicts with $b $seqnames{$b} at beginning $bs\n";
+	    if (exists $ovl{"$a $other"} ||
+		exists $ovl{"$other $a"}) {
+		$nconflicts = 0;
+		last; # we found an extension, this is not a conflict
+	    } else {
+		$nconflicts++;
 	    }
-	} # if $bs > 0
-    } # for my $i...
-} # while each olaps
+	} # for my $j = ...
+	if ($nconflicts != 0){
+	    print "$a $seqnames{$a} has $nconflicts conflicts  with $b $seqnames{$b} at end $be\n";
+	}
+    } # if $be < $seqlens
+    $nconflicts = 0;
+    if ($bs > 0 ) { # we check extension to the left
+	$end = ($bori eq 'N') ? "B" : "E";
+	my @ex = split(' ', $exts{"$b $end"});
+	for ($j = 0; $j <= $#ex; $j++){
+	    # check all reads extending $b
+q	    $other = $ex[$j];
+	    print "beginning looking at $other\n";
+	    if ($insert{$other} eq $insert{$a}) {
+		# skip same insert reads
+		next;
+	    }
+	    if (exists $ovl{"$a $other"} ||
+		exists $ovl{"$other $a"}) {
+		$nconflicts = 0;
+		last; # we found an extension, this is not a conflict
+	    } else {
+		$nconflicts++;
+	    }
+	} # for $j <= $#exts
+	if ($nconflicts != 0){
+	    print "$a $seqnames{$a} has $nconflicts conflicts with $b $seqnames{$b} at beginning $bs\n";
+	}
+    } # if $bs > 0
+} # while (<OVLP>)
+
+close(OVLP);
 print "DONE\n";
 exit(0);  #Main ends here
