@@ -158,10 +158,10 @@ int main (int argc, char ** argv)
           {
             extra++;
           }
-        }
 
-        mtp.writeMessage(msg);
-        msg.write(cout);
+          mtp.writeMessage(msg);
+          msg.write(cout);
+        }
       }
     }
 
