@@ -12,7 +12,7 @@ use TIGR::Foundation;
 
 my $base = new TIGR::Foundation;
 if (! defined $base){
-    die("Wierd problem!\n");
+    die("Weird problem!\n");
 }
 
 my $VERSION = '1.0 $Revision$ ';
@@ -58,16 +58,46 @@ my $inContig = 0;
 my $inSequence = 0;
 my $seqName;
 my $seq;
+my $ctgSeq;
 my %offset;
 my %rc;
 my @gaps;
 my $contigSequence;
+my $ctgLeft;
+my $ctgRight;   # where we'll trim the contig
+my $asmLeft;
+my $asmRight;
+my $nseq;
+my $tmpfile = "tmpfile.$$";
 while (<ACE>){
     if (/^CO (\S+) (\d+) (\d+)/){
+	if (defined $ctgSeq){
+	    $ctgSeq = substr($ctgSeq, $ctgLeft, $ctgRight - $ctgLeft);
+#	    print "trimming to $ctgLeft $ctgRight\n";
+	    printContigRecord(\*CONTIG, $contigName, length($ctgSeq), $nseq, $ctgSeq, "contig");
+	    close(TMP);
+	    open(TMP, $tmpfile) || $base->bail("Cannot open $tmpfile: $!\n");
+	    while (<TMP>){
+		chomp;
+		if (/^\#(\S+)\((\d+)\)(.*)\{(\d+) (\d+)\} <(\d+) (\d+)>$/){
+		    print CONTIG sprintf("#%s(%d)%s{%d %d} <%d %d>\n",
+					 $1, $2 - $ctgLeft, $3, $4, $5, $6 - $asmLeft + 1, $7 - $asmLeft + 1);;
+		} else {
+		    print CONTIG "$_\n";
+		}
+	    }
+	    close(TMP);
+	}
+	open(TMP, ">$tmpfile") || $base->bail("Cannot open $tmpfile: $!\n");
+	$nseq = 0;
+	$ctgLeft = $ctgRight = -1;
+	$asmLeft = $asmRight = -1;
 	$contigName = $1;
 	$contigLen = $2;
 	$contigSeqs = $3;
+			   
 	$inContig = 1;
+	$ctgSeq = "";
 	$seq = "";
 	%offset = ();
 	next;
@@ -82,8 +112,7 @@ while (<ACE>){
             $gap = index($seq, "-", $gap + 1);
         }
 
-	$contigSequence = $seq;
-#	printContigRecord(\*CONTIG, $contigName, $contigLen, $contigSeqs, $seq, "contig");
+	$ctgSeq = $seq;
 	next;
     }
     if ($inSequence && $_ =~ /^\s*$/){
@@ -106,25 +135,50 @@ while (<ACE>){
 	$seq = "";
 	next;
     }
-    if (/^QA -?(\d+) -?(\d+) (\d+) (\d+)/){
+    if (/^QA (-?\d+) (-?\d+) (\d+) (\d+)/){ # qual range, align range
 	my $offset = $offset{$seqName};
-	my $cll = $3;
-	my $clr = $4;
-	my $end5 = $1;
-	my $end3 = $2;
+	my $cll = $1;
+	my $clr = $2;
+	my $end5 = $3;
+	my $end3 = $4;
+	if ($cll == -1 && $clr == -1){  # poor quality sequence - exclude
+	    next;                  
+	}
+	$nseq++;
+
+	if ($cll > $end5) { $end5 = $cll;} # trim poor quality sequence
+	if ($clr < $end3) { $end3 = $clr;}
+
 	$seq =~ s/\*/-/g;
 	my $len = length($seq);
-	$offset += $cll - 2;
-	$seq = substr($seq, $cll - 1, $clr - $cll + 1);
+	$offset += $end5 - 2;
+	if ($ctgLeft == -1 || $offset < $ctgLeft){
+#	    print "setting ctgLeft to $offset\n";
+	    $ctgLeft = $offset;
+	}
+	if ($ctgRight == -1 || $offset + $end3 - $end5 + 1 > $ctgRight){
+	    $ctgRight = $offset + $end3 - $end5 + 1;
+#	    print "setting ctgRight to $ctgRight\n";
+	}
+
+	$seq = substr($seq, $end5 - 1, $end3 - $end5 + 1);
 	
 	my $i = 0;
 	my $asml = $offset + 1;
-	my $asmr = $asml + $clr - $cll + 1;
+	my $asmr = $asml + $end3 - $end5 + 1;
 	while ($i <= $#gaps && $offset > $gaps[$i]){
 	    $asml--; $asmr--; $i++;
 	} # get rid of gaps from offset here
-	while ($i <= $#gaps && $offset + $clr - $cll + 1 > $gaps[$i]){
+#	print "finding gaps between $offset and $offset + $clr - $cll + 1\n";
+	while ($i <= $#gaps && ($offset + $clr - $cll + 1 > $gaps[$i])){
 	    $asmr--; $i++;
+	}
+
+	if ($asmLeft == -1 || $asml < $asmLeft){
+	    $asmLeft = $asml;
+	}
+	if ($asmRight == -1 || $asmr > $asmRight){
+	    $asmRight = $asmr;
 	}
 
 	if ($rc{$seqName} eq "C"){ # make coordinates with respect to forw strand
@@ -145,10 +199,30 @@ while (<ACE>){
 	    $clr = $tmp;
 	}
 	
-	printSequenceRecord(\*CONTIG, $seqName, $seq, $offset, (($rc{$seqName} eq "U")?"" : "RC"), $cll, $clr, $asml, $asmr, "contig");
+	printSequenceRecord(\*TMP, $seqName, $seq, $offset, (($rc{$seqName} eq "U")?"" : "RC"), $cll, $clr, $asml, $asmr, "contig");
 	next;
     }
 }
+
+if (defined $ctgSeq){
+#    print "trimming to $ctgLeft $ctgRight\n";
+    $ctgSeq = substr($ctgSeq, $ctgLeft, $ctgRight - $ctgLeft);
+    printContigRecord(\*CONTIG, $contigName, length($ctgSeq), $nseq, $ctgSeq, "contig");
+    close(TMP);
+    open(TMP, $tmpfile) || $base->bail("Cannot open $tmpfile: $!\n");
+    while (<TMP>){
+	chomp;
+	if (/^\#(\S+)\((\d+)\)(.*)\{(\d+) (\d+)\} <(\d+) (\d+)>$/){
+	    print CONTIG sprintf("#%s(%d)%s{%d %d} <%d %d>\n",
+				 $1, $2 - $ctgLeft, $3, $4, $5, $6 - $asmLeft + 1, $7 - $asmLeft + 1);
+	} else {
+	    print CONTIG "$_\n";
+	}
+    }
+    close(TMP);
+}
+unlink($tmpfile)|| $base->bail("Cannot remove $tmpfile: $!\n");
+
 
 close(CONTIG);
 close(ACE);
