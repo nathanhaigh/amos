@@ -26,6 +26,12 @@ prompt reply.
 Version Release History
 =======================
 
+Version 1.2.6 - September 2004
+
+	* `minimus' negative offset bug fixed
+	* `make-consensus' ID swapping bug fixed
+	* `AMOScmp' won't bomb if mate information absent from the bank
+
 Version 1.2.5 - September 2004
 
         * Added `minimus' pipeline for lightweight assembly tasks.
