@@ -2009,7 +2009,7 @@ void ParseArgs (int argc, char ** argv)
   optarg = NULL;
 
   while ( !errflg  &&
-	  ((ch = getopt (argc, argv, "b:Cg:hi:I:Mo:rs:t:TUv:V:")) != EOF) )
+	  ((ch = getopt (argc, argv, "b:Cg:hi:I:m:Mo:rs:t:TUv:V:")) != EOF) )
     switch (ch)
       {
       case 'b':
@@ -2036,6 +2036,10 @@ void ParseArgs (int argc, char ** argv)
 
       case 'I':
 	OPT_MaxIdentityDiff = atof (optarg);
+	break;
+
+      case 'm':
+	OPT_Majority = atof (optarg);
 	break;
 
       case 'M':
