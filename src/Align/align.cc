@@ -1887,6 +1887,24 @@ void  Gapped_Multi_Alignment_t :: Clear
 
 
 
+void  Gapped_Multi_Alignment_t :: Consensus_To_Lower
+    (void)
+
+//  Convert the consensus sequence in this multialignment
+//  to lowercase.
+
+  {
+   int  i, n;
+
+   n = consensus . length ();
+   for  (i = 0;  i < n;  i ++)
+     consensus [i] = tolower (consensus [i]);
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Convert_Consensus
     (const Multi_Alignment_t & ma, const vector <short> & v)
 

@@ -27,7 +27,7 @@ const int  NEW_SIZE = 1000;
 
 
 enum  Input_Format_t
-     {SIMPLE_CONTIG_FORMAT, CELERA_MSG_FORMAT};
+     {PARTIAL_READ_FORMAT, SIMPLE_CONTIG_FORMAT, CELERA_MSG_FORMAT};
 
 
 static string  Bank_Name;
@@ -56,7 +56,7 @@ static void  Get_Strings_And_Offsets
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <int> & offset,
      const vector <int> & fid, const vector <Ordered_Range_t> pos,
-     Bank_t & read_bank);
+     const vector <Ordered_Range_t> seg, Bank_t & read_bank);
 static void  Parse_Command_Line
     (int argc, char * argv []);
 static void  Usage
@@ -87,6 +87,8 @@ int  main
    Parse_Command_Line (argc, argv);
 
    cerr << "Read bank is " << Bank_Name << endl;
+
+   gma . setPrintFlag (PRINT_WITH_DIFFS);
 
    if  (Input_Format == CELERA_MSG_FORMAT)
        {
@@ -143,11 +145,12 @@ int  main
         if  (Do_Contig_Messages)
             cerr << contig_ct << " ICM messages processed" << endl;
        }
-   else if  (Input_Format == SIMPLE_CONTIG_FORMAT)
+   else if  (Input_Format == SIMPLE_CONTIG_FORMAT
+               || Input_Format == PARTIAL_READ_FORMAT)
        {
         char  line [MAX_LINE];
         char  cid [MAX_LINE];
-        vector <Ordered_Range_t>  pos_list;
+        vector <Ordered_Range_t>  pos_list, seg_list;
         vector <int>  frg_id_list;
         int  fid;
 
@@ -172,7 +175,7 @@ int  main
                 if  (frg_id_list . size () > 0)
                     {
                      Get_Strings_And_Offsets (string_list, qual_list, offset,
-                           frg_id_list, pos_list, read_bank);
+                           frg_id_list, pos_list, seg_list, read_bank);
 
                      msg . setAccession (cid);
                      msg . setIMPs (frg_id_list, pos_list);
@@ -192,6 +195,7 @@ int  main
                           cout << endl << endl << "Contig " << cid
                                << " with " << frg_id_list . size ()
                                << " reads" << endl;
+                          gma . Consensus_To_Lower ();
                           gma . Print (stdout, string_list, 60);
                          }
                      else if  (Output_FASTA)
@@ -210,6 +214,7 @@ int  main
 
                 frg_id_list . clear ();
                 pos_list . clear ();
+                seg_list . clear ();
 
                 p = strtok (NULL, " \t\n");
                 strcpy (cid, p);
@@ -227,6 +232,15 @@ int  main
                 ps . setRange (a, b);
                 frg_id_list . push_back (fid);
                 pos_list . push_back (ps);
+                if  (Input_Format == PARTIAL_READ_FORMAT)
+                    {
+                     p = strtok (NULL, " \t\n");
+                     a = strtol (p, NULL, 10);
+                     p = strtok (NULL, " \t\n");
+                     b = strtol (p, NULL, 10);
+                     ps . setRange (a, b);
+                     seg_list . push_back (ps);
+                    }
                }
           }
 
@@ -234,7 +248,7 @@ int  main
         if  (frg_id_list . size () > 0)
             {
              Get_Strings_And_Offsets (string_list, qual_list, offset,
-                   frg_id_list, pos_list, read_bank);
+                   frg_id_list, pos_list, seg_list, read_bank);
 
              msg . setAccession (cid);
              msg . setIMPs (frg_id_list, pos_list);
@@ -254,6 +268,7 @@ int  main
                   cout << endl << endl << "Contig " << cid
                        << " with " << frg_id_list . size ()
                        << " reads" << endl;
+                  gma . Consensus_To_Lower ();
                   gma . Print (stdout, string_list, 60);
                  }
              else if  (Output_FASTA)
@@ -368,17 +383,19 @@ static void  Get_Strings_And_Offsets
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <int> & offset,
      const vector <int> & fid, const vector <Ordered_Range_t> pos,
-     Bank_t & read_bank)
+     const vector <Ordered_Range_t> seg, Bank_t & read_bank)
 
 //  Populate  s  and  offset  with reads and their contig positions
 //  for the contig with read-ids in  fid  and  consensus positions
 //  in  pos .  Put the corresponding quality-value strings for the reads
 //  into  q .  Get reads and qualities from  read_bank.
-//   read_bank  must already be opened.  
+//   read_bank  must already be opened.  If  seg  is not empty, used
+//  the values in it to determine what segment of each read to use.
 
   {
    Read_t  read;
    int  prev_offset;
+   bool  partial_reads;
    int  i, n;
 
    n = s . size ();
@@ -392,6 +409,7 @@ static void  Get_Strings_And_Offsets
    q . clear ();
 
    offset . clear ();
+   partial_reads = (seg . size () > 0);
 
    prev_offset = 0;
    n = fid . size ();
@@ -414,6 +432,15 @@ static void  Get_Strings_And_Offsets
 	cerr << read;
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
+      if  (partial_reads)
+          {
+           int  lo, hi;
+
+           lo = seg [i] . getBegin ();
+           hi = seg [i] . getEnd ();
+           seq = seq . substr (lo, hi - lo);
+           qual = qual . substr (lo, hi - lo);
+          }
       if  (b < a)
           {
            Reverse_Complement (seq);
@@ -460,7 +487,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "acCfhSu")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "acCfhPSu")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -482,6 +509,10 @@ static void  Parse_Command_Line
 
         case  'h' :
           errflg = true;
+          break;
+
+        case  'P' :
+          Input_Format = PARTIAL_READ_FORMAT;
           break;
 
         case  'S' :
@@ -548,6 +579,8 @@ static void  Usage
            "  -C    Input is Celera msg format, i.e., a .cgb or .cgw file\n"
            "  -f    Output consensus only in FASTA format\n"
            "  -h    Print this usage message\n"
+           "  -P    Input is simple contig format, i.e., UMD format\n"
+           "          using partial reads\n"
            "  -S    Input is simple contig format, i.e., UMD format\n"
            "  -u    Process unitig messages\n"
            "\n",

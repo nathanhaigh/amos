@@ -408,6 +408,8 @@ class  Gapped_Multi_Alignment_t
    void  Clear_All_Print_Flags
        (void)
      { print_flags = 0; }
+   void  Consensus_To_Lower
+       (void);
    void  Convert_Consensus
        (const Multi_Alignment_t & ma, const vector <short> & v);
    void  Convert_From
