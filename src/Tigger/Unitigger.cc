@@ -390,11 +390,13 @@ void Unitigger::remove_transitive_overlaps(IGraph *g) {
 	      if(node2->getFlags() != 2) {
 		// check for transitive link
 		if(node2->getParent() == grand_node->getParent()) {
-		  if(VERBOSE) {
-		    cout << " found transitive link between ";
-		    cout << grand_node->getParent() << " ";
-		    cout << grand_node->getKey() << " " << node2->getKey() << endl;
-		  }
+		  cout << " found transitive link between ";
+		  cout << grand_node->getParent() << " ";
+		  cout << grand_node->getKey() << " " << node2->getKey() << endl;
+		  cout << " parent read suffix ";
+		  Overlap* o1 = (Overlap *)grand_edge->getElement();
+		  Overlap* o2 = (Overlap *)parents[grand_node->getKey()]->getElement();
+		  Overlap* o3 = (Overlap *)parents[node2->getKey()]->getElement();
 		  trans.push(grand_edge);
 		}
 	      }
