@@ -202,10 +202,11 @@ void TilingField::paintEvent( QPaintEvent * )
     }
   }
 
-  int height = ldcov;
+  // +1 takes care of 0dcov regions
+  int height = ldcov + 1;
   QString s;
 
-  QPixmap pix(m_width, height+1);
+  QPixmap pix(m_width, height);
   pix.fill(this, 0,0);
 
   QPainter p(&pix);
@@ -478,9 +479,9 @@ void TilingField::paintEvent( QPaintEvent * )
   p.drawPixmap(0, 0, pix);
   p.end();
 
-  if (m_width != this->width() || height+1 != this->height())
+  if (m_width != this->width() || height != this->height())
   {
-    resize(m_width, height+1);
+    resize(m_width, height);
   }
 }
 
