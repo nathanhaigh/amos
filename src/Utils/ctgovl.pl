@@ -52,8 +52,8 @@ if (defined $asmfile){
     print STDERR "Doing $asmfile\n";
     open(ASM, $asmfile) || $base->bail("Cannot open $asmfile: $!\n");
 
-    while ($record = getCARecord(\*ASM)){
-        my ($type, $fields, $recs) = parseCARecord($record);
+    while ($record = getRecord(\*ASM)){
+        my ($type, $fields, $recs) = parseRecord($record);
         if ($type eq "AFG"){
             my $ids = $$fields{acc};
 	    $ids =~ /\((\d+),(\d+)\)/;
@@ -63,7 +63,7 @@ if (defined $asmfile){
 	    my $contig = getCAId($$fields{acc});
 	    $contiglen{$contig} = $$fields{len};
 	    for (my $i = 0; $i <= $#$recs; $i++){
-		my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		if ($sid eq "MPS"){
 		    my ($asml, $asmr) = split(',', $$sfs{"pos"});
 		    $readctg{$uid2iid{$$sfs{"mid"}}} = "$contig,$asml,$asmr";

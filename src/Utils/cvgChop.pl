@@ -166,8 +166,8 @@ my %seqnames;
 
 if (defined $frgfile){
     open(FRG, "$frgfile") || $base->bail("Cannot open $frgfile: $!\n");
-    while (my $record = getCARecord(\*FRG)){
-	my ($rec, $fields, $recs) = parseCARecord($record);
+    while (my $record = getRecord(\*FRG)){
+	my ($rec, $fields, $recs) = parseRecord($record);
 	if ($rec eq "FRG"){
 	    my $nm = $$fields{src};
 	    my @lines = split('\n', $nm);
@@ -192,8 +192,8 @@ if (defined $asmfile){
     my %scaffctg;
     my @scaffolds;
     if (defined $byscaff){
-	while (my $record = ((my $seekpos = tell ASM), getCARecord(\*ASM))){
-	    ($rec, $fields, $recs) = parseCARecord($record);
+	while (my $record = ((my $seekpos = tell ASM), getRecord(\*ASM))){
+	    ($rec, $fields, $recs) = parseRecord($record);
 	    if ($rec eq "CCO"){
 		$contigidx{getCAId($$fields{acc})} = $seekpos;
 	    }
@@ -202,7 +202,7 @@ if (defined $asmfile){
 		push(@scaffolds, $id);
 		
 		for (my $i = 0; $i <= $#$recs; $i++){
-		    my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+		    my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		    if ($sid eq "CTP"){
 			if ($$sfs{ori} eq "N" ||
 			    $$sfs{ori} eq "I"){
@@ -228,11 +228,11 @@ if (defined $asmfile){
 	    for (my $cc = 0 ; $cc <= $#contigs; $cc++){
 		my ($cid, $cori) = split(',', $contigs[$cc]);
 		seek ASM, $contigidx{$cid}, 0; #seek set
-		my $record = getCARecord(\*ASM);
+		my $record = getRecord(\*ASM);
 		if (! defined $record){
 		    $base->bail("Cannot find record for contig $cid\n");
 		}
-		($rec, $fields, $recs) = parseCARecord($record);
+		($rec, $fields, $recs) = parseRecord($record);
 		if ($rec ne "CCO" || getCAId($$fields{acc}) != $cid){
 		    $base->bail("Incorrect record retrieved for contig $cid:\n$record\n");
 		}
@@ -244,8 +244,8 @@ if (defined $asmfile){
 	    }
 	}
     } else { # if byscaff
-	while (my $record = getCARecord(\*ASM)){
-	    ($rec, $fields, $recs) = parseCARecord($record);
+	while (my $record = getRecord(\*ASM)){
+	    ($rec, $fields, $recs) = parseRecord($record);
 	    if ($rec eq "CCO"){
 		doCCO(0, ""); # forward contig
 	    } # if CCO
@@ -291,7 +291,7 @@ sub doCCO {
     %eventcoord = ();
     
     for (my $i = 0; $i <= $#$recs; $i++){
-	my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+	my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 	
 	if ($sid eq "MPS"){
 	    my $rid = getCAId($$sfs{mid});

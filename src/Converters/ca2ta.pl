@@ -198,8 +198,8 @@ if ($ARGV[0] =~ /(\S+)\.frg/){
     # get the seek positions within the FRG file
     if (! defined $justfasta){
 	my $seekpos = tell FRG;
-  	while (my $record = getCARecord(\*FRG)){
-  	    my ($rec, $fields, $recs) = parseCARecord($record);
+  	while (my $record = getRecord(\*FRG)){
+  	    my ($rec, $fields, $recs) = parseRecord($record);
   	    if ($rec eq "FRG"){
   		# print "setting $$fields{acc} to $seekpos\n";
   		$seqpos{$$fields{acc}} = $seekpos;
@@ -221,8 +221,8 @@ my $record = "";
 my $first = 1;
 my $number = 0;
 
-while ($record = getCARecord(\*IN)){
-    my ($rec, $fields, $recs) = parseCARecord($record);
+while ($record = getRecord(\*IN)){
+    my ($rec, $fields, $recs) = parseRecord($record);
 
     if ($rec eq "ADT"){ # audit
 	if (defined $filter){
@@ -317,7 +317,7 @@ while ($record = getCARecord(\*IN)){
 	
 # here we parse the individual sequences aligned to the contig
 	for (my $i = 0; $i <= $#$recs; $i++){
-	    my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+	    my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 
 	    if ($sid eq "MPS"){
 		if ($$sfs{typ} ne "R"){
@@ -397,7 +397,7 @@ while ($record = getCARecord(\*IN)){
 # here we parse the individual sequences aligned to the contig
 	if (!defined $justfasta){
 	    for (my $i = 0; $i <= $#$recs; $i++){
-		my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		
 		if ($sid eq "MPS"){
 		    if ($$sfs{typ} ne "R"){
@@ -769,13 +769,13 @@ sub get_seq
     my $id = shift;
 
     seek $file, $seqpos{$id}, 0; # seek set
-    my $record = getCARecord($file);
+    my $record = getRecord($file);
     if (! defined $record){
 	print "wierd error\n";
 	return;
     }
 
-    my ($rec, $fields, $recs) = parseCARecord($record);
+    my ($rec, $fields, $recs) = parseRecord($record);
     
     if ($rec ne "FRG"){
 	print STDERR "wierd error in get_seq, expecting frg\n";
@@ -797,12 +797,12 @@ sub print_seq_for_name {
     my $qualfile = shift;
 
     seek $file, $namepos{$nm}, 0;
-    my $record = getCARecord($file);
+    my $record = getRecord($file);
     if (!defined $record){
 	print STDERR "record for name \"$nm\" not found in file\n";
 	return;
     }
-    my ($rec, $fields, $recs) = parseCARecord($record);
+    my ($rec, $fields, $recs) = parseRecord($record);
     if ($rec ne "FRG"){
 	print STDERR "expecting FRG record for name \"$nm\"\n";
 	return;

@@ -97,8 +97,8 @@ if (defined $fastafile){
     open(FRG, $frgfile) || $base->bail("Cannot open $frgfile: $!\n");
     open(RDS, ">$tmprefix.fasta") || 
 	$base->bail("Cannot open $tmprefix.fasta:$!\n");
-    while (my $record = getCARecord(\*FRG)){
-	my ($type, $fields, $recs) = parseCARecord($record);
+    while (my $record = getRecord(\*FRG)){
+	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type ne "FRG"){
 	    next;
 	}

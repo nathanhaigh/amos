@@ -20,8 +20,8 @@ close(SP);
 #$splice = uc($splice);
 
 open(FRG, $frgfile) || die ("Cannot open $frgfile\n");
-while ($record = getCARecord(\*FRG)){
-    my ($rec, $fields, $recs) = parseCARecord($record);
+while ($record = getRecord(\*FRG)){
+    my ($rec, $fields, $recs) = parseRecord($record);
     if ($rec eq "FRG"){
          my $seq = $$fields{seq};
 	 my @lines = split('\n', $seq);

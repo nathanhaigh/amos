@@ -66,8 +66,8 @@ my $record;
 my %seqnames;
 if (defined $frgfile){
     open(FRG, $frgfile) || $base->bail("Cannot open $frgfile: $!\n");
-    while ($record = getCARecord(\*FRG)){
-	my ($type, $fields, $recs) = parseCARecord($record);
+    while ($record = getRecord(\*FRG)){
+	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type eq "FRG"){
 	    my $id = $$fields{"acc"};
 	    my $name = $$fields{"src"};
@@ -108,8 +108,8 @@ my $prefix = (split /\./,basename($infile))[0];
 my %ctglen;
 my %ctglinks;
 my $lnkid = 0;
-while ($record = getCARecord(\*IN)){
-    my ($type, $fields, $recs) = parseCARecord($record);
+while ($record = getRecord(\*IN)){
+    my ($type, $fields, $recs) = parseRecord($record);
 
     if ($type eq "CCO"){
 	my $id = getCAId($$fields{"acc"});
@@ -172,7 +172,7 @@ while ($record = getCARecord(\*IN)){
 	    print DET "\nScaffold $id\n";
 	}
 	for (my $i = 0; $i <= $#$recs; $i++){
-	    my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+	    my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 	    if ($sid eq "CTP"){
 		my $c1 = $$sfs{"ct1"};
 		my $c2 = $$sfs{"ct2"};

@@ -74,8 +74,8 @@ my %seqnames;
 if (defined $frgfile){
     print STDERR "Doing $frgfile\n";
     open(FRG, $frgfile) || $base->bail("Cannot open $frgfile: $!\n");
-    while ($record = getCARecord(\*FRG)){
-	my ($type, $fields, $recs) = parseCARecord($record);
+    while ($record = getRecord(\*FRG)){
+	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type eq "FRG"){
 	    my $id = getCAId($$fields{acc});
 	    my $nm = $$fields{src};
@@ -104,11 +104,11 @@ my %clear;
 my %referenced;  # number of times each unitig is referenced
 
 if (defined $promote) {
-    while ($record = getCARecord(\*IN)){
-	my ($type, $fields, $recs) = parseCARecord($record);
+    while ($record = getRecord(\*IN)){
+	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type eq "CCO"){
 	    for (my $i = 0; $i <= $#$recs; $i++){
-		my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		if ($sid eq "UPS") {
 		    if ($$sfs{typ} eq "S"){
 			$referenced{$$sfs{lid}}++;
@@ -124,8 +124,8 @@ print STDERR "done\n";
 my %readmap; # map of reads in each unitig
 
 print STDERR "second pass through asm\n";
-while ($record = getCARecord(\*IN)){
-    my ($type, $fields, $recs) = parseCARecord($record);
+while ($record = getRecord(\*IN)){
+    my ($type, $fields, $recs) = parseRecord($record);
     
     if ($type eq "CCO" || $type eq "UTG"){
 	my $id = getCAId($$fields{"acc"});
@@ -160,7 +160,7 @@ while ($record = getCARecord(\*IN)){
 	}
 	
 	for (my $i = 0; $i <= $#$recs; $i++){
-	    my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+	    my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 	    if ($sid eq "MPS"){
 		my $fid = getCAId($$sfs{"mid"});
 		my ($cll, $clr) = split(',', $clear{$fid});

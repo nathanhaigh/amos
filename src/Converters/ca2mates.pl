@@ -57,8 +57,8 @@ my $foundMDI = 0;
 if (defined $asmfile){
     print STDERR "Reading $asmfile\n";
     
-    while ( my $record = getCARecord(\*ASM)){
-	my ($type, $fields, $recs) = parseCARecord($record);
+    while ( my $record = getRecord(\*ASM)){
+	my ($type, $fields, $recs) = parseRecord($record);
 	
 	if ($type eq "MDI"){
 	    my $id = getCAId($$fields{"ref"});
@@ -91,8 +91,8 @@ print STDERR "Reading $frgfile\n";
 open(FRG, "$frgfile") ||
     $base->bail("Cannot open $frgfile : $!");
 
-while ( my $record = getCARecord(\*FRG)){
-    my ($type, $fields, $recs) = parseCARecord($record);
+while ( my $record = getRecord(\*FRG)){
+    my ($type, $fields, $recs) = parseRecord($record);
 
     if ($type eq "DST"){
 	if (! defined $asmfile){

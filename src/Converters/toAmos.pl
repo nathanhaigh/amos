@@ -394,8 +394,8 @@ sub parseTraceInfoFile {
 sub parseFrgFile {
     my $IN = shift;
 
-    while (my $record = getCARecord($IN)){
-	my ($type, $fields, $recs) = parseCARecord($record);
+    while (my $record = getRecord($IN)){
+	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type eq "FRG") {
 	    my $id = getCAId($$fields{acc});
 	    my $nm = $$fields{src};
@@ -598,8 +598,8 @@ sub parseMatesFile {
 sub parseAsmFile {
     my $IN = shift;
 
-    while (my $record = getCARecord($IN)){
-	my ($type, $fields, $recs) = parseCARecord($record);
+    while (my $record = getRecord($IN)){
+	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type eq "CCO"){
 	    my $id = getCAId($$fields{acc});
 	    my $contiglen = $$fields{len};
@@ -630,7 +630,7 @@ sub parseAsmFile {
 	    $contigs{$id} = $contiglen;
 
 	    for (my $i = 0; $i <= $#$recs; $i++){
-		my ($sid, $sfs, $srecs) = parseCARecord($$recs[$i]);
+		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		if ($sid eq "MPS"){
 		    my $fid = getCAId($$sfs{mid});
 		    my ($cll, $clr) = split(' ', $seq_range{$fid});

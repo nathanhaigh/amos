@@ -21,8 +21,8 @@ close(SEQ);
 
 open(FRG, $frgfile) || die ("Cannot open $frgfile\n");
 
-while ($record = getCARecord(\*FRG)){
-    my ($rec, $fields, $recs) = parseCARecord($record);
+while ($record = getRecord(\*FRG)){
+    my ($rec, $fields, $recs) = parseRecord($record);
     if ($rec eq "FRG"){
 	 my $nm = $$fields{src};
 	 my @lines = split('\n', $nm);
