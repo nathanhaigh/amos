@@ -172,6 +172,13 @@ class  Base_Alignment_t
        // matching region in string  b  in space-based coords
    int  errors;
        // number of errors in the matching region
+       // currently this is ignored
+   int  string_sub;
+       // subscript of string in accompanying array
+   unsigned  flipped : 1;
+       // 0 if original a was same orientation as b; 1 otherwise
+   int  a_len : 31;
+       // length of entire a string
 
    void  Dump
        (FILE * fp)  const;
@@ -347,8 +354,8 @@ void  Check  (void)
    void  Add_Aligned_Seqs
        (const Gapped_Multi_Alignment_t & m, const Alignment_t & ali,
         int cons_lo, int cons_hi, vector <char *> & sl1,
-        const vector <char *> & sl2, vector <char *> * tg1 = NULL,
-        vector <char *> * tg2 = NULL);
+        const vector <char *> & sl2, vector <int> & sl2_place,
+        vector <char *> * tg1 = NULL, vector <char *> * tg2 = NULL);
    void  Clear
        (void);
    void  Convert_Consensus
@@ -371,32 +378,45 @@ void  Check  (void)
         const vector <char *> & sl);
    void  Get_Element_Subs
        (Distinguishing_Column_t & d, const vector <char *> & sl);
+   void  Get_Partial_Ungapped_Consensus
+       (string & s, int lo, int hi)  const;
    void  Get_Positions
        (vector <Range_t> & pos)  const;
+   void  Get_Ungapped_Consensus
+       (string & s);
    void  Haplo_Sep
        (const vector <char *> & sl, vector <Distinguishing_Column_t> & dc,
         vector <char *> * tg = NULL);
    void  Make_From_CCO_Msg
        (const Celera_Message_t & msg, const vector <int> & slen);
+   void  Make_Gapped_Ungapped_Lookup
+       (vector <int> & lookup);
    void  Merge
        (const Gapped_Multi_Alignment_t & m);
+   void  Output_Read_Positions
+       (FILE * fp, int id, const vector <char *> & tag, int orig_tag_ct,
+        int len, int offset = 0);
    void  Partial_Merge
        (const Gapped_Multi_Alignment_t & m, int a_lo, int a_hi,
         int b_lo, int b_hi, vector <char *> & sl1,
-        const vector <char *> & sl2, vector <char *> * tg1 = NULL,
-        vector <char *> * tg2 = NULL);
+        const vector <char *> & sl2, vector <int> & sl2_place,
+        vector <char *> * tg1 = NULL, vector <char *> * tg2 = NULL);
    void  Print
-       (FILE * fp, const vector <char *> & s, bool with_diffs = false,
-        int width = DEFAULT_FASTA_WIDTH,
+       (FILE * fp, const vector <char *> & s, bool use_string_sub = false,
+        bool with_diffs = false, int width = DEFAULT_FASTA_WIDTH,
         vector <char *> * tag = NULL);
    void  Print_Consensus
        (char * buff, int b1, int b2);
+   void  Print_Ungapped_Consensus
+       (FILE * fp, char * hdr, int width = DEFAULT_FASTA_WIDTH);
    void  Reverse_Complement
        (vector <char *> & s);
    void  Set_Consensus_And_Qual
        (const vector <char *> & s, const vector <char *> & q);
    void  Set_Phase
        (vector <Distinguishing_Column_t> & dc);
+   void  Set_String_Subs
+       (void);
    void  Show_Skips
        (FILE * fp);
    void  Sort

@@ -250,8 +250,8 @@ void  Base_Alignment_t :: Dump
 //  Print to  fp  the contents of this base alignent.
 
   {
-   fprintf (fp, "### a_lo = %d  a_hi = %d  b_lo = %d  b_hi = %d  errors = %d\n",
-            a_lo, a_hi, b_lo, b_hi, errors);
+   fprintf (fp, "### a_lo/hi = %d/%d  b_lo/hi = %d/%d  errors = %d  string_sub = %d\n",
+            a_lo, a_hi, b_lo, b_hi, errors, string_sub);
 
    return;
   }
@@ -824,28 +824,30 @@ void  Gapped_Alignment_t :: Dump_Skip
 
 
 void  Gapped_Alignment_t :: Flip
-    (int a_len, int b_len)
+    (int a_length, int b_length)
 
 //  Change this alignment to reflect that both strings
-//  have been reversed.   a_len  is the length of the
+//  have been reversed.   a_length  is the length of the
 //  a string (i.e., that a coordinates refer to) and
-//  b_len is the length of the b string.
+//  b_length is the length of the b string.
 
   {
    int  i, n, tmp;
 
-   tmp = a_len - a_lo;
-   a_lo = a_len - a_hi;
+   flipped = 1 - flipped;
+
+   tmp = a_length - a_lo;
+   a_lo = a_length - a_hi;
    a_hi = tmp;
 
-   tmp = b_len - b_lo;
-   b_lo = b_len - b_hi;
+   tmp = b_length - b_lo;
+   b_lo = b_length - b_hi;
    b_hi = tmp;
 
    reverse (skip . begin (), skip . end ());
    n = skip . size ();
    for  (i = 0;  i < n;  i ++)
-     skip [i] = b_len - 1 - skip [i];
+     skip [i] = b_length - 1 - skip [i];
 
    return;
   }
@@ -960,6 +962,10 @@ void  Gapped_Alignment_t :: Make_Sub_Alignment
 
    sub_ali . a_hi = a_lo + sub_ali . b_hi - b_lo - d;
 
+   sub_ali . string_sub = string_sub;
+   sub_ali . flipped = flipped;
+   sub_ali . a_len = a_len;
+
    assert (sub_ali . a_lo < sub_ali . a_hi);
    assert (sub_ali . b_lo <= sub_ali . b_hi);
 
@@ -979,11 +985,22 @@ void  Gapped_Alignment_t :: Modify_For_B_Inserts
    vector <int>  new_skip;
    int  i, n;
 
+   if  (Verbose > 2)
+       {
+        n = insert_sub . size ();
+        printf ("insert_sub  n = %d\n", n);
+        for  (i = 0;  i < n;  i ++)
+          printf ("%3d: %5d\n", i, insert_sub [i]);
+
+        printf ("Before Modify_For_B_Inserts:\n");
+        Dump (stdout);
+       }
+
    n = insert_sub . size ();
    for  (i = 0;  i < n && insert_sub [i] < b_lo;  i ++)
-     ;
-
-   b_lo += i;
+     b_lo ++;
+   // Note:  can't wait till end of loop to increment b_lo by
+   //   i because loop may end prematurely
 
    p = skip . begin ();
    while  (p != skip . end () && i < n)
@@ -1009,9 +1026,16 @@ void  Gapped_Alignment_t :: Modify_For_B_Inserts
      {
       new_skip . push_back (insert_sub [i]);
       i ++;
+      b_hi ++;
      }
 
    skip = new_skip;
+
+   if  (Verbose > 2)
+       {
+        printf ("After Modify_For_B_Inserts:\n");
+        Dump (stdout);
+       }
 
    return;
   }
@@ -1030,11 +1054,18 @@ void  Gapped_Alignment_t :: Pass_Through
    vector <int>  new_skip;
    bool  done_b_lo = false;
    int  orig_b_lo;
-   int  skip_len;
+   int  prev_new_skip = -1, skip_len;
    int  d, i, j, k, n;
 
+   if  (Verbose > 2)
+       {
+        printf ("ali . a_lo/hi = %d/%d  ali . b_lo/hi = %d/%d\n",
+             ali . a_lo, ali . a_hi, ali . b_lo, ali . b_hi);
+        printf ("a_lo/hi = %d/%d  b_lo/hi = %d/%d\n",
+             a_lo, a_hi, b_lo, b_hi);
+       }
    assert (ali . a_lo <= b_lo);
-   assert (b_hi <= ali . b_hi);
+   assert (b_hi <= ali . a_hi);
 
    orig_b_lo = b_lo;
    i = ali . a_lo;
@@ -1046,12 +1077,17 @@ void  Gapped_Alignment_t :: Pass_Through
       i += abs (ali . delta [d]) - 1;
       j += abs (ali . delta [d]) - 1;
       if  (! done_b_lo && b_lo <= i)
-          b_lo += j - i;
+          {
+           b_lo += j - i;
+           done_b_lo = true;
+          }
       while  (k < skip_len && skip [k] <= i)
         {
-printf ("k = %d  i = %d  j = %d  old_skip = %d  new_skip = %d\n",
-     k, i, j, skip [k], skip [k] + j - i);
+         if  (Verbose > 2)
+              printf ("k = %d  i = %d  j = %d  old_skip = %d  new_skip = %d\n",
+                   k, i, j, skip [k], skip [k] + j - i);
          new_skip . push_back (skip [k] + j - i);
+         prev_new_skip = skip [k] + j - i;
          k ++;
         }
       if  (ali . delta [d] < 0)
@@ -1066,21 +1102,31 @@ printf ("k = %d  i = %d  j = %d  old_skip = %d  new_skip = %d\n",
          else
           {
            if  (orig_b_lo <= i)
-{
-printf ("k = %d  i = %d  j = %d  b_lo = %d  b_hi = %d  adding new_skip = %d\n",
-     k, i, j, b_lo, b_hi, j);
-               new_skip . push_back (j);
-}
+               {
+                if  (Verbose > 2)
+                    printf ("k = %d  i = %d  j = %d  b_lo = %d  b_hi = %d"
+
+                            "  adding new_skip = %d\n", k, i, j, b_lo, b_hi, j);
+                if  (j == prev_new_skip)
+                    new_skip . push_back (j + 1);
+                  else
+                    new_skip . push_back (j);
+               }
            j ++;
           }
      }
 
    while  (k < skip_len)
      {
+      if  (Verbose > 2)
+          printf ("k = %d  i = %d  j = %d  old_skip = %d  new_skip = %d\n",
+               k, i, j, skip [k], skip [k] + j - i);
       new_skip . push_back (skip [k] + j - i);
       k ++;
      }
 
+   if  (! done_b_lo)
+       b_lo += j - i;
    b_hi += j - i;
    skip = new_skip;
 
@@ -1460,20 +1506,23 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 void  Gapped_Multi_Alignment_t :: Add_Aligned_Seqs
     (const Gapped_Multi_Alignment_t & m, const Alignment_t & ali,
      int cons_lo, int cons_hi, vector <char *> & sl1,
-     const vector <char *> & sl2, vector <char *> * tg1,
-     vector <char *> * tg2)
+     const vector <char *> & sl2, vector <int> & sl2_place,
+     vector <char *> * tg1, vector <char *> * tg2)
 
 //  Add sequences in  m  that align to positions  cons_lo .. cons_hi
 //  in  m . consensus  to this multialignment.  Use alignment  ali
-//  to map  m . consensus  to  this -> consensus .  Add the
-//  actual sequences from  sl2  onto the end of  sl1 .  If
+//  to map  m . consensus  to  this -> consensus .  Check  sl2_place
+//  to see if the actual sequence is already in  sl1 .  If not, add it
+//  onto the end of  sl1  and set the corresponding  sl2_place  entry
+//  to indicate where it is.  If
 //   tg1  and  tg2  are not both NULL, also add the tags from
-//   tg2  onto the end of  tg1 .
+//   tg2  onto the end of  tg1  (unless  sl2_place  indicates they're
+//  already there).
 
   {
    Gapped_Alignment_t  sub_ali;
    bool  use_tgs = (tg1 != NULL && tg2 != NULL);
-   int  i, n;
+   int  i, j, n;
 
    if  (Verbose > 2)
        {
@@ -1507,10 +1556,19 @@ void  Gapped_Multi_Alignment_t :: Add_Aligned_Seqs
                sub_ali . Dump (stdout);
               }
 
+          if  (sl2_place [i] >= 0)
+              j = sl2_place [i];
+            else
+              {
+               sl1 . push_back (strdup (sl2 [i]));
+               if  (use_tgs)
+                   (* tg1) . push_back (strdup ((* tg2) [i]));
+               j = sl1 . size () - 1;
+               sl2_place [i] = j;
+              }
+
+          sub_ali . string_sub = j;
           align . push_back (sub_ali);
-          sl1 . push_back (strdup (sl2 [i]));
-          if  (use_tgs)
-              (* tg1) . push_back (strdup ((* tg2) [i]));
          }
 
    return;
@@ -1703,8 +1761,9 @@ void  Gapped_Multi_Alignment_t :: Expand_Consensus
    if  (n == 0)
        return;  // nothing to do
 
-   for  (i = 0;  i < n;  i ++)
-     printf ("insert_sub [%d] = %d\n", i, insert_sub [i]);
+   if  (Verbose > 2)
+       for  (i = 0;  i < n;  i ++)
+         printf ("insert_sub [%d] = %d\n", i, insert_sub [i]);
 
    n = align . size ();
    for  (i = 0;  i < n;  i ++)
@@ -1853,6 +1912,31 @@ void  Gapped_Multi_Alignment_t :: Get_Element_Subs
 
 
 
+void  Gapped_Multi_Alignment_t :: Get_Partial_Ungapped_Consensus
+    (string & s, int lo, int hi)  const
+
+//  Set  s  to the ungapped portion of the consensus of this
+//  multialignment between positions  lo  and  hi  (in gap
+//  coordinates).
+
+  {
+   int  i, j, n;
+
+   s . erase ();
+   n = consensus . length ();
+   for  (i = j = 0;  i < n && j < hi;  i ++)
+     if  (consensus [i] != '-')
+         {
+          if  (lo <= j)
+              s . push_back (consensus [i]);
+          j ++;
+         }
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Get_Positions
     (vector <Range_t> & pos)  const
 
@@ -1867,6 +1951,26 @@ void  Gapped_Multi_Alignment_t :: Get_Positions
 
    for  (i = 0;  i < n;  i ++)
      pos [i] . setRange (align [i] . b_lo, align [i] . b_hi);
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Get_Ungapped_Consensus
+    (string & s)
+
+//  Set  s  to the ungapped consensus sequence of this
+//  multialignment.
+
+  {
+   int  i, n;
+
+   s . erase ();
+   n = consensus . length ();
+   for  (i = 0;  i < n;  i ++)
+     if  (consensus [i] != '-')
+         s . push_back (consensus [i]);
 
    return;
   }
@@ -1980,6 +2084,7 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
 
       ga . a_lo = 0;
       ga . a_hi = slen [i];
+      ga . a_len = slen [i];
       position = mps_list [i] . getPosition ();
       x = position . getStart ();
       y = position . getEnd ();
@@ -1987,11 +2092,13 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
           {
            ga . b_lo = x;
            ga . b_hi = y;
+           ga . flipped = 0;
           }
         else
           {
            ga . b_lo = y;
            ga . b_hi = x;
+           ga . flipped = 1;
           }
       ga . errors = 0;    // Temporary--needs to be set correctly later
       del = mps_list [i] . getDel ();
@@ -2012,6 +2119,7 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
           {
            ga . a_lo = 0;
            ga . a_hi = slen [i];
+           ga . a_len = slen [i];
            position = ups_list [i] . getPosition ();
            x = position . getStart ();
            y = position . getEnd ();
@@ -2019,11 +2127,13 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
                {
                 ga . b_lo = x;
                 ga . b_hi = y;
+                ga . flipped = 0;
                }
              else
                {
                 ga . b_lo = y;
                 ga . b_hi = x;
+                ga . flipped = 1;
                }
            ga . errors = 0;    // Temporary--needs to be set correctly later
            del = ups_list [i] . getDel ();
@@ -2034,6 +2144,30 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
            align . push_back (ga);
           }
      }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Make_Gapped_Ungapped_Lookup
+    (vector <int> & lookup)
+
+//  Set  lookup  to hold the corresponding ungapped position
+//  for every position in this multialignment's consensus.
+
+  {
+   int  i, n;
+
+   n = consensus . length ();
+   lookup . resize (n + 1);
+
+   lookup [0] = 0;
+   for  (i = 0;  i < n;  i ++)
+     if  (consensus [i] == '-')
+         lookup [i + 1] = lookup [i];
+       else
+         lookup [i + 1] = 1 + lookup [i];
 
    return;
   }
@@ -2054,20 +2188,128 @@ void  Gapped_Multi_Alignment_t :: Merge
 
 
 
+void  Gapped_Multi_Alignment_t :: Output_Read_Positions
+    (FILE * fp, int id, const vector <char *> & tag, int orig_tag_ct,
+     int len, int offset = 0)
+
+//  Output to  fp  a header line for this multialignment
+//  containing  id  and the (ungapped) length of the consensus
+//  followed by a list of reads and their implied positions
+//  in this multialignments.  Include an indication of whether
+//  the read is an original read (if it's subscript is  < orig_tag_ct )
+//  or an added one (otherwise).   len  is the length of the
+//  ungapped consensus.   offset  is added to the b positions
+//  of all the reads
+
+  {
+   vector <int>  lookup;
+   vector <Base_Alignment_t>  extreme;
+        // holds extreme positions of all component reads
+   Base_Alignment_t  * ep;
+   int  bad_ct;
+   int  i, j, num_aligns, num_tags;
+
+   num_tags = tag . size ();
+        // should be the same as number of distinct strings in alignment
+
+   Make_Gapped_Ungapped_Lookup (lookup);
+
+   extreme . resize (num_tags);
+   for  (i = 0;  i < num_tags;  i ++)
+     extreme [i] . string_sub = -1;   // mark to indicate not modified
+
+   num_aligns = align . size ();
+   for  (i = 0;  i < num_aligns;  i ++)
+     {
+      j = align [i] . string_sub;
+      ep = & (extreme [j]);
+      if  (ep -> string_sub == -1)
+          {
+           extreme [j] = align [i];
+           ep -> b_lo = lookup [ep -> b_lo];
+           ep -> b_hi = lookup [ep -> b_hi];
+          }
+      else if  (ep -> flipped != align [i] . flipped)
+          ;  // skip it;  something's wrong;  same read is in with
+             //   different orientations
+        else
+          {
+           ep -> a_lo = Min (ep -> a_lo, align [i] . a_lo);
+           ep -> a_hi = Max (ep -> a_hi, align [i] . a_hi);
+           ep -> b_lo = Min (ep -> b_lo, lookup [align [i] . b_lo]);
+           ep -> b_hi = Max (ep -> b_hi, lookup [align [i] . b_hi]);
+          }
+     }
+
+   bad_ct = 0;
+   for  (i = 0;  i < num_tags;  i ++)
+     if  (extreme [i] . string_sub < 0)
+         bad_ct ++;
+   if  (bad_ct > 0)
+       {
+        fprintf (stderr, "YIKES:  %d unused alignments for contig %d\n",
+             bad_ct, id);
+       }
+
+   fprintf (fp, ">%d  %d  %d\n", id, len, num_tags - bad_ct);
+   
+   for  (i = 0;  i < num_tags;  i ++)
+     {
+      int  actual_start, actual_stop;
+      int  implied_start, implied_stop;
+
+      ep = & (extreme [i]);
+
+      if  (ep -> string_sub < 0)
+          continue;
+
+      if  (ep -> flipped)
+          {
+           actual_start = ep -> b_hi;
+           actual_stop = ep -> b_lo;
+           implied_start = actual_start + (ep -> a_len - ep -> a_hi);
+           implied_stop = actual_stop - ep -> a_lo;
+          }
+        else
+          {
+           actual_start = ep -> b_lo;
+           actual_stop = ep -> b_hi;
+           implied_start = actual_start - ep -> a_lo;
+           implied_stop = actual_stop + (ep -> a_len - ep -> a_hi);
+          }
+      actual_start += offset;
+      actual_stop += offset;
+      implied_start += offset;
+      implied_stop += offset;
+
+      fprintf (fp, "  %c  %c %10s  %7d %7d  %7d %7d\n",
+           tag [i] [0], (i < orig_tag_ct ? 'a' : 'b'),
+           tag [i] + 1, actual_start, actual_stop,
+           implied_start, implied_stop);
+     }
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Partial_Merge
     (const Gapped_Multi_Alignment_t & m, int a_lo, int a_hi,
      int b_lo, int b_hi, vector <char *> & sl1,
-     const vector <char *> & sl2, vector <char *> * tg1,
-     vector <char *> * tg2)
+     const vector <char *> & sl2, vector <int> & sl2_place,
+     vector <char *> * tg1, vector <char *> * tg2)
 
 //  Merge the portion of the alignment in  m  between  a_lo  and
 //  a_hi  into this alignment between  b_lo  and  b_hi .
 //   sl1  and  sl2  are the sequences of the reads for this
 //  multialignment and multialignment  m , respectively.
 //  Must have  a_lo <= a_hi  and  b_lo <= b_hi .
-//  Add relevant sequences from  sl2  to end of  sl1 .
+//   sl2_place  indicates whether and where  sl2  strings are already
+//  in  sl1 .  Any new strings are added
+//  from  sl2  to end of  sl1  and  sl2_place  is updated.
 //  If neither  tg1  nor  tg2  is  NULL , then also add relevant
-//  sequences from  tg2  to the end of  tg1 .
+//  sequences from  tg2  to the end of  tg1 , mirroring  sl1
+//  and  sl2 .
 
   {
    Alignment_t  ali;
@@ -2100,14 +2342,18 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
    //   with gap positions
    Global_Align (x . c_str (), x_len, y . c_str (), 0, y_len, 2, -3, -2, -1, ali);
 
-   ali . Print (stdout, x . c_str (), y . c_str ());
+   if  (Verbose > 2)
+       ali . Print (stdout, x . c_str (), y . c_str ());
 
    // Then align the individual reads to the result.
 
-printf ("ali:\n");
-ali . Dump (stdout);
-printf ("a_gapped_lo/hi = %d/%d  b_gapped_lo/hi = %d/%d\n",
-    a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi);
+   if  (Verbose > 2)
+       {
+        printf ("ali:\n");
+        ali . Dump (stdout);
+        printf ("a_gapped_lo/hi = %d/%d  b_gapped_lo/hi = %d/%d\n",
+             a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi);
+       }
 
    ali . a_lo += a_gapped_lo;
    ali . a_hi += a_gapped_lo;
@@ -2115,10 +2361,36 @@ printf ("a_gapped_lo/hi = %d/%d  b_gapped_lo/hi = %d/%d\n",
    ali . b_hi += b_gapped_lo;
    Expand_Consensus (ali);
 
-   cout << endl << endl << "Contig #1 after Expand_Consensus" << endl;
-   Print (stdout, sl1, 60);
+   if  (Verbose > 2)
+       {
+        cout << endl << endl << "Contig #1 after Expand_Consensus" << endl;
+        cout << "sl1 . size () = " << sl1 . size () << endl;
+        cout << "sl2 . size () = " << sl2 . size () << endl;
+        Print (stdout, sl1, true, true, 60);
+       }
 
-   Add_Aligned_Seqs (m, ali, a_gapped_lo, a_gapped_hi, sl1, sl2, tg1, tg2);
+   Add_Aligned_Seqs (m, ali, a_gapped_lo, a_gapped_hi, sl1, sl2, sl2_place,
+        tg1, tg2);
+
+   if  (Verbose > 2)
+       {
+        int  i, n;
+
+        n = align . size ();
+        cout << endl << "align after partial merge  n = " << n << endl;
+        cout << "sl1 . size () = " << sl1 . size () << endl;
+        cout << "sl2 . size () = " << sl2 . size () << endl;
+        for  (i = 0;  i < n;  i ++)
+          {
+           printf ("align [%d]:\n", i);
+           align [i] . Dump (stdout);
+          }
+        
+        n = sl2_place . size ();
+        cout << endl << "sl2_place  n = " << n << endl;
+        for  (i = 0;  i < n;  i ++)
+          cout << sl2_place [i] << endl;
+       }
 
    // Then re-call the consensus
 
@@ -2128,14 +2400,17 @@ printf ("a_gapped_lo/hi = %d/%d  b_gapped_lo/hi = %d/%d\n",
 
 
 void  Gapped_Multi_Alignment_t :: Print
-    (FILE * fp, const vector <char *> & s, bool with_diffs, int width,
-     vector <char *> * tag)
+    (FILE * fp, const vector <char *> & s, bool use_string_sub = false,
+     bool with_diffs = false, int width = DEFAULT_FASTA_WIDTH,
+     vector <char *> * tag = NULL)
 
 //  Display this multialignment to file  fp  using
 //   width  characters per line.   s  holds the strings
 //  the alignment references.  If  tag  is not NULL, it
 //  holds tag strings corresponding to the sequences  s
-//  to be used to label the sub-alignment lines.  If
+//  to be used to label the sub-alignment lines.  If  use_string_sub
+//  is true, then use the  string_sub  field in each alignment to
+//  determine which string in  s  to use.  If
 //   with_diffs  is true also print a line under the consensus showing
 //  where there are any differences with the aligned sequences.
 
@@ -2144,7 +2419,7 @@ void  Gapped_Multi_Alignment_t :: Print
    int  lo, hi, len;
    int  i, n;
 
-   if  (s . size () != align . size ())
+   if  (! use_string_sub && s . size () != align . size ())
        {
         sprintf (Clean_Exit_Msg_Line,
             "ERROR:  Multi_Align . Print called with %d strings and %d alignments",
@@ -2152,7 +2427,7 @@ void  Gapped_Multi_Alignment_t :: Print
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
 
-   n = s . size ();
+   n = align . size ();
    len = consensus . length ();
    buff = (char *) Safe_malloc (5 + len, __FILE__, __LINE__);
    if  (with_diffs)
@@ -2175,13 +2450,20 @@ void  Gapped_Multi_Alignment_t :: Print
       for  (i = 0;  i < n;  i ++)
         if  (Range_Intersect (align [i] . b_lo, align [i] . b_hi, lo, hi))
             {
-             align [i] . Print_Subalignment_Line
-                           (buff, lo, hi, s [i], a_lo, a_hi);
-             if  (tag == NULL)
-                 fprintf (fp, "%4d:  %s  (%d-%d)\n", i, buff, a_lo, a_hi);
+             int  sub;
+
+             if  (use_string_sub)
+                 sub = align [i] . string_sub;
                else
-                 fprintf (fp, "%10.10s:  %s  (%d-%d)\n", (* tag) [i], buff,
-                      a_lo, a_hi);
+                 sub = i;
+             align [i] . Print_Subalignment_Line
+                           (buff, lo, hi, s [sub], a_lo, a_hi);
+             if  (tag == NULL)
+                 fprintf (fp, "%4d:  %s  (%d-%d%c)\n", sub, buff, a_lo, a_hi,
+                      align [i] . flipped ? 'r' : 'f');
+               else
+                 fprintf (fp, "%10.10s:  %s  (%d-%d%c)\n", (* tag) [sub], buff,
+                      a_lo, a_hi, align [i] . flipped ? 'r' : 'f');
              if  (with_diffs)
                  {
                   int  j, k;
@@ -2202,7 +2484,7 @@ void  Gapped_Multi_Alignment_t :: Print
           }
         else
           {
-           fprintf (fp, "%10.10s:  %s  (%d-%d)\n", "cons", buff, lo, hi);
+           fprintf (fp, "%10.10s:  %s  (%d-%d)\n", "consensus", buff, lo, hi);
            if  (with_diffs)
                fprintf (fp, "%11s  %s\n", "", diff);
           }
@@ -2233,6 +2515,39 @@ void  Gapped_Multi_Alignment_t :: Print_Consensus
      buff [ct ++] = consensus [i];
 
    buff [ct] = '\0';
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Print_Ungapped_Consensus
+    (FILE * fp, char * hdr, int width)
+
+//  Print to  fp  the non-gap entries in this multialignment's
+//  consensus sequence in fasta-style.  Print  hdr  on the
+//  fasta-header line.  Print  width  characters per line.
+
+  {
+   int  i, j, n;
+
+   fprintf (fp, ">%s\n", hdr);
+
+   n = consensus . length ();
+   for  (i = j = 0;  i < n;  i ++)
+     if  (consensus [i] != '-')
+         {
+          fputc (consensus [i], fp);
+          j ++;
+          if  (j == width)
+              {
+               fputc ('\n', fp);
+               j = 0;
+              }
+         }
+
+   if  (j > 0)
+       fputc ('\n', fp);
 
    return;
   }
@@ -2527,6 +2842,23 @@ void  Gapped_Multi_Alignment_t :: Set_Phase
    return;
   }
 
+
+
+void  Gapped_Multi_Alignment_t :: Set_String_Subs
+    (void)
+
+//  Set the  string_sub  field in each component alignment
+//  to the same subscript as the component alignemnt.
+
+  {
+   int  i, n;
+
+   n = align . size ();
+   for  (i = 0;  i < n;  i ++)
+     align [i] . string_sub = i;
+
+   return;
+  }
 
 
 void  Gapped_Multi_Alignment_t :: Show_Skips
@@ -3241,7 +3573,8 @@ printf ("L = %d:%u  D = %d:%u  T = %d:%u\n", entry . left_score, entry . left_fr
 
    if  (sign != 0)
        {
-        printf ("del = %d\n", sign * ct);
+        if  (Verbose > 2)
+            printf ("del = %d\n", sign * ct);
         delta . push_back (sign * ct);
        }
 
@@ -3252,8 +3585,9 @@ printf ("L = %d:%u  D = %d:%u  T = %d:%u\n", entry . left_score, entry . left_fr
 
    reverse (delta . begin (), delta . end ());
    n = delta . size ();
-   for  (i = 0;  i < n;  i ++)
-     printf ("delta [%d] = %d\n", i, delta [i]);
+   if  (Verbose > 2)
+        for  (i = 0;  i < n;  i ++)
+          printf ("delta [%d] = %d\n", i, delta [i]);
 
    align . setDelta (delta);
 
