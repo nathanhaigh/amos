@@ -4930,6 +4930,10 @@ int  Exact_Prefix_Match
        }
 
    for  (i = 0;  i < max_len && s [i] == t [i];  i ++)
+//**ALD  Allow N's to match anything
+//   for  (i = 0;  i < max_len
+//             && (s [i] == t [i] || tolower (s [i]) == 'n'
+//                  || tolower (t [i]) == 'n');  i ++)
      ;
 
    if  (Verbose > 3)
@@ -5705,8 +5709,20 @@ void  Overlap_Align_Save_Space
             "max_row/col = %d/%d  t_lo = %d  t_slip = %d  t_half = %d  t_hi = %d\n",
             max_row, max_col, t_lo, t_slip, t_half, t_hi);
    if  (max_row <= t_half)
-       {  // only need one recursive call
+       {
+        // only need one recursive call on the first half of the alignment
         Complete_Align (s, 0, s_len, t, t_lo, t_slip, max_row,
+             match_score, mismatch_score, indel_score, gap_score, NULL,
+             entry, align);
+
+        return;
+       }
+
+   if  (max_col == 0 && t_half < t_hi)
+       {
+        // only need one recursive call on the second half of the alignment
+        // because the best start for the alignment is after t_half
+        Complete_Align (s, 0, s_len, t, t_half, t_hi, max_row,
              match_score, mismatch_score, indel_score, gap_score, NULL,
              entry, align);
 
