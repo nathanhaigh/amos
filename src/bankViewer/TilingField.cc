@@ -283,7 +283,7 @@ void TilingField::paintEvent( QPaintEvent * )
       p.drawText(seqnamehoffset, ldcov,
                  rchoffset-seqnamehoffset, lineheight,
                  Qt::AlignLeft | Qt::AlignBottom, 
-                 QString(ri->m_read.getEID()));
+                 QString(ri->m_read.getEID().c_str()));
 
       if (hasOverlap)
       {

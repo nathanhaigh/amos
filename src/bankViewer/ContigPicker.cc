@@ -76,7 +76,7 @@ ContigPicker::ContigPicker(const string & bankname,
       new ContigListItem(table,  
                          QString::number(contigid), 
                          QString::number(contig.getIID()),
-                         contig.getEID(),
+                         QString(contig.getEID().c_str()), 
                          QString::number(contiglen), 
                          QString::number(numreads));
       contigid++;
