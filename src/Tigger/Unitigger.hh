@@ -38,6 +38,8 @@ public:
   std::vector< Contig* > contigs;
   std::queue< IEdge* > containment;
 
+  bool VERBOSE;
+
   void Unitigger::error(const char* m, const char* c = "");
 
   void Unitigger::add_read(Read* p_read);

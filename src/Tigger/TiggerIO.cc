@@ -43,11 +43,6 @@ void get_amos_reads(const string p_bankdir) {
       }
       
       while(bank >> amos_read) {
-	if(VERBOSE) {
-	  amos_read.writeMessage(msg);
-	  msg.write(cout);
-	}
-
 	tigger.add_read(amos_read);
 	readCount++;
       }
@@ -78,10 +73,10 @@ void get_amos_overlaps(const string p_bankdir) {
       }
       
       while(bank >> amos_overlap) {
-	if(VERBOSE) {
-	  amos_overlap.writeMessage(msg);
-	  msg.write(cout);
-	}
+// 	if(VERBOSE) {
+// 	  amos_overlap.writeMessage(msg);
+// 	  msg.write(cout);
+// 	}
 
 	tigger.add_overlap(amos_overlap);
 	overlapCount++;
@@ -203,6 +198,8 @@ static void parse_command_line(int argc, char* argv[]) {
 
 int main(int argc, char** argv) {
   parse_command_line(argc, argv);
+
+  tigger.VERBOSE = VERBOSE;
 
   if(AMOS_mode) {
 

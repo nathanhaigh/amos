@@ -9,13 +9,13 @@
 using namespace std;
 using namespace AMOS;
 
-static bool VERBOSE = false;
 typedef list< INode* >::iterator nodeListIter;
 typedef list< IEdge* >::iterator edgeListIter;
 
 Unitigger::Unitigger() {
-  if(VERBOSE) cout << " construct new unitigger" << endl;
   graph = new Graph();
+
+  VERBOSE = false;
   
   colors.push_back("green");
   colors.push_back("red");
@@ -184,7 +184,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
 
       }
       
-      if(VERBOSE) {
+      if(true) {
 	cout << " -> " << read_tile->id << " len " << read_tile->len;
 	cout << " (" << read_tile->start << "," << read_tile->end << ") ";
       }
@@ -234,8 +234,8 @@ void Unitigger::hide_containment(IGraph* g) {
 
 void Unitigger::add_containment() {
   IEdge* edge;
-  INode* node;
   INode* con_node;
+  INode* node;
   Overlap* ovl;
   int count = 0;
 
@@ -243,12 +243,16 @@ void Unitigger::add_containment() {
     edge = containment.front();
     containment.pop();
     ovl = (Overlap*) edge->getElement();
-    node = edge->getTarget();
+    con_node = edge->getTarget();
 
-    if(node->getKey() != ovl->ridA) {
-      con_node = node;
+    if(con_node->getKey() == ovl->ridA) {
+      node = con_node;
+      con_node = edge->getSource();
+    } else {
       node = edge->getSource();
     }
+
+    cout << node->getKey() << " add contained " << con_node->getKey() << endl;
 
     vector< Contig* >::iterator contig_iter = contigs.begin();
     for( ; contig_iter != contigs.end(); ++contig_iter) {
@@ -261,6 +265,8 @@ void Unitigger::add_containment() {
 	edge->setColor("purple");
 	con_node->setColor("purple");
 	break;
+      } else {
+	containment.push(edge);
       }
     }
   }
@@ -581,9 +587,9 @@ void Unitigger::layout_contig(Contig* ctg) {
       count++;
       if(isSuffix(read, ovl)) {
 	read->start = 0;
-	read->end = read->len;
+	read->end = (read->len);
       } else {
-	read->start = read->len;
+	read->start = (read->len);
 	read->end = 0;
       }
     }
