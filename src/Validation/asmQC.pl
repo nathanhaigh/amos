@@ -361,9 +361,11 @@ while (($ins, $lib) = each %ins2lib){
 	    if ($l < $r) 
 	    { #rest of clone is to the right
 		my $rightend = $libMed + $minCln;
+		if ($rightend <= $maxCln) {$rightend = $maxCln + 1;}
 		print CAM "${camid}$cln:$minCln A0noMateColor $maxCln A0MateExtColor $rightend R2 \# no mate for $cln $forw $rev\n";
 	    } else { # rest of clone is to the left
 		my $leftend = $maxCln - $libMed;
+		if ($leftend >= $minCln) {$leftend = $minCln - 1;}
 		print CAM "${camid}$cln:$leftend A0MateExtColor $minCln A0noMateColor $maxCln R2 \# no mate for $cln $forw $rev\n";
 	    }
 	    $camid++;
