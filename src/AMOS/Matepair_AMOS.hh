@@ -117,6 +117,19 @@ public:
   }
 
 
+  //--------------------------------------------------- flip -------------------
+  //! \brief Flip the order of the mates
+  //!
+  //! Reverses the order of the read IDs.
+  //!
+  //! \return void
+  //!
+  void flip ( )
+  {
+    reads_m = make_pair (reads_m . second, reads_m . first);
+  }
+
+
   //--------------------------------------------------- getReads ---------------
   //! \brief Get the pair of read IDs joined by this matepair
   //!

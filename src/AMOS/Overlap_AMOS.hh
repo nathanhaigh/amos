@@ -121,6 +121,29 @@ public:
   }
 
 
+  //--------------------------------------------------- flip -------------------
+  //! \brief Flip the orientation of the overlap
+  //!
+  //! Reverses the order of the read IDs and changes the overlap adjacency as
+  //! altered by the new orientation of the reads. Does not alter adjacency
+  //! if it is currently a NULL_ADJACENCY. Also, swaps the a/bHang values.
+  //! After flip, NORMAL becomes ANTINORMAL, ANTINORMAL becomes NORMAL, and
+  //! INNIE and OUTIE remain the same.
+  //!
+  //! \return void
+  //!
+  void flip ( )
+  {
+    OverlapAdjacency_t oa = getAdjacency( );
+    if ( oa == NORMAL ) setAdjacency (ANTINORMAL);
+    else if ( oa == ANTINORMAL ) setAdjacency (NORMAL);
+
+    Size_t tHang = aHang; aHang = bHang; bHang = tHang;
+
+    reads_m = make_pair (reads_m . second, reads_m . first);
+  }
+
+
   //--------------------------------------------------- getAdjacency -----------
   //! \brief Get the overlapping ends of the reads
   //!

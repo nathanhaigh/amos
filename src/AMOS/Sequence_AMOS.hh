@@ -262,7 +262,7 @@ public:
     if ( isCompressed( ) )
       return uncompress (seq_m [index]);
     else
-      return std::pair<char, char> (seq_m [index], qual_m [index]);
+      return make_pair ((char)(seq_m [index]), (char)(qual_m [index]));
   }
 
 

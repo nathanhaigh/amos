@@ -139,23 +139,19 @@ public:
   //! \brief Flip the orientation of the link
   //!
   //! Reverses the order of the contig IDs and changes the adjacency as
-  //! altered by the new orientation of the contigs. Has no effect if both
-  //! contigs have a NULL_ID, and does not alter adjacency if it is currently
-  //! a NULL_ADJACENCY.
+  //! altered by the new orientation of the contigs. Does not alter adjacency
+  //! if it is currently a NULL_ADJACENCY. After flip, NORMAL become ANTINORMAL,
+  //! ANTINORMAL becomes NORMAL, and INNIE and OUTIE remain the same.
   //!
   //! \return void
   //!
   void flip ( )
   {
-    if ( contigs_m . first != NULL_ID  &&  contigs_m . second != NULL_ID )
-      {
-	LinkAdjacency_t la = getAdjacency( );
-	if ( la == INNIE  ||  la == OUTIE )
-	  setAdjacency (la == INNIE ? OUTIE : INNIE);
+    LinkAdjacency_t la = getAdjacency( );
+    if ( la == NORMAL ) setAdjacency (ANTINORMAL);
+    else if ( la == ANTINORMAL ) setAdjacency (NORMAL);
 
-	contigs_m =
-	  std::pair<ID_t, ID_t> (contigs_m . second, contigs_m . first);
-      }
+    contigs_m = make_pair (contigs_m . second, contigs_m . first);
   }
 
 
