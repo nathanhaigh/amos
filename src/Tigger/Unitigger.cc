@@ -226,7 +226,7 @@ void Unitigger::hide_containment(IGraph* g) {
     }
   }
 
-  cout << " total contained reads hidden " << containment.size() << endl;
+  if(VERBOSE) cout << " total contained reads hidden " << containment.size() << endl;
 }
 
 
@@ -263,7 +263,7 @@ void Unitigger::add_containment() {
     }
   }
 
-  cout << " total contained reads unhidden " << containment.size() << endl;
+  if(VERBOSE) cout << " total contained reads unhidden " << containment.size() << endl;
 }
 
 // TODO: refactor 
@@ -436,7 +436,6 @@ void Unitigger::find_chunks() {
   for(INodeIterator nodes = graph->nodes_begin(); nodes != graph->nodes_end(); ++nodes) {
     node = (*nodes).second;
     if((node->getFlags() != 1) && (! node->getHidden())) {
-      cout << " start contig walk at " << node->getKey() << endl;
       contigs.push_back(walk(node));
     }
   }
@@ -579,11 +578,9 @@ void Unitigger::layout_contig(Contig* ctg) {
     if(ovl->type != 'C') {
       count++;
       if(isSuffix(read, ovl)) {
-	cout << " laying out first read forward " << read->id  << endl;
 	read->start = 0;
 	read->end = read->len;
       } else {
-	cout << " laying out first read backward " << read->id  << endl;
 	read->start = read->len;
 	read->end = 0;
       }
@@ -719,7 +716,9 @@ void Unitigger::output_contig_graphs() {
   for(int i = 0; contig_iter != contigs.end(); ++contig_iter) {
     Contig* c = (*contig_iter);
     sprintf(buffer, "Contig-%d.dot", i++);
-    c->sg->create_dot_file(buffer);
+    if(c->sg->num_nodes() > 1) {
+      c->sg->create_dot_file(buffer);
+    }
   }
 }
 
