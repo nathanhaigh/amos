@@ -1,15 +1,18 @@
 #ifndef MAINWINDOW_HH_
 #define MAINWINDOW_HH_ 1
 
-#include <qwidget.h>
+#include <qmainwindow.h>
 #include <qspinbox.h>
 #include <qslider.h>
 #include <qscrollbar.h>
 #include <qlistview.h>
 #include <qmainwindow.h>
 #include <string>
+#include <qpopupmenu.h>
 
-class MainWindow: public QWidget
+#include "TilingFrame.hh"
+
+class MainWindow: public QMainWindow
 {
   Q_OBJECT
 public:
@@ -26,6 +29,11 @@ public slots:
   void setGindexRange(int, int);
   void contigSelected(QListViewItem * item);
 
+  void toggleShowPositions();
+  void toggleShowQV();
+  void toggleHighlightDiscrepancy();
+  void togglePrefetchChromatograms();
+
 signals:
   void bankSelected(std::string bankname);
   void contigIdSelected(int contigId);
@@ -37,7 +45,14 @@ private:
   QScrollBar * m_slider;
   QMainWindow * m_contigPicker;
 
+  QPopupMenu * m_options;
+  int m_posid;
+  int m_qvid;
+  int m_highid;
+  int m_prefetch;
+
   std::string m_bankname;
+  TilingFrame * m_tiling;
 };
 
 #endif

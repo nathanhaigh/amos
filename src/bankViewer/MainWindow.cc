@@ -3,9 +3,10 @@
 #include <qapplication.h>
 #include <qpushbutton.h>
 #include <qfont.h>
-#include <qlayout.h>
 #include <qspinbox.h>
 #include <qmenubar.h>
+#include <qtoolbar.h>
+#include <qtoolbutton.h>
 #include <qpopupmenu.h>
 #include <qfiledialog.h>
 #include <qstatusbar.h>
@@ -14,6 +15,8 @@
 #include <qlineedit.h>
 #include <qcheckbox.h>
 #include <qpushbutton.h>
+#include <qvbox.h>
+#include <qlayout.h>
 
 #include <qmainwindow.h>
 #include <qlistview.h>
@@ -24,173 +27,127 @@
 using namespace std;
 
 MainWindow::MainWindow( QWidget *parent, const char *name )
-           : QWidget( parent, name )
+           : QMainWindow( parent, name )
 {
-  // Menubar
-  QMenuBar* menubar = new QMenuBar(this);
-  Q_CHECK_PTR( menubar );
 
   m_contigPicker = NULL;
 
-  QPopupMenu* file = new QPopupMenu( menubar );
-  Q_CHECK_PTR( file );
-  menubar->insertItem( "&File", file );
-  file->insertItem("&Open Bank...", this,  SLOT(chooseBank()) );
-  file->insertItem("&Contig Picker...", this, SLOT(chooseContig()));
-  file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
+  QVBox * vbox = new QVBox(this, "vbox");
 
-  // Statusbar
-  QLabel * statusbar = new QLabel(this);
-  statusbar->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-  statusbar->setText("No Bank Loaded");
+  m_tiling = new TilingFrame(vbox, "tilingframe");
 
-  // Widgets
-  m_contigid = new QSpinBox(1, 1, 1, this, "contigid");
-  m_gindex   = new QSpinBox(0,100, 1, this, "gindexspin");
-
-  QSpinBox * fontsize  = new QSpinBox(6, 24, 1, this, "fontsize");
-  QLineEdit * dbpick   = new QLineEdit("DMG", this, "dbpick");
-  TilingFrame * tiling = new TilingFrame(this, "tilingframe");
-  QPushButton * showinserts = new QPushButton("Show Inserts", this, "showinserts");
-
-  QCheckBox * stable       = new QCheckBox("Stable Tiling", this, "stable");
-  QCheckBox * shownumbers  = new QCheckBox("Show Position", this, "consnumbers");
-  QCheckBox * hldisc       = new QCheckBox("Highlight", this, "highlightconflicts");
-  QCheckBox * showqv       = new QCheckBox("Show QV", this, "showqvchkbx");
-  QCheckBox * showchromo   = new QCheckBox("Prefetch Chromo", this, "displayall");
-
-  QLabel * contig_lbl   = new QLabel(m_contigid, "Contig ID", this, "contiglbl");
-  QLabel * db_lbl       = new QLabel(dbpick, "Database", this, "dblbl");
-  QLabel * gindex_lbl   = new QLabel(m_gindex, "Position", this, "gindexlbl");
-  QLabel * fontsize_lbl = new QLabel(fontsize, "Font Size", this, "fontlbl");
-
-  int gutter = 5;
-
-  m_slider = new QScrollBar(Horizontal, this, "slider");
+  m_slider = new QScrollBar(Horizontal, vbox, "slider");
   m_slider->setTracking(0);
   m_slider->setPageStep(20);
 
+  setCentralWidget(vbox);
+
+  // Menubar
+  QPopupMenu* file = new QPopupMenu(this);
+  menuBar()->insertItem("&File", file);
+  file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()) );
+  file->insertItem("&Contig Picker...", this, SLOT(chooseContig()));
+  file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
+
+  m_options = new QPopupMenu(this);
+  menuBar()->insertItem("&Options", m_options);
+  m_posid    = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
+  m_qvid     = m_options->insertItem("&Show Quality Values",     this, SLOT(toggleShowQV()));
+  m_highid   = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
+  m_prefetch = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(togglePrefetchChromatograms()));
+
+  // Status Bar
+  statusBar()->message("No Bank Loaded");
+
+  // Status Tool Bar
+  QToolBar * status = new QToolBar(this, "Status");
+  status->setLabel("Status");
+
+  QLabel * lbl = new QLabel("Position", status, "gindexlbl");
+  m_gindex     = new QSpinBox(0,100, 1, status, "gindexspin");
+  m_gindex->setMinimumWidth(50);
+
+  QToolButton * bNextDisc = new QToolButton(Qt::RightArrow, status, "next");
+
+  new QLabel("   Contig ID", status, "contiglbl");
+  m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
+
+  new QLabel("   Database", status, "dblbl");
+  QLineEdit *  dbpick  = new QLineEdit("DMG", status, "dbpick");
+
+  QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 
+                                               m_tiling, SLOT(showInserts()), status );
+  bShowInserts->setText("Show Inserts");
+
+  new QLabel("   Font Size", status, "fontlbl");
+  QSpinBox * fontsize  = new QSpinBox(6, 24, 1, status, "fontsize");
+
+
   // slider <-> tiling
   connect(m_slider, SIGNAL(valueChanged(int)),
-          tiling, SLOT(setGindex(int)) );
+          m_tiling, SLOT(setGindex(int)) );
 
   connect(m_slider, SIGNAL(sliderMoved(int)),
-          tiling, SLOT(trackGindex(int)));
+          m_tiling, SLOT(trackGindex(int)));
 
-  connect(tiling, SIGNAL(gindexChanged(int)),
+  connect(m_tiling, SIGNAL(gindexChanged(int)),
           m_slider, SLOT(setValue(int)) );
 
   connect(m_slider, SIGNAL(sliderReleased()),
-          tiling,   SLOT(trackGindexDone()) );
+          m_tiling,   SLOT(trackGindexDone()) );
 
   // m_gindex <-> tiling
-  connect(tiling, SIGNAL(gindexChanged(int)),
+  connect(m_tiling, SIGNAL(gindexChanged(int)),
           m_gindex, SLOT(setValue(int)));
 
   connect(m_gindex, SIGNAL(valueChanged(int)),
-          tiling, SLOT(setGindex(int)));
+          m_tiling, SLOT(setGindex(int)));
 
   // fontsize <-> tiling
   connect(fontsize, SIGNAL(valueChanged(int)), 
-          tiling,   SLOT(setFontSize(int)));
+          m_tiling,   SLOT(setFontSize(int)));
 
   // checkboxes <-> tiling
-  connect(stable, SIGNAL(toggled(bool)),
-          tiling, SLOT(toggleStable(bool)));
-  connect(shownumbers, SIGNAL(toggled(bool)),
-          tiling, SLOT(toggleShowNumbers(bool)));
-  connect(hldisc, SIGNAL(toggled(bool)),
-          tiling, SLOT(toggleHighlightDiscrepancy(bool)));
-  connect(showqv, SIGNAL(toggled(bool)),
-          tiling, SLOT(toggleDisplayQV(bool)));
-  connect(showchromo, SIGNAL(toggled(bool)),
-          tiling,     SLOT(toggleDisplayAllChromo(bool)));
-  connect(showinserts, SIGNAL(clicked()),
-          tiling,      SLOT(showInserts()));
+//  connect(stable, SIGNAL(toggled(bool)),
+//          tiling, SLOT(toggleStable(bool)));
 
+  connect(bNextDisc, SIGNAL(clicked()),
+          m_tiling,    SLOT(advanceNextDiscrepancy()));
 
 
   // contigid <-> tiling
   connect(m_contigid, SIGNAL(valueChanged(int)),
-          tiling,     SLOT(setContigId(int)));
+          m_tiling,     SLOT(setContigId(int)));
 
-  connect(tiling,     SIGNAL(contigLoaded(int)),
+  connect(m_tiling,     SIGNAL(contigLoaded(int)),
           m_contigid, SLOT(setValue(int)));
 
   // mainwindow <-> tiling
   connect(this,   SIGNAL(bankSelected(std::string)),
-          tiling, SLOT(setBankname(std::string)));
+          m_tiling, SLOT(setBankname(std::string)));
   
-  connect(tiling,   SIGNAL(contigRange(int, int)),
+  connect(m_tiling,   SIGNAL(contigRange(int, int)),
           this,     SLOT(setContigRange(int, int)));
 
-  connect(tiling, SIGNAL(setGindexRange(int, int)),
+  connect(m_tiling, SIGNAL(setGindexRange(int, int)),
           this,   SLOT(setGindexRange(int, int)));
 
   connect(this, SIGNAL(contigIdSelected(int)),
-          tiling, SLOT(setContigId(int)));
+          m_tiling, SLOT(setContigId(int)));
 
   connect(this, SIGNAL(gindexChanged(int)),
-          tiling, SLOT(setGindex(int)));
+          m_tiling, SLOT(setGindex(int)));
 
-  // statusbar <-> tiling
-  connect(tiling,    SIGNAL(setStatus(const QString &)),
-          statusbar, SLOT(setText(const QString &)));
 
   // dbpick <-> tiling
   connect(dbpick, SIGNAL(textChanged(const QString &)),
-          tiling, SLOT(setDB(const QString &)));
+          m_tiling, SLOT(setDB(const QString &)));
 
   
-  // outmost
-  QBoxLayout * outergrid = new QHBoxLayout(0);
-  QVBoxLayout* vbox = new QVBoxLayout(this);
-  vbox->setMenuBar(menubar);
-  menubar->setSeparator(QMenuBar::InWindowsStyle);
-  vbox->addLayout(outergrid);
-  vbox->addSpacing(gutter);
-  vbox->addWidget(statusbar);
-  vbox->activate();
+  // statusbar <-> tiling
+  connect(m_tiling,      SIGNAL(setStatus(const QString &)),
+          statusBar(), SLOT(message(const QString &)));
   
-  // outer
-  QBoxLayout * leftgrid  = new QVBoxLayout(0);
-  QBoxLayout * rightgrid = new QVBoxLayout(0);
- 
-  outergrid->addSpacing(gutter);
-  outergrid->addLayout(leftgrid);
-  outergrid->addSpacing(gutter);
-
-  outergrid->addLayout(rightgrid, 10);
-
-  //left
-  leftgrid->addSpacing(gutter);
-  leftgrid->addWidget(showinserts);
-  leftgrid->addWidget(db_lbl);
-  leftgrid->addWidget(dbpick);
-  leftgrid->addSpacing(gutter);
-
-  leftgrid->addWidget(contig_lbl);
-  leftgrid->addWidget(m_contigid);
-  leftgrid->addSpacing(gutter);
-
-  leftgrid->addWidget(gindex_lbl);
-  leftgrid->addWidget(m_gindex);
-  leftgrid->addSpacing(gutter);
-
-  leftgrid->addWidget(fontsize_lbl);
-  leftgrid->addWidget(fontsize);
-  leftgrid->addSpacing(gutter);
-
-  leftgrid->addWidget(stable);
-  leftgrid->addWidget(shownumbers);
-  leftgrid->addWidget(hldisc);
-  leftgrid->addWidget(showqv);
-  leftgrid->addWidget(showchromo);
-  leftgrid->addStretch(gutter);
-
-  //right
-  rightgrid->addWidget(tiling, gutter);
-  rightgrid->addWidget(m_slider);
 
   // Set defaults
   fontsize->setValue(12);
@@ -314,12 +271,13 @@ void MainWindow::chooseContig()
       int contiglen = contig.getSeqString().length();
       int numreads = contig.getReadTiling().size();
 
-      ContigListItem * contigitem = new ContigListItem(table,  
-                                                       QString::number(contigid), 
-                                                       "Contig",
-                                                       "0",
-                                                       QString::number(contiglen), 
-                                                       QString::number(numreads));
+      //ContigListItem * contigitem = new ContigListItem(table,  
+      new ContigListItem(table,  
+                         QString::number(contigid), 
+                         "Contig",
+                         "0",
+                         QString::number(contiglen), 
+                         QString::number(numreads));
 
       /*
       vector<AMOS::Tile_t>::iterator ti;
@@ -354,4 +312,35 @@ void MainWindow::contigSelected(QListViewItem * item)
   m_contigPicker = NULL;
 }
 
+void MainWindow::toggleShowPositions()
+{
+  bool b = !m_options->isItemChecked(m_posid);
+  m_options->setItemChecked(m_posid, b);
+
+  m_tiling->toggleShowNumbers(b);
+}
+
+void MainWindow::toggleShowQV()
+{
+  bool b = !m_options->isItemChecked(m_qvid);
+  m_options->setItemChecked(m_qvid, b);
+
+  m_tiling->toggleDisplayQV(b);
+}
+
+void MainWindow::toggleHighlightDiscrepancy()
+{
+  bool b = !m_options->isItemChecked(m_highid);
+  m_options->setItemChecked(m_highid, b);
+
+  m_tiling->toggleHighlightDiscrepancy(b);
+}
+
+void MainWindow::togglePrefetchChromatograms()
+{
+  bool b = !m_options->isItemChecked(m_prefetch);
+  m_options->setItemChecked(m_prefetch, b);
+
+  m_tiling->toggleDisplayAllChromo(b);
+}
 

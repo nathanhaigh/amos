@@ -32,6 +32,7 @@ public slots:
     void toggleDisplayQV(bool);
     void toggleDisplayAllChromo(bool);
     void showInserts();
+    void advanceNextDiscrepancy();
 
 signals:
     void gindexChanged( int );
@@ -49,6 +50,8 @@ protected:
     void paintEvent(QPaintEvent *);
 
 private:
+
+    void loadContigRange(int gindex);
 
     int m_fontsize;
     int m_gindex;

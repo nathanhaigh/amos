@@ -172,7 +172,7 @@ void TilingFrame::setFontSize(int fontsize )
   repaint();
 }
 
-void TilingFrame::setGindex( int gindex )
+void TilingFrame::loadContigRange(int gindex)
 {
   //cerr << "TF:setgindex: " << gindex << endl;
   if (!m_loaded) { return; }
@@ -262,9 +262,13 @@ void TilingFrame::setGindex( int gindex )
 
     cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << kept << " of: " << orig << endl;
   }
+}
 
+void TilingFrame::setGindex(int gindex)
+{
+  loadContigRange(gindex);
   repaint();
-  emit gindexChanged(m_gindex);
+  emit gindexChanged(gindex);
 }
 
 void TilingFrame::setDB(const QString & db)
@@ -278,6 +282,34 @@ void TilingFrame::trackGindex(int gindex)
   m_gindex = gindex;
   m_consfield->repaint();
   emit gindexChanged( m_gindex );
+}
+
+void TilingFrame::advanceNextDiscrepancy()
+{
+  int nextDiscrepancyBuffer = 10;
+
+  int gindex = m_gindex+nextDiscrepancyBuffer+1;
+
+  while (gindex < m_consensus.length())
+  {
+    if (gindex > m_loadedEnd)
+    {
+      loadContigRange(gindex);
+    }
+
+    while (gindex <= m_loadedEnd)
+    {
+      if (m_cstatus[gindex] == 'X')
+      {
+        setGindex(gindex-nextDiscrepancyBuffer);
+        return;
+      }
+
+      gindex++;
+    }
+  }
+
+  setGindex(gindex);
 }
 
 void TilingFrame::trackGindexDone()
