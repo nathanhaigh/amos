@@ -140,21 +140,20 @@ void Contig_t::writeMessage (Message_t & msg) const
   Sequence_t::writeMessage (msg);
 
   try {
-    Message_t submsg;
-    vector<Message_t> msgs;
-    vector<Tile_t>::const_iterator tvi;
     stringstream ss;
 
     msg . setMessageCode (NCode( ));
 
     if ( reads_m . size( ) != 0 )
       {
+	vector<Tile_t>::const_iterator tvi;
+	Pos_t begin = msg . getSubMessages( ) . size( );
+	Pos_t end = begin + reads_m . size( );
+	msg . getSubMessages( ) . reserve (end);
+	msg . getSubMessages( ) . resize (end);
+
         for ( tvi = reads_m . begin( ); tvi != reads_m . end( ); tvi ++ )
-          {
-            tvi -> writeMessage (submsg);
-            msgs . push_back (submsg);
-          }
-        msg . setSubMessages (msgs);
+	  tvi -> writeMessage (msg . getSubMessages( ) [begin ++]);
       }
   }
   catch (ArgumentException_t) {

@@ -57,17 +57,17 @@ int main (int argc, char ** argv)
 
     clocka = clock( );
     for ( int i = 0; i < 1000; i ++ )
-      red . writeMessage (msg);
+      ctg . writeMessage (msg);
     clockb = clock( );
     loopa = (double)(clockb - clocka);
 
     clocka = clock( );
     for ( int i = 0; i < 1000; i ++ )
-      red . readMessage (msg);
+      ctg . readMessage (msg);
     clockb = clock( );
     loopb = (double)(clockb - clocka);
 
-    msg . write (cerr);
+    //    msg . write (cerr);
 
     cerr << endl
 	 << "loopa: " << (double)loopa / CLOCKS_PER_SEC << " sec.\n"

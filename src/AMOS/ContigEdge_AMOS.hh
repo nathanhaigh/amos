@@ -108,14 +108,14 @@ public:
   }
 
 
-  //--------------------------------------------------- getContigLinksItr ------
-  //! \brief Get a mutable iterator to the beginning of the link ID vector
+  //--------------------------------------------------- getContigLinks ---------
+  //! \brief Get the bundle of contig link IDs that make up this contig edge
   //!
-  //! \return Iterator pointing to the beginning of the link ID vector
+  //! \return A vector of contig link IDs
   //!
-  std::vector<ID_t>::iterator getContigLinksItr ( )
+  std::vector<ID_t> & getContigLinks ( )
   {
-    return links_m . begin( );
+    return links_m;
   }
 
 

@@ -245,14 +245,14 @@ public:
   }
 
 
-  //--------------------------------------------------- getReadsItr ------------
-  //! \brief Get a mutable iterator to the beginning of the read ID vector
+  //--------------------------------------------------- getReads ---------------
+  //! \brief Get the containing read IDs
   //!
-  //! \return Iterator pointing to the beginning of the read ID vector
+  //! \return The vector of read IDs that contain this Kmer
   //!
-  std::vector<ID_t>::iterator getReadsItr ( )
+  std::vector<ID_t> & getReads ( )
   {
-    return reads_m . begin( );
+    return reads_m;
   }
 
 

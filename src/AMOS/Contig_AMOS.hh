@@ -154,14 +154,14 @@ public:
   }
 
 
-  //--------------------------------------------------- getReadTilingItr -------
-  //! \brief Get a mutable iterator to the beginning of the read tile vector
+  //--------------------------------------------------- getReadTiling ----------
+  //! \brief Get the tiling of underlying reads
   //!
-  //! \return Iterator pointing to the beginning of the read tile vector
+  //! \return The vector of underlying reads
   //!
-  std::vector<Tile_t>::iterator getReadTilingItr ( )
+  std::vector<Tile_t> & getReadTiling ( )
   {
-    return reads_m . begin( );
+    return reads_m;
   }
 
 

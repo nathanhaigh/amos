@@ -220,14 +220,14 @@ public:
   }
 
 
-  //--------------------------------------------------- getSubMessagesItr ------
-  //! \brief Get a mutable iterator to the beginning of the submessage vector
+  //--------------------------------------------------- getSubMessages ---------
+  //! \brief Get a the vector of submessages for this message
   //!
-  //! \return Iterator pointing to the beginning of the submessage vector
+  //! \return The vector of submessages for this message
   //!
-  std::vector<Message_t>::iterator getSubMessagesItr ( )
+  std::vector<Message_t> & getSubMessages ( )
   {
-    return subs_m . begin( );
+    return subs_m;
   }
 
 

@@ -251,17 +251,17 @@ void Sequence_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    pair<char, char> cp;
-    Pos_t i, j, last;
-    string seq;
-    string qlt;
-    seq . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
-    qlt . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
 
     msg . setMessageCode (NCode( ));
 
     if ( length_m != 0 )
       {
+	pair<char, char> cp;
+	Pos_t i, j, last;
+	string seq, qlt;
+	seq . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
+	qlt . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
+
 	for ( i = 0; i < length_m; i += CHARS_PER_LINE )
 	  {
 	    last = i + CHARS_PER_LINE;
