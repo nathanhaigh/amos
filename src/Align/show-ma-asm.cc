@@ -10,6 +10,7 @@
 
 #include  "delcher.hh"
 #include  "fasta.hh"
+#include  "align.hh"
 #include  <vector>
 #include  <hash_set>
 #include  <string>
@@ -216,6 +217,12 @@ struct  Read_Info_t
    unsigned  flipped : 1;
    vector <int>  del;
    char  * seq, * qual;
+
+   bool  operator <
+       (const Read_Info_t & r)  const
+     {
+      return  (start < r . start);
+     }
   };
 
 
@@ -277,6 +284,7 @@ int  main
    hash_set <int>  frg_ids;
    vector <Read_Info_t>  read_list, surro_list;
    Read_Info_t  read;
+   Gapped_Multi_Alignment_t  gma;
    char  * consensus = NULL;
    int  consensus_len, consensus_ungapped_len;
    int  contig_iid, utg_id;
@@ -341,20 +349,21 @@ int  main
            Clean_Consensus (consensus, consensus_len, consensus_ungapped_len);
            assert (ct == consensus_len);
 
-           if  (consensus_ungapped_len >= 5000)
-               {
-                Get_Reads (FRG_File_Name, read_list, frg_ids);
-                n = read_list . size ();
+           Get_Reads (FRG_File_Name, read_list, frg_ids);
+           n = read_list . size ();
 
-                snps = Count_SNPs (consensus, 0, consensus_len, read_list, possible);
-                printf ("%10d %10d  %8d  %8d %8d  %8d %8d\n",
-                    cid, contig_iid, n, consensus_len, consensus_ungapped_len,
-                    snps, possible);
-               }
+           snps = Count_SNPs (consensus, 0, consensus_len, read_list, possible);
 #if  0
+           printf ("%10d %10d  %8d  %8d %8d  %8d %8d\n",
+               cid, contig_iid, n, consensus_len, consensus_ungapped_len,
+               snps, possible);
+#else
            printf ("\n\nContig %d (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
                 cid, contig_iid, n, consensus_len, consensus_ungapped_len);
            gaps = 0;
+
+           sort (read_list . begin (), read_list . end ());
+
            Print_Multialignment (stdout, consensus, 0, consensus_len,
                 read_list, gaps);
            List_SNPs (stdout, consensus, 0, consensus_len, read_list);
@@ -464,6 +473,9 @@ int  main
         printf ("Contig %d (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
              Contig_ID, contig_iid, n, consensus_len, consensus_ungapped_len);
         gaps = 0;
+
+        sort (read_list . begin (), read_list . end ());
+
         Print_Multialignment (stdout, consensus, 0, consensus_len,
              read_list, gaps);
         List_SNPs (stdout, consensus, 0, consensus_len, read_list);
@@ -988,7 +1000,8 @@ static void  Print_Multialignment
       hi = i + ALIGN_WIDTH;
       if  (hi > con_hi)
           hi = con_hi;
-      Print_Multialignment_Segment (fp, consensus, i, hi, read_list, gaps);
+      Print_Multialignment_Segment (fp, consensus, i, hi, read_list, gaps,
+           with_diffs);
      }
      
    return;
