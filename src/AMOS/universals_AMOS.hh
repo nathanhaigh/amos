@@ -196,7 +196,8 @@ public:
   {
     HASHMAP::hash_map<NCode_t, Universal_t *>::iterator i;
     if ( (i = hash_m . find (ncode)) == hash_m . end( ) )
-      AMOS_THROW_ARGUMENT ("Unknown Universal_t object NCode " + Decode(ncode));
+      AMOS_THROW_ARGUMENT
+	("Unknown UniversalSet_t object NCode " + Decode(ncode));
     return *(i -> second);
   }
 
@@ -204,7 +205,8 @@ public:
   {
     HASHMAP::hash_map<NCode_t, Universal_t *>::const_iterator i;
     if ( (i = hash_m . find (ncode)) == hash_m . end( ) )
-      AMOS_THROW_ARGUMENT ("Unknown Universal_t object NCode " + Decode(ncode));
+      AMOS_THROW_ARGUMENT
+	("Unknown UniversalSet_t object NCode " + Decode(ncode));
     return *(i -> second);
   }
 
@@ -214,6 +216,389 @@ public:
   }
 
   const Universal_t & operator[] (const std::string & ncode) const
+  {
+    return operator[] (Encode (ncode));
+  }
+};
+
+
+
+
+//================================================ BankSet_t ===================
+//! \brief A non-redundant, complete collection of AMOS banks
+//!
+//! Provides a non-redundant, complete collection of static AMOS banks
+//! accessible by their NCode and iteration. Useful when all possible AMOS
+//! banks are required, but the exact makeup of banks is unknown. Banks stored
+//! in this set are static, and only destruced when the class is destructed.
+//! Banks are stored in order that will preserve the def-before-ref rule -
+//! meaning two banks A,B where B has a link to A will always appear in the
+//! order A,B when iterating through the set.
+//!
+//==============================================================================
+class BankSet_t
+{
+
+private:
+
+  std::vector<Bank_t *> bnks_m;     //!< banks in correct order
+  HASHMAP::hash_map<NCode_t, Bank_t *> hash_m;   //!< bank hash
+
+
+public:
+
+  class iterator
+  {
+  private:
+    std::vector<Bank_t *>::iterator i_m;
+
+  public:
+    iterator ()
+    { }
+    iterator (std::vector<Bank_t *>::iterator i)
+    { i_m = i; }
+    Bank_t & operator*() const
+    { return **i_m; }
+    operator Bank_t * () const
+    { return *i_m; }
+    Bank_t * operator->() const
+    { return *i_m; }
+    iterator & operator++()
+    { ++ i_m; }
+    iterator operator++(int)
+    {
+      iterator tmp = *this;
+      this->operator++();
+      return tmp;
+    }
+  };
+
+  class const_iterator
+  {
+  private:
+    std::vector<Bank_t *>::const_iterator i_m;
+
+  public:
+    const_iterator ()
+    { }
+    const_iterator (std::vector<Bank_t *>::const_iterator i)
+    { i_m = i; }
+    const Bank_t & operator*() const
+    { return **i_m; }
+    operator const Bank_t * () const
+    { return *i_m; }
+    const Bank_t * operator->() const
+    { return *i_m; }
+    const_iterator & operator++()
+    { ++ i_m; }
+    const_iterator operator++(int)
+    {
+      const_iterator tmp = *this;
+      this->operator++();
+      return tmp;
+    }
+  };
+
+  
+  //--------------------------------------------------- BankSet_t --------------
+  //! \brief Constructs a BankSet_t w/ default banks
+  //!
+  BankSet_t ( );
+
+
+  //--------------------------------------------------- ~BankSet_t -------------
+  //! \brief Destroys a UniveralSet_t and closes its contained banks
+  //!
+  ~BankSet_t ( );
+
+
+  //--------------------------------------------------- begin ------------------
+  //! \brief Returns an iterator to the beginning of the set
+  //!
+  //! Iterator on all the banks in the set. Operates just like a std::vector
+  //! iterator, however it does not support iterator addition/subtraction or
+  //! reverse iteration. Banks will always be ordered
+  //! definition-before-reference, meaning if B refers to A, A will always
+  //! appear before B when iterating forward.
+  //!
+  //! \return An iterator to the beginning of the set
+  //!
+  iterator begin ( ) { return iterator (bnks_m . begin( )); }
+  const_iterator begin ( ) const { return const_iterator (bnks_m . begin( )); }
+
+
+  //--------------------------------------------------- clearAll ---------------
+  //! \brief Issues a clear command to each bank in the set
+  //!
+  //! \return void
+  //!
+  void clearAll ( )
+  {
+    for ( iterator i = begin( ); i != end( ); ++ i )
+      i -> clear( );
+  }
+
+
+  //--------------------------------------------------- closeAll ---------------
+  //! \brief Issues a close command to each bank in the set
+  //!
+  //! \return void
+  //!
+  void closeAll ( )
+  {
+    for ( iterator i = begin( ); i != end( ); ++ i )
+      i -> close( );
+  }
+
+
+  //--------------------------------------------------- end --------------------
+  //! \brief Returns an iterator to the end of the set
+  //!
+  //! \return An iterator to the end of the set
+  //!
+  iterator end ( ) { return iterator (bnks_m . end ( )); }
+  const_iterator end ( ) const { return const_iterator (bnks_m . end( )); }
+
+
+  //--------------------------------------------------- exists -----------------
+  //! \brief Checks if a bank with a given NCode exists in the set
+  //!
+  //! \return true if it exists, false otherwise
+  //!
+  bool exists (NCode_t ncode)
+  {
+    return ( hash_m . find (ncode) != hash_m . end( ) );
+  }
+
+
+  //--------------------------------------------------- getSize ----------------
+  //! \brief Returns the number of known AMOS banks
+  //!
+  //! \return The number of banks in the set
+  //!
+  Size_t getSize ( )
+  {
+    return bnks_m . size( );
+  }
+
+
+  //--------------------------------------------------- operator[] -------------
+  //! \brief Returns a reference to the bank with the given NCode
+  //!
+  //! \pre The NCode exists in the set
+  //! \throws ArgumentException_t
+  //! \return Pointer to the bank with the given NCode
+  //!
+  Bank_t & operator[] (NCode_t ncode)
+  {
+    HASHMAP::hash_map<NCode_t, Bank_t *>::iterator i;
+    if ( (i = hash_m . find (ncode)) == hash_m . end( ) )
+      AMOS_THROW_ARGUMENT
+	("Unknown BankSet_t object NCode " + Decode(ncode));
+    return *(i -> second);
+  }
+
+  const Bank_t & operator[] (NCode_t ncode) const
+  {
+    HASHMAP::hash_map<NCode_t, Bank_t *>::const_iterator i;
+    if ( (i = hash_m . find (ncode)) == hash_m . end( ) )
+      AMOS_THROW_ARGUMENT
+	("Unknown BankSet_t object NCode " + Decode(ncode));
+    return *(i -> second);
+  }
+
+  Bank_t & operator[] (const std::string & ncode)
+  {
+    return operator[] (Encode (ncode));
+  }
+
+  const Bank_t & operator[] (const std::string & ncode) const
+  {
+    return operator[] (Encode (ncode));
+  }
+
+};
+
+
+
+
+//================================================ BankStreamSet_t =============
+//! \brief A non-redundant, complete collection of AMOS banks
+//!
+//! Provides a non-redundant, complete collection of static AMOS banks
+//! accessible by their NCode and iteration. Useful when all possible AMOS
+//! banks are required, but the exact makeup of banks is unknown. Banks stored
+//! in this set are static, and only destruced when the class is destructed.
+//! Banks are stored in order that will preserve the def-before-ref rule -
+//! meaning two banks A,B where B has a link to A will always appear in the
+//! order A,B when iterating through the set.
+//!
+//==============================================================================
+class BankStreamSet_t
+{
+
+private:
+
+  std::vector<BankStream_t *> bnks_m;     //!< banks in correct order
+  HASHMAP::hash_map<NCode_t, BankStream_t *> hash_m;   //!< bank hash
+
+
+public:
+
+  class iterator
+  {
+  private:
+    std::vector<BankStream_t *>::iterator i_m;
+
+  public:
+    iterator ()
+    { }
+    iterator (std::vector<BankStream_t *>::iterator i)
+    { i_m = i; }
+    BankStream_t & operator*() const
+    { return **i_m; }
+    operator BankStream_t * () const
+    { return *i_m; }
+    BankStream_t * operator->() const
+    { return *i_m; }
+    iterator & operator++()
+    { ++ i_m; }
+    iterator operator++(int)
+    {
+      iterator tmp = *this;
+      this->operator++();
+      return tmp;
+    }
+  };
+
+  class const_iterator
+  {
+  private:
+    std::vector<BankStream_t *>::const_iterator i_m;
+
+  public:
+    const_iterator ()
+    { }
+    const_iterator (std::vector<BankStream_t *>::const_iterator i)
+    { i_m = i; }
+    const BankStream_t & operator*() const
+    { return **i_m; }
+    operator const BankStream_t * () const
+    { return *i_m; }
+    const BankStream_t * operator->() const
+    { return *i_m; }
+    const_iterator & operator++()
+    { ++ i_m; }
+    const_iterator operator++(int)
+    {
+      const_iterator tmp = *this;
+      this->operator++();
+      return tmp;
+    }
+  };
+
+  
+  //--------------------------------------------------- BankStreamSet_t --------
+  //! \brief Constructs a BankStreamSet_t w/ default banks
+  //!
+  BankStreamSet_t ( );
+
+
+  //--------------------------------------------------- ~BankStreamSet_t -------
+  //! \brief Destroys a UniveralSet_t and closes its contained banks
+  //!
+  ~BankStreamSet_t ( );
+
+
+  //--------------------------------------------------- begin ------------------
+  //! \brief Returns an iterator to the beginning of the set
+  //!
+  //! Iterator on all the banks in the set. Operates just like a std::vector
+  //! iterator, however it does not support iterator addition/subtraction or
+  //! reverse iteration. Banks will always be ordered
+  //! definition-before-reference, meaning if B refers to A, A will always
+  //! appear before B when iterating forward.
+  //!
+  //! \return An iterator to the beginning of the set
+  //!
+  iterator begin ( ) { return iterator (bnks_m . begin( )); }
+  const_iterator begin ( ) const { return const_iterator (bnks_m . begin( )); }
+
+
+  //--------------------------------------------------- clearAll ---------------
+  //! \brief Issues a clear command to each bank in the set
+  //!
+  //! \return void
+  //!
+  void clearAll ( )
+  {
+    for ( iterator i = begin( ); i != end( ); ++ i )
+      i -> clear( );
+  }
+
+
+  //--------------------------------------------------- end --------------------
+  //! \brief Returns an iterator to the end of the set
+  //!
+  //! \return An iterator to the end of the set
+  //!
+  iterator end ( ) { return iterator (bnks_m . end ( )); }
+  const_iterator end ( ) const { return const_iterator (bnks_m . end( )); }
+
+
+  //--------------------------------------------------- exists -----------------
+  //! \brief Checks if a bank with a given NCode exists in the set
+  //!
+  //! \return true if it exists, false otherwise
+  //!
+  bool exists (NCode_t ncode)
+  {
+    return ( hash_m . find (ncode) != hash_m . end( ) );
+  }
+
+
+  //--------------------------------------------------- getSize ----------------
+  //! \brief Returns the number of known AMOS banks
+  //!
+  //! \return The number of banks in the set
+  //!
+  Size_t getSize ( )
+  {
+    return bnks_m . size( );
+  }
+
+
+  //--------------------------------------------------- operator[] -------------
+  //! \brief Returns a reference to the bank with the given NCode
+  //!
+  //! \pre The NCode exists in the set
+  //! \throws ArgumentException_t
+  //! \return Pointer to the bank with the given NCode
+  //!
+  BankStream_t & operator[] (NCode_t ncode)
+  {
+    HASHMAP::hash_map<NCode_t, BankStream_t *>::iterator i;
+    if ( (i = hash_m . find (ncode)) == hash_m . end( ) )
+      AMOS_THROW_ARGUMENT
+	("Unknown BankStreamSet_t object NCode " + Decode(ncode));
+    return *(i -> second);
+  }
+
+  const BankStream_t & operator[] (NCode_t ncode) const
+  {
+    HASHMAP::hash_map<NCode_t, BankStream_t *>::const_iterator i;
+    if ( (i = hash_m . find (ncode)) == hash_m . end( ) )
+      AMOS_THROW_ARGUMENT
+	("Unknown BankStreamSet_t object NCode " + Decode(ncode));
+    return *(i -> second);
+  }
+
+  BankStream_t & operator[] (const std::string & ncode)
+  {
+    return operator[] (Encode (ncode));
+  }
+
+  const BankStream_t & operator[] (const std::string & ncode) const
   {
     return operator[] (Encode (ncode));
   }

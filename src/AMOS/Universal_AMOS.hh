@@ -10,9 +10,9 @@
 #ifndef __Universal_AMOS_HH
 #define __Universal_AMOS_HH 1
 
-#include "Bank_AMOS.hh"
 #include "Message_AMOS.hh"
 #include "datatypes_AMOS.hh"
+#include "databanks_AMOS.hh"
 #include <string>
 #include <sstream>
 #include <utility>

@@ -209,7 +209,8 @@ public:
   {
     std::map<NCode_t,std::string>::const_iterator mi = fields_m . find (fcode);
     if ( mi == fields_m . end( ) )
-      AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " + Decode (fcode));
+      AMOS_THROW_ARGUMENT
+	("Cannot retrieve absent field '" + Decode (fcode) + "'");
     return mi -> second;
   }
 

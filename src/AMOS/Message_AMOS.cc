@@ -90,14 +90,14 @@ bool Message_t::read (istream & in)
 	for ( i = 0; i < NCODE_SIZE; i ++ )
 	  name [i] = in . get( );
 	if ( in . get( ) != ':' )
-	  AMOS_THROW_IO ("Could not parse field NCode in " +
-			 Decode (mcode_m) + " message");
+	  AMOS_THROW_IO ("Could not parse field code in '" +
+			 Decode (mcode_m) + "' message");
 
 	//-- Read in first line of field
 	getline (in, data);
 	if ( !in . good( ) )
-	  AMOS_THROW_IO ("Could not parse single-line field data in " +
-			 Decode (mcode_m) + " message");
+	  AMOS_THROW_IO ("Could not parse single-line field data in '" +
+			 Decode (mcode_m) + "' message");
 
 	//-- If multi-line field, read the rest
 	if ( data . empty( ) )
@@ -105,8 +105,8 @@ bool Message_t::read (istream & in)
 	    do {
 	      getline (in, data, '.');
 	      if ( !in . good( ) )
-		AMOS_THROW_IO ("Could not parse multi-line field data in " +
-			       Decode (mcode_m) + " message");
+		AMOS_THROW_IO ("Could not parse multi-line field data in '" +
+			       Decode (mcode_m) + "' message");
 	    } while ( in.peek( ) != NL_CHAR  ||  *(data.rbegin( )) != NL_CHAR );
 	    in . get( ); 
 	  }

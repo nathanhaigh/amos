@@ -111,9 +111,9 @@ void Bank_t::append (IBankable_t & obj)
 void Bank_t::appendBID (IBankable_t & obj)
 {
   if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
-    AMOS_THROW_IO ("Cannot append: bank not open for writing");
+    AMOS_THROW_IO ("Cannot append, bank not open for writing");
   if ( banktype_m != obj.getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append: incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot append, incompatible object type");
 
   //-- Add another partition if necessary
   if ( last_bid_m == max_bid_m )
@@ -157,7 +157,7 @@ void Bank_t::appendBID (IBankable_t & obj)
 void Bank_t::clean ( )
 {
   if ( ! is_open_m  ||  ! (mode_m & B_READ  &&  mode_m & B_WRITE) )
-    AMOS_THROW_IO ("Cannot clean: bank not open for reading and writing");
+    AMOS_THROW_IO ("Cannot clean, bank not open for reading and writing");
 
   //-- Create a temporary bank of similar type and concat this bank to it
   Bank_t tmpbnk (banktype_m);
@@ -206,8 +206,9 @@ void Bank_t::clean ( )
 //----------------------------------------------------- clear ------------------
 void Bank_t::clear ( )
 {
-  if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
-    AMOS_THROW_IO ("Cannot clear: bank not open for writing");
+  if ( ! is_open_m ) return;
+  if ( ! (mode_m & B_WRITE) )
+    AMOS_THROW_IO ("Cannot clear, bank not open for writing");
 
   //-- Close, unlink and free the partition files
   for ( Size_t i = 0; i != npartitions_m; ++ i )
@@ -242,7 +243,7 @@ void Bank_t::close ( )
       string map_path (store_pfx_m + MAP_STORE_SUFFIX);
       ofstream map_stream (map_path . c_str( ));
       if ( ! map_stream . is_open( ) )
-	AMOS_THROW_IO ("Could not open bank partition: " + map_path);
+	AMOS_THROW_IO ("Could not open bank partition, " + map_path);
       
       idmap_m . writeRecord (map_stream);
       
@@ -267,11 +268,11 @@ void Bank_t::close ( )
 void Bank_t::concat (Bank_t & s)
 {
   if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
-    AMOS_THROW_IO ("Cannot concat: bank not open for writing");
+    AMOS_THROW_IO ("Cannot concat, bank not open for writing");
   if ( ! s . is_open_m  ||  ! (s . mode_m & B_READ) )
-    AMOS_THROW_IO ("Cannot concat: source bank not open for reading");
+    AMOS_THROW_IO ("Cannot concat, source bank not open for reading");
   if ( banktype_m != s . banktype_m )
-    AMOS_THROW_ARGUMENT ("Cannot concat: incompatible bank type");
+    AMOS_THROW_ARGUMENT ("Cannot concat, incompatible bank type");
 
   Size_t size;
   Size_t tail = s . fix_size_m - sizeof (bankstreamoff) - sizeof (BankFlags_t);
@@ -386,7 +387,7 @@ void Bank_t::concat (Bank_t & s)
 void Bank_t::create (const string & dir, BankMode_t mode)
 {
   if ( ! (mode & B_WRITE) )
-    AMOS_THROW_IO ("Cannot create: bank not opened for writing");
+    AMOS_THROW_IO ("Cannot create, bank not opened for writing");
   setMode (mode);
 
   if ( is_open_m ) close( );
@@ -429,7 +430,7 @@ void Bank_t::create (const string & dir, BankMode_t mode)
 void Bank_t::destroy ( )
 {
   if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
-    AMOS_THROW_IO ("Cannot destroy: bank not open for writing");
+    AMOS_THROW_IO ("Cannot destroy, bank not open for writing");
 
   //-- Unlink the partitions
   clear( );
@@ -475,9 +476,9 @@ bool Bank_t::exists (const string & dir) const
 void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
 {
   if ( ! is_open_m  ||  ! (mode_m & B_READ) )
-    AMOS_THROW_IO ("Cannot fetch: bank not open for reading");
+    AMOS_THROW_IO ("Cannot fetch, bank not open for reading");
   if (banktype_m != obj.getNCode( ))
-    AMOS_THROW_ARGUMENT ("Cannot fetch: incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot fetch, incompatible object type");
 
   //-- Seek to the record and read the data
   BankPartition_t * partition = localizeBID (bid);
@@ -541,7 +542,7 @@ void Bank_t::lockIFO ( )
       return;
 
   AMOS_THROW_IO
-    ((string)"Failed to obtain bank IFO partition lock: " + strerror(errno));
+    ((string)"Failed to obtain bank IFO file lock, " + strerror (errno));
 }
 
 
@@ -564,7 +565,7 @@ void Bank_t::open (const string & dir, BankMode_t mode)
     string map_path (store_pfx_m + MAP_STORE_SUFFIX);
     ifstream map_stream (map_path . c_str( ));
     if ( ! map_stream . is_open( ) )
-      AMOS_THROW_IO ("Could not open bank partition: " + map_path);
+      AMOS_THROW_IO ("Could not open bank partition, " + map_path);
     
     idmap_m . readRecord (map_stream);
 
@@ -605,10 +606,10 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
 
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
     if ( ! partition -> fix . is_open( ) )
-      AMOS_THROW_IO ("Could not open bank partition: " + partition -> fix_name);
+      AMOS_THROW_IO ("Could not open bank partition, " + partition -> fix_name);
     partition -> var . open (partition -> var_name . c_str( ), mode);
     if ( ! partition -> var . is_open( ) )
-      AMOS_THROW_IO ("Could not open bank partition: " + partition -> var_name);
+      AMOS_THROW_IO ("Could not open bank partition, " + partition -> var_name);
   }
   catch (Exception_t) {
     partition -> fix . close( );
@@ -633,7 +634,7 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
 void Bank_t::removeBID (ID_t bid)
 {
   if ( ! is_open_m  ||  ! (mode_m & B_READ  &&  mode_m & B_WRITE) )
-    AMOS_THROW_IO ("Cannot remove: bank not open for reading and writing");
+    AMOS_THROW_IO ("Cannot remove, bank not open for reading and writing");
 
   //-- Seek to FIX record and rewrite
   BankPartition_t * partition = localizeBID (bid);
@@ -709,9 +710,9 @@ void Bank_t::replace (const char * eid, IBankable_t & obj)
 void Bank_t::replaceBID (ID_t bid, IBankable_t & obj)
 {
   if ( ! is_open_m  ||  ! (mode_m & B_READ  &&  mode_m & B_WRITE) )
-    AMOS_THROW_IO ("Cannot replace: bank not open for reading and writing");
+    AMOS_THROW_IO ("Cannot replace, bank not open for reading and writing");
   if ( banktype_m != obj.getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot replace: incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot replace, incompatible object type");
 
   //-- Set the modified flag
   obj . flags_m . is_removed = false;
@@ -768,18 +769,18 @@ void Bank_t::syncIFO (IFOMode_t mode)
 	string ifo_path (store_pfx_m + IFO_STORE_SUFFIX);
 	ifstream ifo_stream (ifo_path . c_str( ));
 	if ( ! ifo_stream . is_open( ) )
-	  AMOS_THROW_IO ("Could not open bank partition: " + ifo_path);
+	  AMOS_THROW_IO ("Could not open bank partition, " + ifo_path);
 
 	getline (ifo_stream, line, '=');
 	ifo_stream >> line;                // bank version
 	if ( line != BANK_VERSION )
 	  AMOS_THROW_IO
-	    ("Could not read bank: incompatible bank version " + line);
+	    ("Could not read bank, incompatible bank version " + line);
 	getline (ifo_stream, line, '=');
 	ifo_stream >> banktype;            // bank type
 	if ( banktype != banktype_m )
 	  AMOS_THROW_IO
-	    ("Could not read bank: incompatible type " + Decode (banktype));
+	    ("Could not read bank, incompatible type " + Decode (banktype));
 
 	getline (ifo_stream, line, '=');
 	ifo_stream >> nbids;               // number of objects
@@ -859,13 +860,13 @@ void Bank_t::syncIFO (IFOMode_t mode)
     //-- Check existing locks
     if ( (mode_m & B_READ)   &&  ltype == WRITE_LOCK_CHAR )
       AMOS_THROW_IO
-	("Could not open bank for reading: write lock exists\n" + *vj);
+	("Could not open bank for reading, locked by '" + *vj + "'");
     if ( (mode_m & B_WRITE)  &&  ltype == WRITE_LOCK_CHAR )
       AMOS_THROW_IO
-	("Could not open bank for writing: write lock exists\n" + *vj);
+	("Could not open bank for writing, locked by '" + *vj + "'");
     if ( (mode_m & B_WRITE)  &&  ltype == READ_LOCK_CHAR )
       AMOS_THROW_IO
-	("Could not open bank for writing: read lock exists\n"  + *vj);
+	("Could not open bank for writing, locked by '" + *vj + "'");
 
     //-- Add new lock
     if ( mode != I_CLOSE )
@@ -887,10 +888,10 @@ void Bank_t::syncIFO (IFOMode_t mode)
     string ifo_path (store_pfx_m + IFO_STORE_SUFFIX);
     ofstream ifo_stream (ifo_path . c_str( ));
     if ( ! ifo_stream . is_open( ) )
-      AMOS_THROW_IO ("Could not open bank partition: " + ifo_path);
+      AMOS_THROW_IO ("Could not open bank partition, " + ifo_path);
 
     ifo_stream
-      << "____" << Decode (banktype_m) << " BANK INFORMATION____\n"
+      << "____" << Decode (banktype_m) << " BANK INFORMATION____" << endl
       << "bank version = "      << BANK_VERSION         << endl
       << "bank type = "         << banktype_m           << endl
       << "objects = "           << nbids                << endl
@@ -936,16 +937,16 @@ void Bank_t::touchFile (const string & path, int mode, bool create)
     {
     if ( create )
       AMOS_THROW_IO
-	("Could not create bank partition: " + path + '\n' + strerror(errno));
+	("Could not create bank file, " + path + ',' + strerror (errno));
     else
       AMOS_THROW_IO
-	("Could not open bank partition: "   + path + '\n' + strerror(errno));
+	("Could not open bank file, "   + path + ',' + strerror (errno));
     }
 
   fd = ::close (fd);
   if ( fd == -1 )
     AMOS_THROW_IO
-      ("Could not close bank partition: "    + path + '\n' + strerror(errno));
+      ("Could not close bank file, "    + path + ',' + strerror (errno));
 }
 
 
@@ -958,7 +959,7 @@ void Bank_t::unlockIFO ( )
   string lck_path (store_pfx_m + LCK_STORE_SUFFIX);
   if ( unlink (lck_path . c_str( )) )
     AMOS_THROW_IO
-      ((string)"Failed to release bank IFO partition lock: " + strerror(errno));
+      ((string)"Failed to release bank IFO file lock, " + strerror (errno));
 }
 
 

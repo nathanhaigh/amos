@@ -17,7 +17,6 @@ using namespace HASHMAP;
 
 
 //================================================ UniversalSet_t ==============
-
 //----------------------------------------------------- UniversalSet_t ---------
 UniversalSet_t::UniversalSet_t ( )
 {
@@ -47,9 +46,74 @@ UniversalSet_t::UniversalSet_t ( )
 }
 
 
+
 //----------------------------------------------------- ~UniversalSet_t --------
 UniversalSet_t::~UniversalSet_t ( )
 {
   for ( iterator i = begin( ); i != end( ); ++ i )
     delete i;
+}
+
+
+
+//================================================ BankSet_t ===================
+//----------------------------------------------------- BankSet_t --------------
+BankSet_t::BankSet_t ( )
+{
+  UniversalSet_t objs;
+  UniversalSet_t::iterator i;
+
+  //-- Set up the banks
+  for ( i = objs . begin( ); i != objs . end( ); ++ i )
+    bnks_m . push_back (new Bank_t (i -> getNCode( )));
+
+  //-- Set up the hash
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    hash_m [i -> getType( )] = i;
+
+  //-- Make sure everything went OK, e.g. all the NCodes were unique
+  assert ( bnks_m . size( ) == hash_m . size( ) );
+}
+
+
+//----------------------------------------------------- ~BankSet_t -------------
+BankSet_t::~BankSet_t ( )
+{
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    {
+      i -> close( );
+      delete i;
+    }
+}
+
+
+
+//================================================ BankStreamSet_t =============
+//----------------------------------------------------- BankStreamSet_t --------
+BankStreamSet_t::BankStreamSet_t ( )
+{
+  UniversalSet_t objs;
+  UniversalSet_t::iterator i;
+
+  //-- Set up the banks
+  for ( i = objs . begin( ); i != objs . end( ); ++ i )
+    bnks_m . push_back (new BankStream_t (i -> getNCode( )));
+
+  //-- Set up the hash
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    hash_m [i -> getType( )] = i;
+
+  //-- Make sure everything went OK, e.g. all the NCodes were unique
+  assert ( bnks_m . size( ) == hash_m . size( ) );
+}
+
+
+//----------------------------------------------------- ~BankStreamSet_t -------
+BankStreamSet_t::~BankStreamSet_t ( )
+{
+  for ( iterator i = begin( ); i != end( ); ++ i )
+    {
+      i -> close( );
+      delete i;
+    }
 }

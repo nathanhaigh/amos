@@ -713,7 +713,8 @@ public:
   //!
   //! Erases all the objects in a bank, but keeps the bank open at the current
   //! location. Only throws an exception if the bank is not open for writing.
-  //! Won't complain if some of the partitions won't unlink etc.
+  //! Won't complain if some of the partitions won't unlink etc. Has no effect
+  //! on a closed bank.
   //!
   //! \pre The Bank is open for writing
   //! \throws IOException_t
