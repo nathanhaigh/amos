@@ -227,7 +227,7 @@ struct  Read_Info_t
   };
 
 
-static int  Contig_ID;
+static string  Desired_ID;
 static char  * ASM_File_Name;
 static char  * FRG_File_Name;
 static bool  Consensus_With_Gapped_Coords = false;
@@ -238,6 +238,9 @@ static bool  Only_One = true;
 static bool  Show_SNPs = false;
   // If set true by the -s option, the after each multialignment
   // list the SNP values in it
+static bool  Show_Unitig = false;
+  // If set true by the -u option, then do alignment for unitig(s)
+  // with the specified uid
 
 
 static void  Clean_Consensus
@@ -286,11 +289,13 @@ int  main
    Gapped_Multi_Alignment_t  gma;
    char  * consensus = NULL;
    int  consensus_len, consensus_ungapped_len;
-   int  contig_iid, utg_id;
+   int  tig_iid;
    bool  in_cco = false, in_consensus = false, in_mps = false, in_del = false;
    bool  in_utg = false;
    bool  found_it = false;
-   int  cid, ct, dln, gaps, level;
+   string  cid;
+   char  * p;
+   int  ct, dln, gaps, level;
    int  i, n;
 
    cerr << "Starting on " << __DATE__ << " at " << __TIME__ << endl;
@@ -300,9 +305,11 @@ int  main
    Parse_Command_Line (argc, argv);
 
    if  (Only_One)
-       fprintf (stderr, "Multialignment for contig %d\n", Contig_ID);
+       fprintf (stderr, "Multialignment for %stig %s\n",
+            Show_Unitig ? "uni" : "con", Desired_ID . c_str ());
      else
-       fprintf (stderr, "Multialignment for all contigs\n");
+       fprintf (stderr, "Multialignment for all %stigs\n",
+       Show_Unitig ? "uni" : "con");
    fprintf (stderr, "Using .asm file %s and .frg file %s\n",
         ASM_File_Name, FRG_File_Name);
 
@@ -323,21 +330,28 @@ int  main
           in_cco = false;
       else if  (in_utg && level == 0)
           in_utg = false;
-      if  (in_cco && strncmp (line, "acc:", 4) == 0)
+      if  (in_cco && strncmp (line, "acc:", 4) == 0 && ! Show_Unitig)
           {
-           cid = strtol (line + 5, NULL, 10);
-           if  (cid == Contig_ID || ! Only_One)
+           p = strchr (line + 5, ',');
+           assert (p != NULL);
+           cid . assign (line + 5, p - line - 5);
+           if  (cid == Desired_ID || ! Only_One)
                {
-                char  * p;
-
                 found_it = true;
-                p = strchr (line + 5, ',');
-                assert (p != NULL);
-                contig_iid = strtol (p + 1, NULL, 10);
+                tig_iid = strtol (p + 1, NULL, 10);
                }
           }
-      else if  (in_utg && strncmp (line, "acc:", 4) == 0)
-          utg_id = strtol (line + 5, NULL, 10);
+      else if  (in_utg && strncmp (line, "acc:", 4) == 0 && Show_Unitig)
+          {
+           p = strchr (line + 5, ',');
+           assert (p != NULL);
+           cid . assign (line + 5, p - line - 5);
+           if  (cid == Desired_ID || ! Only_One)
+               {
+                found_it = true;
+                tig_iid = strtol (p + 1, NULL, 10);
+               }
+          }
       if  (found_it && level == 0)
           {
            int  possible, snps;
@@ -353,12 +367,13 @@ int  main
 
            snps = Count_SNPs (consensus, 0, consensus_len, read_list, possible);
 #if  0
-           printf ("%10d %10d  %8d  %8d %8d  %8d %8d\n",
-               cid, contig_iid, n, consensus_len, consensus_ungapped_len,
+           printf ("%10s %10d  %8d  %8d %8d  %8d %8d\n",
+               cid . c_str (), tig_iid, n, consensus_len, consensus_ungapped_len,
                snps, possible);
 #else
-           printf ("\n\nContig %d (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
-                cid, contig_iid, n, consensus_len, consensus_ungapped_len);
+           printf ("\n\n%stig %s (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
+                Show_Unitig ? "Uni" : "Con", cid . c_str (), tig_iid, n,
+                consensus_len, consensus_ungapped_len);
            gaps = 0;
 
            sort (read_list . begin (), read_list . end ());
@@ -442,6 +457,12 @@ int  main
 
    if  (Only_One)
        {
+        if  (! found_it)
+            {
+             fprintf (stderr, "ERROR:  Didn't find %stig %s\n",
+                  Show_Unitig ? "Uni" : "Con", Desired_ID . c_str ());
+             exit (EXIT_FAILURE);
+            }
         Clean_Consensus (consensus, consensus_len, consensus_ungapped_len);
         assert (ct == consensus_len);
 
@@ -469,8 +490,9 @@ int  main
                }
             }
 
-        printf ("Contig %d (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
-             Contig_ID, contig_iid, n, consensus_len, consensus_ungapped_len);
+        printf ("%stig %s (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
+             Show_Unitig ? "Uni" : "Con", Desired_ID . c_str (), tig_iid, n,
+             consensus_len, consensus_ungapped_len);
         gaps = 0;
 
         sort (read_list . begin (), read_list . end ());
@@ -843,7 +865,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "ghsV")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "ghsuV")) != EOF))
      switch  (ch)
        {
         case  'g' :
@@ -856,6 +878,10 @@ static void  Parse_Command_Line
 
         case  's' :
           Show_SNPs = true;
+          break;
+
+        case  'u' :
+          Show_Unitig = true;
           break;
 
         case  'V' :
@@ -884,11 +910,11 @@ static void  Parse_Command_Line
    if  (strcmp (argv [optind], "ALL") == 0)
        {
         Only_One = false;
-        Contig_ID = -1;
+        Desired_ID = "BAD";
         optind ++;
        }
      else
-       Contig_ID = strtol (argv [optind ++], NULL, 10);
+       Desired_ID = argv [optind ++];
    ASM_File_Name = argv [optind ++];
    FRG_File_Name = argv [optind ++];
 
@@ -1085,16 +1111,17 @@ static void  Usage
 
   {
    fprintf (stderr,
-           "USAGE:  %s  <contig-id> <asm-file> <frg-file>\n"
+           "USAGE:  %s [options] <uid> <asm-file> <frg-file>\n"
            "\n"
            "Read Celera-format .asm file and .frg file and\n"
-           "print the multialignment for the specified contig\n"
-           "If <contig-id> is ALL, then print alignments of all contigs\n"
+           "print the multialignment for the specified contig/unitig\n"
+           "If <uid> is ALL, then print alignments of all contigs/unitigs\n"
            "\n"
            "Options:\n"
            "  -g    Count gaps in printed consensus positions\n"
            "  -h    Print this usage message\n"
            "  -s    Print SNPs in addition to multialignments\n"
+           "  -u    Print alignments for unitig(s) with specfied uid(s)\n"
            "  -V    Display code version\n"
            "\n",
            command);
