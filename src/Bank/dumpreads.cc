@@ -18,6 +18,7 @@ using namespace AMOS;
 string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_UseEIDs = false;          // print EIDs instead of IIDs
+bool   OPT_UseRaw  = false;          // pull entire seqlen
 
 
 //========================================================== Fuction Decs ====//
@@ -74,17 +75,28 @@ int main (int argc, char ** argv)
       {
 	cnts ++;
 
-	if ( red . getClearRange( ) . getLength( ) <= 0 )
-	  {
-	    cerr << "WARNING: read with IID " << red . getIID( )
-		 << " has no clear range sequence, skipped\n";
-	    continue;
-	  }
+        if ( red . getLength( ) <= 0 )
+          {
+            cerr << "WARNING: read with IID " << red . getIID( )
+                 << " has no sequence, skipped\n";
+            continue;
+          }
+        if ( ! OPT_UseRaw && red . getClearRange( ) . getLength( ) <= 0 )
+          {
+            cerr << "WARNING: read with IID " << red . getIID( )
+                 << " has no clear range sequence, skipped\n";
+            continue;
+          }
+
 	if ( OPT_UseEIDs )
 	  cout << ">" << red . getEID( ) << endl;
 	else
 	  cout << ">" << red . getIID( ) << endl;
-	WrapString (cout, red . getSeqString(red . getClearRange( )), 70);
+
+        if ( OPT_UseRaw )
+          WrapString (cout, red . getSeqString( ), 70);
+        else
+          WrapString (cout, red . getSeqString(red . getClearRange( )), 70);
 
 	cntw ++;
       }
@@ -112,7 +124,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "ehsv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "ehrsv")) != EOF) )
     switch (ch)
       {
       case 'e':
@@ -122,6 +134,10 @@ void ParseArgs (int argc, char ** argv)
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
+        break;
+
+      case 'r':
+        OPT_UseRaw = true;
         break;
 
       case 's':
@@ -157,6 +173,7 @@ void PrintHelp (const char * s)
   cerr
     << "-e            Use EIDs for FastA header instead of IIDs\n"
     << "-h            Display help information\n"
+    << "-r            Ignore clear range and dump entire sequence\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << endl;
