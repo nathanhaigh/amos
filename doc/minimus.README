@@ -64,7 +64,7 @@ Example
 =======
 
    Assume we have an AMOS message file, `target.afg', containing the
-sequence information for a small assembly task. To run the AMOScmp
+sequence information for a small assembly task. To run the minimus
 pipeline we type the following:
 
 `minimus -D TGT=target.afg asm'
