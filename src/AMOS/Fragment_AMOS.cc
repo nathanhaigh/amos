@@ -19,7 +19,7 @@ using namespace std;
 Size_t Fragment_t::readRecord (istream & fix,
 			       istream & var)
 {
-  Size_t streamsize = Bankable_t::readRecord (fix, var);
+  Size_t streamsize = Universal_t::readRecord (fix, var);
   Size_t size;
 
   //-- Read FIX data
@@ -46,7 +46,7 @@ Size_t Fragment_t::readRecord (istream & fix,
 Size_t Fragment_t::writeRecord (ostream & fix,
 				ostream & var) const
 {
-  Size_t streamsize = Bankable_t::writeRecord (fix, var);
+  Size_t streamsize = Universal_t::writeRecord (fix, var);
   Size_t size = reads_m . size( );
 
   //-- Write FIX data

@@ -82,7 +82,7 @@ Sequence_t & Sequence_t::operator= (const Sequence_t & source)
   if ( this != &source )
     {
       //-- Make sure parent data is copied
-      Bankable_t::operator= (source);
+      Universal_t::operator= (source);
 
       //-- Copy object data
       seq_m = (uint8_t *) SafeRealloc (seq_m, source . length_m);
@@ -107,7 +107,7 @@ Sequence_t & Sequence_t::operator= (const Sequence_t & source)
 Size_t Sequence_t::readRecord (istream & fix,
 			       istream & var)
 {
-  Size_t streamsize = Bankable_t::readRecord (fix, var);
+  Size_t streamsize = Universal_t::readRecord (fix, var);
 
   //-- Read FIX data
   fix . read ((char *)&length_m, sizeof (Size_t));
@@ -193,7 +193,7 @@ void Sequence_t::uncompress ( )
 Size_t Sequence_t::writeRecord (ostream & fix,
 				ostream & var) const
 {
-  Size_t streamsize = Bankable_t::writeRecord (fix, var);
+  Size_t streamsize = Universal_t::writeRecord (fix, var);
 
   //-- Write FIX data
   fix . write ((char *)&length_m, sizeof (Size_t));

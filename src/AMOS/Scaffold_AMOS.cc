@@ -19,7 +19,7 @@ using namespace std;
 Size_t Scaffold_t::readRecord (istream & fix,
                                istream & var)
 {
-  Size_t streamsize = Bankable_t::readRecord (fix, var);
+  Size_t streamsize = Universal_t::readRecord (fix, var);
   Size_t size, tsize;
 
   fix . read ((char *)&poly_m, sizeof (null_t));
@@ -62,7 +62,7 @@ Size_t Scaffold_t::readRecord (istream & fix,
 Size_t Scaffold_t::writeRecord (ostream & fix,
                                 ostream & var) const
 {
-  Size_t streamsize = Bankable_t::writeRecord (fix, var);
+  Size_t streamsize = Universal_t::writeRecord (fix, var);
   Size_t size, tsize;
 
   fix . write ((char *)&poly_m, sizeof (null_t));

@@ -19,10 +19,10 @@
 #define __DEBUG
 
 
+#include  "datatypes_AMOS.hh"
+#include  "exceptions_AMOS.hh"
 #include  "delcher.hh"
 #include  "fasta.hh"
-#include  "exceptions_AMOS.hh"
-#include  "datatypes_AMOS.hh"
 #include  <vector>
 #include  <string>
 

@@ -32,7 +32,7 @@ pair<char, char> Overlap_t::getAdjacency ( ) const
 Size_t Overlap_t::readRecord (istream & fix,
 			      istream & var)
 {
-  Size_t streamsize = Bankable_t::readRecord (fix, var);
+  Size_t streamsize = Universal_t::readRecord (fix, var);
 
   //-- Read FIX data
   fix . read ((char *)&aHang_m, sizeof (Size_t));
@@ -75,7 +75,7 @@ void Overlap_t::setAdjacency (pair<char, char> adj)
 Size_t Overlap_t::writeRecord (ostream & fix,
 			       ostream & var) const
 {
-  Size_t streamsize = Bankable_t::writeRecord (fix, var);
+  Size_t streamsize = Universal_t::writeRecord (fix, var);
 
   //-- Write FIX data
   fix . write ((char *)&aHang_m, sizeof (Size_t));

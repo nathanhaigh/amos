@@ -7,9 +7,8 @@
 //  Read Celera-format contigs and merge their multialignments
 
 
+#include  "universal_AMOS.hh"
 #include  "delcher.hh"
-#include  "banktypes_AMOS.hh"
-#include  "datatypes_AMOS.hh"
 #include  "CelMsg.hh"
 #include  "align.hh"
 #include  "prob.hh"
@@ -140,7 +139,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   Bank_t  read_bank (Read_t::BANKTYPE);
+   Bank_t  read_bank (Bankable_k::READ);
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * cco_fp, * coords_fp;

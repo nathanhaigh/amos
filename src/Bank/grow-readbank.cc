@@ -7,9 +7,8 @@
 //  Add reads to a readbank, creating a new one if specfied.
 
 
+#include  "universal_AMOS.hh"
 #include  "delcher.hh"
-#include  "datatypes_AMOS.hh"
-#include  "banktypes_AMOS.hh"
 #include  "CelMsg.hh"
 #include  <vector>
 #include  <string>
@@ -51,8 +50,9 @@ int  main
     (int argc, char * argv [])
 
   {
-   Bank_t  read_bank (Read_t::BANKTYPE);
+
    ID_t  iid;
+   Bank_t  read_bank (Bankable_k::READ);
    Read_t  read;
    Celera_Message_t  msg;
    int  ct;
@@ -136,7 +136,7 @@ int  main
            read . setClearRange (Range_t(0, len));
            read . setComment (p1);
            sprintf (id1, "%d", ct);
-	   //           read . setEID (id1);
+	   read . setEID (id1);
            read . setSequence (s . c_str (), q . c_str ());
 	   if ( Compress_Reads )
 	     read . compress( );

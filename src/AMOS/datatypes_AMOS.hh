@@ -3,7 +3,7 @@
 //! \author Adam M Phillippy
 //! \date 06/16/2003
 //!
-//! \brief Include file for all of the AMOS datatypes
+//! \brief Include file for some simple AMOS data types (structs)
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -346,21 +346,5 @@ bool operator!= (const Tile_t & a, const Tile_t & b);
 typedef Range_t Ordered_Range_t;
 
 } // namespace AMOS
-
-
-//-- Primary (bankable) types, include
-#ifndef __NO_BANKABLE_TYPES
-#include "Bankable_AMOS.hh"
-#include "ContigEdge_AMOS.hh"
-#include "ContigLink_AMOS.hh"
-#include "Contig_AMOS.hh"
-#include "Fragment_AMOS.hh"
-#include "Kmer_AMOS.hh"
-#include "Library_AMOS.hh"
-#include "Overlap_AMOS.hh"
-#include "Read_AMOS.hh"
-#include "Scaffold_AMOS.hh"
-#include "Sequence_AMOS.hh"
-#endif // #ifndef __NO_BANKABLE_TYPES
 
 #endif // #ifndef __datatypes_AMOS_HH

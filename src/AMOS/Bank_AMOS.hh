@@ -11,8 +11,8 @@
 #define __Bank_AMOS_HH 1
 
 #include "alloc.hh"
-#include "datatypes_AMOS.hh"
 #include "exceptions_AMOS.hh"
+#include "inttypes_AMOS.hh"
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -61,10 +61,288 @@ namespace Bank_k {
 
 
 
-//================================================ Bank_t ======================
-//! \brief An AMOS data bank for efficiently storing Bankable_t data types
+namespace Bankable_k {
+
+  const NCode_t NULL_BANK = NCode ("NUL");   //!< NULL bank NCode
+  const NCode_t EXAMPLE   = NCode ("EXX");   //!< Example bank NCode
+
+} // namespace Bankable_k
+
+
+
+
+//================================================ IBankable_t =================
+//! \brief Interface for classes that can be stored in an AMOS Bank
 //!
-//! Efficiently handles large numbers of Bankable_t data types and stores them
+//! All classes derived from this interface class may be stored in a AMOS Bank.
+//! Derive classes from this type that you wish to include in an AMOS Bank_t.
+//! This will assure all data types being "banked" will have an iid and flags
+//! field, and will be able to read and write themselves to a Bank. To derive
+//! new types, the developer must re-implement the virtual functions to ensure
+//! the new class can be correctly stored and recovered from a Bank. See
+//! Example_t for the minimal member set that should be defined for a derived
+//! class. Each IBankable class should return a unique (static) NCode when
+//! getNCode is called upon, so that the Bank can determine the types of
+//! virtual objects.
+//!
+//==============================================================================
+class IBankable_t
+{
+
+private:
+
+  friend class Bank_t;        //!< so the bank class can use the read/writes
+
+
+  //============================================== BankableFlags_t =============
+  //! \brief 8 bit flag set for IBankable types
+  //!
+  //! The flag set object provides 4 flags in a bit field, and can be directly
+  //! accessed. In addition, 4 bits are left available for misc use.
+  //!
+  //============================================================================
+  struct BankableFlags_t
+  {
+    uint8_t is_removed  : 1;        //!< removed flag
+    uint8_t is_modified : 1;        //!< modified flag
+    uint8_t is_flagA    : 1;        //!< generic user flag A
+    uint8_t is_flagB    : 1;        //!< generic user flag B
+    uint8_t extra       : 4;        //!< extra class-specific bits
+  
+    //------------------------------------------------- BankableFlags_t --------
+    //! \brief Constructs an empty Flags_t object
+    //!
+    //! Initializes all flag bits to zero (false)
+    //!
+    BankableFlags_t ( )
+    {
+      is_removed = is_modified = is_flagA = is_flagB = 0; extra = 0;
+    }
+  
+  
+    //------------------------------------------------- ~BankableFlags_t -------
+    //! \brief Destroys a Flags_t object
+    //!
+    ~BankableFlags_t ( )
+    {
+    
+    }
+  };
+
+
+protected:
+
+  BankableFlags_t flags_m;   //!< bank flags, derived classes may use "extra"
+
+  ID_t iid_m;                //!< internal ID (usu. assigned by bank)
+
+
+  //--------------------------------------------------- readRecord -------------
+  //! \brief Read selected class members from a biserial record
+  //!
+  //! Reads the fixed and variable length streams from a biserial record and
+  //! initializes the class members to the values stored within. Used in
+  //! translating a biserial IBankable object, and needed to retrieve objects
+  //! from a Bank. Returned size of the record will only be valid if the read
+  //! was successful, i.e. fix.good( ) and var.good( ).
+  //!
+  //! \note This method must be able to interpret the biserial record
+  //! produced by its related function writeRecord.
+  //!
+  //! \param fix The fixed length stream (stores all fixed length members)
+  //! \param var The variable length stream (stores all var length members)
+  //! \pre The get pointer of fix is at the beginning of the record
+  //! \pre The get pointer of var is at the beginning of the record
+  //! \return size of read record (size of fix + size of var)
+  //!
+  virtual Size_t readRecord (std::istream & fix, std::istream & var) = 0;
+
+
+  //--------------------------------------------------- writeRecord ------------
+  //! \brief Write selected class members to a biserial record
+  //!
+  //! Writes the fixed an variable length streams to a biserial record. Used in
+  //! generating a biserial IBankable object, and needed to commit objects to a
+  //! Bank. Will only write to the ready streams, but the size of the record
+  //! will always be returned. Does not write the flags and IID of the object
+  //! because the Bank will handle the storage of these fields on its own.
+  //!
+  //! \note This method must be able to produce a biserial record that can
+  //! be read by its related funtion readRecord.
+  //!
+  //! \param fix The fixed length stream (stores all fixed length members)
+  //! \param var The variable length stream (stores all var length members)
+  //! \return size of written record (size of fix + size of var)
+  //!
+  virtual Size_t writeRecord (std::ostream & fix, std::ostream & var) const = 0;
+
+
+public:
+
+  //--------------------------------------------------- IBankable_t ------------
+  //! \brief Constructs an empty IBankable_t object
+  //!
+  //! Set IID to NULL_ID, comment to empty string and all flags to false.
+  //!
+  IBankable_t ( )
+  {
+    iid_m = NULL_ID;
+  }
+
+
+  //--------------------------------------------------- IBankable_t ------------
+  //! \brief Copy constructor
+  //!
+  IBankable_t (const IBankable_t & source)
+  {
+    *this = source;
+  }
+
+
+  //--------------------------------------------------- ~IBankable_t -----------
+  //! \brief Virtual destructor
+  //!
+  virtual ~IBankable_t ( )
+  {
+
+  }
+
+
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears all object data, reinitializes the object
+  //!
+  virtual void clear ( )
+  {
+    iid_m = NULL_ID;
+    flags_m . is_removed  = 0;
+    flags_m . is_modified = 0;
+    flags_m . is_flagA    = 0;
+    flags_m . is_flagB    = 0;
+    flags_m . extra       = 0;
+  }
+
+
+  //--------------------------------------------------- getIID -----------------
+  //! \brief Get the internal ID
+  //!
+  //! \return The internal ID
+  //!
+  ID_t getIID ( ) const
+  {
+    return iid_m;
+  }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  //! \brief Get the unique bank type identifier
+  //!
+  //! \return The unique bank type identifier
+  //!
+  virtual NCode_t getNCode ( ) const = 0;
+
+
+  //--------------------------------------------------- isRemoved --------------
+  //! \brief Check if the object is waiting to be removed from the Bank
+  //!
+  //! \return true if removed, otherwise false
+  //!
+  bool isRemoved ( ) const
+  {
+    return flags_m . is_removed;
+  }
+
+
+  //--------------------------------------------------- isModified -------------
+  //! \brief Check if the object has been modified
+  //!
+  //! \return true if modified, otherwise false
+  //!
+  bool isModified ( ) const
+  {
+    return flags_m . is_modified;
+  }
+
+
+  //--------------------------------------------------- isFlagA ----------------
+  //! \brief Check the value of flag A
+  //!
+  //! \return The value of flag A
+  //!
+  bool isFlagA ( ) const
+  {
+    return flags_m . is_flagA;
+  }
+
+
+  //--------------------------------------------------- isFlagB ----------------
+  //! \brief Check the value of flag B
+  //!
+  //! \return The value of flag B
+  //!
+  bool isFlagB ( ) const
+  {
+    return flags_m . is_flagB;
+  }
+
+
+  //--------------------------------------------------- setFlagA ---------------
+  //! \brief Set flag A
+  //!
+  //! Has no effect on the actual object in memory other than setting a flag.
+  //! This is one of two user accessible flags to be used as needed, the other
+  //! is flag B.
+  //!
+  //! \param flag The new flag A value
+  //! \return void
+  //!
+  void setFlagA (bool flag)
+  {
+    flags_m . is_flagA = flag;
+  }
+
+
+  //--------------------------------------------------- setFlagB ---------------
+  //! \brief Set flag B
+  //!
+  //! Has no effect on the actual object in memory other than setting a flag.
+  //! This is one of two user accessible flags to be used as needed, the other
+  //! is flag A.
+  //!
+  //! \param flag The new flag B value
+  //! \return void
+  //!
+  void setFlagB (bool flag)
+  {
+    flags_m . is_flagB = flag;
+  }
+
+
+  //--------------------------------------------------- setIID -----------------
+  //! \brief Set the internal ID
+  //!
+  //! This function should be used with caution, as IID's are usually assigned
+  //! by their respective Bank and are very important to their functionality.
+  //! However, if this object is not tied to any Banks, the user may set the
+  //! IID however he/she wishes.
+  //!
+  //! \param iid The new internal ID
+  //! \return void
+  //!
+  void setIID (ID_t iid)
+  {
+    iid_m = iid;
+  }
+
+};
+
+
+
+
+
+//================================================ Bank_t ======================
+//! \brief An AMOS data bank for efficiently storing Bankable data types
+//!
+//! Efficiently handles large numbers of Bankable data types and stores them
 //! to disk for future retrieval. Each object added to a Bank will be assigned
 //! an IID (internal ID) which will be used to index it in the Bank. Thus, when
 //! storing objects in a Bank, it is recommended to only use the IID assigned
@@ -72,8 +350,8 @@ namespace Bank_k {
 //! Thus, 3 append operations on a new Bank will return the IDs 1, 2, and 3
 //! in that order.
 //!
-//! If data not included in a Bankable_t type needs to be stored in a Bank,
-//! please derive a new Bankable_t type and implement the appropriate virtual
+//! If data not included in a Bankable type needs to be stored in a Bank,
+//! please derive a new Bankable type and implement the appropriate virtual
 //! functions to allow the type to be stored in a Bank.
 //!
 //==============================================================================
@@ -141,12 +419,12 @@ private:
   //!
   //! Private as to disallow copying
   //!
-  Bankable_t & operator= (const Bankable_t & source);
+  Bank_t & operator= (const Bank_t & source);
 
 
 protected:
 
-  Bankable_t::BankType_t banktype_m;            //!< the type of bank
+  NCode_t banktype_m;        //!< the type of objecst stored in this bank
   Size_t fix_size_m;         //!< size of entire fixed length record
   bool is_open_m;            //!< open status of the Bank
   ID_t last_iid_m;           //!< the last bank iid
@@ -252,7 +530,7 @@ protected:
     return
       fix_size_m -
       sizeof (std::streampos) -
-      sizeof (Bankable_t::BankableFlags_t) -
+      sizeof (IBankable_t::BankableFlags_t) -
       sizeof (Size_t);
   }
 
@@ -281,21 +559,21 @@ protected:
 public:
 
   //--------------------------------------------------- Bank_t -----------------
-  //! \brief Constructs an empty Bank_t of type BankType_t
+  //! \brief Constructs an empty Bank_t of objects with a certain NCode
   //!
   //! Initializes members and sets Bank type to the supplied value. All future
-  //! operations on this bank must be made with a Bankable_t type that is
-  //! compatibile with the supplied BankType_t.
+  //! operations on this bank must be made with a Bankable type that is
+  //! compatibile with the supplied NCode.
   //!
-  //! Once a Bank is created with a certain BankType_t, only objects compatible
-  //! with that BankType_t can be used with that Bank. For instance, if a Bank
-  //! is constructed with 'Bank_t mybank (Read_t::BANKTYPE);', only Read_t
+  //! Once a Bank is created with a certain NCode, only objects compatible
+  //! with that NCode can be used with that Bank. For instance, if a Bank
+  //! is constructed with 'Bank_t mybank (Bankable_k::READ);', only Read_t
   //! objects could be used with mybank.
   //!
   //! \param type The type of Bank to construct
   //! \return void
   //!
-  Bank_t (Bankable_t::BankType_t type)
+  Bank_t (NCode_t type)
   {
     banktype_m = type;
     init( );
@@ -317,22 +595,22 @@ public:
 
 
   //--------------------------------------------------- append -----------------
-  //! \brief Appends a Bankable_t object to the Bank
+  //! \brief Appends a Bankable object to the Bank
   //!
-  //! Appends a Bankable_t object to the Bank and changes it's IID to reflect
+  //! Appends a Bankable object to the Bank and changes it's IID to reflect
   //! its newly assigned IID (which is also the return value). The modified and
   //! removed flags are set to false since the object is newly appended.
   //!
-  //! \param obj The Bankable_t object to append
+  //! \param obj The Bankable object to append
   //! \pre The Bank is open
-  //! \pre obj is compatible with the current BankType_t
+  //! \pre obj is compatible with the current NCode Bank type
   //! \post obj's IID will be set to its Bank index
   //! \post obj's modified and removed flags set to false
   //! \throws IOException_t
   //! \throws ArgumentException_t
   //! \return obj's new IID
   //!
-  ID_t append (Bankable_t & obj);
+  ID_t append (IBankable_t & obj);
 
 
   //--------------------------------------------------- clean ------------------
@@ -387,7 +665,7 @@ public:
   //! \param source The Bank to concat to the end of the current Bank
   //! \pre The Bank is open
   //! \pre The source Bank is open
-  //! \pre source is compatible with the current BankType_t
+  //! \pre source is compatible with the current NCode Bank type
   //! \post The source Bank remains open and unchanged
   //! \throws IOException_t
   //! \throws ArgumentException_t
@@ -438,21 +716,21 @@ public:
 
 
   //--------------------------------------------------- fetch ------------------
-  //! \brief Fetches a Bankable_t object from the Bank
+  //! \brief Fetches a Bankable object from the Bank
   //!
-  //! Retrieves an object from the Bank by its IID and stores it in a Bankable_t
+  //! Retrieves an object from the Bank by its IID and stores it in a Bankable
   //! object. Has no effect if IID == NULL_ID.
   //!
-  //! \param obj A Bankable_t object with the IID set to the desired object
+  //! \param obj A Bankable object with the IID set to the desired object
   //! \pre The Bank is open
   //! \pre The requested IID is within range
-  //! \pre obj is compatible with the Bank's BankType
+  //! \pre obj is compatible with the current NCode Bank type
   //! \post The desired object will be loaded into obj
   //! \throws IOException_t
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void fetch (Bankable_t & obj);
+  void fetch (IBankable_t & obj);
 
 
   //--------------------------------------------------- flush ------------------
@@ -468,11 +746,11 @@ public:
 
 
   //--------------------------------------------------- getBankType ------------
-  //! \brief Get the BankType_t of this bank
+  //! \brief Get the NCode type being stored in this Bank
   //!
-  //! \return The bank's BankType_t
+  //! \return The current NCode Bank type
   //!
-  Bankable_t::BankType_t getBankType ( ) const
+  NCode_t getBankType ( ) const
   {
     return banktype_m;
   }
@@ -513,7 +791,7 @@ public:
   //! exists method) before opening to avoid an exception.
   //!
   //! \param dir The resident directory of the Bank
-  //! \pre The specified directory contains a Bank of this BankType
+  //! \pre The specified directory contains a Bank this NCode Bank type
   //! \throws IOException_t
   //! \return void
   //!
@@ -529,7 +807,7 @@ public:
   //! before the clean command by the restore method. Has no effect if IID ==
   //! NULL_ID.
   //!
-  //! \param obj A Bankable_t object with the IID set to the desired object
+  //! \param obj A Bankable object with the IID set to the desired object
   //! \pre The Bank is open
   //! \pre The desired IID is within range
   //! \post obj's is_removed flag is set
@@ -537,7 +815,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void remove (Bankable_t & obj);
+  void remove (IBankable_t & obj);
 
 
   //--------------------------------------------------- replace ----------------
@@ -551,14 +829,14 @@ public:
   //! \param obj The replacement object with its IID set to its predecessor
   //! \pre The Bank is open
   //! \pre The specified IID is within range
-  //! \pre obj is compatible with the Bank's BankType
+  //! \pre obj is compatible with the current NCode Bank type
   //! \post obj will replace the object with the given IID
   //! \post obj's is_modified flag is set
   //! \throws IOException_t
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void replace (Bankable_t & obj);
+  void replace (IBankable_t & obj);
 
 
   //--------------------------------------------------- restore ----------------
@@ -568,7 +846,7 @@ public:
   //! restored by this function. Has no effect on an object that was never
   //! removed. Has no effect if IID == NULL_ID.
   //!
-  //! \param obj A Bankable_t object with the IID set to the desired object
+  //! \param obj A Bankable object with the IID set to the desired object
   //! \pre The Bank is open
   //! \pre The desired IID is within range
   //! \post obj's is_removed flag is unset
@@ -576,7 +854,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void restore (Bankable_t & obj);
+  void restore (IBankable_t & obj);
 
 
   //--------------------------------------------------- transform --------------

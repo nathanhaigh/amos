@@ -20,6 +20,8 @@ using namespace std;
 
 
 
+//================================================ IBankable_t =================
+
 //================================================ Bank_t ======================
 //----------------------------------------------------- addPartition -----------
 void Bank_t::addPartition (bool nuke = true)
@@ -72,14 +74,14 @@ void Bank_t::addPartition (bool nuke = true)
 
 
 //----------------------------------------------------- append -----------------
-ID_t Bank_t::append (Bankable_t & obj)
+ID_t Bank_t::append (IBankable_t & obj)
 {
   //-- Check preconditions
   if ( !isOpen( ) )
     AMOS_THROW_IO ("Cannot append to a closed Bank");
-  if ( banktype_m != Bankable_t::NULL_BANK  &&
-       banktype_m != obj . getBankType( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append incompatible BankType_t");
+  if ( banktype_m != NULL_BANK  &&
+       banktype_m != obj . getNCode( ) )
+    AMOS_THROW_ARGUMENT ("Cannot append incompatible NCode type");
 
   //-- Add new partition if necessary
   if ( ++ last_iid_m > max_iid_m )
@@ -100,7 +102,7 @@ ID_t Bank_t::append (Bankable_t & obj)
   streampos vpos = partition -> var . tellp( );
   partition -> fix . write ((char *)&vpos, sizeof (streampos));
   partition -> fix . write ((char *)&(obj . flags_m),
-			    sizeof (Bankable_t::BankableFlags_t));
+			    sizeof (IBankable_t::BankableFlags_t));
   obj . writeRecord (partition -> fix, partition -> var);
   Size_t vsize = partition -> var . tellp( ) - vpos;
   partition -> fix . write ((char *)&vsize, sizeof (Size_t));
@@ -120,7 +122,7 @@ void Bank_t::clean ( )
     return;
 
   //-- Create a temporary type-less bank and concat this bank to it
-  Bank_t nullbank (Bankable_t::NULL_BANK);
+  Bank_t nullbank (NULL_BANK);
 
   //-- Concat this bank to a temporary bank (cleans the bank as a side effect)
   try {
@@ -214,12 +216,12 @@ void Bank_t::concat (Bank_t & source)
   if ( !source . isOpen( ) )
     AMOS_THROW_IO ("Cannot concat a closed Bank");
   if ( banktype_m != source . banktype_m  &&
-       banktype_m != Bankable_t::NULL_BANK  &&
-       source . banktype_m != Bankable_t::NULL_BANK )
-    AMOS_THROW_ARGUMENT ("Cannot concat incompatible BankType_t");
+       banktype_m != NULL_BANK  &&
+       source . banktype_m != NULL_BANK )
+    AMOS_THROW_ARGUMENT ("Cannot concat incompatible NCode");
 
   Size_t size;
-  Bankable_t::BankableFlags_t flags;
+  IBankable_t::BankableFlags_t flags;
   Size_t tail = source . netFixSize( ) + sizeof (Size_t);
 
   Size_t buffer_size = source . fix_size_m;
@@ -248,7 +250,7 @@ void Bank_t::concat (Bank_t & source)
 	  //-- Read vpos and Bankable flags, break on EOF
 	  sourcep -> fix . read ((char *)&vpos, sizeof (streampos));
 	  sourcep -> fix . read ((char *)&flags,
-				 sizeof (Bankable_t::BankableFlags_t));
+				 sizeof (IBankable_t::BankableFlags_t));
 	  if ( sourcep -> fix . eof( ) )
 	    break;
 
@@ -272,7 +274,7 @@ void Bank_t::concat (Bank_t & source)
 	  vpos = thisp -> var . tellp( );
 	  thisp -> fix . write ((char *)&vpos, sizeof (streampos));
 	  thisp -> fix . write ((char *)&flags,
-				sizeof (Bankable_t::BankableFlags_t));
+				sizeof (IBankable_t::BankableFlags_t));
 
 	  //-- Copy object FIX data
 	  sourcep -> fix . read (buffer, tail);
@@ -326,7 +328,7 @@ void Bank_t::create (const string & dir)
   mkdir (dir . c_str( ), 0755);
 
   //-- Generate the bank prefix and INFO path
-  ss << dir << '/' << BANK_NAMES [banktype_m];
+  ss << dir << '/' << NCode (banktype_m);
   pfx = ss.str( );
   ss << INFO_STORE_SUFFIX;
 
@@ -371,7 +373,7 @@ bool Bank_t::exists (const string & dir)
   //-- Generate the INFO path
   stringstream ss;
   ss << dir << '/'
-     << BANK_NAMES [banktype_m]
+     << NCode (banktype_m)
      << INFO_STORE_SUFFIX;
 
   //-- Return false if insufficient permissions or absent INFO partition
@@ -384,7 +386,7 @@ bool Bank_t::exists (const string & dir)
 
 
 //----------------------------------------------------- fetch ------------------
-void Bank_t::fetch (Bankable_t & obj)
+void Bank_t::fetch (IBankable_t & obj)
 {
   ID_t iid = obj . getIID( );
   if ( iid == NULL_ID )
@@ -393,9 +395,9 @@ void Bank_t::fetch (Bankable_t & obj)
   //-- Check preconditions
   if ( !isOpen( ) )
     AMOS_THROW_IO ("Cannot fetch from a closed Bank");
-  if ( banktype_m != Bankable_t::NULL_BANK  &&
-       banktype_m != obj . getBankType( ) )
-    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible BankType_t");
+  if ( banktype_m != NULL_BANK  &&
+       banktype_m != obj . getNCode( ) )
+    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible NCode");
   if ( iid > last_iid_m )
     AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
@@ -413,7 +415,7 @@ void Bank_t::fetch (Bankable_t & obj)
 
   //-- Read the object data
   partition -> fix . read ((char *)&(obj . flags_m),
-			   sizeof (Bankable_t::BankableFlags_t));
+			   sizeof (IBankable_t::BankableFlags_t));
   obj . readRecord (partition -> fix, partition -> var);
 }
 
@@ -467,11 +469,11 @@ void Bank_t::open (const string & dir)
   string pfx;
   string line;
   ID_t last_partition;
-  Bankable_t::BankType_t banktype;
+  NCode_t banktype;
   stringstream ss;
 
   //-- Generate the INFO path
-  ss << dir << '/' << BANK_NAMES [banktype_m];
+  ss << dir << '/' << NCode (banktype_m);
   pfx = ss.str( );
   ss << INFO_STORE_SUFFIX;
 
@@ -591,7 +593,7 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t iid)
 
 
 //----------------------------------------------------- remove -----------------
-void Bank_t::remove (Bankable_t & obj)
+void Bank_t::remove (IBankable_t & obj)
 {
   ID_t iid = obj . getIID( );
   if ( iid == NULL_ID )
@@ -608,23 +610,23 @@ void Bank_t::remove (Bankable_t & obj)
   lookup (iid, lid, pid);
 
   //-- Seek to and read FIX record
-  Bankable_t::BankableFlags_t flags;
+  IBankable_t::BankableFlags_t flags;
   BankPartition_t * partition = getPartition (pid);
   streampos fpos = lid * fix_size_m + sizeof (streampos);
   partition -> fix . seekg (fpos);
   partition -> fix . read ((char *)&flags,
-			   sizeof (Bankable_t::BankableFlags_t));
+			   sizeof (IBankable_t::BankableFlags_t));
 
   //-- Set deleted flag and rewrite
   flags . is_removed = true;
   partition -> fix . seekp (fpos);
   partition -> fix . write ((char *)&flags,
-			    sizeof (Bankable_t::BankableFlags_t));
+			    sizeof (IBankable_t::BankableFlags_t));
 }
 
 
 //----------------------------------------------------- replace ----------------
-void Bank_t::replace (Bankable_t & obj)
+void Bank_t::replace (IBankable_t & obj)
 {
   ID_t iid = obj . getIID( );
   if ( iid == NULL_ID )
@@ -633,9 +635,9 @@ void Bank_t::replace (Bankable_t & obj)
   //-- Check preconditions
   if ( !isOpen( ) )
     AMOS_THROW_IO ("Cannot fetch from a closed Bank");
-  if ( banktype_m != Bankable_t::NULL_BANK  &&
-       banktype_m != obj . getBankType( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append incompatible BankType_t");
+  if ( banktype_m != NULL_BANK  &&
+       banktype_m != obj . getNCode( ) )
+    AMOS_THROW_ARGUMENT ("Cannot append incompatible NCode");
   if ( iid > last_iid_m )
     AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
@@ -673,7 +675,7 @@ void Bank_t::replace (Bankable_t & obj)
   partition -> fix . seekp (fpos);
   partition -> fix . write ((char *)&vpos, sizeof (streampos));
   partition -> fix . write ((char *)&(obj . flags_m),
-			    sizeof (Bankable_t::BankableFlags_t));
+			    sizeof (IBankable_t::BankableFlags_t));
   obj . writeRecord (partition -> fix, partition -> var);
   newsize = partition -> var . tellp( ) - vpos;
   partition -> fix . write ((char *)&newsize, sizeof (Size_t));
@@ -681,7 +683,7 @@ void Bank_t::replace (Bankable_t & obj)
 
 
 //--------------------------------------------------- restore ----------------
-void Bank_t::restore (Bankable_t & obj)
+void Bank_t::restore (IBankable_t & obj)
 {
   ID_t iid = obj . getIID( );
   if ( iid == NULL_ID )
@@ -698,18 +700,18 @@ void Bank_t::restore (Bankable_t & obj)
   lookup (iid, lid, pid);
 
   //-- Seek to and read FIX record
-  Bankable_t::BankableFlags_t flags;
+  IBankable_t::BankableFlags_t flags;
   BankPartition_t * partition = getPartition (pid);
   streampos fpos = lid * fix_size_m + sizeof (streampos);
   partition -> fix . seekg (fpos);
   partition -> fix . read ((char *)&flags,
-			   sizeof (Bankable_t::BankableFlags_t));
+			   sizeof (IBankable_t::BankableFlags_t));
 
   //-- Set deleted flag and rewrite
   flags . is_removed = false;
   partition -> fix . seekp (fpos);
   partition -> fix . write ((char *)&flags,
-			    sizeof (Bankable_t::BankableFlags_t));;
+			    sizeof (IBankable_t::BankableFlags_t));;
 }
 
 
@@ -725,7 +727,7 @@ void Bank_t::transform (vector<ID_t> id_map)
   ID_t lid, pid;
 
   Size_t size;
-  Bankable_t::BankableFlags_t flags;
+  IBankable_t::BankableFlags_t flags;
   Size_t tail = netFixSize( ) + sizeof (Size_t);
 
   Size_t buffer_size = fix_size_m;
@@ -736,7 +738,7 @@ void Bank_t::transform (vector<ID_t> id_map)
   BankPartition_t * tranp;
 
   //-- Create a temporary type-less bank for transformation
-  Bank_t nullbank (Bankable_t::NULL_BANK);
+  Bank_t nullbank (NULL_BANK);
 
   //-- Concat and transform this bank to a temporary bank
   try {
@@ -755,7 +757,7 @@ void Bank_t::transform (vector<ID_t> id_map)
 	thisp -> fix . read ((char *)&vpos, sizeof (streampos));
 	thisp -> var . seekg (vpos);
 	thisp -> fix . read ((char *)&flags,
-			     sizeof (Bankable_t::BankableFlags_t));
+			     sizeof (IBankable_t::BankableFlags_t));
 
 	//-- If room is needed in transformation, add new partition
 	if ( ++ nullbank . last_iid_m > nullbank . max_iid_m )
@@ -768,7 +770,7 @@ void Bank_t::transform (vector<ID_t> id_map)
 	vpos = tranp -> var . tellp( );
 	tranp -> fix . write ((char *)&vpos, sizeof (streampos));
 	tranp -> fix . write ((char *)&flags,
-			      sizeof (Bankable_t::BankableFlags_t));
+			      sizeof (IBankable_t::BankableFlags_t));
 
 	//-- Copy object FIX data
 	thisp -> fix . read (buffer, tail);

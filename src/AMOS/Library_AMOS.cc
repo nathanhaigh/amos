@@ -19,7 +19,7 @@ using namespace std;
 Size_t Library_t::readRecord (istream & fix,
 			      istream & var)
 {
-  Size_t streamsize = Bankable_t::readRecord (fix, var);
+  Size_t streamsize = Universal_t::readRecord (fix, var);
 
   //-- Read FIX data
   fix . read ((char *)&dist_m, sizeof (Distribution_t));
@@ -33,7 +33,7 @@ Size_t Library_t::readRecord (istream & fix,
 Size_t Library_t::writeRecord (ostream & fix,
 			       ostream & var) const
 {
-  Size_t streamsize = Bankable_t::writeRecord (fix, var);
+  Size_t streamsize = Universal_t::writeRecord (fix, var);
 
   //-- Write FIX data
   fix . write ((char *)&dist_m, sizeof (Distribution_t));

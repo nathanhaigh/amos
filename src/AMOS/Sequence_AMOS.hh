@@ -11,8 +11,7 @@
 #define __Sequence_AMOS_HH 1
 
 #include "alloc.hh"
-#include "exceptions_AMOS.hh"
-#include "Bankable_AMOS.hh"
+#include "Universal_AMOS.hh"
 #include <cstdlib>
 #include <cctype>
 #include <string>
@@ -39,7 +38,7 @@ namespace AMOS {
 //! MIN_QUALITY and MAX_QUALITY.
 //!
 //==============================================================================
-class Sequence_t : public Bankable_t
+class Sequence_t : public Universal_t
 {
 
 private:
@@ -180,10 +179,6 @@ protected:
 
 public:
 
-  static const BankType_t BANKTYPE = Bankable_t::SEQUENCE;
-  //!< Bank type, MUST BE UNIQUE for all derived Bankable classes!
-
-
   //--------------------------------------------------- Sequence_t -------------
   //! \brief Constructs an empty Sequence_t object
   //!
@@ -229,7 +224,7 @@ public:
   //!
   virtual void clear ( )
   {
-    Bankable_t::clear( );
+    Universal_t::clear( );
     free (seq_m);
     free (qual_m);
     seq_m = qual_m = NULL;
@@ -237,14 +232,14 @@ public:
   }
 
 
-  //--------------------------------------------------- getBankType ------------
+  //--------------------------------------------------- getNCode ---------------
   //! \brief Get the unique bank type identifier
   //!
   //! \return The unique bank type identifier
   //!
-  virtual BankType_t getBankType ( ) const
+  virtual NCode_t getNCode ( ) const
   {
-    return BANKTYPE;
+    return Bankable_k::SEQUENCE;
   }
 
 

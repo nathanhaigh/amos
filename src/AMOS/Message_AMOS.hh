@@ -24,29 +24,7 @@
 
 namespace AMOS {
 
-
 namespace Message_k {
-
-  //--------------------------------------------------- HashCode ---------------
-  //! \brief Converts an integer to an NCODE string
-  //!
-  std::string HashCode (uint32_t type);
-
-
-  //--------------------------------------------------- HashCode ---------------
-  //! \brief Converts an NCODE string to an integer
-  //!
-  uint32_t HashCode (const std::string & type);
-
-
-  const uint8_t NCODE = 3;
-  //!< Length of a type name (3-code)
-
-  const std::string F_NULL ("nul");
-  //!< NULL field 3-code name
-
-  const std::string M_NULL ("NUL");
-  //!< NULL message 3-code name
 
   //-- Enumeration characters
   const char          E_ADD         = 'A';
@@ -54,6 +32,7 @@ namespace Message_k {
   const char          E_EDIT        = 'E';
 
   //-- Field type names
+  const std::string   F_NULL         ("nul");
   const std::string   F_3PRIME       ("3pr");
   const std::string   F_5PRIME       ("5pr");
   const std::string   F_AHANG        ("ahg");
@@ -89,11 +68,13 @@ namespace Message_k {
   const std::string   F_VECTORCLEAR  ("vcr");
 
   //-- Message type names
+  const std::string   M_NULL         ("NUL");
   const std::string   M_BANKABLE     ("BNK");
   const std::string   M_CONTIG       ("CTG");
   const std::string   M_CONTIGEDGE   ("CTE");
   const std::string   M_CONTIGLINK   ("CTL");
   const std::string   M_DISTRIBUTION ("DST");
+  const std::string   M_EXAMPLE      ("EXX");
   const std::string   M_FRAGMENT     ("FRG");
   const std::string   M_KMER         ("KMR");
   const std::string   M_LIBRARY      ("LIB");
@@ -294,9 +275,9 @@ public:
   //!
   void setMessageType (const std::string & tname)
   {
-    if ( tname . size( ) != Message_k::NCODE )
+    if ( tname . size( ) != NCODE )
       AMOS_THROW_ARGUMENT ("Invalid message type name length");
-    for ( int i = 0; i < Message_k::NCODE; i ++ )
+    for ( int i = 0; i < NCODE; i ++ )
       if ( !isupper (tname [i]) && !isdigit (tname [i]))
 	AMOS_THROW_ARGUMENT ("Invalid message type name format");
 
@@ -337,7 +318,6 @@ class IMessagable_t
 
 public:
 
-
   //--------------------------------------------------- IMessagable_t ----------
   //! \brief Constructs a Messagable object with null message type
   //!
@@ -367,17 +347,6 @@ public:
   //! \return void
   //!
   virtual void fromMessage (const Message_t & msg) = 0;
-
-
-  //--------------------------------------------------- getMessageType ---------
-  //! \brief Returns the message type string for this Messagable object
-  //!
-  //! \return The message type string
-  //!
-  virtual const std::string & getMessageType ( ) const
-  {
-    return Message_k::M_NULL;
-  }
 
 
   //--------------------------------------------------- toMessage --------------

@@ -10,11 +10,12 @@
 #define  __ALIGN_H_INCLUDED
 
 
+#include  "datatypes_AMOS.hh"
+#include  "alloc.hh"
 #include  "delcher.hh"
 #include  "fasta.hh"
 #include  "prob.hh"
 #include  "matrix.hh"
-#include  "datatypes_AMOS.hh"
 #include  "CelMsg.hh"
 #include  "Slice.h"
 #include  <string>

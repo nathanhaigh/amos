@@ -10,8 +10,7 @@
 #ifndef __ContigLink_AMOS_HH
 #define __ContigLink_AMOS_HH 1
 
-#include "Bankable_AMOS.hh"
-#include "exceptions_AMOS.hh"
+#include "Universal_AMOS.hh"
 #include <utility>
 #include <cctype>
 
@@ -31,7 +30,7 @@ typedef char LinkType_t;
 //! form reliable contig edges, as done in scaffolding.
 //!
 //==============================================================================
-class ContigLink_t : public Bankable_t
+class ContigLink_t : public Universal_t
 {
 
 public:
@@ -50,14 +49,12 @@ private:
   std::pair<ID_t, ID_t> contigs_m;        //!< the pair of contig IDs
   SD_t sd_m;                              //!< standard deviation of the link
   Size_t size_m;                          //!< size of the link
-  std::pair<ID_t, BankType_t> source_m;   //!< source of the link
+  std::pair<ID_t, NCode_t> source_m;      //!< source of the link
   LinkType_t type_m;                      //!< type of link
 
 
 protected:
 
-  static const char BEGIN      = 'B';
-  static const char END        = 'E';
   static const char NORMAL     = 'N';     //!< E,B
   static const char ANTINORMAL = 'A';     //!< B,E
   static const char INNIE      = 'I';     //!< E,E
@@ -110,10 +107,6 @@ protected:
   
 public:
 
-  static const BankType_t BANKTYPE = Bankable_t::CONTIGLINK;
-  //!< Bank type, MUST BE UNIQUE for all derived Bankable classes!
-
-
   //--------------------------------------------------- ContigLink_t -----------
   //! \brief Constructs an empty ContigLink_t object
   //!
@@ -122,7 +115,7 @@ public:
   ContigLink_t ( )
   {
     contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
-    source_m . second = Bankable_t::NULL_BANK;
+    source_m . second = Bankable_k::NULL_BANK;
     sd_m = size_m = 0;
     type_m = NULL_LINK;
   }
@@ -151,14 +144,15 @@ public:
   //!
   virtual void clear ( )
   {
-    Bankable_t::clear( );
+    Universal_t::clear( );
     contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
-    source_m . second = Bankable_t::NULL_BANK;
+    source_m . second = Bankable_k::NULL_BANK;
     sd_m = size_m = 0;
     type_m = NULL_LINK;
   }
 
 
+  /*
   //--------------------------------------------------- fromMessage ------------
   //! \brief Converts from a message
   //!
@@ -170,6 +164,7 @@ public:
   //! \return void
   //!
   virtual void fromMessage (const Message_t & msg);
+  */
 
 
   //--------------------------------------------------- getAdjacency -----------
@@ -184,17 +179,6 @@ public:
   std::pair<char, char> getAdjacency ( ) const;
 
 
-  //--------------------------------------------------- getBankType ------------
-  //! \brief Get the unique bank type identifier
-  //!
-  //! \return The unique bank type identifier
-  //!
-  virtual BankType_t getBankType ( ) const
-  {
-    return BANKTYPE;
-  }
-
-
   //--------------------------------------------------- getContigs -------------
   //! \brief Get the pair of contig IDs joined by this link
   //!
@@ -206,14 +190,14 @@ public:
   }
 
 
-  //--------------------------------------------------- getMessageType ---------
-  //! \brief Returns the message type string for this Messagable object
+  //--------------------------------------------------- getNCode ---------------
+  //! \brief Get the unique bank type identifier
   //!
-  //! \return The message type string
+  //! \return The unique bank type identifier
   //!
-  virtual const std::string & getMessageType ( ) const
+  virtual NCode_t getNCode ( ) const
   {
-    return Message_k::M_CONTIGLINK;
+    return Bankable_k::CONTIGLINK;
   }
 
 
@@ -248,11 +232,11 @@ public:
   //!
   //! This method only returns the ID of the link source and the type of Bank
   //! it is stored in. The entire source object can be retrieved by fetching
-  //! the specified ID from the cooresponding BankType Bank.
+  //! the specified ID from the cooresponding NCode type identifier.
   //!
-  //! \return The ID of the link source and the BankType
+  //! \return The ID of the link source and the NCode type indentifier.
   //!
-  std::pair<ID_t, BankType_t> getSource ( ) const
+  std::pair<ID_t, NCode_t> getSource ( ) const
   {
     return source_m;
   }
@@ -330,10 +314,10 @@ public:
   //--------------------------------------------------- setSource --------------
   //! \brief Set the link source ID
   //!
-  //! \param source The new ID and BankType of the link source
+  //! \param source The new ID and NCode type identifier of the link source
   //! \return void
   //!
-  void setSource (std::pair<ID_t, BankType_t> source)
+  void setSource (std::pair<ID_t, NCode_t> source)
   {
     source_m = source;
   }
@@ -351,6 +335,7 @@ public:
   }
 
 
+  /*
   //--------------------------------------------------- toMessage --------------
   //! \brief Converts to a message
   //!
@@ -360,6 +345,7 @@ public:
   //! \return void
   //!
   virtual void toMessage (Message_t & msg) const;
+  */
 
 };
 

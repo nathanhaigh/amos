@@ -11,8 +11,7 @@
 #define __Kmer_AMOS_HH 1
 
 #include "alloc.hh"
-#include "exceptions_AMOS.hh"
-#include "Bankable_AMOS.hh"
+#include "Universal_AMOS.hh"
 #include <vector>
 #include <string>
 
@@ -28,7 +27,7 @@ namespace AMOS {
 //! set of sequencing reads.
 //!
 //==============================================================================
-class Kmer_t : public Bankable_t
+class Kmer_t : public Universal_t
 {
   
 private:
@@ -60,7 +59,7 @@ protected:
   //!
   static uint8_t compress (char seqchar)
   {
-    switch ( std::toupper(seqchar) )
+    switch ( toupper(seqchar) )
       {
       case 'A':
         return ADENINE_BITS;
@@ -121,8 +120,8 @@ protected:
   //! \pre The get pointer of var is at the beginning of the record
   //! \return size of read record (size of fix + size of var)
   //!
-  Size_t readRecord (std::istream & fix,
-		     std::istream & var);
+  virtual Size_t readRecord (std::istream & fix,
+			     std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -140,14 +139,11 @@ protected:
   //! \param var The variable length stream (stores all var length members)
   //! \return size of written record (size of fix + size of var)
   //!
-  Size_t writeRecord (std::ostream & fix,
-		      std::ostream & var) const;
+  virtual Size_t writeRecord (std::ostream & fix,
+			      std::ostream & var) const;
 
 
 public:
-
-  static const BankType_t BANKTYPE = Bankable_t::KMER;
-  //!< Bank type, MUST BE UNIQUE for all derived Bankable classes!
 
   static const uint8_t MAX_LENGTH    = 255;
   //!< Maximum Kmer length
@@ -192,7 +188,7 @@ public:
   //!
   void clear ( )
   {
-    Bankable_t::clear( );
+    Universal_t::clear( );
     free (seq_m);
     seq_m = NULL;
     count_m = length_m = 0;
@@ -200,14 +196,14 @@ public:
   }
 
 
-  //--------------------------------------------------- getBankType ------------
+  //--------------------------------------------------- getNCode ---------------
   //! \brief Get the unique bank type identifier
   //!
   //! \return The unique bank type identifier
   //!
-  BankType_t getBankType ( ) const
+  virtual NCode_t getNCode ( ) const
   {
-    return BANKTYPE;
+    return Bankable_k::KMER;
   }
 
 

@@ -54,8 +54,8 @@ protected:
   //! \pre The get pointer of var is at the beginning of the record
   //! \return size of read record (size of fix + size of var)
   //!
-  Size_t readRecord (std::istream & fix,
-		     std::istream & var);
+  virtual Size_t readRecord (std::istream & fix,
+			     std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -73,15 +73,11 @@ protected:
   //! \param var The variable length stream (stores all var length members)
   //! \return size of written record (size of fix + size of var)
   //!
-  Size_t writeRecord (std::ostream & fix,
-		      std::ostream & var) const;
+  virtual Size_t writeRecord (std::ostream & fix,
+			      std::ostream & var) const;
 
 
 public:
-
-  static const BankType_t BANKTYPE = Bankable_t::CONTIGEDGE;
-  //!< Bank type, MUST BE UNIQUE for all derived Bankable classes!
-
 
   //--------------------------------------------------- ContigEdge_t -----------
   //! \brief Constructs an empty ContigEdge_t object
@@ -120,17 +116,6 @@ public:
   }
 
 
-  //--------------------------------------------------- getBankType ------------
-  //! \brief Get the unique bank type identifier
-  //!
-  //! \return The unique bank type identifier
-  //!
-  BankType_t getBankType ( ) const
-  {
-    return BANKTYPE;
-  }
-
-
   //--------------------------------------------------- getContigLinks ---------
   //! \brief Get the bundle of contig link IDs that make up this contig edge
   //!
@@ -139,6 +124,17 @@ public:
   const std::vector<ID_t> & getContigLinks ( ) const
   {
     return links_m;
+  }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  //! \brief Get the unique bank type identifier
+  //!
+  //! \return The unique bank type identifier
+  //!
+  virtual NCode_t getNCode ( ) const
+  {
+    return Bankable_k::CONTIGEDGE;
   }
 
   

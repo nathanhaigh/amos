@@ -10,7 +10,7 @@
 #ifndef __Library_AMOS_HH
 #define __Library_AMOS_HH 1
 
-#include "Bankable_AMOS.hh"
+#include "Universal_AMOS.hh"
 
 
 
@@ -25,7 +25,7 @@ namespace AMOS {
 //! Child fragments will point back to this object as their parent library.
 //!
 //==============================================================================
-class Library_t : public Bankable_t
+class Library_t : public Universal_t
 {
   
 private:
@@ -53,8 +53,8 @@ protected:
   //! \pre The get pointer of var is at the beginning of the record
   //! \return size of read record (size of fix + size of var)
   //!
-  Size_t readRecord (std::istream & fix,
-		     std::istream & var);
+  virtual Size_t readRecord (std::istream & fix,
+			     std::istream & var);
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -72,15 +72,11 @@ protected:
   //! \param var The variable length stream (stores all var length members)
   //! \return size of written record (size of fix + size of var)
   //!
-  Size_t writeRecord (std::ostream & fix,
-		      std::ostream & var) const;
+  virtual Size_t writeRecord (std::ostream & fix,
+			      std::ostream & var) const;
 
 
 public:
-
-  static const BankType_t BANKTYPE = Bankable_t::LIBRARY;
-  //!< Bank type, MUST BE UNIQUE for all derived Bankable classes!
-
 
   //--------------------------------------------------- Library_t --------------
   //! \brief Constructs an empty Library_t object
@@ -114,19 +110,19 @@ public:
   //!
   void clear ( )
   {
-    Bankable_t::clear( );
+    Universal_t::clear( );
     dist_m . clear( );
   }
 
 
-  //--------------------------------------------------- getBankType ------------
+  //--------------------------------------------------- getNCode ---------------
   //! \brief Get the unique bank type identifier
   //!
   //! \return The unique bank type identifier
   //!
-  BankType_t getBankType ( ) const
+  virtual NCode_t getNCode ( ) const
   {
-    return BANKTYPE;
+    return Bankable_k::LIBRARY;
   }
 
 

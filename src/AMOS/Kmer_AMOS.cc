@@ -43,7 +43,7 @@ Kmer_t & Kmer_t::operator= (const Kmer_t & source)
   if ( this != &source )
     {
       //-- Make sure parent data is copied
-      Bankable_t::operator= (source);
+      Universal_t::operator= (source);
 
       Size_t size = source . length_m / 4 + (source . length_m % 4 ? 1 : 0);
 
@@ -64,7 +64,7 @@ Kmer_t & Kmer_t::operator= (const Kmer_t & source)
 Size_t Kmer_t::readRecord (istream & fix,
 			   istream & var)
 {
-  Size_t streamsize = Bankable_t::readRecord (fix, var);
+  Size_t streamsize = Universal_t::readRecord (fix, var);
   Size_t size;
 
   //-- Read FIX data
@@ -120,7 +120,7 @@ void Kmer_t::setSeqString (const string & seq)
 Size_t Kmer_t::writeRecord (ostream & fix,
 			    ostream & var) const
 {
-  Size_t streamsize = Bankable_t::writeRecord (fix, var);
+  Size_t streamsize = Universal_t::writeRecord (fix, var);
   Size_t size = reads_m . size( );
 
   //-- Write FIX data

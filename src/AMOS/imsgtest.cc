@@ -1,5 +1,4 @@
-#include <messages_AMOS.hh>
-#include <datatypes_AMOS.hh>
+#include <universal_AMOS.hh>
 #include <fstream>
 using namespace std;
 using namespace AMOS;
@@ -24,7 +23,7 @@ int main (int argc, char ** argv)
   try {
 
     Message_t msg;
-    Bankable_t bnk;
+    Universal_t bnk;
     
     while ( msg . read (msgfile) )
       if ( msg . getMessageType( ) == Message_k::M_BANKABLE )
