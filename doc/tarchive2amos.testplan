@@ -1,0 +1,11 @@
+The following functionality needs to be tested:
+
+1. Trace Archive .seq, .qual, and .xml inputs
+2. Trace Archive .seq, .qual
+3. Trace Archive .seq
+4. TIGR .seq, .qual
+5. Trace Archive .seq, .qual with external clear ranges
+6. Other (not TIGR or Trace Archive format) .seq, .qual
+7. .seq, .qual, .mates - with regular expressions 
+8. .seq, .qual, .mates - with "pair" mates
+9. run minimus on data - if overlap takes too long can skip
