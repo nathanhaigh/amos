@@ -9,6 +9,7 @@
 
 #include "Contig_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
@@ -65,6 +66,38 @@ string Contig_t::getUngappedSeqString (Range_t range) const
 }
 
 
+//----------------------------------------------------- readMessage ------------
+void Contig_t::readMessage (const Message_t & msg)
+{
+  clear( );
+  Sequence_t::readMessage (msg);
+
+  try {
+    Tile_t tile;
+    vector<Message_t>::const_iterator vi;
+    stringstream ss;
+
+    if ( msg . exists (F_POLYMORPHISM) )
+      AMOS_THROW_ARGUMENT ("Polymorphism information not yet implemented");
+
+    for ( vi  = msg . getSubMessages( ) . begin( );
+          vi != msg . getSubMessages( ) . end( ); vi ++ )
+      {
+        if ( vi -> getMessageCode( ) != M_TILE )
+          AMOS_THROW_ARGUMENT ("Invalid submessage in CTG");
+        tile . readMessage (*vi);
+        reads_m . push_back (tile);
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+
+}
+
+
 //----------------------------------------------------- readRecord -------------
 Size_t Contig_t::readRecord (istream & fix,
 			     istream & var)
@@ -98,6 +131,37 @@ Size_t Contig_t::readRecord (istream & fix,
     }
 
   return streamsize;
+}
+
+
+//--------------------------------------------------- writeMessage -----------
+void Contig_t::writeMessage (Message_t & msg) const
+{
+  Sequence_t::writeMessage (msg);
+
+  try {
+    Message_t submsg;
+    vector<Message_t> msgs;
+    vector<Tile_t>::const_iterator tvi;
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    if ( reads_m . size( ) != 0 )
+      {
+        for ( tvi = reads_m . begin( ); tvi != reads_m . end( ); tvi ++ )
+          {
+            tvi -> writeMessage (submsg);
+            msgs . push_back (submsg);
+          }
+        msg . setSubMessages (msgs);
+      }
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
 }
 
 

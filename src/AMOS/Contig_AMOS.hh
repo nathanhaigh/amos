@@ -212,6 +212,10 @@ public:
   std::string getUngappedSeqString (Range_t range) const;
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setPolymorphism --------
   //! \brief Set polymorphism information for this contig
   //!
@@ -236,6 +240,10 @@ public:
   {
     reads_m = reads;
   }
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

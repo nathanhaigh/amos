@@ -32,6 +32,7 @@ int main (int argc, char ** argv)
     Overlap_t ovl;
     Scaffold_t scf;
     Sequence_t seq;
+    Contig_t ctg;
 
     Universal_t * unvp = NULL;
     
@@ -57,6 +58,8 @@ int main (int argc, char ** argv)
 	  unvp = &scf;
 	else if ( msg . getMessageCode( ) == Message_k::M_SEQUENCE )
 	  unvp = &seq;
+	else if ( msg . getMessageCode( ) == Message_k::M_CONTIG )
+	  unvp = &ctg;
 	else
 	  {
 	    cout << "# don't know how to parse message\n";
@@ -106,6 +109,10 @@ int main (int argc, char ** argv)
 
     seq . clear( );
     seq . writeMessage (msg);
+    msg . write (cout);
+
+    ctg . clear( );
+    ctg . writeMessage (msg);
     msg . write (cout);
   }
   catch (Exception_t & e) {
