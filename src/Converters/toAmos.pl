@@ -82,7 +82,7 @@ my $minSeqId = 1;  # where to start numbering reads
 
 my $outprefix;
 
-my $tmprefix = tmpnam();
+my $tmprefix = "tmp.$$"; #tmpnam();
 
 open(TMPSEQ, ">$tmprefix.seq") 
     || $base->bail("Cannot open $tmprefix.seq: $!\n");
