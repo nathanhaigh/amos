@@ -69,7 +69,8 @@ void TilingFrame::paintEvent(QPaintEvent * event)
   QFrame::paintEvent(event);
   m_consfield->repaint();
 
-  m_tilingfield->setSize(m_sv->visibleWidth(), m_sv->visibleHeight());
+  //m_tilingfield->setSize(m_sv->visibleWidth(), m_sv->visibleHeight());
+  m_tilingfield->setSize(width(), m_sv->visibleHeight());
   m_tilingfield->repaint();
 }
 
@@ -154,6 +155,7 @@ void TilingFrame::setFontSize(int fontsize )
 
 void TilingFrame::setGindex( int gindex )
 {
+  //cerr << "setgindex: " << gindex << endl;
   if (!m_loaded) { return; }
 
   int basespace = 5;
@@ -186,10 +188,13 @@ void TilingFrame::setGindex( int gindex )
       rendered.load(read_bank, vi);
       m_renderedSeqs.push_back(rendered);
 
-      for (int j = rendered.m_offset; j < rendered.m_offset + rendered.m_nucs.size(); j++)
+      for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
       {
-        if      (m_cstatus[j] == ' ')              { m_cstatus[j] = rendered.base(j); }
-        else if (m_cstatus[j] != rendered.base(j)) { m_cstatus[j] = 'X'; }
+        if      (m_cstatus[gindex] == ' ')                   
+          { m_cstatus[gindex] = rendered.base(gindex); }
+
+        else if (m_cstatus[gindex] != rendered.base(gindex)) 
+          { m_cstatus[gindex] = 'X'; }
       }
     }
   }
@@ -206,6 +211,7 @@ void TilingFrame::setDB(const QString & db)
 
 void TilingFrame::trackGindex(int gindex)
 {
+  //cerr << "tracking: " << gindex << endl;
   m_gindex = gindex;
   m_consfield->repaint();
   emit gindexChanged( m_gindex );
@@ -213,13 +219,14 @@ void TilingFrame::trackGindex(int gindex)
 
 void TilingFrame::trackGindexDone()
 {
+  //cerr << "track done: " << m_gindex << endl;
   setGindex(m_gindex);
   repaint();
 }
 
 void TilingFrame::toggleStable(bool stable)
 {
-  cerr << "frame::toggle " << (stable ? "true" : "false") << endl;
+  //cerr << "frame::toggle " << (stable ? "true" : "false") << endl;
   m_tilingfield->toggleStable(stable);
 }
 

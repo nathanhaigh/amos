@@ -15,13 +15,13 @@ int jmax (int a, int b)
 }
 
 ConsensusField::ConsensusField(const string & cons,
-                               const string & consstatus,
+                               const string & cstatus,
                                int & gindex,
                                QWidget * parent,
                                const char * name)
    :QFrame(parent, name),
     m_consensus(cons),
-    m_cstatus(consstatus),
+    m_cstatus(cstatus),
     m_gindex(gindex)
 {
   m_shownumbers = 0;
@@ -70,7 +70,6 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 {
   if (m_consensus.empty()) 
   { 
-
     QPainter p (this);
     p.drawText(20, m_fontsize+m_fontsize/2, "No Contig Loaded");
     return;
@@ -100,22 +99,22 @@ void ConsensusField::paintEvent(QPaintEvent * event)
              m_tilehoffset+(grangeEnd-grangeStart+1)*m_basewidth, m_lineoffset);
   QString s;
 
-  for (int j = grangeStart; j <= grangeEnd; j++)
+  for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
   {
-    char b = m_consensus[j];
+    char b = m_consensus[gindex];
     s = b;
 
     p.setFont(QFont("Helvetica", m_fontsize));
     UIElements::setBasePen(pen, b);
     p.setPen(pen);
 
-    int xcoord = m_tilehoffset + (j-grangeStart)*m_basewidth;
+    int xcoord = m_tilehoffset + (gindex-grangeStart)*m_basewidth;
 
     p.drawText(xcoord, m_consoffset, 
                m_fontsize, m_lineheight, 
                Qt::AlignHCenter | Qt::AlignBottom, s);
 
-    if (m_cstatus[j] == 'X')
+    if (m_cstatus[gindex] == 'X')
     {
       p.setBrush(Qt::SolidPattern);
       p.setPen(Qt::black);
@@ -133,7 +132,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
     p.setPen(Qt::black);
 
-    int n = j%10;
+    int n = gindex%10;
     int scaledfont = (int)jmax((m_fontsize*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
 
@@ -149,7 +148,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     // ticks and labels
     if (n==0)
     {
-      s = QString::number(j);
+      s = QString::number(gindex);
 
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
                  xcoord+m_fontsize/2, m_lineoffset+2);
@@ -172,7 +171,6 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
 void ConsensusField::toggleHighlightDiscrepancy(bool show)
 {
-  m_highlightdiscrepancy = show;
-  repaint();
-
+  //m_highlightdiscrepancy = show;
+  //repaint();
 }

@@ -15,25 +15,25 @@ RenderSeq_t::~RenderSeq_t()
 
 char RenderSeq_t::base(Pos_t gindex) const
 {
-  if (gindex < m_offset || gindex >= m_offset + m_nucs.size())
+  if (gindex < m_loffset || gindex > m_roffset)
   {
     return ' ';
   }
   else
   {
-    return m_nucs[gindex - m_offset];
+    return m_nucs[gindex - m_loffset];
   }
 }
 
 int RenderSeq_t::qv(Pos_t gindex) const
 {
-  if (gindex < m_offset || gindex >= m_offset + m_nucs.size())
+  if (gindex < m_loffset || gindex > m_roffset)
   {
     return -1;
   }
   else
   {
-    return m_qual[gindex - m_offset] - AMOS::MIN_QUALITY;
+    return m_qual[gindex - m_loffset] - AMOS::MIN_QUALITY;
   }
 }
 
@@ -46,13 +46,13 @@ Pos_t RenderSeq_t::getGindex(Pos_t gseqpos) const
   {
     // compute distance to right aligned position
     seqoffset = gseqpos - m_tile->range.end;
-    gindex = m_offset+m_nucs.size()-1-seqoffset;  // -1 -> size based
+    gindex = m_roffset-seqoffset;  
   }
   else
   {
     // compute distance to left aligned position
     seqoffset = gseqpos - m_tile->range.begin;
-    gindex = m_offset + seqoffset;
+    gindex = m_loffset + seqoffset;
   }
 
 
@@ -65,7 +65,9 @@ void RenderSeq_t::load(Bank_t & read_bank, Tile_t * tile)
   read_bank.fetch(tile->source, m_read);
   Range_t range = tile->range;
 
-  m_offset = tile->offset;
+  m_loffset = tile->offset;
+  m_roffset = tile->offset + tile->range.getLength() + tile->gaps.size() - 1; 
+
   m_rc = 0;
   if (tile->range.begin > tile->range.end) { m_rc = 1; range.swap();} 
 
@@ -210,12 +212,12 @@ int RenderSeq_t::getGSeqPos(int gindex)
 
   if (m_rc)
   {
-    int distance = m_offset + m_nucs.size() -1 - gindex;
+    int distance = m_roffset - gindex;
     gseqpos = m_tile->range.end + distance;
   }
   else
   {
-    int distance = gindex - m_offset;
+    int distance = gindex - m_loffset;
     gseqpos = m_tile->range.begin + distance;
   }
 

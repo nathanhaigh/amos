@@ -228,7 +228,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
     }
 
     int gindex = read->getGindex(i);
-    if (gindex >= read->m_offset && gindex < read->m_offset + read->m_nucs.size())
+    if (gindex >= read->m_loffset && gindex <= read->m_roffset)
     {
       char c = cons[gindex];
       if (read->m_rc)

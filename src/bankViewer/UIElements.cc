@@ -5,7 +5,7 @@ QColor UIElements::color_c(Qt::blue);
 QColor UIElements::color_g(Qt::yellow);
 QColor UIElements::color_t(Qt::red);
 QColor UIElements::color_default(Qt::black);
-QColor UIElements::color_discrepancy(Qt::darkMagenta);
+QColor UIElements::color_discrepancy(204,204,255);
 
 const QColor & UIElements::getBaseColor(char base)
 {

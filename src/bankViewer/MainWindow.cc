@@ -56,13 +56,17 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   m_slider = new QSlider(Horizontal, this, "slider");
   m_slider->setTracking(0);
+  m_slider->setPageStep(20);
 
   // slider <-> tiling
-  connect(tiling, SIGNAL(gindexChanged(int)),
-          m_slider, SLOT(setValue(int)) );
+  connect(m_slider, SIGNAL(valueChanged(int)),
+          tiling, SLOT(setGindex(int)) );
 
   connect(m_slider, SIGNAL(sliderMoved(int)),
-          tiling,   SLOT(trackGindex(int)));
+          tiling, SLOT(trackGindex(int)));
+
+  connect(tiling, SIGNAL(gindexChanged(int)),
+          m_slider, SLOT(setValue(int)) );
 
   connect(m_slider, SIGNAL(sliderReleased()),
           tiling,   SLOT(trackGindexDone()) );

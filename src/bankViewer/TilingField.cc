@@ -171,7 +171,7 @@ void TilingField::paintEvent( QPaintEvent * )
        ri++)
   {
     int hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
-                                             ri->m_offset, ri->m_nucs.size(), 
+                                             ri->m_loffset, ri->m_nucs.size(), 
                                              clen);
 
     if (hasOverlap || m_stabletiling)
@@ -218,14 +218,21 @@ void TilingField::paintEvent( QPaintEvent * )
 
       if (hasOverlap)
       {
-        for (int j = grangeStart; j <= grangeEnd; j++)
+        for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
         {
-          int hoffset = tilehoffset + (j-grangeStart)*basewidth;
+          int hoffset = tilehoffset + (gindex-grangeStart)*basewidth;
 
-          // Bases
-          char b = ri->base(j);
+          char b = ri->base(gindex);
           s = b;
 
+          if (m_highlightdiscrepancy && b != ' ' && b != m_consensus[gindex])
+          {
+            p.setBrush(UIElements::color_discrepancy);
+            p.setPen(UIElements::color_discrepancy);
+            p.drawRect(hoffset, ldcov, m_fontsize, lineheight);
+          }
+
+          // Bases
           p.setPen(UIElements::getBaseColor(b));
           p.setFont(QFont("Helvetica", m_fontsize));
           p.drawText(hoffset, ldcov, 
@@ -235,7 +242,7 @@ void TilingField::paintEvent( QPaintEvent * )
           // QV
           if (m_displayqv)
           {
-            int qv = ri->qv(j);
+            int qv = ri->qv(gindex);
             if (qv != -1)
             {
               s = QString::number(qv);
@@ -276,16 +283,16 @@ void TilingField::paintEvent( QPaintEvent * )
 
                 bool first = true;
 
-                for (int j = grangeStart-1; j <= grangeEnd+1; j++)
+                for (int gindex = grangeStart-1; gindex <= grangeEnd+1; gindex++)
                 {
-                  int peakposition = ri->m_bcpos[ri->getGSeqPos(j)];
-                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(j+1)];
+                  int peakposition = ri->m_bcpos[ri->getGSeqPos(gindex)];
+                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(gindex+1)];
 
                   int hdelta = nextpeakposition - peakposition;
                   double hscale = ((double)(basewidth))/hdelta;
                   double vscale = 25;
 
-                  int hoffset = tilehoffset + (j-grangeStart)*basewidth+m_fontsize/2;
+                  int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
                         
                   for (int t = peakposition; t < nextpeakposition; t++)
                   {
@@ -332,16 +339,16 @@ void TilingField::paintEvent( QPaintEvent * )
 
                 bool first = true;
 
-                for (int j = grangeStart-1; j <= grangeEnd+1; j++)
+                for (int gindex = grangeStart-1; gindex <= grangeEnd+1; gindex++)
                 {
-                  int peakposition = ri->m_bcpos[ri->getGSeqPos(j)];
-                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(j+1)];
+                  int peakposition = ri->m_bcpos[ri->getGSeqPos(gindex)];
+                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(gindex+1)];
 
                   int hdelta = peakposition - nextpeakposition;
                   double hscale = ((double)(basewidth))/hdelta;
                   double vscale = 25;
 
-                  int hoffset = tilehoffset + (j-grangeStart)*basewidth+m_fontsize/2;
+                  int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
                         
                   for (int t = peakposition; t > nextpeakposition; t--)
                   {
@@ -390,20 +397,6 @@ void TilingField::paintEvent( QPaintEvent * )
     }
   }
 
-  if (m_highlightdiscrepancy)
-  {
-    for (int j = grangeStart; j <= grangeEnd; j++)
-    {
-      int q = j-grangeStart;
-      if (m_cstatus[j] == 'X')
-      {
-        p.setBrush(Qt::NoBrush);
-        p.setPen(UIElements::color_discrepancy);
-        p.drawRect(tilehoffset + q*basewidth, 0,
-                   m_fontsize, ldcov);
-      }
-    }
-  }
 
   p.end();
   p.begin(this);

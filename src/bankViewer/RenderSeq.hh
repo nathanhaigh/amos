@@ -58,7 +58,9 @@ public:
   int m_displaystart;
   int m_displayend;
 
-  int m_offset;
+  int m_loffset;
+  int m_roffset;
+
   int m_vectorpos;
   AMOS::Read_t read;
   string m_nucs;
