@@ -455,17 +455,22 @@ void ParseArgs (int argc, char ** argv)
     }
 
   if (OPT_Create  && !OPT_ForceCreate  &&
-      !access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
+      !access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK))
     {
       cerr << "ERROR: Bank path already exists\n";
       errflg ++;
     }
 
   if (!OPT_Create  &&
-      access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
+      access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK))
     {
-      cerr << "ERROR: Bank path does not exist, "
-	   << "use the -c option to create one\n";
+      cerr << "ERROR: Bank path is not accessible\n";
+      errflg ++;
+    }
+
+  if (access (OPT_MessageName . c_str( ), R_OK|W_OK|X_OK))
+    {
+      cerr << "ERROR: Message path is not accessible\n";
       errflg ++;
     }
 
