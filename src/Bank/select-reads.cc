@@ -132,6 +132,14 @@ int main (int argc, char ** argv)
             r1 != iidsToPrint.end() || 
             r2 != iidsToPrint.end())
         {
+
+          if (r1 == iidsToPrint.end())
+          {
+            mtp.flip();
+            r1 = r2;
+            r2 = iidsToPrint.end();
+          }
+
           red_bank . fetch (mtp . getReads( ) . first, red1);
           frg_bank . fetch (red1 . getFragment( ), frg);
 
