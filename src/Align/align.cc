@@ -372,6 +372,24 @@ void  Base_Alignment_t :: Dump
 
 
 
+double  Base_Alignment_t :: Error_Rate
+    (void)  const
+
+//  Return the number of errors divided by the average
+//  length of this alignment.
+
+  {
+   double  len;
+
+   len = (a_hi - a_lo + b_hi - b_lo) / 2.0;
+   if  (len == 0)
+       return  0.0;
+     else
+       return  errors / len;
+  }
+
+
+
 void  Base_Alignment_t :: Flip_AB
     (void)
 
@@ -847,6 +865,7 @@ void  Alignment_t :: Set_From_VS_Matrix
    a_lo = 0;
    a_hi = t [e] [j] . len;
    b_hi = a_hi + j;
+   errors = e;
 
    delta . clear ();
 
@@ -1708,6 +1727,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
      {
       bool  ok;
       int  error_limit, len, off;
+      int  lo, hi;
 
       len = strlen (s [i]);
       error_limit = Binomial_Cutoff (len, error_rate, 1e-6);
@@ -1733,7 +1753,6 @@ void  Multi_Alignment_t :: Reset_From_Votes
       do
         {
          Fix_Status_t  status;
-         int  lo, hi;
 
          off = align [i] . b_lo + adjust [align [i] . b_lo];
          lo = Max (off - wiggle, 0);
@@ -1742,7 +1761,10 @@ void  Multi_Alignment_t :: Reset_From_Votes
                    (s [i], len, cons, cons_len, lo, hi,
                     error_limit, align [i]);
          if  (! ok)
-             wiggle *= 2;
+             {
+              wiggle *= 2;
+              error_limit += Min (1, int (error_limit * 0.10));
+             }
            else
              {
               align [i] . Check_Fix_Start (s [i] , len, cons, cons_len, status);
@@ -1750,14 +1772,30 @@ void  Multi_Alignment_t :: Reset_From_Votes
                   ok = false;
              }
 
-        }  while  (! ok && attempts ++ < MAX_ALIGN_ATTEMPTS);
+        }  while  (! ok && ++ attempts < MAX_ALIGN_ATTEMPTS);
 
       if  (! ok)
           {
+           long  status;
+
+           Overlap_Align (s [i], len, cons, cons_len, lo, hi,
+                1, -3, -2, -2, align [i]);
+
+           cerr << "In  Reset_From_Votes  in contig " << id << endl
+                << "  Forced alignment of string subscript " << i
+                << " to consensus\n";
+           status = cerr . setf (ios :: fixed);
+           cerr << "  with " << align [i] . errors << " errors ("
+                << setprecision (2) << 100.0 * align [i] . Error_Rate ()
+                << "% error)" << endl;
+           cerr . setf (status);
+
+#if  0
 	    sprintf (Clean_Exit_Msg_Line,
 		     "Failed on string %d in  Reset_From_Votes", i);
 	    throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
 					-1, i);
+#endif
           }
 
       align [i] . Incr_Votes (vote, s [i]);
@@ -1783,13 +1821,14 @@ void  Multi_Alignment_t :: Set_Consensus
 
 void  Multi_Alignment_t :: Set_Initial_Consensus
     (const vector <char *> & s, const vector <int> & offset,
-     int offset_delta, double error_rate,
+     int offset_delta, double error_rate, int min_overlap,
      vector <Vote_t> & vote, vector <char *> * tag_list)
 
 //  Create an initial consensus string in this multialignment from the
 //  strings in  s  with nominal relative offsets in  offset .  Offsets
 //  are allowed to vary by +/-  offset_delta  and the allowed error rate
-//  in alignments is  error_rate .  Set  vote  to the votes of the strings
+//  in alignments is  error_rate .  Strings must overlap by
+//  at least  min_overlap  bases.  Set  vote  to the votes of the strings
 //  at each position of the consensus.  Create the consensus by greedily
 //  tiling the strings in order, appending the extension of any
 //  string that aligns past the end of the consensus.  Store the
@@ -1831,6 +1870,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
      {
       bool  wrote_string_tag = false;
       bool  matched;
+      double  erate;
       int  error_limit, len, exp_olap_len;
       int  attempts, wiggle;
       int  lo, hi;
@@ -1838,17 +1878,24 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       len = strlen (s [i]);
       attempts = 0;
       wiggle = offset_delta;
+      erate = error_rate;
 
       do
         {
          lo = Max (0, prev_off + offset [i] - wiggle);
-         hi = Min (cons_len, prev_off + offset [i] + wiggle);
+         hi = Min (cons_len - min_overlap, prev_off + offset [i] + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
 
-         error_limit = Binomial_Cutoff (exp_olap_len, error_rate, 1e-6);
+         error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
 
          matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
                         0, error_limit, ali);
+         matched = matched && ali . Error_Rate () <= erate;
+
+         if  (Verbose > 0 && matched && attempts > 0)
+             fprintf (stderr,
+                  "Matched with wiggle = %d  error_rate = %.1f%%\n",
+                  wiggle, 100.0 * ali . Error_Rate ());
 
          if  (! matched)
              {
@@ -1870,9 +1917,9 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
                         << "  error_limit = " << error_limit << endl;
                   }
               wiggle *= 2;
+              erate += 0.01;
              }
-        }  while  (! matched && attempts ++ < MAX_ALIGN_ATTEMPTS);
-
+        }  while  (! matched && ++ attempts < MAX_ALIGN_ATTEMPTS);
 
       if  (! matched)
           {
@@ -4885,8 +4932,9 @@ int  Match_Count
 
 void  Multi_Align
     (const string & id, vector <char *> & s, vector <int> & offset,
-     int offset_delta, double error_rate, Gapped_Multi_Alignment_t & gma,
-     vector <int> * ref, vector <char *> * tag_list)
+     int offset_delta, double error_rate, int min_overlap,
+     Gapped_Multi_Alignment_t & gma, vector <int> * ref,
+     vector <char *> * tag_list)
 
 //   id  is the id of the contig being multi-aligned.
 //  Create multialignment in  gma  of strings  s  each of which has
@@ -4895,7 +4943,8 @@ void  Multi_Align
 //  either direction.   error_rate  is the maximum expected error rate
 //  in alignments between strings.  It should be twice the expected error
 //  rate to the real reference string to allow for independent errors
-//  in separate strings.  The value of  offset [0]  must be zero.
+//  in separate strings.  Strings must overlap by at least  min_overlap
+//  bases (unless forced).  The value of  offset [0]  must be zero.
 //  If  ref  isn't  NULL  then make its values be the subscripts of
 //  the original locations of the entries in  s  in case they are
 //  shifted.   If  tag_list  isn't  NULL , then use its values to identify
@@ -4933,7 +4982,8 @@ void  Multi_Align
    Sort_Strings_And_Offsets (s, offset, ref, tag_list);
 
    ma . setID (id);
-   ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote, tag_list);
+   ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, min_overlap,
+        vote, tag_list);
 
    ct = 0;
    do
