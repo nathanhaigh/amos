@@ -65,7 +65,7 @@ int main (int argc, char ** argv)
 {
   ifstream msgfile;                        // the message file, if applicable
   Message_t msg;                           // the current message
-  NCode_t msgcode;                         // current message NCode
+  NCode_t msgcode = NULL_NCODE;            // current message NCode
   streampos lastpos;                       // last tellg pos
   map<NCode_t, LongPair_t> sums;           // message count and size sums
   long int c1, c2;
@@ -164,14 +164,15 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h            Display help information\n\n";
+    << "-h            Display help information\n"
+    << endl;
 
   cerr
-    << "Takes an AMOS message file as input on the command line. All\n"
-    << "messages will be lightly checked for correct AMOS format, but their\n"
-    << "NCode and fields will not be validated. Number of each top-level\n"
-    << "message types will be displayed, along with their total and average\n"
-    << "sizes.\n\n";
+    << "Takes an AMOS message file as input on the command line. Number of\n"
+    << "each top-level message type will be displayed, along with their total\n"
+    << "and average sizes. All messages must have balanced braces and valid\n"
+    << "headers, however their fields will not be checked for correctness.\n"
+    << endl;
 }
 
 
@@ -181,5 +182,6 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  [message path]\n\n";
+    << "\nUSAGE: " << s << "  [options]  [message path]\n"
+    << endl;
 }

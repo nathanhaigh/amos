@@ -161,13 +161,15 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-h            Display help information\n"
-    << "-m path       The file path of the input message\n\n";
+    << "-m path       The file path of the input message\n"
+    << endl;
 
   cerr
     << "Takes an AMOS message file and AMOS NCodes as input. All top-level\n"
-    << "messages matching one of the NCodes will be extracted and reported to\n"
-    << "stdout. Each message will be lightly checked for correct AMOS\n"
-    << "format, but their NCode and fields will not be validated.\n\n";
+    << "messages matching one of the specified NCodes will be extracted and\n"
+    << "reported to stdout. All messages must have balanced braces and valid\n"
+    << "headers, however their fields will not be checked for correctness.\n"
+    << endl;
 }
 
 
@@ -177,5 +179,6 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  -m <message path>  [NCodes]\n\n";
+    << "\nUSAGE: " << s << "  [options]  -m <message path>  [NCodes]\n"
+    << endl;
 }

@@ -123,13 +123,15 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h            Display help information\n\n";
+    << "-h            Display help information\n"
+    << endl;
 
   cerr
     << "Takes an AMOS message file as input on the command line. Validates\n"
     << "the format of the AMOS message and returns 0 if the message parsed\n"
     << "successfully, else returns non-zero and prints a description of the\n"
-    << "failure to stderr.\n\n";
+    << "failure to stderr. Links are not validated.\n"
+    << endl;
 }
 
 
@@ -139,5 +141,6 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  [message path]\n\n";
+    << "\nUSAGE: " << s << "  [options]  [message path]\n"
+    << endl;
 }

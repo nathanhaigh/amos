@@ -15,6 +15,24 @@ using namespace std;
 
 
 //================================================ Message_t ===================
+inline bool skipto (istream & in, char ch)
+{
+  static const int chunk = 1024;
+
+  while ( true )
+    {
+      in . ignore (chunk, ch);
+
+      if ( !in . good( ) )
+	return false;
+      if ( in . gcount( ) != chunk )
+	return true;
+
+      in . unget( );
+    }
+}
+
+
 //----------------------------------------------------- getField ---------------
 const string & Message_t::getField (NCode_t fcode) const
 {
@@ -31,15 +49,14 @@ const string & Message_t::getField (NCode_t fcode) const
 //----------------------------------------------------- read -------------------
 bool Message_t::read (istream & in)
 {
-  uint8_t i;
-  char ch, chp, chpp;
+  int i;
+  char ch;
   string data;
   string name (NCODE_SIZE, NULL_CHAR);
 
   //-- Search for the beginning of the message
-  while ( in . get( ) != '{' )
-    if ( !in . good( ) )
-      return false;
+  if ( !skipto (in, '{') )
+    return NULL_NCODE;
 
   //-- Empty the object
   clear( );
@@ -49,16 +66,21 @@ bool Message_t::read (istream & in)
     //-- Get the type name
     for ( i = 0; i < NCODE_SIZE; i ++ )
       name [i] = in . get( );
-    in . ignore( );
+    if ( in . get( ) != NL_CHAR )
+      AMOS_THROW_IO ("Could not parse message NCode: " + name);
     setMessageCode (name);
 
     //-- Until end of message
-    while (true)
+    while ( true )
       {
+	//-- Check next char
 	ch = in . peek( );
 
+	//-- If unexpected EOF
+	if ( ch == EOF )
+	  AMOS_THROW_IO ("Unbalanced message nesting");
 	//-- If a nested message, read it in
-	if ( ch == '{' )
+	else if ( ch == '{' )
 	  {
 	    subs_m . push_back (Message_t ( ));
 	    subs_m . back( ) . read (in);
@@ -67,42 +89,39 @@ bool Message_t::read (istream & in)
 	//-- If end of message
 	else if ( ch == '}' )
 	  {
-	    while ( in . get( ) != NL_CHAR )
-	      if ( !in . good( ) )
-		break;
+	    skipto (in, NL_CHAR);
 	    break;
+	  }
+	//-- If spacing
+	else if ( ch == NL_CHAR )
+	  {
+	    in . get( );
+	    continue;
 	  }
 
 	//-- Get the field name
 	for ( i = 0; i < NCODE_SIZE; i ++ )
 	  name [i] = in . get( );
-	ch = in . get( );
+	if ( in . get( ) != ':' )
+	  AMOS_THROW_IO ("Could not parse field NCode in " +
+			 Decode (mcode_m) + " message");
 
 	//-- Read in first line of field
 	getline (in, data);
-
-	//-- Throw if bad format
-	if ( ch != ':'  ||  !in . good( ) )
-	  AMOS_THROW_IO ("Message read failure, data: " + data);
+	if ( !in . good( ) )
+	  AMOS_THROW_IO ("Could not parse single-line field data in " +
+			 Decode (mcode_m) + " message");
 
 	//-- If multi-line field, read the rest
 	if ( data . empty( ) )
 	  {
-	    chpp = NL_CHAR;
-	    chp = in . get( );
-	    ch = in . get( );
-	    while (chpp != NL_CHAR  ||  chp != '.'  ||  ch != NL_CHAR)
-	      {
-		chpp = chp;
-		chp = ch;
-		ch = in . get( );
-
-		if ( !in . good( ) )
-		  AMOS_THROW_IO
-		    ("Message read failure, data: " + data);
-
-		data += chpp;
-	      }
+	    do {
+	      getline (in, data, '.');
+	      if ( !in . good( ) )
+		AMOS_THROW_IO ("Could not parse multi-line field data in " +
+			       Decode (mcode_m) + " message");
+	    } while ( in.peek( ) != NL_CHAR  ||  *(data.rbegin( )) != NL_CHAR );
+	    in . get( ); 
 	  }
 
 	//-- Set field data
@@ -133,6 +152,47 @@ void Message_t::setField (NCode_t fcode, const string & data)
 
   //-- Insert new field, overwrite if already exists
   fields_m [fcode] = data;
+}
+
+
+//----------------------------------------------------- skip -------------------
+NCode_t Message_t::skip (istream & in) // static const
+{
+  int i;
+  char ch;
+  string name (NCODE_SIZE, NULL_CHAR);
+
+  //-- Search for the beginning of the message
+  if ( !skipto (in, '{') )
+    return NULL_NCODE;
+
+  //-- Get the type name
+  for ( i = 0; i < NCODE_SIZE; i ++ )
+    name [i] = in . get( );
+  if ( in . get( ) != NL_CHAR )
+    AMOS_THROW_IO ("Could not parse message header: " + name);
+
+  //-- Until end of message
+  i = 1;
+  while ( i != 0 )
+    {
+      //-- Get next char
+      ch = in . get( );
+      if ( !in . good( ) )
+	AMOS_THROW_IO ("Unbalanced message nesting");
+
+      //-- Increment/decrement level counter
+      if ( ch == '{' )
+	i ++;
+      else if ( ch == '}' )
+	i --;
+
+      //-- Suck in rest of line
+      if ( ch != NL_CHAR )
+	skipto (in, NL_CHAR);
+    }
+
+  return Encode (name);
 }
 
 
@@ -171,84 +231,4 @@ void Message_t::write (ostream & out) const
   //-- Check stream 'goodness'
   if ( !out . good( ) )
     AMOS_THROW_IO ("Message write failure");
-}
-
-
-//----------------------------------------------------- skip -------------------
-NCode_t Message_t::skip (istream & in) // static const
-{
-  NCode_t retcode;
-  char ch, chp, chpp;
-  string name (NCODE_SIZE, NULL_CHAR);
-
-  //-- Search for the beginning of the message
-  while ( in . get( ) != '{' )
-    if ( !in . good( ) )
-      return NULL_NCODE;
-
-  try {
-
-    //-- Get the type name
-    for ( int i = 0; i < NCODE_SIZE; i ++ )
-      name [i] = in . get( );
-    in . ignore( );
-    retcode = Encode (name);
-
-    //-- Until end of message
-    while (true)
-      {
-	ch = in . peek( );
-
-	//-- If a nested message, read it in
-	if ( ch == '{' )
-	  {
-	    skip (in);
-	    continue;
-	  }
-	//-- If end of message
-	else if ( ch == '}' )
-	  {
-	    while ( in . get( ) != NL_CHAR )
-	      if ( !in . good( ) )
-		break;
-	    break;
-	  }
-
-	//-- Get the field name
-	in . ignore (NCODE_SIZE);
-
-	//-- Throw if bad format
-	if ( in . get( ) != ':' )
-	  AMOS_THROW_IO ("Message skip failure");
-
-	//-- If multi-line field, read the rest
-	chpp = in . get( );
-	if ( chpp == NL_CHAR )
-	  {
-	    chp = in . get( );
-	    ch = in . get( );
-	    while (chpp != NL_CHAR  ||  chp != '.'  ||  ch != NL_CHAR)
-	      {
-		chpp = chp;
-		chp = ch;
-		ch = in . get( );
-
-		if ( !in . good( ) )
-		  AMOS_THROW_IO ("Message skip failure");
-	      }
-	  }
-	else
-	  {
-	    while ( in . get( ) != NL_CHAR )
-	      if ( !in . good( ) )
-		break;
-	  }
-      }
-  }
-  catch (Exception_t) {
-
-    throw;
-  }
-
-  return retcode;
 }

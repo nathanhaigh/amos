@@ -358,13 +358,14 @@ public:
   //! \brief Skips a message in an input stream, returning its NCode
   //!
   //! Skips a message in an input stream, returning its NCode. Will throw an
-  //! exception if a message is found, but its message code or nesting is not
-  //! properly formatted. This validation is not entirely sound, and message
-  //! errors may slip through unnoticed.
+  //! exception if a message is found, but its nesting is not properly
+  //! formatted. However, complete validation is not performed. Use read method
+  //! to assure proper formatting.
   //!
   //! \param in The input stream to read from
   //! \pre The incoming message code and nesting are properly formatted
   //! \post Information already stored in the message object will not be changed
+  //! \post The istream is repositioned at the beginning of the next message
   //! \throws IOException_t
   //! \return NCode of the skipped message, or NULL_NCODE if no message found
   //!
