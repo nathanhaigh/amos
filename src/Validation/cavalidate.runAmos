@@ -1,3 +1,4 @@
+#!/local/asmg/Linux/bin/runAmos -C
 ## Convert a CA assembly to AMOS land, run validation steps
 
 INPUTS = $(PREFIX).asm $(PREFIX).frg
