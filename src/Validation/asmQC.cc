@@ -187,16 +187,9 @@ int mateLen (AnnotatedMatePair & m, Range_t & a, Range_t & b, int Len, int End)
   return abs(a.getBegin() - b.getBegin());
 }// mateLen
 
-// compare pairs of number and pointer
-//struct lessPair : public binary_function <pair<<Pos_t>, list<pair<Pos_t, Pos_t> >::iterator>, <pair<<Pos_t>, list<pair<Pos_t, Pos_t> >::iterator> >
-//{
-//  bool operator () (pair<Pos_t>, list<pair<Pos_t, Pos_t> >::iterator> a,/
-//		    pair<Pos_t>, list<pair<Pos_t, Pos_t> >::iterator> b) {
-//    return less(a.first, b.first);
-//  }
-//} // comparison of "fancy" pairs
 
 // computes mean and standard deviation for a set of observations
+// observations outside of 5 standard deviations are excluded
 pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
 {
   int numObs = sizes.size();
@@ -215,6 +208,31 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
   }
   stdev = (SD_t) round(sqrt(stdev * 1.0 / (numObs - 1)));
   
+  Pos_t origm = mean;
+  SD_t origs = stdev;
+
+  // recompute mean and stdev for just sizes within 5SD of mean
+
+  mean = 0;
+  for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
+    if (abs(*li - origm) < 5 * origs)
+      mean += *li;
+    else 
+      numObs--;
+  }
+
+  if (numObs == 0) return pair<Pos_t, SD_t> (0, 0);
+  // this should also be an assert
+
+  mean = (Pos_t) round (mean * 1.0 / numObs);
+ 
+  stdev = 0;
+  for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
+    if (abs(*li - origm) < 5 * origs)
+      stdev += (*li - mean) * (*li - mean);
+  }
+  stdev = (SD_t) round(sqrt(stdev * 1.0 / (numObs - 1)));
+
   return pair<Pos_t, SD_t>(mean, stdev);
 }
 
@@ -461,6 +479,7 @@ int main(int argc, char **argv)
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2ctg;     // map from read to contig
   hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > rd2posn; // position in contig
   hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > ctglen;   // length of contig
+  hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > ctgname;   // name of contig
 
   set<ID_t> ctgIDs;
   while (contig_stream >> ctg)
@@ -480,6 +499,7 @@ int main(int argc, char **argv)
         Range_t(f, l);
 
       ctglen[ctg.getIID()] = ctg.getLength();
+      ctgname[ctg.getIID()] = ctg.getEID();
     }
 
   contig_stream.close();
@@ -648,7 +668,8 @@ int main(int argc, char **argv)
     list<pair<Pos_t, Pos_t> > ranges;  // ranges we are interested in
     list<pair<Pos_t, Pos_t> > interest;
 
-    cout << ">Contig_" << *ctg << " " << ctglen[*ctg] << " bases" << endl;
+    cout << ">Contig_" << *ctg << " " << ctgname[*ctg] << " " 
+	 << ctglen[*ctg] << " bases" << endl;
 
     Contig_t newcontig;
     vector<Feature_t> features;
