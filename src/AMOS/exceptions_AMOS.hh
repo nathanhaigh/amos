@@ -86,6 +86,36 @@ public:
 
 
 
+//================================================ AllocException_t ============
+//! \brief An exception for alloc failures, better than std::bad_alloc
+//!
+//! Can be thrown in place of std::bad_alloc when a modified description, line
+//! number or file name would be helpful for debugging.
+//!
+//==============================================================================
+class AllocException_t : public Exception_t
+{
+
+public:
+
+  //---------------------------------------------- AllocException_t ------------
+  //! \brief Informative constructor
+  //!
+  //! \param what Brief description of the exception
+  //! \param line Line number of the exception
+  //! \param file File name of the exception
+  //!
+  AllocException_t (const std::string & what,
+		    int line = 0,
+		    const std::string & file = "")
+    : Exception_t (what, line, file)
+  { }
+
+};
+
+
+
+
 //================================================ ArgumentException_t =========
 //! \brief An exception for invalid arguments
 //!
@@ -152,8 +182,8 @@ public:
 
 //-- Helpful exception throw macros
 #define AMOS_THROW(A) throw Exception_t(A,__LINE__,__FILE__)
-#define AMOS_THROW_IO(A) throw IOException_t(A,__LINE__,__FILE__)
+#define AMOS_THROW_ALLOC(A) throw AllocException_t(A,__LINE__,__FILE__)
 #define AMOS_THROW_ARGUMENT(A) throw ArgumentException_t(A,__LINE__,__FILE__)
-
+#define AMOS_THROW_IO(A) throw IOException_t(A,__LINE__,__FILE__)
 
 #endif // #ifndef __exceptions_AMOS_HH

@@ -7,7 +7,8 @@
 //!
 //! \todo validity checking?
 //! \todo stream error checking?
-//! \todo logging
+//! \todo file locking? esp. for temporary banks?
+//! \todo logging?
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "Bank_AMOS.hh"
@@ -210,15 +211,16 @@ void Bank_t::concat (Bank_t & source)
     AMOS_THROW_IO ("Cannot concat to a closed Bank");
   if ( !source . isOpen( ) )
     AMOS_THROW_IO ("Cannot concat a closed Bank");
-  if ( banktype_m != Bankable_t::NULL_BANK  &&
-       banktype_m != source . banktype_m )
+  if ( banktype_m != source . banktype_m  &&
+       banktype_m != Bankable_t::NULL_BANK  &&
+       source . banktype_m != Bankable_t::NULL_BANK )
     AMOS_THROW_ARGUMENT ("Cannot concat incompatible BankType_t");
 
   Size_t size;
   Bankable_t::BankableFlags_t flags;
   Size_t tail = source . netFixSize( ) + sizeof (Size_t);
 
-  Size_t buffer_size = source . fix_size_m;
+  Size_t buffer_size = fix_size_m;
   char * buffer = (char *) SafeMalloc (buffer_size);
 
   std::streampos vpos;
@@ -391,7 +393,7 @@ void Bank_t::fetch (Bankable_t & obj)
     AMOS_THROW_IO ("Cannot fetch from a closed Bank");
   if ( banktype_m != Bankable_t::NULL_BANK  &&
        banktype_m != obj . getBankType( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append incompatible BankType_t");
+    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible BankType_t");
   if ( iid > last_iid_m )
     AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
@@ -709,4 +711,120 @@ void Bank_t::restore (Bankable_t & obj)
   partition -> fix . seekp (fpos);
   partition -> fix . write ((char *)&flags,
 			    sizeof (Bankable_t::BankableFlags_t));;
+}
+
+
+//----------------------------------------------------- transform --------------
+void Bank_t::transform (std::vector<ID_t> id_map)
+{
+  //-- Check preconditions
+  if ( !isOpen( ) )
+    AMOS_THROW_IO ("Cannot transform a closed Bank");
+  if ( id_map[0] != NULL_ID )
+    AMOS_THROW_ARGUMENT ("Cannot map id_map[0] to NULL_ID (0)");
+
+  ID_t lid, pid;
+
+  Size_t size;
+  Bankable_t::BankableFlags_t flags;
+  Size_t tail = netFixSize( ) + sizeof (Size_t);
+
+  Size_t buffer_size = fix_size_m;
+  char * buffer = (char *) SafeMalloc (buffer_size);
+
+  std::streampos vpos;
+  BankPartition_t * thisp;
+  BankPartition_t * tranp;
+
+  //-- Create a temporary type-less bank for transformation
+  Bank_t nullbank (Bankable_t::NULL_BANK);
+
+  //-- Concat and transform this bank to a temporary bank
+  try {
+    nullbank . create (store_dir_m);
+
+    //-- For each new object in the mapping
+    for ( ID_t i = 1; i < id_map . size( ); i ++ )
+      {
+	if ( id_map [i] == NULL_ID  ||  id_map [i] > last_iid_m )
+	  AMOS_THROW_ARGUMENT ("Cannot map out of range IID");
+
+	//-- Look up the old object
+	lookup (id_map [i], lid, pid);
+	thisp = getPartition (pid);
+	thisp -> fix . seekg (lid * fix_size_m);
+	thisp -> fix . read ((char *)&vpos, sizeof (std::streampos));
+	thisp -> var . seekg (vpos);
+	thisp -> fix . read ((char *)&flags,
+			     sizeof (Bankable_t::BankableFlags_t));
+
+	//-- If room is needed in transformation, add new partition
+	if ( ++ nullbank . last_iid_m > nullbank . max_iid_m )
+	  {
+	    nullbank . addPartition( );
+	    tranp = nullbank . openPartition (nullbank . last_partition_m);
+	  }
+
+	//-- Write transformed vpos and Bankable flags
+	vpos = tranp -> var . tellp( );
+	tranp -> fix . write ((char *)&vpos, sizeof (std::streampos));
+	tranp -> fix . write ((char *)&flags,
+			      sizeof (Bankable_t::BankableFlags_t));
+
+	//-- Copy object FIX data
+	thisp -> fix . read (buffer, tail);
+	memcpy (&size, buffer + (tail - sizeof (Size_t)), sizeof (Size_t));
+	tranp -> fix . write (buffer, tail);
+
+	//-- Make sure bufffer is big enough for VAR data, realloc if needed
+	while ( size > buffer_size )
+	  {
+	    buffer_size *= 2;
+	    buffer = (char *) SafeRealloc (buffer, buffer_size);
+	  }
+
+	//-- Copy object VAR data
+	thisp -> var . read (buffer, size);
+	tranp -> var . write (buffer, size);
+      }
+
+    //-- Update fix_size if needed and flush transformed bank info
+    if ( nullbank . fix_size_m <= 0 )
+      nullbank . fix_size_m = fix_size_m;
+    nullbank . flush( );
+
+    //-- Reset this bank
+    clear( );
+    partition_size_m = nullbank . partition_size_m;
+    
+    //-- Link back the now cleaned partitions
+    for ( ID_t i = 1; i <= nullbank . last_partition_m; i ++ )
+      {
+	while ( last_partition_m < i )
+	  addPartition( );
+      
+	unlink (partitions_m [i] -> fix_name . c_str( ));
+	unlink (partitions_m [i] -> var_name . c_str( ));
+      
+	assert ( ! link (nullbank . partitions_m [i] -> fix_name . c_str( ),
+			 partitions_m [i] -> fix_name . c_str( )) );
+	assert ( ! link (nullbank . partitions_m [i] -> var_name . c_str( ),
+			 partitions_m [i] -> var_name . c_str( )) );
+      }
+    
+    //-- Set up the appropriate fix_size and last_iid values
+    fix_size_m = nullbank . fix_size_m;
+    last_iid_m = nullbank . last_iid_m;
+    flush( );
+  }
+  catch ( IOException_t ) {
+    //-- Clean up before re-throwing
+    nullbank . destroy( );
+    free (buffer);
+    throw;
+  }
+
+  //-- Destroy the temporary bank
+  nullbank . destroy( );
+  free (buffer);
 }

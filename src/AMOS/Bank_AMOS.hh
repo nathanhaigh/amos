@@ -44,7 +44,7 @@ namespace Bank_k {
   const Size_t BUFFER_SIZE = 1024;
   //!< IO buffer size
 
-  const std::string BANK_VERSION = "1.01";
+  const std::string BANK_VERSION = "1.02";
   //!< Current Bank version, may not be able to read from other versions
 
   const std::string FIX_STORE_SUFFIX = ".fix";
@@ -66,7 +66,6 @@ namespace Bank_k {
       "CONTIG",
       "EXAMPLE",
       "FRAGMENT",
-      "KMERMAP",
       "KMER",
       "LIBRARY",
       "OVERLAP",
@@ -595,6 +594,34 @@ public:
   //! \return void
   //!
   void restore (Bankable_t & obj);
+
+
+  //--------------------------------------------------- transform --------------
+  //! \brief Maps objects in the Bank to new locations and IIDs
+  //!
+  //! Transforms the Bank by reordering the contained objects on disk and
+  //! assigning them new IIDs. Takes a vector of ID_t types which represents
+  //! a one-to-many mapping of old-to-new IDs. Each IID in the vector represents
+  //! the current IID of an object in the Bank, while its index in the vector
+  //! represents the new IID for that object. Objects with adjacent IIDs are
+  //! also adjacently stored on disk, so transforming a Bank may increase
+  //! efficiency for localized operations.
+  //!
+  //! \note Redundancy is allowed, i.e. one old IID may map to many new IIDs
+  //! \note Objects flagged for deletion will not be cleaned
+  //!
+  //! \param map A map of old-to-new IIDs, where index = new and value = old
+  //! \pre The Bank is open
+  //! \pre map[0] == NULL_ID
+  //! \pre All IID values in map are within range, except for map[0]
+  //! \post Objects flagged for deletion will not be cleaned
+  //! \post Object IIDs not included in the map will no longer exist
+  //! \post getLastIID( ) == map . size( ) - 1
+  //! \throws IOException_t
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void transform (std::vector<ID_t> id_map);
 
 };
 
