@@ -41,9 +41,29 @@ void printHelpText()
 {
   cerr << 
     "\n"
-    "USAGE:\n"
-    "\n"
+    ".NAME.\n"
+    "asmQC - computes several mate-pair based statistics on an assembly\n"
+    "\n.USAGE.\n"
     "asmQC -b[ank] <bank_name>\n"
+    "\n.OPTIONS.\n"
+    "-h, -help     print out help message\n"
+    "-b, -bank     bank where assembly is stored\n"
+    "-feat         write contig features into the bank\n"
+    "-recompute    recompute library sizes\n"
+    "-update       update bank with recomputed library sizes\n"
+    "-minobs <n>   minimum number of good mate-pairs required to recompute\n"
+    "              library sizes\n"
+    "-numsd <n>    mate-pairs within <n> standard deviations of the mean\n"
+    "              library size are considered good. <n> can be fractional\n"
+    "-goodcvg <n>  report regions with good mate coverage less than <n>\n"
+    "-shortcvg <n> report regions with short mate coverage greater than <n>\n"
+    "-longcvg <n>  report regions with long mate coverage greater than <n>\n"
+    "-samecvg <n>  report regions with coverage by mates with same orientation\n"
+    "              greater than <n>\n"
+    "-outiecvg <n> report regions with outie coverage greater than <n>\n"
+    "\n.DESCRIPTION.\n"
+    "\n.KEYWORDS.\n"
+    "AMOS bank, Validation, Mate pairs\n"
        << endl;
 }
 
@@ -51,10 +71,20 @@ bool GetOptions(int argc, char ** argv)
 {  
   int option_index = 0;
   static struct option long_options[] = {
-    {"help",  0, 0, 'h'},
-    {"h",     0, 0, 'h'},
-    {"b",     1, 0, 'b'},
-    {"bank",  1, 0, 'b'},
+    {"help",      0, 0, 'h'},
+    {"h",         0, 0, 'h'},
+    {"b",         1, 0, 'b'},
+    {"bank",      1, 0, 'b'},
+    {"minobs",    1, 0, 'm'},
+    {"numsd",     1, 0, 'S'},
+    {"goodcvg",   1, 0, 'g'},
+    {"shortcvg",  1, 0, 's'},
+    {"longcvg",   1, 0, 'l'},
+    {"samecvg",   1, 0, 'n'},
+    {"outiecvg",  1, 0, 'o'},
+    {"recompute", 0, 0, 'r'},
+    {"update",    0, 0, 'u'},
+    {"feat",      0, 0, 'f'},
     {0, 0, 0, 0}
   };
   
@@ -64,9 +94,40 @@ bool GetOptions(int argc, char ** argv)
     switch (c){
     case 'h':
       printHelpText();
+      exit(0);
       break;
     case 'b':
       globals["bank"] = string(optarg);
+      break;
+    case 'm':
+      globals["minobs"] = string(optarg);
+      break;
+    case 'S':
+      globals["numsd"] = string(optarg);
+      break;
+    case 'g':
+      globals["goodcvg"] = string(optarg);
+      break;
+    case 's':
+      globals["shortcvg"] = string(optarg);
+      break;
+    case 'l':
+      globals["longcvg"] = string(optarg);
+      break;
+    case 'n':
+      globals["normalcvg"] = string(optarg);
+      break;
+    case 'o':
+      globals["outiecvg"] = string(optarg);
+      break;
+    case 'r':
+      globals["recompute"] = string("true");
+      break;
+    case 'u':
+      globals["update"] = string("true");
+      break;
+    case 'f':
+      globals["feat"] = string("true");
       break;
     case '?':
       return false;
@@ -161,7 +222,12 @@ void getCvg(list<pair<Pos_t, Pos_t> > & ranges,
 
   interest.clear();
   
-  if (ranges.size() == 0) return;
+  if (ranges.size() == 0 && above) return;
+  if (ranges.size() == 0 && coverage >= 0) {
+    // all contig is below needed coverage
+    interest.push_back(pair<Pos_t, Pos_t>(0, ctglen));
+    return;
+  }
 
   for (list<pair<Pos_t, Pos_t> >::iterator li = ranges.begin(); 
        li != ranges.end(); li++){
@@ -234,7 +300,66 @@ int main(int argc, char **argv)
   int MAX_LONG_CVG = 2; // long mate coverages over this will be reported
   int MAX_NORMAL_CVG = 3; // normal orientation read coverages > will be reptd.
   int MAX_OUTIE_CVG = 3; // outie orientation read coverages > will be reptd.
-  
+
+  bool recompute = false; // recompute library sizes
+  bool update = false;    // update library sizes in bank
+  bool feats = false;     // add features to bank
+
+  if (globals.find("recompute") != globals.end()){
+    recompute = true;
+    cout << "Will recompute library sizes" << endl;
+  } else
+    cout << "Will not recompute library sizes" << endl;
+
+  if (globals.find("update") != globals.end()){
+    update = true;
+    cout << "Will update libraries in bank" << endl;
+  } else
+    cout << "Will not update libraries in bank" << endl;
+
+  if (globals.find("feat") != globals.end()){
+    feats = true;
+    cout << "Will write features in bank" << endl;
+  } else 
+    cout << "Will not write features in bank" << endl;
+
+  if (globals.find("minobs") != globals.end())
+    MIN_OBS = strtol(globals["minobs"].c_str(), NULL, 10);
+  cout << "Minimum number of observations required to change library size: " 
+       << MIN_OBS << endl;
+
+  if (globals.find("numsd") != globals.end())
+    NUM_SD = strtof(globals["numsd"].c_str(), NULL);
+  cout << "Mates within " << NUM_SD 
+       << " standard deviations from mean considered good" << endl;
+
+  if (globals.find("goodcvg") != globals.end())
+    MIN_GOOD_CVG = strtol(globals["goodcvg"].c_str(), NULL, 10);
+  cout << "Reporting regions with less than " << MIN_GOOD_CVG
+       << " good mate coverage" << endl;
+
+  if (globals.find("shortcvg") != globals.end())
+    MAX_SHORT_CVG = strtol(globals["shortcvg"].c_str(), NULL, 10);
+  cout << "Reporting regions with more than " << MAX_SHORT_CVG
+       << " short mate coverage" << endl;
+
+  if (globals.find("longcvg") != globals.end())
+    MAX_LONG_CVG = strtol(globals["longcvg"].c_str(), NULL, 10);
+  cout << "Reporting regions with more than " << MAX_LONG_CVG
+       << " long mate coverage" << endl;
+
+  if (globals.find("normalcvg") != globals.end())
+    MAX_NORMAL_CVG = strtol(globals["normalcvg"].c_str(), NULL, 10);
+  cout << "Reporting regions with more than " << MAX_NORMAL_CVG 
+       << " coverage by mates oriented the same way" << endl;
+
+  if (globals.find("outiecvg") != globals.end())
+    MAX_OUTIE_CVG = strtol(globals["outiecvg"].c_str(), NULL, 10);
+  cout << "Reporting regions with more than " << MAX_OUTIE_CVG
+       << " coverage by outie mates" << endl;
+
+  cout << endl;
+
   // open necessary files
   if (globals.find("bank") == globals.end()){ // no bank was specified
     cerr << "A bank must be specified" << endl;
@@ -249,7 +374,10 @@ int main(int argc, char **argv)
     exit(1);
   }
   try {
-    library_bank.open(globals["bank"], B_READ);
+    if (update)
+      library_bank.open(globals["bank"], B_READ|B_WRITE);
+    else
+      library_bank.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
       cerr << "Failed to open library account in bank " << globals["bank"] 
@@ -264,7 +392,6 @@ int main(int argc, char **argv)
     exit(1);
   }
   try {
-    contig_bank.open(globals["bank"], B_READ);
     contig_stream.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
@@ -344,6 +471,8 @@ int main(int argc, char **argv)
       ctglen[ctg.getIID()] = ctg.getLength();
     }
 
+  contig_stream.close();
+
   AnnotatedMatePair mtp;
   list<AnnotatedMatePair> mtl;
   Read_t rd1;
@@ -390,28 +519,50 @@ int main(int argc, char **argv)
     list<Pos_t> sizes;
     pair<Pos_t, SD_t> libsize = lib2size[*li];
     
-    
-    for (list<list<AnnotatedMatePair>::iterator>::iterator 
-	   mi = lib2mtp[*li].begin(); mi != lib2mtp[*li].end(); mi++){
-      // for each mate pair
-      Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getReads().first], 
-			 rd2posn[(*mi)->getReads().second], 
-			 ctglen[rd2ctg[(*mi)->getReads().first]], 
-			 libsize.first + 3 * libsize.second);
-      if (sz != 0) {
-	sizes.push_back(sz);
+    if (recompute) {
+      for (list<list<AnnotatedMatePair>::iterator>::iterator 
+	     mi = lib2mtp[*li].begin(); mi != lib2mtp[*li].end(); mi++){
+	// for each mate pair
+	Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getReads().first], 
+			   rd2posn[(*mi)->getReads().second], 
+			   ctglen[rd2ctg[(*mi)->getReads().first]], 
+			   libsize.first + 3 * libsize.second);
+	if (sz != 0) {
+	  sizes.push_back(sz);
+	}
       }
-    }
+    } // if recomputing library sizes
 
     // compute new sizes
     pair<Pos_t, SD_t> newSize;
-    if (sizes.size() < MIN_OBS ){
+    if (! recompute || sizes.size() < MIN_OBS ){
       newSize = libsize;
     } else {
       newSize = getSz(sizes);
-      cout <<  "Library " << lib2name[*li] << " recomputed as mean = " 
-	   << newSize.first << " SD = " << newSize.second << endl;
-    }
+      if (newSize != libsize){
+	cout <<  "Library " << lib2name[*li] << " recomputed as mean = " 
+	     << newSize.first << " SD = " << newSize.second << endl;
+	if (update){
+	  Library_t newlib;
+	  Distribution_t dist;
+	  dist.mean = newSize.first;
+	  dist.sd = newSize.second;
+	  newlib.setIID(*li);
+	  newlib.setEID(lib2name[*li]);
+	  newlib.setDistribution(dist);
+	  try {
+	    library_bank.replace(*li, newlib);
+	  }  
+	  catch (Exception_t & e)
+	    {
+	      cerr << "Failed to replace library " << *li << "(" 
+		   << lib2name[*li] << ") in bank " << globals["bank"] 
+		   << ": " << endl << e << endl;
+	      exit(1);
+	    }
+	} // if updating library in bank
+      } // if size actually changed
+    } 
     NewLib2size[*li] = newSize;
 
     // recheck mate lengths and set status
@@ -438,6 +589,9 @@ int main(int argc, char **argv)
       }
     }
   }// for each library
+
+  if (feats)
+    contig_bank.open(globals["bank"], B_READ|B_WRITE);
     
   for (set<ID_t>::iterator ctg = ctgIDs.begin(); ctg != ctgIDs.end(); ctg++) {
 
@@ -445,6 +599,23 @@ int main(int argc, char **argv)
     list<pair<Pos_t, Pos_t> > interest;
 
     cout << ">Contig " << *ctg << endl;
+
+    Contig_t newcontig;
+    vector<Feature_t> features;
+
+    if (feats){
+      try {
+	contig_bank.fetch(*ctg, newcontig);
+      }
+      catch (Exception_t & e)
+	{
+	  cerr << "Failed to retrieve contig " << *ctg 
+	       << " from bank " << globals["bank"] 
+	       << ": " << endl << e << endl;
+	  exit(1);
+	}
+    }
+
     // find coverage by good mates
     for (list<list<AnnotatedMatePair>::iterator>::iterator 
 	   mi = ctg2mtp[*ctg].begin(); mi != ctg2mtp[*ctg].end(); mi++){
@@ -468,12 +639,21 @@ int main(int argc, char **argv)
     // report interesting ranges
 
     if (interest.size() > 0){
-      cout << "Regions of " << MIN_GOOD_CVG << "X clone coverage" 
-	   << ((MIN_GOOD_CVG != 0) ? " or less": "") <<endl;
+      cout << "Regions of " << MIN_GOOD_CVG << "X" 
+	   << ((MIN_GOOD_CVG != 0) ? " or less": "") << " clone coverage" 
+	   <<endl;
       
       for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++)
+	   ii != interest.end(); ii++){
 	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.group = "LOW_GOOD_CVG";
+	  f.range = Range_t(ii->first, ii->second);
+	  f.type = Feature_t::COVERAGE;
+	  features.push_back(f);
+	}
+      }
       cout << endl;
     }
 
@@ -500,12 +680,20 @@ int main(int argc, char **argv)
     // report interesting ranges
 
     if (interest.size() > 0){
-      cout << "Regions of " << MAX_SHORT_CVG << "X short mate coverage or more" 
+      cout << "Regions of " << MAX_SHORT_CVG << "X or more short mate coverage"
 	   <<endl;
       
       for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++)
+	   ii != interest.end(); ii++){
 	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.group = "HIGH_SHORT_CVG";
+	  f.range = Range_t(ii->first, ii->second);
+	  f.type = Feature_t::COVERAGE;
+	  features.push_back(f);
+	}
+      }
       cout << endl;
     }
 
@@ -532,12 +720,20 @@ int main(int argc, char **argv)
     // report interesting ranges
 
     if (interest.size() > 0){
-      cout << "Regions of " << MAX_LONG_CVG << "X long mate coverage or more" 
+      cout << "Regions of " << MAX_LONG_CVG << "X or more long mate coverage" 
 	   <<endl;
       
       for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++)
+	   ii != interest.end(); ii++){
 	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.group = "HIGH_LONG_CVG";
+	  f.range = Range_t(ii->first, ii->second);
+	  f.type = Feature_t::COVERAGE;
+	  features.push_back(f);
+	}
+      }
       cout << endl;
     }
     
@@ -570,23 +766,33 @@ int main(int argc, char **argv)
     // report interesting ranges
 
     if (interest.size() > 0){
-      cout << "Regions of " << MAX_NORMAL_CVG << "X normal coverage or more" 
-	   <<endl;
+      cout << "Regions of " << MAX_NORMAL_CVG 
+	   << "X or more same-orientation coverage" <<endl;
       
       for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++)
+	   ii != interest.end(); ii++){
 	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.group = "HIGH_NORMAL_CVG";
+	  f.range = Range_t(ii->first, ii->second);
+	  f.type = Feature_t::COVERAGE;
+	  features.push_back(f);
+	}
+      }
       cout << endl;
     }
 
     ranges.clear();
 
-    // find coverage by normal reads
+    // find coverage by outie reads
     for (list<list<AnnotatedMatePair>::iterator>::iterator 
 	   mi = ctg2mtp[*ctg].begin(); mi != ctg2mtp[*ctg].end(); mi++){
       if ((*mi)->status == MP_OUTIE){
 	Pos_t left, right;
 
+	if ((*mi)->getType() == Matepair_t::TRANSPOSON)
+	  continue;  // transposons are not errors
 	left = rd2posn[((*mi)->getReads()).first].getBegin(); 
 	right = rd2posn[((*mi)->getReads()).first].getEnd(); 
 	if (left < right)
@@ -608,17 +814,39 @@ int main(int argc, char **argv)
     // report interesting ranges
 
     if (interest.size() > 0){
-      cout << "Regions of " << MAX_OUTIE_CVG << "X outie coverage or more" 
+      cout << "Regions of " << MAX_OUTIE_CVG << "X or more outie coverage" 
 	   <<endl;
       
       for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++)
+	   ii != interest.end(); ii++){
 	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.group = "HIGH_OUTIE_CVG";
+	  f.range = Range_t(ii->first, ii->second);
+	  f.type = Feature_t::COVERAGE;
+	  features.push_back(f);
+	}
+      }
       cout << endl;
+    }
+
+    if (feats){
+      newcontig.setFeatures(features);
+      contig_bank.replace(newcontig.getIID(), newcontig);
     }
 
   } // for each contig
 
-  exit(0);
+  frag_bank.close();
+  read_bank.close();
+  library_bank.close();
+  if (feats){
+    contig_bank.clean(); // features may have messed up the bank
+    contig_bank.close();
+  }
+  mate_bank.close();
+
+  return(0);
 } // main
     
