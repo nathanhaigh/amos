@@ -19,6 +19,8 @@
 using namespace std;
 
 
+#define  RESTRICTED_COUNTS  0
+
 
 static const char  * VERSION_ID = "1.2";
 
@@ -29,8 +31,6 @@ static const int  INITIAL_READ_BUFF_LEN = 2048;
   // initial length of buffer to hold reads
 static const int  MAX_LINE = 1000;
   // maximum length input line
-static const unsigned  QUAL_LIMIT = (1 << 16) - 1000;
-  // dont add to quality sum if its already this large
 static const unsigned  SIGNIFICANT_QUAL_THRESHOLD = 30;
   // Minimum value for a quality difference to be significant
 static const int  TAG_WIDTH = 10;
@@ -38,18 +38,126 @@ static const int  TAG_WIDTH = 10;
   // lines--should be at least 9
 
 
+#if  RESTRICTED_COUNTS
+  #define  COUNT_WIDTH  3
+  #define  QUAL_WIDTH  16
+  static const unsigned  QUAL_LIMIT = (1 << QUAL_WIDTH) - 100;
+  // don't add to quality sum if its already this large
+#else
+  #define  COUNT_WIDTH  8
+  #define  QUAL_WIDTH  32
+  static const unsigned  QUAL_LIMIT = UINT_MAX - 128;
+    // don't add to quality sum if its already this large
+#endif
+
+static const unsigned  COUNT_LIMIT = (1 << COUNT_WIDTH) - 1;
+  // dont add to quality sum if its already this large
+
+
 struct  Count_t
   {
-   unsigned a_ct : 3;
-   unsigned c_ct : 3;
-   unsigned g_ct : 3;
-   unsigned t_ct : 3;
-   unsigned other_ct : 3;
-   unsigned a_qual : 16;
-   unsigned c_qual : 16;
-   unsigned g_qual : 16;
-   unsigned t_qual : 16;
-   unsigned other_qual : 16;
+   char  majority_ch, alternate_ch;
+     // In case of SNP, set  majority_ch  to the consensus
+     // character and  alternate_ch  to the other character
+   unsigned a_ct : COUNT_WIDTH;
+   unsigned c_ct : COUNT_WIDTH;
+   unsigned g_ct : COUNT_WIDTH;
+   unsigned t_ct : COUNT_WIDTH;
+   unsigned other_ct : COUNT_WIDTH;
+   unsigned a_qual : QUAL_WIDTH;
+   unsigned c_qual : QUAL_WIDTH;
+   unsigned g_qual : QUAL_WIDTH;
+   unsigned t_qual : QUAL_WIDTH;
+   unsigned other_qual : QUAL_WIDTH;
+   int  position, plus_gaps;
+     //  position  is where this count is in the consensus
+     //  plus_gaps  is how many gaps after that postion if
+     // the position is in terms of ungapped characters
+
+   Count_t
+       ()  // Default constructor
+     { Zero (); }
+
+   bool  Check_SNP  (char cons_ch)
+     // Check if these counts indicate a SNP, where
+     //  cons_ch  is the consensus character.  If not,
+     // return  false ; otherwise, set  majority_ch  and
+     //  alternate_ch  and return  true .
+
+     {
+      unsigned  cons_ct, cons_qual, max_ch, max_ct, max_qual;
+      unsigned  total_ct;
+
+      cons_ch = tolower (cons_ch);
+      max_ct = 0;
+      if  (cons_ch == 'a')
+          {
+           cons_ct = a_ct;
+           cons_qual = a_qual;
+          }
+      else if  (a_ct > max_ct)
+          {
+           max_ch = 'a';
+           max_ct = a_ct;
+           max_qual = a_qual;
+          }
+      if  (cons_ch == 'c')
+          {
+           cons_ct = c_ct;
+           cons_qual = c_qual;
+          }
+      else if  (c_ct > max_ct)
+          {
+           max_ch = 'c';
+           max_ct = c_ct;
+           max_qual = c_qual;
+          }
+      if  (cons_ch == 'g')
+          {
+           cons_ct = g_ct;
+           cons_qual = g_qual;
+          }
+      else if  (g_ct > max_ct)
+          {
+           max_ch = 'g';
+           max_ct = g_ct;
+           max_qual = g_qual;
+          }
+      if  (cons_ch == 't')
+          {
+           cons_ct = t_ct;
+           cons_qual = t_qual;
+          }
+      else if  (t_ct > max_ct)
+          {
+           max_ch = 't';
+           max_ct = t_ct;
+           max_qual = t_qual;
+          }
+      if  (cons_ch == '-')
+          {
+           cons_ct = other_ct;
+           cons_qual = other_qual;
+          }
+      else if  (other_ct > max_ct)
+          {
+           max_ch = '-';
+           max_ct = other_ct;
+           max_qual = other_qual;
+          }
+      total_ct = a_ct + c_ct + g_ct + t_ct + other_ct;
+      // This is the rule for determining SNPs
+      // Can be changed as desired
+      if  (cons_ct >= 3 && max_ct >= 3
+             || total_ct <= 8 && cons_ct >= 2 && max_ct >= 2)
+          {
+           majority_ch = cons_ch;
+           alternate_ch = max_ch;
+           return  true;
+          }
+
+      return  false;
+     }
 
    void  Incr
        (char ch, unsigned q)
@@ -57,31 +165,31 @@ struct  Count_t
       switch  (tolower (ch))
         {
          case  'a' :
-           if  (a_ct < 7)
+           if  (a_ct < COUNT_LIMIT)
                a_ct ++;
            if  (a_qual < QUAL_LIMIT)
                a_qual += q;
            break;
          case  'c' :
-           if  (c_ct < 7)
+           if  (c_ct < COUNT_LIMIT)
                c_ct ++;
            if  (c_qual < QUAL_LIMIT)
                c_qual += q;
            break;
          case  'g' :
-           if  (g_ct < 7)
+           if  (g_ct < COUNT_LIMIT)
                g_ct ++;
            if  (g_qual < QUAL_LIMIT)
                g_qual += q;
            break;
          case  't' :
-           if  (t_ct < 7)
+           if  (t_ct < COUNT_LIMIT)
                t_ct ++;
            if  (t_qual < QUAL_LIMIT)
                t_qual += q;
            break;
          default :
-           if  (other_ct < 7)
+           if  (other_ct < COUNT_LIMIT)
                other_ct ++;
            if  (other_qual < QUAL_LIMIT)
                other_qual += q;
@@ -148,12 +256,23 @@ struct  Count_t
       return  ct;
      }
    void  Print
-       (FILE * fp)
+       (FILE * fp)  const
      {
-      fprintf (fp, " %u/%-3u %u/%-3u %u/%-3u %u/%-3u %u/%-3u ",
+      fprintf (fp, " %2u/%-4u %2u/%-4u %2u/%-4u %2u/%-4u %2u/%-4u ",
            a_ct, a_qual, c_ct, c_qual, g_ct, g_qual, t_ct, t_qual,
            other_ct, other_qual);
      }
+   void  SNP_Print
+       (FILE * fp)  const
+     // Print the SNP information in this count
+     {
+      fprintf (fp, "%8d %+3d  %c/%c ", position, plus_gaps,
+           majority_ch, alternate_ch);
+      Print (fp);
+      fputc ('\n', fp);
+      return;
+     }
+
    const char *  SNP_String
        (void)
      {
@@ -230,6 +349,9 @@ struct  Read_Info_t
 static string  Desired_ID;
 static char  * ASM_File_Name;
 static char  * FRG_File_Name;
+static FILE  * SNP_fp = NULL;
+  // File to which SNP information should be written if
+  //  Show_SNPs  is true.
 static bool  Consensus_With_Gapped_Coords = false;
   // Determines whether coordinates after consensus line count
   // all characters (if  true ), or just non-gap characters (if  false )
@@ -260,15 +382,17 @@ static void  Parse_Command_Line
     (int argc, char * argv []);
 static void  Print_Alignment_Line
     (FILE * fp, const Read_Info_t & read, int lo, int hi,
-     const char * consensus, string & diff_line);
+     const char * consensus, string & diff_line, vector <Count_t> & count);
 static void  Print_Multialignment
     (FILE * fp, char * consensus, int con_lo, int con_hi,
      const vector <Read_Info_t> & read_list, int & gaps,
-     bool with_diffs = true);
+     vector <Count_t> & snp_list, bool with_diffs = true);
 static void  Print_Multialignment_Segment
     (FILE * fp, char * consensus, int con_lo, int con_hi,
      const vector <Read_Info_t> & read_list, int & gaps,
-     bool with_diffs = true);
+     vector <Count_t> & snp_list, bool with_diffs = true);
+static void  Print_SNP_List
+    (FILE * fp, const vector <Count_t> & snp_list);
 bool  Significant_Diff
     (const Count_t & x, const Count_t & y, char & x_ch, char & y_ch,
      unsigned & qual_diff);
@@ -282,11 +406,12 @@ int  main
 
   {
    FILE  * fp;
-   char  line [MAX_LINE];
+   char  line [MAX_LINE], hdr_line [MAX_LINE];
    hash_set <int>  frg_ids;
    vector <Read_Info_t>  read_list, surro_list;
    Read_Info_t  read;
    Gapped_Multi_Alignment_t  gma;
+   vector <Count_t>  snp_list;
    char  * consensus = NULL;
    int  consensus_len, consensus_ungapped_len;
    int  tig_iid;
@@ -295,10 +420,12 @@ int  main
    bool  found_it = false;
    string  cid;
    char  * p;
+   time_t  now;
    int  ct, dln, gaps, level;
    int  i, n;
 
-   cerr << "Starting on " << __DATE__ << " at " << __TIME__ << endl;
+   now = time (NULL);
+   cerr << "Starting on " << ctime (& now) << endl;
 
    Verbose = 0;
 
@@ -314,7 +441,7 @@ int  main
         ASM_File_Name, FRG_File_Name);
 
    // Find and extract the CCO message for the specified contig
-   fp = File_Open (ASM_File_Name, "r");
+   fp = File_Open (ASM_File_Name, "r", __FILE__, __LINE__);
    level = 0;
    while  (fgets (line, MAX_LINE, fp) != NULL)
      {
@@ -365,22 +492,33 @@ int  main
            Get_Reads (FRG_File_Name, read_list, frg_ids);
            n = read_list . size ();
 
-           snps = Count_SNPs (consensus, 0, consensus_len, read_list, possible);
 #if  0
+           snps = Count_SNPs (consensus, 0, consensus_len, read_list, possible);
            printf ("%10s %10d  %8d  %8d %8d  %8d %8d\n",
                cid . c_str (), tig_iid, n, consensus_len, consensus_ungapped_len,
                snps, possible);
 #else
-           printf ("\n\n%stig %s (iid %d)  reads = %d  len = %d (%d without gaps)\n\n",
+           sprintf (hdr_line,
+                "%stig %s (iid %d)  reads = %d  len = %d (%d without gaps)",
                 Show_Unitig ? "Uni" : "Con", cid . c_str (), tig_iid, n,
                 consensus_len, consensus_ungapped_len);
+           printf ("\n\n%s\n\n", hdr_line);
            gaps = 0;
 
            sort (read_list . begin (), read_list . end ());
 
+           snp_list . clear ();
            Print_Multialignment (stdout, consensus, 0, consensus_len,
-                read_list, gaps);
-           List_SNPs (stdout, consensus, 0, consensus_len, read_list);
+                read_list, gaps, snp_list);
+           if  (Show_SNPs)
+               {
+                Print_SNP_List (stdout, snp_list);
+
+                fprintf (SNP_fp, "\n%s\n", hdr_line);
+                Print_SNP_List (SNP_fp, snp_list);
+
+//                List_SNPs (stdout, consensus, 0, consensus_len, read_list);
+               }
 #endif
 
            found_it = false;
@@ -498,9 +636,20 @@ int  main
         sort (read_list . begin (), read_list . end ());
 
         Print_Multialignment (stdout, consensus, 0, consensus_len,
-             read_list, gaps);
-        List_SNPs (stdout, consensus, 0, consensus_len, read_list);
+             read_list, gaps, snp_list);
+        if  (Show_SNPs)
+            {
+             Print_SNP_List (stdout, snp_list);
+
+             fprintf (SNP_fp, "\n%s\n", hdr_line);
+             Print_SNP_List (SNP_fp, snp_list);
+
+//                List_SNPs (stdout, consensus, 0, consensus_len, read_list);
+            }
        }
+
+   if  (Show_SNPs)
+       fclose (SNP_fp);
 
    return  0;
   }
@@ -611,7 +760,7 @@ static void  Get_Reads
 
    // Find the read sequence information from the .frg file
    // for all the reads in read_list
-   fp = File_Open (FRG_File_Name, "r");
+   fp = File_Open (FRG_File_Name, "r", __FILE__, __LINE__);
    level = 0;
    found_it = in_frg = in_frgseq = in_qualseq = false;
    while  (fgets (line, MAX_LINE, fp) != NULL)
@@ -865,7 +1014,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "ghsuV")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "ghs:uV")) != EOF))
      switch  (ch)
        {
         case  'g' :
@@ -878,6 +1027,7 @@ static void  Parse_Command_Line
 
         case  's' :
           Show_SNPs = true;
+          SNP_fp = File_Open (optarg, "w", __FILE__, __LINE__);
           break;
 
         case  'u' :
@@ -925,14 +1075,15 @@ static void  Parse_Command_Line
 
 static void  Print_Alignment_Line
     (FILE * fp, const Read_Info_t & read, int lo, int hi,
-     const char * consensus, string & diff_line)
+     const char * consensus, string & diff_line, vector <Count_t> & count)
 
 //  Print to  fp  the single-line portion of the alignment in
 //   read  to the portion of the consensus string between
 //   lo  and  hi  (in gapped coordinates).
 //   consensus  is the consensus string.  Put a '^' in each
 //  position of  diff_line  that the alignment line disagrees with
-//  the consensus.
+//  the consensus.  Set counts and quality sums in  count
+//  for the corresponding entries.
 
   {
    int  read_lo, read_hi;
@@ -970,13 +1121,22 @@ static void  Print_Alignment_Line
    for  ( ;  i < read . end && i < hi;  i ++)
      if  (k < m && j == read . del [k])
          {
+          unsigned  nbr_qual;
+
           fputc ('-', fp);
+          nbr_qual = read . qual [j];
+          if  (j > 0 && unsigned (read . qual [j - 1]) < nbr_qual)
+              nbr_qual = read . qual [j - 1];
+          // Use smaller of the two bounding qualities as the quality
+          // for the gap
+          count [i - lo] . Incr ('-', nbr_qual);
           diff_line [i - lo] = '^';
           k ++;
          }
        else
          {
           fputc (read . seq [j], fp);
+          count [i - lo] . Incr (read . seq [j], read . qual [j]);
           if  (tolower (read . seq [j]) != tolower (consensus [i]))
               diff_line [i - lo] = '^';
           j ++;
@@ -1002,7 +1162,7 @@ static void  Print_Alignment_Line
 static void  Print_Multialignment
     (FILE * fp, char * consensus, int con_lo, int con_hi,
         const vector <Read_Info_t> & read_list, int & gaps,
-        bool with_diffs)
+        vector <Count_t> & snp_list, bool with_diffs)
 
 //  Print to  fp  the multialignment of the reads in  read_list  to
 //  the portion of the string  consensus  between positions
@@ -1026,7 +1186,7 @@ static void  Print_Multialignment
       if  (hi > con_hi)
           hi = con_hi;
       Print_Multialignment_Segment (fp, consensus, i, hi, read_list, gaps,
-           with_diffs);
+           snp_list, with_diffs);
      }
      
    return;
@@ -1037,7 +1197,7 @@ static void  Print_Multialignment
 static void  Print_Multialignment_Segment
     (FILE * fp, char * consensus, int con_lo, int con_hi,
         const vector <Read_Info_t> & read_list, int & gaps,
-        bool with_diffs)
+        vector <Count_t> & snp_list, bool with_diffs)
 
 //  Print to  fp  the single segment of the multialignment of
 //  the reads in  read_list  to the portion of the string  consensus
@@ -1046,26 +1206,42 @@ static void  Print_Multialignment_Segment
 //  there is not complete agreement in the alignment.   gaps  is
 //  the number of gaps that have been in  consensus  before  con_lo
 //  so that consensus coordinates without gaps can be printed.
-//   gaps  is updated at the end.
+//   gaps  is updated at the end.   snp_list  is where the
+//  SNP locations are saved if  Show_SNPs  is true.
 
   {
    string  diff_line (con_hi - con_lo, ' ');
-   int  new_gaps;
-   int  i, n;
+   vector <Count_t>  count (con_hi - con_lo);
+   int  new_gaps, consecutive_gaps;
+   int  i, j, n;
 
    n = read_list . size ();
    for  (i = 0;  i < n;  i ++)
      if  (read_list [i] . start < con_hi && con_lo < read_list [i] . end)
          Print_Alignment_Line (fp, read_list [i], con_lo, con_hi,
-              consensus, diff_line);
+              consensus, diff_line, count);
    fprintf (fp, "%*s:  ", TAG_WIDTH, "consensus");
-   new_gaps = 0;
-   for  (i = con_lo;  i < con_hi;  i ++)
+   j = new_gaps = consecutive_gaps = 0;
+   for  (i = con_lo;  i < con_hi;  i ++, j ++)
      {
       fputc (consensus [i], fp);
       if  (consensus [i] == '-')
-          new_gaps ++;
+          {
+           new_gaps ++;
+           consecutive_gaps ++;
+          }
+        else
+          consecutive_gaps = 0;
+
+      if  (Show_SNPs && count [j] . Check_SNP (consensus [i]))
+          {
+           diff_line [j] = '#';
+           count [j] . position = i - gaps - new_gaps;
+           count [j] . plus_gaps = consecutive_gaps;
+           snp_list . push_back (count [j]);
+          }
      }
+   
    if  (Consensus_With_Gapped_Coords)
        fprintf (fp, "  %d..%d\n", con_lo, con_hi);
      else
@@ -1076,6 +1252,26 @@ static void  Print_Multialignment_Segment
         fprintf (fp, "%*s   %s\n", TAG_WIDTH, "", diff_line . c_str ());
        }
      
+   return;
+  }
+
+
+
+static void  Print_SNP_List
+    (FILE * fp, const vector <Count_t> & snp_list)
+
+//  Print the SNPs in  snp_list  to  fp .
+
+  {
+   int  i, n;
+
+   n = snp_list . size ();
+
+   fprintf (fp, "SNPs:\n");
+   for  (i = 0;  i < n;  i ++)
+     snp_list [i] . SNP_Print (fp);
+   fprintf (fp, "Total SNPs = %d\n", n);
+
    return;
   }
 
