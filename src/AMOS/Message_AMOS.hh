@@ -4,7 +4,7 @@
 //! \date 11/12/2003
 //!
 //! \brief Header for Message_t
-//! \todo Write a spec for the AMOS 3-code format
+//! \todo Write a spec for the AMOS 3-code format and it's data types
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -43,7 +43,7 @@ namespace Message_k {
 //!
 //! Based on the Celera 3-code format, the AMOS messages are designed for easy
 //! parsing and compatibility with the other AMOS modules. This generic message
-//! class make no assumptions about the type of data to be stored within, so
+//! class makes no assumptions about the type of data to be stored within, so
 //! it can be used for reading and writing ANY type of ASCII record in 3-code
 //! format. The main duty of this class is to understand and validate incoming
 //! or outgoing 3-code format.
@@ -108,9 +108,11 @@ public:
   //! \brief Gets field data by field name
   //!
   //! Will return the field data, or throws an exception if the field does not
-  //! exist.
+  //! exist. If you are too lazy to catch for exceptions when using this
+  //! method, you can check if the field exists first with the exists method.
   //!
   //! \param fname Get field data with this field name
+  //! \pre The field name exists in the current message
   //! \throws ArgumentException_t
   //! \return The field data for fname
   //!
@@ -157,6 +159,7 @@ public:
   //! message is found, but is not properly formatted.
   //!
   //! \param in The input stream to read from
+  //! \pre The incoming message is properly formatted
   //! \throws IOException_t
   //! \return true if a message was read, false if no message read (EOF)
   //!
@@ -200,6 +203,8 @@ public:
   //!
   //! \param fname The field name
   //! \param data The new field data
+  //! \pre The field name is 3 lowercase letters
+  //! \pre The data field ends in '\n' if it is multiple lines
   //! \throws ArugmentException_t
   //! \return void
   //!
@@ -212,8 +217,10 @@ public:
   //! Will throw an exception if the name is improperly formatted.
   //!
   //! \param tname The new 3-code type name of this message
+  //! \pre The type name is 3 uppercase letters
   //! \throws ArgumentException_t
   //! \return void
+  //!
   void setType (const std::string & tname)
   {
     if ( tname . size( ) != Message_k::NCODE )
@@ -234,6 +241,7 @@ public:
   //! write to the stream.
   //!
   //! \param out The output stream to write to
+  //! \pre The ostream is open and writable
   //! \throws IOException_t
   //! \return void
   //!
