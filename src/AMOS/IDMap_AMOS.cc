@@ -56,12 +56,12 @@ void IDMap_t::insert (ID_t key, ID_t val)
 void IDMap_t::invert ( )
 {
   HashNode_t * oldtable = table_m;
-  table_m = new HashNode_t [BUCKETS];
+  table_m = new HashNode_t [buckets_m];
   HashNode_t * oldcurr, * invcurr;
 
   try {
 
-  for ( Size_t i = 0; i < BUCKETS; i ++ )
+  for ( Size_t i = 0; i < buckets_m; i ++ )
     {
       oldcurr = oldtable + i;
       if ( oldcurr -> key == NULL_ID )
@@ -134,7 +134,7 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & source)
 
       clear( );
 
-      for ( Size_t i = 0; i < BUCKETS; i ++ )
+      for ( Size_t i = 0; i < buckets_m; i ++ )
 	{
 	  tcurr = table_m + i;
 	  scurr = source . table_m + i;
@@ -259,7 +259,7 @@ void IDMap_t::write (ostream & out) const
 
   out . write ((char *)&size_m, sizeof (ID_t));
 
-  for ( Size_t i = 0; i < BUCKETS; i ++ )
+  for ( Size_t i = 0; i < buckets_m; i ++ )
     if ( table_m [i] . key != NULL_ID )
       {
 	curr = table_m + i;
@@ -291,7 +291,7 @@ void IDMap_t::writeMessage (Message_t & msg) const
 	msg . setField (F_SIZE, ss . str( ));
 	ss . str("");
 
-	for ( Size_t i = 0; i < BUCKETS; i ++ )
+	for ( Size_t i = 0; i < buckets_m; i ++ )
 	  if ( table_m [i] . key != NULL_ID )
 	    {
 	      curr = table_m + i;

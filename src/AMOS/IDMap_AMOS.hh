@@ -31,7 +31,7 @@ class IDMap_t : public IMessagable_t
 
 private:
 
-  static const Size_t BUCKETS = 100000;  //!< size of hash table
+  static const Size_t DEFAULT_BUCKETS = 100000;  //!< default size of hash
 
 
   //============================================== HashNode_t ==================
@@ -93,9 +93,11 @@ private:
   //!
   HashNode_t * hashfunc (ID_t key)
   {
-    return table_m + (key % BUCKETS);
+    return table_m + (key % buckets_m);
   }
 
+
+  Size_t buckets_m;                  //!< number of hash table buckets
 
   HashNode_t * table_m;              //!< the hash table
 
@@ -125,7 +127,23 @@ public:
   //!
   IDMap_t ( )
   {
-    table_m = new HashNode_t [BUCKETS];
+    buckets_m = DEFAULT_BUCKETS;
+    table_m = new HashNode_t [buckets_m];
+    size_m = 0;
+  }
+
+
+  //--------------------------------------------------- IDMap_t ----------------
+  //! \brief Contstructs an empty IDMap_t object
+  //!
+  //! Sets all members to NULL
+  //!
+  //! \param buckets Number of hash table buckets to use
+  //!
+  IDMap_t (Size_t buckets)
+  {
+    buckets_m = buckets;
+    table_m = new HashNode_t [buckets_m];
     size_m = 0;
   }
 
@@ -153,7 +171,7 @@ public:
   //!
   void clear ( )
   {
-    for ( Size_t i = 0; i < BUCKETS; i ++ )
+    for ( Size_t i = 0; i < buckets_m; i ++ )
       table_m [i] . clear( );
     size_m = 0;
   }
