@@ -8,36 +8,41 @@
 
 using namespace std;
 
-// Node Methods
+Graph::Graph(string p_name) : name(p_name) { 
+  keys = 0;
+  directed = false;
+}
+
+// INode Methods
 ////////////////
 
-int Graph::degree(Node* p_node) const {
+int Graph::degree(INode* p_node) const {
   return p_node->degree();
 }
 
-int Graph::out_degree(Node* p_node) const {
+int Graph::out_degree(INode* p_node) const {
   return p_node->out_degree();
 }
 
-int Graph::in_degree(Node* p_node) const {
+int Graph::in_degree(INode* p_node) const {
   return p_node->in_degree();
 }
 
-Node* Graph::opposite(Node* p_node, Edge* p_edge) {
+INode* Graph::opposite(INode* p_node, IEdge* p_edge) {
   return p_edge->opposite(p_node);
 }
 
-Node* Graph::target(Edge* p_edge) {
+INode* Graph::target(IEdge* p_edge) {
   return p_edge->getTarget();
 }
 
-Node* Graph::source(Edge* p_edge) {
+INode* Graph::source(IEdge* p_edge) {
   return p_edge->getSource();
 }
 
-list< Edge* > Graph::incident_edges(Node* p_node) const {
-  list<Edge *> edges;
-  EdgeIterator iter = p_node->out_edges_begin();
+list< IEdge* > Graph::incident_edges(INode* p_node) const {
+  list<IEdge *> edges;
+  IEdgeIterator iter = p_node->out_edges_begin();
 
   for( ; iter != p_node->out_edges_end(); ++iter) {
     edges.push_back(*iter);
@@ -54,11 +59,11 @@ list< Edge* > Graph::incident_edges(Node* p_node) const {
 }
 
 
-list< Edge* > Graph::out_edges(Node* p_node) const {
-  list<Edge *> edges;
+list< IEdge* > Graph::out_edges(INode* p_node) const {
+  list<IEdge *> edges;
 
   if(directed) {
-    EdgeIterator iter = p_node->out_edges_begin();
+    IEdgeIterator iter = p_node->out_edges_begin();
     for( ; iter != p_node->out_edges_end(); ++iter) {
       edges.push_back(*iter);
     }
@@ -67,11 +72,11 @@ list< Edge* > Graph::out_edges(Node* p_node) const {
   return edges;
 }
 
-list< Edge* > Graph::in_edges(Node* p_node) const {
-  list<Edge *> edges;
+list< IEdge* > Graph::in_edges(INode* p_node) const {
+  list<IEdge *> edges;
 
   if(directed) {
-    EdgeIterator iter = p_node->in_edges_begin();
+    IEdgeIterator iter = p_node->in_edges_begin();
     for( ; iter != p_node->in_edges_end(); ++iter) {
       edges.push_back(*iter);
     }
@@ -80,10 +85,10 @@ list< Edge* > Graph::in_edges(Node* p_node) const {
   return edges;
 }
 
-list< Node* > Graph::adjacent_nodes(Node* p_node) {
-  list< Node* > nodes;
-  Edge* edge;
-  EdgeIterator iter = p_node->out_edges_begin();
+list< INode* > Graph::adjacent_nodes(INode* p_node) {
+  list< INode* > nodes;
+  IEdge* edge;
+  IEdgeIterator iter = p_node->out_edges_begin();
 
   for( ; iter != p_node->out_edges_end(); ++iter) {
     nodes.push_back(opposite(p_node, (*iter)));
@@ -99,10 +104,10 @@ list< Node* > Graph::adjacent_nodes(Node* p_node) {
   return nodes;
 }
 
-list< Node* > Graph::out_adjacent(Node* p_node) {
-  list< Node* > nodes;
-  Edge* edge;
-  EdgeIterator iter = p_node->out_edges_begin();
+list< INode* > Graph::out_adjacent(INode* p_node) {
+  list< INode* > nodes;
+  IEdge* edge;
+  IEdgeIterator iter = p_node->out_edges_begin();
 
   if(directed) {
     for( ; iter != p_node->out_edges_end(); ++iter) {
@@ -113,10 +118,10 @@ list< Node* > Graph::out_adjacent(Node* p_node) {
   return nodes;
 }
 
-list< Node* > Graph::in_adjacent(Node* p_node) {
-  list< Node* > nodes;
-  Edge* edge;
-  EdgeIterator iter = p_node->out_edges_begin();
+list< INode* > Graph::in_adjacent(INode* p_node) {
+  list< INode* > nodes;
+  IEdge* edge;
+  IEdgeIterator iter = p_node->out_edges_begin();
 
   if(directed) {
     iter = p_node->in_edges_begin();
@@ -128,17 +133,25 @@ list< Node* > Graph::in_adjacent(Node* p_node) {
   return nodes;
 }
 
-Node* Graph::new_node(void* p_element) { 
-  Node* n = new Node(p_element);
-  n->setKey(keys++);
-  nodes.push_back(n);
+INode* Graph::new_node(void* p_element) { 
+  return new_node(keys++, p_element);
+}
+
+INode* Graph::new_node(int p_key, void* p_element) { 
+  INode* n = new Node(p_element);
+  n->setKey(p_key);
+  nodes[n->getKey()] = n;
   return n;
 }
 
-// Edge Methods
+INode* Graph::get_node(int p_key) {
+  return nodes[p_key];
+}
+
+// IEdge Methods
 ////////////////
-Edge* Graph::new_edge(Node* p_n1, Node* p_n2, void* p_element) {
-  Edge* e = new Edge(p_element, directed);
+IEdge* Graph::new_edge(INode* p_n1, INode* p_n2, void* p_element) {
+  IEdge* e = (IEdge *) new Edge(p_element, directed);
   edges.push_back(e);
   
   e->setNodes(p_n1, p_n2);
@@ -158,9 +171,9 @@ Edge* Graph::new_edge(Node* p_n1, Node* p_n2, void* p_element) {
 /**
  *
  */
-void Graph::createDotFile(string p_fileName) {
+void Graph::create_dot_file(string p_fileName) {
   ofstream dotOut("test.dot");
-  NodeIterator nodeIter = nodes.begin();
+  PairIterator nodeIter = nodes.begin();
   
   dotOut << " digraph " << name << " {" << endl;
   
@@ -168,15 +181,15 @@ void Graph::createDotFile(string p_fileName) {
   dotOut << "  URL=\"" << name << ".html\";" << endl;
   
   for( ; nodeIter != nodes.end(); ++nodeIter) {
-    int key = (*nodeIter)->getKey();
+    int key = (*nodeIter).first;
     dotOut << "  " <<  key << " [shape=house,orientation=270,URL=\"";
     dotOut << key << ".html\"];" << endl;
   }
 
-  EdgeIterator edgeIter = edges.begin();  
-  Node* n1;
-  Node* n2;
-  Edge* e;
+  IEdgeIterator edgeIter = edges.begin();  
+  INode* n1;
+  INode* n2;
+  IEdge* e;
 
   for( ; edgeIter != edges.end(); ++edgeIter) {
     e = (*edgeIter);

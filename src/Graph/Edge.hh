@@ -3,13 +3,12 @@
 
 #include <iostream>
 #include <sstream>
-#include "Node.hh"
+#include "INode.hh"
+#include "IEdge.hh"
 
 using namespace std;
 
-class Edge;
-
-typedef list< Edge* >::iterator EdgeIterator;
+typedef list< IEdge* >::iterator IEdgeIterator;
 
 const unsigned long DIRECT_MASK = 0x1;
 const unsigned long WEIGHT_MASK = 0x2;
@@ -30,7 +29,7 @@ const unsigned long WEIGHT_MASK = 0x2;
  * $Author$
  * </pre>
  */
-class Edge {
+class Edge : public IEdge {
 
 public:
   /** object associated with edge */
@@ -41,10 +40,10 @@ public:
 
   /* nodes that the edge is connected */
   /** source if node is directed */
-  Node* n1;
+  INode* n1;
 
   /** target if node is directed */
-  Node* n2;
+  INode* n2;
 
   /** bit flags */
   unsigned long flags; 
@@ -68,33 +67,33 @@ public:
   void setWeighted(bool p_bit) { flags |= p_bit; }
 
   void reverse() {
-    Node* tmp = n1;
+    INode* tmp = n1;
     n1 = n2;
     n2 = tmp;
   }
 
-  Node* getSource() const { return n1; }
+  INode* getSource() const { return n1; }
 
-  void setSource(Node *p_node) { n1 = p_node; }
+  void setSource(INode *p_node) { n1 = p_node; }
 
-  Node* getTarget() const { return n2; }
+  INode* getTarget() const { return n2; }
 
-  void setTarget(Node *p_node) { n2 = p_node; }
+  void setTarget(INode *p_node) { n2 = p_node; }
 
-  void setNodes(Node *p_node1, Node *p_node2) {
+  void setNodes(INode *p_node1, INode *p_node2) {
     n1 = p_node1;
     n2 = p_node2;
   }
 
-  Node** getNodes() const {
-    Node** nodes = new Node*[2];
+  INode** getNodes() const {
+    INode** nodes = new INode*[2];
     nodes[0] = n1;
     nodes[1] = n2;
     
     return nodes;
   }
 
-  Node* opposite(Node *p_node) const {
+  INode* opposite(INode *p_node) const {
     if(n1 == p_node) {
       return n2;
     } else if(n2 == p_node) {

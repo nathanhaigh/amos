@@ -3,14 +3,21 @@
 
 #include <iostream>
 #include <sstream>
-#include "Edge.hh"
+#include <map>
+#include <list>
+#include "IGraph.hh"
 #include "Node.hh"
+#include "Edge.hh"
+
+class IEdge;
+class INode;
 
 class Edge;
 class Node;
 
-typedef list< Edge* >::iterator EdgeIterator;
-typedef list< Node* >::iterator NodeIterator;
+typedef list< IEdge* >::iterator IEdgeIterator;
+typedef list< INode* >::iterator INodeIterator;
+typedef map< int, INode* >::iterator PairIterator;
 
 using namespace std;
 
@@ -31,7 +38,7 @@ using namespace std;
  * $Author$
  * </pre>
  */
-class Graph {
+class Graph : public IGraph {
   
 public:
   
@@ -41,11 +48,11 @@ public:
   /** <code> simple </code> is the graph simple, no loops or multi-edges */
   bool simple;
   
-  /** linked list of edges */
-  list< Edge* > edges;
+  /** map of edges */
+  list< IEdge* > edges;
 
-  /** linked list of nodes */
-  list< Node* > nodes;
+  /** map of nodes */
+  map< int, INode* > nodes;
   
   /** <code> name </code> of graph */
   string name;
@@ -53,53 +60,53 @@ public:
   /** */
   int keys;
   
-  Graph(string p_name="noname") : name(p_name) { 
-    keys = 0;
-    directed = false;
-  }
+  Graph(string p_name="noname");
 
   /**
    * output dot file for the graph
    */
-  void createDotFile(string p_name);
+  void create_dot_file(string p_name);
   
   /**
-   * create new Node
+   * create new INode
    */
-  Node* new_node(void* p_element = NULL);
+  INode* new_node(int key, void* p_element = NULL);
+  INode* new_node(void* p_element = NULL);
+
+  INode* get_node(int p_key);
 
   int num_nodes() { return nodes.size(); }
 
-  NodeIterator nodes_begin() { return nodes.begin(); }
-  NodeIterator nodes_end() { return nodes.end(); }
+  PairIterator nodes_begin() { return nodes.begin(); }
+  PairIterator nodes_end() { return nodes.end(); }
   
 
-  int degree(Node* p_node) const;
-  int out_degree(Node* p_node) const;
-  int in_degree(Node* p_node) const;
+  int degree(INode* p_node) const;
+  int out_degree(INode* p_node) const;
+  int in_degree(INode* p_node) const;
   
-  list< Edge* > incident_edges(Node* p_node) const;
-  list< Edge* > in_edges(Node* p_node) const;
-  list< Edge* > out_edges(Node* p_node) const;
+  list< IEdge* > incident_edges(INode* p_node) const;
+  list< IEdge* > in_edges(INode* p_node) const;
+  list< IEdge* > out_edges(INode* p_node) const;
 
-  Node aNode() { return *(nodes.begin()); }
+  INode* aNode() { return (nodes.begin())->second; }
 
   /**
-   * create new Edge
+   * create new IEdge
    */
-  Edge* new_edge(Node* p_n1, Node* p_n2, void* p_element = NULL);
+  IEdge* new_edge(INode* p_n1, INode* p_n2, void* p_element = NULL);
   
   int num_edges() { return edges.size(); }
-  EdgeIterator edges_begin() { return edges.begin(); }
-  EdgeIterator edges_end() { return edges.end(); }
+  IEdgeIterator edges_begin() { return edges.begin(); }
+  IEdgeIterator edges_end() { return edges.end(); }
 
-  Node* opposite(Node* p_node, Edge* p_edge);
-  Node* source(Edge* p_edge);
-  Node* target(Edge* p_edge);
+  INode* opposite(INode* p_node, IEdge* p_edge);
+  INode* source(IEdge* p_edge);
+  INode* target(IEdge* p_edge);
 
-  list< Node* > adjacent_nodes(Node* p_node);
-  list< Node* > out_adjacent(Node* p_node);
-  list< Node* > in_adjacent(Node* p_node);
+  list< INode* > adjacent_nodes(INode* p_node);
+  list< INode* > out_adjacent(INode* p_node);
+  list< INode* > in_adjacent(INode* p_node);
 };
 
 
