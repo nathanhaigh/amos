@@ -10,15 +10,16 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
                    const string & cstatus,
                    QWidget*parent, 
                    const char * name)
-  : QDialog(parent, name)
+  : QDialog(parent, name),
+    m_read(*read)
 {
   resize(1000,256);
 
   QBoxLayout * layout = new QVBoxLayout(this);
 
   QString s = QString(" \"")
-            + read->m_read.getEID().c_str() + "\" {"
-            + QString::number(read->m_read.getIID()) + "}";
+            + m_read.m_read.getEID().c_str() + "\" {"
+            + QString::number(m_read.m_read.getIID()) + "}";
 
   QLabel *label = new QLabel( this );
   label->setFrameStyle( QFrame::Panel | QFrame::Sunken );
@@ -30,7 +31,7 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
   layout->addWidget(label);
   layout->addWidget(m_sv);
 
-  m_chromo = new ChromoField(read, db, cons, cstatus, 
+  m_chromo = new ChromoField(&m_read, db, cons, cstatus, 
                              m_sv->viewport(), "chromo");
   m_sv->addChild(m_chromo);
 }

@@ -25,6 +25,7 @@ public slots:
 private:
   QScrollView * m_sv;
   ChromoField * m_chromo;
+  RenderSeq_t m_read;
 };
 
 #endif
