@@ -5,18 +5,19 @@ TGT = $(PREFIX).afg
 REF = $(PREFIX).1con
 #------------------------------------------------------------------------------#
 
-BINDIR  = /usr/local/bin
-NUCMER  = /usr/local/bin
+BINDIR   = /usr/local/bin
+NUCMER   = /usr/local/bin
 
-SEQS    = $(PREFIX).seq
-BANK    = $(PREFIX).bnk
-ALIGN   = $(PREFIX).delta
-LAYOUT  = $(PREFIX).layout
-CONTIG  = $(PREFIX).ctg
+SEQS     = $(PREFIX).seq
+BANK     = $(PREFIX).bank
+ALIGN    = $(PREFIX).delta
+LAYOUT   = $(PREFIX).layout
+CONFLICT = $(PREFIX).conflict
+CONTIG   = $(PREFIX).contig
 FASTA   = $(PREFIX).fasta
 
-INPUTS  = $(TGT) $(REF)
-OUTPUTS = $(CONTIG) $(FASTA)
+INPUTS   = $(TGT) $(REF)
+OUTPUTS  = $(CONTIG) $(FASTA)
 
 
 ## Building AMOS bank
@@ -29,10 +30,13 @@ OUTPUTS = $(CONTIG) $(FASTA)
 30: $(NUCMER) --maxmatch --prefix=$(PREFIX) $(REF) $(SEQS)
 
 ## Running layout
-40: $(BINDIR)/layout-align -U -b $(BANK) $(ALIGN) > $(LAYOUT)
+40: $(BINDIR)/layout-align -U $(LAYOUT) -C $(CONFLICT) -b $(BANK) $(ALIGN)
 
 ## Running consensus
-50: $(BINDIR)/make-consensus -s -S -T $(LAYOUT) $(BANK) > $(CONTIG)
+50: $(BINDIR)/make-consensus -B -b $(BANK)
 
-## Converting output to fasta file
-60: $(BINDIR)/ctg2fasta < $(CONTIG) > $(FASTA)
+## Outputting contigs
+60: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
+
+## Converting to FastA file
+70: $(BINDIR)/ctg2fasta < $(CONTIG) > $(FASTA)

@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //! \file
 //! \author Adam M Phillippy
 //! \date 03/08/2004
@@ -15,6 +15,7 @@
 #include <climits>
 #include <ctime>
 #include <cmath>
+#include <fstream>
 #include <map>
 #include <set>
 #include <vector>
@@ -33,11 +34,11 @@ using namespace std;
 string  OPT_BankName;                   // bank name parameter
 string  OPT_AlignName;                  // alignment name parameter
 
-bool    OPT_Matepair         = false;   // use matepair information
-bool    OPT_PrintConflicts   = false;   // print conflicts
-bool    OPT_PrintMaps        = false;   // print read maps
-bool    OPT_PrintTigr        = false;   // print tigr contigs
-bool    OPT_PrintUMD         = false;   // print UMD contigs
+string  OPT_ConflictName;               // conflict output file
+string  OPT_MapName;                    // read map name
+string  OPT_TigrName;                   // tigr contig name
+string  OPT_UmdName;                    // umd contig name
+
 bool    OPT_Random           = false;   // randomly place ambiguous reads
 bool    OPT_Singletons       = false;   // keep singletons
 
@@ -429,41 +430,50 @@ void PlaceRandom (Mapping_t & mapping);
 void PlaceUnambiguous (Mapping_t & mapping);
 
 
-//-------------------------------------------------------- PrintConflicts ----//
-//! \brief Prints all of the reference conflicts
+//------------------------------------------------------- OutputConflicts ----//
+//! \brief Outputs all of the reference conflicts
 //!
 //! \param mapping The read mapping with conflicts generated
 //! \return void
 //!
-void PrintConflicts (const Mapping_t & mapping);
+void OutputConflicts (const Mapping_t & mapping);
 
 
-//---------------------------------------------------------- PrintMapping ----//
-//! \brief Prints all the read mappings to stdout
+//--------------------------------------------------------- OutputLayouts ----//
+//! \brief Outputs all of the layouts to the bank
+//!
+//! \param mapping The read mapping with conflicts generated
+//! \return void
+//!
+void OutputLayouts (const Assembly_t & assembly);
+
+
+//--------------------------------------------------------- OutputMapping ----//
+//! \brief Outputs all the read mappings
 //!
 //! \param mapping The read mapping
 //! \pre read list is sorted by place
 //! \return void
 //!
-void PrintMapping (Mapping_t & mapping);
+void OutputMapping (Mapping_t & mapping);
 
 
-//------------------------------------------------------------- PrintTigr ----//
-//! \brief Prints the assembly in TIGR CTG format to cout
+//------------------------------------------------------------ OutputTigr ----//
+//! \brief Outputs the assembly in TIGR CTG format
 //!
 //! \param assembly The assembly
 //! \return void
 //!
-void PrintTigr (const Assembly_t & assembly);
+void OutputTigr (const Assembly_t & assembly);
 
 
-//------------------------------------------------------------- PrintUMD -----//
-//! \brief Prints the assembly in UMD CTG format to cout
+//------------------------------------------------------------ OutputUMD -----//
+//! \brief Outputs the assembly in UMD CTG format
 //!
 //! \param assembly The assembly
 //! \return void
 //!
-void PrintUMD (const Assembly_t & assembly);
+void OutputUMD (const Assembly_t & assembly);
 
 
 //------------------------------------------------------- RefineConflicts ----//
@@ -635,17 +645,16 @@ int main (int argc, char ** argv)
   ParseAlign (mapping);            // parse the alignment data
   cerr << " lis" << endl;
   ChainAligns (mapping);           // build the LAS chains for each read
-  if ( OPT_Matepair )
+  if ( !OPT_BankName . empty( ) )
     {
       cerr << " mates" << endl;
-      ParseMates (mapping);          // parse the matepair data
+      ParseMates (mapping);        // parse the matepair data
     }
 
   //-- READ PLACEMENT
   cerr << "PLACEMENT" << endl;
   PlaceUnambiguous (mapping);      // place unambiguous reads
-  if ( OPT_Matepair )
-    PlaceHappyMates (mapping);     // place 'happy' matepairs
+  PlaceHappyMates (mapping);       // place 'happy' matepairs
   if ( OPT_Random )
     PlaceRandom (mapping);         // randomly place all unplaced reads
 
@@ -657,26 +666,26 @@ int main (int argc, char ** argv)
   RefineConflicts (mapping);       // assess, combine and select conflicts
 
   //-- ASSEMBLY
-  if ( OPT_PrintTigr  ||  OPT_PrintUMD )
-    {
-      cerr << "ASSEMBLY" << endl;
-      Assemble (mapping, assembly);// layout the reads to form the assembly
-      CleanContigs (assembly);     // clean up the contigs
-    }
+  cerr << "ASSEMBLY" << endl;
+  Assemble (mapping, assembly);    // layout the reads to form the assembly
+  CleanContigs (assembly);         // clean up the contigs
 
   //-- OUTPUT
   cerr << "OUTPUT" << endl;
-  if ( OPT_PrintConflicts )
-    PrintConflicts (mapping);      // print conflicts
+  if ( ! OPT_ConflictName . empty( ) )
+    OutputConflicts (mapping);     // print conflicts
 
-  if ( OPT_PrintMaps )
-    PrintMapping (mapping);        // print read mapping
+  if ( ! OPT_MapName . empty( ) )
+    OutputMapping (mapping);       // print read mapping
 
-  if ( OPT_PrintTigr )
-    PrintTigr (assembly);          // print TIGR contigs
+  if ( ! OPT_BankName . empty( ) )
+    OutputLayouts (assembly);      // output layouts to AMOS bank
+
+  if ( ! OPT_TigrName . empty( ) )
+    OutputTigr (assembly);         // print TIGR contigs
   
-  if ( OPT_PrintUMD )
-    PrintUMD (assembly);           // print UMD contigs
+  if ( ! OPT_UmdName . empty( ) )
+    OutputUMD (assembly);          // print UMD contigs
 
   return EXIT_SUCCESS;
 }
@@ -1136,6 +1145,272 @@ void FindConflicts (Mapping_t & mapping)
 
 
 
+//------------------------------------------------------- OutputConflicts ----//
+void OutputConflicts (const Mapping_t & mapping)
+{
+  ofstream out (OPT_ConflictName . c_str( ));
+  if ( !out )
+    cerr << "WARNING: could not open " << OPT_ConflictName << endl;
+
+  list<Conflict_t *>::const_iterator cpi;
+  map<string, Reference_t>::const_iterator rmi;
+
+  for ( rmi  = mapping . references . begin( );
+	rmi != mapping . references . end( ); ++ rmi )
+    {
+      out << '>' << rmi -> first << endl;
+      for ( cpi  = rmi -> second . conflicts . begin( );
+	    cpi != rmi -> second . conflicts . end( ); ++ cpi )
+	{
+	  switch ( (*cpi) -> status )
+	    {
+	    case Conflict_t::SUPPORTED:
+	      out << "+  ";
+	      break;
+	    case Conflict_t::UNSUPPORTED:
+	      out << "-  ";
+	      break;
+	    case Conflict_t::ARTIFACT:
+	      out << ".  ";
+	      break;
+	    case Conflict_t::AMBIGUOUS:
+	      out << "?  ";
+	      break;
+	    }
+
+	  out << (*cpi) -> pos
+	       << "\t"   << (*cpi) -> gapR
+	       << "\t"   << (*cpi) -> gapQ
+	       << "\t"   << (*cpi) -> type
+	       << "\tN." << (*cpi) -> discount . size( )
+	       << "\tY." << (*cpi) -> support  . size( ) << "\t" << endl;
+
+	  //--
+	  set<ReadMap_t *>::const_iterator rmpi;
+	  out << " S: ";
+	  for (rmpi  = (*cpi) -> support . begin( );
+	       rmpi != (*cpi) -> support . end( ); ++ rmpi )
+	    out << ((*rmpi) -> exclude ? '-' : '+') << (*rmpi) -> id << ' ';
+	  out << "\n D: ";
+	  for (rmpi  = (*cpi) -> discount . begin( );
+	       rmpi != (*cpi) -> discount . end( ); ++ rmpi )
+	    out << ((*rmpi) -> exclude ? '-' : '+') << (*rmpi) -> id << ' ';
+	  out << endl << endl;
+	  //--
+	}
+    }
+
+  out . close( );
+}
+
+
+
+
+//--------------------------------------------------------- OutputLayouts ----//
+void OutputLayouts (const Assembly_t & assembly)
+{
+  vector<Contig_t *>::const_iterator cpi;
+  vector<Tile_t *>::const_iterator tpi;
+  long int ctgs = 0;
+
+  AMOS::BankStream_t lay_bank (AMOS::Layout_t::NCODE);
+
+  try {
+    lay_bank . create (OPT_BankName, AMOS::B_WRITE);
+
+    for ( cpi = assembly . contigs . begin( );
+	  cpi != assembly . contigs . end( ); ++ cpi )
+      {
+	AMOS::Layout_t lay;
+	AMOS::Tile_t tle;
+
+	lay . setIID (++ctgs);
+
+	for ( tpi  = (*cpi) -> tiles . begin( );
+	      tpi != (*cpi) -> tiles . end( ); ++ tpi )
+	  {
+	    tle . source = (*tpi) -> read -> id;
+	    tle . offset = (*tpi) -> off;
+	    tle . range . begin = (*tpi) -> beg;
+	    tle . range . end   = (*tpi) -> end;
+
+	    lay . getTiling( ) . push_back (tle);
+	  }
+
+	lay_bank << lay;
+      }
+
+    lay_bank . close( );
+  }
+  catch (const AMOS::Exception_t & e) {
+    cerr << "WARNING: " << e . what( )
+	 << "  could not output layouts to bank" << endl;
+  }
+}
+
+
+
+
+//--------------------------------------------------------- OutputMapping ----//
+void OutputMapping (Mapping_t & mapping)
+{
+  ofstream out (OPT_MapName . c_str( ));
+  if ( !out )
+    cerr << "WARNING: could not open " << OPT_MapName << endl;
+
+  ReadMap_t temprm;
+  temprm . place = new ReadAlignChain_t( );
+  temprm . place -> head = new ReadAlign_t( );
+
+  map<string, Reference_t>::iterator rmi;
+  vector<ReadMap_t *>::iterator rmpi;
+
+  ReadAlign_t * curraln;
+  list<ReadAlignChain_t *>::iterator racpi;
+
+  pair<
+    vector<ReadMap_t *>::iterator,
+    vector<ReadMap_t *>::iterator
+    > rmpip;
+
+
+  //-- For each reference
+  for ( rmi  = mapping . references . begin( );
+	rmi != mapping . references . end( ); ++ rmi )
+    {
+      //-- Find the reference range
+      temprm . place -> head -> ref = &(rmi -> second);
+      rmpip = equal_range (mapping . reads . begin( ), mapping . reads . end( ),
+			   &temprm, ReadReferenceCmp_t( ));
+
+      out << '>' << rmi -> first << '\t'
+	  << (rmi -> second) . len
+	  << endl;
+
+      //-- For each read mapping to this reference
+      for ( rmpi = rmpip . first; rmpi != rmpip . second; ++ rmpi )
+	{
+	  out << (*rmpi) -> id << '\t'
+	      << (*rmpi) -> place -> beg << '\t'
+	      << ((*rmpi) -> place -> head -> ori == FORWARD_CHAR ? '+' : '-');
+	  if ( (*rmpi) -> mate . read == NULL )
+	    out << "\tNULL";
+	  else
+	    out << '\t' << (*rmpi) -> mate . read -> id;
+	  out << endl;
+
+	  /*
+	  for ( racpi  = (*rmpi) -> best . begin( );
+		racpi != (*rmpi) -> best . end( ); racpi ++ )
+	    {
+	      out << "#\n";
+	      for ( curraln  = (*racpi) -> head;
+		    curraln != NULL; curraln = curraln -> from )
+		out << ' ' << curraln -> loR << '\t' << curraln -> hiR << endl;
+	    }
+	  */
+	}
+    }
+
+  delete temprm . place -> head;
+  delete temprm . place;
+
+  out . close( );
+}
+
+
+
+
+//------------------------------------------------------------ OutputTigr ----//
+void OutputTigr (const Assembly_t & assembly)
+{
+  ofstream out (OPT_TigrName . c_str( ));
+  if ( !out )
+    cerr << "WARNING: could not open " << OPT_TigrName << endl;
+
+  vector<Contig_t *>::const_iterator cpi;
+  vector<Tile_t *>::const_iterator tpi;
+  long int ctgs, len;
+
+  ctgs = 0;
+  for ( cpi = assembly . contigs . begin( );
+	cpi != assembly . contigs . end( ); ++ cpi )
+    {
+      out
+	<< "##" << ++ctgs << ' '
+	<< (*cpi) -> tiles . size( ) << ' '
+	<< (*cpi) -> len << " 00000000 checksum."
+	<< endl;
+
+      for ( tpi = (*cpi) -> tiles . begin( );
+	    tpi != (*cpi) -> tiles . end( ); ++ tpi )
+	{
+	  len = labs ((*tpi) -> end - (*tpi) -> beg) + 1;
+
+	  out
+	    << '#' << (*tpi) -> read -> id
+	    << '(' << (*tpi) -> off << ')'
+	    << " [" << ((*tpi) -> beg < (*tpi) -> end ? "" : "RC") << "] "
+	    << len << " bases, 00000000 checksum. "
+	    << '{' << (*tpi) -> beg << ' ' << (*tpi) -> end << "} "
+	    << '<' << (*tpi) -> off + 1 << ' ' << (*tpi) -> off + len << '>'
+	    << endl;
+	}
+    }
+
+  out . close( );
+}
+
+
+
+
+//------------------------------------------------------------- OutputUMD ----//
+void OutputUMD (const Assembly_t & assembly)
+{
+  ofstream out (OPT_UmdName . c_str( ));
+  if ( !out )
+    cerr << "WARNING: could not open " << OPT_UmdName << endl;
+
+  vector<Contig_t *>::const_iterator cpi;
+  vector<Tile_t *>::const_iterator tpi;
+  long int ctgs;
+
+  ctgs = 0;
+  for ( cpi = assembly . contigs . begin( );
+	cpi != assembly . contigs . end( ); ++ cpi )
+    {
+      out
+	<< "C " << ++ctgs << '\t'
+	<< (*cpi) -> tiles . size( ) << '\t'
+	<< *((*cpi)->tiles.front( )->read->place->head->ref->id) << '\t'
+	<< (*cpi) -> tiles . front( ) -> read -> place -> beg << "-"
+	<< (*cpi) -> tiles . front( ) -> read -> place -> beg
+	+ (*cpi) -> len - 1 << endl;
+
+      for ( tpi  = (*cpi) -> tiles . begin( );
+	    tpi != (*cpi) -> tiles . end( ); ++ tpi )
+	{
+	  out
+	    << (*tpi) -> read -> id << ' '
+	    << (*tpi) -> off + (*tpi) -> beg - 1 << ' '
+	    << (*tpi) -> off + (*tpi) -> end - 1 << '\t'
+
+	    << (*tpi) -> read -> place -> tbeg -
+	    (*tpi) -> read -> place -> beg << '\t'
+	    << (*tpi) -> read -> place -> end -
+	    (*tpi) -> read -> place -> tend << '\t'
+	    << (*tpi) -> read -> place -> idy << endl;
+	}
+
+      out << endl;
+    }
+
+  out . close( );
+}
+
+
+
+
 //------------------------------------------------------------ ParseAlign ----//
 void ParseAlign (Mapping_t & mapping)
 {
@@ -1319,10 +1594,9 @@ void ParseMates (Mapping_t & mapping)
 	rmp -> mate . read -> mate . maxoff = rmp -> mate . maxoff;
       }
   }
-  catch (AMOS::Exception_t & e) {
-
-    //-- Couldn't open banks, or find reads
-    cerr << "WARNING: Could not parse mate-pair information from bank\n" << e;
+  catch (const AMOS::Exception_t & e) {
+    cerr << "WARNING: " << e . what( ) << endl
+	 << "  could not retrieve mate-pair information" << endl;
   }
 
   mtp_bank . close( );
@@ -1475,203 +1749,6 @@ void PlaceUnambiguous (Mapping_t & mapping)
 	   &&
 	   IsValidChain (rmp -> best . front( ), rmp) )
 	rmp -> place = rmp -> best . front( );
-    }
-}
-
-
-
-
-//-------------------------------------------------------- PrintConflicts ----//
-void PrintConflicts (const Mapping_t & mapping)
-{
-  list<Conflict_t *>::const_iterator cpi;
-  map<string, Reference_t>::const_iterator rmi;
-
-  for ( rmi  = mapping . references . begin( );
-	rmi != mapping . references . end( ); ++ rmi )
-    {
-      cout << '>' << rmi -> first << endl;
-      for ( cpi  = rmi -> second . conflicts . begin( );
-	    cpi != rmi -> second . conflicts . end( ); ++ cpi )
-	{
-	  switch ( (*cpi) -> status )
-	    {
-	    case Conflict_t::SUPPORTED:
-	      cout << "+  ";
-	      break;
-	    case Conflict_t::UNSUPPORTED:
-	      cout << "-  ";
-	      break;
-	    case Conflict_t::ARTIFACT:
-	      cout << ".  ";
-	      break;
-	    case Conflict_t::AMBIGUOUS:
-	      cout << "?  ";
-	      break;
-	    }
-
-	  cout << (*cpi) -> pos
-	       << "\t"   << (*cpi) -> gapR
-	       << "\t"   << (*cpi) -> gapQ
-	       << "\t"   << (*cpi) -> type
-	       << "\tN." << (*cpi) -> discount . size( )
-	       << "\tY." << (*cpi) -> support  . size( ) << "\t" << endl;
-
-	  //--
-	  set<ReadMap_t *>::const_iterator rmpi;
-	  cout << " S: ";
-	  for (rmpi  = (*cpi) -> support . begin( );
-	       rmpi != (*cpi) -> support . end( ); ++ rmpi )
-	    cout << ((*rmpi) -> exclude ? '-' : '+') << (*rmpi) -> id << ' ';
-	  cout << "\n D: ";
-	  for (rmpi  = (*cpi) -> discount . begin( );
-	       rmpi != (*cpi) -> discount . end( ); ++ rmpi )
-	    cout << ((*rmpi) -> exclude ? '-' : '+') << (*rmpi) -> id << ' ';
-	  cout << endl << endl;
-	  //--
-	}
-    }
-}
-
-
-
-
-//---------------------------------------------------------- PrintMapping ----//
-void PrintMapping (Mapping_t & mapping)
-{
-  ReadMap_t temprm;
-  temprm . place = new ReadAlignChain_t( );
-  temprm . place -> head = new ReadAlign_t( );
-
-  map<string, Reference_t>::iterator rmi;
-  vector<ReadMap_t *>::iterator rmpi;
-
-  ReadAlign_t * curraln;
-  list<ReadAlignChain_t *>::iterator racpi;
-
-  pair<
-    vector<ReadMap_t *>::iterator,
-    vector<ReadMap_t *>::iterator
-    > rmpip;
-
-
-  //-- For each reference
-  for ( rmi  = mapping . references . begin( );
-	rmi != mapping . references . end( ); ++ rmi )
-    {
-      //-- Find the reference range
-      temprm . place -> head -> ref = &(rmi -> second);
-      rmpip = equal_range (mapping . reads . begin( ), mapping . reads . end( ),
-			   &temprm, ReadReferenceCmp_t( ));
-
-      cout << '>' << rmi -> first << '\t'
-	   << (rmi -> second) . len
-	   << endl;
-
-      //-- For each read mapping to this reference
-      for ( rmpi = rmpip . first; rmpi != rmpip . second; ++ rmpi )
-	{
-	  cout << (*rmpi) -> id << '\t'
-	       << (*rmpi) -> place -> beg << '\t'
-	       << ((*rmpi) -> place -> head -> ori == FORWARD_CHAR ? '+' : '-');
-	  if ( (*rmpi) -> mate . read == NULL )
-	    cout << "\tNULL";
-	  else
-	    cout << '\t' << (*rmpi) -> mate . read -> id;
-	  cout << endl;
-
-	  /*
-	  for ( racpi  = (*rmpi) -> best . begin( );
-		racpi != (*rmpi) -> best . end( ); racpi ++ )
-	    {
-	      cout << "#\n";
-	      for ( curraln  = (*racpi) -> head;
-		    curraln != NULL; curraln = curraln -> from )
-		cout << ' ' << curraln -> loR << '\t' << curraln -> hiR << endl;
-	    }
-	  */
-	}
-    }
-
-  delete temprm . place -> head;
-  delete temprm . place;
-}
-
-
-
-
-//------------------------------------------------------------- PrintTigr ----//
-void PrintTigr (const Assembly_t & assembly)
-{
-  vector<Contig_t *>::const_iterator cpi;
-  vector<Tile_t *>::const_iterator tpi;
-  long int ctgs, len;
-
-  ctgs = 0;
-  for ( cpi = assembly . contigs . begin( );
-	cpi != assembly . contigs . end( ); ++ cpi )
-    {
-      cout
-	<< "##" << ++ctgs << ' '
-	<< (*cpi) -> tiles . size( ) << ' '
-	<< (*cpi) -> len << " 00000000 checksum."
-	<< endl;
-
-      for ( tpi = (*cpi) -> tiles . begin( );
-	    tpi != (*cpi) -> tiles . end( ); ++ tpi )
-	{
-	  len = labs ((*tpi) -> end - (*tpi) -> beg) + 1;
-
-	  cout
-	    << '#' << (*tpi) -> read -> id
-	    << '(' << (*tpi) -> off << ')'
-	    << " [" << ((*tpi) -> beg < (*tpi) -> end ? "" : "RC") << "] "
-	    << len << " bases, 00000000 checksum. "
-	    << '{' << (*tpi) -> beg << ' ' << (*tpi) -> end << "} "
-	    << '<' << (*tpi) -> off + 1 << ' ' << (*tpi) -> off + len << '>'
-	    << endl;
-	}
-    }
-}
-
-
-
-
-//-------------------------------------------------------------- PrintUMD ----//
-void PrintUMD (const Assembly_t & assembly)
-{
-  vector<Contig_t *>::const_iterator cpi;
-  vector<Tile_t *>::const_iterator tpi;
-  long int ctgs;
-
-  ctgs = 0;
-  for ( cpi = assembly . contigs . begin( );
-	cpi != assembly . contigs . end( ); ++ cpi )
-    {
-      cout
-	<< "C " << ++ctgs << '\t'
-	<< (*cpi) -> tiles . size( ) << '\t'
-	<< *((*cpi)->tiles.front( )->read->place->head->ref->id) << '\t'
-	<< (*cpi) -> tiles . front( ) -> read -> place -> beg << "-"
-	<< (*cpi) -> tiles . front( ) -> read -> place -> beg
-	+ (*cpi) -> len - 1 << endl;
-
-      for ( tpi  = (*cpi) -> tiles . begin( );
-	    tpi != (*cpi) -> tiles . end( ); ++ tpi )
-	{
-	  cout
-	    << (*tpi) -> read -> id << ' '
-	    << (*tpi) -> off + (*tpi) -> beg - 1 << ' '
-	    << (*tpi) -> off + (*tpi) -> end - 1 << '\t'
-
-	    << (*tpi) -> read -> place -> tbeg -
-	    (*tpi) -> read -> place -> beg << '\t'
-	    << (*tpi) -> read -> place -> end -
-	    (*tpi) -> read -> place -> tend << '\t'
-	    << (*tpi) -> read -> place -> idy << endl;
-	}
-
-      cout << endl;
     }
 }
 
@@ -2015,16 +2092,15 @@ void ParseArgs (int argc, char ** argv)
   optarg = NULL;
 
   while ( !errflg  &&
-	  ((ch = getopt (argc, argv, "b:Cg:hi:I:m:Mo:rs:St:TUv:V:")) != EOF) )
+  ((ch = getopt (argc, argv, "b:C:g:hi:I:m:M:o:rs:St:T:U:v:V:")) != EOF) )
     switch (ch)
       {
       case 'b':
 	OPT_BankName = optarg;
-	OPT_Matepair = true;
 	break;
 
       case 'C':
-	OPT_PrintConflicts = true;
+	OPT_ConflictName = optarg;
 	break;
 
       case 'g':
@@ -2049,7 +2125,7 @@ void ParseArgs (int argc, char ** argv)
 	break;
 
       case 'M':
-	OPT_PrintMaps = true;
+	OPT_MapName = optarg;
 	break;
 
       case 'o':
@@ -2073,11 +2149,11 @@ void ParseArgs (int argc, char ** argv)
 	break;
 
       case 'T':
-	OPT_PrintTigr = true;
+	OPT_TigrName = optarg;
 	break;
 
       case 'U':
-	OPT_PrintUMD = true;
+	OPT_UmdName = optarg;
 	break;
 
       case 'v':
@@ -2113,8 +2189,8 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-b path       Set path of the AMOS bank to use for mate-pair info\n"
-    << "-C            Print conflict positions and support counts\n"
+    << "-b path       Set path of the AMOS bank to use\n"
+    << "-C path       Output conflict positions and support counts to file\n"
     << "-g uint       Set maximum alignment gap length, default "
     << OPT_MaxGap << endl
     << "-h            Display help information\n"
@@ -2124,7 +2200,7 @@ void PrintHelp (const char * s)
     << OPT_MaxIdentityDiff << endl
     << "-m float      Set the majority needed to discern a conflict, default "
     << OPT_Majority << endl
-    << "-M            Print read mappings\n"
+    << "-M path       Output read mappings to file\n"
     << "-o uint       Set minimum overlap length for assembly, default "
     << OPT_MinOverlap << endl
     << "-r            Randomly place repetitive reads into one of their copy\n"
@@ -2134,8 +2210,8 @@ void PrintHelp (const char * s)
     << "-S            Include singleton contigs in the output\n"
     << "-t uint       Set maximum ignorable trim length, default "
     << OPT_MaxTrimLen << endl
-    << "-T            Print TIGR contig\n"
-    << "-U            Print UMD contig\n"
+    << "-T path       Output TIGR contig to file\n"
+    << "-U path       Output UMD contig to file\n"
     << "-v float      Set the minimum alignment coverage, default "
     << OPT_MinCoverage << endl
     << "-V float      Set the coverage tolerance between repeats, default "
@@ -2146,7 +2222,10 @@ void PrintHelp (const char * s)
     << "  Position query sequences on a reference based on the alignment\n"
     << "information contained in the deltafile. Can utilize mate-pair\n"
     << "information to place repetitive sequences, or random placement\n"
-    << "to simulate even coverage.\n\n";
+    << "to simulate even coverage. If an AMOS bank is provided by the -b\n"
+    << "option, mate-pair info will be retrieved from and final layouts\n"
+    << "will be written to the bank.\n"
+    << endl;
 
   return;
 }
