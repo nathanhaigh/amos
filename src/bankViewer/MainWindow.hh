@@ -11,6 +11,7 @@
 #include "TilingFrame.hh"
 #include "ContigPicker.hh"
 #include "DataStore.hh"
+#include "InsertWindow.hh"
 
 class MainWindow: public QMainWindow
 {
@@ -50,6 +51,7 @@ private:
   QSpinBox * m_gspin;
   QScrollBar * m_slider;
   QMainWindow * m_contigPicker;
+  InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;
 
   QPopupMenu * m_options;

@@ -22,6 +22,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   m_contigPicker = NULL;
   m_fontsize = 12;
+  m_insertWindow = NULL;
 
   QVBox * vbox = new QVBox(this, "vbox");
 
@@ -151,20 +152,24 @@ void MainWindow::chooseBank()
 
 void MainWindow::showInserts()
 {
-  InsertWindow * insertWindow = new InsertWindow(&m_datastore,
-                                                 this, 
-                                                 "insertWindow");
-  insertWindow->show();
+  if (!m_insertWindow)
+  {
 
-  connect(insertWindow, SIGNAL(setGindex(int)),
-          this,         SLOT(setGindex(int)));
+    m_insertWindow = new InsertWindow(&m_datastore,
+                                      this, 
+                                      "insertWindow");
 
-  connect(m_tiling,      SIGNAL(setTilingVisibleRange(int, int)),
-          insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
+    connect(m_insertWindow, SIGNAL(setGindex(int)),
+            this,         SLOT(setGindex(int)));
 
-  connect(this, SIGNAL(contigIdSelected(int)),
-          insertWindow, SLOT(contigChanged()));
+    connect(m_tiling,      SIGNAL(setTilingVisibleRange(int, int)),
+            m_insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
 
+    connect(this, SIGNAL(contigIdSelected(int)),
+            m_insertWindow, SLOT(contigChanged()));
+  }
+
+  m_insertWindow->show();
   m_tiling->repaint();
 }
 

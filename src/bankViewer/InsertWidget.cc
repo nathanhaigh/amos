@@ -3,28 +3,35 @@
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qwmatrix.h>
+#include "RenderSeq.hh"
+#include "InsertCanvasItem.hh"
 
+using namespace AMOS;
 using namespace std;
+typedef std::map<ID_t, Tile_t *> SeqTileMap_t;
+
 
 InsertWidget::InsertWidget(DataStore * datastore,
                            QWidget * parent, const char * name)
  : QWidget(parent, name)
 {
+  m_datastore = datastore;
+  m_tilingVisible = NULL;
+
   QBoxLayout * vbox = new QVBoxLayout(this);
 
   m_iposition = new InsertPosition(this, "insertposition");
-  m_icanvas   = new InsertCanvas(datastore, this, "icanvas");
+  m_icanvas   = new QCanvas(this, "icanvas");
+  m_icanvas->setBackgroundColor(Qt::black);
+
+  refreshCanvas();
+
   m_ifield    = new InsertField(m_icanvas, this, "qcv");
   m_ifield->show();
 
   vbox->addWidget(m_iposition);
   vbox->addWidget(m_ifield, 10);
   vbox->activate();
-
-  m_tilingVisible = new QCanvasRectangle(m_icanvas);
-  m_tilingVisible->setZ(-1);
-  m_tilingVisible->setBrush(QColor(100,100,100));
-  m_tilingVisible->setPen(QColor(100,100,100));
 
   connect(m_ifield, SIGNAL(visibleRange(int, double)),
           m_iposition, SLOT(setVisibleRange(int,double)));
@@ -36,8 +43,36 @@ InsertWidget::InsertWidget(DataStore * datastore,
           this,     SIGNAL(setGindex(int)));
 }
 
+void InsertWidget::initializeVisibleRectangle()
+{
+  m_tilingVisible = new QCanvasRectangle(m_icanvas);
+  m_tilingVisible->setZ(-1);
+  m_tilingVisible->setBrush(QColor(100,100,100));
+  m_tilingVisible->setPen(QColor(100,100,100));
+}
+
+InsertWidget::~InsertWidget()
+{
+  flushInserts();
+}
+
+void InsertWidget::flushInserts()
+{
+  vector<Insert *>::iterator i;
+  
+  for (i =  m_inserts.begin();
+       i != m_inserts.end();
+       i++)
+  {
+    delete (*i);
+  }
+
+  m_inserts.clear();
+}
+
 void InsertWidget::setTilingVisibleRange(int gstart, int gend)
 {
+  // resize and place rectangle
   QRect rc = QRect(m_ifield->contentsX(), m_ifield->contentsY(),
                    m_ifield->visibleWidth(), m_ifield->visibleHeight());
   QRect canvasRect = m_ifield->inverseWorldMatrix().mapRect(rc);
@@ -46,13 +81,11 @@ void InsertWidget::setTilingVisibleRange(int gstart, int gend)
   m_tilingVisible->move(gstart, 0);
   m_tilingVisible->show();
 
-
-  int mapx;
-  int mapy;
-
-  m_ifield->worldMatrix().map((gstart + gend)/2, canvasRect.y() + canvasRect.height()/2,
+  // ensure visible
+  int mapx, mapy;
+  m_ifield->worldMatrix().map((gstart + gend)/2, 
+                              canvasRect.y() + canvasRect.height()/2,
                               &mapx, &mapy);
-
   m_ifield->ensureVisible(mapx, mapy);
 
   m_icanvas->update();
@@ -76,5 +109,231 @@ void InsertWidget::setZoom(int zoom)
 
 void InsertWidget::refreshCanvas()
 {
-  m_icanvas->drawCanvas();
+  // clear and flush
+  QCanvasItemList list = m_icanvas->allItems();
+  QCanvasItemList::Iterator it = list.begin();
+  for (; it != list.end(); ++it) {
+      if ( *it )
+          delete *it;
+  }
+
+  flushInserts();
+  initializeVisibleRectangle();
+  m_icanvas->update();
+
+  // now draw
+  if (!m_datastore->m_loaded) { return; }
+
+  m_seqheight = 3;
+  m_hoffset = 0; // 20
+
+  int posoffset = 5;
+  int gutter = 5;
+  int tileoffset = posoffset+2*gutter;
+  int lineheight = m_seqheight+gutter;
+
+  int layoutgutter = 50;
+
+  unsigned int clen = 0;
+  SeqTileMap_t seqtileLookup;
+
+  int mated = 0;
+  int unmated = 0;
+  int allmates = 0;
+
+  try
+  {
+    m_tiling = m_datastore->m_contig.getReadTiling();
+    clen = m_datastore->m_contig.getSeqString().size();
+
+    sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
+
+    cerr << "Creating iid -> tile_t * map" << endl;
+    vector<Tile_t>::iterator vi;
+    for (vi =  m_tiling.begin();
+         vi != m_tiling.end();
+         vi++)
+    {
+      seqtileLookup[vi->source] = &(*vi);
+    }
+
+    cerr << "Loading mates ";
+    Matepair_t mates;
+
+    m_datastore->mate_bank.seekg(1);
+    while (m_datastore->mate_bank >> mates)
+    {
+      allmates++;
+      ID_t aid = mates.getReads().first;
+      ID_t bid = mates.getReads().second;
+      ID_t good = aid;
+      
+      SeqTileMap_t::iterator ai = seqtileLookup.find(aid);
+      SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
+
+      Tile_t * a = NULL;
+      Tile_t * b = NULL;
+
+      if (ai != seqtileLookup.end())
+      {
+        a = ai->second;
+        seqtileLookup.erase(ai);
+      }
+
+      if (bi != seqtileLookup.end())
+      {
+        b = bi->second;
+        seqtileLookup.erase(bi);
+        good = bid;
+      }
+      
+      if (a || b)
+      {
+        mated++;
+        Insert * i = new Insert(a, m_datastore->m_contigId, b, m_datastore->m_contigId, 
+                                getLibrarySize(good), clen);
+
+        if (i->m_state == Insert::Happy)
+        {
+          m_inserts.push_back(i);
+        }
+        else
+        {
+          if (a && b)
+          {
+            Insert * j = new Insert(*i);
+            j->setActive(1, i);
+            m_inserts.push_back(j);
+
+            i->setActive(0, j);
+          }
+          else if (a) { i->setActive(0, NULL); }
+          else if (b) { i->setActive(1, NULL); }
+
+          m_inserts.push_back(i);
+        }
+      }
+    }
+
+    SeqTileMap_t::iterator si;
+    for (si =  seqtileLookup.begin();
+         si != seqtileLookup.end();
+         si++)
+    {
+      if (si->second)
+      {
+        Insert * i = new Insert(si->second, m_datastore->m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
+        m_inserts.push_back(i);
+        unmated++;
+      }
+    }
+
+    cerr << "allmates: " << allmates 
+         << " mated: "   << mated 
+         << " unmated: " << unmated << endl;
+
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+  }
+
+  sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
+
+  QCanvasLine * line = new QCanvasLine(m_icanvas);
+  line->setPoints(m_hoffset,        posoffset, 
+                  m_hoffset + clen, posoffset);
+  line->setPen(QPen(Qt::white, 2));
+  line->show();
+
+  for (unsigned int i = 0; i < clen; i ++)
+  {
+    if (((i % 1000 == 0) && (clen - i > 1000)) || (i == clen-1))
+    {
+      line = new QCanvasLine(m_icanvas);
+
+      line->setPoints(m_hoffset + i, posoffset-2,
+                      m_hoffset + i, posoffset+2);
+      line->setPen(Qt::white);
+      line->show();
+    }
+  }
+
+
+  cerr << "paint inserts: ";
+  char types [] = "HSMNOLU";
+  int numtypes = strlen(types);
+
+  int layoutoffset = 0;
+
+  // For all types
+  for (int type = 0; type < numtypes; type++)
+  {
+    vector<Insert *>::iterator ii;
+
+    vector<int> layout;
+    vector<int>::iterator li;
+    int layoutpos;
+    
+    cerr << types[type];
+
+    // For all inserts
+    for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
+    {
+      if ((*ii)->m_state != types[type]) { continue; }
+
+      // Find a position
+      for (li =  layout.begin(), layoutpos = 0;
+           li != layout.end();
+           li++, layoutpos++)
+      {
+        if (*li < (*ii)->m_loffset)
+        {
+          break;
+        }
+      }
+
+      if (li == layout.end())
+      {
+        layout.push_back(0);
+      }
+
+      int vpos = tileoffset+(layoutpos + layoutoffset)*lineheight;
+      layout[layoutpos] = (*ii)->m_roffset + layoutgutter;
+
+      int inserthpos = m_hoffset + (*ii)->m_loffset; 
+      int insertlength = (*ii)->m_length;
+
+      InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
+                                                      insertlength, m_seqheight,
+                                                      *ii, m_icanvas);
+      iitem->show();
+    }
+
+    if (!layout.empty()) 
+    { 
+      layoutoffset += layout.size() + 1;
+    }
+  }
+
+  cerr << endl;
+
+  m_icanvas->resize(clen+1000, tileoffset+layoutoffset*lineheight);
+  m_icanvas->update();
 }
+
+
+AMOS::Distribution_t InsertWidget::getLibrarySize(ID_t readid)
+{
+  Read_t read;
+  m_datastore->read_bank.fetch(readid, read);
+
+  Fragment_t frag;
+  m_datastore->frag_bank.fetch(read.getFragment(), frag);
+
+  Library_t lib;
+  m_datastore->lib_bank.fetch(frag.getLibrary(), lib);
+
+  return lib.getDistribution();
+}
+
