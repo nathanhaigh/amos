@@ -12,6 +12,7 @@
 #include "delta.hh"
 #include <algorithm>
 #include <cstdlib>
+#include <climit>
 #include <ctime>
 #include <cmath>
 #include <map>
@@ -518,11 +519,12 @@ inline void CallConflict (Conflict_t * c)
 {
   long int yay = c -> support  . size( );
   long int nay = c -> discount . size( );
-  long int tot = yay + nay;
+  float tot = yay + nay;
+  if ( tot == 0 ) tot = -1;
 
-  if ( (float)yay / (float)tot * 100.0 >= OPT_Majority )
+  if ( (float)yay / tot * 100.0 >= OPT_Majority )
     c -> status = Conflict_t::SUPPORTED;
-  else if ( (float)nay / (float)tot * 100.0 >= OPT_Majority )
+  else if ( (float)nay / tot * 100.0 >= OPT_Majority )
     c -> status = Conflict_t::UNSUPPORTED;
   else
     c -> status = Conflict_t::AMBIGUOUS;
@@ -1859,21 +1861,23 @@ void RefineConflicts (Mapping_t & mapping)
 		  {
 		    long int byay = (*bi) -> support . size( );
 		    long int cyay = (*cpi) -> support . size( );
-		    long int tyay = byay + cyay;
-		    
-		    if ((float)byay/(float)tyay*100.0 >= OPT_Majority)
+		    float tyay = byay + cyay;
+		    if ( tyay == 0 ) tyay = -1;
+
+		    if ((float)byay / tyay * 100.0 >= OPT_Majority)
 		      (*cpi) -> status = Conflict_t::ARTIFACT;
-		    else if ((float)cyay/(float)tyay*100.0 >= OPT_Majority)
+		    else if ((float)cyay / tyay * 100.0 >= OPT_Majority)
 		      (*bi) -> status = Conflict_t::ARTIFACT;
 		    else
 		      {
 			long int bnay = (*bi) -> discount . size( );
 			long int cnay = (*cpi) -> discount . size( );
-			long int tnay = bnay + cnay;
+			float tnay = bnay + cnay;
+			if ( tnay == 0 ) tnay = -1;
 			
-			if ((float)bnay/(float)tnay*100.0 >= OPT_Majority)
+			if ((float)bnay / tnay * 100.0 >= OPT_Majority)
 			  (*bi) -> status = Conflict_t::ARTIFACT;
-			else if ((float)cnay/(float)tnay*100.0 >= OPT_Majority)
+			else if ((float)cnay / tnay * 100.0 >= OPT_Majority)
 			  (*cpi) -> status = Conflict_t::ARTIFACT;
 			else
 			  {
