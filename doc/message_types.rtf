@@ -211,13 +211,13 @@ system, which essentially translates to a 0 based indexing scheme. e.g. the rang
 \par src:<iid>
 \par off:(-?\\d+)
 \par clr:(\\d+,\\d+)
-\par del:(\\n(-?\\d+\\n)*).
+\par gap:(\\n(-?\\d+\\n)*).
 \par \}
 \par 
 \par }{\i\fs20 src}{\fs20  - Tiled sequence, referenced by its IID. Type of sequence is implied by how this record is nested, e.g. a TLE in a CTG represents a RED, while a TLE in a SCF represents a CTG.
 \par }{\i\fs20 off}{\fs20  - Offset of the tile from the beginning of the reference.
 \par }{\i\fs20 clr}{\fs20  - Usable range of the tile, relative to the tile\rquote s coordinates.
-\par }{\i\fs20 del}{\fs20  - List of delta encoded gap positions.
+\par }{\i\fs20 gap}{\fs20  - List of delta encoded gap positions.
 \par 
 \par }{\b\fs20 
 \par }{\fs20 -----------------------------------------------
