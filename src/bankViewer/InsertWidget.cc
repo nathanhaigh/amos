@@ -640,8 +640,8 @@ void InsertWidget::start()
   int basey = min(rect.y()+rect.height(), m_icanvas->height());
 
   m_ball = new QCanvasEllipse(100, 5, m_icanvas);
-  m_ball->setX(rect.x() + rect.width()/2);
-  m_ball->setY(basey - 25);
+  m_ball->setX(rect.x() + rect.width()/2+500);
+  m_ball->setY(basey - 15);
   m_ball->setPen(Qt::white);
   m_ball->setBrush(Qt::white);
   m_ball->show();
@@ -652,7 +652,7 @@ void InsertWidget::start()
   m_paddle->show();
 
   m_xvel = rand() % 250 - 125;
-  m_yvel = 1;
+  m_yvel = -1;
 
   m_icanvas->update();
 
