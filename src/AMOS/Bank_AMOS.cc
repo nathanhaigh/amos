@@ -43,7 +43,7 @@ const Size_t Bank_t::DEFAULT_BUFFER_SIZE    = 1024;
 const Size_t Bank_t::DEFAULT_PARTITION_SIZE = 1000000;
 const Size_t Bank_t::MAX_OPEN_PARTITIONS    = 20;
 
-const string Bank_t::BANK_VERSION     =  "2.5";
+const string Bank_t::BANK_VERSION     =  "2.6";
 
 const string Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string Bank_t::IFO_STORE_SUFFIX = ".ifo";
