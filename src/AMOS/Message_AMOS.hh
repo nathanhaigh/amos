@@ -349,6 +349,14 @@ public:
   virtual void fromMessage (const Message_t & msg) = 0;
 
 
+  //--------------------------------------------------- getNCode ---------------
+  //! \brief Get the AMOS NCode type identifier
+  //!
+  //! \return The the AMOS NCode type identifier
+  //!
+  virtual NCode_t getNCode ( ) const = 0;
+
+
   //--------------------------------------------------- toMessage --------------
   //! \brief Converts to a message
   //!
