@@ -36,7 +36,7 @@ the `runAmos' command interpreter. The following variables must be set
 on the command line or added to the script for the pipeline to operate
 properly:
 
-	TGT - The target genome sequences in AMOS message format
+        TGT - The target genome sequences in AMOS message format
 
 `minimus -D TGT=<target> <prefix>'
   OR
@@ -60,24 +60,46 @@ The default TGT file is <prefix>.afg, thus if our input file is
 `minimus <prefix>'
 
 
+Output
+======
+
+   Output will be a TIGR .contig file and a FastA .fasta file. The
+TIGR contig file contains the gapped consensus and multi-alignment
+information for the assembly. Each contig sequence is preceded by a
+header line which starts with '##', followed by the gapped consensus
+sequence with gaps represented as a '-' character. Following the
+consensus is the gapped read sequence preceded by a header line
+beginning with '#'. The .fasta file contains all the contigs produced
+by AMOScmp in a multi-FastA formatted file. These sequences will match
+the sequences in the .contig file, but without the gaps.
+
+   To obtain an ACE format representation of the assembly, we can run
+the following to obtain a <prefix>.ace file:
+
+`bank-report -b <prefix>.bank CTG > <prefix>.ctg'
+`amos2ace <prefix>.afg <prefix>.ctg'
+
+Where <prefix> is the same as was used in the above section and
+<prefix>.afg is the original input to the assembly pipeline. We can
+simply add these commands to the runAmos config file to produce an ACE
+file every time we run minimus.
+
+
 Example
 =======
 
-   Assume we have an AMOS message file, `target.afg', containing the
+   Assume we have a set of Trace Archive data with the names
+`target.seq', `target.qual' and `target.xml' which contain the
 sequence information for a small assembly task. To run the minimus
-pipeline we type the following:
+pipeline and generate the default output, we would type the following:
 
-`minimus -D TGT=target.afg asm'
+`tarchive2amos -o target target.seq'
+`minimus -D TGT=target.afg target'
 
-The output will be written into a file called asm.ctg.afg, which
-contains, for each contig generated, the consensus sequence and
-quality as well as detailed information regarding the placement of the
-reads within the contig. This file, in conjunction with the file
-containing the RED messages can be converted to .ACE format with the
-utility `amos2ace' which will appear in the $bindir directory upon
-installation. For instance, `amos2ace <prefix>.afg <prefix>.ctg.afg'
-will generate the file `<prefix>.ace'.
+This will generate the default output named `target.contig' and
+`target.fasta'. We could then generate an ACE assembly format file by
+following the instructions in the above section, substituting "target"
+for "<prefix>".
 
 
-September 2004
-
+November 2004

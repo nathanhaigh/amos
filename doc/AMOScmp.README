@@ -42,8 +42,8 @@ the `runAmos' command interpreter. The following variables must be set
 on the command line or added to the script for the pipeline to
 operate properly:
 
-	TGT - The target genome sequences in AMOS message format
-	REF - The reference genome sequences in multi-FastA format
+        TGT - The target genome sequences in AMOS message format
+        REF - The reference genome sequences in multi-FastA format
 
 `AMOScmp -D TGT=<target> -D REF=<reference> <prefix>'
   OR
@@ -63,28 +63,48 @@ The default TGT file is <prefix>.afg and the default REF file is
 `AMOScmp <prefix>'
 
 
+Output
+======
+
+   Output will be a TIGR .contig file and a FastA .fasta file. The
+TIGR contig file contains the gapped consensus and multi-alignment
+information for the assembly. Each contig sequence is preceded by a
+header line which starts with '##', followed by the gapped consensus
+sequence with gaps represented as a '-' character. Following the
+consensus is the gapped read sequence preceded by a header line
+beginning with '#'. The .fasta file contains all the contigs produced
+by AMOScmp in a multi-FastA formatted file. These sequences will match
+the sequences in the .contig file, but without the gaps.
+
+   To obtain an ACE format representation of the assembly, we can run
+the following to obtain a <prefix>.ace file:
+
+`bank-report -b <prefix>.bank CTG > <prefix>.ctg'
+`amos2ace <prefix>.afg <prefix>.ctg'
+
+Where <prefix> is the same as was used in the above section and
+<prefix>.afg is the original input to the assembly pipeline. We can
+simply add these commands to the runAmos config file to produce an ACE
+file every time we run AMOScmp.
+
+
 Example
 =======
 
-   Assume we have an AMOS message file, `target.afg', containing the
-sequence information for a whole genome project. This target genome is
-a different strain of the reference genome whose sequence is contained
-in the file, `reference.fasta'. To run the AMOScmp pipeline we type
+   Assume we have a set of Trace Archive data with the names
+`target.seq', `target.qual' and `target.xml' which contain the
+sequence information for a whole-genome assembly task. In addition, we
+have a closely related reference genome named `reference.1con'. To run
+the AMOScmp pipeline and generate the default output, we would type
 the following:
 
-`AMOScmp -D TGT=target.afg -D REF=reference.afg asm'
+`AMOScmp -D TGT=target.afg -D REF=reference.1con target'
 
-This will produce a number of various files with the prefix `asm', but
-the only notable output files are `asm.ctg' and `asm.fasta'. The .ctg
-file contains the multi-alignment information for all the reads and
-contigs. Each contig sequence is preceded by a header line which
-starts with `##', followed by the gapped consensus sequence with gaps
-represented as a `-' character. Following the consensus is the gapped
-read sequence preceded by a header line beginning with `#'. The .fasta
-file contains all the contigs produced by AMOScmp in a multi-FastA
-formatted file. These sequences will match the sequences in the .ctg
-file, with the exception of the `-' being characters removed.
+This will generate the default output named `target.contig' and
+`target.fasta'. We could then generate an ACE assembly format file by
+following the instructions in the above section, substituting "target"
+for "<prefix>".
 
 
-August 2004
+November 2004
 
