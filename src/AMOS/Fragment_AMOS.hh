@@ -140,7 +140,7 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     Universal_t::clear( );
     ends_m . first = ends_m . second = library_m = NULL_ID;

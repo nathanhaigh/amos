@@ -142,7 +142,7 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     Universal_t::clear( );
     aHang_m = bHang_m = 0;

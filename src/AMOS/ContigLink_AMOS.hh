@@ -20,6 +20,7 @@
 namespace AMOS {
 
 typedef char LinkType_t;
+typedef char LinkAdjacency_t;
 
 //================================================ ContigLink_t ================
 //! \brief Linking information between two contigs
@@ -43,6 +44,12 @@ public:
   static const LinkType_t ALIGNMENT  = 'A';
   static const LinkType_t SYNTENY    = 'S';
 
+  static const LinkAdjacency_t NULL_ADJACENCY = 0;
+  static const LinkAdjacency_t NORMAL     = 'N';     //!< E,B
+  static const LinkAdjacency_t ANTINORMAL = 'A';     //!< B,E
+  static const LinkAdjacency_t INNIE      = 'I';     //!< E,E
+  static const LinkAdjacency_t OUTIE      = 'O';     //!< B,B
+
 
 private:
 
@@ -54,15 +61,6 @@ private:
 
 
 protected:
-
-  static const char NORMAL     = 'N';     //!< E,B
-  static const char ANTINORMAL = 'A';     //!< B,E
-  static const char INNIE      = 'I';     //!< E,E
-  static const char OUTIE      = 'O';     //!< B,B
-
-  static const uint8_t FIRST_BIT  = 0x1;  //!< adjacency info for 1st contig
-  static const uint8_t SECOND_BIT = 0x2;  //!< adjacency info for 2nd contig
-
 
   //--------------------------------------------------- readRecord -------------
   //! \brief Read all the class members from a biserial record
@@ -129,7 +127,7 @@ public:
   ContigLink_t ( )
   {
     contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
-    source_m . second = Bank_k::NULL_BANK;
+    source_m . second = NULL_NCODE;
     sd_m = size_m = 0;
     type_m = NULL_LINK;
   }
@@ -147,7 +145,7 @@ public:
   //--------------------------------------------------- ~ContigLink_t ----------
   //! \brief Destroys a ContigLink_t object
   //!
-  virtual ~ContigLink_t ( )
+  ~ContigLink_t ( )
   {
 
   }
@@ -160,13 +158,12 @@ public:
   {
     Universal_t::clear( );
     contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
-    source_m . second = Bank_k::NULL_BANK;
+    source_m . second = NULL_NCODE;
     sd_m = size_m = 0;
     type_m = NULL_LINK;
   }
 
 
-  /*
   //--------------------------------------------------- fromMessage ------------
   //! \brief Converts from a message
   //!
@@ -178,19 +175,19 @@ public:
   //! \return void
   //!
   virtual void fromMessage (const Message_t & msg);
-  */
 
 
   //--------------------------------------------------- getAdjacency -----------
   //! \brief Get the adjacent ends of the two contigs
   //!
-  //! Get the ends of the first and second contigs that are adjacent, i.e.
-  //! (E,B), (E,E), (B,B), or (E,B), where (E,B) would mean the end of the
-  //! first contig is adjacent to the beginning of the second contig.
+  //! Get the adjacency information for the contigs, i.e. [N]ORMAL (EB),
+  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where B is the
+  //! beginning of the contig and E is the end of a contig and EB means the
+  //! end of contig1 is adjacent to the beginning of contig2.
   //!
   //! \return The pair of adjacent ends
   //!
-  std::pair<char, char> getAdjacency ( ) const;
+  LinkAdjacency_t getAdjacency ( ) const;
 
 
   //--------------------------------------------------- getContigs -------------
@@ -272,19 +269,19 @@ public:
   //--------------------------------------------------- setAdjacency -----------
   //! \brief Set the adjacent ends of the two contigs
   //!
-  //! Set the ends of the first and second contigs that are linked, i.e.
-  //! (E,B), (E,E), (B,B), or (E,B), where (E,B) would mean the end of the
-  //! first contig is adjacent to the beginning of the second contig.
-  //! 'B' denotes begin, while 'E' denotes end.
+  //! Set the adjacency information for the contigs, i.e. [N]ORMAL (EB),
+  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where B is the
+  //! beginning of the contig and E is the end of a contig and EB would mean
+  //! the end of contig1 is adjacent to the beginning of contig2.
   //!
   //! \note Will store info in extra portion of BankableFlags
   //!
-  //! \param adj The new adjacent ends (B or E) of the two contigs
-  //! \pre Each char in the pair must be either 'B' or 'E'
+  //! \param adj The new adjacency of the contigs
+  //! \pre adj must be one of [NAIO]
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setAdjacency (std::pair<char, char> adj);
+  void setAdjacency (LinkAdjacency_t adj);
 
 
   //--------------------------------------------------- setContigs -------------
@@ -345,11 +342,24 @@ public:
   //!
   void setType (LinkType_t type)
   {
+    switch (type)
+      {
+      case NULL_LINK:
+      case OTHER:
+      case MATEPAIR:
+      case OVERLAP:
+      case PHYSICAL:
+      case ALIGNMENT:
+      case SYNTENY:
+	type_m = type;
+	break;
+      default:
+	AMOS_THROW_ARGUMENT ((string)"Invalid link type char: " + type);
+      }
     type_m = type;
   }
 
 
-  /*
   //--------------------------------------------------- toMessage --------------
   //! \brief Converts to a message
   //!
@@ -359,7 +369,6 @@ public:
   //! \return void
   //!
   virtual void toMessage (Message_t & msg) const;
-  */
 
 };
 

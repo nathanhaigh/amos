@@ -148,7 +148,7 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     Sequence_t::clear( );
     poly_m = 0;

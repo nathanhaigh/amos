@@ -24,19 +24,32 @@ int main (int argc, char ** argv)
 
     Message_t msg;
     Universal_t unv;
+    ContigLink_t ctl;
+
+    Universal_t * unvp;
     
     while ( msg . read (msgfile) )
-      if ( msg . getMessageCode( ) == Universal_t::NCode( ) )
-	{
-	  unv . clear( );
-	  unv . fromMessage (msg);
+      {
+	cout << "# Found new message: "
+	     << Decode (msg . getMessageCode( )) << endl;
+	if ( msg . getMessageCode( ) == Message_k::M_UNIVERSAL )
+	  unvp = &unv;
+	else if ( msg . getMessageCode( ) == Message_k::M_CONTIGLINK )
+	  unvp = &ctl;
+	else
+	  {
+	    cout << "# don't know how to parse message\n";
+	    continue;
+	  }
 
-	  msg . clear( );
-	  unv . toMessage (msg);
+	unvp -> clear( );
+	unvp -> fromMessage (msg);
 
-	  cout << "### NEW MESSAGE ###\n";
-	  msg . write (cout);
-	}
+	msg . clear( );
+	unvp -> toMessage (msg);
+
+	msg . write (cout);
+      }
   }
   catch (Exception_t & e) {
     cerr << e;

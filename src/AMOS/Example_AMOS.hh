@@ -18,9 +18,9 @@
 namespace AMOS {
 
 //================================================ Example_t ===================
-//! \brief Minimal set of Bankable members
+//! \brief Minimal set of IBankable members
 //!
-//! Minimal set of Bankable members
+//! Minimal set of IBankable members
 //!
 //==============================================================================
 class Example_t : public IBankable_t
@@ -36,7 +36,7 @@ protected:
   //!
   //! Reads the fixed and variable length streams from a biserial record and
   //! initializes all the class members to the values stored within. Used in
-  //! translating a biserial Bankable object, and needed to retrieve objects
+  //! translating a biserial IBankable object, and needed to retrieve objects
   //! from a Bank. Returned size of the record will only be valid if the read
   //! was successful, i.e. fix.good( ) and var.good( ).
   //!
@@ -52,7 +52,7 @@ protected:
   virtual Size_t readRecord (std::istream & fix,
 			     std::istream & var)
   {
-    Size_t streamsize = Bankable_t::readRecord (fix, var);
+    Size_t streamsize = IBankable_t::readRecord (fix, var);
 
     // write class data here
 
@@ -64,7 +64,7 @@ protected:
   //! \brief Write all the class members to a biserial record
   //!
   //! Writes the fixed an variable length streams to a biserial record. Used in
-  //! generating a biserial Bankable object, and needed to commit objects to a
+  //! generating a biserial IBankable object, and needed to commit objects to a
   //! Bank. Will only write to the ready streams, but the size of the record
   //! will always be returned.
   //!
@@ -78,7 +78,7 @@ protected:
   virtual Size_t writeRecord (std::ostream & fix,
 			      std::ostream & var) const
   {
-    Size_t streamsize = Bankable_t::writeRecord (fix, var);
+    Size_t streamsize = IBankable_t::writeRecord (fix, var);
 
     // write class data here
 
@@ -132,9 +132,9 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
-    Bankable_t::clear( );
+    IBankable_t::clear( );
   }
 
 
@@ -159,7 +159,7 @@ public:
   {
     if ( this != &source )
       {
-	Bankable_t::operator= (source);
+	IBankable_t::operator= (source);
 
 	// copy local items
       }

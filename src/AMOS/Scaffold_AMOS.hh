@@ -124,7 +124,7 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     Universal_t::clear( );
     contigs_m . clear( );

@@ -123,7 +123,7 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     ContigLink_t::clear( );
     links_m . clear( );

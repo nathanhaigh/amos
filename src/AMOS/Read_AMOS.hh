@@ -143,7 +143,7 @@ public:
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  virtual void clear ( )
   {
     Sequence_t::clear( );
     clear_m . clear( );
