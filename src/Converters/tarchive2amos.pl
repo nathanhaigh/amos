@@ -517,10 +517,10 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    if ($hasxml || defined $mates){
 		$base->logError("Found a sequence without a template - probably not in XML or mates file: $fidname\n");
 		next;
-	    } else {
-		$seq2ins{$fid} = 0; #insid
-		$ins2id{0} = 0; #$insid;
-	    }
+	    } #else {
+	#	$seq2ins{$fid} = 0; #insid
+	#	$ins2id{0} = 0; #$insid;
+	#    }
 	}
 
 	if (exists $seq2ins{$fid} &&
