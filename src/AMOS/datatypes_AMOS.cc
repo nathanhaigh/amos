@@ -31,10 +31,10 @@ Range_t AMOS::operator& (Range_t a, Range_t b)
       b . end = tmp;
     }
 
-  if ( a . begin > b . end  ||  a . end < b . begin )
+  if ( a . begin >= b . end  ||  a . end <= b . begin )
     return Range_t (0,0);
-  else if ( a . end <= b . end )
-    return Range_t (a . begin > b . begin ? a . begin : b . begin, a . end);
+  else if ( a . begin < b . begin )
+    return Range_t (b . begin, a . end < b . end ? a . end : b . end);
   else
     return Range_t (a . begin, a . end < b . end ? a . end : b . end);
 }
@@ -57,10 +57,16 @@ Range_t AMOS::operator| (Range_t a, Range_t b)
       b . end = tmp;
     }
 
-  if ( a . begin > b . end  ||  a . end < b . begin )
+  if ( a . begin >= b . end  ||  a . end <= b . begin )
     return Range_t (0,0);
-  else if ( a . end <= b . end )
-    return Range_t (a . begin > b . begin ? a . begin : b . begin, a . end);
   else
-    return Range_t (a . begin, a . end < b . end ? a . end : b . end);
+    return Range_t (a . begin < b . begin ? a . begin : b . begin,
+		    a . end > b . end ? a . end : b . end);
+}
+
+
+//----------------------------------------------------- operator== -------------
+bool AMOS::operator== (Range_t a, Range_t b)
+{
+  return ( a . begin == b . begin  &&  a . end == b . end );
 }

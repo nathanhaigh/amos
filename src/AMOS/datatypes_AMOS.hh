@@ -92,9 +92,6 @@ struct Distribution_t
 struct Range_t
 {
 
-  friend inline Range_t operator& (Range_t a, Range_t b);
-  friend inline Range_t operator| (Range_t a, Range_t b);
-
   Pos_t begin;              //!< The begin of the range
   Pos_t end;                //!< The end of the range
 
@@ -298,6 +295,18 @@ Range_t operator& (Range_t a, Range_t b);
 //! \return The union of Range A and B or [0,0) if no overlap
 //!
 Range_t operator| (Range_t a, Range_t b);
+
+
+//----------------------------------------------------- operator== -------------
+//! \brief An equality operator for Ranges
+//!
+//! Returns true if the two ranges have equal begin and end values.
+//!
+//! \param a Range A
+//! \param b Range B
+//! \return true if a.begin == b.begin && a.end == b.end, else false
+//!
+bool operator== (Range_t a, Range_t b);
 
 
 //--TEMPORARY
