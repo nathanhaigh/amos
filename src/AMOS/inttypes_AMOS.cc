@@ -36,7 +36,7 @@ NCode_t AMOS::Encode (const string & str)
 {
   NCode_t ret = 0;
   if ( str . size( ) != NCODE )
-    AMOS_THROW_ARGUMENT ("invalid NCode string length");
+    AMOS_THROW_ARGUMENT ("Invalid NCode string length");
 
   for ( int i = NCODE - 1; i >= 0; i -- )
     {

@@ -24,17 +24,21 @@ typedef int32_t   Pos_t;    //!< position type (in a sequence,etc)
 
 namespace AMOS {
 
-//----------------------------------------------------- NCode ------------------
+//----------------------------------------------------- Decode -----------------
 //! \brief Converts an NCode integer to an AMOS message/field type
 //!
+//! \param ncode The NCode to translate to a string
 //! \return String representation of the NCode
 //!
 std::string Decode (NCode_t ncode);
 
 
-//----------------------------------------------------- NCode ------------------
+//----------------------------------------------------- Encode -----------------
 //! \brief Converts an AMOS message/field type to an NCode integer
 //!
+//! \param str The NCode string equivalent
+//! \pre str is of proper NCode length, i.e. str . size( ) == 3
+//! \throws ArgumentException_t
 //! \return NCode of the string, or NULL_NCODE if invalid string length
 //!
 NCode_t Encode (const std::string & str);
