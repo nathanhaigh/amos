@@ -61,6 +61,7 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
   ReadInfo * readinfo = new ReadInfo(m_currentReads[dcov], 
                                      m_db, 
                                      m_consensus,
+                                     m_cstatus,
                                      this, 
                                      "readinfo");
   readinfo->show();

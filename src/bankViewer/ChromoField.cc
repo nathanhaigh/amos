@@ -15,6 +15,7 @@
 ChromoField::ChromoField(RenderSeq_t * read, 
                          const string & db, 
                          const string & cons,
+                         const string & cstatus,
                          QWidget *parent, 
                          const char *name)
   :QWidget(parent, name)
@@ -37,8 +38,9 @@ ChromoField::ChromoField(RenderSeq_t * read,
   {
     return;
   }
+  int hscale = 2;
 
-  resize (m_rawread->NPoints+100,160);
+  resize (hscale*m_rawread->NPoints+100,210);
 
   vector<int> pos;
 
@@ -73,7 +75,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
     }
   }
 
-  cerr << "loaded " << pos.size() << "positions, i=" << i << endl;
+  cerr << "loaded " << pos.size() << "positions" << i << endl;
 
   m_pix = new QPixmap(width(), height());
   m_pix->fill(this, 0, 0);
@@ -88,9 +90,28 @@ ChromoField::ChromoField(RenderSeq_t * read,
   int tickwidth = 5;
   int maxy = 2000;
 
+  int diam          = 5;
+  int fontsize      = 8;
+  int gutter        = fontsize/2;
+  int lineheight    = fontsize+gutter;
+
+  int sposoffset    = baseline+30;
+  int slineoffset   = sposoffset+lineheight+5;
+  int seqoffset     = slineoffset+5;
+  int consoffset    = seqoffset+lineheight;
+  int discoffset    = consoffset+lineheight;
+  int clineoffset   = discoffset+lineheight;
+  int consposoffset = clineoffset+4;
+
+  int curpos = 0;
+  int startgindex = -1;
+  int endgindex = -1;
+
   // axis
-  painter.drawLine(offset,baseline,m_rawread->NPoints+offset,baseline);
-  painter.drawLine(offset,baseline,offset,baseline-(maxy/vscale));
+  painter.drawLine(offset, baseline, hscale*m_rawread->NPoints+offset, baseline);
+  painter.drawLine(offset, baseline, offset, baseline-(maxy/vscale));
+
+  painter.drawLine(offset, slineoffset, hscale*m_rawread->NPoints+offset, slineoffset);
 
   // y-ticks
   for (i = 0; i < maxy; i+=100)
@@ -102,10 +123,10 @@ ChromoField::ChromoField(RenderSeq_t * read,
   // x-ticks
   for (i = 0; i < m_rawread->NPoints; i+=10)
   {
-    painter.drawLine(i+offset,baseline,i+offset,baseline-tickwidth);
+    painter.drawLine(hscale*i+offset,baseline,hscale*i+offset,baseline-tickwidth);
     if (!(i % 50))
     {
-      painter.drawLine(i+offset, baseline+tickwidth, i+offset, baseline);
+      painter.drawLine(hscale*i+offset, baseline+tickwidth, hscale*i+offset, baseline);
     }
   }
 
@@ -114,9 +135,10 @@ ChromoField::ChromoField(RenderSeq_t * read,
   for (i=0; i < m_rawread->NPoints; i += 50)
   {
     QString s = QString::number(i);
-    painter.drawText(i-20+offset,baseline+10,40,20,Qt::AlignHCenter,s);
+    painter.drawText(hscale*i-20+offset,baseline+10,40,20,Qt::AlignHCenter,s);
   }
-  painter.setFont(QFont("Helvetica", 12));
+
+  painter.setFont(QFont("Helvetica", 8));
 
   for (int channel = 0; channel < 4; channel++)
   {
@@ -136,38 +158,111 @@ ChromoField::ChromoField(RenderSeq_t * read,
     {
       if (trace[i])
       {
-        painter.lineTo(i+offset,baseline-(trace[i])/vscale);
+        painter.lineTo(hscale*i+offset,baseline-(trace[i])/vscale);
       }
       else
       {
-        painter.moveTo(i+offset,baseline);
+        painter.moveTo(hscale*i+offset,baseline);
       }
     }
   }
 
   string bases = read->m_read.getSeqString();
 
+  int rangebegin = read->m_tile->range.begin;
+
+  if (read->m_rc)
+  {
+    rangebegin = bases.length() - read->m_tile->range.begin;
+    reverse(bases.begin(), bases.end());
+    reverse(pos.begin(), pos.end());
+  }
+
+  // Insert gaps
+  Pos_t gapcount;
+  vector<Pos_t>::const_iterator g;
+  for (g =  read->m_tile->gaps.begin(), gapcount = 0; 
+       g != read->m_tile->gaps.end(); 
+       g++, gapcount++)
+  {
+    bases.insert(*g+gapcount+rangebegin, 1, '-');
+
+    int left  = pos[*g+gapcount+rangebegin-1];
+    int right = pos[*g+gapcount+rangebegin];
+    pos.insert(pos.begin()+*g+gapcount+rangebegin, 1, (left+right)/2);
+  }
+
+  if (read->m_rc)
+  {
+    reverse(bases.begin(), bases.end());
+    reverse(pos.begin(), pos.end());
+  }
+
   for (i = 0; i < pos.size(); i++)
   {
     char b = bases[i];
-    UIElements::setBasePen(pen, b);
-    painter.setPen(pen);
+    painter.setPen(UIElements::getBaseColor(b));
+
+    int coordinate = curpos;
+    curpos++;
+    //if (b == '-') { coordinate--; }
+    //else          { curpos++; }
 
     QString s;
-    s+= b;
-    painter.drawText(pos[i]-20+offset,baseline+25,40,20,Qt::AlignHCenter,s);
+    s = b;
 
-    pen.setColor(black);
-    painter.setPen(pen);
+    painter.drawText(hscale*pos[i]-20+offset, seqoffset,
+                     40, 20, Qt::AlignHCenter,s);
+
+    if (b != '-' && (coordinate % 5 == 0))
+    {
+      painter.setPen(black);
+      painter.drawText(hscale*pos[i]-20+offset, sposoffset,
+                       40, 20, Qt::AlignHCenter,QString::number(coordinate));
+      painter.drawLine(hscale*pos[i]+offset, slineoffset-2,
+                       hscale*pos[i]+offset, slineoffset+2);
+    }
 
     int gindex = read->getGindex(i);
     if (gindex >= read->m_offset && gindex < read->m_offset + read->m_nucs.size())
     {
-      s = "";
-      s += cons[gindex];
-      painter.drawText(pos[i]-20+offset,baseline+40,40,20,Qt::AlignHCenter,s);
+      char c = cons[gindex];
+      if (read->m_rc)
+      {
+        c = Complement(c);
+      }
+
+      s=c;
+      painter.setPen(UIElements::getBaseColor(c));
+
+      if (startgindex == -1) { startgindex = hscale*pos[i]+offset-fontsize; }
+      else                   { endgindex   = hscale*pos[i]+offset+fontsize; }
+
+      painter.drawText(hscale*pos[i]-20+offset, consoffset,
+                       40, 20, Qt::AlignHCenter,s);
+
+      if (cstatus[gindex] == 'X')
+      {
+        painter.setBrush(Qt::SolidPattern);
+        painter.setPen(Qt::black);
+        painter.setBrush(Qt::black);
+        painter.drawEllipse(hscale*pos[i]+offset-diam/2-1, discoffset,
+                            diam, diam);
+      }
+
+      if (gindex % 5 == 0)
+      {
+        painter.setPen(black);
+        painter.drawText(hscale*pos[i]-20+offset, consposoffset,
+                         40, 20, Qt::AlignHCenter,QString::number(gindex));
+        painter.drawLine(hscale*pos[i]+offset, clineoffset-2,
+                         hscale*pos[i]+offset, clineoffset+2);
+      }
     }
   }
+
+  painter.setPen(black);
+  painter.drawLine(startgindex, clineoffset, endgindex, clineoffset);
 
   painter.end();
 }

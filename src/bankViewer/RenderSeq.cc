@@ -21,29 +21,22 @@ char RenderSeq_t::base(Pos_t gindex) const
   }
 }
 
-Pos_t RenderSeq_t::getGindex(Pos_t seqpos) const
+Pos_t RenderSeq_t::getGindex(Pos_t gseqpos) const
 {
   Pos_t gindex = 0;
+  int seqoffset;
 
   if (m_rc)
   {
-
+    seqoffset = gseqpos - m_tile->range.end;
+    gindex = m_offset+m_nucs.size()-1-seqoffset;  // -1 -> size based
   }
   else
   {
-    //convert to gapped sequence position
-    int gapcount;
-    vector<Pos_t>::const_iterator g;
-    for (g =  m_tile->gaps.begin(), gapcount = 0;
-         g != m_tile->gaps.end(); 
-         g++, gapcount++)
-    {
-      if (*g+gapcount+m_tile->range.begin < seqpos) { seqpos++; }
-    }
-
-    int seqoffset = seqpos - m_tile->range.begin;
+    seqoffset = gseqpos - m_tile->range.begin;
     gindex = m_offset + seqoffset;
   }
+
 
   return gindex;
 }
