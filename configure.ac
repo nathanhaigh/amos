@@ -82,8 +82,6 @@ AC_CHECK_FUNCS(
    [ \
    dup2 \
    floor \
-   gettimeofday \
-   gmtime \
    localtime \
    lstat \
    memmove \
@@ -91,7 +89,6 @@ AC_CHECK_FUNCS(
    mkdir \
    pow \
    rmdir \
-   select \
    sqrt \
    stat \
    strchr \
