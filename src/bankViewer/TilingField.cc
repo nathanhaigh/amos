@@ -21,7 +21,9 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
           m_consensus(consensus),
           m_renderedSeqs(renderedSeqs)
 {
-  setMinimumSize(500, 100);
+  m_width=500;
+  m_height=100;
+  setMinimumSize(m_width, m_height);
   setPalette( QPalette( QColor( 200, 200, 200) ) );
 }
 
@@ -42,9 +44,14 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
   readinfo->show();
 }
 
+
 int imin (int a, int b)
 {
   return a < b ? a : b;
+}
+int imax (int a, int b)
+{
+  return a > b ? a : b;
 }
 
 void TilingField::paintEvent( QPaintEvent * )
@@ -52,10 +59,9 @@ void TilingField::paintEvent( QPaintEvent * )
   //cerr << "paintTF" << endl;
   if (m_renderedSeqs.empty()) { return; }
 
-  int height = 1000;
+  int height = 10000;
 
-  int width = this->width();
-  QPixmap pix(width, height);
+  QPixmap pix(m_width, height);
   pix.fill(this, 0,0);
 
   QPainter p( &pix );
@@ -68,9 +74,9 @@ void TilingField::paintEvent( QPaintEvent * )
   int seqnamehoffset = 10;
   int rchoffset = m_fontsize*8;
 
-  int displaywidth = (width-tilehoffset)/m_fontsize;
+  int displaywidth = (m_width-tilehoffset)/m_fontsize;
 
-  p.setFont(QFont("Courier", m_fontsize));
+  p.setFont(QFont("Helvetica", m_fontsize));
 
   Pos_t grangeStart = m_gindex;
   Pos_t grangeEnd = imin(m_gindex + displaywidth, m_consensus.size()-1);
@@ -101,15 +107,15 @@ void TilingField::paintEvent( QPaintEvent * )
       QPointArray a(3);
       if (ri->m_rc)
       {
-        a[0]=QPoint(rchoffset+5,lineheight*dcov-1);
-        a[1]=QPoint(rchoffset+5,lineheight*dcov-7);
-        a[2]=QPoint(rchoffset,lineheight*dcov-4);
+        a[0]=QPoint(rchoffset+5,lineheight*dcov-2);
+        a[1]=QPoint(rchoffset+5,lineheight*dcov-8);
+        a[2]=QPoint(rchoffset,lineheight*dcov-5);
       }
       else
       {
-        a[0]=QPoint(rchoffset,lineheight*dcov-1);
-        a[1]=QPoint(rchoffset,lineheight*dcov-7);
-        a[2]=QPoint(rchoffset+5,lineheight*dcov-4);
+        a[0]=QPoint(rchoffset,lineheight*dcov-2);
+        a[1]=QPoint(rchoffset,lineheight*dcov-8);
+        a[2]=QPoint(rchoffset+5,lineheight*dcov-5);
       }
 
       p.drawPolygon(a);
@@ -146,13 +152,19 @@ void TilingField::paintEvent( QPaintEvent * )
 
   p.end();
   p.begin(this);
-  pix.resize(width, height);
+  pix.resize(m_width, height);
   p.drawPixmap(0, 0, pix);
-  resize(width, height);
+  resize(m_width, imax(height, m_height));
 }
 
 
 QSizePolicy TilingField::sizePolicy() const
 {
     return QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+}
+
+void TilingField::setSize(int width, int height)
+{
+  m_width = width;
+  m_height = height;
 }

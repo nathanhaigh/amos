@@ -11,22 +11,25 @@ int jmin (int a, int b)
 
 ConsensusField::ConsensusField(string & cons,
                                int & gindex,
-                               int & fontsize,
                                QWidget * parent,
                                const char * name)
-   :QWidget(parent, name),
+   :QFrame(parent, name),
     m_consensus(cons),
-    m_gindex(gindex),
-    m_fontsize(fontsize)
+    m_gindex(gindex)
 {
-  setMinimumHeight(4*m_fontsize);
-  setPalette( QPalette( QColor( 200, 200, 200) ) );
+  setFontSize(12);
+  setPalette(QPalette(QColor(180, 180, 180)));
+}
+
+void ConsensusField::setFontSize(int fontsize)
+{
+  setMinimumHeight(fontsize*2+12); // 2 lineheight + 2
+  m_fontsize=fontsize;
 }
 
 void ConsensusField::paintEvent(QPaintEvent * event)
 {
-  //cerr << "paintCons" << endl;
-  if (m_consensus.empty()) { return; }
+  if (m_consensus.empty()) { cerr << "nocons" << endl; return; }
 
   QPixmap pix(width(), height());
   pix.fill(this, 0,0);
@@ -37,15 +40,25 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   p.setPen(pen);
 
   int lineheight  = m_fontsize+5;
-  int tilehoffset = m_fontsize*10;
+  int tilehoffset = m_fontsize*10+2;
+  int seqnamehoffset = 10+2;
 
   int width = this->width();
   int displaywidth = (width-tilehoffset)/m_fontsize;
 
-  p.setFont(QFont("Courier", m_fontsize));
+  p.setFont(QFont("Helvetica", m_fontsize));
 
   int grangeStart = m_gindex;
   int grangeEnd = jmin(m_gindex + displaywidth, m_consensus.size()-1);
+
+
+  QString cname = "Consensus";
+  QString pname = "Position";
+
+  p.drawText(seqnamehoffset, lineheight, pname);
+  p.drawText(seqnamehoffset, lineheight*2, cname);
+
+//  cerr << "paintCons [" << grangeStart << "," << grangeEnd << "]" << endl;
 
   QString pos;
   QString cons;
@@ -67,7 +80,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     QString s;
     s+= b;
     p.drawText(tilehoffset + (j-grangeStart)*m_fontsize, lineheight*2, s);
-    
+
     // Numbers
     s = QString::number(j%10);
     pen.setColor(black);

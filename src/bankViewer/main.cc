@@ -5,27 +5,31 @@ int main( int argc, char **argv )
 {
   QApplication a( argc, argv );
 
-  string bankname;
-  int contigid = 1;
+  if (argc > 4)
+  {
+    cerr << "Usage: bankViewer [bankname [contigid]]" << endl;
+    exit (1);
+  }
+
+  MainWindow w(NULL, "mainwindow");
+  w.setGeometry( 100, 100, 700, 355 );
+  a.setMainWidget( &w );
+  w.show();
 
   if (argc > 1)
   {
-    bankname = argv[1];
+    string bankname = argv[1];
+    w.setBankname(bankname);
     if (argc > 2)
     {
-      contigid = atoi(argv[2]);
+      w.setContigId(atoi(argv[2]));
 
       if (argc > 3)
       {
-        cerr << "Usage: bankViewer [bankname [contigid]]" << endl;
-        exit (1);
+        w.setGindex(atoi(argv[3]));
       }
     }
   }
 
-  MainWindow w(bankname, contigid, NULL, "mainwindow");
-  w.setGeometry( 100, 100, 700, 355 );
-  a.setMainWidget( &w );
-  w.show();
   return a.exec();
 }

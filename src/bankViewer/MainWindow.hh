@@ -10,8 +10,11 @@ class MainWindow: public QWidget
 {
   Q_OBJECT
 public:
-    MainWindow( string bankname, int contigID,
-        QWidget *parent=0, const char *name=0 );
+    MainWindow(QWidget *parent=0, const char *name=0 );
+
+    void setBankname(string bankname);
+    void setContigId(int contigID);
+    void setGindex(int gindex);
 
 public slots:
   void openBank();
@@ -20,13 +23,13 @@ public slots:
 
 signals:
   void bankSelected(string bankname);
+  void contigIdSelected(int contigId);
+  void gindexChanged(int gindex);
 
 private:
   QSpinBox * m_contigid;
   QSpinBox * m_gindex;
   QSlider * m_slider;
-
-
 };
 
 #endif

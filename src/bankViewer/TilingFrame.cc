@@ -14,9 +14,9 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
    read_bank(Read_t::NCODE),
    contig_bank(Contig_t::NCODE)
 {
+  m_gindex = 0;
   m_fontsize = 12;
   resize(500, 500);
-  setFrameShadow(QFrame::Raised);
   m_db = "DMG";
   m_sv = new QScrollView(this, "tilingscroll");
   m_sv->setHScrollBarMode(QScrollView::AlwaysOff);
@@ -31,23 +31,28 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
                                   "tiling" );
 
   m_sv->addChild(m_tilingfield);
-  m_consfield = new ConsensusField(m_consensus, m_gindex, m_fontsize,
-                                   this, "cons");
+  m_consfield = new ConsensusField(m_consensus, m_gindex, this, "cons");
+  m_consfield->setFrameStyle(m_sv->frameStyle());
+  m_consfield->setLineWidth(m_sv->lineWidth());
+  m_consfield->setMidLineWidth(m_sv->midLineWidth());
+  m_consfield->setBackgroundMode(m_sv->backgroundMode());
 
   QGridLayout * layout = new QGridLayout(this, 2, 1);
   layout->addWidget(m_consfield, 0,0);
   layout->addWidget(m_sv,1,0);
   layout->setRowStretch(1,10);
+
+  connect(this,        SIGNAL(fontSizeChanged(int)),
+          m_consfield, SLOT(setFontSize(int)));
 }
 
 void TilingFrame::paintEvent(QPaintEvent * event)
 {
+  QFrame::paintEvent(event);
   m_consfield->repaint();
 
-  m_tilingfield->setWidth(m_sv->visibleWidth());
+  m_tilingfield->setSize(m_sv->visibleWidth(), m_sv->visibleHeight());
   m_tilingfield->repaint();
-
-  QFrame::paintEvent(event);
 }
 
 void TilingFrame::setContigId(int contigId)
@@ -98,7 +103,6 @@ void TilingFrame::setContigId(int contigId)
       s += QString::number(m_tiling.size());
 
       emit setStatus(s);
-
       repaint();
     }
     catch (Exception_t & e)
@@ -119,14 +123,6 @@ void TilingFrame::setBankname(string bankname)
       contig_bank.open(m_bankname);
       emit contigRange(1, contig_bank.getSize());
 
-      QString s = "Viewing ";
-      s += m_bankname.c_str();
-      s += " with ";
-      s += QString::number(contig_bank.getSize());
-      s += " contigs";
-
-      emit setStatus(s);
-
       setContigId(1);
     }
     catch (Exception_t & e)
@@ -145,7 +141,7 @@ void TilingFrame::setFontSize(int fontsize )
   m_displaywidth = width/m_fontsize;
 
   repaint();
-  emit setFontSize(m_fontsize);
+  emit fontSizeChanged(m_fontsize);
 }
 
 void TilingFrame::setGindex( int gindex )

@@ -18,7 +18,7 @@ public:
 
     QSizePolicy sizePolicy() const;
     void mouseDoubleClickEvent(QMouseEvent * event);
-    void setWidth(int width) { resize(width, height()); }
+    void setSize(int width, int height);
 
 protected:
     void paintEvent( QPaintEvent * );
@@ -26,6 +26,9 @@ protected:
 private:
     int & m_fontsize;
     int & m_gindex;
+    
+    int m_height;
+    int m_width;
 
     string & m_db;
     string & m_consensus;

@@ -14,8 +14,7 @@
 #include <qlineedit.h>
 #include "TilingFrame.hh"
 
-MainWindow::MainWindow(string bankname, int contigID,
-                       QWidget *parent, const char *name )
+MainWindow::MainWindow( QWidget *parent, const char *name )
            : QWidget( parent, name )
 {
   // Menubar
@@ -65,9 +64,9 @@ MainWindow::MainWindow(string bankname, int contigID,
 
   // contigid <-> tiling
   connect(m_contigid, SIGNAL(valueChanged(int)),
-          tiling,   SLOT(setContigId(int)));
+          tiling,     SLOT(setContigId(int)));
 
-  connect(tiling,   SIGNAL(contigLoaded(int)),
+  connect(tiling,     SIGNAL(contigLoaded(int)),
           m_contigid, SLOT(setValue(int)));
 
   // mainwindow <-> tiling
@@ -79,6 +78,12 @@ MainWindow::MainWindow(string bankname, int contigID,
 
   connect(tiling, SIGNAL(setGindexRange(int, int)),
           this,   SLOT(setGindexRange(int, int)));
+
+  connect(this, SIGNAL(contigIdSelected(int)),
+          tiling, SLOT(setContigId(int)));
+
+  connect(this, SIGNAL(gindexChanged(int)),
+          tiling, SLOT(setGindex(int)));
 
   // statusbar <-> tiling
   connect(tiling,    SIGNAL(setStatus(const QString &)),
@@ -133,11 +138,23 @@ MainWindow::MainWindow(string bankname, int contigID,
 
   // Set defaults
   fontsize->setValue(12);
-  tiling->setBankname(bankname);
-  tiling->setContigId(contigID);
-
   m_gindex->setValue(0);
   m_slider->setFocus();
+}
+
+void MainWindow::setBankname(string bankname)
+{
+  emit bankSelected(bankname);
+}
+
+void MainWindow::setGindex(int gindex)
+{
+  emit gindexChanged(gindex);
+}
+
+void MainWindow::setContigId(int contigId)
+{
+  emit contigIdSelected(contigId);
 }
 
 void MainWindow::openBank()

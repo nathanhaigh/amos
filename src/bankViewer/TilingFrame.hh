@@ -31,6 +31,7 @@ signals:
     void contigRange(int, int);
     void contigLoaded(int);
     void setStatus(const QString &);
+    void fontSizeChanged(int);
 
 protected:
     void paintEvent(QPaintEvent *);

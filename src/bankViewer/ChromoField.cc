@@ -103,13 +103,13 @@ ChromoField::ChromoField(RenderSeq_t * read,
   }
 
   // x-labels
-  painter.setFont(QFont("Courier", 8));
+  painter.setFont(QFont("Helvetica", 8));
   for (i=0; i < m_rawread->NPoints; i += 50)
   {
     QString s = QString::number(i);
     painter.drawText(i-20+offset,baseline+10,40,20,Qt::AlignHCenter,s);
   }
-  painter.setFont(QFont("Courier", 12));
+  painter.setFont(QFont("Helvetica", 12));
 
   for (int channel = 0; channel < 4; channel++)
   {
