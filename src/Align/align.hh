@@ -225,6 +225,8 @@ class  Base_Alignment_t
      }
    void  Dump
        (FILE * fp)  const;
+   double  Error_Rate
+       (void)  const;
    void  Flip_AB
        (void);
   };
@@ -378,7 +380,7 @@ class  Multi_Alignment_t
        (char * s);
    void  Set_Initial_Consensus
        (const vector <char *> & s, const vector <int> & offset,
-        int offset_delta, double error_rate,
+        int offset_delta, double error_rate, int min_overlap,
         vector <Vote_t> & vote, vector <char *> * tag_list = NULL);
   };
 
@@ -581,8 +583,9 @@ int  Match_Count
     (const vector <int> & a, const vector <int> & b);
 void  Multi_Align
     (const string & id, vector <char *> & s, vector <int> & offset,
-     int offset_delta, double error_rate, Gapped_Multi_Alignment_t & ma,
-     vector <int> * ref = NULL, vector <char *> * tag_list = NULL);
+     int offset_delta, double error_rate, int min_overlap,
+     Gapped_Multi_Alignment_t & ma, vector <int> * ref = NULL,
+     vector <char *> * tag_list = NULL);
 void  Overlap_Align
     (const char * s, int s_len, const char * t, int t_lo, int t_hi,
      int t_len, int match_score, int mismatch_score, int indel_score,
