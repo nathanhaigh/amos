@@ -1,6 +1,4 @@
-# NOTE: we can use automake conditionals if we want to build only
-# specific directories etc. e.g. if someone only wants to build
-# AMOScmp and nothing else.
+##-- AMOS CONFIGURE --##
 
 # initialize
 AC_PREREQ(2.59)
