@@ -18,7 +18,7 @@ INPUTS = $(PREFIX).asm $(PREFIX).frg
 50: /usr/local/bin/getCoverage -t --gapped -R -a all -M $(PREFIX).contig
 
 ## findTcovSnps
-60: /local/asmg/Linux/bin/findTcovSnp.pl -H $(PREFIX) > $(PREFIX).snps
+60: /local/asmg/Linux/bin/findTcovSnp.pl -noH $(PREFIX) > $(PREFIX).snps
 
 ## ClusterSnps
 70: /local/asmg/Linux/bin/clusterSnps.pl $(PREFIX).snps > $(PREFIX).snp.feat

@@ -81,3 +81,5 @@ while (<>)
 }
 
 printResults();
+
+exit 0;
