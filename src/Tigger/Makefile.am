@@ -2,42 +2,19 @@
 include $(top_srcdir)/config/amos.mk
 
 
-##-- SUBDIRS TO RECURSE
-SUBDIRS =
-
-
-##-- EXTRA FILES TO BE INCLUDED IN DISTRIBUTION
-EXTRA_DIST =
-
-
 ##-- TO BE INSTALLED
-bin_PROGRAMS =
-dist_bin_SCRIPTS =
-dist_amoslib_SCRIPTS =
-dist_tigrlib_SCRIPTS =
-amoslib_LIBRARIES =
-tigrlib_LIBRARIES =
-amosinclude_HEADERS =
-tigrinclude_HEADERS =
-dist_doc_DATA =
-
+bin_PROGRAMS = tigger
 
 ##-- TO BE TESTED
-check_PROGRAMS =
 check_SCRIPTS =
 
 
 ##-- GLOBAL INCLUDE
-AM_CPPFLAGS =
+AM_CPPFLAGS = -I$(top_srcdir)/src/AMOS -I$(top_srcdir)/src/Graph
 
 
-##-- myprog
-myprog_LDADD =
-myprog_SOURCES =
-
-
-##-- libMy.a
-libMy_a_SOURCES =
-
+##-- tigger
+tigger_LDADD = $(top_builddir)/src/AMOS/libGraph.a $(top_builddir)/src/AMOS/libAMOS.a 
+tigger_SOURCES = Unitigger.cc Unitigger.hh Read.hh Overlap.hh
 
 ##-- END OF MAKEFILE --##
