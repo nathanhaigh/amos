@@ -6,11 +6,12 @@ TGT = $(PREFIX).afg
 
 BINDIR  = /usr/local/bin
 
-BANK    = $(PREFIX).bnk
-CONTIG  = $(PREFIX).ctg.afg
+BANK    = $(PREFIX).bank
+CONTIG  = $(PREFIX).contig
+FASTA   = $(PREFIX).fasta
 
 INPUTS  = $(TGT)
-OUTPUTS = $(CONTIG)
+OUTPUTS = $(CONTIG) $(FASTA)
 
 
 ## Building AMOS bank
@@ -26,4 +27,7 @@ OUTPUTS = $(CONTIG)
 40: $(BINDIR)/make-consensus -B -b $(BANK)
 
 ## Outputting contigs
-50: $(BINDIR)/bank-report -b $(BANK) CTG > $(CONTIG)
+50: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
+
+## Converting to FastA file
+60: $(BINDIR)/ctg2fasta < $(CONTIG) > $(FASTA)
