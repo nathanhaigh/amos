@@ -38,13 +38,13 @@ namespace Bank_k {
   const Size_t DEFAULT_PARTITION_SIZE = 100000;
   //!< Default number of records per partition
 
-  const uint8_t MAX_OPEN_PARTITIONS = 100;
+  const uint8_t MAX_OPEN_PARTITIONS = 25;
   //!< Allowable simultaneously open partitions
 
   const Size_t BUFFER_SIZE = 1024;
   //!< IO buffer size
 
-  const std::string BANK_VERSION ("1.03");
+  const std::string BANK_VERSION ("1.04");
   //!< Current Bank version, may not be able to read from other versions
 
   const std::string FIX_STORE_SUFFIX (".fix");
