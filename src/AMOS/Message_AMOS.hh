@@ -118,9 +118,9 @@ public:
   //!
   const std::string & getField (const std::string & fname)
   {
-    map<string,string>::iterator mi = fields_m . find (fname);
+    std::map<std::string,std::string>::iterator mi = fields_m . find (fname);
     if ( mi == fields_m . end( ) )
-      AMOS_THROW_ARGUMENT ((string)"field name does not exist: " + fname);
+      AMOS_THROW_ARGUMENT ("field name does not exist: " + fname);
 
     return mi -> second;
   }
