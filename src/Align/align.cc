@@ -1382,22 +1382,37 @@ void  Gapped_Multi_Alignment_t :: Add_Aligned_Seqs
    bool  use_tgs = (tg1 != NULL && tg2 != NULL);
    int  i, n;
 
-printf ("ali:\n");
-ali . Dump (stdout);
+   if  (Verbose > 2)
+       {
+        printf ("ali:\n");
+        ali . Dump (stdout);
+       }
    n = m . align . size ();
    for  (i = 0;  i < n;  i ++)
      if  (Range_Intersect (cons_lo, cons_hi, m . align [i] . b_lo,
                m . align [i] . b_hi))
          {
-printf ("m . align [%d]:\n", i);
-m . align [i] . Dump (stdout);
+          if  (Verbose > 2)
+              {
+               printf ("m . align [%d]:\n", i);
+               m . align [i] . Dump (stdout);
+              }
+
           m . align [i] . Make_Sub_Alignment (sub_ali, cons_lo, cons_hi);
-printf ("First sub_ali:\n");
-sub_ali . Dump (stdout);
+
+          if  (Verbose > 2)
+              {
+               printf ("First sub_ali:\n");
+               sub_ali . Dump (stdout);
+              }
 
           sub_ali . Pass_Through (ali);
-printf ("sub_ali after Pass_Through:\n");
-sub_ali . Dump (stdout);
+
+          if  (Verbose > 2)
+              {
+               printf ("sub_ali after Pass_Through:\n");
+               sub_ali . Dump (stdout);
+              }
 
           align . push_back (sub_ali);
           sl1 . push_back (strdup (sl2 [i]));
@@ -1701,6 +1716,39 @@ void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
         del [j] += ga . b_lo + j;
       ga . setSkip (del);
       align . push_back (ga);
+     }
+
+   // Only extract alignment for surrogate (i.e., stone) unitigs
+   n = ups_list . size ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      int  j, k, x, y;
+
+      if  (ups_list [i] . getUnitigType () == STONE_UNI_T)
+          {
+           ga . a_lo = 0;
+           ga . a_hi = slen [i];
+           position = ups_list [i] . getPosition ();
+           x = position . getStart ();
+           y = position . getEnd ();
+           if  (x < y)
+               {
+                ga . b_lo = x;
+                ga . b_hi = y;
+               }
+             else
+               {
+                ga . b_lo = y;
+                ga . b_hi = x;
+               }
+           ga . errors = 0;    // Temporary--needs to be set correctly later
+           del = ups_list [i] . getDel ();
+           k = del . size ();
+           for  (j = 0;  j < k;  j ++)
+             del [j] += ga . b_lo + j;
+           ga . setSkip (del);
+           align . push_back (ga);
+          }
      }
 
    return;
@@ -2396,7 +2444,8 @@ printf ("L = %d:%u  D = %d:%u  T = %d:%u\n", entry . left_score, entry . left_fr
          case  FROM_LEFT :
            if  (sign != 0)
                {
-                printf ("del = %d\n", sign * ct);
+                if  (Verbose > 2)
+                    printf ("del = %d\n", sign * ct);
                 delta . push_back (sign * ct);
                }
            ct = 1;
@@ -2413,7 +2462,8 @@ printf ("L = %d:%u  D = %d:%u  T = %d:%u\n", entry . left_score, entry . left_fr
          case  FROM_TOP :
            if  (sign != 0)
                {
-                printf ("del = %d\n", sign * ct);
+                if  (Verbose > 2)
+                    printf ("del = %d\n", sign * ct);
                 delta . push_back (sign * ct);
                }
            ct = 1;

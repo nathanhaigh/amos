@@ -84,6 +84,8 @@ static bool  Range_Precedes
 
 static void  Copy
     (vector <char *> & S, const vector <char *> & T);
+static int  Find_Unitig
+    (int uid, const vector <Unitig_Ref_t> & uni_list);
 static void  Get_Strings_And_Lengths
     (vector <char *> & s, vector <char *> & q, vector <int> & str_len,
      vector <char *> & tag, const Celera_Message_t & msg,
@@ -175,12 +177,9 @@ int  main
    read_bank . closeStore ();
 
    cout << endl << endl << "Contig #1" << endl;
-   gma1 . Print (stdout, sl1, true, 60);
+   gma1 . Print (stdout, sl1, true, 60, & tg1);
 
-   gma2 . Reverse_Complement (sl2);
-   cout << endl << endl << "Contig #2 after reverse" << endl;
-   gma2 . Print (stdout, sl2, true, 60);
-
+if  (0)
 {
  int  i, n;
 
@@ -193,9 +192,16 @@ int  main
    tg2 [i] [0] = 'b';
 }
 
+#if  0
    cons_len = gma2 . Ungapped_Consensus_Len ();
+
 //   gma1 . Partial_Merge (gma2, cons_len - 3731, cons_len - 2452, 1322, 2638,
 //        sl1, sl2, & tg1, & tg2);
+
+   gma2 . Reverse_Complement (sl2);
+   cout << endl << endl << "Contig #2 after reverse" << endl;
+   gma2 . Print (stdout, sl2, true, 60);
+
    gma1 . Partial_Merge (gma2, cons_len - 3731, cons_len - 2566, 1322, 2487,
         sl1, sl2, & tg1, & tg2);
    gma1 . Partial_Merge (gma2, cons_len - 2474, cons_len - 236, 3080, 5324,
@@ -203,7 +209,7 @@ int  main
 
    cout << endl << endl << "Contig #1 after merge" << endl;
    gma1 . Print (stdout, sl1, true, 60, & tg1);
-
+#endif
 
 #if  0
    {
@@ -244,6 +250,35 @@ static void  Copy
 
 
 
+static int  Find_Unitig
+    (int uid, const vector <Unitig_Ref_t> & uni_list)
+
+//  Search for the entry in  uni_list  whose  uid  field matches
+//   uid  and return the subscript of that entry.  Return  -1
+//  if none is found.   uni_list  is assumed to be in sorted order by
+//   uid  so a binary search is done.
+
+  {
+   int  lo, hi, mid;
+
+   lo = 0;
+   hi = uni_list . size () - 1;
+   while  (lo <= hi)
+     {
+      mid = (lo + hi) / 2;
+      if  (uid == uni_list [mid] . uid)
+          return  mid;
+      else if  (uid < uni_list [mid] . uid)
+          hi = mid - 1;
+        else
+          lo = mid + 1;
+     }
+
+   return  -1;
+  }
+
+
+
 static void  Get_Strings_And_Lengths
     (vector <char *> & s, vector <char *> & q, vector <int> & str_len,
      vector <char *> & tag, const Celera_Message_t & msg,
@@ -264,7 +299,10 @@ static void  Get_Strings_And_Lengths
    vector <int>  id_list;
    Read_t  read;
    Ordered_Range_t  position;
-   int  i, j, n;
+   char  tag_buff [MAX_LINE];
+   char  * tmp;
+   int  len;
+   int  a, b, i, j, n;
 
    n = s . size ();
    for  (i = 0;  i < n;  i ++)
@@ -286,14 +324,11 @@ static void  Get_Strings_And_Lengths
    n = msg . getNumFrags ();
    for  (i = 0;  i < n;  i ++)
      {
-      char  * tmp;
-      char  tag_buff [100];
       string  seq;
       string  qual;
       Range_t  clear;
       int  iid, uid;
-      int  len, qlen;
-      int  a, b;
+      int  qlen;
 
       position = frgs [i] . getPosition ();
       a = position . getStart ();
@@ -329,7 +364,9 @@ static void  Get_Strings_And_Lengths
           }
       tmp = strdup (qual . c_str ());
       q . push_back (tmp);
+
       str_len . push_back (len);
+
       sprintf (tag_buff, "r%d", uid);
       tag . push_back (strdup (tag_buff));
      }
@@ -341,9 +378,43 @@ static void  Get_Strings_And_Lengths
       Celera_Unitig_Type_t  u_type;
       int  uid;
 
+      position = unis [i] . getPosition ();
+      a = position . getStart ();
+      b = position . getEnd ();
+      
       uid = unis [i] . getId ();
       u_type = unis [i] . getUnitigType ();
       printf ("Unitig %8d  %c\n", uid, Convert_Char (u_type));
+      if  (u_type == STONE_UNI_T)
+          {
+           j = Find_Unitig (uid, uni_list);
+           if  (j < 0)
+               {
+                sprintf (Clean_Exit_Msg_Line,
+                     "ERROR:  Could not find unitig %d in unitig list",
+                         uid);
+                Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+               }
+           
+           len = strlen (uni_list [j] . seq);
+           tmp = strdup (uni_list [j] . seq);
+           for  (j = 0;  j < len;  j ++)
+             tmp [j] = tolower (tmp [j]);
+           if  (b < a)
+               Reverse_Complement (tmp);
+           s . push_back (tmp);
+
+           // Make artificial quality string of all 10's
+           tmp = (char *) Safe_malloc (len + 1);
+           memset (tmp, QUALITY_OFFSET + 10, len);
+           tmp [len] = '\0';
+           q . push_back (tmp);
+
+           str_len . push_back (len);
+
+           sprintf (tag_buff, "u%d", uid);
+           tag . push_back (strdup (tag_buff));
+          }
      }
 
    return;
