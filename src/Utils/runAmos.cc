@@ -465,6 +465,8 @@ int main(int argc, char ** argv)
     finish(1);
   }
 
+  logFile.setf(ios::unitbuf);  // make sure buffer flushes on endls
+
   if (globals.find("start") != globals.end() &&
       globals.find("end") != globals.end()){
 
