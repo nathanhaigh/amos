@@ -22,16 +22,20 @@ my $stdev;
 my $end;
 my $seqId;
 
-my %end5;       # the reads at the 5' resp 3' end of an insert
+my %end5;       # the reads at the 5', resp. 3', end of an insert
 my %end3;
 my %means;      # mean and standard deviation for libraries
 my %stdevs;
 my %clr;        # clear range for each sequence
 my %seq2ins;    # insert name for each sequence
 my %ins2lib;    # library name for each insert
-my %lib2id;     # mapping from library name to eid
-my %ins2id;     # mapping from insert name to eid
-my %seq2id;     # mapping from read name to eid
+my %lib2id;     # mapping from library name to iid
+my %ins2id;     # mapping from insert name to iid
+my %seq2id;     # mapping from read name to iid
+
+my @libregexp;  # when using mates files contains list of libraries regular expressions
+my @libnames;   # library names corresponding to the regular expressions
+my @pairregexp; # read mating regular expressions
 
 my $gzip = "gzip";
 
@@ -41,16 +45,18 @@ if (! defined $base) {
     die ("Walk, do not run, to the nearest exit!\n");
 }
 
-my $VERSION = '1.0 ($Revision$)';
+my $VERSION = '$Revision$ ';
 $base->setVersionInfo($VERSION);
 
 my $HELPTEXT = qq~
-    tarchive2amos -o <out_prefix> [-c <clear_ranges>] [options] fasta1 ... fastan
+    tarchive2amos -o <prefix> [-c <clip>] [-m <mates>] [options] fasta1 ... fastan
 
-   <out_prefix>   - prefix for the output files
-   <clear_ranges> - file containing clear ranges for the reads.  If this file
+   <prefix>   - prefix for the output files
+   <clip>     - file containing clear ranges for the reads.  If this file
            is provided, any sequence that does not appear in it is excluded
            from the output.
+   <mates>    - file containing mate-pair information as specified in the BAMBUS
+           documentation.  This file replaces information provided in .xml files
    fasta1 ... fastan - list of files to be converted.
            The program assumes that for each program called <file>.seq there
            is a <file>.qual and a <file>.xml.  If no .xml file is present 
@@ -70,16 +76,19 @@ $base->setHelpInfo($HELPTEXT);
 
 my $outprefix;
 my $clears;
+my $mates ;     # name of file containing mate pairs
 my $ID = 1;
 my $TEM_ID = 1;  # generic identifier for reads with no template
 my $silent;
 my $err = $base->TIGR_GetOptions("o=s"    => \$outprefix,
 				 "c=s"    => \$clears,
+				 "m=s"    => \$mates,
                                  "i=i"    => \$ID,
 				 "silent" => \$silent,
 				 "min"    => \$MINSEQ,
 				 "max"    => \$MAXSEQ,
 				 "qual"   => \$DEFAULT_QUAL);
+
 if ($err == 0) {
     $base->bail("Command line processing failed\n");
 }
@@ -96,7 +105,6 @@ if (!defined $xml) {
 
 my %clones;
 my %seqs;
-my %seqId;
 my %lib ;
 
 my $fragname = "$outprefix.afg";
@@ -113,7 +121,7 @@ if (defined $clears){
 }
 
 # get ready to produce the output
-open(FRAG, ">$fragname") || die ("Cannot open $fragname: $!");
+open(FRAG, ">$fragname") || $base->bail("Cannot open $fragname: $!");
 printFragHeader(\*FRAG);
 
 my $numxml = 0;
@@ -165,11 +173,85 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     close($XML);
 }
 
+
 if ($numxml <= $#ARGV) { # fewer XML files than inputs
     $hasxml = 0;
 } else {
     $hasxml = 1;
 }
+
+
+if (defined $mates){
+    open(MATES, $mates) || $base->bail("Cannot open $mates: $!\n");
+    
+    while (<MATES>){
+	chomp;
+	if (/^library/){
+	    my $libId = getId(); # get a new identifier
+	    my @recs = split('\t', $_);
+
+	    if ($#recs < 3 || $#recs > 4){
+		$base->logError("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n", 1);
+		next;
+	    }
+	    
+	    if ($#recs == 4){
+		push(@libregexp, $recs[4]);
+		push(@libnames, $recs[1]);
+	    }
+
+	    my $mean = ($recs[2] + $recs[3]) / 2;
+	    my $stdev = ($recs[3] - $recs[2]) / 6;
+
+	    $means{$recs[1]} = $mean;
+	    $stdevs{$recs[1]} = $stdev;
+	    
+	    next;
+	} # if library
+
+	if (/^pair/){
+	    my @recs = split('\t', $_);
+	    if ($#recs != 2){
+		$base->logError("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n");
+		next;
+	    }
+	    push(@pairregexp, "$recs[1] $recs[2]");
+	    next;
+	}
+
+	if (/^\#/) { # comment
+	    next;
+	}
+
+	if (/^\s*$/) { # empty line
+	    next;
+	}
+	
+	# now we just deal with the pair lines
+	my @recs = split('\t', $_);
+	if ($#recs < 1 || $#recs > 2){
+	    $base->logError("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n");
+	    next;
+	}
+
+	my $insname = getId();
+	$ins2id{$insname} = $insname;
+
+	if (defined $recs[2]){
+	    $ins2lib{$insname} = $recs[2];
+	} else {
+	    $base->logError("$insname has no library\n");
+	}
+	
+	$end5{$insname} = $recs[0];
+	$end3{$insname} = $recs[1];
+	
+	$seq2ins{$recs[0]} = $insname;
+	$seq2ins{$recs[1]} = $insname;
+    } # while <MATES>
+
+    close(MATES);
+} 
 
 # now we are ready to print the library information
 while (my ($lib, $mean) = each %means){
@@ -187,18 +269,6 @@ while (my ($lib, $mean) = each %means){
     print FRAG "}\n";
 }
 
-# and the fragment information
-while (my ($frg, $lib) = each %ins2lib){
-    my $insid = getId();
-    $ins2id{$frg} = $insid;
-    print FRAG "{FRG\n";
-    print FRAG "act:A\n";              # ADD
-    print FRAG "iid:$insid\n";     
-    print FRAG "eid:$frg\n";           # external fragment id
-    print FRAG "lib:$lib2id{$lib}\n";  
-    print FRAG "typ:I\n";              # INSERT
-    print FRAG "}\n";
-}
 
 for (my $f = 0; $f <= $#ARGV; $f++){
 # for each file
@@ -231,7 +301,6 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	$hasqual = 0;
 #	$base->bail("Cannot find the quality file corresponding to $seqname");
     }
-
 
     if ($seqname =~ /\.gz$/){
 	open(SEQ, "$gzip -dc $seqname |") ||
@@ -269,6 +338,18 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	my $fid; 
 	my $fidname;
 	
+	if ($hasqual == 1){
+	    ($qhead, $qrec) = $qualparse->getRecord();
+	    $qhead =~ /^(\S+)/;
+	    my $qid = $1;
+	    $fhead =~ /^(\S+)/;
+	    my $fid = $1;
+	    
+	    if ($fid != $qid){
+		$base->bail("fasta and qual records have different IDs: $fid vs $qid\n");
+	    }
+	}
+
 	if ($fhead =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
 # if TIGR formatted, fetch the clear range
 #	    print STDERR "got TIGR: $1 $2 $3\n";
@@ -283,7 +364,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    }
 	    # allow XML or clear file to override the clear range info
 	    if (! exists $clr{$fid}) {$clr{$fid} = "$l,$r";}
-	} elsif ($fhead =~ /^(\S+) ?(\S+)?/){
+	} elsif ($fhead =~ /^ ?(\S+) ?(\S+)?/){
 #	    print STDERR "got ncbi: $1 $2\n";
 # NCBI formatted, first is the trace id then the trace name
 	    $fid = $1;
@@ -292,31 +373,80 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    if (! defined $fidname || $fidname eq "bases"){
 		$fidname = $fid;
 	    }
-	    if (defined $clears && (! exists $clr{$fid} && ! exists $clr{$fidname})) {
+
+	    if (defined $clears && ! exists $clr{$fid} && ! exists $clr{$fidname}) {
 		# clear range file decides which sequences stay and which go
 		next;
 	    }
 	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {$clr{$fid} = $clr{$fidname};}
 	}
 
-	if ($hasqual == 1){
-	    ($qhead, $qrec) = $qualparse->getRecord();
-	    $qhead =~ /^(\S+)/;
-	    my $qid = $1;
-	    
-	    if ($fid != $qid){
-		die ("fasta and qual records have different IDs: $fid vs $qid\n");
-	    }
-	}
 
 	my $recId = getId();
+
+	if (defined $mates){
+	    for (my $r = 0; $r <= $#pairregexp; $r++){
+		my ($freg, $revreg) = split(' ', $pairregexp[$r]);
+		my $insertname = undef;
+		if ($fidname =~ /$freg/){
+		    $insertname = $1;
+		    if (! exists $end5{$insertname}){
+			$end5{$insertname} = $fidname;
+			$seq2ins{$fidname} = $insertname;
+		    }
+		} elsif ($fidname =~ /$revreg/){
+		    $insertname = $1;
+		    if (! exists $end3{$insertname}){
+			$end3{$insertname} = $fidname;
+			$seq2ins{$fidname} = $insertname;
+		    }
+		} elsif ($fid =~ /$freg/){
+		    $insertname = $1;
+		    if (! exists $end5{$insertname}){
+			$end5{$insertname} = $fid;
+			$seq2ins{$fid} = $insertname;
+		    }
+		} elsif ($fid =~ /$revreg/){
+		    $insertname = $1;
+		    if (! exists $end3{$insertname}){
+			$end3{$insertname} = $fid;
+			$seq2ins{$fid} = $insertname;
+		    }
+		} # if forw or rev regexp match
+
+		if (defined $insertname){
+		    my $found = 0;
+
+		    if (! exists $ins2id{$insertname}){
+			$ins2id{$insertname} = getId();
+		    }
+
+		    for (my $l = 0; $l <= $#libregexp; $l++){
+			if ($fidname =~ /$libregexp[$l]/){
+			    $ins2lib{$insertname} = $libnames[$l];
+			    $found = 1;
+			    last;
+			} elsif ($fid =~ /$libregexp[$l]/){
+			    $ins2lib{$insertname} = $libnames[$l];
+			    $found = 1;
+			    last;
+			}
+		    }
+		    if ($found == 0){
+			$base->logError("Cannot find library for \"$insertname\"");
+		    }
+
+		    last;
+		} # if found insert
+	    } # for each pairreg
+	} # if defined mates
 
 	my $seqlen = length($frec);
 	my @quals;
 	if ($hasqual == 1){
 	    @quals = split(' ', $qrec);
 	    if ($#quals + 1 != $seqlen) {
-		die ("Fasta and quality disagree: $seqlen vs " . $#quals + 1 . "\n");
+		$base->bail("Fasta and quality disagree: $seqlen vs " . $#quals + 1 . "\n");
 	    }
 	} else {
 	    for (my $q = 0; $q < $seqlen; $q++){ # fill in qualities with 20
@@ -334,15 +464,16 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    $caqual .= chr(ord('0') + $qv);
 	}
 	
-	if (! defined $silent){
-	    print STDERR "$recId $fidname\r";
+	if (! defined $silent && ($recId % 100 == 0)){
+	    print STDERR "$recId\r";
 	}
 	
 	if (! exists $clr{$fid}){
 	    $clr{$fid} = "0,$seqlen";
 	}
 
-	$seqId{$fidname} = $recId;
+	$seq2id{$fidname} = $recId;
+	$seq2id{$fid} = $recId;
 
 	my $seq_lend;
 	my $seq_rend;
@@ -355,38 +486,41 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    $seqlen = length($frec);
 	    if ($seqlen > $MAXSEQ){
 		if (! defined $silent){
-		    print "skipping sequence $fidname due to length $seqlen\n";
+		    $base->logError("skipping sequence $fidname due to length $seqlen\n");
 		}
-		delete $seqId{$fidname};
+		delete $seq2id{$fidname};
+		delete $seq2id{$fid};
 		next;
 	    }
 	}
 	if ($seq_rend - $seq_lend < $MINSEQ){
 	    if (! defined $silent){
-		print "skipping sequence $fidname since it's short\n";
+		$base->logError("skipping sequence $fidname since it's short\n");
 	    }
-	    delete $seqId{$fidname};
+	    delete $seq2id{$fidname};
+	    delete $seq2id{$fid};	
 	    next;
 	}
 
-	if (! exists $seq2ins{$fidname} ||
-	    ! exists $ins2id{$seq2ins{$fidname}}){
-	    if ($hasxml){
-		$base->logError("Found a sequence without a template - probably not in XML file: $fidname\n");
+	if (! exists $seq2ins{$fid} && exists $seq2ins{$fidname}){
+	    $seq2ins{$fid} = $seq2ins{$fidname};
+	}
+
+	if (! exists $seq2ins{$fid} ||
+	    ! exists $ins2id{$seq2ins{$fid}}){
+	    if ($hasxml || defined $mates){
+		$base->logError("Found a sequence without a template - probably not in XML or mates file: $fidname\n");
 		next;
 	    } else {
-#		my $insid = getId();
-		$seq2ins{$fidname} = 0; #$insid;
+		$seq2ins{$fid} = 0; #insid
 		$ins2id{0} = 0; #$insid;
 	    }
 	}
 
-#	print STDERR "printing $fid $fidname\n";
-
 	print FRAG "{RED\n";                # read
 	print FRAG "act:A\n";               # ADD
 	print FRAG "iid:$recId\n";          
-	print FRAG "eid:$fidname\n";
+	print FRAG "eid:$fid\n";
 	print FRAG "seq:\n";
 	$frec =~ s/[^actgnACTGN]/N/g;
 	for (my $s = 0; $s < $seqlen; $s += 60){
@@ -398,17 +532,16 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    print FRAG substr($caqual, $s, 60), "\n";
 	}
 	if ($seq_rend > $seqlen){
-	    print "right end of clear range $seq_rend > $seqlen - shrinking it\n";
+	    $base->logError("right end of clear range $seq_rend > $seqlen - shrinking it\n");
 	    $seq_rend = $seqlen;
 	}
 	print FRAG ".\n";
-	if ($ins2id{$seq2ins{$fidname}} != 0){
-	    print FRAG "frg:$ins2id{$seq2ins{$fidname}}\n";
+	if ($ins2id{$seq2ins{$fid}} != 0){
+	    print FRAG "frg:$ins2id{$seq2ins{$fid}}\n";
 	}
 	print FRAG "clr:$seq_lend,$seq_rend\n";
 	print FRAG "}\n";
-
-    }
+    } # while each read
     
     if (! defined $silent){
 	print STDERR "done\n";
@@ -421,17 +554,30 @@ if (! defined $silent){
     print STDERR "doing mates\n";
 }
 
+# and the fragment information
+while (my ($frg, $lib) = each %ins2lib){
+    my $insid = $ins2id{$frg};
+
+    print FRAG "{FRG\n";
+    print FRAG "act:A\n";              # ADD
+    print FRAG "iid:$insid\n";     
+    print FRAG "eid:$frg\n";           # external fragment id
+    print FRAG "lib:$lib2id{$lib}\n";  
+    print FRAG "typ:I\n";              # INSERT
+    print FRAG "}\n";
+}
+
 while (my ($ins, $lib) = each %ins2lib){
     if (exists $end5{$ins} && exists $end3{$ins}){
-	if (! exists $seqId{$end5{$ins}} ||
-	    ! exists $seqId{$end3{$ins}}){
+	if (! exists $seq2id{$end5{$ins}} ||
+	    ! exists $seq2id{$end3{$ins}}){
 	    next;
 	}
 	my $id = getId();
 	print FRAG "{MTP\n";
 	print FRAG "iid:$id\n";
-	print FRAG "rd1:$seqId{$end5{$ins}}\n";
-	print FRAG "rd2:$seqId{$end3{$ins}}\n";
+	print FRAG "rd1:$seq2id{$end5{$ins}}\n";
+	print FRAG "rd2:$seq2id{$end3{$ins}}\n";
 	print FRAG "com:\n";
 	print FRAG "$ins\n";
 	print FRAG ".\n";
@@ -554,6 +700,9 @@ sub EndTag
 	}
 	$seq2ins{$seqId} = $template;
 	$ins2lib{$template} = $library;
+	if (! defined $ins2id{$template}){
+	    $ins2id{$template} = getId();
+	}
     }
 
     $tag = undef;
@@ -610,8 +759,8 @@ sub printFragHeader
 
     print $file "{UNV\n";
     print $file "act:A\n";
-    print $file "eid:1\n";
-    print $file "com:\nGenerated by tarchive2amos on $date\n.\n";
+    print $file "iid:1\n";
+    print $file "com:\nGenerated by $ENV{USER} with tarchive2amos on $date\n.\n";
     print $file "}\n";
 }
 
