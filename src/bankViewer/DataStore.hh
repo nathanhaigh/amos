@@ -3,6 +3,7 @@
 
 #include "foundation_AMOS.hh"
 #include <string>
+#include <map>
 
 class DataStore
 {
@@ -13,13 +14,17 @@ public:
   int openBank(const string & bank_name);
   int setContigId(int id);
 
+  void loadMates();
+  void loadLibraries();
+  void loadContigs();
+
   AMOS::Distribution_t getLibrarySize(AMOS::ID_t readid);
   AMOS::ID_t lookupContigId(AMOS::ID_t readid);
 
-  AMOS::Bank_t       contig_bank;
+  AMOS::BankStream_t contig_bank;
   AMOS::Bank_t       read_bank;
   AMOS::Bank_t       frag_bank;
-  AMOS::Bank_t       lib_bank;
+  AMOS::BankStream_t lib_bank;
   AMOS::BankStream_t mate_bank;
 
   AMOS::BankStream_t edge_bank;
@@ -32,6 +37,10 @@ public:
   bool m_loaded;
 
   AMOS::Contig_t m_contig;
+
+  map<AMOS::ID_t, AMOS::ID_t> m_readmatelookup;
+  map<AMOS::ID_t, AMOS::Distribution_t> m_libdistributionlookup;
+  map<AMOS::ID_t, AMOS::ID_t> m_readcontiglookup;
 };
 
 

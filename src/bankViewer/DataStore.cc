@@ -11,7 +11,7 @@ DataStore::DataStore()
     edge_bank(ContigEdge_t::NCODE),
     link_bank(ContigLink_t::NCODE)
 {
-  m_contigId = 1;
+  m_contigId = -1;
   m_loaded = false;
 
 }
@@ -31,6 +31,13 @@ int DataStore::openBank(const string & bankname)
     link_bank.open(bankname);
 
     m_bankname = bankname;
+
+    loadMates();
+    loadLibraries();
+    loadContigs();
+
+    m_contigId = -1;
+
   }
   catch (Exception_t & e)
   {
@@ -41,13 +48,66 @@ int DataStore::openBank(const string & bankname)
   return retval;
 }
 
+void DataStore::loadLibraries()
+{
+  m_libdistributionlookup.clear();
+
+  Library_t lib;
+  while (lib_bank >> lib)
+  {
+    m_libdistributionlookup[lib.getIID()] = lib.getDistribution();
+  }
+
+  cerr << "Loaded " << m_libdistributionlookup.size() << " libraries" << endl;
+}
+
+void DataStore::loadMates()
+{
+  m_readmatelookup.clear();
+
+  mate_bank.seekg(1);
+  Matepair_t mates;
+  while (mate_bank >> mates)
+  {
+    m_readmatelookup[mates.getReads().first] = mates.getReads().second;
+    m_readmatelookup[mates.getReads().second] = mates.getReads().first;
+  }
+
+  cerr << "Loaded mates for " << m_readmatelookup.size() << " reads" << endl;
+}
+
+void DataStore::loadContigs()
+{
+  m_readcontiglookup.clear();
+
+  contig_bank.seekg(1);
+
+  Contig_t contig;
+  while (contig_bank >> contig)
+  {
+    vector<Tile_t> & tiling = contig.getReadTiling();
+    vector<Tile_t>::const_iterator ti;
+
+    for (ti =  tiling.begin();
+         ti != tiling.end();
+         ti++)
+    {
+      m_readcontiglookup[ti->source] = contig.getIID();
+    }
+  }
+
+  cerr << "Loaded contig id for " << m_readcontiglookup.size() << " reads" << endl;
+}
+
 int DataStore::setContigId(int id)
 {
   int retval = 0;
 
   try
   {
-    contig_bank.fetch(id, m_contig);
+    ID_t bankid = contig_bank.getIDMap().lookupBID(id);
+    contig_bank.seekg(bankid);
+    contig_bank >> m_contig;
     m_contigId = id;
     m_loaded = true;
   }
@@ -70,10 +130,7 @@ Distribution_t DataStore::getLibrarySize(ID_t readid)
     Fragment_t frag;
     frag_bank.fetch(read.getFragment(), frag);
 
-    Library_t lib;
-    lib_bank.fetch(frag.getLibrary(), lib);
-
-    return lib.getDistribution();
+    return m_libdistributionlookup[frag.getLibrary()];
   }
   catch (Exception_t & e)
   {
@@ -85,31 +142,14 @@ Distribution_t DataStore::getLibrarySize(ID_t readid)
 
 ID_t DataStore::lookupContigId(ID_t readid)
 {
-  try
+  map<ID_t, ID_t>::iterator i = m_readcontiglookup.find(readid);
+
+  if (i == m_readcontiglookup.end())
   {
-    BankStream_t contigs(Contig_t::NCODE);
-    Contig_t contig;
-    contigs.open(m_bankname);
-
-    while (contigs >> contig)
-    {
-      vector<Tile_t>::iterator ti;
-      for (ti =  contig.getReadTiling().begin();
-           ti != contig.getReadTiling().end();
-           ti++)
-      {
-        if (ti->source == readid)
-        {
-          return contig.getIID();
-        }
-      }
-    }
+    return AMOS::NULL_ID;
   }
-  catch (Exception_t & e)
+  else
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    return i->second;
   }
-
-
-  return AMOS::NULL_ID;
 }

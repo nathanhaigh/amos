@@ -2,6 +2,7 @@
 #define CGRAPHVIEW_HH_ 1
 
 #include <qcanvas.h>
+#include "CGraphEdge.hh"
 
 class CGraphView : public QCanvasView
 {
@@ -14,6 +15,7 @@ public:
 
 signals:
   void setContigId(int);
+  void edgeSelected(AMOS::ContigEdge_t *);
 
 protected:
   void contentsMousePressEvent(QMouseEvent * e);

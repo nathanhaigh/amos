@@ -205,7 +205,8 @@ void MainWindow::chooseContig()
 
 void MainWindow::setContigId(int contigId)
 {
-  if (!m_datastore.setContigId(contigId))
+  if ((contigId != m_datastore.m_contigId) &&
+      !m_datastore.setContigId(contigId))
   {
     QString s = "Viewing ";
     s += m_datastore.m_bankname.c_str();

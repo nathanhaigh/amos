@@ -143,7 +143,7 @@ void InsertWidget::refreshCanvas()
 
   int mated = 0;
   int unmated = 0;
-  int allmates = 0;
+  int matelisted = 0;
 
   try
   {
@@ -161,46 +161,70 @@ void InsertWidget::refreshCanvas()
       seqtileLookup[vi->source] = &(*vi);
     }
 
-    cerr << "Loading mates ";
+
+    cerr << "Loading mates" << endl;
     Matepair_t mates;
+    map<ID_t, ID_t>::iterator mi;
 
-    m_datastore->mate_bank.seekg(1);
-    while (m_datastore->mate_bank >> mates)
+    SeqTileMap_t::iterator si;
+    for (si =  seqtileLookup.begin();
+         si != seqtileLookup.end();
+         si++)
     {
-      allmates++;
-      ID_t aid = mates.getReads().first;
-      ID_t bid = mates.getReads().second;
-      ID_t good = aid;
-
-      ID_t acontig = AMOS::NULL_ID;
-      ID_t bcontig = AMOS::NULL_ID;
-      
-      SeqTileMap_t::iterator ai = seqtileLookup.find(aid);
-      SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
-
-      Tile_t * a = NULL;
-      Tile_t * b = NULL;
-
-      if (ai != seqtileLookup.end())
+      if (si->second == NULL)
       {
-        a = ai->second;
+        //cerr << "Skipping already seen read" << endl;
+        continue;
+      }
+
+      mi = m_datastore->m_readmatelookup.find(si->first);
+
+      if (mi == m_datastore->m_readmatelookup.end())
+      {
+        // unmated
+        Insert * i = new Insert(si->second, si->first, m_datastore->m_contigId, 
+                                NULL, AMOS::NULL_ID, AMOS::NULL_ID,
+                                m_datastore->getLibrarySize(si->first), clen);
+        m_inserts.push_back(i);
+        unmated++;
+      }
+      else
+      {
+        matelisted++;
+
+        ID_t aid = mi->first;
+        ID_t bid = mi->second;
+        ID_t good = aid;
+
+        //cerr << "aid:" << aid << " bid: " << bid << endl;
+
+        ID_t acontig = AMOS::NULL_ID;
+        ID_t bcontig = AMOS::NULL_ID;
+        
+        SeqTileMap_t::iterator ai = si;
+        SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
+
+        Tile_t * a = ai->second;
+        Tile_t * b = NULL;
+
+        ai->second = NULL;
         acontig = m_datastore->m_contigId;
-        seqtileLookup.erase(ai);
-      }
 
-      if (bi != seqtileLookup.end())
-      {
-        b = bi->second;
-        bcontig = m_datastore->m_contigId;
-        seqtileLookup.erase(bi);
+        if (bi != seqtileLookup.end())
+        {
+          b = bi->second;
+          bi->second = NULL;
+          bcontig = m_datastore->m_contigId;
 
-        good = bid;
-      }
-      
-      if (a || b)
-      {
-        if (!a) { acontig = m_datastore->lookupContigId(aid); }
-        if (!b) { bcontig = m_datastore->lookupContigId(bid); }
+          good = bid;
+          cerr << ".";
+        }
+        else
+        {
+          bcontig = m_datastore->lookupContigId(bid);
+          cerr << "+";
+        }
+        
 
         mated++;
         Insert * i = new Insert(a, aid, acontig, b, bid, bcontig, 
@@ -228,23 +252,8 @@ void InsertWidget::refreshCanvas()
       }
     }
 
-    SeqTileMap_t::iterator si;
-    for (si =  seqtileLookup.begin();
-         si != seqtileLookup.end();
-         si++)
-    {
-      if (si->second)
-      {
-        Insert * i = new Insert(si->second, si->first, m_datastore->m_contigId, 
-                                NULL, AMOS::NULL_ID, AMOS::NULL_ID,
-                                m_datastore->getLibrarySize(si->first), clen);
-        m_inserts.push_back(i);
-        unmated++;
-      }
-    }
-
-    cerr << "allmates: " << allmates 
-         << " mated: "   << mated 
+    cerr << " mated: "   << mated 
+         << " matelisted: " << matelisted
          << " unmated: " << unmated << endl;
 
   }
@@ -253,11 +262,16 @@ void InsertWidget::refreshCanvas()
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
 
-  sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
-
-  int leftmost = (*m_inserts.begin())->m_loffset;
-  if (leftmost > 0) { leftmost = 0; }
+  int leftmost = 0;
   int rightmost = clen;
+
+  if (!m_inserts.empty())
+  {
+    sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
+
+    leftmost = (*m_inserts.begin())->m_loffset;
+    if (leftmost > 0) { leftmost = 0; }
+  }
 
   cerr << "leftmost: " << leftmost << endl;
   m_hoffset = -leftmost;

@@ -21,5 +21,10 @@ void CGraphView::contentsMousePressEvent(QMouseEvent * e)
       cerr << contig->m_id << " selected" << endl;
       emit setContigId(contig->m_id);
     }
+    else if ((*it)->rtti() == CGraphEdge::RTTI)
+    {
+      CGraphEdge * edge = (CGraphEdge *) *it;
+      emit edgeSelected(edge->m_edge);
+    }
   }
 }
