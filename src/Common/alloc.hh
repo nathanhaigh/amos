@@ -12,6 +12,7 @@
 
 #include <new>
 #include <cstdlib>
+#include <cstring>
 
 
 
@@ -82,5 +83,27 @@ inline void * SafeRealloc (void * P, size_t size)
 
   return Q;
 }
+
+
+//--------------------------------------------------- SafeStrdup ---------------
+//! \brief Safe strdup wrapper
+//!
+//! Detects malloc failure and throws std::bad_alloc exception instead of
+//! returning a NULL pointer.
+//!
+//! \param str The string to copy
+//! \post The memory is allocated and the string is copied
+//! \exception bad_alloc On memory exhaustion
+//! \return Pointer to the new string copy
+//!
+inline char * SafeStrdup (const char * str)
+{
+  char * Q = strdup (str);
+  if ( Q == NULL )
+    throw std::bad_alloc ( );
+
+  return Q;
+}
+
 
 #endif // #ifndef __ALLOC_HH
