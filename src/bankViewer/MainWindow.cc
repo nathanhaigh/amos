@@ -54,7 +54,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   int gutter = 5;
 
-  m_slider = new QSlider(Horizontal, this, "slider");
+  m_slider = new QScrollBar(Horizontal, this, "slider");
   m_slider->setTracking(0);
   m_slider->setPageStep(20);
 

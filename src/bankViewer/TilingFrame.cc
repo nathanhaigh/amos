@@ -16,6 +16,10 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
 {
   m_gindex = 0;
   m_fontsize = 12;
+  m_loadedWidth = 1000;
+  m_loadedStart = -1;
+  m_loadedEnd = -1;
+
   resize(500, 500);
   m_db = "DMG";
   m_sv = new QScrollView(this, "tilingscroll");
@@ -94,12 +98,14 @@ void TilingFrame::setContigId(int contigId)
       m_renderedSeqs.clear();
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
+      m_loaded = 1;
+      m_loadedStart = -1;
+      m_loadedEnd = -1;
 
       setGindex(0);
 
       emit setGindexRange(0, (int)m_consensus.size()-1);
       emit contigLoaded(contigId);
-      m_loaded = 1;
 
       QString s = "Viewing ";
       s += m_bankname.c_str();
@@ -133,14 +139,14 @@ void TilingFrame::setBankname(string bankname)
     {
       m_bankname = bankname;
       contig_bank.open(m_bankname);
-      emit contigRange(1, contig_bank.getSize());
-
-      setContigId(1);
     }
     catch (Exception_t & e)
     {
       cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     }
+
+    emit contigRange(1, contig_bank.getSize());
+    setContigId(1);
   }
 }
 
@@ -164,44 +170,52 @@ void TilingFrame::setGindex( int gindex )
   int width = this->width();
   m_displaywidth = (width-tilehoffset)/basewidth;
 
-  gindex = min(gindex, m_consensus.size()-m_displaywidth);
+  gindex = min(gindex, m_consensus.size()-m_displaywidth+1);
+  m_gindex = gindex;
 
-//  if ( m_gindex == gindex ) {return;}
+  int grangeStart = m_gindex;
+  int grangeEnd = m_gindex + m_displaywidth+200;
 
-  m_renderedSeqs.clear();
-
-      
-  // Render the aligned sequences
-  int vectorpos = 0;
-  vector<Tile_t>::iterator vi;
-
-  for (vi =  m_tiling.begin(), vectorpos = 0;
-       vi != m_tiling.end();
-       vi++, vectorpos++)
+  if (grangeStart < m_loadedStart || grangeEnd > m_loadedEnd)
   {
-    int hasOverlap = RenderSeq_t::hasOverlap(m_gindex, m_gindex+m_displaywidth+100, 
-                                             vi->offset, vi->range.getLength() + vi->gaps.size(),
-                                             m_consensus.length());
-    if (hasOverlap)
+    m_renderedSeqs.clear();
+
+    m_loadedStart = max(0, grangeStart-m_loadedWidth/2);
+    m_loadedEnd   = min(m_consensus.length(), grangeEnd+m_loadedWidth/2);
+      
+    // Render the aligned sequences
+    int vectorpos = 0;
+    vector<Tile_t>::iterator vi;
+
+    for (vi =  m_tiling.begin(), vectorpos = 0;
+         vi != m_tiling.end();
+         vi++, vectorpos++)
     {
-      RenderSeq_t rendered(vectorpos);
-      rendered.load(read_bank, vi);
-      m_renderedSeqs.push_back(rendered);
-
-      for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
+      int hasOverlap = RenderSeq_t::hasOverlap(m_loadedStart, m_loadedEnd,
+                                               vi->offset, vi->range.getLength() + vi->gaps.size(),
+                                               m_consensus.length());
+      if (hasOverlap)
       {
-        if      (m_cstatus[gindex] == ' ')                   
-          { m_cstatus[gindex] = rendered.base(gindex); }
+        RenderSeq_t rendered(vectorpos);
+        rendered.load(read_bank, vi);
+        m_renderedSeqs.push_back(rendered);
 
-        else if (m_cstatus[gindex] != rendered.base(gindex)) 
-          { m_cstatus[gindex] = 'X'; }
+        for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
+        {
+          if      (m_cstatus[gindex] == ' ')                   
+            { m_cstatus[gindex] = rendered.base(gindex); }
+
+          else if (m_cstatus[gindex] != rendered.base(gindex)) 
+            { m_cstatus[gindex] = 'X'; }
+        }
       }
     }
+
+    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << endl;
   }
 
-  m_gindex = gindex;
   repaint();
-  emit gindexChanged( m_gindex );
+  emit gindexChanged(m_gindex);
 }
 
 void TilingFrame::setDB(const QString & db)

@@ -52,6 +52,10 @@ private:
     int m_displaywidth;
     bool m_loaded;
 
+    int m_loadedStart;
+    int m_loadedEnd;
+    int m_loadedWidth;
+
     QScrollView * m_sv;
 
     string m_bankname;

@@ -4,6 +4,7 @@
 #include <qwidget.h>
 #include <qspinbox.h>
 #include <qslider.h>
+#include <qscrollbar.h>
 #include <string>
 
 class MainWindow: public QWidget
@@ -29,7 +30,7 @@ signals:
 private:
   QSpinBox * m_contigid;
   QSpinBox * m_gindex;
-  QSlider * m_slider;
+  QScrollBar * m_slider;
 };
 
 #endif

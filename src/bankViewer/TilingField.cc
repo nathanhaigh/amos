@@ -123,7 +123,6 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 
 void TilingField::paintEvent( QPaintEvent * )
 {
-  //cerr << "paintTField:" << m_renderedSeqs.size() << endl;
   if (m_renderedSeqs.empty()) { resize(m_width, m_height); return; }
 
   int basespace      = 5;
@@ -160,6 +159,9 @@ void TilingField::paintEvent( QPaintEvent * )
 
   Pos_t grangeStart = m_gindex;
   Pos_t grangeEnd = imin(m_gindex + displaywidth, m_consensus.size()-1);
+
+  cerr << "paintTField:" << m_renderedSeqs.size()
+       << " [" << grangeStart << "," << grangeEnd << "]" << endl;
 
   vector<RenderSeq_t>::iterator ri;
   int dcov = 0;
