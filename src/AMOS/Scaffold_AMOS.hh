@@ -11,6 +11,7 @@
 #define __Scaffold_AMOS_HH 1
 
 #include "Universal_AMOS.hh"
+#include "Layout_AMOS.hh"
 #include <vector>
 
 
@@ -139,6 +140,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getSpan ----------------
+  //! \brief Get the span of the contig layout
+  //!
+  //! Returns the difference between min(offset) and max(offset+len). Since the
+  //! layout is not necessarily sorted, this method requires linear time.
+  //!
+  //! \return The span of the layout
+  //!
+  Size_t getSpan ( ) const;
+
+
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
 
@@ -152,6 +164,18 @@ public:
   void setContigTiling (const std::vector<Tile_t> & contigs)
   {
     contigs_m = contigs;
+  }
+
+
+  //--------------------------------------------------- setContigTiling --------
+  //! \brief Set the tiling of underlying contigs
+  //!
+  //! \param contigs The new contig layout
+  //! \return void
+  //!
+  void setContigTiling (const Layout_t & layout)
+  {
+    contigs_m = layout . getTiling( );
   }
 
 

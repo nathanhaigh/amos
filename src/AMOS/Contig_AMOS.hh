@@ -11,6 +11,7 @@
 #define __Contig_AMOS_HH 1
 
 #include "Sequence_AMOS.hh"
+#include "Layout_AMOS.hh"
 #include <vector>
 
 
@@ -140,6 +141,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getSpan ----------------
+  //! \brief Get the span of the read layout
+  //!
+  //! Returns the difference between min(offset) and max(offset+len). Since the
+  //! layout is not necessarily sorted, this method requires linear time.
+  //!
+  //! \return The span of the layout
+  //!
+  Size_t getSpan ( ) const;
+
+
   //--------------------------------------------------- getUngappedQualString --
   //! \brief Get the ungapped quality score string
   //!
@@ -229,6 +241,18 @@ public:
   void setReadTiling (const std::vector<Tile_t> & reads)
   {
     reads_m = reads;
+  }
+
+
+  //--------------------------------------------------- setReadTiling ----------
+  //! \brief Set the tiling of underlying reads
+  //!
+  //! \param reads The new read layout
+  //! \return void
+  //!
+  void setReadTiling (const Layout_t & layout)
+  {
+    reads_m = layout . getTiling( );
   }
 
 

@@ -50,6 +50,10 @@ const char    NULL_CHAR   = '\0';       //!< null char
 const char    NL_CHAR     = '\n';       //!< newline char
 const string  NULL_STRING = &NULL_CHAR; //!< null string
 
+const ID_t    MAX_ID      = (2 << 31) - 1;   //!< 2^32 - 1 (unsigned 32bit int)
+const Size_t  MAX_SIZE    = (2 << 30) - 1;   //!< 2^31 - 1 (signed 32bit int)
+const Pos_t   MAX_POS     = (2 << 30) - 1;   //!< 2^31 - 1 (signed 32bit int)
+
 } // namespace AMOS
 
 #endif // #ifndef __inttypes_AMOS_HH

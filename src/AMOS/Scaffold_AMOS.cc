@@ -18,6 +18,35 @@ using namespace std;
 const NCode_t Scaffold_t::NCODE = M_SCAFFOLD;
 
 
+//----------------------------------------------------- getSpan ----------------
+Size_t Scaffold_t::getSpan ( ) const
+{
+  Pos_t hi,lo;
+
+  if ( contigs_m . empty( ) )
+    {
+      hi = 0;
+      lo = 0;
+    }
+  else
+    {
+      hi = -MAX_SIZE;
+      lo = MAX_SIZE;
+    }
+
+  std::vector<Tile_t>::const_iterator ti;
+  for ( ti = contigs_m . begin( ); ti != contigs_m . end( ); ++ ti )
+    {
+      if ( ti -> offset < lo )
+        lo = ti -> offset;
+      if ( ti -> offset + ti -> range . getLength( ) > hi )
+        hi = ti -> offset + ti -> range . getLength( );
+    }
+
+  return hi - lo;
+}
+
+
 //----------------------------------------------------- readMessage ------------
 void Scaffold_t::readMessage (const Message_t & msg)
 {
