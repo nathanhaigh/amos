@@ -87,10 +87,10 @@ void InsertWidget::setTilingVisibleRange(int gstart, int gend)
 
   // ensure visible
   int mapx, mapy;
-  m_ifield->worldMatrix().map((gstart + gend)/2, 
+  m_ifield->worldMatrix().map((gstart + gend)/2+m_hoffset, 
                               canvasRect.y() + canvasRect.height()/2,
                               &mapx, &mapy);
-  m_ifield->ensureVisible(mapx+m_hoffset, mapy);
+  m_ifield->ensureVisible(mapx, mapy);
 
   m_icanvas->update();
 }
