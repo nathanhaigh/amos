@@ -22,8 +22,8 @@ heading 2;}{\*\cs10 \additive Default Paragraph Font;}{\s15\ql \li0\ri0\nowidctl
 \leveltemplateid67698689\'01\u-3913 ?;}{\levelnumbers;}\f3\chbrdr\brdrnone\brdrcf1 \chshdng0\chcfpat1\chcbpat1\fbias0 \fi-360\li5040\jclisttab\tx5040 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0
 \levelindent0{\leveltext\leveltemplateid67698691\'01o;}{\levelnumbers;}\f2\chbrdr\brdrnone\brdrcf1 \chshdng0\chcfpat1\chcbpat1\fbias0 \fi-360\li5760\jclisttab\tx5760 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1
 \levelspace0\levelindent0{\leveltext\leveltemplateid67698693\'01\u-3929 ?;}{\levelnumbers;}\f14\chbrdr\brdrnone\brdrcf1 \chshdng0\chcfpat1\chcbpat1\fbias0 \fi-360\li6480\jclisttab\tx6480 }{\listname ;}\listid1702514622}}{\*\listoverridetable
-{\listoverride\listid1702514622\listoverridecount0\ls1}}{\info{\title AMOS 3-code message specification}{\author Adam M Phillippy}{\operator Adam M Phillippy}{\creatim\yr2003\mo11\dy26\hr13\min44}{\revtim\yr2003\mo12\dy15\hr16\min9}{\version59}
-{\edmins322}{\nofpages4}{\nofwords409}{\nofchars2333}{\nofcharsws0}{\vern8269}}\widowctrl\ftnbj\aenddoc\noxlattoyen\expshrtn\noultrlspc\dntblnsbdb\nospaceforul\hyphcaps0\horzdoc\dghspace120\dgvspace120\dghorigin1701\dgvorigin1984\dghshow0\dgvshow3
+{\listoverride\listid1702514622\listoverridecount0\ls1}}{\info{\title AMOS 3-code message specification}{\author Adam M Phillippy}{\operator Adam M Phillippy}{\creatim\yr2003\mo11\dy26\hr13\min44}{\revtim\yr2003\mo12\dy17\hr11\min1}{\version61}
+{\edmins325}{\nofpages4}{\nofwords409}{\nofchars2333}{\nofcharsws0}{\vern8269}}\widowctrl\ftnbj\aenddoc\noxlattoyen\expshrtn\noultrlspc\dntblnsbdb\nospaceforul\hyphcaps0\horzdoc\dghspace120\dgvspace120\dghorigin1701\dgvorigin1984\dghshow0\dgvshow3
 \jcompress\viewkind4\viewscale100\nolnhtadjtbl \fet0\sectd \linex0\sectdefaultcl {\*\pnseclvl1\pnucrm\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl2\pnucltr\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl3\pndec\pnstart1\pnindent720\pnhang
 {\pntxta .}}{\*\pnseclvl4\pnlcltr\pnstart1\pnindent720\pnhang{\pntxta )}}{\*\pnseclvl5\pndec\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl6\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl7
 \pnlcrm\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl8\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl9\pnlcrm\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}\pard\plain 
@@ -49,71 +49,69 @@ heading 2;}{\*\cs10 \additive Default Paragraph Font;}{\s15\ql \li0\ri0\nowidctl
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {Bankable_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{BNK
 \par act:[ADE]
-\par iid:(\\d+)
-\par eid:(.+)
+\par eid:(\\d+)
 \par com:(\\n(.*\\n)*).
 \par \}
 \par 
 \par }{\i\f2\fs20 act}{\f2\fs20  - Action. [A]dd, [D]elete, [E]dit message. If absent, default action will be addition.
-\par }{\i\f2\fs20 eid}{\f2\fs20  \endash  External ID. A newline terminated string identifier.
-\par }{\i\f2\fs20 iid}{\f2\fs20  \endash  Internal ID. This ID must be unique across the entire file for all messages of the same type. This is the ID used for message \'93links\'94.
+\par }{\i\f2\fs20 eid}{\f2\fs20  \endash  Internal ID. This ID must be unique across the entire file for all messages of the same type. This is the ID used for message \'93links\'94.
 \par }{\i\f2\fs20 com}{\f2\fs20  \endash  Free-from comment.
 \par 
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {ContigLink_t : Bankable_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{CTL
-\par ct1:<iid>
-\par ct2:<iid>
+\par ct1:<eid>
+\par ct2:<eid>
 \par adj:[NAOI]
 \par std:(\\d+)
 \par sze:(-?\\d+)
 \par typ:[XMOPAS]
-\par src:<iid>,<message type>
+\par src:<eid>,<message type>
 \par \}
 \par 
-\par }{\i\f2\fs20 ct1}{\f2\fs20  \endash  First contig in the pair, referenced by its IID.
-\par }{\i\f2\fs20 ct2}{\f2\fs20  \endash  Second contig in the pair, referenced by its IID.
+\par }{\i\f2\fs20 ct1}{\f2\fs20  \endash  First contig in the pair, referenced by its EID.
+\par }{\i\f2\fs20 ct2}{\f2\fs20  \endash  Second contig in the pair, referenced by its EID.
 \par }{\i\f2\fs20 adj}{\f2\fs20  \endash  Contig adjacency. [N]ormal, [A]nti-normal, [I]nnie, [O]utie which are EB, BE, EE, BB adjacencies respectively.
 \par }{\i\f2\fs20 std}{\f2\fs20  \endash  Standard deviation.
 \par }{\i\f2\fs20 sze}{\f2\fs20  \endash  Size of link.
 \par }{\i\f2\fs20 typ}{\f2\fs20  \endash  Type of link. [X]Other, [M]atepair, [O]verlap, [P]hysical, [A]lignment, [S]ynteny.
-\par }{\i\f2\fs20 src}{\f2\fs20  \endash  Source of the link, referenced by its IID and message type, e.g. if the source is a fragment with IID 5, this field would be \'935,FRG\'94.}{
+\par }{\i\f2\fs20 src}{\f2\fs20  \endash  Source of the link, referenced by its EID and message type, e.g. if the source is a fragment with EID 5, this field would be \'935,FRG\'94.}{
 \par }{\f2\fs20 
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {ContigEdge_t : ContigLink_t
 \par }\pard\plain \s15\ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\{CTE
-\par ctl:(\\n(<iid>\\n)*).
+\par ctl:(\\n(<eid>\\n)*).
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \}
 \par 
-\par }{\i\f2\fs20 ctl}{\f2\fs20  \endash  List of bundled contig links, referenced by their IIDs.
+\par }{\i\f2\fs20 ctl}{\f2\fs20  \endash  List of bundled contig links, referenced by their EIDs.
 \par 
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {Fragment_t : Bankable_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{FRG
-\par lib:<iid>
-\par 5pr:<iid>
-\par 3pr:<iid>
+\par lib:<eid>
+\par 5pr:<eid>
+\par 3pr:<eid>
 \par typ:[XITB]
-\par rds:(\\n(<iid>\\n)*).
+\par rds:(\\n(<eid>\\n)*).
 \par \}
 \par 
-\par }{\i\f2\fs20 lib}{\f2\fs20  \endash  Parent library, referenced by its IID.
-\par }{\i\f2\fs20 5pr}{\f2\fs20  \endash  The 5\rquote  end of the fragment, referenced by its Read_t IID.
-\par }{\i\f2\fs20 3pr}{\f2\fs20  \endash  The 3\rquote  end of the fragment, referenced by its Read_t IID.
+\par }{\i\f2\fs20 lib}{\f2\fs20  \endash  Parent library, referenced by its EID.
+\par }{\i\f2\fs20 5pr}{\f2\fs20  \endash  The 5\rquote  end of the fragment, referenced by its Read_t EID.
+\par }{\i\f2\fs20 3pr}{\f2\fs20  \endash  The 3\rquote  end of the fragment, referenced by its Read_t EID.
 \par }{\i\f2\fs20 typ}{\f2\fs20  \endash  Type of fragment. [X]Other, [I]nsert, [T]ransposon, [B]AC.
-\par }{\i\f2\fs20 rds}{\f2\fs20  \endash  List of reads sequenced from this fragment, referenced by their IIDs.
+\par }{\i\f2\fs20 rds}{\f2\fs20  \endash  List of reads sequenced from this fragment, referenced by their EIDs.
 \par 
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {Kmer_t : Bankable_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{KMR
 \par cnt:(\\d+)
 \par seq:(\\n([ACGT]*\\n)*).
-\par rds:(\\n(<iid>\\n)*).
+\par rds:(\\n(<eid>\\n)*).
 \par \}
 \par 
 \par }{\i\f2\fs20 cnt}{\f2\fs20  \endash  Number of occurrences of this Kmer.
 \par }{\i\f2\fs20 seq}{\f2\fs20  \endash  Sequence of this Kmer.
-\par }{\i\f2\fs20 rds}{\f2\fs20  \endash  List of reads that contain this Kmer, referenced by their IIDs.
+\par }{\i\f2\fs20 rds}{\f2\fs20  \endash  List of reads that contain this Kmer, referenced by their EIDs.
 \par 
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {Library_t : Bankable_t
@@ -126,15 +124,15 @@ heading 2;}{\*\cs10 \additive Default Paragraph Font;}{\s15\ql \li0\ri0\nowidctl
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {Overlap_t : Bankable_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{OVL
-\par rd1:<iid>
-\par rd2:<iid>
+\par rd1:<eid>
+\par rd2:<eid>
 \par adj:[NAIO]
 \par ahg:(-?\\d+)
 \par bhg:(-?\\d+)
 \par \}
 \par 
-\par }{\i\f2\fs20 rd1}{\f2\fs20  \endash  First read in the pair, referenced by its IID.
-\par }{\i\f2\fs20 rd2}{\f2\fs20  \endash  Second read in the pair, referenced by its IID.
+\par }{\i\f2\fs20 rd1}{\f2\fs20  \endash  First read in the pair, referenced by its EID.
+\par }{\i\f2\fs20 rd2}{\f2\fs20  \endash  Second read in the pair, referenced by its EID.
 \par }{\i\f2\fs20 adj}{\f2\fs20  \endash  Read adjacency. [N]ormal, [A]nti-normal, [I]nnie, [O]utie which are EB, BE, EE, BB overlaps respectively.
 \par }{\i\f2\fs20 ahg}{\f2\fs20  \endash  Ahang. Length of the non-overlapping portion of the first read.
 \par }{\i\f2\fs20 bhg}{\f2\fs20  \endash  Bhang. Length of the non-overlapping portion of the second read.
@@ -142,12 +140,12 @@ heading 2;}{\*\cs10 \additive Default Paragraph Font;}{\s15\ql \li0\ri0\nowidctl
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {Scaffold_t : Bankable_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{SCF
-\par cte:(\\n(<iid>\\n)*).
+\par cte:(\\n(<eid>\\n)*).
 \par ply:(\\n(.*\\n)*).
 \par <TLE message>*
 \par \}
 \par 
-\par }{\i\f2\fs20 cte}{\f2\fs20  \endash  List of contig edges, referenced by their IIDs.
+\par }{\i\f2\fs20 cte}{\f2\fs20  \endash  List of contig edges, referenced by their EIDs.
 \par }{\i\f2\fs20 ply}{\f2\fs20  \endash  Polymorphism information.
 \par }{\i\f2\fs20 <TLE message>}{\f2\fs20  - Tiling of the underlying contigs with optional consensus. Avoids the loss of haplotype information by allowing different contigs to be \'93on top\'94 of one another in a linear representation of the scaffold.
 \par 
@@ -174,14 +172,14 @@ heading 2;}{\*\cs10 \additive Default Paragraph Font;}{\s15\ql \li0\ri0\nowidctl
 \par 
 \par }\pard\plain \s1\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel0\rin0\lin0\itap0 \i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\b Read_t : Sequence_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{RED
-\par frg:<iid>
+\par frg:<eid>
 \par typ:[XECBW]
 \par clr:(\\d+,\\d+)
 \par vcr:(\\d+,\\d+)
 \par qcr:(\\d+,\\d+)
 \par \}
 \par 
-\par }{\i\f2\fs20 frg}{\f2\fs20  \endash  The parent fragment, referenced by its IID.
+\par }{\i\f2\fs20 frg}{\f2\fs20  \endash  The parent fragment, referenced by its EID.
 \par }{\i\f2\fs20 typ}{\f2\fs20  \endash  Type of read. [X]Other, [E]nd, [C]ontig, [B]AC, [W]alk.
 \par }{\i\f2\fs20 clr}{\f2\fs20  \endash  Clear range.
 \par }{\i\f2\fs20 vcr}{\f2\fs20  \endash  Vector clear range.
@@ -202,13 +200,13 @@ heading 2;}{\*\cs10 \additive Default Paragraph Font;}{\s15\ql \li0\ri0\nowidctl
 \par 
 \par }\pard\plain \s2\ql \li0\ri0\keepn\nowidctlpar\faauto\outlinelevel1\rin0\lin0\itap0 \b\i\f2\fs20\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {Tile_t
 \par }\pard\plain \ql \li0\ri0\nowidctlpar\faauto\rin0\lin0\itap0 \fs24\lang1033\langfe1033\cgrid\langnp1033\langfenp1033 {\f2\fs20 \{TLE
-\par src:<iid>
+\par src:<eid>
 \par off:(-?\\d+)
 \par clr:(\\d+,\\d+)
 \par del:(\\n(-?\\d+\\n)*).
 \par \}
 \par 
-\par }{\i\f2\fs20 src}{\f2\fs20  \endash  Tiled sequence, referenced by its IID. Type of sequence is implied by how this record is nested, e.g. a TLE in a CTG represents a RED, while a TLE in a SCF represents a CTG.
+\par }{\i\f2\fs20 src}{\f2\fs20  \endash  Tiled sequence, referenced by its EID. Type of sequence is implied by how this record is nested, e.g. a TLE in a CTG represents a RED, while a TLE in a SCF represents a CTG.
 \par }{\i\f2\fs20 off}{\f2\fs20  \endash  Offset of the tile from the beginning of the reference.
 \par }{\i\f2\fs20 clr}{\f2\fs20  \endash  Usable range of the tile, relative to the tile\rquote s coordinates.
 \par }{\i\f2\fs20 del}{\f2\fs20  \endash  List of delta encoded gap positions.}{
