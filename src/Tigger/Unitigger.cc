@@ -174,10 +174,12 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
       tile.source = read_tile->id;
 
       if(read_tile->start < read_tile->end) {
+
 	tile.offset = read_tile->start;
 	tile.range = read_tile->range;
 
       } else {
+
 	tile.range = read_tile->range;
 	tile.range.swap();
 	tile.offset = read_tile->end;
@@ -260,7 +262,7 @@ void Unitigger::add_containment() {
       if(c->sg->contains(node)) {
 	count++;
 	c->sg->add_edge(edge);
-	con_node->setHidden(false);
+	con_node->setNodeHidden(false);
 	edge->setHidden(false);
 	edge->setColor("purple");
 	con_node->setColor("purple");
@@ -412,15 +414,21 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 	}
       }
       
+      int count = 0;
       // hide transitive edges
       while(! trans.empty()) {
+	if(! trans.front()->getHidden()) {
+	  count++;
+	}
 	trans.front()->setHidden(true);
 	trans.pop();
       }
+      cout << " edges hidden by trans is " << count << endl;
       
     }
 
   }
+
 
   g->clear_flags();
 }
@@ -440,7 +448,6 @@ void Unitigger::find_chunks() {
   
   graph->clear_flags();
 
-  // loop over all edges to find containment overlaps
   for(INodeIterator nodes = graph->nodes_begin(); nodes != graph->nodes_end(); ++nodes) {
     node = (*nodes).second;
     if((node->getFlags() != 1) && (! node->getHidden())) {
@@ -465,7 +472,8 @@ IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg) {
   IEdge* path;
   int imatch = 0;
   int omatch = 0;
-
+  bool cur = e->getHidden();
+  
   e->setHidden(true);
 
   // loop through all edges, checking if we can walk
@@ -484,7 +492,7 @@ IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg) {
 
   }
 
-  e->setHidden(false);
+  e->setHidden(cur);
 
   if(imatch == 0) {
     sg->add_edge(e);
@@ -663,6 +671,7 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
 	lay_read->start = lay_read->end + len;
       }
 
+
     } else if(olap->type == 'R') {
 
       lay_read->start = set_read->start + ahang;
@@ -735,10 +744,12 @@ void Unitigger::calc_contigs() {
 
   //
   // Step 1. handle containment edges
+  //
   hide_containment((IGraph*) graph);
 
   //
   // Step 2. transitive edges
+  //
   hide_transitive_overlaps((IGraph*) graph);
 
 
@@ -758,6 +769,5 @@ void Unitigger::calc_contigs() {
     layout_contig((*contig_iter));
   }
 
-  if(VERBOSE) cout << " end calc_contigs " << endl;
 }
 

@@ -1,9 +1,5 @@
 /*** includes ***/
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <list>
 #include "SubGraph.hh"
 
 using namespace std;

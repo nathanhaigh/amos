@@ -3,7 +3,6 @@
 
 #include "foundation_AMOS.hh"
 #include <iostream>
-#include <cstdlib>
 
 /**
  * The <b>Read</b> class

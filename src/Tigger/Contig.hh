@@ -1,9 +1,7 @@
 #ifndef CONTIG_HH
 #define CONTIG_HH 1
 
-#include <iostream>
 #include "SubGraph.hh"
-#include "INode.hh"
 
 /**
  * The <b>Contig</b> class

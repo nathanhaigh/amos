@@ -27,9 +27,9 @@ public:
   int ridB;  // B
   bool asuffix;
   bool bsuffix;
-  char ori;
+  char ori;  // I or N
+  char type; // C, R, P, or S
   int ahang, bhang;
-  char type;
 
   void flip() {
     bool tsuffix = asuffix;

@@ -33,10 +33,11 @@ public:
   
   /** <code> g </code> overlap graph */
   Graph* graph;
-  
+
   std::vector<std::string> colors;
   std::vector< Contig* > contigs;
   std::queue< IEdge* > containment;
+  bool VERBOSE;
 
   bool VERBOSE;
 
