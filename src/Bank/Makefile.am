@@ -12,7 +12,9 @@ bin_PROGRAMS = \
 	grow-readbank \
 	load-overlaps \
 	bank2contig  \
-    bank2coverage
+    bank2coverage \
+    updateBankPositions \
+    extractContig
 
 
 ##-- GLOBAL INCLUDE
@@ -58,6 +60,20 @@ bank_transact_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 bank_transact_SOURCES = \
 	bank-transact.cc
+
+##-- updateBankPositions
+updateBankPositions_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+updateBankPositions_SOURCES = \
+	updateBankPositions.cc
+
+##-- extractContig
+extractContig_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+extractContig_SOURCES = \
+	extractContig.cc
 
 ##-- dumpmates
 dumpmates_LDADD = \
