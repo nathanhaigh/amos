@@ -90,7 +90,7 @@ void Fragment_t::readRecord (istream & fix, istream & var)
 
 
 //----------------------------------------------------- setType ----------------
-inline void Fragment_t::setType (FragmentType_t type)
+void Fragment_t::setType (FragmentType_t type)
 {
   switch (type)
     {

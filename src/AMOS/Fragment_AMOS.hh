@@ -209,7 +209,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  inline void setType (FragmentType_t type);
+  void setType (FragmentType_t type);
 
 
   //--------------------------------------------------- writeMessage -----------

@@ -217,7 +217,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  inline void setType (ReadType_t type);
+  void setType (ReadType_t type);
 
 
   //--------------------------------------------------- setVectorClearRange ----

@@ -302,7 +302,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  inline void setType (LinkType_t type);
+  void setType (LinkType_t type);
 
 
   //--------------------------------------------------- writeMessage -----------

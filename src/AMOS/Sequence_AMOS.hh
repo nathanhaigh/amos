@@ -63,7 +63,7 @@ protected:
   //! \param qualchar The quality score character
   //! \return The compressed byte
   //!
-  static inline uint8_t compress (char seqchar, char qualchar)
+  static uint8_t compress (char seqchar, char qualchar)
   {
     //-- Force quality score into its bits
     qualchar -= MIN_QUALITY;
@@ -96,7 +96,7 @@ protected:
   //! \param byte The compressed sequence and quality byte
   //! \return The sequence and quality char respectively
   //!
-  static inline std::pair<char, char> uncompress (uint8_t byte)
+  static std::pair<char, char> uncompress (uint8_t byte)
   {
     std::pair<char, char> retval;
 

@@ -107,7 +107,7 @@ void Read_t::readRecord (istream & fix,
 
 
 //----------------------------------------------------- setType ----------------
-inline void Read_t::setType (ReadType_t type)
+void Read_t::setType (ReadType_t type)
 {
   switch (type)
     {

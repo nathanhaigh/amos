@@ -178,7 +178,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  inline void setType (MateType_t type);
+  void setType (MateType_t type);
 
 
   //--------------------------------------------------- writeMessage -----------

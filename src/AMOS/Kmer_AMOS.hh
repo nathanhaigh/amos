@@ -56,7 +56,7 @@ protected:
   //! \throws ArgumentException_t
   //! \return The compressed 2 bits (in upper two bit positions)
   //!
-  static inline uint8_t compress (char seqchar)
+  static uint8_t compress (char seqchar)
   {
     switch ( toupper(seqchar) )
       {
@@ -79,7 +79,7 @@ protected:
   //! \throws Exception_t
   //! \return The sequence char
   //!
-  static inline char uncompress (uint8_t byte)
+  static char uncompress (uint8_t byte)
   {
     switch ( byte & SEQ_BITS )
       {

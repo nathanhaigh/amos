@@ -183,7 +183,7 @@ void ContigLink_t::setAdjacency (LinkAdjacency_t adj)
 
 
 //------------------------------------------00--------- setType ----------------
-inline void ContigLink_t::setType (LinkType_t type)
+void ContigLink_t::setType (LinkType_t type)
 {
   switch (type)
     {

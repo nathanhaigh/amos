@@ -78,7 +78,7 @@ void Matepair_t::readRecord (istream & fix,
 
 
 //----------------------------------------------------- setType ----------------
-inline void Matepair_t::setType (MateType_t type)
+void Matepair_t::setType (MateType_t type)
 {
   switch (type)
     {
