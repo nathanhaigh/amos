@@ -149,7 +149,7 @@ public:
   //!
   //! \return The vector of child fragment IDs
   //!
-  std::vector<ID_t> & getFragments ( )
+  const std::vector<ID_t> & getFragments ( ) const
   {
     return frags_m;
   }

@@ -136,7 +136,7 @@ public:
   //!
   //! \return A vector of contig link IDs
   //!
-  std::vector<ID_t> & getContigLinks ( )
+  const std::vector<ID_t> & getContigLinks ( ) const
   {
     return links_m;
   }

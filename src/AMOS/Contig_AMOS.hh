@@ -176,7 +176,7 @@ public:
   //!
   //! \return The vector of underlying reads
   //!
-  std::vector<Tile_t> & getReadTiling ( )
+  const std::vector<Tile_t> & getReadTiling ( ) const
   {
     return reads_m;
   }

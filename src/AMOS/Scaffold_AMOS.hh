@@ -137,7 +137,7 @@ public:
   //!
   //! \return The vector of underlying contigs
   //!
-  std::vector<Tile_t> & getContigTiling ( )
+  const std::vector<Tile_t> & getContigTiling ( ) const
   {
     return contigs_m;
   }
@@ -148,7 +148,7 @@ public:
   //!
   //! \return The vector of contig edge IDs
   //!
-  std::vector<ID_t> & getContigEdges ( )
+  const std::vector<ID_t> & getContigEdges ( ) const
   {
     return edges_m;
   }

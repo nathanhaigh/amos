@@ -266,7 +266,7 @@ public:
   //!
   //! \return The vector of read IDs that contain this Kmer
   //!
-  std::vector<ID_t> & getReads ( )
+  const std::vector<ID_t> & getReads ( ) const
   {
     return reads_m;
   }

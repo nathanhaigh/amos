@@ -183,7 +183,7 @@ public:
   //!
   //! \return The vector of child read IDs
   //!
-  std::vector<ID_t> & getReads ( )
+  const std::vector<ID_t> & getReads ( ) const
   {
     return reads_m;
   }
