@@ -1,6 +1,6 @@
 #include "MainWindow.hh"
-#include <qapplication.h>
 
+#include <qapplication.h>
 #include <qpushbutton.h>
 #include <qfont.h>
 #include <qlayout.h>
@@ -12,6 +12,8 @@
 #include <qlabel.h>
 #include <qscrollview.h>
 #include <qlineedit.h>
+#include <qcheckbox.h>
+
 #include "TilingFrame.hh"
 
 MainWindow::MainWindow( QWidget *parent, const char *name )
@@ -24,7 +26,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QPopupMenu* file = new QPopupMenu( menubar );
   Q_CHECK_PTR( file );
   menubar->insertItem( "&File", file );
-  file->insertItem( "&Open", this,  SLOT(openBank()) );
+  file->insertItem( "&Open Bank...", this,  SLOT(openBank()) );
   file->insertItem( "&Quit", qApp,  SLOT(quit()) );
 
   // Statusbar
@@ -37,9 +39,10 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QSpinBox * fontsize = new QSpinBox(6, 24, 1, this, "fontsize");
   m_gindex = new QSpinBox(0,100, 1, this, "gindexspin");
 
-
   QLineEdit * dbpick = new QLineEdit("DMG", this, "dbpick");
   TilingFrame * tiling = new TilingFrame(this, "tilingframe");
+
+  QCheckBox * stable = new QCheckBox("Stable Tiling", this, "stable");
 
   m_slider = new QSlider(Horizontal, this, "slider");
   m_slider->setTracking(0);
@@ -67,6 +70,10 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   // fontsize <-> tiling
   connect(fontsize, SIGNAL(valueChanged(int)), 
           tiling,   SLOT(setFontSize(int)));
+
+  // stable <-> tiling
+  connect(stable, SIGNAL(toggled(bool)),
+          tiling, SLOT(toggleStable(bool)));
 
   // contigid <-> tiling
   connect(m_contigid, SIGNAL(valueChanged(int)),
@@ -135,7 +142,10 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QLabel * fontsize_lbl = new QLabel(fontsize, "Font Size", this, "fontlbl");
   leftgrid->addWidget(fontsize_lbl,9,0);
   leftgrid->addWidget(fontsize, 10,0);
-  leftgrid->setRowStretch(11,10);
+  leftgrid->addRowSpacing(11,10);
+
+  leftgrid->addWidget(stable, 12, 0);
+  leftgrid->setRowStretch(13,10);
 
   //right
   rightgrid->addWidget(tiling, 0, 0);

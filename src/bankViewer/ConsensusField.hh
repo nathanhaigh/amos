@@ -25,6 +25,7 @@ private:
     string & m_consensus;
     int & m_gindex;
     int m_fontsize;
+    bool m_shownumbers;
 
 
 };

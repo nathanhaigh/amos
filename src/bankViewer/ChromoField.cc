@@ -18,7 +18,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
                          const char *name)
   :QWidget(parent, name)
 {
-  setPalette(QPalette(QColor(200, 200, 200)));
+  setPalette(QPalette(QColor(180, 180, 180)));
 
   string readname = read->m_read.getEID();
 
@@ -30,6 +30,12 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   m_render = read;
   m_rawread = read_reading((char *)path.c_str(), TT_ANY);
+  m_pix = NULL;
+
+  if (!m_rawread)
+  {
+    return;
+  }
 
   resize (m_rawread->NPoints+100,160);
 
@@ -117,10 +123,10 @@ ChromoField::ChromoField(RenderSeq_t * read,
     unsigned short * trace = NULL;
     switch (channel)
     {
-      case 0: trace = m_rawread->traceA; pen.setColor(red); break;
-      case 1: trace = m_rawread->traceC; pen.setColor(green); break;
-      case 2: trace = m_rawread->traceG; pen.setColor(blue); break;
-      case 3: trace = m_rawread->traceT; pen.setColor(yellow); break;
+      case 0: trace = m_rawread->traceA; pen.setColor(darkGreen); break;
+      case 1: trace = m_rawread->traceC; pen.setColor(blue); break;
+      case 2: trace = m_rawread->traceG; pen.setColor(yellow); break;
+      case 3: trace = m_rawread->traceT; pen.setColor(red); break;
     };
 
     painter.setPen(pen);
@@ -147,10 +153,11 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
     switch (b)
     {
-      case 'A': pen.setColor(red); break;
-      case 'C': pen.setColor(green); break;
-      case 'G': pen.setColor(blue); break;
-      case 'T': pen.setColor(yellow); break;
+      case 'A': pen.setColor(darkGreen); break;
+      case 'C': pen.setColor(blue); break;
+      case 'G': pen.setColor(yellow); break;
+      case 'T': pen.setColor(red); break;
+      default:  pen.setColor(black); break;
     };
 
     painter.setPen(pen);
@@ -176,7 +183,10 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
 void ChromoField::paintEvent(QPaintEvent * event)
 {
-  QPainter painter(this);
-  painter.drawPixmap(0, 0, *m_pix);
+  if (m_pix)
+  {
+    QPainter painter(this);
+    painter.drawPixmap(0, 0, *m_pix);
+  }
 }
 

@@ -26,6 +26,7 @@ public slots:
     void setDB(const QString & db);
     void trackGindex(int);
     void trackGindexDone();
+    void toggleStable(bool);
 
 signals:
     void gindexChanged( int );

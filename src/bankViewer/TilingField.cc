@@ -21,10 +21,18 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
           m_consensus(consensus),
           m_renderedSeqs(renderedSeqs)
 {
-  m_width=500;
+  m_width=300;
   m_height=100;
+  m_stabletiling = 0;
+
   setMinimumSize(m_width, m_height);
-  setPalette( QPalette( QColor( 200, 200, 200) ) );
+  setPalette(QPalette(QColor( 180, 180, 180)));
+}
+
+void TilingField::toggleStable(bool stable)
+{
+  m_stabletiling = stable;
+  repaint();
 }
 
 
@@ -56,10 +64,18 @@ int imax (int a, int b)
 
 void TilingField::paintEvent( QPaintEvent * )
 {
-  //cerr << "paintTF" << endl;
-  if (m_renderedSeqs.empty()) { return; }
+  // cerr << "paintTField:" << m_renderedSeqs.size() << endl;
+  if (m_renderedSeqs.empty()) { resize(m_width, m_height); return; }
 
-  int height = 10000;
+  int gutter         = 5;
+  int lineheight     = m_fontsize+gutter;
+  int tilehoffset    = m_fontsize*12;
+  int seqnamehoffset = gutter;
+  int rchoffset      = m_fontsize*11;
+
+  int displaywidth = (m_width-tilehoffset)/m_fontsize;
+
+  int height = imax(m_renderedSeqs.size() * lineheight, 10000);
 
   QPixmap pix(m_width, height);
   pix.fill(this, 0,0);
@@ -69,13 +85,6 @@ void TilingField::paintEvent( QPaintEvent * )
   pen.setColor(black);
   p.setPen(pen);
 
-  int lineheight  = m_fontsize+5;
-  int tilehoffset = m_fontsize*10;
-  int seqnamehoffset = 10;
-  int rchoffset = m_fontsize*8;
-
-  int displaywidth = (m_width-tilehoffset)/m_fontsize;
-
   p.setFont(QFont("Helvetica", m_fontsize));
 
   Pos_t grangeStart = m_gindex;
@@ -83,67 +92,82 @@ void TilingField::paintEvent( QPaintEvent * )
 
   // Figure out which reads tile this range
   vector<RenderSeq_t>::iterator ri;
-  int dcov = 1;
+  int dcov = 0;
   
   int clen = m_consensus.size();
 
   m_currentReads.clear();
+  QString s;
 
   for (ri =  m_renderedSeqs.begin();
        ri != m_renderedSeqs.end(); 
        ri++)
   {
-    if (RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
-                                ri->m_offset, ri->m_nucs.size(), 
-                                clen))
+    int hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+                                             ri->m_offset, ri->m_nucs.size(), 
+                                             clen);
+
+    if (hasOverlap || m_stabletiling)
     {
       pen.setColor(black);
       p.setPen(pen);
+      p.setBrush(black);
       p.setBrush(Qt::SolidPattern);
 
-//      QString s = QString::number(ri->m_vectorpos);
-      QString s = ri->m_read.getEID().c_str();
-
+      // Draw RC Flag
       QPointArray a(3);
+      int tridim = m_fontsize/2;
+      int trioffset = m_fontsize/3;
       if (ri->m_rc)
       {
-        a[0]=QPoint(rchoffset+5,lineheight*dcov-2);
-        a[1]=QPoint(rchoffset+5,lineheight*dcov-8);
-        a[2]=QPoint(rchoffset,lineheight*dcov-5);
+        a[0]=QPoint(rchoffset+tridim, lineheight*dcov+trioffset);
+        a[1]=QPoint(rchoffset+tridim, lineheight*dcov+trioffset+tridim);
+        a[2]=QPoint(rchoffset,        lineheight*dcov+trioffset+tridim/2);
       }
       else
       {
-        a[0]=QPoint(rchoffset,lineheight*dcov-2);
-        a[1]=QPoint(rchoffset,lineheight*dcov-8);
-        a[2]=QPoint(rchoffset+5,lineheight*dcov-5);
+        a[0]=QPoint(rchoffset,        lineheight*dcov+trioffset);
+        a[1]=QPoint(rchoffset,        lineheight*dcov+trioffset+tridim);
+        a[2]=QPoint(rchoffset+tridim, lineheight*dcov+trioffset+tridim/2);
       }
-
       p.drawPolygon(a);
-      p.drawText(seqnamehoffset, lineheight*dcov, s);
 
-      s = "";
-      for (int j = grangeStart; j <= grangeEnd; j++)
+      // Seqname
+      QString s = ri->m_read.getEID().c_str();
+      //s = QString::number(ri->m_vectorpos) + " " + s;
+      p.drawText(seqnamehoffset, lineheight*dcov,
+                 rchoffset-seqnamehoffset, m_fontsize+gutter,
+                 Qt::AlignLeft | Qt::AlignBottom, s);
+
+      p.drawLine(0,       lineheight*dcov+m_fontsize+gutter, 
+                 m_width, lineheight*dcov+m_fontsize+gutter);
+      
+      // Bases
+      if (hasOverlap)
       {
-        char b = ri->base(j);
-
-        switch (b)
+        for (int j = grangeStart; j <= grangeEnd; j++)
         {
-          case 'A': pen.setColor(red); break;
-          case 'C': pen.setColor(green); break;
-          case 'G': pen.setColor(blue); break;
-          case 'T': pen.setColor(yellow); break;
-          default: pen.setColor(black); break;
-        };
+          char b = ri->base(j);
 
-        p.setPen(pen);
+          switch (b)
+          {
+            case 'A': pen.setColor(darkGreen); break;
+            case 'C': pen.setColor(blue); break;
+            case 'G': pen.setColor(yellow); break;
+            case 'T': pen.setColor(red); break;
+            default:  pen.setColor(black); break;
+          };
 
-        QString s;
-        s+= b;
-        p.drawText (tilehoffset + (j-grangeStart)*m_fontsize, lineheight*dcov, s);
+          p.setPen(pen);
+
+          s = b;
+          p.drawText(tilehoffset + (j-grangeStart)*m_fontsize, lineheight*dcov, 
+                     m_fontsize, m_fontsize+gutter, 
+                     Qt::AlignHCenter | Qt::AlignBottom, s);
+        }
       }
 
       dcov++;
-
       m_currentReads.push_back(ri);
     }
   }
@@ -152,6 +176,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
   p.end();
   p.begin(this);
+
   pix.resize(m_width, height);
   p.drawPixmap(0, 0, pix);
   resize(m_width, imax(height, m_height));
@@ -160,7 +185,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
 QSizePolicy TilingField::sizePolicy() const
 {
-    return QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+  return QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 void TilingField::setSize(int width, int height)

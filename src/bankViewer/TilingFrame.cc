@@ -20,8 +20,7 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
   m_db = "DMG";
   m_sv = new QScrollView(this, "tilingscroll");
   m_sv->setHScrollBarMode(QScrollView::AlwaysOff);
-  //m_sv->setVScrollBarMode(QScrollView::AlwaysOn);
-
+  
   m_tilingfield = new TilingField(m_renderedSeqs,
                                   m_consensus,
                                   m_db,
@@ -69,11 +68,12 @@ void TilingFrame::setContigId(int contigId)
 
       m_tiling = contig.getReadTiling();
       m_consensus = contig.getSeqString();
+      m_renderedSeqs.clear();
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
 
       // Render the aligned sequences
-      int vectorpos;
+      int vectorpos = 0;
       vector<Tile_t>::iterator vi;
 
       for (vi =  m_tiling.begin(), vectorpos = 0;
@@ -81,9 +81,11 @@ void TilingFrame::setContigId(int contigId)
            vi++, vectorpos++)
       {
         RenderSeq_t rendered(vectorpos);
+        rendered.load(read_bank, vi);
         m_renderedSeqs.push_back(rendered);
-        m_renderedSeqs[vectorpos].load(read_bank, vi);
       }
+
+      cerr << "renderedSeqs: " << m_renderedSeqs.size() << endl;
 
       emit setGindexRange(0, (int)m_consensus.size()-1);
       emit contigLoaded(contigId);
@@ -171,9 +173,16 @@ void TilingFrame::trackGindex(int gindex)
 {
   m_gindex = gindex;
   m_consfield->repaint();
+  emit gindexChanged( m_gindex );
 }
 
 void TilingFrame::trackGindexDone()
 {
   repaint();
+}
+
+void TilingFrame::toggleStable(bool stable)
+{
+  cerr << "frame::toggle " << (stable ? "true" : "false") << endl;
+  m_tilingfield->toggleStable(stable);
 }

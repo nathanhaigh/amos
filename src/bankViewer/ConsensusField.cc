@@ -17,20 +17,29 @@ ConsensusField::ConsensusField(string & cons,
     m_consensus(cons),
     m_gindex(gindex)
 {
+  m_shownumbers = 1;
   setFontSize(12);
-  setPalette(QPalette(QColor(180, 180, 180)));
+  setPalette(QPalette(QColor(160, 160, 160)));
 }
 
 void ConsensusField::setFontSize(int fontsize)
 {
   m_fontsize=fontsize;
   int lineheight  = m_fontsize+5;
-  setMinimumHeight(lineheight*2+2); // 2 lineheight + 2
+
+  if (m_shownumbers) { setMinimumHeight(3*lineheight+2); }
+  else               { setMinimumHeight(2*lineheight+2); }
 }
 
 void ConsensusField::paintEvent(QPaintEvent * event)
 {
-  if (m_consensus.empty()) { cerr << "nocons" << endl; return; }
+  if (m_consensus.empty()) 
+  { 
+
+    QPainter p (this);
+    p.drawText(20, m_fontsize+m_fontsize/2, "No Contig Loaded");
+    return;
+  }
 
   QPixmap pix(width(), height());
   pix.fill(this, 0,0);
@@ -40,9 +49,12 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   pen.setColor(black);
   p.setPen(pen);
 
-  int lineheight  = m_fontsize+5;
-  int tilehoffset = m_fontsize*10+2;
-  int seqnamehoffset = 10+2;
+  int gutter         = 5;
+  int framegutter    = 2;
+  int lineheight     = m_fontsize + gutter;
+  int tilehoffset    = m_fontsize*12 + framegutter;
+  int seqnamehoffset = gutter + framegutter;
+  int extraheight    = 3;
 
   int width = this->width();
   int displaywidth = (width-tilehoffset)/m_fontsize;
@@ -56,12 +68,14 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   QString cname = "Consensus";
   QString pname = "Position";
 
-  int consoffset = lineheight*2;
-  int posoffset = lineheight*2;
+  int consoffset = lineheight;
+  int posoffset  = lineheight;
   int lineoffset = lineheight;
 
- // p.drawText(seqnamehoffset, posoffset, pname);
-  p.drawText(seqnamehoffset, consoffset, cname);
+  if (m_shownumbers) { p.drawText(seqnamehoffset, posoffset+lineheight, pname); }
+
+  if (m_shownumbers) { consoffset = 2*lineheight; }
+  p.drawText(seqnamehoffset, consoffset+lineheight, cname);
 
   //x-axis
   p.drawLine(tilehoffset, lineoffset, 
@@ -71,6 +85,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
   QString pos;
   QString cons;
+  QString s; 
+
   for (int j = grangeStart; j <= grangeEnd; j++)
   {
     p.setFont(QFont("Helvetica", m_fontsize));
@@ -78,38 +94,53 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
     switch (b)
     {
-      case 'A': pen.setColor(red); break;
-      case 'C': pen.setColor(green); break;
-      case 'G': pen.setColor(blue); break;
-      case 'T': pen.setColor(yellow); break;
-      default: pen.setColor(black); break;
+      case 'A': pen.setColor(darkGreen); break;
+      case 'C': pen.setColor(blue); break;
+      case 'G': pen.setColor(yellow); break;
+      case 'T': pen.setColor(red); break;
+      default:  pen.setColor(black); break;
     };
 
     p.setPen(pen);
     int xcoord = tilehoffset + (j-grangeStart)*m_fontsize;
 
-    QString s;
-    s+= b;
-    p.drawText(xcoord, consoffset, s);
+    s = b;
+    p.drawText(xcoord, consoffset, 
+               m_fontsize, m_fontsize+gutter+extraheight, 
+               Qt::AlignHCenter | Qt::AlignBottom, s);
 
-    // Numbers
-    int n = j%10;
-    s = QString::number(n);
     pen.setColor(black);
     p.setPen(pen);
-    //p.drawText(xcoord, posoffset, s);
 
+    int n = j%10;
+
+    if (m_shownumbers)
+    {
+      // Numbers
+      s = QString::number(n);
+      p.drawText(xcoord, posoffset, 
+                 m_fontsize, m_fontsize+gutter+extraheight, 
+                 Qt::AlignHCenter | Qt::AlignBottom, s);
+    }
+
+    // ticks and labels
     if (n==0)
     {
-      int scaledfont = m_fontsize*.75;
+      int scaledfont = (int)(m_fontsize*.75);
       p.setFont(QFont("Helvetica", scaledfont));
       QString spos = QString::number(j);
-      p.drawLine(xcoord+m_fontsize/3, lineoffset-5, xcoord+m_fontsize/3, lineoffset+5);
-      p.drawText(xcoord+m_fontsize/3-20, lineoffset-5-m_fontsize,40,scaledfont, Qt::AlignHCenter, spos);
+
+      p.drawLine(xcoord+m_fontsize/2, lineoffset-5, 
+                 xcoord+m_fontsize/2, lineoffset+5);
+
+      p.drawText(xcoord+m_fontsize/2-30, lineoffset-5-m_fontsize,
+                 60, m_fontsize, 
+                 Qt::AlignHCenter, spos);
     }
     else if (n==5)
     {
-      p.drawLine(xcoord+m_fontsize/3, lineoffset-2, xcoord+m_fontsize/3, lineoffset+2);
+      p.drawLine(xcoord+m_fontsize/2, lineoffset-2, 
+                 xcoord+m_fontsize/2, lineoffset+2);
     }
   }
 

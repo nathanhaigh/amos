@@ -20,6 +20,9 @@ public:
     void mouseDoubleClickEvent(QMouseEvent * event);
     void setSize(int width, int height);
 
+public slots:
+    void toggleStable(bool);
+
 protected:
     void paintEvent( QPaintEvent * );
 
@@ -29,6 +32,7 @@ private:
     
     int m_height;
     int m_width;
+    int m_stabletiling;
 
     string & m_db;
     string & m_consensus;
