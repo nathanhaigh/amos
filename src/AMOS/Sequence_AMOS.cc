@@ -11,6 +11,7 @@
 using namespace AMOS;
 using namespace Message_k;
 using namespace std;
+#define CHARS_PER_LINE 70
 
 
 
@@ -170,10 +171,10 @@ void Sequence_t::setSequence (const char * seq,
   length_m = 0;
   for ( Pos_t i = 0; i < length; i ++ )
     {
-      if ( seq[i] == '\n' )
-	continue;
-      if ( qual[i] == '\n' )
-	AMOS_THROW_ARGUMENT ("Invalid newline found in quality data");
+      if ( seq [i] == '\n'  &&  qual [i] == '\n' )
+	  continue;
+      else if ( seq [i] == '\n'  ||  qual [i] == '\n' )
+	AMOS_THROW_ARGUMENT ("Invalid newline found in seq and qlt data");
 
       length_m ++;
       setBase (seq [i], qual [i], length_m - 1);
@@ -205,10 +206,10 @@ void Sequence_t::setSequence (const string & seq,
   length_m = 0;
   for ( Pos_t i = 0; i < length; i ++ )
     {
-      if ( seq[i] == '\n' )
-	continue;
-      if ( qual[i] == '\n' )
-	AMOS_THROW_ARGUMENT ("Invalid newline found in quality data");
+      if ( seq [i] == '\n'  &&  qual [i] == '\n' )
+	  continue;
+      else if ( seq [i] == '\n'  ||  qual [i] == '\n' )
+	AMOS_THROW_ARGUMENT ("Invalid newline found in seq and qlt data");
 
       length_m ++;
       setBase (seq [i], qual [i], length_m - 1);
@@ -250,19 +251,34 @@ void Sequence_t::writeMessage (Message_t & msg) const
   Universal_t::writeMessage (msg);
 
   try {
-    stringstream ss;
+    pair<char, char> cp;
+    Pos_t i, j, last;
+    string seq;
+    string qlt;
+    seq . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
+    qlt . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
 
     msg . setMessageCode (NCode( ));
 
     if ( length_m != 0 )
       {
-	WrapString (ss, getSeqString( ), 70);
-	msg . setField (F_SEQUENCE, ss . str( ));
-	ss . str("");
-
-	WrapString (ss, getQualString( ), 70);
-	msg . setField (F_QUALITY, ss . str( ));
-	ss . str("");
+	for ( i = 0; i < length_m; i += CHARS_PER_LINE )
+	  {
+	    last = i + CHARS_PER_LINE;
+	    if ( length_m < last )
+	      last = length_m;
+	    for ( j = i; j < last; j ++ )
+	      {
+		cp = getBase (j);
+		seq += cp . first;
+		qlt += cp . second;
+	      }
+	    seq += '\n';
+	    qlt += '\n';
+	  }
+	
+	msg . setField (F_SEQUENCE, seq);
+	msg . setField (F_QUALITY, qlt);
       }
   }
   catch (ArgumentException_t) {
@@ -270,7 +286,6 @@ void Sequence_t::writeMessage (Message_t & msg) const
     msg . clear( );
     throw;
   }
-
 }
 
 

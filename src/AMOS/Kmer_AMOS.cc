@@ -187,11 +187,7 @@ void Kmer_t::writeMessage (Message_t & msg) const
     ss . str("");
 
     if ( length_m != 0 )
-      {
-	WrapString (ss, getSeqString( ), 70);
-	msg . setField (F_SEQUENCE, ss . str( ));
-	ss . str("");
-      }
+      msg . setField (F_SEQUENCE, getSeqString( ));
 
     if ( reads_m . size( ) != 0 )
       {

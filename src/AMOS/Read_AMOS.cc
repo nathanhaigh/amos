@@ -177,9 +177,9 @@ ostream & AMOS::operator<< (ostream & out, Read_t & read)
   out << "#clear:" << read.getClearRange( ).begin << ","
       << read.getClearRange( ).end << endl;
   out << "#sequence:" << endl;
-  WrapString (out, read.getSeqString( ), 60);
+  WrapString (out, read.getSeqString( ), 70);
   out << "#quality:" << endl;
-  WrapString (out, read.getQualString( ), 60);
+  WrapString (out, read.getQualString( ), 70);
   
   return out;
 }
