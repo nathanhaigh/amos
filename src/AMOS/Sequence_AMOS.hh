@@ -438,7 +438,7 @@ public:
   //--------------------------------------------------- operator= --------------
   //! \brief Assignment (copy) operator
   //!
-  //! Efficiently copies the compressed data from the another Sequence_t.
+  //! Efficiently copies the compressed data from the other Sequence_t.
   //!
   //! \param source The sequence to copy
   //! \return The resulting Sequence_t object
