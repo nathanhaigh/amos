@@ -3,7 +3,7 @@
 using namespace AMOS;
 using namespace std;
 
-const int MAXTRANSPOSONDIST = 300;
+const int MAXTRANSPOSONDIST = 100;
 const int MIN3PRIMETRIM = 250;
 
 
