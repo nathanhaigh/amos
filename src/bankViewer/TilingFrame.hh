@@ -28,6 +28,7 @@ public slots:
     void trackGindexDone();
     void toggleStable(bool);
     void toggleShowNumbers(bool);
+    void toggleHighlightDiscrepancy(bool);
 
 signals:
     void gindexChanged( int );
@@ -37,6 +38,7 @@ signals:
     void setStatus(const QString &);
     void fontSizeChanged(int);
     void setShowNumbers(bool);
+    void setHighlightDiscrepancy(bool);
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -53,6 +55,7 @@ private:
     string m_bankname;
     std::vector<AMOS::Tile_t> m_tiling;
     string m_consensus;
+    string m_cstatus;
     AMOS::Bank_t read_bank;
     AMOS::Bank_t contig_bank;
     std::vector<RenderSeq_t> m_renderedSeqs;

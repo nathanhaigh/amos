@@ -9,8 +9,9 @@ class TilingField : public QWidget
     Q_OBJECT
 public:
     TilingField(vector<RenderSeq_t> & renderedSeqs,
-                string & consensus,
-                string & db,
+                const string & consensus,
+                const string & cstatus,
+                const string & db,
                 int & gindex,
                 int & fontsize,
                 QWidget *parent=0, 
@@ -22,6 +23,7 @@ public:
 
 public slots:
     void toggleStable(bool);
+    void toggleHighlightDiscrepancy(bool);
 
 protected:
     void paintEvent( QPaintEvent * );
@@ -34,11 +36,13 @@ private:
     int m_width;
     int m_stabletiling;
 
-    string & m_db;
-    string & m_consensus;
+    const string & m_db;
+    const string & m_consensus;
+    const string & m_cstatus;
+
+    bool m_highlightdiscrepancy;
 
     vector<RenderSeq_t> & m_renderedSeqs;
-
     vector<RenderSeq_t *> m_currentReads;
 };
 

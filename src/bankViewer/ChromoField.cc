@@ -7,13 +7,14 @@
 #include <qpixmap.h>
 
 #include <stdio.h>
+#include "UIElements.hh"
 
 
 
 
 ChromoField::ChromoField(RenderSeq_t * read, 
-                         string & db, 
-                         string & cons,
+                         const string & db, 
+                         const string & cons,
                          QWidget *parent, 
                          const char *name)
   :QWidget(parent, name)
@@ -119,14 +120,13 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   for (int channel = 0; channel < 4; channel++)
   {
-
     unsigned short * trace = NULL;
     switch (channel)
     {
-      case 0: trace = m_rawread->traceA; pen.setColor(darkGreen); break;
-      case 1: trace = m_rawread->traceC; pen.setColor(blue); break;
-      case 2: trace = m_rawread->traceG; pen.setColor(yellow); break;
-      case 3: trace = m_rawread->traceT; pen.setColor(red); break;
+      case 0: trace = m_rawread->traceA; UIElements::setBasePen(pen, 'A'); break;
+      case 1: trace = m_rawread->traceC; UIElements::setBasePen(pen, 'C'); break;
+      case 2: trace = m_rawread->traceG; UIElements::setBasePen(pen, 'G'); break;
+      case 3: trace = m_rawread->traceT; UIElements::setBasePen(pen, 'T'); break;
     };
 
     painter.setPen(pen);
@@ -150,16 +150,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
   for (i = 0; i < pos.size(); i++)
   {
     char b = bases[i];
-
-    switch (b)
-    {
-      case 'A': pen.setColor(darkGreen); break;
-      case 'C': pen.setColor(blue); break;
-      case 'G': pen.setColor(yellow); break;
-      case 'T': pen.setColor(red); break;
-      default:  pen.setColor(black); break;
-    };
-
+    UIElements::setBasePen(pen, b);
     painter.setPen(pen);
 
     QString s;

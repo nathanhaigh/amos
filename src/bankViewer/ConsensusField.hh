@@ -9,7 +9,8 @@ class ConsensusField : public QFrame
   Q_OBJECT
 
 public:
-    ConsensusField(string & cons,
+    ConsensusField(const string & consensus,
+                   const string & cstatsus,
                    int & gindex,
                    QWidget *parent=0,
                    const char *name=0);
@@ -18,17 +19,29 @@ public:
 public slots:
     void setFontSize(int fontsize);
     void setShowNumbers(bool doShow);
+    void toggleHighlightDiscrepancy(bool doShow);
 
 protected:
     void paintEvent(QPaintEvent *);
 
 private:
-    string & m_consensus;
+    const string & m_consensus;
+    const string & m_cstatus;
     int & m_gindex;
     int m_fontsize;
     bool m_shownumbers;
+    bool m_highlightdiscrepancy;
 
-
+    int m_lineheight;
+    int m_tilehoffset;
+    int m_seqnamehoffset;
+    int m_basewidth;
+    int m_basespace;
+    int m_diam;
+    int m_lineoffset;
+    int m_posoffset;
+    int m_discoffset;
+    int m_consoffset;
 };
 
 #endif

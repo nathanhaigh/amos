@@ -5,8 +5,8 @@
 #include "ChromoField.hh"
 
 ReadInfo::ReadInfo(RenderSeq_t * read, 
-                   string & db, 
-                   string & cons,
+                   const string & db, 
+                   const string & cons,
                    QWidget*parent, 
                    const char * name)
   : QDialog(parent, name)

@@ -23,6 +23,7 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
   
   m_tilingfield = new TilingField(m_renderedSeqs,
                                   m_consensus,
+                                  m_cstatus,
                                   m_db,
                                   m_gindex,
                                   m_fontsize,
@@ -30,11 +31,10 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
                                   "tiling" );
 
   m_sv->addChild(m_tilingfield);
-  m_consfield = new ConsensusField(m_consensus, m_gindex, this, "cons");
-  m_consfield->setFrameStyle(m_sv->frameStyle());
-  m_consfield->setLineWidth(m_sv->lineWidth());
-  m_consfield->setMidLineWidth(m_sv->midLineWidth());
-  m_consfield->setBackgroundMode(m_sv->backgroundMode());
+  m_sv->setPaletteBackgroundColor(QColor(170,170,170));
+
+  m_consfield = new ConsensusField(m_consensus, m_cstatus,
+                                   m_gindex, this, "cons");
 
   QGridLayout * layout = new QGridLayout(this, 2, 1);
   layout->addWidget(m_consfield, 0,0);
@@ -46,6 +46,17 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
 
   connect(this,        SIGNAL(setShowNumbers(bool)),
           m_consfield, SLOT(setShowNumbers(bool)));
+
+  connect(this,          SIGNAL(setHighlightDiscrepancy(bool)),
+          m_consfield,   SLOT(toggleHighlightDiscrepancy(bool)));
+
+  connect(this,          SIGNAL(setHighlightDiscrepancy(bool)),
+          m_tilingfield, SLOT(toggleHighlightDiscrepancy(bool)));
+}
+
+void TilingFrame::toggleHighlightDiscrepancy(bool show)
+{
+  emit setHighlightDiscrepancy(show);
 }
 
 void TilingFrame::toggleShowNumbers(bool doShow)
@@ -76,6 +87,9 @@ void TilingFrame::setContigId(int contigId)
 
       m_tiling = contig.getReadTiling();
       m_consensus = contig.getSeqString();
+
+      m_cstatus.clear();
+      m_cstatus.resize(m_consensus.size(), ' ');
       m_renderedSeqs.clear();
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
@@ -91,9 +105,13 @@ void TilingFrame::setContigId(int contigId)
         RenderSeq_t rendered(vectorpos);
         rendered.load(read_bank, vi);
         m_renderedSeqs.push_back(rendered);
-      }
 
-      cerr << "renderedSeqs: " << m_renderedSeqs.size() << endl;
+        for (int j = rendered.m_offset; j < rendered.m_offset + rendered.m_nucs.size(); j++)
+        {
+          if      (m_cstatus[j] == ' ')              { m_cstatus[j] = rendered.base(j); }
+          else if (m_cstatus[j] != rendered.base(j)) { m_cstatus[j] = 'X'; }
+        }
+      }
 
       emit setGindexRange(0, (int)m_consensus.size()-1);
       emit contigLoaded(contigId);
@@ -147,21 +165,19 @@ void TilingFrame::setFontSize(int fontsize )
   if (fontsize == m_fontsize) { return; }
   m_fontsize = fontsize;
 
-  int tilehoffset=m_fontsize*10;
-  int width = this->width();
-  m_displaywidth = (width-tilehoffset)/m_fontsize;
-
-  repaint();
   emit fontSizeChanged(m_fontsize);
+  repaint();
 }
 
 void TilingFrame::setGindex( int gindex )
 {
   if (!m_loaded) { return; }
 
+  int basespace = 5;
+  int basewidth = m_fontsize + basespace;
   int tilehoffset = m_fontsize*10;
   int width = this->width();
-  m_displaywidth = (width-tilehoffset)/m_fontsize;
+  m_displaywidth = (width-tilehoffset)/basewidth;
 
   gindex = min(gindex, m_consensus.size()-m_displaywidth);
 

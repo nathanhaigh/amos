@@ -4,6 +4,7 @@
 #include "ReadInfo.hh"
 #include <qstring.h>
 #include <qpointarray.h>
+#include "UIElements.hh"
 
 int imin (int a, int b)
 {
@@ -18,8 +19,9 @@ using namespace AMOS;
 using namespace std;
 
 TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
-                         string & consensus,
-                         string & db,
+                         const string & consensus,
+                         const string & cstatus,
+                         const string & db,
                          int & gindex,
                          int & fontsize,
                          QWidget *parent, const char *name )
@@ -28,11 +30,13 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
           m_gindex(gindex),
           m_db(db),
           m_consensus(consensus),
+          m_cstatus(cstatus),
           m_renderedSeqs(renderedSeqs)
 {
   m_width=600;
-  m_height=198;
+  m_height=0;
   m_stabletiling = 0;
+  m_highlightdiscrepancy = 0;
 
   setMinimumSize(m_width, m_height);
   setPalette(QPalette(QColor(170, 170, 170)));
@@ -69,13 +73,15 @@ void TilingField::paintEvent( QPaintEvent * )
   // cerr << "paintTField:" << m_renderedSeqs.size() << endl;
   if (m_renderedSeqs.empty()) { resize(m_width, m_height); return; }
 
+  int basespace      = 5;
   int gutter         = m_fontsize/2;
   int lineheight     = m_fontsize+gutter;
   int tilehoffset    = m_fontsize*12;
   int seqnamehoffset = gutter;
   int rchoffset      = m_fontsize*11;
+  int basewidth      = m_fontsize+basespace;
 
-  int displaywidth = (m_width-tilehoffset)/m_fontsize;
+  int displaywidth = (m_width-tilehoffset)/basewidth;
 
   int height = imax(m_renderedSeqs.size() * lineheight, 10000);
 
@@ -157,20 +163,11 @@ void TilingField::paintEvent( QPaintEvent * )
         for (int j = grangeStart; j <= grangeEnd; j++)
         {
           char b = ri->base(j);
-
-          switch (b)
-          {
-            case 'A': pen.setColor(darkGreen); break;
-            case 'C': pen.setColor(blue); break;
-            case 'G': pen.setColor(yellow); break;
-            case 'T': pen.setColor(red); break;
-            default:  pen.setColor(black); break;
-          };
-
+          UIElements::setBasePen(pen, b);
           p.setPen(pen);
-
           s = b;
-          p.drawText(tilehoffset + (j-grangeStart)*m_fontsize, ldcov, 
+
+          p.drawText(tilehoffset + (j-grangeStart)*basewidth, ldcov, 
                      m_fontsize, lineheight,
                      Qt::AlignHCenter | Qt::AlignBottom, s);
         }
@@ -182,12 +179,28 @@ void TilingField::paintEvent( QPaintEvent * )
     }
   }
 
+  if (m_highlightdiscrepancy)
+  {
+    for (int j = grangeStart; j <= grangeEnd; j++)
+    {
+      int q = j-grangeStart;
+      if (m_cstatus[j] == 'X')
+      {
+        p.setBrush(Qt::NoBrush);
+        p.setPen(UIElements::color_discrepancy);
+        p.drawRect(tilehoffset + q*basewidth, 0,
+                   m_fontsize, ldcov);
+      }
+    }
+  }
+
   p.end();
   p.begin(this);
 
   pix.resize(m_width, ldcov);
   p.drawPixmap(0, 0, pix);
-  resize(m_width, imax(ldcov, m_height));
+//  resize(m_width, imax(ldcov, m_height));
+  resize(m_width, ldcov);
 }
 
 
@@ -200,4 +213,10 @@ void TilingField::setSize(int width, int height)
 {
   m_width = width;
   m_height = height;
+}
+
+void TilingField::toggleHighlightDiscrepancy(bool show)
+{
+  m_highlightdiscrepancy = show;
+  repaint();
 }

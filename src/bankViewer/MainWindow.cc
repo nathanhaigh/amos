@@ -36,14 +36,22 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   // Widgets
   m_contigid = new QSpinBox(1, 1, 1, this, "contigid");
-  QSpinBox * fontsize = new QSpinBox(6, 24, 1, this, "fontsize");
-  m_gindex = new QSpinBox(0,100, 1, this, "gindexspin");
+  m_gindex   = new QSpinBox(0,100, 1, this, "gindexspin");
 
-  QLineEdit * dbpick = new QLineEdit("DMG", this, "dbpick");
+  QSpinBox * fontsize  = new QSpinBox(6, 24, 1, this, "fontsize");
+  QLineEdit * dbpick   = new QLineEdit("DMG", this, "dbpick");
   TilingFrame * tiling = new TilingFrame(this, "tilingframe");
 
-  QCheckBox * stable = new QCheckBox("Stable Tiling", this, "stable");
-  QCheckBox * shownumbers = new QCheckBox("Show Position", this, "consnumbers");
+  QCheckBox * stable       = new QCheckBox("Stable Tiling", this, "stable");
+  QCheckBox * shownumbers  = new QCheckBox("Show Position", this, "consnumbers");
+  QCheckBox * hldisc       = new QCheckBox("Highlight", this, "highlightconflicts");
+
+  QLabel * contig_lbl   = new QLabel(m_contigid, "Contig ID", this, "contiglbl");
+  QLabel * db_lbl       = new QLabel(dbpick, "Database", this, "dblbl");
+  QLabel * gindex_lbl   = new QLabel(m_gindex, "Position", this, "gindexlbl");
+  QLabel * fontsize_lbl = new QLabel(fontsize, "Font Size", this, "fontlbl");
+
+  int gutter = 5;
 
   m_slider = new QSlider(Horizontal, this, "slider");
   m_slider->setTracking(0);
@@ -77,6 +85,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
           tiling, SLOT(toggleStable(bool)));
   connect(shownumbers, SIGNAL(toggled(bool)),
           tiling, SLOT(toggleShowNumbers(bool)));
+  connect(hldisc, SIGNAL(toggled(bool)),
+          tiling, SLOT(toggleHighlightDiscrepancy(bool)));
 
   // contigid <-> tiling
   connect(m_contigid, SIGNAL(valueChanged(int)),
@@ -109,52 +119,53 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(dbpick, SIGNAL(textChanged(const QString &)),
           tiling, SLOT(setDB(const QString &)));
 
-  QGridLayout *outergrid = new QGridLayout(NULL, 1, 2, 10, -1, "outerg"); // 1 row, 2 col
   
   // outmost
+  QBoxLayout * outergrid = new QHBoxLayout(0);
   QVBoxLayout* vbox = new QVBoxLayout(this);
   vbox->setMenuBar(menubar);
   menubar->setSeparator(QMenuBar::InWindowsStyle);
   vbox->addLayout(outergrid);
+  vbox->addSpacing(gutter);
   vbox->addWidget(statusbar);
   vbox->activate();
   
   // outer
-  QGridLayout *leftgrid = new QGridLayout(NULL, 15, 1, 1, -1, "leftg");
-  QGridLayout *rightgrid = new QGridLayout(NULL, 2, 1, 10, -1, "rightg");
-  outergrid->addMultiCellLayout(leftgrid, 0, 0, 0, 0);
-  outergrid->addMultiCellLayout(rightgrid, 0, 0, 1, 1);
-  outergrid->setColStretch( 1, 10 );
+  QBoxLayout * leftgrid  = new QVBoxLayout(0);
+  QBoxLayout * rightgrid = new QVBoxLayout(0);
+ 
+  outergrid->addSpacing(gutter);
+  outergrid->addLayout(leftgrid);
+  outergrid->addSpacing(gutter);
+
+  outergrid->addLayout(rightgrid, 10);
 
   //left
-  QLabel * db_lbl = new QLabel(dbpick, "Database", this, "dblbl");
-  leftgrid->addWidget(db_lbl,0,0);
-  leftgrid->addWidget(dbpick,1,0);
-  leftgrid->addRowSpacing(2,10);
+  leftgrid->addSpacing(gutter);
+  leftgrid->addWidget(db_lbl);
+  leftgrid->addWidget(dbpick);
+  leftgrid->addSpacing(gutter);
 
-  QLabel * contig_lbl = new QLabel(m_contigid, "Contig ID", this, "contiglbl");
-  leftgrid->addWidget(contig_lbl,3,0);
-  leftgrid->addWidget(m_contigid,4,0);
-  leftgrid->addRowSpacing(5,10);
+  leftgrid->addWidget(contig_lbl);
+  leftgrid->addWidget(m_contigid);
+  leftgrid->addSpacing(gutter);
 
-  QLabel * gindex_lbl = new QLabel(m_gindex, "Position", this, "gindexlbl");
-  leftgrid->addWidget(gindex_lbl,6,0);
-  leftgrid->addWidget(m_gindex,7,0);
-  leftgrid->addRowSpacing(8,10);
+  leftgrid->addWidget(gindex_lbl);
+  leftgrid->addWidget(m_gindex);
+  leftgrid->addSpacing(gutter);
 
-  QLabel * fontsize_lbl = new QLabel(fontsize, "Font Size", this, "fontlbl");
-  leftgrid->addWidget(fontsize_lbl,9,0);
-  leftgrid->addWidget(fontsize, 10,0);
-  leftgrid->addRowSpacing(11,10);
+  leftgrid->addWidget(fontsize_lbl);
+  leftgrid->addWidget(fontsize);
+  leftgrid->addSpacing(gutter);
 
-  leftgrid->addWidget(stable, 12, 0);
-  leftgrid->addWidget(shownumbers, 13, 0);
-  leftgrid->setRowStretch(14,10);
+  leftgrid->addWidget(stable);
+  leftgrid->addWidget(shownumbers);
+  leftgrid->addWidget(hldisc);
+  leftgrid->addStretch(gutter);
 
   //right
-  rightgrid->addWidget(tiling, 0, 0);
-  rightgrid->addWidget(m_slider, 1, 0);
-  rightgrid->setRowStretch(0, 10);
+  rightgrid->addWidget(tiling, gutter);
+  rightgrid->addWidget(m_slider);
 
   // Set defaults
   fontsize->setValue(12);

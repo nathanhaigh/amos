@@ -9,8 +9,8 @@ class ReadInfo: public QDialog
 {
 public:
   ReadInfo(RenderSeq_t * read, 
-           string & db, 
-           string & cons,
+           const string & db, 
+           const string & cons,
            QWidget * parent=0, 
            const char *name=0);
 
