@@ -787,6 +787,29 @@ void  Alignment_t :: Print
 
 
 
+void  Alignment_t :: Set_Empty_A
+    (int a_start, int b_start, int b_end)
+
+//  Make this an alignment with an empty  a  string at position
+//   a_start  against the portion of  b  string between  b_start
+//  and  b_end .
+
+  {
+   int  i;
+
+   a_lo = a_hi = a_start;
+   b_lo = b_start;
+   b_hi = b_end;
+   errors = b_hi - b_lo;
+   delta . clear ();
+   for  (i = b_lo;  i < b_hi;  i ++)
+     delta . push_back (1);
+
+   return;
+  }
+
+
+
 void  Alignment_t :: Set_Exact
     (int a_start, int b_start, int len)
 
@@ -1761,7 +1784,7 @@ void  Multi_Alignment_t :: Set_Consensus
 void  Multi_Alignment_t :: Set_Initial_Consensus
     (const vector <char *> & s, const vector <int> & offset,
      int offset_delta, double error_rate,
-     vector <Vote_t> & vote)
+     vector <Vote_t> & vote, vector <char *> * tag_list)
 
 //  Create an initial consensus string in this multialignment from the
 //  strings in  s  with nominal relative offsets in  offset .  Offsets
@@ -1770,12 +1793,14 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 //  at each position of the consensus.  Create the consensus by greedily
 //  tiling the strings in order, appending the extension of any
 //  string that aligns past the end of the consensus.  Store the
-//  initial alignments in this consensus, too.
+//  initial alignments in this consensus, too.  If  tag_list  isn't
+//   NULL , then use its values to identify strings.
 
   {
    Vote_t  v;
    Alignment_t  ali;
    char  * cons;
+   bool  wrote_contig_id = false;
    int  cons_len;
    int  num_strings;
    int  prev_off;
@@ -1804,6 +1829,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
    for  (i = 1;  i < num_strings;  i ++)
      {
+      bool  wrote_string_tag = false;
       bool  matched;
       int  error_limit, len, exp_olap_len;
       int  attempts, wiggle;
@@ -1827,8 +1853,22 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
          if  (! matched)
              {
               if  (Verbose > 0)
-                  cerr << "Failed with wiggle = " << wiggle
-                       << "  error_limit = " << error_limit << endl;
+                  {
+                   if  (! wrote_contig_id)
+                       {
+                        cerr << endl
+                             << "In Set_Initial_Consensus for contig " << id
+                             << ":" << endl;
+                        wrote_contig_id = true;
+                       }
+                   if  (tag_list != NULL && ! wrote_string_tag)
+                       {
+                        cerr << "For string " << (* tag_list) [i] << endl;
+                        wrote_string_tag = true;
+                       }
+                   cerr << "Alignment failed with wiggle = " << wiggle
+                        << "  error_limit = " << error_limit << endl;
+                  }
               wiggle *= 2;
              }
         }  while  (! matched && attempts ++ < MAX_ALIGN_ATTEMPTS);
@@ -1836,6 +1876,33 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
       if  (! matched)
           {
+           long  status;
+           int  a_width, b_width, max_width;
+
+           if  (Verbose > 0)
+               cerr << "No more Mr. Nice Guy--forcing alignment" << endl;
+
+           Overlap_Align (s [i], len, cons, lo, hi, cons_len,
+                1, -3, -2, -2, ali);
+
+           a_width = ali . a_hi - ali . a_lo;
+           b_width = ali . b_hi - ali . b_lo;
+           max_width = Max (a_width, b_width);
+
+           cerr << "In contig " << id << " forced alignment of "
+                << a_width << " bases of string ";
+           if  (tag_list == NULL)
+               cerr << "subscript " << i;
+             else
+               cerr << (* tag_list) [i];
+           cerr << " to " << b_width << " bases of consensus\n";
+           status = cerr . setf (ios :: fixed);
+           cerr << "  with " << ali . errors << " errors ("
+                << setprecision (2) << Percent (ali . errors, max_width)
+                << "% error)" << endl;
+           cerr . setf (status);
+
+#if  0
            fprintf (stderr,
                 "\nERROR:  Failed to find overlap between this string:\n");
            Fasta_Print (stderr, s [i]);
@@ -1848,6 +1915,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
                 "Failed on string %d in  Set_Initial_Consensus", i);
            throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
                 -1, i);
+#endif
           }
 
       ali . Incr_Votes (vote, s [i]);
@@ -2066,6 +2134,8 @@ void  Gapped_Multi_Alignment_t :: Convert_From
    Gapped_Alignment_t  ga;
    int  len;
    int  i, n;
+
+   id = ma . id;
 
    len = 1 + ma . consensus . length ();
 
@@ -2286,6 +2356,7 @@ void  Gapped_Multi_Alignment_t :: Full_Merge_Left
 
   {
    Alignment_t  ali;
+   Align_Score_Entry_t  last_entry;
    string  x, y;
    int  a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi;
    int  x_len, y_len, x_slip, extra;
@@ -2311,7 +2382,7 @@ void  Gapped_Multi_Alignment_t :: Full_Merge_Left
 
    x_slip = 1 + Gapped_Equivalent (a_lo - adj_a_lo, x);
    Complete_Align (y . c_str (), 0, y_len, x . c_str (), 0,
-        x_slip, x_len, 2, -3, -2, -1, ali);
+        x_slip, x_len, 2, -3, -2, -1, NULL, last_entry, ali);
 
    if  (Verbose > 2)
        {
@@ -2991,6 +3062,7 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
 
   {
    Alignment_t  ali;
+   Align_Score_Entry_t  last_entry;
    string  x, y;
    int  a_gapped_lo, a_gapped_hi, b_gapped_lo, b_gapped_hi;
    int  x_len, y_len;
@@ -3022,7 +3094,7 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
    Global_Align (x . c_str (), x_len, y . c_str (), 0, y_len, 2, -3, -2, -1, ali);
 #else
    Complete_Align (x . c_str (), 0, x_len, y . c_str (), 0, 1, y_len,
-        2, -3, -2, -1, ali);
+        2, -3, -2, -1, NULL, last_entry, ali);
 #endif
 
    if  (Verbose > 2)
@@ -3659,12 +3731,12 @@ void  Gapped_Multi_Alignment_t :: Show_Skips
 
 
 void  Gapped_Multi_Alignment_t :: Sort
-    (vector <char *> & s, vector <int> * ref)
+    (vector <char *> & s, vector <int> * ref, vector <char *> * tag_list)
 
 //  Sort the align entries in this multialignment according to their
 //   b_lo  values.  Also sort the strings  s  along with them.
 //  If  ref  isn't  NULL , then move its entries in parallel
-//  with those of  s  and  align .
+//  with those of  s  and  align .  Likewise, for  tag_list .
 
   {
    int  i, j, n;
@@ -3680,7 +3752,7 @@ void  Gapped_Multi_Alignment_t :: Sort
 
    for  (i = 1;  i < n;  i ++)
      {
-      char  * s_save;
+      char  * s_save, * t_save;
       Gapped_Alignment_t  a_save;
       int  r_save;
 
@@ -3691,6 +3763,8 @@ void  Gapped_Multi_Alignment_t :: Sort
       a_save = align [i];
       if  (ref != NULL)
           r_save = (* ref) [i];
+      if  (tag_list != NULL)
+          t_save = (* tag_list) [i];
 
       for  (j = i;  j > 0 && align [j - 1] . b_lo > a_save . b_lo;  j --)
         {
@@ -3698,12 +3772,16 @@ void  Gapped_Multi_Alignment_t :: Sort
          s [j] = s [j - 1];
          if  (ref != NULL)
              (* ref) [j] = (* ref) [j - 1];
+         if  (tag_list != NULL)
+             (* tag_list) [j] = (* tag_list) [j - 1];
         }
 
       s [j] = s_save;
       align [j] = a_save;
       if  (ref != NULL)
           (* ref) [j] = r_save;
+      if  (tag_list != NULL)
+          (* tag_list) [j] = t_save;
      }
 
    return;
@@ -4052,11 +4130,15 @@ void  Classify_Reads
 void  Complete_Align
     (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
      int t_hi, int match_score, int mismatch_score, int indel_score,
-     int gap_score, Alignment_t & align)
+     int gap_score, Align_Score_Entry_t * first_entry,
+     Align_Score_Entry_t & last_entry, Alignment_t & align)
 
 //  Find the best alignment of the entire string  s [s_lo .. (s_hi - 1)]
 //  to the entire string  t [t_lo .. (t_hi - 1)]  but the alignment in
 //   t  may start between  t_lo  and  t_slip .
+//  If  first_entry  is not  NULL , use it for the first entry in
+//  the alignment matrix; otherwise, use a zero value.
+//  Set  last_entry  to the last entry in the alignment matrix.
 //  The resulting alignment is stored in  align ,
 //  where  s  is the  a  string and  t  is the  b  string.
 //   match_score  is the score for matching characters (positive);
@@ -4067,17 +4149,24 @@ void  Complete_Align
   {
    int  matrix_size;
 
+   if  (Verbose > 3)
+       fprintf (stderr,
+            "Complete_Align:  s_lo/hi = %d/%d  t_lo/slip/hi = %d/%d/%d\n",
+            s_lo, s_hi, t_lo, t_slip, t_hi);
+
    assert (t_lo < t_slip);
    assert (t_slip <= t_hi);
-   assert (s_lo < s_hi );
+   assert (s_lo <= s_hi );
 
    matrix_size = (s_hi - s_lo) * (t_hi - t_lo);
    if  (t_hi - t_lo <= 10 || matrix_size <= MATRIX_SIZE_LIMIT)
        Complete_Align_Full_Matrix (s, s_lo, s_hi, t, t_lo, t_slip, t_hi,
-            match_score, mismatch_score, indel_score, gap_score, align);
+            match_score, mismatch_score, indel_score, gap_score,
+            first_entry, last_entry, align);
      else
        Complete_Align_Save_Space (s, s_lo, s_hi, t, t_lo, t_slip, t_hi,
-            match_score, mismatch_score, indel_score, gap_score, align);
+            match_score, mismatch_score, indel_score, gap_score,
+            first_entry, last_entry, align);
 
    return;
   }
@@ -4087,11 +4176,15 @@ void  Complete_Align
 void  Complete_Align_Full_Matrix
     (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
      int t_hi, int match_score, int mismatch_score, int indel_score,
-     int gap_score, Alignment_t & align)
+     int gap_score, Align_Score_Entry_t * first_entry,
+     Align_Score_Entry_t & last_entry, Alignment_t & align)
 
 //  Find the best alignment of the entire string  s [s_lo .. (s_hi - 1)]
 //  to the entire string  t [t_lo .. (t_hi - 1)]  but the alignment in
 //   t  may start between  t_lo  and  t_slip .
+//  If  first_entry  is not  NULL , use it for the first entry in
+//  the alignment matrix; otherwise, use a zero value.
+//  Set  last_entry  to the last entry in the alignment matrix.
 //  The resulting alignment is stored in  align ,
 //  where  s  is the  a  string and  t  is the  b  string.
 //   match_score  is the score for matching characters (positive);
@@ -4124,8 +4217,13 @@ void  Complete_Align_Full_Matrix
 
    // Do first row
    a . push_back (empty_vector);
-   entry . diag_score = entry . top_score = entry . left_score = 0;
-   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   if  (first_entry != NULL)
+       entry = * first_entry;
+     else
+       {
+        entry . diag_score = entry . top_score = entry . left_score = 0;
+        entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+       }
    r = c = 0;
    a [r] . push_back (entry);
 
@@ -4190,6 +4288,11 @@ void  Complete_Align_Full_Matrix
         }
      }
 
+   last_entry = a [t_len] [s_len];
+   last_entry . Get_Max (mxs, mxf);
+   if  (Verbose > 1)
+       printf ("Complete_Align_Full_Matrix:  final score = %d\n", mxs);
+
    // Trace back
    row_limit = t_slip - t_lo - 1;
    Trace_Back_Align_Path (a, r, s_len, row_limit, 0, delta,
@@ -4218,11 +4321,15 @@ void  Complete_Align_Full_Matrix
 void  Complete_Align_Save_Space
     (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
      int t_hi, int match_score, int mismatch_score, int indel_score,
-     int gap_score, Alignment_t & align)
+     int gap_score, Align_Score_Entry_t * first_entry,
+     Align_Score_Entry_t & last_entry, Alignment_t & align)
 
 //  Find the best alignment of the entire string  s [s_lo .. (s_hi - 1)]
 //  to the entire string  t [t_lo .. (t_hi - 1)]  but the alignment in
 //   t  may start between  t_lo  and  t_slip .
+//  If  first_entry  is not  NULL , use it for the first entry in
+//  the alignment matrix; otherwise, use a zero value.
+//  Set  last_entry  to the last entry in the alignment matrix.
 //  The resulting alignment is stored in  align ,
 //  where  s  is the  a  string and  t  is the  b  string.
 //   match_score  is the score for matching characters (positive);
@@ -4246,8 +4353,20 @@ void  Complete_Align_Save_Space
    assert (t_len > 1);
 
    // Build first row
-   entry . diag_score = entry . top_score = entry . left_score = 0;
-   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   if  (first_entry == NULL)
+       {
+        entry . diag_score = entry . top_score = entry . left_score = 0;
+        entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+       }
+     else
+       {
+        entry . diag_score = first_entry -> diag_score;
+        entry . top_score = first_entry -> top_score;
+        entry . left_score = first_entry -> left_score;
+        entry . diag_from = first_entry -> diag_from;
+        entry . top_from = first_entry -> top_from;
+        entry . left_from = first_entry -> left_from;
+       }
    entry . top_ref = entry . diag_ref = entry . left_ref = 0;
    align_row . push_back (entry);
 
@@ -4304,7 +4423,8 @@ void  Complete_Align_Save_Space
        fprintf (stderr, "max_ref = %d  t_lo = %d  t_slip = %d  t_half = %d  t_hi = %d\n",
             max_ref, t_lo, t_slip, t_half, t_hi);
    Complete_Align_Full_Matrix (s, s_lo, s_lo + max_ref, t, t_lo, tmp_slip, t_half,
-        match_score, mismatch_score, indel_score, gap_score, sub_ali_1);
+        match_score, mismatch_score, indel_score, gap_score, first_entry,
+        entry, sub_ali_1);
 
    if  (max_ref == 0)
        tmp_slip = Max (t_slip, t_half + 1);
@@ -4312,7 +4432,7 @@ void  Complete_Align_Save_Space
        tmp_slip = t_half + 1;
    Complete_Align_Full_Matrix (s, s_lo + max_ref, s_hi, t, t_half, tmp_slip,
         t_hi, match_score, mismatch_score, indel_score, gap_score,
-        sub_ali_2);
+        & entry, last_entry, sub_ali_2);
 
    align . Combine (sub_ali_1, sub_ali_2);
 
@@ -4764,10 +4884,11 @@ int  Match_Count
 
 
 void  Multi_Align
-    (vector <char *> & s, vector <int> & offset, int offset_delta,
-     double error_rate, Gapped_Multi_Alignment_t & gma,
-     vector <int> * ref)
+    (const string & id, vector <char *> & s, vector <int> & offset,
+     int offset_delta, double error_rate, Gapped_Multi_Alignment_t & gma,
+     vector <int> * ref, vector <char *> * tag_list)
 
+//   id  is the id of the contig being multi-aligned.
 //  Create multialignment in  gma  of strings  s  each of which has
 //  a nominal offset from its predecessor of  offset .   offset_delta  is
 //  the number of positions by which the offset is allowed to vary in
@@ -4777,7 +4898,8 @@ void  Multi_Align
 //  in separate strings.  The value of  offset [0]  must be zero.
 //  If  ref  isn't  NULL  then make its values be the subscripts of
 //  the original locations of the entries in  s  in case they are
-//  shifted
+//  shifted.   If  tag_list  isn't  NULL , then use its values to identify
+//  the strings in  s  and shift them along with the entries in  s .
 
   {
    Multi_Alignment_t  ma;
@@ -4787,25 +4909,31 @@ void  Multi_Align
 
    n = s . size ();
    if  (n == 0)
-       Clean_Exit ("ERROR:  Multi_Align called with no strings", __FILE__, __LINE__);
+       {
+        sprintf (Clean_Exit_Msg_Line,
+            "ERROR:  Multi_Align for contig %s called with no strings",
+            id . c_str ());
+        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+       }
    if  (n != int (offset . size ()))
        {
         sprintf (Clean_Exit_Msg_Line,
-            "ERROR:  Multi_Align called with %d strings and %d offsets",
-            n, int (offset . size ()));
+            "ERROR:  Multi_Align for contig %s called with %d strings and %d offsets",
+            id . c_str (), n, int (offset . size ()));
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
    if  (offset [0] != 0)
        {
         sprintf (Clean_Exit_Msg_Line,
-            "ERROR:  Multi_Align called with non-zero  offset [0] = %d",
-            offset [0]);
+            "ERROR:  Multi_Align for contig %s called with non-zero  offset [0] = %d",
+            id . c_str (), offset [0]);
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
 
-   Sort_Strings_And_Offsets (s, offset, ref);
+   Sort_Strings_And_Offsets (s, offset, ref, tag_list);
 
-   ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote);
+   ma . setID (id);
+   ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, vote, tag_list);
 
    ct = 0;
    do
@@ -4844,6 +4972,10 @@ void  Overlap_Align
 
   {
    int  matrix_size;
+
+   if  (Verbose > 3)
+       fprintf (stderr, "Overlap_Align:  s_len = %d  t_lo/hi/len = %d/%d/%d\n",
+            s_len, t_lo, t_hi, t_len);
 
    assert (t_lo <= t_hi);
    assert (t_hi <= t_len);
@@ -4891,6 +5023,9 @@ void  Overlap_Align_Full_Matrix
    int  i, n;  // position in string  t
 
    // Do first row
+
+   if  (Verbose > 0)
+       fprintf (stderr, "Overlap_Align_Full_Matrix:\n");
 
    a . push_back (empty_vector);
    entry . diag_score = entry . top_score = entry . left_score = 0;
@@ -5030,12 +5165,15 @@ void  Overlap_Align_Save_Space
    Alignment_t  sub_ali_1, sub_ali_2;
    vector <Augmented_Score_Entry_t> align_row;
         //  row of alignment array
-   Augmented_Score_Entry_t  entry;
+   Augmented_Score_Entry_t  entry, last_entry;
    int  t_half, t_slip;
    int  max_row, max_col, max_score, mxs, max_ref;
    unsigned int  max_from, mxf;
    int  r, c;
    
+   if  (Verbose > 3)
+       fprintf (stderr, "Overlap_Align_Save_Space:\n");
+
    // Build first row
 
    entry . diag_score = entry . top_score = entry . left_score = 0;
@@ -5116,20 +5254,27 @@ void  Overlap_Align_Save_Space
      }
 
    t_slip = Min (t_hi, max_row);
+   if  (Verbose > 3)
+       fprintf (stderr,
+            "max_row/col = %d/%d  t_lo = %d  t_slip = %d  t_half = %d  t_hi = %d\n",
+            max_row, max_col, t_lo, t_slip, t_half, t_hi);
    if  (max_row <= t_half)
        {  // only need one recursive call
-        Complete_Align_Full_Matrix (s, 0, s_len, t, t_lo, t_slip, max_row,
-             match_score, mismatch_score, indel_score, gap_score, align);
+        Complete_Align (s, 0, s_len, t, t_lo, t_slip, max_row,
+             match_score, mismatch_score, indel_score, gap_score, NULL,
+             entry, align);
 
         return;
        }
 
    t_slip = Min (t_hi, t_half);
    if  (Verbose > 3)
-       fprintf (stderr, "max_ref = %d  t_lo = %d  t_slip = %d  t_half = %d  t_hi = %d\n",
+       fprintf (stderr,
+            "max_ref = %d  t_lo = %d  t_slip = %d  t_half = %d  t_hi = %d\n",
             max_ref, t_lo, t_slip, t_half, t_hi);
    Complete_Align (s, 0, max_ref, t, t_lo, t_slip, t_half,
-        match_score, mismatch_score, indel_score, gap_score, sub_ali_1);
+        match_score, mismatch_score, indel_score, gap_score,
+        NULL, entry, sub_ali_1);
 
    if  (max_ref == 0)
        t_slip = Max (t_hi, t_half + 1);
@@ -5137,7 +5282,7 @@ void  Overlap_Align_Save_Space
        t_slip = t_half + 1;
    Complete_Align (s, max_ref, max_col, t, t_half, t_slip,
         max_row, match_score, mismatch_score, indel_score, gap_score,
-        sub_ali_2);
+        & entry, last_entry, sub_ali_2);
 
    align . Combine (sub_ali_1, sub_ali_2);
 
@@ -5485,14 +5630,15 @@ bool  Range_Intersect
 
 
 void  Sort_Strings_And_Offsets
-    (vector <char *> & s, vector <int> & offset, vector <int> * ref)
+    (vector <char *> & s, vector <int> & offset, vector <int> * ref,
+     vector <char *> * tag_list)
 
 //  Sort the strings in  s  into order so that all their offsets
 //  are non-negative.  Adjust the values in  offset  accordingly.
 //  Use insertion sort since most offsets should be positive.
 //  If  ref  isn't  NULL, then set it to the subscripts of the
 //  positions of the entries in  s  and  offset  before they were
-//  changed.
+//  changed.  If  tag_list  isn't  NULL , then also sort its entries.
 
   {
    int  i, j, n;
@@ -5514,7 +5660,7 @@ void  Sort_Strings_And_Offsets
 
    for  (i = 1;  i < n;  i ++)
      {
-      char  * s_save;
+      char  * s_save, * t_save;
       int  o_save, r_save;
 
       if  (0 <= offset [i])
@@ -5522,6 +5668,8 @@ void  Sort_Strings_And_Offsets
 
       s_save = s [i];
       o_save = offset [i];
+      if  (tag_list != NULL)
+          t_save = (* tag_list) [i];
       if  (ref != NULL)
           r_save = (* ref) [i];
       if  (i < n - 1)
@@ -5532,6 +5680,8 @@ void  Sort_Strings_And_Offsets
          o_save += offset [j - 1];
          offset [j] = offset [j - 1];
          s [j] = s [j - 1];
+         if  (tag_list != NULL)
+             (* tag_list) [j] = (* tag_list) [j - 1];
          if  (ref != NULL)
              (* ref) [j] = (* ref) [j - 1];
         }
@@ -5539,6 +5689,8 @@ void  Sort_Strings_And_Offsets
       s [j] = s_save;
       offset [j] = o_save;
       offset [j + 1] -= o_save;
+      if  (tag_list != NULL)
+          (* tag_list) [j] = t_save;
       if  (ref != NULL)
           (* ref) [j] = r_save;
      }

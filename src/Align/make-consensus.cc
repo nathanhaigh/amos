@@ -2,7 +2,7 @@
 //
 //  File:  make-consensus.cc
 //
-//  Last Modified:  22 March 2004
+//  Last Modified:  12 April 2004
 //
 //  Read layout information for reads in unitigs/contigs and create
 //  multialignments and/or consensus sequences for them.
@@ -22,11 +22,12 @@
 using namespace std;
 using namespace AMOS;
 
-const int  MAX_LINE = 1000;
-const int  NEW_SIZE = 1000;
 const int  ALIGN_WIGGLE = 10;
    // Number of positions left and right of specified location
    // to look for alignments.
+const double  DEFAULT_ERROR_RATE = 0.06;
+const int  MAX_LINE = 1000;
+const int  NEW_SIZE = 1000;
 
 
 enum  Input_Format_t
@@ -44,6 +45,10 @@ static bool  Do_Contig_Messages = false;
 static bool  Do_Unitig_Messages = false;
   // If set true (by -u option) then unitig messages in the
   // input will be processed
+static double  Error_Rate = DEFAULT_ERROR_RATE;
+  // Fraction of errors allowed in alignments
+static FILE  * Extra_fp = NULL;
+  // Pointer to file of extra fasta sequences to align
 static Input_Format_t  Input_Format = SIMPLE_CONTIG_INPUT;
   // Type of input
 static Output_Format_t  Output_Format = CELERA_MSG_OUTPUT;
@@ -60,8 +65,8 @@ static void  Get_Strings_And_Offsets
      const Celera_Message_t & msg, Bank_t & read_bank);
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <Range_t> & clr_list,
-     vector <char * > & tag_list, vector <int> & offset, const vector <int> & fid,
-     const vector <Ordered_Range_t> pos, const vector <Ordered_Range_t> seg,
+     vector <char * > & tag_list, vector <int> & offset, vector <int> & fid,
+     vector <Ordered_Range_t> & pos, vector <Ordered_Range_t> & seg,
      Bank_t & read_bank);
 static void  Output_Unit
     (const string & label, const string & id, int num_reads,
@@ -71,6 +76,9 @@ static void  Output_Unit
      const vector <char *> tag_list);
 static void  Parse_Command_Line
     (int argc, char * argv []);
+static void  Sort_By_Low_Pos
+    (vector <int> & fid, vector <Ordered_Range_t> & pos,
+     vector <Ordered_Range_t> & seg);
 static void  Usage
     (const char * command);
 
@@ -85,6 +93,7 @@ int  main
    Read_t  read;
    FILE  * input_fp;
    string  label = "Contig";
+   string  cid;
    vector <char *>  string_list, qual_list;
    vector <char *>  tag_list;
    vector <int>  offset;
@@ -93,6 +102,7 @@ int  main
    vector < vector <int> >  del_list;
    Gapped_Multi_Alignment_t  gma;
    time_t  now;
+   long  status;
    int  contig_ct, unitig_ct;
 
    
@@ -106,6 +116,10 @@ int  main
       Parse_Command_Line (argc, argv);
 
       cerr << "Read bank is " << Bank_Name << endl;
+      status = cerr . setf (ios :: fixed);
+      cerr << "Alignment error rate is " << setprecision (2)
+           << Error_Rate << endl;
+      cerr . setf (status);
 
       gma . setPrintFlag (PRINT_WITH_DIFFS);
 
@@ -136,7 +150,9 @@ int  main
 
                    try
                      {
-                      Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04, gma, & ref);
+                      cid = msg . getAccession ();
+                      Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
+                           Error_Rate, gma, & ref, & tag_list);
                      }
                    catch (AlignmentException_t)
                      {
@@ -146,7 +162,6 @@ int  main
 
                    Permute (qual_list, ref);
                    Permute (clr_list, ref);
-                   Permute (tag_list, ref);
 
                    gma . Set_Flipped (clr_list);
                    gma . Get_Positions (pos);
@@ -173,7 +188,6 @@ int  main
                   || Input_Format == PARTIAL_READ_INPUT)
           {
            char  line [MAX_LINE];
-           string  cid;
            vector <Ordered_Range_t>  pos_list, seg_list;
            vector <int>  frg_id_list;
            int  fid;
@@ -206,21 +220,20 @@ int  main
                         msg . setIMPs (frg_id_list, pos_list);
                         try
                           {
-                           Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04,
-                                gma, & ref);
+                           Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
+                                Error_Rate, gma, & ref, & tag_list);
                           }
                         catch (AlignmentException_t & e)
                           {
                            int  b = e . b_id ();
 
-                           cerr << "Failed on contig " << contig_ct << endl;
+                           cerr << "Failed on contig " << cid << endl;
                            cerr << "Could not align string "
                                 << tag_list [b] << " subscript " << b << endl;
                            throw;
                           }
                         Permute (qual_list, ref);
                         Permute (clr_list, ref);
-                        Permute (tag_list, ref);
                         Permute (frg_id_list, ref);
 
                         gma . Set_Flipped (clr_list);
@@ -278,17 +291,25 @@ int  main
                 Get_Strings_And_Offsets (string_list, qual_list, clr_list,
                      tag_list, offset, frg_id_list, pos_list, seg_list, read_bank);
 
+                if  (Extra_fp != NULL)
+                    {
+                     fprintf (stderr,
+                          "Fasta sequence option not yet available--Ignored\n");
+                     fclose (Extra_fp);
+                    }
+
                 msg . setAccession (cid);
                 msg . setIMPs (frg_id_list, pos_list);
                 try
                   {
-                   Multi_Align (string_list, offset, ALIGN_WIGGLE, 0.04, gma, & ref);
+                   Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
+                        Error_Rate, gma, & ref, & tag_list);
                   }
                 catch (AlignmentException_t & e)
                   {
                    int  b = e . b_id ();
 
-                   cerr << "Failed on contig " << contig_ct << endl;
+                   cerr << "Failed on contig " << cid << endl;
                    cerr << "Could not align string "
                         << tag_list [b] << " subscript " << b << endl;
                    throw;
@@ -296,7 +317,6 @@ int  main
 
                 Permute (qual_list, ref);
                 Permute (clr_list, ref);
-                Permute (tag_list, ref);
                 Permute (frg_id_list, ref);
 
                 gma . Set_Flipped (clr_list);
@@ -477,8 +497,8 @@ static void  Get_Strings_And_Offsets
 
 static void  Get_Strings_And_Offsets
     (vector <char *> & s, vector <char *> & q, vector <Range_t> & clr_list,
-     vector <char *> & tag_list, vector <int> & offset, const vector <int> & fid,
-     const vector <Ordered_Range_t> pos, const vector <Ordered_Range_t> seg,
+     vector <char *> & tag_list, vector <int> & offset, vector <int> & fid,
+     vector <Ordered_Range_t> & pos, vector <Ordered_Range_t> & seg,
      Bank_t & read_bank)
 
 //  Populate  s  and  offset  with reads and their contig positions
@@ -515,6 +535,18 @@ static void  Get_Strings_And_Offsets
    clr_list . clear ();
    offset . clear ();
    partial_reads = (seg . size () > 0);
+
+   Sort_By_Low_Pos (fid, pos, seg);
+   if  (Verbose > 2)
+       {
+        int  i, n;
+
+        fprintf (stderr, "After Sort_By_Low_Pos:\n");
+        n = fid . size ();
+        for  (i = 0;  i < n;  i ++)
+          fprintf (stderr, "%8d  %6d %6d\n", fid [i],
+               pos [i] . getBegin (), pos [i] . getEnd ());
+       }
 
    prev_offset = 0;
    n = fid . size ();
@@ -650,7 +682,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "acCfhPSTu")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "acCe:E:fhPSTu")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -664,6 +696,14 @@ static void  Parse_Command_Line
 
         case  'C' :
           Input_Format = CELERA_MSG_INPUT;
+          break;
+
+        case  'e' :
+          Error_Rate = strtod (optarg, NULL);
+          break;
+
+        case  'E' :
+          Extra_fp = File_Open (optarg, "r", __FILE__, __LINE__);
           break;
 
         case  'f' :
@@ -725,6 +765,65 @@ static void  Parse_Command_Line
 
 
 
+static void  Sort_By_Low_Pos
+    (vector <int> & fid, vector <Ordered_Range_t> & pos,
+     vector <Ordered_Range_t> & seg)
+
+//  Sort the entries in  fid  and  pos  (and  seg  if it's not empty)
+//  into ascending order based on the lower of two values in each
+//   pos  entry.  Use an insertion sort since we expect the values are
+//  likely to be nearly sorted already.
+
+  {
+   vector <int>  low;
+   bool  use_seg;
+   Ordered_Range_t  save_pos, save_seg;
+   int  save_fid, save_low;
+   int  n, i;
+
+   n = pos . size ();
+   if  (n == 0)
+       return;
+
+   use_seg = (seg . size () > 0);
+   
+   for  (i = 0;  i < n;  i ++)
+     low . push_back (Min (pos [i] . getBegin (), pos [i] . getEnd ()));
+
+   for  (i = 1;  i < n;  i ++)
+     {
+      int  j;
+
+      if  (low [i - 1] <= low [i])
+          continue;  // already in order
+
+      save_low = low [i];
+      save_pos = pos [i];
+      save_fid = fid [i];
+      if  (use_seg)
+          save_seg = seg [i];
+
+      for  (j = i;  j > 0 && low [j - 1] > save_low;  j --)
+        {
+         low [j] = low [j - 1];
+         pos [j] = pos [j - 1];
+         fid [j] = fid [j - 1];
+         if  (use_seg)
+             seg [j] = seg [j - 1];
+        }
+
+      low [j] = save_low;
+      pos [j] = save_pos;
+      fid [j] = save_fid;
+      if  (use_seg)
+          seg [j] = save_seg;
+     }
+
+   return;
+  }
+
+
+
 static void  Usage
     (const char * command)
 
@@ -741,16 +840,18 @@ static void  Usage
            "for them.  Read sequences are obtained from <bank-name>\n"
            "\n"
            "Options:\n"
-           "  -a    Output alignments instead of consensus messages\n"
-           "  -c    Process contig messages\n"
-           "  -C    Input is Celera msg format, i.e., a .cgb or .cgw file\n"
-           "  -f    Output consensus only in FASTA format\n"
-           "  -h    Print this usage message\n"
-           "  -P    Input is simple contig format, i.e., UMD format\n"
-           "          using partial reads\n"
-           "  -S    Input is simple contig format, i.e., UMD format\n"
-           "  -T    Output in TIGR Assembler contig format\n"
-           "  -u    Process unitig messages\n"
+           "  -a       Output alignments instead of consensus messages\n"
+           "  -c       Process contig messages\n"
+           "  -C       Input is Celera msg format, i.e., a .cgb or .cgw file\n"
+           "  -e <x>   Set alignment error rate to <x>, e.g.,  -e 0.05  for 5%% error\n"
+           "  -E <fn>  Get extra sequences to align from fasta file <fn>\n"
+           "  -f       Output consensus only in FASTA format\n"
+           "  -h       Print this usage message\n"
+           "  -P       Input is simple contig format, i.e., UMD format\n"
+           "              using partial reads\n"
+           "  -S       Input is simple contig format, i.e., UMD format\n"
+           "  -T       Output in TIGR Assembler contig format\n"
+           "  -u       Process unitig messages\n"
            "\n",
            command);
 

@@ -271,6 +271,8 @@ class  Alignment_t  :  public Base_Alignment_t
    void  Print
        (FILE * fp, const char * a, const char * b,
         int width = DEFAULT_FASTA_WIDTH);
+   void  Set_Empty_A
+       (int a_start, int b_start, int b_end);
    void  Set_Exact
        (int a_start, int b_start, int len);
    void  Set_From_VS_Matrix
@@ -348,12 +350,22 @@ class  Multi_Alignment_t
   {
   friend class Gapped_Multi_Alignment_t;
   private:
+   string  id;
    string  consensus;
        // consensus of each column of the multialignment
    vector <Alignment_t>  align;
        // alignment of each string to the consensus
 
   public:
+   const char *  getID
+       (void)
+     // return the id string as a C string
+     { return id . c_str (); }
+
+   void  setID
+       (const string & s)
+     { id = s; }
+
    void  Clear
        (void);
    void  Print_Alignments_To_Consensus
@@ -367,7 +379,7 @@ class  Multi_Alignment_t
    void  Set_Initial_Consensus
        (const vector <char *> & s, const vector <int> & offset,
         int offset_delta, double error_rate,
-        vector <Vote_t> & vote);
+        vector <Vote_t> & vote, vector <char *> * tag_list = NULL);
   };
 
 
@@ -377,6 +389,7 @@ class  Gapped_Multi_Alignment_t
   friend class Multi_Alignment_t;
   private:
    unsigned int  print_flags;
+   string  id;
    string  consensus;
        // consensus of each column of the multialignment
    string  con_qual;
@@ -401,10 +414,17 @@ class  Gapped_Multi_Alignment_t
        (void)
      // return the quality string as a C string
      { return con_qual . c_str (); }
+   const char *  getID
+       (void)
+     // return the id string as a C string
+     { return id . c_str (); }
 
    void  setConsensusString
        (const string & s)
      { consensus = s; }
+   void  setID
+       (const string & s)
+     { id = s; }
    void  setPrintFlag
        (unsigned int  f)
      { print_flags |= f; }
@@ -503,7 +523,8 @@ class  Gapped_Multi_Alignment_t
    void  Show_Skips
        (FILE * fp);
    void  Sort
-       (vector <char *> & s, vector <int> * ref = NULL);
+       (vector <char *> & s, vector <int> * ref = NULL,
+        vector <char *> * tag_list = NULL);
    void  Gapped_Multi_Alignment_t :: TA_Print
        (FILE * fp, const vector <char *> & s,
         const vector <AMOS :: Range_t> & clr_list,
@@ -527,15 +548,18 @@ void  Classify_Reads
 void  Complete_Align
     (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
      int t_hi, int match_score, int mismatch_score, int indel_score,
-     int gap_score, Alignment_t & align);
+     int gap_score, Align_Score_Entry_t * first_entry,
+     Align_Score_Entry_t & last_entry, Alignment_t & align);
 void  Complete_Align_Full_Matrix
     (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
      int t_hi, int match_score, int mismatch_score, int indel_score,
-     int gap_score, Alignment_t & align);
+     int gap_score, Align_Score_Entry_t * first_entry,
+     Align_Score_Entry_t & last_entry, Alignment_t & align);
 void  Complete_Align_Save_Space
     (const char * s, int s_lo, int s_hi, const char * t, int t_lo, int t_slip,
      int t_hi, int match_score, int mismatch_score, int indel_score,
-     int gap_score, Alignment_t & align);
+     int gap_score, Align_Score_Entry_t * first_entry,
+     Align_Score_Entry_t & last_entry, Alignment_t & align);
 int  DNA_Char_To_Sub
     (char ch);
 int  Exact_Prefix_Match
@@ -556,9 +580,9 @@ bool  Is_Distinguishing
 int  Match_Count
     (const vector <int> & a, const vector <int> & b);
 void  Multi_Align
-    (vector <char *> & s, vector <int> & offset, int offset_delta,
-     double error_rate, Gapped_Multi_Alignment_t & ma,
-     vector <int> * ref = NULL);
+    (const string & id, vector <char *> & s, vector <int> & offset,
+     int offset_delta, double error_rate, Gapped_Multi_Alignment_t & ma,
+     vector <int> * ref = NULL, vector <char *> * tag_list = NULL);
 void  Overlap_Align
     (const char * s, int s_len, const char * t, int t_lo, int t_hi,
      int t_len, int match_score, int mismatch_score, int indel_score,
@@ -585,7 +609,8 @@ void  Print_VS_Table
 bool  Range_Intersect
     (int a_lo, int a_hi, int b_lo, int b_hi);
 void  Sort_Strings_And_Offsets
-    (vector <char *> & s, vector <int> & offset, vector <int> * ref = NULL);
+    (vector <char *> & s, vector <int> & offset, vector <int> * ref = NULL,
+     vector <char *> * tag_list = NULL);
 bool  Substring_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int max_errors, Alignment_t & align);
