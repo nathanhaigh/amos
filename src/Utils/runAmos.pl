@@ -4,6 +4,11 @@ use strict;
 use TIGR::Foundation;
 
 my $VERSION = '$Revision$ ';
+my $USAGE = q~
+  USAGE: runAmos -C config_file [-s start] [-e end] prefix
+
+Try 'runAmos -h' for more information.
+~;
 my $HELP = q~
     runAmos -C config_file [-s start] [-e end] [-clean] prefix 
 
@@ -59,7 +64,7 @@ if ($err != 1){
 $prefix = $ARGV[0];
 
 if (! defined $prefix){
-    $base->bail("You must specify a prefix");
+    $base->bail($USAGE);
 }
 
 if (! defined $conffile){
