@@ -54,8 +54,7 @@ void Scaffold_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    Tile_t tile;
-    vector<Message_t>::const_iterator vi;
+    vector<Message_t>::const_iterator i;
 
     if ( msg . exists (F_CONTIGEDGE) )
       {
@@ -76,13 +75,21 @@ void Scaffold_t::readMessage (const Message_t & msg)
 	ss . clear( );
       }
 
-    for ( vi  = msg . getSubMessages( ) . begin( );
-	  vi != msg . getSubMessages( ) . end( ); vi ++ )
+    for ( i  = msg . getSubMessages( ) . begin( );
+	  i != msg . getSubMessages( ) . end( ); i ++ )
       {
-	if ( vi -> getMessageCode( ) != M_TILE )
+	if ( i -> getMessageCode( ) == M_TILE )
+	  {
+	    contigs_m . push_back (Tile_t( ));
+	    contigs_m . back( ) . readMessage (*i);
+	  }
+	else if ( i -> getMessageCode( ) == M_FEATURE )
+	  {
+	    feats_m . push_back (Feature_t( ));
+	    feats_m . back( ). readMessage (*i);
+	  }
+	else
 	  AMOS_THROW_ARGUMENT ("Invalid submessage");
-	tile . readMessage (*vi);
-	contigs_m . push_back (tile);
       }
   }
   catch (ArgumentException_t) {
@@ -98,13 +105,18 @@ void Scaffold_t::readRecord (istream & fix, istream & var)
 {
   Universal_t::readRecord (fix, var);
 
-  Size_t csize, esize;
+  Size_t csize, esize, fsize;
   readLE (fix, &csize);
+  readLE (fix, &fsize);
   readLE (fix, &esize);
 
   contigs_m . resize (csize);
   for ( Pos_t i = 0; i < csize; i ++ )
     contigs_m [i] . readRecord (var);
+
+  feats_m . resize (fsize);
+  for ( Pos_t i = 0; i < fsize; i ++ )
+    feats_m [i] . readRecord (var);
 
   edges_m . resize (esize);
   for ( Pos_t i = 0; i < esize; i ++ )
@@ -120,6 +132,9 @@ void Scaffold_t::writeMessage (Message_t & msg) const
 
   try {
     ostringstream ss;
+    Pos_t begin = msg . getSubMessages( ) . size( );
+    msg . getSubMessages( ) . resize
+      (begin + contigs_m . size( ) + feats_m . size( ));
 
     msg . setMessageCode (Scaffold_t::NCODE);
 
@@ -140,12 +155,15 @@ void Scaffold_t::writeMessage (Message_t & msg) const
     if ( !contigs_m . empty( ) )
       {
 	vector<Tile_t>::const_iterator tvi;
-	Pos_t begin = msg . getSubMessages( ) . size( );
-	Pos_t end = begin + contigs_m . size( );
-	msg . getSubMessages( ) . resize (end);
-
-	for ( tvi = contigs_m . begin( ); tvi != contigs_m . end( ); tvi ++ )
+	for ( tvi = contigs_m . begin( ); tvi != contigs_m . end( ); ++ tvi )
 	  tvi -> writeMessage (msg . getSubMessages( ) [begin ++]);
+      }
+
+    if ( !feats_m . empty( ) )
+      {
+	vector<Feature_t>::const_iterator fvi;
+	for ( fvi = feats_m . begin( ); fvi != feats_m . end( ); ++ fvi )
+	  fvi -> writeMessage (msg . getSubMessages( ) [begin ++]);
       }
   }
   catch (ArgumentException_t) {
@@ -162,12 +180,17 @@ void Scaffold_t::writeRecord (ostream & fix, ostream & var) const
   Universal_t::writeRecord (fix, var);
 
   Size_t csize = contigs_m . size( );
+  Size_t fsize = feats_m . size( );
   Size_t esize = edges_m . size( );
   writeLE (fix, &csize);
+  writeLE (fix, &fsize);
   writeLE (fix, &esize);
 
   for ( Pos_t i = 0; i < csize; i ++ )
     contigs_m [i] . writeRecord (var);
+
+  for ( Pos_t i = 0; i < fsize; i ++ )
+    feats_m [i] . writeRecord (var);
 
   for ( Pos_t i = 0; i < esize; i ++ )
     writeLE (var, &(edges_m [i]));

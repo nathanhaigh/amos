@@ -33,6 +33,7 @@ private:
 
   std::vector<Tile_t> contigs_m;   //!< contig tiling
   std::vector<ID_t> edges_m;       //!< list of contig edges
+  std::vector<Feature_t> feats_m;  //!< features
 
 
 protected:
@@ -84,6 +85,7 @@ public:
     Universal_t::clear( );
     contigs_m . clear( );
     edges_m . clear( );
+    feats_m . clear( );
   }
 
 
@@ -128,6 +130,24 @@ public:
   std::vector<ID_t> & getContigEdges ( )
   {
     return edges_m;
+  }
+
+
+  //--------------------------------------------------- getFeatures ------------
+  //! \brief Get the associated features
+  //!
+  //! \return The vector of associated features
+  //!
+  const std::vector<Feature_t> & getFeatures ( ) const
+  {
+    return feats_m;
+  }
+
+
+  //--------------------------------------------------- getFeatures ------------
+  std::vector<Feature_t> & getFeatures ( )
+  {
+    return feats_m;
   }
 
 
@@ -186,6 +206,18 @@ public:
   void setContigEdges (const std::vector<ID_t> & edges)
   {
     edges_m = edges;
+  }
+
+
+  //--------------------------------------------------- setFeatures ------------
+  //! \brief Set the associated features
+  //!
+  //! \param feats The new vector of associated features
+  //! \return void
+  //!
+  void setFeatures (const std::vector<Feature_t> & feats)
+  {
+    feats_m = feats;
   }
 
 

@@ -110,8 +110,6 @@ void Contig_t::readMessage (const Message_t & msg)
     for ( i  = msg . getSubMessages( ) . begin( );
           i != msg . getSubMessages( ) . end( ); i ++ )
       {
-	Tile_t tile;
-
 	if ( i -> getMessageCode( ) == M_TILE )
 	  {
 	    reads_m . push_back (Tile_t( ));
