@@ -17,6 +17,7 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
+#include <errno.h>
 
 //-- Include hash_map
 #ifdef __GNUC__
