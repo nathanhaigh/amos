@@ -16,6 +16,12 @@ my $HELP = q~
            -o outfile 
            [-i insertfile | -map dstmap]
            [-gq goodqual] [-bq badqual]
+
+    toAmos is primarily designed for converting the output of an assembly
+program into the AMOS format so that it can be stored in an AMOS bank.
+
+    If you simply need a program to generate assembly inputs for one the 
+AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos.
 ~;
 
 my $base = new TIGR::Foundation();
@@ -88,6 +94,8 @@ open(TMPSEQ, ">$tmprefix.seq")
     || $base->bail("Cannot open $tmprefix.seq: $!\n");
 open(TMPCTG, ">$tmprefix.ctg") 
     || $base->bail("Cannot open $tmprefix.ctg: $!\n");
+open(TMPSCF, ">$tmprefix.scf")
+    || $base->bail("Cannot open $tmprefix.scf: $!\n");
 
 #first get the contig information
 
@@ -176,6 +184,7 @@ if (defined $libmap){
 }
 close(TMPSEQ);
 close(TMPCTG);
+close(TMPSCF);
 
 ## make sure all reads have an insert
 my %libid;
@@ -218,15 +227,13 @@ while (my ($lib, $range) = each %libraries){
     my ($mean, $sd) = split(' ', $range);
     print OUT "{LIB\n";
 
-    if ($lib =~ /^\d+$/){
-	print OUT "iid:$lib\n";
-	$libid{$lib} = $lib;
-    } else {
-	$libid{$lib} = $minSeqId;
-	print OUT "iid:", $minSeqId++, "\n";
-    }
+    $libid{$lib} = $minSeqId;
+    print OUT "iid:", $minSeqId++, "\n";
+
     if (exists $libnames{$lib}){
 	print OUT "eid:$libnames{$lib}\n";
+    } else {
+	print OUT "eid:$lib\n";
     }
     print OUT "{DST\n";
     print OUT "mea:$mean\n";
@@ -335,6 +342,12 @@ while (<TMPCTG>){
 	    my $rid = $1;
 	    my ($len, $ren) = split(' ', $asm_range{$rid});
 	    my ($cl, $cr) = split(' ', $seq_range{$rid});
+	    if (! exists $seq_range{$rid}){
+		die ("No clear range for read $rid\n");
+	    }
+	    if (! exists $asm_range{$rid}){
+		die ("No asm range for read $rid\n");
+	    }
 	    if ($len > $ren){
 		$len = $ren;
 		$ren = $cr;
@@ -369,11 +382,17 @@ close(TMPCTG);
 unlink("$tmprefix.ctg") || $base->bail("Cannot remove $tmprefix.ctg: $!\n");
 
 # all the contig links
-
 # all the contig edges
-
 # and all the scaffolds
 
+if (-f "$tmprefix.scf"){
+    open(TMPSCF, "$tmprefix.scf") || $base->bail("Cannot open $tmprefix.scf:$!\n");
+    while (<TMPSCF>){
+	print OUT;
+    }
+    close(TMPSCF);
+    unlink("$tmprefix.scf") || $base->bail("Cannot remove $tmprefix.scf: $!\n");
+}
 close(OUT);
 
 exit(0);
@@ -741,7 +760,7 @@ sub parseAsmFile {
 	    my $id = getCAId($$fields{acc});
 	    my $contiglen = $$fields{len};
 
-	    my @offsets; my $coord;
+	    my $coord;
 
 	    my $consensus = $$fields{cns};
 	    my @consensus = split('\n', $consensus);
@@ -752,26 +771,12 @@ sub parseAsmFile {
 	    print TMPCTG "#\n";
 	    print TMPCTG $$fields{qlt};
 	    
-	    
-	    $#offsets = length($consensus) - 1;
-
-	    for (my $i = 0; $i < length($consensus); $i++){
-		if (substr($consensus, $i, 1) ne "-"){
-		    $coord++;
-		} else {
-		    $contiglen--;
-		}
-		$offsets[$i] = $coord;
-	    }
-
 	    $contigs{$id} = $contiglen;
 
 	    for (my $i = 0; $i <= $#$recs; $i++){
 		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		if ($sid eq "MPS"){
-		    my $fid = getCAId($$sfs{mid});
-		    my ($cll, $clr) = split(' ', $seq_range{$fid});
-
+		    my $fid = $seqids{getCAId($$sfs{mid})};
 		    print TMPCTG "#$fid\n";
 		    print TMPCTG $$sfs{del};
 		    $seqcontig{$fid} = $id;
@@ -783,6 +788,53 @@ sub parseAsmFile {
 	    }
 	    print TMPCTG "#\n";
 	} # if type eq CCO
+	if ($type eq "SCF"){
+	    my $off = 0;
+	    print TMPSCF "{SCF\n";
+	    my $id = getCAId($$fields{acc});
+	    for (my $i = 0; $i <= $#$recs; $i++){
+		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
+		if ($sid eq "CTP"){
+		    print TMPSCF "{TLE\n";
+		    print TMPSCF "src:$$sfs{ct1}\n";
+		    print TMPSCF "off:$off\n";
+		    if ($$sfs{ori} eq "N" ||
+			$$sfs{ori} eq "I"){
+			print TMPSCF "clr:0,$contigs{$$sfs{ct1}}\n";
+		    } else {
+			print TMPSCF "clr:$contigs{$$sfs{ct1}},0\n";
+		    }
+		    print TMPSCF "}\n";
+		    $off += $contigs{$$sfs{ct1}};
+		    $off += int($$sfs{mea});
+
+		    if ($i == $#$recs &&
+			$$sfs{ct1} != $$sfs{ct2}){
+			print TMPSCF "{TLE\n";
+			print TMPSCF "src:$$sfs{ct2}\n";
+			print TMPSCF "off:$off\n";
+			if ($$sfs{ori} eq "N" ||
+			    $$sfs{ori} eq "O"){
+			    print TMPSCF "clr:0,$contigs{$$sfs{ct2}}\n";
+			} else {
+			    print TMPSCF "clr:$contigs{$$sfs{ct2}},0\n";
+			}
+			print TMPSCF "}\n";
+		    }
+		}
+	    }
+	    print TMPSCF "}\n";
+	} # if type eq SCF
+	if ($type eq "CLK"){
+	    print TMPSCF "{CTE\n";
+	    print TMPSCF "ct1:$$fields{co1}\n";
+	    print TMPSCF "ct2:$$fields{co2}\n";
+	    print TMPSCF "adj:$$fields{ori}\n";
+	    print TMPSCF "sze:$$fields{mea}\n";
+	    print TMPSCF "std:$$fields{std}\n";
+	    print TMPSCF "typ:M\n";
+	    print TMPSCF "}\n";
+	}
     }
 } # parseAsmFile
 
