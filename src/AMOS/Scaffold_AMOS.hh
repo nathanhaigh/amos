@@ -24,6 +24,7 @@ namespace AMOS {
 //! A list of contigs that are ordered, oriented and positioned in
 //! relation to one another.
 //!
+//! \warning Polymorphism information not yet implemented
 //==============================================================================
 class Scaffold_t : public Universal_t
 {
@@ -121,6 +122,13 @@ public:
   }
 
 
+  //--------------------------------------------------- getNCode ---------------
+  virtual NCode_t getNCode ( ) const
+  {
+    return Scaffold_t::NCode( );
+  }
+
+
   //--------------------------------------------------- getPolymorphism --------
   //! \brief Get polymorphism information for this scaffold
   //!
@@ -134,6 +142,10 @@ public:
   }
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setContigTiling --------
   //! \brief Set the tiling of underlying contigs
   //!
@@ -143,13 +155,6 @@ public:
   void setContigTiling (const std::vector<Tile_t> & contigs)
   {
     contigs_m = contigs;
-  }
-
-
-  //--------------------------------------------------- getNCode ---------------
-  virtual NCode_t getNCode ( ) const
-  {
-    return Scaffold_t::NCode( );
   }
 
 
@@ -177,6 +182,10 @@ public:
   {
     poly_m = poly;
   }
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

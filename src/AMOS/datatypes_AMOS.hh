@@ -252,7 +252,7 @@ struct Range_t
 //! alignment algorithm (where both gaps in the contig and finished sequence
 //! need to be stored).
 //==============================================================================
-struct Tile_t
+struct Tile_t : public IMessagable_t
 {
   ID_t id;                    //!< the ID of the tiled sequence
   std::vector<int32_t> gaps;  //!< the list of gap positions
@@ -291,6 +291,21 @@ struct Tile_t
     offset = 0;
     range . clear( );
   }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  virtual NCode_t getNCode ( ) const
+  {
+    return Message_k::M_TILE;
+  }
+
+
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
 
 };
 

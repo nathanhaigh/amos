@@ -30,6 +30,7 @@ int main (int argc, char ** argv)
     Kmer_t kmr;
     Library_t lib;
     Overlap_t ovl;
+    Scaffold_t scf;
 
     Universal_t * unvp = NULL;
     
@@ -51,6 +52,8 @@ int main (int argc, char ** argv)
 	  unvp = &lib;
 	else if ( msg . getMessageCode( ) == Message_k::M_OVERLAP )
 	  unvp = &ovl;
+	else if ( msg . getMessageCode( ) == Message_k::M_SCAFFOLD )
+	  unvp = &scf;
 	else
 	  {
 	    cout << "# don't know how to parse message\n";
@@ -92,6 +95,10 @@ int main (int argc, char ** argv)
 
     ovl . clear( );
     ovl . writeMessage (msg);
+    msg . write (cout);
+
+    scf . clear( );
+    scf . writeMessage (msg);
     msg . write (cout);
   }
   catch (Exception_t & e) {

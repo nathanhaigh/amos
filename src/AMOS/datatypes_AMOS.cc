@@ -57,6 +57,64 @@ void Distribution_t::readMessage (const Message_t & msg)
 }
 
 
+//----------------------------------------------------- readMessage ------------
+void Tile_t::readMessage (const Message_t & msg)
+{
+  clear( );
+
+  try {
+    int32_t delta;
+    stringstream ss;
+
+    if ( msg . exists (F_SOURCE) )
+      {
+	ss . str (msg . getField (F_SOURCE));
+	ss >> id;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid src format");
+      }
+
+    if ( msg . exists (F_OFFSET) )
+      {
+	ss . str (msg . getField (F_OFFSET));
+	ss >> offset;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid off format");
+      }
+
+    if ( msg . exists (F_CLEAR) )
+      {
+	ss . str (msg . getField (F_CLEAR));
+	ss >> range . begin;
+	ss . ignore( );
+	ss >> range . end;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid clr format");
+      }
+
+    if ( msg . exists (F_DELTA) )
+      {
+	ss . str (msg . getField (F_DELTA));
+
+	while ( ss )
+	  {
+	    ss >> delta;
+	    if ( ! ss . fail( ) )
+	      gaps . push_back (delta);
+	  }
+
+	if ( !ss . eof( ) )
+	  AMOS_THROW_ARGUMENT ("Invalid del format");
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Distribution_t::writeMessage (Message_t & msg) const
 {
@@ -78,6 +136,48 @@ void Distribution_t::writeMessage (Message_t & msg) const
     ss << skew;
     msg . setField (F_SKEWNESS, ss . str( ));
     ss . str("");
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Tile_t::writeMessage (Message_t & msg) const
+{
+  msg . clear( );
+
+  try {
+    vector<int32_t>::const_iterator vi;
+    stringstream ss;
+
+    msg . setMessageCode (Tile_t::getNCode( ));
+
+    if ( id != NULL_ID )
+      {
+	ss << id;
+	msg . setField (F_SOURCE, ss . str( ));
+	ss . str("");
+      }
+
+    ss << offset;
+    msg . setField (F_OFFSET, ss . str( ));
+    ss . str("");
+
+    ss << range . begin << ',' << range . end;
+    msg . setField (F_CLEAR, ss . str( ));
+    ss . str("");
+
+    if ( gaps . size( ) != 0 )
+      {
+	for ( vi = gaps . begin( ); vi != gaps . end( ); vi ++ )
+	  ss << *vi << '\n';
+	msg . setField (F_DELTA, ss . str( ));
+	ss . str("");
+      }
   }
   catch (ArgumentException_t) {
 

@@ -9,12 +9,60 @@
 
 #include "Scaffold_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
 
 
 //================================================ Scaffold_t ==================
+//----------------------------------------------------- readMessage ------------
+void Scaffold_t::readMessage (const Message_t & msg)
+{
+  clear( );
+  Universal_t::readMessage (msg);
+
+  try {
+    Tile_t tile;
+    vector<Message_t>::const_iterator vi;
+    ID_t iid;
+    stringstream ss;
+
+    if ( msg . exists (F_CONTIGEDGE) )
+      {
+	ss . str (msg . getField (F_CONTIGEDGE));
+
+	while ( ss )
+	  {
+	    ss >> iid;
+	    if ( ! ss . fail( ) )
+	      edges_m . push_back (iid);
+	  }
+
+	if ( !ss . eof( ) )
+	  AMOS_THROW_ARGUMENT ("Invalid cte format");
+      }
+
+    if ( msg . exists (F_POLYMORPHISM) )
+      AMOS_THROW_ARGUMENT ("Polymorphism information not yet implemented");
+
+    for ( vi  = msg . getSubMessages( ) . begin( );
+	  vi != msg . getSubMessages( ) . end( ); vi ++ )
+      {
+	if ( vi -> getMessageCode( ) != M_TILE )
+	  AMOS_THROW_ARGUMENT ("Invalid submessage in SCF");
+	tile . readMessage (*vi);
+	contigs_m . push_back (tile);
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- readRecord -------------
 Size_t Scaffold_t::readRecord (istream & fix,
                                istream & var)
@@ -55,6 +103,46 @@ Size_t Scaffold_t::readRecord (istream & fix,
   streamsize += size * sizeof (ID_t);
 
   return streamsize;
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Scaffold_t::writeMessage (Message_t & msg) const
+{
+  Universal_t::writeMessage (msg);
+
+  try {
+    Message_t submsg;
+    vector<Message_t> msgs;
+    vector<Tile_t>::const_iterator tvi;
+    vector<ID_t>::const_iterator evi;
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    if ( edges_m . size( ) != 0 )
+      {
+	for ( evi = edges_m . begin( ); evi != edges_m . end( ); evi ++ )
+	  ss << *evi << '\n';
+	msg . setField (F_CONTIGEDGE, ss . str( ));
+	ss . str("");
+      }
+
+    if ( contigs_m . size( ) != 0 )
+      {
+	for ( tvi = contigs_m . begin( ); tvi != contigs_m . end( ); tvi ++ )
+	  {
+	    tvi -> writeMessage (submsg);
+	    msgs . push_back (submsg);
+	  }
+	msg . setSubMessages (msgs);
+      }
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
 }
 
 
