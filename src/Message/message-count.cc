@@ -10,12 +10,11 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "IDMap_AMOS.hh"
 #include "messages_AMOS.hh"
 #include <string>
 #include <fstream>
 #include <cstdio>
-#include <vector>
+#include <map>
 #include <unistd.h>
 using namespace AMOS;
 using namespace Message_k;
@@ -25,6 +24,11 @@ using namespace std;
 //=============================================================== Globals ====//
 string OPT_MessageName;           // message name parameter
 
+struct LongPair_t
+{
+  long int first, second;
+  LongPair_t( ) { first = second = 0; }
+};
 
 //========================================================== Fuction Decs ====//
 long int SafeIntDiv (long int a, long int b)
@@ -48,7 +52,7 @@ void ParseArgs (int argc, char ** argv);
 void PrintHelp (const char * s);
 
 
-//----------------------------------------------------- PringUsage -------------
+//----------------------------------------------------- PrintUsage -------------
 //! \brief Prints usage information to cerr
 //!
 //! \param s The program name, i.e. argv[0]
@@ -60,18 +64,17 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  Message_t msg;                           // the current message
   ifstream msgfile;                        // the message file, if applicable
-  IDMap_t typemap(1000);                   // NCode to index mapping
-  ID_t ti;                                 // current type index
+  Message_t msg;                           // the current message
   NCode_t msgcode;                         // current message NCode
   streampos lastpos;                       // last tellg pos
-  vector< pair<long int,long int> > sums (1);  // message count and size sums
+  map<NCode_t, LongPair_t> sums;           // message count and size sums
   long int c1, c2;
+
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
-  
+
 
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
@@ -85,23 +88,10 @@ int main (int argc, char ** argv)
   //-- Parse the message file
   while ( (msgcode = msg . skip (msgfile)) != NULL_NCODE )
     {
-      if ( typemap . exists (msgcode) )
-	ti = typemap . lookup (msgcode);
-      else
-	{
-	  ti = sums . size( );
-	  typemap . insert (msgcode, ti);
-	  sums . push_back (make_pair ((long int)0, (long int)0));
-	}
-
-      sums [ti] . first ++;
-      sums [ti] . second += msgfile . tellg( ) - lastpos;
-
+      sums [msgcode] . first ++;
+      sums [msgcode] . second += msgfile . tellg( ) - lastpos;
       lastpos = msgfile . tellg( );
     }
-
-  typemap . invert( );
-
   }
   catch (Exception_t & e) {
 
@@ -119,16 +109,16 @@ int main (int argc, char ** argv)
   printf ("%5s %9s %12s %12s\n", "NCODE", "COUNT", "SIZE", "AVG");
   printf ("-----------------------------------------\n");
   c1 = c2 = 0;
-  for ( ID_t i = 1; i < sums . size( ); i ++ )
+  map<NCode_t, LongPair_t>::iterator mi;
+  for ( mi = sums . begin( ); mi != sums . end( ); mi ++ )
     {
-      msgcode = typemap . lookup (i);
       printf ("%5s %9ld %12ld %12ld\n",
-	      Decode (msgcode) . c_str( ),
-	      sums [i] . first,
-	      sums [i] . second,
-	      SafeIntDiv (sums [i] . second, sums [i] . first));
-      c1 += sums [i] . first;
-      c2 += sums [i] . second;
+	      Decode (mi -> first) . c_str( ),
+	      mi -> second . first,
+	      mi -> second . second,
+	      SafeIntDiv (mi -> second . second, mi -> second . first));
+      c1 += mi -> second . first;
+      c2 += mi -> second . second;
     }
   printf ("-----------------------------------------\n");
   printf ("      %9ld %12ld %12ld\n",

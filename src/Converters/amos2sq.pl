@@ -73,25 +73,26 @@ while (my $record = getRecord(\*IN)){
 	my $max = int($$sfs{mea} + 3 * $$sfs{std});
 	$min = 0 if $min < 0;
 
-	$libinfo{$$fields{eid}} = "$min $max $med";
+	$libinfo{$$fields{iid}} = "$min $max $med";
 
     } # type is LIB
     
     if ($type eq "FRG"){
-	$frg2lib{$$fields{"eid"}} = $$fields{"lib"};
+	$frg2lib{$$fields{"iid"}} = $$fields{"lib"};
     } # type is FRG
 
     if ($type eq "RED"){
 	my @lines;
-	@lines = split('\n', $$fields{com});
-	my $seqname = join('', @lines);
 	@lines = split('\n', $$fields{seq});
 	my $sequence = join('', @lines);
 	@lines = split('\n', $$fields{qlt});
 	my $qualities = join('', @lines);
 
-	if ($seqname =~ /^\s*$/){
+	my $seqname;
+	if ( defined $$fields{eid} ) {
 	    $seqname = $$fields{eid};
+	} else {
+	    $seqname = $$fields{iid};
 	}
 
 	my ($cll, $clr) = split(',', $$fields{clr});

@@ -22,18 +22,18 @@ LinkAdjacency_t ContigLink_t::getAdjacency ( ) const
   //-- first and second adjacency information is stored respectively in bits
   //   0x1 and 0x2. A 0 bit means 'B' and a 1 bit means 'E'. If 0x4 = 0, then
   //   no adjacency information exists.
-  if ( flags_m . extra & 0x4 )
+  if ( flags_m . nibble & 0x4 )
     {
-      if ( flags_m . extra & 0x1 )
+      if ( flags_m . nibble & 0x1 )
 	{
-	  if ( flags_m . extra & 0x2 )
+	  if ( flags_m . nibble & 0x2 )
 	    return INNIE;
 	  else
 	    return NORMAL;
 	}
       else
 	{
-	  if ( flags_m . extra & 0x2 )
+	  if ( flags_m . nibble & 0x2 )
 	    return ANTINORMAL;
 	  else
 	    return OUTIE;
@@ -126,8 +126,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void ContigLink_t::readRecord (istream & fix,
-			       istream & var)
+void ContigLink_t::readRecord (istream & fix, istream & var)
 {
   //-- Read the parent object data
   Universal_t::readRecord (fix, var);
@@ -153,26 +152,19 @@ void ContigLink_t::setAdjacency (LinkAdjacency_t adj)
     case ANTINORMAL:
     case INNIE:
     case OUTIE:
-      flags_m . extra &= ~0x7;
+      flags_m . nibble &= ~0x7;
       if ( adj == NORMAL || adj == INNIE )
-	flags_m . extra |= 0x1;
+	flags_m . nibble |= 0x1;
       if ( adj == INNIE || adj == ANTINORMAL )
-	flags_m . extra |= 0x2;
-      flags_m . extra |= 0x4;
+	flags_m . nibble |= 0x2;
+      flags_m . nibble |= 0x4;
       break;
     case NULL_ADJACENCY:
-      flags_m . extra &= ~0x7;
+      flags_m . nibble &= ~0x7;
       break;
     default:
       AMOS_THROW_ARGUMENT ((string)"Invalid adjacency " + adj);
     }
-}
-
-
-//----------------------------------------------------- sizeVar ----------------
-Size_t ContigLink_t::sizeVar ( ) const
-{
-  return Universal_t::sizeVar( );
 }
 
 
@@ -188,45 +180,45 @@ void ContigLink_t::writeMessage (Message_t & msg) const
 
     if ( contigs_m . first != NULL_ID )
       {
-	ss << contigs_m . first;
-	msg . setField (F_CONTIG1, ss . str( ));
-	ss . str("");
+        ss << contigs_m . first;
+        msg . setField (F_CONTIG1, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     if ( contigs_m . second != NULL_ID )
       {
-	ss << contigs_m . second;
-	msg . setField (F_CONTIG2, ss . str( ));
-	ss . str("");
+        ss << contigs_m . second;
+        msg . setField (F_CONTIG2, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     if ( getAdjacency( ) != NULL_ADJACENCY )
       {
-	ss << getAdjacency( );
-	msg . setField (F_ADJACENCY, ss . str( ));
-	ss . str("");
+        ss << getAdjacency( );
+        msg . setField (F_ADJACENCY, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     ss << sd_m;
     msg . setField (F_SD, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     ss << size_m;
     msg . setField (F_SIZE, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     if ( type_m != NULL_LINK )
       {
-	ss << type_m;
-	msg . setField (F_TYPE, ss . str( ));
-	ss . str("");
+        ss << type_m;
+        msg . setField (F_TYPE, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     if ( source_m . first != NULL_ID  ||  source_m . second != NULL_NCODE )
       {
-	ss << source_m . first << ',' << Decode (source_m . second);
-	msg . setField (F_SOURCE, ss . str( ));
-	ss . str("");
+        ss << source_m . first << ',' << Decode (source_m . second);
+        msg . setField (F_SOURCE, ss . str( ));
+        ss . str (NULL_STRING);
       }
   }
   catch (ArgumentException_t) {
@@ -238,8 +230,7 @@ void ContigLink_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void ContigLink_t::writeRecord (ostream & fix,
-				ostream & var) const
+void ContigLink_t::writeRecord (ostream & fix, ostream & var) const
 {
   //-- Write the parent object data
   Universal_t::writeRecord (fix, var);

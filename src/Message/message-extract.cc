@@ -10,9 +10,9 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "IDMap_AMOS.hh"
 #include "messages_AMOS.hh"
 #include "alloc.hh"
+#include <set>
 #include <fstream>
 #include <unistd.h>
 using namespace AMOS;
@@ -22,7 +22,7 @@ using namespace std;
 
 //=============================================================== Globals ====//
 string OPT_MessageName;           // message name parameter
-IDMap_t OPT_ExtractCodes(1000);   // extract message type map
+set<NCode_t> OPT_ExtractCodes;    // extract message type set
 
 
 //========================================================== Fuction Decs ====//
@@ -43,7 +43,7 @@ void ParseArgs (int argc, char ** argv);
 void PrintHelp (const char * s);
 
 
-//----------------------------------------------------- PringUsage -------------
+//----------------------------------------------------- PrintUsage -------------
 //! \brief Prints usage information to cerr
 //!
 //! \param s The program name, i.e. argv[0]
@@ -62,6 +62,7 @@ int main (int argc, char ** argv)
   char * buff = NULL;                      // record buffer
   streamsize size;                         // size of curr record
   streamsize buff_size = 0;                // size of curr record buffer
+  set<NCode_t>::iterator endcode;          // end of the NCode set
 
 
   //-- Parse the command line arguments
@@ -78,21 +79,21 @@ int main (int argc, char ** argv)
   spos = msgfile . tellg( );
 
   //-- Parse the message file
+  endcode = OPT_ExtractCodes . end( );
   while ( (msgcode = msg . skip (msgfile)) != NULL_NCODE )
     {
-      if ( OPT_ExtractCodes . exists (msgcode) )
+      if ( OPT_ExtractCodes . find (msgcode) != endcode )
 	{
 	  size = msgfile . tellg( ) - spos;
 	  if ( size > buff_size )
 	    {
-	      buff_size = size;
+	      buff_size = size << 2;
 	      buff = (char *) SafeRealloc (buff, buff_size);
 	    }
 	  msgfile . seekg (-size, ifstream::cur);
 	  msgfile . read (buff, size);
 	  cout . write (buff, size);
 	}
-
       spos = msgfile . tellg( );
     }
   }
@@ -150,17 +151,7 @@ void ParseArgs (int argc, char ** argv)
     }
 
   while ( optind != argc )
-    {
-      try {
-
-	OPT_ExtractCodes . insert (Encode (argv [optind ++]), 1);
-      }
-      catch (Exception_t & e) {
-
-	cerr << "WARNING: " << e . what( )
-	     << " - NCode " << argv [optind - 1] << " ignored" << endl;
-      }
-    }
+    OPT_ExtractCodes . insert (Encode (argv [optind ++]));
 }
 
 

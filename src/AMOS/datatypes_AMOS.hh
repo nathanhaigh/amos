@@ -3,20 +3,19 @@
 //! \author Adam M Phillippy
 //! \date 06/16/2003
 //!
-//! \brief Include file for some simple AMOS data types (structs)
+//! \brief Include file for some simple AMOS type definitions and structs
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef __datatypes_AMOS_HH
 #define __datatypes_AMOS_HH 1
 
-#include "exceptions_AMOS.hh"
 #include "inttypes_AMOS.hh"
+#include "exceptions_AMOS.hh"
 #include "Message_AMOS.hh"
 #include <vector>
-#include <cstdlib>
 #include <string>
-#include <sstream>
+
 
 
 
@@ -221,14 +220,12 @@ struct Range_t
   }
 
 
-  //--------------------------------------------------- Swap -------------------
+  //--------------------------------------------------- swap -------------------
   //! \brief Exchange the beginning and end of the range
   //!
-  void  Swap  (void)
+  void swap ( )
   {
-   Pos_t  save;
-
-   save = begin;
+   Pos_t save = begin;
    begin = end;
    end = save;
   }
@@ -243,7 +240,7 @@ struct Range_t
 //!
 //! A tiled sequence, like a read in a contig, or a contig in a scaffold. For
 //! explanation purposes, let us assume we are dealing with an underlying read
-//! in a contig. The id is the ID of the read. The gaps are the alignment gaps
+//! in a contig. The id is the IID of the read. The gaps are the alignment gaps
 //! in the read, stored as a list of gap positions. How these positions are
 //! stored relative to the parent contig is left to the user. Commonly, each
 //! gap integer is simply the gap location in the read. Thus, two adjacent gaps
@@ -258,8 +255,8 @@ struct Range_t
 //==============================================================================
 struct Tile_t : public IMessagable_t
 {
-  ID_t id;                    //!< the ID of the tiled sequence
-  std::vector<int32_t> gaps;  //!< the list of gap positions
+  ID_t source;                //!< the source of the tile, e.g. read IID
+  std::vector<Pos_t> gaps;    //!< the delta encoded gap positions
   Pos_t offset;               //!< the offset of the tile
   Range_t range;              //!< the usable range of the tile
 
@@ -271,7 +268,7 @@ struct Tile_t : public IMessagable_t
   //!
   Tile_t ( )
   {
-    id = NULL_ID;
+    source = NULL_ID;
     offset = 0;
   }
 
@@ -288,9 +285,9 @@ struct Tile_t : public IMessagable_t
   //--------------------------------------------------- clear ------------------
   //! \brief Clears all object data, reinitializes the object
   //!
-  void clear ( )
+  void Tile_t::clear ( )
   {
-    id = NULL_ID;
+    source = NULL_ID;
     gaps . clear( );
     offset = 0;
     range . clear( );

@@ -41,7 +41,7 @@ void ParseArgs (int argc, char ** argv);
 void PrintHelp (const char * s);
 
 
-//----------------------------------------------------- PringUsage -------------
+//----------------------------------------------------- PrintUsage -------------
 //! \brief Prints usage information to cerr
 //!
 //! \param s The program name, i.e. argv[0]

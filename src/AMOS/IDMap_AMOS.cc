@@ -8,6 +8,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "IDMap_AMOS.hh"
+#include <string>
+#include <sstream>
+#include <cstring>
 using namespace AMOS;
 using namespace Message_k;
 using namespace std;
@@ -15,224 +18,265 @@ using namespace std;
 
 
 
-//================================================ IDMap_t =====================
-//----------------------------------------------------- exists -----------------
-bool IDMap_t::exists (ID_t key)
+
+//================================================ iterator ====================
+//------------------------------------------------ iterator --------------------
+IDMap_t::iterator::iterator (std::vector<HashNode_t> * iid_bucs_p,
+			     std::vector<HashNode_t> * eid_bucs_p)
+  : iid_bucs (iid_bucs_p), eid_bucs (eid_bucs_p)
 {
-  HashNode_t * curr = hashfunc (key);
-
-  while ( curr -> key != key )
-    {
-      if ( curr -> next == NULL )
-	return false;
-      curr = curr -> next;
-    }
-
-  return true;
-}
-
-
-//----------------------------------------------------- insert -----------------
-void IDMap_t::insert (ID_t key, ID_t val)
-{
-  if ( key == NULL_ID )
-    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID map key");
-  if ( val == NULL_ID )
-    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID map value");
-
-  HashNode_t * curr = hashfunc (key);
-
-  if ( curr -> key == NULL_ID )
-    {
-      curr -> key = key;
-      curr -> val = val;
-    }
+  if ( iid_bucs -> empty( ) )
+    curr = NULL;
   else
     {
-      while ( curr -> next != NULL )
-	{
-	  if ( curr -> key == key )
-	    AMOS_THROW_ARGUMENT ("Cannot insert multiple map keys");
-	  curr = curr -> next;
-	}
-      if ( curr -> key == key )
-	AMOS_THROW_ARGUMENT ("Cannot insert multiple map keys");
-  
-      curr -> next = new HashNode_t( );
-      curr = curr -> next;
-      curr -> key = key;
-      curr -> val = val;
+      iids = true;
+      buc = iid_bucs -> begin( );
+      curr = &(*buc);
+      if ( curr -> triple == NULL )
+	this->operator++();
     }
-
-  size_m ++;
 }
 
 
-//----------------------------------------------------- invert -----------------
-void IDMap_t::invert ( )
+//------------------------------------------------ operator++ ------------------
+IDMap_t::iterator & IDMap_t::iterator::operator++ ( )
 {
-  HashNode_t * oldtable = table_m;
-  table_m = new HashNode_t [buckets_m];
-  HashNode_t * oldcurr, * invcurr;
-
-  try {
-
-  for ( Size_t i = 0; i < buckets_m; i ++ )
+  while ( curr != NULL )
     {
-      oldcurr = oldtable + i;
-      if ( oldcurr -> key == NULL_ID )
-	continue;
-	
-      do
+      curr = curr -> next;
+      while ( curr == NULL )
 	{
-	  invcurr = hashfunc (oldcurr -> val);
-	    
-	  if ( invcurr -> key == NULL_ID )
+	  ++ buc;
+
+	  if ( iids  &&  buc >= iid_bucs -> end( ) )
 	    {
-	      invcurr -> key = oldcurr -> val;
-	      invcurr -> val = oldcurr -> key;
+	      iids = false;
+	      buc = eid_bucs -> begin( );
 	    }
-	  else
-	    {
-	      while ( invcurr -> next != NULL )
-		{
-		  if ( invcurr -> key == oldcurr -> val )
-		    AMOS_THROW_ARGUMENT
-		      ("Cannot invert map with duplicate values");
-		  invcurr = invcurr -> next;
-		}
-	      if ( invcurr -> key == oldcurr -> val )
-		AMOS_THROW_ARGUMENT
-		  ("Cannot invert map with duplicate values");	
 		
-	      invcurr -> next = new HashNode_t( );
-	      invcurr = invcurr -> next;
-	      invcurr -> key = oldcurr -> val;
-	      invcurr -> val = oldcurr -> key;
-	    }
-	    
-	  oldcurr = oldcurr -> next;
-	} while (oldcurr != NULL);
-    }
-  }
-  catch (Exception_t) {
+	  if ( !iids  &&  buc >= eid_bucs -> end( ) )
+	    return *this;
 
-    delete[] table_m;
-    table_m = oldtable;
-    throw;
-  }
-
-  delete[] oldtable;
-}
-
-
-//----------------------------------------------------- lookup -----------------
-ID_t IDMap_t::lookup (ID_t key)
-{
-  if ( key == NULL_ID )
-    return NULL_ID;
-
-  HashNode_t * curr = hashfunc (key);
-
-  while ( curr -> key != key )
-    {
-      if ( curr -> next == NULL )
-	AMOS_THROW_ARGUMENT ("Could not find map key");
-      curr = curr -> next;
-    }
-
-  return curr -> val;
-}
-
-
-//----------------------------------------------------- operator= --------------
-IDMap_t & IDMap_t::operator= (const IDMap_t & source)
-{
-  if ( this != &source )
-    {
-      HashNode_t * tcurr;
-      const HashNode_t * scurr;
-
-      clear( );
-      if ( buckets_m != source . buckets_m )
-	{
-	  buckets_m = source . buckets_m;
-	  delete[] table_m;
-	  table_m = new HashNode_t [buckets_m];
+	  if ( buc -> triple != NULL )
+	    curr = &(*buc);
 	}
 
-      for ( Size_t i = 0; i < buckets_m; i ++ )
-	{
-	  tcurr = table_m + i;
-	  scurr = source . table_m + i;
-
-	  *tcurr = *scurr;
-	  while ( tcurr -> next != NULL )
-	    {
-	      tcurr -> next = new HashNode_t( );
-	      tcurr = tcurr -> next;
-	      scurr = scurr -> next;
-	      *tcurr = *scurr;
-	    }
-	}
-
-      size_m = source . size_m;
+      if ( iids  ||  curr -> triple -> c == 1 )
+	break;
     }
-
   return *this;
 }
 
 
-//----------------------------------------------------- remove -----------------
-void IDMap_t::remove (ID_t key)
+//------------------------------------------------ const_iterator --------------
+IDMap_t::const_iterator::const_iterator (const vector<HashNode_t> * iid_bucs_p,
+					 const vector<HashNode_t> * eid_bucs_p)
+  : iid_bucs (iid_bucs_p), eid_bucs (eid_bucs_p)
 {
-  if ( key == NULL_ID )
-    return;
-
-  HashNode_t * prev = NULL;
-  HashNode_t * curr = hashfunc (key);
-
-  while ( curr -> key != key )
-    {
-      if ( curr -> next == NULL )
-	AMOS_THROW_ARGUMENT ("Could not find map key for removal");
-      prev = curr;
-      curr = curr -> next;
-    }
-
-  if ( prev == NULL )
-    {
-      if ( curr -> next == NULL )
-	curr -> clear( );
-      else
-	*curr = *(curr -> next);
-    }
+  if ( iid_bucs -> empty( ) )
+    curr = NULL;
   else
     {
-      prev -> next = curr -> next;
-      curr -> next = NULL;
-      delete curr;
+      iids = true;
+      buc = iid_bucs -> begin( );
+      curr = &(*buc);
+      if ( curr -> triple == NULL )
+	this->operator++();
     }
-
-  size_m --;
 }
 
 
-//----------------------------------------------------- read -------------------
-void IDMap_t::read (istream & in)
+//------------------------------------------------ operator++ ------------------
+IDMap_t::const_iterator & IDMap_t::const_iterator::operator++ ( )
 {
-  ID_t key, val, size;
-
-  clear( );
-
-  in . read ((char *)&size, sizeof (ID_t));
-
-  for ( ID_t i = 0; i < size; i ++ )
+  while ( curr != NULL )
     {
-      in . read ((char *)&key, sizeof (ID_t));
-      in . read ((char *)&val, sizeof (ID_t));
-      insert (key, val);
+      curr = curr -> next;
+      while ( curr == NULL )
+	{
+	  ++ buc;
+
+	  if ( iids  &&  buc >= iid_bucs -> end( ) )
+	    {
+	      iids = false;
+	      buc = eid_bucs -> begin( );
+	    }
+		
+	  if ( !iids  &&  buc >= eid_bucs -> end( ) )
+	    return *this;
+
+	  if ( buc -> triple != NULL )
+	    curr = &(*buc);
+	}
+
+      if ( iids  ||  curr -> triple -> c == 1 )
+	break;
     }
+  return *this;
+}
+
+
+//================================================ IDMap_t =====================
+//----------------------------------------------------- minbuckets -------------
+Size_t IDMap_t::minbuckets (Size_t min)
+{
+  //-- Bucket size constants
+  const uint8_t NUM_BUCKET_SIZES = 27;
+  const Size_t BUCKET_SIZES [NUM_BUCKET_SIZES] =
+    {
+      53l,         97l,         193l,       389l,       769l,
+      1543l,       3079l,       6151l,      12289l,     24593l,
+      49157l,      98317l,      196613l,    393241l,    786433l,
+      1572869l,    3145739l,    6291469l,   12582917l,  25165843l,
+      50331653l,   100663319l,  201326611l, 402653189l, 805306457l, 
+      1610612741l, 2147354947l
+    };
+
+  uint8_t first = 0;
+  uint8_t len = NUM_BUCKET_SIZES;
+  uint8_t half, middle;
+  
+  //-- Binary search for a bucket size greater than hint
+  while ( len > 0 )
+    {
+      half = len >> 1;
+      middle = first + half;
+      if ( BUCKET_SIZES [middle] < min )
+	{
+	  first = middle + 1;
+	  len = len - half - 1;
+	}
+      else
+	len = half;
+    }
+  if ( first == NUM_BUCKET_SIZES )
+    first --;
+
+  return BUCKET_SIZES [first];
+}
+
+
+//----------------------------------------------------- lookupnode -------------
+bool IDMap_t::lookupnode (ID_t key, HashNode_t * & node) const
+{
+  if ( key == NULL_ID )
+    {
+      node = NULL;
+      return false;
+    }
+  for ( node = hashfunc (key); node -> next != NULL; node = node -> next )
+    if ( node -> triple -> iid == key )
+      return true;
+  if ( node -> triple == NULL  ||  node -> triple -> iid != key )
+    return false;
+  else
+    return true;
+}
+
+
+//----------------------------------------------------- lookupnode -------------
+bool IDMap_t::lookupnode (const char * key, HashNode_t * & node) const
+{
+  if ( key == NULL || key[0] == NULL_CHAR )
+    {
+      node = NULL;
+      return false;
+    }
+  for ( node = hashfunc (key); node -> next != NULL; node = node -> next )
+    if ( strcmp (node -> triple -> eid, key) == 0 )
+      return true;
+  if ( node -> triple == NULL  ||  strcmp (node -> triple -> eid, key) != 0)
+    return false;
+  else
+    return true;
+}
+
+
+//----------------------------------------------------- removenode -------------
+void IDMap_t::removenode (HashNode_t * curr, HashNode_t * prev)
+{
+  if ( prev == NULL )
+    //-- If a root node
+    {
+      if ( curr -> next == NULL )
+	curr -> clear( );                  // free curr's triple
+      else
+	{
+	  prev = curr -> next;             // this will be the new root
+	  curr -> next = NULL;             // as to not delete next on clear
+	  curr -> clear( );                // free curr's triple
+	  *curr = *prev;                   // overwrite root node
+	  delete prev;                     // free duplicate node
+	}
+    }
+  else
+    //-- If not a root node
+    {
+      prev -> next = curr -> next;         // bypass curr
+      curr -> next = NULL;                 // as to not delete next on clear
+      curr -> clear( );                    // free curr's triple
+      delete curr;                         // free removed node
+    }
+}
+
+
+//----------------------------------------------------- concat -----------------
+void IDMap_t::concat (const IDMap_t & s)
+{
+  if ( this != &s )
+    {
+      resize (getSize( ) + s . getSize( ));
+
+      //-- Copy all the triples
+      for ( const_iterator itr (&(s.iid_bucs_m), &(s.eid_bucs_m)); itr; ++ itr )
+	insert (itr -> iid, itr -> eid, itr -> bid);
+    }
+}
+
+
+//----------------------------------------------------- insert -----------------
+const IDMap_t::HashTriple_t * IDMap_t::insert (ID_t iid,
+					       const char * eid,
+					       ID_t bid = NULL_ID)
+{
+  if ( iid == NULL_ID  &&  (eid == NULL || eid[0] == NULL_CHAR) ) return NULL;
+
+  HashNode_t * curri, * curre;
+
+  if ( lookupnode (iid, curri) )
+    {
+      ostringstream ss;
+      ss << "Cannot insert int key '" << iid << "' multiple times";
+      AMOS_THROW_ARGUMENT (ss . str( ));
+    }
+  if ( lookupnode (eid, curre) )
+    {
+      ostringstream ss;
+      ss << "Cannot insert char key '" << eid << "' multiple times";
+      AMOS_THROW_ARGUMENT (ss . str( ));
+    }
+
+  HashTriple_t * currt = new HashTriple_t (iid, eid, bid);
+
+  if ( curri != NULL )
+    {
+      if ( curri -> triple != NULL )
+	curri = curri -> next = new HashNode_t( );
+      curri -> triple = currt;
+      currt -> c ++;
+    }
+  if ( curre != NULL )
+    {
+      if ( curre -> triple != NULL )
+	curre = curre -> next = new HashNode_t( );
+      curre -> triple = currt;
+      currt -> c ++;
+    }
+
+  if ( ++ size_m >= getBuckets( ) )
+    resize (size_m + 1);
+
+  return currt;
 }
 
 
@@ -242,38 +286,49 @@ void IDMap_t::readMessage (const Message_t & msg)
   clear( );
 
   try {
+    Size_t size = 0;
     istringstream ss;
 
-    if ( msg . exists (F_MAP) )
+    if ( msg . exists (F_TYPE) )
       {
-	ID_t key, val;
-	ss . str (msg . getField (F_MAP));
-
-	while ( ss )
-	  {
-	    ss >> key;
-	    ss . ignore( );
-	    ss >> val;
-	    if ( ! ss . fail( ) )
-	      insert (key, val);
-	  }
-
-	if ( ! ss . eof( ) )
-	  AMOS_THROW_ARGUMENT ("Invalid map format");
-	ss . clear( );
+	if ( msg . getField (F_TYPE) . length( ) != NCODE )
+	  AMOS_THROW_ARGUMENT ("Invalid type format");
+	type_m = Encode (msg . getField (F_TYPE));
       }
 
     if ( msg . exists (F_SIZE) )
       {
-	ID_t size;
-
 	ss . str (msg . getField (F_SIZE));
 	ss >> size;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid size format");
 	ss . clear( );
 
-	if ( size != size_m )
+	resize (size);
+      }
+
+    if ( msg . exists (F_MAP) )
+      {
+	string eid;
+	ID_t bid, iid;
+	ss . str (msg . getField (F_MAP));
+
+	while ( ss )
+	  {
+	    ss >> bid;
+	    ss . ignore( );
+	    ss >> iid;
+	    ss . ignore( );
+	    getline (ss, eid);
+	    if ( ! ss . fail( ) )
+	      insert (iid, eid . c_str( ), bid);
+	  }
+
+	if ( ! ss . eof( ) )
+	  AMOS_THROW_ARGUMENT ("Invalid map format");
+	ss . clear( );
+
+	if ( size != 0  &&  size != size_m )
 	  AMOS_THROW_ARGUMENT ("map and size fields do not agree");
       }
   }
@@ -285,24 +340,144 @@ void IDMap_t::readMessage (const Message_t & msg)
 }
 
 
-//----------------------------------------------------- write ------------------
-void IDMap_t::write (ostream & out) const
+//----------------------------------------------------- remove -----------------
+void IDMap_t::remove (ID_t key)
 {
-  const HashNode_t * curr;
+  if ( key == NULL_ID ) return;
+  const char * eid = NULL;
 
-  out . write ((char *)&size_m, sizeof (ID_t));
-
-  for ( Size_t i = 0; i < buckets_m; i ++ )
-    if ( table_m [i] . key != NULL_ID )
+  HashNode_t * prev = NULL;
+  HashNode_t * curr = hashfunc (key);
+  if ( curr -> triple != NULL )
+    for ( ; curr != NULL; curr = curr -> next )
       {
-	curr = table_m + i;
-	while ( curr != NULL )
+	if ( curr -> triple -> iid == key )
 	  {
-	    out . write ((char *)&(curr -> key), sizeof (ID_t));
-	    out . write ((char *)&(curr -> val), sizeof (ID_t));
-	    curr = curr -> next;
+	    if ( curr -> triple -> c > 1 )
+	      eid = curr -> triple -> eid;
+	    removenode (curr, prev);
+	    break;
 	  }
+	prev = curr;
       }
+  
+  if ( eid == NULL )
+    return;
+
+  prev = NULL;
+  curr = hashfunc (eid);
+  if ( curr -> triple != NULL )
+    for ( ; curr != NULL; curr = curr -> next )
+      {
+	if ( curr -> triple -> eid == eid )
+	  {
+	    removenode (curr, prev);
+	    break;
+	  }
+	prev = curr;
+      }
+
+  size_m --;
+}
+
+
+//----------------------------------------------------- remove -----------------
+void IDMap_t::remove (const char * key)
+{
+  if ( key == NULL || key[0] == NULL_CHAR ) return;
+  ID_t iid = NULL_ID;
+
+  HashNode_t * prev = NULL;
+  HashNode_t * curr = hashfunc (key);
+  if ( curr -> triple != NULL )
+    for ( ; curr != NULL; curr = curr -> next )
+      {
+	if ( strcmp (curr -> triple -> eid, key) == 0 )
+	  {
+	    if ( curr -> triple -> c > 1 )
+	      iid = curr -> triple -> iid;
+	    removenode (curr, prev);
+	    break;
+	  }
+	prev = curr;
+      }
+  
+  if ( iid == NULL_ID )
+    return;
+
+  prev = NULL;
+  curr = hashfunc (iid);
+  if ( curr -> triple != NULL )
+    for ( ; curr != NULL; curr = curr -> next )
+      {
+	if ( curr -> triple -> iid == iid )
+	  {
+	    removenode (curr, prev);
+	    break;
+	  }
+	prev = curr;
+      }
+
+  size_m --;
+}
+
+
+//----------------------------------------------------- resize -----------------
+void IDMap_t::resize (Size_t min)
+{
+  if ( (min = minbuckets (min)) == getBuckets( ) )
+    return;
+
+  vector<HashTriple_t *> triples;
+  triples . reserve (size_m);
+
+  if ( size_m > 0 )
+    {
+      //-- Collect all the triples
+      for ( iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
+	{
+	  itr -> c ++;
+	  triples . push_back (itr);
+	}
+
+      Size_t  size = size_m;
+      NCode_t type = type_m;
+      clear( );
+      size_m = size;
+      type_m = type;
+    }
+
+  //-- Resize the bucket vectors
+  if ( size_m != triples . size( ) )
+    AMOS_THROW ("Unknown fatal error during hash resize");
+  iid_bucs_m . resize (min);
+  eid_bucs_m . resize (min);
+
+  //-- Put the triples back in the map via modified insert
+  HashNode_t * curri, * curre;
+  vector<HashTriple_t *>::iterator tpi;
+  for ( tpi = triples . begin( ); tpi != triples . end( ); tpi ++ )
+    {
+      lookupnode ((*tpi) -> iid, curri);
+      lookupnode ((*tpi) -> eid, curre);
+
+      if ( curri != NULL )
+	{
+	  if ( curri -> triple != NULL )
+	    curri = curri -> next = new HashNode_t( );
+	  curri -> triple = (*tpi);
+	  curri -> triple -> c ++;
+	}
+      if ( curre != NULL )
+	{
+	  if ( curre -> triple != NULL )
+	    curre = curre -> next = new HashNode_t( );
+	  curre -> triple = (*tpi);
+	  curre -> triple -> c ++;
+	}
+
+      (*tpi) -> c --;
+    }
 }
 
 
@@ -312,30 +487,31 @@ void IDMap_t::writeMessage (Message_t & msg) const
   msg . clear( );
 
   try {
+    ostringstream ss;
 
     msg . setMessageCode (NCode( ));
-
-    if ( size_m != 0 )
+    
+    if ( type_m != NULL_NCODE )
+      msg . setField (F_TYPE, Decode (type_m));
+    
+    ss << size_m;
+    msg . setField (F_SIZE, ss . str( ));
+    ss . str (NULL_STRING);
+    
+    if (size_m != 0 )
       {
-	ostringstream ss;
-	const HashNode_t * curr;
-
-	ss << size_m;
-	msg . setField (F_SIZE, ss . str( ));
-	ss . str("");
-
-	for ( Size_t i = 0; i < buckets_m; i ++ )
-	  if ( table_m [i] . key != NULL_ID )
-	    {
-	      curr = table_m + i;
-	      while ( curr != NULL )
-		{
-		  ss << curr -> key << ',' << curr -> val << endl;
-		  curr = curr -> next;
-		}
-	    }
-	msg . setField (F_MAP, ss . str( ));
-	ss . str("");
+	//-- Output all the triples
+	string str;
+	for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
+	  {
+	    ss << itr -> bid << ',' << itr -> iid << ',';
+	    str . append (ss . str( ));
+	    ss . str (NULL_STRING);
+	    str . append (itr -> eid);
+	    str . push_back (NL_CHAR);
+	  }
+	
+	msg . setField (F_MAP, str);
       }
   }
   catch (ArgumentException_t) {
@@ -343,4 +519,53 @@ void IDMap_t::writeMessage (Message_t & msg) const
     msg . clear( );
     throw;
   }
+}
+
+
+//----------------------------------------------------- operator= --------------
+IDMap_t & IDMap_t::operator= (const IDMap_t & s)
+{
+  if ( this != &s )
+    {
+      clear( );
+      type_m = s . type_m;
+      concat (s);
+    }
+
+  return *this;
+}
+
+
+//----------------------------------------------------- readRecord -------------
+void IDMap_t::readRecord (std::istream & in)
+{
+  Size_t size;
+  string eid;
+  ID_t bid, iid;
+
+  clear( );
+  in . read ((char *)&type_m, sizeof (NCode_t));
+  in . read ((char *)&size, sizeof (Size_t));
+  resize (size);
+  for ( Size_t i = 0; i < size; i ++ )
+    {
+      in . read ((char *)&bid, sizeof (ID_t));
+      in . read ((char *)&iid, sizeof (ID_t));
+      getline (in, eid, NULL_CHAR);
+      insert (iid, eid . c_str( ), bid);
+    }
+}
+
+
+//----------------------------------------------------- writeRecord ------------
+void IDMap_t::writeRecord (std::ostream & out) const
+{
+  out . write ((char *)&type_m, sizeof (NCode_t));
+  out . write ((char *)&size_m, sizeof (Size_t));
+  for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
+    {
+      out . write ((char *)&(itr -> bid), sizeof (ID_t));
+      out . write ((char *)&(itr -> iid), sizeof (ID_t));
+      out . write (itr -> eid, strlen (itr -> eid) + 1);
+    }
 }

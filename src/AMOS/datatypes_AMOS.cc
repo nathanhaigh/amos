@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "datatypes_AMOS.hh"
+#include <sstream>
 using namespace AMOS;
 using namespace Message_k;
 using namespace std;
@@ -65,13 +66,13 @@ void Tile_t::readMessage (const Message_t & msg)
   clear( );
 
   try {
-    int32_t delta;
+    Pos_t gap;
     istringstream ss;
 
     if ( msg . exists (F_SOURCE) )
       {
 	ss . str (msg . getField (F_SOURCE));
-	ss >> id;
+	ss >> source;
 	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid source link format");
 	ss . clear( );
@@ -97,19 +98,19 @@ void Tile_t::readMessage (const Message_t & msg)
 	ss . clear( );
       }
 
-    if ( msg . exists (F_DELTA) )
+    if ( msg . exists (F_GAPS) )
       {
-	ss . str (msg . getField (F_DELTA));
+	ss . str (msg . getField (F_GAPS));
 
 	while ( ss )
 	  {
-	    ss >> delta;
+	    ss >> gap;
 	    if ( ! ss . fail( ) )
-	      gaps . push_back (delta);
+	      gaps . push_back (gap);
 	  }
 
 	if ( !ss . eof( ) )
-	  AMOS_THROW_ARGUMENT ("Invalid delta gap format");
+	  AMOS_THROW_ARGUMENT ("Invalid gaps format");
 	ss . clear( );
       }
   }
@@ -133,15 +134,15 @@ void Distribution_t::writeMessage (Message_t & msg) const
 
     ss << mean;
     msg . setField (F_MEAN, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     ss << sd;
     msg . setField (F_SD, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     ss << skew;
     msg . setField (F_SKEWNESS, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
   }
   catch (ArgumentException_t) {
 
@@ -162,27 +163,27 @@ void Tile_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Tile_t::getNCode( ));
 
-    if ( id != NULL_ID )
+    if ( source != NULL_ID )
       {
-	ss << id;
+	ss << source;
 	msg . setField (F_SOURCE, ss . str( ));
-	ss . str("");
+	ss . str (NULL_STRING);
       }
 
     ss << offset;
     msg . setField (F_OFFSET, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     ss << range . begin << ',' << range . end;
     msg . setField (F_CLEAR, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
-    if ( gaps . size( ) != 0 )
+    if ( !gaps . empty( ) )
       {
 	for ( vi = gaps . begin( ); vi != gaps . end( ); vi ++ )
 	  ss << *vi << '\n';
-	msg . setField (F_DELTA, ss . str( ));
-	ss . str("");
+	msg . setField (F_GAPS, ss . str( ));
+	ss . str (NULL_STRING);
       }
   }
   catch (ArgumentException_t) {
@@ -274,7 +275,7 @@ bool AMOS::operator!= (const Distribution_t & a, const Distribution_t & b)
 //----------------------------------------------------- operator== -------------
 bool AMOS::operator== (const Tile_t & a, const Tile_t & b)
 {
-  return ( a . id == b . id  &&
+  return ( a . source == b . source  &&
 	   a . gaps == b . gaps  &&
 	   a . offset == b . offset  &&
 	   a . range == b . range );

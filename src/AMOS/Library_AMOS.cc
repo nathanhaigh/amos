@@ -52,13 +52,6 @@ void Library_t::readRecord (istream & fix,
 }
 
 
-//----------------------------------------------------- sizeVar ----------------
-Size_t Library_t::sizeVar ( ) const
-{
-  return Universal_t::sizeVar( );
-}
-
-
 //----------------------------------------------------- writeMessage -----------
 void Library_t::writeMessage (Message_t & msg) const
 {

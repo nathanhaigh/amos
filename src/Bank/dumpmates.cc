@@ -7,12 +7,13 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "universals_AMOS.hh"
+#include "foundation_AMOS.hh"
 #include <iostream>
 #include <cassert>
 #include <unistd.h>
 using namespace std;
 using namespace AMOS;
+using namespace Bank_k;
 
 
 //=============================================================== Globals ====//
@@ -37,7 +38,7 @@ void ParseArgs (int argc, char ** argv);
 void PrintHelp (const char * s);
 
 
-//----------------------------------------------------- PringUsage -------------
+//----------------------------------------------------- PrintUsage -------------
 //! \brief Prints usage information to cerr
 //!
 //! \param s The program name, i.e. argv[0]
@@ -54,12 +55,11 @@ int main (int argc, char ** argv)
   Library_t lib;
   Matepair_t mtp;
 
-  Bank_t red_bank (Bank_k::READ);
-  Bank_t frg_bank (Bank_k::FRAGMENT);
-  Bank_t lib_bank (Bank_k::LIBRARY);
-  Bank_t mtp_bank (Bank_k::MATEPAIR);
+  Bank_t red_bank (READ);
+  Bank_t frg_bank (FRAGMENT);
+  BankStream_t lib_bank (LIBRARY);
+  BankStream_t mtp_bank (MATEPAIR);
 
-  ID_t id;                       // id holder
   long int cnts = 0;             // seen object count
   long int cntw = 0;             // written object count
 
@@ -75,14 +75,8 @@ int main (int argc, char ** argv)
     lib_bank . open (OPT_BankName);
 
     //-- Iterate through each library in the bank
-    for ( id = 1; id <= lib_bank . getLastIID( ); id ++ )
+    while ( lib_bank >> lib )
       {
-	//-- Fetch the next object
-	lib . setIID (id);
-	lib_bank . fetch (lib);
-	if ( lib . isRemoved( ) )
-	  continue;
-
 	cout << "library\t" << lib . getIID( ) << '\t'
 	     << lib . getDistribution( ) . mean -
 	  (lib . getDistribution( ) . sd * 3) << '\t'
@@ -91,20 +85,13 @@ int main (int argc, char ** argv)
       }
 
     //-- Iterate through each object in the bank
-    for ( id = 1; id <= mtp_bank . getLastIID( ); id ++ )
+    while ( mtp_bank >> mtp )
       {
-	//-- Fetch the next object
-	mtp . setIID (id);
-	mtp_bank . fetch (mtp);
-	if ( mtp . isRemoved( ) )
-	  continue;
 	cnts ++;
 
 	//-- Get the library record for this insert
-	red . setIID (mtp . getReads( ) . first);
-	red_bank . fetch (red);
-	frg . setIID (red . getFragment( ));
-	frg_bank . fetch (frg);
+	red_bank . fetch (mtp . getReads( ) . first, red);
+	frg_bank . fetch (red . getFragment( ), frg);
 
 	cout << mtp . getReads( ) . first << '\t'
 	     << mtp . getReads( ) . second << '\t'

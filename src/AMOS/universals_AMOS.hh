@@ -10,12 +10,6 @@
 #ifndef __universals_AMOS_HH
 #define __universals_AMOS_HH 1
 
-#include "inttypes_AMOS.hh"
-#include "datatypes_AMOS.hh"
-#include "exceptions_AMOS.hh"
-#include "messages_AMOS.hh"
-#include "databanks_AMOS.hh"
-
 #include "ContigEdge_AMOS.hh"
 #include "ContigLink_AMOS.hh"
 #include "Contig_AMOS.hh"

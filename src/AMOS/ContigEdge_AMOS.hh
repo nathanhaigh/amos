@@ -41,10 +41,6 @@ protected:
 			   std::istream & var);
 
 
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
-
-
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix,
 			    std::ostream & var) const;
@@ -102,9 +98,9 @@ public:
 
 
   //--------------------------------------------------- getContigLinks ---------
-  //! \brief Get the bundle of contig link IDs that make up this contig edge
+  //! \brief Get the bundle of contig link IIDs that make up this contig edge
   //!
-  //! \return A vector of contig link IDs
+  //! \return A vector of contig link IIDs
   //!
   const std::vector<ID_t> & getContigLinks ( ) const
   {
@@ -113,9 +109,9 @@ public:
 
 
   //--------------------------------------------------- getContigLinks ---------
-  //! \brief Get the bundle of contig link IDs that make up this contig edge
+  //! \brief Get the bundle of contig link IIDs that make up this contig edge
   //!
-  //! \return A vector of contig link IDs
+  //! \return A vector of contig link IIDs
   //!
   std::vector<ID_t> & getContigLinks ( )
   {
@@ -135,9 +131,9 @@ public:
 
   
   //--------------------------------------------------- setContigLinks ---------
-  //! \brief Set the bundle of contig link IDs that make up this contig edge
+  //! \brief Set the bundle of contig link IIDs that make up this contig edge
   //!
-  //! \param links The new vector of contig link IDs
+  //! \param links The new vector of contig link IIDs
   //! \return void
   //!
   void setContigLinks (const std::vector<ID_t> & links)

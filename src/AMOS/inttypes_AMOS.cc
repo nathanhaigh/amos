@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "inttypes_AMOS.hh"
+#include <limits.h>
 using namespace AMOS;
 using namespace std;
 
@@ -18,31 +19,15 @@ using namespace std;
 //----------------------------------------------------- Decode -----------------
 string AMOS::Decode (NCode_t ncode)
 {
-  string ret;
-  ret . reserve (NCODE);
-
-  for ( int i = 0; i < NCODE; i ++ )
-    {
-      ret += ((uint8_t)ncode);
-      ncode >>= 8;
-    }
-
-  return ret;
+  char buff[4] = {ncode & CHAR_MAX,
+		  ncode >> CHAR_BIT & CHAR_MAX,
+		  ncode >> CHAR_BIT >> CHAR_BIT & CHAR_MAX, '\0'};
+  return buff;
 }
 
 
 //----------------------------------------------------- Encode -----------------
 NCode_t AMOS::Encode (const string & str)
 {
-  NCode_t ret = 0;
-  if ( str . size( ) != NCODE )
-    AMOS_THROW_ARGUMENT ("Invalid NCode string length");
-
-  for ( int i = NCODE - 1; i >= 0; i -- )
-    {
-      ret <<= 8;
-      ret |= (uint8_t)str [i];
-    }
-
-  return ret;
+  return (((str[2] << CHAR_BIT) | str[1]) << CHAR_BIT) | str[0];
 }

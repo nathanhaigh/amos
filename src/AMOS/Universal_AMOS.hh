@@ -16,6 +16,7 @@
 #include "messages_AMOS.hh"
 #include <string>
 #include <sstream>
+#include <utility>
 
 
 
@@ -58,8 +59,6 @@ private:
 
   std::string comment_m;      //!< comment string
 
-  ID_t eid_m;          //!< external ID, as appears in message
-
 
 protected:
 
@@ -67,15 +66,7 @@ protected:
   virtual void readRecord (std::istream & fix,
 			   std::istream & var)
   {
-    fix . read ((char *)&eid_m, sizeof (ID_t));
     std::getline (var, comment_m, '\0');
-  }
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const
-  {
-    return comment_m . size( ) + 1;
   }
 
 
@@ -83,7 +74,6 @@ protected:
   virtual void writeRecord (std::ostream & fix,
 			    std::ostream & var) const
   {
-    fix . write ((char *)&eid_m, sizeof (ID_t));
     var . write (comment_m . c_str( ), comment_m . size( ) + 1);
   }
 
@@ -111,7 +101,7 @@ public:
   //!
   Universal_t ( )
   {
-    eid_m = NULL_ID;
+
   }
 
 
@@ -138,7 +128,6 @@ public:
   {
     IBankable_t::clear( );
     comment_m . erase( );
-    eid_m = NULL_ID;
   }
 
 
@@ -150,17 +139,6 @@ public:
   const std::string & getComment ( ) const
   {
     return comment_m;
-  }
-
-
-  //--------------------------------------------------- getEID -----------------
-  //! \brief Get the external ID
-  //!
-  //! \return The external ID
-  //!
-  ID_t getEID ( ) const
-  {
-    return eid_m;
   }
 
 
@@ -184,17 +162,6 @@ public:
   void setComment (const std::string & comment)
   {
     comment_m = comment;
-  }
-
-
-  //--------------------------------------------------- setEID -----------------
-  //! \brief Set the external ID
-  //!
-  //! \return void
-  //!
-  void setEID (ID_t eid)
-  {
-    eid_m = eid;
   }
 
 

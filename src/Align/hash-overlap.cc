@@ -3,6 +3,7 @@
 //  File:  hash-overlap.cc
 //
 //  Last Modified:  Tue May 25 09:42:14 EDT 2004
+//                  Thu Jul  1 17:29:28 EDT 2004 (amp)
 //
 //  Compute overlaps among an input set of sequences by
 //  creating a hash table of minimizers to use as seed
@@ -26,16 +27,12 @@ static double  Error_Rate = DEFAULT_ERROR_RATE;
 static bool  FASTA_Input = false;
   // If set true by the -F option, then input is a multi-fasta
   // file instead of a read-bank
-static int  Lo_IID = 1, Hi_IID = INT_MAX;
-  // Range of read (internal) IDs in bank for which to compute
-  // overlaps
+static int  Lo_ID = 0, Hi_ID = INT_MAX;
+  // Range of indices for which to compute overlaps
 static int  Minimizer_Window_Len = 20;
   // Length of window from which a minimizer is extracted
 static int  Min_Overlap_Len = DEFAULT_MIN_OVERLAP_LEN;
   // Minimum number of bases by which two sequences must overlap
-static bool  Use_SeqNames = false;
-  // If set true, will use comment field in the readbank to
-  // extract sequence tags
 
 
 
@@ -43,11 +40,11 @@ int  main
     (int argc, char * argv [])
 
   {
-   Bank_t  read_bank (Read_t :: NCode ());
-   Read_t  read;
+   BankStream_t  read_bank (Read_t :: NCode());
    Simple_Overlap_t  olap;
    vector <char *>  string_list, qual_list;
    vector <char *>  tag_list;
+   vector <ID_t>    id_list;
    vector <Range_t>  clr_list;
    hash_map <unsigned int, Hash_Entry_t> hash_table;
    time_t  now;
@@ -63,6 +60,7 @@ int  main
 
       Parse_Command_Line (argc, argv);
 
+
       if  (FASTA_Input)
           cerr << "FASTA input file is " << Input_Name << endl;
         else
@@ -75,29 +73,21 @@ int  main
 
       if  (FASTA_Input)
           {
-           Read_Fasta_Strings (string_list, tag_list, Input_Name);
-           Lo_IID = 1;
-           Hi_IID = string_list . size ();
-           Check_IIDs ();
+	    Read_Fasta_Strings (string_list, id_list, tag_list, Input_Name);
           }
         else
           {
            read_bank . open (Input_Name);
-
-           Hi_IID = Min (Hi_IID, int (read_bank . getLastIID ()));
-           Check_IIDs ();
-
-           Get_Strings_From_Bank (Lo_IID, Hi_IID, string_list, qual_list, clr_list,
-                tag_list, read_bank);
+           Get_Strings_From_Bank (string_list, qual_list, clr_list,
+				  id_list, tag_list, read_bank);
+	   read_bank . close ();
           }
 
       Map_Minimizers (string_list, hash_table);
 
-      Find_Fwd_Overlaps (string_list, hash_table, Lo_IID);
+      Find_Fwd_Overlaps (string_list, hash_table, id_list);
 
-      Find_Rev_Overlaps (string_list, hash_table, Lo_IID);
-
-      read_bank . close ();
+      Find_Rev_Overlaps (string_list, hash_table, id_list);
      }
    catch (Exception_t & e)
      {
@@ -166,29 +156,29 @@ static int  By_String_Num_Then_Pos
 
 
 
-static void  Check_IIDs
+static void  Check_IDs
     (void)
 
-// Check that global IID range bounds  Lo_IID  and  Hi_IID
+// Check that global ID range bounds  Lo_ID  and  Hi_ID
 // are valid.  Throw an exception if they're not.
 
   {
-   if  (Lo_IID < 1)
+   if  (Lo_ID < 0)
        {
         sprintf (Clean_Exit_Msg_Line,
-                 "Low IID = %d is less than 1", Lo_IID);
+                 "Low ID = %d is negative", Lo_ID);
         AMOS_THROW (Clean_Exit_Msg_Line);
        }
-   if  (Hi_IID < Lo_IID)
+   if  (Hi_ID < Lo_ID)
        {
         sprintf (Clean_Exit_Msg_Line,
-                 "Low IID = %d and High IID = %d are out of order", Lo_IID, Hi_IID);
+                 "Low ID = %d and High ID = %d are out of order", Lo_ID, Hi_ID);
         AMOS_THROW (Clean_Exit_Msg_Line);
        }
-   if  (Lo_IID == Hi_IID)
+   if  (Lo_ID == Hi_ID)
        {
         sprintf (Clean_Exit_Msg_Line,
-                 "Low IID = %d = High IID  No overlaps are possible", Lo_IID);
+                 "Low ID = %d = High ID  No overlaps are possible", Lo_ID);
         AMOS_THROW (Clean_Exit_Msg_Line);
        }
 
@@ -199,12 +189,12 @@ static void  Check_IIDs
 
 static void  Find_Fwd_Overlaps
     (const vector <char *> & string_list,
-     hash_map <unsigned int, Hash_Entry_t> & ht, int lo_iid)
+     hash_map <unsigned int, Hash_Entry_t> & ht,
+     const vector <ID_t> & id_list)
 
 //  Find all overlaps between pairs of strings in  string_list
 //  where both are in the forward orientation and share
-//  a minimizer in  ht .  Add  lo_iid  to the subscript
-//  in  string_list  when outputting the string id number.
+//  a minimizer in  ht .
 
   {
    vector <Offset_Entry_t>  offset_list;
@@ -267,8 +257,8 @@ static void  Find_Fwd_Overlaps
             / (olap . a_olap_len + olap . b_olap_len);
         if  (erate <= Error_Rate)
             {
-             olap . a_id = i + lo_iid;
-             olap . b_id = b + lo_iid;
+             olap . a_id = id_list [i];
+             olap . b_id = id_list [b];
              olap . flipped = false;
              Output (cout, olap);
             }
@@ -285,14 +275,14 @@ static void  Find_Fwd_Overlaps
 
 static void  Find_Rev_Overlaps
     (vector <char *> & string_list,
-     hash_map <unsigned int, Hash_Entry_t> & ht, int lo_iid)
+     hash_map <unsigned int, Hash_Entry_t> & ht,
+     const vector <ID_t> & id_list)
 
 //  Find all overlaps between pairs of strings in  string_list
 //  where the lower-numbered string is in the reverse orientation
 //  the higher-numbered string is in the forward orientation.
 //  Overlaps are found only if the sequences share
-//  a minimizer in  ht .  Add  lo_iid  to the subscript
-//  in  string_list  when outputting the string id number.
+//  a minimizer in  ht .
 
   {
    Minimizer_t  mini (Minimizer_Window_Len);
@@ -375,8 +365,8 @@ static void  Find_Rev_Overlaps
               save = olap . a_hang;
               olap . a_hang = - olap . b_hang;
               olap . b_hang = - save;
-              olap . a_id = i + lo_iid;
-              olap . b_id = b + lo_iid;
+              olap . a_id = id_list [i];
+              olap . b_id = id_list [b];
               olap . flipped = true;
               Output (cout, olap);
              }
@@ -395,19 +385,17 @@ static void  Find_Rev_Overlaps
 
 
 static void  Get_Strings_From_Bank
-    (int lo_iid, int hi_iid, vector <char *> & s, vector <char *> & q,
-     vector <Range_t> & clr_list, vector <char * > & tag_list,
-     Bank_t & read_bank)
+    (vector <char *> & s, vector <char *> & q,
+     vector <Range_t> & clr_list, vector <ID_t> & id_list,
+     vector <char * > & tag_list, BankStream_t & read_bank)
 
 //  Populate  s  and  q  with sequences and quality values, resp.,
 //  from  read_bank .  Put the clear-ranges for the sequences in  clr_list .
 //   read_bank  must already be opened.  Put the identifying tags for the
-//  sequences in  tag_list .  Only get sequences with iids in the range
-//   lo_iid .. hi_iid .
+//  sequences in  tag_list .  Only get sequences with index in the range
+//   lo_id .. hi_id .
 
   {
-   Read_t  read;
-   Ordered_Range_t  position;
    int  i, n;
 
    n = s . size ();
@@ -424,40 +412,24 @@ static void  Get_Strings_From_Bank
    for  (i = 0;  i < n;  i ++)
      free (tag_list [i]);
    tag_list . clear ();
-
+   id_list . clear ();
    clr_list . clear ();
 
-   for  (i = lo_iid;  i <= hi_iid;  i ++)
-     {
-      char  * tmp, tag_buff [100];
-      string  seq;
-      string  qual;
-      Range_t  clear;
-      int  this_offset;
-      int  a, b, j, len, qlen;
+   Read_t  read;
+   char  * tmp, tag_buff [100];
+   string  seq;
+   string  qual;
+   Range_t  clear;
+   int  this_offset;
+   int  a, b, j, len, qlen;
 
-      read . setIID (i);
-      read_bank . fetch (read);
-      if  (read . isRemoved ())
-          {
-           s . push_back ("");
-           q . push_back ("");
-           clear . setRange (0, 0);
-           clr_list . push_back (clear);
-           continue;
-          }
-      if  (Use_SeqNames)
-          {
-           j = read . getComment () . find ('\n');
-           if  (unsigned (j) == string :: npos)
-               j = read . getComment () . size ();
-           read . getComment () . copy (tag_buff, j);
-           tag_buff [j] = '\0';
-          }
-        else
-          sprintf (tag_buff, "%u", read . getIID ());
-      tag_list . push_back (strdup (tag_buff));
-      
+   i = Lo_ID;
+   read_bank . seekg (i, BankStream_t::BEGIN);
+   while ( read_bank >> read  &&  i ++ < Hi_ID )
+     {
+      id_list . push_back (read . getIID());
+      tag_list . push_back (strdup (read . getEID() . c_str()));
+
       clear = read . getClearRange ();
       if  (Verbose > 2)
 	cerr << read;
@@ -474,10 +446,9 @@ static void  Get_Strings_From_Bank
       qlen = qual . length ();
       if  (len != qlen)
           {
-           sprintf
-               (Clean_Exit_Msg_Line,
-                "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
-                    len, qlen, read . getIID( ));
+           sprintf (Clean_Exit_Msg_Line,
+	    "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+            len, qlen, read . getIID( ));
            Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
           }
       tmp = strdup (qual . c_str ());
@@ -607,7 +578,7 @@ static void  Map_Minimizers
 
 
 static void  Output
-    (ostream & os, const Simple_Overlap_t & olap)
+     (ostream & os, const Simple_Overlap_t & olap)
 
 //  Print the contents of  olap  to  fp .
 
@@ -661,7 +632,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "Ab:e:Fho:sv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "Ab:e:Fho:v:")) != EOF))
      switch  (ch)
        {
         case  'A' :
@@ -669,11 +640,11 @@ static void  Parse_Command_Line
           break;
 
         case  'b' :
-          Lo_IID = strtol (optarg, NULL, 10);
+          Lo_ID = strtol (optarg, NULL, 10);
           break;
 
         case  'e' :
-          Hi_IID = strtol (optarg, NULL, 10);
+          Hi_ID = strtol (optarg, NULL, 10);
           break;
 
         case  'F' :
@@ -686,10 +657,6 @@ static void  Parse_Command_Line
 
         case  'o' :
           Min_Overlap_Len = strtol (optarg, NULL, 10);
-          break;
-
-        case 's' :
-	  Use_SeqNames = true;
 	  break;
 
         case  'v' :
@@ -716,15 +683,15 @@ static void  Parse_Command_Line
        }
 
    Input_Name = argv [optind ++];
-
+   Check_IDs( );
    return;
   }
 
 
 
 static void  Read_Fasta_Strings
-    (vector <char *> & s, vector <char *> & tag_list,
-     const std :: string & fn)
+     (vector <char *> & s, vector <ID_t> & id_list,
+      vector <char *> & tag_list, const std :: string & fn)
 
 //  Open file named  fn  and read FASTA-format sequences from it
 //  into  s  and their tags into  tag_list .
@@ -735,22 +702,29 @@ static void  Read_Fasta_Strings
 
    fp = File_Open (fn . c_str (), "r", __FILE__, __LINE__);
    s . clear ();
+   id_list . clear();
    tag_list . clear ();
+
+   char  tag [MAX_LINE];
+   char  * tmp;
+   int  j, len;
+   int cnt = 0;
 
    while  (Fasta_Read (fp, seq, hdr))
      {
-      char  tag [MAX_LINE];
-      char  * tmp;
-      int  j, len;
-
-      tmp = strdup (seq . c_str ());
-      len = seq . length ();
-      for  (j = 0;  j < len;  j ++)
-        tmp [j] = tolower (tmp [j]);
-      s . push_back (tmp);
-
-      sscanf (hdr . c_str (), "%s", tag);
-      tag_list . push_back (strdup (tag));
+       if ( cnt >= Lo_ID  &&  cnt < Hi_ID )
+	 {
+	   tmp = strdup (seq . c_str ());
+	   len = seq . length ();
+	   for  (j = 0;  j < len;  j ++)
+	     tmp [j] = tolower (tmp [j]);
+	   s . push_back (tmp);
+	   
+	   sscanf (hdr . c_str (), "%s", tag);
+	   tag_list . push_back (strdup (tag));
+	   id_list . push_back (cnt);
+	 }
+       ++ cnt;
      }
 
    return;
@@ -788,16 +762,17 @@ static void  Usage
            "Compute pairwise overlaps among a set of sequences by\n"
            "brute-force all-pairs alignment.  Sequences are obtained\n"
            "from <input-name>, which by default is an AMOS read bank.\n"
+           "Output links will reference IIDs for read bank input, and\n"
+	   "sequence index for fasta file input.\n"
            "\n"
            "Options:\n"
            "  -A       Output AMOS-format messages\n"
-           "  -b <n>   Use <n> as lowest read iid\n"
-           "  -e <n>   Use <n> as highest read iid\n"
-           "  -F       Input is from multi-fasta file <bank-name>\n"
+           "  -b <n>   Use <n> as lowest read index (0 based inclusive)\n"
+           "  -e <n>   Use <n> as highest read index (0 based exclusive)\n"
+           "  -F       Input is from multi-fasta file <input-name>\n"
            "  -h       Print this usage message\n"
            "  -o <n>   Set minimum overlap length to <n>\n"
-           "  -s       Get id tag from readbank comment string\n"
-           "  -v <n>   Set verbose level to <n>.  Higher produces more output.\n"
+           "  -v <n>   Set verbose level to <n>. Higher produces more output.\n"
            "\n",
            command);
 
@@ -920,7 +895,8 @@ void  Minimizer_t :: Advance
              window_offset += delay [0];
              for  (i = 1;  i < signature_ct - 1;  i ++)
                delay [i] -= delay [0];
-             delay [signature_ct - 1] = window_len - signature_len - window_offset;
+             delay [signature_ct - 1] =
+	       window_len - signature_len - window_offset;
             }
         delay [0] = 0;
        }
@@ -933,7 +909,8 @@ void  Minimizer_t :: Advance
         if  (signature_ct == 1)
             window_offset = window_len - signature_len;
           else
-            delay [signature_ct - 1] = window_len - signature_len - window_offset;
+            delay [signature_ct - 1] =
+	      window_len - signature_len - window_offset;
        }
 
    return;

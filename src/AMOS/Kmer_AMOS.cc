@@ -38,29 +38,6 @@ string Kmer_t::getSeqString ( ) const
 }
 
 
-//----------------------------------------------------- operator= --------------
-Kmer_t & Kmer_t::operator= (const Kmer_t & source)
-{
-  if ( this != &source )
-    {
-      //-- Make sure parent data is copied
-      Universal_t::operator= (source);
-
-      Size_t size = source . length_m / 4 + (source . length_m % 4 ? 1 : 0);
-
-      //-- Copy object data
-      seq_m = (uint8_t *) SafeRealloc (seq_m, size);
-      memcpy (seq_m, source . seq_m, size);
-
-      count_m = source . count_m;
-      length_m = source . length_m;
-      reads_m = source . reads_m;
-    }
-
-  return *this;
-}
-
-
 //----------------------------------------------------- readMessage-------------
 void Kmer_t::readMessage (const Message_t & msg)
 {
@@ -150,7 +127,7 @@ void Kmer_t::setSeqString (const string & seq)
   length_m = 0;
   for ( Size_t ui = 0; ui < osize; ui ++ )
     {
-      if ( seq [ui] == '\n' )
+      if ( seq [ui] == NL_CHAR )
 	continue;
 
       length_m ++;
@@ -171,15 +148,6 @@ void Kmer_t::setSeqString (const string & seq)
 }
 
 
-//----------------------------------------------------- sizeVar ----------------
-Size_t Kmer_t::sizeVar ( ) const
-{
-  return Universal_t::sizeVar( ) +
-    (reads_m . size( ) * sizeof (ID_t)) +
-    (length_m / 4 + (length_m % 4 ? 1 : 0));
-}
-
-
 //----------------------------------------------------- writeMessage -----------
 void Kmer_t::writeMessage (Message_t & msg) const
 {
@@ -193,19 +161,19 @@ void Kmer_t::writeMessage (Message_t & msg) const
 
     ss << count_m;
     msg . setField (F_COUNT, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     if ( length_m != 0 )
       msg . setField (F_SEQUENCE, getSeqString( ));
 
-    if ( reads_m . size( ) != 0 )
+    if ( !reads_m . empty( ) )
       {
 	vector<ID_t>::const_iterator vi;
 
 	for ( vi = reads_m . begin( ); vi != reads_m . end( ); vi ++ )
-	  ss << *vi << '\n';
+	  ss << *vi << endl;
 	msg . setField (F_READS, ss . str( ));
-	ss . str("");
+	ss . str (NULL_STRING);
       }
   }
   catch (ArgumentException_t) {
@@ -235,4 +203,27 @@ void Kmer_t::writeRecord (ostream & fix,
 
   size = length_m / 4 + (length_m % 4 ? 1 : 0);
   var . write ((char *)seq_m, size);
+}
+
+
+//----------------------------------------------------- operator= --------------
+Kmer_t & Kmer_t::operator= (const Kmer_t & source)
+{
+  if ( this != &source )
+    {
+      //-- Make sure parent data is copied
+      Universal_t::operator= (source);
+
+      Size_t size = source . length_m / 4 + (source . length_m % 4 ? 1 : 0);
+
+      //-- Copy object data
+      seq_m = (uint8_t *) SafeRealloc (seq_m, size);
+      memcpy (seq_m, source . seq_m, size);
+
+      count_m = source . count_m;
+      length_m = source . length_m;
+      reads_m = source . reads_m;
+    }
+
+  return *this;
 }

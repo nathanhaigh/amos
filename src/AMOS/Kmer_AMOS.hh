@@ -10,8 +10,8 @@
 #ifndef __Kmer_AMOS_HH
 #define __Kmer_AMOS_HH 1
 
-#include "alloc.hh"
 #include "Universal_AMOS.hh"
+#include "alloc.hh"
 #include <vector>
 #include <string>
 
@@ -105,10 +105,6 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix,
 			   std::istream & var);
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -239,9 +235,9 @@ public:
 
 
   //--------------------------------------------------- getReads ---------------
-  //! \brief Get the containing read IDs
+  //! \brief Get the containing read IIDs
   //!
-  //! \return The vector of read IDs that contain this Kmer
+  //! \return The vector of read IIDs that contain this Kmer
   //!
   const std::vector<ID_t> & getReads ( ) const
   {
@@ -250,9 +246,9 @@ public:
 
 
   //--------------------------------------------------- getReads ---------------
-  //! \brief Get the containing read IDs
+  //! \brief Get the containing read IIDs
   //!
-  //! \return The vector of read IDs that contain this Kmer
+  //! \return The vector of read IIDs that contain this Kmer
   //!
   std::vector<ID_t> & getReads ( )
   {
@@ -325,9 +321,9 @@ public:
 
 
   //--------------------------------------------------- setReads ---------------
-  //! \brief Set the list of containing read IDs
+  //! \brief Set the list of containing read IIDs
   //!
-  //! \param reads The new vector of read IDs that contain this Kmer
+  //! \param reads The new vector of read IIDs that contain this Kmer
   //! \return void
   //!
   void setReads (const std::vector<ID_t> & reads)

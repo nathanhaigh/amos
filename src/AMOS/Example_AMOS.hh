@@ -35,15 +35,8 @@ protected:
   virtual void readRecord (std::istream & fix,
 			   std::istream & var)
   {
+    // write parent class data first, e.g. Parent_t::writeRecord (fix,var)
     // write class data here
-  }
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const
-  {
-    // return size of variable length data here
-    return 0;
   }
 
 
@@ -51,6 +44,7 @@ protected:
   virtual void writeRecord (std::ostream & fix,
 			    std::ostream & var) const
   {
+    // write parent class data first, e.g. Parent_t::writeRecord (fix,var)
     // write class data here
   }
 
@@ -101,7 +95,8 @@ public:
   //--------------------------------------------------- clear ------------------
   virtual void clear ( )
   {
-    IBankable_t::clear( );
+    // clear parent items, e.g. Parent_t::clear( )
+    // clear local items
   }
 
 
@@ -122,8 +117,7 @@ public:
   {
     if ( this != &source )
       {
-	IBankable_t::operator= (source);
-
+	// copy parent items, e.g. Parent_t::operator= (source)
 	// copy local items
       }
 

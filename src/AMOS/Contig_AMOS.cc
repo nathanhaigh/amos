@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "Contig_AMOS.hh"
+#include <cctype>
 using namespace AMOS;
 using namespace Message_k;
 using namespace std;
@@ -75,9 +76,6 @@ void Contig_t::readMessage (const Message_t & msg)
   try {
     vector<Message_t>::const_iterator vi;
 
-    if ( msg . exists (F_POLYMORPHISM) )
-      AMOS_THROW_ARGUMENT ("Polymorphism not yet implemented");
-
     for ( vi  = msg . getSubMessages( ) . begin( );
           vi != msg . getSubMessages( ) . end( ); vi ++ )
       {
@@ -99,8 +97,7 @@ void Contig_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Contig_t::readRecord (istream & fix,
-			   istream & var)
+void Contig_t::readRecord (istream & fix, istream & var)
 {
   Size_t size, tsize;
 
@@ -109,7 +106,6 @@ void Contig_t::readRecord (istream & fix,
 
   //-- Read the object data
   fix . read ((char *)&size, sizeof (Size_t));
-  fix . read ((char *)&poly_m, sizeof (null_t));
 
   reads_m . resize (size);
   for ( Pos_t i = 0; i < size; i ++ )
@@ -119,7 +115,7 @@ void Contig_t::readRecord (istream & fix,
       for ( Pos_t j = 0; j < tsize; j ++ )
 	var . read ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
 
-      var . read ((char *)&reads_m [i] . id, sizeof (ID_t));
+      var . read ((char *)&reads_m [i] . source, sizeof (ID_t));
       var . read ((char *)&reads_m [i] . offset, sizeof (Pos_t));
       var . read ((char *)&reads_m [i] . range, sizeof (Range_t));
     }
@@ -130,7 +126,7 @@ void Contig_t::readRecord (istream & fix,
 bool Contig_t::readUMD (std::istream & in)
 {
   char ch;
-  ID_t tid;
+  string eid;
   Tile_t tile;
   istringstream ss;
   string line;
@@ -147,12 +143,12 @@ bool Contig_t::readUMD (std::istream & in)
   try {
 
     ss . str (line);
-    ss >> ch;
-    ss >> tid;
+    ss . ignore( );
+    ss >> eid;
     if ( !ss )
       AMOS_THROW_ARGUMENT ("Invalid contig ID");
     ss . clear( );
-    setEID (tid);
+    setEID (eid);
 
     while ( true )
       {
@@ -161,7 +157,7 @@ bool Contig_t::readUMD (std::istream & in)
 	  break;
 
 	ss . str (line);
-	ss >> tile . id;
+	ss >> tile . source;
 	ss >> tile . range . begin;
 	ss >> tile . range . end;
 	if ( !ss )
@@ -186,25 +182,6 @@ bool Contig_t::readUMD (std::istream & in)
 }
 
 
-//----------------------------------------------------- sizeVar ----------------
-Size_t Contig_t::sizeVar ( ) const
-{
-  Size_t varsize = Sequence_t::sizeVar( );
-  Size_t size = reads_m . size( );
-
-  for ( Pos_t i = 0; i < size; i ++ )
-    {
-      varsize += sizeof (Size_t);
-      varsize += reads_m [i] . gaps . size( ) * sizeof (int32_t);
-      varsize += sizeof (ID_t);
-      varsize += sizeof (Pos_t);
-      varsize += sizeof (Range_t);
-    }
-
-  return varsize;
-}
-
-
 //----------------------------------------------------- writeMessage -----------
 void Contig_t::writeMessage (Message_t & msg) const
 {
@@ -214,12 +191,11 @@ void Contig_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (NCode( ));
 
-    if ( reads_m . size( ) != 0 )
+    if ( !reads_m . empty( ) )
       {
 	vector<Tile_t>::const_iterator tvi;
 	Pos_t begin = msg . getSubMessages( ) . size( );
 	Pos_t end = begin + reads_m . size( );
-	msg . getSubMessages( ) . reserve (end);
 	msg . getSubMessages( ) . resize (end);
 
         for ( tvi = reads_m . begin( ); tvi != reads_m . end( ); tvi ++ )
@@ -235,8 +211,7 @@ void Contig_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Contig_t::writeRecord (ostream & fix,
-			    ostream & var) const
+void Contig_t::writeRecord (ostream & fix, ostream & var) const
 {
   Size_t size, tsize;
 
@@ -246,7 +221,6 @@ void Contig_t::writeRecord (ostream & fix,
   //-- Write object data
   size = reads_m . size( );
   fix . write ((char *)&size, sizeof (Size_t));
-  fix . write ((char *)&poly_m, sizeof (null_t));
 
   for ( Pos_t i = 0; i < size; i ++ )
     {
@@ -256,7 +230,7 @@ void Contig_t::writeRecord (ostream & fix,
       for ( Pos_t j = 0; j < tsize; j ++ )
 	var . write ((char *)&(reads_m [i] . gaps [j]), sizeof (int32_t));
 
-      var . write ((char *)&reads_m [i] . id, sizeof (ID_t));
+      var . write ((char *)&reads_m [i] . source, sizeof (ID_t));
       var . write ((char *)&reads_m [i] . offset, sizeof (Pos_t));
       var . write ((char *)&reads_m [i] . range, sizeof (Range_t));
     }
@@ -271,7 +245,7 @@ void Contig_t::writeUMD (std::ostream & out) const
   out << "C " << getEID( ) << endl;
 
   for ( ti = reads_m . begin( ); ti != reads_m . end( ); ti ++ )
-    out << ti -> id << ' '
+    out << ti -> source << ' '
 	<< ti -> range . begin + ti -> offset << ' '
 	<< ti -> range . end + ti -> offset << endl;
 

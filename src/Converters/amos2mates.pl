@@ -77,24 +77,24 @@ while (my $record = getRecord(\*STDIN)){
 	my $max = int($$sfs{mea} + 3 * $$sfs{std});
 	$min = 0 if $min < 0;
 	
-	print "library\t$$fields{eid}\t$min\t$max\n";
+	print "library\t$$fields{iid}\t$min\t$max\n";
     } # type is LIB
     
     if ($type eq "FRG"){
-	$frg2lib{$$fields{"eid"}} = $$fields{"lib"};
+	$frg2lib{$$fields{"iid"}} = $$fields{"lib"};
     } # type is FRG
 
     if ($type eq "RED"){
-	$rd2lib{$$fields{"eid"}} = $frg2lib{$$fields{"frg"}};
+	$rd2lib{$$fields{"iid"}} = $frg2lib{$$fields{"frg"}};
 	
-	my @lines;
-	@lines = split('\n', $$fields{com});
-	my $seqname = join('', @lines);
-	if ($seqname =~ /^\s*$/){
+	my $seqname;
+	if ( defined $$fields{eid} ) {
 	    $seqname = $$fields{eid};
+	} else {
+	    $seqname = $$fields{iid};
 	}
 
-	$rdids{$$fields{"eid"}} = $seqname;
+	$rdids{$$fields{"iid"}} = $seqname;
     } # type is RED
     if ($type eq "MTP"){
 	

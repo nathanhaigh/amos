@@ -45,9 +45,6 @@ void Scaffold_t::readMessage (const Message_t & msg)
 	ss . clear( );
       }
 
-    if ( msg . exists (F_POLYMORPHISM) )
-      AMOS_THROW_ARGUMENT ("Polymorphism not yet implemented");
-
     for ( vi  = msg . getSubMessages( ) . begin( );
 	  vi != msg . getSubMessages( ) . end( ); vi ++ )
       {
@@ -75,7 +72,6 @@ void Scaffold_t::readRecord (istream & fix,
   Universal_t::readRecord (fix, var);
 
   //-- Read object data
-  fix . read ((char *)&poly_m, sizeof (null_t));
   fix . read ((char *)&size, sizeof (Size_t));
 
   contigs_m . resize (size);
@@ -87,7 +83,7 @@ void Scaffold_t::readRecord (istream & fix,
       for ( Pos_t j = 0; j < tsize; j ++ )
 	var . read ((char *)&(contigs_m [i] . gaps [j]), sizeof (int32_t));
 
-      var . read ((char *)&contigs_m [i] . id, sizeof (ID_t));
+      var . read ((char *)&contigs_m [i] . source, sizeof (ID_t));
       var . read ((char *)&contigs_m [i] . offset, sizeof (Pos_t));
       var . read ((char *)&contigs_m [i] . range, sizeof (Range_t));
     }
@@ -98,26 +94,6 @@ void Scaffold_t::readRecord (istream & fix,
     var . read ((char *)&edges_m [i], sizeof (ID_t));
 }
 
-
-//----------------------------------------------------- sizeVar ----------------
-Size_t Scaffold_t::sizeVar ( ) const
-{
-  Size_t varsize = Universal_t::sizeVar( );
-  Size_t size = contigs_m . size( );
-
-  for ( Pos_t i = 0; i < size; i ++ )
-    {
-      varsize += sizeof (Size_t);
-      varsize += contigs_m [i] . gaps . size( ) * sizeof (int32_t);
-      varsize += sizeof (ID_t);
-      varsize += sizeof (Pos_t);
-      varsize += sizeof (Range_t);
-    }
-
-  varsize += edges_m . size( ) * sizeof (ID_t);
-
-  return varsize;
-}
 
 
 //----------------------------------------------------- writeMessage -----------
@@ -130,22 +106,25 @@ void Scaffold_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (NCode( ));
 
-    if ( edges_m . size( ) != 0 )
+    if ( !edges_m . empty( ) )
       {
+	string s;
 	vector<ID_t>::const_iterator evi;
 
 	for ( evi = edges_m . begin( ); evi != edges_m . end( ); evi ++ )
-	  ss << *evi << '\n';
-	msg . setField (F_CONTIGEDGE, ss . str( ));
-	ss . str("");
+	  {
+	    ss << *evi << endl;
+	    s . append (ss . str( ));
+	    ss . str (NULL_STRING);
+	  }
+	msg . setField (F_CONTIGEDGE, s);
       }
 
-    if ( contigs_m . size( ) != 0 )
+    if ( !contigs_m . empty( ) )
       {
 	vector<Tile_t>::const_iterator tvi;
 	Pos_t begin = msg . getSubMessages( ) . size( );
 	Pos_t end = begin + contigs_m . size( );
-	msg . getSubMessages( ) . reserve (end);
 	msg . getSubMessages( ) . resize (end);
 
 	for ( tvi = contigs_m . begin( ); tvi != contigs_m . end( ); tvi ++ )
@@ -170,7 +149,6 @@ void Scaffold_t::writeRecord (ostream & fix,
   Universal_t::writeRecord (fix, var);
 
   //-- Write object data
-  fix . write ((char *)&poly_m, sizeof (null_t));
   size = contigs_m . size( );
   fix . write ((char *)&size, sizeof (Size_t));
 
@@ -182,7 +160,7 @@ void Scaffold_t::writeRecord (ostream & fix,
       for ( Pos_t j = 0; j < tsize; j ++ )
 	var . write ((char *)&(contigs_m [i] . gaps [j]), sizeof (int32_t));
 
-      var . write ((char *)&contigs_m [i] . id, sizeof (ID_t));
+      var . write ((char *)&contigs_m [i] . source, sizeof (ID_t));
       var . write ((char *)&contigs_m [i] . offset, sizeof (Pos_t));
       var . write ((char *)&contigs_m [i] . range, sizeof (Range_t));
     }

@@ -32,7 +32,7 @@ void Sequence_t::compress ( )
   qual_m = NULL;
 
   //-- store compression flag in bit COMPRESS_BIT
-  flags_m . extra |= COMPRESS_BIT;
+  flags_m . nibble |= COMPRESS_BIT;
 }
 
 
@@ -72,36 +72,9 @@ string Sequence_t::getSeqString (Range_t range) const
 
   //-- Fill retval
   for ( Pos_t i = range . begin; i < range . end; i ++ )
-    retval += getBase (i) . first;
+    retval . push_back (getBase (i) . first);
 
   return retval;
-}
-
-
-//----------------------------------------------------- operator= --------------
-Sequence_t & Sequence_t::operator= (const Sequence_t & source)
-{
-  if ( this != &source )
-    {
-      //-- Make sure parent data is copied
-      Universal_t::operator= (source);
-
-      //-- Copy object data
-      seq_m = (uint8_t *) SafeRealloc (seq_m, source . length_m);
-      memcpy (seq_m, source . seq_m, source . length_m);
-
-      if ( !source . isCompressed( ) )
-	{
-	  qual_m = (uint8_t *) SafeRealloc (qual_m, source . length_m);
-	  memcpy (qual_m, source . qual_m, source . length_m);
-	}
-      else
-	qual_m = NULL;
-
-      length_m = source . length_m;
-    }
-
-  return *this;
 }
 
 
@@ -167,9 +140,9 @@ void Sequence_t::setSequence (const char * seq,
   length_m = 0;
   for ( Pos_t i = 0; i < length; i ++ )
     {
-      if ( seq [i] == '\n'  &&  qual [i] == '\n' )
+      if ( seq [i] == NL_CHAR  &&  qual [i] == NL_CHAR )
 	  continue;
-      else if ( seq [i] == '\n'  ||  qual [i] == '\n' )
+      else if ( seq [i] == NL_CHAR  ||  qual [i] == NL_CHAR )
 	AMOS_THROW_ARGUMENT ("Invalid newline found in seq and qlt data");
 
       length_m ++;
@@ -202,9 +175,9 @@ void Sequence_t::setSequence (const string & seq,
   length_m = 0;
   for ( Pos_t i = 0; i < length; i ++ )
     {
-      if ( seq [i] == '\n'  &&  qual [i] == '\n' )
+      if ( seq [i] == NL_CHAR  &&  qual [i] == NL_CHAR )
 	  continue;
-      else if ( seq [i] == '\n'  ||  qual [i] == '\n' )
+      else if ( seq [i] == NL_CHAR  ||  qual [i] == NL_CHAR )
 	AMOS_THROW_ARGUMENT ("Invalid newline found in seq and qlt data");
 
       length_m ++;
@@ -217,14 +190,6 @@ void Sequence_t::setSequence (const string & seq,
       if ( !isCompressed( ) )
 	qual_m = (uint8_t *) SafeRealloc (qual_m, length_m);
     }
-}
-
-
-//----------------------------------------------------- sizeVar ----------------
-Size_t Sequence_t::sizeVar ( ) const
-{
-  return Universal_t::sizeVar( ) +
-    (isCompressed( ) ? length_m : length_m + length_m);
 }
 
 
@@ -245,7 +210,7 @@ void Sequence_t::uncompress ( )
     }
 
   //-- store compression flag in bit COMPRESS_BIT
-  flags_m . extra &= ~COMPRESS_BIT;
+  flags_m . nibble &= ~COMPRESS_BIT;
 }
 
 
@@ -262,26 +227,26 @@ void Sequence_t::writeMessage (Message_t & msg) const
       {
 	pair<char, char> cp;
 	Pos_t i, j, last;
-	string seq, qlt;
+	Size_t pos = length_m + ((length_m - 1) / CHARS_PER_LINE) + 1;
+	string seq (pos, NL_CHAR);
+	string qlt (pos, NL_CHAR);
 
-	seq . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
-	qlt . reserve (length_m + (length_m / CHARS_PER_LINE) + 1);
-
+	pos = 0;
 	for ( i = 0; i < length_m; i += CHARS_PER_LINE )
 	  {
 	    last = i + CHARS_PER_LINE;
 	    if ( length_m < last )
 	      last = length_m;
-	    for ( j = i; j < last; j ++ )
+	    for ( j = i; j < last; ++ j )
 	      {
 		cp = getBase (j);
-		seq += cp . first;
-		qlt += cp . second;
+		seq [pos] = cp . first;
+		qlt [pos] = cp . second;
+		++ pos;
 	      }
-	    seq += '\n';
-	    qlt += '\n';
+	    ++ pos;
 	  }
-	
+
 	msg . setField (F_SEQUENCE, seq);
        	msg . setField (F_QUALITY, qlt);
       }
@@ -307,4 +272,31 @@ void Sequence_t::writeRecord (ostream & fix,
 
   if ( !isCompressed( ) )
     var . write ((char *)qual_m, length_m);
+}
+
+
+//----------------------------------------------------- operator= --------------
+Sequence_t & Sequence_t::operator= (const Sequence_t & source)
+{
+  if ( this != &source )
+    {
+      //-- Make sure parent data is copied
+      Universal_t::operator= (source);
+
+      //-- Copy object data
+      seq_m = (uint8_t *) SafeRealloc (seq_m, source . length_m);
+      memcpy (seq_m, source . seq_m, source . length_m);
+
+      if ( !source . isCompressed( ) )
+	{
+	  qual_m = (uint8_t *) SafeRealloc (qual_m, source . length_m);
+	  memcpy (qual_m, source . qual_m, source . length_m);
+	}
+      else
+	qual_m = NULL;
+
+      length_m = source . length_m;
+    }
+
+  return *this;
 }

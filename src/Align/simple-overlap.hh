@@ -11,7 +11,7 @@
 #define  __SIMPLE_OVERLAP_HH_INCLUDED
 
 
-#include  "universals_AMOS.hh"
+#include  "foundation_AMOS.hh"
 #include  "delcher.hh"
 #include  "align.hh"
 #include  "fasta.hh"
@@ -34,9 +34,9 @@ const int  NEW_SIZE = 1000;
 
 
 static void  Get_Strings_From_Bank
-    (int lo_iid, int hi_iid, vector <char *> & s, vector <char *> & q,
-     vector <Range_t> & clr_list, vector <char * > & tag_list,
-     Bank_t & read_bank);
+    (vector <char *> & s, vector <char *> & q,
+     vector <Range_t> & clr_list, vector <ID_t> & id_list,
+     vector <char * > & tag_list, BankStream_t & read_bank);
 static void  Output
     (FILE * fp, const Simple_Overlap_t & olap);
 static void  Parse_Command_Line

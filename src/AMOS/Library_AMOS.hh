@@ -40,10 +40,6 @@ protected:
 			   std::istream & var);
 
 
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
-
-
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix,
 			    std::ostream & var) const;

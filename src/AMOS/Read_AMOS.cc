@@ -98,13 +98,6 @@ void Read_t::readRecord (istream & fix,
 }
 
 
-//----------------------------------------------------- sizeVar ----------------
-Size_t Read_t::sizeVar ( ) const
-{
-  return Sequence_t::sizeVar( );
-}
-
-
 //----------------------------------------------------- writeMessage -----------
 void Read_t::writeMessage (Message_t & msg) const
 {
@@ -117,29 +110,29 @@ void Read_t::writeMessage (Message_t & msg) const
 
     if ( frag_m != NULL_ID )
       {
-	ss << frag_m;
-	msg . setField (F_FRAGMENT, ss . str( ));
-	ss . str("");
+        ss << frag_m;
+        msg . setField (F_FRAGMENT, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     if ( type_m != NULL_READ )
       {
         ss << type_m;
         msg . setField (F_TYPE, ss . str( ));
-        ss . str("");
+        ss . str (NULL_STRING);
       }
 
     ss << clear_m . begin << ',' << clear_m . end;
     msg . setField (F_CLEAR, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     ss << vclear_m . begin << ',' << vclear_m . end;
     msg . setField (F_VECTORCLEAR, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
 
     ss << qclear_m . begin << ',' << qclear_m . end;
     msg . setField (F_QUALITYCLEAR, ss . str( ));
-    ss . str("");
+    ss . str (NULL_STRING);
   }
   catch (ArgumentException_t) {
 

@@ -20,24 +20,20 @@ static bool  Fasta_Input = false;
   // on the command line
 static int  Min_Overlap_Len = DEFAULT_MIN_OVERLAP_LEN;
   // Minimum number of bases by which two sequences must overlap
-static bool  Use_SeqNames = false;
-  // If set true, will use comment field in the readbank to
-  // extract sequence tags
 
 
 int  main
     (int argc, char * argv [])
 
   {
-   Bank_t  read_bank (Read_t :: NCode ());
-   Read_t  read;
+   BankStream_t  read_bank (Read_t :: NCode ());
    Simple_Overlap_t  olap;
    vector <char *>  string_list, qual_list;
    vector <char *>  tag_list;
+   vector <ID_t> id_list;
    vector <Range_t>  clr_list;
    time_t  now;
    iostream :: fmtflags  status;
-   int  lo_iid, hi_iid;
    int  i, j, n;
 
 
@@ -67,10 +63,9 @@ int  main
            std :: string  seq, hdr;
            Alignment_t  ali;
 
-           fp = File_Open (Bank_Name, "r");
+           fp = File_Open (Bank_Name . c_str(), "r");
            while  (Fasta_Read (fp, seq, hdr))
              string_list . push_back (strdup (seq . c_str ()));
-
 
            char  line [MAX_LINE];
 
@@ -96,12 +91,8 @@ int  main
         else
           {
            read_bank . open (Bank_Name);
-
-           lo_iid = 1;
-           hi_iid = Min (50, int (read_bank . getLastIID ()));
-
-           Get_Strings_From_Bank (lo_iid, hi_iid, string_list, qual_list, clr_list,
-                tag_list, read_bank);
+           Get_Strings_From_Bank (string_list, qual_list, clr_list,
+				  id_list, tag_list, read_bank);
           }
 
       n = string_list . size ();
@@ -120,8 +111,8 @@ int  main
                 / (olap . a_olap_len + olap . b_olap_len);
             if  (erate <= Error_Rate)
                 {
-                 olap . a_id = lo_iid + i;
-                 olap . b_id = lo_iid + j;
+                 olap . a_id = id_list [i];
+                 olap . b_id = id_list [j];
                  olap . flipped = false;
                  Output (stdout, olap);
                 }
@@ -147,8 +138,8 @@ int  main
                  olap . a_hang = - olap . b_hang;
                  olap . b_hang = - save;
 
-                 olap . a_id = lo_iid + i;
-                 olap . b_id = lo_iid + j;
+                 olap . a_id = id_list [i];
+                 olap . b_id = id_list [j];
                  olap . flipped = true;
                  Output (stdout, olap);
                 }
@@ -176,15 +167,14 @@ int  main
 
 
 static void  Get_Strings_From_Bank
-    (int lo_iid, int hi_iid, vector <char *> & s, vector <char *> & q,
-     vector <Range_t> & clr_list, vector <char * > & tag_list,
-     Bank_t & read_bank)
+    (vector <char *> & s, vector <char *> & q,
+     vector <Range_t> & clr_list, vector <ID_t> & id_list,
+     vector <char * > & tag_list, BankStream_t & read_bank)
 
 //  Populate  s  and  q  with sequences and quality values, resp.,
 //  from  read_bank .  Put the clear-ranges for the sequences in  clr_list .
 //   read_bank  must already be opened.  Put the identifying tags for the
-//  sequences in  tag_list .  Only get sequences with iids in the range
-//   lo_iid .. hi_iid .
+//  sequences in  tag_list .
 
   {
    Read_t  read;
@@ -205,39 +195,20 @@ static void  Get_Strings_From_Bank
    for  (i = 0;  i < n;  i ++)
      free (tag_list [i]);
    tag_list . clear ();
-
+   id_list . clear();
    clr_list . clear ();
 
-   for  (i = lo_iid;  i <= hi_iid;  i ++)
-     {
-      char  * tmp, tag_buff [100];
-      string  seq;
-      string  qual;
-      Range_t  clear;
-      int  this_offset;
-      int  a, b, j, len, qlen;
+   char  * tmp, tag_buff [100];
+   string  seq;
+   string  qual;
+   Range_t  clear;
+   int  this_offset;
+   int  a, b, j, len, qlen;
 
-      read . setIID (i);
-      read_bank . fetch (read);
-      if  (read . isRemoved ())
-          {
-           s . push_back ("");
-           q . push_back ("");
-           clear . setRange (0, 0);
-           clr_list . push_back (clear);
-           continue;
-          }
-      if  (Use_SeqNames)
-          {
-           j = read . getComment () . find ('\n');
-           if  (unsigned (j) == string :: npos)
-               j = read . getComment () . size ();
-           read . getComment () . copy (tag_buff, j);
-           tag_buff [j] = '\0';
-          }
-        else
-          sprintf (tag_buff, "%u", read . getIID ());
-      tag_list . push_back (strdup (tag_buff));
+   while ( read_bank >> read )
+     {
+      id_list . push_back (read . getIID());
+      tag_list . push_back (strdup (read . getEID() . c_str()));
       
       clear = read . getClearRange ();
       if  (Verbose > 2)
@@ -256,8 +227,8 @@ static void  Get_Strings_From_Bank
       if  (len != qlen)
           {
            sprintf
-               (Clean_Exit_Msg_Line,
-                "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+            (Clean_Exit_Msg_Line,
+	    "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
                     len, qlen, read . getIID( ));
            Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
           }
@@ -301,7 +272,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "fho:sv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "fho:v:")) != EOF))
      switch  (ch)
        {
         case  'f' :
@@ -315,10 +286,6 @@ static void  Parse_Command_Line
         case  'o' :
           Min_Overlap_Len = strtol (optarg, NULL, 10);
           break;
-
-        case 's' :
-	  Use_SeqNames = true;
-	  break;
 
         case  'v' :
           Verbose = strtol (optarg, NULL, 10);
@@ -366,9 +333,9 @@ static void  Usage
            "from <bank-name>\n"
            "\n"
            "Options:\n"
+           "  -f       Input is a fasta file\n"
            "  -h       Print this usage message\n"
            "  -o <n>   Set minimum overlap length to <n>\n"
-           "  -s       Get id tag from readbank comment string\n"
            "  -v <n>   Set verbose level to <n>.  Higher produces more output.\n"
            "\n",
            command);

@@ -12,8 +12,7 @@
 
 #include "Sequence_AMOS.hh"
 #include <vector>
-#include <cctype>
-#include <sstream>
+
 
 
 
@@ -38,7 +37,6 @@ class Contig_t : public Sequence_t
   
 private:
 
-  null_t poly_m;                   //!< polymorphism
   std::vector<Tile_t> reads_m;     //!< read tiling
 
 
@@ -67,10 +65,6 @@ protected:
 			   std::istream & var);
 
 
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
-
-
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix,
 			    std::ostream & var) const;
@@ -97,7 +91,7 @@ public:
   //!
   Contig_t ( )
   {
-    poly_m = 0;
+
   }
 
 
@@ -123,7 +117,6 @@ public:
   virtual void clear ( )
   {
     Sequence_t::clear( );
-    poly_m = 0;
     reads_m . clear( );
   }
 
@@ -132,19 +125,6 @@ public:
   virtual NCode_t getNCode ( ) const
   {
     return Contig_t::NCode( );
-  }
-
-
-  //--------------------------------------------------- getPolymorphism --------
-  //! \brief Get polymorphism information for this contig
-  //!
-  //! \note datatype not yet decided upon
-  //!
-  //! \return The polymorphism info
-  //!
-  null_t & getPolymorphism ( )
-  {
-    return poly_m;
   }
 
 
@@ -248,20 +228,6 @@ public:
   //! \return true if a message was read, false if no message read (EOF)
   //!
   bool readUMD (std::istream & in);
-
-
-  //--------------------------------------------------- setPolymorphism --------
-  //! \brief Set polymorphism information for this contig
-  //!
-  //! \note datatype not yet decided upon
-  //!
-  //! \param poly The new polymorphism info
-  //! \return void
-  //!
-  void setPolymorphism (const null_t & poly)
-  {
-    poly_m = poly;
-  }
 
 
   //--------------------------------------------------- setReadTiling ----------

@@ -3,6 +3,7 @@
 //  File:  hash-overlap.hh
 //
 //  Last Modified:  Tue May 25 09:45:25 EDT 2004
+//                  Thu Jul  1 17:29:28 EDT 2004 (amp)
 //
 //  Declarations for  simple-overlap.cc
 
@@ -11,7 +12,7 @@
 #define  __HASH_OVERLAP_HH_INCLUDED
 
 
-#include  "universals_AMOS.hh"
+#include  "foundation_AMOS.hh"
 #include  "delcher.hh"
 #include  "align.hh"
 #include  "fasta.hh"
@@ -113,18 +114,20 @@ static unsigned int  Bit_Pattern
     (char ch);
 static int  By_String_Num_Then_Pos
     (const void * a, const void * b);
-static void  Check_IIDs
+static void  Check_IDs
     (void);
 static void  Find_Fwd_Overlaps
     (const vector <char *> & string_list,
-     hash_map <unsigned int, Hash_Entry_t> & ht, int lo_iid);
+     hash_map <unsigned int, Hash_Entry_t> & ht,
+     const vector <ID_t> & id_list);
 static void  Find_Rev_Overlaps
     (vector <char *> & string_list,
-     hash_map <unsigned int, Hash_Entry_t> & ht, int lo_iid);
+     hash_map <unsigned int, Hash_Entry_t> & ht,
+     const vector <ID_t> & id_list);
 static void  Get_Strings_From_Bank
-    (int lo_iid, int hi_iid, vector <char *> & s, vector <char *> & q,
-     vector <Range_t> & clr_list, vector <char *> & tag_list,
-     Bank_t & read_bank);
+    (vector <char *> & s, vector <char *> & q,
+     vector <Range_t> & clr_list, vector <ID_t> & id_list,
+     vector <char *> & tag_list, BankStream_t & read_bank);
 static void  Map_Minimizers
     (const vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht);
@@ -133,8 +136,8 @@ static void  Output
 static void  Parse_Command_Line
     (int argc, char * argv []);
 static void  Read_Fasta_Strings
-    (vector <char *> & s, vector <char *> & tag_list,
-     const std :: string & fn);
+    (vector <char *> & s, vector <ID_t> & id_list,
+     vector <char *> & tag_list, const string & fn);
 static void  Shift_In
     (unsigned int & u, char ch, unsigned int mask = UINT_MAX);
 static void  Usage

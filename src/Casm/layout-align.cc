@@ -14,7 +14,7 @@
 #include "alloc.hh"
 #include "amp.hh"
 #include "delta.hh"
-#include "universals_AMOS.hh"
+#include "foundation_AMOS.hh"
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
@@ -1204,6 +1204,7 @@ void ParseAlign (Mapping_t & mapping)
       ss . str (dr . getRecord( ) . idQ);
       ss >> id;
       assert (!ss . fail( ));
+      ss . clear( );
 
       //-- If a new read, push it
       if ( currmp == NULL || id != currmp -> id )
@@ -1292,9 +1293,8 @@ void ParseMates (Mapping_t & mapping)
   AMOS::Bank_t red_bank (AMOS::Bank_k::READ);
   AMOS::Bank_t frg_bank (AMOS::Bank_k::FRAGMENT);
   AMOS::Bank_t lib_bank (AMOS::Bank_k::LIBRARY);
-  AMOS::Bank_t mtp_bank (AMOS::Bank_k::MATEPAIR);
+  AMOS::BankStream_t mtp_bank (AMOS::Bank_k::MATEPAIR);
 
-  ID_t id;
   ReadMap_t * rmp, temprm;
   pair<
     vector<ReadMap_t *>::iterator,
@@ -1308,13 +1308,8 @@ void ParseMates (Mapping_t & mapping)
     lib_bank . open (OPT_BankName);
 
     //-- Populate the mate records
-    for ( id = 1; id <= mtp_bank . getLastIID( ); id ++ )
+    while ( mtp_bank >> mtp )
       {
-	mtp . setIID (id);
-	mtp_bank . fetch (mtp);
-	if ( mtp . isRemoved( ) )
-	  continue;
-
 	//-- Find the read
 	temprm . id = mtp . getReads( ) . first;
 	rmpip = equal_range (mapping . reads . begin( ),
@@ -1343,12 +1338,9 @@ void ParseMates (Mapping_t & mapping)
 	rmp -> mate . read -> mate . read = rmp;
 
 	//-- Get the library record for this insert
-	red . setIID (rmp -> id);
-	red_bank . fetch (red);
-	frg . setIID (red . getFragment( ));
-	frg_bank . fetch (frg);
-	lib . setIID (frg . getLibrary( ));
-	lib_bank . fetch (lib);
+	red_bank . fetch (rmp -> id, red);
+	frg_bank . fetch (red . getFragment( ), frg);
+	lib_bank . fetch (frg . getLibrary( ), lib);
 
 	//-- Set the mate offsets
 	rmp -> mate . minoff = rmp -> mate . maxoff =

@@ -11,7 +11,6 @@
 #define __Read_AMOS_HH 1
 
 #include "Sequence_AMOS.hh"
-#include <iostream>
 
 
 
@@ -45,7 +44,7 @@ public:
 private:
 
   Range_t clear_m;                 //!< generic clear range
-  ID_t frag_m;                     //!< the ID of the parent fragment
+  ID_t frag_m;                     //!< the IID of the parent fragment
   Range_t qclear_m;                //!< the quality score clear range
   ReadType_t type_m;               //!< the read type
   Range_t vclear_m;                //!< the vector clear range
@@ -56,10 +55,6 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix,
 			   std::istream & var);
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -137,9 +132,9 @@ public:
 
 
   //--------------------------------------------------- getFragment ------------
-  //! \brief Get the parent fragment ID
+  //! \brief Get the parent fragment IID
   //!
-  //! \return The parent fragment ID
+  //! \return The parent fragment IID
   //!
   ID_t getFragment ( ) const
   {
@@ -204,9 +199,9 @@ public:
 
 
   //--------------------------------------------------- setFragment ------------
-  //! \brief Set the parent fragment ID
+  //! \brief Set the parent fragment IID
   //!
-  //! \param frag The new parent fragment ID
+  //! \param frag The new parent fragment IID
   //! \return void
   //!
   void setFragment (ID_t frag)

@@ -7,7 +7,7 @@
 //  Read Celera-format contigs and merge their multialignments
 
 
-#include  "universals_AMOS.hh"
+#include  "foundation_AMOS.hh"
 #include  "delcher.hh"
 #include  "CelMsg.hh"
 #include  "align.hh"
@@ -615,8 +615,7 @@ static void  Get_Strings_And_Lengths
       b = position . getEnd ();
       
       uid = frgs [i] . getId ();
-      read . setIID (Lookup (uid,map));
-      read_bank . fetch (read);
+      read_bank . fetch (Lookup (uid,map), read);
       clear = read . getClearRange ();
       if  (Verbose > 2)
 	cerr << read;

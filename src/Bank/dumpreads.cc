@@ -7,12 +7,12 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "universals_AMOS.hh"
+#include "foundation_AMOS.hh"
 #include <iostream>
-#include <cassert>
 #include <unistd.h>
-using namespace AMOS;
 using namespace std;
+using namespace AMOS;
+using namespace Bank_k;
 
 
 //=============================================================== Globals ====//
@@ -37,7 +37,7 @@ void ParseArgs (int argc, char ** argv);
 void PrintHelp (const char * s);
 
 
-//----------------------------------------------------- PringUsage -------------
+//----------------------------------------------------- PrintUsage -------------
 //! \brief Prints usage information to cerr
 //!
 //! \param s The program name, i.e. argv[0]
@@ -49,7 +49,7 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  Bank_t red_bank (Bank_k::READ);
+  BankStream_t red_bank (READ);
   Read_t red;
 
   ID_t id;                       // id holder
@@ -65,16 +65,16 @@ int main (int argc, char ** argv)
     red_bank . open (OPT_BankName);
 
     //-- Iterate through each object in the bank
-    for ( id = 1; id <= red_bank . getLastIID( ); id ++ )
+    while ( red_bank >> red )
       {
-	//-- Fetch the next object
-	red . setIID (id);
-	red_bank . fetch (red);
-	if ( red . isRemoved( ) )
-	  continue;
 	cnts ++;
 
-	assert (red . getClearRange( ) . getLength( ) > 0);
+	if ( red . getClearRange( ) . getLength( ) <= 0 )
+	  {
+	    cerr << "WARNING: read with IID " << red . getIID( )
+		 << " has no clear range sequence, skipped\n";
+	    continue;
+	  }
 	cout << ">" << red . getIID( ) << endl;
 	WrapString (cout, red . getSeqString(red . getClearRange( )), 70);
 

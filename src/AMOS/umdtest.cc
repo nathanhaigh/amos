@@ -1,4 +1,4 @@
-#include <universals_AMOS.hh>
+#include "foundation_AMOS.hh"
 #include <iostream>
 using namespace std;
 using namespace AMOS;

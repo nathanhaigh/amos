@@ -101,7 +101,6 @@ inline char * SafeStrdup (const char * str)
   char * Q = strdup (str);
   if ( Q == NULL )
     throw std::bad_alloc ( );
-
   return Q;
 }
 

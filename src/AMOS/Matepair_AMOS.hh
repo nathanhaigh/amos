@@ -11,7 +11,6 @@
 #define __Matepair_AMOS_HH 1
 
 #include "Universal_AMOS.hh"
-#include <cctype>
 
 
 
@@ -42,7 +41,7 @@ public:
 
 private:
 
-  std::pair<ID_t, ID_t> reads_m;        //!< the pair of read IDs
+  std::pair<ID_t, ID_t> reads_m;        //!< the pair of read IIDs
   MateType_t type_m;                    //!< type of link
 
 
@@ -51,10 +50,6 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix,
 			   std::istream & var);
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -120,7 +115,7 @@ public:
   //--------------------------------------------------- flip -------------------
   //! \brief Flip the order of the mates
   //!
-  //! Reverses the order of the read IDs.
+  //! Reverses the order of the read IIDs.
   //!
   //! \return void
   //!
@@ -131,12 +126,12 @@ public:
 
 
   //--------------------------------------------------- getReads ---------------
-  //! \brief Get the pair of read IDs joined by this matepair
+  //! \brief Get the pair of read IIDs joined by this matepair
   //!
   //! The first read in the matepair is the Forward or North read and the second
   //! read is the Reverse or South read.
   //!
-  //! \return The first and second read IDs joined by this matepair
+  //! \return The first and second read IIDs joined by this matepair
   //!
   std::pair<ID_t, ID_t> getReads ( ) const
   {
@@ -169,14 +164,14 @@ public:
 
 
   //--------------------------------------------------- setReads ---------------
-  //! \brief Set the read ID pair for this matepair
+  //! \brief Set the read IID pair for this matepair
   //!
-  //! Only returns the IDs of the reads. It is up to the user to keep track
+  //! Only returns the IIDs of the reads. It is up to the user to keep track
   //! of where the actual read objects are stored. The first read in the
   //! matepair is the Forward or North read and the second read is the Reverse
   //! or South read.
   //!
-  //! \param reads The new pair of read IDs
+  //! \param reads The new pair of read IIDs
   //! \return void
   //!
   void setReads (std::pair<ID_t, ID_t> reads)

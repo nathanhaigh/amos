@@ -8,7 +8,7 @@
 //  multialignments and/or consensus sequences for them.
 
 
-#include  "universals_AMOS.hh"
+#include  "foundation_AMOS.hh"
 #include  "delcher.hh"
 #include  "CelMsg.hh"
 #include  "align.hh"
@@ -451,24 +451,20 @@ static void  Get_Strings_And_Offsets
       int  this_offset;
       int  a, b, j, len, qlen;
 
-      read . setIID ( frgs [i] . getId () );
       position = frgs [i] . getPosition ();
       a = position . getBegin ();
       b = position . getEnd ();
 
-      read_bank . fetch (read);
+      read_bank . fetch (frgs [i] . getId(), read);
+
       if ( Use_SeqNames )
-	{
-	  j = read . getComment( ) . find ('\n');
-	  if ( (unsigned)j == string::npos )
-	    j = read . getComment( ) . size( );
-	  read . getComment( ) . copy (tag_buff, j);
-	  tag_buff [j] = '\0';
-	}
+	tag_list . push_back (strdup (read . getEID() . c_str()));
       else
-	sprintf (tag_buff, "%u", read . getIID ());
-      tag_list . push_back (strdup (tag_buff));
-      
+	{
+	  sprintf (tag_buff, "%u", read . getIID ());
+	  tag_list . push_back (strdup (tag_buff));
+	}      
+
       clear = read . getClearRange ();
       if  (Verbose > 2)
 	cerr << read;
@@ -478,7 +474,7 @@ static void  Get_Strings_And_Offsets
           {
            Reverse_Complement (seq);
            reverse (qual . begin (), qual . end ());
-           clear . Swap ();
+           clear . swap ();
           }
       clr_list . push_back (clear);
 
@@ -578,20 +574,15 @@ static void  Get_Strings_And_Offsets
       a = pos [i] . getBegin ();
       b = pos [i] . getEnd ();
 
-      read . setIID ( fid [i] );
-      read_bank . fetch (read);
+      read_bank . fetch (fid [i], read);
 
       if ( Use_SeqNames )
-	{
-	  j = read . getComment( ) . find ('\n');
-	  if ( (unsigned)j == string::npos )
-	    j = read . getComment( ) . size( );
-	  read . getComment( ) . copy (tag_buff, j);
-	  tag_buff [j] = '\0';
-	}
+	tag_list . push_back (strdup (read . getEID() . c_str()));
       else
-	sprintf (tag_buff, "%u", read . getIID ());
-      tag_list . push_back (strdup (tag_buff));
+	{
+	  sprintf (tag_buff, "%u", read . getIID ());
+	  tag_list . push_back (strdup (tag_buff));
+	}      
 
       clear = read . getClearRange ();
       if  (Verbose > 2)
@@ -611,7 +602,7 @@ static void  Get_Strings_And_Offsets
           {
            Reverse_Complement (seq);
            reverse (qual . begin (), qual . end ());
-           clear . Swap ();
+           clear . swap ();
           }
 
       clr_list . push_back (clear);
@@ -889,7 +880,7 @@ static void  Usage
            "  -o <n>   Set minimum overlap bases to <n>\n"
            "  -P       Input is simple contig format, i.e., UMD format\n"
            "              using partial reads\n"
-           "  -s       Output comment string for read tags instead of iids\n"
+           "  -s       Output EID seqnames for reads instead of IID ints\n"
            "  -S       Input is simple contig format, i.e., UMD format\n"
            "  -T       Output in TIGR Assembler contig format\n"
            "  -u       Process unitig messages\n"

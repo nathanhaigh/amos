@@ -12,7 +12,6 @@
 
 #include "Universal_AMOS.hh"
 #include <utility>
-#include <cctype>
 
 
 
@@ -34,6 +33,27 @@ typedef char LinkAdjacency_t;
 class ContigLink_t : public Universal_t
 {
 
+private:
+
+  std::pair<ID_t, ID_t> contigs_m;        //!< the pair of contig IIDs
+  SD_t sd_m;                              //!< standard deviation of the link
+  Size_t size_m;                          //!< size of the link
+  std::pair<ID_t, NCode_t> source_m;      //!< source of the link
+  LinkType_t type_m;                      //!< type of link
+
+
+protected:
+
+  //--------------------------------------------------- readRecord -------------
+  virtual void readRecord (std::istream & fix,
+			   std::istream & var);
+
+
+  //--------------------------------------------------- writeRecord ------------
+  virtual void writeRecord (std::ostream & fix,
+			    std::ostream & var) const;
+
+  
 public:
 
   static const LinkType_t NULL_LINK  = 0;
@@ -50,33 +70,6 @@ public:
   static const LinkAdjacency_t INNIE      = 'I';     //!< E,E
   static const LinkAdjacency_t OUTIE      = 'O';     //!< B,B
 
-
-private:
-
-  std::pair<ID_t, ID_t> contigs_m;        //!< the pair of contig IDs
-  SD_t sd_m;                              //!< standard deviation of the link
-  Size_t size_m;                          //!< size of the link
-  std::pair<ID_t, NCode_t> source_m;      //!< source of the link
-  LinkType_t type_m;                      //!< type of link
-
-
-protected:
-
-  //--------------------------------------------------- readRecord -------------
-  virtual void readRecord (std::istream & fix,
-			   std::istream & var);
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
-
-
-  //--------------------------------------------------- writeRecord ------------
-  virtual void writeRecord (std::ostream & fix,
-			    std::ostream & var) const;
-
-  
-public:
 
   //--------------------------------------------------- NCode ------------------
   //! \brief Get the AMOS NCode type identifier (statically)
@@ -138,7 +131,7 @@ public:
   //--------------------------------------------------- flip -------------------
   //! \brief Flip the orientation of the link
   //!
-  //! Reverses the order of the contig IDs and changes the adjacency as
+  //! Reverses the order of the contig IIDs and changes the adjacency as
   //! altered by the new orientation of the contigs. Does not alter adjacency
   //! if it is currently a NULL_ADJACENCY. After flip, NORMAL become ANTINORMAL,
   //! ANTINORMAL becomes NORMAL, and INNIE and OUTIE remain the same.
@@ -169,9 +162,9 @@ public:
 
 
   //--------------------------------------------------- getContigs -------------
-  //! \brief Get the pair of contig IDs joined by this link
+  //! \brief Get the pair of contig IIDs joined by this link
   //!
-  //! \return The first and second contig IDs joined by this link
+  //! \return The first and second contig IIDs joined by this link
   //!
   std::pair<ID_t, ID_t> getContigs ( ) const
   {
@@ -213,13 +206,13 @@ public:
 
 
   //--------------------------------------------------- getSource --------------
-  //! \brief Get the link source ID and type of Bank it is stored in
+  //! \brief Get the link source IID and type of Bank it is stored in
   //!
-  //! This method only returns the ID of the link source and the type of Bank
+  //! This method only returns the IID of the link source and the type of Bank
   //! it is stored in. The entire source object can be retrieved by fetching
-  //! the specified ID from the cooresponding NCode type identifier.
+  //! the specified IID from the cooresponding NCode type identifier.
   //!
-  //! \return The ID of the link source and the NCode type indentifier.
+  //! \return The IID of the link source and the NCode type indentifier.
   //!
   std::pair<ID_t, NCode_t> getSource ( ) const
   {
@@ -252,7 +245,7 @@ public:
   //! beginning of the contig and E is the end of a contig and EB would mean
   //! the end of contig1 is adjacent to the beginning of contig2.
   //!
-  //! \note Will store info in extra portion of BankableFlags
+  //! \note Will store info in nibble portion of BankFlags
   //!
   //! \param adj The new adjacency of the contigs
   //! \pre adj must be one of [NAIO]
@@ -263,12 +256,12 @@ public:
 
 
   //--------------------------------------------------- setContigs -------------
-  //! \brief Set the contig ID pair for this link
+  //! \brief Set the contig IID pair for this link
   //!
-  //! Only returns the IDs of the contigs. It is up to the user to keep track
+  //! Only returns the IIDs of the contigs. It is up to the user to keep track
   //! of where the actual contig objects are stored.
   //!
-  //! \param contigs The new pair of contig IDs
+  //! \param contigs The new pair of contig IIDs
   //! \return void
   //!
   void setContigs (std::pair<ID_t, ID_t> contigs)
@@ -301,9 +294,9 @@ public:
 
 
   //--------------------------------------------------- setSource --------------
-  //! \brief Set the link source ID
+  //! \brief Set the link source IID
   //!
-  //! \param source The new ID and NCode type identifier of the link source
+  //! \param source The new IID and NCode type identifier of the link source
   //! \return void
   //!
   void setSource (std::pair<ID_t, NCode_t> source)

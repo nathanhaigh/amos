@@ -21,8 +21,8 @@ bool Message_t::read (istream & in)
 {
   uint8_t i;
   char ch, chp, chpp;
-  string name, data;
-  name . reserve (NCODE);
+  string data;
+  string name (NCODE, NULL_CHAR);
 
   //-- Search for the beginning of the message
   while ( in . get( ) != '{' )
@@ -35,7 +35,9 @@ bool Message_t::read (istream & in)
   try {
 
     //-- Get the type name
-    getline (in, name);
+    for ( i = 0; i < NCODE; i ++ )
+      name [i] = in . get( );
+    in . ignore( );
     setMessageCode (name);    // will assert that name . size == NCODE
 
     //-- Until end of message
@@ -53,7 +55,7 @@ bool Message_t::read (istream & in)
 	//-- If end of message
 	else if ( ch == '}' )
 	  {
-	    while ( in . get( ) != '\n' )
+	    while ( in . get( ) != NL_CHAR )
 	      if ( !in . good( ) )
 		break;
 	    break;
@@ -74,10 +76,10 @@ bool Message_t::read (istream & in)
 	//-- If multi-line field, read the rest
 	if ( data . empty( ) )
 	  {
-	    chpp = '\n';
+	    chpp = NL_CHAR;
 	    chp = in . get( );
 	    ch = in . get( );
-	    while (chpp != '\n'  ||  chp != '.'  ||  ch != '\n')
+	    while (chpp != NL_CHAR  ||  chp != '.'  ||  ch != NL_CHAR)
 	      {
 		chpp = chp;
 		chp = ch;
@@ -109,16 +111,13 @@ bool Message_t::read (istream & in)
 //----------------------------------------------------- setField ---------------
 void Message_t::setField (NCode_t fcode, const string & data)
 {
-  //-- Check pre-conditions
-  if ( data . find ('\n') != string::npos  &&
-       *(data . rbegin( )) != '\n' )
-    AMOS_THROW_ARGUMENT ("Invalid multi-line message field format");
   if ( data . empty( ) )
-    {
-      //AMOS_THROW_ARGUMENT ("Empty fields are not allowed");
-      //maybe write to log stream
-      return;
-    }
+    return;
+
+  //-- Check pre-conditions
+  string::size_type nlpos = data . rfind (NL_CHAR);
+  if ( nlpos != string::npos  &&  nlpos != data . size( ) - 1 )
+    AMOS_THROW_ARGUMENT ("Invalid multi-line message field format");
 
   //-- Insert new field, overwrite if already exists
   fields_m [fcode] = data;
@@ -139,15 +138,15 @@ void Message_t::write (ostream & out) const
   for ( mi = fields_m . begin( ); mi != fields_m . end( ); mi ++ )
     {
       //-- Set multi-line message flag
-      mline = *(mi -> second . rbegin( )) == '\n' ? true : false;
+      mline = *(mi -> second . rbegin( )) == NL_CHAR ? true : false;
 
       out << Decode (mi -> first) << ':';
       if ( mline )
-	out . put ('\n');
+	out . put (NL_CHAR);
       out << mi -> second;
       if ( mline )
 	out . put ('.');
-      out . put ('\n');
+      out . put (NL_CHAR);
     }
 
   //-- Write all sub-messages
@@ -168,8 +167,7 @@ NCode_t Message_t::skip (istream & in) // static const
 {
   NCode_t retcode;
   char ch, chp, chpp;
-  string name;
-  name . reserve (NCODE);
+  string name (NCODE, NULL_CHAR);
 
   //-- Search for the beginning of the message
   while ( in . get( ) != '{' )
@@ -179,7 +177,9 @@ NCode_t Message_t::skip (istream & in) // static const
   try {
 
     //-- Get the type name
-    getline (in, name);
+    for ( int i = 0; i < NCODE; i ++ )
+      name [i] = in . get( );
+    in . ignore( );
     retcode = Encode (name);
 
     //-- Until end of message
@@ -196,7 +196,7 @@ NCode_t Message_t::skip (istream & in) // static const
 	//-- If end of message
 	else if ( ch == '}' )
 	  {
-	    while ( in . get( ) != '\n' )
+	    while ( in . get( ) != NL_CHAR )
 	      if ( !in . good( ) )
 		break;
 	    break;
@@ -211,11 +211,11 @@ NCode_t Message_t::skip (istream & in) // static const
 
 	//-- If multi-line field, read the rest
 	chpp = in . get( );
-	if ( chpp == '\n' )
+	if ( chpp == NL_CHAR )
 	  {
 	    chp = in . get( );
 	    ch = in . get( );
-	    while (chpp != '\n'  ||  chp != '.'  ||  ch != '\n')
+	    while (chpp != NL_CHAR  ||  chp != '.'  ||  ch != NL_CHAR)
 	      {
 		chpp = chp;
 		chp = ch;
@@ -228,7 +228,7 @@ NCode_t Message_t::skip (istream & in) // static const
 	  }
 	else
 	  {
-	    while ( in . get( ) != '\n' )
+	    while ( in . get( ) != NL_CHAR )
 	      if ( !in . good( ) )
 		break;
 	  }

@@ -30,21 +30,11 @@ typedef char FragmentType_t;
 class Fragment_t : public Universal_t
 {
 
-public:
-
-  static const FragmentType_t NULL_FRAGMENT  = 0;
-  static const FragmentType_t OTHER          = 'X';
-  static const FragmentType_t BAC            = 'B';
-  static const FragmentType_t INSERT         = 'I';
-  static const FragmentType_t TRANSPOSON     = 'T';
-  static const FragmentType_t WALK           = 'W';
-
-
 private:
 
-  ID_t library_m;                  //!< ID of the parent library
+  ID_t library_m;                  //!< IID of the parent library
   Size_t size_m;                   //!< size of the fragment, 0 if not known
-  ID_t source_m;                   //!< ID of the source fragment
+  ID_t source_m;                   //!< IID of the source fragment
   FragmentType_t type_m;           //!< type of fragment
 
 
@@ -55,16 +45,20 @@ protected:
 			   std::istream & var);
 
 
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
-
-
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix,
 			    std::ostream & var) const;
 
 
 public:
+
+  static const FragmentType_t NULL_FRAGMENT  = 0;
+  static const FragmentType_t OTHER          = 'X';
+  static const FragmentType_t BAC            = 'B';
+  static const FragmentType_t INSERT         = 'I';
+  static const FragmentType_t TRANSPOSON     = 'T';
+  static const FragmentType_t WALK           = 'W';
+
 
   //--------------------------------------------------- NCode ------------------
   //! \brief Get the AMOS NCode type identifier (statically)
@@ -129,9 +123,9 @@ public:
 
 
   //--------------------------------------------------- getLibrary -------------
-  //! \brief Get the parent library ID
+  //! \brief Get the parent library IID
   //!
-  //! \return The ID of the parent library
+  //! \return The IID of the parent library
   //!
   ID_t getLibrary ( ) const
   {
@@ -157,7 +151,7 @@ public:
   //!
   //! e.g. The insert fragment used for a PCR walk fragment
   //!
-  //! \return The ID of the source fragment
+  //! \return The IID of the source fragment
   //!
   ID_t getSource ( ) const
   {
@@ -181,9 +175,9 @@ public:
 
 
   //--------------------------------------------------- setLibrary -------------
-  //! \brief Set the parent library ID
+  //! \brief Set the parent library IID
   //!
-  //! \param library The new ID of parent library
+  //! \param library The new IID of parent library
   //! \return void
   //!
   void setLibrary (ID_t library)
@@ -209,7 +203,7 @@ public:
   //!
   //! e.g. The insert fragment used for a PCR walk fragment
   //!
-  //! \param source The ID of the source fragment
+  //! \param source The IID of the source fragment
   //! \return void
   //!
   void setSource (ID_t source)

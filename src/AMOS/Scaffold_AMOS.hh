@@ -24,14 +24,12 @@ namespace AMOS {
 //! A list of contigs that are ordered, oriented and positioned in
 //! relation to one another.
 //!
-//! \warning Polymorphism information not yet implemented
 //==============================================================================
 class Scaffold_t : public Universal_t
 {
 
 private:
 
-  null_t poly_m;                   //!< polymorphism
   std::vector<Tile_t> contigs_m;   //!< contig tiling
   std::vector<ID_t> edges_m;       //!< list of contig edges
 
@@ -41,10 +39,6 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix,
 			   std::istream & var);
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -127,9 +121,9 @@ public:
 
 
   //--------------------------------------------------- getContigEdges ---------
-  //! \brief Get the contig edge IDs
+  //! \brief Get the contig edge IIDs
   //!
-  //! \return The vector of contig edge IDs
+  //! \return The vector of contig edge IIDs
   //!
   const std::vector<ID_t> & getContigEdges ( ) const
   {
@@ -138,9 +132,9 @@ public:
 
 
   //--------------------------------------------------- getContigEdges ---------
-  //! \brief Get the contig edge IDs
+  //! \brief Get the contig edge IIDs
   //!
-  //! \return The vector of contig edge IDs
+  //! \return The vector of contig edge IIDs
   //!
   std::vector<ID_t> & getContigEdges ( )
   {
@@ -152,19 +146,6 @@ public:
   virtual NCode_t getNCode ( ) const
   {
     return Scaffold_t::NCode( );
-  }
-
-
-  //--------------------------------------------------- getPolymorphism --------
-  //! \brief Get polymorphism information for this scaffold
-  //!
-  //! \note datatype not yet decided upon
-  //!
-  //! \return The polymorphism info
-  //!
-  null_t & getPolymorphism ( )
-  {
-    return poly_m;
   }
 
 
@@ -185,28 +166,14 @@ public:
 
 
   //--------------------------------------------------- setContigEdges ---------
-  //! \brief Set the contig edge IDs
+  //! \brief Set the contig edge IIDs
   //!
-  //! \param edges The new vector of contig edge IDs
+  //! \param edges The new vector of contig edge IIDs
   //! \return void
   //!
   void setContigEdges (const std::vector<ID_t> & edges)
   {
     edges_m = edges;
-  }
-
-
-  //--------------------------------------------------- setPolymorphism --------
-  //! \brief Set polymorphism information for this scaffold
-  //!
-  //! \note datatype not yet decided upon
-  //!
-  //! \param poly The new polymorphism info
-  //! \return void
-  //!
-  void setPolymorphism (const null_t & poly)
-  {
-    poly_m = poly;
   }
 
 

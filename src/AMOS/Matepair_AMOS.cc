@@ -71,13 +71,6 @@ void Matepair_t::readRecord (istream & fix,
 }
 
 
-//----------------------------------------------------- sizeVar ----------------
-Size_t Matepair_t::sizeVar ( ) const
-{
-  return Universal_t::sizeVar( );
-}
-
-
 //----------------------------------------------------- writeMessage -----------
 void Matepair_t::writeMessage (Message_t & msg) const
 {
@@ -92,21 +85,21 @@ void Matepair_t::writeMessage (Message_t & msg) const
       {
 	ss << reads_m . first;
 	msg . setField (F_READ1, ss . str( ));
-	ss . str("");
+	ss . str (NULL_STRING);
       }
 
     if ( reads_m . second != NULL_ID )
       {
 	ss << reads_m . second;
 	msg . setField (F_READ2, ss . str( ));
-	ss . str("");
+	ss . str (NULL_STRING);
       }
 
     if ( type_m != NULL_MATE )
       {
 	ss << type_m;
 	msg . setField (F_TYPE, ss . str( ));
-	ss . str("");
+	ss . str (NULL_STRING);
       }
   }
   catch (ArgumentException_t) {

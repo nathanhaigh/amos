@@ -97,7 +97,7 @@ who:
 ctm:$date
 vsn:1.00
 com:
-First UNV record in file had accession $$fields{eid} and comment:
+AMOS UNV header
 $$fields{com}.
 }
 .
@@ -113,7 +113,7 @@ $$fields{com}.
 	if ($#$recs < 0){
 	    $base->bail("LIB record doesn't have any DST record at or around line $. in input");
 	}
-	$libids{$$fields{"eid"}} = $acc;
+	$libids{$$fields{"iid"}} = $acc;
         my ($sid, $sfs, $srecs) = parseRecord($$recs[0]);
 	if ($sid ne "DST"){
 	    $base->bail("LIB record doesn't start with DST record at or around line $. in input");
@@ -136,12 +136,12 @@ std:$$sfs{std}
     } # type is LIB
     
     if ($type eq "FRG"){
-	$frg2lib{$$fields{"eid"}} = $$fields{"lib"};
+	$frg2lib{$$fields{"iid"}} = $$fields{"lib"};
     } # type is FRG
 
     if ($type eq "RED"){
-	$rd2lib{$$fields{"eid"}} = $frg2lib{$$fields{"frg"}};
-	$rdids{$$fields{"eid"}} = $acc;
+	$rd2lib{$$fields{"iid"}} = $frg2lib{$$fields{"frg"}};
+	$rdids{$$fields{"iid"}} = $acc;
 	
 /`/;
 print qq~{FRG
@@ -149,7 +149,8 @@ act:A
 acc:$acc
 typ:R
 src:
-$$fields{com}.
+$$fields{eid}
+.
 etm:0
 seq:
 $$fields{seq}.

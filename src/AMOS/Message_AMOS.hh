@@ -11,10 +11,9 @@
 #ifndef __Message_AMOS_HH
 #define __Message_AMOS_HH 1
 
-#include "exceptions_AMOS.hh"
 #include "inttypes_AMOS.hh"
+#include "exceptions_AMOS.hh"
 #include <map>
-#include <cctype>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -27,9 +26,9 @@ namespace AMOS {
 namespace Message_k {
 
   //-- Enumeration characters
-  const char          E_ADD         = 'A';
-  const char          E_DELETE      = 'D';
-  const char          E_EDIT        = 'E';
+  const char      E_ADD         = 'A';
+  const char      E_DELETE      = 'D';
+  const char      E_REPLACE     = 'R';
 
   //-- Field NCode types
   const NCode_t   F_NULL         = Encode ("nul");
@@ -39,6 +38,7 @@ namespace Message_k {
   const NCode_t   F_ACTION       = Encode ("act");
   const NCode_t   F_ADJACENCY    = Encode ("adj");
   const NCode_t   F_BHANG        = Encode ("bhg");
+  const NCode_t   F_BID          = Encode ("bid");
   const NCode_t   F_CLEAR        = Encode ("clr");
   const NCode_t   F_COMMENT      = Encode ("com");
   const NCode_t   F_CONTIG1      = Encode ("ct1");
@@ -46,15 +46,14 @@ namespace Message_k {
   const NCode_t   F_CONTIGEDGE   = Encode ("cte");
   const NCode_t   F_CONTIGLINK   = Encode ("ctl");
   const NCode_t   F_COUNT        = Encode ("cnt");
-  const NCode_t   F_DELTA        = Encode ("del");
   const NCode_t   F_EID          = Encode ("eid");
   const NCode_t   F_FRAGMENT     = Encode ("frg");
+  const NCode_t   F_GAPS         = Encode ("gap");
   const NCode_t   F_IID          = Encode ("iid");
   const NCode_t   F_LIBRARY      = Encode ("lib");
   const NCode_t   F_MAP          = Encode ("map");
   const NCode_t   F_MEAN         = Encode ("mea");
   const NCode_t   F_OFFSET       = Encode ("off");
-  const NCode_t   F_POLYMORPHISM = Encode ("ply");
   const NCode_t   F_QUALITY      = Encode ("qlt");
   const NCode_t   F_QUALITYCLEAR = Encode ("qcr");
   const NCode_t   F_READ1        = Encode ("rd1");
@@ -186,8 +185,7 @@ public:
 
     mi = fields_m . find (fcode);
     if ( mi == fields_m . end( ) )
-      AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " +
-			   Decode (fcode));
+      AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " + Decode (fcode));
 
     return mi -> second;
   }

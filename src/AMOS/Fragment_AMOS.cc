@@ -68,8 +68,7 @@ void Fragment_t::readMessage (const Message_t & msg)
 
 
 //----------------------------------------------------- readRecord -------------
-void Fragment_t::readRecord (istream & fix,
-			     istream & var)
+void Fragment_t::readRecord (istream & fix, istream & var)
 {
   //-- Read parent object data
   Universal_t::readRecord (fix, var);
@@ -79,13 +78,6 @@ void Fragment_t::readRecord (istream & fix,
   fix . read ((char *)&size_m, sizeof (Size_t));
   fix . read ((char *)&source_m, sizeof (ID_t));
   fix . read ((char *)&type_m, sizeof (FragmentType_t));
-}
-
-
-//----------------------------------------------------- sizeVar ----------------
-Size_t Fragment_t::sizeVar ( ) const
-{
-  return Universal_t::sizeVar( );
 }
 
 
@@ -103,28 +95,28 @@ void Fragment_t::writeMessage (Message_t & msg) const
       {
         ss << library_m;
         msg . setField (F_LIBRARY, ss . str( ));
-        ss . str("");
+        ss . str (NULL_STRING);
       }
 
     if ( size_m != 0 )
       {
 	ss << size_m;
 	msg . setField (F_SIZE, ss . str( ));
-	ss .str("");
+	ss .str (NULL_STRING);
       }
 
     if ( source_m != NULL_ID )
       {
 	ss << source_m;
 	msg . setField (F_SOURCE, ss . str( ));
-	ss . str("");
+	ss . str (NULL_STRING);
       }
 
     if ( type_m != NULL_FRAGMENT )
       {
         ss << type_m;
         msg . setField (F_TYPE, ss . str( ));
-        ss . str("");
+        ss . str (NULL_STRING);
       }
   }
   catch (ArgumentException_t) {
@@ -136,8 +128,7 @@ void Fragment_t::writeMessage (Message_t & msg) const
 
 
 //----------------------------------------------------- writeRecord ------------
-void Fragment_t::writeRecord (ostream & fix,
-			      ostream & var) const
+void Fragment_t::writeRecord (ostream & fix, ostream & var) const
 {
   //-- Write parent object data
   Universal_t::writeRecord (fix, var);

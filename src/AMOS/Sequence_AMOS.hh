@@ -10,13 +10,9 @@
 #ifndef __Sequence_AMOS_HH
 #define __Sequence_AMOS_HH 1
 
-#include "alloc.hh"
 #include "Universal_AMOS.hh"
-#include <cstdlib>
-#include <cctype>
+#include "alloc.hh"
 #include <string>
-#include <utility>
-#include <iostream>
 
 
 
@@ -141,10 +137,6 @@ protected:
 			   std::istream & var);
 
 
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
-
-
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix,
 			    std::ostream & var) const;
@@ -212,14 +204,14 @@ public:
   //!
   virtual void clear ( )
   {
-    bool compress = flags_m . extra & COMPRESS_BIT;
+    bool compress = flags_m . nibble & COMPRESS_BIT;
     Universal_t::clear( );
     free (seq_m);
     free (qual_m);
     seq_m = qual_m = NULL;
     length_m = 0;
     if ( compress )
-      flags_m . extra |= COMPRESS_BIT;
+      flags_m . nibble |= COMPRESS_BIT;
   }
 
 
@@ -345,7 +337,7 @@ public:
   bool isCompressed ( ) const
   {
     //-- compression flag is in bit COMPRESS_BIT
-    return flags_m . extra & COMPRESS_BIT;
+    return flags_m . nibble & COMPRESS_BIT;
   }
 
 

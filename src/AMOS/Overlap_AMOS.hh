@@ -11,7 +11,6 @@
 #define __Overlap_AMOS_HH 1
 
 #include "Universal_AMOS.hh"
-#include <utility>
 
 
 
@@ -43,7 +42,7 @@ private:
 
   Size_t aHang_m;          //!< length of non-overlapping portion of A
   Size_t bHang_m;          //!< length of non-overlapping portion of B
-  std::pair<ID_t, ID_t> reads_m;   //!< the pair of read IDs
+  std::pair<ID_t, ID_t> reads_m;   //!< the pair of read IIDs
 
 
 protected:
@@ -55,10 +54,6 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix,
 			   std::istream & var);
-
-
-  //--------------------------------------------------- sizeVar ----------------
-  virtual Size_t sizeVar ( ) const;
 
 
   //--------------------------------------------------- writeRecord ------------
@@ -124,7 +119,7 @@ public:
   //--------------------------------------------------- flip -------------------
   //! \brief Flip the orientation of the overlap
   //!
-  //! Reverses the order of the read IDs and changes the overlap adjacency as
+  //! Reverses the order of the read IIDs and changes the overlap adjacency as
   //! altered by the new orientation of the reads. Does not alter adjacency
   //! if it is currently a NULL_ADJACENCY. Also, swaps the a/bHang values.
   //! After flip, NORMAL becomes ANTINORMAL, ANTINORMAL becomes NORMAL, and
@@ -191,9 +186,9 @@ public:
 
 
   //--------------------------------------------------- getReads ---------------
-  //! \brief Get the pair of contig IDs joined by this overlap
+  //! \brief Get the pair of contig IIDs joined by this overlap
   //!
-  //! \return The first and second read IDs joined by this overlap
+  //! \return The first and second read IIDs joined by this overlap
   //!
   std::pair<ID_t, ID_t> getReads ( ) const
   {
@@ -213,7 +208,7 @@ public:
   //! beginning of the read and E is the end of the read and EB would mean
   //! the end of read1 overlaps the beginning of read2.
   //!
-  //! \note Will store info in extra portion of BankableFlags
+  //! \note Will store info in nibble portion of BankFlags
   //!
   //! \param adj The new adjacency of the reads
   //! \pre adj must be one of [NAIO]
@@ -252,9 +247,9 @@ public:
 
 
   //--------------------------------------------------- setReads ---------------
-  //! \brief Set the read ID pair for this overlap
+  //! \brief Set the read IID pair for this overlap
   //!
-  //! \param reads The new pair of read IDs
+  //! \param reads The new pair of read IIDs
   //!
   void setReads (std::pair<ID_t, ID_t> reads)
   {

@@ -10,6 +10,7 @@
 #ifndef __exceptions_AMOS_HH
 #define __exceptions_AMOS_HH 1
 
+#include "inttypes_AMOS.hh"
 #include <string>
 #include <exception>
 #include <iostream>
@@ -48,21 +49,16 @@ public:
   //!
   Exception_t (const std::string & what,
 	       int line = 0,
-	       const std::string & file = "")
-  {
-    what_m = what;
-    line_m = line;
-    file_m = file;
-  }
+	       const std::string & file = NULL_STRING)
+    : what_m (what), line_m (line), file_m (file)
+  { }
 
 
   //---------------------------------------------- ~Exception_t ----------------
   //! \brief Default destructor
   //!
-  ~Exception_t ( ) throw( )
-  {
-
-  }
+  ~Exception_t ( )
+  { }
 
 
   //---------------------------------------------- file ------------------------
@@ -125,14 +121,11 @@ public:
   //!
   AlignmentException_t (const std::string & what,
        int line = 0,
-       const std::string & file = "",
+       const std::string & file = NULL_STRING,
        int a_id = -1,
        int b_id = -1)
-    : Exception_t (what, line, file)
-  {
-   a_id_m = a_id;
-   b_id_m = b_id;
-  }
+    : Exception_t (what, line, file), a_id_m (a_id), b_id_m (b_id)
+  { }
 
 
   //---------------------------------------------- a_id ------------------------
@@ -179,7 +172,7 @@ public:
   //!
   AllocException_t (const std::string & what,
 		    int line = 0,
-		    const std::string & file = "")
+		    const std::string & file = NULL_STRING)
     : Exception_t (what, line, file)
   { }
 
@@ -212,7 +205,7 @@ public:
   //!
   ArgumentException_t (const std::string & what,
 		       int line = 0,
-		       const std::string & file = "")
+		       const std::string & file = NULL_STRING)
     : Exception_t (what, line, file)
   { }
 
@@ -243,7 +236,7 @@ public:
   //!
   IOException_t (const std::string & what,
 		 int line = 0,
-		 const std::string & file = "")
+		 const std::string & file = NULL_STRING)
     : Exception_t (what, line, file)
   { }
 

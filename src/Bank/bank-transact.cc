@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //! \file
 //! \author Adam M Phillippy
 //! \date 12/20/2003
@@ -6,27 +6,27 @@
 //! \brief Transacts the operations described by the messages on a bank
 //!
 //! bank-transact reads assembly input data from an AMOS message file and
-//! modifies the AMOS bank data as directed. External IDs (eid's) and their
-//! their links are translated to internal IDs (iid's), but will be returned
-//! to eid's on a bank-report operation. Any conflict in this mapping, e.g. a
-//! duplicate eid or an invalid link will cause the violating message to be
-//! ignored.
+//! modifies the AMOS bank data as directed. All object links should reference
+//! IIDs (internal IDs), but objects will be accessible from the bank by both
+//! their IID and EID (external ID). Any conflict in the IID, EID mapping, e.g.
+//! a duplicate id, will cause the violating message to be ignored and the
+//! user will be warned of the inconsistency.
 //!
-//! \todo -f option should remove all banks, not just the types in the message
+//! \note problem with exception catch
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "foundation_AMOS.hh"
 #include "amp.hh"
-#include "IDMap_AMOS.hh"
-#include "messages_AMOS.hh"
-#include "universals_AMOS.hh"
 #include <iostream>
-#include <cassert>
-#include <ctime>
 #include <vector>
 #include <unistd.h>
 using namespace AMOS;
+using namespace Bank_k;
 using namespace Message_k;
 using namespace std;
+
+
+
 
 
 //=============================================================== Globals ====//
@@ -35,6 +35,21 @@ bool   OPT_ForceCreate = false;      // forcibly create bank option
 bool   OPT_Compress    = false;      // SEQ and RED compression option
 string OPT_BankName;                 // bank name parameter
 string OPT_MessageName;              // message name parameter
+
+
+struct obpair
+{
+  Universal_t * obj;
+  Bank_t * bank;
+
+  obpair ( )
+    : obj(NULL), bank(NULL)
+  {}
+
+  obpair (Bank_t * bank_p, Universal_t * obj_p)
+    : obj(obj_p), bank(bank_p)
+  {}
+};
 
 
 //========================================================== Fuction Decs ====//
@@ -55,7 +70,7 @@ void ParseArgs (int argc, char ** argv);
 void PrintHelp (const char * s);
 
 
-//----------------------------------------------------- PringUsage -------------
+//----------------------------------------------------- PrintUsage -------------
 //! \brief Prints usage information to cerr
 //!
 //! \param s The program name, i.e. argv[0]
@@ -67,77 +82,28 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  char act;                      // action enumeration
-  Message_t msg;                 // the current message
+  long int cnts = 0;
+  long int cntc = 0;
+  Message_t msg;
+  NCode_t ncode;
+  map<NCode_t, obpair> obps;     // object,bank pair NCode-keyed map
   ifstream msgfile;              // the message file stream
-  NCode_t msgcode;               // current message NCode
-  IDMap_t typemap(1000);         // NCode to index mapping
-  ID_t ti;                       // type index
-  Universal_t * typep;           // type pointer
-  Bank_t * bankp;                // bank pointer
-  long int cnts = 0;             // seen message count
-  long int cntc = 0;             // committed message count
+  char act;                      // action enumeration
+  obpair obp;                    // object,bank pair pointer
 
-  ID_t id;                       // id holder
-  pair<ID_t, ID_t> idp;          // id pair
-  pair<ID_t, NCode_t> scp;       // source pair
-  vector<Tile_t>::iterator tvi;  // tile vector iterator
-  vector<ID_t>::iterator ivi;    // ID vector iterator
-
-  //-- Indices of the types in the bank and type arrays
-  enum
-    {
-      I_NULL = 0,
-      I_UNIVERSAL,
-      I_CONTIG,
-      I_CONTIGEDGE,
-      I_CONTIGLINK,
-      I_FRAGMENT,
-      I_KMER,
-      I_LIBRARY,
-      I_MATEPAIR,
-      I_OVERLAP,
-      I_READ,
-      I_SCAFFOLD,
-      I_SEQUENCE,
-      I_MAX,
-    };
-
-  //-- The known universal types
-  Universal_t * types [I_MAX] =
-    {
-      NULL,
-      new Universal_t( ),
-      new Contig_t( ),
-      new ContigEdge_t( ),
-      new ContigLink_t( ),
-      new Fragment_t( ),
-      new Kmer_t( ),
-      new Library_t( ),
-      new Matepair_t( ),
-      new Overlap_t( ),
-      new Read_t( ),
-      new Scaffold_t( ),
-      new Sequence_t( ),
-    };
-
-  //-- The known banks
-  Bank_t * banks [I_MAX] =
-    {
-      NULL,
-      new Bank_t (Universal_t::NCode( )),
-      new Bank_t (Contig_t::NCode( )),
-      new Bank_t (ContigEdge_t::NCode( )),
-      new Bank_t (ContigLink_t::NCode( )),
-      new Bank_t (Fragment_t::NCode( )),
-      new Bank_t (Kmer_t::NCode( )),
-      new Bank_t (Library_t::NCode( )),
-      new Bank_t (Matepair_t::NCode( )),
-      new Bank_t (Overlap_t::NCode( )),
-      new Bank_t (Read_t::NCode( )),
-      new Bank_t (Scaffold_t::NCode( )),
-      new Bank_t (Sequence_t::NCode( )),
-    };
+  //-- The KNOWN types to put in the banks
+  obps [UNIVERSAL]  = obpair (new Bank_t (UNIVERSAL),  new Universal_t);
+  obps [SEQUENCE]   = obpair (new Bank_t (SEQUENCE),   new Sequence_t);
+  obps [LIBRARY]    = obpair (new Bank_t (LIBRARY),    new Library_t);
+  obps [FRAGMENT]   = obpair (new Bank_t (FRAGMENT),   new Fragment_t);
+  obps [READ]       = obpair (new Bank_t (READ),       new Read_t);
+  obps [MATEPAIR]   = obpair (new Bank_t (MATEPAIR),   new Matepair_t);
+  obps [OVERLAP]    = obpair (new Bank_t (OVERLAP),    new Overlap_t);
+  obps [KMER]       = obpair (new Bank_t (KMER),       new Kmer_t);
+  obps [CONTIG]     = obpair (new Bank_t (CONTIG),     new Contig_t);
+  obps [CONTIGLINK] = obpair (new Bank_t (CONTIGLINK), new ContigLink_t);
+  obps [CONTIGEDGE] = obpair (new Bank_t (CONTIGEDGE), new ContigEdge_t);
+  obps [SCAFFOLD]   = obpair (new Bank_t (SCAFFOLD),   new Scaffold_t);
 
 
   //-- Parse the command line arguments
@@ -147,262 +113,147 @@ int main (int argc, char ** argv)
   cerr << "START DATE: " << Date( ) << endl;
   cerr << "Bank is: " << OPT_BankName << endl;
 
-
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
-  //-- Set up the ncode to index mapping
-  typemap . insert (Universal_t::NCode( ),  I_UNIVERSAL);
-  typemap . insert (Contig_t::NCode( ),     I_CONTIG);
-  typemap . insert (ContigEdge_t::NCode( ), I_CONTIGEDGE);
-  typemap . insert (ContigLink_t::NCode( ), I_CONTIGLINK);
-  typemap . insert (Fragment_t::NCode( ),   I_FRAGMENT);
-  typemap . insert (Kmer_t::NCode( ),       I_KMER);
-  typemap . insert (Library_t::NCode( ),    I_LIBRARY);
-  typemap . insert (Matepair_t::NCode( ),   I_MATEPAIR);
-  typemap . insert (Overlap_t::NCode( ),    I_OVERLAP);
-  typemap . insert (Read_t::NCode( ),       I_READ);
-  typemap . insert (Scaffold_t::NCode( ),   I_SCAFFOLD);
-  typemap . insert (Sequence_t::NCode( ),   I_SEQUENCE);
-
-  //-- Compress RED and SEQ if option is turned on
-  if ( OPT_Compress )
-    {
-      ((Read_t *)(types [I_READ])) -> compress( );
-      ((Sequence_t *)(types [I_SEQUENCE])) -> compress( );
-    }
-
-  //-- Open the message file
-  msgfile . open (OPT_MessageName . c_str( ));
-  if ( !msgfile )
-    AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
-
-  //-- Read the message file
-  while ( msg . read (msgfile) )
-    {
-      //-- Increment the message counter
-      cnts ++;
-
-      //-- Get the message NCode and figure out the type array index
-      msgcode = msg . getMessageCode( );
-      try {
-	ti = typemap . lookup (msgcode);
-      }
-      catch (Exception_t & e) {
-	cerr << "WARNING: " << e . what( ) << endl
-	     << "  unrecognized NCode message type ("
-	     << Decode (msgcode) << "), message ignored\n";
-	continue;
+    //-- Compress RED and SEQ if option is turned on
+    if ( OPT_Compress )
+      {
+	((Read_t *)(obps [READ] . obj)) -> compress( );
+	((Sequence_t *)(obps [SEQUENCE] . obj)) -> compress( );
       }
 
-      //-- Convienence pointers to the current NCode type
-      typep = types [ti];
-      bankp = banks [ti];
+    //-- Open the message file
+    msgfile . open (OPT_MessageName . c_str( ));
+    if ( !msgfile )
+      AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
 
-      //-- Parse the message
-      try {
-	typep -> readMessage (msg);
-      }
-      catch (Exception_t & e) {
-	cerr << "WARNING: " << e . what( ) << endl
-	     << "  could not parse fields in "
-	     << Decode (msgcode) << " with eid:"
-	     << typep -> getEID( ) << ", message ignored\n";
-	continue;
-      }
+    //-- Read the message file
+    while ( msg . read (msgfile) )
+      {
+	//-- Increment the message counter
+	++ cnts;
 
-      //-- Open the bank if necessary
-      try {
-	if ( ! bankp -> isOpen( ) )
+	//-- Get the message NCode and figure out the type array index
+	ncode = msg . getMessageCode( );
+	obp = obps [ncode];
+
+	if ( obp . bank == NULL )
 	  {
-	    if ( OPT_Create )
-	      bankp -> create (OPT_BankName);
-	    else
-	      bankp -> open (OPT_BankName);
+	    cerr << "WARNING: Unrecognized message type "
+		 << Decode (ncode) << " ignored\n";
+	    continue;
 	  }
-      }
-      catch (Exception_t & e) {
-	cerr << "WARNING: " << e . what( ) << endl
-	     << "  could not open "
-	     << Decode (msgcode) << " bank, message ignored\n";
-	continue;
-      }
-      
-      //-- Translate the ID pointers from EID to IID
-      try {
-	switch ( ti )
-	  {
-	  case I_UNIVERSAL:
-	  case I_LIBRARY:
-	  case I_SEQUENCE:
-	    //-- No pointers to translate
-	    break;
-	  case I_CONTIG:
-	    for ( tvi  = ((Contig_t *)typep) -> getReadTiling( ) . begin( );
-		  tvi != ((Contig_t *)typep) -> getReadTiling( ) . end( );
-		  tvi ++ )
-	      tvi -> id = banks [I_READ] -> map( ) . lookup (tvi -> id);
-	    break;
-	  case I_CONTIGEDGE:
-	    for ( ivi  = ((ContigEdge_t *)typep) ->
-		    getContigLinks( ) . begin( );
-		  ivi != ((ContigEdge_t *)typep) ->
-		    getContigLinks( ) . end( );
-		  ivi ++ )
-	      (*ivi) = banks [I_CONTIGLINK] -> map( ) . lookup (*ivi);
-	    break;
-	  case I_CONTIGLINK:
-	    idp = ((ContigLink_t *)typep) -> getContigs( );
-	    if ( idp . first != NULL_ID  ||  idp . second != NULL_ID )
-	      {
-		idp . first =
-		  banks [I_CONTIG] -> map( ) . lookup (idp . first);
-		idp . second =
-		  banks [I_CONTIG] -> map( ) . lookup (idp . second);
-		((ContigLink_t *)typep) -> setContigs (idp);
-	      }
-	    scp = ((ContigLink_t *)typep) -> getSource( );
-	    if ( scp . second != NULL_NCODE )
-	      {
-		scp . first =
-		  banks [typemap . lookup (scp . second)] ->
-		  map( ) . lookup (scp . first);
-		((ContigLink_t *)typep) -> setSource (scp);
-	      }
-	    break;
-	  case I_FRAGMENT:
-	    if ( ((Fragment_t *)typep) -> getLibrary( ) != NULL_ID )
-	      ((Fragment_t *)typep) -> setLibrary (banks [I_LIBRARY] ->
-	        map( ) . lookup (((Fragment_t *)typep) -> getLibrary( )));
-	    if ( ((Fragment_t *)typep) -> getSource( ) != NULL_ID )
-	      ((Fragment_t *)typep) -> setSource (banks [I_FRAGMENT] ->
-                map( ) . lookup (((Fragment_t *)typep) -> getSource( )));
-	    break;
-	  case I_KMER:
-	    for ( ivi  = ((Kmer_t *)typep) -> getReads( ) . begin( );
-		  ivi != ((Kmer_t *)typep) -> getReads( ) . end( );
-		  ivi ++ )
-	      (*ivi) = banks [I_READ] -> map( ) . lookup (*ivi);
-	    break;
-	  case I_MATEPAIR:
-	    idp = ((Matepair_t *)typep) -> getReads( );
-	    if ( idp . first != NULL_ID  ||  idp . second != NULL_ID )
-	      {
-		idp . first = banks [I_READ] -> map( ) . lookup (idp . first);
-		idp . second = banks [I_READ] -> map( ) . lookup (idp . second);
-		((Matepair_t *)typep) -> setReads (idp);
-	      }
-	    break;
-	  case I_OVERLAP:
-	    idp = ((Overlap_t *)typep) -> getReads( );
-	    if ( idp . first != NULL_ID  ||  idp . second != NULL_ID )
-	      {
-		idp . first = banks [I_READ] -> map( ) . lookup (idp . first);
-		idp . second = banks [I_READ] -> map( ) . lookup (idp . second);
-		((Overlap_t *)typep) -> setReads (idp);
-	      }
-	    break;
-	  case I_READ:
-	    if ( ((Read_t *)typep) -> getFragment( ) != NULL_ID )
-	      ((Read_t *)typep) -> setFragment (banks [I_FRAGMENT] ->
-                map( ) . lookup (((Read_t *)typep) -> getFragment( )));
-	    break;
-	  case I_SCAFFOLD:
-	    for ( tvi  = ((Scaffold_t *)typep) -> getContigTiling( ) . begin( );
-		  tvi != ((Scaffold_t *)typep) -> getContigTiling( ) . end( );
-		  tvi ++ )
-	      tvi -> id = banks [I_CONTIG] -> map( ) . lookup (tvi -> id);
-	    for ( ivi  = ((Scaffold_t *)typep) -> getContigEdges( ) . begin( );
-		  ivi != ((Scaffold_t *)typep) -> getContigEdges( ) . end( );
-		  ivi ++ )
-	      (*ivi) = banks [I_CONTIGEDGE] -> map( ) . lookup (*ivi);
-	    break;
-	  default:
-	    assert (false);
-	  }
-      }
-      catch (Exception_t & e) {
-	//-- If failed to resolve a link, ignore message
-	cerr << "WARNING: " << e . what( ) << endl
-	     << "  could not resolve eid links in "
-	     << Decode (msgcode) << " with eid:"
-	     << typep -> getEID( ) << ", message ignored\n";
-	continue;
+
+	//-- Parse the message
+	try {
+	  obp . obj -> readMessage (msg);
+	}
+	catch (Exception_t & e) {
+	  cerr << "WARNING: " << e . what( ) << endl
+	       << "  could not parse fields in " << Decode (ncode)
+	       << " with iid:" << msg . getField (F_IID)
+	       << ", message ignored\n";
+	  continue;
+	}
+
+	//-- Open the bank if necessary
+	try {
+	  if ( ! obp . bank -> isOpen( ) )
+	    {
+	      if ( OPT_Create )
+		obp . bank -> create (OPT_BankName);
+	      else
+		obp . bank -> open (OPT_BankName);
+	    }
+	}
+	catch (Exception_t & e) {
+	  cerr << "WARNING: " << e . what( ) << endl
+	       << "  could not open " << Decode (ncode)
+	       << " bank, message ignored\n";
+	  continue;
+	}
+
+	//-- Get the message action code
+	if ( msg . exists (F_ACTION) )
+	  act = (msg . getField (F_ACTION)) [0];
+	else
+	  act = E_ADD;
+
+	//-- Perform the appropriate action on the bank
+	try {
+	  switch (act)
+	    {
+	    case E_ADD:
+	      //-- Append a new object to the bank
+	      obp . bank -> append (*(obp . obj));
+	      break;
+	    case E_DELETE:
+	      //-- Flag an existing object for removal from the bank
+	      if ( obp . obj -> getIID( ) != NULL_ID )
+		obp . bank -> remove (obp . obj -> getIID( ));
+	      else if ( ! obp . obj -> getEID( ) . empty( ) )
+		obp . bank -> remove (obp . obj -> getEID( ) . c_str( ));
+	      else
+		AMOS_THROW_ARGUMENT ("Cannot remove object w/o IID or EID");
+	      break;
+	    case E_REPLACE:
+	      //-- Replace an existing object in the bank
+	      if ( obp . obj -> getIID( ) != NULL_ID )
+		obp . bank -> replace (obp . obj -> getIID( ), *(obp . obj));
+	      else if ( ! obp . obj -> getEID( ) . empty( ) )
+		obp . bank -> replace
+		  (obp . obj -> getEID( ) . c_str( ), *(obp . obj));
+	      else
+		AMOS_THROW_ARGUMENT ("Cannot edit object w/o IID or EID");
+	      break;
+	    default:
+	      AMOS_THROW_IO ("Unrecognized action field");
+	    }
+	}
+	catch (IOException_t & e) {
+	  cerr << "WARNING: " << e . what( ) << endl
+	       << "  could not commit " << Decode (ncode)
+	       << " with iid:" << msg . getField (F_IID)
+	       << " to bank, message ignored\n";
+	  continue;
+	}
+	catch (ArgumentException_t & e) {
+	  cerr << "WARNING: " << e . what( ) << endl
+	       << "  ID conflict caused by " << Decode (ncode)
+	       << " with iid:" << msg . getField (F_IID)
+	       << ", message ignored\n";
+	  continue;
+	}
+
+	cntc ++;
       }
 
-      //-- Get the message action code
-      if ( msg . exists (F_ACTION) )
-	act = (msg . getField (F_ACTION)) [0];
-      else
-	act = E_ADD;
+    //-- Close all the banks and free the objects
+    msgfile . close( );
 
-      //-- Perform the appropriate action on the bank
-      try {
-	switch (act)
-	  {
-	  case E_ADD:
-	    //-- Append a new object to the bank
-	    id = bankp -> getLastIID( ) + 1;
-	    if ( typep -> getEID( ) != NULL_ID )
-	      bankp -> map( ) . insert (typep -> getEID( ), id);
-	    bankp -> append (*typep);
-	    assert (id == typep -> getIID( ));
-	    break;
-	  case E_DELETE:
-	    //-- Flag an existing object for deletion from the bank
-	    typep -> setIID (bankp -> map( ) . lookup (typep -> getEID( )));
-	    bankp -> remove (*typep);
-	    break;
-	  case E_EDIT:
-	    //-- Replace an existing object in the bank
-	    typep -> setIID (bankp -> map( ) . lookup (typep -> getEID( )));
-	    bankp -> replace (*typep);
-	    break;
-	  default:
-	    AMOS_THROW_IO ("Unrecognized action field");
-	  }
+    map<NCode_t, obpair>::iterator mi;
+    for ( mi = obps . begin( ); mi != obps . end( ); ++ mi )
+      {
+	if ( mi -> second . bank != NULL )
+	  mi -> second . bank -> close( );
+	delete mi -> second . bank;
+	delete mi -> second . obj;
       }
-      catch (IOException_t & e) {
-	cerr << "WARNING: " << e . what( ) << endl
-	     << "  could not commit "
-	     << Decode (msgcode) << " with eid:"
-	     << typep -> getEID( ) << " to bank, message ignored\n";
-	continue;
-      }
-      catch (Exception_t & e) {
-	cerr << "WARNING: " << e . what( ) << endl
-	     << "  ID conflict caused by "
-	     << Decode (msgcode) << " with eid:"
-	     << typep -> getEID( ) << ", message ignored\n";
-	continue;
-      }
-
-      cntc ++;
-    }
-  
-
-  //-- Close all the banks and free the object
-  msgfile . close( );
-  for ( ID_t i = 1; i < I_MAX; i ++ )
-    {
-      banks [i] -> close( );
-      delete banks [i];
-      delete types [i];
-    }
   }
   catch (Exception_t & e) {
 
-  //-- On error, print debugging information
-  cerr << "Current message: " << Decode (msgcode)
-       << " eid:" << typep -> getEID( ) << endl
-       << "Messages seen: " << cnts << endl
-       << "Messages committed: " << cntc << endl
-       << "ERROR: -- Fatal AMOS Exception --\n" << e;
-  return EXIT_FAILURE;
+    //-- On error, print debugging information
+    cerr << "Current message: " << Decode (ncode)
+	 << " iid:" << msg . getField (F_IID) << endl
+	 << "Messages seen: " << cnts << endl
+	 << "Messages committed: " << cntc << endl
+      	 << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    return EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
-
-
+  
+  
   //-- Output the end time
   cerr << "Messages seen: " << cnts << endl
        << "Messages committed: " << cntc << endl
@@ -459,7 +310,8 @@ void ParseArgs (int argc, char ** argv)
       errflg ++;
     }
 
-  if ( OPT_Create  && !OPT_ForceCreate  &&
+  if ( OPT_Create  &&
+       ! OPT_ForceCreate  &&
        ! access (OPT_BankName . c_str( ), F_OK) )
     {
       cerr << "ERROR: Bank path already exists\n";
@@ -496,15 +348,13 @@ void PrintHelp (const char * s)
     << "-m path       The file path of the input message\n"
     << "-z            Compress sequence and quality values for SEQ and RED\n"
     << "              (only allows [ACGTN] sequence and [0,63] quality)\n\n";
-
   cerr
     << "Takes an AMOS bank directory and message file as input. Alters the\n"
     << "banks as directed by the message file. Messages without an act field\n"
-    << "will, by default, be added to the bank. EID link information in the\n"
-    << "messages will be automatically translated to IID link information, so\n"
-    << "all links in a bank will refer to IIDs. To retrieve information from\n"
-    << "a bank in message format, please use the bank-report utility which\n"
-    << "will return all linking information back to EIDs.\n\n";
+    << "will, by default, be added to the bank. All object links must\n"
+    << "reference IIDs. If an object has a non-unique ID, the user will be\n"
+    << "warned and the object will be ignored. To retrieve information from\n"
+    << "a bank in message format, please use the bank-report utility.\n\n";
   return;
 }
 

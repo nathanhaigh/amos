@@ -9,14 +9,14 @@
 
 #include "amp.hh"
 #include "delta.hh"
-#include "universals_AMOS.hh"
+#include "foundation_AMOS.hh"
 #include <list>
 #include <algorithm>
 #include <iostream>
 #include <cassert>
 #include <unistd.h>
 using namespace std;
-
+using namespace AMOS;
 
 
 
@@ -71,11 +71,11 @@ struct Mapping_t
 
 struct Overlaps_t
 {
-  list<AMOS::Overlap_t *> ovls;
+  list<Overlap_t *> ovls;
 
   ~Overlaps_t ( )
   {
-    list<AMOS::Overlap_t *>::iterator opi;
+    list<Overlap_t *>::iterator opi;
     for ( opi = ovls . begin( ); opi != ovls . end( ); opi ++ )
       delete (*opi);
   }
@@ -83,7 +83,7 @@ struct Overlaps_t
 
 struct OverlapCmp_t
 {
-  bool operator( ) (const AMOS::Overlap_t * A, const AMOS::Overlap_t * B)
+  bool operator( ) (const Overlap_t * A, const Overlap_t * B)
   {
     if ( A -> getReads( ) . first < B -> getReads( ) . first )
       return true;
@@ -209,8 +209,8 @@ int main (int argc, char ** argv)
 //---------------------------------------------------------- LoadOverlaps ----//
 void LoadOverlaps (const Overlaps_t & overlaps)
 {
-  AMOS::Bank_t ovl_bank (AMOS::Bank_k::OVERLAP);
-  list<AMOS::Overlap_t *>::const_iterator opi;
+  BankStream_t ovl_bank (Bank_k::OVERLAP);
+  list<Overlap_t *>::const_iterator opi;
 
   try {
     if ( ovl_bank . exists (OPT_BankName) )
@@ -221,11 +221,11 @@ void LoadOverlaps (const Overlaps_t & overlaps)
     //-- Upload da overlaps
     for ( opi  = overlaps . ovls . begin( );
 	  opi != overlaps . ovls . end( ); opi ++ )
-      ovl_bank . append (**opi);
+      ovl_bank << **opi;
 
     ovl_bank . close( );
   }
-  catch (AMOS::Exception_t & e) {
+  catch (Exception_t & e) {
 
     //-- On error, print debugging information
     cerr << "ERROR: -- Fata AMOS Exception --\n" << e;
@@ -239,12 +239,12 @@ void LoadOverlaps (const Overlaps_t & overlaps)
 //--------------------------------------------------------------- Overlap ----//
 void Overlap (Mapping_t & mapping, Overlaps_t & overlaps)
 {
-  list<AMOS::Overlap_t *>::iterator opi;
+  list<Overlap_t *>::iterator opi;
   vector<Align_t *>::iterator api;
   map<ID_t, ReadAlign_t *>::iterator rmpiA, rmpiB;
   ReadAlign_t * rapA, * rapB;
   Align_t * ap;
-  AMOS::Overlap_t * op;
+  Overlap_t * op;
   pair<ID_t, ID_t> idp;
 
   //-- For each read, get it's overlaps
@@ -266,15 +266,15 @@ void Overlap (Mapping_t & mapping, Overlaps_t & overlaps)
 	  //-- If an overlap
 	  if ( IsOverlap (rapA, rapB, ap) )
 	    {
-	      overlaps . ovls . push_back (new AMOS::Overlap_t( ));
+	      overlaps . ovls . push_back (new Overlap_t( ));
 	      op = overlaps . ovls . back( );
 
 	      op -> setReads (make_pair (rapA -> id, rapB -> id));
 
 	      if ( ap -> oriB == FORWARD_CHAR )
-		op -> setAdjacency (AMOS::Overlap_t::NORMAL);
+		op -> setAdjacency (Overlap_t::NORMAL);
 	      else
-		op -> setAdjacency (AMOS::Overlap_t::INNIE);
+		op -> setAdjacency (Overlap_t::INNIE);
 
 	      op -> setAhang (ap->lo  - ap->loB);
 	      op -> setBhang ((rapB->len - ap->hiB) - (rapA->len - ap->hi));
@@ -405,8 +405,8 @@ void ParseAlign (Mapping_t & mapping)
 //------------------------------------------------------------- PrintOVL -----//
 void PrintOVL (const Overlaps_t & overlaps)
 {
-  list<AMOS::Overlap_t *>::const_iterator opi;
-  AMOS::Message_t msg;
+  list<Overlap_t *>::const_iterator opi;
+  Message_t msg;
 
   for ( opi  = overlaps . ovls . begin( );
 	opi != overlaps . ovls . end( ); opi ++ )

@@ -7,7 +7,7 @@
 //  Add reads to a readbank, creating a new one if specfied.
 
 
-#include  "universals_AMOS.hh"
+#include  "foundation_AMOS.hh"
 #include  "delcher.hh"
 #include  "CelMsg.hh"
 #include  <vector>
@@ -50,9 +50,7 @@ int  main
     (int argc, char * argv [])
 
   {
-
-   ID_t  iid;
-   Bank_t  read_bank (Read_t::NCode( ));
+   Bank_t  read_bank (Bank_k::READ);
    Read_t  read;
    Celera_Message_t  msg;
    int  ct;
@@ -92,18 +90,19 @@ int  main
 
                ct ++;
                read . setClearRange (msg . getClearRange ());
-               read . setComment (msg . getSource ());
+	       read . setEID (msg . getSource());
+	       read . setIID (ct);
                read . setSequence (msg . getSequence (), msg . getQuality ());
 	       if ( Compress_Reads )
 		 read . compress( );
-               iid = read_bank . append (read);
+               read_bank . append (read);
               }
        }
    else if  (Input_Format == FASTA_FORMAT)
        {
         FILE  * fp1, * fp2;
         string  s, q, tag_line1, tag_line2;
-        char  id1 [MAX_LINE], id2 [MAX_LINE];
+	char  id1 [MAX_LINE], id2 [MAX_LINE];
 
         fp1 = File_Open (Input_File_1, "r");
         fp2 = File_Open (Input_File_2, "r");
@@ -120,8 +119,7 @@ int  main
            p2 = strtok (id2, " \t\n");
            if  (strcmp (p1, p2) != 0)
                {
-                sprintf (Clean_Exit_Msg_Line, "seq id %s doesn't match quality id %s",
-                     p1, p2);
+                sprintf (Clean_Exit_Msg_Line, "seq id %s doesn't match quality id %s", p1, p2);
                 Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
                }
            len = s . length ();
@@ -135,13 +133,12 @@ int  main
 
            ct ++;
            read . setClearRange (Range_t(0, len));
-           read . setComment (p1);
-	   //           sprintf (id1, "%d", ct);
-	   //	   read . setEID (id1);
+           read . setEID (p1);
+	   read . setIID (ct);
            read . setSequence (s . c_str (), q . c_str ());
 	   if ( Compress_Reads )
 	     read . compress( );
-           iid = read_bank . append (read);
+           read_bank . append (read);
           }
        }
    fprintf (stderr, "Processed %d reads\n", ct);
@@ -156,8 +153,7 @@ int  main
    for  (i = 0;  i < 10;  i ++)
      {
       j = 1 + lrand48 () % ct;
-      read . setIID (j);
-      read_bank . fetch (read);
+      read_bank . fetch (j, read);
       cout << read;
      }
    read_bank . close ();
