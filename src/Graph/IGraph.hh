@@ -33,6 +33,8 @@ class IGraph {
   
 public:
 
+  virtual ~IGraph( ) { }
+
   /**
    * output dot file for the graph
    */

@@ -4,7 +4,7 @@
 
 using namespace std;
 
-SubGraph::SubGraph(IGraph& p_parent, string p_name) : parent(p_parent), Graph(p_name) {
+SubGraph::SubGraph(IGraph& p_parent, string p_name) : Graph(p_name), parent(p_parent) {
   directed = parent.isDirected();
 }
 

@@ -24,7 +24,7 @@ private:
 public:
 
   ProgressDots_t (long long end, long long count = 100)
-    : end_m (end), count_m (count), total_m (0)
+    : total_m (0), count_m (count), end_m (end)
   { }
 
   void update (long long progress);  // update job progress with respect to end

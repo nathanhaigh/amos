@@ -87,6 +87,8 @@ protected:
       case CYTOSINE_BITS: return 'C';
       case GUANINE_BITS:  return 'G';
       case THYMINE_BITS:  return 'T';
+      default:
+        AMOS_THROW_ARGUMENT ("Unknown logic error");
       }
   }
 

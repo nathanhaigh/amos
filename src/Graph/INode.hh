@@ -29,6 +29,8 @@ typedef std::map< int, IEdge* >::iterator IEdgeIterator;
 class INode {
 public:
 
+  virtual ~INode( ) { }
+
   virtual void setColor(const std::string p_color) = 0;
   virtual std::string getColor() const = 0;
 

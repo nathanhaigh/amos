@@ -152,7 +152,7 @@ list< INode* > Graph::out_adjacent(INode* p_node) {
 
 list< INode* > Graph::in_adjacent(INode* p_node) {
   list< INode* > nodes;
-  IEdge* edge;
+  //  IEdge* edge;
   IEdgeIterator iter = p_node->out_edges_begin();
 
   if(directed) {

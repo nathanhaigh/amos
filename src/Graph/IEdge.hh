@@ -29,6 +29,8 @@ class IEdge {
 
 public:
 
+  virtual ~IEdge( ) { }
+
   virtual void setColor(std::string p_color) = 0;
   virtual std::string getColor() const = 0;
 

@@ -25,7 +25,7 @@ char  Complement
 // Returns the DNA complement of  ch
 
   {
-   return  Complement_Table [ch];
+   return  Complement_Table [(int)ch];
   }
 
 
