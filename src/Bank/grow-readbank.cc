@@ -7,7 +7,7 @@
 //  Add reads to a readbank, creating a new one if specfied.
 
 
-#include  "universal_AMOS.hh"
+#include  "universals_AMOS.hh"
 #include  "delcher.hh"
 #include  "CelMsg.hh"
 #include  <vector>

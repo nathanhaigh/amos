@@ -1,5 +1,6 @@
 #include <Bank_AMOS.hh>
 #include <IDMap_AMOS.hh>
+#include <Universal_AMOS.hh>
 #include <iostream>
 using namespace std;
 using namespace AMOS;
@@ -8,20 +9,18 @@ using namespace AMOS;
 
 int main ( )
 {
-  //  char c;
+  char c;
 
   try {
 
     Message_t msg;
-    IDMap_t idmap;
+    IDMap_t idmap, idmap2;
 
     msg . read (cin);
     idmap . readMessage (msg);
-
-    //    for ( ID_t i = 1; i <= HSIZE; i ++ )
-    //      idmap . insert (i, i + 10);
-
     msg . clear( );
+
+
     idmap . writeMessage (msg);
     msg . write (cout);
   }

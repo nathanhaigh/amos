@@ -8,7 +8,7 @@
 //  consensus sequences for them.
 
 
-#include  "universal_AMOS.hh"
+#include  "universals_AMOS.hh"
 #include  "delcher.hh"
 #include  "CelMsg.hh"
 #include  "align.hh"

@@ -1,4 +1,4 @@
-#include <universal_AMOS.hh>
+#include <universals_AMOS.hh>
 #include <fstream>
 using namespace std;
 using namespace AMOS;
