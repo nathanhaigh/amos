@@ -8,7 +8,7 @@
 #include <list>
 #include "IGraph.hh"
 #include "Node.hh"
-#include "CompositeNode.hh"
+//#include "CompositeNode.hh"
 #include "Edge.hh"
 
 class IEdge;
