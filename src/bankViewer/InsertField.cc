@@ -289,9 +289,7 @@ void InsertField::mouseDoubleClickEvent(QMouseEvent * e)
   pos /= m_scale; 
   pos -= m_hoffset;
 
-  cerr << "Click at " << pos << endl;
   emit setGindex(pos);
-
 }
 
 

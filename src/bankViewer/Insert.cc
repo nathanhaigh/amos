@@ -59,7 +59,6 @@ Insert::Insert(Tile_t * atile,
 
     if (m_arc + m_brc != 1)
     {
-      cerr << "Orientation violation detected!" << endl;
       m_state = OrientationViolation;
     }
   }
