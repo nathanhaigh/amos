@@ -26,12 +26,29 @@ prompt reply.
 Version Release History
 =======================
 
+Version 1.2.8 - January 2005
+
+     * `minimus'
+        * circular contig bug fixed
+        * layout bug fixed
+        * multiple overlaps between two reads bug fixed
+     * `libAMOS'
+        * Bank_t map partition now a plaintext tab-delimited file
+        * Message_t read() bug fixed
+        * IDMap_t remove() bug fixed
+        * BankStream_t operator()>> bug fixed
+     * `bank-unlock' and `bank-clean' utilities added
+     * `bank-*' tools now report progress
+     * `toAmos' bug fix
+     * `tarchive2amos' bug fix
+     * `amos2ace' bug fix
+
 Version 1.2.7 - November 2004
 
-     * `AMOScmp' enhancements
+     * `AMOScmp'
         * improved conflict resolution
         * operates on an AMOS bank
-     * `libAMOS' enhancements
+     * `libAMOS'
         * Feature_t added to Contig_t and Scaffold_t
         * BankSet_t, BankStreamSet_t, UniversalSet_t added
         * read/write locks added to Bank_t
@@ -58,5 +75,5 @@ Version 1.2.3 - August 2004
      * Added `AMOScmp' comparative assembly pipeline.
 
 
-November 2004
+January 2005
 
