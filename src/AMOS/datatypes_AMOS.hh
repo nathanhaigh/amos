@@ -204,6 +204,17 @@ struct Range_t
   }
 
 
+  //--------------------------------------------------- isReverse --------------
+  //! \brief Returns true if begin > end, otherwise false
+  //!
+  //! \return true if begin > end, otherwise false
+  //!
+  bool isReverse ( ) const
+  {
+    return begin > end;
+  }
+
+
   //--------------------------------------------------- setBegin ---------------
   //! \brief Set the beginning of the range
   //!
