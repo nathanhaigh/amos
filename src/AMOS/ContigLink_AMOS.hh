@@ -310,7 +310,7 @@ public:
 	type_m = type;
 	break;
       default:
-	AMOS_THROW_ARGUMENT ((string)"Invalid link type char: " + type);
+	AMOS_THROW_ARGUMENT ((string)"Invalid contig link type " + type);
       }
     type_m = type;
   }

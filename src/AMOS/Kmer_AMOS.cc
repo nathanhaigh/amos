@@ -76,7 +76,7 @@ void Kmer_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_COUNT));
 	ss >> count_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid cnt format");
+	  AMOS_THROW_ARGUMENT ("Invalid count format");
       }
 
     if ( msg . exists (F_SEQUENCE) )
@@ -94,7 +94,7 @@ void Kmer_t::readMessage (const Message_t & msg)
 	  }
 
 	if ( !ss . eof( ) )
-	  AMOS_THROW_ARGUMENT ("Invalid rds format");
+	  AMOS_THROW_ARGUMENT ("Invalid read link list format");
 	ss . clear( );
       }
   }
@@ -139,7 +139,7 @@ void Kmer_t::setSeqString (const string & seq)
 {
   Size_t size = seq . size( );
   if ( size > Kmer_t::MAX_LENGTH )
-    AMOS_THROW_ARGUMENT ("Kmer sequence is too long");
+    AMOS_THROW_ARGUMENT ("Invalid kmer sequence is too long");
 
   size = size / 4 + (size % 4 ? 1 : 0);
   seq_m = (uint8_t *) SafeRealloc (seq_m, size);

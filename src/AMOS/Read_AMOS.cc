@@ -30,7 +30,7 @@ void Read_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_FRAGMENT));
 	ss >> frag_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid frg format");
+	  AMOS_THROW_ARGUMENT ("Invalid fragment link format");
       }
 
     if ( msg . exists (F_TYPE) )
@@ -46,7 +46,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss . ignore( );
         ss >> clear_m . end;
         if ( !ss )
-          AMOS_THROW_ARGUMENT ("Invalid clr format");
+          AMOS_THROW_ARGUMENT ("Invalid clear range format");
       }
 
     if ( msg . exists (F_VECTORCLEAR) )
@@ -56,7 +56,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss . ignore( );
         ss >> vclear_m . end;
         if ( !ss )
-          AMOS_THROW_ARGUMENT ("Invalid vcr format");
+          AMOS_THROW_ARGUMENT ("Invalid vector clear range format");
       }
 
     if ( msg . exists (F_QUALITYCLEAR) )
@@ -66,7 +66,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss . ignore( );
         ss >> qclear_m . end;
         if ( !ss )
-          AMOS_THROW_ARGUMENT ("Invalid qcr format");
+          AMOS_THROW_ARGUMENT ("Invalid quality clear range format");
       }
   }
   catch (ArgumentException_t) {

@@ -23,7 +23,7 @@ string Contig_t::getUngappedQualString (Range_t range) const
   if ( range . begin > range . end ||
        range . begin < 0 ||
        range . end > getLength( ) )
-    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
+    AMOS_THROW_ARGUMENT ("Invalid quality subrange");
 
   pair<char, char> seqqualc;
   string retval;
@@ -48,7 +48,7 @@ string Contig_t::getUngappedSeqString (Range_t range) const
   if ( range . begin > range . end ||
        range . begin < 0 ||
        range . end > getLength( ) )
-    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
+    AMOS_THROW_ARGUMENT ("Invalid sequence subrange");
 
   char seqc;
   string retval;
@@ -78,13 +78,13 @@ void Contig_t::readMessage (const Message_t & msg)
     stringstream ss;
 
     if ( msg . exists (F_POLYMORPHISM) )
-      AMOS_THROW_ARGUMENT ("Polymorphism information not yet implemented");
+      AMOS_THROW_ARGUMENT ("Polymorphism not yet implemented");
 
     for ( vi  = msg . getSubMessages( ) . begin( );
           vi != msg . getSubMessages( ) . end( ); vi ++ )
       {
         if ( vi -> getMessageCode( ) != M_TILE )
-          AMOS_THROW_ARGUMENT ("Invalid submessage in CTG");
+          AMOS_THROW_ARGUMENT ("Invalid submessage");
         tile . readMessage (*vi);
         reads_m . push_back (tile);
       }

@@ -38,7 +38,7 @@ void ContigEdge_t::readMessage (const Message_t & msg)
 	  }
 
 	if ( ! ss . eof( ) )
-	  AMOS_THROW_ARGUMENT ("Invalid ctl format");
+	  AMOS_THROW_ARGUMENT ("Invalid contig link list format");
 	ss . clear( );
       }
   }

@@ -70,7 +70,7 @@ protected:
       case 'T':
         return THYMINE_BITS;
       default:
-	AMOS_THROW_ARGUMENT ((std::string)"Invalid Kmer character: " + seqchar);
+	AMOS_THROW_ARGUMENT ((std::string)"Invalid Kmer character " + seqchar);
       }
   }
 
@@ -199,7 +199,7 @@ public:
   char getBase (Pos_t index) const
   {
     if ( index < 0 || index >= length_m )
-      AMOS_THROW_ARGUMENT ("Requested index is out of range");
+      AMOS_THROW_ARGUMENT ("Requested kmer index is out of range");
 
     return uncompress ((seq_m [index / 4]) << (index % 4 * 2));
   }
@@ -297,7 +297,7 @@ public:
                 Pos_t index)
   {
     if ( index < 0 || index >= length_m )
-      AMOS_THROW_ARGUMENT ("Requested index is out of range");
+      AMOS_THROW_ARGUMENT ("Requested kmer index is out of range");
 
     int offset = index % 4 * 2;              // the bitmask offset
     uint8_t * seqp = seq_m + index / 4;      // the required byte

@@ -48,7 +48,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_CONTIG1));
 	ss >> contigs_m . first;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid ct1 format");
+	  AMOS_THROW_ARGUMENT ("Invalid contig1 link format");
       }
 
     if ( msg . exists (F_CONTIG2) )
@@ -56,7 +56,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_CONTIG2));
 	ss >> contigs_m . second;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid ct2 format");
+	  AMOS_THROW_ARGUMENT ("Invalid contig2 link format");
       }
 
     if ( msg . exists (F_ADJACENCY) )
@@ -70,7 +70,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SD));
 	ss >> sd_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid std format");
+	  AMOS_THROW_ARGUMENT ("Invalid standard deviation format");
       }
 
     if ( msg . exists (F_SIZE) )
@@ -78,7 +78,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SIZE));
 	ss >> size_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid sze format");
+	  AMOS_THROW_ARGUMENT ("Invalid size format");
       }
 
     if ( msg . exists (F_TYPE) )
@@ -94,7 +94,7 @@ void ContigLink_t::readMessage (const Message_t & msg)
 	ss . ignore( );
 	ss >> str;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid src format");
+	  AMOS_THROW_ARGUMENT ("Invalid source link format");
 	source_m . second = Encode (str);
       }
   }
@@ -151,7 +151,7 @@ void ContigLink_t::setAdjacency (LinkAdjacency_t adj)
       flags_m . extra &= ~0x7;
       break;
     default:
-      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency type char: " + adj);
+      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency " + adj);
     }
 }
 

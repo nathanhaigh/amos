@@ -31,7 +31,7 @@ void Matepair_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_READ1));
 	ss >> reads_m . first;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid ct1 format");
+	  AMOS_THROW_ARGUMENT ("Invalid contig1 link format");
       }
 
     if ( msg . exists (F_READ2) )
@@ -39,7 +39,7 @@ void Matepair_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_READ2));
 	ss >> reads_m . second;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid ct2 format");
+	  AMOS_THROW_ARGUMENT ("Invalid contig2 link format");
       }
 
     if ( msg . exists (F_TYPE) )

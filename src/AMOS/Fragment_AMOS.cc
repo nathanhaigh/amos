@@ -30,7 +30,7 @@ void Fragment_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_LIBRARY));
 	ss >> library_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid lib format");
+	  AMOS_THROW_ARGUMENT ("Invalid library link format");
       }
 
     if ( msg . exists (F_SIZE) )
@@ -38,7 +38,7 @@ void Fragment_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SIZE));
 	ss >> size_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid sze format");
+	  AMOS_THROW_ARGUMENT ("Invalid size format");
       }
 
     if ( msg . exists (F_SOURCE) )
@@ -46,7 +46,7 @@ void Fragment_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SOURCE));
 	ss >> source_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid src format");
+	  AMOS_THROW_ARGUMENT ("Invalid source link format");
       }
 
     if ( msg . exists (F_TYPE) )

@@ -253,7 +253,7 @@ public:
   std::pair<char, char> getBase (Pos_t index) const
   {
     if ( index < 0 || index >= length_m )
-      AMOS_THROW_ARGUMENT ("Requested index is out of range");
+      AMOS_THROW_ARGUMENT ("Requested sequence index is out of range");
 
     if ( isCompressed( ) )
       return uncompress (seq_m [index]);
@@ -374,7 +374,7 @@ public:
 		Pos_t index)
   {
     if ( index < 0 || index >= length_m )
-      AMOS_THROW_ARGUMENT ("Requested index is out of range");
+      AMOS_THROW_ARGUMENT ("Requested sequence index is out of range");
 
     seqchar = std::toupper (seqchar);
 

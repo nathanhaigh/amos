@@ -19,8 +19,6 @@ using namespace std;
 
 
 
-//================================================ IBankable_t =================
-
 //================================================ Bank_t ======================
 //----------------------------------------------------- addPartition -----------
 void Bank_t::addPartition (bool nuke = true)
@@ -43,7 +41,7 @@ void Bank_t::addPartition (bool nuke = true)
     partition -> fix_name = ss . str( );
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
     if ( ! partition -> fix )
-      AMOS_THROW_IO ("Could not add partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not add bank partition " + ss . str( ));
     partition -> fix . close( );
     
     //-- Add the VAR partition file
@@ -52,7 +50,7 @@ void Bank_t::addPartition (bool nuke = true)
     partition -> var_name = ss . str( );
     partition -> var . open (partition -> var_name . c_str( ), mode);
     if ( ! partition -> var )
-      AMOS_THROW_IO ("Could not add partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not add bank partition " + ss . str( ));
     partition -> var . close( );
   }
   catch (IOException_t) {
@@ -77,10 +75,10 @@ ID_t Bank_t::append (IBankable_t & obj)
 {
   //-- Check preconditions
   if ( !isOpen( ) )
-    AMOS_THROW_IO ("Cannot append to a closed Bank");
+    AMOS_THROW_IO ("Cannot append to a closed bank");
   if ( banktype_m != NULL_BANK  &&
        banktype_m != obj . getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot append incompatible object type to bank");
 
   //-- Add new partition if necessary
   if ( ++ last_iid_m > max_iid_m )
@@ -210,13 +208,13 @@ void Bank_t::close ( )
       mapout . open ((store_pfx_m + MAP_STORE_SUFFIX) . c_str( ));
 
       if ( !mapout )
-	AMOS_THROW_IO ("Could not open partition: " +
+	AMOS_THROW_IO ("Could not open bank partition " +
 		       store_pfx_m + MAP_STORE_SUFFIX);
 
       idmap_m . write (mapout);
 
       if ( !mapout )
-	AMOS_THROW_IO ("Error writing to partition: " +
+	AMOS_THROW_IO ("Error writing to bank partition " +
 		       store_pfx_m + MAP_STORE_SUFFIX);
 
       mapout . close( );
@@ -235,13 +233,13 @@ void Bank_t::concat (Bank_t & source)
 {
   //-- Check preconditions
   if ( !isOpen( ) )
-    AMOS_THROW_IO ("Cannot concat to a closed Bank");
+    AMOS_THROW_IO ("Cannot concat to a closed bank");
   if ( !source . isOpen( ) )
-    AMOS_THROW_IO ("Cannot concat a closed Bank");
+    AMOS_THROW_IO ("Cannot concat a closed bank");
   if ( banktype_m != source . banktype_m  &&
        banktype_m != NULL_BANK  &&
        source . banktype_m != NULL_BANK )
-    AMOS_THROW_ARGUMENT ("Cannot concat incompatible object types");
+    AMOS_THROW_ARGUMENT ("Cannot concat incompatible bank types");
 
   Size_t size;
   IBankable_t::BankableFlags_t flags;
@@ -359,7 +357,7 @@ void Bank_t::create (const string & dir)
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK)  ||
        ( !access (ss . str( ) . c_str( ), F_OK)  &&
 	 access (ss . str( ) . c_str( ), R_OK|W_OK) ) )
-    AMOS_THROW_IO ("Insufficient permissions in directory: " + dir);
+    AMOS_THROW_IO ("Insufficient bank permissions in " + dir);
 
   //-- Officially open
   is_open_m   = true;
@@ -415,12 +413,12 @@ void Bank_t::fetch (IBankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot fetch from a closed bank");
   if ( banktype_m != NULL_BANK  &&
        banktype_m != obj . getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible object type from bank");
   if ( iid > last_iid_m )
-    AMOS_THROW_ARGUMENT ("Requested IID is out of range");
+    AMOS_THROW_ARGUMENT ("Requested bank IID is out of range");
 
   //-- Calculate the local and partition IDs
   ID_t lid, pid;
@@ -461,21 +459,21 @@ void Bank_t::flush ( )
   ifo . precision (5);
 
   if ( !ifo )
-    AMOS_THROW_IO ("Could not open partition: " +
+    AMOS_THROW_IO ("Could not open bank partition " +
 		   store_pfx_m + INFO_STORE_SUFFIX);
 
   //-- Flush updated INFO
   ifo << "____BANK INFORMATION____\n";
   ifo << "bank version = "      << BANK_VERSION << "\n";
   ifo << "bank type = "         << banktype_m
-                                << " " << Decode (banktype_m) << "\n";
+                                << " (" << Decode (banktype_m) << ")\n";
   ifo << "bytes/index = "       << fix_size_m         << "\n";
   ifo << "last index = "        << last_iid_m         << "\n";
   ifo << "indices/partition = " << partition_size_m   << "\n";
   ifo << "last partition = "    << last_partition_m   << "\n";
 
   if ( !ifo )
-    AMOS_THROW_IO ("Error writing to partition: " +
+    AMOS_THROW_IO ("Error writing to bank partition " +
 		   store_pfx_m + INFO_STORE_SUFFIX);
 
   ifo . close( );
@@ -501,9 +499,9 @@ void Bank_t::open (const string & dir)
 
   //-- Check permissions and INFO read/write-ability
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK) )
-    AMOS_THROW_IO ("Insufficient permissions in directory: " + dir);
+    AMOS_THROW_IO ("Insufficient bank permissions in " + dir);
   if ( access (ss . str( ) . c_str( ), R_OK|W_OK) )
-    AMOS_THROW_IO ("Cannot open partition: " + ss . str( ));
+    AMOS_THROW_IO ("Cannot open bank partition " + ss . str( ));
 
   try {
     
@@ -511,7 +509,7 @@ void Bank_t::open (const string & dir)
     ifstream ifo;
     ifo . open (ss . str( ) . c_str( ));
     if ( !ifo )
-      AMOS_THROW_IO ("Could not open partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not open bank partition " + ss . str( ));
     
     //-- Open MAP partition (if exists)
     if ( !access ((pfx + MAP_STORE_SUFFIX) . c_str( ), F_OK) )
@@ -519,13 +517,13 @@ void Bank_t::open (const string & dir)
 	ifstream mapin;
 	mapin . open ((pfx + MAP_STORE_SUFFIX) . c_str( ));
 	if ( !mapin )
-	  AMOS_THROW_IO ("Could not open partition: " +
+	  AMOS_THROW_IO ("Could not open bank partition " +
 			 pfx + MAP_STORE_SUFFIX);
 
 	idmap_m . read (mapin);
 
 	if ( !mapin )
-	  AMOS_THROW_IO ("Error reading partition: " +
+	  AMOS_THROW_IO ("Error reading bank partition " +
 			 pfx + MAP_STORE_SUFFIX);
 
 	mapin . close( );
@@ -535,36 +533,36 @@ void Bank_t::open (const string & dir)
     getline (ifo, line, '=');
     ifo >> line;
     if ( line != BANK_VERSION )
-      AMOS_THROW_IO ("Incompatible Bank version");
+      AMOS_THROW_IO ("Cannot open incompatible bank version");
     if ( !ifo . good( ) )
-      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse bank partition " + ss . str( ));
 
     getline (ifo, line, '=');
     ifo >> (int)banktype;
     if ( banktype != banktype_m )
-      AMOS_THROW_IO ("Incompatible Bank type");
+      AMOS_THROW_IO ("Cannot open incompatible bank type");
     if ( !ifo . good( ) )
-      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse bank partition " + ss . str( ));
 
     getline (ifo, line, '=');
     ifo >> fix_size_m;
     if ( !ifo . good( ) )
-      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse bank partition " + ss . str( ));
 
     getline (ifo, line, '=');
     ifo >> last_iid_m;
     if ( !ifo . good( ) )
-      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse bank partition " + ss . str( ));
 
     getline (ifo, line, '=');
     ifo >> partition_size_m;
     if ( !ifo . good( ) )
-      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse bank partition " + ss . str( ));
 
     getline (ifo, line, '=');
     ifo >> last_partition;
     if ( !ifo . good( ) )
-      AMOS_THROW_IO ("Could not parse partition: " + ss . str( ));
+      AMOS_THROW_IO ("Could not parse bank partition " + ss . str( ));
 
     ifo . close( );
   }
@@ -613,12 +611,12 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t iid)
     //-- Open the FIX partition file
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
     if ( ! partition -> fix )
-      AMOS_THROW_IO ("Could not open partition: " + partition -> fix_name);
+      AMOS_THROW_IO ("Could not open bank partition " + partition -> fix_name);
     
     //-- Open the VAR partition file
     partition -> var . open (partition -> var_name . c_str( ), mode);
     if ( ! partition -> var )
-      AMOS_THROW_IO ("Could not open partition: " + partition -> var_name);
+      AMOS_THROW_IO ("Could not open bank partition " + partition -> var_name);
   }
   catch (IOException_t) {
     partition -> fix . close( );
@@ -642,9 +640,12 @@ void Bank_t::remove (IBankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot remove from a closed bank");
+  if ( banktype_m != NULL_BANK  &&
+       banktype_m != obj . getNCode( ) )
+    AMOS_THROW_ARGUMENT ("Cannot remove incompatible object type from bank");
   if ( iid > last_iid_m )
-    AMOS_THROW_ARGUMENT ("Requested IID is out of range");
+    AMOS_THROW_ARGUMENT ("Requested bank IID is out of range");
 
   //-- Calculate the local and partition IDs
   ID_t lid, pid;
@@ -675,12 +676,12 @@ void Bank_t::replace (IBankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot replace in a closed Bank");
   if ( banktype_m != NULL_BANK  &&
        banktype_m != obj . getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot replace incompatible object type");
+    AMOS_THROW_ARGUMENT ("Cannot replace incompatible object type in bank");
   if ( iid > last_iid_m )
-    AMOS_THROW_ARGUMENT ("Requested IID is out of range");
+    AMOS_THROW_ARGUMENT ("Requested bank IID is out of range");
 
   //-- Calculate the local and partition IDs
   ID_t lid, pid;
@@ -732,7 +733,10 @@ void Bank_t::restore (IBankable_t & obj)
 
   //-- Check preconditions
   if ( !isOpen( ) )
-    AMOS_THROW_IO ("Cannot fetch from a closed Bank");
+    AMOS_THROW_IO ("Cannot restore in a closed bank");
+  if ( banktype_m != NULL_BANK  &&
+       banktype_m != obj . getNCode( ) )
+    AMOS_THROW_ARGUMENT ("Cannot restore incompatible object type in bank");
   if ( iid > last_iid_m )
     AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
@@ -761,9 +765,9 @@ void Bank_t::transform (vector<ID_t> id_map)
 {
   //-- Check preconditions
   if ( !isOpen( ) )
-    AMOS_THROW_IO ("Cannot transform a closed Bank");
+    AMOS_THROW_IO ("Cannot transform a closed bank");
   if ( id_map[0] != NULL_ID )
-    AMOS_THROW_ARGUMENT ("Cannot map id_map[0], must be NULL_ID");
+    AMOS_THROW_ARGUMENT ("NULL_ID cannot transform to anything but NULL_ID");
 
   ID_t lid, pid;
 
@@ -789,7 +793,7 @@ void Bank_t::transform (vector<ID_t> id_map)
     for ( ID_t i = 1; i < id_map . size( ); i ++ )
       {
 	if ( id_map [i] == NULL_ID  ||  id_map [i] > last_iid_m )
-	  AMOS_THROW_ARGUMENT ("Cannot map out of range IID");
+	  AMOS_THROW_ARGUMENT ("Cannot transform out of range IID");
 
 	//-- Look up the old object
 	lookup (id_map [i], lid, pid);

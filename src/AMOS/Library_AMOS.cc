@@ -29,7 +29,7 @@ void Library_t::readMessage (const Message_t & msg)
       case 0:
 	break;
       default:
-	AMOS_THROW_ARGUMENT ("Invalid multiple submessages in LIB");
+	AMOS_THROW_ARGUMENT ("Invalid submessage");
       }
   }
   catch (ArgumentException_t) {

@@ -29,7 +29,7 @@ void Distribution_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_MEAN));
 	ss >> mean;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid mea format");
+	  AMOS_THROW_ARGUMENT ("Invalid mean format");
       }
 
     if ( msg . exists (F_SD) )
@@ -37,7 +37,7 @@ void Distribution_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SD));
 	ss >> sd;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid std format");
+	  AMOS_THROW_ARGUMENT ("Invalid standard deviation format");
       }
 
     if ( msg . exists (F_SKEWNESS) )
@@ -45,7 +45,7 @@ void Distribution_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SKEWNESS));
 	ss >> skew;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid skw format");
+	  AMOS_THROW_ARGUMENT ("Invalid skewness format");
       }
   }
   catch (ArgumentException_t) {
@@ -70,7 +70,7 @@ void Tile_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SOURCE));
 	ss >> id;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid src format");
+	  AMOS_THROW_ARGUMENT ("Invalid source link format");
       }
 
     if ( msg . exists (F_OFFSET) )
@@ -78,7 +78,7 @@ void Tile_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_OFFSET));
 	ss >> offset;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid off format");
+	  AMOS_THROW_ARGUMENT ("Invalid offset format");
       }
 
     if ( msg . exists (F_CLEAR) )
@@ -88,7 +88,7 @@ void Tile_t::readMessage (const Message_t & msg)
 	ss . ignore( );
 	ss >> range . end;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid clr format");
+	  AMOS_THROW_ARGUMENT ("Invalid clear range format");
       }
 
     if ( msg . exists (F_DELTA) )
@@ -103,7 +103,7 @@ void Tile_t::readMessage (const Message_t & msg)
 	  }
 
 	if ( !ss . eof( ) )
-	  AMOS_THROW_ARGUMENT ("Invalid del format");
+	  AMOS_THROW_ARGUMENT ("Invalid delta gap format");
 	ss . clear( );
       }
   }

@@ -20,9 +20,9 @@ using namespace std;
 void IDMap_t::insert (ID_t key, ID_t val)
 {
   if ( key == NULL_ID )
-    AMOS_THROW_ARGUMENT ("key equals NULL_ID");
+    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID key in map");
   if ( val == NULL_ID )
-    AMOS_THROW_ARGUMENT ("val equals NULL_ID");
+    AMOS_THROW_ARGUMENT ("Cannot insert NULL_ID val in map");
 
   HashNode_t * curr = hashfunc (key);
 
@@ -36,11 +36,11 @@ void IDMap_t::insert (ID_t key, ID_t val)
       while ( curr -> next != NULL )
 	{
 	  if ( curr -> key == key )
-	    AMOS_THROW_ARGUMENT ("key already exists");
+	    AMOS_THROW_ARGUMENT ("Cannot insert multiple keys in map");
 	  curr = curr -> next;
 	}
       if ( curr -> key == key )
-	AMOS_THROW_ARGUMENT ("key already exists");	
+	AMOS_THROW_ARGUMENT ("Cannot insert multiple keys in map");
   
       curr -> next = new HashNode_t( );
       curr = curr -> next;
@@ -81,11 +81,13 @@ void IDMap_t::invert ( )
 	      while ( invcurr -> next != NULL )
 		{
 		  if ( invcurr -> key == oldcurr -> val )
-		    AMOS_THROW_ARGUMENT ("invert failed due to multiple keys");
+		    AMOS_THROW_ARGUMENT
+		      ("Cannot invert map with duplicate values");
 		  invcurr = invcurr -> next;
 		}
 	      if ( invcurr -> key == oldcurr -> val )
-		AMOS_THROW_ARGUMENT ("invert failed due to multiple keys");	
+		AMOS_THROW_ARGUMENT
+		  ("Cannot invert map with duplicate values");	
 		
 	      invcurr -> next = new HashNode_t( );
 	      invcurr = invcurr -> next;
@@ -119,7 +121,7 @@ ID_t IDMap_t::lookup (ID_t key)
   while ( curr -> key != key )
     {
       if ( curr -> next == NULL )
-	AMOS_THROW_ARGUMENT ("key does not exist");
+	AMOS_THROW_ARGUMENT ("Could not lookup absent key in map");
       curr = curr -> next;
     }
 
@@ -171,7 +173,7 @@ void IDMap_t::remove (ID_t key)
   while ( curr -> key != key )
     {
       if ( curr -> next == NULL )
-	AMOS_THROW_ARGUMENT ("key does not exist");
+	AMOS_THROW_ARGUMENT ("Could not remove absent key");
       prev = curr;
       curr = curr -> next;
     }
@@ -244,10 +246,10 @@ void IDMap_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_SIZE));
 	ss >> size;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid sze format");
+	  AMOS_THROW_ARGUMENT ("Invalid size format");
 
 	if ( size != size_m )
-	  AMOS_THROW_ARGUMENT ("sze value does not match number of entries");
+	  AMOS_THROW_ARGUMENT ("Size of map and size field do not agree");
       }
   }
   catch (ArgumentException_t) {

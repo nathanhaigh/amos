@@ -47,7 +47,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_READ1));
 	ss >> reads_m . first;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid rd1 format");
+	  AMOS_THROW_ARGUMENT ("Invalid read1 link format");
       }
 
     if ( msg . exists (F_READ2) )
@@ -55,7 +55,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_READ2));
 	ss >> reads_m . second;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid rd2 format");
+	  AMOS_THROW_ARGUMENT ("Invalid read2 link format");
       }
 
     if ( msg . exists (F_ADJACENCY) )
@@ -69,7 +69,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_AHANG));
 	ss >> aHang_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid ahg format");
+	  AMOS_THROW_ARGUMENT ("Invalid aHang format");
       }
 
     if ( msg . exists (F_BHANG) )
@@ -77,7 +77,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_BHANG));
 	ss >> bHang_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid bhg format");
+	  AMOS_THROW_ARGUMENT ("Invalid bHang format");
       }
   }
   catch (ArgumentException_t) {
@@ -129,7 +129,7 @@ void Overlap_t::setAdjacency (OverlapAdjacency_t adj)
       flags_m . extra &= ~0x7;
       break;
     default:
-      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency type char: " + adj);
+      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency type " + adj);
     }
 }
 

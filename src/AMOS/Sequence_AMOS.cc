@@ -42,7 +42,7 @@ string Sequence_t::getQualString (Range_t range) const
   if ( range . begin > range . end ||
        range . begin < 0 ||
        range . end > length_m )
-    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
+    AMOS_THROW_ARGUMENT ("Invalid quality subrange");
 
   //-- Allocate space for retval
   string retval;
@@ -118,7 +118,7 @@ void Sequence_t::readMessage (const Message_t & msg)
 		   msg . getField (F_QUALITY));
     else if ( msg . exists (F_SEQUENCE)  ||
 	      msg . exists (F_QUALITY) )
-      AMOS_THROW_ARGUMENT ("missing seq or qual field");
+      AMOS_THROW_ARGUMENT ("Missing sequence or quality field");
   }
   catch (ArgumentException_t) {
     
@@ -160,7 +160,7 @@ void Sequence_t::setSequence (const char * seq,
   //-- Check preconditions
   Size_t length = strlen (seq);
   if ( length != (Size_t)strlen (qual) )
-    AMOS_THROW_ARGUMENT ("seq and qual string lengths do not match");
+    AMOS_THROW_ARGUMENT ("Sequence and quality lengths disagree");
 
   //-- Set the sequence
   seq_m = (uint8_t *) SafeRealloc (seq_m, length);
@@ -195,7 +195,7 @@ void Sequence_t::setSequence (const string & seq,
   //-- Check preconditions
   Size_t length = seq . size( );
   if ( length != (Size_t)qual . size( ) )
-    AMOS_THROW_ARGUMENT ("seq and qual string lengths do not match");
+    AMOS_THROW_ARGUMENT ("Sequence and quality lengths disagree");
 
   //-- Set the sequence
   seq_m = (uint8_t *) SafeRealloc (seq_m, length);

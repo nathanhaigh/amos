@@ -45,7 +45,7 @@ namespace Bank_k {
   const Size_t BUFFER_SIZE = 1024;
   //!< IO buffer size
 
-  const std::string BANK_VERSION ("1.05");
+  const std::string BANK_VERSION ("1.06");
   //!< Current Bank version, may not be able to read from other versions
 
   const std::string FIX_STORE_SUFFIX (".fix");
@@ -809,7 +809,7 @@ public:
   IDMap_t & map ( )
   {
     if ( !isOpen( ) )
-      AMOS_THROW_ARGUMENT ("Cannot access ID map from a closed Bank");
+      AMOS_THROW_ARGUMENT ("Cannot access ID map from a closed bank");
     return idmap_m;
   }
 
@@ -842,6 +842,7 @@ public:
   //! \param obj A Bankable object with the IID set to the desired object
   //! \pre The Bank is open
   //! \pre The desired IID is within range
+  //! \pre obj is compatible with the current NCode Bank type
   //! \post obj's is_removed flag is set
   //! \throws IOException_t
   //! \throws ArgumentException_t
@@ -881,6 +882,7 @@ public:
   //! \param obj A Bankable object with the IID set to the desired object
   //! \pre The Bank is open
   //! \pre The desired IID is within range
+  //! \pre obj is compatible with the current NCode Bank type
   //! \post obj's is_removed flag is unset
   //! \throws IOException_t
   //! \throws ArgumentException_t
@@ -905,11 +907,11 @@ public:
   //!
   //! \param id_map A map of old-to-new IIDs, where index = new and value = old
   //! \pre The Bank is open
-  //! \pre map[0] == NULL_ID
-  //! \pre All IID values in map are within range, except for map[0]
+  //! \pre map[NULL_ID] == NULL_ID
+  //! \pre All IID values in map are within range
   //! \post Objects flagged for deletion will not be cleaned
   //! \post Object IIDs not included in the map will no longer exist
-  //! \post getLastIID( ) == map . size( ) - 1
+  //! \post getLastIID( ) >= map . size( ) - 1
   //! \throws IOException_t
   //! \throws ArgumentException_t
   //! \return void

@@ -56,7 +56,7 @@ bool Message_t::read (istream & in)
 
 	//-- Throw if bad format
 	if ( line . size( ) < 4  ||  line [3] != ':' )
-	  AMOS_THROW_IO ("Message read failure, line: " + line);
+	  AMOS_THROW_IO ("Invalid message format, line: " + line);
 
 	//-- Read in first line of field
 	name = line . substr (0,3);
@@ -97,7 +97,7 @@ void Message_t::setField (NCode_t fcode, const string & data)
   //-- Check pre-conditions
   if ( data . find ('\n') != string::npos  &&
        *(data . rbegin( )) != '\n' )
-    AMOS_THROW_ARGUMENT ("Invalid message multi-line field format");
+    AMOS_THROW_ARGUMENT ("Invalid multi-line message field format");
   if ( data . size( ) == 0 )
     {
       //AMOS_THROW_ARGUMENT ("Empty fields are not allowed");

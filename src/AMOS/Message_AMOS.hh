@@ -185,7 +185,8 @@ public:
 
     mi = fields_m . find (fcode);
     if ( mi == fields_m . end( ) )
-      AMOS_THROW_ARGUMENT ("Field name does not exist: " + Decode (fcode));
+      AMOS_THROW_ARGUMENT ("Cannot retrieve absent field " +
+			   Decode (fcode));
 
     return mi -> second;
   }
@@ -435,6 +436,8 @@ public:
   //! data in the Messagable object will be cleared or overwritten.
   //!
   //! \param msg The Message to read from
+  //! \pre The expected fields are formatted properly
+  //! \throws ArgumentException_t
   //! \return void
   //!
   virtual void readMessage (const Message_t & msg) = 0;

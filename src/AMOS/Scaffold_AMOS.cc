@@ -40,18 +40,18 @@ void Scaffold_t::readMessage (const Message_t & msg)
 	  }
 
 	if ( !ss . eof( ) )
-	  AMOS_THROW_ARGUMENT ("Invalid cte format");
+	  AMOS_THROW_ARGUMENT ("Invalid contig edge link list format");
 	ss . clear( );
       }
 
     if ( msg . exists (F_POLYMORPHISM) )
-      AMOS_THROW_ARGUMENT ("Polymorphism information not yet implemented");
+      AMOS_THROW_ARGUMENT ("Polymorphism not yet implemented");
 
     for ( vi  = msg . getSubMessages( ) . begin( );
 	  vi != msg . getSubMessages( ) . end( ); vi ++ )
       {
 	if ( vi -> getMessageCode( ) != M_TILE )
-	  AMOS_THROW_ARGUMENT ("Invalid submessage in SCF");
+	  AMOS_THROW_ARGUMENT ("Invalid submessage");
 	tile . readMessage (*vi);
 	contigs_m . push_back (tile);
       }
