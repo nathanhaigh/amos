@@ -52,7 +52,7 @@ int  main
   {
 
    ID_t  iid;
-   Bank_t  read_bank (Bankable_k::READ);
+   Bank_t  read_bank (Read_t::BankCode( ));
    Read_t  read;
    Celera_Message_t  msg;
    int  ct;

@@ -23,16 +23,16 @@ int main (int argc, char ** argv)
   try {
 
     Message_t msg;
-    Universal_t bnk;
+    Universal_t unv;
     
     while ( msg . read (msgfile) )
-      if ( msg . getMessageType( ) == Message_k::M_BANKABLE )
+      if ( msg . getMessageType( ) == Message_k::M_UNIVERSAL )
 	{
-	  bnk . clear( );
-	  bnk . fromMessage (msg);
+	  unv . clear( );
+	  unv . fromMessage (msg);
 
 	  msg . clear( );
-	  bnk . toMessage (msg);
+	  unv . toMessage (msg);
 
 	  cout << "### NEW MESSAGE ###\n";
 	  msg . write (cout);

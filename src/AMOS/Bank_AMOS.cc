@@ -14,7 +14,6 @@
 #include "Bank_AMOS.hh"
 using namespace AMOS;
 using namespace Bank_k;
-using namespace Bankable_k;
 using namespace std;
 
 
@@ -81,7 +80,7 @@ ID_t Bank_t::append (IBankable_t & obj)
     AMOS_THROW_IO ("Cannot append to a closed Bank");
   if ( banktype_m != NULL_BANK  &&
        banktype_m != obj . getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append incompatible NCode type");
+    AMOS_THROW_ARGUMENT ("Cannot append incompatible object type");
 
   //-- Add new partition if necessary
   if ( ++ last_iid_m > max_iid_m )
@@ -218,7 +217,7 @@ void Bank_t::concat (Bank_t & source)
   if ( banktype_m != source . banktype_m  &&
        banktype_m != NULL_BANK  &&
        source . banktype_m != NULL_BANK )
-    AMOS_THROW_ARGUMENT ("Cannot concat incompatible NCode");
+    AMOS_THROW_ARGUMENT ("Cannot concat incompatible object types");
 
   Size_t size;
   IBankable_t::BankableFlags_t flags;
@@ -397,7 +396,7 @@ void Bank_t::fetch (IBankable_t & obj)
     AMOS_THROW_IO ("Cannot fetch from a closed Bank");
   if ( banktype_m != NULL_BANK  &&
        banktype_m != obj . getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible NCode");
+    AMOS_THROW_ARGUMENT ("Cannot fetch incompatible object type");
   if ( iid > last_iid_m )
     AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 
@@ -446,11 +445,11 @@ void Bank_t::flush ( )
   //-- Flush updated INFO
   ifo << "____BANK INFORMATION____\n";
   ifo << "bank version = "      << BANK_VERSION << "\n";
-  ifo << "bank type = "         << (int)banktype_m      << "\n";
-  ifo << "bytes/index = "       << fix_size_m           << "\n";
-  ifo << "last index = "        << last_iid_m           << "\n";
-  ifo << "indices/partition = " << partition_size_m     << "\n";
-  ifo << "last partition = "    << last_partition_m     << "\n";
+  ifo << "bank type = "         << banktype_m         << "\n";
+  ifo << "bytes/index = "       << fix_size_m         << "\n";
+  ifo << "last index = "        << last_iid_m         << "\n";
+  ifo << "indices/partition = " << partition_size_m   << "\n";
+  ifo << "last partition = "    << last_partition_m   << "\n";
 
   if ( ifo . fail( ) )
     AMOS_THROW_IO ("Error writing to partition: " +
@@ -637,7 +636,7 @@ void Bank_t::replace (IBankable_t & obj)
     AMOS_THROW_IO ("Cannot fetch from a closed Bank");
   if ( banktype_m != NULL_BANK  &&
        banktype_m != obj . getNCode( ) )
-    AMOS_THROW_ARGUMENT ("Cannot append incompatible NCode");
+    AMOS_THROW_ARGUMENT ("Cannot replace incompatible object type");
   if ( iid > last_iid_m )
     AMOS_THROW_ARGUMENT ("Requested IID is out of range");
 

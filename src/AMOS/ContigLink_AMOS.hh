@@ -107,6 +107,20 @@ protected:
   
 public:
 
+  //--------------------------------------------------- BankCode ---------------
+  //! \brief Get the AMOS NCode type identifier (statically)
+  //!
+  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (ContigLink_t::BankCode( ))'
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  static NCode_t BankCode ( )
+  {
+    return Bank_k::CONTIGLINK;
+  }
+
+
   //--------------------------------------------------- ContigLink_t -----------
   //! \brief Constructs an empty ContigLink_t object
   //!
@@ -115,7 +129,7 @@ public:
   ContigLink_t ( )
   {
     contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
-    source_m . second = Bankable_k::NULL_BANK;
+    source_m . second = Bank_k::NULL_BANK;
     sd_m = size_m = 0;
     type_m = NULL_LINK;
   }
@@ -146,7 +160,7 @@ public:
   {
     Universal_t::clear( );
     contigs_m . first = contigs_m . second = source_m . first = NULL_ID;
-    source_m . second = Bankable_k::NULL_BANK;
+    source_m . second = Bank_k::NULL_BANK;
     sd_m = size_m = 0;
     type_m = NULL_LINK;
   }
@@ -191,13 +205,13 @@ public:
 
 
   //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the unique bank type identifier
+  //! \brief Get the AMOS NCode type identifier
   //!
-  //! \return The unique bank type identifier
+  //! \return The AMOS NCode type identifier
   //!
   virtual NCode_t getNCode ( ) const
   {
-    return Bankable_k::CONTIGLINK;
+    return ContigLink_t::BankCode( );
   }
 
 

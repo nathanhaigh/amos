@@ -149,6 +149,20 @@ public:
   //!< Maximum Kmer length
 
 
+  //--------------------------------------------------- BankCode ---------------
+  //! \brief Get the AMOS NCode type identifier (statically)
+  //!
+  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (Kmer_t::BankCode( ))'
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  static NCode_t BankCode ( )
+  {
+    return Bank_k::KMER;
+  }
+
+
   //--------------------------------------------------- Kmer_t -----------------
   //! \brief Constructs an empty Kmer_t object
   //!
@@ -193,17 +207,6 @@ public:
     seq_m = NULL;
     count_m = length_m = 0;
     reads_m . clear( );
-  }
-
-
-  //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the unique bank type identifier
-  //!
-  //! \return The unique bank type identifier
-  //!
-  virtual NCode_t getNCode ( ) const
-  {
-    return Bankable_k::KMER;
   }
 
 
@@ -254,6 +257,17 @@ public:
   uint8_t getLength ( ) const
   {
     return length_m;
+  }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  //! \brief Get the AMOS NCode type identifier
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  virtual NCode_t getNCode ( ) const
+  {
+    return Kmer_t::BankCode( );
   }
 
 

@@ -22,9 +22,9 @@
 
 namespace AMOS {
 
-namespace Bankable_k {
+namespace Bank_k {
 
-  const NCode_t BANKABLE   = NCode (Message_k::M_BANKABLE);
+  const NCode_t UNIVERSAL  = NCode (Message_k::M_UNIVERSAL);
   const NCode_t CONTIG     = NCode (Message_k::M_CONTIG);
   const NCode_t CONTIGEDGE = NCode (Message_k::M_CONTIGEDGE);
   const NCode_t CONTIGLINK = NCode (Message_k::M_CONTIGLINK);
@@ -36,7 +36,7 @@ namespace Bankable_k {
   const NCode_t SCAFFOLD   = NCode (Message_k::M_SCAFFOLD);
   const NCode_t SEQUENCE   = NCode (Message_k::M_SEQUENCE);
 
-} // namespace Bankable_k
+} // namespace Bank_k
 
 
 
@@ -116,6 +116,20 @@ protected:
 
 public:
 
+  //--------------------------------------------------- BankCode ---------------
+  //! \brief Get the AMOS NCode type identifier (statically)
+  //!
+  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (Universal_t::BankCode( ))'
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  static NCode_t BankCode ( )
+  {
+    return Bank_k::UNIVERSAL;
+  }
+
+
   //--------------------------------------------------- Universal_t ------------
   //! \brief Constructs an empty Universal_t object
   //!
@@ -192,13 +206,13 @@ public:
 
 
   //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the unique bank type identifier
+  //! \brief Get the AMOS NCode type identifier
   //!
-  //! \return The unique bank type identifier
+  //! \return The AMOS NCode type identifier
   //!
   virtual NCode_t getNCode ( ) const
   {
-    return Bankable_k::BANKABLE;
+    return Universal_t::BankCode( );
   }
 
 

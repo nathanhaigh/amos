@@ -56,17 +56,12 @@ namespace Bank_k {
   const std::string VAR_STORE_SUFFIX (".var");
   //!< Suffix for the variable length store
 
-} // namespace Bank_k
-
-
-
-
-namespace Bankable_k {
 
   const NCode_t NULL_BANK = NCode ("NUL");   //!< NULL bank NCode
   const NCode_t EXAMPLE   = NCode ("EXX");   //!< Example bank NCode
 
-} // namespace Bankable_k
+} // namespace Bank_k
+
 
 
 
@@ -234,9 +229,9 @@ public:
 
 
   //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the unique bank type identifier
+  //! \brief Get the AMOS NCode type identifier
   //!
-  //! \return The unique bank type identifier
+  //! \return The AMOS NCode type identifier
   //!
   virtual NCode_t getNCode ( ) const = 0;
 
@@ -567,7 +562,7 @@ public:
   //!
   //! Once a Bank is created with a certain NCode, only objects compatible
   //! with that NCode can be used with that Bank. For instance, if a Bank
-  //! is constructed with 'Bank_t mybank (Bankable_k::READ);', only Read_t
+  //! is constructed with 'Bank_t mybank (Bank_k::READ);', only Read_t
   //! objects could be used with mybank.
   //!
   //! \param type The type of Bank to construct
@@ -611,6 +606,19 @@ public:
   //! \return obj's new IID
   //!
   ID_t append (IBankable_t & obj);
+
+
+  //--------------------------------------------------- BankCode ---------------
+  //! \brief Get the unique bank type identifier
+  //!
+  //! Is equivalent to the NCode of the objects stored in the Bank.
+  //!
+  //! \return The unique bank type identifier
+  //!
+  NCode_t BankCode ( ) const
+  {
+    return banktype_m;
+  }
 
 
   //--------------------------------------------------- clean ------------------
@@ -744,16 +752,6 @@ public:
   //!
   void flush ( );
 
-
-  //--------------------------------------------------- getBankType ------------
-  //! \brief Get the NCode type being stored in this Bank
-  //!
-  //! \return The current NCode Bank type
-  //!
-  NCode_t getBankType ( ) const
-  {
-    return banktype_m;
-  }
 
   //--------------------------------------------------- getLastIID -------------
   //! \brief Get the last (largest) IID in the Bank

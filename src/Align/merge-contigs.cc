@@ -139,7 +139,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   Bank_t  read_bank (Bankable_k::READ);
+   Bank_t  read_bank (Read_t::BankCode( ));
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * cco_fp, * coords_fp;

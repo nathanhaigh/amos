@@ -88,6 +88,20 @@ protected:
 
 public:
 
+  //--------------------------------------------------- BankCode ---------------
+  //! \brief Get the AMOS NCode type identifier (statically)
+  //!
+  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (Example_t::BankCode( ))'
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  static NCode_t BankCode ( )
+  {
+    return Bank_k::EXAMPLE;
+  }
+
+
   //--------------------------------------------------- Example_t --------------
   //! \brief Constructs an empty Example_t object
   //!
@@ -125,13 +139,13 @@ public:
 
 
   //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the unique bank type identifier
+  //! \brief Get the AMOS NCode type identifier
   //!
-  //! \return The unique bank type identifier
+  //! \return The AMOS NCode type identifier
   //!
   virtual NCode_t getNCode ( ) const
   {
-    return Bankable_k::EXAMPLE;
+    return Example_t::BankCode( );
   }
 
 

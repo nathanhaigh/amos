@@ -179,6 +179,20 @@ protected:
 
 public:
 
+  //--------------------------------------------------- BankCode ---------------
+  //! \brief Get the AMOS NCode type identifier (statically)
+  //!
+  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (Sequence_t::BankCode( ))'
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  static NCode_t BankCode ( )
+  {
+    return Bank_k::SEQUENCE;
+  }
+
+
   //--------------------------------------------------- Sequence_t -------------
   //! \brief Constructs an empty Sequence_t object
   //!
@@ -229,17 +243,6 @@ public:
     free (qual_m);
     seq_m = qual_m = NULL;
     length_m = 0;
-  }
-
-
-  //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the unique bank type identifier
-  //!
-  //! \return The unique bank type identifier
-  //!
-  virtual NCode_t getNCode ( ) const
-  {
-    return Bankable_k::SEQUENCE;
   }
 
 
@@ -294,6 +297,17 @@ public:
   Size_t getLength ( ) const
   {
     return length_m;
+  }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  //! \brief Get the AMOS NCode type identifier
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  virtual NCode_t getNCode ( ) const
+  {
+    return Sequence_t::BankCode( );
   }
 
 

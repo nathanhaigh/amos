@@ -78,6 +78,20 @@ protected:
 
 public:
 
+  //--------------------------------------------------- BankCode ---------------
+  //! \brief Get the AMOS NCode type identifier (statically)
+  //!
+  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (Library_t::BankCode( ))'
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  static NCode_t BankCode ( )
+  {
+    return Bank_k::LIBRARY;
+  }
+
+
   //--------------------------------------------------- Library_t --------------
   //! \brief Constructs an empty Library_t object
   //!
@@ -115,17 +129,6 @@ public:
   }
 
 
-  //--------------------------------------------------- getNCode ---------------
-  //! \brief Get the unique bank type identifier
-  //!
-  //! \return The unique bank type identifier
-  //!
-  virtual NCode_t getNCode ( ) const
-  {
-    return Bankable_k::LIBRARY;
-  }
-
-
   //--------------------------------------------------- getDistribution --------
   //! \brief Get the insert fragment size distribution
   //!
@@ -134,6 +137,17 @@ public:
   Distribution_t getDistribution ( ) const
   {
     return dist_m;
+  }
+
+
+  //--------------------------------------------------- getNCode ---------------
+  //! \brief Get the AMOS NCode type identifier
+  //!
+  //! \return The AMOS NCode type identifier
+  //!
+  virtual NCode_t getNCode ( ) const
+  {
+    return Library_t::BankCode( );
   }
 
 

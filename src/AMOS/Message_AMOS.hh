@@ -69,7 +69,7 @@ namespace Message_k {
 
   //-- Message type names
   const std::string   M_NULL         ("NUL");
-  const std::string   M_BANKABLE     ("BNK");
+  const std::string   M_UNIVERSAL    ("UNV");
   const std::string   M_CONTIG       ("CTG");
   const std::string   M_CONTIGEDGE   ("CTE");
   const std::string   M_CONTIGLINK   ("CTL");
@@ -352,7 +352,7 @@ public:
   //--------------------------------------------------- getNCode ---------------
   //! \brief Get the AMOS NCode type identifier
   //!
-  //! \return The the AMOS NCode type identifier
+  //! \return The AMOS NCode type identifier
   //!
   virtual NCode_t getNCode ( ) const = 0;
 
