@@ -5,7 +5,7 @@
 # initialize
 AC_PREREQ(2.59)
 AC_INIT([AMOS Assembler],
-        [1.2.3],
+        [1.2.4],
         [amos@tigr.org],
         [amos])
 AC_PREFIX_DEFAULT([`pwd`])
