@@ -67,12 +67,6 @@ void PrintUsage (const char * s);
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  //***************
-  double loopa = 0;
-  double loopb = 0;
-  clock_t clocka, clockb;
-  //***************
-
   char act;                      // action enumeration
   Message_t msg;                 // the current message
   ifstream msgfile;              // the message file stream
@@ -152,7 +146,6 @@ int main (int argc, char ** argv)
   //-- Output the current time and bank directory
   cerr << "START DATE: " << Date( ) << endl;
   cerr << "Bank is: " << OPT_BankName << endl;
-  cerr << "Message is: " << OPT_MessageName << endl;
 
 
   //-- BEGIN: MAIN EXCEPTION CATCH
@@ -183,16 +176,10 @@ int main (int argc, char ** argv)
   msgfile . open (OPT_MessageName . c_str( ));
   if ( !msgfile )
     AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
-  
-  //-- Read the message file
-  while ( 1 )
-    {
-      clocka = clock( );
-      if ( ! msg . read (msgfile) )
-	break;
-      clockb = clock( );
-      loopa += (double)(clockb - clocka);
 
+  //-- Read the message file
+  while ( msg . read (msgfile) )
+    {
       //-- Increment the message counter
       cnts ++;
 
@@ -212,7 +199,6 @@ int main (int argc, char ** argv)
       typep = types [ti];
       bankp = banks [ti];
 
-      clocka = clock( );
       //-- Parse the message
       try {
 	typep -> readMessage (msg);
@@ -224,8 +210,6 @@ int main (int argc, char ** argv)
 	     << typep -> getEID( ) << ", message ignored\n";
 	continue;
       }
-      clockb = clock( );
-      loopb += (double)(clockb - clocka);
 
       //-- Open the bank if necessary
       try {
@@ -424,11 +408,6 @@ int main (int argc, char ** argv)
        << "Messages committed: " << cntc << endl
        << "END DATE:   " << Date( ) << endl;
 
-  cerr << endl
-       << "loopa: " << (double)loopa / CLOCKS_PER_SEC << " sec.\n"
-       << "loopb: " << (double)loopb / CLOCKS_PER_SEC << " sec.\n"
-       << "granu: " << CLOCKS_PER_SEC << " of a sec.\n";
-
   return EXIT_SUCCESS;
 }
 
@@ -468,35 +447,29 @@ void ParseArgs (int argc, char ** argv)
 	errflg ++;
       }
 
-  if (OPT_BankName == "")
+  if ( OPT_BankName . empty( ) )
     {
       cerr << "ERROR: The -b option is mandatory\n";
       errflg ++;
     }
 
-  if (OPT_MessageName == "")
+  if ( OPT_MessageName . empty( ) )
     {
       cerr << "ERROR: The -m option is mandatory\n";
       errflg ++;
     }
 
-  if (OPT_Create  && !OPT_ForceCreate  &&
-      !access (OPT_BankName . c_str( ), F_OK))
+  if ( OPT_Create  && !OPT_ForceCreate  &&
+       ! access (OPT_BankName . c_str( ), F_OK) )
     {
       cerr << "ERROR: Bank path already exists\n";
       errflg ++;
     }
 
-  if (!OPT_Create  &&
-      access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK))
+  if ( ! OPT_Create  &&
+       access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
       cerr << "ERROR: Bank path is not accessible\n";
-      errflg ++;
-    }
-
-  if (access (OPT_MessageName . c_str( ), R_OK))
-    {
-      cerr << "ERROR: Message path is not accessible\n";
       errflg ++;
     }
 
