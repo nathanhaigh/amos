@@ -25,7 +25,7 @@ void ConsensusField::setFontSize(int fontsize)
 {
   m_fontsize=fontsize;
   int lineheight  = m_fontsize+5;
-  setMinimumHeight(lineheight*3+2); // 2 lineheight + 2
+  setMinimumHeight(lineheight*2+2); // 2 lineheight + 2
 }
 
 void ConsensusField::paintEvent(QPaintEvent * event)
@@ -56,11 +56,11 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   QString cname = "Consensus";
   QString pname = "Position";
 
-  int consoffset = lineheight*3;
+  int consoffset = lineheight*2;
   int posoffset = lineheight*2;
   int lineoffset = lineheight;
 
-  p.drawText(seqnamehoffset, posoffset, pname);
+ // p.drawText(seqnamehoffset, posoffset, pname);
   p.drawText(seqnamehoffset, consoffset, cname);
 
   //x-axis
@@ -97,7 +97,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     s = QString::number(n);
     pen.setColor(black);
     p.setPen(pen);
-    p.drawText(xcoord, posoffset, s);
+    //p.drawText(xcoord, posoffset, s);
 
     if (n==0)
     {
