@@ -2,6 +2,7 @@
 #define __AMP_HH
 
 #include <ctime>
+#include <cstring>
 
 const char * Date
      ( );

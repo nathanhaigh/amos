@@ -67,7 +67,9 @@ int  main
 
    try {
 
-   if ( !Force_New_Bank  &&  read_bank . exists (Bank_Name) )
+   if ( Create_New_Bank  &&
+	!Force_New_Bank  &&
+	read_bank . exists (Bank_Name) )
    {
      cerr << "Bank already exists: " << Bank_Name << endl;
      exit (1);

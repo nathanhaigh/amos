@@ -467,7 +467,8 @@ void Bank_t::flush ( )
   //-- Flush updated INFO
   ifo << "____BANK INFORMATION____\n";
   ifo << "bank version = "      << BANK_VERSION << "\n";
-  ifo << "bank type = "         << banktype_m         << "\n";
+  ifo << "bank type = "         << banktype_m
+                                << " " << Decode (banktype_m) << "\n";
   ifo << "bytes/index = "       << fix_size_m         << "\n";
   ifo << "last index = "        << last_iid_m         << "\n";
   ifo << "indices/partition = " << partition_size_m   << "\n";
