@@ -22,10 +22,11 @@
 using namespace std;
 using namespace AMOS;
 
-const int  ALIGN_WIGGLE = 10;
+const int  ALIGN_WIGGLE = 15;
    // Number of positions left and right of specified location
    // to look for alignments.
 const double  DEFAULT_ERROR_RATE = 0.06;
+const int  DEFAULT_MIN_OVERLAP = 10;
 const int  MAX_LINE = 1000;
 const int  NEW_SIZE = 1000;
 
@@ -51,6 +52,8 @@ static FILE  * Extra_fp = NULL;
   // Pointer to file of extra fasta sequences to align
 static Input_Format_t  Input_Format = SIMPLE_CONTIG_INPUT;
   // Type of input
+static int  Min_Overlap = DEFAULT_MIN_OVERLAP;
+  // Minimum number of bases strings in multialignment must overlap
 static Output_Format_t  Output_Format = CELERA_MSG_OUTPUT;
   // Type of output to produce
 static string  Tig_File_Name;
@@ -111,7 +114,7 @@ int  main
       now = time (NULL);
       cerr << "Starting on " << ctime (& now) << endl;
 
-      Verbose = 1;
+      Verbose = 0;
 
       Parse_Command_Line (argc, argv);
 
@@ -152,7 +155,7 @@ int  main
                      {
                       cid = msg . getAccession ();
                       Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
-                           Error_Rate, gma, & ref, & tag_list);
+                           Error_Rate, Min_Overlap, gma, & ref, & tag_list);
                      }
                    catch (AlignmentException_t)
                      {
@@ -221,7 +224,7 @@ int  main
                         try
                           {
                            Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
-                                Error_Rate, gma, & ref, & tag_list);
+                                Error_Rate, Min_Overlap, gma, & ref, & tag_list);
                           }
                         catch (AlignmentException_t & e)
                           {
@@ -303,7 +306,7 @@ int  main
                 try
                   {
                    Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
-                        Error_Rate, gma, & ref, & tag_list);
+                        Error_Rate, Min_Overlap, gma, & ref, & tag_list);
                   }
                 catch (AlignmentException_t & e)
                   {
@@ -682,7 +685,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "acCe:E:fhPSTu")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "acCe:E:fhPSTuv:")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -729,6 +732,10 @@ static void  Parse_Command_Line
         case  'u' :
           Do_Unitig_Messages = true;
           Do_Contig_Messages = false;
+          break;
+
+        case  'v' :
+          Verbose = strtol (optarg, NULL, 10);
           break;
 
         case  '?' :
@@ -852,6 +859,7 @@ static void  Usage
            "  -S       Input is simple contig format, i.e., UMD format\n"
            "  -T       Output in TIGR Assembler contig format\n"
            "  -u       Process unitig messages\n"
+           "  -v <n>   Set verbose level to <n>.  Higher produces more output.\n"
            "\n",
            command);
 
