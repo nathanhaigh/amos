@@ -16,19 +16,6 @@ using namespace std;
 
 
 //================================================ Message_t ===================
-//----------------------------------------------------- getField ---------------
-const string & Message_t::getField (const string & fname)
-{
-  map<string,string,StrLT>::iterator mi;
-
-  mi = fields_m . find (fname);
-  if ( mi == fields_m . end( ) )
-    AMOS_THROW_ARGUMENT ((string)"field name does not exist: " + fname);
-  
-  return mi -> second;
-}
-
-
 //----------------------------------------------------- read -------------------
 bool Message_t::read (istream & in)
 {
@@ -99,24 +86,15 @@ void Message_t::setField (const string & fname, const string & data)
   for ( int i = 0; i < NCODE; i ++ )
     if ( !islower (fname [i]) )
       AMOS_THROW_ARGUMENT ("invalid message field name format");
+  if ( data . find ('\n') != string::npos  &&
+       *(data . rbegin( )) != '\n' )
+    AMOS_THROW_ARGUMENT ("invalid message multi-line field format");
 
   pair<map<string,string,StrLT>::iterator,bool> ret;
 
   ret = fields_m . insert (map<string,string,StrLT>::value_type(fname, data));
   if ( !ret . second )
     (ret . first) -> second = data;
-}
-
-
-//----------------------------------------------------- setType ----------------
-void Message_t::setType (const string & tname)
-{
-  if ( tname . size( ) != NCODE )
-    AMOS_THROW_ARGUMENT ("invalid message type name length");
-  for ( int i = 0; i < NCODE; i ++ )
-    if ( !isupper (tname [i]) )
-      AMOS_THROW_ARGUMENT ("invalid message type name format");
-  tname_m = tname;
 }
 
 

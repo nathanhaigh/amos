@@ -28,7 +28,7 @@ namespace Message_k {
 
   const uint8_t NCODE = 3;
 
-  const std::string NULL_NAME = "XXX";
+  const std::string NULL_NAME = "NUL";
 
 
   struct StrLT
@@ -82,8 +82,22 @@ public:
   }
 
 
+  //--------------------------------------------------- exists -----------------
+  bool exists (const std::string & fname)
+  {
+    return fields_m . find (fname) == fields_m . end( ) ? false : true;
+  }
+
+
   //--------------------------------------------------- getField ---------------
-  const std::string & getField (const std::string & fname);
+  const std::string & getField (const std::string & fname)
+  {
+    map<string,string,Message_k::StrLT>::iterator mi = fields_m . find (fname);
+    if ( mi == fields_m . end( ) )
+      AMOS_THROW_ARGUMENT ((string)"field name does not exist: " + fname);
+
+    return mi -> second;
+  }
 
 
   //--------------------------------------------------- getSubMessages ---------
@@ -104,6 +118,13 @@ public:
   bool read (std::istream & in);
 
 
+  //--------------------------------------------------- removeField ------------
+  void removeField (const std::string & fname)
+  {
+    fields_m . erase (fname);
+  }
+
+
   //--------------------------------------------------- setSubMessages ---------
   void setSubMessages (const std::vector<Message_t> & subs)
   {
@@ -116,7 +137,16 @@ public:
 
 
   //--------------------------------------------------- setType ----------------
-  void setType (const std::string & tname);
+  void setType (const std::string & tname)
+  {
+    if ( tname . size( ) != Message_k::NCODE )
+      AMOS_THROW_ARGUMENT ("invalid message type name length");
+    for ( int i = 0; i < Message_k::NCODE; i ++ )
+      if ( !isupper (tname [i]) )
+	AMOS_THROW_ARGUMENT ("invalid message type name format");
+
+    tname_m = tname;
+  }
 
 
   //--------------------------------------------------- write ------------------

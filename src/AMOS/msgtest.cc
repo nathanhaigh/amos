@@ -28,6 +28,10 @@ int main (int argc, char ** argv)
       {
 	msg . write (cout);
       }
+
+    msg . clear( );
+    msg . write (cout);
+
   }
   catch (Exception_t & e) {
     cerr << e;
