@@ -10,6 +10,7 @@
 //! their external IDs (eid's).
 //!
 //! \todo allow the reporting of one or more specific objects
+//! \todo rix runtime issue with messages
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "amp.hh"
@@ -205,13 +206,10 @@ int main (int argc, char ** argv)
       //-- Iterate through each object in the bank
       for ( id = 1; id <= bankp -> getLastIID( ); id ++ )
 	{
-	  clocka = clock( );
 	  //-- Fetch the next object
 	  typep -> setIID (id);
 	  bankp -> fetch (*typep);
 	  cnts ++;
-	  clockb = clock( );
-	  loopa += (double)(clockb - clocka);
 
 	  //-- Translate the ID pointers from IID to EID
 	  try {
@@ -254,13 +252,13 @@ int main (int argc, char ** argv)
 		  }
 		break;
 	      case I_KMER:
-		for ( ivi  = ((Kmer_t *)typep) -> getReadsItr( );
+		for ( ivi  = ((Kmer_t *)typep) -> getReads( ) . begin( );
 		      ivi != ((Kmer_t *)typep) -> getReads( ) . end( );
 		      ivi ++ )
 		  (*ivi) = invmaps [I_READ] -> lookup (*ivi);
 		break;
 	      case I_CONTIG:
-		for ( tvi  = ((Contig_t *)typep) -> getReadTilingItr( );
+		for ( tvi  = ((Contig_t *)typep) -> getReadTiling( ) . begin( );
 		      tvi != ((Contig_t *)typep) -> getReadTiling( ) . end( );
 		      tvi ++ )
 		  tvi -> id = invmaps [I_READ] -> lookup (tvi -> id);
@@ -283,19 +281,22 @@ int main (int argc, char ** argv)
 		  }
 		break;
 	      case I_CONTIGEDGE:
-		for ( ivi  = ((ContigEdge_t *)typep) -> getContigLinksItr( );
+		for ( ivi  = ((ContigEdge_t *)typep) ->
+			getContigLinks( ) . begin( );
 		      ivi != ((ContigEdge_t *)typep) ->
 			getContigLinks( ) . end( );
 		      ivi ++ )
 		  (*ivi) = invmaps [I_CONTIGLINK] -> lookup (*ivi);
 		break;
 	      case I_SCAFFOLD:
-		for ( tvi  = ((Scaffold_t *)typep) -> getContigTilingItr( );
+		for ( tvi  = ((Scaffold_t *)typep) ->
+			getContigTiling( ) . begin( );
 		      tvi != ((Scaffold_t *)typep) ->
 			getContigTiling( ) . end( );
 		      tvi ++ )
 		  tvi -> id = invmaps [I_CONTIG] -> lookup (tvi -> id);
-		for ( ivi  = ((Scaffold_t *)typep) -> getContigEdgesItr( );
+		for ( ivi  = ((Scaffold_t *)typep) ->
+			getContigEdges( ) . begin( );
 		      ivi != ((Scaffold_t *)typep) ->
 			getContigEdges( ) . end( );
 		      ivi ++ )
@@ -316,10 +317,13 @@ int main (int argc, char ** argv)
 
 	  clocka = clock( );
 	  typep -> writeMessage (msg);
+	  clockb = clock( );
+	  loopa += (double)(clockb - clocka);
+	  clocka = clock( );
 	  msg . write (msgfile);
-	  cntw ++;
 	  clockb = clock( );
 	  loopb += (double)(clockb - clocka);
+	  cntw ++;
 	}
 
       //-- Close the bank, only its inverted ID map are needed now
@@ -328,8 +332,6 @@ int main (int argc, char ** argv)
 
 
   //-- Close and free the objects
-  if ( !msgfile )
-    AMOS_THROW_IO ("Failure in message output stream");
   msgfile . close( );
   for ( ID_t i = 1; i < I_MAX; i ++ )
     {

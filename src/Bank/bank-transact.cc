@@ -12,6 +12,7 @@
 //! duplicate eid or an invalid link will cause the violating message to be
 //! ignored.
 //!
+//! \todo fix runtime issue with messages
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "amp.hh"
@@ -189,6 +190,8 @@ int main (int argc, char ** argv)
       clocka = clock( );
       if ( ! msg . read (msgfile) )
 	break;
+      clockb = clock( );
+      loopa += (double)(clockb - clocka);
 
       //-- Increment the message counter
       cnts ++;
@@ -209,6 +212,7 @@ int main (int argc, char ** argv)
       typep = types [ti];
       bankp = banks [ti];
 
+      clocka = clock( );
       //-- Parse the message
       try {
 	typep -> readMessage (msg);
@@ -221,7 +225,7 @@ int main (int argc, char ** argv)
 	continue;
       }
       clockb = clock( );
-      loopa += (double)(clockb - clocka);
+      loopb += (double)(clockb - clocka);
 
       //-- Open the bank if necessary
       try {
@@ -250,14 +254,16 @@ int main (int argc, char ** argv)
 	    //-- No pointers to translate
 	    break;
 	  case I_CONTIG:
-	    for ( tvi  = ((Contig_t *)typep) -> getReadTilingItr( );
+	    for ( tvi  = ((Contig_t *)typep) -> getReadTiling( ) . begin( );
 		  tvi != ((Contig_t *)typep) -> getReadTiling( ) . end( );
 		  tvi ++ )
 	      tvi -> id = banks [I_READ] -> map( ) . lookup (tvi -> id);
 	    break;
 	  case I_CONTIGEDGE:
-	    for ( ivi  = ((ContigEdge_t *)typep) -> getContigLinksItr( );
-		  ivi != ((ContigEdge_t *)typep) -> getContigLinks( ) . end( );
+	    for ( ivi  = ((ContigEdge_t *)typep) ->
+		    getContigLinks( ) . begin( );
+		  ivi != ((ContigEdge_t *)typep) ->
+		    getContigLinks( ) . end( );
 		  ivi ++ )
 	      (*ivi) = banks [I_CONTIGLINK] -> map( ) . lookup (*ivi);
 	    break;
@@ -289,7 +295,7 @@ int main (int argc, char ** argv)
                 map( ) . lookup (((Fragment_t *)typep) -> getSource( )));
 	    break;
 	  case I_KMER:
-	    for ( ivi  = ((Kmer_t *)typep) -> getReadsItr( );
+	    for ( ivi  = ((Kmer_t *)typep) -> getReads( ) . begin( );
 		  ivi != ((Kmer_t *)typep) -> getReads( ) . end( );
 		  ivi ++ )
 	      (*ivi) = banks [I_READ] -> map( ) . lookup (*ivi);
@@ -318,11 +324,11 @@ int main (int argc, char ** argv)
                 map( ) . lookup (((Read_t *)typep) -> getFragment( )));
 	    break;
 	  case I_SCAFFOLD:
-	    for ( tvi  = ((Scaffold_t *)typep) -> getContigTilingItr( );
+	    for ( tvi  = ((Scaffold_t *)typep) -> getContigTiling( ) . begin( );
 		  tvi != ((Scaffold_t *)typep) -> getContigTiling( ) . end( );
 		  tvi ++ )
 	      tvi -> id = banks [I_CONTIG] -> map( ) . lookup (tvi -> id);
-	    for ( ivi  = ((Scaffold_t *)typep) -> getContigEdgesItr( );
+	    for ( ivi  = ((Scaffold_t *)typep) -> getContigEdges( ) . begin( );
 		  ivi != ((Scaffold_t *)typep) -> getContigEdges( ) . end( );
 		  ivi ++ )
 	      (*ivi) = banks [I_CONTIGEDGE] -> map( ) . lookup (*ivi);
@@ -347,7 +353,6 @@ int main (int argc, char ** argv)
 	act = E_ADD;
 
       //-- Perform the appropriate action on the bank
-      clocka = clock( );
       try {
 	switch (act)
 	  {
@@ -387,8 +392,6 @@ int main (int argc, char ** argv)
 	     << typep -> getEID( ) << ", message ignored\n";
 	continue;
       }
-      clockb = clock( );
-      loopb += (double)(clockb - clocka);
 
       cntc ++;
     }
