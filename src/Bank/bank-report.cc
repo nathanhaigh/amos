@@ -82,23 +82,20 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
-//----------------------------------------------------- PrintVersion -----------
-//! \brief Prints version information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintVersion (const char * s);
-
-
 
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
-  long int cntc = 0;       // objects reported
+  int exitcode = EXIT_SUCCESS;
+  long int cnto = 0;       // objects reported
+  long int cntc = 0;       // banks reported
+  long int cnts = 0;       // banks seen
   NCode_t ncode;           // current object type
   UniversalSet_t objs;     // all the universal objects
   ID_t bid;                // bank index
+
+  UniversalSet_t::iterator ui;
+  set<NCode_t>::iterator ci;
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -110,118 +107,138 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
+    cerr << "    0%                                            100%" << endl;
+
     //-- Iterate through each known object and dump if its got bank
-    for ( UniversalSet_t::iterator i = objs.begin( ); i != objs.end( ); ++ i )
+    for ( ui = objs.begin( ); ui != objs.end( ); ++ ui )
       {
-	ncode = i -> getNCode( );
+	ncode = ui -> getNCode( );
 
 	//-- Skip if we're not looking at this one or it doesn't exist
 	if ( (OPT_IsExtractCodes  &&
 	      OPT_ExtractCodes . find (ncode) == OPT_ExtractCodes . end( ))
 	     ||
-	     (!OPT_IsExtractCodes  &&  !BankExists (ncode, OPT_BankName)) )
+	     (!OPT_IsExtractCodes  &&
+              !BankExists (ncode, OPT_BankName)) )
 	  continue;
 
+        cnts ++;
+        OPT_ExtractCodes . erase (ncode);
 
-	if ( OPT_IsExtractIDs )
-	  {
-	    Bank_t bank (ncode);
+        //-- Report the bank
+        try {
+          cerr << Decode (ncode) << " ";
 
-	    //-- Try and open the bank
-	    try {
-	      if ( OPT_BankSpy )
-		bank . open (OPT_BankName, B_SPY);
-	      else
-		bank . open (OPT_BankName, B_READ);
-	    }
-	    catch (const Exception_t & e) {
-	      cerr << "WARNING: " << e . what( ) << endl
-		   << "  could not open '" << Decode (ncode)
-		   << "' bank, all objects ignored" << endl;
-	      continue;
-	    }
+          if ( OPT_IsExtractIDs )
+            {
+              vector<ID_t>::iterator ii = OPT_ExtractIIDs . begin( );
+              vector<string>::iterator ei = OPT_ExtractEIDs . begin( );
+              Bank_t bank (ncode);
+              
+              if ( OPT_BankSpy )
+                bank . open (OPT_BankName, B_SPY);
+              else
+                bank . open (OPT_BankName, B_READ);
 
-	    //-- Get all of the requested IIDs
-	    for ( vector<ID_t>::iterator ii = OPT_ExtractIIDs . begin( );
-		  ii != OPT_ExtractIIDs . end( ); ++ ii )
-	      {
-		bid = bank . getIDMap( ) . lookupBID (*ii);
-		if ( bid == NULL_ID )
-		  continue;
-		bank . fetch (*ii, *i);
-		PrintObject (*i, bid);
-		cntc ++;
-	      }
+              ProgressDots_t dots (OPT_ExtractIIDs . size( ) +
+                                   OPT_ExtractEIDs . size( ), 50);
 
-	    //-- Get all of the requested EIDs
-	    for ( vector<string>::iterator ei = OPT_ExtractEIDs . begin( );
-		  ei != OPT_ExtractEIDs . end( ); ++ ei )
-	      {
-		bid = bank . getIDMap( ) . lookupBID (ei -> c_str( ));
-		if ( bid == NULL_ID )
-		  continue;
-		bank . fetch (ei -> c_str( ), *i);
-		PrintObject (*i, bid);
-		cntc ++;
-	      }
+              //-- Get the requested IIDs
+              for ( ; ii != OPT_ExtractIIDs . end( ); ++ ii )
+                {
+                  dots . update (ii - OPT_ExtractIIDs . begin( ));
+                  bid = bank . getIDMap( ) . lookupBID (*ii);
+                  if ( bid == NULL_ID )
+                    {
+                      cerr << "ERROR: IID '" << *ii << "' not found in '"
+                           << Decode (ncode) << "' bank" << endl;
+                      exitcode = EXIT_FAILURE;
+                      continue;
+                    }
+                  bank . fetch (*ii, *ui);
+                  PrintObject (*ui, bid);
+                  cnto ++;
+                }
 
-	    bank . close( );
-	  }
-	else
-	  {
-	    BankStream_t bankstream (ncode);
-	    
-	    //-- Open the bankstream if it exists
-	    try {
+              //-- Get the requested EIDs
+              for ( ; ei != OPT_ExtractEIDs . end( ); ++ ei )
+                {
+                  dots . update ((ei - OPT_ExtractEIDs . begin( )) +
+                                 (ii - OPT_ExtractIIDs . begin( )));
+                  bid = bank . getIDMap( ) . lookupBID (ei -> c_str( ));
+                  if ( bid == NULL_ID )
+                    {
+                      cerr << "ERROR: EID '" << *ei << "' not found in '"
+                           << Decode (ncode) << "' bank" << endl;
+                      exitcode = EXIT_FAILURE;
+                      continue;
+                    }
+                  bank . fetch (ei -> c_str( ), *ui);
+                  PrintObject (*ui, bid);
+                  cnto ++;
+                }
+
+              dots . end( );
+              bank . close( );
+            }
+          else
+            {
+              BankStream_t bankstream (ncode);
+
 	      if ( OPT_BankSpy )
 		bankstream . open (OPT_BankName, B_SPY);
 	      else
 		bankstream . open (OPT_BankName, B_READ);
-	    }
-	    catch (const Exception_t & e) {
-	      cerr << "WARNING: " << e . what( ) << endl
-		   << "  could not open '" << Decode (ncode)
-		   << "' bankstream, all objects ignored" << endl;
-	      continue;
-	    }
-	    
-	    //-- Get ALL of the objects
-	    while ( bankstream >> *i )
-	      {
-		PrintObject (*i, bankstream . tellg( ) - 1);
-		cntc ++;
-	      }
 
-	    bankstream . close( );
-	  }
+              long int cntd = 0;
+              ProgressDots_t dots (bankstream . getSize( ), 50);
 
-	//-- Remove the code
-	if ( OPT_IsExtractCodes )
-	  OPT_ExtractCodes . erase (ncode);
+              //-- Get all objects
+              while ( bankstream >> *ui )
+                {
+                  dots . update (++ cntd);
+                  PrintObject (*ui, bankstream . tellg( ) - 1);
+                  cnto ++;
+                }
+
+              dots . end( );
+              bankstream . close( );
+            }
+        }
+        catch (const Exception_t & e) {
+          cerr << "ERROR: " << e . what( ) << endl
+               << "  failed to report '" << Decode (ncode) << "' bank" << endl;
+          exitcode = EXIT_FAILURE;
+          continue;
+        }
+
+        cntc ++;
+      }
+
+    //-- Any codes unrecognized?
+    for ( ci = OPT_ExtractCodes.begin( ); ci != OPT_ExtractCodes.end( ); ++ ci )
+      {
+        cnts ++;
+        cerr << "ERROR: Unrecognized bank type" << endl
+             << "  unknown bank type '" << Decode (*ci) << "' ignored" << endl;
+        exitcode = EXIT_FAILURE;
       }
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
-	 << "  could not perform report, abort" << endl
-	 << "Objects reported: " << cntc << endl;
-    return EXIT_FAILURE;
+         << "  there has been a fatal error, abort" << endl;
+    exitcode = EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
 
-  //-- Any codes unrecognized?
-  for ( set<NCode_t>::iterator i = OPT_ExtractCodes . begin( );
-	i != OPT_ExtractCodes . end( ); ++ i )
-    {
-      cerr << "WARNING: Unrecognized bank type" << endl
-	   << "  unknown bank type '" << Decode (*i)
-	   << "',  bank ignored" << endl;
-    }
-
   //-- Output the end time
-  cerr << "Objects reported: " << cntc << endl
+  cerr << "Report attempts: " << cnts << endl
+       << "Report successes: " << cntc << endl
+       << "Objects reported: " << cnto << endl
        << "END DATE:   " << Date( ) << endl;
-  return EXIT_SUCCESS;
+
+  return exitcode;
 }
 
 
@@ -238,7 +255,7 @@ void ParseExtract ( )
     {
       infile . open (OPT_IIDExtractName . c_str( ));
       if ( !infile )
-	cerr << "WARNING: Could not open " << OPT_IIDExtractName << endl;
+	cerr << "ERROR: Could not open " << OPT_IIDExtractName << endl;
 
       infile >> iid;
       while ( infile )
@@ -254,7 +271,7 @@ void ParseExtract ( )
     {
       infile . open (OPT_EIDExtractName . c_str( ));
       if ( !infile )
-	cerr << "WARNING: Could not open " << OPT_EIDExtractName << endl;
+	cerr << "ERROR: Could not open " << OPT_EIDExtractName << endl;
 
       getline (infile, eid);
       while ( infile )
@@ -327,7 +344,7 @@ void ParseArgs (int argc, char ** argv)
 	break;
 
       case 'v':
-	PrintVersion (argv[0]);
+	PrintBankVersion (argv[0]);
 	exit (EXIT_SUCCESS);
 	break;
 
@@ -404,15 +421,5 @@ void PrintUsage (const char * s)
 {
   cerr
     << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n\n";
-  return;
-}
-
-
-
-
-//---------------------------------------------------------- PrintVersion ----//
-void PrintVersion (const char * s)
-{
-  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

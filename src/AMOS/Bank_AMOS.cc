@@ -846,8 +846,7 @@ void Bank_t::syncIFO (IFOMode_t mode)
             if ( noskip  ||  line != lock )
               {
                 if ( mode == I_OPEN  &&  mode_m & B_FORCE )
-                  cerr << endl << "WARNING: Clearing '"
-                       << Decode (banktype_m)
+                  cerr << "WARNING: Clearing '" << Decode (banktype_m)
                        << "' bank lock, locked by '" + line + "'" << endl;
                 else
                   locks . push_back (line);      // add bank lock
@@ -905,7 +904,7 @@ void Bank_t::syncIFO (IFOMode_t mode)
     //-- B_SPY sneak out
     if ( mode_m & B_SPY )
       {
-        cerr << endl << "WARNING: Disregarding '" << Decode (banktype_m)
+        cerr << "WARNING: Disregarding '" << Decode (banktype_m)
              << "' bank lock, locked by '" + *vj + "'" << endl;
         return;
       }
@@ -1029,6 +1028,12 @@ bool AMOS::BankExists (NCode_t ncode, const string & dir)
 	   ! access (ifo_path . c_str( ), R_OK) );
 }
 
+
+//--------------------------------------------------- PrintBankVersion ---------
+void AMOS::PrintBankVersion (const char * s)
+{
+  cerr << s << " compiled for bank version " << Bank_t::BANK_VERSION << endl;
+}
 
 
 

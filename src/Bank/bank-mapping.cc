@@ -57,23 +57,19 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
-//----------------------------------------------------- PrintVersion -----------
-//! \brief Prints version information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintVersion (const char * s);
-
-
 
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
+  int exitcode = EXIT_SUCCESS;
   long int cntc = 0;       // mappings output
+  long int cnts = 0;       // banks seen
   NCode_t ncode;           // current bank type
   Message_t msg;           // output message
   BankSet_t bnks;          // all the banks
+
+  BankSet_t::iterator bi;
+  set<NCode_t>::iterator ci;
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -86,70 +82,69 @@ int main (int argc, char ** argv)
   try {
 
     //-- Iterate through each bank and dump its map
-    for ( BankSet_t::iterator i = bnks . begin( ); i != bnks . end( ); ++ i )
+    for ( bi = bnks.begin( ); bi != bnks.end( ); ++ bi )
       {
-	ncode = i -> getType( );
+	ncode = bi -> getType( );
 
 	//-- Skip if we're not looking at this one or it doesn't exist
 	if ( (OPT_IsExtractCodes  &&
 	      OPT_ExtractCodes . find (ncode) == OPT_ExtractCodes . end( ))
 	     ||
-	     (!OPT_IsExtractCodes  &&  !i -> exists (OPT_BankName)) )
+	     (!OPT_IsExtractCodes  &&
+              !bi -> exists (OPT_BankName)) )
 	  continue;
 
-	//-- Try and open the bank
-	try {
+        cnts ++;
+        OPT_ExtractCodes . erase (ncode);
+
+	//-- Write the map and close the bank
+        try {
+          cerr << Decode (ncode) << " ... ";
+
 	  if ( OPT_BankSpy )
-	    i -> open (OPT_BankName, B_SPY);
+	    bi -> open (OPT_BankName, B_SPY);
 	  else
-	    i -> open (OPT_BankName, B_READ);
-	}
-	catch (const Exception_t & e) {
-          cerr << "WARNING: " << e . what( ) << endl
-               << "  could not open '" << Decode (ncode)
-               << "' bank, mapping ignored" << endl;
+	    bi -> open (OPT_BankName, B_READ);
+          bi -> getIDMap( ) . writeMessage (msg);
+          msg . write (cout);
+          bi -> close( );
+
+          cerr << "done\n";
+        }
+        catch (const Exception_t & e) {
+          cerr << "err\n";
+          cerr << "ERROR: " << e . what( ) << endl
+               << "  failed to map '" << Decode (ncode) << "' bank" << endl;
+          exitcode = EXIT_FAILURE;
           continue;
-	}
-
-
-	//-- Write the IDMap message to cout
-	i -> getIDMap( ) . writeMessage (msg);
-	msg . write (cout);
-
-
-	//-- Close the bank
-	i -> close( );
-
-
-	//-- Remove the code
-	if ( OPT_IsExtractCodes )
-	  OPT_ExtractCodes . erase (ncode);
+        }
 
 	cntc ++;
+      }
+
+    //-- Any codes unrecognized?
+    for ( ci = OPT_ExtractCodes.begin( ); ci != OPT_ExtractCodes.end( ); ++ ci )
+      {
+        cnts ++;
+        cerr << "ERROR: Unrecognized bank type" << endl
+             << "  unknown bank type '" << Decode (*ci) << "' ignored" << endl;
+        exitcode = EXIT_FAILURE;
       }
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
-	 << "  could not report mapping, abort" << endl
-	 << "Mappings reported: " << cntc << endl;
-    return EXIT_FAILURE;
+	 << "  there has been a fatal error, abort" << endl;
+    exitcode = EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
 
-  //-- Any codes unrecognized?
-  for ( set<NCode_t>::iterator i = OPT_ExtractCodes . begin( );
-	i != OPT_ExtractCodes . end( ); ++ i )
-    {
-      cerr << "WARNING: Unrecognized bank type" << endl
-	   << "  unknown bank type '" << Decode (*i)
-	   << "', bank ignored" << endl;
-    }
-
   //-- Output the end time
-  cerr << "Mappings reported: " << cntc << endl
+  cerr << "Mapping attempts: " << cnts << endl
+       << "Mapping successes: " << cntc << endl
        << "END DATE:   " << Date( ) << endl;
-  return EXIT_SUCCESS;
+
+  return exitcode;
 }
 
 
@@ -178,7 +173,7 @@ void ParseArgs (int argc, char ** argv)
 	break;
 
       case 'v':
-	PrintVersion (argv[0]);
+	PrintBankVersion (argv[0]);
 	exit (EXIT_SUCCESS);
 	break;
 
@@ -248,15 +243,5 @@ void PrintUsage (const char * s)
   cerr
     << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n"
     << endl;
-  return;
-}
-
-
-
-
-//---------------------------------------------------------- PrintVersion ----//
-void PrintVersion (const char * s)
-{
-  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

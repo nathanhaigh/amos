@@ -1101,6 +1101,15 @@ public:
 //!
 bool BankExists (NCode_t ncode, const std::string & dir);
 
+
+//--------------------------------------------------- PrintBankVersion ---------
+//! \brief Prints the bank version a program is compatible with
+//!
+//! \param s The program name
+//! \return void
+//!
+void PrintBankVersion (const char * s);
+
 } // namespace AMOS
 
 #endif // #ifndef __Bank_AMOS_HH

@@ -47,19 +47,11 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
-//----------------------------------------------------- PrintVersion -----------
-//! \brief Prints version information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintVersion (const char * s);
-
-
 
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
+  int exitcode = EXIT_SUCCESS;
   BankStream_t red_bank (Read_t::NCODE);
   Read_t red;
 
@@ -99,16 +91,16 @@ int main (int argc, char ** argv)
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
-	 << "  could not perform dump, abort" << endl
-	 << "Objects seen: " << cnts << endl
-	 << "Objects written: " << cntw << endl;
-  return EXIT_FAILURE;
+         << "  there has been a fatal error, abort" << endl;
+    exitcode = EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
-    cerr << "Objects seen: " << cnts << endl
-	 << "Objects written: " << cntw << endl;
-  return EXIT_SUCCESS;
+
+  cerr << "Objects seen: " << cnts << endl
+       << "Objects written: " << cntw << endl;
+
+  return exitcode;
 }
 
 
@@ -137,7 +129,7 @@ void ParseArgs (int argc, char ** argv)
 	break;
 
       case 'v':
-	PrintVersion (argv[0]);
+	PrintBankVersion (argv[0]);
 	exit (EXIT_SUCCESS);
 	break;
 
@@ -183,15 +175,5 @@ void PrintUsage (const char * s)
 {
   cerr
     << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
-  return;
-}
-
-
-
-
-//---------------------------------------------------------- PrintVersion ----//
-void PrintVersion (const char * s)
-{
-  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

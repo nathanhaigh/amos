@@ -56,22 +56,18 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
-//----------------------------------------------------- PrintVersion -----------
-//! \brief Prints version information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintVersion (const char * s);
-
-
 
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
+  int exitcode = EXIT_SUCCESS;
   long int cntc = 0;       // banks cleand
+  long int cnts = 0;       // banks seen
   NCode_t ncode;           // current bank type
   BankSet_t bnks;          // all the banks
+
+  BankSet_t::iterator bi;
+  set<NCode_t>::iterator ci;
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -84,68 +80,68 @@ int main (int argc, char ** argv)
   try {
 
     //-- Iterate through each known bank and clean
-    for ( BankSet_t::iterator i = bnks.begin( ); i != bnks.end( ); ++ i )
+    for ( bi = bnks.begin( ); bi != bnks.end( ); ++ bi )
       {
-        ncode = i -> getType( );
+        ncode = bi -> getType( );
 
 	//-- Skip if we're not looking at this one or it doesn't exist
 	if ( (OPT_IsCleanCodes  &&
 	      OPT_CleanCodes . find (ncode) == OPT_CleanCodes . end( ))
 	     ||
-             (!OPT_IsCleanCodes  &&  !i -> exists (OPT_BankName)) )
+             (!OPT_IsCleanCodes  &&
+              !bi -> exists (OPT_BankName)) )
 	  continue;
 
-        cerr << "Cleaning '" << Decode(ncode) << "' bank ... ";
+        cnts ++;
+        OPT_CleanCodes . erase (ncode);
 
-        //-- Try and open the bank
+        //-- Clean the bank
         try {
+          cerr << Decode (ncode) << " ... ";
+
           if ( OPT_ForceClean )
-            i -> open (OPT_BankName, B_READ | B_WRITE | B_FORCE);
+            bi -> open (OPT_BankName, B_READ | B_WRITE | B_FORCE);
           else
-            i -> open (OPT_BankName, B_READ | B_WRITE);
+            bi -> open (OPT_BankName, B_READ | B_WRITE);
+          bi -> clean( );
+          bi -> close( );
+
+          cerr << "done\n";
         }
         catch (const Exception_t & e) {
-          cerr << "WARNING: " << e . what( ) << endl
-               << "  could not open '" << Decode (ncode)
-               << "' bank, bank ignored" << endl;
+          cerr << "err\n";
+          cerr << "ERROR: " << e . what( ) << endl
+               << "  failed to clean '" << Decode (ncode) << "' bank" << endl;
+          exitcode = EXIT_FAILURE;
           continue;
         }
 
-        //-- Clean and close the bank
-        i -> clean( );
-        i -> close( );
-
-	//-- Remove the code
-	if ( OPT_IsCleanCodes )
-	  OPT_CleanCodes . erase (ncode);
-
-        cerr << "done.\n";
-
         cntc ++;
       }
+
+  //-- Any codes unrecognized?
+  for ( ci = OPT_CleanCodes.begin( ); ci != OPT_CleanCodes.end( ); ++ ci )
+    {
+      cnts ++;
+      cerr << "ERROR: Unrecognized bank type" << endl
+           << "  unknown bank type '" << Decode (*ci) << "' ignored" << endl;
+      exitcode = EXIT_FAILURE;
+    }
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
-	 << "  could not perform clean, abort" << endl
-	 << "Banks cleaned: " << cntc << endl;
-    return EXIT_FAILURE;
+         << "  there has been a fatal error, abort" << endl;
+    exitcode = EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
 
-  //-- Any codes unrecognized?
-  for ( set<NCode_t>::iterator i = OPT_CleanCodes . begin( );
-	i != OPT_CleanCodes . end( ); ++ i )
-    {
-      cerr << "WARNING: Unrecognized bank type" << endl
-	   << "  unknown bank type '" << Decode (*i)
-	   << "',  bank ignored" << endl;
-    }
-
   //-- Output the end time
-  cerr << "Banks cleaned: " << cntc << endl
+  cerr << "Clean attempts: " << cnts << endl
+       << "Clean successes: " << cntc << endl
        << "END DATE:   " << Date( ) << endl;
-  return EXIT_SUCCESS;
+
+  return exitcode;
 }
 
 
@@ -157,7 +153,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:fh")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:fhv")) != EOF) )
     switch (ch)
       {
       case 'b':
@@ -170,6 +166,11 @@ void ParseArgs (int argc, char ** argv)
 
       case 'h':
         PrintHelp (argv[0]);
+        exit (EXIT_SUCCESS);
+        break;
+
+      case 'v':
+        PrintBankVersion (argv[0]);
         exit (EXIT_SUCCESS);
         break;
 
@@ -240,15 +241,5 @@ void PrintUsage (const char * s)
 {
   cerr
     << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n\n";
-  return;
-}
-
-
-
-
-//---------------------------------------------------------- PrintVersion ----//
-void PrintVersion (const char * s)
-{
-  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }

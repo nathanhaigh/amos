@@ -63,21 +63,15 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
-//----------------------------------------------------- PrintVersion -----------
-//! \brief Prints version information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintVersion (const char * s);
-
-
 
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
+  int exitcode = EXIT_SUCCESS;
   long int cnts = 0;                  // messages seen
-  long int cntc = 0;                  // messages committed
+  long int cnta = 0;                  // objects appended
+  long int cntd = 0;                  // objects deleted
+  long int cntr = 0;                  // objects replaced
   Message_t msg;                      // current message
   NCode_t ncode;                      // current NCode
   char act;                           // action enumeration
@@ -99,23 +93,22 @@ int main (int argc, char ** argv)
 
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
+
     //-- If OPT_ForceCreate, blast away existing banks
     if ( OPT_ForceCreate )
       for ( BankSet_t::iterator i = bnks . begin( ); i != bnks . end( ); ++ i )
-	if ( i -> exists (OPT_BankName) )
-	  {
-	    i -> open (OPT_BankName, B_WRITE);
-	    i -> destroy ( );
-	  }
-
+        if ( i -> exists (OPT_BankName) )
+          {
+            i -> open (OPT_BankName, B_WRITE);
+            i -> destroy ( );
+          }
 
     //-- Compress RED and SEQ if option is turned on
     if ( OPT_Compress )
       {
-	((Read_t &)objs [Read_t::NCODE]) . compress( );
-	((Sequence_t &)objs [Sequence_t::NCODE]) . compress( );
+        ((Read_t &)objs [Read_t::NCODE]) . compress( );
+        ((Sequence_t &)objs [Sequence_t::NCODE]) . compress( );
       }
-
 
     //-- Open the message file
     msgfile . open (OPT_MessageName . c_str( ));
@@ -126,146 +119,143 @@ int main (int argc, char ** argv)
     if ( ! msgfile )
       AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
 
-    cerr << "0%                                            100%" << endl;
+    cerr << "    0%                                            100%" << endl
+         << "AFG ";
 
     //-- Read the message file
     while ( msg . read (msgfile) )
       {
-	dots . update (msgfile . tellg( ));
+        cnts ++;
+        dots . update (msgfile . tellg( ));
 
-	//-- Increment the message counter
-	++ cnts;
+        ncode = msg . getMessageCode( );
 
-	//-- Get the message NCode and figure out the type
-	ncode = msg . getMessageCode( );
+        if ( ! objs . exists (ncode) )
+          {
+            cerr << "ERROR: Unrecognized message type" << endl
+                 << "  unknown message type '" << Decode (ncode)
+                 << "' ignored" << endl;
+            exitcode = EXIT_FAILURE;
+            continue;
+          }
 
-	if ( ! objs . exists (ncode) )
-	  {
-	    cerr << endl
-		 << "WARNING: Unrecognized message type" << endl
-		 << "  unknown message type '" << Decode (ncode)
-		 << "', message ignored" << endl;
-	    continue;
-	  }
-	bp = & (bnks [ncode]);
-	op = & (objs [ncode]);
-	if ( op -> isFlagA( ) )
-	  continue; // skip objects missing a bank
+        bp = & (bnks [ncode]);
+        op = & (objs [ncode]);
+        if ( op -> isFlagA( ) )
+          continue; // skip objects missing a bank
 
+        //-- Parse the message
+        try {
+          op -> readMessage (msg);
+        }
+        catch (const Exception_t & e) {
+          cerr << "ERROR: " << e . what( ) << endl
+               << "  could not parse '" << Decode (ncode)
+               << "' message with iid:"
+               << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
+               << ", message ignored" << endl;
+          exitcode = EXIT_FAILURE;
+          continue;
+        }
 
-	//-- Parse the message
-	try {
-	  op -> readMessage (msg);
-	}
-	catch (const Exception_t & e) {
-	  cerr << endl
-	       << "WARNING: " << e . what( ) << endl
-	       << "  could not parse '" << Decode (ncode)
-	       << "' message with iid:"
-	       << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
-	       << ", message ignored" << endl;
-	  continue;
-	}
+        //-- Open the bank if necessary
+        try {
+          if ( ! bp -> isOpen( ) )
+            {
+              if ( ! bp -> exists (OPT_BankName) )
+                bp -> create (OPT_BankName, B_WRITE);
+              else
+                bp -> open (OPT_BankName, B_WRITE);
+            }
+        }
+        catch (const Exception_t & e) {
+          cerr << "ERROR: " << e . what( ) << endl
+               << "  could not open '" << Decode (ncode)
+               << "' bank, all messages ignored" << endl;
+          op -> setFlagA (true);
+          exitcode = EXIT_FAILURE;
+          continue;
+        }
 
+        //-- Get the message action code
+        act = msg . exists (F_ACTION) ? msg [F_ACTION] [0] : E_ADD;
 
-	//-- Open the bank if necessary
-	try {
-	  if ( ! bp -> isOpen( ) )
-	    {
-	      if ( ! bp -> exists (OPT_BankName) )
-		bp -> create (OPT_BankName, B_WRITE);
-	      else
-		bp -> open (OPT_BankName, B_WRITE);
-	    }
-	}
-	catch (const Exception_t & e) {
-	  cerr << endl
-	       << "WARNING: " << e . what( ) << endl
-	       << "  could not open '" << Decode (ncode)
-	       << "' bank, all messages ignored" << endl;
-	  op -> setFlagA (true);
-	  continue;
-	}
+        //-- Perform the appropriate action on the bank
+        try {
+          switch (act)
+            {
+            case E_ADD:
+              //-- Append a new object to the bank
+              bp -> append (*op);
+              cnta ++;
+              break;
 
+            case E_DELETE:
+              //-- Flag an existing object for removal from the bank
+              if ( op -> getIID( ) != NULL_ID )
+                bp -> remove (op -> getIID( ));
+              else if ( ! op -> getEID( ) . empty( ) )
+                bp -> remove (op -> getEID( ) . c_str( ));
+              else
+                AMOS_THROW_ARGUMENT ("Cannot remove object w/o IID or EID");
+              cntd ++;
+              break;
 
-	//-- Get the message action code
-	act = msg . exists (F_ACTION) ? msg [F_ACTION] [0] : E_ADD;
+            case E_REPLACE:
+              //-- Replace an existing object in the bank
+              if ( op -> getIID( ) != NULL_ID )
+                bp -> replace (op -> getIID( ), *op);
+              else if ( ! op -> getEID( ) . empty( ) )
+                bp -> replace (op -> getEID( ) . c_str( ), *op);
+              else
+                AMOS_THROW_ARGUMENT ("Cannot replace object w/o IID or EID");
+              cntr ++;
+              break;
 
-	//-- Perform the appropriate action on the bank
-	try {
-	  switch (act)
-	    {
-	    case E_ADD:
-	      //-- Append a new object to the bank
-	      bp -> append (*op);
-	      break;
-
-	    case E_DELETE:
-	      //-- Flag an existing object for removal from the bank
-	      if ( op -> getIID( ) != NULL_ID )
-		bp -> remove (op -> getIID( ));
-	      else if ( ! op -> getEID( ) . empty( ) )
-		bp -> remove (op -> getEID( ) . c_str( ));
-	      else
-		AMOS_THROW_ARGUMENT ("Cannot remove object w/o IID or EID");
-	      break;
-
-	    case E_REPLACE:
-	      //-- Replace an existing object in the bank
-	      if ( op -> getIID( ) != NULL_ID )
-		bp -> replace (op -> getIID( ), *op);
-	      else if ( ! op -> getEID( ) . empty( ) )
-		bp -> replace (op -> getEID( ) . c_str( ), *op);
-	      else
-		AMOS_THROW_ARGUMENT ("Cannot replace object w/o IID or EID");
-	      break;
-
-	    default:
-	      AMOS_THROW_IO ((string)"Unrecognized action field " + act);
-	    }
-	}
-	catch (const IOException_t & e) {
-	  cerr << endl
-	       << "WARNING: " << e . what( ) << endl
-	       << "  could not commit '" << Decode (ncode)
-	       << "' message with iid:"
-	       << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
-	       << " to bank, message ignored" << endl;
-	  continue;
-	}
-	catch (const ArgumentException_t & e) {
-	  cerr << endl
-	       << "WARNING: " << e . what( ) << endl
-	       << "  ID conflict caused by '" << Decode (ncode)
-	       << "' message with iid:"
-	       << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
-	       << ", message ignored" << endl;
-	  continue;
-	}
-
-	cntc ++;
+            default:
+              AMOS_THROW_IO ((string)"Unrecognized action field " + act);
+            }
+        }
+        catch (const IOException_t & e) {
+          cerr << "ERROR: " << e . what( ) << endl
+               << "  could not commit '" << Decode (ncode)
+               << "' message with iid:"
+               << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
+               << " to bank, message ignored" << endl;
+          exitcode = EXIT_FAILURE;
+          continue;
+        }
+        catch (const ArgumentException_t & e) {
+          cerr << "ERROR: " << e . what( ) << endl
+               << "  ID conflict caused by '" << Decode (ncode)
+               << "' message with iid:"
+               << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
+               << ", message ignored" << endl;
+          exitcode = EXIT_FAILURE;
+          continue;
+        }
       }
 
     dots . end( );
-    msgfile . close( );
     bnks . closeAll( );
   }
   catch (const Exception_t & e) {
-    cerr << endl
-      	 << "FATAL: " << e . what( ) << endl
-	 << "  could not perform transaction, abort" << endl
-	 << "Messages seen: " << cnts << endl
-	 << "Messages committed: " << cntc << endl;
-    return EXIT_FAILURE;
+    cerr << "FATAL: " << e . what( ) << endl
+         << "  there has been a fatal error, abort" << endl;
+    exitcode = EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
 
+  msgfile . close( );
 
   //-- Output the end time
-  cerr << "Messages seen: " << cnts << endl
-       << "Messages committed: " << cntc << endl
+  cerr << "Messages read: " << cnts << endl
+       << "Objects added: " << cnta << endl
+       << "Objects deleted: " << cntd << endl
+       << "Objects replaced: " << cntr << endl
        << "END DATE:   " << Date( ) << endl;
-  return EXIT_SUCCESS;
+
+  return exitcode;
 }
 
 
@@ -281,38 +271,38 @@ void ParseArgs (int argc, char ** argv)
     switch (ch)
       {
       case 'b':
-	OPT_BankName = optarg;
-	break;
+        OPT_BankName = optarg;
+        break;
 
       case 'c':
-	OPT_Create = true;
-	break;
+        OPT_Create = true;
+        break;
 
       case 'f':
-	OPT_Create = true;
-	OPT_ForceCreate = true;
-	break;
+        OPT_Create = true;
+        OPT_ForceCreate = true;
+        break;
 
       case 'h':
-	PrintHelp (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
+        PrintHelp (argv[0]);
+        exit (EXIT_SUCCESS);
+        break;
 
       case 'm':
-	OPT_MessageName = optarg;
-	break;
+        OPT_MessageName = optarg;
+        break;
 
       case 'v':
-	PrintVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
+        PrintBankVersion (argv[0]);
+        exit (EXIT_SUCCESS);
+        break;
 
       case 'z':
-	OPT_Compress = true;
-	break;
+        OPT_Compress = true;
+        break;
 
       default:
-	errflg ++;
+        errflg ++;
       }
 
   if ( OPT_BankName . empty( ) )
@@ -330,7 +320,7 @@ void ParseArgs (int argc, char ** argv)
   if ( !OPT_Create && access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
       cerr << "ERROR: Bank directory is not accessible, "
-	   << strerror (errno) << endl;
+           << strerror (errno) << endl;
       errflg ++;
     }
 
@@ -385,15 +375,5 @@ void PrintUsage (const char * s)
   cerr
     << "\nUSAGE: " << s << "  [options]  -b <bank path>  -m <message path>\n"
     << endl;
-  return;
-}
-
-
-
-
-//---------------------------------------------------------- PrintVersion ----//
-void PrintVersion (const char * s)
-{
-  cerr << endl << s << " for bank version " << Bank_t::BANK_VERSION << endl;
   return;
 }
