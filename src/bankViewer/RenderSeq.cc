@@ -1,4 +1,7 @@
 #include "RenderSeq.hh"
+#include <sys/types.h>
+#include <dirent.h>
+
 
 using namespace std;
 using namespace AMOS;
@@ -221,28 +224,55 @@ bool RenderSeq_t::hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
   return retval;
 }
 
+string chromodbpath(const string & base,
+                    const string & db,
+                    const string & readname)
+{
+  string path = base + db;
+  path += (string)"/ABISSed/" +
+          readname[0]+readname[1]+readname[2] + "/" +
+          readname[0]+readname[1]+readname[2]+readname[3] + "/" +
+          readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/";
+
+  return path;        
+}
+
 void RenderSeq_t::loadTrace(const string & db)
 {
   if (m_trace) { return; }
 
   string readname = m_read.getEID();
 
-  string path = "/local/chromo/Chromatograms/";
-  path += db + "/ABISSed/" + readname[0]+readname[1]+readname[2] + "/"
-                           + readname[0]+readname[1]+readname[2]+readname[3] + "/"
-                           + readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/" 
-                           + readname;
-
   cerr << "Load Positions [";
   m_pos = m_read.getBasePositions();
-  cerr << m_pos.size() << "]";
+  cerr << m_pos.size() << "] ";
   
   if (m_pos.empty()) { cerr << endl; return; }
   
-  cerr << "and trace";
-  m_trace = read_reading((char *)path.c_str(), TT_ANY);
+  cerr << "and trace" << endl;
+
+  vector <string> chromodbs;
+  vector <string>::iterator ci;
+  chromodbs.push_back("/local/chromo/Chromatograms/");
+  chromodbs.push_back("/local/chromo2/Chromatograms/");
+  chromodbs.push_back("/local/chromo3/Chromatograms/");
+  chromodbs.push_back("/local/asmg/scratch/mschatz/Chromatograms/");
+
+  for (ci =  chromodbs.begin();
+       ci != chromodbs.end();
+       ci++)
+  {
+    string path = chromodbpath(*ci, db, readname);
+    if (DIR * dir = opendir(path.c_str()))
+    {
+      closedir(dir);
+      path += readname;
+      m_trace = read_reading((char *)path.c_str(), TT_ANY);
+      if (m_trace) {break;}
+    }
+  }
+
   if (!m_trace) { cerr << "=NULL" << endl; return; }
-  cerr << " ok." << endl;
 
   if (m_rc)
   {
