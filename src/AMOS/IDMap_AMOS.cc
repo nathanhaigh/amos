@@ -138,6 +138,12 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & source)
       const HashNode_t * scurr;
 
       clear( );
+      if ( buckets_m != source . buckets_m )
+	{
+	  buckets_m = source . buckets_m;
+	  delete[] table_m;
+	  table_m = new HashNode_t [buckets_m];
+	}
 
       for ( Size_t i = 0; i < buckets_m; i ++ )
 	{
