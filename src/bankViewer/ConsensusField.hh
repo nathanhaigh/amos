@@ -21,6 +21,7 @@ public slots:
     void setShowNumbers(bool doShow);
     void toggleHighlightDiscrepancy(bool doShow);
     void toggleBaseColors(bool show);
+    void toggleShowIndicator(bool show);
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -33,6 +34,7 @@ private:
     bool m_shownumbers;
     bool m_highlightdiscrepancy;
     bool m_basecolors;
+    bool m_showIndicator;
 
     int m_lineheight;
     int m_tilehoffset;

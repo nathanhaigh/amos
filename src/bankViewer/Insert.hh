@@ -37,7 +37,8 @@ public:
   {
     Happy = 'H',
     Unknown = 'U',
-    SizeViolation = 'S',
+    StretchedMate = 'S',
+    CompressedMate = 'C',
     OrientationViolation = 'O',
     MissingMate = 'M',
     LinkingMate = 'L',

@@ -54,6 +54,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
   m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange()));
   m_posid          = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
+  m_indicatorid    = m_options->insertItem("&Show Indicator",          this, SLOT(toggleShowIndicator()));
   m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleShowQV()));
   m_lowquallowerid = m_options->insertItem("Lower Case &Low QV", this, SLOT(toggleLowQualityLowerCase()));
   m_highid         = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
@@ -161,6 +162,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   {
     toggleBaseColors();
   }
+
+  toggleShowIndicator();
 }
 
 
@@ -303,6 +306,14 @@ void MainWindow::toggleShowPositions()
   m_options->setItemChecked(m_posid, b);
 
   m_tiling->toggleShowNumbers(b);
+}
+
+void MainWindow::toggleShowIndicator()
+{
+  bool b = !m_options->isItemChecked(m_indicatorid);
+  m_options->setItemChecked(m_indicatorid, b);
+
+  m_tiling->toggleShowIndicator(b);
 }
 
 void MainWindow::toggleShowQV()

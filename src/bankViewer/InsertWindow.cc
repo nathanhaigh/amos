@@ -45,7 +45,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   // MenuBar
   m_typesmenu = new QPopupMenu(this);
-  menuBar()->insertItem("&Show Types", m_typesmenu);
+  menuBar()->insertItem("&Display Types", m_typesmenu);
 
   const char * states = Insert::allstates;
   for (unsigned int i = 0; i < strlen(states); i++)

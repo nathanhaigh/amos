@@ -63,21 +63,23 @@ Insert::Insert(ID_t     aid,
 
     m_length = m_roffset - m_loffset + 1;
 
-    if (abs(m_length - dist.mean) <= 3*dist.sd)
-    {
-      m_state = Happy;
-      m_active = 2;
-    }
-    else
-    {
-      m_state = SizeViolation;
-    }
+    m_state = Happy;
+    m_active = 2;
 
+    if (m_length > dist.mean + 3*dist.sd)
+    {
+      m_state = StretchedMate;
+    }
+    else if (m_length + 3*dist.sd < dist.mean)
+    {
+      m_state = CompressedMate;
+    }
 
     // Orientation violation if the reads point in the same direction, or
-    // if there is at least 1 3' base not covered:
+    // there is at least one 3' base not covered:
     //   <--------
     //     -------->
+    //    ^       ^
 
     if ((m_arc + m_brc != 1) ||
         (m_arc && arange.begin < brange.begin) ||
@@ -157,10 +159,9 @@ bool Insert::reasonablyConnected() const
   if (!m_atile || !m_btile) { return false; }
 
   return (m_state == Happy) ||
-          (m_state == Insert::SizeViolation && 
-           (m_actual <= m_dist.mean + 10 * m_dist.sd) &&
-           (m_actual > (m_atile->range.getLength() + m_atile->gaps.size() +
-                        m_btile->range.getLength() + m_btile->gaps.size())));
+         (m_state == StretchedMate && (m_actual <= m_dist.mean + 10 * m_dist.sd)) ||
+         (m_state == CompressedMate && (m_actual > (m_atile->range.getLength() + m_atile->gaps.size() +
+                                                    m_btile->range.getLength() + m_btile->gaps.size())));
 }
 
 void Insert::setActive(int i, Insert * other)
@@ -206,7 +207,8 @@ void Insert::setActive(int i, Insert * other)
 }
 
 static const char * happystr       = "Happy";
-static const char * sizestr        = "Size Violation";
+static const char * stretchedstr   = "Stretched Mate";
+static const char * compressedstr  = "Compressed Mate";
 static const char * orientationstr = "Orientation Violation";
 static const char * missingstr     = "Missing Mate";
 static const char * linkingstr     = "Linking Mate";
@@ -218,7 +220,8 @@ const char * Insert::getInsertTypeStr(MateState state)
   switch (state)
   {
     case Happy:                return happystr;
-    case SizeViolation:        return sizestr;
+    case StretchedMate:        return stretchedstr;
+    case CompressedMate:       return compressedstr;
     case OrientationViolation: return orientationstr;
     case MissingMate:          return missingstr;
     case LinkingMate:          return linkingstr;
@@ -227,4 +230,4 @@ const char * Insert::getInsertTypeStr(MateState state)
   }
 }
 
-const char * Insert::allstates = "HSOMLNU";
+const char * Insert::allstates = "HSCOMLNU";

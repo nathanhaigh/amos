@@ -30,7 +30,8 @@ public:
 
   static QColor color_Happy;
   static QColor color_Unknown;
-  static QColor color_SizeViolation;
+  static QColor color_StretchedMate;
+  static QColor color_CompressedMate;
   static QColor color_LinkingMate;
   static QColor color_OrientationViolation;
   static QColor color_MissingMate;

@@ -33,6 +33,7 @@ public slots:
     void toggleLowQualityLowerCase(bool);
     void toggleBaseColors(bool);
     void toggleShowFullRange(bool);
+    void toggleShowIndicator(bool);
     void advanceNextDiscrepancy();
     void advancePrevDiscrepancy();
     void highlightRead(int);

@@ -28,6 +28,7 @@ ConsensusField::ConsensusField(const string & cons,
 {
   m_shownumbers = 0;
   m_highlightdiscrepancy = 0;
+  m_showIndicator = true;
 
   m_diam = 5;
   m_basespace = 5;
@@ -170,14 +171,16 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     }
   }
 
-  bool showIndicator = false;
-  if (showIndicator)
+  if (m_showIndicator)
   {
     QPointArray indicator (3);
 
-    indicator[0] = QPoint(m_tilehoffset + 10*m_basewidth, 2);
-    indicator[1] = QPoint(m_tilehoffset + 10*m_basewidth + .5*m_fontsize, 2);
-    indicator[2] = QPoint(m_tilehoffset + 10*m_basewidth + .25*m_fontsize, 8);
+    int hbase = m_tilehoffset + 10*m_basewidth + .25*m_fontsize;
+    int hstep = .25*m_fontsize;
+
+    indicator[0] = QPoint(hbase, 1);
+    indicator[1] = QPoint(hbase + 2*hstep+1, 1);
+    indicator[2] = QPoint(hbase + hstep, 5);
 
     p.setPen(Qt::black);
     p.setBrush(Qt::black);
@@ -198,5 +201,11 @@ void ConsensusField::toggleHighlightDiscrepancy(bool show)
 void ConsensusField::toggleBaseColors(bool show)
 {
   m_basecolors = show;
+  repaint();
+}
+
+void ConsensusField::toggleShowIndicator(bool show)
+{
+  m_showIndicator = show;
   repaint();
 }

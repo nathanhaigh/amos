@@ -38,6 +38,7 @@ public slots:
   void showCGraph();
 
   void toggleShowPositions();
+  void toggleShowIndicator();
   void toggleShowQV();
   void toggleHighlightDiscrepancy();
   void togglePrefetchChromatograms();
@@ -71,6 +72,7 @@ private:
   QPopupMenu * m_options;
   int m_posid;
   int m_qvid;
+  int m_indicatorid;
   int m_highid;
   int m_prefetch;
   int m_fontsize;

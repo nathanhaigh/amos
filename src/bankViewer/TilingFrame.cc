@@ -74,6 +74,11 @@ void TilingFrame::toggleShowNumbers(bool doShow)
   emit setShowNumbers(doShow);
 }
 
+void TilingFrame::toggleShowIndicator(bool doShow)
+{
+  m_consfield->toggleShowIndicator(doShow);
+}
+
 void TilingFrame::paintEvent(QPaintEvent * event)
 {
   QFrame::paintEvent(event);
