@@ -26,6 +26,12 @@ prompt reply.
 Version Release History
 =======================
 
+Version 1.2.9 - February 2005
+     * `tarchive2amos' bug fixes
+     * `amos2ace' bug fixes
+     * `hash-overlap' self-overlap bug fixed
+     * `tigger' now ignores self-overlaps
+
 Version 1.2.8 - January 2005
 
      * `minimus'
