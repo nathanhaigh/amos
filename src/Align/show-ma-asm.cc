@@ -12,7 +12,7 @@
 #include  "fasta.hh"
 #include  "align.hh"
 #include  <vector>
-#include  <hash_set>
+#include  <hash_set.h>
 #include  <string>
 #include  <algorithm>
 

@@ -169,7 +169,7 @@ Size_t Read_t::writeRecord (ostream & fix,
 //----------------------------------------------------- operator<< -------------
 ostream & AMOS::operator<< (ostream & out, Read_t & read)
 {
-  string s;
+  std::string s;
 
   out << "#iid:" << read.getIID( ) << endl;
   out << "#comment:" << endl;

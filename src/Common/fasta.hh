@@ -33,17 +33,17 @@ void  Fasta_Print_Skip
     (FILE * fp, const char * s, const char * skip, const char * hdr = NULL,
      int fasta_width = DEFAULT_FASTA_WIDTH);
 bool  Fasta_Qual_Read
-    (FILE * fp, string & q, string & hdr);
+    (FILE * fp, std::string & q, std::string & hdr);
 bool  Fasta_Read
-    (FILE * fp, string & s, string & hdr);
+    (FILE * fp, std::string & s, std::string & hdr);
 void  Reverse_Complement
     (char * s);
 void  Reverse_Complement
-    (string & s);
+    (std::string & s);
 void  Reverse_String
     (char * s);
 void  Reverse_String
-    (string & s);
+    (std::string & s);
 
 
 #endif // #ifndef __FASTA_HH

@@ -187,7 +187,7 @@ public:
 	type_m = type;
 	break;
       default:
-	AMOS_THROW_ARGUMENT ((string)"Invalid mate type " + type);
+	AMOS_THROW_ARGUMENT ((std::string)"Invalid mate type " + type);
       }
     type_m = type;
   }

@@ -10,7 +10,7 @@
 #include  "delcher.hh"
 #include  <vector>
 #include  <algorithm>
-
+using namespace std;
 
 const int  DEFAULT_MIN_CTG_CT = 2;
 const int  DEFAULT_MIN_OLAP_LEN = 40;

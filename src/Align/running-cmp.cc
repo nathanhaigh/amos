@@ -11,7 +11,7 @@
 #include  "delcher.hh"
 #include  <vector>
 #include  <algorithm>
-
+using namespace std;
 
 const int  MAX_LINE = 10000;
 

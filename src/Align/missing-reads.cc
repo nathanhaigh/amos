@@ -3,12 +3,12 @@
 // Also output which gap in which scaffold each should go in.
 // Output goes to stdout
 
-#include  <stdio.h>
-#include  <stdlib.h>
-#include  <math.h>
+#include  <cstdio>
+#include  <cstdlib>
+#include  <cmath>
 #include  <vector>
 #include  <algorithm>
-
+using namespace std;
 
 const int  MAX_LINE = 1000;
 

@@ -244,7 +244,7 @@ public:
 	type_m = type;
 	break;
       default:
-	AMOS_THROW_ARGUMENT ((string)"Invalid read type " + type);
+	AMOS_THROW_ARGUMENT ((std::string)"Invalid read type " + type);
       }
   }
 

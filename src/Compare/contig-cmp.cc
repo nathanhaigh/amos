@@ -10,7 +10,7 @@
 #include  "delcher.hh"
 #include  <vector>
 #include  <algorithm>
-
+using namespace std;
 
 
 struct  Unitig_t

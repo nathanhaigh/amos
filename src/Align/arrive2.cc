@@ -1,9 +1,9 @@
-#include  <stdio.h>
-#include  <stdlib.h>
-#include  <math.h>
+#include  <cstdio>
+#include  <cstdlib>
+#include  <cmath>
 #include  <vector>
 #include  <delcher.hh>
-
+using namespace std;
 
 const int  DIST_MAX = 11;
   // Number of counts to keep in a distribution.  Values >= the

@@ -7,4 +7,4 @@
 const char * Date
      ( );
 
-#endif _AMP_HH
+#endif // _AMP_HH

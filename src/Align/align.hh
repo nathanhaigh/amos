@@ -222,7 +222,7 @@ class  Gapped_Alignment_t;
 
 class  Alignment_t  :  public Base_Alignment_t
   {
-  friend  Gapped_Alignment_t;
+  friend class Gapped_Alignment_t;
   private:
    Delta_Encoding_t  delta;
        // indicates positions of inserts/deletes
@@ -268,7 +268,7 @@ class  Alignment_t  :  public Base_Alignment_t
 
 class  Gapped_Alignment_t  :  public Base_Alignment_t
   {
-  friend  Alignment_t;
+  friend class Alignment_t;
   protected:
    vector <int>  skip;
        // indicates positions of inserts/deletes
@@ -328,7 +328,7 @@ class  Gapped_Multi_Alignment_t;
 
 class  Multi_Alignment_t
   {
-  friend  Gapped_Multi_Alignment_t;
+  friend class Gapped_Multi_Alignment_t;
   private:
    string  consensus;
        // consensus of each column of the multialignment
@@ -356,7 +356,7 @@ class  Multi_Alignment_t
 
 class  Gapped_Multi_Alignment_t
   {
-  friend  Multi_Alignment_t;
+  friend class Multi_Alignment_t;
   private:
    unsigned int  print_flags;
    string  consensus;

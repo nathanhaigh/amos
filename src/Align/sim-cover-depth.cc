@@ -10,7 +10,7 @@
 #include  "delcher.hh"
 #include  <deque>
 #include  <vector>
-
+using namespace std;
 
 const int  DEFAULT_MIN_OLAP_LEN = 40;
 const int  DEFAULT_HI_DEGREE = 20;

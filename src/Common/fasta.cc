@@ -8,7 +8,7 @@
 
 
 #include  "fasta.hh"
-
+using namespace std;
 
 
 static const char  Complement_Table []
@@ -94,8 +94,8 @@ void  Fasta_Print_N
 
 
 void  Fasta_Print_Skip
-    (FILE * fp, const char * s, const char * skip, const char * hdr = NULL,
-     int fasta_width = DEFAULT_FASTA_WIDTH)
+    (FILE * fp, const char * s, const char * skip, const char * hdr,
+     int fasta_width)
 
 //  Print string  s  in fasta format to  fp  but omit any characters
 //  that occur in string  skip .  Put string  hdr

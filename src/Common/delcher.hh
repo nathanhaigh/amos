@@ -11,18 +11,18 @@
 #define  __DELCHER_HH
 
 
-#include  <stdio.h>
-#include  <stdlib.h>
-#include  <iostream.h>
-#include  <iomanip.h>
-#include  <fstream.h>
-#include  <math.h>
-#include  <string.h>
-#include  <ctype.h>
-#include  <limits.h>
-#include  <float.h>
-#include  <time.h>
-#include  <assert.h>
+#include  <cstdio>
+#include  <cstdlib>
+#include  <iostream>
+#include  <iomanip>
+#include  <fstream>
+#include  <cmath>
+#include  <cstring>
+#include  <cctype>
+#include  <climits>
+#include  <cfloat>
+#include  <ctime>
+#include  <cassert>
 #include  <errno.h>
 #include  <getopt.h>
 

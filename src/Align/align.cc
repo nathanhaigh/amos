@@ -2518,7 +2518,7 @@ void  Gapped_Multi_Alignment_t :: Get_Ungapped_Consensus
 
 void  Gapped_Multi_Alignment_t :: Haplo_Sep
     (const vector <char *> & sl, vector <Distinguishing_Column_t> & dc,
-     vector <char *> * tg = NULL)
+     vector <char *> * tg)
 
 //  Identify distinguishing columns in this multialignment
 //  and use them to partition the elements into separate
@@ -2740,7 +2740,7 @@ void  Gapped_Multi_Alignment_t :: Merge
 
 void  Gapped_Multi_Alignment_t :: Output_Read_Positions
     (FILE * fp, int id, const vector <char *> & tag, int orig_tag_ct,
-     int len, int offset = 0)
+     int len, int offset)
 
 //  Output to  fp  a header line for this multialignment
 //  containing  id  and the (ungapped) length of the consensus
@@ -2955,8 +2955,8 @@ void  Gapped_Multi_Alignment_t :: Partial_Merge
 
 
 void  Gapped_Multi_Alignment_t :: Print
-    (FILE * fp, const vector <char *> & s, int width = DEFAULT_FASTA_WIDTH,
-     vector <char *> * tag = NULL)
+    (FILE * fp, const vector <char *> & s, int width,
+     vector <char *> * tag)
 
 //  Display this multialignment to file  fp  using
 //   width  characters per line.   s  holds the strings

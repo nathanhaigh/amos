@@ -3,12 +3,12 @@
 // Generate a celamy cam file for the reads that are in the contig file.
 // Output goes to stdout
 
-#include  <stdio.h>
-#include  <stdlib.h>
-#include  <math.h>
+#include  <cstdio>
+#include  <cstdlib>
+#include  <cmath>
 #include  <vector>
 #include  <algorithm>
-
+using namespace std;
 
 const int  MAX_LINE = 1000;
 const char  Unique_Col_Id [] = "1UniUtgCol";
@@ -586,7 +586,7 @@ fprintf (stderr, "### %d reads\n", n);
                             contig_pos [p] . b, contig_pos [p] . len);
                         Set_Position (Read [i] . cam_a, Read [i] . cam_b,
                             Read [i] . u_a_pos, Read [i] . u_b_pos,
-                            x, y, int (fabs (x - y)));
+                            x, y, abs (x - y));
                         done = true;
                        }
                   }
