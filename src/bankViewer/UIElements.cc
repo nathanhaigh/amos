@@ -59,3 +59,4 @@ QColor & UIElements::getInsertColor(Insert::MateState state)
     default: return color_Unknown;
   };
 }
+

@@ -18,14 +18,7 @@ public:
 
 public slots:
   void contigChanged();
-
-  void toggleHappy();
-  void toggleUnknown();
-  void toggleStretched();
-  void toggleOrientation();
-  void toggleMissing();
-  void toggleLinking();
-  void toggleNone();
+  void toggleItem(int id);
 
 signals:
   void setGindex(int gindex);
@@ -34,10 +27,12 @@ signals:
   void refreshCanvas();
 
 private:
-  void toggleItem(char c);
-  std::map<char, std::pair<int, bool> > m_types;
 
-  QPopupMenu * m_display;
+  typedef std::map<char, std::pair<int, bool> > typemap;
+
+  typemap m_types;
+
+  QPopupMenu * m_typesmenu;
 };
 
 #endif

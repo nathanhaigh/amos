@@ -171,3 +171,27 @@ void Insert::setActive(int i, Insert * other)
 
   m_length = (m_roffset - m_loffset);
 }
+
+static const char * happystr       = "Happy";
+static const char * sizestr        = "Size Violation";
+static const char * orientationstr = "Orientation Violation";
+static const char * missingstr     = "Missing Mate";
+static const char * linkingstr     = "Linking Mate";
+static const char * unmatedstr     = "No Mate";
+static const char * unknownstr     = "Unknown";
+
+const char * Insert::getInsertTypeStr(MateState state)
+{
+  switch (state)
+  {
+    case Happy:                return happystr;
+    case SizeViolation:        return sizestr;
+    case OrientationViolation: return orientationstr;
+    case MissingMate:          return missingstr;
+    case LinkingMate:          return linkingstr;
+    case NoMate:               return unmatedstr;
+    default:                   return unknownstr;
+  }
+}
+
+const char * Insert::allstates = "HSOMLNU";

@@ -13,6 +13,7 @@ public:
   static void setBasePen(QPen & pen, char base);
   static QColor & getBaseColor(char base);
 
+
   static QColor color_tiling;
   static QColor color_tilingoffset;
   static QColor color_tilingtrim;
@@ -26,6 +27,7 @@ public:
   static QColor color_discrepancy;
 
   static QColor & getInsertColor(Insert::MateState state);
+
   static QColor color_Happy;
   static QColor color_Unknown;
   static QColor color_SizeViolation;

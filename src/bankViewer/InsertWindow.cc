@@ -6,6 +6,12 @@
 #include <qslider.h>
 #include <qpopupmenu.h>
 #include <qtoolbutton.h>
+#include <qmenubar.h>
+#include <qpixmap.h>
+#include <qpainter.h>
+
+#include "UIElements.hh"
+
 
 using namespace std;
 
@@ -15,7 +21,12 @@ InsertWindow::InsertWindow(DataStore * datastore,
   : QMainWindow(parent, name)
 {
   resize(600, 300);
+  setCaption("Inserts");
 
+  statusBar()->message("Ready", 2000);
+  statusBar()->setSizeGripEnabled(false);
+
+  // Toolbar
   QToolBar * options = new QToolBar(this, "options");
   options->setLabel("Options");
 
@@ -23,36 +34,33 @@ InsertWindow::InsertWindow(DataStore * datastore,
   QSlider * zoom = new QSlider(1, 500, 10, 20, Qt::Horizontal, options, "zoom");
 
 
-  QToolButton * bShowTypes = new QToolButton(QPixmap(), "Show Types", "Show Types", 
-                                             this, SLOT(showInserts()), options);
-  bShowTypes->setText("Display Types");
-  bShowTypes->setPopupDelay(1);
+  // MenuBar
+  m_typesmenu = new QPopupMenu(this);
+  menuBar()->insertItem("&Show Types", m_typesmenu);
 
-  m_display = new QPopupMenu(this);
-  bShowTypes->setPopup(m_display);
-
-  m_types['H'].first = m_display->insertItem("Happy (Green)",          this, SLOT(toggleHappy()));
-  m_types['S'].first = m_display->insertItem("Stretched (Blue)",       this, SLOT(toggleStretched()));
-  m_types['O'].first = m_display->insertItem("Orientation (Red)",   this, SLOT(toggleOrientation()));
-  m_types['M'].first = m_display->insertItem("Missing Mate (Magenta)", this, SLOT(toggleMissing()));
-  m_types['L'].first = m_display->insertItem("Linking Mate (Yellow)",  this, SLOT(toggleLinking()));
-  m_types['N'].first = m_display->insertItem("No Mate (Cyan)",         this, SLOT(toggleNone()));
-  m_types['U'].first = m_display->insertItem("Unknown (White)",        this, SLOT(toggleUnknown()));
-
-  map<char, pair<int, bool> >::iterator mi;
-
-  for (mi =  m_types.begin();
-       mi != m_types.end();
-       mi++)
+  const char * states = Insert::allstates;
+  for (unsigned int i = 0; i < strlen(states); i++)
   {
-    mi->second.second = true;
-    m_display->setItemChecked(mi->second.first, TRUE);
+    char state = states[i];
+    QPixmap rect(10,10);
+
+    QPainter p(&rect);
+    p.fillRect(rect.rect(), UIElements::getInsertColor((Insert::MateState)state));
+    p.end();
+
+    QString name = Insert::getInsertTypeStr((Insert::MateState)state);
+
+    m_types[state].first = m_typesmenu->insertItem(QIconSet(rect), name);
+    m_types[state].second = true;
+    m_typesmenu->setItemChecked(m_types[state].first, m_types[state].second);
   }
 
+  // Main Widget
   InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
   setCentralWidget(iw);
-  statusBar()->message("Ready", 2000);
-  statusBar()->setSizeGripEnabled(false);
+
+  connect(m_typesmenu, SIGNAL(activated(int)),
+          this,        SLOT(toggleItem(int)));
 
   connect(iw,          SIGNAL(setStatus(const QString &)),
           statusBar(), SLOT(message(const QString &)));
@@ -75,18 +83,19 @@ void InsertWindow::contigChanged()
   emit refreshCanvas();
 }
 
-void InsertWindow::toggleHappy()       { toggleItem('H'); }
-void InsertWindow::toggleUnknown()     { toggleItem('U'); }
-void InsertWindow::toggleStretched()   { toggleItem('S'); }
-void InsertWindow::toggleOrientation() { toggleItem('O'); }
-void InsertWindow::toggleMissing()     { toggleItem('M'); }
-void InsertWindow::toggleLinking()     { toggleItem('L'); }
-void InsertWindow::toggleNone()        { toggleItem('N'); }
-
-void InsertWindow::toggleItem(char c)
+void InsertWindow::toggleItem(int id)
 {
-  m_types[c].second = !m_display->isItemChecked(m_types[c].first);
-  m_display->setItemChecked(m_types[c].first, m_types[c].second);
+  typemap::iterator mi;
 
-  emit refreshCanvas();
+  for (mi = m_types.begin(); mi != m_types.end(); mi++)
+  {
+    if (mi->second.first == id)
+    {
+      mi->second.second = !m_typesmenu->isItemChecked(mi->second.first);
+      m_typesmenu->setItemChecked(mi->second.first, mi->second.second);
+
+      emit refreshCanvas();
+      break;
+    }
+  }
 }

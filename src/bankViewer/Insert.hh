@@ -76,8 +76,12 @@ public:
 
       return true;
     }
-
   };
+
+
+  static const char * getInsertTypeStr(MateState state);
+  static const char * allstates;
+
 };
 
 #endif

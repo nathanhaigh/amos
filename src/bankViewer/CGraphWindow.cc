@@ -15,7 +15,7 @@ CGraphWindow::CGraphWindow(DataStore * datastore,
                            const char * name)
   : QMainWindow(parent, name)
 {
-  cerr << "CGraphWindow" << endl;
+  setCaption("Contig Graph");
   m_contigHeight = 40;
   m_contigWidth  = 100;
   m_gutter = 10;
