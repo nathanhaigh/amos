@@ -19,6 +19,7 @@
 #include "messages_AMOS.hh"
 #include "universals_AMOS.hh"
 #include <iostream>
+#include <cassert>
 #include <ctime>
 #include <vector>
 #include <unistd.h>
@@ -82,11 +83,6 @@ int main (int argc, char ** argv)
   vector<Tile_t>::iterator tvi;  //!< tile vector iterator
   vector<ID_t>::iterator ivi;    //!< ID vector iterator
 
-
-  //-- Parse the command line arguments
-  ParseArgs (argc, argv);
-
-
   //-- Indices of the types in the bank and type arrays
   enum
     {
@@ -143,9 +139,13 @@ int main (int argc, char ** argv)
     };
 
 
+  //-- Parse the command line arguments
+  ParseArgs (argc, argv);
+
   //-- Output the current time and bank directory
   cerr << "START DATE: " << Date( ) << endl;
   cerr << "Bank is: " << OPT_BankName << endl;
+  cerr << "Message is: " << OPT_MessageName << endl;
 
 
   //-- BEGIN: MAIN EXCEPTION CATCH
@@ -212,13 +212,21 @@ int main (int argc, char ** argv)
       }
       
       //-- Open the bank if necessary
-      if ( ! bankp -> isOpen( ) )
-	{
-	  if ( OPT_Create )
-	    bankp -> create (OPT_BankName);
-	  else
-	    bankp -> open (OPT_BankName);
-	}
+      try {
+	if ( ! bankp -> isOpen( ) )
+	  {
+	    if ( OPT_Create )
+	      bankp -> create (OPT_BankName);
+	    else
+	      bankp -> open (OPT_BankName);
+	  }
+      }
+      catch (Exception_t & e) {
+	cerr << "WARNING: " << e . what( ) << endl
+	     << "  could not open "
+	     << Decode (msgcode) << " bank, message ignored\n";
+	continue;
+      }
       
       //-- Translate the ID pointers from EID to IID
       try {
@@ -261,14 +269,12 @@ int main (int argc, char ** argv)
 	      }
 	    break;
 	  case I_FRAGMENT:
-	    id = ((Fragment_t *)typep) -> getLibrary( );
-	    if ( id != NULL_ID )
-	      ((Fragment_t *)typep) -> setLibrary
-		(banks [I_LIBRARY] -> map( ) . lookup (id));
-	    id = ((Fragment_t *)typep) -> getSource( );
-	    if ( id != NULL_ID )
-	      ((Fragment_t *)typep) -> setSource
-		(banks [I_FRAGMENT] -> map( ) . lookup (id));
+	    if ( ((Fragment_t *)typep) -> getLibrary( ) != NULL_ID )
+	      ((Fragment_t *)typep) -> setLibrary (banks [I_LIBRARY] ->
+	        map( ) . lookup (((Fragment_t *)typep) -> getLibrary( )));
+	    if ( ((Fragment_t *)typep) -> getSource( ) != NULL_ID )
+	      ((Fragment_t *)typep) -> setSource (banks [I_FRAGMENT] ->
+                map( ) . lookup (((Fragment_t *)typep) -> getSource( )));
 	    break;
 	  case I_KMER:
 	    for ( ivi  = ((Kmer_t *)typep) -> getReadsItr( );
@@ -280,10 +286,8 @@ int main (int argc, char ** argv)
 	    idp = ((Matepair_t *)typep) -> getReads( );
 	    if ( idp . first != NULL_ID  ||  idp . second != NULL_ID )
 	      {
-		idp . first =
-		  banks [I_READ] -> map( ) . lookup (idp . first);
-		idp . second =
-		  banks [I_READ] -> map( ) . lookup (idp . second);
+		idp . first = banks [I_READ] -> map( ) . lookup (idp . first);
+		idp . second = banks [I_READ] -> map( ) . lookup (idp . second);
 		((Matepair_t *)typep) -> setReads (idp);
 	      }
 	    break;
@@ -291,18 +295,15 @@ int main (int argc, char ** argv)
 	    idp = ((Overlap_t *)typep) -> getReads( );
 	    if ( idp . first != NULL_ID  ||  idp . second != NULL_ID )
 	      {
-		idp . first =
-		  banks [I_READ] -> map( ) . lookup (idp . first);
-		idp . second =
-		  banks [I_READ] -> map( ) . lookup (idp . second);
+		idp . first = banks [I_READ] -> map( ) . lookup (idp . first);
+		idp . second = banks [I_READ] -> map( ) . lookup (idp . second);
 		((Overlap_t *)typep) -> setReads (idp);
 	      }
 	    break;
 	  case I_READ:
-	    id = ((Read_t *)typep) -> getFragment( );
-	    if ( id != NULL_ID )
-	      ((Read_t *)typep) -> setFragment
-		(banks [I_FRAGMENT] -> map( ) . lookup (id));
+	    if ( ((Read_t *)typep) -> getFragment( ) != NULL_ID )
+	      ((Read_t *)typep) -> setFragment (banks [I_FRAGMENT] ->
+                map( ) . lookup (((Read_t *)typep) -> getFragment( )));
 	    break;
 	  case I_SCAFFOLD:
 	    for ( tvi  = ((Scaffold_t *)typep) -> getContigTilingItr( );
@@ -315,7 +316,7 @@ int main (int argc, char ** argv)
 	      (*ivi) = banks [I_CONTIGEDGE] -> map( ) . lookup (*ivi);
 	    break;
 	  default:
-	    AMOS_THROW ("Unknown logic error");
+	    assert (false);
 	  }
       }
       catch (Exception_t & e) {
@@ -340,10 +341,10 @@ int main (int argc, char ** argv)
 	  case E_ADD:
 	    //-- Append a new object to the bank
 	    id = bankp -> getLastIID( ) + 1;
-	    bankp -> map( ) . insert (typep -> getEID( ), id);
+	    if ( typep -> getEID( ) != NULL_ID )
+	      bankp -> map( ) . insert (typep -> getEID( ), id);
 	    bankp -> append (*typep);
-	    if ( id != typep -> getIID( ) )
-	      AMOS_THROW ("Unknown logic error");
+	    assert (id == typep -> getIID( ));
 	    break;
 	  case E_DELETE:
 	    //-- Flag an existing object for deletion from the bank
@@ -377,7 +378,11 @@ int main (int argc, char ** argv)
       cntc ++;
     }
   
-  //-- Close all the banks and free the objects
+
+  //-- Close all the banks and free the object
+  if ( !msgfile )
+    AMOS_THROW_IO ("Failure in message input stream");
+  msgfile . close( );
   for ( ID_t i = 1; i < I_MAX; i ++ )
     {
       banks [i] -> close( );
