@@ -214,7 +214,7 @@ public:
   //!
   //! Returns NULL_ID if key == NULL_ID
   //!
-  //! \param The key of the value to lookup
+  //! \param key The key of the value to lookup
   //! \pre key exists in the map
   //! \throws ArgumentException_t
   //! \return The ID of the lookup value
