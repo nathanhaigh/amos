@@ -15,7 +15,7 @@
 #include <string>
 
 typedef uint8_t   null_t;   //!< don't know which type yet (devel)
-typedef uint32_t  ID_t;     //!< internal ID type (for internal IDs)
+typedef uint32_t  ID_t;     //!< ID type for iid's and eid's
 typedef uint32_t  NCode_t;  //!< unique integer code for dynamic typing
 typedef uint32_t  SD_t;     //!< standard deviation type
 typedef int32_t   Size_t;   //!< size type (for links,etc)

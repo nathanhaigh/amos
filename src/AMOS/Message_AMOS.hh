@@ -49,7 +49,6 @@ namespace Message_k {
   const NCode_t   F_DELTA        = Encode ("del");
   const NCode_t   F_EID          = Encode ("eid");
   const NCode_t   F_FRAGMENT     = Encode ("frg");
-  const NCode_t   F_IID          = Encode ("iid");
   const NCode_t   F_LIBRARY      = Encode ("lib");
   const NCode_t   F_MEAN         = Encode ("mea");
   const NCode_t   F_OFFSET       = Encode ("off");

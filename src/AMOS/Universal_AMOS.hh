@@ -57,7 +57,7 @@ private:
 
   std::string comment_m;      //!< comment string
 
-  std::string eid_m;          //!< external ID
+  ID_t eid_m;          //!< external ID, as appears in message
 
 
 protected:
@@ -66,9 +66,9 @@ protected:
   virtual Size_t readRecord (std::istream & fix,
 			     std::istream & var)
   {
+    fix . read ((char *)&eid_m, sizeof (ID_t));
     std::getline (var, comment_m, '\0');
-    std::getline (var, eid_m, '\0');
-    return (comment_m . size( ) + eid_m . size( ) + 2);
+    return (comment_m . size( ) + 1 + sizeof (ID_t));
   }
 
 
@@ -76,9 +76,9 @@ protected:
   virtual Size_t writeRecord (std::ostream & fix,
 			      std::ostream & var) const
   {
+    fix . write ((char *)&eid_m, sizeof (ID_t));
     var . write (comment_m . c_str( ), comment_m . size( ) + 1);
-    var . write (eid_m . c_str( ), eid_m . size( ) + 1);
-    return (comment_m . size( ) + eid_m . size( ) + 2);
+    return (comment_m . size( ) + 1 + sizeof (ID_t));
   }
 
 
@@ -105,7 +105,7 @@ public:
   //!
   Universal_t ( )
   {
-
+    eid_m = NULL_ID;
   }
 
 
@@ -132,7 +132,7 @@ public:
   {
     IBankable_t::clear( );
     comment_m . erase( );
-    eid_m . erase( );
+    eid_m = NULL_ID;
   }
 
 
@@ -150,9 +150,9 @@ public:
   //--------------------------------------------------- getEID -----------------
   //! \brief Get the external ID
   //!
-  //! \return The external ID string
+  //! \return The external ID
   //!
-  const std::string & getEID ( ) const
+  const ID_t getEID ( ) const
   {
     return eid_m;
   }
@@ -182,17 +182,12 @@ public:
 
 
   //--------------------------------------------------- setEID -----------------
-  //! \brief Set the external ID string
+  //! \brief Set the external ID
   //!
-  //! \param eid The new external ID string
-  //! \pre eid does not contain any newline characters
-  //! \throws ArgumentException_t
   //! \return void
   //!
-  void setEID (const std::string & eid)
+  void setEID (ID_t eid)
   {
-    if ( eid . find ('\n') != std::string::npos )
-      AMOS_THROW_ARGUMENT ("Invalid newline character in EID");
     eid_m = eid;
   }
 
