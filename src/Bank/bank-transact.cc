@@ -455,7 +455,7 @@ void ParseArgs (int argc, char ** argv)
     }
 
   if (OPT_Create  && !OPT_ForceCreate  &&
-      !access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK))
+      !access (OPT_BankName . c_str( ), F_OK))
     {
       cerr << "ERROR: Bank path already exists\n";
       errflg ++;
