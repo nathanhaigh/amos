@@ -3,6 +3,9 @@
 // This program uses DST, MTP, and CTG records from a bank in order to generate a set of 
 // contig links (CLK).
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <getopt.h>
 #include <map>
