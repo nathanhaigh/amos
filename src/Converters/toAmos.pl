@@ -436,6 +436,7 @@ sub parseFrgFile {
 # make sure all reads have an insert
     my $ll = $minSeqId++;
     $libraries{$ll} = "0 0"; # dummy library for unmated guys
+    $libnames{$ll} = "UNMATED";
     while (my ($sid, $sname) = each %seqnames){
 	if (! exists $seqinsert{$sid}){
 	    my $id = $minSeqId++;
