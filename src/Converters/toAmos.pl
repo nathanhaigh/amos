@@ -443,18 +443,19 @@ sub parseFrgFile {
 	my ($type, $fields, $recs) = parseRecord($record);
 	if ($type eq "FRG") {
 	    my $id = getCAId($$fields{acc});
+	    my $iid = $minSeqId++;
 	    my $nm = $$fields{src};
 	    my @lines = split('\n', $nm);
-	    $nm = join('', @lines);
+	    $nm = $lines[0]; # join('', @lines);
 	    if ($nm ne "" && $nm !~ /^\s*$/){
-		$seqnames{$id} = $nm;
-		$seqids{$nm} = $id;
+		$seqnames{$iid} = $nm;
+		$seqids{$nm} = $iid;
 	    } else {
-		$seqnames{$id} = $id;
-		$seqids{$id} = $id;
+		$seqnames{$iid} = $id;
+		$seqids{$id} = $iid;
 	    }
 	    my ($seql, $seqr) = split(',', $$fields{clr});
-	    $seq_range{$id} = "$seql $seqr";
+	    $seq_range{$iid} = "$seql $seqr";
 	    print TMPSEQ "#$id\n";
 	    print TMPSEQ "$$fields{seq}";
 	    print TMPSEQ "#\n";
