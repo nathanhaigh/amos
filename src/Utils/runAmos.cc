@@ -6,6 +6,7 @@
 #include <fstream>
 #include <map>
 #include <set>
+#include <vector>
 #include <sstream>
 #include <string>
 #include <stdio.h>
@@ -18,7 +19,7 @@
 #include <fcntl.h>
 #include <iostream>
 
-
+#define MAX_STRING 256         // length of various char*s in file
 
 
 using namespace std;
@@ -66,10 +67,10 @@ void finish(int status)
 
 string timeStr()
 {
-  char tm[256];
+  char tm[MAX_STRING];
   time_t t = time(NULL);
 
-  strftime(tm, 256, "%F %T  ", localtime(&t));
+  strftime(tm, MAX_STRING, "%F %T  ", localtime(&t));
 
   return "!!! " + string(tm);
 } // timeStr
@@ -78,7 +79,7 @@ string timeStr()
 set<string> splitBlank(string s)
 {
   string tmp = s;
-  char elem[256];
+  char elem[MAX_STRING];
   int pos;
   set<string> out;
 
@@ -207,12 +208,17 @@ void cleanFiles()
 //   }
 }
 
+string doCommandStr(string);
 
 string substVars(string & in)
 {
   string out = "";
   string var;
   int i = 0;
+  char vname[MAX_STRING];
+  char suff[MAX_STRING];
+  int noscan;
+
   while (i < in.length()){
     if (in[i] != '$')
       out += in[i];
@@ -222,7 +228,7 @@ string substVars(string & in)
 	var = "";
 	while (i < in.length() && in[i] != ')')
 	  var += in[i++];
-	if (var.find_first_not_of("0123456789") == var.size()){
+	if (var.find_first_not_of("0123456789") == var.npos){
 	  // string is a number
 	  int n = strtol(var.c_str(), NULL, 10);
 	  if (n >= cmdLnVars.size()){
@@ -233,6 +239,23 @@ string substVars(string & in)
 	    finish(1);
 	  }
 	  out += cmdLnVars[n];
+	} else if (sscanf(var.c_str(), "%s %n", vname, &noscan) == 1 && string(vname) == "shell") { // shell command
+	  string v = var.substr(noscan);
+	  out += doCommandStr(v);
+	} else if (sscanf(var.c_str(), "strip %s %s", suff, vname) == 2){
+	  if (variables.find(string(vname)) == variables.end()){
+	    cerr << "Cannot substitute variable " << var << endl;
+	    if (logFile.is_open())
+	      logFile << timeStr() << "Cannot substitute variable " 
+		      << var << endl;
+	    finish(1);
+	  }
+	  string v = variables[string(vname)];
+	  string s = string(suff);
+	  if (v.substr(v.size() - s.size()) == s){ // if suffix in string
+	    v = v.substr(0, v.size() - s.size());
+	  }
+	  out += v;
 	} else {
 	  if (variables.find(var) == variables.end()){
 	    cerr << "Cannot substitute variable " << var << endl;
@@ -243,7 +266,7 @@ string substVars(string & in)
 	  }
 	  out += variables[var];
 	}
-      } else {
+      } else { // if not a $() string
 	out += in[i];
       }
     }
@@ -362,10 +385,10 @@ bool GetOptions(int argc, char ** argv)
     case '?':
       return false;
     }
-  }
+  } // while each parameter
 
   if (helpRequested && confFile){
-    ifstream conf(confFile.c_str());
+    ifstream conf(globals["conffile"].c_str());
     if (! conf.is_open()){
       cerr << "Could not open config file " << confFile << endl;
       finish(1);
@@ -377,12 +400,12 @@ bool GetOptions(int argc, char ** argv)
 	cout << line.substr(2) << endl;;
 
     exit(0);
-  }
+  } // if help and conf
   
   if (helpRequested){
     printHelpText();
     exit(0);
-  }
+  } // if help
 
   if (optind < argc){
     variables["PREFIX"] = string(argv[optind]);
@@ -390,6 +413,7 @@ bool GetOptions(int argc, char ** argv)
       cmdLnVars.push_back(string(argv[optind]));
   } else 
     return false;
+
   return true;
 } // GetOptions
 
@@ -432,9 +456,9 @@ string doCommandStr(string command)
     finish(1);
   } else {
     close(fd[1]);
-    char buf[256];
+    char buf[MAX_STRING];
     int nread;
-    while ((nread = read(fd[0], buf, 256)) > 0){
+    while ((nread = read(fd[0], buf, MAX_STRING)) > 0){
       buf[nread] = 0;
       //      printf("got %s\n", buf);
       out.write(buf, nread);
@@ -475,13 +499,8 @@ string doCommandStr(string command)
   return out.str();
 } // doCommandStr
 
-bool doCommand(string command, bool noop)
+void doCommand(string command)
 {
-  // if outside of start/end range, return without doing the work
-
-  if (noop) 
-    return true;
-
   command = substVars(command);
 
   logFile << timeStr() << "Running: " << command << endl;
@@ -521,9 +540,9 @@ bool doCommand(string command, bool noop)
     finish(1);
   } else {
     close(fd[1]);
-    char buf[256];
+    char buf[MAX_STRING];
     int nread;
-    while ((nread = read(fd[0], buf, 256)) > 0){
+    while ((nread = read(fd[0], buf, MAX_STRING)) > 0){
       buf[nread] = 0;
       //      printf("got %s\n", buf);
       logFile.write(buf, nread);
@@ -588,7 +607,7 @@ int main(int argc, char ** argv)
     confFile = globals["conffile"];
 
 
-  vector<pair<string, vector<string>::iterator> > steps; //steps that will be executed
+  vector<pair<string, int> > steps; //steps that will be executed
   vector<string> commands; // commands that will be executed
 
   ifstream conf(confFile.c_str());
@@ -608,6 +627,8 @@ int main(int argc, char ** argv)
   if (!logFile.is_open()){
     cerr << "Cannot open logfile!" << endl;
     finish(1);
+  } else {
+    cout << "The log file is: " << logFileName << endl;
   }
 
   logFile.setf(ios::unitbuf);  // make sure buffer flushes on endls
@@ -652,22 +673,29 @@ int main(int argc, char ** argv)
     if (space)
       continue; // skip empty lines
 
+    int numvars;
+    if (sscanf(line.c_str(), "EXPECT %d", &numvars) == 1){
+      //      cout << "Expecting " << numvars << endl;
+      if (cmdLnVars.size() < numvars){
+	cerr << "Expecting " << numvars 
+	     << " parameters. Try -h for usage info" <<endl;
+	finish(1);
+      }
+      continue;
+    } 
+
     if (multiline){ // part of a multi-line command
       if (line.length() == 1 && line[0] == '.'){ // end multiline
 	multiline = false;
-	if (! noop)
-	  logFile << timeStr() << "Elapsed: " 
-		  << elapsed(time(NULL) - start) << endl;
 	noop = false;
 	continue;
       }
 
-      doCommand(line, noop);
+      if (! noop)
+	commands.push_back(line);
 
       continue;
     } // multiline command
-
-    
 
     if (sscanf(line.c_str(), "%d : %n", &step, &noscan) >= 1 ) {// numbered command
       if (step <= currstep){
@@ -678,12 +706,8 @@ int main(int argc, char ** argv)
 	finish(1);
       } else 
 	currstep = step;
-
-      if (globals.find("ocd") != globals.end()){
-	globals.erase("ocd");
-	checkFiles();
-      }
-
+      
+      
       if (globals.find("start") != globals.end() &&
 	  strtol(globals["start"].c_str(), NULL, 10) > currstep)
 	noop =  true;
@@ -691,60 +715,65 @@ int main(int argc, char ** argv)
 	  strtol(globals["end"].c_str(), NULL, 10) < currstep)
 	noop = true;  
       
-
       if (! noop) {
-	cout << "Doing step " << step;
-	logFile << timeStr() << "Doing step " << step;
+	ostringstream msg;
+	msg << "step " << step;
 	if (message.length() != 0){
-	  cout << ": " << message;
-	  logFile << ": " << message;
+	  msg << ": " << message;
 	  message = "";
 	}
-	cout << endl;
-	logFile << endl;
+	steps.push_back(pair<string, int> (msg.str(), commands.size()));
       }
-
+      
       if (line.substr(noscan).length() == 0) {// multiline command
 	multiline = true;
-	start = time(NULL);
 	continue;
       } else { 
-	start = time(NULL);
-	doCommand(line.substr(noscan), noop);
-	
 	if (! noop)
-	  logFile << timeStr() << "Elapsed: " << elapsed(time(NULL) - start) 
-		  << endl;
+	  commands.push_back(line.substr(noscan));
 	noop = false;
-
       }
-
+      
       continue;
     } // numbered commands 
-
-
-    char varname[256];
-    if (sscanf(line.c_str(), "%[a-zA-Z0-9_-] = %n", varname, &noscan) >= 1){
+    
+    char varname[MAX_STRING];
+    char c; 
+    if (sscanf(line.c_str(), "%[a-zA-Z0-9_-] %c %n", varname, &c, &noscan) >= 2 && c == '='){
+      //      cout << line << " is variable definition \n"; 
       processDefn(line); // variable definition
       continue;
     }
-
-    int numvars;
-    if (sscanf(line.c_str(), "EXPECT %d", &numvars) == 1){
-      if (cmdLnVars.size() < numvars){
-	cerr << "Expecting " << numvars 
-	     << " parameters. Try -h for usage info" <<endl;
-	finish(1);
-      }
-    } 
 
     logFile << timeStr() << "Cannot parse line " << lineno << " in " 
 	    << confFile << ":" << endl << line << endl;
     cerr << "Cannot parse line " << lineno << " in " 
 	 << confFile << endl;
     finish(1);
+  } // while each line in configuration file
+
+  // before running make sure everything is kosher
+  if (globals.find("ocd") != globals.end()){
+    globals.erase("ocd");
+    checkFiles();
   }
 
+  for (int vi = 0; vi < steps.size(); vi++){
+    int lastcmd;
+    start = time(NULL);
+    cout << "Doing " << steps[vi].first << endl;
+    logFile << timeStr() << "Doing " << steps[vi].first << endl;
+    if (vi == steps.size() - 1)
+      lastcmd = commands.size();
+    else
+      lastcmd = steps[vi + 1].second;
+    
+    for (int ci = steps[vi].second; ci < lastcmd; ci++)
+      doCommand(commands[ci]);
+
+    logFile << timeStr() << "Done! Elapsed time:" 
+	    << elapsed(time(NULL) - start) << endl;
+  }
 
   if (globals.find("clean") != globals.end())
     cleanFiles();
