@@ -37,9 +37,9 @@ public:
   AMOS::Read_t read;
   
   // full gapped sequence contig oriented
-  std::string      m_bases;     
-  std::string      m_quals;
-  std::vector<int> m_pos;
+  std::string          m_bases;     
+  std::string          m_quals;
+  std::vector<int16_t> m_pos;
 
   int m_rangebegin;  // first aligned base of m_bases
   int m_rangeend;    // last  aligned base of m_bases

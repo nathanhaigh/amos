@@ -170,46 +170,15 @@ void RenderSeq_t::loadTrace(const string & db)
   m_trace = read_reading((char *)path.c_str(), TT_ANY);
   if (!m_trace) { return; }
 
-  cerr << "and ";
-  char name[100];
-  int version;
-
-  char hex[5];
-  hex[4]='\0';
-  string curseq;
-  FILE * fpos = fopen("dmg.pos", "r");
-  char c;
-  int i;
-  int x;
-  while ((i = fscanf ( fpos, "%s\t%d\t", name, &version )) != 0)
-  {
-    if (readname == name)
-    {
-      while ( fgets ( hex, 5, fpos ) && hex[0] != '\n' )
-      {
-        sscanf ( hex, "%04x", &x );
-        m_pos.push_back(x);
-      }
-
-      break;
-    }
-    else
-    {
-      do {
-        c = fgetc(fpos);
-      } while (c != '\n');
-    }
-  }
-
-  cerr << m_pos.size() << " positions" << endl;
+  m_pos = m_read.getBasePositions();
+  cerr << "and " << m_pos.size() << " positions" << endl;
 
   if (m_rc)
   {
-    // RC the positions
     reverse(m_pos.begin(), m_pos.end());
 
 #if RC_TRACE
-    vector<Pos_t>::iterator p;
+    vector<int16_t>::iterator p;
     for (p = m_pos.begin(); p != m_pos.end(); p++)
     {
       *p = m_trace->NPoints - *p;

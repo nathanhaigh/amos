@@ -68,7 +68,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   p.translate(m_hoffset, 0);
 
-  vector<int> & m_pos = m_read->m_pos;
+  vector<int16_t> & m_pos = m_read->m_pos;
   string & bases = m_read->m_bases;
   string & quals = m_read->m_quals;
   

@@ -85,6 +85,7 @@ InsertCanvas::InsertCanvas(const string & bankname,
     allmates++;
     ID_t aid = mates.getReads().first;
     ID_t bid = mates.getReads().second;
+    ID_t good = aid;
     
     SeqTileMap_t::iterator ai = seqtileLookup.find(aid);
     SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
@@ -102,12 +103,14 @@ InsertCanvas::InsertCanvas(const string & bankname,
     {
       b = bi->second;
       seqtileLookup.erase(bi);
+      good = bid;
     }
     
     if (a || b)
     {
       mated++;
-      Insert * i = new Insert(a, m_contigId, b, m_contigId, getLibrarySize(aid), clen);
+      Insert * i = new Insert(a, m_contigId, b, m_contigId, 
+                              getLibrarySize(good), clen);
 
       if (i->m_state == Insert::Happy)
       {
@@ -118,9 +121,10 @@ InsertCanvas::InsertCanvas(const string & bankname,
         if (a && b)
         {
           Insert * j = new Insert(*i);
-          i->setActive(0, j);
           j->setActive(1, i);
           m_inserts.push_back(j);
+
+          i->setActive(0, j);
         }
         else if (a) { i->setActive(0, NULL); }
         else if (b) { i->setActive(1, NULL); }
