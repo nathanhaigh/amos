@@ -13,6 +13,7 @@
 #include  "delcher.hh"
 #include  "fasta.hh"
 #include  "WGA_datatypes.hh"
+#include  "CelMsgWGA.hh"
 #include  "prob.hh"
 #include  "Slice.h"
 #include  <string>
@@ -39,6 +40,24 @@ const int  MATCH_FROM_TOP = 0;
 const int  MATCH_FROM_NW = 1;
 const int  MATCH_FROM_NE = -1;
 const char  MAX_QUALITY_CHAR = 60;
+
+
+const int  NEG_INFTY_SCORE = ((1 << 30) - 1) * -1;
+const unsigned int  FROM_LEFT = 0;
+const unsigned int  FROM_DIAG = 1;
+const unsigned int  FROM_TOP = 2;
+const unsigned int  FROM_NOWHERE = 3;
+
+class  Align_Score_Entry_t
+  {
+  public:
+   int  diag_score : 30;    // score where last move is match/mismatch
+   unsigned int  diag_from : 2;
+   int  top_score : 30;     // score where last move is from preceding row
+   unsigned int  top_from : 2;
+   int  left_score : 30;    // score where last move is from preceding column
+   unsigned int  left_from : 2;
+  };
 
 
 class  Match_Extent_Entry_t
@@ -120,7 +139,11 @@ class  Gapped_Alignment_t  :  public Base_Alignment_t
        // indicates positions of inserts/deletes
 
   public:
-   void  Gapped_Alignment_t :: Convert_From
+   void  setSkip
+       (const vector <int> & s)
+     { skip = s; }
+
+   void  Convert_From
        (const Alignment_t & ali, vector <int> & tr);
    void  Convert_Skip_to_Del
        (vector <int> & del);
@@ -201,6 +224,15 @@ class  Gapped_Multi_Alignment_t
      // return the quality string as a C string
      { return con_qual . c_str (); }
 
+   void  setConsensusString
+       (const string & s)
+     { consensus = s; }
+   void  setQualityString
+       (const string & q)
+     { con_qual = q; }
+
+   void  Clear
+       (void);
    void  Convert_Consensus
        (const Multi_Alignment_t & ma, const vector <short> & v);
    void  Convert_From
@@ -209,6 +241,10 @@ class  Gapped_Multi_Alignment_t
        (vector < vector <int> > & del_list);
    void  Get_Positions
        (vector <Range_t> & pos)  const;
+   void  Make_From_CCO_Msg
+       (const Celera_Message_t & msg, const vector <int> & slen);
+   void  Merge
+       (const Gapped_Multi_Alignment_t & m);
    void  Print
        (FILE * fp, const vector <char *> & s,
         int width = DEFAULT_FASTA_WIDTH);
@@ -226,6 +262,10 @@ class  Gapped_Multi_Alignment_t
 
 int  Exact_Prefix_Match
     (const char * s, const char * t, int max_len);
+void  Global_Align
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align);
 void  Multi_Align
     (vector <char *> & s, vector <int> & offset, int offset_delta,
      double error_rate, Gapped_Multi_Alignment_t & ma,

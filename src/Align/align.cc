@@ -1069,6 +1069,21 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
 
 
+void  Gapped_Multi_Alignment_t :: Clear
+    (void)
+
+//  Clear this gapped multi-alignment.
+
+  {
+   consensus . erase ();
+   con_qual . erase ();
+   align . clear ();
+
+   return;
+  }
+
+
+
 void  Gapped_Multi_Alignment_t :: Convert_Consensus
     (const Multi_Alignment_t & ma, const vector <short> & v)
 
@@ -1189,6 +1204,79 @@ void  Gapped_Multi_Alignment_t :: Get_Positions
 
    for  (i = 0;  i < n;  i ++)
      pos [i] . setRange (align [i] . b_lo, align [i] . b_hi);
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Make_From_CCO_Msg
+    (const Celera_Message_t & msg, const vector <int> & slen)
+
+//  Set this multi-alignment to the one in the Celera CCO
+//  message  msg .   slen  is the lengths of the reads in  msg .
+
+  {
+   vector <Celera_MPS_Sub_Msg_t>  mps_list;
+   vector <Celera_UPS_Sub_Msg_t>  ups_list;
+   Ordered_Range_t  position;
+   Gapped_Alignment_t  ga;
+   vector <int>  del;
+   int  i, n;
+
+   consensus = msg . getConsensus ();
+   n = consensus . length ();
+   for  (i = 0;  i < n;  i ++)
+     consensus [i] = tolower (consensus [i]);
+   con_qual = msg . getQuality ();
+
+   align . clear ();
+
+   mps_list = msg . getMPSList ();
+   ups_list = msg . getUPSList ();
+
+   n = mps_list . size ();
+   for  (i = 0;  i < n;  i ++)
+     {
+      int  j, k, x, y;
+
+      ga . a_lo = 0;
+      ga . a_hi = slen [i];
+      position = mps_list [i] . getPosition ();
+      x = position . getStart ();
+      y = position . getEnd ();
+      if  (x < y)
+          {
+           ga . b_lo = x;
+           ga . b_hi = y;
+          }
+        else
+          {
+           ga . b_lo = y;
+           ga . b_hi = x;
+          }
+      ga . errors = 0;    // Temporary--needs to be set correctly later
+      del = mps_list [i] . getDel ();
+      k = del . size ();
+      for  (j = 0;  j < k;  j ++)
+        del [j] += ga . b_lo + j;
+      ga . setSkip (del);
+      align . push_back (ga);
+     }
+
+   return;
+  }
+
+
+
+void  Gapped_Multi_Alignment_t :: Merge
+    (const Gapped_Multi_Alignment_t & m)
+
+//  Merge the multialignment  m  into this one
+
+  {
+   // Not done yet.  Need to add extra parameters specifying
+   // where the merge happens (including orientation)
 
    return;
   }
@@ -1488,7 +1576,7 @@ void  Multi_Align
      double error_rate, Gapped_Multi_Alignment_t & gma,
      vector <int> * ref)
 
-//  Create multialignment in  ma  of strings  s  each of which has
+//  Create multialignment in  gma  of strings  s  each of which has
 //  a nominal offset from its predecessor of  offset .   offset_delta  is
 //  the number of positions by which the offset is allowed to vary in
 //  either direction.   error_rate  is the maximum expected error rate
@@ -1540,6 +1628,128 @@ void  Multi_Align
    gma . Convert_From (ma);
 
    gma . Sort (s, ref);
+
+   return;
+  }
+
+
+
+void  Global_Align
+    (const char * s, int s_len, const char * t, int t_lo, int t_hi,
+     int match_score, int mismatch_score, int indel_score,
+     int gap_score, Alignment_t & align)
+
+//  Find the best global alignment of the entire string  s  to a
+//  substring of  t  between postions  t_lo  and  t_hi .
+//  The length of  s  is  s_len  and the length of  t  is at least
+//   t_hi .  The resulting alignment is stored in  align .
+//   match_score  is the score for matching characters (positive);
+//   mismatch_score  the score for aligning different characters (negative);
+//   indel_score  the score for insertions/deletions (negative);
+//  and  gap_score  the extra penalty for starting a gap (negative).
+
+  {
+   vector < vector <Align_Score_Entry_t> > a;  // the alignment array
+   vector <Align_Score_Entry_t>  empty_vector;
+   Align_Score_Entry_t  entry;
+   int  r, c;    // row and column
+   int  i;  // position in string  t
+
+   assert (t_lo <= t_hi);
+   assert (0 <= s_len );
+
+   // Do first row
+   a . push_back (empty_vector);
+   entry . diag_score = entry . top_score = entry . left_score = 0;
+   entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+   r = 0;
+   a [r] . push_back (entry);
+   for  (c = 1;  c <= s_len;  c ++)
+     {
+      entry . top_score = NEG_INFTY_SCORE;
+      entry . top_from = FROM_NOWHERE;
+      entry . diag_score = NEG_INFTY_SCORE;
+      entry . diag_from = FROM_NOWHERE;
+      entry . left_score = a [r] [c - 1] . left_score + indel_score;
+      if  (c == 1)
+          entry . left_score += gap_score;
+      entry . left_from = FROM_LEFT;
+      a [r] . push_back (entry);
+     }
+     
+   // Do remaining rows
+   for  (i = t_lo;  i < t_hi;  i ++)
+     {
+      r ++;
+
+      // First column in row
+      a . push_back (empty_vector);
+      entry . diag_score = entry . left_score = NEG_INFTY_SCORE;
+      entry . top_score = 0;
+      entry . diag_from = entry . top_from = entry . left_from = FROM_NOWHERE;
+      a [r] . push_back (entry);
+
+      // Remaining columns in row
+      for  (c = 1;  c <= s_len;  c ++)
+        {
+         Align_Score_Entry_t  * p;
+
+         p = & (a [r - 1] [c]);
+         if  (p -> left_score < p -> diag_score)
+             {
+              entry . top_score = p -> diag_score + gap_score;
+              entry . top_from = FROM_DIAG;
+             }
+           else
+             {
+              entry . top_score = p -> left_score + gap_score;
+              entry . top_from = FROM_LEFT;
+             }
+         if  (entry . top_score < p -> top_score)
+             {
+              entry . top_score = p -> top_score;   // Don't add gap_score here
+              entry . top_from = FROM_TOP;
+             }
+         entry . top_score += indel_score;
+
+         p = & (a [r - 1] [c - 1]);
+         if  (p -> left_score < p -> diag_score)
+             {
+              entry . diag_score = p -> diag_score;
+              entry . diag_from = FROM_DIAG;
+             }
+           else
+             {
+              entry . diag_score = p -> left_score;
+              entry . diag_from = FROM_LEFT;
+             }
+         if  (entry . diag_score < p -> top_score)
+             {
+              entry . diag_score = p -> top_score;
+              entry . diag_from = FROM_TOP;
+             }
+         entry . diag_score += (t [r - 1] == s [c - 1] ? match_score : mismatch_score);
+
+         p = & (a [r] [c - 1]);
+         if  (p -> left_score < p -> diag_score)
+             {
+              entry . diag_score = p -> diag_score + gap_score;
+              entry . diag_from = FROM_DIAG;
+             }
+           else
+             {
+              entry . diag_score = p -> left_score;   // Don't add gap_score here
+              entry . diag_from = FROM_LEFT;
+             }
+         if  (entry . diag_score < p -> top_score)
+             {
+              entry . diag_score = p -> top_score + gap_score;
+              entry . diag_from = FROM_TOP;
+             }
+         entry . diag_score += indel_score;
+         a [r] . push_back (entry);
+        }
+     }
 
    return;
   }
