@@ -630,14 +630,19 @@ int main (int argc, char ** argv)
   srand (OPT_Seed);
 
   //-- INPUT
-  cerr << "layout.INPUT" << endl;;
+  cerr << "INPUT" << endl;
+  cerr << " reads" << endl;
   ParseAlign (mapping);            // parse the alignment data
+  cerr << " lis" << endl;
   ChainAligns (mapping);           // build the LAS chains for each read
   if ( OPT_Matepair )
-    ParseMates (mapping);          // parse the matepair data
+    {
+      cerr << " mates" << endl;
+      ParseMates (mapping);          // parse the matepair data
+    }
 
   //-- READ PLACEMENT
-  cerr << "layout.PLACEMENT" << endl;
+  cerr << "PLACEMENT" << endl;
   PlaceUnambiguous (mapping);      // place unambiguous reads
   if ( OPT_Matepair )
     PlaceHappyMates (mapping);     // place 'happy' matepairs
@@ -647,20 +652,20 @@ int main (int argc, char ** argv)
   sort (mapping.reads.begin( ), mapping.reads.end( ), ReadPlaceCmp_t( ));
 
   //-- CONFLICT DETECTION
-  cerr << "layout.CONFLICT" << endl;
+  cerr << "CONFLICT" << endl;
   FindConflicts (mapping);         // find conflicts btwn reads and refs
   RefineConflicts (mapping);       // assess, combine and select conflicts
 
   //-- ASSEMBLY
   if ( OPT_PrintTigr  ||  OPT_PrintUMD )
     {
-      cerr << "layout.ASSEMBLY" << endl;
+      cerr << "ASSEMBLY" << endl;
       Assemble (mapping, assembly);// layout the reads to form the assembly
       CleanContigs (assembly);     // clean up the contigs
     }
 
   //-- OUTPUT
-  cerr << "layout.OUTPUT" << endl;
+  cerr << "OUTPUT" << endl;
   if ( OPT_PrintConflicts )
     PrintConflicts (mapping);      // print conflicts
 
@@ -1512,7 +1517,7 @@ void PrintConflicts (const Mapping_t & mapping)
 	       << "\tN." << (*cpi) -> discount . size( )
 	       << "\tY." << (*cpi) -> support  . size( ) << "\t" << endl;
 
-	  //-- cut
+	  //--
 	  set<ReadMap_t *>::const_iterator rmpi;
 	  cout << " S: ";
 	  for (rmpi  = (*cpi) -> support . begin( );
@@ -1523,7 +1528,7 @@ void PrintConflicts (const Mapping_t & mapping)
 	       rmpi != (*cpi) -> discount . end( ); ++ rmpi )
 	    cout << ((*rmpi) -> exclude ? '-' : '+') << (*rmpi) -> id << ' ';
 	  cout << endl << endl;
-	  //-- tuc
+	  //--
 	}
     }
 }
@@ -1575,6 +1580,7 @@ void PrintMapping (Mapping_t & mapping)
 	    cout << '\t' << (*rmpi) -> mate . read -> id;
 	  cout << endl;
 
+	  /*
 	  for ( racpi  = (*rmpi) -> best . begin( );
 		racpi != (*rmpi) -> best . end( ); racpi ++ )
 	    {
@@ -1583,6 +1589,7 @@ void PrintMapping (Mapping_t & mapping)
 		    curraln != NULL; curraln = curraln -> from )
 		cout << ' ' << curraln -> loR << '\t' << curraln -> hiR << endl;
 	    }
+	  */
 	}
     }
 
