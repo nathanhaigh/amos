@@ -4,6 +4,7 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
+	bank-clean \
 	bank-mapping \
 	bank-report \
 	bank-transact \
@@ -47,6 +48,12 @@ bank2coverage_LDADD = \
 bank2coverage_SOURCES = \
 	bank2coverage.cc
 
+##-- bank-clean
+bank_clean_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+bank_clean_SOURCES = \
+	bank-clean.cc
 
 ##-- bank-report
 bank_report_LDADD = \

@@ -34,8 +34,9 @@ namespace AMOS {
 typedef uint8_t BankMode_t;
 const BankMode_t B_READ   = 0x1;  //!< protected reading mode
 const BankMode_t B_WRITE  = 0x2;  //!< protected writing mode
-const BankMode_t B_SPY    = 0x4;
-//!< unprotected reading mode, overrides reading and writing modes
+const BankMode_t B_FORCE  = 0x4;  //!< clears bank locks on open, experts only
+const BankMode_t B_SPY    = 0x8;
+//!< unprotected reading mode, overrides all other modes
 
 
 
@@ -512,17 +513,14 @@ protected:
   //!
   void setMode (BankMode_t mode)
   {
-    if ( mode & ~(B_READ | B_WRITE | B_SPY) )
+    if ( mode & ~(B_READ | B_WRITE | B_FORCE | B_SPY) )
       AMOS_THROW_ARGUMENT ("Invalid BankMode: unknown mode");
 
-    if ( ! (mode & B_READ)  &&  ! (mode & B_WRITE)  &&  ! (mode & B_SPY) )
+    if ( ! mode & (B_READ | B_WRITE | B_SPY) )
       AMOS_THROW_ARGUMENT ("Invalid BankMode: mode not specified");
 
-    if ( (mode & B_SPY)  &&  (mode & B_WRITE) )
-      mode &= ~B_WRITE;
-
-    if ( (mode & B_SPY) )
-      mode |= B_READ;
+    if ( mode & B_SPY )
+      mode = B_SPY | B_READ;
 
       mode_m = mode;
   }
@@ -557,7 +555,7 @@ protected:
   //!
   //! Releases the file lock on the info store of the current bank. Will throw
   //! an exception if the unlock failed either because the lock did not exist
-  //! or could not be released. Has no effect if BankMode is set for B_SPY.
+  //! or could not be released. Has no effect if BankMode is set to B_SPY.
   //!
   //! \pre The bank is open
   //! \pre The info store is currently locked
@@ -589,7 +587,7 @@ protected:
   Size_t max_partitions_m;   //!< maximum number of open partitions
 
   bool is_open_m;            //!< open status of the bank
-  BankMode_t mode_m;         //!< mode of the bank, B_READ | B_WRITE | B_SPY
+  BankMode_t mode_m;         //!< mode of the bank, B_READ|B_WRITE|B_SPY
 
   std::string store_dir_m;   //!< the disk store directory
   std::string store_pfx_m;   //!< the disk store prefix (including dir)

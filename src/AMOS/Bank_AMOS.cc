@@ -193,6 +193,10 @@ void Bank_t::clean ( )
   if ( ! is_open_m  ||  ! (mode_m & B_READ  &&  mode_m & B_WRITE) )
     AMOS_THROW_IO ("Cannot clean, bank not open for reading and writing");
 
+  //-- Nothing to be cleaned if no "holes" in the index
+  if ( getIndexSize( ) == getSize( ) )
+    return;
+
   //-- Create a temporary bank of similar type and concat this bank to it
   Bank_t tmpbnk (banktype_m);
 
@@ -429,7 +433,7 @@ void Bank_t::create (const string & dir, BankMode_t mode)
   //-- Destroy any pre-existing bank
   if ( exists (dir) )
     {
-      open (dir); // resets the mode
+      open (dir, mode); // side effect: resets the mode
       destroy( );
     }
 
@@ -438,7 +442,6 @@ void Bank_t::create (const string & dir, BankMode_t mode)
   try {
     //-- Initialize the bank
     is_open_m = true;
-    setMode (mode);
     store_dir_m = dir;
     store_pfx_m = dir + '/' + Decode (banktype_m);
     mkdir (store_dir_m . c_str( ), DIR_MODE);
@@ -638,8 +641,6 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
   try {
     //-- Open the FIX and VAR partition files
     ios::openmode mode = ios::binary | ios::ate | ios::in;
-    //    if ( (mode_m & B_READ) )
-    //      mode |= ios::in;
     if ( (mode_m & B_WRITE) )
       mode |= ios::out;
 
@@ -797,7 +798,7 @@ void Bank_t::syncIFO (IFOMode_t mode)
   vector<string> locks;
   vector<string>::iterator vi;
 
-
+  //-- Obtain a lock on the IFO store
   lockIFO( );
 
   try {
@@ -837,18 +838,25 @@ void Bank_t::syncIFO (IFOMode_t mode)
 	if ( ! ifo_stream . good( ) )
 	  AMOS_THROW_IO ("Unknown file read error in sync, bank corrupted");
 
-	bool skipped = false;
-	getline (ifo_stream, line);
-	while ( ifo_stream . good( ) )
-	  {
-	    if ( mode != I_CLOSE  ||  skipped  ||  line != lock )
-	      locks . push_back (line);      // add bank lock
-	    else
-	      skipped = true;                // skip own lock
-	    getline (ifo_stream, line);
-	  }
-	ifo_stream . close( );
-
+        //-- Read existing bank locks
+        bool noskip = (mode == I_OPEN);
+        getline (ifo_stream, line);
+        while ( ifo_stream . good( ) )
+          {
+            if ( noskip  ||  line != lock )
+              {
+                if ( mode == I_OPEN  &&  mode_m & B_FORCE )
+                  cerr << endl << "WARNING: Clearing '"
+                       << Decode (banktype_m)
+                       << "' bank lock, locked by '" + line + "'" << endl;
+                else
+                  locks . push_back (line);      // add bank lock
+              }
+            else
+              noskip = true;                   // skipped self lock
+            getline (ifo_stream, line);
+          }
+        ifo_stream . close( );
 
 	//-- If seeing this for the first time
 	if ( mode == I_OPEN )
@@ -887,7 +895,8 @@ void Bank_t::syncIFO (IFOMode_t mode)
 	  case WRITE_LOCK_CHAR:
 	    if ( locks . size( ) == 1 )
 	      break;
-	  default: // intentional fall-through
+            // fall-through
+	  default:
 	    AMOS_THROW_IO ("Invalid bank partition lock, bank corrupted");
 	  }
       }
@@ -896,11 +905,11 @@ void Bank_t::syncIFO (IFOMode_t mode)
     //-- B_SPY sneak out
     if ( mode_m & B_SPY )
       {
-	if ( ltype == WRITE_LOCK_CHAR )
-	  cerr << endl << "WARNING: Disregarding '" << Decode (banktype_m)
-	       << "' bank write lock!" << endl;
-	return;
+        cerr << endl << "WARNING: Disregarding '" << Decode (banktype_m)
+             << "' bank lock, locked by '" + *vj + "'" << endl;
+        return;
       }
+
 
     //-- Check existing locks
     if ( (mode_m & B_READ)   &&  ltype == WRITE_LOCK_CHAR )
@@ -912,7 +921,6 @@ void Bank_t::syncIFO (IFOMode_t mode)
     if ( (mode_m & B_WRITE)  &&  ltype == READ_LOCK_CHAR )
       AMOS_THROW_IO
 	("Could not open bank for writing, locked by '" + *vj + "'");
-
 
 
     //-- Add new lock
@@ -962,6 +970,7 @@ void Bank_t::syncIFO (IFOMode_t mode)
     throw;
   }
 
+  //-- Release lock on the IFO store
   unlockIFO( );
 }
 
