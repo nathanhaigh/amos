@@ -13,6 +13,23 @@ int min (int a, int b)
   return a < b ? a : b;
 }
 
+
+
+struct SNPTilingOrderCmp
+{
+  static int snpposition;
+  bool operator() (const RenderSeq_t & a, const RenderSeq_t & b)
+  {
+    char abase = a.base(snpposition);
+    char bbase = b.base(snpposition);
+
+    return abase < bbase;
+  }
+};
+
+int SNPTilingOrderCmp::snpposition(0);
+
+
 TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * name, WFlags f)
   :QFrame(parent, name, f),
    m_datastore(datastore)
@@ -51,33 +68,69 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
   connect(this,        SIGNAL(fontSizeChanged(int)),
           m_consfield, SLOT(setFontSize(int)));
 
-  connect(this,        SIGNAL(setShowNumbers(bool)),
-          m_consfield, SLOT(setShowNumbers(bool)));
-
-  connect(this,          SIGNAL(setHighlightDiscrepancy(bool)),
-          m_consfield,   SLOT(toggleHighlightDiscrepancy(bool)));
-
-  connect(this,          SIGNAL(setHighlightDiscrepancy(bool)),
-          m_tilingfield, SLOT(toggleHighlightDiscrepancy(bool)));
-
   connect(m_tilingfield, SIGNAL(setTilingVisibleRange(int, int)),
           this,          SIGNAL(setTilingVisibleRange(int, int)));
+
+  connect(m_consfield,   SIGNAL(sortColumns(int)),
+          this,          SLOT(sortColumns(int)));
+
+  connect(this,        SIGNAL(toggleDisplayQV(bool)),
+          m_tilingfield, SLOT(toggleDisplayQV(bool)));
+
+  connect(this,        SIGNAL(toggleLowQualityLowerCase(bool)),
+          m_tilingfield, SLOT(toggleLowQualityLowerCase(bool)));
+
+  connect(this,        SIGNAL(toggleShowFullRange(bool)),
+          m_tilingfield, SLOT(toggleShowFullRange(bool)));
+
+  connect(this,        SIGNAL(toggleHighlightDiscrepancy(bool)),
+          m_tilingfield, SLOT(toggleHighlightDiscrepancy(bool)));
+
+  connect(this,        SIGNAL(toggleShowNumbers(bool)),
+          m_consfield,   SLOT(toggleShowNumbers(bool)));
+
+  connect(this,        SIGNAL(toggleBaseColors(bool)),
+          m_consfield,   SLOT(toggleBaseColors(bool)));
+
+  connect(this,        SIGNAL(toggleShowIndicator(bool)),
+          m_consfield,   SLOT(toggleShowIndicator(bool)));
+
+  connect(this,        SIGNAL(toggleSNPColoring(bool)),
+          m_tilingfield, SLOT(toggleSNPColoring(bool)));
+
+  connect(this,        SIGNAL(toggleBaseColors(bool)),
+          m_tilingfield, SLOT(toggleBaseColors(bool)));
 }
 
-void TilingFrame::toggleHighlightDiscrepancy(bool show)
+void TilingFrame::toggleDisplayAllChromo(bool display)
 {
-  emit setHighlightDiscrepancy(show);
+  m_displayAllChromo = display;
+
+  if (m_displayAllChromo)
+  {
+    m_loadedWidth = 500;
+
+    // load only the reads in this region
+    setGindex(m_gindex);
+
+    // force loading of chromatograms
+    vector<RenderSeq_t>::iterator ri;
+    for (ri =  m_renderedSeqs.begin();
+         ri != m_renderedSeqs.end();
+         ri++)
+    {
+      ri->loadTrace(m_datastore);
+      ri->m_displayTrace = true;
+    }
+
+    repaint();
+  }
+  else
+  {
+    m_loadedWidth = 5000;
+  }
 }
 
-void TilingFrame::toggleShowNumbers(bool doShow)
-{
-  emit setShowNumbers(doShow);
-}
-
-void TilingFrame::toggleShowIndicator(bool doShow)
-{
-  m_consfield->toggleShowIndicator(doShow);
-}
 
 void TilingFrame::paintEvent(QPaintEvent * event)
 {
@@ -190,7 +243,6 @@ void TilingFrame::loadContigRange(int gindex)
           else if (toupper(m_cstatus[gindex]) != toupper(rendered.base(gindex))) 
             { m_cstatus[gindex] = 'X'; }
         }
-
       }
     }
 
@@ -249,12 +301,29 @@ void TilingFrame::advanceNextDiscrepancy()
         setGindex(gindex-nextDiscrepancyBuffer);
         return;
       }
-
-      gindex++;
+      else
+      {
+        gindex++;
+      }
     }
   }
 
   setGindex(gindex);
+} 
+
+void TilingFrame::sortColumns(int gindex)
+{
+  SNPTilingOrderCmp::snpposition = gindex;
+  stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SNPTilingOrderCmp());
+
+  vector<RenderSeq_t>::iterator vi;
+  for (vi =  m_renderedSeqs.begin();
+       vi != m_renderedSeqs.end();
+       vi++)
+  {
+    vi->bgcolor = vi->base(gindex);
+  }
+  repaint();
 }
 
 void TilingFrame::advancePrevDiscrepancy()
@@ -285,61 +354,6 @@ void TilingFrame::advancePrevDiscrepancy()
   setGindex(gindex);
 }
 
-void TilingFrame::toggleStable(bool stable)
-{
-  //cerr << "frame::toggle " << (stable ? "true" : "false") << endl;
-  m_tilingfield->toggleStable(stable);
-}
-
-void TilingFrame::toggleDisplayQV(bool show)
-{
-  m_tilingfield->toggleDisplayQV(show);
-}
-
-void TilingFrame::toggleLowQualityLowerCase(bool dolower)
-{
-  m_tilingfield->toggleLowQualityLowerCase(dolower);
-}
-
-void TilingFrame::toggleBaseColors(bool showColors)
-{
-  m_tilingfield->toggleBaseColors(showColors);
-  m_consfield->toggleBaseColors(showColors);
-}
-
-void TilingFrame::toggleShowFullRange(bool showFull)
-{
-  m_tilingfield->toggleShowFullRange(showFull);
-}
-
-void TilingFrame::toggleDisplayAllChromo(bool display)
-{
-  m_displayAllChromo = display;
-
-  if (m_displayAllChromo)
-  {
-    m_loadedWidth = 500;
-
-    // load only the reads in this region
-    setGindex(m_gindex);
-
-    // force loading of chromatograms
-    vector<RenderSeq_t>::iterator ri;
-    for (ri =  m_renderedSeqs.begin();
-         ri != m_renderedSeqs.end();
-         ri++)
-    {
-      ri->loadTrace(m_datastore);
-      ri->m_displayTrace = true;
-    }
-
-    repaint();
-  }
-  else
-  {
-    m_loadedWidth = 5000;
-  }
-}
 
 void TilingFrame::highlightRead(int iid)
 {

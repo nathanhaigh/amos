@@ -27,12 +27,12 @@ public:
     void setSize(int width, int height);
 
 public slots:
-    void toggleStable(bool);
     void toggleHighlightDiscrepancy(bool);
     void toggleDisplayQV(bool);
     void toggleLowQualityLowerCase(bool);
     void toggleBaseColors(bool);
     void toggleShowFullRange(bool);
+    void toggleSNPColoring(bool);
     void singleClick();
 
 signals:
@@ -57,6 +57,7 @@ private:
     int m_stabletiling;
     int m_traceheight;
     int m_tracespace;
+    int m_snpcoloring;
 
     const std::string & m_consensus;
     const std::string & m_cstatus;

@@ -5,6 +5,7 @@
 #include <qwmatrix.h>
 #include <qmessagebox.h>
 #include "RenderSeq.hh"
+#include <qapplication.h>
 #include "InsertCanvasItem.hh"
 #include "CoverageCanvasItem.hh"
 #include "FeatureCanvasItem.hh"

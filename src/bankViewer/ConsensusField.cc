@@ -63,7 +63,7 @@ void ConsensusField::setFontSize(int fontsize)
   setMinimumHeight(m_consoffset+m_lineheight+2);
 }
 
-void ConsensusField::setShowNumbers(bool doShow)
+void ConsensusField::toggleShowNumbers(bool doShow)
 {
   m_shownumbers = doShow;
   setFontSize(m_fontsize);
@@ -209,3 +209,12 @@ void ConsensusField::toggleShowIndicator(bool show)
   m_showIndicator = show;
   repaint();
 }
+
+void ConsensusField::mouseReleaseEvent( QMouseEvent * e)
+{
+  int gindex = m_gindex + (e->x() - m_tilehoffset)/m_basewidth;
+  emit sortColumns(gindex);
+}
+
+
+

@@ -44,6 +44,7 @@ TilingField::TilingField(DataStore * datastore,
   m_displayqv = 0;
   m_lowquallower = false;
   m_fullseq = false;
+  m_snpcoloring = true;
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),
@@ -53,12 +54,6 @@ TilingField::TilingField(DataStore * datastore,
 
   setMinimumSize(m_width, m_height);
   setPalette(QPalette(UIElements::color_tiling));
-}
-
-void TilingField::toggleStable(bool stable)
-{
-  m_stabletiling = stable;
-  repaint();
 }
 
 int TilingField::getReadCov(int y)
@@ -249,15 +244,32 @@ void TilingField::paintEvent( QPaintEvent * )
       int readheight = lineheight; // seqname
       if (m_displayqv)        { readheight += lineheight; }
       if (ri->m_displayTrace) { readheight += m_tracespace; }
+
+
+      QColor bgcolor;
+      if (m_snpcoloring)
+      {
+        bgcolor = UIElements::getBaseColor(ri->bgcolor);
+      }
+      else
+      {
+        bgcolor = UIElements::color_tilingoffset;
+      }
     
       // background rectangle
       if (dcov % 2)
       {
-        p.setPen(UIElements::color_tilingoffset);
-        p.setBrush(UIElements::color_tilingoffset);
-        p.drawRect(0, ldcov, m_width, readheight);
+        bgcolor = bgcolor.light(150);
+      }
+      else
+      {
+        bgcolor = bgcolor.light(175);
       }
 
+      p.setPen(bgcolor);
+      p.setBrush(bgcolor);
+
+      p.drawRect(0, ldcov, m_width, readheight);
       dcov++;
 
       // black pen
@@ -524,5 +536,11 @@ void TilingField::toggleDisplayQV(bool show)
 void TilingField::toggleLowQualityLowerCase(bool dolower)
 {
   m_lowquallower = dolower;
+  repaint();
+}
+
+void TilingField::toggleSNPColoring(bool doColor)
+{
+  m_snpcoloring = doColor;
   repaint();
 }

@@ -40,6 +40,8 @@ public:
   int m_loffset;
   int m_roffset;
 
+  char bgcolor;
+
   // Projected left and right offsets to full range sequence
   int m_lfoffset;
   int m_rfoffset;

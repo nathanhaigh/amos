@@ -43,12 +43,13 @@ public slots:
 
   void toggleShowPositions();
   void toggleShowIndicator();
-  void toggleShowQV();
   void toggleHighlightDiscrepancy();
-  void togglePrefetchChromatograms();
+  void toggleSNPColoring();
+  void toggleDisplayAllChromo();
   void toggleLowQualityLowerCase();
   void toggleBaseColors();
   void toggleShowFullRange();
+  void toggleDisplayQV();
 
   void fontIncrease();
   void fontDecrease();
@@ -68,6 +69,17 @@ signals:
   void highlightRead(int iid);
   void chromoDBSet(const QString & db);
 
+  void toggleShowFullRange(bool);
+  void toggleShowNumbers(bool);
+  void toggleShowIndicator(bool);
+  void toggleDisplayQV(bool);
+  void toggleLowQualityLowerCase(bool);
+  void toggleBaseColors(bool);
+  void toggleSNPColoring(bool);
+  void toggleHighlightDiscrepancy(bool);
+  void toggleDisplayAllChromo(bool);
+  void setFontSize(int);
+
 private:
   QSpinBox * m_contigid;
   QSpinBox * m_gspin;
@@ -82,6 +94,7 @@ private:
   CGraphWindow * m_cgraphWindow;
 
   QPopupMenu * m_options;
+
   int m_posid;
   int m_qvid;
   int m_indicatorid;
@@ -91,6 +104,7 @@ private:
   int m_lowquallowerid;
   int m_basecolorid;
   int m_showfullid;
+  int m_snpcoloringid;
 
   int m_gindex;
 

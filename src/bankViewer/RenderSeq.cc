@@ -9,6 +9,7 @@ RenderSeq_t::RenderSeq_t()
   m_displayTrace = false;
   m_displaystart = 0;
   m_displayend = 0;
+  bgcolor = ' ';
 }
 
 RenderSeq_t::~RenderSeq_t()

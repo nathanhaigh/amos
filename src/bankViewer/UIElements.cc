@@ -17,8 +17,12 @@ QColor UIElements::color_NoMate(Qt::cyan);
 QColor UIElements::color_Unknown(Qt::white);
 
 QColor UIElements::color_tiling(180,180,180);
-QColor UIElements::color_tilingoffset(160,160,160);
+//QColor UIElements::color_tilingoffset(160,160,160);
+QColor UIElements::color_tilingoffset(100,100,100);
 QColor UIElements::color_tilingtrim(204, 153, 153);
+
+QColor color_gap(Qt::cyan);
+
 
 QColor & UIElements::getBaseColor(char base)
 {
@@ -35,6 +39,9 @@ QColor & UIElements::getBaseColor(char base)
 
     case 'T':
     case 't': return color_t;
+
+    case ' ': return color_tilingoffset;
+    case '-': return color_gap;
 
     default: return color_default;
   };

@@ -19,10 +19,10 @@ LIBS	+=  -L../AMOS -L../Common -lAMOS -lCommon -lAMOS -lCommon
 
 DOMAIN = $$system(hostname -d)
 contains( DOMAIN, tigr.org ) {
-  INCLUDEPATH	+= local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/include/io_lib/
-  LIBS	+=  -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/lib
-  QMAKE_CXX = /usr/local/bin/g++
-  QMAKE_LINK  = /usr/local/bin/g++
+INCLUDEPATH	+= /local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/include/io_lib/
+LIBS	+=  -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/lib
+QMAKE_CXX = /usr/local/bin/g++
+QMAKE_LINK  = /usr/local/bin/g++
 }
 
 LIBS += -lread

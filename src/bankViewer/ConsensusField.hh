@@ -15,13 +15,17 @@ public:
                    QWidget *parent=0,
                    const char *name=0);
     void setWidth(int width) { resize(width, height()); }
+    void mouseReleaseEvent(QMouseEvent * e);
 
 public slots:
     void setFontSize(int fontsize);
-    void setShowNumbers(bool doShow);
+    void toggleShowNumbers(bool doShow);
     void toggleHighlightDiscrepancy(bool doShow);
     void toggleBaseColors(bool show);
     void toggleShowIndicator(bool show);
+
+signals:
+    void sortColumns(int);
 
 protected:
     void paintEvent(QPaintEvent *);

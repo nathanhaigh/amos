@@ -60,13 +60,16 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
+  m_snpcoloringid  = m_options->insertItem("SN&P Coloring",            this, SLOT(toggleSNPColoring()));
   m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange()));
   m_posid          = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
-  m_indicatorid    = m_options->insertItem("&Show Indicator",          this, SLOT(toggleShowIndicator()));
-  m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleShowQV()));
+  m_indicatorid    = m_options->insertItem("Show &Indicator",          this, SLOT(toggleShowIndicator()));
+  m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleDisplayQV()));
   m_lowquallowerid = m_options->insertItem("Lower Case &Low QV", this, SLOT(toggleLowQualityLowerCase()));
   m_highid         = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
-  m_prefetch       = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(togglePrefetchChromatograms()));
+  m_prefetch       = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(toggleDisplayAllChromo()));
+
+  m_options->setItemChecked(m_snpcoloringid, true);
 
   // Status Bar
   statusBar()->message("No Bank Loaded");
@@ -96,8 +99,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   a->connectItem(a->insertItem(Key_PageDown+SHIFT), this, SLOT(jumpPGindex()) );
   a->connectItem(a->insertItem(Key_Down+SHIFT),     this, SLOT(jumpPGindex()) );
 
-  a->connectItem(a->insertItem(CTRL+SHIFT+Key_Plus), this, SLOT(fontIncrease()));
-  a->connectItem(a->insertItem(CTRL+SHIFT+Key_Minus), this, SLOT(fontDecrease()));
+  a->connectItem(a->insertItem(CTRL+Key_Plus), this, SLOT(fontIncrease()));
+  a->connectItem(a->insertItem(CTRL+Key_Minus), this, SLOT(fontDecrease()));
 
   new QLabel("   Contig ID", status, "contiglbl");
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
@@ -172,6 +175,38 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   connect(this, SIGNAL(chromoDBSet(const QString &)),
           dbpick, SLOT(setText(const QString &)));
+
+
+
+  connect(this,        SIGNAL(toggleDisplayAllChromo(bool)),
+          m_tiling,    SLOT(toggleDisplayAllChromo(bool)));
+
+  connect(this,        SIGNAL(setFontSize(int)),
+          m_tiling,    SLOT(setFontSize(int)));
+
+  connect(this,        SIGNAL(toggleDisplayQV(bool)),
+          m_tiling,    SIGNAL(toggleDisplayQV(bool)));
+
+  connect(this,        SIGNAL(toggleLowQualityLowerCase(bool)),
+          m_tiling,    SIGNAL(toggleLowQualityLowerCase(bool)));
+
+  connect(this,        SIGNAL(toggleShowFullRange(bool)),
+          m_tiling,    SIGNAL(toggleShowFullRange(bool)));
+
+  connect(this,        SIGNAL(toggleHighlightDiscrepancy(bool)),
+          m_tiling,    SIGNAL(toggleHighlightDiscrepancy(bool)));
+
+  connect(this,        SIGNAL(toggleShowNumbers(bool)),
+          m_tiling,    SIGNAL(toggleShowNumbers(bool)));
+
+  connect(this,        SIGNAL(toggleBaseColors(bool)),
+          m_tiling,    SIGNAL(toggleBaseColors(bool)));
+
+  connect(this,        SIGNAL(toggleShowIndicator(bool)),
+          m_tiling,    SIGNAL(toggleShowIndicator(bool)));
+
+  connect(this,        SIGNAL(toggleSNPColoring(bool)),
+          m_tiling,    SIGNAL(toggleSNPColoring(bool)));
 
 
   // Set defaults
@@ -316,8 +351,7 @@ void MainWindow::toggleShowFullRange()
   bool b = !m_options->isItemChecked(m_showfullid);
   m_options->setItemChecked(m_showfullid, b);
 
-  m_tiling->toggleShowFullRange(b);
-
+  emit toggleShowFullRange(b);
 }
 
 
@@ -326,7 +360,7 @@ void MainWindow::toggleShowPositions()
   bool b = !m_options->isItemChecked(m_posid);
   m_options->setItemChecked(m_posid, b);
 
-  m_tiling->toggleShowNumbers(b);
+  emit toggleShowNumbers(b);
 }
 
 void MainWindow::toggleShowIndicator()
@@ -334,15 +368,15 @@ void MainWindow::toggleShowIndicator()
   bool b = !m_options->isItemChecked(m_indicatorid);
   m_options->setItemChecked(m_indicatorid, b);
 
-  m_tiling->toggleShowIndicator(b);
+  emit toggleShowIndicator(b);
 }
 
-void MainWindow::toggleShowQV()
+void MainWindow::toggleDisplayQV()
 {
   bool b = !m_options->isItemChecked(m_qvid);
   m_options->setItemChecked(m_qvid, b);
 
-  m_tiling->toggleDisplayQV(b);
+  emit toggleDisplayQV(b);
 }
 
 void MainWindow::toggleLowQualityLowerCase()
@@ -350,7 +384,7 @@ void MainWindow::toggleLowQualityLowerCase()
   bool b = !m_options->isItemChecked(m_lowquallowerid);
   m_options->setItemChecked(m_lowquallowerid, b);
 
-  m_tiling->toggleLowQualityLowerCase(b);
+  emit toggleLowQualityLowerCase(b);
 }
 
 void MainWindow::toggleBaseColors()
@@ -358,7 +392,15 @@ void MainWindow::toggleBaseColors()
   bool b = !m_options->isItemChecked(m_basecolorid);
   m_options->setItemChecked(m_basecolorid, b);
 
-  m_tiling->toggleBaseColors(b);
+  emit toggleBaseColors(b);
+}
+
+void MainWindow::toggleSNPColoring()
+{
+  bool b = !m_options->isItemChecked(m_snpcoloringid);
+  m_options->setItemChecked(m_snpcoloringid, b);
+
+  emit toggleSNPColoring(b);
 }
 
 void MainWindow::toggleHighlightDiscrepancy()
@@ -366,28 +408,28 @@ void MainWindow::toggleHighlightDiscrepancy()
   bool b = !m_options->isItemChecked(m_highid);
   m_options->setItemChecked(m_highid, b);
 
-  m_tiling->toggleHighlightDiscrepancy(b);
+  emit toggleHighlightDiscrepancy(b);
 }
 
-void MainWindow::togglePrefetchChromatograms()
+void MainWindow::toggleDisplayAllChromo()
 {
   bool b = !m_options->isItemChecked(m_prefetch);
   m_options->setItemChecked(m_prefetch, b);
 
-  m_tiling->toggleDisplayAllChromo(b);
+  emit toggleDisplayAllChromo(b);
 }
 
 void MainWindow::fontIncrease()
 {
   m_fontsize++;
-  m_tiling->setFontSize(m_fontsize);
+  emit setFontSize(m_fontsize);
 }
 
 void MainWindow::fontDecrease()
 {
   if (m_fontsize <= 6) { return; }
   m_fontsize--;
-  m_tiling->setFontSize(m_fontsize);
+  emit setFontSize(m_fontsize);
 }
 
 void MainWindow::setChromoDB(const QString & db)

@@ -5,6 +5,7 @@ using namespace std;
 
 const int MAXTRANSPOSONDIST = 100;
 const int MIN3PRIMETRIM = 250;
+const int MAXSTDEV = 2;
 
 
 static int min (int a, int b)
@@ -96,11 +97,11 @@ Insert::Insert(ID_t     aid,
     }
     else
     {
-      if ((unsigned int)m_length > dist.mean + 3*dist.sd)
+      if ((unsigned int)m_length > dist.mean + MAXSTDEV*dist.sd)
       {
         m_state = StretchedMate;
       }
-      else if ((int)(m_length + 3*dist.sd) < dist.mean)
+      else if ((int)(m_length + MAXSTDEV*dist.sd) < dist.mean)
       {
         m_state = CompressedMate;
       }
@@ -180,11 +181,11 @@ int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
 
   if (tile->range.isReverse())
   {
-    return tile->offset + tile->range.getLength() + tile->gaps.size() - 1 - dist.mean - 3*dist.sd - READLEN;
+    return tile->offset + tile->range.getLength() + tile->gaps.size() - 1 - dist.mean - MAXSTDEV*dist.sd - READLEN;
   }
   else
   {
-    return tile->offset + dist.mean + 3*dist.sd + READLEN;
+    return tile->offset + dist.mean + MAXSTDEV*dist.sd + READLEN;
   }
 }
 

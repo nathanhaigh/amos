@@ -25,18 +25,11 @@ public slots:
     void setGindex(int gindex);
     void setContigId(int contigId);
     void setFontSize(int);
-    void toggleStable(bool);
-    void toggleShowNumbers(bool);
-    void toggleHighlightDiscrepancy(bool);
-    void toggleDisplayQV(bool);
-    void toggleDisplayAllChromo(bool);
-    void toggleLowQualityLowerCase(bool);
-    void toggleBaseColors(bool);
-    void toggleShowFullRange(bool);
-    void toggleShowIndicator(bool);
     void advanceNextDiscrepancy();
     void advancePrevDiscrepancy();
     void highlightRead(int);
+    void sortColumns(int);
+    void toggleDisplayAllChromo(bool);
 
 signals:
     void gindexChanged( int );
@@ -45,9 +38,16 @@ signals:
     void setStatus(const QString &);
     void fontSizeChanged(int);
     void setShowNumbers(bool);
-    void setHighlightDiscrepancy(bool);
-    void setDisplayQV(bool);
     void setTilingVisibleRange(int, int);
+
+    void toggleShowFullRange(bool);
+    void toggleShowNumbers(bool);
+    void toggleShowIndicator(bool);
+    void toggleDisplayQV(bool);
+    void toggleLowQualityLowerCase(bool);
+    void toggleBaseColors(bool);
+    void toggleSNPColoring(bool);
+    void toggleHighlightDiscrepancy(bool);
 
 protected:
     void paintEvent(QPaintEvent *);
