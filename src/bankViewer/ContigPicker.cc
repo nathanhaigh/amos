@@ -64,7 +64,7 @@ ContigPicker::ContigPicker(const string & bankname,
     AMOS::Contig_t contig;
     AMOS::BankStream_t contig_bank(AMOS::Contig_t::NCODE);
 
-    contig_bank.open(bankname);
+    contig_bank.open(bankname, AMOS::B_SPY);
 
     QString status = "Select from " + 
                      QString::number(contig_bank.getSize()) + 
