@@ -12,7 +12,7 @@
 #include "delta.hh"
 #include <algorithm>
 #include <cstdlib>
-#include <climit>
+#include <climits>
 #include <ctime>
 #include <cmath>
 #include <map>
