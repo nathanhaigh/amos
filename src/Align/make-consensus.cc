@@ -833,6 +833,8 @@ static void  Get_Strings_And_Offsets
    return;
   } // Get_Strings_And_Offsets
 
+
+
 static void  Output_Unit
     (const string & label, const string & id, int num_reads,
      Gapped_Multi_Alignment_t & gma, Celera_Message_t & msg,

@@ -448,6 +448,41 @@ void  Base_Alignment_t :: Flip_AB
 // ###  Alignment_t  methods  ###
 
 
+int  Alignment_t :: B_Position
+    (int a)  const
+
+//  Return the postion in the b string that corresponds to
+//  position  a  in the a string.  Must have  a_lo <= a < a_hi .
+//  In case of insertions in the a string, return the lowest
+//  position in the b string that corresponds.
+
+  {
+   int  d, i, j, n;
+
+   i = a_lo;
+   j = b_lo;
+   n = delta . size ();
+
+   for  (d = 0;  d < n;  d ++)
+     {
+      int  extent;
+
+      extent = abs (delta [d]) - 1;
+      if  (a - i <= extent)
+          return  j + a - i;
+      i += extent;
+      j += extent;
+      if  (delta [d] < 0)
+          i ++;
+        else
+          j ++;
+     }
+
+   return  j + a - i;
+  }
+
+
+
 void  Alignment_t :: Clear
     (void)
 
@@ -1824,6 +1859,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
 //##ALD  Replace this with a Substring_Align
            Overlap_Align (s [i], len, cons, lo, hi, cons_len,
                 1, -3, -2, -2, align [i]);
+           align [i] . a_len = len;
            align [i] . Check_Fix_Start (s [i] , len, cons, cons_len,
                 fix_status);
 
@@ -1888,7 +1924,6 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    bool  wrote_contig_id = false;
    int  cons_len;
    int  num_strings;
-   int  prev_off;
    int  i, j;
 
    Clear ();
@@ -1908,7 +1943,6 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    align . push_back (ali);
 
    num_strings = s . size ();
-   prev_off = 0;
        // where the last string started in the consensus
 
 
@@ -1918,18 +1952,20 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       bool  matched;
       double  erate;
       int  error_limit, len, exp_olap_len;
-      int  attempts, wiggle;
+      int  attempts, curr_offset, wiggle;
       int  lo, hi;
 
       len = strlen (s [i]);
       attempts = 0;
       wiggle = offset_delta;
       erate = error_rate;
+      curr_offset = ali . B_Position (offset [i]);
+        // where offset position in prior string hits the consensus
 
       do
         {
-         lo = Max (0, prev_off + offset [i] - wiggle);
-         hi = Min (cons_len - min_overlap, prev_off + offset [i] + wiggle);
+         lo = Max (0, curr_offset - wiggle);
+         hi = Min (cons_len - min_overlap, curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
 
          error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
@@ -1977,6 +2013,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
            Overlap_Align (s [i], len, cons, lo, hi, cons_len,
                 1, -3, -2, -2, ali);
+           ali . a_len = len;
 
            a_width = ali . a_hi - ali . a_lo;
            b_width = ali . b_hi - ali . b_lo;
@@ -1984,10 +2021,9 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
            cerr << "In contig " << id << " forced alignment of "
                 << a_width << " bases of string ";
-           if  (tag_list == NULL)
-               cerr << "subscript " << i;
-             else
-               cerr << (* tag_list) [i];
+           if  (tag_list != NULL)
+               cerr << (* tag_list) [i] << " ";
+           cerr << "subscript " << i;
            cerr << " to " << b_width << " bases of consensus\n";
            status = cerr . setf (ios :: fixed);
            cerr << "  with " << ali . errors << " errors ("
@@ -2037,8 +2073,6 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
       ali . a_len = len;
       align . push_back (ali);
-
-      prev_off = ali . b_lo;
      }
 
    if  (Verbose > 1)

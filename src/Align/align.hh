@@ -291,6 +291,8 @@ class  Alignment_t  :  public Base_Alignment_t
        (const Delta_Encoding_t & d)
      { delta = d; }
 
+   int  B_Position
+       (int a)  const;
    void  Clear
        (void);
    void  Combine
