@@ -3,6 +3,10 @@
 using namespace AMOS;
 using namespace std;
 
+const int MAXTRANSPOSONDIST = 300;
+const int MIN3PRIMETRIM = 250;
+
+
 static int min (int a, int b)
 {
   return (a < b) ? a : b;
@@ -20,7 +24,8 @@ Insert::Insert(ID_t     aid,
                ID_t     bcontig,
                Tile_t * btile,
                Distribution_t dist,
-               int conslen)
+               int conslen,
+               AMOS::MateType_t matetype)
 {
   m_atile   = atile;
   m_aid     = aid;
@@ -30,9 +35,13 @@ Insert::Insert(ID_t     aid,
   m_bid     = bid;
   m_bcontig = bcontig;
 
+  m_matetype = matetype;
+
+
   m_state = Unknown;
   m_dist = dist;
   m_active = -1;
+  m_actual = -1;
 
   m_length = m_dist.mean;
 
@@ -66,28 +75,50 @@ Insert::Insert(ID_t     aid,
     m_state = Happy;
     m_active = 2;
 
-    if ((unsigned int)m_length > dist.mean + 3*dist.sd)
+    if (m_matetype == Matepair_t::TRANSPOSON)
     {
-      m_state = StretchedMate;
-    }
-    else if ((int)(m_length + 3*dist.sd) < dist.mean)
-    {
-      m_state = CompressedMate;
-    }
+      if (m_arc) { m_actual = brange.begin - arange.end; }
+      else       { m_actual = arange.begin - brange.end; }
 
-    // Orientation violation if the reads point in the same direction, or
-    // there is at least one 3' base not covered:
-    //   <--------
-    //     -------->
-    //    ^       ^
+      if (m_actual > MAXTRANSPOSONDIST)
+      {
+        m_state = StretchedMate;
+      }
 
-    if ((m_arc + m_brc != 1) ||
-        (m_arc && arange.begin < brange.begin) ||
-        (m_arc && brange.end > arange.end) ||
-        (m_brc && brange.begin < arange.begin) ||
-        (m_brc && arange.end > brange.end))
+      if ((m_arc + m_brc != 1) ||
+          (m_arc && arange.end > brange.end) ||
+          (m_arc && brange.begin < arange.begin) ||
+          (m_brc && brange.end > arange.end) ||
+          (m_brc && arange.begin < brange.begin))
+      {
+        m_state = OrientationViolation;
+      }
+    }
+    else
     {
-      m_state = OrientationViolation;
+      if ((unsigned int)m_length > dist.mean + 3*dist.sd)
+      {
+        m_state = StretchedMate;
+      }
+      else if ((int)(m_length + 3*dist.sd) < dist.mean)
+      {
+        m_state = CompressedMate;
+      }
+
+      // Orientation violation if the reads point in the same direction, or
+      // there is at least one 3' base not covered:
+      //   <--------
+      //     -------->
+      //    ^       ^
+
+      if ((m_arc + m_brc != 1) ||
+          (m_arc && arange.begin < brange.begin) ||
+          (m_arc && brange.end > arange.end) ||
+          (m_brc && brange.begin < arange.begin) ||
+          (m_brc && arange.end > brange.end))
+      {
+        m_state = OrientationViolation;
+      }
     }
   }
   else if (atile)
@@ -130,7 +161,10 @@ Insert::Insert(ID_t     aid,
     throw "No Tile!";
   }
 
-  m_actual = m_roffset - m_loffset + 1;
+  if (m_actual == -1)
+  {
+    m_actual = m_roffset - m_loffset + 1;
+  }
   m_other = NULL;
   m_canvasItem = NULL;
 }
@@ -157,6 +191,11 @@ int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
 bool Insert::reasonablyConnected() const
 {
   if (!m_atile || !m_btile) { return false; }
+
+  if (m_matetype == Matepair_t::TRANSPOSON)
+  {
+    return true;
+  }
 
   return (m_state == Happy) ||
          (m_state == CompressedMate) ||
@@ -193,7 +232,7 @@ void Insert::setActive(int i, Insert * other, bool includeLibrary)
       }
       else
       {
-        m_loffset = tile->offset - 250;
+        m_loffset = tile->offset - MIN3PRIMETRIM;
       }
     }
     else
@@ -206,7 +245,7 @@ void Insert::setActive(int i, Insert * other, bool includeLibrary)
       }
       else
       {
-        m_roffset = m_loffset + len + 250;
+        m_roffset = m_loffset + len + MIN3PRIMETRIM;
       }
     }
   }

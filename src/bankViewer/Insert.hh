@@ -11,7 +11,8 @@ public:
   Insert(AMOS::ID_t aid, AMOS::ID_t acontig, AMOS::Tile_t * atile, 
          AMOS::ID_t bid, AMOS::ID_t bcontig, AMOS::Tile_t * btile, 
          AMOS::Distribution_t distribution,
-         int conslen);
+         int conslen,
+         AMOS::MateType_t matetype);
 
   void setActive(int i, Insert * other, bool includeLibrary);
   int getProjectedPosition(AMOS::Tile_t * tile, AMOS::Distribution_t dist);
@@ -25,6 +26,8 @@ public:
 
   int m_arc;
   int m_brc;
+
+  AMOS::MateType_t m_matetype;
 
   Insert * m_other;
   InsertCanvasItem * m_canvasItem;

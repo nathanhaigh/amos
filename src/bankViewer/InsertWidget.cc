@@ -197,7 +197,7 @@ void InsertWidget::refreshCanvas()
         cerr << "o";
         insert = new Insert(aid, acontig, atile,
                             AMOS::NULL_ID, AMOS::NULL_ID, NULL,
-                            dist, clen);
+                            dist, clen, AMOS::Matepair_t::NULL_MATE);
       }
       else
       {
@@ -226,7 +226,8 @@ void InsertWidget::refreshCanvas()
 
         insert = new Insert(aid, acontig, atile, 
                             bid, bcontig, btile, 
-                            dist, clen);
+                            dist, clen, 
+                            mi->second.second);
 
 
         if (m_connectMates && insert->reasonablyConnected())
@@ -303,8 +304,6 @@ void InsertWidget::refreshCanvas()
       i = clen - 1 - 1000;
     }
   }
-
-
 
   // bubblesort the types by the order they appear in the popup menu
   vector<char> types;
