@@ -75,6 +75,7 @@ struct  Unitig_Info_t
    char  typ;
    int  cam_lo, cam_hi;
    int  match;
+   short  copy_num, copy_total;
    bool  cam_fwd;
   };
 
@@ -179,7 +180,7 @@ static void  Set_Position
 static int  Uni_Data_Search
     (const vector <Uni_Data_t> & u, int id);
 static int  Unitig_Search
-    (const vector <Unitig_Info_t> & u, int id, int & occurs);
+    (const vector <Unitig_Info_t> & u, int id);
 
 
 
@@ -196,6 +197,7 @@ int  main
    char  line [MAX_LINE];
    bool  found;
    float  cov;
+   short  copy_ct;
    int  unitig_ct;
    int  id1, id2, hi_id;
    int  a, b, c;
@@ -250,8 +252,13 @@ int  main
                 exit (EXIT_FAILURE);
                }
 
-           assert (Read [id1] . mate == -1);
-           assert (Read [id2] . mate == -1);
+           if  (Read [id1] . mate != -1 || Read [id2] . mate != -1)
+               {
+                fprintf (stderr, "ERROR:  Missing mate\n");
+                fprintf (stderr, "id1 = %d  mate = %d\n", id1, Read [id1] . mate);
+                fprintf (stderr, "id2 = %d  mate = %d\n", id2, Read [id2] . mate);
+                exit (EXIT_FAILURE);
+               }
            Read [id1] . mate = id2;
            Read [id2] . mate = id1;
 
@@ -399,9 +406,11 @@ int  main
 
    // Set size of contigs in  contig_pos  to max unitig pos
    // in them
+   // Also set  copy_num  and  copy_total  fields in  unitig  array
    n = unitig . size ();
 fprintf (stderr, "### %d unitigs\n", n);
 
+   copy_ct = 0;
    for  (i = 0;  i < n;  i ++)
      {
       j = Search (contig_pos, unitig [i] . contig_id);
@@ -415,7 +424,20 @@ fprintf (stderr, "### %d unitigs\n", n);
            if  (unitig [i] . c_b_pos > contig_pos [j] . len)
                contig_pos [j] . len = unitig [i] . c_b_pos;
           }
+
+      if  (i == 0 || unitig [i] . unitig_id == unitig [i - 1] . unitig_id)
+          copy_ct ++;
+        else
+          {
+           for  (j = 1;  j <= copy_ct;  j ++)
+             unitig [i - j] . copy_total = copy_ct;
+           copy_ct = 1;
+          }
+      unitig [i] . copy_num = copy_ct;
      }
+   for  (j = 1;  j <= copy_ct;  j ++)
+     unitig [n - j] . copy_total = copy_ct;
+   
 
    // Output celamy lines for matching unitigs
    unitig_ct = 0;
@@ -462,18 +484,22 @@ fprintf (stderr, "### %d unitigs\n", n);
            unitig_ct ++;
            if  (x < y)
                printf ("%dUnitig: %d A%s %d R6 # Utg%d Ctg%d"
-                   " cov=%.1f typ=%c nfr=%d len=%d\n",
+                   " cov=%.1f typ=%c nfr=%d len=%d",
                    unitig_ct, x, colour, y, unitig [i] . unitig_id,
                    unitig [i] . contig_id, uni_data [k] . coverage,
                    uni_data [k] . typ, uni_data [k] . num_reads,
                    uni_data [k] . len);
              else
                printf ("%dUnitig: %d A%s %d R6 # Utg%d Ctg%d"
-                   "  cov=%.1f typ=%c nfr=%d len=%d\n",
+                   "  cov=%.1f typ=%c nfr=%d len=%d",
                    unitig_ct, y, colour, x, unitig [i] . unitig_id,
                    unitig [i] . contig_id, uni_data [k] . coverage,
                    uni_data [k] . typ, uni_data [k] . num_reads,
                    uni_data [k] . len);
+           if  (unitig [i] . copy_total > 1)
+               printf (" copy=%d of %d", unitig [i] . copy_num,
+                    unitig [i] . copy_total);
+           putchar ('\n');
           }
      }
 
@@ -535,16 +561,17 @@ fprintf (stderr, "### %d reads\n", n);
       else if  (Read [i] . unitig_id >= 0)
           {
            bool  done;
-           int  k, occurs;
+           int  k;
 
-           j = Unitig_Search (unitig, Read [i] . unitig_id, occurs);
+           j = Unitig_Search (unitig, Read [i] . unitig_id);
            if  (j < 0)
                fprintf (stderr, "** Unitig %d not found\n",
                     Read [i] . unitig_id);
              else
                {
                 done = false;
-                for  (k = j;  k < j + occurs && ! done;  k ++)
+
+                for  (k = j;  k < j + unitig [j] . copy_total && ! done;  k ++)
                   {
                    int  p;
 
@@ -871,11 +898,10 @@ static int  Uni_Data_Search
 
 
 static int  Unitig_Search
-    (const vector <Unitig_Info_t> & u, int id, int & occurs)
+    (const vector <Unitig_Info_t> & u, int id)
 
 //  Do a binary search of  u  for entries with  unitig_id == id
 //  Return subscript of first entry if found;  -1 , if not found.
-//  Set  occurs  to the number of entries found.
 //  Assumes  u  has been sorted into ascending order by  unitig_id .
 
   {
@@ -888,14 +914,8 @@ static int  Unitig_Search
       mid = (lo + hi) / 2;
       if  (id == u [mid] . unitig_id)
           {
-           int  i;
-
            while  (mid > 0 && u [mid] . unitig_id == u [mid - 1] . unitig_id)
              mid --;
-           for  (i = 1;
-                   mid + i <= n && u [mid] . unitig_id == u [mid + i] . unitig_id;
-                   i ++)
-           occurs = i;
 
            return  mid;
           }
