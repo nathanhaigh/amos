@@ -2,6 +2,9 @@
 #include <qcursor.h>
 #include <qstatusbar.h>
 
+#include <qlabel.h>
+#include <qlineedit.h>
+
 #include "foundation_AMOS.hh"
 
 #include <vector>
@@ -44,23 +47,48 @@ ReadPicker::ReadPicker(DataStore * datastore,
                        const char * name)
   :QMainWindow(parent, name)
 {
-  QListView * table = new QListView(this, "readpickertbl");
-  table->resize(500,500);
-  setCentralWidget(table);
-  resize(500,500);
+  m_table = new QListView(this, "readpickertbl");
+  setCentralWidget(m_table);
+  setCaption("Read Chooser");
+  resize(550,500);
   show();
 
-  connect(table, SIGNAL(doubleClicked(QListViewItem *)),
+  QToolBar * tool = new QToolBar(this, "tools");
+  new QLabel("IID:", tool, "iidlbl");
+  QLineEdit * iidpick = new QLineEdit(tool, "iidpick");
+
+  new QLabel("EID:", tool, "eidlbl");
+  QLineEdit * eidpick = new QLineEdit(tool, "eidpick");
+
+  connect(m_table, SIGNAL(doubleClicked(QListViewItem *)),
           this,  SLOT(itemSelected(QListViewItem *)));
 
-  table->addColumn("IID");
-  table->addColumn("EID");
-  table->addColumn("Offset");
-  table->addColumn("End Offset");
-  table->addColumn("Length");
-  table->addColumn("Dir");
-  table->setShowSortIndicator(true);
-  table->setRootIsDecorated(true);
+  connect(m_table, SIGNAL(returnPressed(QListViewItem *)),
+          this,  SLOT(itemSelected(QListViewItem *)));
+
+  connect(iidpick, SIGNAL(textChanged(const QString &)),
+          this,    SLOT(selectiid(const QString &)));
+
+  connect(eidpick, SIGNAL(textChanged(const QString &)),
+          this,    SLOT(selecteid(const QString &)));
+
+  connect(eidpick, SIGNAL(returnPressed()),
+          this,    SLOT(acceptSelected()));
+
+  connect(iidpick, SIGNAL(returnPressed()),
+          this,    SLOT(acceptSelected()));
+
+
+  m_table->addColumn("IID");
+  m_table->addColumn("EID");
+  m_table->addColumn("Offset");
+  m_table->addColumn("End Offset");
+  m_table->addColumn("Length");
+  m_table->addColumn("Dir");
+
+  m_table->setShowSortIndicator(true);
+  m_table->setRootIsDecorated(true);
+  m_table->setAllColumnsShowFocus(true);
 
   try
   {
@@ -78,7 +106,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
          ti++)
     {
       int len = ti->range.getLength() + ti->gaps.size();
-      new ContigListItem(table,
+      new ContigListItem(m_table,
                          QString::number(ti->source),
                          datastore->read_bank.lookupEID(ti->source),
                          QString::number(ti->offset),
@@ -99,4 +127,36 @@ void ReadPicker::itemSelected(QListViewItem * item)
 {
   emit highlightRead(atoi(item->text(0)));
 }
+
+void ReadPicker::selectiid(const QString & iid)
+{
+  cerr << iid << endl;
+  QListViewItem * item = m_table->findItem(iid, 0);
+  if (item)
+  {
+    m_table->setSelected(item, true);
+    m_table->ensureItemVisible(item);
+  }
+}
+
+void ReadPicker::selecteid(const QString & eid)
+{
+  cerr << eid << endl;
+  QListViewItem * item = m_table->findItem(eid, 1);
+  if (item)
+  {
+    m_table->setSelected(item, true);
+    m_table->ensureItemVisible(item);
+  }
+}
+
+void ReadPicker::acceptSelected()
+{
+  QListViewItem * item = m_table->selectedItem();
+  if (item)
+  {
+    itemSelected(item);
+  }
+}
+
 

@@ -17,12 +17,16 @@ public:
 
 public slots:
   void itemSelected(QListViewItem * item);
+  void selectiid(const QString & iid);
+  void selecteid(const QString & eid);
+  void acceptSelected();
 
 signals:
   void highlightRead(int);
 
 private:
   DataStore * m_datastore;
+  QListView * m_table;
 };
 
 

@@ -220,9 +220,11 @@ void MainWindow::chooseContig()
 {
   if (m_contigPicker) { m_contigPicker->close(); }
 
-  m_contigPicker = new ContigPicker(m_datastore.m_bankname, this, "contigpicker");
+  m_contigPicker = new ContigPicker(&m_datastore, this, "contigpicker");
   connect(m_contigPicker, SIGNAL(contigSelected(int)),
           this,           SLOT(setContigId(int)));
+  connect(m_contigPicker, SIGNAL(setGindex(int)),
+          this,           SLOT(setGindex(int)));
 }
 
 void MainWindow::setContigId(int contigId)
@@ -246,12 +248,6 @@ void MainWindow::setContigId(int contigId)
     statusBar()->message(s);
 
     emit contigIdSelected(m_datastore.m_contigId);
-
-    if (m_contigPicker)
-    {
-      m_contigPicker->close();
-      m_contigPicker = NULL;
-    }
 
     if (m_readPicker)
     {
