@@ -16,6 +16,5 @@ CoverageCanvasItem::CoverageCanvasItem(int x, int y, int width, int height,
 
 void CoverageCanvasItem::drawShape (QPainter & p)
 {
-  p.setPen(QPen(Qt::red, 2));
   p.drawPolyline(m_coveragePlot);
 }

@@ -199,16 +199,16 @@ void InsertWidget::refreshCanvas()
 
   m_tiling = m_datastore->m_contig.getReadTiling();
   sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
+  vector<Tile_t>::iterator ti;
 
   try
   {
     // map iid -> tile * (within this contig)
-    vector<Tile_t>::iterator vi;
-    for (vi =  m_tiling.begin();
-         vi != m_tiling.end();
-         vi++)
+    for (ti =  m_tiling.begin();
+         ti != m_tiling.end();
+         ti++)
     {
-      seqtileLookup[vi->source] = &(*vi);
+      seqtileLookup[ti->source] = &(*ti);
     }
 
     cerr << "Loading mates" << endl;
@@ -360,7 +360,7 @@ void InsertWidget::refreshCanvas()
 
   if (m_coveragePlot)
   {
-    cerr << " coverage";
+    cerr << " icoverage";
     int maxdepth = 0;
     int maxroffset = 0;
 
@@ -424,10 +424,10 @@ void InsertWidget::refreshCanvas()
       coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + tileoffset);
     }
 
-    QCanvasRectangle * bg = new QCanvasRectangle(0, tileoffset, maxroffset + m_hoffset + 1, maxdepth, m_icanvas);
-    bg->setBrush(QColor(60,60,60));
-    bg->setZ(-2);
-    bg->show();
+    QCanvasRectangle * covbg = new QCanvasRectangle(0, tileoffset, maxroffset + m_hoffset + 1, maxdepth, m_icanvas);
+    covbg->setBrush(QColor(60,60,60));
+    covbg->setZ(-2);
+    covbg->show();
 
     QCanvasLine * base = new QCanvasLine(m_icanvas);
     base->setPoints(0, tileoffset+maxdepth, maxroffset+m_hoffset+1, tileoffset+maxdepth);
@@ -437,7 +437,82 @@ void InsertWidget::refreshCanvas()
     CoverageCanvasItem * citem = new CoverageCanvasItem(0, tileoffset,
                                                         maxroffset + m_hoffset + 1, maxdepth,
                                                         coveragelevel, m_icanvas);
+    citem->setPen(QPen(Qt::red, 1));
     citem->show();
+
+    int readCoverage = 1;
+    if (readCoverage)
+    {
+      cerr << " rcoverage";
+      int maxrdepth = 0;
+      int maxroffset = 0;
+
+      multiset<int> endpoints;
+      multiset<int>::iterator vi, vi2;
+
+      // coverage will change at each endpoint of each insert
+      QPointArray coveragelevel(m_tiling.size()*4); 
+      int curcpos = 0;
+
+      for (ti = m_tiling.begin(); ti != m_tiling.end(); ti++)
+      {
+        int curloffset = ti->offset;
+        int curroffset = ti->offset + ti->range.getLength() + ti->gaps.size() - 1;
+
+        // find end points that have already passed
+        vi = endpoints.begin();
+        while (vi != endpoints.end())
+        {
+          if (*vi <= curloffset) 
+          { 
+            coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
+            coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
+            vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
+          }
+          else
+          { 
+            break; 
+          }
+        }
+
+        // Add this insert's beginning and end
+        coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size());
+        coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size()+1);
+        endpoints.insert(curroffset);
+
+        if (endpoints.size() > maxrdepth) 
+        { 
+          maxrdepth = endpoints.size(); 
+        }
+
+        if (curroffset > maxroffset)
+        {
+          maxroffset = curroffset;
+        }
+      }
+
+      // Handle remaining end points
+      vi = endpoints.begin();
+      while (vi != endpoints.end())
+      {
+        coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
+        coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
+        vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
+      }
+
+      // Adjust coordinates for painting
+      for (int i = 0; i < curcpos; i++)
+      {
+        coveragelevel[i].setX(coveragelevel[i].x()+m_hoffset);
+        coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + tileoffset);
+      }
+
+      CoverageCanvasItem * citem = new CoverageCanvasItem(0, tileoffset,
+                                                          maxroffset + m_hoffset + 1, maxdepth,
+                                                          coveragelevel, m_icanvas);
+      citem->setPen(QPen(Qt::green, 1));
+      citem->show();
+    }
 
     tileoffset += maxdepth + gutter;
   }
@@ -487,13 +562,13 @@ void InsertWidget::refreshCanvas()
 
   // bubblesort the types by the order they appear in the popup menu
   vector<char> types;
-  map<char, pair<int, bool> >::iterator ti;
+  map<char, pair<int, bool> >::iterator type;
   map<char, bool> drawType;
 
-  for (ti = m_types.begin(); ti != m_types.end(); ti++)
+  for (type = m_types.begin(); type != m_types.end(); type++)
   {
-    types.push_back(ti->first);
-    drawType[ti->first] = ti->second.second;
+    types.push_back(type->first);
+    drawType[type->first] = type->second.second;
   }
 
   for (unsigned int i = 0; i < types.size(); i++)
@@ -584,8 +659,8 @@ void InsertWidget::refreshCanvas()
       int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
 
       QCanvasRectangle * rect = new QCanvasRectangle(m_hoffset + offset, 0, fi->range.getLength(), newheight, m_icanvas);
-      rect->setBrush(QColor(139,119,101));
-      rect->setPen(QColor(169,149,131));
+      rect->setBrush(QColor(59,49,31));
+      rect->setPen(QColor(139,119,111));
       rect->setZ(-2);
       rect->show();
     }
