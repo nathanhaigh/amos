@@ -42,7 +42,7 @@ void Bank_t::addPartition (bool nuke = true)
     ss << store_pfx_m << '.' << last_partition_m << FIX_STORE_SUFFIX;
     partition -> fix_name = ss . str( );
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
-    if ( partition -> fix . fail( ) )
+    if ( ! partition -> fix )
       AMOS_THROW_IO ("Could not add partition: " + ss . str( ));
     partition -> fix . close( );
     
@@ -51,7 +51,7 @@ void Bank_t::addPartition (bool nuke = true)
     ss << store_pfx_m << '.' << last_partition_m << VAR_STORE_SUFFIX;
     partition -> var_name = ss . str( );
     partition -> var . open (partition -> var_name . c_str( ), mode);
-    if ( partition -> var . fail( ) )
+    if ( ! partition -> var )
       AMOS_THROW_IO ("Could not add partition: " + ss . str( ));
     partition -> var . close( );
   }
@@ -436,7 +436,7 @@ void Bank_t::flush ( )
   ifo . open ((store_pfx_m + INFO_STORE_SUFFIX) . c_str( ));
   ifo . precision (5);
 
-  if ( ifo . fail( ) )
+  if ( !ifo )
     AMOS_THROW_IO ("Could not open partition: " +
 		   store_pfx_m + INFO_STORE_SUFFIX);
 
@@ -449,7 +449,7 @@ void Bank_t::flush ( )
   ifo << "indices/partition = " << partition_size_m   << "\n";
   ifo << "last partition = "    << last_partition_m   << "\n";
 
-  if ( ifo . fail( ) )
+  if ( !ifo )
     AMOS_THROW_IO ("Error writing to partition: " +
 		   store_pfx_m + INFO_STORE_SUFFIX);
 
@@ -483,7 +483,7 @@ void Bank_t::open (const string & dir)
   //-- Open INFO partition
   ifstream ifo;
   ifo . open (ss . str( ) . c_str( ));
-  if ( ifo . fail( ) )
+  if ( !ifo )
     AMOS_THROW_IO ("Could not open partition: " + ss . str( ));
 
   //-- Parse the INFO partition
@@ -568,12 +568,12 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t iid)
   try {
     //-- Open the FIX partition file
     partition -> fix . open (partition -> fix_name . c_str( ), mode);
-    if ( partition -> fix . fail( ) )
+    if ( ! partition -> fix )
       AMOS_THROW_IO ("Could not open partition: " + partition -> fix_name);
     
     //-- Open the VAR partition file
     partition -> var . open (partition -> var_name . c_str( ), mode);
-    if ( partition -> var . fail( ) )
+    if ( ! partition -> var )
       AMOS_THROW_IO ("Could not open partition: " + partition -> var_name);
   }
   catch (IOException_t) {

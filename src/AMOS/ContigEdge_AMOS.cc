@@ -19,7 +19,33 @@ using namespace std;
 //----------------------------------------------------- fromMessage ------------
 void ContigEdge_t::fromMessage (const Message_t & msg)
 {
+  clear( );
+  ContigLink_t::fromMessage (msg);
 
+  try {
+    ID_t iid;
+    stringstream ss;
+
+    if ( msg . exists (F_CONTIGLINK) )
+      {
+	ss . str (msg . getField (F_CONTIGLINK));
+
+	while ( ss )
+	  {
+	    ss >> iid;
+	    if ( ! ss . fail( ) )
+	      links_m . push_back (iid);
+	  }
+
+	if ( !ss . eof( ) )
+	  AMOS_THROW_ARGUMENT ("Invalid ctl format");
+      }
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
 }
 
 
@@ -47,7 +73,27 @@ Size_t ContigEdge_t::readRecord (istream & fix,
 //----------------------------------------------------- toMessage --------------
 void ContigEdge_t::toMessage (Message_t & msg) const
 {
+  ContigLink_t::toMessage (msg);
 
+  try {
+    vector<ID_t>::const_iterator vi;
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    if ( links_m . size( ) != 0 )
+      {
+	for ( vi = links_m . begin( ); vi != links_m . end( ); vi ++ )
+	  ss << *vi << '\n';
+	msg . setField (F_CONTIGLINK, ss . str( ));
+	ss . str("");
+      }
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
 }
 
 

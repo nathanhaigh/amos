@@ -36,6 +36,7 @@ LinkAdjacency_t ContigLink_t::getAdjacency ( ) const
 //----------------------------------------------------- fromMessage ------------
 void ContigLink_t::fromMessage (const Message_t & msg)
 {
+  clear( );
   Universal_t::fromMessage (msg);
 
   try {
@@ -46,7 +47,7 @@ void ContigLink_t::fromMessage (const Message_t & msg)
       {
 	ss . str (msg . getField (F_CONTIG1));
 	ss >> contigs_m . first;
-	if ( ss. fail( ) )
+	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid ct1 format");
       }
 
@@ -54,7 +55,7 @@ void ContigLink_t::fromMessage (const Message_t & msg)
       {
 	ss . str (msg . getField (F_CONTIG2));
 	ss >> contigs_m . second;
-	if ( ss . fail( ) )
+	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid ct2 format");
       }
 
@@ -68,7 +69,7 @@ void ContigLink_t::fromMessage (const Message_t & msg)
       {
 	ss . str (msg . getField (F_SD));
 	ss >> sd_m;
-	if ( ss . fail( ) )
+	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid std format");
       }
 
@@ -76,7 +77,7 @@ void ContigLink_t::fromMessage (const Message_t & msg)
       {
 	ss . str (msg . getField (F_SIZE));
 	ss >> size_m;
-	if ( ss . fail( ) )
+	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid sze format");
       }
 
@@ -92,7 +93,7 @@ void ContigLink_t::fromMessage (const Message_t & msg)
 	ss >> source_m . first;
 	ss . ignore( );
 	ss >> str;
-	if ( ss . fail( ) )
+	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid src format");
 	source_m . second = Encode (str);
       }

@@ -28,7 +28,7 @@ void Universal_t::fromMessage (const Message_t & msg)
       {
 	ss . str (msg . getField (F_IID));
 	ss >> iid_m;
-	if ( ss . fail( ) )
+	if ( !ss )
 	  AMOS_THROW_ARGUMENT ("Invalid iid format");
       }    
 

@@ -25,6 +25,7 @@ int main (int argc, char ** argv)
     Message_t msg;
     Universal_t unv;
     ContigLink_t ctl;
+    ContigEdge_t cte;
 
     Universal_t * unvp;
     
@@ -36,6 +37,8 @@ int main (int argc, char ** argv)
 	  unvp = &unv;
 	else if ( msg . getMessageCode( ) == Message_k::M_CONTIGLINK )
 	  unvp = &ctl;
+	else if ( msg . getMessageCode( ) == Message_k::M_CONTIGEDGE )
+	  unvp = &cte;
 	else
 	  {
 	    cout << "# don't know how to parse message\n";
@@ -57,6 +60,10 @@ int main (int argc, char ** argv)
 
     ctl . clear( );
     ctl . toMessage (msg);
+    msg . write (cout);
+
+    cte . clear( );
+    cte . toMessage (msg);
     msg . write (cout);
   }
   catch (Exception_t & e) {
