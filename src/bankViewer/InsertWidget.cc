@@ -724,7 +724,7 @@ void InsertWidget::timeout()
       }
       else
       {
-        QCanvasItemList l = m_ball->collisions(false);
+        QCanvasItemList l = m_ball->collisions(true);
 
         for (QCanvasItemList::Iterator li=l.begin(); li != l.end(); li++)
         {
