@@ -161,7 +161,8 @@ int main (int argc, char ** argv)
 	  cerr << endl
 	       << "WARNING: " << e . what( ) << endl
 	       << "  could not parse '" << Decode (ncode)
-	       << "' message with iid:" << msg . getField (F_IID)
+	       << "' message with iid:"
+	       << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
 	       << ", message ignored" << endl;
 	  continue;
 	}
@@ -227,7 +228,8 @@ int main (int argc, char ** argv)
 	  cerr << endl
 	       << "WARNING: " << e . what( ) << endl
 	       << "  could not commit '" << Decode (ncode)
-	       << "' with iid:" << msg . getField (F_IID)
+	       << "' message with iid:"
+	       << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
 	       << " to bank, message ignored" << endl;
 	  continue;
 	}
@@ -235,7 +237,8 @@ int main (int argc, char ** argv)
 	  cerr << endl
 	       << "WARNING: " << e . what( ) << endl
 	       << "  ID conflict caused by '" << Decode (ncode)
-	       << "' with iid:" << msg . getField (F_IID)
+	       << "' message with iid:"
+	       << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
 	       << ", message ignored" << endl;
 	  continue;
 	}
