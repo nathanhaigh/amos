@@ -157,8 +157,8 @@ int  main
    Contig_Map_Entry_t  map_entry;
    Coord_Line_t  c;
    string  left_string, right_string, ref_string;
-   int  acc, len, left_offset;
-   bool  result, same_ref, same_query, q_flipped;
+   int  acc, len, left_offset, right_tail;
+   bool  result, same_ref, same_query, q_flipped, full_merge = false;
    bool  first = true;
    time_t  now;
    char  buff [MAX_LINE];
@@ -211,8 +211,8 @@ int  main
       same_ref = (c . r_id == prev_ref_id);
       same_query = (same_ref && c . q_id == prev_q_id);
 
-      if  (! first && ! same_query && right_string_id != prev_q_id
-              && q_hi < prev_q_len)
+      if  (! first && ! same_query && ! full_merge
+              && right_string_id != prev_q_id && q_hi < prev_q_len)
           {  // need to output variant to end of query string
            Output_Variant (vary_fp, prev_ref_id, prev_q_id, q_flipped,
                 prev_ref_end, -1, prev_q_hi, prev_q_len, gma2);
@@ -350,6 +350,7 @@ int  main
            q_flipped = true;
           }
 
+      full_merge = false;
       if  (c . r_lo == 1 && 0 < q_lo 
              && left_string . length () == 0)
           {
@@ -361,19 +362,20 @@ int  main
            prev_ref_end = c . r_hi;  // prevents outputting variant
            prev_q_hi = q_hi;
           }
-      if  (c . r_hi == c . r_len && q_hi < c . q_len
+      right_tail = c . r_len - c . r_hi;
+      if  (right_tail <= 3 && right_tail < c . q_len - q_hi
              && right_string . length () == 0)
           {
-           // should be Full_Merge_Right but for now we'll just
-           // extract the appropriate piece of the query sequence so
-           // we can append it to the output
-
-           gma2 . Get_Partial_Ungapped_Consensus (right_string, q_hi, c . q_len);
-           right_string_id = prev_q_id;
+           ref_gma . Full_Merge_Right (gma2, q_lo, c . r_lo - 1,
+                ref_sl, sl2, sl2_place, & ref_tag, & tg2);
+//**ALD           gma2 . Get_Partial_Ungapped_Consensus (right_string, q_hi, c . q_len);
+//**ALD           right_string_id = prev_q_id;
+           full_merge = true;
           }
 
-      ref_gma . Partial_Merge (gma2, q_lo, q_hi, c . r_lo - 1,
-           c . r_hi, ref_sl, sl2, sl2_place, & ref_tag, & tg2);
+      if  (! full_merge)
+          ref_gma . Partial_Merge (gma2, q_lo, q_hi, c . r_lo - 1,
+               c . r_hi, ref_sl, sl2, sl2_place, & ref_tag, & tg2);
 
       if  (0 < q_lo && (prev_ref_end < c . r_lo || prev_q_hi < q_lo))
           Output_Variant (vary_fp, prev_ref_id, prev_q_id, q_flipped,
@@ -396,7 +398,8 @@ int  main
    // handle any leftover matches at end of file
    if  (! first)
        {
-        if  (right_string_id != prev_q_id && q_hi < prev_q_len)
+        if  (right_string_id != prev_q_id && ! full_merge
+                && q_hi < prev_q_len)
             {  // need to output variant to end of query string
              Output_Variant (vary_fp, prev_ref_id, prev_q_id, q_flipped,
                   prev_ref_end, -1, prev_q_hi, prev_q_len, gma2);
