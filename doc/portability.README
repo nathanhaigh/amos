@@ -6,13 +6,10 @@
 #        #if HAVE_CONFIG_H
 #        #include "config.h"
 #        #endif
-# At the top of your source file. Where this gets placed in relation to the
-# system headers is *important*. Please place it _after_ the standard C/C++
-# headers but _before_ extension headers such as <getopt.h>.
-# autoconf/automake will take care of the rest.
+# At the top of your source file. autoconf/automake will take care of the rest.
 #
 
-error
+getopt.h
 getopt
 getopt_long
 getopt_long_only
