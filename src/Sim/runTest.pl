@@ -25,11 +25,11 @@ $base->setDebugLevel(1);
 
 $base->setHelpInfo($MY_HELPTEXT);
 $base->setVersionInfo($MY_VERSION);
-my $asRoot = "/local/asmg/bin/CA";
+my $asRoot = "/local/asmg/bin/CA"; #$ENV{CA_ROOT};
 $base->addDependInfo($asRoot);
 $ENV{"AS_ROOT"} = $asRoot;  # set environment for Celera programs
 
-my $asBin = "$asRoot/bin";
+my $asBin = "$ENV{CA_ROOT}/bin";
 if (! -e "bin"){
     symlink($asBin, "bin") || 
 	$base->bail("Cannot symlink \"$asBin\" to \"./bin\": $!");
@@ -37,19 +37,24 @@ if (! -e "bin"){
 
 my $celsim = "$asRoot/bin/celsim";
 $base->addDependInfo($celsim);
-my $assembler = "$asRoot/scripts/assembler.pl";
+my $assembler = "$ENV{CA_ROOT}/scripts/assembler.pl";
 $base->addDependInfo($assembler);
-my $gatekeeper = "$asRoot/bin/gatekeeper";
+my $gatekeeper = "$ENV{CA_ROOT}/bin/gatekeeper";
 $base->addDependInfo($gatekeeper);
-my $overlapper = "$asRoot/bin/overlap";
-$base->addDependInfo($overlapper);
+my $populator = "$ENV{CA_ROOT}/bin/PopulateFragStore";
+$base->addDependInfo($populator);
 my $grep = "/bin/grep";
 $base->addDependInfo($grep);
 my $cata = "/local/asmg/bin/ca2ta";
 $base->addDependInfo($cata);
-my $caqc = "/local/asmg/bin/caqc";
+my $caqc = "/usr/local/common/caqc";
 $base->addDependInfo($caqc);
-
+my $makeofg = "$ENV{CA_ROOT}/bin/make_OFG_from_FragStore";
+$base->addDependInfo($makeofg);
+my $meryl = "$ENV{CA_ROOT}/bin/meryl";
+$base->addDependInfo($meryl);
+my  $ca2scaff = "/local/asmg/work/mpop/Tools/CA/ca2scaff.pl";
+$base->addDependInfo($ca2scaff);
 
 my $infile;
 my $justasm;
@@ -93,6 +98,8 @@ my $nreads;
 my %libraries;
 my %fractions;
 my %genomes;
+my %size;
+my $seed = undef;
 while (<IN>){
     if (/^lib_id=(\w+)/){
 	$lib = $1;
@@ -120,6 +127,25 @@ while (<IN>){
 	}
 	next;
     }
+    if (/^min_read=(\d+)/){
+	$MIN_READ = $1;
+	next;
+    }
+    if (/^max_read=(\d+)/){
+	$MAX_READ = $1;
+	next;
+    }
+    if (/^genome_size=(\d+)/){
+	$size{$genome} = $1;
+	next;
+    }
+    if (/^coverage=(\d+)/){
+	if (! exists $size{$genome}){
+	    $base->bail("you must define a genome size for genome $genome at line $. in $infile\n");
+	}
+	$genomes{$genome} = int( $1 * $size{$genome} / (($MIN_READ + $MAX_READ)/ 2));
+	next;
+    }
     if (/^nreads=(\d+)/){
 	$nreads = $1;
 	$genomes{$genome} = $nreads;
@@ -129,6 +155,11 @@ while (<IN>){
     if (/^err=([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+)/){
 	$MIN_ERR = $1;
 	$MAX_ERR = $2;
+	next;
+    }
+    
+    if (/^seed=(\d+)/){
+	$seed = $1;
 	next;
     }
     if (/^\#/){
@@ -160,8 +191,8 @@ while (($genome, $nreads) = each %genomes){
     $base->logLocal("simulation file is in \"$simfile\"", 1);
     open(OUT, ">$simfile") || $base->bail("Cannot open \"$simfile\": $!\n");
     
-    my $seed = time ^ ($$ + ($$ << 15)) ; # straight out of perlfunc
-    $seed = 17131; # Art's lucky and magic seed
+#    my $seed = time ^ ($$ + ($$ << 15)) ; # straight out of perlfunc
+    if (! defined $seed) {$seed = 17131;} # Art's lucky and magic seed
     print OUT 
 qq~
 .seed
@@ -254,31 +285,51 @@ for (my $file = 0; $file <= $#fragfiles; $file++) {
 
     $fragfiles[$file] =~ /(.*)\.frg/;
     my $inpfile = $1 . ".inp";
-    my $ovlpCmd = "$overlapper -K 20 -n -P $create_mode $prefix.frgStore $inpfile";
-    $base->logLocal("Running \"$ovlpCmd\"", 1);
-    my $errno = $base->runCommand($ovlpCmd);
+    my $populateCmd = "$populator -c -f -o $prefix.frgStore $create_mode $inpfile";
+    $base->logLocal("Running \"$populateCmd\"", 1);
+    my $errno = $base->runCommand($populateCmd);
     if ($errno != 0){
-       $base->bail("Command \"$ovlpCmd\" failed with code: $errno");
+       $base->bail("Command \"$populateCmd\" failed with code: $errno");
     }
+}
+
+my $ofgCmd = "$makeofg $prefix.frgStore > $prefix.ofg";
+$base->logLocal("Running \"$ofgCmd\"", 1);
+my $errno = $base->runCommand($ofgCmd);
+if ($errno != 0){
+    $base->bail("Command \"$ofgCmd\" failed with code: $errno");
+}
+
+my $merylCmd = "$meryl -s $prefix.frgStore -m 22 -n 200 -o $prefix.nmers.fasta";$base->logLocal("Running \"$merylCmd\"", 1);
+$errno = $base->runCommand($merylCmd);
+if ($errno != 0){
+    $base->bail("Command \"$merylCmd\" failed with code: $errno");
 }
 
 my $asmCmd = "$assembler -root=$asRoot -start=402 -prefix=$prefix";
 $base->logLocal("Running \"$asmCmd\"", 1);
-my $errno = $base->runCommand($asmCmd);
+$errno = $base->runCommand($asmCmd);
 if ($errno != 0){
     $base->bail("Command \"$asmCmd\" failed with code: $errno");
 }
 
-my $cataCmd = "$cata -justfasta $prefix.asm";
-$base->logLocal("Running \"$cataCmd\"", 1);
-$errno = $base->runCommand($cataCmd);
-if ($errno != 0){
-    $base->bail("Command \"$cataCmd\" failed with code: $errno");
-}
+# my $cataCmd = "$cata -justfasta $prefix.asm";
+# $base->logLocal("Running \"$cataCmd\"", 1);
+# $errno = $base->runCommand($cataCmd);
+# if ($errno != 0){
+#     $base->bail("Command \"$cataCmd\" failed with code: $errno");
+# }
 
 my $caqcCmd = "$caqc $prefix.asm > $prefix.qc";
 $base->logLocal("Running \"$caqcCmd\"", 1);
 system($caqcCmd);
+
+my $ca2scaffCmd = "$ca2scaff $prefix.asm -o $prefix";
+$base->logLocal("Running \"$ca2scaffCmd\"", 1);
+$errno = $base->runCommand($ca2scaffCmd);
+if ($errno != 0){
+    $base->bail("Command \"$ca2scaffCmd\" failed with code: $errno");
+}
 
 $base->logLocal("Succesful finish!", 1);
 exit(0);
