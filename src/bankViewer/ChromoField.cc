@@ -1,4 +1,5 @@
 #include "ChromoField.hh"
+#include "RenderSeq.hh"
 #include <qpainter.h>
 #include <qpen.h>
 #include <math.h>
@@ -21,6 +22,8 @@ ChromoField::ChromoField(RenderSeq_t * read,
   :QWidget(parent, name)
 {
   setPalette(QPalette(QColor(180, 180, 180)));
+  m_pix = NULL;
+  int hscale = 2;
 
   string readname = read->m_read.getEID();
 
@@ -31,16 +34,14 @@ ChromoField::ChromoField(RenderSeq_t * read,
                            + readname;
 
   m_render = read;
-  m_rawread = read_reading((char *)path.c_str(), TT_ANY);
-  m_pix = NULL;
+  m_trace = read_reading((char *)path.c_str(), TT_ANY);
 
-  if (!m_rawread)
+  if (!m_trace)
   {
     return;
   }
-  int hscale = 2;
 
-  resize (hscale*m_rawread->NPoints+100,210);
+  resize (hscale*m_trace->NPoints+100,210);
 
   vector<int> pos;
 
@@ -107,11 +108,6 @@ ChromoField::ChromoField(RenderSeq_t * read,
   int startgindex = -1;
   int endgindex = -1;
 
-  // axis
-  painter.drawLine(offset, baseline, hscale*m_rawread->NPoints+offset, baseline);
-  painter.drawLine(offset, baseline, offset, baseline-(maxy/vscale));
-
-  painter.drawLine(offset, slineoffset, hscale*m_rawread->NPoints+offset, slineoffset);
 
   // y-ticks
   for (i = 0; i < maxy; i+=100)
@@ -121,7 +117,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
   }
 
   // x-ticks
-  for (i = 0; i < m_rawread->NPoints; i+=10)
+  for (i = 0; i < m_trace->NPoints; i+=10)
   {
     painter.drawLine(hscale*i+offset,baseline,hscale*i+offset,baseline-tickwidth);
     if (!(i % 50))
@@ -132,7 +128,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   // x-labels
   painter.setFont(QFont("Helvetica", 8));
-  for (i=0; i < m_rawread->NPoints; i += 50)
+  for (i=0; i < m_trace->NPoints; i += 50)
   {
     QString s = QString::number(i);
     painter.drawText(hscale*i-20+offset,baseline+10,40,20,Qt::AlignHCenter,s);
@@ -145,16 +141,16 @@ ChromoField::ChromoField(RenderSeq_t * read,
     unsigned short * trace = NULL;
     switch (channel)
     {
-      case 0: trace = m_rawread->traceA; UIElements::setBasePen(pen, 'A'); break;
-      case 1: trace = m_rawread->traceC; UIElements::setBasePen(pen, 'C'); break;
-      case 2: trace = m_rawread->traceG; UIElements::setBasePen(pen, 'G'); break;
-      case 3: trace = m_rawread->traceT; UIElements::setBasePen(pen, 'T'); break;
+      case 0: trace = m_trace->traceA; UIElements::setBasePen(pen, 'A'); break;
+      case 1: trace = m_trace->traceC; UIElements::setBasePen(pen, 'C'); break;
+      case 2: trace = m_trace->traceG; UIElements::setBasePen(pen, 'G'); break;
+      case 3: trace = m_trace->traceT; UIElements::setBasePen(pen, 'T'); break;
     };
 
     painter.setPen(pen);
 
     painter.moveTo(offset,baseline);
-    for (i = 0; i < m_rawread->NPoints; i++)
+    for (i = 0; i < m_trace->NPoints; i++)
     {
       if (trace[i])
       {
@@ -166,6 +162,14 @@ ChromoField::ChromoField(RenderSeq_t * read,
       }
     }
   }
+
+  painter.setPen(black);
+  
+  // axis
+  painter.drawLine(offset, baseline, hscale*m_trace->NPoints+offset, baseline);
+  painter.drawLine(offset, baseline, offset, baseline-(maxy/vscale));
+
+  painter.drawLine(offset, slineoffset, hscale*m_trace->NPoints+offset, slineoffset);
 
   string bases = read->m_read.getSeqString();
 

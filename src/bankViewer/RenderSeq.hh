@@ -7,6 +7,8 @@
 #include "amp.hh"
 #include "fasta.hh"
 
+#include "ChromoField.hh"
+
 using namespace AMOS;
 
 class RenderSeq_t
@@ -17,6 +19,8 @@ public:
   void load(AMOS::Bank_t & read_bank, AMOS::Tile_t * tile);
   char base(Pos_t gindex) const;
   Pos_t getGindex(Pos_t seqpos) const;
+  void loadTrace(const string & db);
+  int getGSeqPos(int gindex);
 
   static bool hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
                          Pos_t rangeEnd,   // 0-based exact end of range
@@ -58,6 +62,10 @@ public:
   bool m_rc;
   AMOS::Read_t m_read;
   Tile_t * m_tile;
+
+  Read * m_trace;
+  vector<int> m_bcpos;
+  bool m_displayTrace;
 };
 
 #endif

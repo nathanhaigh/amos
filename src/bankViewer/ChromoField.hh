@@ -4,7 +4,6 @@
 #include <qwidget.h>
 #include <qpixmap.h>
 #include <string>
-#include "RenderSeq.hh"
 
 #ifdef __cplusplus
 extern "C"
@@ -16,6 +15,8 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+class RenderSeq_t;
 
 class ChromoField: public QWidget
 {
@@ -32,7 +33,7 @@ protected:
     void paintEvent( QPaintEvent * );
 
 private:
-    Read * m_rawread;
+    Read * m_trace;
     RenderSeq_t * m_render;
     QPixmap * m_pix;
 };

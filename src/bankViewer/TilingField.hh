@@ -19,6 +19,7 @@ public:
 
     QSizePolicy sizePolicy() const;
     void mouseDoubleClickEvent(QMouseEvent * event);
+    void mouseReleaseEvent(QMouseEvent * event);
     void setSize(int width, int height);
 
 public slots:
@@ -29,12 +30,15 @@ protected:
     void paintEvent( QPaintEvent * );
 
 private:
+    int getReadCov(int y);
+
     int & m_fontsize;
     int & m_gindex;
     
     int m_height;
     int m_width;
     int m_stabletiling;
+    int m_traceheight;
 
     const string & m_db;
     const string & m_consensus;

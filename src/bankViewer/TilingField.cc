@@ -37,6 +37,7 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
   m_height=0;
   m_stabletiling = 0;
   m_highlightdiscrepancy = 0;
+  m_traceheight = 50;
 
   setMinimumSize(m_width, m_height);
   setPalette(QPalette(QColor(170, 170, 170)));
@@ -48,16 +49,53 @@ void TilingField::toggleStable(bool stable)
   repaint();
 }
 
-
-void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
+int TilingField::getReadCov(int y)
 {
+  int curoffset = 0;
+
   int gutter      = m_fontsize/2;
   int lineheight  = m_fontsize+gutter;
 
-  int dcov = e->y();
-  dcov /= lineheight;
+  int dcov;
+  vector<RenderSeq_t *>::iterator i;
+  for (i =  m_currentReads.begin(), dcov = 0;
+       i != m_currentReads.end();
+       i++, dcov++)
+  {
+    int curheight = lineheight;
+    if ((*i)->m_displayTrace) { curheight += m_traceheight; }
 
-  if (dcov >= (int) m_currentReads.size()) { return; }
+    if (y >= curoffset && y < curoffset+curheight)
+    {
+      return dcov;
+    }
+
+    curoffset += curheight;
+  }
+
+  return -1;
+}
+
+void TilingField::mouseReleaseEvent( QMouseEvent * e)
+{
+  int dcov = getReadCov(e->y());
+  if (dcov == -1) { return; }
+
+  m_currentReads[dcov]->m_displayTrace = !m_currentReads[dcov]->m_displayTrace;
+
+  if (m_currentReads[dcov]->m_displayTrace)
+  {
+    m_currentReads[dcov]->loadTrace(m_db);
+  }
+
+  repaint();
+}
+
+
+void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
+{
+  int dcov = getReadCov(e->y());
+  if (dcov == -1) { return; }
   ReadInfo * readinfo = new ReadInfo(m_currentReads[dcov], 
                                      m_db, 
                                      m_consensus,
@@ -123,13 +161,20 @@ void TilingField::paintEvent( QPaintEvent * )
 
     if (hasOverlap || m_stabletiling)
     {
+      int readheight = lineheight;
+
+      if (ri->m_displayTrace) 
+      { 
+        readheight += m_traceheight; 
+      }
+    
       // offset rectangle
       if (dcov % 2)
       {
         pen.setColor(offsetColor);
         p.setPen(pen);
         p.setBrush(offsetColor);
-        p.drawRect(0, ldcov, m_width, lineheight);
+        p.drawRect(0, ldcov, m_width, readheight);
       }
 
       // black pen
@@ -171,11 +216,101 @@ void TilingField::paintEvent( QPaintEvent * )
           p.drawText(tilehoffset + (j-grangeStart)*basewidth, ldcov, 
                      m_fontsize, lineheight,
                      Qt::AlignHCenter | Qt::AlignBottom, s);
+
+        }
+
+        if (ri->m_displayTrace) 
+        { 
+          int baseline = ldcov + readheight - 10;
+          
+          if (ri->m_trace)
+          {
+            if (!ri->m_rc)
+            {
+              for (int channel = 0; channel < 4; channel++)
+              {
+                unsigned short * trace = NULL;
+                switch (channel)
+                {
+                  case 0: trace = ri->m_trace->traceA; UIElements::setBasePen(pen, 'A'); break;
+                  case 1: trace = ri->m_trace->traceC; UIElements::setBasePen(pen, 'C'); break;
+                  case 2: trace = ri->m_trace->traceG; UIElements::setBasePen(pen, 'G'); break;
+                  case 3: trace = ri->m_trace->traceT; UIElements::setBasePen(pen, 'T'); break;
+                };
+
+                p.setPen(pen);
+
+                p.moveTo(tilehoffset + m_fontsize/2, baseline);
+
+                for (int j = grangeStart-1; j <= grangeEnd+1; j++)
+                {
+                  int peakposition = ri->m_bcpos[ri->getGSeqPos(j)];
+                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(j+1)];
+
+                  int hdelta = nextpeakposition - peakposition;
+                  double hscale = ((double)(basewidth))/hdelta;
+                  double vscale = 25;
+
+                  int hoffset = tilehoffset + (j-grangeStart)*basewidth+m_fontsize/2;
+                        
+                  for (int t = peakposition; t < nextpeakposition; t++)
+                  {
+                    int tval = trace[t]/vscale;
+
+                    p.lineTo(hoffset + (t-peakposition)*hscale,
+                             baseline-tval);
+                  }
+                }
+              }
+            }
+            else
+            {
+              for (int channel = 0; channel < 4; channel++)
+              {
+                unsigned short * trace = NULL;
+                switch (channel)
+                {
+                  case 0: trace = ri->m_trace->traceA; UIElements::setBasePen(pen, 'T'); break;
+                  case 1: trace = ri->m_trace->traceC; UIElements::setBasePen(pen, 'G'); break;
+                  case 2: trace = ri->m_trace->traceG; UIElements::setBasePen(pen, 'C'); break;
+                  case 3: trace = ri->m_trace->traceT; UIElements::setBasePen(pen, 'A'); break;
+                };
+
+                p.setPen(pen);
+
+                p.moveTo(tilehoffset + m_fontsize/2, baseline);
+
+                for (int j = grangeStart-1; j <= grangeEnd+1; j++)
+                {
+                  int peakposition = ri->m_bcpos[ri->getGSeqPos(j)];
+                  int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(j+1)];
+
+                  int hdelta = peakposition - nextpeakposition;
+                  double hscale = ((double)(basewidth))/hdelta;
+                  double vscale = 25;
+
+                  int hoffset = tilehoffset + (j-grangeStart)*basewidth+m_fontsize/2;
+                        
+                  for (int t = peakposition; t > nextpeakposition; t--)
+                  {
+                    int tval = trace[t]/vscale;
+
+                    p.lineTo(hoffset + (peakposition-t)*hscale,
+                             baseline-tval);
+                  }
+                }
+              }
+            }
+          }
+
+          p.setPen(black);
+          p.drawLine(tilehoffset, baseline, m_width, baseline);
         }
       }
 
+      ldcov += readheight;
+
       dcov++;
-      ldcov = lineheight * dcov;
       m_currentReads.push_back(ri);
     }
   }

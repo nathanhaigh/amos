@@ -3,6 +3,8 @@
 RenderSeq_t::RenderSeq_t(int vectorpos)
 {
   m_vectorpos = vectorpos;
+  m_trace = NULL;
+  m_displayTrace = false;
 }
 
 RenderSeq_t::~RenderSeq_t()
@@ -28,11 +30,13 @@ Pos_t RenderSeq_t::getGindex(Pos_t gseqpos) const
 
   if (m_rc)
   {
+    // compute distance to right aligned position
     seqoffset = gseqpos - m_tile->range.end;
     gindex = m_offset+m_nucs.size()-1-seqoffset;  // -1 -> size based
   }
   else
   {
+    // compute distance to left aligned position
     seqoffset = gseqpos - m_tile->range.begin;
     gindex = m_offset + seqoffset;
   }
@@ -108,4 +112,98 @@ bool RenderSeq_t::hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
   return retval;
 }
 
+void RenderSeq_t::loadTrace(const string & db)
+{
+  if (m_trace) { return; }
 
+  string readname = m_read.getEID();
+
+  string path = "/local/chromo/Chromatograms/";
+  path += db + "/ABISSed/" + readname[0]+readname[1]+readname[2] + "/"
+                           + readname[0]+readname[1]+readname[2]+readname[3] + "/"
+                           + readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/" 
+                           + readname;
+
+  m_trace = read_reading((char *)path.c_str(), TT_ANY);
+  if (!m_trace) { return; }
+
+  char name[100];
+  int version;
+
+  char hex[5];
+  hex[4]='\0';
+  string curseq;
+  FILE * fpos = fopen("dmg.pos", "r");
+  char c;
+  int i;
+  int x;
+  while ((i = fscanf ( fpos, "%s\t%d\t", name, &version )) != 0)
+  {
+    if (readname == name)
+    {
+      while ( fgets ( hex, 5, fpos ) && hex[0] != '\n' )
+      {
+        sscanf ( hex, "%04x", &x );
+        m_bcpos.push_back(x);
+      }
+
+      break;
+    }
+    else
+    {
+      do {
+        c = fgetc(fpos);
+      } while (c != '\n');
+    }
+  }
+
+  cerr << "loaded " << m_bcpos.size() << "positions" << i << endl;
+
+  string bases = m_read.getSeqString();
+  int rangebegin = m_tile->range.begin;
+
+  if (m_rc)
+  {
+    rangebegin = bases.length() - m_tile->range.begin;
+//    reverse(bases.begin(), bases.end());
+    reverse(m_bcpos.begin(), m_bcpos.end());
+  }
+
+  // Insert gaps
+  Pos_t gapcount;
+  vector<Pos_t>::const_iterator g;
+  for (g =  m_tile->gaps.begin(), gapcount = 0; 
+       g != m_tile->gaps.end(); 
+       g++, gapcount++)
+  {
+//    bases.insert(*g+gapcount+rangebegin, 1, '-');
+
+    int left  = m_bcpos[*g+gapcount+rangebegin-1];
+    int right = m_bcpos[*g+gapcount+rangebegin];
+    m_bcpos.insert(m_bcpos.begin()+*g+gapcount+rangebegin, 1, (left+right)/2);
+  }
+
+  if (m_rc)
+  {
+//    reverse(bases.begin(), bases.end());
+    reverse(m_bcpos.begin(), m_bcpos.end());
+  }
+}
+
+int RenderSeq_t::getGSeqPos(int gindex)
+{
+  int gseqpos;
+
+  if (m_rc)
+  {
+    int distance = m_offset + m_nucs.size() -1 - gindex;
+    gseqpos = m_tile->range.end + distance;
+  }
+  else
+  {
+    int distance = gindex - m_offset;
+    gseqpos = m_tile->range.begin + distance;
+  }
+
+  return gseqpos;
+}
