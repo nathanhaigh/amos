@@ -1715,6 +1715,39 @@ void  Multi_Alignment_t :: Clear
 
 
 
+int  Multi_Alignment_t :: Estimate_Offset_Position
+    (int i, const vector <int> & offset)
+
+//  Estimate the position at which  offset [i]  would be in the
+//  consensus of this multialignment using the previous alignments
+//  in  align [0 .. (i-1)] .  The values in  offset  represent the
+//  leftmost positino of each string relative to the preceding string.
+
+  {
+   int  j, off;
+
+   off = offset [i];
+   for  (j = i - 1;  j >= 0;  j --)
+     {
+      int  len;
+
+      len = align [j] . a_hi - align [j] . a_lo;
+      if  (off < len)
+          return  align [j] . B_Position (off);
+
+      off += offset [j];
+     }
+
+   sprintf (Clean_Exit_Msg_Line,
+        "ERROR:  Impossible  offset = %d  i = %d  in  Estimate_Offset_Position\n",
+        offset [i], i);
+   Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+
+   return  -1;
+  }
+
+
+
 void  Multi_Alignment_t :: Print_Alignments_To_Consensus
     (FILE * fp, vector <char *> s)
 
@@ -1959,8 +1992,10 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       attempts = 0;
       wiggle = offset_delta;
       erate = error_rate;
-      curr_offset = ali . B_Position (offset [i]);
-        // where offset position in prior string hits the consensus
+
+      curr_offset = Min (cons_len, Estimate_Offset_Position (i, offset));
+        // where offset position hits the consensus, based on prior
+        // string alignment(s)
 
       do
         {
@@ -1969,7 +2004,6 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
          exp_olap_len = Min (cons_len - lo, len);
 
          error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
-
          matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
                         0, error_limit, ali);
          matched = matched && ali . Error_Rate () <= erate;

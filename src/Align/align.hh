@@ -413,6 +413,8 @@ class  Multi_Alignment_t
 
    void  Clear
        (void);
+   int  Estimate_Offset_Position
+       (int i, const vector <int> & offset);
    void  Print_Alignments_To_Consensus
        (FILE * fp, vector <char *> s);
    void  Reset_From_Votes
