@@ -16,6 +16,7 @@
 #include "messages_AMOS.hh"
 #include "universals_AMOS.hh"
 #include <iostream>
+#include <fstream>
 #include <cassert>
 #include <ctime>
 #include <vector>
@@ -29,7 +30,8 @@ using namespace std;
 
 //=============================================================== Globals ====//
 string  OPT_BankName;                        // bank name parameter
-bool    OPT_IncludeIIDs = false;             // include IIDs in the output
+string  OPT_ExtractName;                     // extract by tag file
+bool    OPT_UseIIDs = false;                 // include IIDs in the output
 bool    OPT_IsExtractCodes = false;          // extract codes or not
 bool    OPT_IsExtractIIDs = false;           // extract iids or not
 bool    OPT_IsExtractEIDs = false;           // extract eids or not
@@ -42,6 +44,14 @@ map<string, bool> OPT_ExtractComments;       // extract message comment map
 
 
 //========================================================== Fuction Decs ====//
+//----------------------------------------------------- ParseExtract -----------
+//! \brief Parses the extract file and loads the appropriate extract map
+//!
+//! \return void
+//!
+void ParseExtract ( );
+
+
 //----------------------------------------------------- ParseArgs --------------
 //! \brief Sets the global OPT_% values from the command line arguments
 //!
@@ -213,7 +223,8 @@ int main (int argc, char ** argv)
 		! OPT_ExtractIDs . exists (id))
 	       ||
 	       (OPT_IsExtractEIDs  &&
-		! OPT_ExtractIDs . exists (invmaps [ti] -> lookup (id))) )
+		(! invmaps [ti] -> exists (id)  ||
+		 ! OPT_ExtractIDs . exists (invmaps [ti] -> lookup (id)))) )
 	    continue;
 
 	  //-- Fetch the next object
@@ -224,6 +235,7 @@ int main (int argc, char ** argv)
 	  cnts ++;
 
 	  //-- Translate the ID pointers from IID to EID
+	  if ( !OPT_UseIIDs )
 	  try {
 	    switch ( ti )
 	      {
@@ -340,11 +352,12 @@ int main (int argc, char ** argv)
 	  if ( showrecord )
 	    {
 	      typep -> writeMessage (msg);
-	      if ( OPT_IncludeIIDs )
+	      if ( OPT_UseIIDs )
 		{
 		  ss . str("");
 		  ss << typep -> getIID( );
 		  msg . setField (F_IID, ss . str( ));
+		  msg . removeField (F_EID);
 		}
 	      msg . write (cout);
 	      cntw ++;
@@ -386,6 +399,76 @@ int main (int argc, char ** argv)
 
 
 
+//----------------------------------------------------- ParseExtract -----------
+void ParseExtract ( )
+{
+  ifstream efile (OPT_ExtractName . c_str( ));
+  string str;
+  ID_t id;
+
+  if ( !efile . good( ) )
+    {
+      cerr << "WARNING: Could not open " << OPT_ExtractName << endl;
+      return;
+    }
+
+  if ( OPT_IsExtractComments )
+    {
+      while ( true )
+	{
+	  getline (efile, str);
+	  if ( !efile . good( ) )
+	    break;
+
+	  if ( !(OPT_ExtractComments .
+		 insert (map<string,bool>::value_type(str,true))).second )
+	    cerr << "WARNING: Cannot insert multiple map keys - Comment "
+		 << str << " ignored" << endl;
+	}
+    }
+  else if ( OPT_IsExtractIIDs )
+    {
+      while ( true )
+	{
+	  efile >> id;
+	  if ( !efile . good( ) )
+	    break;
+
+	  try {
+	    OPT_ExtractIDs . insert (id, 1);
+	  }
+	  catch (Exception_t & e) {
+	    cerr << "WARNING: " << e . what( )
+		 << " - IID " << id << " ignored" << endl;
+	  }
+	}
+    }
+  else if ( OPT_IsExtractEIDs )
+    {
+      while ( true )
+	{
+	  efile >> id;
+	  if ( !efile . good( ) )
+	    break;
+
+	  try {
+	    OPT_ExtractIDs . insert (id, 1);
+	  }
+	  catch (Exception_t & e) {
+	    cerr << "WARNING: " << e . what( )
+		 << " - EID " << id << " ignored" << endl;
+	  }
+	}
+    }
+  else
+    assert (false);
+
+  efile . close( );
+}
+
+
+
+
 //------------------------------------------------------------- ParseArgs ----//
 void ParseArgs (int argc, char ** argv)
 {
@@ -400,32 +483,13 @@ void ParseArgs (int argc, char ** argv)
         break;
 
       case 'c':
-	if ( OPT_IsExtractEIDs  ||  OPT_IsExtractIIDs )
-	  cerr << "WARNING: -c -e -i are mutually exlusive, -c ignored\n";
-	else
-	  {
-	    OPT_IsExtractComments = true;
-	    if ( !(OPT_ExtractComments .
-		   insert (map<string,bool>::value_type(optarg,true))).second )
-	      cerr << "WARNING: Cannot insert multiple map keys - Comment "
-		   << optarg << " ignored" << endl;
-	  }
+	OPT_ExtractName = optarg;
+	OPT_IsExtractComments = true;
 	break;
 
       case 'e':
-	if ( OPT_IsExtractIIDs  ||  OPT_IsExtractComments )
-	  cerr << "WARNING: -c -e -i are mutually exlusive, -e ignored\n";
-	else
-	  {
-	    OPT_IsExtractEIDs = true;
-	    try {
-	      OPT_ExtractIDs . insert (atoi (optarg), 1);
-	    }
-	    catch (Exception_t & e) {
-	      cerr << "WARNING: " << e . what( )
-		   << " - EID " << optarg << " ignored" << endl;
-	    }
-	  }
+	OPT_ExtractName = optarg;
+	OPT_IsExtractEIDs = true;
 	break;
 
       case 'h':
@@ -434,23 +498,12 @@ void ParseArgs (int argc, char ** argv)
         break;
 
       case 'i':
-	if ( OPT_IsExtractEIDs  ||  OPT_IsExtractComments )
-	  cerr << "WARNING: -c -e -i are mutually exlusive, -i ignored\n";
-	else
-	  {
-	    OPT_IsExtractIIDs = true;
-	    try {
-	      OPT_ExtractIDs . insert (atoi (optarg), 1);
-	    }
-	    catch (Exception_t & e) {
-	      cerr << "WARNING: " << e . what( )
-		   << " - IID " << optarg << " ignored" << endl;
-	    }
-	  }
+	OPT_ExtractName = optarg;
+	OPT_IsExtractIIDs = true;
 	break;
 
       case 'I':
-	OPT_IncludeIIDs = true;
+	OPT_UseIIDs = true;
 	break;
 
       default:
@@ -466,6 +519,16 @@ void ParseArgs (int argc, char ** argv)
   if ( access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
       cerr << "ERROR: Bank path is not accessible\n";
+      errflg ++;
+    }
+
+  if (
+      (OPT_IsExtractComments  &&  OPT_IsExtractEIDs)  ||
+      (OPT_IsExtractComments  &&  OPT_IsExtractIIDs)  ||
+      (OPT_IsExtractEIDs      &&  OPT_IsExtractIIDs)
+      )
+    {
+      cerr << "ERROR: -c -e -i are mutually exlusive\n";
       errflg ++;
     }
 
@@ -490,6 +553,9 @@ void ParseArgs (int argc, char ** argv)
 	  }
 	}
     }
+
+  if ( ! OPT_ExtractName . empty( ) )
+    ParseExtract( );
 }
 
 
@@ -501,11 +567,11 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-b path       The directory path of the bank to report\n"
-    << "-c string     Report objects matching this comment, excludes -e -i\n"
-    << "-e uint       Report objects matching this eid, excludes -c -i\n"
+    << "-c file       Report objects matching comments listed in file\n"
+    << "-e file       Report objects matching EIDs listed in file\n"
     << "-h            Display help information\n"
-    << "-i uint       Report objects matching this iid, excludes -c -e\n"
-    << "-I            Include IIDs in the output\n"
+    << "-i file       Report objects matching IIDs listed in file\n"
+    << "-I            Use IIDs for links and IDs instead of EIDs\n"
     << endl;
 
   cerr
@@ -514,8 +580,10 @@ void PrintHelp (const char * s)
     << "link information in the banks will be automatically translated to EID\n"
     << "link information, so all links in the message will refer to EIDs. If\n"
     << "no NCodes are listed on the command line, all object types will be\n"
-    << "reported. This utility only outputs bank information; To alter the\n"
-    << "contents of a bank, please use the bank-transact utility.\n\n";
+    << "reported. The -c -e -i options are mutually exlusive; their files\n"
+    << "should contain a list of tags, one per line. This utility only\n"
+    << "outputs bank information; To alter the contents of a bank, please use\n"
+    << "the bank-transact utility.\n\n";
   return;
 }
 
