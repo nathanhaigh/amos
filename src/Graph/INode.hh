@@ -37,9 +37,17 @@ public:
   virtual int getKey() const = 0;
   virtual void setKey(int p_key) = 0;
 
+  virtual int getDepth() const = 0;
+  virtual void setDepth(int p_depth) = 0;
+
+  virtual int getParent() const = 0;
+  virtual void setParent(int p_parent) = 0;
+
   virtual int getInterval() const = 0;
   virtual void setInterval(int p_interval) = 0;
 
+  virtual int getHidden() const = 0;
+  virtual void setHidden(bool p_hidden) = 0;
   virtual unsigned long getFlags() const = 0;
   virtual void setFlags(unsigned long p_flags) = 0;
 

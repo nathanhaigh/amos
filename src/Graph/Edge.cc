@@ -4,7 +4,9 @@
 using namespace std;
 
 Edge::Edge(void* p_element, bool p_directed) : element(p_element) {
-  flags |= p_directed;
+  flags = 0;
+  //  flags |= p_directed;
+  hidden = false;
 }
 
 void Edge::reverse() {

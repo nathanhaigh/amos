@@ -38,6 +38,8 @@ public:
   /** identitfier, position in array or locator for map */
   int key;
 
+  bool hidden;
+
   /* nodes that the edge is connected */
   /** source if node is directed */
   INode* n1;
@@ -55,6 +57,9 @@ public:
   
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }
+
+  int getHidden() const { return hidden; }
+  void setHidden(bool p_hidden) { hidden = p_hidden; }
 
   unsigned long getFlags() const { return key; }
   void setFlags(unsigned long p_flags) { flags = p_flags; }

@@ -6,8 +6,13 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = tigger
 
 ##-- TO BE TESTED
-check_SCRIPTS =
+check_PROGRAMS = iotest
 
+##-- test
+iotest_LDADD = \
+	$(top_builddir)/src/AMOS/libAMOS.a
+iotest_SOURCES = \
+	TiggerIO.cc
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = -I$(top_srcdir)/src/AMOS -I$(top_srcdir)/src/Graph
@@ -17,7 +22,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/AMOS -I$(top_srcdir)/src/Graph
 tigger_LDADD = \
 	$(top_builddir)/src/Graph/libGraph.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-tigger_SOURCES = Unitigger.cc Unitigger.hh Overlap.hh Read.hh
+tigger_SOURCES = Unitigger.cc Unitigger.hh Overlap.hh Read.hh TiggerIO.cc
 
 
 ##-- END OF MAKEFILE --##

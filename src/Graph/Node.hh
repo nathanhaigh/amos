@@ -13,9 +13,6 @@ class IEdge;
 using namespace std;
 
 typedef list< IEdge* >::iterator IEdgeIterator;
-//typedef list< Node* >::iterator NodeIterator;
-//typedef map< int, Node* >::iterator PairIterator;
-
 
 /**
  * The <b>Node</b> class
@@ -45,13 +42,22 @@ public:
   // identitfier or position
   int key;
 
+  bool hidden;
+
   // interval
   int interval;
+
+  int depth;
+
+  int parent;
 
   unsigned long flags;
 
   Node(void* p_element) : element(p_element) {
     flags = 0;
+    depth = 0;
+    parent = -1;
+    hidden = false;
   }
 
   /* Setters & Getters */
@@ -60,6 +66,23 @@ public:
   
   int getKey() const { return key; }
   void setKey(int p_key) { key = p_key; }
+
+  int getDepth() const { return depth; }
+  void setDepth(int p_depth) { depth = p_depth; }
+
+  int getParent() const { return parent; }
+  void setParent(int p_parent) { parent = p_parent; }
+
+  int getHidden() const { return hidden; }
+
+  void setHidden(bool p_hidden) { 
+    IEdge* edge;
+    hidden = p_hidden;
+    for(IEdgeIterator edges = oedges.begin(); edges != oedges.end(); edges++) {
+      edge = (*edges);
+      edge->setHidden(p_hidden);
+    }
+  }
 
   int getInterval() const { return interval; }
   void setInterval(int p_interval) { interval = p_interval; }

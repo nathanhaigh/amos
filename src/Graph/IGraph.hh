@@ -40,7 +40,7 @@ public:
   /**
    * output dot file for the graph
    */
-  virtual   void create_dot_file(string p_name) = 0;
+  virtual   void create_dot_file(const char* p_filename) = 0;
   
   /**
    * create new INode
@@ -65,6 +65,7 @@ public:
   virtual   list< IEdge* > out_edges(INode* p_node) const = 0;
 
   virtual   INode* aNode() = 0;
+  virtual   void clear_flags() = 0;
 
   /**
    * create new IEdge

@@ -20,7 +20,7 @@ OUTPUTS = $(CONTIG)
 20: $(BINDIR)/hash-overlap -B $(BANK)
 
 ## Running contigger
-30: $(BINDIR)/tigger ?
+30: $(BINDIR)/tigger -b $(BANK)
 
 ## Running consensus
 40: $(BINDIR)/make-consensus -B ? ? $(BANK)

@@ -39,6 +39,10 @@ public:
 
   virtual   unsigned long getFlags() const = 0;
   virtual   void setFlags(unsigned long p_flags) = 0;
+
+  virtual int getHidden() const = 0;
+  virtual void setHidden(bool p_hidden) = 0;
+
   virtual   bool isDirected() const = 0;
   virtual   void setDirected(bool p_bit) = 0;
 

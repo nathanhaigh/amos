@@ -18,12 +18,17 @@
  * </pre>
  */
 class Overlap {
-  
+
 public:
 
-  int rid1, rid2;
+  int rid1;  // A
+  int rid2;  // B
+  bool asuffix;
+  bool bsuffix;
+  bool flip;
   char ori;
   int ahang, bhang;
+  char type;
   int alen, blen;
   int alin_score, errors;
   float percent;

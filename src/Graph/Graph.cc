@@ -45,13 +45,17 @@ list< IEdge* > Graph::incident_edges(INode* p_node) const {
   IEdgeIterator iter = p_node->out_edges_begin();
 
   for( ; iter != p_node->out_edges_end(); ++iter) {
-    edges.push_back(*iter);
+    if(! (*iter)->getHidden()) {
+      edges.push_back(*iter);
+    }
   }
 
   if(directed) {
     iter = p_node->in_edges_begin();
     for( ; iter != p_node->in_edges_end(); ++iter) {
-      edges.push_back(*iter);
+      if(! (*iter)->getHidden()) {
+	edges.push_back(*iter);
+      }
     }
   }
 
@@ -91,13 +95,17 @@ list< INode* > Graph::adjacent_nodes(INode* p_node) {
   IEdgeIterator iter = p_node->out_edges_begin();
 
   for( ; iter != p_node->out_edges_end(); ++iter) {
-    nodes.push_back(opposite(p_node, (*iter)));
+    if(! (*iter)->getHidden()) {
+      nodes.push_back(opposite(p_node, (*iter)));
+    }
   }
 
   if(directed) {
     iter = p_node->in_edges_begin();
     for( ; iter != p_node->in_edges_end(); ++iter) {
-      nodes.push_back(opposite(p_node, (*iter)));
+      if(! (*iter)->getHidden()) {
+	nodes.push_back(opposite(p_node, (*iter)));
+      }
     }
   }
 
@@ -168,22 +176,36 @@ IEdge* Graph::new_edge(INode* p_n1, INode* p_n2, void* p_element) {
   return e;
 }
 
+void Graph::clear_flags() {
+  for(PairIterator nodeIter = nodes.begin(); nodeIter != nodes.end(); ++nodeIter) {
+    (*nodeIter).second->setFlags(0x0);
+  }
+
+  IEdgeIterator edgeIter = edges.begin();  
+  for( ; edgeIter != edges.end(); ++edgeIter) {
+    (*edgeIter)->setFlags(0x0);
+  }
+}
+
 /**
  *
  */
-void Graph::create_dot_file(string p_fileName) {
-  ofstream dotOut("test.dot");
-  PairIterator nodeIter = nodes.begin();
+void Graph::create_dot_file(const char* p_filename) {
+  ofstream dotOut(p_filename);
   
   dotOut << " digraph " << name << " {" << endl;
   
   dotOut << "  label=\"" << name << "\";" << endl;
   dotOut << "  URL=\"" << name << ".html\";" << endl;
   
-  for( ; nodeIter != nodes.end(); ++nodeIter) {
-    int key = (*nodeIter).first;
-    dotOut << "  " <<  key << " [shape=house,orientation=270,URL=\"";
-    dotOut << key << ".html\"];" << endl;
+  INode* n;
+  for(PairIterator nodeIter = nodes.begin(); nodeIter != nodes.end(); ++nodeIter) {
+    n = (*nodeIter).second;
+    if(! n->getHidden()) {
+      int key = (*nodeIter).first;
+      dotOut << "  " <<  key << " [shape=house,orientation=270,URL=\"";
+      dotOut << key << ".html\"];" << endl;
+    }
   }
 
   IEdgeIterator edgeIter = edges.begin();  
@@ -193,13 +215,16 @@ void Graph::create_dot_file(string p_fileName) {
 
   for( ; edgeIter != edges.end(); ++edgeIter) {
     e = (*edgeIter);
-    n1 = e->getSource();
-    n2 = e->getTarget();
+    if(! e->getHidden() ) {
+      n1 = e->getSource();
+      n2 = e->getTarget();
+      
+      dotOut << "  " << n1->getKey() << " -> " << n2->getKey() << " [label=\"" << e->getKey() << "\"]; " << endl;
 
-    dotOut << "  " << n1->getKey() << " -> " << n2->getKey() << " [label=\"" << e->getKey() << "\"]; " << endl;
-
+    }
   }
 
+  cout << " end of create dot file " << endl;
   dotOut << endl;
   dotOut << "} " << endl;
 }

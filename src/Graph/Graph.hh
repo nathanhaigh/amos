@@ -65,7 +65,7 @@ public:
   /**
    * output dot file for the graph
    */
-  void create_dot_file(string p_name);
+  void create_dot_file(const char* p_filename);
   
   /**
    * create new INode
@@ -80,7 +80,7 @@ public:
   PairIterator nodes_begin() { return nodes.begin(); }
   PairIterator nodes_end() { return nodes.end(); }
   
-
+  void clear_flags();
   int degree(INode* p_node) const;
   int out_degree(INode* p_node) const;
   int in_degree(INode* p_node) const;
