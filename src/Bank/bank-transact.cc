@@ -12,7 +12,6 @@
 //! duplicate eid or an invalid link will cause the violating message to be
 //! ignored.
 //!
-//! \todo fix runtime issue with messages
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "amp.hh"

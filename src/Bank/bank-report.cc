@@ -10,7 +10,6 @@
 //! their external IDs (eid's).
 //!
 //! \todo allow the reporting of one or more specific objects
-//! \todo rix runtime issue with messages
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "amp.hh"
