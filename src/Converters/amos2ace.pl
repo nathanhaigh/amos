@@ -208,6 +208,9 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		    if (! exists $$sfields{src}){
 			$base->bail("Error: TLE record contains no src: field\n");
 		    }
+		    if (! exists $seqnames{$$fields{src}}){
+			$base->bail("Sequence with ID $$sfields{src} not found\nSequence records (RED) either not provided or in wrong order\n");
+		    }
 		    $seqName = $seqnames{$$sfields{src}};
 		    $sequence = get_seq($seqfile{$$sfields{src}}, $$sfields{src});
 		    @lines = split('\n', $sequence);
