@@ -16,6 +16,39 @@ using namespace std;
 
 
 //================================================ Message_t ===================
+//----------------------------------------------------- HashCode ---------------
+string AMOS::Message_k::HashCode (uint32_t type)
+{
+  string ret;
+  ret . reserve (Message_k::NCODE);
+
+  for ( int i = 0; i < Message_k::NCODE; i ++ )
+    {
+      ret += ((uint8_t)type);
+      type >>= 8;
+    }
+
+  return ret;
+}
+
+
+//----------------------------------------------------- HashCode ---------------
+uint32_t AMOS::Message_k::HashCode (const string & type)
+{
+  if ( type . size( ) != Message_k::NCODE )
+    AMOS_THROW_ARGUMENT ("Invalid code length");
+
+  uint32_t ret = 0;
+  for ( int i = Message_k::NCODE - 1; i >= 0; i -- )
+    {
+      ret <<= 8;
+      ret |= (uint8_t)type [i];
+    }
+
+  return ret;
+}
+
+
 //----------------------------------------------------- read -------------------
 bool Message_t::read (istream & in)
 {
@@ -98,7 +131,7 @@ void Message_t::setField (const string & fname, const string & data)
   if ( fname . size( ) != NCODE )
     AMOS_THROW_ARGUMENT ("Invalid message field name length");
   for ( int i = 0; i < NCODE; i ++ )
-    if ( !islower (fname [i]) )
+    if ( !islower (fname [i]) && !isdigit (fname [i]))
       AMOS_THROW_ARGUMENT ("Invalid message field name format");
   if ( data . find ('\n') != string::npos  &&
        *(data . rbegin( )) != '\n' )

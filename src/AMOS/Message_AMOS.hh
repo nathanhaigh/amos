@@ -27,6 +27,18 @@ namespace AMOS {
 
 namespace Message_k {
 
+  //--------------------------------------------------- HashCode ---------------
+  //! \brief Converts an integer to an NCODE string
+  //!
+  std::string HashCode (uint32_t type);
+
+
+  //--------------------------------------------------- HashCode ---------------
+  //! \brief Converts an NCODE string to an integer
+  //!
+  uint32_t HashCode (const std::string & type);
+
+
   const uint8_t NCODE = 3;
   //!< Length of a type name (3-code)
 
@@ -285,7 +297,7 @@ public:
     if ( tname . size( ) != Message_k::NCODE )
       AMOS_THROW_ARGUMENT ("Invalid message type name length");
     for ( int i = 0; i < Message_k::NCODE; i ++ )
-      if ( !isupper (tname [i]) )
+      if ( !isupper (tname [i]) && !isdigit (tname [i]))
 	AMOS_THROW_ARGUMENT ("Invalid message type name format");
 
     tname_m = tname;
