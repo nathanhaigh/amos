@@ -36,7 +36,7 @@ int main (int argc, char ** argv)
     contig_bank.open(bank_name);
 
     string group;
-    ID_t iid;
+    string eid;
     int end3;
     int end5;
     string count;
@@ -46,7 +46,7 @@ int main (int argc, char ** argv)
 
     int featurecount = 0;
 
-    while (features >> group >> iid >> end5 >> end3 >> count >> density)
+    while (features >> group >> eid >> end5 >> end3 >> count >> density)
     {
       comment = count + " " + density;
 
@@ -56,9 +56,9 @@ int main (int argc, char ** argv)
       feat.range.setRange(end5,end3);
       feat.comment = comment;
 
-      contig_bank.fetch(iid, contig);
+      contig_bank.fetch(eid.c_str(), contig);
       contig.getFeatures().push_back(feat);
-      contig_bank.replace(iid, contig);
+      contig_bank.replace(eid.c_str(), contig);
 
       featurecount++;
       cerr << ".";

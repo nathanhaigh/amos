@@ -17,7 +17,8 @@ bin_PROGRAMS = \
 	bank2coverage \
 	updateBankPositions \
 	extractContig \
-    loadFeatures
+    loadFeatures \
+    dumpFeatures
 
 dist_bin_SCRIPTS = \
 	bank-unlock.pl
@@ -94,6 +95,13 @@ loadFeatures_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 loadFeatures_SOURCES = \
 	loadFeatures.cc
+
+##-- dumpFeatures
+dumpFeatures_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+dumpFeatures_SOURCES = \
+	dumpFeatures.cc
 
 ##-- dumpmates
 dumpmates_LDADD = \
