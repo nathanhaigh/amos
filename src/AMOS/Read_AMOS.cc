@@ -190,13 +190,19 @@ void Read_t::writeMessage (Message_t & msg) const
     msg . setField (F_CLEAR, ss . str( ));
     ss . str (NULL_STRING);
 
-    ss << vclear_m . begin << ',' << vclear_m . end;
-    msg . setField (F_VECTORCLEAR, ss . str( ));
-    ss . str (NULL_STRING);
+    if ( vclear_m . getLength( ) != 0 )
+      {
+	ss << vclear_m . begin << ',' << vclear_m . end;
+	msg . setField (F_VECTORCLEAR, ss . str( ));
+	ss . str (NULL_STRING);
+      }
 
-    ss << qclear_m . begin << ',' << qclear_m . end;
-    msg . setField (F_QUALITYCLEAR, ss . str( ));
-    ss . str (NULL_STRING);
+    if ( qclear_m . getLength( ) != 0 )
+      {
+	ss << qclear_m . begin << ',' << qclear_m . end;
+	msg . setField (F_QUALITYCLEAR, ss . str( ));
+	ss . str (NULL_STRING);
+      }
 
     if ( !pos_m . empty( ) )
       {
