@@ -172,7 +172,7 @@ int main (int argc, char ** argv)
 	try {
 	  if ( ! bp -> isOpen( ) )
 	    {
-	      if ( OPT_Create )
+	      if ( ! bp -> exists (OPT_BankName) )
 		bp -> create (OPT_BankName, B_WRITE);
 	      else
 		bp -> open (OPT_BankName, B_WRITE);
@@ -327,16 +327,14 @@ void ParseArgs (int argc, char ** argv)
       errflg ++;
     }
 
-  if ( !OPT_Create  &&  access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
+  if ( !OPT_Create && access (OPT_BankName . c_str( ), R_OK|W_OK|X_OK) )
     {
       cerr << "ERROR: Bank directory is not accessible, "
 	   << strerror (errno) << endl;
       errflg ++;
     }
 
-  if ( OPT_Create  &&
-       !OPT_ForceCreate  &&
-       !access (OPT_BankName . c_str( ), F_OK) )
+  if ( OPT_Create && !OPT_ForceCreate && !access (OPT_BankName.c_str( ), F_OK) )
     {
       cerr << "ERROR: Bank path already exists" << endl;
       errflg ++;
