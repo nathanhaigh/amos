@@ -9,6 +9,7 @@ bin_PROGRAMS = \
 	bank-report \
 	bank-transact \
 	dumpmates \
+	select-reads \
 	dumpreads \
 	grow-readbank \
 	load-overlaps \
@@ -91,6 +92,12 @@ dumpmates_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 dumpmates_SOURCES = \
 	dumpmates.cc
+
+##-- select-reads
+select_reads_LDADD = \
+	$(top_builddir)/src/AMOS/libAMOS.a
+select_reads_SOURCES = \
+	select-reads.cc
 
 ##-- dumpreads
 dumpreads_LDADD = \
