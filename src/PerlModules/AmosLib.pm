@@ -153,7 +153,7 @@ sub parseRecord
     my $level = 0;
     my $fieldname;
     for (my $i = 1; $i < $#lines; $i++){
-      if ($lines[$i] =~ /^(\w+):(\S+)$/){   # simple field
+      if ($lines[$i] =~ /^(\w+):(.+)$/){   # simple field
           $fields{$1} = $2;
       } # simple field
       if ($lines[$i] =~ /^(\w+):$/){ # complex field
