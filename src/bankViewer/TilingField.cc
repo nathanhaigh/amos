@@ -195,7 +195,7 @@ void TilingField::paintEvent( QPaintEvent * )
        ri++)
   {
     int hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
-                                             ri->m_loffset, ri->m_nucs.size(), 
+                                             ri->m_loffset, ri->gappedLen(),
                                              clen);
 
     if (hasOverlap || m_stabletiling)

@@ -37,11 +37,14 @@ protected:
 
 private:
   Read * m_trace;
-  RenderSeq_t * m_render;
-  QPixmap * m_pix;
+  RenderSeq_t * m_read;
   std::vector<int> m_pos;
+
+  QPixmap * m_pix;
+
   double m_hscale;
-  int m_hoffset;
+  int    m_hoffset;
+
   bool m_contigView;
 };
 
