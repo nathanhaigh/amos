@@ -220,6 +220,19 @@ struct Range_t
     end = e;
   }
 
+
+  //--------------------------------------------------- Swap -------------------
+  //! \brief Exchange the beginning and end of the range
+  //!
+  void  Swap  (void)
+  {
+   Pos_t  save;
+
+   save = begin;
+   begin = end;
+   end = save;
+  }
+
 };
 
 
