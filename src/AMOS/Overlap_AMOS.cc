@@ -94,6 +94,15 @@ void Overlap_t::readMessage (const Message_t & msg)
 	  AMOS_THROW_ARGUMENT ("Invalid bHang format");
 	ss . clear( );
       }
+
+    if ( msg . exists (F_SCORE) )
+      {
+	ss . str (msg . getField (F_SCORE));
+	ss >> score_m;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid score format");
+	ss . clear( );
+      }
   }
   catch (ArgumentException_t) {
     
@@ -114,6 +123,7 @@ void Overlap_t::readRecord (istream & fix,
   fix . read ((char *)&aHang_m, sizeof (Size_t));
   fix . read ((char *)&bHang_m, sizeof (Size_t));
   fix . read ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
+  fix . read ((char *)&score_m, sizeof (uint32_t));
 }
 
 
@@ -183,6 +193,10 @@ void Overlap_t::writeMessage (Message_t & msg) const
     ss << bHang_m;
     msg . setField (F_BHANG, ss . str( ));
     ss . str (NULL_STRING);
+
+    ss << score_m;
+    msg . setField (F_SCORE, ss . str( ));
+    ss . str (NULL_STRING);
   }
   catch (ArgumentException_t) {
 
@@ -203,4 +217,5 @@ void Overlap_t::writeRecord (ostream & fix,
   fix . write ((char *)&aHang_m, sizeof (Size_t));
   fix . write ((char *)&bHang_m, sizeof (Size_t));
   fix . write ((char *)&reads_m, sizeof (pair<ID_t, ID_t>));
+  fix . write ((char *)&score_m, sizeof (uint32_t));
 }

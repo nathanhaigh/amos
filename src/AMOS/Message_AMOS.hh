@@ -59,6 +59,7 @@ namespace Message_k {
   const NCode_t   F_READ1        = Encode ("rd1");
   const NCode_t   F_READ2        = Encode ("rd2");
   const NCode_t   F_READS        = Encode ("rds");
+  const NCode_t   F_SCORE        = Encode ("scr");
   const NCode_t   F_SEQUENCE     = Encode ("seq");
   const NCode_t   F_SD           = Encode ("std");
   const NCode_t   F_SIZE         = Encode ("sze");
