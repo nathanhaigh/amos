@@ -233,6 +233,22 @@ public:
   }
 
 
+  //--------------------------------------------------- clear ------------------
+  //! \brief Clears the sequence and quality strings
+  //!
+  //! Effectively re-initializes the Sequence
+  //!
+  //! \return void
+  //!
+  void clear ( )
+  {
+    free (seq_m);
+    free (qual_m);
+    seq_m = qual_m = NULL;
+    length_m = 0;
+  }
+
+
   //--------------------------------------------------- compress ---------------
   //! \brief Compress the internal representation of this sequence
   //!
@@ -347,8 +363,8 @@ public:
   //!
   bool isCompressed ( ) const
   {
-    //-- compression flag is in bit 0x1
-    return flags_m . extra & 0x1;
+    //-- compression flag is in bit COMPRESS_BIT
+    return flags_m . extra & COMPRESS_BIT;
   }
 
 
