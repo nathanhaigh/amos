@@ -1,96 +1,9 @@
 #!/usr/local/bin/perl
 
-#$Id$
-
-# Change history: 
-#   $Log$
-#   Revision 1.1  2003/12/23 14:43:20  mpop
-#   *** empty log message ***
-#
-#   Revision 1.25  2002/06/06 14:00:07  mpop
-#   Added a noname option that only uses IDs
-#
-#   Revision 1.24  2002/05/10 19:51:02  mpop
-#   minor bug.
-#
-#   Revision 1.23  2002/05/10 19:48:42  mpop
-#   Added a few changes:
-#    - -noqual option to retrieve only a .seq file from the .frg
-#    - -mates option to retrieve the mate relationships between .frg
-#   sequences
-#    - fixed a bug that created an empty contig record for contigs that
-#   had no consensus (surprisingly enough those exist)
-#
-#   Revision 1.22  2002/04/12 14:05:47  mpop
-#   Added a -justfasta option
-#
-#   Revision 1.21  2002/04/02 23:28:18  mpop
-#   small typos
-#
-#   Revision 1.20  2002/04/02 23:25:22  mpop
-#   Added an option to create a mates file together with the .seq file
-#   when converting .frg files.
-#
-#   Revision 1.19  2002/02/28 20:58:00  mpop
-#   In case seq names are not defined we make some up.
-#
-#   Revision 1.18  2002/02/28 20:53:59  mpop
-#   Added a -noqual option to the output.  Also changed /netapp/asmg to /local/asmg
-#
-#   Revision 1.17  2002/01/31 16:48:22  mpop
-#   Fixed bug which allowed empty contigs in the file.
-#
-#   Revision 1.16  2001/11/20 22:39:32  mpop
-#   Changed the info in the type to the comment field.
-#
-#   Revision 1.15  2001/11/14 20:06:38  mpop
-#   added filter capability.
-#
-#   Revision 1.14  2001/11/14 19:27:56  mpop
-#   fixed check output.
-#
-#   Revision 1.13  2001/11/14 16:15:21  mpop
-#
-#   small bug.
-#
-#   Revision 1.12  2001/11/14 16:10:23  mpop
-#   Made a few changes to the code.  Added use of the AsmLib and also
-#   added more command line parameters, specifically a feature allowing
-#   the retrieval of selected CA Ids.
-#
-#   Revision 1.11  2001/11/12 20:17:40  mpop
-#   *** empty log message ***
-#
-#   Revision 1.10  2001/10/17 21:29:10  mpop
-#   removed gaps in fasta output for consensus.
-#
-#   Revision 1.9  2001/10/05 19:41:30  mpop
-#   fixed MINSEQSIZE
-#
-#   Revision 1.8  2001/10/01 21:30:50  mpop
-#   The .tasm file now contains a type field for each contig.
-#   Additionally, repeat unitigs are now included in the .tasm output.
-#   Types are CA_CONTIG for a proper contig, and CA_FREE for a repeat unitig.
-#
-#   Revision 1.7  2001/09/26 15:23:00  mpop
-#   Fixed conflicts between 1.5 and 1.6
-#
-#   Revision 1.6  2001/09/26 15:18:02  mpop
-#   Just small changes
-#
-#   Revision 1.5  2001/09/19 17:47:36  shumwaym
-#   Output a contig-only fasta file suitable for use by mummer.
-#
-#   Revision 1.4  2001/08/29 15:16:52  mpop
-#   Added CVS pretty fields.
-#
-
-use lib "/local/asmg/lib";
-
 use strict;
 use Fcntl;
 use TIGR::Foundation;
-use AsmLib;
+use TIGR::AsmLib;
 use IO::Handle;
 
 my $FILEBUF;
