@@ -1,0 +1,29 @@
+#---- AMOS Small-scale Assembler Pipeline
+
+#--------------------------------------- USER DEFINED VALUES ------------------#
+TGT = $(PREFIX).afg
+#------------------------------------------------------------------------------#
+
+BINDIR  = /usr/local/bin
+
+BANK    = $(PREFIX).bnk
+CONTIG  = $(PREFIX).ctg.afg
+
+INPUTS  = $(TGT)
+OUTPUTS = $(CONTIG)
+
+
+## Building AMOS bank
+10: $(BINDIR)/bank-transact -c -f -z -b $(BANK) -m $(TGT)
+
+## Running overlap
+20: $(BINDIR)/hash-overlap -B $(BANK)
+
+## Running contigger
+30: $(BINDIR)/tigger ?
+
+## Running consensus
+40: $(BINDIR)/make-consensus -B ? ? $(BANK)
+
+## Outputting contigs
+50: $(BINDIR)/bank-report -b $(BANK) CTG > $(CONTIG)

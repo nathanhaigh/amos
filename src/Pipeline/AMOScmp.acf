@@ -1,15 +1,15 @@
 #---- AMOS Comparative Assembler Pipeline
 
-#---- USER DEFINED ------------------------------------------------------------#
-TGT = ## target genome in AMOS message format
-REF = ## reference genome is multi-FastA format
+#--------------------------------------- USER DEFINED VALUES ------------------#
+TGT = $(PREFIX).afg
+REF = $(PREFIX).1con
 #------------------------------------------------------------------------------#
 
-BINDIR = ## location of the AMOS binaries
-NUCMER = ## location of the nucmer alignment utility
+BINDIR  = /usr/local/bin
+NUCMER  = /usr/local/bin
 
 SEQS    = $(PREFIX).seq
-BANK    = $(PREFIX).bank
+BANK    = $(PREFIX).bnk
 ALIGN   = $(PREFIX).delta
 LAYOUT  = $(PREFIX).layout
 CONTIG  = $(PREFIX).ctg

@@ -1,5 +1,8 @@
 ##-- SUBDIRS TO RECURSE
-SUBDIRS = \
+SUBDIRS =
+
+if BUILD_all
+SUBDIRS += \
 	GNU \
 	AMOS \
 	Common \
@@ -20,6 +23,42 @@ SUBDIRS = \
 	Utils \
 	PerlModules \
 	Pipeline
+endif BUILD_all
+
+if BUILD_AMOScmp
+SUBDIRS += \
+	GNU \
+	AMOS \
+	Common \
+	Slice \
+	CelMsg \
+	Message \
+	Bank \
+	Align \
+	Casm \
+	Converters \
+	Utils \
+	PerlModules \
+	Pipeline
+endif BUILD_AMOScmp
+
+if BUILD_AMOSmini
+SUBDIRS += \
+	GNU \
+	AMOS \
+	Common \
+	Graph \
+	Slice \
+	CelMsg \
+	Message \
+	Bank \
+	Align \
+        Tigger \
+	Converters \
+	Utils \
+	PerlModules \
+	Pipeline
+endif BUILD_AMOSmini
 
 
 ##-- END OF MAKEFILE --##
