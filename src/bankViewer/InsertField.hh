@@ -34,7 +34,7 @@ protected:
 
 private:
   void highlightInsert(InsertCanvasItem * iitem, bool highlight, bool highlightBuddy);
-  void getInsertString(QString & s, int which, Insert * ins);
+  void getInsertString(QString & s, int which, Insert * ins, int isSecond);
   DataStore * m_datastore;
   int & m_hoffset;
 };

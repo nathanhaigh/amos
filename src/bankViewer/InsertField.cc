@@ -30,12 +30,12 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
 
   Insert * ins = iitem->m_insert;
 
-  QString s = "Insert " + QString::number(ins->m_active);
+  QString s = "Insert";
+
+  getInsertString(s, ins->m_active, ins, 0);
+  getInsertString(s, !ins->m_active, ins, 1);
 
   s += QString(" [") + (char)ins->m_state + "] ";
-
-  getInsertString(s, ins->m_active, ins);
-  getInsertString(s, !ins->m_active, ins);
 
   s += " Actual: "   + QString::number(ins->m_actual);
   s += " Expected: " + QString::number(ins->m_dist.mean - 3*ins->m_dist.sd) 
@@ -131,27 +131,35 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
 
 
 
-void InsertField::getInsertString(QString & s, int which, Insert * ins)
+void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int second)
 {
-  if (which == 0)
+  AMOS::ID_t iid = ins->m_aid;
+  AMOS::ID_t contigiid = ins->m_acontig;
+
+  if (selectb)
   {
-    if (ins->m_aid != AMOS::NULL_ID)
-    {
-      s += " a: ";
-      s += m_datastore->read_bank.lookupEID(ins->m_aid);
-      s += " {" + QString::number(ins->m_aid)     + "}";
-      s += " [" + QString::number(ins->m_acontig) + "]";
-    }
+    iid = ins->m_bid;
+    contigiid = ins->m_bcontig;
   }
-  else
+
+  if (iid != AMOS::NULL_ID)
   {
-    if (ins->m_bid != AMOS::NULL_ID)
+    if (second)
     {
-      s += " b: ";
-      s += m_datastore->read_bank.lookupEID(ins->m_bid);
-      s += " {" + QString::number(ins->m_bid)     + "}";
-      s += " [" + QString::number(ins->m_bcontig) + "]";
+      s += " <=>";
     }
+
+    s += " ";
+    if (ins->m_active == selectb)
+    {
+      s += "*";
+    }
+
+    s += "[";
+    s += "e:" + QString(m_datastore->read_bank.lookupEID(iid));
+    s += " i:" + QString::number(iid);
+    s += " c:" + QString::number(contigiid);
+    s += "]";
   }
 }
 
