@@ -9,9 +9,9 @@
 class IEdge;
 class INode;
 
-typedef std::list< IEdge* >::iterator IEdgeIterator;
-typedef std::list< INode* >::iterator INodeIterator;
-typedef std::map< int, INode* >::iterator PairIterator;
+typedef list< IEdge* >::iterator IEdgeIterator;
+typedef list< INode* >::iterator INodeIterator;
+typedef map< int, INode* >::iterator PairIterator;
 
 
 using namespace std;
@@ -40,7 +40,7 @@ public:
   /**
    * output dot file for the graph
    */
-  virtual   void create_dot_file(std::string p_name) = 0;
+  virtual   void create_dot_file(string p_name) = 0;
   
   /**
    * create new INode
@@ -60,9 +60,9 @@ public:
   virtual   int out_degree(INode* p_node) const = 0;
   virtual   int in_degree(INode* p_node) const = 0;
   
-  virtual   std::list< IEdge* > incident_edges(INode* p_node) const = 0;
-  virtual   std::list< IEdge* > in_edges(INode* p_node) const = 0;
-  virtual   std::list< IEdge* > out_edges(INode* p_node) const = 0;
+  virtual   list< IEdge* > incident_edges(INode* p_node) const = 0;
+  virtual   list< IEdge* > in_edges(INode* p_node) const = 0;
+  virtual   list< IEdge* > out_edges(INode* p_node) const = 0;
 
   virtual   INode* aNode() = 0;
 
@@ -79,9 +79,9 @@ public:
   virtual   INode* source(IEdge* p_edge) = 0;
   virtual   INode* target(IEdge* p_edge) = 0;
 
-  virtual   std::list< INode* > adjacent_nodes(INode* p_node) = 0;
-  virtual   std::list< INode* > out_adjacent(INode* p_node) = 0;
-  virtual   std::list< INode* > in_adjacent(INode* p_node) = 0;
+  virtual   list< INode* > adjacent_nodes(INode* p_node) = 0;
+  virtual   list< INode* > out_adjacent(INode* p_node) = 0;
+  virtual   list< INode* > in_adjacent(INode* p_node) = 0;
 
 };
 

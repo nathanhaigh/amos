@@ -6,7 +6,9 @@
 #include "INode.hh"
 #include "IEdge.hh"
 
-typedef std::list< IEdge* >::iterator IEdgeIterator;
+using namespace std;
+
+typedef list< IEdge* >::iterator IEdgeIterator;
 
 const unsigned long DIRECT_MASK = 0x1;
 const unsigned long WEIGHT_MASK = 0x2;
@@ -46,9 +48,7 @@ public:
   /** bit flags */
   unsigned long flags; 
 
-  Edge(void* p_element, bool p_directed =false) : element(p_element) {
-    flags |= p_directed;
-  }
+  Edge(void* p_element, bool p_directed =false);
 
   void* getElement() const { return element; }
   void setElement(void* p_element) { element = p_element; }
@@ -64,11 +64,7 @@ public:
   bool isWeigthed() const { return flags & WEIGHT_MASK; }
   void setWeighted(bool p_bit) { flags |= p_bit; }
 
-  void reverse() {
-    INode* tmp = n1;
-    n1 = n2;
-    n2 = tmp;
-  }
+  void reverse();
 
   INode* getSource() const { return n1; }
 
@@ -78,29 +74,11 @@ public:
 
   void setTarget(INode *p_node) { n2 = p_node; }
 
-  void setNodes(INode *p_node1, INode *p_node2) {
-    n1 = p_node1;
-    n2 = p_node2;
-  }
+  void setNodes(INode *p_node1, INode *p_node2);
 
-  INode** getNodes() const {
-    INode** nodes = new INode*[2];
-    nodes[0] = n1;
-    nodes[1] = n2;
-    
-    return nodes;
-  }
+  INode** getNodes() const;
 
-  INode* opposite(INode *p_node) const {
-    if(n1 == p_node) {
-      return n2;
-    } else if(n2 == p_node) {
-      return n1;
-    } else { 
-      // TODO throw exception
-      return NULL;
-    }
-  }
+  INode* opposite(INode *p_node) const;
 
 };
 
