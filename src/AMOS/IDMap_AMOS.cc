@@ -502,7 +502,6 @@ void IDMap_t::read (istream & in)
 
   clear( );
 
-  in . ignore( );
   in >> ncode >> size;
   type_m = Encode (ncode);
   resize (size);
@@ -524,7 +523,7 @@ void IDMap_t::read (istream & in)
 //----------------------------------------------------- write ------------------
 void IDMap_t::write (ostream & out) const
 {
-  out << '>' << Decode(type_m) << '\t' << size_m << NL_CHAR;
+  out << Decode(type_m) << ' ' << size_m << NL_CHAR;
 
   for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
     out << itr -> bid << '\t' << itr -> iid << '\t' << itr -> eid << NL_CHAR;

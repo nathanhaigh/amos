@@ -648,7 +648,7 @@ public:
   //--------------------------------------------------- read -------------------
   //! \brief Read a tab-delimited IDMap record
   //!
-  //! IDMap NCode and size listed on the first line after a '>' character,
+  //! IDMap NCode and size listed on the first line separated by a single space,
   //! followed by one tab-delimited triple per line in the order: bid, iid, eid.
   //! One of the stream's error bits will be set on failure.
   //!
@@ -673,7 +673,7 @@ public:
   //--------------------------------------------------- write ------------------
   //! \brief Write a tab-delimited IDMap record
   //!
-  //! IDMap NCode and size listed on the first line after a '>' character,
+  //! IDMap NCode and size listed on the first line separated by a single space,
   //! followed by one tab-delimited triple per line in the order: bid, iid, eid.
   //! One of the stream's error bits will be set on failure.
   //!
