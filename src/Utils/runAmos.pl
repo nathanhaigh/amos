@@ -6,18 +6,19 @@ use strict;
 
 my $VERSION = '$Revision$ ';
 my $USAGE = q~
-  USAGE: runAmos -C config_file [-s start] [-e end] prefix
+  USAGE: runAmos -C config_file [-D VAR=value] [-s start] [-e end] [-ocd] prefix
 
 Try 'runAmos -h' for more information.
 ~;
 my $HELP = q~
-    runAmos -C config_file [-s start] [-e end] [-clean] prefix 
+    runAmos -C config_file [-D VAR=value] [-s start] [-e end] [-clean] [-ocd] prefix 
 
     if the config file is not specified we use environment variable AMOSCONF
     if a start step is specified (-s) starts with that command
     if an end step is specified (-e) ends with the command prior to the number
     if -clean is specified, all files except for those listed in the variables INPUTS
 and OUTPUTS get removed from the current directory
+    if -ocd is specified checks that all files in the INPUTS variable exist
 
     e.g.  runAmos -s 1 -e 5   will run steps 1, 2, 3, and 4.
     
@@ -27,7 +28,7 @@ and OUTPUTS get removed from the current directory
 
   Example config file:
 
-    PATH = /usr/local/bin
+    PATH = /usr/local/bin  # can also be set with -D command line option
     PERL = $(PATH)/perl
 
     1: $(PERL) $(PREFIX).pl
@@ -41,22 +42,23 @@ my $base = new TIGR::Foundation();
 if (! defined $base) {
     die("A horrible death\n");
 }
-$base->logAppend(1);
-
 $base->setVersionInfo($VERSION);
 $base->setHelpInfo($HELP);
-$base->setDebugLevel(1);
 
 my $conffile;
 my $prefix;
 my $start;
 my $end;
 my $clean;
+my $ocd;
+my @defines;
 
 my $err = $base->TIGR_GetOptions("conf|C=s"   => \$conffile,
 				 "start|s=i"  => \$start,
 				 "end|e=i"    => \$end,
-				 "clean"      => \$clean);
+				 "clean"      => \$clean,
+				 "D=s"        => \@defines,
+				 "ocd"        => \$ocd);
 
 if ($err != 1){
     $base->bail("Command line processing failed");
@@ -67,6 +69,10 @@ $prefix = $ARGV[0];
 if (! defined $prefix){
     $base->bail($USAGE);
 }
+
+$base->setLogFile("$prefix.runAmos.log");
+$base->setDebugLevel(1);
+
 
 if (! defined $conffile){
     $conffile = $ENV{AMOSCONF};
@@ -88,6 +94,15 @@ my $startime;
 my $noop = 0;
 
 $variables{PREFIX} = $prefix;
+
+for (my $d = 0; $d <= $#defines; $d++){
+    if ($defines[$d] =~ /^(\S+)\s*=\s*(\S.*)\s*$/){
+	if (! exists $variables{$1}){
+	    $variables{$1} = substituteVars($2);
+	    $base->logLocal("Setting variable $1 to $2", 2);
+	}
+    }
+}
 
 open(CONF, "$conffile") || $base->bail("Cannot open $conffile: $!\n");
 
@@ -127,6 +142,10 @@ while (<CONF>){
 	next;
     }
     if (/^(\d+)\s*:\s*(\S.*)\s*$/){ # one-line command
+	if (defined $ocd){
+	    checkFiles();
+	    $ocd = undef;
+	}
 	if ($1 < $step){
 	    $base->bail("Steps appear out of order at line $.");
 	}
@@ -151,6 +170,10 @@ while (<CONF>){
 	next;
     }
     if (/^(\S+)\s*:\s*$/){ # multi-line command
+	if (defined $ocd){
+	    checkFiles();
+	    $ocd = undef;
+	}
 	if ($1 < $step){
 	    $base->bail("Steps appear out of order at line $.");
 	}
@@ -281,4 +304,20 @@ sub prettyTime
     my $day  = int($elapsed / 86400) % 24;
 
     return "${day}d ${hr}h ${min}m ${secs}s";
+}
+
+sub checkFiles
+{
+    my @inputs = split(/\s+/, $variables{"INPUTS"});
+    my $errors = 0;
+    
+    for (my $i = 0; $i <= $#inputs; $i++){
+	if (! -e $inputs[$i]){
+	    $base->logError("File $inputs[$i] specified in INPUTS cannot be found\n");
+	    $errors++;
+	}
+    }
+    if ($errors != 0){
+	$base->bail("Could not find some of the files specified in INPUTS\n");
+    }
 }
