@@ -52,18 +52,21 @@ void Universal_t::toMessage (Message_t & msg) const
   msg . clear( );
 
   try {
+    stringstream ss;
 
-  msg . setMessageCode (getNCode( ));
+    msg . setMessageCode (NCode( ));
 
-  stringstream ss;
-  ss << iid_m;
-  msg . setField (F_IID, ss . str( ));
+    if ( iid_m != NULL_ID )
+      {
+	ss << iid_m;
+	msg . setField (F_IID, ss . str( ));
+      }
+
+    if ( eid_m . size( ) != 0 )
+      msg . setField (F_EID, eid_m);
   
-  if ( eid_m . size( ) != 0 )
-    msg . setField (F_EID, eid_m);
-  
-  if ( comment_m . size( ) != 0 )
-    msg . setField (F_COMMENT, comment_m);
+    if ( comment_m . size( ) != 0 )
+      msg . setField (F_COMMENT, comment_m);
   }
   catch (ArgumentException_t) {
 
