@@ -15,6 +15,7 @@ LCDRange::LCDRange( QWidget *parent, const char *name )
     QLCDNumber *lcd  = new QLCDNumber( 10, this, "lcd"  );
     slider = new QSlider( Horizontal, this, "slider" );
     slider->setValue( 0 );
+    lcd->setSegmentStyle(QLCDNumber::Flat);
     connect( slider, SIGNAL(valueChanged(int)),
 	     lcd, SLOT(display(int)) );
     connect( slider, SIGNAL(valueChanged(int)),
