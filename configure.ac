@@ -115,6 +115,7 @@ AC_CONFIG_FILES(
    src/GNU/Makefile \
    src/AMOS/Makefile \
    src/Bambus/Makefile \
+   src/Bambus/Bundler/Makefile \
    src/Common/Makefile \
    src/Graph/Makefile \
    src/Slice/Makefile \
