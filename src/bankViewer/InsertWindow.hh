@@ -3,6 +3,7 @@
 
 #include <qmainwindow.h>
 #include <string>
+#include "DataStore.hh"
 
 
 class InsertWindow : public QMainWindow
@@ -10,13 +11,16 @@ class InsertWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  InsertWindow(const std::string & bankname, int contigId,
-               QWidget* parent=0, const char* name=0);
+  InsertWindow(DataStore * datastore, QWidget* parent=0, const char* name=0);
+
+public slots:
+  void contigChanged();
 
 signals:
   void setGindex(int gindex);
   void visibleRange(int, int);
   void setTilingVisibleRange(int, int);
+  void refreshCanvas();
 };
 
 #endif

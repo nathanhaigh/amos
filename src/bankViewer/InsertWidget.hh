@@ -7,6 +7,7 @@
 #include "InsertField.hh"
 #include "InsertCanvas.hh"
 #include "InsertPosition.hh"
+#include "DataStore.hh"
 
 #include <qcanvas.h>
 #include <qslider.h>
@@ -18,12 +19,13 @@ class InsertWidget : public QWidget
 
 public:
 
-  InsertWidget(const std::string & bankname, int contigId,
+  InsertWidget(DataStore * datastore,
                QWidget * parent = 0, const char * name = 0);
 
 public slots:
   void setTilingVisibleRange(int, int);
   void setZoom(int);
+  void refreshCanvas();
 
 signals:
   void setStatus(const QString & message);
@@ -36,11 +38,7 @@ private:
   InsertPosition * m_iposition;
 
   QCanvasRectangle * m_tilingVisible;
-
   QSlider * m_zoom;
-
-  std::string m_bankname;
-  int m_contigId;
 };
 
 #endif

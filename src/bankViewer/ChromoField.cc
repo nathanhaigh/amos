@@ -23,7 +23,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
                          const char *name)
   :QWidget(parent, name)
 {
-  setPalette(QPalette(QColor(180, 180, 180)));
+  setPalette(QPalette(UIElements::color_tiling));
   m_pix = NULL;
   m_hscale = 2.0;
 
@@ -73,8 +73,8 @@ ChromoField::ChromoField(RenderSeq_t * read,
   string & quals = m_read->m_quals;
   
   // tint outside the assembled
-  p.setPen(QColor(140,140,140));
-  p.setBrush(QColor(140,140,140));
+  p.setPen(UIElements::color_tilingoffset);
+  p.setBrush(UIElements::color_tilingoffset);
   
   if (m_read->m_rangebegin)
   {

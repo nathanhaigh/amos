@@ -5,12 +5,12 @@
 #include <qspinbox.h>
 #include <qslider.h>
 #include <qscrollbar.h>
-#include <qmainwindow.h>
-#include <string>
 #include <qpopupmenu.h>
+#include <string>
 
 #include "TilingFrame.hh"
 #include "ContigPicker.hh"
+#include "DataStore.hh"
 
 class MainWindow: public QMainWindow
 {
@@ -20,15 +20,15 @@ public:
   MainWindow(QWidget *parent=0, const char *name=0 );
 
   void setBankname(std::string bankname);
-  void setContigId(int contigID);
-  void setGindex(int gindex);
 
 public slots:
   void chooseBank();
   void chooseContig();
-  void setContigRange(int, int);
+
+  void setDB(const QString &);
   void setGindexRange(int, int);
-  void contigSelected(int);
+  void setContigId(int contigID);
+  void setGindex(int gindex);
 
   void showInserts();
 
@@ -47,9 +47,10 @@ signals:
 
 private:
   QSpinBox * m_contigid;
-  QSpinBox * m_gindex;
+  QSpinBox * m_gspin;
   QScrollBar * m_slider;
   QMainWindow * m_contigPicker;
+  TilingFrame * m_tiling;
 
   QPopupMenu * m_options;
   int m_posid;
@@ -58,8 +59,9 @@ private:
   int m_prefetch;
   int m_fontsize;
 
-  std::string m_bankname;
-  TilingFrame * m_tiling;
+  int m_gindex;
+
+  DataStore m_datastore;
 };
 
 #endif

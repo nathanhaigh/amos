@@ -20,26 +20,27 @@ int imax (int a, int b)
 using namespace AMOS;
 using namespace std;
 
-TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
+TilingField::TilingField(DataStore * datastore,
+                         vector<RenderSeq_t> & renderedSeqs,
                          const string & consensus,
                          const string & cstatus,
-                         const string & db,
                          int & gindex,
                          int & fontsize,
                          QWidget *parent, const char *name )
         : QWidget( parent, name ),
           m_fontsize(fontsize),
           m_gindex(gindex),
-          m_db(db),
           m_consensus(consensus),
           m_cstatus(cstatus),
           m_renderedSeqs(renderedSeqs)
 {
+  m_datastore = datastore;
   m_width=600;
   m_height=0;
   m_stabletiling = 0;
   m_highlightdiscrepancy = 0;
-  m_traceheight = 50;
+  m_tracespace = 50;
+  m_traceheight = m_tracespace - 10;
   m_displayqv = 0;
 
   m_clickTimer = new QTimer(this, 0);
@@ -49,7 +50,7 @@ TilingField::TilingField(vector<RenderSeq_t> & renderedSeqs,
   m_clickstate = 0;
 
   setMinimumSize(m_width, m_height);
-  setPalette(QPalette(QColor(170, 170, 170)));
+  setPalette(QPalette(UIElements::color_tiling));
 }
 
 void TilingField::toggleStable(bool stable)
@@ -96,7 +97,7 @@ void TilingField::singleClick()
 
   if (m_currentReads[dcov]->m_displayTrace)
   {
-    m_currentReads[dcov]->loadTrace(m_db);
+    m_currentReads[dcov]->loadTrace(m_datastore->m_db);
   }
 
   repaint();
@@ -124,9 +125,9 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
   int dcov = getReadCov(e->y());
   if (dcov == -1) { return; }
 
-  m_currentReads[dcov]->loadTrace(m_db);
+  m_currentReads[dcov]->loadTrace(m_datastore->m_db);
   ReadInfo * readinfo = new ReadInfo(m_currentReads[dcov], 
-                                     m_db, 
+                                     m_datastore->m_db, 
                                      m_consensus,
                                      m_cstatus,
                                      this, 
@@ -151,7 +152,7 @@ void TilingField::paintEvent( QPaintEvent * )
   int rchoffset      = m_fontsize*11;
   int basewidth      = m_fontsize+basespace;
 
-  double tracevscale = 1500.0 / (m_traceheight - 10);
+  double tracevscale = 1500.0 / m_traceheight;
 
   int displaywidth = (m_width-tilehoffset)/basewidth;
 
@@ -167,8 +168,6 @@ void TilingField::paintEvent( QPaintEvent * )
   p.setFont(QFont("Helvetica", m_fontsize));
   p.setBrush(Qt::SolidPattern);
 
-
-  QColor offsetColor(190,190,190);
 
   QPointArray rcflag(3);
   int tridim = m_fontsize/2;
@@ -206,13 +205,13 @@ void TilingField::paintEvent( QPaintEvent * )
 
       int readheight = lineheight; // seqname
       if (m_displayqv)        { readheight += lineheight; }
-      if (ri->m_displayTrace) { readheight += m_traceheight; }
+      if (ri->m_displayTrace) { readheight += m_tracespace; }
     
-      // offset rectangle
+      // background rectangle
       if (dcov % 2)
       {
-        p.setPen(offsetColor);
-        p.setBrush(offsetColor);
+        p.setPen(UIElements::color_tilingoffset);
+        p.setBrush(UIElements::color_tilingoffset);
         p.drawRect(0, ldcov, m_width, readheight);
       }
 
@@ -287,7 +286,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
         if (ri->m_displayTrace) 
         { 
-          int baseline = ldcov + m_traceheight - 10;
+          int baseline = ldcov + m_traceheight;
           
           if (ri->m_trace)
           {
@@ -341,11 +340,8 @@ void TilingField::paintEvent( QPaintEvent * )
                   int hval = hoffset + (int)((tpos-peakposition)*hscale); // rc negative
                   int tval = (int)(trace[tpos]/tracevscale);
 
-                  if (tval > m_traceheight - 10)
-                  {
-                    // truncate very tall peaks
-                    tval = m_traceheight - 10;
-                  }
+                  // truncate very tall peaks
+                  if (tval > m_traceheight) { tval = m_traceheight; }
 
                   if (first)
                   {
@@ -377,7 +373,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
           p.setPen(black);
           p.drawLine(tilehoffset-basewidth, baseline, m_width, baseline);
-          ldcov += m_traceheight;
+          ldcov += m_tracespace;
         }
       }
       else

@@ -13,6 +13,9 @@ public:
   static void setBasePen(QPen & pen, char base);
   static QColor & getBaseColor(char base);
 
+  static QColor color_tiling;
+  static QColor color_tilingoffset;
+
   static QColor color_a;
   static QColor color_c;
   static QColor color_g;

@@ -6,17 +6,14 @@
 
 using namespace std;
 
-InsertWidget::InsertWidget(const string & bankname, int contigId,
+InsertWidget::InsertWidget(DataStore * datastore,
                            QWidget * parent, const char * name)
  : QWidget(parent, name)
 {
-  m_bankname = bankname;
-  m_contigId = contigId;
-
   QBoxLayout * vbox = new QVBoxLayout(this);
 
   m_iposition = new InsertPosition(this, "insertposition");
-  m_icanvas   = new InsertCanvas(m_bankname, m_contigId, this, "icanvas");
+  m_icanvas   = new InsertCanvas(datastore, this, "icanvas");
   m_ifield    = new InsertField(m_icanvas, this, "qcv");
   m_ifield->show();
 
@@ -75,4 +72,9 @@ void InsertWidget::setZoom(int zoom)
   QWMatrix newzoom(xfactor, matrix.m12(), matrix.m21(), matrix.m22(),
                    matrix.dx(), matrix.dy());
   m_ifield->setWorldMatrix(newzoom);
+}
+
+void InsertWidget::refreshCanvas()
+{
+  m_icanvas->drawCanvas();
 }

@@ -5,14 +5,16 @@
 #include <qtimer.h>
 #include "RenderSeq.hh"
 
+#include "DataStore.hh"
+
 class TilingField : public QWidget
 {
     Q_OBJECT
 public:
-    TilingField(std::vector<RenderSeq_t> & renderedSeqs,
+    TilingField(DataStore * datastore,
+                std::vector<RenderSeq_t> & renderedSeqs,
                 const std::string & consensus,
                 const std::string & cstatus,
-                const std::string & db,
                 int & gindex,
                 int & fontsize,
                 QWidget *parent=0, 
@@ -51,8 +53,8 @@ private:
     int m_width;
     int m_stabletiling;
     int m_traceheight;
+    int m_tracespace;
 
-    const std::string & m_db;
     const std::string & m_consensus;
     const std::string & m_cstatus;
 
@@ -60,6 +62,8 @@ private:
 
     std::vector<RenderSeq_t> & m_renderedSeqs;
     std::vector<RenderSeq_t *> m_currentReads;
+
+    DataStore * m_datastore;
 };
 
 

@@ -1,5 +1,4 @@
 #include "InsertCanvas.hh"
-#include <qpainter.h>
 #include <qfont.h>
 #include <qtooltip.h>
 
@@ -9,24 +8,35 @@
 #include "UIElements.hh"
 #include "InsertCanvasItem.hh"
 
+#include "foundation_AMOS.hh"
+#include "DataStore.hh"
+
+
 using namespace AMOS;
 using namespace std;
 typedef std::map<ID_t, Tile_t *> SeqTileMap_t;
 
-InsertCanvas::InsertCanvas(const string & bankname,
-                           int contigId,
+InsertCanvas::InsertCanvas(DataStore * datastore,
                            QWidget * parent,
                            const char * name)
-  : QCanvas(parent, name),
-    read_bank(AMOS::Read_t::NCODE),
-    contig_bank(AMOS::Contig_t::NCODE),
-    frag_bank(AMOS::Fragment_t::NCODE),
-    lib_bank(AMOS::Library_t::NCODE),
-    mate_bank(AMOS::Matepair_t::NCODE)
+  : QCanvas(parent, name)
 {
   setBackgroundColor(Qt::black);
-  m_bankname = bankname;
-  m_contigId = contigId;
+  m_datastore = datastore;
+
+  drawCanvas();
+}
+
+void InsertCanvas::drawCanvas()
+{
+  QCanvasItemList list = allItems();
+  QCanvasItemList::Iterator it = list.begin();
+  for (; it != list.end(); ++it) {
+      if ( *it )
+          delete *it;
+  }
+
+  if (!m_datastore->m_loaded) { return; }
 
   m_seqheight = 3;
   m_hoffset = 0; // 20
@@ -38,119 +48,109 @@ InsertCanvas::InsertCanvas(const string & bankname,
 
   int layoutgutter = 50;
 
-  try
-  {
-    read_bank.open(m_bankname);
-    contig_bank.open(m_bankname);
-    mate_bank.open(m_bankname);
-    frag_bank.open(m_bankname);
-    lib_bank.open(m_bankname);
-
-    Contig_t contig;
-    contig_bank.fetch(m_contigId, contig);
-
-    m_consensus = contig.getSeqString();
-    m_tiling = contig.getReadTiling();
-  }
-  catch (Exception_t & e)
-  {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
-  }
-
-  sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
-
-  unsigned int clen = m_consensus.size();
-
-  cerr << "Creating iid -> tile_t * map" << endl;
+  unsigned int clen = 0;
   SeqTileMap_t seqtileLookup;
-
-  vector<Tile_t>::iterator vi;
-  for (vi =  m_tiling.begin();
-       vi != m_tiling.end();
-       vi++)
-  {
-    seqtileLookup[vi->source] = &(*vi);
-  }
-
 
   int mated = 0;
   int unmated = 0;
   int allmates = 0;
 
-  cerr << "Loading mates ";
-  Matepair_t mates;
-
-  while (mate_bank >> mates)
+  try
   {
-    allmates++;
-    ID_t aid = mates.getReads().first;
-    ID_t bid = mates.getReads().second;
-    ID_t good = aid;
-    
-    SeqTileMap_t::iterator ai = seqtileLookup.find(aid);
-    SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
+    m_tiling = m_datastore->m_contig.getReadTiling();
+    clen = m_datastore->m_contig.getSeqString().size();
 
-    Tile_t * a = NULL;
-    Tile_t * b = NULL;
+    sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
 
-    if (ai != seqtileLookup.end())
+    cerr << "Creating iid -> tile_t * map" << endl;
+    vector<Tile_t>::iterator vi;
+    for (vi =  m_tiling.begin();
+         vi != m_tiling.end();
+         vi++)
     {
-      a = ai->second;
-      seqtileLookup.erase(ai);
+      seqtileLookup[vi->source] = &(*vi);
     }
 
-    if (bi != seqtileLookup.end())
-    {
-      b = bi->second;
-      seqtileLookup.erase(bi);
-      good = bid;
-    }
-    
-    if (a || b)
-    {
-      mated++;
-      Insert * i = new Insert(a, m_contigId, b, m_contigId, 
-                              getLibrarySize(good), clen);
+    cerr << "Loading mates ";
+    Matepair_t mates;
 
-      if (i->m_state == Insert::Happy)
+    m_datastore->mate_bank.seekg(1);
+    while (m_datastore->mate_bank >> mates)
+    {
+      allmates++;
+      ID_t aid = mates.getReads().first;
+      ID_t bid = mates.getReads().second;
+      ID_t good = aid;
+      
+      SeqTileMap_t::iterator ai = seqtileLookup.find(aid);
+      SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
+
+      Tile_t * a = NULL;
+      Tile_t * b = NULL;
+
+      if (ai != seqtileLookup.end())
       {
-        m_inserts.push_back(i);
+        a = ai->second;
+        seqtileLookup.erase(ai);
       }
-      else
+
+      if (bi != seqtileLookup.end())
       {
-        if (a && b)
+        b = bi->second;
+        seqtileLookup.erase(bi);
+        good = bid;
+      }
+      
+      if (a || b)
+      {
+        mated++;
+        Insert * i = new Insert(a, m_datastore->m_contigId, b, m_datastore->m_contigId, 
+                                getLibrarySize(good), clen);
+
+        if (i->m_state == Insert::Happy)
         {
-          Insert * j = new Insert(*i);
-          j->setActive(1, i);
-          m_inserts.push_back(j);
-
-          i->setActive(0, j);
+          m_inserts.push_back(i);
         }
-        else if (a) { i->setActive(0, NULL); }
-        else if (b) { i->setActive(1, NULL); }
+        else
+        {
+          if (a && b)
+          {
+            Insert * j = new Insert(*i);
+            j->setActive(1, i);
+            m_inserts.push_back(j);
 
-        m_inserts.push_back(i);
+            i->setActive(0, j);
+          }
+          else if (a) { i->setActive(0, NULL); }
+          else if (b) { i->setActive(1, NULL); }
+
+          m_inserts.push_back(i);
+        }
       }
     }
-  }
 
-
-  SeqTileMap_t::iterator si;
-  for (si =  seqtileLookup.begin();
-       si != seqtileLookup.end();
-       si++)
-  {
-    if (si->second)
+    SeqTileMap_t::iterator si;
+    for (si =  seqtileLookup.begin();
+         si != seqtileLookup.end();
+         si++)
     {
-      Insert * i = new Insert(si->second, m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
-      m_inserts.push_back(i);
-      unmated++;
+      if (si->second)
+      {
+        Insert * i = new Insert(si->second, m_datastore->m_contigId, NULL, AMOS::NULL_ID, getLibrarySize(si->second->source), clen);
+        m_inserts.push_back(i);
+        unmated++;
+      }
     }
-  }
 
-  cerr << "allmates: " << allmates 
-       << " mated: "   << mated 
-       << " unmated: " << unmated << endl;
+    cerr << "allmates: " << allmates 
+         << " mated: "   << mated 
+         << " unmated: " << unmated << endl;
+
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+  }
 
   sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
 
@@ -250,13 +250,13 @@ InsertCanvas::~InsertCanvas()
 AMOS::Distribution_t InsertCanvas::getLibrarySize(ID_t readid)
 {
   Read_t read;
-  read_bank.fetch(readid, read);
+  m_datastore->read_bank.fetch(readid, read);
 
   Fragment_t frag;
-  frag_bank.fetch(read.getFragment(), frag);
+  m_datastore->frag_bank.fetch(read.getFragment(), frag);
 
   Library_t lib;
-  lib_bank.fetch(frag.getLibrary(), lib);
+  m_datastore->lib_bank.fetch(frag.getLibrary(), lib);
 
   return lib.getDistribution();
 }

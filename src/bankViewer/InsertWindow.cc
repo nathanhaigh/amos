@@ -7,8 +7,7 @@
 
 using namespace std;
 
-InsertWindow::InsertWindow(const std::string & bankname,
-                           int contigId,
+InsertWindow::InsertWindow(DataStore * datastore,
                            QWidget * parent,
                            const char * name)
   : QMainWindow(parent, name)
@@ -21,7 +20,7 @@ InsertWindow::InsertWindow(const std::string & bankname,
   new QLabel("Zoom", options, "zoomlbl");
   QSlider * zoom = new QSlider(1, 500, 10, 20, Qt::Horizontal, options, "zoom");
 
-  InsertWidget * iw = new InsertWidget(bankname, contigId, this, "iw");
+  InsertWidget * iw = new InsertWidget(datastore, this, "iw");
   setCentralWidget(iw);
   statusBar()->message("Ready", 2000);
   statusBar()->setSizeGripEnabled(false);
@@ -38,4 +37,13 @@ InsertWindow::InsertWindow(const std::string & bankname,
 
   connect(zoom, SIGNAL(valueChanged(int)),
           iw,   SLOT(setZoom(int)));
+
+  connect(this, SIGNAL(refreshCanvas()),
+          iw,   SLOT(refreshCanvas()));
+}
+
+void InsertWindow::contigChanged()
+{
+  emit refreshCanvas();
+
 }

@@ -15,6 +15,9 @@ QColor UIElements::color_MissingMate(Qt::magenta);
 QColor UIElements::color_NoMate(Qt::cyan);
 QColor UIElements::color_Unknown(Qt::white);
 
+QColor UIElements::color_tiling(180,180,180);
+QColor UIElements::color_tilingoffset(160,160,160);
+
 QColor & UIElements::getBaseColor(char base)
 {
   switch (base)

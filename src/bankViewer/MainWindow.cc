@@ -1,26 +1,14 @@
 #include "MainWindow.hh"
 
 #include <qapplication.h>
-#include <qpushbutton.h>
-#include <qfont.h>
-#include <qspinbox.h>
 #include <qmenubar.h>
 #include <qtoolbar.h>
 #include <qtoolbutton.h>
-#include <qpopupmenu.h>
 #include <qfiledialog.h>
 #include <qstatusbar.h>
 #include <qlabel.h>
-#include <qscrollview.h>
 #include <qlineedit.h>
-#include <qcheckbox.h>
-#include <qpushbutton.h>
 #include <qvbox.h>
-#include <qlayout.h>
-
-#include <qmainwindow.h>
-#include <qlistview.h>
-#include <qcursor.h>
 
 #include "TilingFrame.hh"
 #include "InsertWindow.hh"
@@ -30,16 +18,17 @@ using namespace std;
 MainWindow::MainWindow( QWidget *parent, const char *name )
            : QMainWindow( parent, name )
 {
+  m_gindex = -1;
 
   m_contigPicker = NULL;
   m_fontsize = 12;
 
   QVBox * vbox = new QVBox(this, "vbox");
 
-  m_tiling = new TilingFrame(vbox, "tilingframe");
+  m_tiling = new TilingFrame(&m_datastore, vbox, "tilingframe");
 
   m_slider = new QScrollBar(Horizontal, vbox, "slider");
-  m_slider->setTracking(0);
+  m_slider->setTracking(1);
   m_slider->setPageStep(20);
 
   setCentralWidget(vbox);
@@ -66,8 +55,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   status->setLabel("Status");
 
   new QLabel("Position", status, "gindexlbl");
-  m_gindex     = new QSpinBox(0,100, 1, status, "gindexspin");
-  m_gindex->setMinimumWidth(100);
+  m_gspin     = new QSpinBox(0,100, 1, status, "gindexspin");
+  m_gspin->setMinimumWidth(100);
 
   QToolButton * bPrevDisc = new QToolButton(Qt::LeftArrow, status, "prev");
   bPrevDisc->setTextLabel("Previous Discrepancy");
@@ -79,7 +68,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
 
   new QLabel("   Database", status, "dblbl");
-  QLineEdit *  dbpick  = new QLineEdit("DMG", status, "dbpick");
+  QLineEdit *  dbpick  = new QLineEdit(status, "dbpick");
 
   QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 
                                                this, SLOT(showInserts()), status );
@@ -94,90 +83,56 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   new QToolButton(icon_fontminus, "Font Decrease", "Font Decrease",
                   this, SLOT(fontDecrease()), status);
 
-  // slider <-> tiling
-  connect(m_slider, SIGNAL(valueChanged(int)),
-          m_tiling, SLOT(setGindex(int)) );
-
-  connect(m_slider, SIGNAL(sliderMoved(int)),
-          m_tiling, SLOT(trackGindex(int)));
-
-  connect(m_tiling, SIGNAL(gindexChanged(int)),
-          m_slider, SLOT(setValue(int)) );
-
-  connect(m_slider, SIGNAL(sliderReleased()),
-          m_tiling,   SLOT(trackGindexDone()) );
-
-  // m_gindex <-> tiling
-  connect(m_tiling, SIGNAL(gindexChanged(int)),
-          m_gindex, SLOT(setValue(int)));
-
-  connect(m_gindex, SIGNAL(valueChanged(int)),
+  // gindex
+  connect(this,     SIGNAL(gindexChanged(int)),
           m_tiling, SLOT(setGindex(int)));
 
-  // checkboxes <-> tiling
-//  connect(stable, SIGNAL(toggled(bool)),
-//          tiling, SLOT(toggleStable(bool)));
+  connect(this,     SIGNAL(gindexChanged(int)),
+          m_slider, SLOT(setValue(int)));
 
+  connect(this,     SIGNAL(gindexChanged(int)),
+          m_gspin, SLOT(setValue(int)));
+
+  connect(m_tiling, SIGNAL(gindexChanged(int)),
+          this,     SLOT(setGindex(int)));
+          
+  connect(m_gspin, SIGNAL(valueChanged(int)),
+          this,     SLOT(setGindex(int)));
+  
+  connect(m_slider, SIGNAL(valueChanged(int)),
+          this,     SLOT(setGindex(int)));
+
+
+  // discrepancy advance
   connect(bNextDisc, SIGNAL(clicked()),
           m_tiling,    SLOT(advanceNextDiscrepancy()));
   connect(bPrevDisc, SIGNAL(clicked()),
           m_tiling,    SLOT(advancePrevDiscrepancy()));
 
-
-  // contigid <-> tiling
+  // contigid
   connect(m_contigid, SIGNAL(valueChanged(int)),
-          m_tiling,     SLOT(setContigId(int)));
+          this,       SLOT(setContigId(int)));
 
-  connect(m_tiling,   SIGNAL(contigLoaded(int)),
-          m_contigid,   SLOT(setValue(int)));
+  connect(this,       SIGNAL(contigIdSelected(int)),
+          m_contigid, SLOT(setValue(int)));
+
+  connect(this,       SIGNAL(contigIdSelected(int)),
+          m_tiling,   SLOT(setContigId(int)));
 
   // mainwindow <-> tiling
-  connect(this,   SIGNAL(bankSelected(std::string)),
-          m_tiling, SLOT(setBankname(std::string)));
-  
-  connect(m_tiling,   SIGNAL(contigRange(int, int)),
-          this,     SLOT(setContigRange(int, int)));
-
   connect(m_tiling, SIGNAL(setGindexRange(int, int)),
-          this,   SLOT(setGindexRange(int, int)));
-
-  connect(this, SIGNAL(contigIdSelected(int)),
-          m_tiling, SLOT(setContigId(int)));
-
-  connect(this, SIGNAL(gindexChanged(int)),
-          m_tiling, SLOT(setGindex(int)));
-
+          this,     SLOT(setGindexRange(int, int)));
 
   // dbpick <-> tiling
   connect(dbpick, SIGNAL(textChanged(const QString &)),
-          m_tiling, SLOT(setDB(const QString &)));
-
-  
-  // statusbar <-> tiling
-  connect(m_tiling,      SIGNAL(setStatus(const QString &)),
-          statusBar(), SLOT(message(const QString &)));
-  
+          this,   SLOT(setDB(const QString &)));
 
   // Set defaults
-  m_gindex->setValue(0);
+  m_gspin->setValue(0);
   m_slider->setFocus();
+  dbpick->setText("DMG");
 }
 
-void MainWindow::setBankname(std::string bankname)
-{
-  m_bankname = bankname;
-  emit bankSelected(bankname);
-}
-
-void MainWindow::setGindex(int gindex)
-{
-  emit gindexChanged(gindex);
-}
-
-void MainWindow::setContigId(int contigId)
-{
-  emit contigIdSelected(contigId);
-}
 
 void MainWindow::chooseBank()
 {
@@ -188,43 +143,97 @@ void MainWindow::chooseBank()
                    "Choose a Bank",
                    TRUE );
 
-  if (s != "")
+  if (!s.isEmpty())
   {
-    m_bankname = s.ascii();
-    emit bankSelected(s.ascii());
+    setBankname(s.ascii());
   }
 }
 
-void MainWindow::setContigRange(int a, int b)
+void MainWindow::showInserts()
 {
-  m_contigid->setRange(a,b);
-}
+  InsertWindow * insertWindow = new InsertWindow(&m_datastore,
+                                                 this, 
+                                                 "insertWindow");
+  insertWindow->show();
 
-void MainWindow::setGindexRange(int a, int b)
-{
-  m_gindex->setRange(a,b);
-  m_slider->setRange(a,b);
+  connect(insertWindow, SIGNAL(setGindex(int)),
+          this,         SLOT(setGindex(int)));
+
+  connect(m_tiling,      SIGNAL(setTilingVisibleRange(int, int)),
+          insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
+
+  connect(this, SIGNAL(contigIdSelected(int)),
+          insertWindow, SLOT(contigChanged()));
+
+  m_tiling->repaint();
 }
 
 void MainWindow::chooseContig()
 {
   if (m_contigPicker) { m_contigPicker->close(); }
 
-  m_contigPicker = new ContigPicker(m_bankname, this, "contigpicker");
+  m_contigPicker = new ContigPicker(m_datastore.m_bankname, this, "contigpicker");
   connect(m_contigPicker, SIGNAL(contigSelected(int)),
-          this,           SLOT(contigSelected(int)));
+          this,           SLOT(setContigId(int)));
 }
 
-void MainWindow::contigSelected(int contigid)
+void MainWindow::setContigId(int contigId)
 {
-  emit contigIdSelected(contigid);
-
-  if (m_contigPicker)
+  if (!m_datastore.setContigId(contigId))
   {
-    m_contigPicker->close();
-    m_contigPicker = NULL;
+    QString s = "Viewing ";
+    s += m_datastore.m_bankname.c_str();
+    s += " with ";
+    s += QString::number(m_datastore.contig_bank.getSize());
+    s += " contigs";
+
+    s += " Contig Id:";
+    s += QString::number(contigId);
+    s += " Size: ";
+    s += QString::number(m_datastore.m_contig.getSeqString().length());
+    s += " Reads: ";
+    s += QString::number(m_datastore.m_contig.getReadTiling().size());
+
+    statusBar()->message(s);
+
+    emit contigIdSelected(m_datastore.m_contigId);
+
+    if (m_contigPicker)
+    {
+      m_contigPicker->close();
+      m_contigPicker = NULL;
+    }
   }
 }
+
+void MainWindow::setBankname(std::string bankname)
+{
+  if (bankname != "")
+  {
+    if (!m_datastore.openBank(bankname))
+    {
+      emit bankSelected(bankname);
+      m_contigid->setRange(1, m_datastore.contig_bank.getSize());
+      setContigId(1);
+    }
+  }
+}
+
+void MainWindow::setGindex(int gindex)
+{
+  if (gindex == m_gindex) { return; }
+
+  m_gindex = gindex;
+  emit gindexChanged(gindex);
+}
+
+
+void MainWindow::setGindexRange(int a, int b)
+{
+  m_gspin->setRange(a,b);
+  m_slider->setRange(a,b);
+}
+
 
 void MainWindow::toggleShowPositions()
 {
@@ -271,21 +280,7 @@ void MainWindow::fontDecrease()
   m_tiling->setFontSize(m_fontsize);
 }
 
-void MainWindow::showInserts()
+void MainWindow::setDB(const QString & db)
 {
-  InsertWindow * insertWindow = new InsertWindow(m_bankname, 
-                                                 m_contigid->value(), 
-                                                 this, 
-                                                 "insertWindow");
-  insertWindow->show();
-
-  connect(insertWindow, SIGNAL(setGindex(int)),
-          this,         SIGNAL(gindexChanged(int)));
-
-  connect(m_tiling,      SIGNAL(setTilingVisibleRange(int, int)),
-          insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
-
-  m_tiling->repaint();
+  m_datastore.m_db = db.ascii();
 }
-
-

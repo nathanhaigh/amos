@@ -13,30 +13,26 @@ int min (int a, int b)
   return a < b ? a : b;
 }
 
-TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f)
+TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * name, WFlags f)
   :QFrame(parent, name, f),
-   read_bank(Read_t::NCODE),
-   contig_bank(Contig_t::NCODE)
+   m_datastore(datastore)
 {
-  m_contigId = 0;
   m_gindex = 0;
   m_fontsize = 12;
   m_displayAllChromo = true;
-  m_loadedStart = -1;
-  m_loadedEnd = -1;
+
+  m_loadedStart = m_loadedEnd = -1;
 
   toggleDisplayAllChromo(false);
 
-
   resize(500, 500);
-  m_db = "DMG";
   m_sv = new QScrollView(this, "tilingscroll");
   m_sv->setHScrollBarMode(QScrollView::AlwaysOff);
   
-  m_tilingfield = new TilingField(m_renderedSeqs,
+  m_tilingfield = new TilingField(datastore,
+                                  m_renderedSeqs,
                                   m_consensus,
                                   m_cstatus,
-                                  m_db,
                                   m_gindex,
                                   m_fontsize,
                                   m_sv->viewport(),
@@ -48,10 +44,9 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f)
   m_consfield = new ConsensusField(m_consensus, m_cstatus,
                                    m_gindex, this, "cons");
 
-  QGridLayout * layout = new QGridLayout(this, 2, 1);
-  layout->addWidget(m_consfield, 0,0);
-  layout->addWidget(m_sv,1,0);
-  layout->setRowStretch(1,10);
+  QBoxLayout * layout = new QVBoxLayout(this);
+  layout->addWidget(m_consfield);
+  layout->addWidget(m_sv, 10);
 
   connect(this,        SIGNAL(fontSizeChanged(int)),
           m_consfield, SLOT(setFontSize(int)));
@@ -84,84 +79,35 @@ void TilingFrame::paintEvent(QPaintEvent * event)
   QFrame::paintEvent(event);
   m_consfield->repaint();
 
-  //m_tilingfield->setSize(m_sv->visibleWidth(), m_sv->visibleHeight());
   m_tilingfield->setSize(width(), m_sv->visibleHeight());
   m_tilingfield->repaint();
 }
 
 void TilingFrame::setContigId(int contigId)
 {
-  if (contigId == m_contigId) { return; }
-
-  if (m_bankname != "")
+  if (m_datastore->m_loaded)
   {
     try
     {
-      m_contigId = contigId;
-
-      read_bank.open(m_bankname);
-      contig_bank.open(m_bankname);
-
-      Contig_t contig;
-      contig_bank.fetch(m_contigId, contig);
-
-      m_tiling = contig.getReadTiling();
-      m_consensus = contig.getSeqString();
+      m_tiling = m_datastore->m_contig.getReadTiling();
+      m_consensus = m_datastore->m_contig.getSeqString();
 
       m_cstatus.clear();
       m_cstatus.resize(m_consensus.size(), ' ');
       m_renderedSeqs.clear();
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
-      m_loaded = 1;
-      m_loadedStart = -1;
-      m_loadedEnd = -1;
+
+      m_loadedStart = m_loadedEnd = -1;
 
       setGindex(0);
 
       emit setGindexRange(0, (int)m_consensus.size()-1);
-      emit contigLoaded(m_contigId);
-
-      QString s = "Viewing ";
-      s += m_bankname.c_str();
-      s += " with ";
-      s += QString::number(contig_bank.getSize());
-      s += " contigs";
-
-      s += " Contig Id:";
-      s += QString::number(m_contigId);
-      s += " Size: ";
-      s += QString::number(m_consensus.size());
-      s += " Reads: ";
-      s += QString::number(m_tiling.size());
-
-      emit setStatus(s);
-      repaint();
     }
     catch (Exception_t & e)
     {
       cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     }
-  }
-}
-
-
-void TilingFrame::setBankname(string bankname)
-{
-  if (bankname != "")
-  {
-    try
-    {
-      m_bankname = bankname;
-      contig_bank.open(m_bankname);
-    }
-    catch (Exception_t & e)
-    {
-      cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
-    }
-
-    emit contigRange(1, contig_bank.getSize());
-    setContigId(1);
   }
 }
 
@@ -177,7 +123,7 @@ void TilingFrame::setFontSize(int fontsize )
 void TilingFrame::loadContigRange(int gindex)
 {
   //cerr << "TF:setgindex: " << gindex << endl;
-  if (!m_loaded) { return; }
+  if (m_tiling.empty()) { return; }
 
   int basespace = 5;
   int basewidth = m_fontsize + basespace;
@@ -227,8 +173,8 @@ void TilingFrame::loadContigRange(int gindex)
 
         // hasn't been rendered before
         RenderSeq_t rendered;
-        rendered.load(read_bank, &*vi);
-        if (m_displayAllChromo) { rendered.loadTrace(m_db); rendered.m_displayTrace = true; }
+        rendered.load(m_datastore->read_bank, &*vi);
+        if (m_displayAllChromo) { rendered.loadTrace(m_datastore->m_db); rendered.m_displayTrace = true; }
         m_renderedSeqs.push_back(rendered);
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
@@ -268,25 +214,14 @@ void TilingFrame::loadContigRange(int gindex)
 
 void TilingFrame::setGindex(int gindex)
 {
-  if      (gindex < 0)                    { gindex = 0; }
-  else if (gindex > m_consensus.length()) { gindex = m_consensus.length(); }
+  if (m_loadedStart != -1 && gindex == m_gindex) { return; }
+
+  if      (gindex < 0)                          { gindex = 0; }
+  else if (gindex > (int) m_consensus.length()) { gindex = m_consensus.length(); }
 
   loadContigRange(gindex);
-  repaint();
   emit gindexChanged(gindex);
-}
-
-void TilingFrame::setDB(const QString & db)
-{
-  m_db = db.ascii();
-}
-
-void TilingFrame::trackGindex(int gindex)
-{
-  //cerr << "tracking: " << gindex << endl;
-  m_gindex = gindex;
-  m_consfield->repaint();
-  emit gindexChanged( m_gindex );
+  repaint();
 }
 
 void TilingFrame::advanceNextDiscrepancy()
@@ -295,7 +230,7 @@ void TilingFrame::advanceNextDiscrepancy()
 
   int gindex = m_gindex+nextDiscrepancyBuffer+1;
 
-  while (gindex < m_consensus.length())
+  while (gindex < (int)m_consensus.length())
   {
     if (gindex > m_loadedEnd)
     {
@@ -345,13 +280,6 @@ void TilingFrame::advancePrevDiscrepancy()
   setGindex(gindex);
 }
 
-void TilingFrame::trackGindexDone()
-{
-  //cerr << "track done: " << m_gindex << endl;
-  setGindex(m_gindex);
-  repaint();
-}
-
 void TilingFrame::toggleStable(bool stable)
 {
   //cerr << "frame::toggle " << (stable ? "true" : "false") << endl;
@@ -380,7 +308,7 @@ void TilingFrame::toggleDisplayAllChromo(bool display)
          ri != m_renderedSeqs.end();
          ri++)
     {
-      ri->loadTrace(m_db);
+      ri->loadTrace(m_datastore->m_db);
       ri->m_displayTrace = true;
     }
 

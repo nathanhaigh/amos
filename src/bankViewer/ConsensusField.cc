@@ -33,7 +33,7 @@ ConsensusField::ConsensusField(const string & cons,
   m_basespace = 5;
 
   setFontSize(12);
-  setPalette(QPalette(QColor(160, 160, 160)));
+  setPalette(QPalette(UIElements::color_tiling));
 }
 
 void ConsensusField::setFontSize(int fontsize)
@@ -135,7 +135,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     p.setPen(Qt::black);
 
     int n = gindex%10;
-    int scaledfont = (int)jmax((m_fontsize*.6), 6);
+    int scaledfont = (int)jmax((int)(m_fontsize*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
 
     if (m_shownumbers)
