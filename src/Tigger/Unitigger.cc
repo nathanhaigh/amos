@@ -4,8 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include <vector>
-#include <queue>
+#include <stdio.h>
 
 using namespace std;
 using namespace AMOS;
@@ -562,6 +561,9 @@ void Unitigger::layout_contig(Contig* ctg) {
   Overlap* ovl;
   int count = 0;
   queue< INode* > q;
+
+  read->start = 0;
+  read->end = read->len;
 
   ctg->sg->clear_flags();
 

@@ -17,13 +17,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/AMOS -I$(top_srcdir)/src/Graph
 tigger_LDADD = \
 	$(top_builddir)/src/Graph/libGraph.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-tigger_SOURCES = Unitigger.cc Unitigger.hh Overlap.hh Read.hh TiggerIO.cc
+tigger_SOURCES = Unitigger.cc Unitigger.hh Overlap.hh Read.hh TiggerIO.cc Contig.hh
 
 ##-- test
 iotest_LDADD = \
 	$(top_builddir)/src/Graph/libGraph.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-iotest_SOURCES = Unitigger.cc Unitigger.hh Overlap.hh Read.hh TiggerIO.cc
+iotest_SOURCES = Unitigger.cc Unitigger.hh Overlap.hh Read.hh TiggerIO.cc Contig.hh
 
 
 ##-- END OF MAKEFILE --##
