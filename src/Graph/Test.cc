@@ -1,3 +1,8 @@
+int main ( )
+{
+
+  return 0;
+}
 
 /**
  * genLinearGraph - generate a graph that is a linklist
