@@ -1066,7 +1066,8 @@ void  Gapped_Alignment_t :: Convert_From
       i ++;
       b_lo --;
      }
-   if  (d > 0 && (j == 0 || tr [j] - d <= tr [j - 1]))
+   if  (b_lo < 0)
+//##ALD   if  (d > 0 && (j == 0 || tr [j] - d <= tr [j - 1]))
        {
         sprintf (Clean_Exit_Msg_Line,
                  "ERROR:  Convert_From had too many initial inserts\n"
