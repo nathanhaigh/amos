@@ -111,7 +111,12 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
     partition -> var . seekg (vpos);
 
   const IDMap_t::HashTriple_t * trip = triples_m [curr_bid_m - 1];
-  if ( trip != NULL )
+  if ( trip == NULL )
+    {
+      obj . iid_m = NULL_ID;
+      obj . eid_m . erase( );
+    }
+  else
     {
       obj . iid_m = trip -> iid;
       obj . eid_m = trip -> eid;
