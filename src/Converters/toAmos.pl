@@ -15,11 +15,12 @@ use strict;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    toAmos (-m mates|-x traceinfo.xml|-f frg) 
+    toAmos (-m mates|-x traceinfo.xml|-f frg)
            (-c contig|-a asm|-ta tasm|-ace ace|-s fasta|-q qual) 
            -o outfile 
            [-i insertfile | -map dstmap]
            [-gq goodqual] [-bq badqual]
+           [-pos posfile]
 
     toAmos is primarily designed for converting the output of an assembly
 program into the AMOS format so that it can be stored in an AMOS bank.
@@ -49,6 +50,7 @@ my $fastafile;
 my $qualfile;
 my $insertfile;
 my $libmap;
+my $posfile;
 my $GOODQUAL = 30;
 my $BADQUAL = 10;
 
@@ -67,6 +69,7 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "bq=i"  => \$BADQUAL,
 				 "q=s"   => \$qualfile,
 				 "s=s"   => \$fastafile,
+				 "pos=s" => \$posfile,
 				 "id=i"  => \$minSeqId);
 
 
@@ -92,6 +95,7 @@ my %seqinsert;  # sequence id to insert id map
 my %libnames;   # lib id to lib name
 my %ctgnames;   # ctg id to ctg name
 my %ctgids;     # ctg name to ctg id
+my %posidx;     # position of sequence in pos file
 
 my $minCtgId = $minSeqId;  # where to start numbering contigs
 
@@ -130,6 +134,12 @@ if (defined $fastafile){
     } else {
 	parseFastaFile(\*IN);
     }
+    close(IN);
+}
+
+if (defined $posfile){
+    open(IN, $posfile) || $base->bail("Cannot open $posfile: $!\n");
+    parsePosFile(\*IN);
     close(IN);
 }
 
@@ -273,6 +283,9 @@ while (my ($ins, $lib) = each %seenlib){
 }
 
 # then all the reads
+if (defined $posfile){
+    open(POS, $posfile) || $base->bail("Cannot open $posfile: $!\n");
+}
 open(TMPSEQ, "$tmprefix.seq") 
     || $base->bail("Cannot open $tmprefix.seq: $!\n");
 
@@ -296,6 +309,26 @@ while (<TMPSEQ>){
 	    $_ = <TMPSEQ>;
 	}
 	print OUT ".\n";
+	if (defined $posfile){
+	    if (exists $posidx{$rid}){
+		seek POS, $posidx{$rid}, 0;
+		my $line = <POS>;
+		chomp $line;
+		my ($seqname, $ver, $poss) = split('\t', $line);
+#		print "unpacking $poss\n";
+		my @poss = unpack("(a4)*", $poss);
+		@poss = map(hex, @poss);
+#		print "got $#poss pieces\n";
+
+		print OUT "pos:\n";
+		for (my $p = 0; $p <= $#poss; $p += 15){
+		    print OUT join(" ", @poss[$p .. $p + 14]), "\n";
+		}
+		print OUT ".\n";
+	    }# else {
+#		print "What pos: $rid $seqnames{$rid}\n";
+#	    }
+	}
 	if  (! exists $seqinsert{$rid}){
 	    die("Cannot find insert for $rid ($seqnames{$rid})\n");
 	}
@@ -311,6 +344,7 @@ while (<TMPSEQ>){
     }
 }
 close(TMPSEQ);
+if (defined $posfile){ close(POS);}
 
 unlink("$tmprefix.seq") || $base->bail("Cannot remove $tmprefix.seq: $!\n");
 
@@ -454,6 +488,28 @@ sub parseLibMapFile {
 	$libnames{$id} = $name;
     }
 }
+
+# POSIION FILE PARSER
+
+# parse TIGR-style .pos file
+sub parsePosFile {
+    my $IN = shift;
+    my $pos = tell IN;
+    while (<IN>){
+	chomp;
+	my ($seqname, $ver, $poss) = split('\t', $_);
+	if ($seqname ne "SequenceName"){ # skip header
+	    if (! exists $seqids{$seqname}){
+		$base->bail("Have not seen sequence $seqname before processing pos file");
+	    }
+#	print "pos of $seqids{$seqname} $seqname is $pos\n";
+	    $posidx{$seqids{$seqname}} = $pos;
+	}
+	$pos = tell IN;
+    }
+} # parse TIGR-style .pos file
+
+
 # MATES PARSING FUNCTIONS
 
 # parse Trace Archive style XML files
@@ -804,7 +860,7 @@ sub parseAsmFile {
 	    my $contiglen = $$fields{len};
 
 	    $ctgnames{$iid} = $id;
-	    $ctgids {$id} = $iid;
+	    $ctgids{$id} = $iid;
 
 	    my $coord;
 
@@ -822,6 +878,9 @@ sub parseAsmFile {
 	    for (my $i = 0; $i <= $#$recs; $i++){
 		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
 		if ($sid eq "MPS"){
+		    if (! exists $seqids{getCAId($$sfs{mid})}){
+			die ("Have not seen sequence with id " . getCAId($$sfs{mid}));
+		    }
 		    my $fid = $seqids{getCAId($$sfs{mid})};
 		    print TMPCTG "#$fid\n";
 		    print TMPCTG $$sfs{del};
