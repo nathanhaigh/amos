@@ -155,44 +155,59 @@ fi
 echo \
 "  Host System type:    ${host}
   Install prefix:      ${prefix}
+  Install eprefix:     ${exec_prefix}
 
   See config.h for further configuration information.
   Email <${PACKAGE_BUGREPORT}> with questions and bug reports.
 "
 
+# alert the user of possible problems
 case "${host}" in
-     *alpha*osf*)
-     case "${CFLAGS} ${CXXFLAGS}" in
-	  *-g*)
-	echo "WARNING! TIGR alphas may bomb when -g flag is turned on"
-	echo "   use \`configure CFLAGS= CXXFLAGS=' to avoid"
-	  ;;
-     esac
-     ;;
-     *sparc*solaris*)
-     case "${gcc_version}" in
-	  *2.*.*)
-	echo "WARNING! TIGR suns using GCC 2.x.x will bomb on largefile support"
-	echo "   use \`configure --disable-largefile' to avoid"
-          ;;
-     esac
-     ;;
+  *alpha*osf*)
+    case "${CFLAGS} ${CXXFLAGS}" in
+      *-g*)
+        echo "WARNING! TIGR alphas may bomb when -g flag is turned on"
+        echo "   use \`configure CFLAGS= CXXFLAGS=' to avoid"
+      ;;
+    esac
+    ;;
+
+  *sparc*solaris*)
+    case "${gcc_version}" in
+      *2.*.*)
+        if test "${enable_largefile}" != no; then
+        echo "WARNING! TIGR suns using GCC 2.x.x will bomb on largefile support"
+        echo "   use \`configure --disable-largefile' to avoid"
+        fi
+      ;;
+    esac
+    ;;
+
+  *x86_64*)
+    case "${gcc_version}" in
+      *3.*.*)
+        echo "WARNING! GCC ${gcc_version} has bugs that effect 64bit computing"
+        echo "   please install a newer version of GCC and reconfigure"
+        ;;
+    esac
+    ;;
 esac
 
 case "${gcc_version}" in
-     *2.96.*)
-   echo "WARNING! GCC ${gcc_version} has bugs that affect AMOS"
-   echo "   please install an newer version of GCC and reconfigure"
+  *2.96.*)
+    echo "WARNING! GCC ${gcc_version} has bugs that affect AMOS"
+    echo "   please install a newer version of GCC and reconfigure"
+  ;;
 esac
 
 if test "${NUCMER}" = ":"  ||  ! test -x "${NUCMER}"; then
-   echo "WARNING! nucmer was not found, but is required to run AMOScmp"
-   echo "   install nucmer if planning on using AMOScmp"
+  echo "WARNING! nucmer was not found, but is required to run AMOScmp"
+  echo "   install nucmer if planning on using AMOScmp"
 fi
 
 if test "${PERL}" = ":"  ||  ! test -x "${PERL}"; then
-   echo "WARNING! perl was not found, but is required to run AMOS scripts"
-   echo "   install perl if planning on using AMOS scripts"
+  echo "WARNING! perl was not found, but is required to run AMOS scripts"
+  echo "   install perl if planning on using AMOS scripts"
 fi
 
 
