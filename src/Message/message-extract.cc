@@ -172,7 +172,9 @@ void PrintHelp (const char * s)
   cerr
     << "Takes an AMOS message file as input, either from the -m option or\n"
     << "from stdin. All messages matching one of the NCodes specified on the\n"
-    << "command line will be extracted and reported to stdout.\n\n";
+    << "command line will be extracted and reported to stdout. Each message\n"
+    << "will be lightly checked for correct AMOS format, but their NCode and\n"
+    << "fields will not be validated.\n\n";
 }
 
 
