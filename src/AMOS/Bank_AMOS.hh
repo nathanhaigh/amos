@@ -610,7 +610,7 @@ public:
   //! \note Redundancy is allowed, i.e. one old IID may map to many new IIDs
   //! \note Objects flagged for deletion will not be cleaned
   //!
-  //! \param map A map of old-to-new IIDs, where index = new and value = old
+  //! \param id_map A map of old-to-new IIDs, where index = new and value = old
   //! \pre The Bank is open
   //! \pre map[0] == NULL_ID
   //! \pre All IID values in map are within range, except for map[0]
