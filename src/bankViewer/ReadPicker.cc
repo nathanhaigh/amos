@@ -22,9 +22,11 @@ public:
                  QString offset,
                  QString endoffset,
                  QString len,
-                 QString dir)
+                 QString dir,
+                 QString seql,
+                 QString seqr)
                
-    : QListViewItem(parent, iid, eid, offset, endoffset, len, dir) {}
+    : QListViewItem(parent, iid, eid, offset, endoffset, len, dir, seql, seqr) {}
 
 
   int compare(QListViewItem *i, int col,
@@ -85,6 +87,8 @@ ReadPicker::ReadPicker(DataStore * datastore,
   m_table->addColumn("End Offset");
   m_table->addColumn("Length");
   m_table->addColumn("Dir");
+  m_table->addColumn("CLR Begin");
+  m_table->addColumn("CLR End");
 
   m_table->setShowSortIndicator(true);
   m_table->setRootIsDecorated(true);
@@ -112,7 +116,9 @@ ReadPicker::ReadPicker(DataStore * datastore,
                          QString::number(ti->offset),
                          QString::number(ti->offset + len - 1),
                          QString::number(len),
-                         ((ti->range.isReverse())?"R":"F"));
+                         ((ti->range.isReverse())?"R":"F"),
+                         QString::number(ti->range.begin),
+                         QString::number(ti->range.end));
     }
 
     setCursor(orig);
