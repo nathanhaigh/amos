@@ -116,13 +116,13 @@ my %seqfile;
 
 my @files;
 
+my %seqclr;
 for (my $f = 0; $f <= $#ARGV; $f++){
     open($files[$f], $ARGV[$f]) || $base->bail("Cannot open $ARGV[$f]: $!");
     
     my $seekpos = tell $files[$f];
 
-    my %seqclr;
-    while (my $record = getRecord(\*$files[$f])){
+    while (my $record = getRecord($files[$f])){
 	my ($rec, $fields, $recs) = parseRecord($record);
 	my $nseqs;
 	my $id = $$fields{iid};
@@ -131,8 +131,18 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	if ($rec eq "RED"){
 	    $seqpos{$$fields{iid}} = $seekpos;
 	    $seqfile{$$fields{iid}} = $f;
-	    $seqnames{$$fields{iid}}= $$fields{eid};
-	    $seqclr{$$fields{acc}} = $$fields{clr};
+	    if (! exists $$fields{eid} || $$fields{eid} =~ /^\s*$/){
+		$seqnames{$$fields{iid}} = $$fields{iid};
+	    } else {
+		$seqnames{$$fields{iid}}= $$fields{eid};
+		$seqnames{$$fields{iid}} =~ s/^\s+//; # clean up any initial spaces
+		if ($seqnames{$$fields{iid}} =~ /^(\S+)\s+.*$/) {
+		    # if the eid is a space-separated name, use just the first token
+		    $seqnames{$$fields{iid}} = $1;
+		}
+	    }
+	    $seqclr{$$fields{iid}} = $$fields{clr};
+#	    print STDERR "setting clear range for $$fields{iid} to $$fields{clr}\n";
 	} elsif ($rec eq "CTG"){
 	    my $seq = $$fields{seq};
 	    my @lines = split('\n', $seq);
@@ -192,16 +202,22 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		my $seql;
 		my $seqr;
 		my $sequence;
-		if ($sreq eq "TLE"){
+		if ($srec eq "TLE"){
 		    $nReads++;
 		    $nseqs++;
-		    $seqName = $seqname{$$sfields{src}};
+		    if (! exists $$sfields{src}){
+			$base->bail("Error: TLE record contains no src: field\n");
+		    }
+		    $seqName = $seqnames{$$sfields{src}};
 		    $sequence = get_seq($seqfile{$$sfields{src}}, $$sfields{src});
 		    @lines = split('\n', $sequence);
 		    $sequence = join('', @lines);
-		    ($seql, $seqr) = split(',', $seqclr{$$sfields{mid}});
-		    my @gaps = split(' ', $$sfields{del});
+		    ($seql, $seqr) = split(',', $seqclr{$$sfields{src}});
+#		    print STDERR "sequence $$sfields{src} has range $seql, $seqr\n";
+		    my @gaps = split(/\s+/, $$sfields{gap});
 		    my ($asml, $asmr) = split(',', $$sfields{clr});
+
+#		    print STDERR "asml and asmr are $asml $asmr\n";
 		    if ($asml < $asmr){
 			$asmr -= $asml;
 			$asml = 0;
@@ -209,8 +225,10 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 			$asml -= $asmr;
 			$asmr = 0;
 		    }
-		    $asml += $$fields{off};
-		    $asmr += $$fields{off};
+#		    print STDERR "asml and asmr are $asml $asmr\n";
+		    $asml += $$sfields{off};
+		    $asmr += $$sfields{off};
+#		    print STDERR "asml and asmr are $asml $asmr\n";
 
 		    my $left = $seql;
 		    if ($asml > $asmr){
@@ -224,20 +242,20 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 			$seql = $tmp;
 			$left = length($sequence) - $seql;
 		    }
+#		    print STDERR "asml and asmr are $asml $asmr\n";
 		    # now we add gaps to the sequence
 		    my $outseq = "";
 		    my $gapindex = 0;
+#		    print STDERR "have ", $#gaps + 1, " gaps and ", length($sequence), " bases\n";
 		    for (my $j = 0; $j < length($sequence); $j++){
 			my $seqj = $j - $left;# + $seql{$id} - 1; # index in untrimmed sequence
+#			my $seqj = $j; # if index in trimmed sequence
 			if ($gapindex <= $#gaps && $seqj > $gaps[$gapindex]){
 			    print STDERR "Weird $seqnames{$id}, $seqj > $gaps[$gapindex]\n";
 			}
-			# this here is a fix for cases when the last gap index 
-			# is equal to the length of the sequence.  In this case
-			# the sequence gets an extra gap at the very end (which
-			# I might add, is completely stupid).
 			while ($gapindex <= $#gaps && $seqj == $gaps[$gapindex]){
 			    $outseq .= "*";
+			    $asmr++;
 			    $gapindex++;
 			}
 			$outseq .= substr($sequence, $j, 1);
@@ -246,8 +264,9 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		    $seqAlnClr{$seqName} = sprintf("%d %d", 
 						   (($seql < $seqr)?$seql + 1:$seql), 
 						   (($seql < $seqr)?$seqr : $seqr + 1));
-		    my $off = $asml;
+		    my $off = $$sfields{off};
 		    my $ori = ($seql > $seqr) ? "C" : "U";
+
 		    $seqOff{$seqName} = $asml;
 		    $rend{$seqName} = $asmr;
 		    
@@ -303,19 +322,28 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    close(SEQOUT);
 	    my $prev;
 	    my $nBS = 0;
-	    foreach my $sequence ( sort {($seqOff{$a} == $seqOff{$b}) ? ($rend{$b} <=> $rend{$a}) : ($seqOff{$a} <=> $seqOff{$b})} (keys %seqOff)) {
-		if (defined $prev) {
-		    if ($seqOff{$sequence} - 1 < $seqOff{$prev} ||
+
+	    my @offsets = keys  %seqOff;
+#	    print STDERR " I have ", $#offsets + 1, " offsets\n";
+ 	    foreach my $sequence ( sort {
+		($seqOff{$a} == $seqOff{$b}) ? 
+		    ($rend{$b} <=> $rend{$a}) : 
+		    ($seqOff{$a} <=> $seqOff{$b})
+		} (keys %seqOff)) {
+#		print STDERR "${sequence}($seqOff{$sequence}), ";
+ 		if (defined $prev) {
+ 		    if ($seqOff{$sequence} - 1 < $seqOff{$prev} ||
 			$rend{$sequence} < $rend{$prev}){
-			next;
-		    }
-		    $nBS++;
-		    print CTGOUT "BS $seqOff{$prev} ", $seqOff{$sequence} - 1, " $prev\n";
-		}
-		$prev = $sequence;
+ 			next;
+ 		    }
+ 		    $nBS++;
+ 		    print CTGOUT "BS $seqOff{$prev} ", $seqOff{$sequence} - 1, " $prev\n";
+ 		}
+ 		$prev = $sequence;
 	    }
-	    $nBS++;
-	    print CTGOUT "BS $seqOff{$prev} $contigLen $prev\n";
+#	    print STDERR "\n";
+ 	    $nBS++;
+ 	    print CTGOUT "BS $seqOff{$prev} $contigLen $prev\n";
 	    close(CTGOUT);
 	    
 	    print OUT "CO $contigid $contigLen $nseqs $nBS U\n";
@@ -372,8 +400,8 @@ sub get_seq
     my $file = shift;
     my $id = shift;
 
-    seek $file, $seqpos{$id}, 0; # seek set
-    my $record = getRecord($file);
+    seek $files[$file], $seqpos{$id}, 0; # seek set
+    my $record = getRecord($files[$file]);
     if (! defined $record){
         print "weird error\n";
         return;
@@ -382,11 +410,11 @@ sub get_seq
     my ($rec, $fields, $recs) = parseRecord($record);
     
     if ($rec ne "RED"){
-        print STDERR "wierd error in get_seq, expecting frg\n";
+        print STDERR "weird error in get_seq for read $id, expecting RED not $rec at position $seqpos{$id} in file $file\n";
         return;
     }
     if ($$fields{iid} != $id){
-        print STDERR "wierd error in get_seq, expecting $id, got $$fields{acc}\n
+        print STDERR "weird error in get_seq, expecting $id, got $$fields{acc}\n
 ";
         return;
     }
