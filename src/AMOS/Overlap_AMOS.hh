@@ -138,7 +138,7 @@ public:
     if ( oa == NORMAL ) setAdjacency (ANTINORMAL);
     else if ( oa == ANTINORMAL ) setAdjacency (NORMAL);
 
-    Size_t tHang = aHang; aHang = bHang; bHang = tHang;
+    Size_t tHang = aHang_m; aHang_m = bHang_m; bHang_m = tHang;
 
     reads_m = make_pair (reads_m . second, reads_m . first);
   }
