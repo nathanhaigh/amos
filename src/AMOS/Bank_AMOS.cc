@@ -43,7 +43,7 @@ const Size_t Bank_t::DEFAULT_BUFFER_SIZE    = 1024;
 const Size_t Bank_t::DEFAULT_PARTITION_SIZE = 1000000;
 const Size_t Bank_t::MAX_OPEN_PARTITIONS    = 20;
 
-const string Bank_t::BANK_VERSION     =  "2.4";
+const string Bank_t::BANK_VERSION     =  "2.5";
 
 const string Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string Bank_t::IFO_STORE_SUFFIX = ".ifo";
@@ -153,6 +153,40 @@ void Bank_t::appendBID (IBankable_t & obj)
 }
 
 
+//----------------------------------------------------- assignEID --------------
+void Bank_t::assignEID (ID_t iid, const char * eid)
+{
+  ID_t bid = IIDtoBID (iid);
+  string peid (idmap_m . lookupEID (iid));
+  idmap_m . remove (iid);
+
+  try {
+    idmap_m . insert (iid, eid, bid);
+  }
+  catch (Exception_t) {
+    idmap_m . insert (iid, peid . c_str( ), bid);
+    throw;
+  }
+}
+
+
+//----------------------------------------------------- assignIID --------------
+void Bank_t::assignIID (const char * eid, ID_t iid)
+{
+  ID_t bid = EIDtoBID (eid);
+  ID_t piid = idmap_m . lookupIID (eid);
+  idmap_m . remove (eid);
+
+  try {
+    idmap_m . insert (iid, eid, bid);
+  }
+  catch (Exception_t) {
+    idmap_m . insert (piid, eid, bid);
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- clean ------------------
 void Bank_t::clean ( )
 {
@@ -245,7 +279,7 @@ void Bank_t::close ( )
       if ( ! map_stream . is_open( ) )
 	AMOS_THROW_IO ("Could not open bank partition, " + map_path);
       
-      idmap_m . writeRecord (map_stream);
+      idmap_m . write (map_stream);
       
       if ( ! map_stream . good( ) )
 	AMOS_THROW_IO ("Unknown file write error in close, bank corrupted");
@@ -571,14 +605,15 @@ void Bank_t::open (const string & dir, BankMode_t mode)
     if ( ! map_stream . is_open( ) )
       AMOS_THROW_IO ("Could not open bank partition, " + map_path);
     
-    idmap_m . readRecord (map_stream);
+    idmap_m . read (map_stream);
 
     if ( ! map_stream . good( ) )
       AMOS_THROW_IO ("Unknown file read error in open, bank corrupted");
     map_stream . close( );
 
     //-- Make sure nothing smells fishy
-    if ( idmap_m . getSize( ) > nbids_m  ||
+    if ( idmap_m . getType( ) != banktype_m  ||
+         idmap_m . getSize( ) > nbids_m  ||
 	 nbids_m > last_bid_m  ||
 	 last_bid_m > max_bid_m  ||
 	 partitions_m . size( ) != npartitions_m )

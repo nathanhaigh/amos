@@ -470,9 +470,9 @@ protected:
 
 
   //--------------------------------------------------- lockIFO ----------------
-  //! \brief Obtains a file lock on the info store of the current Bank
+  //! \brief Obtains a file lock on the info store of the current bank
   //!
-  //! Obtains a file lock on the info store of the current Bank. Will throw an
+  //! Obtains a file lock on the info store of the current bank. Will throw an
   //! exception if the lock failed either because the info store does not exist
   //! or it took too long to obtain the lock. Has no effect if BankMode is set
   //! to B_SPY.
@@ -538,7 +538,7 @@ protected:
   //! will have an effect if bank is in B_SPY mode. Will throw an exception
   //! if any of the bank locks are violated.
   //!
-  //! \pre The Bank is open
+  //! \pre The bank is open
   //! \param mode I_OPEN, I_CREATE or I_CLOSE (cannot OR these together)
   //! \throws IOException_t
   //! \return void
@@ -553,13 +553,13 @@ protected:
 
 
   //--------------------------------------------------- unlockIFO --------------
-  //! \brief Releases the file lock on the info store of the current Bank
+  //! \brief Releases the file lock on the info store of the current bank
   //!
-  //! Releases the file lock on the info store of the current Bank. Will throw
+  //! Releases the file lock on the info store of the current bank. Will throw
   //! an exception if the unlock failed either because the lock did not exist
   //! or could not be released. Has no effect if BankMode is set for B_SPY.
   //!
-  //! \pre The Bank is open
+  //! \pre The bank is open
   //! \pre The info store is currently locked
   //! \throws IOException_t
   //! \return void
@@ -628,17 +628,17 @@ public:
   //--------------------------------------------------- Bank_t -----------------
   //! \brief Constructs an empty Bank_t of objects with a certain NCode
   //!
-  //! Initializes members and sets Bank type to the supplied value. All future
+  //! Initializes members and sets bank type to the supplied value. All future
   //! operations on this bank must be made with a Bankable type that is
   //! compatibile with the supplied NCode.
   //!
-  //! Once a Bank is created with a certain NCode, only objects compatible
-  //! with that NCode can be used with that Bank. For instance, if a Bank
+  //! Once a bank is created with a certain NCode, only objects compatible
+  //! with that NCode can be used with that bank. For instance, if a bank
   //! is constructed with 'Bank_t mybank (Read_t::NCODE);', only Read_t
   //! objects could be used with mybank. Also, if a static NCode member is not
   //! available 'Bank_t mybank ("RED");' will also work.
   //!
-  //! \param type The type of Bank to construct
+  //! \param type The type of bank to construct
   //!
   Bank_t (NCode_t type)
     : banktype_m (type),
@@ -672,9 +672,9 @@ public:
 
 
   //--------------------------------------------------- append -----------------
-  //! \brief Appends a Bankable object to the Bank
+  //! \brief Appends a Bankable object to the bank
   //!
-  //! Appends a Bankable object to the Bank. The modified and removed flags of
+  //! Appends a Bankable object to the bank. The modified and removed flags of
   //! the object are cleared, because the object is newly appended. If the
   //! object has a non-empty IID/EID value, the bank will include the IID/EID
   //! in the IDMap to allow for future IID <-> EID conversions. Note that
@@ -682,8 +682,8 @@ public:
   //! it accessible only by iteration via a BankStream_t.
   //!
   //! \param obj The Bankable object to append
-  //! \pre The Bank is open for writing
-  //! \pre obj is compatible with the current NCode Bank type
+  //! \pre The bank is open for writing
+  //! \pre obj is compatible with the current NCode bank type
   //! \pre There is no IID/EID of this object already in the bank
   //! \post obj's modified and removed flags are cleared
   //! \post obj IID/EID and assigned BID are added to the IDMap
@@ -694,6 +694,44 @@ public:
   void append (IBankable_t & obj);
 
 
+  //--------------------------------------------------- assignEID --------------
+  //! \brief Assigns an EID to an existing object
+  //!
+  //! Assigns an EID to an object that currently has only an IID. Only affects
+  //! the IDMap and is therefore much more efficient than the replace method.
+  //! Will throw an exception if the IID does not exist or if the new EID
+  //! already exists.
+  //!
+  //! \param iid The IID of the existing object
+  //! \param eid The EID to assign to the object
+  //! \pre The bank is open for read/writing
+  //! \pre The specified IID exists in the bank
+  //! \pre The new EID does not exist in the bank
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void assignEID (ID_t iid, const char * eid);
+
+
+  //--------------------------------------------------- assignIID --------------
+  //! \brief Assigns an object a new IID
+  //!
+  //! Assigns an IID to an object that currently has only an EID. Only affects
+  //! the IDMap and is therefore much more efficient than the replace method.
+  //! Will throw an exception if the IID does not exist or if the new EID
+  //! already exists.
+  //!
+  //! \param eid The EID of the existing object
+  //! \param iid The IID to assign to the object
+  //! \pre The bank is open for read/writing
+  //! \pre The specified EID exists in the bank
+  //! \pre The new IID does not exist in the bank
+  //! \throws ArgumentException_t
+  //! \return void
+  //!
+  void assignIID (const char * eid, ID_t iid);
+
+
   //--------------------------------------------------- clean ------------------
   //! \brief Reorganizes the bank and removes all residual deleted objects
   //!
@@ -701,7 +739,7 @@ public:
   //! rubbish data left over from past replace operations. This is a costly
   //! operation, as it requires the entire bank be copied to a temporary store.
   //!
-  //! \pre The Bank is open for read/writing
+  //! \pre The bank is open for read/writing
   //! \throws IOException_t
   //! \return void
   //!
@@ -716,7 +754,7 @@ public:
   //! Won't complain if some of the partitions won't unlink etc. Has no effect
   //! on a closed bank.
   //!
-  //! \pre The Bank is open for writing
+  //! \pre The bank is open for writing
   //! \throws IOException_t
   //! \return void
   //!
@@ -841,7 +879,7 @@ public:
   //!
   //! \param iid The IID of the object to fetch
   //! \param obj A Bankable object to store the data
-  //! \pre The Bank is open for reading
+  //! \pre The bank is open for reading
   //! \pre The requested IID exists in the bank
   //! \pre obj is compatible with the current NCode bank type
   //! \post The desired object data will be loaded into obj
@@ -995,7 +1033,7 @@ public:
   //! size of the bank.
   //!
   //! \param iid The IID of the object to remove
-  //! \pre The Bank is open for read/writing
+  //! \pre The bank is open for read/writing
   //! \pre The IID exists in the bank
   //! \post The object is conceptually removed from the bank
   //! \throws IOException_t
@@ -1032,7 +1070,7 @@ public:
   //!
   //! \param iid The IID of the object to replace
   //! \param obj The Bankable object to replace old object
-  //! \pre The Bank is open for read/writing
+  //! \pre The bank is open for read/writing
   //! \pre The specified IID exists in the bank
   //! \pre obj is compatible with the current NCode bank type
   //! \pre The new object EID does not exist in the bank

@@ -242,7 +242,7 @@ void IDMap_t::readMessage (const Message_t & msg)
   clear( );
 
   try {
-    Size_t size = 0;
+    Size_t size = -1;
     istringstream ss;
 
     if ( msg . exists (F_TYPE) )
@@ -284,7 +284,7 @@ void IDMap_t::readMessage (const Message_t & msg)
 	  AMOS_THROW_ARGUMENT ("Invalid map format");
 	ss . clear( );
 
-	if ( size != 0  &&  size != size_m )
+	if ( size >= 0  &&  size != size_m )
 	  AMOS_THROW_ARGUMENT ("map and size fields do not agree");
       }
   }
@@ -460,7 +460,7 @@ void IDMap_t::writeMessage (Message_t & msg) const
 	string str;
 	for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
 	  {
-	    ss << itr -> bid << ',' << itr -> iid << ',';
+	    ss << itr -> bid << '\t' << itr -> iid << '\t';
 	    str . append (ss . str( ));
 	    ss . str (NULL_STRING);
 	    str . append (itr -> eid);
@@ -492,38 +492,42 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & s)
 }
 
 
-//----------------------------------------------------- readRecord -------------
-void IDMap_t::readRecord (istream & in)
+//----------------------------------------------------- read -------------------
+void IDMap_t::read (istream & in)
 {
   Size_t size;
+  string ncode;
   string eid;
   ID_t bid, iid;
 
   clear( );
-  readLE (in, &type_m);
-  readLE (in, &size);
+
+  in . ignore( );
+  in >> ncode >> size;
+  type_m = Encode (ncode);
   resize (size);
-  for ( Size_t i = 0; i < size; i ++ )
+
+  while ( in )
     {
-      readLE (in, &bid);
-      readLE (in, &iid);
-      getline (in, eid, NULL_CHAR);
-      insert (iid, eid . c_str( ), bid);
+      in >> bid >> iid;
+      in . ignore( );
+      getline (in, eid);
+      if ( ! in . fail( ) )
+        insert (iid, eid . c_str( ), bid);
     }
+
+  if ( size == size_m  &&  in . eof( ) )
+    in . clear( );
 }
 
 
-//----------------------------------------------------- writeRecord ------------
-void IDMap_t::writeRecord (ostream & out) const
+//----------------------------------------------------- write ------------------
+void IDMap_t::write (ostream & out) const
 {
-  writeLE (out, &type_m);
-  writeLE (out, &size_m);
+  out << '>' << Decode(type_m) << '\t' << size_m << NL_CHAR;
+
   for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
-    {
-      writeLE (out, &(itr -> bid));
-      writeLE (out, &(itr -> iid));
-      out . write (itr -> eid, strlen (itr -> eid) + 1);
-    }
+    out << itr -> bid << '\t' << itr -> iid << '\t' << itr -> eid << NL_CHAR;
 }
 
 

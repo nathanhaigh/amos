@@ -645,10 +645,17 @@ public:
   virtual void writeMessage (Message_t & msg) const;
 
 
-  //--------------------------------------------------- readRecord -------------
-  //! \brief Read a binary IDMap record
+  //--------------------------------------------------- read -------------------
+  //! \brief Read a tab-delimited IDMap record
   //!
-  void readRecord (std::istream & in);
+  //! IDMap NCode and size listed on the first line after a '>' character,
+  //! followed by one tab-delimited triple per line in the order: bid, iid, eid.
+  //! One of the stream's error bits will be set on failure.
+  //!
+  //! \param in The stream to read the IDMap from
+  //! \return void
+  //!
+  void read (std::istream & in);
 
 
   //--------------------------------------------------- setType ----------------
@@ -663,10 +670,17 @@ public:
   }
 
 
-  //--------------------------------------------------- writeRecord ------------
-  //! \brief Write a binary IDMap record
+  //--------------------------------------------------- write ------------------
+  //! \brief Write a tab-delimited IDMap record
   //!
-  void writeRecord (std::ostream & out) const;
+  //! IDMap NCode and size listed on the first line after a '>' character,
+  //! followed by one tab-delimited triple per line in the order: bid, iid, eid.
+  //! One of the stream's error bits will be set on failure.
+  //!
+  //! \param out The stream to write the IDMap to
+  //! \return void
+  //!
+  void write (std::ostream & out) const;
 
 };
 
