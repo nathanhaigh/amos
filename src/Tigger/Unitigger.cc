@@ -277,18 +277,22 @@ void Unitigger::add_containment() {
 }
 
 // TODO: refactor 
+// TODO: better handle two distinct overlaps between reads
 void Unitigger::hide_transitive_overlaps(IGraph* g) {
-  queue< INode* > q;
+  queue< INode* > q; // queue of gray nodes
   queue< INode* > children;
   map< int, IEdge* > parents; // parent mapping
-  queue< IEdge* > trans;
+  queue< IEdge* > trans; // trans edges that were found
 
   graph->clear_flags();
 
+  // loop over all nodes 
   for(INodeIterator nodeIter = g->nodes_begin(); nodeIter != g->nodes_end(); ++nodeIter) {
     INode* root_node = (*nodeIter).second;
     int depth = 1;
 
+    // look for one that isn't hidden and hasn't been visited by BFS
+    // use as root for BFS
     if((! root_node->getHidden()) && root_node->getDepth() == 0) {
       root_node->setDepth(depth);
       root_node->setFlags(1);
@@ -304,113 +308,136 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 	q.pop();
 	depth = cur_node->getDepth();
 	cur_node->setFlags(2); // black
-	
+
 	// go over each child and mark/queue
+	cout << "children of " << cur_node->getKey();
 	inc_edges = g->incident_edges(cur_node);
 	for(edgeListIter iter = inc_edges.begin(); iter != inc_edges.end(); ++iter) {
 	  cur_edge = (*iter);
 	  child = cur_edge->opposite(cur_node);
+
+	  if(child == NULL) {
+	    cout << " ERROR null node in graph " << endl;
+	    exit(1);
+	  }
+	  
 	  if(child->getFlags() == 0) { // hasn't  been visited
 	    child->setDepth(depth + 1);
 	    child->setFlags(1); // gray
 	    parents[child->getKey()] = cur_edge;
-	    q.push(child);
-	    children.push(child);
+	    q.push(child);  // push onto gray queue
+
 	    child->setParent(cur_node->getKey());
+	    children.push(child); // this nodes children
+	    cout << " " << child->getKey();
+
+
 	  } else if(child->getFlags() == 1) {
-	    children.push(child);
-	    child->setParent(cur_node->getKey());
+	    if(child->getParent() == -1) {
+	      child->setParent(cur_node->getKey());
+	      children.push(child);
+	      cout << " " << child->getKey();
+	    } else {
+	      cout << " " << child->getKey() << "(dup)";
+	    }
+
 	    parents[child->getKey()] = cur_edge;
+
+	  } else { // flags should be 2/black
+	    cout << " " << child->getKey() << "(done)";
+
 	  }
 	}
 
 
 	// look for transitive edges
+	cout << endl << " start looking for 3 cycles for children of node " << cur_node->getKey() << endl;
 	while(! children.empty()) {
 	  IEdge* grand_edge;
 	  INode* grand_node = children.front();
 	  children.pop();
 	  INode* node2;
-
+	  
 	  list< IEdge* > grand = g->incident_edges(grand_node);
-	    for(edgeListIter iter = grand.begin(); iter != grand.end(); ++iter) {
-	      grand_edge = (*iter);
-	      node2 = grand_edge->opposite(grand_node);
-
-	      if(node2->getFlags() != 2) {
-		// check for transitive link
-		if(node2->getParent() == grand_node->getParent()) {
-		  int pkey = grand_node->getParent();
-		  int gkey = grand_node->getKey();
-		  int nkey = node2->getKey();
-		  bool suffix1;
-		  bool suffix2;
-
-		  if(VERBOSE) {
-		    cout << " found transitive link between ";
-		    cout << grand_node->getParent() << " ";
-		    cout << grand_node->getKey() << " " << node2->getKey() << endl;
-		  }
-
-		  Overlap* o1 = (Overlap *)grand_edge->getElement();
-		  Overlap* o2 = (Overlap *)parents[grand_node->getKey()]->getElement();
-		  Overlap* o3 = (Overlap *)parents[node2->getKey()]->getElement();
-
-		  if(o2->ridA == pkey) {
-		    suffix1 = o2->asuffix;
-		  } else if(o2->ridB == pkey) {
-		    suffix1 = o2->bsuffix;
-		  }
-
-		  if(o3->ridA == pkey) {
-		    suffix2 = o3->asuffix;
-		  } else if(o3->ridB == pkey) {
-		    suffix2 = o3->bsuffix;
-		  }
-
-		  if(suffix1 != suffix2) {
-		    trans.push(grand_edge);
-		  }
-
-		  if(o1->ridA == gkey) {
-		    suffix1 = o1->asuffix;
-		  } else if(o1->ridB == gkey) {
-		    suffix1 = o1->bsuffix;
-		  }
-
-		  if(o2->ridA == gkey) {
-		    suffix2 = o2->asuffix;
-		  } else if(o2->ridB == gkey) {
-		    suffix2 = o2->bsuffix;
-		  }
-
-		  if(suffix1 != suffix2) {
-		    trans.push(parents[node2->getKey()]);
-		  }
-
-
-		  if(o1->ridA == nkey) {
-		    suffix1 = o1->asuffix;
-		  } else if(o1->ridB == nkey) {
-		    suffix1 = o1->bsuffix;
-		  }
-
-		  if(o3->ridA == nkey) {
-		    suffix2 = o3->asuffix;
-		  } else if(o3->ridB == nkey) {
-		    suffix2 = o3->bsuffix;
-		  }
-		  
-		  if(suffix1 != suffix2) {
-		    trans.push(parents[grand_node->getKey()]);
-		  }
-		  
-		  
+	  for(edgeListIter iter = grand.begin(); iter != grand.end(); ++iter) {
+	    grand_edge = (*iter);
+	    node2 = grand_edge->opposite(grand_node);
+	    
+	    if(node2->getFlags() != 2) {
+	      // check for transitive link
+	      if(node2->getParent() == grand_node->getParent()) {
+		int pkey = grand_node->getParent();
+		int gkey = grand_node->getKey();
+		int nkey = node2->getKey();
+		bool suffix1;
+		bool suffix2;
+		
+		if(VERBOSE) {
+		  cout << " found transitive link between ";
+		  cout << pkey << " ";
+		  cout << gkey << " " << nkey << endl;
 		}
+		
+		Overlap* o1 = (Overlap *)grand_edge->getElement();
+		Overlap* o2 = (Overlap *)parents[grand_node->getKey()]->getElement();
+		Overlap* o3 = (Overlap *)parents[node2->getKey()]->getElement();
+
+		if(o2->ridA == pkey) {
+		  suffix1 = o2->asuffix;
+		} else if(o2->ridB == pkey) {
+		  suffix1 = o2->bsuffix;
+		}
+		
+		if(o3->ridA == pkey) {
+		  suffix2 = o3->asuffix;
+		} else if(o3->ridB == pkey) {
+		  suffix2 = o3->bsuffix;
+		}
+		
+		if(suffix1 != suffix2) {
+		  trans.push(grand_edge);
+		}
+		
+		if(o1->ridA == gkey) {
+		  suffix1 = o1->asuffix;
+		} else if(o1->ridB == gkey) {
+		  suffix1 = o1->bsuffix;
+		}
+		
+		if(o2->ridA == gkey) {
+		  suffix2 = o2->asuffix;
+		} else if(o2->ridB == gkey) {
+		  suffix2 = o2->bsuffix;
+		}
+		
+		if(suffix1 != suffix2) {
+		  trans.push(parents[node2->getKey()]);
+		}
+		
+		
+		if(o1->ridA == nkey) {
+		  suffix1 = o1->asuffix;
+		} else if(o1->ridB == nkey) {
+		  suffix1 = o1->bsuffix;
+		}
+		
+		if(o3->ridA == nkey) {
+		  suffix2 = o3->asuffix;
+		} else if(o3->ridB == nkey) {
+		  suffix2 = o3->bsuffix;
+		}
+		
+		if(suffix1 != suffix2) {
+		  trans.push(parents[grand_node->getKey()]);
+		}
+				
+		
 	      }
-	
-	    }
-	    grand_node->setParent(-1);
+	    } // end transitive check for node2
+	    
+	  }
+	  cout << " set node parent to -1 " << grand_node->getKey() << endl;
+	  grand_node->setParent(-1);
 	}
       }
       
