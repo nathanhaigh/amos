@@ -17,6 +17,8 @@
 
 #include "TilingFrame.hh"
 
+using namespace std;
+
 MainWindow::MainWindow( QWidget *parent, const char *name )
            : QWidget( parent, name )
 {
@@ -106,8 +108,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
           m_contigid, SLOT(setValue(int)));
 
   // mainwindow <-> tiling
-  connect(this,   SIGNAL(bankSelected(string)),
-          tiling, SLOT(setBankname(string)));
+  connect(this,   SIGNAL(bankSelected(std::string)),
+          tiling, SLOT(setBankname(std::string)));
   
   connect(tiling,   SIGNAL(contigRange(int, int)),
           this,     SLOT(setContigRange(int, int)));
@@ -185,7 +187,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_slider->setFocus();
 }
 
-void MainWindow::setBankname(string bankname)
+void MainWindow::setBankname(std::string bankname)
 {
   emit bankSelected(bankname);
 }

@@ -23,9 +23,9 @@ class ChromoField: public QWidget
   Q_OBJECT
 public:
     ChromoField(RenderSeq_t * read, 
-                const string & db,
-                const string & cons,
-                const string & cstatus,
+                const std::string & db,
+                const std::string & cons,
+                const std::string & cstatus,
                 QWidget *parent=0, 
                 const char *name=0);
 

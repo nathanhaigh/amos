@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include "UIElements.hh"
 
+using namespace std;
+using namespace AMOS;
+
 
 
 
@@ -45,7 +48,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   vector<int> pos;
 
-  char name[100];
+  char seqname[100];
   int version;
 
   char hex[5];
@@ -54,9 +57,9 @@ ChromoField::ChromoField(RenderSeq_t * read,
   FILE * fpos = fopen("dmg.pos", "r");
   char c;
   int i;
-  while ((i = fscanf ( fpos, "%s\t%d\t", name, &version )) != 0)
+  while ((i = fscanf ( fpos, "%s\t%d\t", seqname, &version )) != 0)
   {
-    if (readname == name)
+    if (readname == seqname)
     {
       while ( fgets ( hex, 5, fpos ) && hex[0] != '\n' )
       {

@@ -7,8 +7,8 @@
 class Insert
 {
 public:
-  Insert(AMOS::Tile_t * atile, ID_t acontig,
-         AMOS::Tile_t * btile, ID_t bcontig,
+  Insert(AMOS::Tile_t * atile, AMOS::ID_t acontig,
+         AMOS::Tile_t * btile, AMOS::ID_t bcontig,
          AMOS::Distribution_t distribution,
          int conslen);
 
@@ -40,10 +40,10 @@ public:
   MateState m_state;
 
   AMOS::Tile_t * m_atile;
-  ID_t           m_acontig;
+  AMOS::ID_t     m_acontig;
 
   AMOS::Tile_t * m_btile;
-  ID_t           m_bcontig;
+  AMOS::ID_t     m_bcontig;
 
 
   struct TilingOrderCmp

@@ -13,7 +13,7 @@ class MainWindow: public QWidget
 public:
     MainWindow(QWidget *parent=0, const char *name=0 );
 
-    void setBankname(string bankname);
+    void setBankname(std::string bankname);
     void setContigId(int contigID);
     void setGindex(int gindex);
 
@@ -23,7 +23,7 @@ public slots:
   void setGindexRange(int, int);
 
 signals:
-  void bankSelected(string bankname);
+  void bankSelected(std::string bankname);
   void contigIdSelected(int contigId);
   void gindexChanged(int gindex);
 

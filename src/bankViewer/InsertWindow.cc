@@ -1,28 +1,17 @@
 #include "InsertWindow.hh"
+#include "InsertWidget.hh"
 
-InsertWindow::InsertWindow(const string & bankname,
+using namespace std;
+
+InsertWindow::InsertWindow(const std::string & bankname,
                            int contigId,
                            QWidget * parent,
                            const char * name)
   : QMainWindow(parent, name)
 {
   resize(600, 300);
-  m_bankname = bankname;
-  m_contigId = contigId;
 
-  m_sv = new QScrollView(this, "insertscroll");
-  m_insertfield = new InsertField(m_bankname, 
-                                  m_contigId,
-                                  m_sv->viewport(),
-                                  "inserts");
-  m_sv->addChild(m_insertfield);
-
-  setCentralWidget(m_sv);
-
-  connect(m_insertfield, SIGNAL(setGindex(int)),
-          parent, SLOT(setGindex(int)));
-
-
-
-
+  InsertWidget * iw = new InsertWidget(bankname, contigId, this, "iw");
+  setCentralWidget(iw);
 }
+

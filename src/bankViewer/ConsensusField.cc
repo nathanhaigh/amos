@@ -4,6 +4,8 @@
 #include <qpainter.h>
 #include "UIElements.hh"
 
+using namespace std;
+
 
 int jmin (int a, int b)
 {

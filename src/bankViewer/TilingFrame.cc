@@ -5,12 +5,15 @@
 #include "ConsensusField.hh"
 #include "InsertWindow.hh"
 
+using namespace std;
+using namespace AMOS;
+
 int min (int a, int b)
 {
   return a < b ? a : b;
 }
 
-TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
+TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f)
   :QFrame(parent, name, f),
    read_bank(Read_t::NCODE),
    contig_bank(Contig_t::NCODE)
@@ -200,7 +203,7 @@ void TilingFrame::setGindex( int gindex )
       if (hasOverlap)
       {
         RenderSeq_t rendered(vectorpos);
-        rendered.load(read_bank, vi);
+        rendered.load(read_bank, &*vi);
         m_renderedSeqs.push_back(rendered);
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)

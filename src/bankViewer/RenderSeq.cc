@@ -1,5 +1,8 @@
 #include "RenderSeq.hh"
 
+using namespace std;
+using namespace AMOS;
+
 RenderSeq_t::RenderSeq_t(int vectorpos)
 {
   m_vectorpos = vectorpos;

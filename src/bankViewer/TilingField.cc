@@ -410,7 +410,7 @@ void TilingField::paintEvent( QPaintEvent * )
       ri->m_displayend = ldcov;
 
       dcov++;
-      m_currentReads.push_back(ri);
+      m_currentReads.push_back(&(*ri));
     }
   }
 

@@ -9,29 +9,27 @@
 
 #include "ChromoField.hh"
 
-using namespace AMOS;
-
 class RenderSeq_t
 {
 public:
   RenderSeq_t(int vectorpos);
   ~RenderSeq_t();
   void load(AMOS::Bank_t & read_bank, AMOS::Tile_t * tile);
-  char base(Pos_t gindex) const;
-  int qv(Pos_t gindex) const;
-  Pos_t getGindex(Pos_t seqpos) const;
-  void loadTrace(const string & db);
+  char base(AMOS::Pos_t gindex) const;
+  int qv(AMOS::Pos_t gindex) const;
+  AMOS::Pos_t getGindex(AMOS::Pos_t seqpos) const;
+  void loadTrace(const std::string & db);
   int getGSeqPos(int gindex);
 
-  static bool hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
-                         Pos_t rangeEnd,   // 0-based exact end of range
-                         Pos_t seqOffset,  // 0-bases exact offset of seq
-                         Pos_t seqLen,     // count of bases of seq (seqend+1)
-                         Pos_t contigLen);  // count of bases in contig (contigend+1)
+  static bool hasOverlap(AMOS::Pos_t rangeStart, // 0-based exact offset of range
+                         AMOS::Pos_t rangeEnd,   // 0-based exact end of range
+                         AMOS::Pos_t seqOffset,  // 0-bases exact offset of seq
+                         AMOS::Pos_t seqLen,     // count of bases of seq (seqend+1)
+                         AMOS::Pos_t contigLen);  // count of bases in contig (contigend+1)
 
   struct TilingOrderCmp
   {
-    bool operator() (const Tile_t & a, const Tile_t & b)
+    bool operator() (const AMOS::Tile_t & a, const AMOS::Tile_t & b)
     {
       int offdiff = b.offset - a.offset;
 
@@ -63,14 +61,14 @@ public:
 
   int m_vectorpos;
   AMOS::Read_t read;
-  string m_nucs;
-  string m_qual;
+  std::string m_nucs;
+  std::string m_qual;
   bool m_rc;
   AMOS::Read_t m_read;
-  Tile_t * m_tile;
+  AMOS::Tile_t * m_tile;
 
   Read * m_trace;
-  vector<int> m_bcpos;
+  std::vector<int> m_bcpos;
   bool m_displayTrace;
 };
 

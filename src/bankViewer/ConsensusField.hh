@@ -9,8 +9,8 @@ class ConsensusField : public QFrame
   Q_OBJECT
 
 public:
-    ConsensusField(const string & consensus,
-                   const string & cstatsus,
+    ConsensusField(const std::string & consensus,
+                   const std::string & cstatsus,
                    int & gindex,
                    QWidget *parent=0,
                    const char *name=0);
@@ -25,8 +25,8 @@ protected:
     void paintEvent(QPaintEvent *);
 
 private:
-    const string & m_consensus;
-    const string & m_cstatus;
+    const std::string & m_consensus;
+    const std::string & m_cstatus;
     int & m_gindex;
     int m_fontsize;
     bool m_shownumbers;

@@ -21,7 +21,7 @@ public:
 public slots:
     void setGindex(int gindex);
     void setContigId(int contigId);
-    void setBankname(string bankname);
+    void setBankname(std::string bankname);
     void setFontSize(int);
     void setDB(const QString & db);
     void trackGindex(int);
@@ -59,18 +59,18 @@ private:
 
     QScrollView * m_sv;
 
-    string m_bankname;
+    std::string m_bankname;
     int m_contigId;
 
     std::vector<AMOS::Tile_t> m_tiling;
-    string m_consensus;
-    string m_cstatus;
+    std::string m_consensus;
+    std::string m_cstatus;
 
     AMOS::Bank_t read_bank;
     AMOS::Bank_t contig_bank;
     std::vector<RenderSeq_t> m_renderedSeqs;
 
-    string m_db;
+    std::string m_db;
 
     TilingField * m_tilingfield;
     ConsensusField * m_consfield;

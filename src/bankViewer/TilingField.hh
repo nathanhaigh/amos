@@ -9,10 +9,10 @@ class TilingField : public QWidget
 {
     Q_OBJECT
 public:
-    TilingField(vector<RenderSeq_t> & renderedSeqs,
-                const string & consensus,
-                const string & cstatus,
-                const string & db,
+    TilingField(std::vector<RenderSeq_t> & renderedSeqs,
+                const std::string & consensus,
+                const std::string & cstatus,
+                const std::string & db,
                 int & gindex,
                 int & fontsize,
                 QWidget *parent=0, 
@@ -49,14 +49,14 @@ private:
     int m_stabletiling;
     int m_traceheight;
 
-    const string & m_db;
-    const string & m_consensus;
-    const string & m_cstatus;
+    const std::string & m_db;
+    const std::string & m_consensus;
+    const std::string & m_cstatus;
 
     bool m_highlightdiscrepancy;
 
-    vector<RenderSeq_t> & m_renderedSeqs;
-    vector<RenderSeq_t *> m_currentReads;
+    std::vector<RenderSeq_t> & m_renderedSeqs;
+    std::vector<RenderSeq_t *> m_currentReads;
 };
 
 

@@ -4,6 +4,8 @@
 #include <qlayout.h>
 #include "ChromoField.hh"
 
+using namespace std;
+
 ReadInfo::ReadInfo(RenderSeq_t * read, 
                    const string & db, 
                    const string & cons,
