@@ -309,6 +309,7 @@ void IDMap_t::remove (ID_t key)
       {
 	if ( curr -> triple -> iid == key )
 	  {
+            size_m --;
 	    if ( curr -> triple -> c > 1 )
 	      eid = curr -> triple -> eid;
 	    removenode (curr, prev);
@@ -332,8 +333,6 @@ void IDMap_t::remove (ID_t key)
 	  }
 	prev = curr;
       }
-
-  size_m --;
 }
 
 
@@ -350,6 +349,7 @@ void IDMap_t::remove (const char * key)
       {
 	if ( strcmp (curr -> triple -> eid, key) == 0 )
 	  {
+            size_m --;
 	    if ( curr -> triple -> c > 1 )
 	      iid = curr -> triple -> iid;
 	    removenode (curr, prev);
@@ -373,8 +373,6 @@ void IDMap_t::remove (const char * key)
 	  }
 	prev = curr;
       }
-
-  size_m --;
 }
 
 
