@@ -27,8 +27,8 @@ string OPT_MessageName;           // message name parameter
 
 
 //========================================================== Fuction Decs ====//
-uint64_t SafeIntDiv (uint64_t a, uint64_t b)
-{ return (uint64_t)(b == 0 ? 0 : (double)a / (double)b); }
+long int SafeIntDiv (long int a, long int b)
+{ return (long int)(b == 0 ? 0 : (double)a / (double)b); }
 
 
 //----------------------------------------------------- ParseArgs --------------
@@ -61,14 +61,13 @@ void PrintUsage (const char * s);
 int main (int argc, char ** argv)
 {
   Message_t msg;                           // the current message
-  istream * msgstreamp;                    // the message file stream
   ifstream msgfile;                        // the message file, if applicable
   IDMap_t typemap(1000);                   // NCode to index mapping
   ID_t ti;                                 // current type index
   NCode_t msgcode;                         // current message NCode
   streampos lastpos;                       // last tellg pos
-  vector< pair<uint32_t,uint32_t> > sums (1);  // message count and size sums
-  uint64_t c1, c2;
+  vector< pair<long int,long int> > sums (1);  // message count and size sums
+  long int c1, c2;
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -78,19 +77,13 @@ int main (int argc, char ** argv)
   try {
 
   //-- Open the message file
-  if ( OPT_MessageName . empty( ) )
-    msgstreamp = &cin;
-  else
-    {
-      msgfile . open (OPT_MessageName . c_str( ));
-      if ( !msgfile )
-	AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
-      msgstreamp = &msgfile;
-    }
-  lastpos = msgstreamp -> tellg( );
+  msgfile . open (OPT_MessageName . c_str( ));
+  if ( !msgfile )
+    AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
+  lastpos = msgfile . tellg( );
 
   //-- Parse the message file
-  while ( (msgcode = msg . skip (*msgstreamp)) )
+  while ( (msgcode = msg . skip (msgfile)) != NULL_NCODE )
     {
       if ( typemap . exists (msgcode) )
 	ti = typemap . lookup (msgcode);
@@ -98,13 +91,13 @@ int main (int argc, char ** argv)
 	{
 	  ti = sums . size( );
 	  typemap . insert (msgcode, ti);
-	  sums . push_back (pair<uint32_t, uint32_t> (0,0));
+	  sums . push_back (make_pair ((long int)0, (long int)0));
 	}
 
       sums [ti] . first ++;
-      sums [ti] . second += msgstreamp -> tellg( ) - lastpos;
+      sums [ti] . second += msgfile . tellg( ) - lastpos;
 
-      lastpos = msgstreamp -> tellg( );
+      lastpos = msgfile . tellg( );
     }
 
   typemap . invert( );
@@ -129,7 +122,7 @@ int main (int argc, char ** argv)
   for ( ID_t i = 1; i < sums . size( ); i ++ )
     {
       msgcode = typemap . lookup (i);
-      printf ("%5s %9d %12d %12lld\n",
+      printf ("%5s %9ld %12ld %12ld\n",
 	      Decode (msgcode) . c_str( ),
 	      sums [i] . first,
 	      sums [i] . second,
@@ -138,7 +131,8 @@ int main (int argc, char ** argv)
       c2 += sums [i] . second;
     }
   printf ("-----------------------------------------\n");
-  printf ("      %9ld %12ld %12lld\n", (long)c1, (long)c2, SafeIntDiv (c2, c1));
+  printf ("      %9ld %12ld %12ld\n",
+	  (long int)c1, (long int)c2, SafeIntDiv (c2, c1));
 
   return EXIT_SUCCESS;
 }
@@ -163,15 +157,14 @@ void ParseArgs (int argc, char ** argv)
 	errflg ++;
       }
 
-  if ( errflg > 0 || (optind != argc && optind != argc - 1) )
+  if ( errflg > 0 || optind != argc - 1 )
     {
       PrintUsage (argv[0]);
       cerr << "Try '" << argv[0] << " -h' for more information.\n";
       exit (EXIT_FAILURE);
     }
 
-  if ( optind == argc - 1 )
-    OPT_MessageName = argv [optind ++];
+  OPT_MessageName = argv [optind ++];
 }
 
 
@@ -185,11 +178,11 @@ void PrintHelp (const char * s)
     << "-h            Display help information\n\n";
 
   cerr
-    << "Takes an AMOS message file as input, either from the command line\n"
-    << "or from stdin. All messages will be lightly checked for correct AMOS\n"
-    << "format, but their NCode and fields will not be validated. Number of\n"
-    << "each top-level message type will be displayed, along with their total\n"
-    << "and average sizes.\n\n";
+    << "Takes an AMOS message file as input on the command line. All\n"
+    << "messages will be lightly checked for correct AMOS format, but their\n"
+    << "NCode and fields will not be validated. Number of each top-level\n"
+    << "message types will be displayed, along with their total and average\n"
+    << "sizes.\n\n";
 }
 
 

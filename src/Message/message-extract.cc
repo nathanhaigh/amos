@@ -56,7 +56,6 @@ void PrintUsage (const char * s);
 int main (int argc, char ** argv)
 {
   Message_t msg;                           // the current message
-  istream * msgstreamp;                    // the message file stream
   ifstream msgfile;                        // the message file, if applicable
   NCode_t msgcode;                         // current message NCode
   streampos spos;                          // begin of the curr record
@@ -73,38 +72,29 @@ int main (int argc, char ** argv)
   try {
 
   //-- Open the message file
-  if ( OPT_MessageName . empty( ) )
-    msgstreamp = &cin;
-  else
-    {
-      msgfile . open (OPT_MessageName . c_str( ));
-      if ( !msgfile )
-	AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
-      msgstreamp = &msgfile;
-    }
-
+  msgfile . open (OPT_MessageName . c_str( ));
+  if ( !msgfile )
+    AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
+  spos = msgfile . tellg( );
 
   //-- Parse the message file
-  while ( msgstreamp -> good( ) )
+  while ( (msgcode = msg . skip (msgfile)) != NULL_NCODE )
     {
-      while ( msgstreamp -> get( ) != '{' )
-	if ( !msgstreamp -> good( ) )
-	  break;
-      msgstreamp -> putback ('{');
-
-      spos = msgstreamp -> tellg( );
-      msgcode = msg . skip (*msgstreamp);
       if ( OPT_ExtractCodes . exists (msgcode) )
 	{
-	  size = msgstreamp -> tellg( ) - spos;
+	  size = msgfile . tellg( ) - spos;
 	  if ( size > buff_size )
-	    buff = (char *) SafeRealloc (buff, size);
-	  msgstreamp -> seekg (-size, ifstream::cur);
-	  msgstreamp -> read (buff, size);
+	    {
+	      buff_size = size;
+	      buff = (char *) SafeRealloc (buff, buff_size);
+	    }
+	  msgfile . seekg (-size, ifstream::cur);
+	  msgfile . read (buff, size);
 	  cout . write (buff, size);
 	}
-    }
 
+      spos = msgfile . tellg( );
+    }
   }
   catch (Exception_t & e) {
 
@@ -146,6 +136,12 @@ void ParseArgs (int argc, char ** argv)
 	errflg ++;
       }
 
+  if ( OPT_MessageName . empty( ) )
+    {
+      cerr << "ERROR: The -m option is mandatory\n";
+      errflg ++;
+    }
+
   if ( errflg > 0 )
     {
       PrintUsage (argv[0]);
@@ -179,9 +175,8 @@ void PrintHelp (const char * s)
     << "-m path       The file path of the input message\n\n";
 
   cerr
-    << "Takes an AMOS message file as input, either from the -m option or\n"
-    << "from stdin. All top-level messages matching one of the NCodes\n"
-    << "specified on the command line will be extracted and reported to\n"
+    << "Takes an AMOS message file and AMOS NCodes as input. All top-level\n"
+    << "messages matching one of the NCodes will be extracted and reported to\n"
     << "stdout. Each message will be lightly checked for correct AMOS\n"
     << "format, but their NCode and fields will not be validated.\n\n";
 }
@@ -193,5 +188,5 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  [NCodes]\n\n";
+    << "\nUSAGE: " << s << "  [options]  -m <message path>  [NCodes]\n\n";
 }
