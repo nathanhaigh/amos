@@ -114,6 +114,7 @@ AC_CONFIG_FILES(
    src/Makefile \
    src/GNU/Makefile \
    src/AMOS/Makefile \
+   src/Bambus/Makefile \
    src/Common/Makefile \
    src/Graph/Makefile \
    src/Slice/Makefile \
@@ -123,7 +124,6 @@ AC_CONFIG_FILES(
    src/Align/Makefile \
    src/Tigger/Makefile \
    src/Compare/Makefile \
-   src/Bundler/Makefile \
    src/Casm/Makefile \
    src/CtgTrim/Makefile \
    src/Sim/Makefile \
