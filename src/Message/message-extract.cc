@@ -12,9 +12,8 @@
 
 #include "IDMap_AMOS.hh"
 #include "messages_AMOS.hh"
-#include <string>
+#include "alloc.hh"
 #include <fstream>
-#include <cstdio>
 #include <vector>
 #include <unistd.h>
 using namespace AMOS;
@@ -24,6 +23,7 @@ using namespace std;
 
 //=============================================================== Globals ====//
 string OPT_MessageName;           // message name parameter
+IDMap_t OPT_ExtractCodes(1000);   // extract message type map
 
 
 //========================================================== Fuction Decs ====//
@@ -59,12 +59,12 @@ int main (int argc, char ** argv)
   Message_t msg;                           // the current message
   istream * msgstreamp;                    // the message file stream
   ifstream msgfile;                        // the message file, if applicable
-  IDMap_t typemap(1000);                   // NCode to index mapping
-  ID_t ti;                                 // current type index
   NCode_t msgcode;                         // current message NCode
-  streampos lastpos;                       // last tellg pos
-  vector< pair<uint32_t,uint32_t> > sums (1);  // message count and size sums
-  uint64_t c1, c2;
+  streampos spos;                          // begin of the curr record
+  char * buff = NULL;                      // record buffer
+  streamsize size;                         // size of curr record
+  streamsize buff_size = 0;                // size of curr record buffer
+
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -83,27 +83,28 @@ int main (int argc, char ** argv)
 	AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
       msgstreamp = &msgfile;
     }
-  lastpos = msgstreamp -> tellg( );
+
 
   //-- Parse the message file
-  while ( (msgcode = msg . skip (*msgstreamp)) )
+  while ( msgstreamp -> good( ) )
     {
-      if ( typemap . exists (msgcode) )
-	ti = typemap . lookup (msgcode);
-      else
+      while ( msgstreamp -> get( ) != '{' )
+	if ( !msgstreamp -> good( ) )
+	  break;
+      msgstreamp -> putback ('{');
+
+      spos = msgstreamp -> tellg( );
+      msgcode = msg . skip (*msgstreamp);
+      if ( OPT_ExtractCodes . exists (msgcode) )
 	{
-	  ti = sums . size( );
-	  typemap . insert (msgcode, ti);
-	  sums . push_back (pair<uint32_t, uint32_t> (0,0));
+	  size = msgstreamp -> tellg( ) - spos;
+	  if ( size > buff_size )
+	    buff = (char *) SafeRealloc (buff, size);
+	  msgstreamp -> seekg (-size, ifstream::cur);
+	  msgstreamp -> read (buff, size);
+	  cout . write (buff, size);
 	}
-
-      sums [ti] . first ++;
-      sums [ti] . second += msgstreamp -> tellg( ) - lastpos;
-
-      lastpos = msgstreamp -> tellg( );
     }
-
-  typemap . invert( );
 
   }
   catch (Exception_t & e) {
@@ -119,22 +120,6 @@ int main (int argc, char ** argv)
 
   msgfile . close( );
 
-  printf ("%5s %9s %12s %12s\n", "NCODE", "COUNT", "SIZE", "AVG");
-  printf ("-----------------------------------------\n");
-  c1 = c2 = 0;
-  for ( ID_t i = 1; i < sums . size( ); i ++ )
-    {
-      msgcode = typemap . lookup (i);
-      printf ("%5s %9ld %12ld %12ld\n",
-	      Decode (msgcode) . c_str( ),
-	      (long)sums [i] . first,
-	      (long)sums [i] . second,
-	      (long)(sums [i] . second / sums [i] . first));
-      c1 += sums [i] . first;
-      c2 += sums [i] . second;
-    }
-  printf ("-----------------------------------------\n");
-  printf ("      %9ld %12ld %12ld\n", (long)c1, (long)c2, (long)(c2 / c1));
 
   return EXIT_SUCCESS;
 }
@@ -148,26 +133,29 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "h")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hm:")) != EOF) )
     switch (ch)
       {
       case 'h':
 	PrintHelp (argv[0]);
 	exit (EXIT_SUCCESS);
 	break;
+      case 'm':
+	OPT_MessageName = optarg;
+	break;
       default:
 	errflg ++;
       }
 
-  if ( errflg > 0 || (optind != argc && optind != argc - 1) )
+  if ( errflg > 0 )
     {
       PrintUsage (argv[0]);
       cerr << "Try '" << argv[0] << " -h' for more information.\n";
       exit (EXIT_FAILURE);
     }
 
-  if ( optind == argc - 1 )
-    OPT_MessageName = argv [optind ++];
+  while ( optind != argc )
+    OPT_ExtractCodes . insert (Encode (argv [optind ++]), 1);
 }
 
 
@@ -178,14 +166,13 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h            Display help information\n\n";
+    << "-h            Display help information\n"
+    << "-m path       The file path of the input message\n\n";
 
   cerr
-    << "Takes an AMOS message file as input, either from the command line\n"
-    << "or from stdin. All messages will be lightly checked for correct AMOS\n"
-    << "format, but their NCode and fields will not be validated. Number of\n"
-    << "each top-level message type will be displayed, along with their total\n"
-    << "and average sizes.\n\n";
+    << "Takes an AMOS message file as input, either from the -m option or\n"
+    << "from stdin. All messages matching one of the NCodes specified on the\n"
+    << "command line will be extracted and reported to stdout.\n\n";
 }
 
 
@@ -195,5 +182,5 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  [message path]\n\n";
+    << "\nUSAGE: " << s << "  [options]  [NCodes]\n\n";
 }
