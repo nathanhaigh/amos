@@ -4,26 +4,78 @@ minimus - The AMOS Lightweight Assembler
 Brief Summary
 =============
 
-   Summary here.
+   minimus is an assembly pipeline designed specifically for small
+data-sets, such as the set of reads covering a specific gene. While
+the code will probably work for larger assemblies the execution will
+not be efficient, both in terms of time/memory usage, and in the
+quality of the assembly produced. minimus follows the Overlap-Layout-
+Consensus paradigm and consists of three main modules:
+
+    * overlapper - computes the overlaps between the reads using a
+    modified version of the Smith-Waterman local alignment algorithm
+
+    * tigger - uses the read overlaps to generate the layouts of reads
+    representing individual contigs
+
+    * make-consensus - refines the layouts produced by the tigger to
+    generate accurate multiple alignments within the reads
 
 
 Dependencies
 ============
 
-   Dependencies here.
+   None.
 
 
 Running
 =======
 
-   How to here.
+   Either execute the minimus configuration script directly from
+$bindir OR copy it to your local directory, edit it, and run it with
+the `runAmos' command interpreter. The following variables must be set
+on the command line or added to the script for the pipeline to operate
+properly:
+
+	TGT - The target genome sequences in AMOS message format
+
+`minimus -D TGT=<target> <prefix>'
+  OR
+`runAmos -C minimus -D TGT=<target> <prefix>'
+
+Where <prefix> will be the output file prefix, and <target> is the
+input AMOS message file. Check the `runAmos' documentation or type
+`runAmos --help' for details on operating an AMOS pipeline. The
+minimus pipeline config file can be easily modified by the user to add
+additional processing steps.
+
+   In order to run minimus you need to provide an AMOS formatted file
+of the reads. Such a file (commonly with extension .afg) can be
+generated from a combination of sequence (.seq), quality (.qual), and
+Trace Archive XML (.xml) files using the `tarchive2amos' program which
+will appear in the $bindir directory upon installation.
+
+The default TGT file is <prefix>.afg, thus if our input file is
+<prefix>.afg we can run minimus simply by typing:
+
+`minimus <prefix>'
 
 
 Example
 =======
 
-   Example here.
+   Assume we have an AMOS message file, `target.afg', containing the
+sequence information for a small assembly task. To run the AMOScmp
+pipeline we type the following:
+
+`minimus -D TGT=target.afg asm'
+
+The output will be written into a file called asm.ctg.afg, which
+contains, for each contig generated, the consensus sequence and
+quality as well as detailed information regarding the placement of the
+reads within the contig. This file can be converted to .ACE format
+with the utility `amos2ace' which will appear in the $bindir directory
+upon installation.
 
 
-August 2004
+September 2004
 

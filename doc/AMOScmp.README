@@ -52,7 +52,15 @@ operate properly:
 Where <prefix> will be the output file prefix, <target> is the input
 AMOS message file, and <reference> is the input multi-FastA
 file. Check the `runAmos' documentation or type `runAmos --help' for
-details on operating an AMOS pipeline.
+details on operating an AMOS pipeline. The AMOScmp pipeline config
+file can be easily modified by the user to add additional processing
+steps.
+
+The default TGT file is <prefix>.afg and the default REF file is
+<prefix>.1con, thus if our input files are <prefix>.afg and
+<prefix>.1con we can run AMOScmp simply by typing:
+
+`AMOScmp <prefix>'
 
 
 Example
