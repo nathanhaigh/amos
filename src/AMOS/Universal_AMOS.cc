@@ -53,7 +53,7 @@ void Universal_t::toMessage (Message_t & msg) const
 
   try {
 
-  msg . setMessageType (NCode (getNCode( )));
+  msg . setMessageCode (getNCode( ));
 
   stringstream ss;
   ss << iid_m;

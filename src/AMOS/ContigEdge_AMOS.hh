@@ -79,15 +79,15 @@ protected:
 
 public:
 
-  //--------------------------------------------------- BankCode ---------------
+  //--------------------------------------------------- NCode ------------------
   //! \brief Get the AMOS NCode type identifier (statically)
   //!
-  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (ContigEdge_t::BankCode( ))'
+  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (ContigEdge_t::NCode( ))'
   //!
   //! \return The AMOS NCode type identifier
   //!
-  static NCode_t BankCode ( )
+  static NCode_t NCode ( )
   {
     return Bank_k::CONTIGEDGE;
   }
@@ -148,7 +148,7 @@ public:
   //!
   virtual NCode_t getNCode ( ) const
   {
-    return ContigEdge_t::BankCode( );
+    return ContigEdge_t::NCode( );
   }
 
   

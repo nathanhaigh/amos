@@ -26,7 +26,7 @@ int main (int argc, char ** argv)
     Universal_t unv;
     
     while ( msg . read (msgfile) )
-      if ( msg . getMessageType( ) == Message_k::M_UNIVERSAL )
+      if ( msg . getMessageCode( ) == unv . getNCode( ) )
 	{
 	  unv . clear( );
 	  unv . fromMessage (msg);

@@ -36,7 +36,7 @@ bool Message_t::read (istream & in)
 
     //-- Get the type name
     name = line . substr (1);
-    setMessageType (name);
+    setMessageCode (name);
 
     //-- Until end of message
     while (true)
@@ -92,24 +92,19 @@ bool Message_t::read (istream & in)
 
 
 //----------------------------------------------------- setField ---------------
-void Message_t::setField (const string & fname, const string & data)
+void Message_t::setField (NCode_t fcode, const string & data)
 {
   //-- Check pre-conditions
-  if ( fname . size( ) != NCODE )
-    AMOS_THROW_ARGUMENT ("Invalid message field name length");
-  for ( int i = 0; i < NCODE; i ++ )
-    if ( !islower (fname [i]) && !isdigit (fname [i]))
-      AMOS_THROW_ARGUMENT ("Invalid message field name format");
   if ( data . find ('\n') != string::npos  &&
        *(data . rbegin( )) != '\n' )
     AMOS_THROW_ARGUMENT ("Invalid message multi-line field format");
   if ( data . size( ) == 0 )
     AMOS_THROW_ARGUMENT ("Empty fields are not allowed");
 
-  pair<map<string,string>::iterator,bool> ret;
+  pair<map<NCode_t,string>::iterator,bool> ret;
 
   //-- Insert new field, overwrite if already exists
-  ret = fields_m . insert (map<string,string>::value_type(fname, data));
+  ret = fields_m . insert (map<NCode_t,string>::value_type(fcode, data));
   if ( !ret . second )
     (ret . first) -> second = data;
 }
@@ -119,11 +114,11 @@ void Message_t::setField (const string & fname, const string & data)
 void Message_t::write (ostream & out) const
 {
   bool mline = false;
-  map<string, string>::const_iterator mi;
+  map<NCode_t, string>::const_iterator mi;
   vector<Message_t>::const_iterator vi;
 
   //-- Write opening of message
-  out << '{' << tname_m << endl;
+  out << '{' << Decode (mcode_m) << endl;
 
   //-- Write all fields
   for ( mi = fields_m . begin( ); mi != fields_m . end( ); mi ++ )
@@ -131,7 +126,7 @@ void Message_t::write (ostream & out) const
       //-- Set multi-line message flag
       mline = *(mi -> second . rbegin( )) == '\n' ? true : false;
 
-      out << mi -> first << ':';
+      out << Decode (mi -> first) << ':';
       if ( mline )
 	out . put ('\n');
       out << mi -> second;

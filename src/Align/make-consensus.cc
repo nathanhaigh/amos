@@ -68,7 +68,7 @@ int  main
     (int argc, char * argv [])
 
   {
-   Bank_t  read_bank (Read_t::BankCode( ));
+   Bank_t  read_bank (Read_t::NCode( ));
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * input_fp;

@@ -10,6 +10,7 @@
 #ifndef __inttypes_AMOS_HH
 #define __inttypes_AMOS_HH 1
 
+#include <exceptions_AMOS.hh>
 #include <inttypes.h>   //!< ints of the form [u]int(size)_t, i.e. int32_t
 #include <string>
 
@@ -28,7 +29,7 @@ namespace AMOS {
 //!
 //! \return String representation of the NCode
 //!
-std::string NCode (NCode_t ncode);
+std::string Decode (NCode_t ncode);
 
 
 //----------------------------------------------------- NCode ------------------
@@ -36,7 +37,7 @@ std::string NCode (NCode_t ncode);
 //!
 //! \return NCode of the string, or NULL_NCODE if invalid string length
 //!
-NCode_t NCode (const std::string & str);
+NCode_t Encode (const std::string & str);
 
 
 const uint8_t NCODE =  3;              //!< length of the NCode strings

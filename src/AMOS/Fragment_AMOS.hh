@@ -93,15 +93,15 @@ protected:
 
 public:
 
-  //--------------------------------------------------- BankCode ---------------
+  //--------------------------------------------------- NCode ------------------
   //! \brief Get the AMOS NCode type identifier (statically)
   //!
-  //! Used for constructing a Bank with a certain NCode. e.g. 'Bank_t
-  //! (Fragment_t::BankCode( ))'
+  //! Can be used for constructing a Bank with a certain NCode. e.g. 'Bank_t
+  //! (Fragment_t::NCode( ))'
   //!
   //! \return The AMOS NCode type identifier
   //!
-  static NCode_t BankCode ( )
+  static NCode_t NCode ( )
   {
     return Bank_k::FRAGMENT;
   }
@@ -156,7 +156,7 @@ public:
   //!
   virtual NCode_t getNCode ( ) const
   {
-    return Fragment_t::BankCode( );
+    return Fragment_t::NCode( );
   }
 
 

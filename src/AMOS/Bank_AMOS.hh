@@ -57,8 +57,8 @@ namespace Bank_k {
   //!< Suffix for the variable length store
 
 
-  const NCode_t NULL_BANK = NCode ("NUL");   //!< NULL bank NCode
-  const NCode_t EXAMPLE   = NCode ("EXX");   //!< Example bank NCode
+  const NCode_t NULL_BANK = Encode ("NUL");   //!< NULL bank NCode
+  const NCode_t EXAMPLE   = Encode ("EXX");   //!< Example bank NCode
 
 } // namespace Bank_k
 
@@ -564,8 +564,8 @@ public:
   //! with that NCode can be used with that Bank. For instance, if a Bank
   //! is constructed with 'Bank_t mybank (Bank_k::READ);', only Read_t
   //! objects could be used with mybank. Also, if the IBankable object has
-  //! a static 'BankCode( )' function included, the user can construct a Bank
-  //! of these objects with 'Bank_t mybank (Read_t::BankCode( ))'.
+  //! a static 'NCode( )' function included, the user can construct a Bank
+  //! of these objects with 'Bank_t mybank (Read_t::NCode( ))'.
   //!
   //! \param type The type of Bank to construct
   //! \return void
@@ -610,14 +610,14 @@ public:
   ID_t append (IBankable_t & obj);
 
 
-  //--------------------------------------------------- BankCode ---------------
+  //--------------------------------------------------- getBankCode ------------
   //! \brief Get the unique bank type identifier
   //!
   //! Is equivalent to the NCode of the objects stored in the Bank.
   //!
   //! \return The unique bank type identifier
   //!
-  NCode_t BankCode ( ) const
+  NCode_t getBankCode ( ) const
   {
     return banktype_m;
   }

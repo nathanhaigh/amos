@@ -15,8 +15,8 @@ using namespace std;
 
 
 //================================================ Helper Functions ============
-//----------------------------------------------------- NCode ------------------
-string AMOS::NCode (NCode_t ncode)
+//----------------------------------------------------- Decode -----------------
+string AMOS::Decode (NCode_t ncode)
 {
   string ret;
   ret . reserve (NCODE);
@@ -31,12 +31,12 @@ string AMOS::NCode (NCode_t ncode)
 }
 
 
-//----------------------------------------------------- NCode ------------------
-NCode_t AMOS::NCode (const string & str)
+//----------------------------------------------------- Encode -----------------
+NCode_t AMOS::Encode (const string & str)
 {
   NCode_t ret = 0;
   if ( str . size( ) != NCODE )
-    return NULL_NCODE;
+    AMOS_THROW_ARGUMENT ("invalid NCode string length");
 
   for ( int i = NCODE - 1; i >= 0; i -- )
     {

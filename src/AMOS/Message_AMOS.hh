@@ -4,7 +4,7 @@
 //! \date 11/12/2003
 //!
 //! \brief Header for Message_t and IMessagable_t
-//! \todo Write a spec for the AMOS 3-code format and it's data types
+//! \todo Validity checking for Message and Field codes
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -31,58 +31,58 @@ namespace Message_k {
   const char          E_DELETE      = 'D';
   const char          E_EDIT        = 'E';
 
-  //-- Field type names
-  const std::string   F_NULL         ("nul");
-  const std::string   F_3PRIME       ("3pr");
-  const std::string   F_5PRIME       ("5pr");
-  const std::string   F_AHANG        ("ahg");
-  const std::string   F_ACTION       ("act");
-  const std::string   F_ADJACENCY    ("adj");
-  const std::string   F_BHANG        ("bhg");
-  const std::string   F_CLEAR        ("clr");
-  const std::string   F_COMMENT      ("com");
-  const std::string   F_CONTIG1      ("ct1");
-  const std::string   F_CONTIG2      ("ct2");
-  const std::string   F_CONTIGEDGE   ("cte");
-  const std::string   F_CONTIGLINK   ("ctl");
-  const std::string   F_COUNT        ("cnt");
-  const std::string   F_DELTA        ("del");
-  const std::string   F_EID          ("eid");
-  const std::string   F_FRAGMENT     ("frg");
-  const std::string   F_IID          ("iid");
-  const std::string   F_LIBRARY      ("lib");
-  const std::string   F_MEAN         ("mea");
-  const std::string   F_OFFSET       ("off");
-  const std::string   F_POLYMORPHISM ("ply");
-  const std::string   F_QUALITY      ("qlt");
-  const std::string   F_QUALITYCLEAR ("qcr");
-  const std::string   F_READ1        ("rd1");
-  const std::string   F_READ2        ("rd2");
-  const std::string   F_READS        ("rds");
-  const std::string   F_SEQUENCE     ("seq");
-  const std::string   F_SD           ("std");
-  const std::string   F_SIZE         ("sze");
-  const std::string   F_SKEWNESS     ("skw");
-  const std::string   F_SOURCE       ("src");
-  const std::string   F_TYPE         ("typ");
-  const std::string   F_VECTORCLEAR  ("vcr");
+  //-- Field NCode types
+  const NCode_t   F_NULL         = Encode ("nul");
+  const NCode_t   F_3PRIME       = Encode ("3pr");
+  const NCode_t   F_5PRIME       = Encode ("5pr");
+  const NCode_t   F_AHANG        = Encode ("ahg");
+  const NCode_t   F_ACTION       = Encode ("act");
+  const NCode_t   F_ADJACENCY    = Encode ("adj");
+  const NCode_t   F_BHANG        = Encode ("bhg");
+  const NCode_t   F_CLEAR        = Encode ("clr");
+  const NCode_t   F_COMMENT      = Encode ("com");
+  const NCode_t   F_CONTIG1      = Encode ("ct1");
+  const NCode_t   F_CONTIG2      = Encode ("ct2");
+  const NCode_t   F_CONTIGEDGE   = Encode ("cte");
+  const NCode_t   F_CONTIGLINK   = Encode ("ctl");
+  const NCode_t   F_COUNT        = Encode ("cnt");
+  const NCode_t   F_DELTA        = Encode ("del");
+  const NCode_t   F_EID          = Encode ("eid");
+  const NCode_t   F_FRAGMENT     = Encode ("frg");
+  const NCode_t   F_IID          = Encode ("iid");
+  const NCode_t   F_LIBRARY      = Encode ("lib");
+  const NCode_t   F_MEAN         = Encode ("mea");
+  const NCode_t   F_OFFSET       = Encode ("off");
+  const NCode_t   F_POLYMORPHISM = Encode ("ply");
+  const NCode_t   F_QUALITY      = Encode ("qlt");
+  const NCode_t   F_QUALITYCLEAR = Encode ("qcr");
+  const NCode_t   F_READ1        = Encode ("rd1");
+  const NCode_t   F_READ2        = Encode ("rd2");
+  const NCode_t   F_READS        = Encode ("rds");
+  const NCode_t   F_SEQUENCE     = Encode ("seq");
+  const NCode_t   F_SD           = Encode ("std");
+  const NCode_t   F_SIZE         = Encode ("sze");
+  const NCode_t   F_SKEWNESS     = Encode ("skw");
+  const NCode_t   F_SOURCE       = Encode ("src");
+  const NCode_t   F_TYPE         = Encode ("typ");
+  const NCode_t   F_VECTORCLEAR  = Encode ("vcr");
 
-  //-- Message type names
-  const std::string   M_NULL         ("NUL");
-  const std::string   M_UNIVERSAL    ("UNV");
-  const std::string   M_CONTIG       ("CTG");
-  const std::string   M_CONTIGEDGE   ("CTE");
-  const std::string   M_CONTIGLINK   ("CTL");
-  const std::string   M_DISTRIBUTION ("DST");
-  const std::string   M_EXAMPLE      ("EXX");
-  const std::string   M_FRAGMENT     ("FRG");
-  const std::string   M_KMER         ("KMR");
-  const std::string   M_LIBRARY      ("LIB");
-  const std::string   M_OVERLAP      ("OVL");
-  const std::string   M_READ         ("RED");
-  const std::string   M_SCAFFOLD     ("SCF");
-  const std::string   M_SEQUENCE     ("SEQ");
-  const std::string   M_TILE         ("TLE");
+  //-- Message NCode types
+  const NCode_t   M_NULL         = Encode ("NUL");
+  const NCode_t   M_UNIVERSAL    = Encode ("UNV");
+  const NCode_t   M_CONTIG       = Encode ("CTG");
+  const NCode_t   M_CONTIGEDGE   = Encode ("CTE");
+  const NCode_t   M_CONTIGLINK   = Encode ("CTL");
+  const NCode_t   M_DISTRIBUTION = Encode ("DST");
+  const NCode_t   M_EXAMPLE      = Encode ("EXX");
+  const NCode_t   M_FRAGMENT     = Encode ("FRG");
+  const NCode_t   M_KMER         = Encode ("KMR");
+  const NCode_t   M_LIBRARY      = Encode ("LIB");
+  const NCode_t   M_OVERLAP      = Encode ("OVL");
+  const NCode_t   M_READ         = Encode ("RED");
+  const NCode_t   M_SCAFFOLD     = Encode ("SCF");
+  const NCode_t   M_SEQUENCE     = Encode ("SEQ");
+  const NCode_t   M_TILE         = Encode ("TLE");
 
 } // namespace Message_k
 
@@ -92,12 +92,12 @@ namespace Message_k {
 //================================================ Message_t ===================
 //! \brief A generic AMOS message object for reading and writing data
 //!
-//! Based on the Celera 3-code format, the AMOS messages are designed for easy
-//! parsing and compatibility with the other AMOS modules. This generic message
-//! class makes no assumptions about the type of data to be stored within, so
-//! it can be used for reading and writing ANY type of ASCII record in 3-code
-//! format. The main duty of this class is to understand and validate incoming
-//! or outgoing 3-code format.
+//! Based on the Celera 3-code format, the AMOS 'NCode' messages are designed
+//! for easy parsing and compatibility with the other AMOS modules. This
+//! generic message class makes no assumptions about the type of data to be
+//! stored within, so it can be used for reading and writing ANY type of ASCII
+//! record in NCode format. The main duty of this class is to understand and
+//! validate incoming or outgoing NCode format.
 //!
 //==============================================================================
 class Message_t
@@ -105,9 +105,9 @@ class Message_t
 
 private:
 
-  std::string tname_m;                          //!< message type name
-  std::map<std::string,std::string> fields_m;   //!< message fields
-  std::vector<Message_t> subs_m;                //!< vector of submessages
+  NCode_t mcode_m;                            //!< message NCode type
+  std::map<NCode_t,std::string> fields_m;     //!< message fields
+  std::vector<Message_t> subs_m;              //!< vector of submessages
 
 
 public:
@@ -117,7 +117,7 @@ public:
   //!
   Message_t ( )
   {
-    tname_m = Message_k::M_NULL;
+    mcode_m = Message_k::M_NULL;
   }
 
 
@@ -137,9 +137,21 @@ public:
   //!
   void clear ( )
   {
-    tname_m = Message_k::M_NULL;
+    mcode_m = Message_k::M_NULL;
     fields_m . clear( );
     subs_m . clear( );
+  }
+
+
+  //--------------------------------------------------- exists -----------------
+  //! \brief Checks for the existence of a field by NCode
+  //!
+  //! \param fcode Check for a field with this NCode
+  //! \return true if exists, false if otherwise
+  //!
+  bool exists (NCode_t fcode) const
+  {
+    return fields_m . find (fcode) == fields_m . end( ) ? false : true;
   }
 
 
@@ -151,7 +163,30 @@ public:
   //!
   bool exists (const std::string & fname) const
   {
-    return fields_m . find (fname) == fields_m . end( ) ? false : true;
+    return exists (Encode (fname));
+  }
+
+
+  //--------------------------------------------------- getField ---------------
+  //! \brief Gets field data by field NCode
+  //!
+  //! Will return the field data, or throws an exception if the field does not
+  //! exist. You can check if the field exists first with the exists method.
+  //!
+  //! \param fcode Get field data with this field NCode
+  //! \pre The field code exists in the current message
+  //! \throws ArgumentException_t
+  //! \return The field data for fcode
+  //!
+  const std::string & getField (NCode_t fcode) const
+  {
+    std::map<NCode_t,std::string>::const_iterator mi;
+
+    mi = fields_m . find (fcode);
+    if ( mi == fields_m . end( ) )
+      AMOS_THROW_ARGUMENT ("Field name does not exist: " + Decode (fcode));
+
+    return mi -> second;
   }
 
 
@@ -168,13 +203,7 @@ public:
   //!
   const std::string & getField (const std::string & fname) const
   {
-    std::map<std::string,std::string>::const_iterator mi;
-
-    mi = fields_m . find (fname);
-    if ( mi == fields_m . end( ) )
-      AMOS_THROW_ARGUMENT ("Field name does not exist: " + fname);
-
-    return mi -> second;
+    return getField (Encode (fname));
   }
 
 
@@ -189,17 +218,17 @@ public:
   }
 
 
-  //--------------------------------------------------- getMessageType ---------
-  //! \brief Get the 3-code type name of this message
+  //--------------------------------------------------- getMessageCode ---------
+  //! \brief Get the NCode type  of this message
   //!
   //! Will return M_NULL if the message has not been assigned a type name
-  //! yet.
+  //! yet. NCode can be decoded to a string with the 'AMOS::Decode' function.
   //!
-  //! \return The 3-code type name of this message
+  //! \return The NCode type of this message
   //!
-  const std::string & getMessageType ( ) const
+  NCode_t getMessageCode ( ) const
   {
-    return tname_m;
+    return mcode_m;
   }
 
 
@@ -219,6 +248,21 @@ public:
 
 
   //--------------------------------------------------- removeField ------------
+  //! \brief Removes a field from the message object by NCode
+  //!
+  //! Removes a field from the message by its NCode. Has no effect if the field
+  //! code does not exist.
+  //!
+  //! \param fcode The field NCode to remove
+  //! \return void
+  //!
+  void removeField (NCode_t fcode)
+  {
+    fields_m . erase (fcode);
+  }
+
+
+  //--------------------------------------------------- removeField ------------
   //! \brief Removes a field from the message object
   //!
   //! Removes a field from the message. Has no effect if the field name does
@@ -229,7 +273,7 @@ public:
   //!
   void removeField (const std::string & fname)
   {
-    fields_m . erase (fname);
+    removeField (Encode (fname));
   }
 
 
@@ -246,6 +290,22 @@ public:
 
 
   //--------------------------------------------------- setField ---------------
+  //! \brief Set field data by field NCode
+  //!
+  //! Will set a new, or overwrite and existing field with the supplied data.
+  //! Throws an exception for an improperly formatted  data record (i.e. a
+  //! multi-line record that does not end in a newline).
+  //!
+  //! \param fcode The field NCode
+  //! \param data The new field data
+  //! \pre The data field ends in '\n' if it is multiple lines
+  //! \throws ArugmentException_t
+  //! \return void
+  //!
+  void setField (NCode_t fcode, const std::string & data);
+
+
+  //--------------------------------------------------- setField ---------------
   //! \brief Set field data by field name
   //!
   //! Will set a new, or overwrite and existing field with the supplied data.
@@ -255,40 +315,49 @@ public:
   //!
   //! \param fname The field name
   //! \param data The new field data
-  //! \pre The field name is 3 lowercase letters
+  //! \pre The field name is 3 chars
   //! \pre The data field ends in '\n' if it is multiple lines
   //! \throws ArugmentException_t
   //! \return void
   //!
-  void setField (const std::string & fname, const std::string & data);
+  void setField (const std::string & fname, const std::string & data)
+  {
+    setField (Encode (fname), data);
+  }
 
 
-  //--------------------------------------------------- setMessageType ---------
-  //! \brief Set the 3-code type name of this message
+  //--------------------------------------------------- setMessageCode ---------
+  //! \brief Set the NCode type code of this message
+  //!
+  //! \param mcode The new NCode type of this message
+  //! \return void
+  //!
+  void setMessageCode (NCode_t mcode)
+  {
+    mcode_m = mcode;
+  }
+
+
+  //--------------------------------------------------- setMessageCode ---------
+  //! \brief Set the NCode type name of this message
   //!
   //! Will throw an exception if the name is improperly formatted.
   //!
-  //! \param tname The new 3-code type name of this message
-  //! \pre The type name is 3 uppercase letters
+  //! \param mname The new NCode type name of this message
+  //! \pre The type name is 3 chars
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void setMessageType (const std::string & tname)
+  void setMessageCode (const std::string & mname)
   {
-    if ( tname . size( ) != NCODE )
-      AMOS_THROW_ARGUMENT ("Invalid message type name length");
-    for ( int i = 0; i < NCODE; i ++ )
-      if ( !isupper (tname [i]) && !isdigit (tname [i]))
-	AMOS_THROW_ARGUMENT ("Invalid message type name format");
-
-    tname_m = tname;
+    setMessageCode (Encode (mname));
   }
 
 
   //--------------------------------------------------- write ------------------
   //! \brief Write the message object to an output stream
   //!
-  //! Writes the 3-code ASCII representation of this object to the supplied
+  //! Writes the NCode ASCII representation of this object to the supplied
   //! output stream. Will throw an exception if there was an error trying to
   //! write to the stream.
   //!

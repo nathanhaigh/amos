@@ -327,7 +327,7 @@ void Bank_t::create (const string & dir)
   mkdir (dir . c_str( ), 0755);
 
   //-- Generate the bank prefix and INFO path
-  ss << dir << '/' << NCode (banktype_m);
+  ss << dir << '/' << Decode (banktype_m);
   pfx = ss.str( );
   ss << INFO_STORE_SUFFIX;
 
@@ -371,9 +371,7 @@ bool Bank_t::exists (const string & dir)
 {
   //-- Generate the INFO path
   stringstream ss;
-  ss << dir << '/'
-     << NCode (banktype_m)
-     << INFO_STORE_SUFFIX;
+  ss << dir << '/' << Decode (banktype_m) << INFO_STORE_SUFFIX;
 
   //-- Return false if insufficient permissions or absent INFO partition
   if ( access (dir . c_str( ), R_OK|W_OK|X_OK)  ||
@@ -472,7 +470,7 @@ void Bank_t::open (const string & dir)
   stringstream ss;
 
   //-- Generate the INFO path
-  ss << dir << '/' << NCode (banktype_m);
+  ss << dir << '/' << Decode (banktype_m);
   pfx = ss.str( );
   ss << INFO_STORE_SUFFIX;
 
