@@ -117,7 +117,7 @@ int main (int argc, char ** argv)
       msg.write(cout);
     }
 
-    int extra;   
+    int extra = 0;   
 
     //-- Iterate through each object in the mate bank
     while ( mtp_bank >> mtp )
