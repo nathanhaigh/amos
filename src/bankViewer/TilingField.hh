@@ -18,6 +18,7 @@ public:
 
     QSizePolicy sizePolicy() const;
     void mouseDoubleClickEvent(QMouseEvent * event);
+    void setWidth(int width) { resize(width, height()); }
 
 protected:
     void paintEvent( QPaintEvent * );

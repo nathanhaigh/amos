@@ -6,6 +6,7 @@
 #include "RenderSeq.hh"
 #include "TilingField.hh"
 #include "ConsensusField.hh"
+#include <qscrollview.h>
 
 
 
@@ -31,12 +32,17 @@ signals:
     void contigLoaded(int);
     void setStatus(const QString &);
 
+protected:
+    void paintEvent(QPaintEvent *);
+
 private:
 
     int m_fontsize;
     int m_gindex;
     int m_displaywidth;
     bool m_loaded;
+
+    QScrollView * m_sv;
 
     string m_bankname;
     std::vector<AMOS::Tile_t> m_tiling;

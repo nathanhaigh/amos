@@ -14,6 +14,7 @@ public:
                    int & fontsize,
                    QWidget *parent=0,
                    const char *name=0);
+    void setWidth(int width) { resize(width, height()); }
 protected:
     void paintEvent(QPaintEvent *);
 

@@ -18,25 +18,36 @@ TilingFrame::TilingFrame(QWidget * parent, const char * name, WFlags f = 0)
   resize(500, 500);
   setFrameShadow(QFrame::Raised);
   m_db = "DMG";
-  QScrollView * sv = new QScrollView(this, "tilingscroll");
-  sv->setHScrollBarMode(QScrollView::AlwaysOff);
+  m_sv = new QScrollView(this, "tilingscroll");
+  m_sv->setHScrollBarMode(QScrollView::AlwaysOff);
+  m_sv->setVScrollBarMode(QScrollView::AlwaysOn);
 
   m_tilingfield = new TilingField(m_renderedSeqs,
                                   m_consensus,
                                   m_db,
                                   m_gindex,
                                   m_fontsize,
-                                  sv->viewport(),
+                                  m_sv->viewport(),
                                   "tiling" );
 
-  sv->addChild(m_tilingfield);
+  m_sv->addChild(m_tilingfield);
   m_consfield = new ConsensusField(m_consensus, m_gindex, m_fontsize,
                                    this, "cons");
 
   QGridLayout * layout = new QGridLayout(this, 2, 1);
   layout->addWidget(m_consfield, 0,0);
-  layout->addWidget(sv,1,0);
+  layout->addWidget(m_sv,1,0);
   layout->setRowStretch(1,10);
+}
+
+void TilingFrame::paintEvent(QPaintEvent * event)
+{
+  m_consfield->repaint();
+
+  m_tilingfield->setWidth(m_sv->visibleWidth());
+  m_tilingfield->repaint();
+
+  QFrame::paintEvent(event);
 }
 
 void TilingFrame::setContigId(int contigId)
@@ -88,8 +99,7 @@ void TilingFrame::setContigId(int contigId)
 
       emit setStatus(s);
 
-      m_consfield->repaint();
-      m_tilingfield->repaint();
+      repaint();
     }
     catch (Exception_t & e)
     {
@@ -135,8 +145,6 @@ void TilingFrame::setFontSize(int fontsize )
   m_displaywidth = width/m_fontsize;
 
   repaint();
-  m_tilingfield->repaint();
-  m_consfield->repaint();
   emit setFontSize(m_fontsize);
 }
 
@@ -153,8 +161,6 @@ void TilingFrame::setGindex( int gindex )
 
   m_gindex = gindex;
   repaint();
-  m_tilingfield->repaint();
-  m_consfield->repaint();
   emit gindexChanged( m_gindex );
 }
 
