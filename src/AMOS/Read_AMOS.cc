@@ -33,6 +33,7 @@ void Read_t::clear ( )
   qclear_m . clear( );
   type_m = NULL_READ;
   vclear_m . clear( );
+  pos_m . clear( );
 }
 
 
@@ -43,6 +44,7 @@ void Read_t::readMessage (const Message_t & msg)
   Sequence_t::readMessage (msg);
 
   try {
+    int16_t pos;
     istringstream ss;
 
     if ( msg . exists (F_FRAGMENT) )
@@ -93,6 +95,22 @@ void Read_t::readMessage (const Message_t & msg)
           AMOS_THROW_ARGUMENT ("Invalid quality clear range format");
 	ss . clear( );
       }
+
+    if ( msg . exists (F_POSITION) )
+      {
+        ss . str (msg . getField (F_POSITION));
+
+        while ( ss )
+          {
+            ss >> pos;
+            if ( ! ss . fail( ) )
+              pos_m . push_back (pos);
+          }
+
+        if ( !ss . eof( ) )
+          AMOS_THROW_ARGUMENT ("Invalid pos format");
+        ss . clear( );
+      }
   }
   catch (ArgumentException_t) {
     
@@ -105,6 +123,7 @@ void Read_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void Read_t::readRecord (istream & fix, istream & var)
 {
+  Size_t size;
   Sequence_t::readRecord (fix, var);
 
   readLE (fix, &(clear_m . begin));
@@ -115,6 +134,11 @@ void Read_t::readRecord (istream & fix, istream & var)
   type_m = fix . get( );
   readLE (fix, &(vclear_m . begin));
   readLE (fix, &(vclear_m . end));
+  readLE (fix, &size);
+
+  pos_m . resize (size);
+  for ( Pos_t i = 0; i < size; i ++ )
+    readLE (var, &(pos_m [i]));
 }
 
 
@@ -143,6 +167,7 @@ void Read_t::writeMessage (Message_t & msg) const
   Sequence_t::writeMessage (msg);
 
   try {
+    vector<int16_t>::const_iterator vi;
     ostringstream ss;
 
     msg . setMessageCode (Read_t::NCODE);
@@ -172,6 +197,14 @@ void Read_t::writeMessage (Message_t & msg) const
     ss << qclear_m . begin << ',' << qclear_m . end;
     msg . setField (F_QUALITYCLEAR, ss . str( ));
     ss . str (NULL_STRING);
+
+    if ( !pos_m . empty( ) )
+      {
+        for ( vi = pos_m . begin( ); vi != pos_m . end( ); vi ++ )
+          ss << *vi << '\n';
+        msg . setField (F_POSITION, ss . str( ));
+        ss . str (NULL_STRING);
+      }
   }
   catch (ArgumentException_t) {
 
@@ -184,6 +217,7 @@ void Read_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Read_t::writeRecord (ostream & fix, ostream & var) const
 {
+  Size_t size = pos_m . size( );
   Sequence_t::writeRecord (fix, var);
 
   writeLE (fix, &(clear_m . begin));
@@ -194,6 +228,10 @@ void Read_t::writeRecord (ostream & fix, ostream & var) const
   fix . put (type_m);
   writeLE (fix, &(vclear_m . begin));
   writeLE (fix, &(vclear_m . end));
+  writeLE (fix, &size);
+
+  for ( Pos_t i = 0; i < size; i ++ )
+    writeLE (var, &(pos_m [i]));
 }
 
 

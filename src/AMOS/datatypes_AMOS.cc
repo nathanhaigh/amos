@@ -195,7 +195,7 @@ void Tile_t::writeMessage (Message_t & msg) const
   msg . clear( );
 
   try {
-    vector<int32_t>::const_iterator vi;
+    vector<Pos_t>::const_iterator vi;
     ostringstream ss;
 
     msg . setMessageCode (Tile_t::getNCode( ));
@@ -234,9 +234,8 @@ void Tile_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Tile_t::writeRecord (ostream & out) const
 {
-  Size_t size;
+  Size_t size = gaps . size( );
 
-  size = gaps . size( );
   writeLE (out, &size);
   for ( Pos_t i = 0; i < size; i ++ )
     writeLE (out, &(gaps [i]));

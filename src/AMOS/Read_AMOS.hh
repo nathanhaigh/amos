@@ -11,6 +11,7 @@
 #define __Read_AMOS_HH 1
 
 #include "Sequence_AMOS.hh"
+#include <vector>
 
 
 
@@ -37,6 +38,7 @@ private:
   Range_t qclear_m;                //!< the quality score clear range
   ReadType_t type_m;               //!< the read type
   Range_t vclear_m;                //!< the vector clear range
+  std::vector<int16_t> pos_m;        //!< base call positions
 
 
 protected:
@@ -94,6 +96,36 @@ public:
 
   //--------------------------------------------------- clear ------------------
   virtual void clear ( );
+
+
+  //--------------------------------------------------- getBasePositions -------
+  //! \brief Get the base call positions
+  //!
+  //! If the vector is empty, then no base call positions are provided.
+  //! Otherwise, the vector should have a size equal to the sequence length
+  //! representing the base call positions as specified by the base-caller.
+  //!
+  //! \return The vector of base call positions
+  //!
+  const std::vector<int16_t> & getBasePositions ( ) const
+  {
+    return pos_m;
+  }
+
+
+  //--------------------------------------------------- getBasePositions -------
+  //! \brief Get the base call positions
+  //!
+  //! If the vector is empty, then no base call positions are provided.
+  //! Otherwise, the vector should have a size equal to the sequence length
+  //! representing the base call positions as specified by the base-caller.
+  //!
+  //! \return The vector of base call positions
+  //!
+  std::vector<int16_t> & getBasePositions ( )
+  {
+    return pos_m;
+  }
 
 
   //--------------------------------------------------- getClearRange ----------
@@ -160,6 +192,18 @@ public:
 
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
+
+
+  //--------------------------------------------------- setBasePositions -------
+  //! \brief Set the base call positions
+  //!
+  //! \param pos The new vector of base call positions
+  //! \return void
+  //!
+  void setBasePositions (const std::vector<int16_t> & pos)
+  {
+    pos_m = pos;
+  }
 
 
   //--------------------------------------------------- setClearRange ----------

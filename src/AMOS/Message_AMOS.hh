@@ -48,6 +48,7 @@ const NCode_t   F_LIBRARY      = Encode ("lib");
 const NCode_t   F_MAP          = Encode ("map");
 const NCode_t   F_MEAN         = Encode ("mea");
 const NCode_t   F_OFFSET       = Encode ("off");
+const NCode_t   F_POSITION     = Encode ("pos");
 const NCode_t   F_QUALITY      = Encode ("qlt");
 const NCode_t   F_QUALITYCLEAR = Encode ("qcr");
 const NCode_t   F_READ1        = Encode ("rd1");
