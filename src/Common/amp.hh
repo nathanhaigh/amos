@@ -1,6 +1,5 @@
 #ifndef __AMP_HH
 #define __AMP_HH
-#include <cstdarg>
 
 // Return a character string representing the current date
 const char * Date ( );
@@ -13,12 +12,24 @@ inline long long int RevComp1 (long long int c, long long int len)
 inline long long int RevComp0 (long long int c, long long int len)
 { return len - c - 1; }
 
-// concats the return of time(NULL) and rand( ) to the end of prefix,
-// creates a file with that path, and returns the name
-const char * TempFile (const char * prefix);
+// Shows progress dots across the screen
+class ProgressDots_t
+{
+private:
 
-// concats the return of time(NULL) and rand( ) to the end of prefix,
-// creates a file with that path, and returns the name
-const char * TempDir (const char * prefix);
+  int total_m;    // number of dots currently printed
+  int count_m;    // total number of dots to print
+  int end_m;      // end of job progress (progress measured between 0 - end)
+
+public:
+
+  ProgressDots_t (int end, int count = 100)
+    : end_m (end), count_m (count), total_m (0)
+  { }
+
+  void update (int progress);  // update job progress with respect to end
+
+  void end ( );  // job complete, flush remaining dots and newline
+};
 
 #endif // _AMP_HH

@@ -1,13 +1,8 @@
 #include "amp.hh"
 #include <new>
+#include <iostream>
 #include <cstring>
 #include <ctime>
-#include <cstdio>
-#include <cstdlib>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 using namespace std;
 
 #define MAX_FILE_NAME 1024
@@ -29,22 +24,18 @@ const char * Date
   return cp;
 }
 
-const char * TempFile (const char * prefix)
+void ProgressDots_t::update (int progress)
 {
-  static char name [MAX_FILE_NAME];
-  snprintf (name, MAX_FILE_NAME, "%s%ld%d", prefix, time(NULL), rand( ));
-  int fd = creat (name, 0644);
-  if ( fd == -1 )
-    throw std::exception();
-  close (fd);
-  return name;
+  int dots = (int)((double)progress / (double)end_m * (double)count_m);
+  while ( total_m < dots  &&  total_m < count_m )
+    {
+      cerr << '.';
+      total_m ++;
+    }
 }
 
-const char * TempDir (const char * prefix)
+void ProgressDots_t::end ( )
 {
-  static char name [MAX_FILE_NAME];
-  snprintf (name, MAX_FILE_NAME, "%s%ld%d", prefix, time(NULL), rand( ));
-  if ( mkdir (name, 0755) == -1 )
-    throw std::exception();
-  return name;
+  update (end_m);
+  cerr << endl;
 }
