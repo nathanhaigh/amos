@@ -13,10 +13,12 @@ QMAKE_CXXFLAGS_RELEASE	= -I/usr/include/freetype2 -I/usr/include/freetype2/freet
 QMAKE_CFLAGS_WARN_ON	= -Wall -g
 QMAKE_CXXFLAGS_WARN_ON	= -Wall -g
 
-QMAKE_CXX = /usr/bin/g++
-QMAKE_LINK  = /usr/bin/g++
+QMAKE_CXX = /usr/local/bin/g++
+QMAKE_LINK  = /usr/local/bin/g++
 
 
 INCLUDEPATH	+= ../AMOS ../Common ../Slice /local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/include/io_lib/
-LIBS	+= -L../AMOS -L../Common -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/lib -lAMOS -lCommon -lread
+LIBS	+=  -L../AMOS -L../Common -L/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/lib -lAMOS -lCommon -lread
+
+QMAKE_LIBDIR = 
 
