@@ -81,6 +81,7 @@ public:
   PairIterator nodes_end() { return nodes.end(); }
   
   void clear_flags();
+  void clear_edge_flags();
   int degree(INode* p_node) const;
   int out_degree(INode* p_node) const;
   int in_degree(INode* p_node) const;

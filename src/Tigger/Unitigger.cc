@@ -171,13 +171,20 @@ void Unitigger::calc_layout(IEdge* p_edge) {
   Read* read2 = (Read*) target->getElement();
   Overlap* olap = (Overlap *)p_edge->getElement();
   
+
   if(read2->start != -1) {
     Read* tmp = read1;
     read1 = read2;
     read2 = tmp;
   }
 
-  if(VERBOSE) cout << " start layout " << endl;
+
+
+  if(VERBOSE) {
+    cout << " start layout " << endl;
+    cout << " read1 start " << read1->start << endl;
+    cout << " read2 start " << read2->start << " " << read2->end << endl;
+  }
   if(read2->start == -1) {
     if(VERBOSE) cout << " layout read " << read1->id << " and " << read2->id << endl;
 
@@ -246,6 +253,7 @@ void Unitigger::calc_layout(IEdge* p_edge) {
   } else {
     cerr << " passed a layout to calulate but both read have start positions " << endl;
   }
+
   if(VERBOSE) cout << " end layout " << endl;
   
 }
@@ -443,17 +451,19 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     contig.pop_back();
     calc_layout(calc_edge);
     first_node = calc_edge->opposite(first_node);
-    cout << " -> " << first_node->getKey();
+
     read_tile = (Read*) first_node->getElement();
     tile.source = read_tile->id;
-    
-    if(read_tile->start > read_tile->end) {
+
+
+    cout << " -> " << read_tile->id << "(" << read_tile->start << ", " << read_tile->end << ")"; 
+    if(read_tile->start < read_tile->end) {
       tile.offset = read_tile->start;
       tile.range = read_tile->range;
     } else {
       tile.range = read_tile->range;
-      tile.range.swap();
       tile.offset = read_tile->end;
+      tile.range.swap();
     }
     
     tiles.push_back(tile);

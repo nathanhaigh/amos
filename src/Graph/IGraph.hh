@@ -66,6 +66,7 @@ public:
 
   virtual   INode* aNode() = 0;
   virtual   void clear_flags() = 0;
+  virtual   void clear_edge_flags() = 0;
 
   /**
    * create new IEdge

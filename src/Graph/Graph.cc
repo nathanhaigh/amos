@@ -162,7 +162,8 @@ IEdge* Graph::new_edge(INode* p_n1, INode* p_n2, void* p_element) {
   IEdge* e = (IEdge *) new Edge(p_element, directed);
   edges.push_back(e);
   
-  e->setNodes(p_n1, p_n2);
+  e->setSource(p_n1);
+  e->setTarget(p_n2);
   e->setKey(keys++);
 
   p_n1->add_oedge(e);
@@ -176,15 +177,20 @@ IEdge* Graph::new_edge(INode* p_n1, INode* p_n2, void* p_element) {
   return e;
 }
 
+void Graph::clear_edge_flags() {
+  IEdgeIterator edgeIter = edges.begin();  
+  for( ; edgeIter != edges.end(); ++edgeIter) {
+    (*edgeIter)->setFlags(0x0);
+  }
+}
+
 void Graph::clear_flags() {
   for(PairIterator nodeIter = nodes.begin(); nodeIter != nodes.end(); ++nodeIter) {
     (*nodeIter).second->setFlags(0x0);
   }
 
-  IEdgeIterator edgeIter = edges.begin();  
-  for( ; edgeIter != edges.end(); ++edgeIter) {
-    (*edgeIter)->setFlags(0x0);
-  }
+  clear_edge_flags();
+
 }
 
 /**
