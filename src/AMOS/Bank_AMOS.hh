@@ -44,7 +44,7 @@ namespace Bank_k {
   const Size_t BUFFER_SIZE = 1024;
   //!< IO buffer size
 
-  const std::string BANK_VERSION ("1.02");
+  const std::string BANK_VERSION ("1.03");
   //!< Current Bank version, may not be able to read from other versions
 
   const std::string FIX_STORE_SUFFIX (".fix");
