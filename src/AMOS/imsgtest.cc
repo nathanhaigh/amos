@@ -34,6 +34,8 @@ int main (int argc, char ** argv)
 
 	  msg . clear( );
 	  bnk . toMessage (msg);
+
+	  cout << "### NEW MESSAGE ###\n";
 	  msg . write (cout);
 	}
   }

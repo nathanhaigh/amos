@@ -101,7 +101,7 @@ namespace Message_k {
 //! format. The main duty of this class is to understand and validate incoming
 //! or outgoing 3-code format.
 //!
-//!=============================================================================
+//==============================================================================
 class Message_t
 {
 
@@ -314,7 +314,7 @@ public:
 //! allows in-memory classes to read and write messages to a stream via the
 //! Message_t class.
 //!
-//!=============================================================================
+//==============================================================================
 class IMessagable_t
 {
 
