@@ -176,6 +176,20 @@ int mateLen (AnnotatedMatePair & m, Range_t & a, Range_t & b, int Len, int End)
     return 0;
   }
 
+  if (oriA == 1 && (b.getEnd() < a.getBegin() || a.getEnd() > b.getBegin())) {
+    // B <-------
+    // A   ------->
+    m.status = MP_OUTIE;
+    return 0;
+  }
+
+  if (oriA == -1 && (a.getEnd() < b.getBegin() || b.getEnd() > a.getBegin())) {
+    // A <-------
+    // B   ------->
+    m.status = MP_OUTIE;
+    return 0;
+  }
+
   // now everything is kosher A --> <-- B or B --> <-- A
   if ((oriA == 1 && (Len - a.getBegin() < End))||
       (oriA == -1 && (a.getBegin() < End)) ||
