@@ -201,6 +201,17 @@ public:
   }
 
 
+  //--------------------------------------------------- empty ------------------
+  //! \brief Returns true if the map is empty
+  //!
+  //! \return true if empty, else false
+  //!
+  bool empty ( )
+  {
+    return (size_m == 0);
+  }
+
+
   //--------------------------------------------------- exists -----------------
   //! \brief Check if a certain key exists in the map
   //!
