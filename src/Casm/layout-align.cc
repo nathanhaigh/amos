@@ -8,6 +8,7 @@
 //! \todo link mates that span the origin when -c is on
 //! \todo circ read olaps in readheap
 //! \todo set rand seed on command line
+//! \todo idy window diff checking?
 //! \todo see "//TODO" in code
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -34,42 +35,35 @@ using namespace std;
 
 
 //=============================================================== Options ====//
-string  OPT_BankName;                 // bank name parameter
-string  OPT_AlignName;                // alignment name parameter
-bool    OPT_Matepair = false;         // use matepair information
-bool    OPT_Circular = false;         // circular reference
-bool    OPT_PrintConflicts = false;   // print conflicts
-bool    OPT_PrintMaps = false;        // print read maps
-bool    OPT_PrintTigr = false;        // print tigr contigs
-bool    OPT_PrintUMD = false;         // print UMD contigs
-bool    OPT_Random = false;           // randomly place ambiguous reads
-int     OPT_Seed = -1;                // random seed
-bool    OPT_ExcludeSegmented = false; // exclude all segmented reads
+string  OPT_BankName;                   // bank name parameter
+string  OPT_AlignName;                  // alignment name parameter
 
+bool    OPT_Matepair         = false;   // use matepair information
+bool    OPT_Circular         = false;   // circular reference
+bool    OPT_PrintConflicts   = false;   // print conflicts
+bool    OPT_PrintMaps        = false;   // print read maps
+bool    OPT_PrintTigr        = false;   // print tigr contigs
+bool    OPT_PrintUMD         = false;   // print UMD contigs
+bool    OPT_Random           = false;   // randomly place ambiguous reads
+bool    OPT_ExcludeSegmented = false;   // exclude all segmented reads
+
+int     OPT_MinOverlap       = 10;      // minimum overlap between reads
+int     OPT_MaxTrimLen       = 20;      // maximum ignorable trim length
+int     OPT_MaxGap           = 75000;   // maximum gap in an alignment chain
+int     OPT_Seed             = -1;      // random seed
+
+float   OPT_MinCoverage      = 25.0;    // min coverage to tile
+float   OPT_MinIdentity      = 70.0;    // min identity to tile
+float   OPT_MaxCoverageDiff  =  2.0;    // max %coverage diff between 'best'
+float   OPT_MaxIdentityDiff  =  2.0;    // max %identity diff between 'best'
 
 
 //============================================================= Constants ====//
 const char FORWARD_CHAR  = '+';
 const char REVERSE_CHAR  = '-';
 
-const int   MAXGAPR     = 75000;        // maximum reference gap in a chain
-const int   MAXGAPQ     =  1000;        // maximum query gap in a chain
-
-const float MINCOV = 25.0;              // min coverage to tile
-const float MINIDY = 70.0;              // min identity to tile
-
-const float MAXCOVDIFF  =  2.0;         // max %coverage diff between 'best'
-const float MAXIDYDIFF  =  2.0;         // max %identity diff between 'best'
-
-const int   ERRLEN       =   10;        // max diff indel length before error
-const int   TRMLEN       =   20;        // max end trimming before error
-
-//TODO - DO IDY CHECKING
-//const float ERRIDY       =  4.0;        // max %identity diff before error
-//const float IDYOLAP      = 50.0;        // min olap coverage for idy check
-
-const int   MININDELS    =    2;        // min coverage of indels needed
-const int   MINOLAP      =   10;        // min olap between 2 1x regions
+const int   FUZZY        =   10;         // fuzzy equals tolerance
+const int   MININDELS    =    2;         // min coverage of indels needed
 
 struct ReadMap_t;
 struct Contig_t;
@@ -406,7 +400,6 @@ void CleanContigs (Assembly_t & assembly);
 //! \brief Find and store conflicts between the reads and the refs
 //!
 //! \param mapping The read mapping
-//! \pre read list is sorted by place
 //! \return void
 //!
 void FindConflicts (Mapping_t & mapping);
@@ -558,11 +551,11 @@ inline bool IsBetterChain (const ReadAlignChain_t * cand,
 			   const ReadMap_t * read)
 {  
   if ( (float)labs(best -> len - cand -> len) /
-       (float)(read -> len) * 100.0 > MAXCOVDIFF )
+       (float)(read -> len) * 100.0 > OPT_MaxCoverageDiff )
     return cand -> len > best -> len;
   else
     {
-      if ( fabs(best -> idy - cand -> idy) > MAXIDYDIFF )
+      if ( fabs(best -> idy - cand -> idy) > OPT_MaxIdentityDiff )
 	return cand -> idy > best -> idy;
       else
 	{
@@ -588,9 +581,9 @@ inline bool IsEqualChain (const ReadAlignChain_t * cand,
 {
   return (
 	  (float)(best -> len - cand -> len) /
-	  (float)(read -> len) * 100.0 <= MAXCOVDIFF
+	  (float)(read -> len) * 100.0 <= OPT_MaxCoverageDiff
 	  &&
-	  best -> idy - cand -> idy <= MAXIDYDIFF
+	  best -> idy - cand -> idy <= OPT_MaxIdentityDiff
 	  );
 }
 
@@ -600,11 +593,11 @@ inline bool IsEqualConflict (const Conflict_t * A, const Conflict_t * B)
 {
   if ( A -> type == B -> type
        &&
-       labs (A -> pos - B -> pos) <= ERRLEN
+       labs (A -> pos - B -> pos) <= FUZZY
        &&
-       labs (A -> gapR - B -> gapR) <= ERRLEN
+       labs (A -> gapR - B -> gapR) <= FUZZY
        &&
-       labs (A -> gapQ - B -> gapQ) <= ERRLEN )
+       labs (A -> gapQ - B -> gapQ) <= FUZZY )
     return true;
   else
     return false;
@@ -618,14 +611,14 @@ inline bool IsValidChain(const ReadAlignChain_t * cand,
   //-- Exclude segmented or partial alignments
   if ( OPT_ExcludeSegmented )
     if ( cand -> head -> from != NULL  ||
-	 cand -> end  - cand -> tend > TRMLEN  ||
-	 cand -> tbeg - cand -> beg  > TRMLEN )
+	 cand -> end  - cand -> tend > OPT_MaxTrimLen  ||
+	 cand -> tbeg - cand -> beg  > OPT_MaxTrimLen )
       return false;
 
   return (
-	  (float)cand -> len / (float)read -> len * 100.0 >= MINCOV
+	  (float)cand -> len / (float)read -> len * 100.0 >= OPT_MinCoverage
 	  &&
-	  cand -> idy >= MINIDY
+	  cand -> idy >= OPT_MinIdentity
 	  );
 }
 
@@ -653,6 +646,7 @@ int main (int argc, char ** argv)
   Mapping_t mapping;
   Assembly_t assembly;
 
+  //-- COMMAND
   ParseArgs (argc, argv);          // parse the command line arguments
   srand (OPT_Seed);
 
@@ -804,8 +798,10 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 		{
 		  tp = new Tile_t (*rmpi, cp);
 
+		  //TODO - think about overlap
 		  //-- 0 coverage forces a new contig
-		  if ( ! cp->tiles.empty( )  &&  tp->off > cp->len - MINOLAP )
+		  if ( ! cp -> tiles . empty( )  &&
+		       tp -> off > cp -> len - OPT_MinOverlap )
 		    {
 		      //-- Push a new contig and redo the tile
 		      cp = new Contig_t( );
@@ -882,8 +878,8 @@ void Assemble (Mapping_t & mapping, Assembly_t & assembly)
 		  else
 		    {
 		      //-- 0 coverage forces a new contig
-		      if ( !cp -> tiles . empty( )  &&
-			   tp -> off > cp -> len - MINOLAP )
+		      if ( ! cp -> tiles . empty( )  &&
+			   tp -> off > cp -> len - OPT_MinOverlap )
 			{
 			  //-- Push a new contig and redo the tile
 			  cp = new Contig_t( );
@@ -966,12 +962,12 @@ void ChainAligns (Mapping_t & mapping)
 		olap1 = (las [j] . a -> hiR - las [j] . a -> ref -> len) +
 		  (1 - las [i] . a -> loR);
 	      }
-	    if ( olap1 < -(MAXGAPR) )
+	    if ( olap1 < -(OPT_MaxGap) )
 	      continue;
 	    olap = olap1 > 0 ? olap1 : 0;
 
 	    olap2 = las [j] . a -> hi - las [i] . a -> lo + 1;
-	    if ( olap2 < -(MAXGAPQ) )
+	    if ( olap2 < -(OPT_MaxGap) )
 	      continue;
 	    olap = olap > olap2 ? olap : olap2;
 
@@ -1019,8 +1015,8 @@ void ChainAligns (Mapping_t & mapping)
 	}
 
       //-- Keep only the 'best' chains, thus best . size > 0 == ambiguity
-      //   i.e. within MAXCOVDIFF of the longest and within MAXIDYDIFF
-      //   of the longest (with the higest idy)
+      //   i.e. within OPT_MaxCoverageDiff of the longest and within
+      //   OPT_MaxIdentityDiff of the longest (with the higest idy)
       rcpi = (*rmpi) -> best . begin( );
       while ( rcpi != (*rmpi) -> best . end( ) )
 	{
@@ -1089,7 +1085,7 @@ void FindConflicts (Mapping_t & mapping)
       curraln = currmap -> place -> head;
 
       //-- If there is a HIBREAK
-      if ( currmap -> place -> end - currmap -> place -> tend > TRMLEN )
+      if ( currmap -> place -> end - currmap -> place -> tend > OPT_MaxTrimLen )
 	curraln -> ref -> conflicts . push_back
 	  (new Conflict_t (Conflict_t::HIBREAK, curraln -> hiR, 0, 0, currmap));
       
@@ -1097,7 +1093,7 @@ void FindConflicts (Mapping_t & mapping)
 	{
 	  gap = GapDistance (curraln -> from, curraln);
 	  //-- If there is an INDEL, push it and it's break points
-	  if ( labs (gap . first) > ERRLEN  ||  labs (gap . second) > ERRLEN )
+	  if ( labs (gap . first) > FUZZY  ||  labs (gap . second) > FUZZY )
 	    {
 	      curraln -> ref -> conflicts . push_back
 		(new Conflict_t (Conflict_t::INDEL,
@@ -1115,7 +1111,7 @@ void FindConflicts (Mapping_t & mapping)
 	}
 
       //-- If there is a LOBREAK
-      if ( currmap -> place -> tbeg - currmap -> place -> beg > TRMLEN )
+      if ( currmap -> place -> tbeg - currmap -> place -> beg > OPT_MaxTrimLen )
 	curraln -> ref -> conflicts . push_back
 	  (new Conflict_t (Conflict_t::LOBREAK, curraln -> loR, 0, 0, currmap));
     }
@@ -1149,7 +1145,7 @@ void FindConflicts (Mapping_t & mapping)
 	    }
 	  else
 	    {
-	      if ( labs ((*first) -> pos - (*next) -> pos) <= ERRLEN )
+	      if ( labs ((*first) -> pos - (*next) -> pos) <= FUZZY )
 		{
 		  if ( nxtf == last )
 		    nxtf = next;
@@ -1686,7 +1682,10 @@ void PrintUMD (const Assembly_t & assembly)
 
       cout
 	<< "C " << ++ctgs << '\t'
-	<< (*cpi) -> tiles . front( ) -> read -> place -> beg << endl;
+	<< (*cpi) -> tiles . size( ) << '\t'
+	<< (*cpi) -> tiles . front( ) -> read -> place -> beg << "-"
+	<< (*cpi) -> tiles . front( ) -> read -> place -> beg
+	+ (*cpi) -> len - 1 << endl;
 
       for ( tpi  = (*cpi) -> tiles . begin( );
 	    tpi != (*cpi) -> tiles . end( ); tpi ++ )
@@ -1770,7 +1769,7 @@ void RefineConflicts (Mapping_t & mapping)
 	  //-- Collect the nay counts, i.e. reads that do not agree on break
 	  for ( ri = heap . begin( ); ri != heap . end( ); ri ++ )
 	    for ( rap = (*ri) -> place -> head; rap != NULL; rap = rap->from )
-	      if ( rap -> loR < cpos - ERRLEN  &&  rap -> hiR > cpos + ERRLEN )
+	      if ( rap -> loR < cpos - FUZZY  &&  rap -> hiR > cpos + FUZZY )
 		{
 		  (*cpi) -> discount . push_back (*ri);
 		  break;
@@ -1806,14 +1805,14 @@ void RefineConflicts (Mapping_t & mapping)
 	  end = (*cpi) -> pos + (*cpi) -> gapR + 1;
 
 	  hicpi = locpi = cpi;
-	  while ( hicpi != bcpi  &&  beg - (*hicpi) -> pos <= ERRLEN )
+	  while ( hicpi != bcpi  &&  beg - (*hicpi) -> pos <= FUZZY )
 	    hicpi --;
-	  while ( locpi != bcpi  &&  end - (*locpi) -> pos <= ERRLEN )
+	  while ( locpi != bcpi  &&  end - (*locpi) -> pos <= FUZZY )
 	    locpi --;
 
 	  //-- Find hang conflicts corresponding to the reference HIBREAK
-	  for ( ; hicpi != ecpi  &&  (*hicpi) -> pos - beg <= ERRLEN; hicpi ++ )
-	    if ( hicpi != cpi  &&  labs (beg - (*hicpi) -> pos) <= ERRLEN )
+	  for ( ; hicpi != ecpi  &&  (*hicpi) -> pos - beg <= FUZZY; hicpi ++ )
+	    if ( hicpi != cpi  &&  labs (beg - (*hicpi) -> pos) <= FUZZY )
 	      {
 		breaks . push_back (*hicpi);
 
@@ -1823,7 +1822,8 @@ void RefineConflicts (Mapping_t & mapping)
 		    if ( (*cpi)->support.size( ) >= (unsigned int)MININDELS )
 		      for ( ri  = (*hicpi) -> support . begin( );
 			    ri != (*hicpi) -> support . end( ); ri ++ )
-			if ( (*ri)->place->end - beg < (*cpi)->gapQ + TRMLEN )
+			if ( (*ri) -> place -> end - beg <
+			     (*cpi) -> gapQ + OPT_MaxTrimLen )
 			  (*cpi) -> support . push_back (*ri);
 
 		    //-- Add to INDEL discount
@@ -1834,8 +1834,8 @@ void RefineConflicts (Mapping_t & mapping)
 	      }
 
 	  //-- Find hang conflicts corresponding to the reference LOBREAK
-	  for ( ; locpi != ecpi  &&  (*locpi) -> pos - end <= ERRLEN; locpi ++ )
-	    if ( locpi != cpi  &&  labs (end - (*locpi) -> pos) <= ERRLEN )
+	  for ( ; locpi != ecpi  &&  (*locpi) -> pos - end <= FUZZY; locpi ++ )
+	    if ( locpi != cpi  &&  labs (end - (*locpi) -> pos) <= FUZZY )
 	      {
 		breaks . push_back (*locpi);
 
@@ -1845,7 +1845,8 @@ void RefineConflicts (Mapping_t & mapping)
 		    if ( (*cpi)->support.size( ) >= (unsigned int)MININDELS )
 		      for ( ri  = (*locpi) -> support . begin( );
 			    ri != (*locpi) -> support . end( ); ri ++ )
-			if ( end - (*ri)->place->beg < (*cpi)->gapQ + TRMLEN )
+			if ( end - (*ri) -> place -> beg <
+			     (*cpi) -> gapQ + OPT_MaxTrimLen )
 			  (*cpi) -> support . push_back (*ri);
 		    
 		    //-- Add to INDEL discount
@@ -1989,7 +1990,8 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:cCehMrs:TU")) != EOF) )
+  while ( !errflg  &&
+	  ((ch = getopt (argc, argv, "b:cCeg:hi:I:Mo:rs:t:TUv:V:")) != EOF) )
     switch (ch)
       {
       case 'b':
@@ -2009,13 +2011,29 @@ void ParseArgs (int argc, char ** argv)
 	OPT_ExcludeSegmented = true;
 	break;
 
+      case 'g':
+	OPT_MaxGap = atoi (optarg);
+	break;
+
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
         break;
 
+      case 'i':
+	OPT_MinIdentity = atof (optarg);
+	break;
+
+      case 'I':
+	OPT_MaxIdentityDiff = atof (optarg);
+	break;
+
       case 'M':
 	OPT_PrintMaps = true;
+	break;
+
+      case 'o':
+	OPT_MinOverlap = atoi (optarg);
 	break;
 
       case 'r':
@@ -2026,12 +2044,24 @@ void ParseArgs (int argc, char ** argv)
 	OPT_Seed = atoi (optarg);
 	break;
 
+      case 't':
+	OPT_MaxTrimLen = atoi (optarg);
+	break;
+
       case 'T':
 	OPT_PrintTigr = true;
 	break;
 
       case 'U':
 	OPT_PrintUMD = true;
+	break;
+
+      case 'v':
+	OPT_MinCoverage = atof (optarg);
+	break;
+
+      case 'V':
+	OPT_MaxCoverageDiff = atof (optarg);
 	break;
 
       default:
@@ -2059,18 +2089,33 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-b path       The path of the AMOS bank to use for mate-pair info\n"
+    << "-b path       Set path of the AMOS bank to use for mate-pair info\n"
     << "-c            Circular reference sequence\n"
-    << "-C            Print conflicts\n"
+    << "-C            Print conflict positions and support counts\n"
     << "-e            Exclude all segmented and partial read mappings\n"
+    << "-g uint       Set maximum alignment gap length, default "
+    << OPT_MaxGap << endl
     << "-h            Display help information\n"
-    << "-M            Print read maps\n"
+    << "-i float      Set the minimum alignment identity, default "
+    << OPT_MinIdentity << endl
+    << "-I float      Set the identity tolerance between repeats, default "
+    << OPT_MaxIdentityDiff << endl
+    << "-M            Print read mappings\n"
+    << "-o uint       Set minimum overlap length for assembly, default "
+    << OPT_MinOverlap << endl
     << "-r            Randomly place repetitive reads into one of their copy\n"
-    << "              locations if it cannot be placed via mate-pair info\n"
+    << "              locations if they cannot be placed via mate-pair info\n"
     << "-s uint       Set random generator seed to unsigned int. Default\n"
     << "              seed is generated by the system clock\n"
+    << "-t uint       Set maximum ignorable trim length, default "
+    << OPT_MaxTrimLen << endl
     << "-T            Print TIGR contig\n"
-    << "-U            Print UMD contig\n\n";
+    << "-U            Print UMD contig\n"
+    << "-v float      Set the minimum alignment coverage, default "
+    << OPT_MinCoverage << endl
+    << "-V float      Set the coverage tolerance between repeats, default "
+    << OPT_MaxCoverageDiff << endl
+    << endl;
 
   cerr
     << "  Position query sequences on a reference based on the alignment\n"
