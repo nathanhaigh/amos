@@ -40,8 +40,11 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
+    cerr << "open mtp bank" << endl;
     mate_bank.open(bankname, B_SPY);
+    cerr << "open frg bank" << endl;
     frag_bank.open(bankname, B_SPY);
+    cerr << "open lib bank" << endl;
     lib_bank.open(bankname,  B_SPY);
     loadMates();
     loadLibraries();

@@ -124,6 +124,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       p.setBrush(Qt::SolidPattern);
       p.setPen(Qt::black);
       p.setBrush(Qt::black);
+
       p.drawEllipse(xcoord+m_fontsize/2-m_diam/2-1, m_discoffset,
                     m_diam, m_diam);
                     
@@ -167,6 +168,20 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
                  xcoord+m_fontsize/2, m_lineoffset+2);
     }
+  }
+
+  bool showIndicator = false;
+  if (showIndicator)
+  {
+    QPointArray indicator (3);
+
+    indicator[0] = QPoint(m_tilehoffset + 10*m_basewidth, 2);
+    indicator[1] = QPoint(m_tilehoffset + 10*m_basewidth + .5*m_fontsize, 2);
+    indicator[2] = QPoint(m_tilehoffset + 10*m_basewidth + .25*m_fontsize, 8);
+
+    p.setPen(Qt::black);
+    p.setBrush(Qt::black);
+    p.drawPolygon(indicator);
   }
 
   p.end();

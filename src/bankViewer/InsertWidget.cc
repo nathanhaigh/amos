@@ -33,6 +33,12 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, this, "qcv");
   m_ifield->show();
 
+  connect(this, SIGNAL(highlightIID(const QString &)),
+          m_ifield, SLOT(highlightIID(const QString &)));
+
+  connect(this, SIGNAL(highlightEID(const QString &)),
+          m_ifield, SLOT(highlightEID(const QString &)));
+
   vbox->addWidget(m_iposition);
   vbox->addWidget(m_ifield, 10);
   vbox->activate();

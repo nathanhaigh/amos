@@ -43,6 +43,8 @@ public slots:
 signals:
   void setStatus(const QString & message);
   void setGindex(int gindex);
+  void highlightIID(const QString & qiid);
+  void highlightEID(const QString & qeid);
 
 
 private:

@@ -22,6 +22,77 @@ InsertField::InsertField(DataStore * datastore,
 
 }
 
+void InsertField::highlightInsert(InsertCanvasItem * iitem, 
+                                  bool highlight,
+                                  bool highlightBuddy)
+{
+  iitem->m_highlight = highlight;
+
+  Insert * ins = iitem->m_insert;
+
+  QString s = "Insert " + QString::number(ins->m_active);
+
+  s += QString(" [") + (char)ins->m_state + "] ";
+
+  getInsertString(s, ins->m_active, ins);
+  getInsertString(s, !ins->m_active, ins);
+
+  s += " Actual: "   + QString::number(ins->m_actual);
+  s += " Expected: " + QString::number(ins->m_dist.mean - 3*ins->m_dist.sd) 
+    +  " - "         + QString::number(ins->m_dist.mean + 3*ins->m_dist.sd);
+
+  emit setStatus(s);
+
+  canvas()->setChanged(iitem->boundingRect());
+
+  if (highlightBuddy &&
+      ins->m_other && 
+      ins->m_other->m_canvasItem)
+  {
+    ins->m_other->m_canvasItem->m_highlight = iitem->m_highlight;
+    canvas()->setChanged(ins->m_other->m_canvasItem->boundingRect());
+  }
+
+  canvas()->update();
+}
+
+void InsertField::highlightEID(const QString & qeid)
+{
+  AMOS::ID_t iid = m_datastore->read_bank.lookupIID(qeid.ascii());
+  highlightIID(iid);
+}
+
+void InsertField::highlightIID(const QString & qiid)
+{
+  AMOS::ID_t iid = (AMOS::ID_t) (qiid.toUInt());
+  highlightIID(iid);
+}
+
+void InsertField::highlightIID(AMOS::ID_t iid)
+{
+  if (iid == AMOS::NULL_ID)
+  {
+    return;
+  }
+
+  QCanvasItemList all = canvas()->allItems();
+
+  for (QCanvasItemList::Iterator it=all.begin(); it!=all.end(); ++it) 
+  {
+    if ((*it)->rtti() == InsertCanvasItem::RTTI)
+    {
+      InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
+      Insert * ins = iitem->m_insert;
+
+      if (ins->m_aid == iid || ins->m_bid == iid)
+      {
+        highlightInsert(iitem, true, true);
+        break;
+      }
+    }
+  }
+}
+
 void InsertField::contentsMousePressEvent( QMouseEvent* e )
 {
   QPoint real = inverseWorldMatrix().map(e->pos());
@@ -38,33 +109,10 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       if ((*it)->rtti() == InsertCanvasItem::RTTI)
       {
         InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
-        Insert * ins = iitem->m_insert;
+        bool highlight = !iitem->m_highlight;
+        bool highlightBuddy = e->button() == RightButton;
 
-        QString s = "Insert " + QString::number(ins->m_active);
-
-        s += QString(" [") + (char)ins->m_state + "] ";
-
-        getInsertString(s, ins->m_active, ins);
-        getInsertString(s, !ins->m_active, ins);
-
-        s += " Actual: "   + QString::number(ins->m_actual);
-        s += " Expected: " + QString::number(ins->m_dist.mean - 3*ins->m_dist.sd) 
-          +  " - "         + QString::number(ins->m_dist.mean + 3*ins->m_dist.sd);
-
-        emit setStatus(s);
-
-        iitem->m_highlight = !iitem->m_highlight;
-        canvas()->setChanged(iitem->boundingRect());
-
-        if (e->button() == RightButton && 
-            ins->m_other && 
-            ins->m_other->m_canvasItem)
-        {
-          ins->m_other->m_canvasItem->m_highlight = iitem->m_highlight;
-          canvas()->setChanged(ins->m_other->m_canvasItem->boundingRect());
-        }
-
-        canvas()->update();
+        highlightInsert(iitem, highlight, highlightBuddy);
       }
     }
   }

@@ -9,6 +9,7 @@
 #include <qmenubar.h>
 #include <qpixmap.h>
 #include <qpainter.h>
+#include <qlineedit.h>
 
 #include "UIElements.hh"
 
@@ -32,6 +33,14 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   new QLabel("Zoom", options, "zoomlbl");
   QSlider * zoom = new QSlider(1, 500, 10, 20, Qt::Horizontal, options, "zoom");
+
+  new QLabel("IID:", options, "iidlbl");
+  QLineEdit * iidpick = new QLineEdit(options, "iidpick");
+
+  new QLabel("EID:", options, "eidlbl");
+  QLineEdit * eidpick = new QLineEdit(options, "eidpick");
+
+
 
 
   // MenuBar
@@ -76,6 +85,12 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(refreshCanvas()),
           iw,   SLOT(refreshCanvas()));
+
+  connect(iidpick, SIGNAL(textChanged(const QString &)),
+          iw,      SIGNAL(highlightIID(const QString &)));
+
+  connect(eidpick, SIGNAL(textChanged(const QString &)),
+          iw,      SIGNAL(highlightEID(const QString &)));
 }
 
 void InsertWindow::contigChanged()
