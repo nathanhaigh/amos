@@ -449,6 +449,9 @@ sub parseFrgFile {
 	    if ($nm ne "" && $nm !~ /^\s*$/){
 		$seqnames{$id} = $nm;
 		$seqids{$nm} = $id;
+	    } else {
+		$seqnames{$id} = $id;
+		$seqids{$id} = $id;
 	    }
 	    my ($seql, $seqr) = split(',', $$fields{clr});
 	    $seq_range{$id} = "$seql $seqr";
