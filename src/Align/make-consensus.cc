@@ -40,6 +40,8 @@ enum  Output_Format_t
 
 static string  Bank_Name;
   // Name of read bank from which reads are obtained
+static bool  Use_SeqNames = false;
+  //AMP// If set true, will use comment filed in the readbank for seq tags
 static bool  Do_Contig_Messages = false;
   // If set true (by -c option) then contig messages in the
   // input will be processed
@@ -454,7 +456,16 @@ static void  Get_Strings_And_Offsets
       b = position . getEnd ();
 
       read_bank . fetch (read);
-      sprintf (tag_buff, "%u", read . getIID ());
+      if ( Use_SeqNames )
+	{
+	  j = read . getComment( ) . find ('\n');
+	  if ( (unsigned)j == string::npos )
+	    j = read . getComment( ) . size( );
+	  read . getComment( ) . copy (tag_buff, j);
+	  tag_buff [j] = '\0';
+	}
+      else
+	sprintf (tag_buff, "%u", read . getIID ());
       tag_list . push_back (strdup (tag_buff));
       
       clear = read . getClearRange ();
@@ -568,8 +579,19 @@ static void  Get_Strings_And_Offsets
 
       read . setIID ( fid [i] );
       read_bank . fetch (read);
-      sprintf (tag_buff, "%u", read . getIID ());
+
+      if ( Use_SeqNames )
+	{
+	  j = read . getComment( ) . find ('\n');
+	  if ( (unsigned)j == string::npos )
+	    j = read . getComment( ) . size( );
+	  read . getComment( ) . copy (tag_buff, j);
+	  tag_buff [j] = '\0';
+	}
+      else
+	sprintf (tag_buff, "%u", read . getIID ());
       tag_list . push_back (strdup (tag_buff));
+
       clear = read . getClearRange ();
       if  (Verbose > 2)
 	cerr << read;
@@ -686,7 +708,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "acCe:E:fho:PSTuv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "acCe:E:fho:PsSTuv:")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -725,6 +747,10 @@ static void  Parse_Command_Line
         case  'P' :
           Input_Format = PARTIAL_READ_INPUT;
           break;
+
+        case 's' :
+	  Use_SeqNames = true;
+	  break;
 
         case  'S' :
           Input_Format = SIMPLE_CONTIG_INPUT;
@@ -862,6 +888,7 @@ static void  Usage
            "  -o <n>   Set minimum overlap bases to <n>\n"
            "  -P       Input is simple contig format, i.e., UMD format\n"
            "              using partial reads\n"
+           "  -s       Output comment string for read tags instead of iids\n"
            "  -S       Input is simple contig format, i.e., UMD format\n"
            "  -T       Output in TIGR Assembler contig format\n"
            "  -u       Process unitig messages\n"
