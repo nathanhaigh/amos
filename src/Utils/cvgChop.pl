@@ -8,7 +8,7 @@ use strict;
 my $VERSION = '$Revision$ ';
 my $HELPTEXT = q~ 
 cvgchop (-a <asm_file> | -c <contig_file>) [-sum] [-map] [-cvg <min_cvg>] 
-        [-byscf]
+        [-byscf] [-split]
 
 -sum - summarize the coverages
 -map - build map of coverage areas
@@ -16,6 +16,7 @@ cvgchop (-a <asm_file> | -c <contig_file>) [-sum] [-map] [-cvg <min_cvg>]
                  in genome with > <min_cvg> coverage. (Default: 2) 
 -byscf - the contigs are reported in the order and orientation implied by
     the scaffolds.  Option requires -a.
+-split - splits the contigs into chunks that have > 0 coverage over all length
                  
 If no option or just -cvg is passed to the program the output file will be
 named <asm_file>.<min_cvg>x  or <contig_file>.<min_cvg>x depending on the
@@ -39,13 +40,15 @@ my $summary;
 my $map;
 my $frgfile;
 my $byscaff;
+my $dosplit;
 my $err = $base->TIGR_GetOptions("a=s" => \$asmfile,
 				 "f=s" => \$frgfile,
 				 "c=s" => \$contigfile,
 				 "sum" => \$summary,
 				 "map" => \$map,
 				 "byscf" => \$byscaff,
-				 "cvg=i" => \$MIN_CVG);
+				 "cvg=i" => \$MIN_CVG,
+				 "split" => \$dosplit);
 
 
 if ($err == 0){
@@ -98,17 +101,18 @@ my $incontig = 0;
 my %eventcoord;
 my $thiscontig;
 my $seq;
+my $chunk; # chunk in contig
 
 if (defined $contigfile){
     open(CTG, "$contigfile") || die ("Cannot open \"$contigfile\": $!\n");
     while (<CTG>){
 	if (/^\#\#/){
-#	print STDERR;
+
 	}
 	if (/^\#\#(\S+) \d+ (\d+)/){
-#	print STDERR $1, " ", $2, "\n";
 	    my $tmp = $1;
 	    my $tmp2 = $2;
+	    $chunk = 1;
 	    
 	    if (defined $thiscontig){
 		$seq =~ s/-//g;
@@ -190,7 +194,6 @@ if (defined $asmfile){
     if (defined $byscaff){
 	while (my $record = ((my $seekpos = tell ASM), getCARecord(\*ASM))){
 	    ($rec, $fields, $recs) = parseCARecord($record);
-	   # my $seekpos = tell ASM;
 	    if ($rec eq "CCO"){
 		$contigidx{getCAId($$fields{acc})} = $seekpos;
 	    }
@@ -218,7 +221,6 @@ if (defined $asmfile){
 			} # just for the last CTP record
 		    } # if sid eq CTP
 		} # for each subrec
-		
 	    } # if rec eq SCF
 	} # while ASM
 	for (my $scf = 0; $scf <= $#scaffolds; $scf++){
@@ -295,9 +297,7 @@ sub doCCO {
 	    my $rid = getCAId($$sfs{mid});
 	    my $asms = $$sfs{pos};
 	    $asms =~ /(\d+),(\d+)/;
-	    #	    print "$sid, $rid, $$sfs{pos}, $asms\n";
-#		    print join(' ', keys %{$sfs}), "\n";
-#		    print join(' ', values %{$sfs}), "\n";
+
 	    my $asml;
 	    my $asmr;
 	    if ($1 > $2){
@@ -307,11 +307,9 @@ sub doCCO {
 		$asml = $1;
 		$asmr = $2;
 	    }
-	    
-	    #print "$asml, $asmr\n";
+
 	    $asml = $offsets[$asml - 1];
 	    $asmr = $offsets[$asmr - 1];
-	    #print "$asml, $asmr\n";
 
 	    if ($orient == 1){
 		my $tmpr = $contiglen - $asml;
@@ -336,7 +334,6 @@ sub doCCO {
 
 sub process_contig {
     my $ctg = shift;
-#    print STDERR "processing contig $ctg $contiglen\n";
     if ($map){
 	print ">$ctg\n";
     }
@@ -356,7 +353,6 @@ sub process_contig {
 		$ss = $coord;
 	    }
 	    if ($map) {
-#		print "$ss $coord $cvg\n";
 		if (POSIX::floor($coord) != POSIX::floor($ss)) {
 		    printf ("%d %d %d\n", POSIX::floor($ss), POSIX::floor($coord), int($cvg));
 		}
@@ -395,10 +391,8 @@ sub process_contig {
 		$start = $end = 0;
 	    }
 	} # if end
-#	print STDERR "\t$cvg at $coord\n";
     } # foreach
 
-#    print STDERR "$ss $contiglen $summary\n";
     if ($ss < $contiglen && $map){
 	printf ("%d %d %d\n", POSIX::floor($ss), $contiglen, int($cvg));
     }

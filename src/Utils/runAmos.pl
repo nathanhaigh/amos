@@ -203,10 +203,14 @@ exit(0);
 sub doCommand
 {
     my $command = shift;
-
+    my $checkRet = 1;
     return if (! defined $step);
     return if ($noop);
 
+    if ($command =~ /^-.*/){
+	$checkRet = 0;
+	$command =~ s/^-//;
+    }
     $command = substituteVars($command);
     $base->logLocal("Running: $command", 1);
 
@@ -223,7 +227,7 @@ sub doCommand
     if ($ret == -1){
 	$base->bail("Failed to spawn command $command: $!\n");
     }
-    if ($ret != 0){
+    if ($checkRet == 1 && $ret != 0){
 	$base->bail(
 		    sprintf("Command $command failed with exit code %d", 
 			    $ret / 256)
