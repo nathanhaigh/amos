@@ -257,7 +257,6 @@ void Graph::create_dot_file(const char* p_filename) {
   for( ; edgeIter != edges.end(); ++edgeIter) {
     e = (*edgeIter).second;
     if(contains(e)) {
-      cout << " hidden edge " << e->getHidden() << endl;
       n1 = e->getSource();
       n2 = e->getTarget();
       

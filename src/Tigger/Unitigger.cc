@@ -186,7 +186,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
 
       }
       
-      if(true) {
+      if(VERBOSE) {
 	cout << " -> " << read_tile->id << " len " << read_tile->len;
 	cout << " (" << read_tile->start << "," << read_tile->end << ") ";
       }
@@ -254,9 +254,8 @@ void Unitigger::add_containment() {
       node = edge->getSource();
     }
 
-    cout << node->getKey() << " add contained " << con_node->getKey() << endl;
-
     vector< Contig* >::iterator contig_iter = contigs.begin();
+    bool added = false;
     for( ; contig_iter != contigs.end(); ++contig_iter) {
       Contig* c = (*contig_iter);
       if(c->sg->contains(node)) {
@@ -266,10 +265,13 @@ void Unitigger::add_containment() {
 	edge->setHidden(false);
 	edge->setColor("purple");
 	con_node->setColor("purple");
+	added = true;
 	break;
-      } else {
-	containment.push(edge);
       }
+    }
+
+    if(!added) {
+      containment.push(edge);
     }
   }
 
@@ -423,7 +425,6 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 	trans.front()->setHidden(true);
 	trans.pop();
       }
-      cout << " edges hidden by trans is " << count << endl;
       
     }
 
@@ -665,12 +666,22 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
 
 	lay_read->start = set_read->start + ahang;
 	lay_read->end = lay_read->start + len;
+
       } else {  // innie
 
 	lay_read->end = set_read->start + ahang;
 	lay_read->start = lay_read->end + len;
       }
 
+      if(lay_read->start < 0) {
+	cout << " negative start contained read " << lay_read->start << endl;
+	lay_read->end -= lay_read->start;
+	lay_read->start = 0;
+      } else if(lay_read->end < 0) {
+	cout << " negative end contained read " << lay_read->end << endl;
+	lay_read->start -= lay_read->end;
+	lay_read->end = 0;
+      }
 
     } else if(olap->type == 'R') {
 
