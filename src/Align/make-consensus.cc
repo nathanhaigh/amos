@@ -14,6 +14,7 @@
 #include  "align.hh"
 #include  "prob.hh"
 #include  "fasta.hh"
+#include  "Contig_AMOS.hh"
 #include  <iostream>
 #include  <vector>
 #include  <string>
@@ -36,7 +37,7 @@ enum  Input_Format_t
      {PARTIAL_READ_INPUT, SIMPLE_CONTIG_INPUT, CELERA_MSG_INPUT};
 enum  Output_Format_t
      {MULTI_ALIGN_OUTPUT, ONLY_FASTA_OUTPUT, CELERA_MSG_OUTPUT,
-      TIGR_CONTIG_OUTPUT};
+      TIGR_CONTIG_OUTPUT, AMOS_OUTPUT, BANK_OUTPUT};
 
 
 static string  Bank_Name;
@@ -79,7 +80,7 @@ static void  Output_Unit
      Gapped_Multi_Alignment_t & gma, Celera_Message_t & msg,
      const vector <char *> & string_list,
      const vector <char *> & qual_list, const vector <Range_t> & clr_list,
-     const vector <char *> tag_list);
+     const vector <char *> tag_list, BankStream_t & bank);
 static void  Parse_Command_Line
     (int argc, char * argv []);
 static void  Sort_By_Low_Pos
@@ -95,6 +96,7 @@ int  main
 
   {
    Bank_t  read_bank (Read_t::NCODE);
+   BankStream_t  contig_bank (Contig_t::NCODE);
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * input_fp;
@@ -127,6 +129,14 @@ int  main
            << Error_Rate << endl;
       cerr . setf (status);
       cerr << "Minimum overlap bases is " << Min_Overlap << endl;
+
+      if (Output_Format == BANK_OUTPUT){
+	cerr << "Output will be written to the bank" << endl;
+	if (! contig_bank . exists (Bank_Name))
+	  contig_bank . create (Bank_Name);
+	else
+	  contig_bank . open (Bank_Name);
+      }
 
       gma . setPrintFlag (PRINT_WITH_DIFFS);
 
@@ -177,7 +187,7 @@ int  main
 
                    Output_Unit (label, msg . getAccession (),
                         msg . getNumFrags (), gma, msg, string_list,
-                        qual_list, clr_list, tag_list);
+                        qual_list, clr_list, tag_list, contig_bank);
 
                    unitig_ct ++;
                   }
@@ -255,7 +265,7 @@ int  main
 
                         Output_Unit (label, msg . getAccession (),
                              msg . getNumFrags (), gma, msg, string_list,
-                             qual_list, clr_list, tag_list);
+                             qual_list, clr_list, tag_list, contig_bank);
 
                         contig_ct ++;
                        }
@@ -338,7 +348,7 @@ int  main
 
                 Output_Unit (label, msg . getAccession (),
                      msg . getNumFrags (), gma, msg, string_list,
-                     qual_list, clr_list, tag_list);
+                     qual_list, clr_list, tag_list, contig_bank);
 
                 contig_ct ++;
                }
@@ -640,7 +650,7 @@ static void  Output_Unit
      Gapped_Multi_Alignment_t & gma, Celera_Message_t & msg,
      const vector <char *> & string_list,
      const vector <char *> & qual_list, const vector <Range_t> & clr_list,
-     vector <char *> tag_list)
+     vector <char *> tag_list, BankStream_t & bank)
 
 //  Output the consensus/multialignment unit in  msg  and  gma  with
 //   id  and  num_reads  in the format specified in global  Output_Format .
@@ -651,6 +661,8 @@ static void  Output_Unit
 //  reverse-complemented).   tag_list  holds the IIDs of the reads.
 
   {
+    Contig_t act;
+    Message_t amg;
    switch  (Output_Format)
      {
       case  MULTI_ALIGN_OUTPUT :
@@ -675,6 +687,15 @@ static void  Output_Unit
         gma . TA_Print (stdout, string_list, clr_list, 60, & tag_list,
              msg . getAccession ());
         break;
+      case AMOS_OUTPUT :
+        gma . Make_AMOS_Contig (clr_list, tag_list, act);
+        act . writeMessage (amg);
+        amg . write (cout);
+        break;
+      case BANK_OUTPUT :
+	gma . Make_AMOS_Contig (clr_list, tag_list, act);
+	bank << act; 
+	break;
       default :
         sprintf
             (Clean_Exit_Msg_Line,
@@ -700,12 +721,20 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "acCe:E:fho:PsSTuv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "aABcCe:E:fho:PsSTuv:")) != EOF))
      switch  (ch)
        {
         case  'a' :
           Output_Format = MULTI_ALIGN_OUTPUT;
           break;
+
+        case 'A' :
+	  Output_Format = AMOS_OUTPUT;
+	  break;
+	  
+        case 'B' :
+	  Output_Format = BANK_OUTPUT;
+	  break; 
 
         case  'c' :
           Do_Contig_Messages = true;
@@ -871,6 +900,8 @@ static void  Usage
            "\n"
            "Options:\n"
            "  -a       Output alignments instead of consensus messages\n"
+	   "  -A       Output an AMOS message file\n"
+	   "  -B       Output to an AMOS bank\n"
            "  -c       Process contig messages\n"
            "  -C       Input is Celera msg format, i.e., a .cgb or .cgw file\n"
            "  -e <x>   Set alignment error rate to <x>, e.g.,  -e 0.05  for 5%% error\n"

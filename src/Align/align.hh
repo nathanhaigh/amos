@@ -11,6 +11,7 @@
 
 
 #include  "datatypes_AMOS.hh"
+#include  "Contig_AMOS.hh"
 #include  "alloc.hh"
 #include  "delcher.hh"
 #include  "fasta.hh"
@@ -573,6 +574,9 @@ class  Gapped_Multi_Alignment_t
         int width, const vector <char *> * tag, const string & id);
    int  Ungapped_Consensus_Len
        (void)  const;
+   void Make_AMOS_Contig(const vector <AMOS :: Range_t> & clr_list,
+			 const vector <char *> & tag,
+			 AMOS::Contig_t & out) const;
   };
 
 

@@ -3970,6 +3970,36 @@ void  Gapped_Multi_Alignment_t :: TA_Print
   }
 
 
+void Gapped_Multi_Alignment_t :: Make_AMOS_Contig 
+     (const vector <AMOS :: Range_t> & clr_list, const vector <char *> & tag,
+      AMOS :: Contig_t & out) const
+  // returns a Contig_t representation of the multi-alignment
+{
+  out . setSequence(consensus, con_qual);
+  out . setEID(id);
+
+  int n = align . size();
+
+  vector <Tile_t> tiles;
+  for (int i = 0; i < n; i ++){
+    AMOS :: Tile_t tile;
+    tile . source = strtol(tag [i], NULL, 10);
+    tile . range = clr_list [i];
+    tile . offset = align [i] . b_lo;
+    
+    int skip = align [i] . Get_Skip (0);
+    int s = 0;
+    while (skip != INT_MAX) {
+      tile . gaps . push_back (skip - tile . offset - s); // convert to CA standard
+      skip = align [i] . Get_Skip(++ s);
+    }
+
+    tiles . push_back(tile);
+  }
+  out . setReadTiling(tiles);
+}
+
+
 
 int  Gapped_Multi_Alignment_t :: Ungapped_Consensus_Len
     (void)  const
