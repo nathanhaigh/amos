@@ -85,9 +85,9 @@ my $err = $base->TIGR_GetOptions("o=s"    => \$outprefix,
 				 "m=s"    => \$mates,
                                  "i=i"    => \$ID,
 				 "silent" => \$silent,
-				 "min"    => \$MINSEQ,
-				 "max"    => \$MAXSEQ,
-				 "qual"   => \$DEFAULT_QUAL);
+				 "min=i"    => \$MINSEQ,
+				 "max=i"    => \$MAXSEQ,
+				 "qual=i"   => \$DEFAULT_QUAL);
 
 if ($err == 0) {
     $base->bail("Command line processing failed\n");
