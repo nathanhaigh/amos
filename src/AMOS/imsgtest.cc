@@ -31,6 +31,7 @@ int main (int argc, char ** argv)
     Library_t lib;
     Overlap_t ovl;
     Scaffold_t scf;
+    Sequence_t seq;
 
     Universal_t * unvp = NULL;
     
@@ -54,6 +55,8 @@ int main (int argc, char ** argv)
 	  unvp = &ovl;
 	else if ( msg . getMessageCode( ) == Message_k::M_SCAFFOLD )
 	  unvp = &scf;
+	else if ( msg . getMessageCode( ) == Message_k::M_SEQUENCE )
+	  unvp = &seq;
 	else
 	  {
 	    cout << "# don't know how to parse message\n";
@@ -99,6 +102,10 @@ int main (int argc, char ** argv)
 
     scf . clear( );
     scf . writeMessage (msg);
+    msg . write (cout);
+
+    seq . clear( );
+    seq . writeMessage (msg);
     msg . write (cout);
   }
   catch (Exception_t & e) {

@@ -341,6 +341,10 @@ public:
   }
 
 
+  //--------------------------------------------------- readMessage ------------
+  virtual void readMessage (const Message_t & msg);
+
+
   //--------------------------------------------------- setBase ----------------
   //! \brief Set a sequence base and its quality score
   //!
@@ -440,6 +444,11 @@ public:
   //! \return The resulting Sequence_t object
   //!
   Sequence_t & operator= (const Sequence_t & source);
+
+
+  //--------------------------------------------------- writeMessage -----------
+  virtual void writeMessage (Message_t & msg) const;
+
 };
 
 } // namespace AMOS

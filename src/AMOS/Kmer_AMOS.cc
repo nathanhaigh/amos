@@ -140,21 +140,19 @@ void Kmer_t::setSeqString (const string & seq)
   if ( size > Kmer_t::MAX_LENGTH )
     AMOS_THROW_ARGUMENT ("Kmer sequence is too long");
 
-  length_m = size;
-  size = length_m / 4 + (length_m % 4 ? 1 : 0);
+  size = size / 4 + (size % 4 ? 1 : 0);
   seq_m = (uint8_t *) SafeRealloc (seq_m, size);
 
   //-- See comments for setBase regarding the compressed sequence
   Pos_t ci = -1;
   int offset = 8;
+  length_m = 0;
   for ( string::size_type ui = 0; ui < seq . size( ); ui ++ )
     {
       if ( seq [ui] == '\n' )
-	{
-	  length_m --;
-	  continue;
-	}
+	continue;
 
+      length_m ++;
       if ( offset >= 8 )
 	{
 	  offset = 0;

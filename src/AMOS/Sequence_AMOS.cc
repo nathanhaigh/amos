@@ -9,6 +9,7 @@
 
 #include "Sequence_AMOS.hh"
 using namespace AMOS;
+using namespace Message_k;
 using namespace std;
 
 
@@ -103,6 +104,30 @@ Sequence_t & Sequence_t::operator= (const Sequence_t & source)
 }
 
 
+//--------------------------------------------------- readMessage ------------
+void Sequence_t::readMessage (const Message_t & msg)
+{
+  clear( );
+  Universal_t::readMessage (msg);
+
+  try {
+
+    if ( msg . exists (F_SEQUENCE)  &&
+	 msg . exists (F_QUALITY) )
+      setSequence (msg . getField (F_SEQUENCE),
+		   msg . getField (F_QUALITY));
+    else if ( msg . exists (F_SEQUENCE)  ||
+	      msg . exists (F_QUALITY) )
+      AMOS_THROW_ARGUMENT ("missing seq or qual field");
+  }
+  catch (ArgumentException_t) {
+    
+    clear( );
+    throw;
+  }
+}
+
+
 //----------------------------------------------------- readRecord -------------
 Size_t Sequence_t::readRecord (istream & fix,
 			       istream & var)
@@ -142,17 +167,16 @@ void Sequence_t::setSequence (const char * seq,
   if ( !isCompressed( ) )
     qual_m = (uint8_t *) SafeRealloc (qual_m, length);
 
-  length_m = length;
+  length_m = 0;
   for ( Pos_t i = 0; i < length; i ++ )
     {
       if ( seq[i] == '\n' )
-	{
-	  length_m --;
-	  continue;
-	}
+	continue;
       if ( qual[i] == '\n' )
 	AMOS_THROW_ARGUMENT ("Invalid newline found in quality data");
-      setBase (seq [i], qual [i], i);
+
+      length_m ++;
+      setBase (seq [i], qual [i], length_m - 1);
     }
 
   if ( length_m != length )
@@ -178,17 +202,16 @@ void Sequence_t::setSequence (const string & seq,
   if ( !isCompressed( ) )
     qual_m = (uint8_t *) SafeRealloc (qual_m, length);
 
-  length_m = length;
+  length_m = 0;
   for ( Pos_t i = 0; i < length; i ++ )
     {
       if ( seq[i] == '\n' )
-	{
-	  length_m --;
-	  continue;
-	}
+	continue;
       if ( qual[i] == '\n' )
 	AMOS_THROW_ARGUMENT ("Invalid newline found in quality data");
-      setBase (seq [i], qual [i], i);
+
+      length_m ++;
+      setBase (seq [i], qual [i], length_m - 1);
     }
 
   if ( length_m != length )
@@ -218,6 +241,36 @@ void Sequence_t::uncompress ( )
 
   //-- store compression flag in bit COMPRESS_BIT
   flags_m . extra &= ~COMPRESS_BIT;
+}
+
+
+//----------------------------------------------------- writeMessage -----------
+void Sequence_t::writeMessage (Message_t & msg) const
+{
+  Universal_t::writeMessage (msg);
+
+  try {
+    stringstream ss;
+
+    msg . setMessageCode (NCode( ));
+
+    if ( length_m != 0 )
+      {
+	WrapString (ss, getSeqString( ), 70);
+	msg . setField (F_SEQUENCE, ss . str( ));
+	ss . str("");
+
+	WrapString (ss, getQualString( ), 70);
+	msg . setField (F_QUALITY, ss . str( ));
+	ss . str("");
+      }
+  }
+  catch (ArgumentException_t) {
+
+    msg . clear( );
+    throw;
+  }
+
 }
 
 
