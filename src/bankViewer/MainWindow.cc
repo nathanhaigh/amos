@@ -23,6 +23,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_contigPicker = NULL;
   m_fontsize = 12;
   m_insertWindow = NULL;
+  m_cgraphWindow = NULL;
 
   QVBox * vbox = new QVBox(this, "vbox");
 
@@ -73,7 +74,11 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 
                                                this, SLOT(showInserts()), status );
-  bShowInserts->setText("Show Inserts");
+  bShowInserts->setText("Inserts");
+
+  QToolButton * bShowCGraph = new QToolButton(QPixmap(), "Show CGraph", "Show CGraph", 
+                                               this, SLOT(showCGraph()), status );
+  bShowCGraph->setText("Contig Graph");
 
   QIconSet icon_fontminus(QPixmap("icons/fontdecrease.xpm"));
   QIconSet icon_fontplus(QPixmap("icons/fontincrease.xpm"));
@@ -171,6 +176,22 @@ void MainWindow::showInserts()
 
   m_insertWindow->show();
   m_tiling->repaint();
+}
+
+void MainWindow::showCGraph()
+{
+  if (!m_cgraphWindow)
+  {
+    m_cgraphWindow = new CGraphWindow(&m_datastore, this, "CGraphWindow");
+
+    connect(this, SIGNAL(contigIdSelected(int)),
+            m_cgraphWindow, SLOT(contigChanged()));
+
+    connect(m_cgraphWindow, SIGNAL(setContigId(int)),
+            this,           SLOT(setContigId(int)));
+  }
+
+  m_cgraphWindow->show();
 }
 
 void MainWindow::chooseContig()

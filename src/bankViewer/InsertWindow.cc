@@ -85,10 +85,8 @@ void InsertWindow::toggleNone()        { toggleItem('N'); }
 
 void InsertWindow::toggleItem(char c)
 {
-  bool b = !m_display->isItemChecked(m_types[c].first);
-  m_display->setItemChecked(m_types[c].first, b);
-
-  m_types[c].second = b;
+  m_types[c].second = !m_display->isItemChecked(m_types[c].first);
+  m_display->setItemChecked(m_types[c].first, m_types[c].second);
 
   emit refreshCanvas();
 }

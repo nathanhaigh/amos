@@ -12,6 +12,7 @@
 #include "ContigPicker.hh"
 #include "DataStore.hh"
 #include "InsertWindow.hh"
+#include "CGraphWindow.hh"
 
 class MainWindow: public QMainWindow
 {
@@ -32,6 +33,7 @@ public slots:
   void setGindex(int gindex);
 
   void showInserts();
+  void showCGraph();
 
   void toggleShowPositions();
   void toggleShowQV();
@@ -53,6 +55,7 @@ private:
   QMainWindow * m_contigPicker;
   InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;
+  CGraphWindow * m_cgraphWindow;
 
   QPopupMenu * m_options;
   int m_posid;

@@ -14,12 +14,16 @@ public:
   int setContigId(int id);
 
   AMOS::Distribution_t getLibrarySize(AMOS::ID_t readid);
+  AMOS::ID_t lookupContigId(AMOS::ID_t readid);
 
-  AMOS::Bank_t contig_bank;
-  AMOS::Bank_t read_bank;
-  AMOS::Bank_t frag_bank;
-  AMOS::Bank_t lib_bank;
+  AMOS::Bank_t       contig_bank;
+  AMOS::Bank_t       read_bank;
+  AMOS::Bank_t       frag_bank;
+  AMOS::Bank_t       lib_bank;
   AMOS::BankStream_t mate_bank;
+
+  AMOS::BankStream_t edge_bank;
+  AMOS::Bank_t       link_bank;
 
   std::string m_db;
   std::string m_bankname;

@@ -4,6 +4,8 @@
 #include <qcanvas.h>
 #include "DataStore.hh"
 
+class Insert;
+
 class InsertField : public QCanvasView
 {
   Q_OBJECT
@@ -25,6 +27,7 @@ protected:
   void viewportPaintEvent(QPaintEvent * e);
 
 private:
+  void getInsertString(QString & s, int which, Insert * ins);
   DataStore * m_datastore;
   int & m_hoffset;
 

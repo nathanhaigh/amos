@@ -171,6 +171,9 @@ void InsertWidget::refreshCanvas()
       ID_t aid = mates.getReads().first;
       ID_t bid = mates.getReads().second;
       ID_t good = aid;
+
+      ID_t acontig = AMOS::NULL_ID;
+      ID_t bcontig = AMOS::NULL_ID;
       
       SeqTileMap_t::iterator ai = seqtileLookup.find(aid);
       SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
@@ -181,20 +184,26 @@ void InsertWidget::refreshCanvas()
       if (ai != seqtileLookup.end())
       {
         a = ai->second;
+        acontig = m_datastore->m_contigId;
         seqtileLookup.erase(ai);
       }
 
       if (bi != seqtileLookup.end())
       {
         b = bi->second;
+        bcontig = m_datastore->m_contigId;
         seqtileLookup.erase(bi);
+
         good = bid;
       }
       
       if (a || b)
       {
+        if (!a) { acontig = m_datastore->lookupContigId(aid); }
+        if (!b) { bcontig = m_datastore->lookupContigId(bid); }
+
         mated++;
-        Insert * i = new Insert(a, m_datastore->m_contigId, b, m_datastore->m_contigId, 
+        Insert * i = new Insert(a, aid, acontig, b, bid, bcontig, 
                                 m_datastore->getLibrarySize(good), clen);
 
         if (i->m_state == Insert::Happy)
@@ -226,8 +235,9 @@ void InsertWidget::refreshCanvas()
     {
       if (si->second)
       {
-        Insert * i = new Insert(si->second, m_datastore->m_contigId, NULL, AMOS::NULL_ID, 
-                                m_datastore->getLibrarySize(si->second->source), clen);
+        Insert * i = new Insert(si->second, si->first, m_datastore->m_contigId, 
+                                NULL, AMOS::NULL_ID, AMOS::NULL_ID,
+                                m_datastore->getLibrarySize(si->first), clen);
         m_inserts.push_back(i);
         unmated++;
       }
@@ -357,3 +367,5 @@ void InsertWidget::refreshCanvas()
   m_icanvas->resize(rightmost - leftmost + 1000, tileoffset+layoutoffset*lineheight);
   m_icanvas->update();
 }
+
+

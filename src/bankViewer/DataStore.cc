@@ -7,7 +7,9 @@ DataStore::DataStore()
     read_bank(Read_t::NCODE),
     frag_bank(Fragment_t::NCODE),
     lib_bank(Library_t::NCODE),
-    mate_bank(Matepair_t::NCODE)
+    mate_bank(Matepair_t::NCODE),
+    edge_bank(ContigEdge_t::NCODE),
+    link_bank(ContigLink_t::NCODE)
 {
   m_contigId = 1;
   m_loaded = false;
@@ -25,6 +27,8 @@ int DataStore::openBank(const string & bankname)
     mate_bank.open(bankname);
     frag_bank.open(bankname);
     lib_bank.open(bankname);
+    edge_bank.open(bankname);
+    link_bank.open(bankname);
 
     m_bankname = bankname;
   }
@@ -47,7 +51,7 @@ int DataStore::setContigId(int id)
     m_contigId = id;
     m_loaded = true;
   }
-  catch (AMOS::Exception_t & e)
+  catch (Exception_t & e)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     retval = 1;
@@ -56,7 +60,7 @@ int DataStore::setContigId(int id)
   return retval;
 }
 
-AMOS::Distribution_t DataStore::getLibrarySize(ID_t readid)
+Distribution_t DataStore::getLibrarySize(ID_t readid)
 {
   try
   {
@@ -71,7 +75,7 @@ AMOS::Distribution_t DataStore::getLibrarySize(ID_t readid)
 
     return lib.getDistribution();
   }
-  catch (AMOS::Exception_t & e)
+  catch (Exception_t & e)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
@@ -79,3 +83,33 @@ AMOS::Distribution_t DataStore::getLibrarySize(ID_t readid)
   return Distribution_t();
 }
 
+ID_t DataStore::lookupContigId(ID_t readid)
+{
+  try
+  {
+    BankStream_t contigs(Contig_t::NCODE);
+    Contig_t contig;
+    contigs.open(m_bankname);
+
+    while (contigs >> contig)
+    {
+      vector<Tile_t>::iterator ti;
+      for (ti =  contig.getReadTiling().begin();
+           ti != contig.getReadTiling().end();
+           ti++)
+      {
+        if (ti->source == readid)
+        {
+          return contig.getIID();
+        }
+      }
+    }
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+  }
+
+
+  return AMOS::NULL_ID;
+}

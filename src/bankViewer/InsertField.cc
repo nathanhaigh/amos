@@ -41,19 +41,9 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
         Insert * ins = iitem->m_insert;
 
         QString s = "Insert " + QString::number(ins->m_active);
-        if (ins->m_atile)
-        {
-          s += " atile: ";
-          s += m_datastore->read_bank.lookupEID(ins->m_atile->source);
-          s += " {" + QString::number(ins->m_atile->source) + "}";
-        }
 
-        if (ins->m_btile)
-        {
-          s += " btile: ";
-          s += m_datastore->read_bank.lookupEID(ins->m_btile->source);
-          s += " {" + QString::number(ins->m_btile->source) + "}";
-        }
+        getInsertString(s, ins->m_active, ins);
+        getInsertString(s, !ins->m_active, ins);
 
         s += " Actual: "   + QString::number(ins->m_actual);
         s += " Expected: " + QString::number(ins->m_dist.mean - 3*ins->m_dist.sd) 
@@ -87,6 +77,32 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
   QCanvasView::viewportPaintEvent(e);
 
   emit visibleRange(canvasRect.x()-m_hoffset, worldMatrix().m11());
+}
+
+
+
+void InsertField::getInsertString(QString & s, int which, Insert * ins)
+{
+  if (which == 0)
+  {
+    if (ins->m_aid != AMOS::NULL_ID)
+    {
+      s += " a: ";
+      s += m_datastore->read_bank.lookupEID(ins->m_aid);
+      s += " {" + QString::number(ins->m_aid)     + "}";
+      s += " [" + QString::number(ins->m_acontig) + "]";
+    }
+  }
+  else
+  {
+    if (ins->m_bid != AMOS::NULL_ID)
+    {
+      s += " b: ";
+      s += m_datastore->read_bank.lookupEID(ins->m_bid);
+      s += " {" + QString::number(ins->m_bid)     + "}";
+      s += " [" + QString::number(ins->m_bcontig) + "]";
+    }
+  }
 }
 
 

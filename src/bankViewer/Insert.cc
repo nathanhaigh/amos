@@ -13,16 +13,20 @@ int omax (int a, int b)
 }
 
 Insert::Insert(Tile_t * atile, 
+               ID_t     aid,
                ID_t     acontig,
                Tile_t * btile,
+               ID_t     bid,
                ID_t     bcontig,
                Distribution_t dist,
                int conslen)
 {
-  m_atile = atile;
+  m_atile   = atile;
+  m_aid     = aid;
   m_acontig = acontig;
 
-  m_btile = btile;
+  m_btile   = btile;
+  m_bid     = bid;
   m_bcontig = bcontig;
 
   m_state = Unknown;
@@ -33,6 +37,7 @@ Insert::Insert(Tile_t * atile,
 
   m_arc = 0;
   m_brc = 0;
+
   if (atile) { m_arc = (atile->range.end < atile->range.begin); }
   if (btile) { m_brc = (btile->range.end < btile->range.begin); }
   
@@ -66,7 +71,7 @@ Insert::Insert(Tile_t * atile,
     m_loffset = atile->offset;
     m_roffset = atile->offset + atile->range.getLength() + atile->gaps.size() -1;
 
-    if (bcontig == AMOS::NULL_ID)
+    if (bcontig == NULL_ID)
     {
       m_state = NoMate;
       m_length = m_roffset - m_loffset + 1;

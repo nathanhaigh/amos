@@ -5,12 +5,11 @@
 
 class InsertCanvasItem;
 
-
 class Insert
 {
 public:
-  Insert(AMOS::Tile_t * atile, AMOS::ID_t acontig,
-         AMOS::Tile_t * btile, AMOS::ID_t bcontig,
+  Insert(AMOS::Tile_t * atile, AMOS::ID_t aid, AMOS::ID_t acontig,
+         AMOS::Tile_t * btile, AMOS::ID_t bid, AMOS::ID_t bcontig,
          AMOS::Distribution_t distribution,
          int conslen);
 
@@ -47,9 +46,11 @@ public:
 
   AMOS::Tile_t * m_atile;
   AMOS::ID_t     m_acontig;
+  AMOS::ID_t     m_aid;
 
   AMOS::Tile_t * m_btile;
   AMOS::ID_t     m_bcontig;
+  AMOS::ID_t     m_bid;
 
 
   struct TilingOrderCmp
