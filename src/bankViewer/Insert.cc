@@ -72,7 +72,7 @@ Insert::Insert(Tile_t * atile,
     m_loffset = atile->offset;
     m_roffset = atile->offset + atile->range.getLength() + atile->gaps.size() -1;
 
-    if (bcontig == NULL_ID)
+    if (bid == NULL_ID)
     {
       m_state = NoMate;
       m_length = m_roffset - m_loffset + 1;
