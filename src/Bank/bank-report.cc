@@ -87,9 +87,7 @@ void PrintUsage (const char * s);
 int main (int argc, char ** argv)
 {
   int exitcode = EXIT_SUCCESS;
-  long int cnto = 0;       // objects reported
-  long int cntc = 0;       // banks reported
-  long int cnts = 0;       // banks seen
+  long int cntc = 0;       // objects reported
   NCode_t ncode;           // current object type
   UniversalSet_t objs;     // all the universal objects
   ID_t bid;                // bank index
@@ -122,7 +120,6 @@ int main (int argc, char ** argv)
               !BankExists (ncode, OPT_BankName)) )
 	  continue;
 
-        cnts ++;
         OPT_ExtractCodes . erase (ncode);
 
         //-- Report the bank
@@ -157,7 +154,7 @@ int main (int argc, char ** argv)
                     }
                   bank . fetch (*ii, *ui);
                   PrintObject (*ui, bid);
-                  cnto ++;
+                  cntc ++;
                 }
 
               //-- Get the requested EIDs
@@ -175,7 +172,7 @@ int main (int argc, char ** argv)
                     }
                   bank . fetch (ei -> c_str( ), *ui);
                   PrintObject (*ui, bid);
-                  cnto ++;
+                  cntc ++;
                 }
 
               dots . end( );
@@ -198,7 +195,7 @@ int main (int argc, char ** argv)
                 {
                   dots . update (++ cntd);
                   PrintObject (*ui, bankstream . tellg( ) - 1);
-                  cnto ++;
+                  cntc ++;
                 }
 
               dots . end( );
@@ -211,14 +208,11 @@ int main (int argc, char ** argv)
           exitcode = EXIT_FAILURE;
           continue;
         }
-
-        cntc ++;
       }
 
     //-- Any codes unrecognized?
     for ( ci = OPT_ExtractCodes.begin( ); ci != OPT_ExtractCodes.end( ); ++ ci )
       {
-        cnts ++;
         cerr << "ERROR: Unrecognized bank type" << endl
              << "  unknown bank type '" << Decode (*ci) << "' ignored" << endl;
         exitcode = EXIT_FAILURE;
@@ -233,9 +227,7 @@ int main (int argc, char ** argv)
 
 
   //-- Output the end time
-  cerr << "Report attempts: " << cnts << endl
-       << "Report successes: " << cntc << endl
-       << "Objects reported: " << cnto << endl
+  cerr << "Objects reported: " << cntc << endl
        << "END DATE:   " << Date( ) << endl;
 
   return exitcode;
