@@ -11,7 +11,6 @@
 #define __Library_AMOS_HH 1
 
 #include "Bankable_AMOS.hh"
-#include <vector>
 
 
 
@@ -21,9 +20,9 @@ namespace AMOS {
 //================================================ Library_t ===================
 //! \brief A collection of cloned, size-controlled DNA molecules
 //!
-//! A DNA sequence library has a list of associated fragments that follow a
-//! certain sizing distribution. Those associated fragments in turn have a list
-//! of associated sequencing reads.
+//! A DNA sequence library contains a group of child fragments that follow a
+//! certain sizing distribution. This object stores that size distribution.
+//! Child fragments will point back to this object as their parent library.
 //!
 //==============================================================================
 class Library_t : public Bankable_t
@@ -32,7 +31,6 @@ class Library_t : public Bankable_t
 private:
 
   Distribution_t dist_m;           //!< the insert fragment size distribution
-  std::vector<ID_t> frags_m;       //!< the list of associated fragments
 
 
 protected:
@@ -118,7 +116,6 @@ public:
   {
     Bankable_t::clear( );
     dist_m . clear( );
-    frags_m . clear( );
   }
 
 
@@ -144,17 +141,6 @@ public:
   }
 
 
-  //--------------------------------------------------- getFragments -----------
-  //! \brief Get the child fragment IDs
-  //!
-  //! \return The vector of child fragment IDs
-  //!
-  const std::vector<ID_t> & getFragments ( ) const
-  {
-    return frags_m;
-  }
-
-
   //--------------------------------------------------- setDistribution --------
   //! \brief Set the insert fragment size distribution
   //!
@@ -164,18 +150,6 @@ public:
   void setDistribution (Distribution_t dist)
   {
     dist_m = dist;
-  }
-
-
-  //--------------------------------------------------- setFragments -----------
-  //! \brief Set the child fragment IDs
-  //!
-  //! \param frags The new vector of child fragment IDs
-  //! \return void
-  //!
-  void setFragments (const std::vector<ID_t> frags)
-  {
-    frags_m = frags;
   }
 
 };
