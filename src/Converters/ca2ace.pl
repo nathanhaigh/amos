@@ -37,7 +37,7 @@ if (! defined $base){
     die ("Foundation cannot be created.  FATAL!\n");
 }
 
-my $VERSION = 'ta2ace version 1.0 $Revision$ ';
+my $VERSION = '$Revision$ ';
 $base->setVersionInfo($VERSION);
 
 my $HELPTEXT = q~
