@@ -22,27 +22,44 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
-    read_bank.open(bankname);
-    contig_bank.open(bankname);
-    mate_bank.open(bankname);
-    frag_bank.open(bankname);
-    lib_bank.open(bankname);
-    edge_bank.open(bankname);
-    link_bank.open(bankname);
+    read_bank.open(bankname, B_SPY);
+    contig_bank.open(bankname, B_SPY);
 
     m_bankname = bankname;
 
-    loadMates();
-    loadLibraries();
     loadContigs();
 
     m_contigId = -1;
-
   }
   catch (Exception_t & e)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     retval = 1;
+  }
+
+  try
+  {
+    mate_bank.open(bankname, B_SPY);
+    frag_bank.open(bankname, B_SPY);
+    lib_bank.open(bankname, B_SPY);
+    loadMates();
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    cerr << "Mates not available\n";
+  }
+
+  try
+  {
+    edge_bank.open(bankname);
+    link_bank.open(bankname);
+    loadLibraries();
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    cerr << "Libraries not available\n";
   }
 
   return retval;

@@ -14,6 +14,7 @@ CGraphWindow::CGraphWindow(DataStore * datastore,
                            const char * name)
   : QMainWindow(parent, name)
 {
+  cerr << "CGraphWindow" << endl;
   m_contigHeight = 40;
   m_contigWidth  = 100;
   m_gutter = 10;
@@ -53,6 +54,7 @@ CGraphWindow::CGraphWindow(DataStore * datastore,
 
 void CGraphWindow::drawGraph()
 {
+  cerr << "drawGraph()" << endl;
   // clear and flush
   QCanvasItemList list = m_canvas->allItems();
   QCanvasItemList::Iterator it = list.begin();
@@ -73,69 +75,78 @@ void CGraphWindow::drawGraph()
   m_leftcontigs.clear();
   m_rightcontigs.clear();
 
-  m_datastore->edge_bank.seekg(1);
-  while (m_datastore->edge_bank >> edge)
+  try
   {
-    if ((edge.getContigs().first  == m_datastore->m_contigId) ||
-        (edge.getContigs().second == m_datastore->m_contigId))
+    m_datastore->edge_bank.seekg(1);
+    while (m_datastore->edge_bank >> edge)
     {
-      if (edge.getContigs().second == m_datastore->m_contigId)
+      if ((edge.getContigs().first  == m_datastore->m_contigId) ||
+          (edge.getContigs().second == m_datastore->m_contigId))
       {
-        edge.flip();
-      }
+        if (edge.getContigs().second == m_datastore->m_contigId)
+        {
+          edge.flip();
+        }
 
-      LinkAdjacency_t adj = edge.getAdjacency();
+        LinkAdjacency_t adj = edge.getAdjacency();
 
-      QString side;
+        QString side;
 
-      if (adj == 'N' || adj == 'I')
-      {
-        m_rightcontigs.push_back(edge);
-      }
-      else
-      {
-        m_leftcontigs.push_back(edge);
+        if (adj == 'N' || adj == 'I')
+        {
+          m_rightcontigs.push_back(edge);
+        }
+        else
+        {
+          m_leftcontigs.push_back(edge);
+        }
       }
     }
-  }
-  
-  // Draw myself
-  CGraphContig * contig = new CGraphContig(m_datastore->m_contigId, NULL, 0,
-                                           2*m_contigWidth+m_gutter, m_gutter,
-                                           m_contigWidth, m_contigHeight,
-                                           m_canvas);
-  contig->show();
+    
+    // Draw myself
+    CGraphContig * contig = new CGraphContig(m_datastore->m_contigId, NULL, 0,
+                                             2*m_contigWidth+m_gutter, m_gutter,
+                                             m_contigWidth, m_contigHeight,
+                                             m_canvas);
+    contig->show();
 
-  // Draw Neighbors
-  vector<ContigEdge_t>::iterator ci;
-  for (ci =  m_leftcontigs.begin(), leftcount = 0;
-       ci != m_leftcontigs.end();
-       ci++, leftcount++)
+    // Draw Neighbors
+    vector<ContigEdge_t>::iterator ci;
+    for (ci =  m_leftcontigs.begin(), leftcount = 0;
+         ci != m_leftcontigs.end();
+         ci++, leftcount++)
+    {
+      drawNeighbor(&(*ci), 
+                   m_gutter, 
+                   leftcount*lineheight+m_gutter, 
+                   false);
+    }
+
+    for (ci =  m_rightcontigs.begin(), rightcount = 0;
+         ci != m_rightcontigs.end();
+         ci++, rightcount++)
+    {
+      drawNeighbor(&(*ci), 
+                   4*m_contigWidth+m_gutter, 
+                   rightcount*lineheight+m_gutter, 
+                   true);
+    }
+
+    int vmax = (rightcount > leftcount) ? rightcount : leftcount;
+    vmax = (vmax ? vmax : 1);
+
+    m_canvas->resize(5*m_contigWidth+2*m_gutter,vmax*lineheight+m_gutter);
+    m_canvas->update();
+
+    QString status = "Viewing contig graph for contig " + QString::number(m_datastore->m_contigId);
+    statusBar()->message(status);
+  }
+  catch (Exception_t & e)
   {
-    drawNeighbor(&(*ci), 
-                 m_gutter, 
-                 leftcount*lineheight+m_gutter, 
-                 false);
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    QString status = "Contig graph not available";
+    statusBar()->message(status);
   }
-
-  for (ci =  m_rightcontigs.begin(), rightcount = 0;
-       ci != m_rightcontigs.end();
-       ci++, rightcount++)
-  {
-    drawNeighbor(&(*ci), 
-                 4*m_contigWidth+m_gutter, 
-                 rightcount*lineheight+m_gutter, 
-                 true);
-  }
-
-  int vmax = (rightcount > leftcount) ? rightcount : leftcount;
-  vmax = (vmax ? vmax : 1);
-
-  m_canvas->resize(5*m_contigWidth+2*m_gutter,vmax*lineheight+m_gutter);
-  m_canvas->update();
-
-  QString status = "Viewing contig graph for contig " + QString::number(m_datastore->m_contigId);
-  statusBar()->message(status);
 }
 
 void CGraphWindow::drawNeighbor(ContigEdge_t * edge, 
