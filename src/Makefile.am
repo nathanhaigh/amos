@@ -14,7 +14,7 @@ SUBDIRS += \
 	Align \
         Tigger \
 	Compare \
-	Bundler \
+	Bambus \
 	Casm \
 	CtgTrim \
 	Sim \
