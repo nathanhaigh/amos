@@ -208,6 +208,8 @@ int main (int argc, char ** argv)
 	  //-- Fetch the next object
 	  typep -> setIID (id);
 	  bankp -> fetch (*typep);
+	  if ( typep -> isRemoved( ) )
+	    continue;
 	  cnts ++;
 
 	  //-- Translate the ID pointers from IID to EID
