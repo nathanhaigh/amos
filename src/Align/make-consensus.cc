@@ -224,6 +224,15 @@ int  main
 	       char sid[256]; 
 	       sprintf(sid, "%ld", ++layout_id);
 	       cid = string(sid);
+	       ID_t lid = layout.getIID();
+	       if (lid == 0) {
+		 lid = layout_id;
+	       }
+	       
+	       
+	       //   if (Verbose >= 1){
+	       //		 cerr << "Processing layout: " << cid << endl;
+		 // }
 
 	       Get_Strings_And_Offsets
 		 (string_list, qual_list, clr_list, tag_list, offset,
@@ -238,9 +247,9 @@ int  main
 		   Multi_Align (cid, string_list, offset, ALIGN_WIGGLE,
 				Error_Rate, Min_Overlap, gma, & ref, & tag_list);
 		 }
-	       catch (AlignmentException_t)
+	       catch (...)
 		 {
-		   cerr << "Failed on " << cid << "\'th layout/contig" <<  endl;
+		   cerr << "Failed on " << lid << "\'th layout/contig" <<  endl;
 		   throw;
 		 }
 
