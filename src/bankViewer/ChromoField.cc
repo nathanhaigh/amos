@@ -15,8 +15,6 @@ using namespace std;
 using namespace AMOS;
 
 
-
-
 ChromoField::ChromoField(RenderSeq_t * read, 
                          const string & db, 
                          const string & cons,
@@ -28,52 +26,11 @@ ChromoField::ChromoField(RenderSeq_t * read,
   setPalette(QPalette(QColor(180, 180, 180)));
   m_pix = NULL;
   m_hscale = 2.0;
-  m_contigView = true;
-  
-  string readname = read->m_read.getEID();
-
-  string path = "/local/chromo/Chromatograms/";
-  path += db + "/ABISSed/" + readname[0]+readname[1]+readname[2] + "/"
-                           + readname[0]+readname[1]+readname[2]+readname[3] + "/"
-                           + readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/" 
-                           + readname;
 
   m_read = read;
-  m_trace = read_reading((char *)path.c_str(), TT_ANY);
-  if (!m_trace) { return; }
+  if (!m_read->m_trace) { return; }
 
-  char seqname[100];
-  int version;
-
-  char hex[5];
-  hex[4]='\0';
-  string curseq;
-  FILE * fpos = fopen("dmg.pos", "r");
-  char c;
-  int i;
-  int x;
-  while ((i = fscanf ( fpos, "%s\t%d\t", seqname, &version )) != 0)
-  {
-    if (readname == seqname)
-    {
-      while ( fgets ( hex, 5, fpos ) && hex[0] != '\n' )
-      {
-        sscanf ( hex, "%04x", &x );
-        m_pos.push_back(x);
-      }
-
-      break;
-    }
-    else
-    {
-      do {
-        c = fgetc(fpos);
-      } while (c != '\n');
-    }
-  }
-
-  cerr << "loaded " << m_pos.size() << " positions" << endl;
-
+  Read * m_trace = m_read->m_trace;
 
   int vscale=24;
   int tickwidth = 2;
@@ -111,98 +68,35 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   p.translate(m_hoffset, 0);
 
-  int rangebegin = m_read->m_tile->range.begin;
-  int rangeend   = m_read->m_tile->range.end + m_read->m_tile->gaps.size() - 1;
-  
-  // Render the full gapped sequence
-  string bases = m_read->m_read.getSeqString();
-  string quals = m_read->m_read.getQualString();
-
-  if (m_read->m_rc)
-  {
-    rangebegin = bases.length() - m_read->m_tile->range.begin;
-    reverse(bases.begin(), bases.end());
-    reverse(m_pos.begin(), m_pos.end());
-    reverse(quals.begin(), quals.end());
-  }
-
-  // Insert gaps
-  Pos_t gapcount;
-  vector<Pos_t>::const_iterator g;
-  for (g =  m_read->m_tile->gaps.begin(), gapcount = 0; 
-       g != m_read->m_tile->gaps.end(); 
-       g++, gapcount++)
-  {
-    unsigned int gappos = *g+gapcount+rangebegin;
-    bases.insert(gappos, 1, '-');
-
-    int left  = m_pos[gappos-1];
-    int right = m_pos[gappos];
-    m_pos.insert(m_pos.begin()+gappos, 1, (left+right)/2);
-
-    // qv of a gap is the min of the flanking values
-    char lqv = (gappos > 0)            ? quals[gappos-1] : -1;
-    char rqv = (gappos < quals.size()) ? quals[gappos]   : -1;
-    char gapqv = (lqv < rqv) 
-                 ? (lqv != -1) ? lqv : rqv 
-                 : (rqv != -1) ? rqv : lqv;
-
-    quals.insert(gappos, 1, gapqv);
-  }
-
-  if (m_read->m_rc)
-  {
-    reverse(bases.begin(), bases.end());
-    reverse(m_pos.begin(), m_pos.end());
-    reverse(quals.begin(), quals.end());
-  }
-
+  vector<int> & m_pos = m_read->m_pos;
+  string & bases = m_read->m_bases;
+  string & quals = m_read->m_quals;
   
   // tint outside the assembled
   p.setPen(QColor(140,140,140));
   p.setBrush(QColor(140,140,140));
   
-  if (!m_read->m_rc || m_contigView)
+  if (m_read->m_rangebegin)
   {
-    if (m_read->m_rc)
-    {
-      rangebegin = m_read->m_tile->range.end;
-      rangeend   = m_read->m_tile->range.begin + m_read->m_tile->gaps.size() - 1;
-    }
+    int rpos = m_pos[m_read->m_rangebegin];
+    int bpos = m_pos[m_read->m_rangebegin-1];
 
-    if (rangebegin)
-    {
-      int rpos = m_pos[rangebegin];
-      int bpos = m_pos[rangebegin-1];
+    int width = (int)(((rpos+bpos)/2)*m_hscale);
+    if (m_read->m_rc) { width = lastTracePos - width; }
 
-      int width = (int)(((rpos+bpos)/2)*m_hscale);
+    p.drawRect(-5, 2, width+5, height() -4);
+  }
 
-      if (m_read->m_rc)
-      {
-        p.drawRect(lastTracePos - width, 2, width+2, height()-4);
-      }
-      else
-      {
-        p.drawRect(-5, 2, width+5, height() -4);
-      }
-    }
+  if (m_read->m_rangeend != (int) bases.length()-1)
+  {
+    int rpos = m_pos[m_read->m_rangeend];
+    int bpos = m_pos[m_read->m_rangeend+1];
 
-    if (rangeend != (int) bases.length()-1)
-    {
-      int rpos = m_pos[rangeend];
-      int bpos = m_pos[rangeend+1];
-      int width = (int)(((rpos+bpos)/2)*m_hscale);
+    int width = (int)(((rpos+bpos)/2)*m_hscale);
+    if (m_read->m_rc) { width = lastTracePos - width; }
 
-      if (m_read->m_rc)
-      {
-        p.drawRect(-5, 2, (lastTracePos-width)+5, height()-4);
-      }
-      else
-      {
-        p.drawRect(width-2, 2,
-                   lastTracePos-width+3, height()-4);
-      }
-    }
+    p.drawRect(width-2, 2,
+               lastTracePos-width+3, height()-4);
   }
 
   // Draw the bases and consensus
@@ -211,69 +105,60 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   QString s;
 
+  int i;
   for (i = 0; i < (int) m_pos.size(); i++)
   {
-    char b = bases[i];
+    int gseqpos = i;
+    if (m_read->m_rc) { gseqpos = bases.size() - i -1; }
+
+    char b  = bases[i]; s = b;
     char qv = quals[i] - AMOS::MIN_QUALITY;
 
     int hpos = (int)(m_hscale*m_pos[i]);
+    if (m_read->m_rc) { hpos = lastTracePos - hpos; }
 
-    if (m_read->m_rc && m_contigView)
-    {
-      hpos = lastTracePos - hpos;
-      b = Complement(b);
-    }
-
-    s = b;
-
+    // base
     p.setPen(UIElements::getBaseColor(b));
     p.setFont(QFont("Helvetica", fontsize));
     p.drawText(hpos-20, seqoffset,
                40, 20, Qt::AlignHCenter,s);
 
+    // qv
     p.setFont(QFont("Helvetica", 8));
     p.drawText(hpos-20, qvoffset,
                40, 20, Qt::AlignHCenter,QString::number(qv));
 
 
+    // gseqpos
     p.setPen(black);
-    if (b != '-' && (i % 5 == 0))
+    if (b != '-' && (gseqpos % 5 == 0))
     {
       p.setFont(QFont("Helvetica", 8));
       p.drawText(hpos-20, sposoffset,
-                 40, 20, Qt::AlignHCenter, QString::number(i));
+                 40, 20, Qt::AlignHCenter, QString::number(gseqpos));
 
       p.drawLine(hpos, slineoffset-2,
                  hpos, slineoffset+2);
     }
 
 
-    int gindex = m_read->getGindex(i);
+    int gindex = m_read->getGindex(gseqpos);
     if (gindex >= 0 && gindex < (int) cons.length())
     {
-      char c = cons[gindex];
-      if (m_read->m_rc && !m_contigView) { c = Complement(c); }
+      if (startgindex == -1) { startgindex = hpos-fontsize; }
+      else                   { endgindex   = hpos+fontsize; }
 
-      s=c;
-      p.setPen(UIElements::getBaseColor(c));
+      char c = cons[gindex]; s=c;
 
-      if (m_read->m_rc && m_contigView)
-      {
-        if (startgindex == -1) { startgindex = hpos+fontsize; }
-        else                   { endgindex   = hpos-fontsize; }
-      }
-      else
-      {
-        if (startgindex == -1) { startgindex = hpos-fontsize; }
-        else                   { endgindex   = hpos+fontsize; }
-      }
-
+      // consensus
       p.setFont(QFont("Helvetica", fontsize));
+      p.setPen(UIElements::getBaseColor(c));
       p.drawText(hpos-20, consoffset,
                  40, 20, Qt::AlignHCenter,s);
 
       p.setPen(black);
 
+      // consensus dot
       if (cstatus[gindex] == 'X')
       {
         p.setBrush(Qt::SolidPattern);
@@ -281,6 +166,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
         p.drawEllipse(hpos-diam/2-1, discoffset, diam, diam);
       }
 
+      // consensus position
       if (gindex % 5 == 0)
       {
         p.setFont(QFont("Helvetica", 8));
@@ -297,7 +183,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
   // y-axis and ticks
   int hpos = 0;
-  if (m_read->m_rc && m_contigView) { hpos = lastTracePos; }
+  if (m_read->m_rc) { hpos = lastTracePos; }
 
   p.drawLine(hpos, baseline, hpos, baseline-(maxy/vscale));
   for (i = 0; i < maxy; i+=100)
@@ -312,11 +198,12 @@ ChromoField::ChromoField(RenderSeq_t * read,
   for (i = 0; i < m_trace->NPoints; i+=10)
   {
     hpos = (int)(m_hscale*i);
-    if (m_read->m_rc && m_contigView)
+    if (m_read->m_rc)
     {
       hpos = lastTracePos - hpos;
     }
 
+    // chromo ticks and labels
     if (i % 50 == 0)
     {
       p.setFont(QFont("Helvetica", 8));
@@ -333,10 +220,11 @@ ChromoField::ChromoField(RenderSeq_t * read,
     }
   }
 
+  // trace
   for (int channel = 0; channel < 4; channel++)
   {
     unsigned short * trace = NULL;
-    if (m_read->m_rc && m_contigView)
+    if (m_read->m_rc)
     {
       switch (channel)
       {
@@ -361,7 +249,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
 
     p.moveTo(0,baseline);
 
-    if (m_read->m_rc && m_contigView)
+    if (m_read->m_rc)
     {
       p.moveTo(lastTracePos, baseline);
     }
@@ -369,7 +257,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
     for (i = 0; i < m_trace->NPoints; i++)
     {
       hpos = (int)(m_hscale * i);
-      if (m_read) { hpos = lastTracePos - hpos; }
+      if (m_read->m_rc) { hpos = lastTracePos - hpos; }
 
       p.lineTo(hpos,baseline-(trace[i])/vscale);
     }
@@ -395,11 +283,16 @@ void ChromoField::paintEvent(QPaintEvent * event)
 int ChromoField::getWindowPos(int gindex)
 {
   int gseqpos = m_read->getGSeqPos(gindex);
-  int retval = (int)(m_pos[gseqpos]*m_hscale);
+  int retval; 
 
-  if (m_contigView && m_read->m_rc)
+  if (m_read->m_rc)
   {
-    retval = (int)(m_trace->NPoints * m_hscale) - retval;
+    gseqpos = m_read->m_pos.size() - gseqpos;
+    retval = (int)((m_read->m_trace->NPoints-m_read->m_pos[gseqpos])* m_hscale);
+  }
+  else
+  {
+    retval = (int)(m_read->m_pos[gseqpos]*m_hscale);
   }
 
   retval += m_hoffset;

@@ -4,6 +4,7 @@
 #include <qlayout.h>
 #include "ConsensusField.hh"
 #include "InsertWindow.hh"
+#include "RenderSeq.hh"
 
 using namespace std;
 using namespace AMOS;
@@ -193,16 +194,13 @@ void TilingFrame::setGindex( int gindex )
     m_loadedEnd   = min(m_consensus.length(), grangeEnd+m_loadedWidth/2);
       
     // Render the aligned sequences
-    int vectorpos = 0;
     vector<Tile_t>::iterator vi;
 
     int orig = m_renderedSeqs.size();
     int kept = 0;
     vector<RenderSeq_t>::iterator ri;
 
-    for (vi =  m_tiling.begin(), vectorpos = 0;
-         vi != m_tiling.end();
-         vi++, vectorpos++)
+    for (vi =  m_tiling.begin(); vi != m_tiling.end(); vi++)
     {
       int hasOverlap = RenderSeq_t::hasOverlap(m_loadedStart, m_loadedEnd,
                                                vi->offset, vi->range.getLength() + vi->gaps.size(),
@@ -226,7 +224,7 @@ void TilingFrame::setGindex( int gindex )
         if (found) { continue; }
 
         // hasn't been rendered before
-        RenderSeq_t rendered(vectorpos);
+        RenderSeq_t rendered;
         rendered.load(read_bank, &*vi);
         if (m_displayAllChromo) { rendered.loadTrace(m_db); rendered.m_displayTrace = true; }
         m_renderedSeqs.push_back(rendered);
@@ -244,7 +242,7 @@ void TilingFrame::setGindex( int gindex )
     }
 
     // remove sequences that are no longer in the view window
-    vectorpos = 0;
+    int vectorpos = 0;
     for (ri = m_renderedSeqs.begin(); ri != m_renderedSeqs.end();)
          
     {

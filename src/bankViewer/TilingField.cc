@@ -123,6 +123,8 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 
   int dcov = getReadCov(e->y());
   if (dcov == -1) { return; }
+
+  m_currentReads[dcov]->loadTrace(m_db);
   ReadInfo * readinfo = new ReadInfo(m_currentReads[dcov], 
                                      m_db, 
                                      m_consensus,
@@ -319,12 +321,14 @@ void TilingField::paintEvent( QPaintEvent * )
               bool first = true;
 
               // go beyond the range so the entire peak will be drawn
-              for (int gindex = grangeStart-1; gindex <= grangeEnd+1; gindex++)
+              for (int gindex =  imax(ri->m_loffset, grangeStart-1); 
+                       gindex <= imin(ri->m_roffset, grangeEnd+1); 
+                       gindex++)
               {
                 int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
 
-                int peakposition     = ri->m_bcpos[ri->getGSeqPos(gindex)];
-                int nextpeakposition = ri->m_bcpos[ri->getGSeqPos(gindex+1)];
+                int peakposition     = ri->pos(gindex);
+                int nextpeakposition = ri->pos(gindex+1);
 
                 // in 1 basewidth worth of pixels, cover hdelta worth of trace
                 int    hdelta = nextpeakposition - peakposition;

@@ -16,7 +16,7 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
 
   QBoxLayout * layout = new QVBoxLayout(this);
 
-  QString s = QString::number(read->m_vectorpos) + " \""
+  QString s = QString(" \"")
             + read->m_read.getEID().c_str() + "\" {"
             + QString::number(read->m_read.getIID()) + "}";
 
@@ -38,6 +38,6 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
 void ReadInfo::setTilingVisibleRange(int grangeStart, int grangeEnd)
 {
   int pos = m_chromo->getWindowPos((int) ((grangeStart+grangeEnd)/2));
-  m_sv->ensureVisible(pos, 0);
+  m_sv->center(pos, 0);
 }
 

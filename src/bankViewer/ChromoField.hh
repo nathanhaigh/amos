@@ -36,16 +36,12 @@ protected:
   void paintEvent( QPaintEvent * );
 
 private:
-  Read * m_trace;
   RenderSeq_t * m_read;
-  std::vector<int> m_pos;
 
   QPixmap * m_pix;
 
   double m_hscale;
   int    m_hoffset;
-
-  bool m_contigView;
 };
 
 

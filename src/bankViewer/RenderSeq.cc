@@ -3,9 +3,8 @@
 using namespace std;
 using namespace AMOS;
 
-RenderSeq_t::RenderSeq_t(int vectorpos)
+RenderSeq_t::RenderSeq_t()
 {
-  m_vectorpos = vectorpos;
   m_trace = NULL;
   m_displayTrace = false;
   m_displaystart = 0;
@@ -24,7 +23,7 @@ char RenderSeq_t::base(Pos_t gindex) const
   }
   else
   {
-    return m_nucs[gindex - m_loffset];
+    return m_bases[gindex - m_loffset + m_rangebegin];
   }
 }
 
@@ -36,7 +35,23 @@ int RenderSeq_t::qv(Pos_t gindex) const
   }
   else
   {
-    return m_qual[gindex - m_loffset] - AMOS::MIN_QUALITY;
+    return m_quals[gindex - m_loffset + m_rangebegin] - AMOS::MIN_QUALITY;
+  }
+}
+
+int RenderSeq_t::pos(Pos_t gindex) const
+{
+  if (gindex < m_loffset)
+  {
+    return m_pos[m_rangebegin];
+  }
+  else if (gindex > m_roffset)
+  {
+    return m_pos[m_rangeend];
+  }
+  else
+  {
+    return m_pos[gindex - m_loffset + m_rangebegin];
   }
 }
 
@@ -58,7 +73,6 @@ Pos_t RenderSeq_t::getGindex(Pos_t gseqpos) const
     gindex = m_loffset + seqoffset;
   }
 
-
   return gindex;
 }
 
@@ -74,32 +88,41 @@ void RenderSeq_t::load(Bank_t & read_bank, Tile_t * tile)
   m_rc = 0;
   if (tile->range.begin > tile->range.end) { m_rc = 1; range.swap();} 
 
-  m_nucs = m_read.getSeqString(range);
-  m_qual = m_read.getQualString(range);
+  m_rangebegin = m_tile->range.begin;
 
-  if (m_rc) 
-  { 
-    Reverse_Complement(m_nucs); 
-    reverse (m_qual.begin(), m_qual.end());
+  // Render the full gapped sequence
+  m_bases = m_read.getSeqString();
+  m_quals = m_read.getQualString();
+
+  if (m_rc)
+  {
+    m_rangebegin = m_bases.length() - m_tile->range.begin;
+
+    Reverse_Complement(m_bases);
+    reverse(m_quals.begin(), m_quals.end());
   }
+
+  // last aligned base is the first plus the gapped aligned range
+  m_rangeend = m_rangebegin + m_tile->range.getLength() + m_tile->gaps.size() -1;
 
   // Insert gaps
   Pos_t gapcount;
   vector<Pos_t>::const_iterator g;
-  for (g =  tile->gaps.begin(), gapcount = 0; 
-       g != tile->gaps.end(); 
+  for (g =  m_tile->gaps.begin(), gapcount = 0; 
+       g != m_tile->gaps.end(); 
        g++, gapcount++)
   {
-    m_nucs.insert(*g+gapcount, 1, '-');
+    unsigned int gappos = *g+gapcount+m_rangebegin;
+    m_bases.insert(gappos, 1, '-');
 
     // qv of a gap is the min of the flanking values
-    char lqv = (*g+gapcount > 0) ? m_qual[*g+gapcount-1] : -1;
-    char rqv = (*g+gapcount < (int)m_qual.size()) ? m_qual[*g+gapcount] : -1;
+    char lqv = (gappos > 0)              ? m_quals[gappos-1] : -1;
+    char rqv = (gappos < m_quals.size()) ? m_quals[gappos]   : -1;
     char gapqv = (lqv < rqv) 
                  ? (lqv != -1) ? lqv : rqv 
                  : (rqv != -1) ? rqv : lqv;
 
-    m_qual.insert(*g+gapcount, 1, gapqv);
+    m_quals.insert(gappos, 1, gapqv);
   }
 }
 
@@ -165,7 +188,7 @@ void RenderSeq_t::loadTrace(const string & db)
       while ( fgets ( hex, 5, fpos ) && hex[0] != '\n' )
       {
         sscanf ( hex, "%04x", &x );
-        m_bcpos.push_back(x);
+        m_pos.push_back(x);
       }
 
       break;
@@ -178,16 +201,20 @@ void RenderSeq_t::loadTrace(const string & db)
     }
   }
 
-  cerr << m_bcpos.size() << " positions" << endl;
-
-  string bases = m_read.getSeqString();
-  int rangebegin = m_tile->range.begin;
+  cerr << m_pos.size() << " positions" << endl;
 
   if (m_rc)
   {
-    rangebegin = bases.length() - m_tile->range.begin;
-//    reverse(bases.begin(), bases.end());
-    reverse(m_bcpos.begin(), m_bcpos.end());
+    // RC the positions
+    reverse(m_pos.begin(), m_pos.end());
+
+#if RC_TRACE
+    vector<Pos_t>::iterator p;
+    for (p = m_pos.begin(); p != m_pos.end(); p++)
+    {
+      *p = m_trace->NPoints - *p;
+    }
+#endif
   }
 
   // Insert gaps
@@ -197,17 +224,12 @@ void RenderSeq_t::loadTrace(const string & db)
        g != m_tile->gaps.end(); 
        g++, gapcount++)
   {
-//    bases.insert(*g+gapcount+rangebegin, 1, '-');
+    int gappos = *g+gapcount+m_rangebegin;
 
-    int left  = m_bcpos[*g+gapcount+rangebegin-1];
-    int right = m_bcpos[*g+gapcount+rangebegin];
-    m_bcpos.insert(m_bcpos.begin()+*g+gapcount+rangebegin, 1, (left+right)/2);
-  }
+    int left  = m_pos[gappos-1];
+    int right = m_pos[gappos];
 
-  if (m_rc)
-  {
-//    reverse(bases.begin(), bases.end());
-    reverse(m_bcpos.begin(), m_bcpos.end());
+    m_pos.insert(m_pos.begin()+gappos, 1, (left+right)/2);
   }
 }
 
@@ -226,8 +248,8 @@ int RenderSeq_t::getGSeqPos(int gindex)
     gseqpos = m_tile->range.begin + distance;
   }
 
-  if      (gseqpos < 0)                     { gseqpos = 0; }
-  else if (gseqpos >= (int) m_bcpos.size()) { gseqpos = m_bcpos.size()-1; }
+  if      (gseqpos < 0)                   { gseqpos = 0; }
+  else if (gseqpos >= (int) m_pos.size()) { gseqpos = m_pos.size()-1; }
 
   return gseqpos;
 }
