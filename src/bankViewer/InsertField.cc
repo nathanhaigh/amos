@@ -39,8 +39,8 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
   s += QString(" [") + (char)ins->m_state + "] ";
 
   s += " Actual: "   + QString::number(ins->m_actual);
-  s += " Expected: " + QString::number(ins->m_dist.mean - 3*ins->m_dist.sd) 
-    +  " - "         + QString::number(ins->m_dist.mean + 3*ins->m_dist.sd);
+  s += " Expected: " + QString::number(ins->m_dist.mean - Insert::MAXSTDEV*ins->m_dist.sd) 
+    +  " - "         + QString::number(ins->m_dist.mean + Insert::MAXSTDEV*ins->m_dist.sd);
 
   emit setStatus(s);
 

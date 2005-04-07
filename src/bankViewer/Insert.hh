@@ -24,6 +24,8 @@ public:
   int m_length;
   int m_actual;
 
+  static int MAXSTDEV;
+
   int m_arc;
   int m_brc;
 
