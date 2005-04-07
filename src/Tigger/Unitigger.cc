@@ -92,6 +92,11 @@ void Unitigger::add_overlap(Overlap_t p_olap) {
 
   Overlap* olap = new Overlap();
   pair <ID_t, ID_t>  reads = p_olap.getReads();
+
+  if(reads.first == reads.second) {
+    cerr << "WARNING: Not adding overlap between read " << reads.first << " and itself " << endl;
+    return;
+  }
   
   olap->ridA = reads.first;
   olap->ridB = reads.second;
@@ -269,6 +274,7 @@ void Unitigger::add_containment() {
       }
     }
 
+    // TODO: fix if read contains self
     if(!added) {
       containment.push(edge);
     }
