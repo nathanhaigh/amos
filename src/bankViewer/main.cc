@@ -16,10 +16,11 @@ int main( int argc, char **argv )
     {
       cerr << "Usage: bankViewer [options] [bankname [contigid [position]]]" << endl;
       cerr << "Options:"  << endl
-           << "  -c <path>   Add a chromatogram path"      << endl
-           << "  -d <dbpath> Add a chromatogram db path"   << endl
-           << "  -D <DB>     Set the chromatogram DB"      << endl
-           << "  -h          Display this help"            << endl;
+           << "  -c <path>   Add a chromatogram path"        << endl
+           << "  -d <dbpath> Add a chromatogram db path"     << endl
+           << "  -D <DB>     Set the chromatogram DB"        << endl
+           << "  -p <port>   Initialize Server on this port" << endl
+           << "  -h          Display this help"              << endl;
 
       exit (1);
     }
@@ -60,6 +61,12 @@ int main( int argc, char **argv )
     {
       i++; v = a.argv()[i];
       w.addChromoDB(v);
+    }
+    else if (v == "-p" && i+1 < a.argc())
+    {
+      i++; v = a.argv()[i];
+      int port = atoi(v.c_str());
+      w.initializeSimpleServer(port);
     }
     else if (v == "-D" && i+1 < a.argc())
     {

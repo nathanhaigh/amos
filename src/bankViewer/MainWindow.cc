@@ -245,7 +245,53 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   toggleShowIndicator();
   toggleHighlightDiscrepancy();
+
 }
+
+void MainWindow::initializeSimpleServer(int port)
+{
+  SimpleServer * server = new SimpleServer(this, port);
+  connect(server, SIGNAL(newConnect(ClientSocket*)),
+          SLOT(newConnect(ClientSocket*)));
+}
+
+void MainWindow::newConnect(ClientSocket * s)
+{
+  cerr << "New Connection" << endl;
+
+  connect(s,           SIGNAL(logText(const QString &)),
+          statusBar(), SLOT(message(const QString &)));
+
+  connect(s,           SIGNAL(setContigLocation(QString, int)),
+          this,        SLOT(setContigLocation(QString, int)));
+}
+
+void MainWindow::setContigLocation(const QString contigid, int pos)
+{
+  int bid;
+  cerr << "set contig location " << contigid << ":" << pos << endl;
+
+  if (contigid[0] == 'E')
+  {
+    cerr << "Lookup: " << contigid.ascii()+1 << endl;
+    bid = m_datastore.contig_bank.getIDMap().lookupBID(contigid.ascii()+1);
+  }
+  else if (contigid[0] == 'I')
+  {
+    int iid = atoi(contigid.ascii()+1);
+
+    cerr << "Lookup " << iid << endl;
+    bid = m_datastore.contig_bank.getIDMap().lookupBID(iid);
+  }
+  else
+  {
+    bid = atoi(contigid.ascii());
+  }
+
+  setContigId(bid);
+  setGindex(pos);
+}
+
 
 
 void MainWindow::chooseBank()
@@ -315,7 +361,8 @@ void MainWindow::chooseContig()
 
 void MainWindow::setContigId(int contigId)
 {
-  if ((contigId != m_datastore.m_contigId) &&
+  if ((contigId != 0) &&
+      (contigId != m_datastore.m_contigId) &&
       !m_datastore.setContigId(contigId))
   {
     QString s = "Viewing ";

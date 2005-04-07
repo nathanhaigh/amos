@@ -18,6 +18,7 @@
 #include "DataStore.hh"
 #include "InsertWindow.hh"
 #include "CGraphWindow.hh"
+#include "NetworkCom.hh"
 
 class MainWindow: public QMainWindow
 {
@@ -31,6 +32,9 @@ public:
 public slots:
   void chooseBank();
   void chooseContig();
+  void newConnect(ClientSocket * s);
+  void setContigLocation(QString, int);
+  void initializeSimpleServer(int port);
 
   void addChromoPath(const QString &);
   void addChromoDB(const QString &);
@@ -65,6 +69,7 @@ public slots:
 
   void findNext();
   void findPrev();
+
 
 signals:
   void bankSelected(std::string bankname);
