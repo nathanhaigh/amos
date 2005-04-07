@@ -1,9 +1,11 @@
-##-- MAKE FRAGMENT FOR AMOS RULES
+es##-- MAKE FRAGMENT FOR AMOS RULES
 include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	asmQC 
+	asmQC \
+	shotgunSim
+
 dist_bin_SCRIPTS = \
 #	asmQC.pl \
 	coords2cam.pl \
@@ -26,4 +28,12 @@ asmQC_LDADD = \
 asmQC_SOURCES = \
 	asmQC.cc
 
+
+##-- shotgunSim
+shotgunSim_LDADD = \
+	-lgsl \
+	-lgslcblas
+
+shotgunSim_SOURCES = \
+	shotgunSim.cc
 ##-- END OF MAKEFILE --##
