@@ -65,6 +65,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   m_optionsmenu = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_optionsmenu);
+  m_scaffid = m_optionsmenu->insertItem("&Scaffold Plot", this, SLOT(togglePaintScaffold()));
+
   m_connectmatesid = m_optionsmenu->insertItem("&Connect Mates", this, SLOT(toggleConnectMates()));
   m_optionsmenu->setItemChecked(m_connectmatesid, true);
 
@@ -93,17 +95,17 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(iw,   SIGNAL(setGindex(int)),
           this, SIGNAL(setGindex(int)));
 
+  connect(iw,   SIGNAL(setContigId(int)),
+          this, SIGNAL(setContigId(int)));
+
   connect(this, SIGNAL(setTilingVisibleRange(int, int)),
           iw,   SLOT(setTilingVisibleRange(int, int)));
 
   connect(zoom, SIGNAL(valueChanged(int)),
           iw,   SLOT(setZoom(int)));
 
-  connect(this, SIGNAL(refreshCanvas()),
-          iw,   SLOT(refreshCanvas()));
-
-  connect(this, SIGNAL(refreshInserts()),
-          iw,   SLOT(initializeInserts()));
+  connect(this, SIGNAL(paintCanvas()),
+          iw,   SLOT(paintCanvas()));
 
   connect(iidpick, SIGNAL(textChanged(const QString &)),
           iw,      SIGNAL(highlightIID(const QString &)));
@@ -120,11 +122,17 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(setCoveragePlot(bool)),
           iw,   SLOT(setCoveragePlot(bool)));
 
+  connect(this, SIGNAL(setPaintScaffold(bool)),
+          iw,   SLOT(setPaintScaffold(bool)));
+
   connect(this, SIGNAL(setFeatures(bool)),
           iw,   SLOT(setFeatures(bool)));
 
   connect(this, SIGNAL(setColorByLibrary(bool)),
           iw,   SLOT(setColorByLibrary(bool)));
+
+  connect(this, SIGNAL(newContig()),
+          iw,   SLOT(contigChanged()));
 
   QAccel *a = new QAccel( this );
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_S), iw, SLOT(start()) );
@@ -136,7 +144,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 void InsertWindow::contigChanged()
 {
-  emit refreshInserts();
+  emit newContig();
 }
 
 void InsertWindow::toggleItem(int id)
@@ -150,7 +158,7 @@ void InsertWindow::toggleItem(int id)
       mi->second.second = !m_typesmenu->isItemChecked(mi->second.first);
       m_typesmenu->setItemChecked(mi->second.first, mi->second.second);
 
-      emit refreshCanvas();
+      emit paintCanvas();
       break;
     }
   }
@@ -178,6 +186,14 @@ void InsertWindow::toggleCoveragePlot()
   m_optionsmenu->setItemChecked(m_coverageid, b);
 
   emit setCoveragePlot(b);
+}
+
+void InsertWindow::togglePaintScaffold()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_scaffid);
+  m_optionsmenu->setItemChecked(m_scaffid, b);
+
+  emit setPaintScaffold(b);
 }
 
 void InsertWindow::toggleFeatures()

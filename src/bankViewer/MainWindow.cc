@@ -314,23 +314,23 @@ void MainWindow::showInserts()
 {
   if (!m_insertWindow)
   {
-
-    m_insertWindow = new InsertWindow(&m_datastore,
-                                      this, 
-                                      "insertWindow");
+    m_insertWindow = new InsertWindow(&m_datastore, this, "insertWindow");
 
     connect(m_insertWindow, SIGNAL(setGindex(int)),
-            this,         SLOT(setGindex(int)));
+            this,           SLOT(setGindex(int)));
 
-    connect(m_tiling,      SIGNAL(setTilingVisibleRange(int, int)),
-            m_insertWindow,  SIGNAL(setTilingVisibleRange(int, int)));
+    connect(m_insertWindow, SIGNAL(setContigId(int)),
+            this,           SLOT(setContigId(int)));
 
-    connect(this, SIGNAL(contigIdSelected(int)),
+    connect(m_tiling,       SIGNAL(setTilingVisibleRange(int, int)),
+            m_insertWindow, SIGNAL(setTilingVisibleRange(int, int)));
+
+    connect(this,           SIGNAL(contigIdSelected(int)),
             m_insertWindow, SLOT(contigChanged()));
   }
 
   m_insertWindow->show();
-  m_tiling->repaint();
+//  m_tiling->repaint();
 }
 
 void MainWindow::showCGraph()

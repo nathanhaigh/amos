@@ -17,9 +17,9 @@ DataStore::DataStore()
     frag_bank(Fragment_t::NCODE),
     lib_bank(Library_t::NCODE),
     mate_bank(Matepair_t::NCODE),
+    scaffold_bank(Scaffold_t::NCODE),
     edge_bank(ContigEdge_t::NCODE),
-    link_bank(ContigLink_t::NCODE),
-    scaffold_bank(Scaffold_t::NCODE)
+    link_bank(ContigLink_t::NCODE)
 {
   m_contigId = -1;
   m_loaded = false;
@@ -56,6 +56,7 @@ int DataStore::openBank(const string & bankname)
   try
   {
     scaffold_bank.open(bankname, B_SPY);
+    indexScaffolds();
   }
   catch (Exception_t & e)
   {
@@ -182,10 +183,37 @@ void DataStore::indexContigs()
       m_readcontiglookup[ti->source] = contigid;
     }
 
-    contigid++;
+    contigid = contig_bank.tellg();
   }
 
   cerr <<  m_readcontiglookup.size() << " reads in " << contigid-1 << " contigs" << endl;
+}
+
+void DataStore::indexScaffolds()
+{
+  cerr << "Indexing scaffolds... ";
+  m_contigscafflookup.clear();
+
+  scaffold_bank.seekg(1);
+  int scaffid = 1;
+
+  Scaffold_t scaffold;
+  while (scaffold_bank >> scaffold)
+  {
+    vector<Tile_t> & tiling = scaffold.getContigTiling();
+    vector<Tile_t>::const_iterator ti;
+
+    for (ti =  tiling.begin();
+         ti != tiling.end();
+         ti++)
+    {
+      m_contigscafflookup[ti->source] = scaffid;
+    }
+
+    scaffid = scaffold_bank.tellg();
+  }
+
+  cerr <<  m_contigscafflookup.size() << " contigs in " << scaffid-1 << " scaffolds" << endl;
 }
 
 int DataStore::setContigId(int id)
@@ -199,8 +227,8 @@ int DataStore::setContigId(int id)
 
     if (bankid != 0)
     {
-      contig_bank.seekg(bankid);
-      contig_bank >> m_contig;
+      fetchContig(bankid, m_contig);
+      m_scaffoldId = lookupScaffoldId(id);
       m_contigId = id;
       m_loaded = true;
     }
@@ -218,6 +246,18 @@ void DataStore::fetchRead(ID_t readid, Read_t & read)
 {
   read_bank.seekg(read_bank.getIDMap().lookupBID(readid));
   read_bank >> read;
+}
+
+void DataStore::fetchContig(ID_t contigid, Contig_t & contig)
+{
+  contig_bank.seekg(contigid);
+  contig_bank >> contig;
+}
+
+void DataStore::fetchScaffold(ID_t scaffid, Scaffold_t & scaff)
+{
+  scaffold_bank.seekg(scaffid);
+  scaffold_bank >> scaff;
 }
 
 void DataStore::fetchFrag(ID_t fragid, Fragment_t & frag)
@@ -278,9 +318,23 @@ Distribution_t DataStore::getLibrarySize(ID_t libid)
 
 ID_t DataStore::lookupContigId(ID_t readid)
 {
-  map<ID_t, ID_t>::iterator i = m_readcontiglookup.find(readid);
+  IdLookup_t::iterator i = m_readcontiglookup.find(readid);
 
   if (i == m_readcontiglookup.end())
+  {
+    return AMOS::NULL_ID;
+  }
+  else
+  {
+    return i->second;
+  }
+}
+
+ID_t DataStore::lookupScaffoldId(ID_t contigid)
+{
+  IdLookup_t::iterator i = m_contigscafflookup.find(contigid);
+
+  if (i == m_contigscafflookup.end())
   {
     return AMOS::NULL_ID;
   }

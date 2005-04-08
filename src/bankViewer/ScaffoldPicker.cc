@@ -65,7 +65,7 @@ ScaffoldPicker::ScaffoldPicker(DataStore * datastore,
                                const char * name)
   :QMainWindow(parent, name)
 {
-  m_showContigs = false;
+  m_showContigs = true;
   m_datastore = datastore;
 
   m_table = new QListView(this, "scaffpickertbl");
@@ -77,6 +77,7 @@ ScaffoldPicker::ScaffoldPicker(DataStore * datastore,
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
   m_showcontigsid  = m_options->insertItem("Show &Contigs", this, SLOT(toggleShowContigs()));
+  m_options->setItemChecked(m_showcontigsid, true);
 
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");
@@ -121,9 +122,6 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
     m_table->removeColumn(0);
   }
 
-  QCursor orig = cursor();
-  setCursor(Qt::waitCursor);
-
   if (m_showContigs)
   {
     m_table->addColumn("Id");
@@ -141,6 +139,16 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
     m_table->addColumn("Span");
     m_table->addColumn("Contigs");
   }
+
+  if (!m_datastore->scaffold_bank.isOpen())
+  {
+    QString status = "Scaffold Information not available";
+    statusBar()->message(status);
+    return;
+  }
+
+  QCursor orig = cursor();
+  setCursor(Qt::waitCursor);
 
   try
   {
@@ -190,13 +198,14 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
              ti != scaffold.getContigTiling().end(); 	 
              ti++) 	 
         { 	 
+          QString oo = ti->range.isReverse() ? "EB" : "BE";
           new ScaffoldListItem(scaffolditem, 	 
                              QString::number(m_datastore->contig_bank.getIDMap().lookupBID(ti->source)),
                              QString::number(ti->source), 	 
                              QString(m_datastore->contig_bank.lookupEID(ti->source)),
                              QString::number(ti->offset), 	 
                              QString::number(ti->range.getLength() + ti->gaps.size()),
-                             QString("")); 	 
+                             oo);
         }
       }
     }

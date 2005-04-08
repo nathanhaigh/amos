@@ -21,12 +21,15 @@ public:
 
   void * fetchTrace(const AMOS::Read_t & read);
 
-  void fetchRead(AMOS::ID_t readid, AMOS::Read_t & read);
+  void fetchScaffold(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
+  void fetchContig(AMOS::ID_t contigid, AMOS::Contig_t & contig);
   void fetchFrag(AMOS::ID_t fragid, AMOS::Fragment_t & frag);
+  void fetchRead(AMOS::ID_t readid, AMOS::Read_t & read);
 
   AMOS::Distribution_t getLibrarySize(AMOS::ID_t libid);
   AMOS::ID_t getLibrary(AMOS::ID_t readid);
   AMOS::ID_t lookupContigId(AMOS::ID_t readid);
+  AMOS::ID_t lookupScaffoldId(AMOS::ID_t readid);
 
   AMOS::BankStream_t contig_bank;
   AMOS::BankStream_t read_bank;
@@ -44,7 +47,8 @@ public:
   std::vector <string> m_chromodbs;
   std::vector <string> m_chromopaths;
 
-  int m_contigId;
+  AMOS::ID_t m_contigId;
+  AMOS::ID_t m_scaffoldId;
   bool m_loaded;
 
   AMOS::Contig_t m_contig;
@@ -57,6 +61,7 @@ public:
   IdLookup_t m_readcontiglookup;
   IdLookup_t m_fragliblookup;
   IdLookup_t m_readfraglookup;      
+  IdLookup_t m_contigscafflookup;
 
   typedef map<AMOS::ID_t, AMOS::Distribution_t> LibLookup_t;
   LibLookup_t m_libdistributionlookup;
@@ -68,6 +73,7 @@ private:
   void indexReads();
   void indexLibraries();
   void indexContigs();
+  void indexScaffolds();
 };
 
 

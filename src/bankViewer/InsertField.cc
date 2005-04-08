@@ -2,6 +2,7 @@
 #include <qwmatrix.h>
 #include "InsertCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
+#include "ContigCanvasItem.hh"
 
 #include <iostream>
 using namespace std;
@@ -124,6 +125,15 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       s += QString::number(fitem->m_feat.range.end) + "]";
 
       emit setStatus(s);
+      found = true;
+    }
+    else if ((*it)->rtti() == ContigCanvasItem::RTTI)
+    {
+      ContigCanvasItem * citem = (ContigCanvasItem *) * it;
+
+      QString s = "Contig IID: " + QString::number(citem->m_contigid);
+      emit setStatus(s);
+
       found = true;
     }
   }

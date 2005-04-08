@@ -37,16 +37,19 @@ public:
   ~InsertWidget();
 
 public slots:
-  void initializeInserts();
+  void initializeTiling();
 
   void setTilingVisibleRange(int, int);
   void setZoom(int);
-  void refreshCanvas();
+  void paintCanvas();
   void setConnectMates(bool);
   void setPartitionTypes(bool);
   void setCoveragePlot(bool);
+  void setPaintScaffold(bool);
   void setFeatures(bool);
   void setColorByLibrary(bool);
+  void contigChanged();
+  void computePos(int);
 
   void start();
   void stopbreak();
@@ -59,28 +62,25 @@ public slots:
 signals:
   void setStatus(const QString & message);
   void setGindex(int gindex);
+  void setContigId(int contigid);
   void highlightIID(const QString & qiid);
   void highlightEID(const QString & qeid);
 
 private:
   void flushInserts();
-  void loadInserts();
-
-  void initializeCanvas();
-
-
-  void paintCoverage();
-
+  void computeInsertHappiness();
+  void clearCanvas();
   void initializeVisibleRectangle();
 
-  DataStore * m_datastore;
+  DataStore      * m_datastore;
   InsertField    * m_ifield;
   QCanvas        * m_icanvas;
   InsertPosition * m_iposition;
 
   QCanvasRectangle * m_tilingVisible;
+
   QCanvasRectangle * m_paddle;
-  QCanvasEllipse * m_ball;
+  QCanvasEllipse   * m_ball;
   QTimer * m_timer;
   int m_xvel;
   int m_yvel;
@@ -91,6 +91,12 @@ private:
   int m_coveragePlot;
   int m_showFeatures;
   int m_colorByLibrary;
+  int m_paintScaffold;
+
+  int m_tilingwidth;
+
+  AMOS::ID_t m_currentContig;
+  AMOS::ID_t m_currentScaffold;
 
   // from insert canvas
   void drawTile(AMOS::Tile_t * tile, QCanvas * p, int hoffset, int vpos, Insert::MateState state);
@@ -102,6 +108,7 @@ private:
   InsertList_t m_inserts;
 
   std::vector<AMOS::Tile_t> m_tiling;
+  std::vector<AMOS::Tile_t> m_ctiling;
 
   std::map<char, std::pair<int, bool> > & m_types;
 };

@@ -25,12 +25,15 @@ public slots:
   void toggleCoveragePlot();
   void toggleFeatures();
   void toggleColorByLibrary();
+  void togglePaintScaffold();
 
 signals:
   void setGindex(int gindex);
+  void setContigId(int contigid);
   void visibleRange(int, int);
   void setTilingVisibleRange(int, int);
-  void refreshCanvas();
+  void paintCanvas();
+  void newContig();
   void refreshInserts();
 
   void setConnectMates(bool);
@@ -38,6 +41,7 @@ signals:
   void setCoveragePlot(bool);
   void setFeatures(bool);
   void setColorByLibrary(bool);
+  void setPaintScaffold(bool);
 
 private:
 
@@ -53,6 +57,7 @@ private:
   int m_coverageid;
   int m_featid;
   int m_libcolorid;
+  int m_scaffid;
 };
 
 #endif
