@@ -51,6 +51,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   file->insertItem("Chromatogram P&aths...",   this,  SLOT(showChromoPicker()));
   file->insertSeparator();
   file->insertItem("&Contig Picker...", this,  SLOT(chooseContig()));
+  file->insertItem("&Scaffold Information...", this,  SLOT(showScaffoldPicker()));
   file->insertItem("&Read Information...",   this,  SLOT(showReadPicker()));
   file->insertItem("&Feature Browser...",   this,  SLOT(showFeatureBrowser()));
   file->insertItem("&Library Information...",   this,  SLOT(showLibPicker()));
@@ -356,6 +357,17 @@ void MainWindow::chooseContig()
   connect(m_contigPicker, SIGNAL(contigSelected(int)),
           this,           SLOT(setContigId(int)));
   connect(m_contigPicker, SIGNAL(setGindex(int)),
+          this,           SLOT(setGindex(int)));
+}
+
+
+void MainWindow::showScaffoldPicker()
+{
+  ScaffoldPicker * scaffoldPicker = new ScaffoldPicker(&m_datastore, this, "scaffoldpicker");
+
+  connect(scaffoldPicker, SIGNAL(contigSelected(int)),
+          this,           SLOT(setContigId(int)));
+  connect(scaffoldPicker, SIGNAL(setGindex(int)),
           this,           SLOT(setGindex(int)));
 }
 

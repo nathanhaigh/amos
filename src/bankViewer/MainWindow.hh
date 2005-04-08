@@ -11,6 +11,7 @@
 
 #include "TilingFrame.hh"
 #include "ContigPicker.hh"
+#include "ScaffoldPicker.hh"
 #include "ReadPicker.hh"
 #include "FeatureBrowser.hh"
 #include "LibraryPicker.hh"
@@ -63,6 +64,7 @@ public slots:
   void showLibPicker();
   void showChromoPicker();
   void showFeatureBrowser();
+  void showScaffoldPicker();
   
   void jumpFGindex();
   void jumpPGindex();

@@ -18,7 +18,8 @@ DataStore::DataStore()
     lib_bank(Library_t::NCODE),
     mate_bank(Matepair_t::NCODE),
     edge_bank(ContigEdge_t::NCODE),
-    link_bank(ContigLink_t::NCODE)
+    link_bank(ContigLink_t::NCODE),
+    scaffold_bank(Scaffold_t::NCODE)
 {
   m_contigId = -1;
   m_loaded = false;
@@ -50,6 +51,16 @@ int DataStore::openBank(const string & bankname)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     retval = 1;
+  }
+
+  try
+  {
+    scaffold_bank.open(bankname, B_SPY);
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "Scaffold information not available" << endl;
+
   }
 
   try

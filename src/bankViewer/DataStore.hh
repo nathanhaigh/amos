@@ -33,6 +33,7 @@ public:
   AMOS::BankStream_t frag_bank;
   AMOS::BankStream_t lib_bank;
   AMOS::BankStream_t mate_bank;
+  AMOS::BankStream_t scaffold_bank;
 
   AMOS::BankStream_t edge_bank;
   AMOS::Bank_t       link_bank;
