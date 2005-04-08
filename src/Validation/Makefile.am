@@ -1,4 +1,4 @@
-es##-- MAKE FRAGMENT FOR AMOS RULES
+##-- MAKE FRAGMENT FOR AMOS RULES
 include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
