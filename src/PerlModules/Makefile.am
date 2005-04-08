@@ -6,6 +6,7 @@ include $(top_srcdir)/config/amos.mk
 dist_amoslib_SCRIPTS = \
 	AmosLib.pm \
 	ParseFasta.pm \
+	AmosFoundation.pm \
 	xfig.pm
 
 dist_tigrlib_SCRIPTS = \
