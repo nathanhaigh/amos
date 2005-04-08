@@ -18,19 +18,19 @@ public:
   int openBank(const string & bank_name);
   int setContigId(int id);
 
-  void loadMates();
-  void loadLibraries();
-  void loadContigs();
 
   void * fetchTrace(const AMOS::Read_t & read);
 
-  AMOS::Distribution_t getLibrarySize(AMOS::ID_t readid);
+  void fetchRead(AMOS::ID_t readid, AMOS::Read_t & read);
+  void fetchFrag(AMOS::ID_t fragid, AMOS::Fragment_t & frag);
+
+  AMOS::Distribution_t getLibrarySize(AMOS::ID_t libid);
   AMOS::ID_t getLibrary(AMOS::ID_t readid);
   AMOS::ID_t lookupContigId(AMOS::ID_t readid);
 
   AMOS::BankStream_t contig_bank;
-  AMOS::Bank_t       read_bank;
-  AMOS::Bank_t       frag_bank;
+  AMOS::BankStream_t read_bank;
+  AMOS::BankStream_t frag_bank;
   AMOS::BankStream_t lib_bank;
   AMOS::BankStream_t mate_bank;
 
@@ -49,10 +49,24 @@ public:
   AMOS::Contig_t m_contig;
 
   typedef map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::MateType_t> > MateLookupMap;
-
   MateLookupMap m_readmatelookup;
-  map<AMOS::ID_t, AMOS::Distribution_t> m_libdistributionlookup;
-  map<AMOS::ID_t, AMOS::ID_t> m_readcontiglookup;
+
+
+  typedef map<AMOS::ID_t, AMOS::ID_t> IdLookup_t;
+  IdLookup_t m_readcontiglookup;
+  IdLookup_t m_fragliblookup;
+  IdLookup_t m_readfraglookup;      
+
+  typedef map<AMOS::ID_t, AMOS::Distribution_t> LibLookup_t;
+  LibLookup_t m_libdistributionlookup;
+
+private:
+
+  void indexMates();
+  void indexFrags();
+  void indexReads();
+  void indexLibraries();
+  void indexContigs();
 };
 
 

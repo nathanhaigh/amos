@@ -102,6 +102,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(refreshCanvas()),
           iw,   SLOT(refreshCanvas()));
 
+  connect(this, SIGNAL(refreshInserts()),
+          iw,   SLOT(initializeInserts()));
+
   connect(iidpick, SIGNAL(textChanged(const QString &)),
           iw,      SIGNAL(highlightIID(const QString &)));
 
@@ -133,7 +136,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 void InsertWindow::contigChanged()
 {
-  emit refreshCanvas();
+  emit refreshInserts();
 }
 
 void InsertWindow::toggleItem(int id)

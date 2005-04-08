@@ -37,6 +37,8 @@ public:
   ~InsertWidget();
 
 public slots:
+  void initializeInserts();
+
   void setTilingVisibleRange(int, int);
   void setZoom(int);
   void refreshCanvas();
@@ -62,6 +64,13 @@ signals:
 
 private:
   void flushInserts();
+  void loadInserts();
+
+  void initializeCanvas();
+
+
+  void paintCoverage();
+
   void initializeVisibleRectangle();
 
   DataStore * m_datastore;
@@ -89,8 +98,10 @@ private:
   int m_seqheight;
   int m_hoffset;
 
+  typedef std::vector<Insert *> InsertList_t;
+  InsertList_t m_inserts;
+
   std::vector<AMOS::Tile_t> m_tiling;
-  std::vector<Insert *> m_inserts;
 
   std::map<char, std::pair<int, bool> > & m_types;
 };

@@ -31,6 +31,7 @@ signals:
   void visibleRange(int, int);
   void setTilingVisibleRange(int, int);
   void refreshCanvas();
+  void refreshInserts();
 
   void setConnectMates(bool);
   void setPartitionTypes(bool);

@@ -124,10 +124,11 @@ ReadPicker::ReadPicker(DataStore * datastore,
          ti++)
     {
       AMOS::ID_t libid = datastore->getLibrary(ti->source);
-      AMOS::Distribution_t dist = datastore->m_libdistributionlookup[libid];
+      AMOS::Distribution_t dist = datastore->getLibrarySize(libid);
 
       AMOS::Read_t red;
-      datastore->read_bank.fetch(ti->source, red);
+      datastore->fetchRead(ti->source, red);
+
       char type = red.getType();
       if (type == 0) { type = '?'; }
 
@@ -144,7 +145,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
       int len = ti->range.getLength() + ti->gaps.size();
       new ReadListItem(m_table,
                        QString::number(ti->source),
-                       datastore->read_bank.lookupEID(ti->source),
+                       red.getEID(),
                        QString(QChar(type)),
                        QString(QChar(mateType)),
                        QString::number(ti->offset),

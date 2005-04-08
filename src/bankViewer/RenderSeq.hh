@@ -17,7 +17,7 @@ public:
   RenderSeq_t();
   ~RenderSeq_t();
 
-  void load(AMOS::Bank_t & read_bank, AMOS::Tile_t * tile);
+  void load(DataStore * datastore, AMOS::Tile_t * tile);
   void loadTrace(DataStore * datastore);
 
   char base(AMOS::Pos_t gindex, bool outsideclr = false) const;

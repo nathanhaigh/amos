@@ -76,8 +76,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_showFeatures = 1;
   m_colorByLibrary = 0;
 
-
-  refreshCanvas();
+  m_seqheight = 3;
 
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, this, "qcv");
   m_ifield->show();
@@ -100,6 +99,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   connect(m_ifield, SIGNAL(setGindex(int)),
           this,     SIGNAL(setGindex(int)));
+
+  initializeInserts();
 }
 
 void InsertWidget::initializeVisibleRectangle()
@@ -115,19 +116,6 @@ InsertWidget::~InsertWidget()
   flushInserts();
 }
 
-void InsertWidget::flushInserts()
-{
-  vector<Insert *>::iterator i;
-  
-  for (i =  m_inserts.begin();
-       i != m_inserts.end();
-       i++)
-  {
-    delete (*i);
-  }
-
-  m_inserts.clear();
-}
 
 void InsertWidget::setTilingVisibleRange(int gstart, int gend)
 {
@@ -166,33 +154,22 @@ void InsertWidget::setZoom(int zoom)
   m_ifield->setWorldMatrix(newzoom);
 }
 
-void InsertWidget::refreshCanvas()
+void InsertWidget::flushInserts()
 {
-  // clear and flush
-  QCanvasItemList list = m_icanvas->allItems();
-  QCanvasItemList::Iterator it = list.begin();
-  for (; it != list.end(); ++it) {
-      if ( *it )
-          delete *it;
+  vector<Insert *>::iterator i;
+  
+  for (i =  m_inserts.begin();
+       i != m_inserts.end();
+       i++)
+  {
+    delete (*i);
   }
 
-  flushInserts();
-  initializeVisibleRectangle();
-  m_icanvas->update();
+  m_inserts.clear();
+}
 
-  // now draw
-  if (!m_datastore->m_loaded) { return; }
-
-  m_seqheight = 3;
-  m_hoffset = 0; 
-
-  int posoffset = 5;
-  int gutter = 5;
-  int tileoffset = posoffset+2*gutter;
-  int lineheight = m_seqheight+gutter;
-
-  int layoutgutter = 50;
-
+void InsertWidget::loadInserts()
+{
   int clen = m_datastore->m_contig.getSeqString().size();
   SeqTileMap_t seqtileLookup;
 
@@ -204,122 +181,154 @@ void InsertWidget::refreshCanvas()
   sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
   vector<Tile_t>::iterator ti;
 
-  try
+  // map iid -> tile * (within this contig)
+  for (ti =  m_tiling.begin();
+       ti != m_tiling.end();
+       ti++)
   {
-    // map iid -> tile * (within this contig)
-    for (ti =  m_tiling.begin();
-         ti != m_tiling.end();
-         ti++)
+    seqtileLookup[ti->source] = &(*ti);
+  }
+
+  cerr << "Loading mates" << endl;
+  Insert * insert;
+  DataStore::MateLookupMap::iterator mi;
+
+  ProgressDots_t dots(seqtileLookup.size(), 50);
+  int count = 0;
+
+  // For each read in the contig
+  SeqTileMap_t::iterator ai;
+  for (ai =  seqtileLookup.begin();
+       ai != seqtileLookup.end();
+       ai++)
+  {
+    count++;
+    dots.update(count);
+
+    if (ai->second == NULL)
     {
-      seqtileLookup[ti->source] = &(*ti);
+      //cerr << "Skipping already seen read" << endl;
+      continue;
     }
 
-    cerr << "Loading mates" << endl;
-    Insert * insert;
-    DataStore::MateLookupMap::iterator mi;
+    ID_t aid = ai->first;
+    ID_t acontig = m_datastore->m_contigId;
+    Tile_t * atile = ai->second;
 
+    AMOS::ID_t libid = m_datastore->getLibrary(aid);
+    AMOS::Distribution_t dist = m_datastore->getLibrarySize(libid);
 
-    ProgressDots_t dots(seqtileLookup.size(), 50);
-    int count = 0;
-
-    // For each read in the contig
-    SeqTileMap_t::iterator ai;
-    for (ai =  seqtileLookup.begin();
-         ai != seqtileLookup.end();
-         ai++)
+    // Does it have a mate
+    mi = m_datastore->m_readmatelookup.find(aid);
+    if (mi == m_datastore->m_readmatelookup.end())
     {
-      count++;
-      dots.update(count);
+      unmated++;
+      insert = new Insert(aid, acontig, atile,
+                          AMOS::NULL_ID, AMOS::NULL_ID, NULL,
+                          libid, dist, clen, 
+                          AMOS::Matepair_t::NULL_MATE);
+    }
+    else
+    {
+      matelisted++;
 
-      if (ai->second == NULL)
+      ID_t bid = mi->second.first;
+      ID_t bcontig = AMOS::NULL_ID;
+      Tile_t * btile = NULL;
+
+      SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
+
+      if (bi == seqtileLookup.end())
       {
-        //cerr << "Skipping already seen read" << endl;
-        continue;
-      }
-
-      ID_t aid = ai->first;
-      ID_t acontig = m_datastore->m_contigId;
-      Tile_t * atile = ai->second;
-
-      AMOS::ID_t libid = m_datastore->getLibrary(aid);
-      AMOS::Distribution_t dist = m_datastore->m_libdistributionlookup[libid];
-
-      // Does it have a mate
-      mi = m_datastore->m_readmatelookup.find(aid);
-      if (mi == m_datastore->m_readmatelookup.end())
-      {
-        unmated++;
-        insert = new Insert(aid, acontig, atile,
-                            AMOS::NULL_ID, AMOS::NULL_ID, NULL,
-                            libid, dist, clen, 
-                            AMOS::Matepair_t::NULL_MATE);
+        bcontig = m_datastore->lookupContigId(bid);
       }
       else
       {
-        matelisted++;
+        mated++;
 
-        ID_t bid = mi->second.first;
-        ID_t bcontig = AMOS::NULL_ID;
-        Tile_t * btile = NULL;
-
-        SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
-
-        if (bi == seqtileLookup.end())
-        {
-          bcontig = m_datastore->lookupContigId(bid);
-        }
-        else
-        {
-          mated++;
-
-          btile = bi->second;
-          bi->second = NULL;
-          bcontig = m_datastore->m_contigId;
-        }
-
-        insert = new Insert(aid, acontig, atile, 
-                            bid, bcontig, btile, 
-                            libid, dist, clen, 
-                            mi->second.second);
-
-
-        if (m_connectMates && insert->reasonablyConnected())
-        {
-          // A and B are within this contig, and should be drawn together
-          insert->m_active = 2;
-        }
-        else if (btile)
-        {
-          // A and B are within this contig, but not reasonably connected
-          Insert * j = new Insert(*insert);
-          j->setActive(1, insert, m_connectMates);
-          m_inserts.push_back(j);
-
-          insert->setActive(0, j, m_connectMates);
-        }
-        else 
-        { 
-          // Just A is valid
-          insert->setActive(0, NULL, m_connectMates); 
-        }
+        btile = bi->second;
+        bi->second = NULL;
+        bcontig = m_datastore->m_contigId;
       }
 
-      m_inserts.push_back(insert);
+      insert = new Insert(aid, acontig, atile, 
+                          bid, bcontig, btile, 
+                          libid, dist, clen, 
+                          mi->second.second);
 
-      // Mark that this read has been taken care of already
-      ai->second = NULL;
+
+      if (m_connectMates && insert->reasonablyConnected())
+      {
+        // A and B are within this contig, and should be drawn together
+        insert->m_active = 2;
+      }
+      else if (btile)
+      {
+        // A and B are within this contig, but not reasonably connected
+        Insert * j = new Insert(*insert);
+        j->setActive(1, insert, m_connectMates);
+        m_inserts.push_back(j);
+
+        insert->setActive(0, j, m_connectMates);
+      }
+      else 
+      { 
+        // Just A is valid
+        insert->setActive(0, NULL, m_connectMates); 
+      }
     }
 
-    dots.end();
+    m_inserts.push_back(insert);
 
-    cerr << "mated: "   << mated 
-         << " matelisted: " << matelisted
-         << " unmated: " << unmated << endl;
+    // Mark that this read has been taken care of already
+    ai->second = NULL;
   }
-  catch (Exception_t & e)
-  {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+
+  dots.end();
+
+  sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
+
+  cerr << "mated: "   << mated 
+       << " matelisted: " << matelisted
+       << " unmated: " << unmated << endl;
+}
+
+void InsertWidget::initializeCanvas()
+{
+  // clear and flush
+  QCanvasItemList list = m_icanvas->allItems();
+  QCanvasItemList::Iterator it = list.begin();
+  for (; it != list.end(); ++it) {
+      if ( *it )
+          delete *it;
   }
+
+  initializeVisibleRectangle();
+  m_icanvas->update();
+}
+
+void InsertWidget::initializeInserts()
+{
+  flushInserts();
+  loadInserts();
+  refreshCanvas();
+}
+
+void InsertWidget::refreshCanvas()
+{
+  initializeCanvas();
+  // now draw
+  if (!m_datastore->m_loaded) { return; }
+
+  m_hoffset = 0; 
+
+  int posoffset = 5;
+  int gutter = 5;
+  int tileoffset = posoffset+2*gutter;
+  int lineheight = m_seqheight+gutter;
+
+  int layoutgutter = 50;
+  int clen = m_datastore->m_contig.getSeqString().size();
 
   int leftmost = 0;
   int rightmost = clen;
@@ -328,8 +337,6 @@ void InsertWidget::refreshCanvas()
 
   if (!m_inserts.empty())
   {
-    sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
-
     leftmost = (*m_inserts.begin())->m_loffset;
     if (leftmost > 0) { leftmost = 0; }
   }
@@ -458,6 +465,8 @@ void InsertWidget::refreshCanvas()
       // coverage will change at each endpoint of each insert
       QPointArray coveragelevel(m_tiling.size()*4); 
       int curcpos = 0;
+
+      vector<Tile_t>::iterator ti;
 
       for (ti = m_tiling.begin(); ti != m_tiling.end(); ti++)
       {
@@ -615,7 +624,7 @@ void InsertWidget::refreshCanvas()
 
 
 
-  cerr << " inserts" << endl;
+  cerr << " inserts";
   int layoutoffset = 0;
 
   vector<int>::iterator li;
@@ -716,6 +725,8 @@ void InsertWidget::refreshCanvas()
     }
   }
 
+  cerr << "." << endl;
+
   m_icanvas->resize(rightmost - leftmost + 1000, newheight);
   m_icanvas->update();
 }
@@ -723,7 +734,7 @@ void InsertWidget::refreshCanvas()
 void InsertWidget::setConnectMates(bool b)
 {
   m_connectMates = b;
-  refreshCanvas();
+  initializeInserts();
 }
 
 void InsertWidget::setPartitionTypes(bool b)
@@ -893,8 +904,6 @@ void InsertWidget::timeout()
     }
   }
 }
-
-
 
 
 

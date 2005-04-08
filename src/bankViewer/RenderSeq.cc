@@ -141,10 +141,10 @@ Pos_t RenderSeq_t::getGindex(Pos_t gseqpos) const
   return gindex;
 }
 
-void RenderSeq_t::load(Bank_t & read_bank, Tile_t * tile)
+void RenderSeq_t::load(DataStore * datastore, Tile_t * tile)
 {
   m_tile = tile;
-  read_bank.fetch(tile->source, m_read);
+  datastore->fetchRead(tile->source, m_read);
   Range_t range = tile->range;
 
   m_loffset = tile->offset;

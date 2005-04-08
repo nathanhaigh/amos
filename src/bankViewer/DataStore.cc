@@ -42,7 +42,7 @@ int DataStore::openBank(const string & bankname)
 
     m_bankname = bankname;
 
-    loadContigs();
+    indexContigs();
 
     m_contigId = -1;
   }
@@ -57,8 +57,12 @@ int DataStore::openBank(const string & bankname)
     mate_bank.open(bankname, B_SPY);
     frag_bank.open(bankname, B_SPY);
     lib_bank.open(bankname,  B_SPY);
-    loadMates();
-    loadLibraries();
+
+    indexLibraries();
+    indexMates();
+
+    indexFrags();
+    indexReads();
   }
   catch (Exception_t & e)
   {
@@ -78,24 +82,62 @@ int DataStore::openBank(const string & bankname)
   return retval;
 }
 
-void DataStore::loadLibraries()
+void DataStore::indexReads()
+{
+  m_readfraglookup.clear();
+
+  cerr << "Indexing reads... ";
+
+  Read_t red;
+  read_bank.seekg(1);
+
+  while (read_bank >> red)
+  {
+    m_readfraglookup[red.getIID()] = red.getFragment();
+  }
+
+  cerr << m_readfraglookup.size() << " reads" << endl;
+}
+
+void DataStore::indexFrags()
+{
+  m_fragliblookup.clear();
+
+  cerr << "Indexing frags... ";
+
+  Fragment_t frg;
+  frag_bank.seekg(1);
+
+  while (frag_bank >> frg)
+  {
+    m_fragliblookup[frg.getIID()] = frg.getLibrary();
+  }
+
+  cerr << m_fragliblookup.size() << " fragments" << endl;
+}
+
+void DataStore::indexLibraries()
 {
   m_libdistributionlookup.clear();
 
+  cerr << "Indexing libraries... ";
+
   Library_t lib;
+  lib_bank.seekg(1);
+
   while (lib_bank >> lib)
   {
     m_libdistributionlookup[lib.getIID()] = lib.getDistribution();
   }
 
-  cerr << "Loaded " << m_libdistributionlookup.size() << " libraries" << endl;
+  cerr << m_libdistributionlookup.size() << " libraries" << endl;
 }
 
-void DataStore::loadMates()
+void DataStore::indexMates()
 {
   m_readmatelookup.clear();
 
-  cerr << "Loading mates... ";
+  cerr << "Indexing mates... ";
 
   mate_bank.seekg(1);
   Matepair_t mates;
@@ -108,13 +150,13 @@ void DataStore::loadMates()
   cerr << m_readmatelookup.size() << " mated reads" << endl;
 }
 
-void DataStore::loadContigs()
+void DataStore::indexContigs()
 {
   cerr << "Indexing contigs... ";
   m_readcontiglookup.clear();
 
   int contigid = 1;
-  contig_bank.seekg(contigid);
+  contig_bank.seekg(1);
 
   Contig_t contig;
   while (contig_bank >> contig)
@@ -161,19 +203,49 @@ int DataStore::setContigId(int id)
   return retval;
 }
 
+void DataStore::fetchRead(ID_t readid, Read_t & read)
+{
+  read_bank.seekg(read_bank.getIDMap().lookupBID(readid));
+  read_bank >> read;
+}
+
+void DataStore::fetchFrag(ID_t fragid, Fragment_t & frag)
+{
+  frag_bank.seekg(frag_bank.getIDMap().lookupBID(fragid));
+  frag_bank >> frag;
+}
+
 AMOS::ID_t DataStore::getLibrary(ID_t readid)
 {
   if (!m_libdistributionlookup.empty())
   {
     try
     {
-      Read_t read;
-      read_bank.fetch(readid, read);
+      ID_t fragid, libid;
 
-      Fragment_t frag;
-      frag_bank.fetch(read.getFragment(), frag);
+      if (!m_readfraglookup.empty())
+      {
+        fragid = m_readfraglookup[readid];
+      }
+      else
+      {
+        Read_t read;
+        fetchRead(readid, read);
+        fragid = read.getFragment();
+      }
 
-      return frag.getLibrary();
+      if (!m_fragliblookup.empty())
+      {
+        libid = m_fragliblookup[fragid];
+      }
+      else
+      {
+        Fragment_t frag;
+        fetchFrag(fragid, frag);
+        libid = frag.getLibrary();
+      }
+
+      return libid;
     }
     catch (Exception_t & e)
     {
@@ -183,23 +255,11 @@ AMOS::ID_t DataStore::getLibrary(ID_t readid)
   return AMOS::NULL_ID;
 }
 
-Distribution_t DataStore::getLibrarySize(ID_t readid)
+Distribution_t DataStore::getLibrarySize(ID_t libid)
 {
-  if (!m_libdistributionlookup.empty())
+  if (libid)
   {
-    try
-    {
-      Read_t read;
-      read_bank.fetch(readid, read);
-
-      Fragment_t frag;
-      frag_bank.fetch(read.getFragment(), frag);
-
-      return m_libdistributionlookup[frag.getLibrary()];
-    }
-    catch (Exception_t & e)
-    {
-    }
+    return m_libdistributionlookup[libid];
   }
 
   return Distribution_t();

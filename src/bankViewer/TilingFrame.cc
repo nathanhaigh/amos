@@ -234,7 +234,7 @@ void TilingFrame::loadContigRange(int gindex)
 
         // hasn't been rendered before
         RenderSeq_t rendered;
-        rendered.load(m_datastore->read_bank, &*vi);
+        rendered.load(m_datastore, &*vi);
         if (m_displayAllChromo) { rendered.loadTrace(m_datastore); rendered.m_displayTrace = true; }
         m_renderedSeqs.push_back(rendered);
 
