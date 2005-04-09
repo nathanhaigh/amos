@@ -71,8 +71,8 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
   connect(this,        SIGNAL(fontSizeChanged(int)),
           m_consfield, SLOT(setFontSize(int)));
 
-  connect(m_tilingfield, SIGNAL(setTilingVisibleRange(int, int)),
-          this,          SIGNAL(setTilingVisibleRange(int, int)));
+  connect(m_tilingfield, SIGNAL(setTilingVisibleRange(int, int, int)),
+          this,          SIGNAL(setTilingVisibleRange(int, int, int)));
 
   connect(m_consfield,   SIGNAL(sortColumns(int)),
           this,          SLOT(sortColumns(int)));

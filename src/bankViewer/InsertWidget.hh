@@ -39,7 +39,7 @@ public:
 public slots:
   void initializeTiling();
 
-  void setTilingVisibleRange(int, int);
+  void setTilingVisibleRange(int, int, int);
   void setZoom(int);
   void paintCanvas();
   void setConnectMates(bool);
@@ -94,6 +94,7 @@ private:
   int m_paintScaffold;
 
   int m_tilingwidth;
+  float m_hscale;
 
   AMOS::ID_t m_currentContig;
   AMOS::ID_t m_currentScaffold;
@@ -109,6 +110,7 @@ private:
 
   std::vector<AMOS::Tile_t> m_tiling;
   std::vector<AMOS::Tile_t> m_ctiling;
+  std::vector<AMOS::Feature_t> m_features;
 
   std::map<char, std::pair<int, bool> > & m_types;
 };

@@ -133,8 +133,8 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
                                      "readinfo");
   readinfo->show();
 
-  connect(this, SIGNAL(setTilingVisibleRange(int, int)),
-          readinfo, SLOT(setTilingVisibleRange(int, int)));
+  connect(this, SIGNAL(setTilingVisibleRange(int, int, int)),
+          readinfo, SLOT(setTilingVisibleRange(int, int, int)));
 }
 
 
@@ -216,7 +216,7 @@ void TilingField::paintEvent( QPaintEvent * )
   int tridim = m_fontsize/2;
   int trioffset = m_fontsize/2;
 
-  emit setTilingVisibleRange(grangeStart, grangeEnd);
+  emit setTilingVisibleRange(m_datastore->m_contigId, grangeStart, grangeEnd);
 
   #if DEBUG
   cerr << "paintTField:" << m_renderedSeqs.size()

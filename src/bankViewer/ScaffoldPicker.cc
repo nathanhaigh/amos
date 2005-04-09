@@ -8,6 +8,7 @@
 #include <qmenubar.h>
 
 #include "foundation_AMOS.hh"
+#include "RenderSeq.hh"
 
 #include <vector>
 
@@ -193,9 +194,11 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
 
       if (m_showContigs)
       {
+        vector<AMOS::Tile_t> & ctiling = scaffold.getContigTiling();
+
         vector<AMOS::Tile_t>::iterator ti; 	 
-        for (ti =  scaffold.getContigTiling().begin(); 	 
-             ti != scaffold.getContigTiling().end(); 	 
+        for (ti =  ctiling.begin();
+             ti != ctiling.end();
              ti++) 	 
         { 	 
           QString oo = ti->range.isReverse() ? "EB" : "BE";

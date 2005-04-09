@@ -39,7 +39,7 @@ signals:
     void setStatus(const QString &);
     void fontSizeChanged(int);
     void setShowNumbers(bool);
-    void setTilingVisibleRange(int, int);
+    void setTilingVisibleRange(int, int, int);
 
     void toggleShowFullRange(bool);
     void toggleShowNumbers(bool);

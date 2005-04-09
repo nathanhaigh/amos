@@ -36,7 +36,7 @@ public slots:
     void singleClick();
 
 signals:
-    void setTilingVisibleRange(int, int);
+    void setTilingVisibleRange(int, int, int);
 
 protected:
     void paintEvent( QPaintEvent * );

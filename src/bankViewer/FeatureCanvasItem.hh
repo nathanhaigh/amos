@@ -15,9 +15,6 @@ public:
   int rtti () const { return RTTI; }
   AMOS::Feature_t & m_feat;
 
-protected:
-  void drawShape (QPainter & p);
-
 private:
 };
 

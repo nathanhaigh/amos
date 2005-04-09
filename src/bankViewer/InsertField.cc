@@ -131,7 +131,11 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     {
       ContigCanvasItem * citem = (ContigCanvasItem *) * it;
 
-      QString s = "Contig IID: " + QString::number(citem->m_contigid);
+      QString s = "Contig IID: " + QString::number(citem->m_tile.source);
+      s += " [" + QString::number(citem->m_tile.offset) +
+           ","  + QString::number(citem->m_tile.offset + citem->m_tile.range.getLength()) +
+           "]";
+
       emit setStatus(s);
 
       found = true;
@@ -140,7 +144,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
   if (!found)
   {
-    emit setGindex(real.x()-m_hoffset);
+    emit setGindex(16*real.x()-m_hoffset);
   }
 }
 

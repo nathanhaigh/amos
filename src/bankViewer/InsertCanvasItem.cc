@@ -47,11 +47,13 @@ void InsertCanvasItem::drawShape (QPainter & p)
 void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p, char type)
 {
   if (!tile) { return; }
+  float hscale = .06250;
 
-  int hoffset = x() - m_insert->m_loffset;
+  int hoffset = (int)((1/hscale)*x() - m_insert->m_loffset);
 
   int readLength = tile->range.getLength() + tile->gaps.size();
-  p.drawRect(tile->offset+hoffset, (int) y(), readLength, height());
+  p.drawRect((int)(hscale*(tile->offset+hoffset)), (int) y(), 
+             (int)(hscale*readLength), height());
 
   if (tile->offset+hoffset < x())
   {

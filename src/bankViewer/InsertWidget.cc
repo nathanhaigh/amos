@@ -59,6 +59,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   QBoxLayout * vbox = new QVBoxLayout(this);
 
+  m_hscale = .06250;
 
   m_iposition = new InsertPosition(this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
@@ -74,7 +75,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_hoffset        = 0;
   m_connectMates   = 1;
   m_partitionTypes = 1;
-  m_coveragePlot   = 0;
+  m_coveragePlot   = 1;
   m_showFeatures   = 1;
   m_colorByLibrary = 0;
   m_paintScaffold  = 0;
@@ -85,7 +86,6 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_tilingwidth = 0;
 
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, this, "qcv");
-  m_ifield->show();
 
   connect(this, SIGNAL(highlightIID(const QString &)),
           m_ifield, SLOT(highlightIID(const QString &)));
@@ -107,6 +107,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
           this,     SLOT(computePos(int)));
 
   initializeTiling();
+  m_ifield->show();
 }
 
 void InsertWidget::computePos(int gindex)
@@ -119,13 +120,11 @@ void InsertWidget::computePos(int gindex)
   }
   else
   {
-    cerr << "gindex=" << gindex;
-
-    vector<Tile_t>::iterator ci;
+    vector<Tile_t>::const_iterator ci;
 
     for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
     {
-      if ((ci->offset <= gindex) && (ci->offset + ci->range.getLength() <= gindex))
+      if ((ci->offset <= gindex) && (gindex <= (ci->offset + ci->range.getLength())))
       {
         AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(ci->source);
 
@@ -136,10 +135,9 @@ void InsertWidget::computePos(int gindex)
           gindex = ci->range.getLength() - gindex;
         }
 
-        cerr << " => " << bid << ":" << gindex << endl;
-        
         emit setContigId(bid);
         emit setGindex(gindex);
+        break;
       }
     }
   }
@@ -159,21 +157,48 @@ InsertWidget::~InsertWidget()
 }
 
 
-void InsertWidget::setTilingVisibleRange(int gstart, int gend)
+void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
 {
+  if (m_paintScaffold && m_datastore->m_scaffoldId != AMOS::NULL_ID)
+  {
+    vector<Tile_t>::const_iterator ci;
+    for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
+    {
+      AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(ci->source);
+
+      if (bid == contigid)
+      {
+        if (ci->range.isReverse())
+        {
+          int t = gstart;
+          gstart = ci->offset + (ci->range.getLength() - gend);
+          gend   = ci->offset + (ci->range.getLength() - t);
+        }
+        else
+        {
+          gstart += ci->offset;
+          gend += ci->offset;
+        }
+
+        break;
+      }
+    }
+  }
+
+
   // resize and place rectangle
   QRect rc = QRect(m_ifield->contentsX(), m_ifield->contentsY(),
                    m_ifield->visibleWidth(), m_ifield->visibleHeight());
   QRect canvasRect = m_ifield->inverseWorldMatrix().mapRect(rc);
 
-  m_tilingVisible->setSize(gend - gstart +1, m_icanvas->height());
-  m_tilingVisible->move(gstart+m_hoffset, 0);
+  m_tilingVisible->setSize((int)(m_hscale*(gend - gstart)) +1, m_icanvas->height());
+  m_tilingVisible->move((int)(m_hscale*(gstart+m_hoffset)), 0);
   m_tilingVisible->show();
 
   // ensure visible
   int mapx, mapy;
-  m_ifield->worldMatrix().map((gstart + gend)/2+m_hoffset, 
-                              canvasRect.y() + canvasRect.height()/2,
+  m_ifield->worldMatrix().map((int)(m_hscale*((gstart + gend)/2+m_hoffset)), 
+                              (int)(canvasRect.y() + canvasRect.height()/2),
                               &mapx, &mapy);
   m_ifield->ensureVisible(mapx, mapy);
 
@@ -182,7 +207,7 @@ void InsertWidget::setTilingVisibleRange(int gstart, int gend)
 
 void InsertWidget::setZoom(int zoom)
 {
-  double xfactor = 1.00/zoom;
+  double xfactor = 16.00/(zoom);
 
   QWMatrix matrix = m_ifield->worldMatrix();
   QWMatrix imatrix = m_ifield->inverseWorldMatrix();
@@ -346,6 +371,7 @@ void InsertWidget::initializeTiling()
 {
   flushInserts();
 
+  m_features.clear();
   m_ctiling.clear();
   m_currentScaffold = m_datastore->m_scaffoldId;
 
@@ -359,13 +385,14 @@ void InsertWidget::initializeTiling()
     m_ctiling = scaffold.getContigTiling();
     sort(m_ctiling.begin(), m_ctiling.end(), RenderSeq_t::TilingOrderCmp());
 
+    cerr << "Mapping read tiling for " << m_ctiling.size() << " contigs... ";
+
     vector<Tile_t>::const_iterator ci;
     for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
     {
       Contig_t contig;
       m_datastore->fetchContig(ci->source, contig);
 
-      cerr << "Mapping " << contig.getEID() << endl;
 
       int clen = contig.getSeqString().size();
 
@@ -390,7 +417,29 @@ void InsertWidget::initializeTiling()
 
         m_tiling.push_back(mappedTile);
       }
+
+      const vector<Feature_t> & cfeats = contig.getFeatures();
+      vector<Feature_t>::const_iterator fi;
+      for (fi = cfeats.begin(); fi != cfeats.end(); fi++)
+      {
+        Feature_t feat(*fi);
+
+        if (ci->range.isReverse())
+        {
+          feat.range.swap();
+
+          feat.range.begin = (ci->range.getLength() - feat.range.begin);
+          feat.range.end   = (ci->range.getLength() - feat.range.end);
+        }
+
+        feat.range.begin += ci->offset;
+        feat.range.end   += ci->offset;
+
+        m_features.push_back(feat);
+      }
     }
+
+    cerr << "done." << endl;
   }
   else
   {
@@ -403,6 +452,8 @@ void InsertWidget::initializeTiling()
 
     m_tilingwidth = m_datastore->m_contig.getSeqString().size();
     m_tiling      = m_datastore->m_contig.getReadTiling();
+
+    m_features = m_datastore->m_contig.getFeatures();
   }
 
   sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
@@ -424,7 +475,7 @@ void InsertWidget::paintCanvas()
   int voffset = posoffset+2*gutter;
   int lineheight = m_seqheight+gutter;
 
-  int layoutgutter = 50;
+  int layoutgutter = 64;
 
   int leftmost = 0;
   int rightmost = m_tilingwidth;
@@ -453,7 +504,8 @@ void InsertWidget::paintCanvas()
 
     // Draw the scaffold/contig line
     QCanvasLine * line = new QCanvasLine(m_icanvas);
-    line->setPoints(m_hoffset, posoffset, m_hoffset + m_tilingwidth, posoffset);
+    line->setPoints((int)(m_hoffset * m_hscale), posoffset, 
+                    (int)((m_tilingwidth + m_hoffset) * m_hscale), posoffset);
     line->setPen(QPen(Qt::white, 2));
     line->show();
 
@@ -462,8 +514,8 @@ void InsertWidget::paintCanvas()
     {
       line = new QCanvasLine(m_icanvas);
 
-      line->setPoints(m_hoffset + i, posoffset-2,
-                      m_hoffset + i, posoffset+2);
+      line->setPoints((int)(m_hscale * (m_hoffset+i)), posoffset-2,
+                      (int)(m_hscale * (m_hoffset+i)), posoffset+2);
       line->setPen(Qt::white);
       line->show();
 
@@ -474,6 +526,7 @@ void InsertWidget::paintCanvas()
       }
     }
   }
+
 
 
   if (1)
@@ -498,13 +551,11 @@ void InsertWidget::paintCanvas()
 
       int vpos = voffset + layoutpos * lineheight;
 
-      ContigCanvasItem * contig = new ContigCanvasItem(offset + m_hoffset,
+      ContigCanvasItem * contig = new ContigCanvasItem((int)(m_hscale*(offset + m_hoffset)),
                                                        vpos,
-                                                       ci->range.getLength(),
+                                                       (int) (ci->range.getLength() * m_hscale),
                                                        m_seqheight,
-                                                       ci->range.isReverse(),
-                                                       ci->source,
-                                                       m_icanvas);
+                                                       *ci, m_icanvas);
       contig->show();
     }
 
@@ -573,22 +624,24 @@ void InsertWidget::paintCanvas()
     // Adjust coordinates for painting
     for (int i = 0; i < curcpos; i++)
     {
-      coveragelevel[i].setX(coveragelevel[i].x()+m_hoffset);
+      coveragelevel[i].setX((int)((coveragelevel[i].x()+m_hoffset) * m_hscale));
       coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + voffset);
     }
 
-    QCanvasRectangle * covbg = new QCanvasRectangle(0, voffset, maxroffset + m_hoffset + 1, maxdepth, m_icanvas);
+    int covwidth = (int)((maxroffset + m_hoffset) * m_hscale);
+
+    QCanvasRectangle * covbg = new QCanvasRectangle(0, voffset, covwidth + 1, maxdepth, m_icanvas);
     covbg->setBrush(QColor(60,60,60));
     covbg->setZ(-2);
     covbg->show();
 
     QCanvasLine * base = new QCanvasLine(m_icanvas);
-    base->setPoints(0, voffset+maxdepth, maxroffset+m_hoffset+1, voffset+maxdepth);
+    base->setPoints(0, voffset+maxdepth, covwidth+1, voffset+maxdepth);
     base->setPen(Qt::white);
     base->show();
 
     CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
-                                                        maxroffset + m_hoffset + 1, maxdepth,
+                                                        covwidth + 1, maxdepth,
                                                         coveragelevel, m_icanvas);
     citem->setPen(QPen(Qt::blue, 1));
     citem->show();
@@ -658,12 +711,12 @@ void InsertWidget::paintCanvas()
       // Adjust coordinates for painting
       for (int i = 0; i < curcpos; i++)
       {
-        coveragelevel[i].setX(coveragelevel[i].x()+m_hoffset);
+        coveragelevel[i].setX((int)((coveragelevel[i].x()+m_hoffset)*m_hscale));
         coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + voffset);
       }
 
       CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
-                                                          maxroffset + m_hoffset + 1, maxdepth,
+                                                          (int)((maxroffset + m_hoffset)*m_hscale) + 1, maxdepth,
                                                           coveragelevel, m_icanvas);
       citem->setPen(QPen(Qt::green, 1));
       citem->show();
@@ -677,45 +730,28 @@ void InsertWidget::paintCanvas()
     cerr << " features";
     layout.clear();
 
-    for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
+    vector<AMOS::Feature_t>::iterator fi;
+    for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
-      Contig_t contig;
-      m_datastore->fetchContig(ci->source, contig);
-      int clen = contig.getSeqString().size();
+      int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
 
-      vector<AMOS::Feature_t> & feats = contig.getFeatures();
-      sort(feats.begin(), feats.end(), FeatOrderCmp());
-
-      vector<AMOS::Feature_t>::iterator fi;
-      for (fi = feats.begin(); fi != feats.end(); fi++)
+      // First fit into the layout
+      for (li =  layout.begin(), layoutpos = 0;
+           li != layout.end();
+           li++, layoutpos++)
       {
-        int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
-
-        if (ci->range.isReverse())
-        {
-          offset = clen - (offset + fi->range.getLength());
-        }
-
-        offset += ci->offset;
-
-        // First fit into the layout
-        for (li =  layout.begin(), layoutpos = 0;
-             li != layout.end();
-             li++, layoutpos++)
-        {
-          if (*li < offset) { break; }
-        }
-
-        if (li == layout.end()) { layout.push_back(0); }
-        layout[layoutpos] = offset + fi->range.getLength() + layoutgutter;
-
-        int vpos = voffset + layoutpos * lineheight;
-
-        FeatureCanvasItem * fitem = new FeatureCanvasItem(m_hoffset+offset, vpos,
-                                                          fi->range.getLength(), m_seqheight,
-                                                          *fi, m_icanvas);
-        fitem->show();
+        if (*li < offset) { break; }
       }
+
+      if (li == layout.end()) { layout.push_back(0); }
+      layout[layoutpos] = offset + fi->range.getLength() + layoutgutter;
+
+      int vpos = voffset + layoutpos * lineheight;
+
+      FeatureCanvasItem * fitem = new FeatureCanvasItem((int)(m_hscale * (offset+m_hoffset)), vpos,
+                                                        (int)(m_hscale*fi->range.getLength()), m_seqheight,
+                                                        *fi, m_icanvas);
+      fitem->show();
     }
 
     if (!layout.empty())
@@ -770,105 +806,114 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  cerr << " inserts";
-
-  // For all types, or when !m_connectMates, do exactly 1 pass
-  for (unsigned int type = 0; type < types.size(); type++)
+  int m_drawInserts = 1;
+  if (m_drawInserts)
   {
-    if (m_partitionTypes && !m_types[types[type]].second) { continue; }
+    cerr << " inserts";
 
-    layout.clear();
-
-    // For all inserts of this type (or if type enabled)
-    for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
+    // For all types, or when !m_connectMates, do exactly 1 pass
+    for (unsigned int type = 0; type < types.size(); type++)
     {
-      if (m_partitionTypes)
+      if (m_partitionTypes && !m_types[types[type]].second) { continue; }
+
+      layout.clear();
+
+      // For all inserts of this type (or if type enabled)
+      for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
       {
-        if ((*ii)->m_state != types[type]) { continue; }
-      }
-      else
-      {
-        if (!drawType[(*ii)->m_state]) { continue; }
-      }
-
-      int offset = (*ii)->m_loffset;
-
-      // Find a position
-      for (li =  layout.begin(), layoutpos = 0;
-           li != layout.end();
-           li++, layoutpos++)
-      {
-        if (*li < offset) { break; }
-      }
-
-      if (li == layout.end()) { layout.push_back(0); }
-
-      if ((*ii)->m_roffset > rightmost) { rightmost = (*ii)->m_roffset; }
-
-      int vpos = voffset + layoutpos*lineheight;
-      layout[layoutpos] = (*ii)->m_roffset + layoutgutter;
-
-      int inserthpos = m_hoffset + (*ii)->m_loffset; 
-      int insertlength = (*ii)->m_length;
-
-      InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
-                                                      insertlength, m_seqheight,
-                                                      *ii, m_icanvas);
-      if (m_colorByLibrary)
-      {
-        QColor insertcolor(Qt::cyan);
-
-        LibColorMap::const_iterator lci = libColorMap.find((*ii)->m_libid);
-
-        if (lci != libColorMap.end())
+        if (m_partitionTypes)
         {
-          insertcolor = lci->second;
+          if ((*ii)->m_state != types[type]) { continue; }
+        }
+        else
+        {
+          if (!drawType[(*ii)->m_state]) { continue; }
         }
 
-        iitem->setPen(insertcolor);
-        iitem->setBrush(insertcolor);
+        int offset = (*ii)->m_loffset;
+
+        // Find a position
+        for (li =  layout.begin(), layoutpos = 0;
+             li != layout.end();
+             li++, layoutpos++)
+        {
+          if (*li < offset) { break; }
+        }
+
+        if (li == layout.end()) { layout.push_back(0); }
+
+        if ((*ii)->m_roffset > rightmost) { rightmost = (*ii)->m_roffset; }
+
+        int vpos = voffset + layoutpos*lineheight;
+        layout[layoutpos] = (*ii)->m_roffset + layoutgutter;
+
+        int inserthpos =   (int)(m_hscale * ((*ii)->m_loffset + m_hoffset)); 
+        int insertlength = (int)(m_hscale * (*ii)->m_length);
+
+
+        InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
+                                                        insertlength, m_seqheight,
+                                                        *ii, m_icanvas);
+        if (m_colorByLibrary)
+        {
+          QColor insertcolor(Qt::cyan);
+
+          LibColorMap::const_iterator lci = libColorMap.find((*ii)->m_libid);
+
+          if (lci != libColorMap.end())
+          {
+            insertcolor = lci->second;
+          }
+
+          iitem->setPen(insertcolor);
+          iitem->setBrush(insertcolor);
+        }
+        else
+        {
+          iitem->setPen(UIElements::getInsertColor((*ii)->m_state));
+          iitem->setBrush(UIElements::getInsertColor((*ii)->m_state));
+        }
+
+        iitem->show();
       }
-      else
+
+      if (!layout.empty()) 
+      { 
+        voffset += (layout.size() + 1) * lineheight;
+      }
+
+      if (!m_partitionTypes)
       {
-        iitem->setPen(UIElements::getInsertColor((*ii)->m_state));
-        iitem->setBrush(UIElements::getInsertColor((*ii)->m_state));
+        break;
       }
-
-      iitem->show();
-    }
-
-    if (!layout.empty()) 
-    { 
-      voffset += (layout.size() + 1) * lineheight;
-    }
-
-    if (!m_partitionTypes)
-    {
-      break;
     }
   }
 
   if (m_showFeatures)
   {
-    QCanvasItemList list = m_icanvas->allItems();
-    QCanvasItemList::Iterator it = list.begin();
-    for (; it != list.end(); ++it) 
+    vector<AMOS::Feature_t>::iterator fi;
+    for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
-      if ((*it)->rtti() == FeatureCanvasItem::RTTI)
-      {
-        QCanvasRectangle * rect = new QCanvasRectangle((*it)->x(), 0, (*it)->boundingRect().width(), voffset, m_icanvas);
-        rect->setBrush(QColor(59,49,31));
-        rect->setPen(QColor(139,119,111));
-        rect->setZ(-2);
-        rect->show();
-      }
+      int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
+      QCanvasRectangle * rect = new QCanvasRectangle((int)((m_hoffset+offset) * m_hscale), 0, 
+                                                     (int)(fi->range.getLength() * m_hscale), voffset, 
+                                                     m_icanvas);
+      rect->setBrush(QColor(59,49,31));
+      rect->setPen(QColor(139,119,111));
+      rect->setZ(-2);
+      rect->show();
     }
   }
 
-  cerr << "." << endl;
+  cerr << endl 
+       << "width: " << rightmost-leftmost
+       << " swidth: " << (int)((rightmost-leftmost) * m_hscale)
+       << " voffset: " << voffset;
 
-  m_icanvas->resize(rightmost - leftmost + 1000, voffset);
+  m_icanvas->resize((int)(m_hscale*(rightmost - leftmost)) + 100, voffset);
+  cerr << ".";
   m_icanvas->update();
+  cerr << "." << endl;
 }
 
 void InsertWidget::setConnectMates(bool b)

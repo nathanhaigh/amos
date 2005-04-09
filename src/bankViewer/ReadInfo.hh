@@ -20,7 +20,7 @@ public:
            const char *name=0);
 
 public slots:
-  void setTilingVisibleRange(int grangeStart, int grangeEnd);
+  void setTilingVisibleRange(int contigid, int grangeStart, int grangeEnd);
 
 private:
   QScrollView * m_sv;

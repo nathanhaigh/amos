@@ -31,7 +31,7 @@ signals:
   void setGindex(int gindex);
   void setContigId(int contigid);
   void visibleRange(int, int);
-  void setTilingVisibleRange(int, int);
+  void setTilingVisibleRange(int, int, int);
   void paintCanvas();
   void newContig();
   void refreshInserts();

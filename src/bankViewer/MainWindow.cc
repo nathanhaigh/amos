@@ -322,8 +322,8 @@ void MainWindow::showInserts()
     connect(m_insertWindow, SIGNAL(setContigId(int)),
             this,           SLOT(setContigId(int)));
 
-    connect(m_tiling,       SIGNAL(setTilingVisibleRange(int, int)),
-            m_insertWindow, SIGNAL(setTilingVisibleRange(int, int)));
+    connect(m_tiling,       SIGNAL(setTilingVisibleRange(int, int, int)),
+            m_insertWindow, SIGNAL(setTilingVisibleRange(int, int, int)));
 
     connect(this,           SIGNAL(contigIdSelected(int)),
             m_insertWindow, SLOT(contigChanged()));

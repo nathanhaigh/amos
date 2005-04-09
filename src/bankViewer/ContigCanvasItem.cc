@@ -4,14 +4,15 @@
 
 const int ContigCanvasItem::RTTI = 132556;
 
-ContigCanvasItem::ContigCanvasItem(int x, int y, int width, int height, bool rc,
-                                   AMOS::ID_t bid, QCanvas * canvas)
-  : QCanvasRectangle(x, y, width, height, canvas), m_contigid(bid)
+ContigCanvasItem::ContigCanvasItem(int x, int y, int width, int height, 
+                                   AMOS::Tile_t tile,
+                                   QCanvas * canvas)
+  : QCanvasRectangle(x, y, width, height, canvas), m_tile(tile)
 {
-  if (rc)
+  if (tile.range.isReverse())
   {
-    setPen(Qt::red);
-    setBrush(Qt::red);
+    setPen(Qt::yellow);
+    setBrush(Qt::yellow);
   }
   else
   {

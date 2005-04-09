@@ -33,7 +33,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   options->setLabel("Options");
 
   new QLabel("Zoom", options, "zoomlbl");
-  QSlider * zoom = new QSlider(1, 500, 10, 20, Qt::Horizontal, options, "zoom");
+  QSlider * zoom = new QSlider(1, 512, 8, 16, Qt::Horizontal, options, "zoom");
 
   new QLabel("IID:", options, "iidlbl");
   QLineEdit * iidpick = new QLineEdit(options, "iidpick");
@@ -98,8 +98,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(iw,   SIGNAL(setContigId(int)),
           this, SIGNAL(setContigId(int)));
 
-  connect(this, SIGNAL(setTilingVisibleRange(int, int)),
-          iw,   SLOT(setTilingVisibleRange(int, int)));
+  connect(this, SIGNAL(setTilingVisibleRange(int, int, int)),
+          iw,   SLOT(setTilingVisibleRange(int, int, int)));
 
   connect(zoom, SIGNAL(valueChanged(int)),
           iw,   SLOT(setZoom(int)));
@@ -140,6 +140,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   a->connectItem(a->insertItem(Key_Right), iw, SLOT(right()) );
   a->connectItem(a->insertItem(Key_Escape), iw, SLOT(stopbreak()));
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_A), iw, SLOT(autoplay()) );
+
+  zoom->setValue(8);
 }
 
 void InsertWindow::contigChanged()

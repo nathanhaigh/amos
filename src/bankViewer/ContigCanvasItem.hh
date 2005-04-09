@@ -8,13 +8,12 @@
 class ContigCanvasItem : public QCanvasRectangle
 {
 public:
-  ContigCanvasItem(int x, int y, int width, int height, bool rc,
-                   AMOS::ID_t bid, QCanvas * canvas);
+  ContigCanvasItem(int x, int y, int width, int height, AMOS::Tile_t tile, QCanvas * canvas);
 
   static const int RTTI;
   int rtti () const { return RTTI; }
 
-  AMOS::ID_t m_contigid;
+  AMOS::Tile_t m_tile;
 };
 
 

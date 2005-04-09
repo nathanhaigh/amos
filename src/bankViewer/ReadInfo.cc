@@ -36,8 +36,9 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
   m_sv->addChild(m_chromo);
 }
 
-void ReadInfo::setTilingVisibleRange(int grangeStart, int grangeEnd)
+void ReadInfo::setTilingVisibleRange(int contigid, int grangeStart, int grangeEnd)
 {
+  // TODO:: Assume contigid is current
   int pos = m_chromo->getWindowPos((int) ((grangeStart+grangeEnd)/2));
   m_sv->center(pos, 0);
 }
