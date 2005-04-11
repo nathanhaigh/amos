@@ -562,6 +562,7 @@ void InsertWidget::paintCanvas()
     voffset += (layout.size() + 1) * lineheight;
   }
 
+  m_coveragePlot = 0;
   if (m_coveragePlot)
   {
     cerr << " icoverage";
