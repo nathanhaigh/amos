@@ -127,6 +127,10 @@ static void  Get_Strings_From_Bank
     (vector <char *> & s, vector <char *> & q,
      vector <Range_t> & clr_list, vector <ID_t> & id_list,
      vector <char *> & tag_list, BankStream_t & read_bank);
+static void  Get_Strings_From_Bank_ByID
+    (vector <char *> & s, vector <char *> & q,
+     vector <Range_t> & clr_list, vector <ID_t> & id_list,
+     vector <char *> & tag_list, Bank_t & read_bank, vector <ID_t> & sel_list);
 static void  Map_Minimizers
     (const vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht);
