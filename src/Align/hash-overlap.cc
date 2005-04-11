@@ -38,7 +38,8 @@ static string IIDFile = "";
   // List of IID to be overlapped
 bool selectIIDs = false;
   // Whether IIDs should be read from a file
-
+bool selectEIDs = false;
+  // Whether EIDs should be read from a file
 
 
 int  main
@@ -98,6 +99,23 @@ int  main
 	     Bank_t read_bank (Read_t::NCODE);
 	     read_bank . open(Input_Name, B_READ);
 	     Get_Strings_From_Bank_ByID(string_list, qual_list, clr_list, 
+					id_list, tag_list, read_bank, sel_list);
+	     read_bank . close ();
+	   } else if (selectEIDs) {
+	     vector<string> sel_list;
+	     string eid;
+	     ifstream selfile(IIDFile.c_str());
+	     if (! selfile.is_open()) {
+	       cerr << "Could not open IID file " << IIDFile << endl;
+	       exit(1);
+	     }
+	     
+	     while (selfile >> eid)
+	       sel_list.push_back(eid);
+	    
+	     Bank_t read_bank (Read_t::NCODE);
+	     read_bank . open(Input_Name, B_READ);
+	     Get_Strings_From_Bank_ByEID(string_list, qual_list, clr_list, 
 					id_list, tag_list, read_bank, sel_list);
 	     read_bank . close ();
 	   } else {
@@ -580,6 +598,86 @@ static void  Get_Strings_From_Bank_ByID
   }
 
 
+static void  Get_Strings_From_Bank_ByEID
+    (vector <char *> & s, vector <char *> & q,
+     vector <Range_t> & clr_list, vector <ID_t> & id_list,
+     vector <char * > & tag_list, Bank_t & read_bank, 
+     vector <string> & sel_list)
+
+//  Populate  s  and  q  with sequences and quality values, resp.,
+//  from  read_bank .  Put the clear-ranges for the sequences in  clr_list .
+//   read_bank  must already be opened.  Put the identifying tags for the
+//  sequences in  tag_list .  Only get sequences whose IIDs are in sel_list
+
+  {
+   int  i, n;
+
+   n = s . size ();
+   for  (i = 0;  i < n;  i ++)
+     free (s [i]);
+   s . clear ();
+
+   n = q . size ();
+   for  (i = 0;  i < n;  i ++)
+     free (q [i]);
+   q . clear ();
+
+   n = tag_list . size ();
+   for  (i = 0;  i < n;  i ++)
+     free (tag_list [i]);
+   tag_list . clear ();
+   id_list . clear ();
+   clr_list . clear ();
+
+   Read_t  read;
+   char  * tmp, tag_buff [100];
+   string  seq;
+   string  qual;
+   Range_t  clear;
+   int  this_offset;
+   int  a, b, j, len, qlen;
+
+   //   i = Lo_ID;
+   //   read_bank . seekg (i, BankStream_t::BEGIN);
+   for (int idx = 0; idx < sel_list.size(); idx++)
+     {
+       if (! read_bank.existsEID(sel_list[idx].c_str())){
+	 cerr << "EID " << sel_list[idx] << " does not exist in bank!\n";
+	 exit(1);
+       }
+      read_bank.fetch(sel_list[idx].c_str(), read); 
+      id_list . push_back (read . getIID());
+      tag_list . push_back (strdup (read . getEID() . c_str()));
+
+      clear = read . getClearRange ();
+      if  (Verbose > 2)
+	cerr << read;
+      seq = read . getSeqString (clear);
+      qual = read . getQualString (clear);
+      clr_list . push_back (clear);
+
+      len = seq . length ();
+      tmp = strdup (seq . c_str ());
+      for  (j = 0;  j < len;  j ++)
+        tmp [j] = tolower (tmp [j]);
+      s . push_back (tmp);
+
+      qlen = qual . length ();
+      if  (len != qlen)
+          {
+           sprintf (Clean_Exit_Msg_Line,
+	    "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+            len, qlen, read . getIID( ));
+           Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+          }
+      tmp = strdup (qual . c_str ());
+      q . push_back (tmp);
+     }
+
+   return;
+  }
+
+
 static void  Map_Minimizers
     (const vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht)
@@ -760,7 +858,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:x:i:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:x:I:E:")) != EOF))
      switch  (ch)
        {
         case  'A' :
@@ -799,9 +897,14 @@ static void  Parse_Command_Line
           Error_Rate = strtod (optarg, NULL);
           break;
 	  
-       case 'i' :
+       case 'I' :
 	 IIDFile = string(optarg);
 	 selectIIDs = true;
+	 break;
+
+       case 'E' :
+	 IIDFile = string(optarg);
+	 selectEIDs = true;
 	 break;
 
         case  '?' :
@@ -928,7 +1031,8 @@ static void  Usage
            "  -o <n>   Set minimum overlap length to <n>\n"
            "  -v <n>   Set verbose level to <n>. Higher produces more output.\n"
            "  -x <d>   Set maximum error rate to <d>.  E.g., 0.06 is 6%% error\n"
-	   "  -i <file> Build overlaps only for reads whose IIDs are in <file>\n"
+	   "  -I <file> Build overlaps only for reads whose IIDs are in <file>\n"
+	   "  -E <file> Build overlaps only for reads whose EIDs are in <file>\n"
            "\n",
            command);
 
