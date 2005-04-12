@@ -21,6 +21,8 @@ using namespace std;
 using namespace AMOS;
 using namespace HASHMAP;
 
+#define endl "\n"
+
 enum MateStatus {MP_GOOD, MP_SHORT, MP_LONG, MP_NORMAL, MP_OUTIE};
 
 class AnnotatedMatePair: public Matepair_t
@@ -61,6 +63,9 @@ void printHelpText()
     "-samecvg <n>  report regions with coverage by mates with same orientation\n"
     "              greater than <n>\n"
     "-outiecvg <n> report regions with outie coverage greater than <n>\n"
+    "-perinsert <file> output per-insert information in <file>\n"
+    "-meachange <n> libraries whose mean changed by less than <n> will be considered unchanged\n"
+    "-sdchange <n> libraries whose stdev. changed by less than <n> will be considered unchanged\n"
     "-debug        output status for each mate-pair to STDERR\n"
     "\n.DESCRIPTION.\n"
     "\n.KEYWORDS.\n"
@@ -87,6 +92,9 @@ bool GetOptions(int argc, char ** argv)
     {"update",    0, 0, 'u'},
     {"feat",      0, 0, 'f'},
     {"debug",     0, 0, 'd'},
+    {"perinsert", 1, 0, 'p'},
+    {"meachange", 1, 0, 'c'},
+    {"sdchange",  1, 0, 'C'},
     {0, 0, 0, 0}
   };
   
@@ -133,6 +141,15 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'd':
       globals["debug"] = string("true");
+      break;
+    case 'p':
+      globals["perinsert"] = string(optarg);
+      break;
+    case 'c':
+      globals["meachange"] = string(optarg);
+      break;
+    case 'C':
+      globals["sdchange"] = string(optarg);
       break;
     case '?':
       return false;
@@ -337,20 +354,32 @@ int main(int argc, char **argv)
   int MAX_LONG_CVG = 2; // long mate coverages over this will be reported
   int MAX_NORMAL_CVG = 3; // normal orientation read coverages > will be reptd.
   int MAX_OUTIE_CVG = 3; // outie orientation read coverages > will be reptd.
+  int MEA_CHANGE = 50;// libraries that change by less are considered unchanged
+  int SD_CHANGE = 10;// libraries that change by less are considered unchanged
 
   bool recompute = false; // recompute library sizes
   bool update = false;    // update library sizes in bank
   bool feats = false;     // add features to bank
   bool debug = false;     // write debugging info to STDERR
+  bool perinsert = false; // do per-insert output
 
   if (globals.find("debug") != globals.end()){
     debug = true;
     cout << "Debugging mode: additional information written to STDERR" << endl;
   }
 
+  if (globals.find("meanchange") != globals.end())
+      MEA_CHANGE = strtol(globals["meanchange"].c_str(), NULL, 10);
+
+  if (globals.find("sdchange") != globals.end())
+      SD_CHANGE = strtol(globals["sdchange"].c_str(), NULL, 10);
+
   if (globals.find("recompute") != globals.end()){
     recompute = true;
     cout << "Will recompute library sizes" << endl;
+    cout << "Libraries whose mean changes by less than " << MEA_CHANGE
+	 << "\nand whose std. dev. changes by less than " << SD_CHANGE 
+	 << " are considered to not have changed" << endl;
   } else
     cout << "Will not recompute library sizes" << endl;
 
@@ -403,6 +432,12 @@ int main(int argc, char **argv)
   cout << "Reporting regions with more than " << MAX_OUTIE_CVG
        << " coverage by outie mates" << endl;
 
+  cout << endl;
+  if (globals.find("perinsert") != globals.end()){
+    perinsert = true;
+    cout << "Per-insert information reported in file: " 
+	 << globals["perinsert"] << endl;
+  }
   cout << endl;
 
   // open necessary files
@@ -489,6 +524,16 @@ int main(int argc, char **argv)
     }
 
 
+
+  ofstream insertFile;
+  if (perinsert){
+    insertFile.open(globals["perinsert"].c_str(), ofstream::out);
+    if (! insertFile.is_open()){
+      cerr << "Failed to open insert file " << globals["perinsert"] << endl;
+      exit(1);
+    }
+  }
+
   // Stream through the contigs and retrieve map of read positions within ctgs.
   Contig_t ctg;
   
@@ -532,9 +577,22 @@ int main(int argc, char **argv)
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > rd2name;
 
   while (mate_bank >> mtp){
-    if (mtp.getType() != Matepair_t::END) // we only handle end reads
+    read_bank.fetch(mtp.getReads().first, rd1); // get the read
+    read_bank.fetch(mtp.getReads().second, rd2);
+    rd2name[rd1.getIID()] = rd1.getEID();
+    rd2name[rd2.getIID()] = rd2.getEID();
+
+    if (mtp.getType() != Matepair_t::END) {// we only handle end reads
       //      cerr << "Type is " << mtp.getType() << endl;
+      if (perinsert)
+	insertFile << "NOT END MATES: "
+		   << mtp.getReads().first 
+		   << "(" << rd2name[mtp.getReads().first] << ") " 
+		   << mtp.getReads().second 
+		   << "(" << rd2name[mtp.getReads().second] << ") "
+		   << "\n";
       continue;
+    }
 
     if (rd2ctg[mtp.getReads().first] == rd2ctg[mtp.getReads().second]){
       // mate-pair between reads within the same contig
@@ -542,10 +600,6 @@ int main(int argc, char **argv)
 
       //      ctgIDs.insert(rd2ctg[mtp.getReads().first]);
       ti = mtl.insert(mtl.end(), mtp);
-      read_bank.fetch(mtp.getReads().first, rd1); // get the read
-      read_bank.fetch(mtp.getReads().second, rd2);
-      rd2name[rd1.getIID()] = rd1.getEID();
-      rd2name[rd2.getIID()] = rd2.getEID();
 
       frag_bank.fetch(rd1.getFragment(), frg); // get the fragment
       rd2frg[mtp.getReads().first] = rd1.getFragment();
@@ -554,16 +608,16 @@ int main(int argc, char **argv)
       lib2mtp[frg.getLibrary()].push_back(ti);
       ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
     } else {
-      if (debug)
-	cerr << "Mates " 
-	     << mtp.getReads().first 
-	     << "(" << rd2name[mtp.getReads().first] << ") " 
-	     << mtp.getReads().second 
-	     << "(" << rd2name[mtp.getReads().second] << ") "
-	     << "not in same contig: "
-	     <<	 rd2ctg[mtp.getReads().first] << ", "
-	     <<	 rd2ctg[mtp.getReads().second] 
-	     << endl;
+      if (perinsert)
+	insertFile << "LINKING: " 
+		   << mtp.getReads().first 
+		   << "(" << rd2name[mtp.getReads().first] << ") " 
+		   << mtp.getReads().second 
+		   << "(" << rd2name[mtp.getReads().second] << ") "
+		   << " in separate contigs: "
+		   << rd2ctg[mtp.getReads().first] << ", "
+		   << rd2ctg[mtp.getReads().second] 
+		   << "\n";
     }
   }
   
@@ -605,7 +659,8 @@ int main(int argc, char **argv)
       newSize = libsize;
     } else {
       newSize = getSz(sizes);
-      if (newSize != libsize){
+      if (abs (newSize.first - libsize.first) < MEA_CHANGE
+	  && abs ((int) newSize.second - (int) libsize.second) < SD_CHANGE ){ // if new size significantly different
 	cout <<  "Library " << lib2name[*li] << " recomputed as mean = " 
 	     << newSize.first << " SD = " << newSize.second << endl;
 	if (update){
@@ -636,8 +691,23 @@ int main(int argc, char **argv)
 	   mi = lib2mtp[*li].begin(); mi != lib2mtp[*li].end(); mi++){
       // for each mate pair
       // turn off end check 
-      if ((*mi)->status != MP_GOOD)
+      if ((*mi)->status != MP_GOOD){
+	if (perinsert){
+	  if ((*mi)->status == MP_OUTIE)
+	    insertFile << "OUTIE: ";
+	  if ((*mi)->status == MP_NORMAL)
+	    insertFile << "SAME: ";
+	  
+	  insertFile << ((*mi)->getReads()).first 
+		     << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+		     << ((*mi)->getReads()).second 
+		     << "(" << rd2name[((*mi)->getReads()).second] 
+		     << ") LIBRARY: "
+		     << *li << "(" << lib2name[*li] << ")"
+		     << "\n";
+	}
 	continue; // only interested in mates not already tagged
+      }
 
       Pos_t sz = mateLen(**mi, rd2posn[((*mi)->getReads()).first], 
 			 rd2posn[((*mi)->getReads()).second], 
@@ -652,29 +722,43 @@ int main(int argc, char **argv)
 	if (sz < newSize.first){
 	  (*mi)->status = MP_SHORT; // too short
 	  (*mi)->deviation = newSize.first - sz;
-	  if (debug)
-	    cerr << "Short mate " 
-		 << ((*mi)->getReads()).first 
-		 << "(" << rd2name[((*mi)->getReads()).first] << ") " 
-		 << ((*mi)->getReads()).second 
-		 << "(" << rd2name[((*mi)->getReads()).second] << ") "
-		 << (*mi)->deviation << " shorter than " << newSize.first
-		 << endl;
+	  if (perinsert)
+	    insertFile << "SHORT " 
+		       << ((*mi)->getReads()).first 
+		       << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+		       << ((*mi)->getReads()).second 
+		       << "(" << rd2name[((*mi)->getReads()).second] << ") "
+		       << "SIZE: " << sz << " EXPECTED: " << newSize.first 
+		       << "(" << newSize.second << ") LIBRARY: " 
+		       << *li << "(" << lib2name[*li] << ")"
+		       << "\n";
 		
 	} else { 
 	  (*mi)->status = MP_LONG; // too long
 	  (*mi)->deviation = sz - newSize.first;
-	  if (debug)
-	    cerr << "Long mate " 
-		 << ((*mi)->getReads()).first 
-		 << "(" << rd2name[((*mi)->getReads()).first] << ") " 
-		 << ((*mi)->getReads()).second 
-		 << "(" << rd2name[((*mi)->getReads()).second] << ") "
-		 << (*mi)->deviation << " longer than " << newSize.first
-		 << endl;
+	  if (perinsert)
+	    insertFile << "LONG " 
+		       << ((*mi)->getReads()).first 
+		       << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+		       << ((*mi)->getReads()).second 
+		       << "(" << rd2name[((*mi)->getReads()).second] << ") "
+		       << "SIZE: " << sz << " EXPECTED: " << newSize.first 
+		       << "(" << newSize.second << ") LIBRARY: "
+		       << *li << "(" << lib2name[*li] << ")"
+		       << "\n";
 	}
-      }
-    }
+      } else // long or short
+	if (perinsert)
+	  insertFile << "GOOD " 
+		     << ((*mi)->getReads()).first 
+		     << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+		     << ((*mi)->getReads()).second 
+		     << "(" << rd2name[((*mi)->getReads()).second] << ") "
+		     << "SIZE: " << sz << " EXPECTED: " << newSize.first 
+		     << "(" << newSize.second << ") LIBRARY: "
+		     << *li << "(" << lib2name[*li] << ")"
+		     << "\n";
+    } // for each mate pair
   }// for each library
 
   if (recompute) 
@@ -957,6 +1041,8 @@ int main(int argc, char **argv)
     contig_bank.close();
   }
   mate_bank.close();
+  if (perinsert)
+    insertFile.close();
 
   return(0);
 } // main
