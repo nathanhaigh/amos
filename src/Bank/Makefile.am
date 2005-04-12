@@ -17,9 +17,10 @@ bin_PROGRAMS = \
 	bank2coverage \
 	updateBankPositions \
 	extractContig \
-    loadFeatures \
-    dumpFeatures \
-    findMissingMates
+	bank2fasta \
+	loadFeatures \
+        dumpFeatures \
+        findMissingMates
 
 dist_bin_SCRIPTS = \
 	bank-unlock.pl
@@ -144,5 +145,11 @@ load_overlaps_LDADD = \
 load_overlaps_SOURCES = \
 	load-overlaps.cc
 
+##-- bank2fasta
+bank2fasta_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+bank2fasta_SOURCES = \
+	bank2fasta.cc
 
 ##-- END OF MAKEFILE --##
