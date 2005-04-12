@@ -75,7 +75,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_hoffset        = 0;
   m_connectMates   = 1;
   m_partitionTypes = 1;
-  m_coveragePlot   = 1;
+  m_coveragePlot   = 0;
   m_showFeatures   = 1;
   m_colorByLibrary = 0;
   m_paintScaffold  = 0;
@@ -147,8 +147,9 @@ void InsertWidget::initializeVisibleRectangle()
 {
   m_tilingVisible = new QCanvasRectangle(m_icanvas);
   m_tilingVisible->setZ(-1);
-  m_tilingVisible->setBrush(QColor(100,100,100));
-  m_tilingVisible->setPen(QColor(100,100,100));
+
+  m_tilingVisible->setBrush(QColor(200,200,100));
+  m_tilingVisible->setPen(QColor(200,200,100));
 }
 
 InsertWidget::~InsertWidget()
@@ -457,6 +458,7 @@ void InsertWidget::initializeTiling()
   }
 
   sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
+  sort(m_features.begin(), m_features.end(), FeatOrderCmp());
 
   computeInsertHappiness();
   paintCanvas();
@@ -562,7 +564,6 @@ void InsertWidget::paintCanvas()
     voffset += (layout.size() + 1) * lineheight;
   }
 
-  m_coveragePlot = 0;
   if (m_coveragePlot)
   {
     cerr << " icoverage";
@@ -890,7 +891,7 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  if (m_showFeatures)
+  if (m_showFeatures && 0)
   {
     vector<AMOS::Feature_t>::iterator fi;
     for (fi = m_features.begin(); fi != m_features.end(); fi++)

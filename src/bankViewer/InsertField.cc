@@ -131,10 +131,13 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     {
       ContigCanvasItem * citem = (ContigCanvasItem *) * it;
 
-      QString s = "Contig IID: " + QString::number(citem->m_tile.source);
+      QString s = "Contig ID: " + QString::number(m_datastore->contig_bank.getIDMap().lookupBID(citem->m_tile.source));
+      s += " IID: " + QString::number(citem->m_tile.source);
+      s += " EID: " + QString(m_datastore->contig_bank.lookupEID(citem->m_tile.source));
       s += " [" + QString::number(citem->m_tile.offset) +
            ","  + QString::number(citem->m_tile.offset + citem->m_tile.range.getLength()) +
            "]";
+      s += " " + QString::number(citem->m_tile.range.getLength()) + "bp";
 
       emit setStatus(s);
 

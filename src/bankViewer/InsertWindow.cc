@@ -74,7 +74,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_optionsmenu->setItemChecked(m_partitiontypesid, true);
 
   m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
-  m_optionsmenu->setItemChecked(m_coverageid, true);
+  m_optionsmenu->setItemChecked(m_coverageid, false);
 
   m_featid = m_optionsmenu->insertItem("Show F&eatures", this, SLOT(toggleFeatures()));
   m_optionsmenu->setItemChecked(m_featid, true);
