@@ -15,7 +15,7 @@ use strict;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    toAmos (-m mates|-x traceinfo.xml|-f frg)
+    toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)
            (-c contig|-a asm|-ta tasm|-ace ace|-s fasta|-q qual) 
            -o outfile 
            [-i insertfile | -map dstmap]
@@ -53,6 +53,7 @@ my $libmap;
 my $posfile;
 my $GOODQUAL = 30;
 my $BADQUAL = 10;
+my $byaccession = undef;
 
 my $minSeqId = 1;  # where to start numbering reads
 my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
@@ -70,7 +71,8 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "q=s"   => \$qualfile,
 				 "s=s"   => \$fastafile,
 				 "pos=s" => \$posfile,
-				 "id=i"  => \$minSeqId);
+				 "id=i"  => \$minSeqId,
+				 "acc"   => \$byaccession);
 
 
 my $matesDone = 0;
@@ -553,11 +555,11 @@ sub parseFrgFile {
 	    my $nm = $$fields{src};
 	    my @lines = split('\n', $nm);
 	    $nm = $lines[0]; # join('', @lines);
-	    if ($nm ne "" && $nm !~ /^\s*$/){
+	    if ($byaccession || $nm eq "" || $nm !~ /^\s*$/)){
+		$seqnames{$iid} = $id;
+	    } else {
 		$seqnames{$iid} = $nm;
 		$seqids{$nm} = $iid;
-	    } else {
-		$seqnames{$iid} = $id;
 	    }
 	    $seqids{$id} = $iid;
 	    my ($seql, $seqr) = split(',', $$fields{clr});
