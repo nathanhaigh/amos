@@ -530,40 +530,6 @@ void InsertWidget::paintCanvas()
   }
 
 
-
-  if (1)
-  {
-    cerr << " contigs";
-    layout.clear();
-
-    for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
-    {
-      int offset = ci->offset;
-
-      // First fit into the layout
-      for (li = layout.begin(), layoutpos = 0; 
-           li != layout.end(); 
-           li++, layoutpos++)
-      {
-        if (*li < offset) { break; }
-      }
-
-      if (li == layout.end()) { layout.push_back(0); }
-      layout[layoutpos] = offset + ci->range.getLength() + layoutgutter;
-
-      int vpos = voffset + layoutpos * lineheight;
-
-      ContigCanvasItem * contig = new ContigCanvasItem((int)(m_hscale*(offset + m_hoffset)),
-                                                       vpos,
-                                                       (int) (ci->range.getLength() * m_hscale),
-                                                       m_seqheight,
-                                                       *ci, m_icanvas);
-      contig->show();
-    }
-
-    voffset += (layout.size() + 1) * lineheight;
-  }
-
   if (m_coveragePlot)
   {
     cerr << " icoverage";
@@ -643,9 +609,9 @@ void InsertWidget::paintCanvas()
     base->show();
 
     CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
-                                                        covwidth + 1, maxdepth,
+                                                        covwidth + 1, maxdepth, true,
                                                         coveragelevel, m_icanvas);
-    citem->setPen(QPen(Qt::blue, 1));
+    citem->setPen(QPen(Qt::magenta, 1));
     citem->show();
 
     int readCoverage = 1;
@@ -719,12 +685,46 @@ void InsertWidget::paintCanvas()
 
       CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
                                                           (int)((maxroffset + m_hoffset)*m_hscale) + 1, maxdepth,
+                                                          false,
                                                           coveragelevel, m_icanvas);
       citem->setPen(QPen(Qt::green, 1));
       citem->show();
     }
 
-    voffset += maxdepth + gutter;
+    voffset += maxdepth + 2*gutter;
+  }
+
+  if (1)
+  {
+    cerr << " contigs";
+    layout.clear();
+
+    for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
+    {
+      int offset = ci->offset;
+
+      // First fit into the layout
+      for (li = layout.begin(), layoutpos = 0; 
+           li != layout.end(); 
+           li++, layoutpos++)
+      {
+        if (*li < offset) { break; }
+      }
+
+      if (li == layout.end()) { layout.push_back(0); }
+      layout[layoutpos] = offset + ci->range.getLength() + layoutgutter;
+
+      int vpos = voffset + layoutpos * lineheight;
+
+      ContigCanvasItem * contig = new ContigCanvasItem((int)(m_hscale*(offset + m_hoffset)),
+                                                       vpos,
+                                                       (int) (ci->range.getLength() * m_hscale),
+                                                       m_seqheight,
+                                                       *ci, m_icanvas);
+      contig->show();
+    }
+
+    voffset += (layout.size() + 1) * lineheight;
   }
 
   if (m_showFeatures)

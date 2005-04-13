@@ -6,9 +6,10 @@ const int CoverageCanvasItem::RTTI = 132546;
 
 using namespace std;
 
-CoverageCanvasItem::CoverageCanvasItem(int x, int y, int width, int height,
+CoverageCanvasItem::CoverageCanvasItem(int x, int y, int width, int height, bool isClone,
                                        QPointArray & arr, QCanvas * canvas)
   : QCanvasRectangle(x, y, width, height, canvas),
+    m_isClone(isClone),
     m_coveragePlot(arr)
 {
 

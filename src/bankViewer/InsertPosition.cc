@@ -31,7 +31,7 @@ void InsertPosition::paintEvent(QPaintEvent * e)
   p.drawRect(rect());
   p.setPen(Qt::white);
 
-  int distance = (int)(50/m_scale); // 50 pixels between tick marks
+  int distance = (int)(100/m_scale); // 50 pixels between tick marks
 
   double sd = distance;
   int num = 0;
@@ -62,16 +62,20 @@ void InsertPosition::paintEvent(QPaintEvent * e)
       p.drawLine((i-m_start) * m_scale, linepos-2,
                  (i-m_start) * m_scale, linepos+2);
 
-      if (abs(i) > 1000)
+      if (abs(i) > 1000000)
       {
-        pos = QString::number(i/1000.0) + "k";
+        pos = QString::number(i/1000000.0) + "M";
+      }
+      else if (abs(i) > 1000)
+      {
+        pos = QString::number(i/1000.0) + "K";
       }
       else
       {
         pos = QString::number(i);
       }
 
-      p.drawText((i-m_start) * m_scale - 20, 4, 40, 15,  
+      p.drawText((i-m_start) * m_scale - 50, 4, 100, 15,  
                  Qt::AlignHCenter | Qt::AlignBottom, pos);
     }
   }

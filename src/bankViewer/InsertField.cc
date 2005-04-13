@@ -3,6 +3,7 @@
 #include "InsertCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
 #include "ContigCanvasItem.hh"
+#include "CoverageCanvasItem.hh"
 
 #include <iostream>
 using namespace std;
@@ -100,7 +101,12 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   QPoint real = inverseWorldMatrix().map(e->pos());
   QCanvasItemList l = canvas()->collisions(real);
 
-  bool found = false;
+  int gindex = 16*real.x() - m_hoffset;
+
+  bool jump = true;
+  bool emitstatus = true;
+
+  QString s = "[" + QString::number(gindex) + "]";
 
   for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
   {
@@ -111,12 +117,13 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       bool highlightBuddy = e->button() == RightButton;
 
       highlightInsert(iitem, highlight, highlightBuddy);
-      found = true;
+      jump = false;
+      emitstatus = false;
     }
     else if ((*it)->rtti() == FeatureCanvasItem::RTTI)
     {
       FeatureCanvasItem * fitem = (FeatureCanvasItem *) * it;
-      QString s = "EID: ";
+      s += " Feature EID: ";
       s += fitem->m_feat.eid + " Group:";
       s += fitem->m_feat.group + " Comment:";
       s += fitem->m_feat.comment + " Type:";
@@ -124,14 +131,14 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       s += " [" +  QString::number(fitem->m_feat.range.begin) + ",";
       s += QString::number(fitem->m_feat.range.end) + "]";
 
-      emit setStatus(s);
-      found = true;
+      jump = false;
+      emitstatus = true;
     }
     else if ((*it)->rtti() == ContigCanvasItem::RTTI)
     {
       ContigCanvasItem * citem = (ContigCanvasItem *) * it;
 
-      QString s = "Contig ID: " + QString::number(m_datastore->contig_bank.getIDMap().lookupBID(citem->m_tile.source));
+      s += " Contig ID: " + QString::number(m_datastore->contig_bank.getIDMap().lookupBID(citem->m_tile.source));
       s += " IID: " + QString::number(citem->m_tile.source);
       s += " EID: " + QString(m_datastore->contig_bank.lookupEID(citem->m_tile.source));
       s += " [" + QString::number(citem->m_tile.offset) +
@@ -139,15 +146,52 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
            "]";
       s += " " + QString::number(citem->m_tile.range.getLength()) + "bp";
 
-      emit setStatus(s);
+      jump = false;
+      emitstatus = true;
+    }
+    else if ((*it)->rtti() == CoverageCanvasItem::RTTI)
+    {
+      CoverageCanvasItem * citem = (CoverageCanvasItem *) * it;
 
-      found = true;
+      int i = 0;
+      int actual = e->pos().x();
+
+      cerr << "lastx" << citem->m_coveragePlot[citem->m_coveragePlot.size()-1].x() << endl;
+
+      for (i = 1; i < citem->m_coveragePlot.size(); i++)
+      {
+        int xval = citem->m_coveragePlot[i].x();
+        QPoint val(xval, 0);
+        QPoint map = inverseWorldMatrix().map(e->pos());
+        xval = 16*map.x() - m_hoffset;
+        if (xval >= gindex)
+        {
+          break;
+        }
+      }
+
+      i--;
+
+      cerr << "i: " << i << " x: " << citem->m_coveragePlot[i].x() << endl;
+      
+      if (citem->m_isClone) { s += " Clone"; }
+      else                  { s += " Read"; }
+
+      s += " Coverage " +
+            QString::number(citem->y() + citem->height() - citem->m_coveragePlot[i].y());
+      jump = false;
+      emitstatus = true;
     }
   }
 
-  if (!found)
+  if (emitstatus)
   {
-    emit setGindex(16*real.x()-m_hoffset);
+    emit setStatus(s);
+  }
+
+  if (jump)
+  {
+    emit setGindex(gindex);
   }
 }
 
@@ -155,11 +199,11 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
 {
   QRect rc = QRect(contentsX(),    contentsY(),
                    visibleWidth(), visibleHeight() );
-  QRect canvasRect = inverseWorldMatrix().mapRect(rc);
+  QRect real = inverseWorldMatrix().mapRect(rc);
 
   QCanvasView::viewportPaintEvent(e);
 
-  emit visibleRange(canvasRect.x()-m_hoffset, worldMatrix().m11());
+  emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);
 }
 
 
