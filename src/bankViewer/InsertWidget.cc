@@ -75,7 +75,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_hoffset        = 0;
   m_connectMates   = 1;
   m_partitionTypes = 1;
-  m_coveragePlot   = 0;
+  m_coveragePlot   = 1;
   m_showFeatures   = 1;
   m_colorByLibrary = 0;
   m_paintScaffold  = 0;
@@ -684,7 +684,7 @@ void InsertWidget::paintCanvas()
       }
 
       CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
-                                                          (int)((maxroffset + m_hoffset)*m_hscale) + 1, maxdepth,
+                                                          covwidth + 1, maxdepth,
                                                           false,
                                                           coveragelevel, m_icanvas);
       citem->setPen(QPen(Qt::green, 1));

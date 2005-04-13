@@ -153,18 +153,13 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     {
       CoverageCanvasItem * citem = (CoverageCanvasItem *) * it;
 
-      int i = 0;
-      int actual = e->pos().x();
-
-      cerr << "lastx" << citem->m_coveragePlot[citem->m_coveragePlot.size()-1].x() << endl;
+      int i = 1;
+      int click = real.x();
 
       for (i = 1; i < citem->m_coveragePlot.size(); i++)
       {
         int xval = citem->m_coveragePlot[i].x();
-        QPoint val(xval, 0);
-        QPoint map = inverseWorldMatrix().map(e->pos());
-        xval = 16*map.x() - m_hoffset;
-        if (xval >= gindex)
+        if (xval > click)
         {
           break;
         }
@@ -172,14 +167,18 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
       i--;
 
-      cerr << "i: " << i << " x: " << citem->m_coveragePlot[i].x() << endl;
-      
+      if (0)
+      {
+        int xval = citem->m_coveragePlot[i].x();
+        xval = 16*xval - m_hoffset;
+        cerr << "i: " << i << " xval: " << xval << endl;
+      }
+
       if (citem->m_isClone) { s += " Clone"; }
       else                  { s += " Read"; }
 
-      s += " Coverage " +
-            QString::number(citem->y() + citem->height() - citem->m_coveragePlot[i].y());
-      jump = false;
+      s += " Coverage " + QString::number(citem->y() + citem->height() - citem->m_coveragePlot[i].y());
+      jump = true;
       emitstatus = true;
     }
   }
