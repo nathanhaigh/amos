@@ -13,7 +13,8 @@ public:
   static void setBasePen(QPen & pen, char base);
   static QColor & getBaseColor(char base);
   static QColor & getSNPColoring(char base, bool dark=false);
-
+  static QColor & getInsertColor(Insert::MateState state);
+  static QColor & getFeatureColor(AMOS::FeatureType_t type);
 
   static QColor color_tiling;
   static QColor color_tilingoffset;
@@ -28,8 +29,6 @@ public:
   static QColor color_discrepancy;
   static QColor color_snpgap;
 
-  static QColor & getInsertColor(Insert::MateState state);
-
   static QColor color_Happy;
   static QColor color_Unknown;
   static QColor color_StretchedMate;
@@ -38,6 +37,14 @@ public:
   static QColor color_OrientationViolation;
   static QColor color_MissingMate;
   static QColor color_NoMate;
+
+  static QColor color_featrepeat;
+  static QColor color_featunitig;
+  static QColor color_featjoin;
+  static QColor color_featcoverage;
+  static QColor color_featorf;
+  static QColor color_featsnp;
+  static QColor color_featdefault;
 };
 
 

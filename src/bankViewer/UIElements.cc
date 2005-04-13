@@ -22,6 +22,15 @@ QColor UIElements::color_tilingtrim(204, 153, 153);
 
 QColor UIElements::color_snpgap(Qt::cyan);
 
+QColor UIElements::color_featrepeat(Qt::white);
+QColor UIElements::color_featunitig(Qt::cyan);
+QColor UIElements::color_featjoin(Qt::white);
+QColor UIElements::color_featcoverage(Qt::magenta);
+QColor UIElements::color_featorf(Qt::white);
+QColor UIElements::color_featsnp(Qt::red);
+QColor UIElements::color_featdefault(Qt::white);
+
+
 QColor & UIElements::getSNPColoring(char base, bool dark)
 {
   switch (base)
@@ -42,6 +51,21 @@ QColor & UIElements::getSNPColoring(char base, bool dark)
     case '-': return color_snpgap;
 
     default: return color_default;
+  };
+}
+
+
+QColor & UIElements::getFeatureColor(AMOS::FeatureType_t type)
+{
+  switch (type)
+  {
+    case 'R':  return color_featrepeat;
+    case 'U':  return color_featunitig;
+    case 'J':  return color_featjoin;
+    case 'C':  return color_featcoverage;
+    case 'O':  return color_featorf;
+    case 'P':  return color_featsnp;
+    default: return color_featdefault;
   };
 }
 
