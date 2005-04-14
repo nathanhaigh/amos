@@ -375,6 +375,7 @@ void InsertWidget::initializeTiling()
   m_features.clear();
   m_ctiling.clear();
   m_currentScaffold = m_datastore->m_scaffoldId;
+  m_tiling.clear();
 
   if (m_paintScaffold && m_datastore->m_scaffoldId != AMOS::NULL_ID)
   {
