@@ -396,27 +396,31 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		my $insertname = undef;
 		if ($fidname =~ /$freg/){
 		    $insertname = $1;
-		    if (! exists $end5{$insertname}){
+		    $seq2ins{$fidname} = $insertname;
+		    if (! exists $end5{$insertname} || 
+			$end5{$insertname} lt $fidname){
 			$end5{$insertname} = $fidname;
-			$seq2ins{$fidname} = $insertname;
 		    }
 		} elsif ($fidname =~ /$revreg/){
 		    $insertname = $1;
-		    if (! exists $end3{$insertname}){
+		    $seq2ins{$fidname} = $insertname;
+		    if (! exists $end3{$insertname} ||
+			$end3{$insertname} lt $fidname){
 			$end3{$insertname} = $fidname;
-			$seq2ins{$fidname} = $insertname;
 		    }
 		} elsif ($fid =~ /$freg/){
 		    $insertname = $1;
-		    if (! exists $end5{$insertname}){
+		    $seq2ins{$fid} = $insertname;
+		    if (! exists $end5{$insertname} ||
+			$end5{$insertname} lt $fid){
 			$end5{$insertname} = $fid;
-			$seq2ins{$fid} = $insertname;
 		    }
 		} elsif ($fid =~ /$revreg/){
 		    $insertname = $1;
-		    if (! exists $end3{$insertname}){
+		    $seq2ins{$fid} = $insertname;
+		    if (! exists $end3{$insertname} ||
+			$end3{$insertname} lt $fid){
 			$end3{$insertname} = $fid;
-			$seq2ins{$fid} = $insertname;
 		    }
 		} # if forw or rev regexp match
 
