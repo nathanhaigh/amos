@@ -5,7 +5,8 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	trimByOvl \
-	runAmos
+	runAmos \
+	ContigIterator
 
 dist_bin_SCRIPTS = \
 	benchmark_qual.pl \
@@ -32,6 +33,13 @@ trimByOvl_LDADD = \
 trimByOvl_SOURCES = \
 	trimByOvl.cc
 
+##-- ContigIterator
+ContigIterator_CPPFLAGS = \
+	-I$(top_srcdir)/src/AMOS
+ContigIterator_LDADD = \
+        $(top_builddir)/src/AMOS/libAMOS.a
+ContigIterator_SOURCES = \
+	ContigIterator.cc
 
 ##-- runAmos
 ## note: this references top_builddir because getopt.h is built if needed
