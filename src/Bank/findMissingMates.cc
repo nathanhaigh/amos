@@ -260,6 +260,13 @@ int main (int argc, char ** argv)
       cerr << rtiling.size() << " reads mapped" << endl;
     }
 
+    if (rangeEnd < rangeStart)
+    {
+      int t = rangeEnd;
+      rangeEnd = rangeStart;
+      rangeStart = t;
+    }
+
 
 
     cerr << "Finding reads that overlap [" << rangeStart << "," << rangeEnd << "]" << endl;
