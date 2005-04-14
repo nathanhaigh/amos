@@ -77,8 +77,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_partitionTypes = 1;
   m_coveragePlot   = 1;
   m_showFeatures   = 1;
+  m_paintScaffold  = 1;
   m_colorByLibrary = 0;
-  m_paintScaffold  = 0;
 
   m_currentScaffold = AMOS::NULL_ID;
 

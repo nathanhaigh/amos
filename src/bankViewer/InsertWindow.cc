@@ -66,6 +66,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_optionsmenu = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_optionsmenu);
   m_scaffid = m_optionsmenu->insertItem("&Scaffold Plot", this, SLOT(togglePaintScaffold()));
+  m_optionsmenu->setItemChecked(m_scaffid, true);
 
   m_connectmatesid = m_optionsmenu->insertItem("&Connect Mates", this, SLOT(toggleConnectMates()));
   m_optionsmenu->setItemChecked(m_connectmatesid, true);
@@ -141,7 +142,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   a->connectItem(a->insertItem(Key_Escape), iw, SLOT(stopbreak()));
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_A), iw, SLOT(autoplay()) );
 
-  zoom->setValue(10);
+  zoom->setValue(14);
 }
 
 void InsertWindow::contigChanged()
