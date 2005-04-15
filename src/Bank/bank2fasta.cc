@@ -88,8 +88,8 @@ bool GetOptions(int argc, char ** argv)
 //----------------------------------------------
 int main(int argc, char **argv)
 {
-  globals["iid"] = "false";
-  globals["eid"] = "true";
+  globals["iid"] = "true";
+  globals["eid"] = "false";
 
   if (! GetOptions(argc, argv)){
     cerr << "Command line parsing failed" << endl;
