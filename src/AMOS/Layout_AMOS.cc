@@ -50,7 +50,6 @@ Size_t Layout_t::getSpan ( ) const
 //----------------------------------------------------- readMessage ------------
 void Layout_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {

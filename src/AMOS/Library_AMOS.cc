@@ -21,7 +21,6 @@ const NCode_t Library_t::NCODE = M_LIBRARY;
 //----------------------------------------------------- readMessage ------------
 void Library_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {

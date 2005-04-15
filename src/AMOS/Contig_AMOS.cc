@@ -101,7 +101,6 @@ string Contig_t::getUngappedSeqString (Range_t range) const
 //----------------------------------------------------- readMessage ------------
 void Contig_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Sequence_t::readMessage (msg);
 
   try {

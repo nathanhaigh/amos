@@ -97,7 +97,6 @@ string Sequence_t::getSeqString (Range_t range) const
 //--------------------------------------------------- readMessage ------------
 void Sequence_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {

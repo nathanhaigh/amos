@@ -12,12 +12,14 @@ amosinclude_HEADERS = \
 	ContigEdge_AMOS.hh \
 	ContigLink_AMOS.hh \
 	Contig_AMOS.hh \
-	Example_AMOS.hh \
+	Edge_AMOS.hh \
 	Fragment_AMOS.hh \
+	Group_AMOS.hh \
 	IDMap_AMOS.hh \
 	Kmer_AMOS.hh \
 	Layout_AMOS.hh \
 	Library_AMOS.hh \
+	Link_AMOS.hh \
 	Matepair_AMOS.hh \
 	Message_AMOS.hh \
 	Overlap_AMOS.hh \
@@ -94,11 +96,14 @@ libAMOS_a_SOURCES = \
 	ContigEdge_AMOS.cc \
 	ContigLink_AMOS.cc \
 	Contig_AMOS.cc \
+	Edge_AMOS.cc \
 	Fragment_AMOS.cc \
+	Group_AMOS.cc \
 	IDMap_AMOS.cc \
 	Kmer_AMOS.cc \
 	Layout_AMOS.cc \
 	Library_AMOS.cc \
+	Link_AMOS.cc \
 	Matepair_AMOS.cc \
 	Message_AMOS.cc \
 	Overlap_AMOS.cc \

@@ -10,6 +10,7 @@
 #ifndef __ContigEdge_AMOS_HH
 #define __ContigEdge_AMOS_HH 1
 
+#include "Edge_AMOS.hh"
 #include "ContigLink_AMOS.hh"
 #include <vector>
 
@@ -26,12 +27,12 @@ namespace AMOS {
 //! of contig edges is generally the output contig scaffolding.
 //!
 //==============================================================================
-class ContigEdge_t : public ContigLink_t
+  class ContigEdge_t : public ContigLink_t, public IEdge_t
 {
   
 private:
 
-  std::vector<ID_t> links_m;             //!< bundle of ContigLinks
+  void setNodeType (NCode_t nodtype);
 
 
 protected:
@@ -55,7 +56,7 @@ public:
   //!
   ContigEdge_t ( )
   {
-
+    // ContigLink_t sets NodeType
   }
 
 
@@ -80,8 +81,9 @@ public:
   //--------------------------------------------------- clear ------------------
   virtual void clear ( )
   {
+    // ContigLink_t preserves NodeType
     ContigLink_t::clear( );
-    links_m . clear( );
+    IEdge_t::clear( );
   }
 
 
@@ -92,7 +94,7 @@ public:
   //!
   const std::vector<ID_t> & getContigLinks ( ) const
   {
-    return links_m;
+    return IEdge_t::getLinks( );
   }
 
 
@@ -103,7 +105,7 @@ public:
   //!
   std::vector<ID_t> & getContigLinks ( )
   {
-    return links_m;
+    return IEdge_t::getLinks( );
   }
 
 
@@ -126,7 +128,7 @@ public:
   //!
   void setContigLinks (const std::vector<ID_t> & links)
   {
-    links_m = links;
+    IEdge_t::setLinks (links);
   }
 
 

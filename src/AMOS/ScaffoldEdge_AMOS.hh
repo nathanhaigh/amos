@@ -10,6 +10,7 @@
 #ifndef __ScaffoldEdge_AMOS_HH
 #define __ScaffoldEdge_AMOS_HH 1
 
+#include "Edge_AMOS.hh"
 #include "ScaffoldLink_AMOS.hh"
 #include <vector>
 
@@ -25,12 +26,12 @@ namespace AMOS {
 //! two scaffolds that is usually composed of multiple scaffold links.
 //!
 //==============================================================================
-class ScaffoldEdge_t : public ScaffoldLink_t
+  class ScaffoldEdge_t : public ScaffoldLink_t, public IEdge_t
 {
   
 private:
 
-  std::vector<ID_t> links_m;             //!< bundle of ScaffoldLinks
+  void setNodeType (NCode_t nodtype);
 
 
 protected:
@@ -54,7 +55,7 @@ public:
   //!
   ScaffoldEdge_t ( )
   {
-
+    // ScaffoldLink_t sets NodeType
   }
 
 
@@ -79,8 +80,9 @@ public:
   //--------------------------------------------------- clear ------------------
   virtual void clear ( )
   {
+    // ScaffoldLink_t preserves NodeType
     ScaffoldLink_t::clear( );
-    links_m . clear( );
+    IEdge_t::clear( );
   }
 
 
@@ -91,7 +93,7 @@ public:
   //!
   const std::vector<ID_t> & getScaffoldLinks ( ) const
   {
-    return links_m;
+    return IEdge_t::getLinks( );
   }
 
 
@@ -102,7 +104,7 @@ public:
   //!
   std::vector<ID_t> & getScaffoldLinks ( )
   {
-    return links_m;
+    return IEdge_t::getLinks( );
   }
 
 
@@ -125,7 +127,7 @@ public:
   //!
   void setScaffoldLinks (const std::vector<ID_t> & links)
   {
-    links_m = links;
+    IEdge_t::setLinks (links);
   }
 
 

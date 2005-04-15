@@ -31,11 +31,14 @@ UniversalSet_t::UniversalSet_t ( )
   objs_m . push_back (new Kmer_t( ));
   objs_m . push_back (new Layout_t( ));
   objs_m . push_back (new Contig_t( ));
-  objs_m . push_back (new ContigLink_t( ));
-  objs_m . push_back (new ContigEdge_t( ));
   objs_m . push_back (new Scaffold_t( ));
+  objs_m . push_back (new Link_t( ));
+  objs_m . push_back (new ContigLink_t( ));
   objs_m . push_back (new ScaffoldLink_t( ));
+  objs_m . push_back (new Edge_t( ));
+  objs_m . push_back (new ContigEdge_t( ));
   objs_m . push_back (new ScaffoldEdge_t( ));
+  objs_m . push_back (new Group_t( ));
 
   //-- Set up the hash
   for ( iterator i = begin( ); i != end( ); ++ i )

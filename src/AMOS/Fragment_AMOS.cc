@@ -37,7 +37,6 @@ void Fragment_t::clear ( )
 //----------------------------------------------------- readMessage-------------
 void Fragment_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {

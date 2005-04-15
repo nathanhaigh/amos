@@ -21,7 +21,7 @@ const NCode_t Universal_t::NCODE = M_UNIVERSAL;
 //----------------------------------------------------- readMessage ------------
 void Universal_t::readMessage (const Message_t & msg)
 {
-  clear( );
+  clear( ); // virtual func, will call child clear( )
 
   try {
     istringstream ss;

@@ -55,7 +55,6 @@ string Kmer_t::getSeqString ( ) const
 //----------------------------------------------------- readMessage-------------
 void Kmer_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {

@@ -40,7 +40,6 @@ void Read_t::clear ( )
 //----------------------------------------------------- readMessage-------------
 void Read_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Sequence_t::readMessage (msg);
 
   try {

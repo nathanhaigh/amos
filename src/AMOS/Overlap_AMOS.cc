@@ -60,7 +60,6 @@ OverlapAdjacency_t Overlap_t::getAdjacency ( ) const
 //----------------------------------------------------- readMessage ------------
 void Overlap_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {

@@ -50,7 +50,6 @@ Size_t Scaffold_t::getSpan ( ) const
 //----------------------------------------------------- readMessage ------------
 void Scaffold_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {

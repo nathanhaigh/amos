@@ -25,7 +25,6 @@ const MateType_t Matepair_t::TRANSPOSON = 'T';
 //----------------------------------------------------- readMessage ------------
 void Matepair_t::readMessage (const Message_t & msg)
 {
-  clear( );
   Universal_t::readMessage (msg);
 
   try {
