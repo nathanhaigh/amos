@@ -180,6 +180,10 @@ public:
   Size_t getSize ( ) const { return Bank_t::getSize( ); }
 
 
+  //--------------------------------------------------- getStatus --------------
+  signed char getStatus ( ) const { return Bank_t::getStatus( ); }
+
+
   //--------------------------------------------------- getType ----------------
   NCode_t getType ( ) const { return Bank_t::getType( ); }
 
@@ -263,6 +267,10 @@ public:
     eof_m = !inrange( );
     return *this;
   }
+
+
+  //--------------------------------------------------- setStatus --------------
+  void setStatus (signed char status) { Bank_t::setStatus(status); }
 
 
   //--------------------------------------------------- tellg ------------------

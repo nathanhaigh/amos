@@ -141,7 +141,7 @@ int main (int argc, char ** argv)
 
         bp = & (bnks [ncode]);
         op = & (objs [ncode]);
-        if ( op -> isFlagA( ) )
+        if ( bp -> getStatus( ) )
           continue; // skip objects missing a bank
 
         //-- Parse the message
@@ -172,7 +172,7 @@ int main (int argc, char ** argv)
           cerr << "ERROR: " << e . what( ) << endl
                << "  could not open '" << Decode (ncode)
                << "' bank, all messages ignored" << endl;
-          op -> setFlagA (true);
+          bp -> setStatus (1);
           exitcode = EXIT_FAILURE;
           continue;
         }

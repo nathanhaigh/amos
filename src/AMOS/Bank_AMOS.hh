@@ -47,11 +47,10 @@ const BankMode_t B_SPY    = 0x4;
 //! This will assure all data types being "banked" will have an iid, eid and
 //! flags field, and will be able to read and write themselves to a bank. To
 //! derive new types, the developer must implement the virtual functions to
-//! ensure the new class can be correctly stored and recovered from a bank. See
-//! Example_t for the minimal member set that should be defined for a derived
-//! class. Each IBankable class should return a unique (static) NCode when
-//! getNCode is called upon, so that the bank dynamically identify the types of
-//! virtual objects.
+//! ensure the new class can be correctly stored and recovered from a bank.
+//! Each IBankable class should return a unique (static) NCode when getNCode
+//! is called upon, so that the bank dynamically identify the types of virtual
+//! objects.
 //!
 //==============================================================================
 class IBankable_t
@@ -586,6 +585,7 @@ protected:
   Size_t max_partitions_m;   //!< maximum number of open partitions
 
   bool is_open_m;            //!< open status of the bank
+  signed char status_m;      //!< bank status
   BankMode_t mode_m;         //!< mode of the bank, B_READ|B_WRITE|B_SPY
 
   std::string store_dir_m;   //!< the disk store directory
@@ -643,6 +643,7 @@ public:
       max_partitions_m (MAX_OPEN_PARTITIONS)
   {
     init( );
+    status_m = 0;
   }
 
 
@@ -653,6 +654,7 @@ public:
       max_partitions_m (MAX_OPEN_PARTITIONS)
   {
     init( );
+    status_m = 0;
   }
 
 
@@ -952,6 +954,21 @@ public:
   }
 
 
+  //--------------------------------------------------- getStatus --------------
+  //! \brief Get the bank status
+  //!
+  //! Currently the status is set by the user and not written to the bank. So
+  //! don't expect any interesting return values from this method. Status is
+  //! set to zero on object initialization and then left untouched.
+  //!
+  //! \return Return the status of the bank
+  //!
+  signed char getStatus ( ) const
+  {
+    return status_m;
+  }
+
+
   //--------------------------------------------------- getType ----------------
   //! \brief Get the unique bank type identifier
   //!
@@ -1084,6 +1101,20 @@ public:
   //! \brief Replaces an object in the bank by its EID
   //!
   void replace (const char * eid, IBankable_t & obj);
+
+
+  //--------------------------------------------------- setStatus --------------
+  //! \brief Set the bank status
+  //!
+  //! Currently the status is set by the user and not written to the bank.
+  //! Status is set to zero on object initialization and then left untouched.
+  //!
+  //! \return void
+  //!
+  void setStatus (signed char status)
+  {
+    status_m = status;
+  }
 
 };
 
