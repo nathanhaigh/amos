@@ -23,7 +23,8 @@ using namespace HASHMAP;
 
 #define endl "\n"
 
-enum MateStatus {MP_GOOD, MP_SHORT, MP_LONG, MP_NORMAL, MP_OUTIE};
+enum MateStatus {MP_GOOD, MP_SHORT, MP_LONG, MP_NORMAL, MP_OUTIE, MP_SINGMATE, 
+		 MP_LINKING};
 
 class AnnotatedMatePair: public Matepair_t
 {
@@ -63,6 +64,8 @@ void printHelpText()
     "-samecvg <n>  report regions with coverage by mates with same orientation\n"
     "              greater than <n>\n"
     "-outiecvg <n> report regions with outie coverage greater than <n>\n"
+    "-linking <n>  report regions with linking read coverage greater than <n>\n"
+    "-singlemate <n> report regions with singleton mate coverage > than <n>\n"
     "-perinsert <file> output per-insert information in <file>\n"
     "-meachange <n> libraries whose mean changed by less than <n> will be considered unchanged\n"
     "-sdchange <n> libraries whose stdev. changed by less than <n> will be considered unchanged\n"
@@ -88,6 +91,8 @@ bool GetOptions(int argc, char ** argv)
     {"longcvg",   1, 0, 'l'},
     {"samecvg",   1, 0, 'n'},
     {"outiecvg",  1, 0, 'o'},
+    {"linking",   1, 0, 'L'},
+    {"singlemate", 1, 0, 'M'},
     {"recompute", 0, 0, 'r'},
     {"update",    0, 0, 'u'},
     {"feat",      0, 0, 'f'},
@@ -129,6 +134,12 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'o':
       globals["outiecvg"] = string(optarg);
+      break;
+    case 'L':
+      globals["linking"] = string(optarg);
+      break;
+    case 'M':
+      globals["singlemate"] = string(optarg);
       break;
     case 'r':
       globals["recompute"] = string("true");
@@ -262,6 +273,7 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
     if (abs(*li - origm) < 5 * origs)
       stdev += (*li - mean) * (*li - mean);
   }
+
   stdev = (SD_t) round(sqrt(stdev * 1.0 / (numObs - 1)));
 
   return pair<Pos_t, SD_t>(mean, stdev);
@@ -354,6 +366,8 @@ int main(int argc, char **argv)
   int MAX_LONG_CVG = 2; // long mate coverages over this will be reported
   int MAX_NORMAL_CVG = 3; // normal orientation read coverages > will be reptd.
   int MAX_OUTIE_CVG = 3; // outie orientation read coverages > will be reptd.
+  int MAX_LINKING_CVG = 3; // linking mate coverage > will be reported
+  int MAX_SINGLEMATE_CVG = 3; // single mate coverage > will be reported
   int MEA_CHANGE = 50;// libraries that change by less are considered unchanged
   int SD_CHANGE = 10;// libraries that change by less are considered unchanged
 
@@ -431,6 +445,21 @@ int main(int argc, char **argv)
     MAX_OUTIE_CVG = strtol(globals["outiecvg"].c_str(), NULL, 10);
   cout << "Reporting regions with more than " << MAX_OUTIE_CVG
        << " coverage by outie mates" << endl;
+
+  if (globals.find("outiecvg") != globals.end())
+    MAX_OUTIE_CVG = strtol(globals["outiecvg"].c_str(), NULL, 10);
+  cout << "Reporting regions with more than " << MAX_OUTIE_CVG
+       << " coverage by outie mates" << endl;
+
+  if (globals.find("linking") != globals.end())
+    MAX_LINKING_CVG = strtol(globals["linking"].c_str(), NULL, 10);
+  cout << "Reporting regions with more than " << MAX_LINKING_CVG
+       << " coverage by linking mates" << endl;
+
+  if (globals.find("singlemate") != globals.end())
+    MAX_SINGLEMATE_CVG = strtol(globals["singlemate"].c_str(), NULL, 10);
+  cout << "Reporting regions with more than " << MAX_SINGLEMATE_CVG
+       << " coverage by singleton mates" << endl;
 
   cout << endl;
   if (globals.find("perinsert") != globals.end()){
@@ -549,12 +578,14 @@ int main(int argc, char **argv)
       rd2ctg[ti->source] = ctg.getIID();
       ctgIDs.insert(ctg.getIID());
       Pos_t f, l; // coords of beginning/end of read
-      if (ti->range.end < ti->range.begin) { // reverse
-	f = ti->offset + ti->range.begin - ti->range.end;
+      if (ti->range.getEnd() < ti->range.getBegin()) { // reverse
+	f = ti->offset + ti->range.getBegin() - ti->range.getEnd() + 
+	  ti->gaps.size();
 	l = ti->offset;
       } else {
 	f = ti->offset;
-	l = ti->offset + ti->range.end - ti->range.begin;
+	l = ti->offset + ti->range.getEnd() - ti->range.getBegin() + 
+	  ti->gaps.size();
       }
       rd2posn[ti->source] = 
         Range_t(f, l);
@@ -577,10 +608,15 @@ int main(int argc, char **argv)
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > rd2name;
 
   while (mate_bank >> mtp){
+    mtp.status = MP_GOOD;
     read_bank.fetch(mtp.getReads().first, rd1); // get the read
     read_bank.fetch(mtp.getReads().second, rd2);
     rd2name[rd1.getIID()] = rd1.getEID();
     rd2name[rd2.getIID()] = rd2.getEID();
+    frag_bank.fetch(rd1.getFragment(), frg); // get the fragment
+    rd2frg[mtp.getReads().first] = rd1.getFragment();
+    libIDs.insert(frg.getLibrary());
+    rd2lib[mtp.getReads().first] = frg.getLibrary();
 
     if (mtp.getType() != Matepair_t::END) {// we only handle end reads
       //      cerr << "Type is " << mtp.getType() << endl;
@@ -594,30 +630,49 @@ int main(int argc, char **argv)
       continue;
     }
 
+    list<AnnotatedMatePair>::iterator ti; 
     if (rd2ctg[mtp.getReads().first] == rd2ctg[mtp.getReads().second]){
       // mate-pair between reads within the same contig
-      list<AnnotatedMatePair>::iterator ti; 
 
       //      ctgIDs.insert(rd2ctg[mtp.getReads().first]);
       ti = mtl.insert(mtl.end(), mtp);
 
-      frag_bank.fetch(rd1.getFragment(), frg); // get the fragment
-      rd2frg[mtp.getReads().first] = rd1.getFragment();
-      libIDs.insert(frg.getLibrary());
-      rd2lib[mtp.getReads().first] = frg.getLibrary();
       lib2mtp[frg.getLibrary()].push_back(ti);
       ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
     } else {
-      if (perinsert)
-	insertFile << "LINKING: " 
-		   << mtp.getReads().first 
-		   << "(" << rd2name[mtp.getReads().first] << ") " 
-		   << mtp.getReads().second 
-		   << "(" << rd2name[mtp.getReads().second] << ") "
-		   << " in separate contigs: "
-		   << rd2ctg[mtp.getReads().first] << ", "
-		   << rd2ctg[mtp.getReads().second] 
-		   << "\n";
+      if (rd2ctg[mtp.getReads().first] == 0 ||
+	  rd2ctg[mtp.getReads().second] == 0) { // mate should be in contig
+	mtp.status = MP_SINGMATE;
+	ti = mtl.insert(mtl.end(), mtp);
+	lib2mtp[frg.getLibrary()].push_back(ti);
+	ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
+	if (perinsert)
+	  insertFile << "SINGLETON_MATE: " 
+		     << mtp.getReads().first 
+		     << "(" << rd2name[mtp.getReads().first] << ") " 
+		     << mtp.getReads().second 
+		     << "(" << rd2name[mtp.getReads().second] << ") "
+		     << " in separate contigs: "
+		     << rd2ctg[mtp.getReads().first] << ", "
+		     << rd2ctg[mtp.getReads().second] 
+		     << "\n";
+      } else {
+	mtp.status = MP_LINKING;
+	ti = mtl.insert(mtl.end(), mtp);
+	lib2mtp[frg.getLibrary()].push_back(ti);
+	ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
+	
+	if (perinsert)
+	  insertFile << "LINKING: " 
+		     << mtp.getReads().first 
+		     << "(" << rd2name[mtp.getReads().first] << ") " 
+		     << mtp.getReads().second 
+		     << "(" << rd2name[mtp.getReads().second] << ") "
+		     << " in separate contigs: "
+		     << rd2ctg[mtp.getReads().first] << ", "
+		     << rd2ctg[mtp.getReads().second] 
+		     << "\n";
+      }
     }
   }
   
@@ -642,6 +697,8 @@ int main(int argc, char **argv)
     
     for (list<list<AnnotatedMatePair>::iterator>::iterator 
 	   mi = lib2mtp[*li].begin(); mi != lib2mtp[*li].end(); mi++){
+      if ((*mi)->status != MP_GOOD)
+	continue;
       // for each mate pair
       Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getReads().first], 
 			 rd2posn[(*mi)->getReads().second], 
@@ -659,8 +716,8 @@ int main(int argc, char **argv)
       newSize = libsize;
     } else {
       newSize = getSz(sizes);
-      if (abs (newSize.first - libsize.first) < MEA_CHANGE
-	  && abs ((int) newSize.second - (int) libsize.second) < SD_CHANGE ){ // if new size significantly different
+      if ((abs (((int) newSize.first) - ((int) libsize.first)) > MEA_CHANGE) ||
+	  (abs (((int) newSize.second) - ((int) libsize.second)) > SD_CHANGE) ){ // if new size significantly different
 	cout <<  "Library " << lib2name[*li] << " recomputed as mean = " 
 	     << newSize.first << " SD = " << newSize.second << endl;
 	if (update){
@@ -682,7 +739,12 @@ int main(int argc, char **argv)
 	      exit(1);
 	    }
 	} // if updating library in bank
-      } // if size actually changed
+      } else {
+	cout << "Size of library " << lib2name[*li] 
+	     << " has not changed enough: MEA= " << newSize.first 
+	     << " SD= " << newSize.second << " versus MEA= "
+	     << libsize.first << " SD= " << libsize.second << endl;
+      }// if size actually changed
     } 
     NewLib2size[*li] = newSize;
 
@@ -1025,6 +1087,112 @@ int main(int argc, char **argv)
       }
       cout << endl;
     }
+
+    ranges.clear();
+
+    // find coverage by linking reads
+    for (list<list<AnnotatedMatePair>::iterator>::iterator 
+	   mi = ctg2mtp[*ctg].begin(); mi != ctg2mtp[*ctg].end(); mi++){
+      if ((*mi)->status == MP_LINKING){
+	Pos_t left, right;
+
+	if (rd2ctg[((*mi)->getReads()).first] == *ctg) {
+	  left = rd2posn[((*mi)->getReads()).first].getBegin(); 
+	  right = rd2posn[((*mi)->getReads()).first].getEnd(); 
+	} else {
+	  left = rd2posn[((*mi)->getReads()).second].getBegin(); 
+	  right = rd2posn[((*mi)->getReads()).second].getEnd(); 
+	}
+	if (left < right)
+	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
+	else
+	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
+
+	if (debug)
+	  cerr << "Linking mates " 
+	       << ((*mi)->getReads()).first 
+	       << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+	       << ((*mi)->getReads()).second 
+	       << "(" << rd2name[((*mi)->getReads()).second] << ") "
+	       << endl;
+      }
+    } // for each mate in the contig
+
+    getCvg(ranges, interest, ctglen[*ctg], MAX_LINKING_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_LINKING_CVG << "X or more linking coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.group = "HIGH_LINKING_CVG";
+	  f.range = Range_t(ii->first, ii->second);
+	  f.type = Feature_t::COVERAGE;
+	  features.push_back(f);
+	}
+      }
+      cout << endl;
+    }
+
+    ranges.clear();
+
+    // find coverage by single mate reads
+    for (list<list<AnnotatedMatePair>::iterator>::iterator 
+	   mi = ctg2mtp[*ctg].begin(); mi != ctg2mtp[*ctg].end(); mi++){
+      if ((*mi)->status == MP_SINGMATE){
+	Pos_t left, right;
+
+	if (rd2ctg[((*mi)->getReads()).first] == *ctg) {
+	  left = rd2posn[((*mi)->getReads()).first].getBegin(); 
+	  right = rd2posn[((*mi)->getReads()).first].getEnd(); 
+	} else {
+	  left = rd2posn[((*mi)->getReads()).second].getBegin(); 
+	  right = rd2posn[((*mi)->getReads()).second].getEnd(); 
+	}
+	if (left < right)
+	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
+	else
+	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
+
+	if (debug)
+	  cerr << "Singleton mates " 
+	       << ((*mi)->getReads()).first 
+	       << "(" << rd2name[((*mi)->getReads()).first] << ") " 
+	       << ((*mi)->getReads()).second 
+	       << "(" << rd2name[((*mi)->getReads()).second] << ") "
+	       << endl;
+      }
+    } // for each mate in the contig
+
+    getCvg(ranges, interest, ctglen[*ctg], MAX_SINGLEMATE_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_SINGLEMATE_CVG << "X or more singleton mate coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.group = "HIGH_SINGLEMATE_CVG";
+	  f.range = Range_t(ii->first, ii->second);
+	  f.type = Feature_t::COVERAGE;
+	  features.push_back(f);
+	}
+      }
+      cout << endl;
+    }
+
+    ranges.clear();
 
     if (feats){
       newcontig.setFeatures(features);
