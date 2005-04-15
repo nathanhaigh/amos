@@ -66,7 +66,8 @@ protected:
   static inline uint8_t compress (char seqchar, char qualchar)
   {
     //-- Force quality score into its bits
-    qualchar -= MIN_QUALITY;
+    qualchar = Char2Qual (qualchar);
+
     if ( qualchar & SEQ_BITS )
       {
 	std::cerr << "WARNING: qualscore '" << qualchar << "' cast to 0\n";
@@ -111,7 +112,8 @@ protected:
     if ( byte == 0 )
       retval . first = 'N';
 
-    retval . second = byte + MIN_QUALITY;
+    retval . second = Qual2Char (byte);
+
     return retval;
   }
 

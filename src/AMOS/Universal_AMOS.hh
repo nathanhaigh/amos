@@ -36,6 +36,7 @@ class Universal_t : public IBankable_t, public IMessagable_t
 
 private:
 
+  Status_t status_m;          //!< status char
   std::string comment_m;      //!< comment string
 
 
@@ -44,6 +45,7 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix, std::istream & var)
   {
+    fix . get (status_m);
     std::getline (var, comment_m, '\0');
   }
 
@@ -51,6 +53,7 @@ protected:
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix, std::ostream & var) const
   {
+    fix . put (status_m);
     var . write (comment_m . c_str( ), comment_m . size( ) + 1);
   }
 
@@ -68,7 +71,7 @@ public:
   //!
   Universal_t ( )
   {
-
+    status_m = NULL_STATUS;
   }
 
 
@@ -94,6 +97,7 @@ public:
   virtual void clear ( )
   {
     IBankable_t::clear( );
+    status_m = NULL_STATUS;
     comment_m . erase( );
   }
 
@@ -106,6 +110,17 @@ public:
   const std::string & getComment ( ) const
   {
     return comment_m;
+  }
+
+
+  //--------------------------------------------------- getStatus --------------
+  //! \brief Get the status value
+  //!
+  //! \return The status value
+  //!
+  const Status_t getStatus ( ) const
+  {
+    return status_m;
   }
 
 
@@ -129,6 +144,18 @@ public:
   void setComment (const std::string & comment)
   {
     comment_m = comment;
+  }
+
+
+  //--------------------------------------------------- setStatus --------------
+  //! \brief Set the status value
+  //!
+  //! \param status The new status value
+  //! \return void
+  //!
+  void setStatus (Status_t status)
+  {
+    status_m = status;
   }
 
 

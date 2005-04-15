@@ -21,25 +21,50 @@
 
 namespace AMOS {
 
-typedef uint32_t  ID_t;     //!< ID type for iid's
-typedef uint32_t  NCode_t;  //!< unique integer code for dynamic typing
-typedef uint32_t  SD_t;     //!< standard deviation type
-typedef int32_t   Size_t;   //!< size type (for links,etc)
-typedef Size_t    Pos_t;    //!< position type (in a sequence,etc)
+typedef uint32_t  ID_t;      //!< ID type for iid's
+typedef uint32_t  NCode_t;   //!< unique integer code for dynamic typing
+typedef uint32_t  SD_t;      //!< standard deviation type
+typedef int32_t   Size_t;    //!< size type (for links,etc)
+typedef Size_t    Pos_t;     //!< position type (in a sequence,etc)
+typedef char      Status_t;  //!< status type
 
-
-const uint8_t NCODE_SIZE  =  3;         //!< length of the NCode strings
-const NCode_t NULL_NCODE  =  0;         //!< NULL NCode definition
-const ID_t    NULL_ID     =  0;         //!< NULL ID definition
-const char    MIN_QUALITY = '0';        //!< min quality score definition
-const char    MAX_QUALITY = '0' + 63;   //!< max quality score definition
-const char    NULL_CHAR   = '\0';       //!< null char
-const char    NL_CHAR     = '\n';       //!< newline char
+const uint8_t  NCODE_SIZE  =  3;         //!< length of the NCode strings
+const NCode_t  NULL_NCODE  =  0;         //!< NULL NCode definition
+const ID_t     NULL_ID     =  0;         //!< NULL ID definition
+const Status_t NULL_STATUS =  0;         //!< NULL status definition
+const char     MIN_QUALITY = '0';        //!< min quality score definition
+const char     MAX_QUALITY = '0' + 63;   //!< max quality score definition
+const char     NULL_CHAR   = '\0';       //!< null char
+const char     NL_CHAR     = '\n';       //!< newline char
 const std::string  NULL_STRING = &NULL_CHAR; //!< null string
 
-const ID_t    MAX_ID      = ~((uint32_t)0);        //!< (unsigned 32bit int)
-const Size_t  MAX_SIZE    = ~((uint32_t)0) >> 1;   //!< (  signed 32bit int)
-const Pos_t   MAX_POS     = ~((uint32_t)0) >> 1;   //!< (  signed 32bit int)
+const ID_t     MAX_ID      = ~((uint32_t)0);        //!< (unsigned 32bit int)
+const Size_t   MAX_SIZE    = ~((uint32_t)0) >> 1;   //!< (  signed 32bit int)
+const Pos_t    MAX_POS     = ~((uint32_t)0) >> 1;   //!< (  signed 32bit int)
+
+
+//----------------------------------------------------- Qual2Char --------------
+//! \brief Converts a quality int into a printable character
+//!
+//! \param qual Integer quality representation
+//! \return Printable quality character
+//!
+inline char Qual2Char (uint8_t qual)
+{
+  return qual + MIN_QUALITY;
+}
+
+
+//----------------------------------------------------- Char2Qual --------------
+//! \brief Converts a printable quality character to an int
+//!
+//! \param qual Character quality representation
+//! \return Integer quality representation
+//!
+inline uint8_t Char2Qual (char qual)
+{
+  return qual - MIN_QUALITY;
+}
 
 
 //----------------------------------------------------- Decode -----------------

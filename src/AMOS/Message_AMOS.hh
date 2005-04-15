@@ -64,6 +64,7 @@ const NCode_t   F_SEQUENCE     = Encode ("seq");
 const NCode_t   F_SD           = Encode ("std");
 const NCode_t   F_SIZE         = Encode ("sze");
 const NCode_t   F_SOURCE       = Encode ("src");
+const NCode_t   F_STATUS       = Encode ("sts");
 const NCode_t   F_TYPE         = Encode ("typ");
 const NCode_t   F_VECTORCLEAR  = Encode ("vcr");
 const NCode_t   M_NULL         = Encode ("NUL");

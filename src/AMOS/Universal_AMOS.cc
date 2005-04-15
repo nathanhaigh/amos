@@ -38,6 +38,13 @@ void Universal_t::readMessage (const Message_t & msg)
     if ( msg . exists (F_EID) )
       eid_m = msg . getField (F_EID);
 
+    if ( msg . exists (F_STATUS) )
+      {
+        ss . str (msg . getField (F_STATUS));
+        setStatus (ss . get( ));
+        ss . clear( );
+      }
+
     if ( msg . exists (F_COMMENT) )
       comment_m = msg . getField (F_COMMENT);
 
@@ -80,6 +87,13 @@ void Universal_t::writeMessage (Message_t & msg) const
 
     if ( !eid_m . empty( ) )
       msg . setField (F_EID, eid_m);
+
+    if ( status_m != NULL_STATUS )
+      {
+        ss << status_m;
+        msg . setField (F_STATUS, ss . str( ));
+        ss . str (NULL_STRING);
+      }
 
     if ( !comment_m . empty( ) )
       msg . setField (F_COMMENT, comment_m);
