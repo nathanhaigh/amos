@@ -41,4 +41,4 @@ INPUTS = $(PREFIX).asm $(PREFIX).frg
 1010: egrep "HIGH_SNP|HIGH_SHORT" $(PREFIX).all.feat | sort -k1 -nk4 > $(PREFIX).suspicious.feat
 
 ## Create Suspicious Regions
-1020: /home/mschatz/bin/amosfeat2region.pl $(PREFIX).suspicious.feat > $(PREFIX).suspicious.regions
+1020: /local/asmg/Linux/bin/suspiciousfeat2region.pl $(PREFIX).suspicious.feat > $(PREFIX).suspicious.regions
