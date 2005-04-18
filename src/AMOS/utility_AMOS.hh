@@ -132,6 +132,68 @@ inline char * SafeStrdup (const char * str)
 }
 
 
+//--------------------------------------------------- Complement ---------------
+//! \brief Returns the DNA complement of an IUPAC character
+//!
+//! Complement-able IUPAC characters are ACGTUMRWSYKVHDB, while NX*- are also
+//! acceptable but are self-complementary. Characters other than these will
+//! throw an exception.
+//!
+//! \param ch The character to take the complement of
+//! \throws ArgumentException_t if ch is an invalid character
+//! \return void
+//!
+char Complement (char ch);
+
+
+//--------------------------------------------------- ReverseComplement --------
+//! \brief Takes the DNA reverse complement of an IUPAC string
+//!
+//! Complement-able IUPAC characters are ACGTUMRWSYKVHDB, while NX*- are also
+//! acceptable but are self-complementary. Characters other than these will
+//! throw an exception.
+//!
+//! \param str The string to reverse complement
+//! \throws ArgumentException_t if invalid characters are found
+//! \return void
+//!
+void ReverseComplement (std::string & str);
+
+
+//--------------------------------------------------- ReverseComplement --------
+//! \brief Takes the DNA reverse complement of an IUPAC string
+//!
+//! Complement-able IUPAC characters are ACGTUMRWSYKVHDB, while NX*- are also
+//! acceptable but are self-complementary. Characters other than these will
+//! throw an exception.
+//!
+//! \param str The string to reverse complement
+//! \throws ArgumentException_t if invalid characters are found
+//! \return void
+//!
+void ReverseComplement (char * str);
+
+
+//--------------------------------------------------- Reverse ------------------
+//! \brief Reverses the contents of a string
+//!
+//! Simply calls the STL reverse "algorithm" but in an AMOS way
+//!
+//! \param str The string to reverse
+//! \return void
+//!
+void Reverse (std::string & str);
+
+
+//--------------------------------------------------- Reverse ------------------
+//! \brief Reverses the contents of a string
+//!
+//! \param str The string to reverse
+//! \return void
+//!
+void Reverse (char * str);
+
+
 //------------------------------------------------- writeLE ------------------
 //! \brief Writes an 8-bit int in little-endian byte order
 //!

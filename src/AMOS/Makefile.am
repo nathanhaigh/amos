@@ -114,7 +114,8 @@ libAMOS_a_SOURCES = \
 	Sequence_AMOS.cc \
 	Universal_AMOS.cc \
 	datatypes_AMOS.cc \
-	universals_AMOS.cc
+	universals_AMOS.cc \
+	utility_AMOS.cc
 
 
 ##-- END OF MAKEFILE --##
