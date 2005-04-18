@@ -382,8 +382,8 @@ void IDMap_t::resize (Size_t min)
   if ( (min = minbuckets (min)) == getBuckets( ) )
     return;
 
-  vector<HashTriple_t *> triples;
-  triples . reserve (size_m);
+  vector<HashTriple_t *> triples (size_m);
+  long int pos = 0;
 
   if ( size_m > 0 )
     {
@@ -391,7 +391,7 @@ void IDMap_t::resize (Size_t min)
       for ( iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
 	{
 	  itr -> c ++;
-	  triples . push_back (itr);
+          triples [pos ++] = itr;
 	}
 
       Size_t  size = size_m;
@@ -402,7 +402,7 @@ void IDMap_t::resize (Size_t min)
     }
 
   //-- Resize the bucket vectors
-  if ( size_m != (Size_t)triples . size( ) )
+  if ( size_m != pos )
     AMOS_THROW ("Unknown fatal error during hash resize");
   iid_bucs_m . resize (min);
   eid_bucs_m . resize (min);

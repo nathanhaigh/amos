@@ -33,8 +33,7 @@ void Kmer_t::clear ( )
 //----------------------------------------------------- getSeqString -----------
 string Kmer_t::getSeqString ( ) const
 {
-  string retval;
-  retval . reserve (length_m);
+  string retval (length_m, NULL_CHAR);
 
   //-- See developer comments for getBase
   Pos_t ci = -1;
@@ -44,7 +43,7 @@ string Kmer_t::getSeqString ( ) const
       if ( ui % 4 == 0 )
 	byte = seq_m [++ ci];
 
-      retval += uncompress (byte);
+      retval [ui] = uncompress (byte);
       byte <<= 2;
     }
 
