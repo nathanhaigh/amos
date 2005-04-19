@@ -18,6 +18,82 @@ using namespace AMOS;
 using namespace std;
 typedef std::map<ID_t, Tile_t *> SeqTileMap_t;
 
+class CoverageLevel
+{
+public:
+  CoverageLevel(QPointArray & coverage):
+     m_coverage(coverage),
+     m_maxdepth(0),
+     m_curpos(0)
+  {
+    cerr << "Constructed" << endl;
+
+  }
+
+  void addEndpoints(int curloffset, int curroffset)
+  {
+    multiset<int>::iterator vi, vi2;
+
+    // find end points that have already passed
+    vi = m_endpoints.begin();
+    while (vi != m_endpoints.end())
+    {
+      if (*vi <= curloffset) 
+      { 
+        m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size());
+        m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size()-1);
+        vi2 = vi; vi2++; m_endpoints.erase(vi); vi = vi2;
+      }
+      else
+      { 
+        break; 
+      }
+    }
+
+    // Add this insert's beginning and end
+    m_coverage[m_curpos++]=QPoint(curloffset, m_endpoints.size());
+    m_coverage[m_curpos++]=QPoint(curloffset, m_endpoints.size()+1);
+    m_endpoints.insert(curroffset);
+
+    if (m_endpoints.size() > m_maxdepth) 
+    { 
+      m_maxdepth = m_endpoints.size(); 
+    }
+  }
+
+  void finalize()
+  {
+    multiset<int>::iterator vi, vi2;
+
+    // Handle remaining end points
+    vi = m_endpoints.begin();
+    while (vi != m_endpoints.end())
+    {
+      m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size());
+      m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size()-1);
+      vi2 = vi; vi2++; m_endpoints.erase(vi); vi = vi2;
+    }
+  }
+
+  void normalize(float hscale, int hoffset, int voffset)
+  {
+    int size = m_coverage.size();
+
+    // Adjust coordinates for painting
+    for (int i = 0; i < size; i++)
+    {
+      m_coverage[i].setX((int)((m_coverage[i].x()+hoffset) * hscale));
+      m_coverage[i].setY(voffset-m_coverage[i].y());
+    }
+  }
+
+  QPointArray & m_coverage;
+  int m_maxdepth;
+  int m_curpos;
+
+  multiset<int> m_endpoints;
+};
+
 struct FeatOrderCmp
 {
   bool operator() (const AMOS::Feature_t & a, const AMOS::Feature_t & b)
@@ -530,169 +606,65 @@ void InsertWidget::paintCanvas()
     }
   }
 
-
   if (m_coveragePlot)
   {
-    cerr << " icoverage";
-    int maxdepth = 0;
-    int maxroffset = 0;
-
-    multiset<int> endpoints;
-    multiset<int>::iterator vi, vi2;
+    cerr << " coverage";
 
     // coverage will change at each endpoint of each insert
-    QPointArray coveragelevel(m_inserts.size()*4); 
-    int curcpos = 0;
+    QPointArray insertCoverage(m_inserts.size()*4); 
+    CoverageLevel insertCL(insertCoverage);
+
+    int curloffset = 0, curroffset = 0;
 
     for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
     {
-      int curloffset = (*ii)->m_loffset;
-      int curroffset = (*ii)->m_roffset;
+      curloffset = (*ii)->m_loffset;
+      curroffset = (*ii)->m_roffset;
 
-      // find end points that have already passed
-      vi = endpoints.begin();
-      while (vi != endpoints.end())
-      {
-        if (*vi <= curloffset) 
-        { 
-          coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
-          coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
-          vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
-        }
-        else
-        { 
-          break; 
-        }
-      }
-
-      // Add this insert's beginning and end
-      coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size());
-      coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size()+1);
-      endpoints.insert(curroffset);
-
-      if (endpoints.size() > maxdepth) 
-      { 
-        maxdepth = endpoints.size(); 
-      }
-
-      if (curroffset > maxroffset)
-      {
-        maxroffset = curroffset;
-      }
+      insertCL.addEndpoints(curloffset, curroffset);
     }
 
-    // Handle remaining end points
-    vi = endpoints.begin();
-    while (vi != endpoints.end())
+    insertCL.finalize();
+
+    QPointArray readCoverage(m_tiling.size()*4); 
+    CoverageLevel readCL(readCoverage);
+
+    vector<Tile_t>::iterator ti;
+    for (ti = m_tiling.begin(); ti != m_tiling.end(); ti++)
     {
-      coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
-      coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
-      vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
+      curloffset = ti->offset;
+      curroffset = ti->offset + ti->range.getLength() + ti->gaps.size() - 1;
+
+      readCL.addEndpoints(curloffset, curroffset);
     }
 
-    // Adjust coordinates for painting
-    for (int i = 0; i < curcpos; i++)
-    {
-      coveragelevel[i].setX((int)((coveragelevel[i].x()+m_hoffset) * m_hscale));
-      coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + voffset);
-    }
+    readCL.finalize();
 
-    int covwidth = (int)((maxroffset + m_hoffset) * m_hscale);
+    insertCL.normalize(m_hscale, m_hoffset, voffset + insertCL.m_maxdepth);
+    readCL.normalize(m_hscale, m_hoffset, voffset + insertCL.m_maxdepth);
 
-    QCanvasRectangle * covbg = new QCanvasRectangle(0, voffset, covwidth + 1, maxdepth, m_icanvas);
+    int covwidth = (int)((curroffset + m_hoffset) * m_hscale);
+
+    CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
+                                                        covwidth + 1, insertCL.m_maxdepth, true,
+                                                        insertCoverage, m_icanvas);
+
+
+    citem = new CoverageCanvasItem(0, voffset,
+                                   covwidth + 1, insertCL.m_maxdepth, 
+                                   false, readCoverage, m_icanvas);
+
+    QCanvasRectangle * covbg = new QCanvasRectangle(0, voffset, covwidth + 1, insertCL.m_maxdepth, m_icanvas);
     covbg->setBrush(QColor(60,60,60));
     covbg->setZ(-2);
     covbg->show();
 
     QCanvasLine * base = new QCanvasLine(m_icanvas);
-    base->setPoints(0, voffset+maxdepth, covwidth+1, voffset+maxdepth);
+    base->setPoints(0, voffset+insertCL.m_maxdepth, covwidth+1, voffset+insertCL.m_maxdepth);
     base->setPen(Qt::white);
     base->show();
 
-    CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
-                                                        covwidth + 1, maxdepth, true,
-                                                        coveragelevel, m_icanvas);
-    citem->setPen(QPen(Qt::magenta, 1));
-    citem->show();
-
-    int readCoverage = 1;
-    if (readCoverage)
-    {
-      cerr << " rcoverage";
-      int maxrdepth = 0;
-      int maxroffset = 0;
-
-      multiset<int> endpoints;
-      multiset<int>::iterator vi, vi2;
-
-      // coverage will change at each endpoint of each insert
-      QPointArray coveragelevel(m_tiling.size()*4); 
-      int curcpos = 0;
-
-      vector<Tile_t>::iterator ti;
-
-      for (ti = m_tiling.begin(); ti != m_tiling.end(); ti++)
-      {
-        int curloffset = ti->offset;
-        int curroffset = ti->offset + ti->range.getLength() + ti->gaps.size() - 1;
-
-        // find end points that have already passed
-        vi = endpoints.begin();
-        while (vi != endpoints.end())
-        {
-          if (*vi <= curloffset) 
-          { 
-            coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
-            coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
-            vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
-          }
-          else
-          { 
-            break; 
-          }
-        }
-
-        // Add this insert's beginning and end
-        coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size());
-        coveragelevel[curcpos++]=QPoint(curloffset, endpoints.size()+1);
-        endpoints.insert(curroffset);
-
-        if (endpoints.size() > maxrdepth) 
-        { 
-          maxrdepth = endpoints.size(); 
-        }
-
-        if (curroffset > maxroffset)
-        {
-          maxroffset = curroffset;
-        }
-      }
-
-      // Handle remaining end points
-      vi = endpoints.begin();
-      while (vi != endpoints.end())
-      {
-        coveragelevel[curcpos++]=QPoint(*vi, endpoints.size());
-        coveragelevel[curcpos++]=QPoint(*vi, endpoints.size()-1);
-        vi2 = vi; vi2++; endpoints.erase(vi); vi = vi2;
-      }
-
-      // Adjust coordinates for painting
-      for (int i = 0; i < curcpos; i++)
-      {
-        coveragelevel[i].setX((int)((coveragelevel[i].x()+m_hoffset)*m_hscale));
-        coveragelevel[i].setY((maxdepth-coveragelevel[i].y()) + voffset);
-      }
-
-      CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
-                                                          covwidth + 1, maxdepth,
-                                                          false,
-                                                          coveragelevel, m_icanvas);
-      citem->setPen(QPen(Qt::green, 1));
-      citem->show();
-    }
-
-    voffset += maxdepth + 2*gutter;
+    voffset += insertCL.m_maxdepth + 2*gutter;
   }
 
   if (1)
@@ -977,19 +949,20 @@ void InsertWidget::start()
 
   int basey = min(rect.y()+rect.height(), m_icanvas->height());
 
-  m_ball = new QCanvasEllipse(100, 5, m_icanvas);
-  m_ball->setX(rect.x() + rect.width()/2+500);
+  m_ball = new QCanvasEllipse(7, 5, m_icanvas);
+  m_ball->setX(rect.x() + rect.width()/2);
   m_ball->setY(basey - 15);
   m_ball->setPen(Qt::white);
   m_ball->setBrush(Qt::white);
   m_ball->show();
 
-  m_paddle = new Paddle(rect.x() + rect.width()/2, basey-10, 1000, 5, m_icanvas);
+  m_paddle = new Paddle((int)(m_ball->x()-16), (int)(m_ball->y()+5), 
+                        50, 5, m_icanvas);
   m_paddle->setPen(Qt::white);
   m_paddle->setBrush(Qt::white);
   m_paddle->show();
 
-  m_xvel = rand() % 250 - 125;
+  m_xvel = rand() % 25 - 12;
   m_yvel = -1;
 
   m_icanvas->update();
@@ -1001,7 +974,7 @@ void InsertWidget::left()
 {
   if (m_paddle)
   {
-    m_paddle->moveBy(-250, 0);
+    m_paddle->moveBy(-10, 0);
     m_icanvas->update();
   }
 }
@@ -1010,7 +983,7 @@ void InsertWidget::right()
 {
   if (m_paddle)
   {
-    m_paddle->moveBy(250, 0);
+    m_paddle->moveBy(10, 0);
     m_icanvas->update();
   }
 }
@@ -1034,7 +1007,6 @@ void InsertWidget::stopbreak()
 void InsertWidget::autoplay()
 {
   m_autoplay = !m_autoplay;
-
 }
 
 
@@ -1069,6 +1041,7 @@ void InsertWidget::timeout()
       else
       {
         QCanvasItemList l = m_ball->collisions(true);
+        bool hit = false;
 
         for (QCanvasItemList::Iterator li=l.begin(); li != l.end(); li++)
         {
@@ -1076,22 +1049,29 @@ void InsertWidget::timeout()
           {
             (*li)->hide();
             m_yvel = -m_yvel;
+            hit = true;
           }
           else if ((*li)->rtti() == Paddle::RTTI)
           {
             m_yvel = -m_yvel;
-            m_xvel += rand()%100-50;
+            m_xvel += rand()%10-5;
+            hit = true;
           }
+        }
+
+        if (hit)
+        {
+          m_ball->moveBy(0, 3*m_yvel);
         }
       }
 
-      if (abs(m_xvel) > 250) { m_xvel = m_xvel/2; }
+      if (abs(m_xvel) > 25) { m_xvel = m_xvel/2; }
 
       m_ball->moveBy(m_xvel, m_yvel);
 
       if (m_autoplay)
       {
-        m_paddle->move(m_ball->x()-500, m_paddle->y());
+        m_paddle->move(m_ball->x()-m_paddle->width()/2, m_paddle->y());
       }
 
       m_icanvas->update();
