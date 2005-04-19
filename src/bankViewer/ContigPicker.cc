@@ -156,7 +156,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
     m_datastore->contig_bank.seekg(1);
     while (m_datastore->contig_bank >> contig)
     {
-      int contiglen = contig.getSeqString().length();
+      int contiglen = contig.getLength();
       int numreads = contig.getReadTiling().size();
 
       ContigListItem * contigitem;

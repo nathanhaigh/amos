@@ -386,7 +386,7 @@ void MainWindow::setContigId(int contigId)
     s += " Contig Id:";
     s += QString::number(contigId);
     s += " Size: ";
-    s += QString::number(m_datastore.m_contig.getSeqString().length());
+    s += QString::number(m_datastore.m_contig.getLength());
     s += " Reads: ";
     s += QString::number(m_datastore.m_contig.getReadTiling().size());
 

@@ -218,7 +218,7 @@ int main (int argc, char ** argv)
         ctg_bank.seekg(ctg_bank.getIDMap().lookupBID(ci->source));
         ctg_bank >> contig;
 
-        int clen = contig.getSeqString().size();
+        int clen = contig.getLength();
 
         // map original range to scaffold coordinates
         if (ci->source == contigiid)

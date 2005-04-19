@@ -473,8 +473,7 @@ void InsertWidget::initializeTiling()
       Contig_t contig;
       m_datastore->fetchContig(ci->source, contig);
 
-
-      int clen = contig.getSeqString().size();
+      int clen = contig.getLength();
 
       vector<Tile_t> & rtiling = contig.getReadTiling();
       vector<Tile_t>::const_iterator ri;
@@ -526,11 +525,11 @@ void InsertWidget::initializeTiling()
     Tile_t currentContig;
     currentContig.source = m_datastore->m_contig.getIID();
     currentContig.offset = 0;
-    currentContig.range = Range_t(0, m_datastore->m_contig.getSeqString().length());
+    currentContig.range = Range_t(0, m_datastore->m_contig.getLength());
 
     m_ctiling.push_back(currentContig);
 
-    m_tilingwidth = m_datastore->m_contig.getSeqString().size();
+    m_tilingwidth = m_datastore->m_contig.getLength();
     m_tiling      = m_datastore->m_contig.getReadTiling();
 
     m_features = m_datastore->m_contig.getFeatures();
