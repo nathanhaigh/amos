@@ -58,7 +58,7 @@ int main (int argc, char ** argv)
       }
       else { cout << contig.getIID(); }
 
-      const string & cons = contig.getSeqString();
+      const string cons = contig.getSeqString();
 
       cout << " "  << tiling.size()
            << " "  << cons.length()
