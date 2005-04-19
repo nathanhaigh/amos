@@ -64,8 +64,12 @@ signals:
   void setStatus(const QString & message);
   void setGindex(int gindex);
   void setContigId(int contigid);
+
   void highlightIID(const QString & qiid);
   void highlightEID(const QString & qeid);
+
+  void readIIDHighlighted(const QString & qiid);
+  void readEIDHighlighted(const QString & qeid);
 
 private:
   void flushInserts();

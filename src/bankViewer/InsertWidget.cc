@@ -168,6 +168,12 @@ InsertWidget::InsertWidget(DataStore * datastore,
   connect(this, SIGNAL(highlightEID(const QString &)),
           m_ifield, SLOT(highlightEID(const QString &)));
 
+  connect(m_ifield, SIGNAL(readEIDHighlighted(const QString &)),
+          this,     SIGNAL(readEIDHighlighted(const QString &)));
+
+  connect(m_ifield, SIGNAL(readIIDHighlighted(const QString &)),
+          this,     SIGNAL(readIIDHighlighted(const QString &)));
+
   vbox->addWidget(m_iposition);
   vbox->addWidget(m_ifield, 10);
   vbox->activate();

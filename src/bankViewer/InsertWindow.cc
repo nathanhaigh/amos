@@ -146,8 +146,16 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(newContig()),
           iw,   SLOT(contigChanged()));
 
+  connect(iw, SIGNAL(readIIDHighlighted(const QString &)),
+          iidpick, SLOT(setText(const QString &)));
+
+  connect(iw, SIGNAL(readEIDHighlighted(const QString &)),
+          eidpick, SLOT(setText(const QString &)));
+
+
   zoom->setValue(14);
 }
+
 
 void InsertWindow::loadHappyDistance()
 {

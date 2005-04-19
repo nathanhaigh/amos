@@ -23,6 +23,10 @@ signals:
   void setStatus(const QString & message);
   void setGindex(int gindex);
 
+  void readIIDHighlighted(const QString &);
+  void readEIDHighlighted(const QString &);
+
+
 public slots:
   void highlightIID(const QString & qeid);
   void highlightEID(const QString & qeid);

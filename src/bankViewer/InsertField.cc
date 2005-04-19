@@ -35,6 +35,10 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
 
   QString s = "Insert";
 
+  AMOS::ID_t iid = ins->m_aid;
+  emit readIIDHighlighted(QString::number(iid));
+  emit readEIDHighlighted(QString(m_datastore->read_bank.lookupEID(iid)));
+
   getInsertString(s, ins->m_active, ins, 0);
   getInsertString(s, !ins->m_active, ins, 1);
 
