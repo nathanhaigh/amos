@@ -188,6 +188,24 @@ struct Range_t
   }
 
 
+  //--------------------------------------------------- getLo ------------------
+  //! \brief Get the lo range position, (begin < end ? begin : end)
+  //!
+  Pos_t getLo ( ) const
+  {
+    return (begin < end ? begin : end);
+  }
+
+
+  //--------------------------------------------------- getHi ------------------
+  //! \brief Get the hi range position, (begin > end ? begin : end)
+  //!
+  Pos_t getHi ( ) const
+  {
+    return (begin > end ? begin : end);
+  }
+
+
   //--------------------------------------------------- getEnd -----------------
   //! \brief Get the end of the range
   //!
