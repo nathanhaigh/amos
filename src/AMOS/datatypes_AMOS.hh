@@ -397,7 +397,7 @@ struct Feature_t : public IMessagable_t
 struct Tile_t : public IMessagable_t
 {
   ID_t source;                //!< the source of the tile, e.g. read IID
-  std::vector<Pos_t> gaps;    //!< the delta encoded gap positions
+  std::vector<Pos_t> gaps;    //!< the absolute gap positions
   Pos_t offset;               //!< the offset of the tile
   Range_t range;              //!< the usable range of the tile
 
@@ -431,6 +431,19 @@ struct Tile_t : public IMessagable_t
   //! \brief Clears all object data, reinitializes the object
   //!
   void clear ( );
+
+
+  //--------------------------------------------------- getGappedLength --------
+  //! \brief Gets the gapped length of the tile
+  //!
+  //! (range . getLength( ) + gaps . size( ))
+  //!
+  //! \return The gapped length of the tile
+  //!
+  Size_t getGappedLength ( )
+  {
+    return (range . getLength( ) + gaps . size( ));
+  }
 
 
   //--------------------------------------------------- getNCode ---------------
