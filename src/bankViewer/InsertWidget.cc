@@ -25,10 +25,7 @@ public:
      m_coverage(coverage),
      m_maxdepth(0),
      m_curpos(0)
-  {
-    cerr << "Constructed" << endl;
-
-  }
+  { }
 
   void addEndpoints(int curloffset, int curroffset)
   {
@@ -285,6 +282,11 @@ void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
 void InsertWidget::setZoom(int zoom)
 {
   double xfactor = 16.00/(zoom);
+
+  if (zoom > 16)
+  {
+    xfactor = pow(xfactor, zoom/16);
+  }
 
   QWMatrix matrix = m_ifield->worldMatrix();
   QWMatrix imatrix = m_ifield->inverseWorldMatrix();

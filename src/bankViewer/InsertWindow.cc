@@ -33,7 +33,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   options->setLabel("Options");
 
   new QLabel("Zoom", options, "zoomlbl");
-  QSlider * zoom = new QSlider(1, 1024, 8, 16, Qt::Horizontal, options, "zoom");
+  QSlider * zoom = new QSlider(1, 80, 4, 16, Qt::Horizontal, options, "zoom");
 
   new QLabel("IID:", options, "iidlbl");
   QLineEdit * iidpick = new QLineEdit(options, "iidpick");
