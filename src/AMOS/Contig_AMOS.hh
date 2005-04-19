@@ -17,7 +17,6 @@
 
 
 
-
 namespace AMOS {
 
 //================================================ Contig_t ====================
@@ -184,13 +183,13 @@ public:
   //--------------------------------------------------- getUngappedQualString --
   //! \brief Get an ungapped quality score substring
   //!
-  //! Returns a subrange of quality scores [left, right) with all the gap
-  //! scores removed. The range bounds are relative to the gapped consensus
-  //! sequence.
+  //! Returns a subrange of quality scores [begin, end) or (end, begin] with
+  //! all the gap scores removed. The range bounds are relative to the gapped
+  //! consensus sequence, and a reversed range will pull the reverse string of
+  //! quality scores.
   //!
   //! \param range The range of quality scores to get
-  //! \pre range begin <= end
-  //! \pre range begin >= 0 && end <= length
+  //! \pre range lo >= 0 && hi <= length
   //! \throws ArgumentException
   //! \return A subrange of ungapped quality scores
   //!
@@ -199,8 +198,6 @@ public:
 
   //--------------------------------------------------- getUngappedSeqString ---
   //! \brief Get the ungapped sequence base string
-  //!
-  //! Returns the sequence string with all the gaps (non-alphas) removed.
   //!
   //! \return The full string of ungapped sequence bases
   //!
@@ -213,13 +210,13 @@ public:
   //--------------------------------------------------- getUngappedSeqString ---
   //! \brief Get an ungapped sequence base substring
   //!
-  //! Returns a subrange of ungapped sequence bases [left, right) with all the
-  //! gaps (non-alphas) removed. The range bounds are relative to the gapped
-  //! consensus sequence.
+  //! Returns a subrange of ungapped sequence bases [begin, end) or (end, begin]
+  //! with all the gaps (non-alphas) removed. The range bounds are relative to
+  //! the gapped consensus sequence, and reversed range will pull the reverse
+  //! complement string of sequence bases.
   //!
   //! \param range The range of sequence bases to get
-  //! \pre range begin <= end
-  //! \pre range begin >= 0 && end <= length
+  //! \pre range lo >= 0 && hi <= length
   //! \throws ArgumentException
   //! \return A subrange of ungapped sequence bases
   //!

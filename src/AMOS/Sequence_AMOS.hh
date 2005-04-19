@@ -69,10 +69,7 @@ protected:
     qualchar = Char2Qual (qualchar);
 
     if ( qualchar & SEQ_BITS )
-      {
-	std::cerr << "WARNING: qualscore '" << qualchar << "' cast to 0\n";
-	return 0;
-      }
+      return 0;
 
     switch ( toupper (seqchar) )
       {
@@ -82,7 +79,6 @@ protected:
       case 'T': return (uint8_t)qualchar | THYMINE_BITS;
       case 'N': return 0;
       default:
-	std::cerr << "WARNING: seqchar '" << seqchar << "' cast to 'N'\n";
 	return 0;
       }
   }
@@ -250,11 +246,11 @@ public:
   //--------------------------------------------------- getQualString ----------
   //! \brief Get a quality score substring
   //!
-  //! Returns a subrange of quality scores [begin, end)
+  //! Returns a subrange of quality scores [begin, end) or (end, begin]. The
+  //! reversed range will pull the reverse string of quality scores.
   //!
   //! \param range The range of quality scores to get
-  //! \pre range begin <= end
-  //! \pre range begin >= 0 && end <= length
+  //! \pre range lo >= 0 && hi <= length
   //! \throws ArgumentException_t
   //! \return A subrange quality scores
   //!
@@ -275,11 +271,11 @@ public:
   //--------------------------------------------------- getSeqString -----------
   //! \brief Get a sequence base substring
   //!
-  //! Returns a subrange of sequence bases [begin, end)
+  //! Returns a subrange of sequence bases [begin, end) or (end, being]. The
+  //! reversed range will pull the reverse complement string of sequences bases.
   //!
   //! \param range The range of sequence bases to get
-  //! \pre range begin <= end
-  //! \pre range begin >= 0 && end <= length
+  //! \pre range lo >= 0 && hi <= length
   //! \throws ArgumentException_t
   //! \return A subrange of sequence bases
   //!
@@ -296,7 +292,6 @@ public:
   //!
   bool isCompressed ( ) const
   {
-    //-- compression flag is in bit COMPRESS_BIT
     return flags_m . nibble & COMPRESS_BIT;
   }
 

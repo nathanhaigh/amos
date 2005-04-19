@@ -55,19 +55,22 @@ void Sequence_t::compress ( )
 //----------------------------------------------------- getQualString ----------
 string Sequence_t::getQualString (Range_t range) const
 {
+  Pos_t lo = range . getLo( );
+  Pos_t hi = range . getHi( );
+
   //-- Check preconditions
-  if ( range . begin > range . end ||
-       range . begin < 0 ||
-       range . end > length_m )
+  if ( lo < 0  ||  hi > length_m )
     AMOS_THROW_ARGUMENT ("Invalid quality subrange");
 
   //-- Allocate space for retval
-  string retval;
-  retval . reserve (range . end - range . begin);
+  string retval (hi - lo, NULL_CHAR);
 
   //-- Fill retval
-  for ( Pos_t i = range . begin; i < range . end; i ++ )
-    retval += getBase (i) . second;
+  for ( Pos_t i = 0; lo < hi; i ++, lo ++ )
+    retval [i] = getBase (lo) . second;
+
+  if ( range . isReverse( ) )
+    AMOS::Reverse (retval);
 
   return retval;
 }
@@ -76,19 +79,22 @@ string Sequence_t::getQualString (Range_t range) const
 //----------------------------------------------------- getSeqString -----------
 string Sequence_t::getSeqString (Range_t range) const
 {
+  Pos_t lo = range . getLo( );
+  Pos_t hi = range . getHi( );
+
   //-- Check preconditions
-  if ( range . begin > range . end ||
-       range . begin < 0 ||
-       range . end > length_m )
-    AMOS_THROW_ARGUMENT ("range does not represent a valid substring");
+  if ( lo < 0  ||  hi > length_m )
+    AMOS_THROW_ARGUMENT ("Invalid sequence subrange");
 
   //-- Allocate space for retval
-  string retval;
-  retval . reserve (range . end - range . begin);
+  string retval (hi - lo, NULL_CHAR);
 
   //-- Fill retval
-  for ( Pos_t i = range . begin; i < range . end; i ++ )
-    retval . push_back (getBase (i) . first);
+  for ( Pos_t i = 0; lo < hi; i ++, lo ++ )
+    retval [i] = getBase (lo) . first;
+
+  if ( range . isReverse( ) )
+    AMOS::ReverseComplement (retval);
 
   return retval;
 }

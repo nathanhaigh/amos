@@ -24,24 +24,25 @@ Size_t Contig_t::getSpan ( ) const
 {
   Pos_t hi,lo;
 
+
   if ( reads_m . empty( ) )
     {
-      hi = 0;
-      lo = 0;
+      lo = hi = 0;
     }
   else
     {
-      hi = -(MAX_POS);
-      lo = MAX_POS;
-    }
+      vector<Tile_t>::const_iterator ti = reads_m . begin( );
 
-  vector<Tile_t>::const_iterator ti;
-  for ( ti = reads_m . begin( ); ti != reads_m . end( ); ++ ti )
-    {
-      if ( ti -> offset < lo )
-        lo = ti -> offset;
-      if ( ti -> offset + ti -> range . getLength( ) > hi )
-        hi = ti -> offset + ti -> range . getLength( );
+      lo = ti -> offset;
+      hi = ti -> offset + ti -> range . getLength( );
+
+      for ( ++ ti; ti != reads_m . end( ); ++ ti )
+        {
+          if ( ti -> offset < lo )
+            lo = ti -> offset;
+          if ( ti -> offset + ti -> range . getLength( ) > hi )
+            hi = ti -> offset + ti -> range . getLength( );
+        }
     }
 
   return hi - lo;
@@ -51,23 +52,27 @@ Size_t Contig_t::getSpan ( ) const
 //----------------------------------------------------- getUngappedQualString --
 string Contig_t::getUngappedQualString (Range_t range) const
 {
+  Pos_t lo = range . getLo( );
+  Pos_t hi = range . getHi( );
+
   //-- Check preconditions
-  if ( range . begin > range . end ||
-       range . begin < 0 ||
-       range . end > getLength( ) )
+  if ( lo < 0  ||  hi > getLength( ) )
     AMOS_THROW_ARGUMENT ("Invalid quality subrange");
 
-  pair<char, char> seqqualc;
   string retval;
-  retval . reserve (range . end - range . begin);
+  retval . reserve (hi - lo);
+  pair<char, char> seqqualc;
 
   //-- Skip the gaps in the sequence and populate the retval
-  for ( Pos_t i = range . begin; i < range . end; i ++ )
+  for ( ; lo < hi; lo ++ )
     {
-      seqqualc = getBase (i);
+      seqqualc = getBase (lo);
       if ( isalpha (seqqualc . first) )
-	retval += seqqualc . second;
+        retval . push_back (seqqualc . second);
     }
+
+  if ( range . isReverse( ) )
+    AMOS::Reverse (retval);
 
   return retval;
 }
@@ -76,23 +81,27 @@ string Contig_t::getUngappedQualString (Range_t range) const
 //----------------------------------------------------- getUngappedSeqString ---
 string Contig_t::getUngappedSeqString (Range_t range) const
 {
+  Pos_t lo = range . getLo( );
+  Pos_t hi = range . getHi( );
+
   //-- Check preconditions
-  if ( range . begin > range . end ||
-       range . begin < 0 ||
-       range . end > getLength( ) )
+  if ( lo < 0  ||  hi > getLength( ) )
     AMOS_THROW_ARGUMENT ("Invalid sequence subrange");
 
-  char seqc;
   string retval;
-  retval . reserve (range . end - range . begin);
+  retval . reserve (hi - lo);
+  char seqc;
 
   //-- Skip the gaps in the sequence and populate the retval
-  for ( Pos_t i = range . begin; i < range . end; i ++ )
+  for ( ; lo < hi; lo ++ )
     {
-      seqc = getBase (i) . first;
+      seqc = getBase (lo) . first;
       if ( isalpha (seqc) )
-	retval += seqc;
+        retval . push_back (seqc);
     }
+  
+  if ( range . isReverse( ) )
+    AMOS::ReverseComplement (retval);
 
   return retval;
 }
