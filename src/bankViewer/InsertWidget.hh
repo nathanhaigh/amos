@@ -50,6 +50,7 @@ public slots:
   void setColorByLibrary(bool);
   void contigChanged();
   void computePos(int);
+  void setHappyDistance(float);
 
   void start();
   void stopbreak();

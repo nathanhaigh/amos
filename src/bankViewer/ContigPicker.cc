@@ -59,6 +59,8 @@ public:
   }
 };
 
+#include "BufferedLineEdit.hh"
+
 
 ContigPicker::ContigPicker(DataStore * datastore,
                            QWidget * parent, 
@@ -80,10 +82,10 @@ ContigPicker::ContigPicker(DataStore * datastore,
 
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");
-  QLineEdit * iidpick = new QLineEdit(tool, "iidpick");
+  BufferedLineEdit * iidpick = new BufferedLineEdit(tool, "iidpick");
 
   new QLabel("EID:", tool, "eidlbl");
-  QLineEdit * eidpick = new QLineEdit(tool, "eidpick");
+  BufferedLineEdit * eidpick = new BufferedLineEdit(tool, "eidpick");
 
   connect(m_table, SIGNAL(doubleClicked(QListViewItem *)),
           this,  SLOT(itemSelected(QListViewItem *)));

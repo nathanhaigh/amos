@@ -5,6 +5,7 @@
 #include <string>
 #include "DataStore.hh"
 #include <qpopupmenu.h>
+#include <qlineedit.h>
 
 #include <map>
 
@@ -26,6 +27,7 @@ public slots:
   void toggleFeatures();
   void toggleColorByLibrary();
   void togglePaintScaffold();
+  void loadHappyDistance();
 
 signals:
   void setGindex(int gindex);
@@ -35,6 +37,7 @@ signals:
   void paintCanvas();
   void newContig();
   void refreshInserts();
+  void setHappyDistance(float);
 
   void setConnectMates(bool);
   void setPartitionTypes(bool);
@@ -51,6 +54,7 @@ private:
 
   QPopupMenu * m_typesmenu;
   QPopupMenu * m_optionsmenu;
+  QLineEdit * m_happypick;
 
   int m_connectmatesid;
   int m_partitiontypesid;

@@ -13,6 +13,7 @@
 #include <qlineedit.h>
 
 #include "UIElements.hh"
+#include "BufferedLineEdit.hh"
 
 
 using namespace std;
@@ -35,11 +36,15 @@ InsertWindow::InsertWindow(DataStore * datastore,
   new QLabel("Zoom", options, "zoomlbl");
   QSlider * zoom = new QSlider(1, 80, 4, 16, Qt::Horizontal, options, "zoom");
 
-  new QLabel("IID:", options, "iidlbl");
-  QLineEdit * iidpick = new QLineEdit(options, "iidpick");
+  new QLabel(" Happy Distance:", options, "happylbl");
+  m_happypick = new QLineEdit(options, "happypick");
+  m_happypick->setText(QString::number(Insert::MAXSTDEV));
 
-  new QLabel("EID:", options, "eidlbl");
-  QLineEdit * eidpick = new QLineEdit(options, "eidpick");
+  new QLabel(" IID:", options, "iidlbl");
+  BufferedLineEdit * iidpick = new BufferedLineEdit(options, "iidpick");
+
+  new QLabel(" EID:", options, "eidlbl");
+  BufferedLineEdit * eidpick = new BufferedLineEdit(options, "eidpick");
 
 
   // MenuBar
@@ -108,11 +113,17 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(paintCanvas()),
           iw,   SLOT(paintCanvas()));
 
-  connect(iidpick, SIGNAL(textChanged(const QString &)),
+  connect(iidpick, SIGNAL(newValue(const QString &)),
           iw,      SIGNAL(highlightIID(const QString &)));
 
-  connect(eidpick, SIGNAL(textChanged(const QString &)),
+  connect(eidpick, SIGNAL(newValue(const QString &)),
           iw,      SIGNAL(highlightEID(const QString &)));
+
+  connect(m_happypick, SIGNAL(returnPressed()),
+          this,        SLOT(loadHappyDistance()));
+
+  connect(this,        SIGNAL(setHappyDistance(float)),
+          iw,          SLOT(setHappyDistance(float)));
 
   connect(this, SIGNAL(setConnectMates(bool)),
           iw,   SLOT(setConnectMates(bool)));
@@ -135,14 +146,12 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(newContig()),
           iw,   SLOT(contigChanged()));
 
-  QAccel *a = new QAccel( this );
-  a->connectItem(a->insertItem(CTRL+SHIFT+Key_S), iw, SLOT(start()) );
-  a->connectItem(a->insertItem(Key_Left), iw, SLOT(left()) );
-  a->connectItem(a->insertItem(Key_Right), iw, SLOT(right()) );
-  a->connectItem(a->insertItem(Key_Escape), iw, SLOT(stopbreak()));
-  a->connectItem(a->insertItem(CTRL+SHIFT+Key_A), iw, SLOT(autoplay()) );
-
   zoom->setValue(14);
+}
+
+void InsertWindow::loadHappyDistance()
+{
+  emit setHappyDistance(atof(m_happypick->text().ascii()));
 }
 
 void InsertWindow::contigChanged()

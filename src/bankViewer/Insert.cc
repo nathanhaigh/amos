@@ -5,8 +5,11 @@ using namespace std;
 
 const int MAXTRANSPOSONDIST = 100;
 const int MIN3PRIMETRIM = 250;
-int Insert::MAXSTDEV = 2;
+const int REASONABLY_CONNECTED_SD = 10;
+const int READLEN = 500;
 
+float Insert::MAXSTDEV = 2;
+const char * Insert::allstates = "HSCOMLNU";
 
 static int min (int a, int b)
 {
@@ -98,7 +101,7 @@ Insert::Insert(ID_t     aid,
     }
     else
     {
-      if ((unsigned int)m_length > dist.mean + MAXSTDEV*dist.sd)
+      if ((unsigned int)m_length > (unsigned int)(dist.mean + MAXSTDEV*dist.sd))
       {
         m_state = StretchedMate;
       }
@@ -178,17 +181,16 @@ void Insert::printInsert() const
 
 int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
 {
-  const int READLEN = 500;
-
   if (tile->range.isReverse())
   {
-    return tile->offset + tile->range.getLength() + tile->gaps.size() - 1 - dist.mean - MAXSTDEV*dist.sd - READLEN;
+    return (int)(tile->offset + tile->range.getLength() + tile->gaps.size() - 1 - dist.mean - MAXSTDEV*dist.sd - READLEN);
   }
   else
   {
-    return tile->offset + dist.mean + MAXSTDEV*dist.sd + READLEN;
+    return (int)(tile->offset + dist.mean + MAXSTDEV*dist.sd + READLEN);
   }
 }
+
 
 bool Insert::reasonablyConnected() const
 {
@@ -201,7 +203,7 @@ bool Insert::reasonablyConnected() const
 
   return (m_state == Happy) ||
          (m_state == CompressedMate) ||
-         (m_state == StretchedMate && (m_actual <= m_dist.mean + 10 * m_dist.sd));
+         (m_state == StretchedMate && (m_actual <= m_dist.mean + REASONABLY_CONNECTED_SD * m_dist.sd));
 
 
   /*  //This would force reads that overlap to be disconnected 
@@ -284,4 +286,3 @@ const char * Insert::getInsertTypeStr(MateState state)
   }
 }
 
-const char * Insert::allstates = "HSCOMLNU";

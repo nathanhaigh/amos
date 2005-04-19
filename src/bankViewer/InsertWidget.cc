@@ -5,6 +5,8 @@
 #include <qlabel.h>
 #include <qwmatrix.h>
 #include <qmessagebox.h>
+#include <qcursor.h>
+#include <qaccel.h>
 #include "RenderSeq.hh"
 #include <qapplication.h>
 #include "InsertCanvasItem.hh"
@@ -52,7 +54,7 @@ public:
     m_coverage[m_curpos++]=QPoint(curloffset, m_endpoints.size()+1);
     m_endpoints.insert(curroffset);
 
-    if (m_endpoints.size() > m_maxdepth) 
+    if (m_endpoints.size() > (unsigned int) m_maxdepth) 
     { 
       m_maxdepth = m_endpoints.size(); 
     }
@@ -179,6 +181,13 @@ InsertWidget::InsertWidget(DataStore * datastore,
   connect(m_ifield, SIGNAL(setGindex(int)),
           this,     SLOT(computePos(int)));
 
+  QAccel *a = new QAccel( this );
+  a->connectItem(a->insertItem(CTRL+SHIFT+Key_S), this, SLOT(start()) );
+  a->connectItem(a->insertItem(Key_Left),         this, SLOT(left()) );
+  a->connectItem(a->insertItem(Key_Right),        this, SLOT(right()) );
+  a->connectItem(a->insertItem(Key_Escape),       this, SLOT(stopbreak()));
+  a->connectItem(a->insertItem(CTRL+SHIFT+Key_A), this, SLOT(autoplay()) );
+
   initializeTiling();
   m_ifield->show();
 }
@@ -240,7 +249,7 @@ void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
     {
       AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(ci->source);
 
-      if (bid == contigid)
+      if (bid == (ID_t) contigid)
       {
         if (ci->range.isReverse())
         {
@@ -316,6 +325,7 @@ void InsertWidget::flushInserts()
 
 void InsertWidget::computeInsertHappiness()
 {
+  flushInserts();
   SeqTileMap_t seqtileLookup;
 
   int mated = 0;
@@ -448,8 +458,6 @@ void InsertWidget::clearCanvas()
 
 void InsertWidget::initializeTiling()
 {
-  flushInserts();
-
   m_features.clear();
   m_ctiling.clear();
   m_currentScaffold = m_datastore->m_scaffoldId;
@@ -544,6 +552,8 @@ void InsertWidget::initializeTiling()
 
 void InsertWidget::paintCanvas()
 {
+  QApplication::setOverrideCursor( QCursor(Qt::WaitCursor) );
+
   clearCanvas();
   if (!m_datastore->m_loaded) { return; }
 
@@ -765,7 +775,7 @@ void InsertWidget::paintCanvas()
 
   if (m_colorByLibrary)
   {
-    int type = 0;
+    unsigned int type = 0;
 
     map<ID_t, Distribution_t>::const_iterator li;
     for (li =  m_datastore->m_libdistributionlookup.begin();
@@ -886,10 +896,19 @@ void InsertWidget::paintCanvas()
        << " swidth: " << (int)((rightmost-leftmost) * m_hscale)
        << " voffset: " << voffset;
 
-  m_icanvas->resize((int)(m_hscale*(rightmost - leftmost)) + 100, voffset);
+  m_icanvas->resize((int)(m_hscale*(rightmost - leftmost)) + 500, voffset);
   cerr << ".";
   m_icanvas->update();
   cerr << "." << endl;
+
+  QApplication::restoreOverrideCursor();
+}
+
+void InsertWidget::setHappyDistance(float distance)
+{
+  Insert::MAXSTDEV=distance;
+  computeInsertHappiness();
+  paintCanvas();
 }
 
 void InsertWidget::setConnectMates(bool b)
