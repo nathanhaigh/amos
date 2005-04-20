@@ -151,7 +151,7 @@ void parseInFile(ifstream & in)
 
   size = 0;
   for (int i = 0; i < fastasizes.size(); i++){
-    int tmp = fastasizes[i];
+    long tmp = fastasizes[i];
     fastasizes[i] = size;
     size += tmp;
   }
@@ -368,8 +368,12 @@ int main(int argc, char ** argv)
       int idx = mol - fastasizes.begin() - 1; // where to insert fragment
 
       Fragment_t frg;
-      frg.left = start;
-      frg.right = start + len;
+
+      assert (mol != fastasizes.begin());
+
+      vector<long>::iterator prev = mol - 1;
+      frg.left = start - *prev;
+      frg.right = frg.left + len;
       frg.libid = i;
 
       // now the reads
