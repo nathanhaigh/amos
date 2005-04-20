@@ -3,15 +3,15 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	asmQC \
-	shotgunSim
+	shotgunSim \
+#	asmQC
 
 dist_bin_SCRIPTS = \
-#	asmQC.pl \
 	coords2cam.pl \
 	fixlib.pl \
 	postCAqc.pl \
-	tiling2cam.pl
+	tiling2cam.pl \
+#	asmQC.pl
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \

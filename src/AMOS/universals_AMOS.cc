@@ -38,6 +38,7 @@ UniversalSet_t::UniversalSet_t ( )
   objs_m . push_back (new Edge_t( ));
   objs_m . push_back (new ContigEdge_t( ));
   objs_m . push_back (new ScaffoldEdge_t( ));
+  objs_m . push_back (new Feature_t( ));
   objs_m . push_back (new Group_t( ));
 
   //-- Set up the hash

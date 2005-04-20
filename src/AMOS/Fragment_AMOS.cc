@@ -29,7 +29,8 @@ void Fragment_t::clear ( )
 {
   Universal_t::clear( );
   size_m = 0;
-  library_m = source_m = NULL_ID;
+  library_m = source_m . first = NULL_ID;
+  source_m . second = NULL_NCODE;
   type_m = NULL_FRAGMENT;
 }
 
@@ -62,11 +63,16 @@ void Fragment_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_SOURCE) )
       {
+        string str;
+
 	ss . str (msg . getField (F_SOURCE));
-	ss >> source_m;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid source link format");
-	ss . clear( );
+        ss >> source_m . first;
+        ss . ignore( );
+        ss >> str;
+        if ( !ss  ||  str . length( ) != NCODE_SIZE )
+          AMOS_THROW_ARGUMENT ("Invalid source format");
+        ss . clear( );
+        source_m . second = Encode (str);
       }
 
     if ( msg . exists (F_TYPE) )
@@ -91,7 +97,8 @@ void Fragment_t::readRecord (istream & fix, istream & var)
 
   readLE (fix, &library_m);
   readLE (fix, &size_m);
-  readLE (fix, &source_m);
+  readLE (fix, &(source_m . first));
+  readLE (fix, &(source_m . second));
   type_m = fix . get( );
 }
 
@@ -139,11 +146,11 @@ void Fragment_t::writeMessage (Message_t & msg) const
 	ss .str (NULL_STRING);
       }
 
-    if ( source_m != NULL_ID )
+    if ( source_m . first != NULL_ID  ||  source_m . second != NULL_NCODE )
       {
-	ss << source_m;
-	msg . setField (F_SOURCE, ss . str( ));
-	ss . str (NULL_STRING);
+        ss << source_m . first << ',' << Decode (source_m . second);
+        msg . setField (F_SOURCE, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     if ( type_m != NULL_FRAGMENT )
@@ -168,6 +175,7 @@ void Fragment_t::writeRecord (ostream & fix, ostream & var) const
 
   writeLE (fix, &library_m);
   writeLE (fix, &size_m);
-  writeLE (fix, &source_m);
+  writeLE (fix, &(source_m . first));
+  writeLE (fix, &(source_m . second));
   fix . put (type_m);
 }

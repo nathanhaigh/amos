@@ -14,6 +14,7 @@
 #include "ContigLink_AMOS.hh"
 #include "Contig_AMOS.hh"
 #include "Edge_AMOS.hh"
+#include "Feature_AMOS.hh"
 #include "Fragment_AMOS.hh"
 #include "Group_AMOS.hh"
 #include "Kmer_AMOS.hh"

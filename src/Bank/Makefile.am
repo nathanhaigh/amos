@@ -18,9 +18,9 @@ bin_PROGRAMS = \
 	updateBankPositions \
 	extractContig \
 	bank2fasta \
-	loadFeatures \
-        dumpFeatures \
         findMissingMates
+#       dumpFeatures
+#	loadFeatures 
 
 dist_bin_SCRIPTS = \
 	bank-unlock.pl
@@ -92,18 +92,18 @@ extractContig_SOURCES = \
 	extractContig.cc
 
 ##-- loadFeatures
-loadFeatures_LDADD = \
-	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
-loadFeatures_SOURCES = \
-	loadFeatures.cc
+#loadFeatures_LDADD = \
+#	$(top_builddir)/src/Common/libCommon.a \
+#	$(top_builddir)/src/AMOS/libAMOS.a
+#loadFeatures_SOURCES = \
+#	loadFeatures.cc
 
 ##-- dumpFeatures
-dumpFeatures_LDADD = \
-	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
-dumpFeatures_SOURCES = \
-	dumpFeatures.cc
+#dumpFeatures_LDADD = \
+#	$(top_builddir)/src/Common/libCommon.a \
+#	$(top_builddir)/src/AMOS/libAMOS.a
+#dumpFeatures_SOURCES = \
+#	dumpFeatures.cc
 
 ##-- findMissingMates
 findMissingMates_LDADD = \

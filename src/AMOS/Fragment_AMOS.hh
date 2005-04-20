@@ -32,10 +32,10 @@ class Fragment_t : public Universal_t
 
 private:
 
-  ID_t library_m;                  //!< IID of the parent library
-  Size_t size_m;                   //!< size of the fragment, 0 if not known
-  ID_t source_m;                   //!< IID of the source fragment
-  FragmentType_t type_m;           //!< type of fragment
+  ID_t library_m;                     //!< IID of the parent library
+  Size_t size_m;                      //!< size of the fragment, 0 if not known
+  std::pair<ID_t, NCode_t> source_m;  //!< source of the fragment
+  FragmentType_t type_m;              //!< type of fragment
 
 
 protected:
@@ -69,7 +69,8 @@ public:
   Fragment_t ( )
   {
     size_m = 0;
-    library_m = source_m = NULL_ID;
+    library_m = source_m . first = NULL_ID;
+    source_m . second = NULL_NCODE;
     type_m = NULL_FRAGMENT;
   }
 
@@ -128,13 +129,14 @@ public:
 
 
   //--------------------------------------------------- getSource --------------
-  //! \brief Get the source fragment of this fragment
+  //! \brief Get the fragment source IID and type
   //!
-  //! e.g. The insert fragment used for a PCR walk fragment
+  //! Returns the source this fragment was generated from, e.g. the insert
+  //! fragment used for a PCR walk.
   //!
-  //! \return The IID of the source fragment
+  //! \return The IID of the fragment source and the NCode type identifier
   //!
-  ID_t getSource ( ) const
+  std::pair<ID_t, NCode_t> getSource ( ) const
   {
     return source_m;
   }
@@ -179,15 +181,16 @@ public:
   }
 
 
-  //--------------------------------------------------- getSource --------------
-  //! \brief Set the source fragment of this fragment
+  //--------------------------------------------------- setSource --------------
+  //! \brief Set the link source IID and type
   //!
-  //! e.g. The insert fragment used for a PCR walk fragment
+  //! Sets the source this fragment was generated from, e.g. the insert
+  //! fragment used for a PCR walk.
   //!
-  //! \param source The IID of the source fragment
+  //! \param source The IID and NCode type of the fragment source
   //! \return void
   //!
-  void setSource (ID_t source)
+  void setSource (std::pair<ID_t, NCode_t> source)
   {
     source_m = source;
   }

@@ -152,7 +152,7 @@ void Link_t::readMessage (const Message_t & msg)
 	ss . ignore( );
 	ss >> str;
 	if ( !ss  ||  str . length( ) != NCODE_SIZE )
-	  AMOS_THROW_ARGUMENT ("Invalid source link format");
+	  AMOS_THROW_ARGUMENT ("Invalid source format");
 	ss . clear( );
 	source_m . second = Encode (str);
       }
