@@ -2,13 +2,13 @@
 #define INode_HH 1
 
 #include <string>
-#include <map>
+#include "utility_AMOS.hh"
 #include "IEdge.hh"
 
 
 class IEdge;
 
-typedef std::map< int, IEdge* >::iterator IEdgeIterator;
+typedef HASHMAP::hash_map< int, IEdge* >::iterator IEdgeIterator;
 
 /**
  * The <b>INode</b> class is a interface

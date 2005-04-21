@@ -1,7 +1,6 @@
 #ifndef Node_HH
 #define Node_HH 1
 
-#include <map>
 #include <string>
 #include "INode.hh"
 #include "IEdge.hh"
@@ -31,8 +30,8 @@ public:
   void* element;
 
   // 
-  std::map< int, IEdge* > oedges;
-  std::map< int, IEdge* > iedges;
+  HASHMAP::hash_map< int, IEdge* > oedges;
+  HASHMAP::hash_map< int, IEdge* > iedges;
 
   // identitfier or position
   int key;

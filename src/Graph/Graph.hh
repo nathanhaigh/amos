@@ -42,10 +42,10 @@ public:
   bool directed;
 
   /** map of edges */
-  std::map< int, IEdge* > edges;
+  HASHMAP::hash_map< int, IEdge* > edges;
 
   /** map of nodes */
-  std::map< int, INode* > nodes;
+  HASHMAP::hash_map< int, INode* > nodes;
   
   /** <code> name </code> of graph */
   std::string name;

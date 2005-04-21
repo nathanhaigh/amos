@@ -2,6 +2,7 @@
 #include <iostream>
 #include "SubGraph.hh"
 
+using namespace HASHMAP;
 using namespace std;
 
 SubGraph::SubGraph(IGraph& p_parent, string p_name) : Graph(p_name), parent(p_parent) {
@@ -9,7 +10,7 @@ SubGraph::SubGraph(IGraph& p_parent, string p_name) : Graph(p_name), parent(p_pa
 }
 
 bool SubGraph::contains(INode* p_node) {
-  map< int, INode* >::iterator n = nodes.find(p_node->getKey());
+  hash_map< int, INode* >::iterator n = nodes.find(p_node->getKey());
   if(n != nodes.end()) {
     return ! (p_node->getHidden());
   } else {
@@ -18,7 +19,7 @@ bool SubGraph::contains(INode* p_node) {
 }
 
 bool SubGraph::contains(IEdge* p_edge) {
-  map< int, IEdge* >::iterator e = edges.find(p_edge->getKey());
+  hash_map< int, IEdge* >::iterator e = edges.find(p_edge->getKey());
   if(e != edges.end()) {
     return ! (p_edge->getHidden());
   } else {

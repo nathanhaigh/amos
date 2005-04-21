@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <map>
 #include <list>
 #include "IGraph.hh"
 #include "Graph.hh"

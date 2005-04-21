@@ -2,15 +2,15 @@
 #define IGraph_HH 1
 
 #include <list>
-#include <map>
+#include "utility_AMOS.hh"
 #include "IEdge.hh"
 #include "INode.hh"
 
 class IEdge;
 class INode;
 
-typedef std::map< int, IEdge* >::iterator IEdgeIterator;
-typedef std::map< int, INode* >::iterator INodeIterator;
+typedef HASHMAP::hash_map< int, IEdge* >::iterator IEdgeIterator;
+typedef HASHMAP::hash_map< int, INode* >::iterator INodeIterator;
 
 
 /**

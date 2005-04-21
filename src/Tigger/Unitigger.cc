@@ -245,41 +245,73 @@ void Unitigger::add_containment() {
   Overlap* ovl;
   int count = 0;
 
+
   while(!containment.empty()) {
-    edge = containment.front();
-    containment.pop();
-    ovl = (Overlap*) edge->getElement();
-    con_node = edge->getTarget();
+    int size = containment.size();
+    int pass_count = 0;
+    
+    cout << "this pass containment size is " << size << endl;
+    
+    for(int i = size; i > 0; i--) {
+      edge = containment.front();
+      containment.pop();
+      ovl = (Overlap*) edge->getElement();
+      con_node = edge->getTarget();
+      
+      if(con_node->getKey() == ovl->ridA) {
+	node = con_node;
+	con_node = edge->getSource();
+      } else {
+	node = edge->getSource();
+      }
+      
+      vector< Contig* >::iterator contig_iter = contigs.begin();
+      bool added = false;
 
-    if(con_node->getKey() == ovl->ridA) {
-      node = con_node;
-      con_node = edge->getSource();
-    } else {
-      node = edge->getSource();
-    }
+      cout << " start looking for contig that contains read " << node->getKey() << endl;
+      //
+      // TODO : for a large number of contigs, 
+      // finding the right contig can be very, very slow
+      for( ; contig_iter != contigs.end(); ++contig_iter) {
+	Contig* c = (*contig_iter);
+	if(c->sg->contains(node)) {
+	  pass_count++;
+	  c->sg->add_edge(edge);
+	  con_node->setNodeHidden(false);
+	  edge->setHidden(false);
+	  edge->setColor("purple");
+	  con_node->setColor("purple");
+	  added = true;
+	  break;
+	}
+      }
+      
+      // TODO: fix if read contains self
+      if(!added) {
+	containment.push(edge);
+      }
+    } // for containment size
 
-    vector< Contig* >::iterator contig_iter = contigs.begin();
-    bool added = false;
-    for( ; contig_iter != contigs.end(); ++contig_iter) {
-      Contig* c = (*contig_iter);
-      if(c->sg->contains(node)) {
-	count++;
-	c->sg->add_edge(edge);
-	con_node->setNodeHidden(false);
-	edge->setHidden(false);
-	edge->setColor("purple");
-	con_node->setColor("purple");
-	added = true;
-	break;
+    cout << pass_count << " containment reads added back on this pass " << endl;
+    count += pass_count;
+    cout << " sub-total contained reads unhidden " << count << endl;
+
+    if(containment.size() == size) { // we didn't remove any nodes BAD
+      cout << " containment loop found " << endl;
+      cout << " queue contains: " << endl;
+      cout << " [ read1, read2, overlap ]" << endl;
+      while(!containment.empty()) {
+	IEdge* e2 = containment.front();
+	containment.pop();
+	int read1 = edge->getTarget()->getKey();
+	int read2 = edge->getSource()->getKey();
+
+	cout << "[ " << read1 << ", " << read2 << ", " << e2->getKey() << " ]" << endl;
+
       }
     }
 
-    // TODO: fix if read contains self
-    if(!added) {
-      containment.push(edge);
-    }
-  }
-
+  } 
   cout << " total contained reads unhidden " << count << endl;
 }
 
@@ -317,7 +349,6 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 	cur_node->setFlags(2); // black
 
 	// go over each child and mark/queue
-	cout << "children of " << cur_node->getKey();
 	inc_edges = g->incident_edges(cur_node);
 	for(edgeListIter iter = inc_edges.begin(); iter != inc_edges.end(); ++iter) {
 	  cur_edge = (*iter);
@@ -358,7 +389,7 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 
 
 	// look for transitive edges
-	cout << endl << " start looking for 3 cycles for children of node " << cur_node->getKey() << endl;
+	//cout << endl << " start looking for 3 cycles for children of node " << cur_node->getKey() << endl;
 	while(! children.empty()) {
 	  IEdge* grand_edge;
 	  INode* grand_node = children.front();
@@ -443,7 +474,6 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 	    } // end transitive check for node2
 	    
 	  }
-	  cout << " set node parent to -1 " << grand_node->getKey() << endl;
 	  grand_node->setParent(-1);
 	}
       }

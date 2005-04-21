@@ -4,6 +4,9 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE TESTED
 check_PROGRAMS = Test
 
+##-- GLOBAL INCLUDE
+AM_CPPFLAGS = -I$(top_srcdir)/src/AMOS 
+
 ##-- test
 Test_LDADD = \
 	$(top_builddir)/src/Graph/libGraph.a
@@ -14,7 +17,7 @@ Test_SOURCES = \
 
 #-- TO BE INSTALLED
 amoslib_LIBRARIES = \
-	libGraph.a
+	libGraph.a 
 
 amosinclude_HEADERS = \
 	INode.hh \
