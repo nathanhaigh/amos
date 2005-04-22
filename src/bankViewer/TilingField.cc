@@ -309,29 +309,24 @@ void TilingField::paintEvent( QPaintEvent * )
 
           if (grangeStart < ri->m_loffset)
           {
-            int start = (ri->m_lfoffset - grangeStart) * basewidth;
-            if (grangeStart > ri->m_lfoffset)
-            {
-              start = 0;
-            }
+            int left  = max(grangeStart, ri->m_lfoffset);
+            int right = min(ri->m_loffset-1, grangeEnd);
+
+            int start = (left - grangeStart) * basewidth;
 
             p.drawRect(tilehoffset + start, ldcov + 2, 
-                       (ri->m_loffset - grangeStart) * basewidth, readheight-4);
+                       (right - left + 1) * basewidth, readheight - 4);
           }
 
           if (grangeEnd > ri->m_roffset)
           {
-            int start = (ri->m_roffset - grangeStart + 1) * basewidth;
+            int left = max(grangeStart, ri->m_roffset+1);
+            int right = min(ri->m_rfoffset, grangeEnd);
 
-            if (grangeStart > ri->m_roffset)
-            {
-              start = 0;
-            }
-
-            int rightdistance = (min(grangeEnd, ri->m_rfoffset) - max(ri->m_roffset+1, grangeStart) + 1 ) * basewidth;
+            int start = (left - grangeStart) * basewidth;
 
             p.drawRect(tilehoffset + start, ldcov + 2, 
-                       rightdistance,readheight - 4);
+                       (right - left + 1 ) * basewidth, readheight - 4);
           }
         }
 
