@@ -134,6 +134,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       s += (char)fitem->m_feat.type;
       s += " [" +  QString::number(fitem->m_feat.range.begin) + ",";
       s += QString::number(fitem->m_feat.range.end) + "]";
+      s += " " + QString::number(fitem->m_feat.range.getLength()) + "bp";
 
       jump = false;
       emitstatus = true;
