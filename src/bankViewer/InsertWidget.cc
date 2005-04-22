@@ -662,24 +662,59 @@ void InsertWidget::paintCanvas()
 
     int covwidth = (int)((curroffset + m_hoffset) * m_hscale);
 
-    CoverageCanvasItem * citem = new CoverageCanvasItem(0, voffset,
-                                                        covwidth + 1, insertCL.m_maxdepth, true,
-                                                        insertCoverage, m_icanvas);
+    int i = 0;
+    while (1)
+    {
+      int size = min(500, (int)(insertCoverage.count() - i));
+      QPointArray window(size);
+      for (int j = 0; j < size; j++)
+      {
+        window[j] = insertCoverage[i+j];
+      }
+      new CoverageCanvasItem(window[0].x(), voffset,
+                             window[size-1].x()-window[0].x()+1, insertCL.m_maxdepth, 
+                             true, window, m_icanvas);
+      i+= size;
 
+      if (i == insertCoverage.count()) { break; }
+      i--;
+    }
 
-    citem = new CoverageCanvasItem(0, voffset,
-                                   covwidth + 1, insertCL.m_maxdepth, 
-                                   false, readCoverage, m_icanvas);
+    i = 0;
+    while (1)
+    {
+      int size = min(1000, (int)(readCoverage.count() - i));
+      QPointArray window(size);
+      for (int j = 0; j < size; j++)
+      {
+        window[j] = readCoverage[i+j];
+      }
 
-    QCanvasRectangle * covbg = new QCanvasRectangle(0, voffset, covwidth + 1, insertCL.m_maxdepth, m_icanvas);
-    covbg->setBrush(QColor(60,60,60));
-    covbg->setZ(-2);
-    covbg->show();
+      int width = window[size-1].x()-window[0].x()+1;
 
-    QCanvasLine * base = new QCanvasLine(m_icanvas);
-    base->setPoints(0, voffset+insertCL.m_maxdepth, covwidth+1, voffset+insertCL.m_maxdepth);
-    base->setPen(Qt::white);
-    base->show();
+      new CoverageCanvasItem(window[0].x(), voffset,
+                             width, insertCL.m_maxdepth, 
+                             false, window, m_icanvas);
+
+      QCanvasRectangle * covbg = new QCanvasRectangle(window[0].x(), voffset, 
+                                                      width, insertCL.m_maxdepth, m_icanvas);
+      covbg->setBrush(QColor(60,60,60));
+      covbg->setPen(QColor(60,60,60));
+      covbg->setZ(-2);
+      covbg->show();
+
+      QCanvasLine * base = new QCanvasLine(m_icanvas);
+      base->setPoints(window[0].x(), voffset+insertCL.m_maxdepth, 
+                      width, voffset+insertCL.m_maxdepth);
+      base->setPen(Qt::white);
+      base->show();
+
+      i+= size;
+
+      if (i == readCoverage.count()) { break; }
+      i--;
+    }
+
 
     voffset += insertCL.m_maxdepth + 2*gutter;
   }
