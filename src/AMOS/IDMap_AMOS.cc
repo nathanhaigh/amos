@@ -184,7 +184,7 @@ void IDMap_t::concat (const IDMap_t & s)
       resize (getSize( ) + s . getSize( ));
 
       //-- Copy all the triples
-      for ( const_iterator itr (&(s.iid_bucs_m), &(s.eid_bucs_m)); itr; ++ itr )
+      for ( const_iterator itr = s . begin( ); itr != s . end( ); ++ itr )
 	insert (itr -> iid, itr -> eid, itr -> bid);
     }
 }
@@ -245,11 +245,13 @@ void IDMap_t::readMessage (const Message_t & msg)
     Size_t size = -1;
     istringstream ss;
 
-    if ( msg . exists (F_TYPE) )
+    if ( msg . exists (F_OBJECT) )
       {
-	if ( msg . getField (F_TYPE) . length( ) != NCODE_SIZE )
-	  AMOS_THROW_ARGUMENT ("Invalid type format");
-	type_m = Encode (msg . getField (F_TYPE));
+        string str = msg . getField (F_OBJECT);
+
+	if ( str . length( ) != NCODE_SIZE )
+	  AMOS_THROW_ARGUMENT ("Invalid object type format");
+	type_m = Encode (str);
       }
 
     if ( msg . exists (F_SIZE) )
@@ -271,10 +273,8 @@ void IDMap_t::readMessage (const Message_t & msg)
 
 	while ( ss )
 	  {
-	    ss >> bid;
-	    ss . ignore( );
-	    ss >> iid;
-	    ss . ignore( );
+	    ss >> bid >> iid;
+            ss . ignore( );
 	    getline (ss, eid);
 	    if ( ! ss . fail( ) )
 	      insert (iid, eid . c_str( ), bid);
@@ -388,7 +388,7 @@ void IDMap_t::resize (Size_t min)
   if ( size_m > 0 )
     {
       //-- Collect all the triples
-      for ( iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
+      for ( iterator itr = begin( ); itr != end ( ); ++ itr )
 	{
 	  itr -> c ++;
           triples [pos ++] = itr;
@@ -446,7 +446,7 @@ void IDMap_t::writeMessage (Message_t & msg) const
     msg . setMessageCode (IDMap_t::NCODE);
     
     if ( type_m != NULL_NCODE )
-      msg . setField (F_TYPE, Decode (type_m));
+      msg . setField (F_OBJECT, Decode (type_m));
     
     ss << size_m;
     msg . setField (F_SIZE, ss . str( ));
@@ -456,7 +456,7 @@ void IDMap_t::writeMessage (Message_t & msg) const
       {
 	//-- Output all the triples
 	string str;
-	for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
+        for ( const_iterator itr = begin( ); itr != end( ); ++ itr )
 	  {
 	    ss << itr -> bid << '\t' << itr -> iid << '\t';
 	    str . append (ss . str( ));
@@ -523,7 +523,7 @@ void IDMap_t::write (ostream & out) const
 {
   out << Decode(type_m) << ' ' << size_m << NL_CHAR;
 
-  for ( const_iterator itr (&iid_bucs_m, &eid_bucs_m); itr; ++ itr )
+  for ( const_iterator itr = begin( ); itr != end( ); ++ itr )
     out << itr -> bid << '\t' << itr -> iid << '\t' << itr -> eid << NL_CHAR;
 }
 

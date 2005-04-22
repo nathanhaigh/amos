@@ -40,6 +40,7 @@ UniversalSet_t::UniversalSet_t ( )
   objs_m . push_back (new ScaffoldEdge_t( ));
   objs_m . push_back (new Feature_t( ));
   objs_m . push_back (new Group_t( ));
+  objs_m . push_back (new Index_t( ));
 
   //-- Set up the hash
   for ( iterator i = begin( ); i != end( ); ++ i )

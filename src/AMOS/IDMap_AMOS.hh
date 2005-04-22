@@ -167,6 +167,20 @@ private:
   };
 
 
+  //--------------------------------------------------- begin ------------------
+  iterator begin ( )
+  {
+    return iterator (&iid_bucs_m, &eid_bucs_m);
+  }
+
+
+  //--------------------------------------------------- end --------------------
+  iterator end ( )
+  {
+    return iterator ( );
+  }
+
+
   //--------------------------------------------------- minbuckets -------------
   //! \brief Get the minimum number of buckets to satisfy need
   //!
@@ -338,6 +352,19 @@ public:
   const_iterator begin ( ) const
   {
     return const_iterator (&iid_bucs_m, &eid_bucs_m);
+  }
+
+
+  //--------------------------------------------------- end --------------------
+  //! \brief Returns an IDMap_t::const_iterator to the end of the map
+  //!
+  //! Constant iterator on all the HashTriple_t values in the map. Usage similar
+  //! to STL iterators, i.e.
+  //! for ( itr = map.begin( ); itr != map.end( ); ++ itr )
+  //!
+  const_iterator end ( ) const
+  {
+    return const_iterator ( );
   }
 
 

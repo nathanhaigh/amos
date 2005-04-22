@@ -82,6 +82,7 @@ const NCode_t   M_LAYOUT       = Encode ("LAY");
 const NCode_t   M_LIBRARY      = Encode ("LIB");
 const NCode_t   M_LINK         = Encode ("LNK");
 const NCode_t   M_IDMAP        = Encode ("MAP");
+const NCode_t   M_INDEX        = Encode ("IDX");
 const NCode_t   M_MATEPAIR     = Encode ("MTP");
 const NCode_t   M_OVERLAP      = Encode ("OVL");
 const NCode_t   M_READ         = Encode ("RED");
@@ -174,6 +175,39 @@ public:
     mcode_m = M_NULL;
     fields_m . clear( );
     subs_m . clear( );
+  }
+
+
+  //--------------------------------------------------- countFields ------------
+  //! \brief Returns the number of top-level fields in the message
+  //!
+  //! \return The number of top-level fields in the message
+  //!
+  Size_t countFields ( ) const
+  {
+    return fields_m . size( );
+  }
+
+
+  //--------------------------------------------------- countSubMessages -------
+  //! \brief Returns the number of top-level sub-messages in the message
+  //!
+  //! \return The number of top-level sub-messages in the message
+  //!
+  Size_t countSubMessages ( ) const
+  {
+    return subs_m . size( );
+  }
+
+
+  //--------------------------------------------------- empty ------------------
+  //! \brief Returns true if the message has no fields or sub messages
+  //!
+  //! \return True if the message is empty, else false
+  //!
+  bool empty ( ) const
+  {
+    return (fields_m . empty( ) && subs_m . empty( ));
   }
 
 

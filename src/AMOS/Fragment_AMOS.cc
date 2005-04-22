@@ -67,7 +67,7 @@ void Fragment_t::readMessage (const Message_t & msg)
 
 	ss . str (msg . getField (F_SOURCE));
         ss >> source_m . first;
-        ss . ignore( );
+        ss . ignore ( );
         ss >> str;
         if ( !ss  ||  str . length( ) != NCODE_SIZE )
           AMOS_THROW_ARGUMENT ("Invalid source format");

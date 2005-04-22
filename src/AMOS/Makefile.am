@@ -17,6 +17,7 @@ amosinclude_HEADERS = \
 	Fragment_AMOS.hh \
 	Group_AMOS.hh \
 	IDMap_AMOS.hh \
+	Index_AMOS.hh \
 	Kmer_AMOS.hh \
 	Layout_AMOS.hh \
 	Library_AMOS.hh \
@@ -102,6 +103,7 @@ libAMOS_a_SOURCES = \
 	Fragment_AMOS.cc \
 	Group_AMOS.cc \
 	IDMap_AMOS.cc \
+	Index_AMOS.cc \
 	Kmer_AMOS.cc \
 	Layout_AMOS.cc \
 	Library_AMOS.cc \

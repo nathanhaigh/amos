@@ -52,7 +52,7 @@ void Group_t::readMessage (const Message_t & msg)
         ss . str (msg . getField (F_OBJECT));
         ss >> str;
         if ( !ss || str . length( ) != NCODE_SIZE )
-          AMOS_THROW_ARGUMENT ("Invalid type format");
+          AMOS_THROW_ARGUMENT ("Invalid object type format");
         ss . clear( );
         memtype_m = Encode (str);
       }

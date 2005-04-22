@@ -325,7 +325,8 @@ void Bank_t::concat (Bank_t & s)
   //-- Set up the BID lookup table
   const IDMap_t::HashTriple_t * stp = NULL;
   vector<const IDMap_t::HashTriple_t *> striples (s . last_bid_m + 1, stp);
-  for ( IDMap_t::const_iterator idmi = s.getIDMap( ).begin( ); idmi; ++ idmi )
+  for ( IDMap_t::const_iterator idmi = s . getIDMap( ) . begin( );
+        idmi != s . getIDMap( ) . end( ); ++ idmi )
     striples [idmi -> bid] = idmi;
 
   //-- Seek to the end of current bank

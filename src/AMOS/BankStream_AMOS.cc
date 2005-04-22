@@ -61,7 +61,8 @@ void BankStream_t::open (const std::string & dir, BankMode_t mode)
   
   const IDMap_t::HashTriple_t * tp = NULL;
   triples_m . resize (last_bid_m + 1, tp);
-  for ( IDMap_t::const_iterator idmi = getIDMap( ) . begin( ); idmi; ++ idmi )
+  for ( IDMap_t::const_iterator idmi = getIDMap( ) . begin( );
+        idmi != getIDMap( ) . end( ); ++ idmi )
     triples_m [idmi -> bid] = idmi;
 }
 

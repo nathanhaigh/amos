@@ -17,6 +17,7 @@
 #include "Feature_AMOS.hh"
 #include "Fragment_AMOS.hh"
 #include "Group_AMOS.hh"
+#include "Index_AMOS.hh"
 #include "Kmer_AMOS.hh"
 #include "Layout_AMOS.hh"
 #include "Library_AMOS.hh"

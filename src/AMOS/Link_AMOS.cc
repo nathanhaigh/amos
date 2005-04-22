@@ -106,7 +106,7 @@ void Link_t::readMessage (const Message_t & msg)
         ss . str (msg . getField (F_OBJECT));
         ss >> str;
         if ( !ss || str . length( ) != NCODE_SIZE )
-          AMOS_THROW_ARGUMENT ("Invalid type format");
+          AMOS_THROW_ARGUMENT ("Invalid object type format");
         ss . clear( );
         nodtype_m = Encode (str);
       }
@@ -149,7 +149,7 @@ void Link_t::readMessage (const Message_t & msg)
 
 	ss . str (msg . getField (F_SOURCE));
 	ss >> source_m . first;
-	ss . ignore( );
+        ss . ignore( );
 	ss >> str;
 	if ( !ss  ||  str . length( ) != NCODE_SIZE )
 	  AMOS_THROW_ARGUMENT ("Invalid source format");
