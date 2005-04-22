@@ -368,8 +368,8 @@ void TilingField::paintEvent( QPaintEvent * )
 
               p.setFont(QFont("Helvetica", (int)(m_fontsize*.75)));
               p.setPen(black);
-              p.drawText(hoffset, ldcov+lineheight,
-                         m_fontsize, 2*m_fontsize,
+              p.drawText(hoffset-m_fontsize, ldcov+lineheight,
+                         3*m_fontsize, m_fontsize,
                          Qt::AlignHCenter | Qt::AlignVCenter, s);
             }
           }
