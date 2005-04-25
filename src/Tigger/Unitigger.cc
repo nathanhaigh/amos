@@ -226,8 +226,9 @@ void Unitigger::hide_containment(IGraph* g) {
 	cerr << " Error overlap B id " << olap->ridB << " doesn't match read id " << read->id << endl;
       }
 
-
+      // only add the node once to the containment queue
       if(!node->getHidden()) {
+	//	cout << " add node to containment " << node->getKey() << endl;
 	containment.push(edge);
       }
       node->setHidden(true);
@@ -268,7 +269,7 @@ void Unitigger::add_containment() {
       vector< Contig* >::iterator contig_iter = contigs.begin();
       bool added = false;
 
-      cout << " start looking for contig that contains read " << node->getKey() << endl;
+      //      cout << " start looking for contig that contains read " << node->getKey() << endl;
       //
       // TODO : for a large number of contigs, 
       // finding the right contig can be very, very slow
@@ -288,6 +289,7 @@ void Unitigger::add_containment() {
       
       // TODO: fix if read contains self
       if(!added) {
+	//cout << " not added  " << con_node->getKey() << " " << node->getKey() << endl;
 	containment.push(edge);
       }
     } // for containment size
@@ -298,16 +300,14 @@ void Unitigger::add_containment() {
 
     if(containment.size() == size) { // we didn't remove any nodes BAD
       cout << " containment loop found " << endl;
-      cout << " queue contains: " << endl;
-      cout << " [ read1, read2, overlap ]" << endl;
+      //      cout << " queue contains: " << endl;
+      //      cout << " [ read1, read2, overlap ]" << endl;
       while(!containment.empty()) {
 	IEdge* e2 = containment.front();
 	containment.pop();
 	int read1 = edge->getTarget()->getKey();
 	int read2 = edge->getSource()->getKey();
-
-	cout << "[ " << read1 << ", " << read2 << ", " << e2->getKey() << " ]" << endl;
-
+	//	cout << "[ " << read1 << ", " << read2 << ", " << e2->getKey() << " ]" << endl;
       }
     }
 
@@ -367,22 +367,22 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 
 	    child->setParent(cur_node->getKey());
 	    children.push(child); // this nodes children
-	    cout << " " << child->getKey();
+	    //	    cout << " " << child->getKey();
 
 
 	  } else if(child->getFlags() == 1) {
 	    if(child->getParent() == -1) {
 	      child->setParent(cur_node->getKey());
 	      children.push(child);
-	      cout << " " << child->getKey();
+	      //	      cout << " " << child->getKey();
 	    } else {
-	      cout << " " << child->getKey() << "(dup)";
+	      //	      cout << " " << child->getKey() << "(dup)";
 	    }
 
 	    parents[child->getKey()] = cur_edge;
 
 	  } else { // flags should be 2/black
-	    cout << " " << child->getKey() << "(done)";
+	    //	    cout << " " << child->getKey() << "(done)";
 
 	  }
 	}
@@ -790,11 +790,11 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
   }
 
   if(lay_read->start < 0) {
-    cout << " negative start read " << lay_read->start << endl;
+    //cout << " negative start read " << lay_read->start << endl;
     lay_read->end -= lay_read->start;
     lay_read->start = 0;
   } else if(lay_read->end < 0) {
-    cout << " negative end read " << lay_read->end << endl;
+    // cout << " negative end read " << lay_read->end << endl;
     lay_read->start -= lay_read->end;
     lay_read->end = 0;
   }
