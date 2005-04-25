@@ -257,7 +257,7 @@ public:
   //! Only returns the IIDs of the nodes. It is up to the user to keep track
   //! of where the actual node objects are stored.
   //!
-  //! \param nodes The new pair of node IIDs
+  //! \param nods The new pair of node IIDs
   //! \return void
   //!
   void setNodes (std::pair<ID_t, ID_t> nods)
@@ -293,9 +293,9 @@ public:
 
 
   //--------------------------------------------------- setSize ----------------
-  //! \brief Set the weight\size of the link
+  //! \brief Set the weight/size of the link
   //!
-  //! \param size The new link weight\size
+  //! \param size The new link weight/size
   //! \return void
   //!
   void setSize (Size_t size)

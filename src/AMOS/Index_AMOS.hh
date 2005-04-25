@@ -295,9 +295,9 @@ public:
   //! \param itr An iterator pointing to the pair to remove
   //! \return void
   //!
-  void remove (iterator i)
+  void remove (iterator itr)
   {
-    index_m . erase (i);
+    index_m . erase (itr);
   }
 
 
@@ -307,7 +307,7 @@ public:
   //! Set the index type as a pair of NCodes for the FROM and TO type
   //! respectively.
   //!
-  //! \param The new index type
+  //! \param type The new index type
   //! \return void
   //!
   void setType (std::pair<NCode_t, NCode_t> type)

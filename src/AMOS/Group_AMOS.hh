@@ -146,7 +146,7 @@ public:
   //!
   //! Describes the type of IIDs stored in the group vector.
   //!
-  //! \param type The new object type
+  //! \param memtype The new object type
   //! \return void
   //!
   void setMemberType (NCode_t memtype)
