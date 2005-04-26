@@ -54,10 +54,11 @@ public:
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
-  static const std::string READ_TO_CONTIG;     //!< Suggested EID
+  static const std::string CONTIG_TO_FEATURE;  //!< Suggested EID
   static const std::string CONTIG_TO_SCAFFOLD; //!< Suggested EID
-  static const std::string READ_TO_MATE;       //!< Suggested EID
+  static const std::string READ_TO_CONTIG;     //!< Suggested EID
   static const std::string READ_TO_LIBRARY;    //!< Suggested EID
+  static const std::string READ_TO_MATE;       //!< Suggested EID
 
 
   typedef HASHMAP::hash_multimap<ID_t, ID_t>::iterator iterator;

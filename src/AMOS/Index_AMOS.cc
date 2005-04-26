@@ -16,10 +16,12 @@ using namespace std;
 
 //================================================ Index_t =====================
 const NCode_t Index_t::NCODE = M_INDEX;
-const string  Index_t::READ_TO_CONTIG     = "RED->CTG";
+const string  Index_t::CONTIG_TO_FEATURE  = "CTG->FEA";
 const string  Index_t::CONTIG_TO_SCAFFOLD = "CTG->SCF";
-const string  Index_t::READ_TO_MATE       = "RED->RED";
+const string  Index_t::READ_TO_CONTIG     = "RED->CTG";
 const string  Index_t::READ_TO_LIBRARY    = "RED->LIB";
+const string  Index_t::READ_TO_MATE       = "RED->RED";
+
 
 
 //----------------------------------------------------- readMessage ------------

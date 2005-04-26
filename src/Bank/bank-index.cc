@@ -20,36 +20,44 @@ string  OPT_BankName;                        // bank name parameter
 
 
 //========================================================== Fuction Decs ====//
-//----------------------------------------------------- BuildReadToContig ------
-//! \brief Builds the Read to Contig index
+//----------------------------------------------------- BuildContigToFeature ---
+//! \brief Builds the contig to feature index
 //!
 //! \return Success or failure
 //!
-bool BuildReadToContig (Bank_t & idx_bank);
+bool BuildContigToFeature (Bank_t & idx_bank);
 
 
 //----------------------------------------------------- BuildContigToScaffold --
-//! \brief Builds the Contig to Scaffold index
+//! \brief Builds the contig to scaffold index
 //!
 //! \return Success or failure
 //!
 bool BuildContigToScaffold (Bank_t & idx_bank);
 
 
-//----------------------------------------------------- BuildReadToMate --------
-//! \brief Builds the Read to Mate index
+//----------------------------------------------------- BuildReadToContig ------
+//! \brief Builds the read to contig index
 //!
 //! \return Success or failure
 //!
-bool BuildReadToMate (Bank_t & idx_bank);
+bool BuildReadToContig (Bank_t & idx_bank);
 
 
 //----------------------------------------------------- BuildReadToLibrary -----
-//! \brief Builds the Read to Library index
+//! \brief Builds the read to library index
 //!
 //! \return Success or failure
 //!
 bool BuildReadToLibrary (Bank_t & idx_bank);
+
+
+//----------------------------------------------------- BuildReadToMate --------
+//! \brief Builds the read to mate index
+//!
+//! \return Success or failure
+//!
+bool BuildReadToMate (Bank_t & idx_bank);
 
 
 //----------------------------------------------------- ParseArgs --------------
@@ -98,12 +106,14 @@ int main (int argc, char ** argv)
       idx_bank . create (OPT_BankName);
     else
       idx_bank . open (OPT_BankName);
-
-    BuildReadToContig (idx_bank);
-    BuildContigToScaffold (idx_bank);
-    BuildReadToMate (idx_bank);
-    BuildReadToLibrary (idx_bank);
-
+    
+    //-- Build the indices
+    exitcode = BuildContigToFeature (idx_bank) && exitcode;
+    exitcode = BuildContigToScaffold (idx_bank) && exitcode;
+    exitcode = BuildReadToContig (idx_bank) && exitcode;
+    exitcode = BuildReadToLibrary (idx_bank) && exitcode;
+    exitcode = BuildReadToMate (idx_bank) && exitcode;
+   
     idx_bank . close( );
   }
   catch (const Exception_t & e) {
@@ -123,32 +133,30 @@ int main (int argc, char ** argv)
 
 
 
-//----------------------------------------------------- BuildReadToContig ------
-bool BuildReadToContig (Bank_t & idx_bank)
+//----------------------------------------------------- BuildContigToFeature ---
+bool BuildContigToFeature (Bank_t & idx_bank)
 {
-  Index_t idx (Read_t::NCODE, Contig_t::NCODE);
-  idx . setEID (Index_t::READ_TO_CONTIG);
+  Index_t idx (Contig_t::NCODE, Feature_t::NCODE);
+  idx . setEID (Index_t::CONTIG_TO_FEATURE);
 
-  Contig_t ctg;
-  vector<Tile_t>::const_iterator ti;
+  Feature_t fea;
 
-  BankStream_t ctg_bank (Contig_t::NCODE);
+  BankStream_t fea_bank (Feature_t::NCODE);
 
   try {
-    ctg_bank . open (OPT_BankName, B_READ);
+    fea_bank . open (OPT_BankName, B_READ);
 
-    while ( ctg_bank >> ctg )
-      for ( ti  = ctg . getReadTiling( ) . begin( );
-            ti != ctg . getReadTiling( ) . end( ); ++ ti )
-        idx . insert (ti -> source, ctg . getIID( ));
+    while ( fea_bank >> fea )
+      if ( fea . getSource( ) . second == Contig_t::NCODE )
+        idx . insert (fea . getSource( ) . first, fea . getIID( ));
 
-    ctg_bank . close( );
+    fea_bank . close( );
 
     idx_bank . append (idx);
   }
   catch (const Exception_t & e) {
     cerr << "ERROR: " << e . what( ) << endl
-         << "  could not create read-to-contig index" << endl;
+         << "  could not create contig-to-feature index" << endl;
     return false;
   }
   return true;
@@ -191,34 +199,32 @@ bool BuildContigToScaffold (Bank_t & idx_bank)
 
 
 
-//----------------------------------------------------- BuildReadToMate --------
-bool BuildReadToMate (Bank_t & idx_bank)
+//----------------------------------------------------- BuildReadToContig ------
+bool BuildReadToContig (Bank_t & idx_bank)
 {
-  Index_t idx (Read_t::NCODE, Read_t::NCODE);
-  idx . setEID (Index_t::READ_TO_MATE);
+  Index_t idx (Read_t::NCODE, Contig_t::NCODE);
+  idx . setEID (Index_t::READ_TO_CONTIG);
 
-  Matepair_t mtp;
-  pair<ID_t, ID_t> reads;
+  Contig_t ctg;
+  vector<Tile_t>::const_iterator ti;
 
-  BankStream_t mtp_bank (Matepair_t::NCODE);
+  BankStream_t ctg_bank (Contig_t::NCODE);
 
   try {
-    mtp_bank . open (OPT_BankName, B_READ);
+    ctg_bank . open (OPT_BankName, B_READ);
 
-    while ( mtp_bank >> mtp )
-      {
-        reads = mtp . getReads( );
-        idx . insert (reads . first, reads . second);
-        idx . insert (reads . second, reads . first);
-      }
+    while ( ctg_bank >> ctg )
+      for ( ti  = ctg . getReadTiling( ) . begin( );
+            ti != ctg . getReadTiling( ) . end( ); ++ ti )
+        idx . insert (ti -> source, ctg . getIID( ));
 
-    mtp_bank . close( );
+    ctg_bank . close( );
 
     idx_bank . append (idx);
   }
   catch (const Exception_t & e) {
     cerr << "ERROR: " << e . what( ) << endl
-         << "  could not create read-to-mate index" << endl;
+         << "  could not create read-to-contig index" << endl;
     return false;
   }
   return true;
@@ -257,6 +263,42 @@ bool BuildReadToLibrary (Bank_t & idx_bank)
   catch (const Exception_t & e) {
     cerr << "ERROR: " << e . what( ) << endl
          << "  could not create read-to-library index" << endl;
+    return false;
+  }
+  return true;
+}
+
+
+
+
+//----------------------------------------------------- BuildReadToMate --------
+bool BuildReadToMate (Bank_t & idx_bank)
+{
+  Index_t idx (Read_t::NCODE, Read_t::NCODE);
+  idx . setEID (Index_t::READ_TO_MATE);
+
+  Matepair_t mtp;
+  pair<ID_t, ID_t> reads;
+
+  BankStream_t mtp_bank (Matepair_t::NCODE);
+
+  try {
+    mtp_bank . open (OPT_BankName, B_READ);
+
+    while ( mtp_bank >> mtp )
+      {
+        reads = mtp . getReads( );
+        idx . insert (reads . first, reads . second);
+        idx . insert (reads . second, reads . first);
+      }
+
+    mtp_bank . close( );
+
+    idx_bank . append (idx);
+  }
+  catch (const Exception_t & e) {
+    cerr << "ERROR: " << e . what( ) << endl
+         << "  could not create read-to-mate index" << endl;
     return false;
   }
   return true;
