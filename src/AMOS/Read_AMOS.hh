@@ -38,7 +38,8 @@ private:
   Range_t qclear_m;                //!< the quality score clear range
   ReadType_t type_m;               //!< the read type
   Range_t vclear_m;                //!< the vector clear range
-  std::vector<int16_t> pos_m;        //!< base call positions
+  std::vector<int16_t> bcp_m;      //!< base call positions
+  Pos_t pos_m;                     //!< position on parent fragment
 
 
 protected:
@@ -62,6 +63,7 @@ public:
   static const ReadType_t CONTIG;
   static const ReadType_t BAC;
   static const ReadType_t WALK;
+  static const ReadType_t TRANSPOSON;
 
 
   //--------------------------------------------------- Read_t -----------------
@@ -73,6 +75,7 @@ public:
   {
     frag_m = NULL_ID;
     type_m = NULL_READ;
+    pos_m = 0;
   }
 
 
@@ -109,7 +112,7 @@ public:
   //!
   const std::vector<int16_t> & getBasePositions ( ) const
   {
-    return pos_m;
+    return bcp_m;
   }
 
 
@@ -124,7 +127,7 @@ public:
   //!
   std::vector<int16_t> & getBasePositions ( )
   {
-    return pos_m;
+    return bcp_m;
   }
 
 
@@ -147,6 +150,21 @@ public:
   ID_t getFragment ( ) const
   {
     return frag_m;
+  }
+
+
+  //--------------------------------------------------- getFragmentPosition ----
+  //! \brief Get the approximate position on the parent fragment
+  //!
+  //! Get this read's 1-based position on the parent fragment, positive if
+  //! counting from left and oriented forward, negative if counting from right
+  //! and reverse oriented, 0 if unknown.
+  //!
+  //! \return The position of this read on the parent fragment
+  //!
+  Pos_t getFragmentPosition ( )
+  {
+    return pos_m;
   }
 
 
@@ -197,12 +215,12 @@ public:
   //--------------------------------------------------- setBasePositions -------
   //! \brief Set the base call positions
   //!
-  //! \param pos The new vector of base call positions
+  //! \param bcp The new vector of base call positions
   //! \return void
   //!
-  void setBasePositions (const std::vector<int16_t> & pos)
+  void setBasePositions (const std::vector<int16_t> & bcp)
   {
-    pos_m = pos;
+    bcp_m = bcp;
   }
 
 
@@ -227,6 +245,22 @@ public:
   void setFragment (ID_t frag)
   {
     frag_m = frag;
+  }
+
+
+  //--------------------------------------------------- setFragmentPosition ----
+  //! \brief Set the approximate position on the parent fragment
+  //!
+  //! Set this read's 1-based position on the parent fragment, positive if
+  //! counting from left and oriented forward, negative if counting from right
+  //! and reverse oriented, 0 if unknown.
+  //!
+  //! \param pos The approximate position of this read on the parent fragment
+  //! \return void
+  //!
+  void setFragmentPosition (Pos_t pos)
+  {
+    pos_m = pos;
   }
 
 

@@ -24,14 +24,15 @@ void Library_t::readMessage (const Message_t & msg)
   Universal_t::readMessage (msg);
 
   try {
-    switch ( msg . getSubMessages( ) . size( ) )
+    vector<Message_t>::const_iterator i;
+
+    for ( i  = msg . getSubMessages( ) . begin( );
+          i != msg . getSubMessages( ) . end( ); i ++ )
       {
-      case 1:
-	dist_m . readMessage (msg . getSubMessages( ) . back ( ));
-      case 0:
-	break;
-      default:
-	AMOS_THROW_ARGUMENT ("Invalid submessage");
+        if ( i -> getMessageCode( ) == M_DISTRIBUTION )
+          {
+            dist_m . readMessage (*i);
+          }
       }
   }
   catch (ArgumentException_t) {

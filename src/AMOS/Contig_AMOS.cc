@@ -123,8 +123,6 @@ void Contig_t::readMessage (const Message_t & msg)
 	    reads_m . push_back (Tile_t( ));
 	    reads_m . back( ) . readMessage (*i);
 	  }
-	else
-	  AMOS_THROW_ARGUMENT ("Invalid submessage");
       }
   }
   catch (ArgumentException_t) {

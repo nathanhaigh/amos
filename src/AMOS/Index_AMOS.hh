@@ -11,6 +11,7 @@
 #define __Index_AMOS_HH 1
 
 #include "Universal_AMOS.hh"
+#include <utility>
 
 
 
@@ -53,6 +54,11 @@ public:
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
+  static const std::string READ_TO_CONTIG;     //!< Suggested EID
+  static const std::string CONTIG_TO_SCAFFOLD; //!< Suggested EID
+  static const std::string READ_TO_MATE;       //!< Suggested EID
+  static const std::string READ_TO_LIBRARY;    //!< Suggested EID
+
 
   typedef HASHMAP::hash_multimap<ID_t, ID_t>::iterator iterator;
   //!< Un-mutable index iterator, only itr -> second can be modified
@@ -69,6 +75,16 @@ public:
   Index_t ( )
   {
     type_m . first = type_m . second = NULL_NCODE;
+  }
+
+
+  //--------------------------------------------------- Index_t ----------------
+  //! \brief Constructs an Index_t of a certain type
+  //!
+  Index_t (NCode_t a, NCode_t b)
+  {
+    type_m . first = a;
+    type_m . second = b;
   }
 
 
@@ -313,6 +329,13 @@ public:
   void setType (std::pair<NCode_t, NCode_t> type)
   {
     type_m = type;
+  }
+
+
+  //--------------------------------------------------- setType ----------------
+  void setType (NCode_t a, NCode_t b)
+  {
+    setType (std::make_pair (a, b));
   }
 
 

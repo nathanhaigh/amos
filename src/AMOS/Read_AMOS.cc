@@ -22,6 +22,7 @@ const ReadType_t Read_t::END        = 'E';
 const ReadType_t Read_t::CONTIG     = 'C';
 const ReadType_t Read_t::BAC        = 'B';
 const ReadType_t Read_t::WALK       = 'W';
+const ReadType_t Read_t::TRANSPOSON = 'T';
 
 
 //----------------------------------------------------- clear ------------------
@@ -33,7 +34,8 @@ void Read_t::clear ( )
   qclear_m . clear( );
   type_m = NULL_READ;
   vclear_m . clear( );
-  pos_m . clear( );
+  bcp_m . clear( );
+  pos_m = 0;
 }
 
 
@@ -43,7 +45,7 @@ void Read_t::readMessage (const Message_t & msg)
   Sequence_t::readMessage (msg);
 
   try {
-    int16_t pos;
+    int16_t bcp;
     istringstream ss;
 
     if ( msg . exists (F_FRAGMENT) )
@@ -95,20 +97,29 @@ void Read_t::readMessage (const Message_t & msg)
 	ss . clear( );
       }
 
-    if ( msg . exists (F_POSITION) )
+    if ( msg . exists (F_BASEPOSITION) )
       {
-        ss . str (msg . getField (F_POSITION));
+        ss . str (msg . getField (F_BASEPOSITION));
 
         while ( ss )
           {
-            ss >> pos;
+            ss >> bcp;
             if ( ! ss . fail( ) )
-              pos_m . push_back (pos);
+              bcp_m . push_back (bcp);
           }
 
         if ( !ss . eof( ) )
-          AMOS_THROW_ARGUMENT ("Invalid pos format");
+          AMOS_THROW_ARGUMENT ("Invalid base call position format");
         ss . clear( );
+      }
+
+    if ( msg . exists (F_POSITION) )
+      {
+        ss . str (msg . getField (F_POSITION));
+	ss >> pos_m;
+	if ( !ss )
+	  AMOS_THROW_ARGUMENT ("Invalid fragment position format");
+	ss . clear( );
       }
   }
   catch (ArgumentException_t) {
@@ -133,11 +144,12 @@ void Read_t::readRecord (istream & fix, istream & var)
   type_m = fix . get( );
   readLE (fix, &(vclear_m . begin));
   readLE (fix, &(vclear_m . end));
+  readLE (fix, &pos_m);
   readLE (fix, &size);
 
-  pos_m . resize (size);
+  bcp_m . resize (size);
   for ( Pos_t i = 0; i < size; i ++ )
-    readLE (var, &(pos_m [i]));
+    readLE (var, &(bcp_m [i]));
 }
 
 
@@ -152,6 +164,7 @@ void Read_t::setType (ReadType_t type)
     case CONTIG:
     case BAC:
     case WALK:
+    case TRANSPOSON:
       type_m = type;
       break;
     default:
@@ -185,9 +198,12 @@ void Read_t::writeMessage (Message_t & msg) const
         ss . str (NULL_STRING);
       }
 
-    ss << clear_m . begin << ',' << clear_m . end;
-    msg . setField (F_CLEAR, ss . str( ));
-    ss . str (NULL_STRING);
+    if ( clear_m . getLength( ) != 0 )
+      {
+        ss << clear_m . begin << ',' << clear_m . end;
+        msg . setField (F_CLEAR, ss . str( ));
+        ss . str (NULL_STRING);
+      }
 
     if ( vclear_m . getLength( ) != 0 )
       {
@@ -203,10 +219,17 @@ void Read_t::writeMessage (Message_t & msg) const
 	ss . str (NULL_STRING);
       }
 
-    if ( !pos_m . empty( ) )
+    if ( !bcp_m . empty( ) )
       {
-        for ( vi = pos_m . begin( ); vi != pos_m . end( ); vi ++ )
+        for ( vi = bcp_m . begin( ); vi != bcp_m . end( ); vi ++ )
           ss << *vi << '\n';
+        msg . setField (F_BASEPOSITION, ss . str( ));
+        ss . str (NULL_STRING);
+      }
+
+    if ( pos_m != 0 )
+      {
+        ss << pos_m;
         msg . setField (F_POSITION, ss . str( ));
         ss . str (NULL_STRING);
       }
@@ -222,7 +245,7 @@ void Read_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Read_t::writeRecord (ostream & fix, ostream & var) const
 {
-  Size_t size = pos_m . size( );
+  Size_t size = bcp_m . size( );
   Sequence_t::writeRecord (fix, var);
 
   writeLE (fix, &(clear_m . begin));
@@ -233,10 +256,11 @@ void Read_t::writeRecord (ostream & fix, ostream & var) const
   fix . put (type_m);
   writeLE (fix, &(vclear_m . begin));
   writeLE (fix, &(vclear_m . end));
+  writeLE (fix, &pos_m);
   writeLE (fix, &size);
 
   for ( Pos_t i = 0; i < size; i ++ )
-    writeLE (var, &(pos_m [i]));
+    writeLE (var, &(bcp_m [i]));
 }
 
 

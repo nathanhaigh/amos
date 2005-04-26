@@ -29,6 +29,7 @@ const NCode_t   F_5PRIME       = Encode ("5pr");
 const NCode_t   F_AHANG        = Encode ("ahg");
 const NCode_t   F_ACTION       = Encode ("act");
 const NCode_t   F_ADJACENCY    = Encode ("adj");
+const NCode_t   F_BASEPOSITION = Encode ("bcp");
 const NCode_t   F_BHANG        = Encode ("bhg");
 const NCode_t   F_BID          = Encode ("bid");
 const NCode_t   F_CLEAR        = Encode ("clr");

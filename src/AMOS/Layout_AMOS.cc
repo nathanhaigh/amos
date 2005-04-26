@@ -59,10 +59,11 @@ void Layout_t::readMessage (const Message_t & msg)
     for ( vi  = msg . getSubMessages( ) . begin( );
           vi != msg . getSubMessages( ) . end( ); vi ++ )
       {
-        if ( vi -> getMessageCode( ) != M_TILE )
-          AMOS_THROW_ARGUMENT ("Invalid submessage");
-        tile . readMessage (*vi);
-        tiles_m . push_back (tile);
+        if ( vi -> getMessageCode( ) == M_TILE )
+          {
+            tile . readMessage (*vi);
+            tiles_m . push_back (tile);
+          }
       }
   }
   catch (ArgumentException_t) {

@@ -82,8 +82,6 @@ void Scaffold_t::readMessage (const Message_t & msg)
 	    contigs_m . push_back (Tile_t( ));
 	    contigs_m . back( ) . readMessage (*i);
 	  }
-	else
-	  AMOS_THROW_ARGUMENT ("Invalid submessage");
       }
   }
   catch (ArgumentException_t) {
