@@ -208,6 +208,7 @@ void PrintHelp (const char * s)
   cerr
     << "-b path       The directory path of the bank to clean\n"
     << "-h            Display help information\n"
+    << "-v            Display the compatible bank version\n"
     << endl;
   cerr
     << "Takes an AMOS bank directory as input. If no NCodes are listed on the\n"
