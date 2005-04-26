@@ -96,17 +96,20 @@ void Feature_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Feature_t::NCODE);
 
-     ss << range_m . begin << ',' << range_m . end;
-     msg . setField (F_CLEAR, ss . str( ));
-     ss . str (NULL_STRING);
-
-     if ( type_m != NULL_FEATURE )
-       {
-         ss << type_m;
-         msg . setField (F_TYPE, ss . str( ));
-         ss . str (NULL_STRING);
-       }
-
+    if ( range_m . getLength( ) != 0 )
+      {
+        ss << range_m . begin << ',' << range_m . end;
+        msg . setField (F_CLEAR, ss . str( ));
+        ss . str (NULL_STRING);
+      }
+    
+    if ( type_m != NULL_FEATURE )
+      {
+        ss << type_m;
+        msg . setField (F_TYPE, ss . str( ));
+        ss . str (NULL_STRING);
+      }
+    
     if ( source_m . first != NULL_ID  ||  source_m . second != NULL_NCODE )
       {
         ss << source_m . first << ',' << Decode (source_m . second);

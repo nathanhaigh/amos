@@ -122,12 +122,12 @@ void Index_t::writeMessage (Message_t & msg) const
         ss . str (NULL_STRING);
       }
 
-    ss << size;
-    msg . setField (F_SIZE, ss . str( ));
-    ss . str (NULL_STRING);
-
     if ( size != 0 )
       {
+        ss << size;
+        msg . setField (F_SIZE, ss . str( ));
+        ss . str (NULL_STRING);
+
         string str;
         for ( const_iterator itr = begin( ); itr != end( ); ++ itr )
           {
