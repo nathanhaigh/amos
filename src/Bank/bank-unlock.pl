@@ -3,11 +3,11 @@
 use strict;
 use File::Basename;
 
-my $dir = shift;
-
-if ( scalar (@ARGV) != 0 ) {
+if ( scalar (@ARGV) != 1 ) {
     die "USAGE: $0  <bankdir>\n";
 }
+
+my $dir = shift;
 
 if ( !defined ($dir) || !(-d $dir) ) {
     die "ERROR: Cannot find bank dir '$dir'\n";
