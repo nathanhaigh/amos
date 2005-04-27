@@ -97,14 +97,14 @@ void Bank_t::addPartition (bool create)
 void Bank_t::append (IBankable_t & obj)
 {
   //-- Insert the ID triple into the map (may throw exception)
-  idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), last_bid_m + 1);
+  idmap_m . insert (obj . iid_m, obj . eid_m, last_bid_m + 1);
 
   try {
     appendBID (obj);
   }
   catch (Exception_t) {
     idmap_m . remove (obj . iid_m);
-    idmap_m . remove (obj . eid_m . c_str( ));
+    idmap_m . remove (obj . eid_m);
     throw;
   }
 }
@@ -157,7 +157,7 @@ void Bank_t::appendBID (IBankable_t & obj)
 
 
 //----------------------------------------------------- assignEID --------------
-void Bank_t::assignEID (ID_t iid, const char * eid)
+void Bank_t::assignEID (ID_t iid, const string & eid)
 {
   ID_t bid = IIDtoBID (iid);
   string peid (idmap_m . lookupEID (iid));
@@ -167,14 +167,14 @@ void Bank_t::assignEID (ID_t iid, const char * eid)
     idmap_m . insert (iid, eid, bid);
   }
   catch (Exception_t) {
-    idmap_m . insert (iid, peid . c_str( ), bid);
+    idmap_m . insert (iid, peid, bid);
     throw;
   }
 }
 
 
 //----------------------------------------------------- assignIID --------------
-void Bank_t::assignIID (const char * eid, ID_t iid)
+void Bank_t::assignIID (const string & eid, ID_t iid)
 {
   ID_t bid = EIDtoBID (eid);
   ID_t piid = idmap_m . lookupIID (eid);
@@ -485,7 +485,7 @@ void Bank_t::destroy ( )
 
 
 //----------------------------------------------------- EIDtoBID ---------------
-ID_t Bank_t::EIDtoBID (const char * eid) const
+ID_t Bank_t::EIDtoBID (const string & eid) const
 {
   ID_t bid = idmap_m . lookupBID (eid);
   if ( bid == NULL_ID || bid > last_bid_m )
@@ -702,10 +702,10 @@ void Bank_t::replace (ID_t iid, IBankable_t & obj)
   idmap_m . remove (iid);
 
   try {
-    idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), bid);
+    idmap_m . insert (obj . iid_m, obj . eid_m, bid);
   }
   catch (Exception_t) {
-    idmap_m . insert (iid, peid . c_str( ), bid);
+    idmap_m . insert (iid, peid, bid);
     throw;
   }
 
@@ -714,21 +714,21 @@ void Bank_t::replace (ID_t iid, IBankable_t & obj)
   }
   catch (Exception_t) {
     idmap_m . remove (obj . iid_m);
-    idmap_m . insert (iid, peid . c_str( ), bid);
+    idmap_m . insert (iid, peid, bid);
     throw;
   }
 }
 
 
 //----------------------------------------------------- replace ----------------
-void Bank_t::replace (const char * eid, IBankable_t & obj)
+void Bank_t::replace (const string & eid, IBankable_t & obj)
 {
   ID_t bid = EIDtoBID (eid);
   ID_t piid = idmap_m . lookupIID (eid);
   idmap_m . remove (eid);
 
   try {
-    idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), bid);
+    idmap_m . insert (obj . iid_m, obj . eid_m, bid);
   }
   catch (Exception_t) {
     idmap_m . insert (piid, eid, bid);
@@ -739,7 +739,7 @@ void Bank_t::replace (const char * eid, IBankable_t & obj)
     replaceBID (bid, obj);
   }
   catch (Exception_t) {
-    idmap_m . remove (obj . eid_m . c_str( ));
+    idmap_m . remove (obj . eid_m);
     idmap_m . insert (piid, eid, bid);
     throw;
   }

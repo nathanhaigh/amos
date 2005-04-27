@@ -165,7 +165,8 @@ public:
 
 
   //--------------------------------------------------- existsEID --------------
-  bool existsEID (const char * eid) const { return Bank_t::existsEID(eid); }
+  bool existsEID (const std::string & eid) const
+  { return Bank_t::existsEID(eid); }
 
 
   //--------------------------------------------------- existsIID --------------
@@ -207,11 +208,13 @@ public:
 
 
   //--------------------------------------------------- lookupEID --------------
-  const char * lookupEID (ID_t iid) const { return Bank_t::lookupEID(iid); }
+  const std::string & lookupEID (ID_t iid) const
+  { return Bank_t::lookupEID(iid); }
 
 
   //--------------------------------------------------- lookupIID --------------
-  ID_t lookupIID (const char * eid) const { return Bank_t::lookupIID(eid); }
+  ID_t lookupIID (const std::string & eid) const
+  { return Bank_t::lookupIID(eid); }
 
 
   //--------------------------------------------------- open -------------------

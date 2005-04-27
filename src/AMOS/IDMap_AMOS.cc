@@ -28,7 +28,7 @@ IDMap_t::HashTriple_t & IDMap_t::HashTriple_t::operator=
       c = s.c;
       iid = s.iid;
       bid = s.bid;
-      eid = SafeStrdup (s.eid);
+      eid = s.eid;
     }
   return *this;
 }
@@ -131,17 +131,17 @@ bool IDMap_t::lookupnode (ID_t key, HashNode_t * & node) const
 
 
 //----------------------------------------------------- lookupnode -------------
-bool IDMap_t::lookupnode (const char * key, HashNode_t * & node) const
+bool IDMap_t::lookupnode (const string & key, HashNode_t * & node) const
 {
-  if ( key == NULL || key[0] == NULL_CHAR )
+  if ( key . empty( ) )
     {
       node = NULL;
       return false;
     }
   for ( node = hashfunc (key); node -> next != NULL; node = node -> next )
-    if ( strcmp (node -> triple -> eid, key) == 0 )
+    if ( node -> triple -> eid == key )
       return true;
-  if ( node -> triple == NULL  ||  strcmp (node -> triple -> eid, key) != 0)
+  if ( node -> triple == NULL  ||  node -> triple -> eid != key )
     return false;
   else
     return true;
@@ -192,10 +192,10 @@ void IDMap_t::concat (const IDMap_t & s)
 
 //----------------------------------------------------- insert -----------------
 const IDMap_t::HashTriple_t * IDMap_t::insert (ID_t iid,
-					       const char * eid,
+                                               const string & eid,
 					       ID_t bid)
 {
-  if ( iid == NULL_ID  &&  (eid == NULL || eid[0] == NULL_CHAR) ) return NULL;
+  if ( iid == NULL_ID  &&  eid . empty( ) ) return NULL;
 
   HashNode_t * curri, * curre;
 
@@ -208,7 +208,7 @@ const IDMap_t::HashTriple_t * IDMap_t::insert (ID_t iid,
   if ( lookupnode (eid, curre) )
     {
       ostringstream ss;
-      ss << "Cannot insert char key '" << eid << "' multiple times";
+      ss << "Cannot insert string key '" << eid << "' multiple times";
       AMOS_THROW_ARGUMENT (ss . str( ));
     }
 
@@ -277,7 +277,7 @@ void IDMap_t::readMessage (const Message_t & msg)
             ss . ignore( );
 	    getline (ss, eid);
 	    if ( ! ss . fail( ) )
-	      insert (iid, eid . c_str( ), bid);
+	      insert (iid, eid, bid);
 	  }
 
 	if ( ! ss . eof( ) )
@@ -300,7 +300,7 @@ void IDMap_t::readMessage (const Message_t & msg)
 void IDMap_t::remove (ID_t key)
 {
   if ( key == NULL_ID ) return;
-  const char * eid = NULL;
+  string eid;
 
   HashNode_t * prev = NULL;
   HashNode_t * curr = hashfunc (key);
@@ -318,7 +318,7 @@ void IDMap_t::remove (ID_t key)
 	prev = curr;
       }
   
-  if ( eid == NULL )
+  if ( eid . empty( ) )
     return;
 
   prev = NULL;
@@ -337,9 +337,9 @@ void IDMap_t::remove (ID_t key)
 
 
 //----------------------------------------------------- remove -----------------
-void IDMap_t::remove (const char * key)
+void IDMap_t::remove (const string & key)
 {
-  if ( key == NULL || key[0] == NULL_CHAR ) return;
+  if ( key . empty( ) ) return;
   ID_t iid = NULL_ID;
 
   HashNode_t * prev = NULL;
@@ -347,7 +347,7 @@ void IDMap_t::remove (const char * key)
   if ( curr -> triple != NULL )
     for ( ; curr != NULL; curr = curr -> next )
       {
-	if ( strcmp (curr -> triple -> eid, key) == 0 )
+        if ( curr -> triple -> eid == key )
 	  {
             size_m --;
 	    if ( curr -> triple -> c > 1 )
@@ -510,7 +510,7 @@ void IDMap_t::read (istream & in)
       in . ignore( );
       getline (in, eid);
       if ( ! in . fail( ) )
-        insert (iid, eid . c_str( ), bid);
+        insert (iid, eid, bid);
     }
 
   if ( size == size_m  &&  in . eof( ) )

@@ -143,7 +143,7 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
 
   //-- Insert the ID triple into the map (may throw exception)
   triples_m . push_back
-    (idmap_m . insert (obj . iid_m, obj . eid_m . c_str( ), last_bid_m + 1));
+    (idmap_m . insert (obj . iid_m, obj . eid_m, last_bid_m + 1));
 
   try {
     //-- Add another partition if necessary
@@ -185,7 +185,7 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
   catch (Exception_t) {
     triples_m . pop_back( );
     idmap_m . remove (obj . iid_m);
-    idmap_m . remove (obj . eid_m . c_str( ));
+    idmap_m . remove (obj . eid_m);
     throw;
   }
 

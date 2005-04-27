@@ -394,7 +394,7 @@ protected:
   //!
   //! \throws ArgumentException_t
   //!
-  ID_t EIDtoBID (const char * eid) const;
+  ID_t EIDtoBID (const std::string & eid) const;
 
 
   //--------------------------------------------------- fetchBID ---------------
@@ -709,7 +709,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void assignEID (ID_t iid, const char * eid);
+  void assignEID (ID_t iid, const std::string & eid);
 
 
   //--------------------------------------------------- assignIID --------------
@@ -728,7 +728,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void assignIID (const char * eid, ID_t iid);
+  void assignIID (const std::string & eid, ID_t iid);
 
 
   //--------------------------------------------------- clean ------------------
@@ -855,7 +855,7 @@ public:
   //--------------------------------------------------- existsEID --------------
   //! \brief Returns true if EID exists in the bank
   //!
-  bool existsEID (const char * eid) const
+  bool existsEID (const std::string & eid) const
   {
     return (idmap_m . exists (eid));
   }
@@ -897,7 +897,7 @@ public:
   //--------------------------------------------------- fetch ------------------
   //! \brief Fetches a Bankable object from the bank by its EID
   //!
-  void fetch (const char * eid, IBankable_t & obj)
+  void fetch (const std::string & eid, IBankable_t & obj)
   {
     fetchBID (EIDtoBID (eid), obj);
     obj . iid_m = idmap_m . lookupIID (eid);
@@ -998,7 +998,7 @@ public:
   //!
   //! \return Returns the EID of the IID or empty string on failure
   //!
-  const char * lookupEID (ID_t iid) const
+  const std::string & lookupEID (ID_t iid) const
   {
     return idmap_m . lookupEID (iid);
   }
@@ -1009,7 +1009,7 @@ public:
   //!
   //! \return Returns the IID of the EID or NULL_ID on failure
   //!
-  ID_t lookupIID (const char * eid) const
+  ID_t lookupIID (const std::string & eid) const
   {
     return idmap_m . lookupIID (eid);
   }
@@ -1064,7 +1064,7 @@ public:
   //--------------------------------------------------- remove -----------------
   //! \brief Removes an object from the bank by its EID
   //!
-  void remove (const char * eid)
+  void remove (const std::string & eid)
   {
     removeBID (EIDtoBID (eid));
     idmap_m . remove (eid);
@@ -1100,7 +1100,7 @@ public:
   //--------------------------------------------------- replace ----------------
   //! \brief Replaces an object in the bank by its EID
   //!
-  void replace (const char * eid, IBankable_t & obj);
+  void replace (const std::string & eid, IBankable_t & obj);
 
 
   //--------------------------------------------------- setStatus --------------

@@ -50,24 +50,20 @@ public:
     uint8_t  c;               //!< reference counter
     ID_t   iid;               //!< internal AMOS ID
     ID_t   bid;               //!< bank index
-    char * eid;               //!< external ID
+    std::string eid;          //!< external ID
 
     //------------------------------------------------- HashTriple_t -----------
     //! \brief Constructs a HashTriple
     //!
-    HashTriple_t (ID_t iid_p, const char * eid_p, ID_t bid_p)
-      : c (0), iid (iid_p), bid (bid_p)
-    {
-      eid = SafeStrdup ( (eid_p == NULL ? &NULL_CHAR : eid_p) );
-    }
+    HashTriple_t (ID_t iid_p, const std::string & eid_p, ID_t bid_p)
+      : c (0), iid (iid_p), eid (eid_p), bid (bid_p)
+    { }
 
     //------------------------------------------------- ~HashTriple_t ----------
-    //! \brief Destroys a HashTriple and frees the string
+    //! \brief Destroys a HashTriple
     //!
     ~HashTriple_t ( )
-    {
-      free (eid);
-    }
+    { }
 
     //------------------------------------------------- operator= --------------
     //! \brief Deep copy of the HashTriple
@@ -205,13 +201,15 @@ private:
   //! \param key The EID key
   //! \return The appropriate bucket
   //!
-  HashNode_t * hashfunc (const char * key) const
+  HashNode_t * hashfunc (const std::string & key) const
   {
     int c;
     unsigned long h = 5381;
+    std::string::const_iterator i;
+    std::string::const_iterator end = key . end( );
 
-    while ( (c = *key ++) )
-      h = ((h << 5) + h) ^ c;     // djb2 string hash method
+    for ( i = key . begin( ); i != end; i ++ )
+      h = ((h << 5) + h) ^ (*i);
 
     return &((HashNode_t &)(eid_bucs_m [h % getBuckets( )]));
   }
@@ -240,7 +238,7 @@ private:
   //! \post Will adjust node to point to the end or right pos of the chain
   //! \return true if found, else false
   //!
-  bool lookupnode (const char * key, HashNode_t * & node) const;
+  bool lookupnode (const std::string & key, HashNode_t * & node) const;
 
 
   //--------------------------------------------------- removenode -------------
@@ -409,7 +407,7 @@ public:
   //! \param key The EID key to check
   //! \return true if key exists, otherwise false
   //!
-  bool exists (const char * key) const
+  bool exists (const std::string & key) const
   {
     HashNode_t * curr;
     return lookupnode (key, curr);
@@ -490,7 +488,9 @@ public:
   //! \throws ArgumentException_t
   //! \return Pointer to the inserted triple
   //!
-  const HashTriple_t * insert (ID_t iid, const char * eid, ID_t bid = NULL_ID);
+  const HashTriple_t * insert (ID_t iid,
+                               const std::string & eid,
+                               ID_t bid = NULL_ID);
 
 
   //--------------------------------------------------- insertEID --------------
@@ -506,7 +506,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  const HashTriple_t * insert (const char * eid, ID_t bid = NULL_ID)
+  const HashTriple_t * insert (const std::string & eid, ID_t bid = NULL_ID)
   {
     return insert (NULL_ID, eid, bid);
   }
@@ -526,7 +526,7 @@ public:
   //!
   const HashTriple_t * insert (ID_t iid, ID_t bid = NULL_ID)
   {
-    return insert (iid, NULL, bid);
+    return insert (iid, NULL_STRING, bid);
   }
 
 
@@ -540,7 +540,7 @@ public:
   //! \param key The EID key of the BID to lookup
   //! \return The BID of the lookup key or NULL_ID if key does not exist
   //!
-  ID_t lookupBID (const char * key) const
+  ID_t lookupBID (const std::string & key) const
   {
     HashNode_t * curr;
     if ( !lookupnode (key, curr) )
@@ -578,11 +578,11 @@ public:
   //! \param key The IID key of the EID to lookup
   //! \return The EID of the lookup key or empty ('\\0') if key does not exist
   //!
-  const char * lookupEID (ID_t key) const
+  const std::string & lookupEID (ID_t key) const
   {
     HashNode_t * curr;
     if ( !lookupnode (key, curr) )
-      return &NULL_CHAR;
+      return NULL_STRING;
     return curr -> triple -> eid;
   }
 
@@ -597,7 +597,7 @@ public:
   //! \param key The EID key of the IID to lookup
   //! \return The IID of the lookup key or NULL_ID if key does not exist
   //!
-  ID_t lookupIID (const char * key) const
+  ID_t lookupIID (const std::string & key) const
   {
     HashNode_t * curr;
     if ( !lookupnode (key, curr) )
@@ -648,7 +648,7 @@ public:
   //! \param key The EID key of the triple to remove
   //! \return void
   //!
-  void remove (const char * key);
+  void remove (const std::string & key);
 
 
   //--------------------------------------------------- resize -----------------
