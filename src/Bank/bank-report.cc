@@ -162,7 +162,7 @@ int main (int argc, char ** argv)
                 {
                   dots . update ((ei - OPT_ExtractEIDs . begin( )) +
                                  (ii - OPT_ExtractIIDs . begin( )));
-                  bid = bank . getIDMap( ) . lookupBID (ei -> c_str( ));
+                  bid = bank . getIDMap( ) . lookupBID (*ei);
                   if ( bid == NULL_ID )
                     {
                       cerr << "ERROR: EID '" << *ei << "' not found in '"
@@ -170,7 +170,7 @@ int main (int argc, char ** argv)
                       exitcode = EXIT_FAILURE;
                       continue;
                     }
-                  bank . fetch (ei -> c_str( ), *ui);
+                  bank . fetch (*ei, *ui);
                   PrintObject (*ui, bid);
                   cntc ++;
                 }

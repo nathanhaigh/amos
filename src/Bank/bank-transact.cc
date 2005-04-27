@@ -195,7 +195,7 @@ int main (int argc, char ** argv)
               if ( op -> getIID( ) != NULL_ID )
                 bp -> remove (op -> getIID( ));
               else if ( ! op -> getEID( ) . empty( ) )
-                bp -> remove (op -> getEID( ) . c_str( ));
+                bp -> remove (op -> getEID( ));
               else
                 AMOS_THROW_ARGUMENT ("Cannot remove object w/o IID or EID");
               cntd ++;
@@ -206,7 +206,7 @@ int main (int argc, char ** argv)
               if ( op -> getIID( ) != NULL_ID )
                 bp -> replace (op -> getIID( ), *op);
               else if ( ! op -> getEID( ) . empty( ) )
-                bp -> replace (op -> getEID( ) . c_str( ), *op);
+                bp -> replace (op -> getEID( ), *op);
               else
                 AMOS_THROW_ARGUMENT ("Cannot replace object w/o IID or EID");
               cntr ++;
