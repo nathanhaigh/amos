@@ -21,7 +21,7 @@ DataStore::DataStore()
     edge_bank(ContigEdge_t::NCODE),
     link_bank(ContigLink_t::NCODE)
 {
-  m_contigId = -1;
+  m_contigId = 0;
   m_loaded = false;
 
   m_chromodbs.push_back("/local/chromo/Chromatograms/");
@@ -45,7 +45,7 @@ int DataStore::openBank(const string & bankname)
 
     indexContigs();
 
-    m_contigId = -1;
+    m_contigId = 0;
   }
   catch (Exception_t & e)
   {
@@ -97,6 +97,7 @@ int DataStore::openBank(const string & bankname)
 void DataStore::indexReads()
 {
   m_readfraglookup.clear();
+  m_readfraglookup.resize(read_bank.getSize());
 
   cerr << "Indexing reads... ";
 
@@ -105,7 +106,7 @@ void DataStore::indexReads()
 
   while (read_bank >> red)
   {
-    m_readfraglookup[red.getIID()] = red.getFragment();
+    m_readfraglookup.insert(make_pair(red.getIID(), red.getFragment()));
   }
 
   cerr << m_readfraglookup.size() << " reads" << endl;
@@ -114,6 +115,7 @@ void DataStore::indexReads()
 void DataStore::indexFrags()
 {
   m_fragliblookup.clear();
+  m_fragliblookup.resize(frag_bank.getSize());
 
   cerr << "Indexing frags... ";
 
@@ -122,7 +124,7 @@ void DataStore::indexFrags()
 
   while (frag_bank >> frg)
   {
-    m_fragliblookup[frg.getIID()] = frg.getLibrary();
+    m_fragliblookup.insert(make_pair(frg.getIID(), frg.getLibrary()));
   }
 
   cerr << m_fragliblookup.size() << " fragments" << endl;
@@ -131,6 +133,7 @@ void DataStore::indexFrags()
 void DataStore::indexLibraries()
 {
   m_libdistributionlookup.clear();
+  m_libdistributionlookup.resize(lib_bank.getSize());
 
   cerr << "Indexing libraries... ";
 
@@ -139,7 +142,7 @@ void DataStore::indexLibraries()
 
   while (lib_bank >> lib)
   {
-    m_libdistributionlookup[lib.getIID()] = lib.getDistribution();
+    m_libdistributionlookup.insert(make_pair(lib.getIID(), lib.getDistribution()));
   }
 
   cerr << m_libdistributionlookup.size() << " libraries" << endl;
@@ -148,6 +151,7 @@ void DataStore::indexLibraries()
 void DataStore::indexMates()
 {
   m_readmatelookup.clear();
+  m_readmatelookup.resize(mate_bank.getSize() * 2);
 
   cerr << "Indexing mates... ";
 
@@ -155,8 +159,8 @@ void DataStore::indexMates()
   Matepair_t mates;
   while (mate_bank >> mates)
   {
-    m_readmatelookup[mates.getReads().first]  = pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().second, mates.getType());
-    m_readmatelookup[mates.getReads().second] = pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().first,  mates.getType());
+    m_readmatelookup.insert(make_pair(mates.getReads().first, pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().second, mates.getType())));
+    m_readmatelookup.insert(make_pair(mates.getReads().second, pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().first,  mates.getType())));
   }
 
   cerr << m_readmatelookup.size() << " mated reads" << endl;
@@ -166,6 +170,7 @@ void DataStore::indexContigs()
 {
   cerr << "Indexing contigs... ";
   m_readcontiglookup.clear();
+  m_readcontiglookup.resize(read_bank.getSize());
 
   int contigid = 1;
   contig_bank.seekg(1);
@@ -180,7 +185,7 @@ void DataStore::indexContigs()
          ti != tiling.end();
          ti++)
     {
-      m_readcontiglookup[ti->source] = contigid;
+      m_readcontiglookup.insert(make_pair(ti->source, contigid));
     }
 
     contigid = contig_bank.tellg();
@@ -193,6 +198,7 @@ void DataStore::indexScaffolds()
 {
   cerr << "Indexing scaffolds... ";
   m_contigscafflookup.clear();
+  m_contigscafflookup.resize(contig_bank.getSize());
 
   scaffold_bank.seekg(1);
   int scaffid = 1;
@@ -207,7 +213,7 @@ void DataStore::indexScaffolds()
          ti != tiling.end();
          ti++)
     {
-      m_contigscafflookup[ti->source] = scaffid;
+      m_contigscafflookup.insert(make_pair(ti->source, scaffid));
     }
 
     scaffid = scaffold_bank.tellg();

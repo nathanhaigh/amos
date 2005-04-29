@@ -9,6 +9,8 @@ using std::string;
 using std::map;
 using std::pair;
 
+
+
 class DataStore
 {
 public:
@@ -53,17 +55,17 @@ public:
 
   AMOS::Contig_t m_contig;
 
-  typedef map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::MateType_t> > MateLookupMap;
+  typedef HASHMAP::hash_map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::MateType_t> > MateLookupMap;
   MateLookupMap m_readmatelookup;
 
 
-  typedef map<AMOS::ID_t, AMOS::ID_t> IdLookup_t;
+  typedef HASHMAP::hash_map<AMOS::ID_t, AMOS::ID_t> IdLookup_t;
   IdLookup_t m_readcontiglookup;
   IdLookup_t m_fragliblookup;
   IdLookup_t m_readfraglookup;      
   IdLookup_t m_contigscafflookup;
 
-  typedef map<AMOS::ID_t, AMOS::Distribution_t> LibLookup_t;
+  typedef HASHMAP::hash_map<AMOS::ID_t, AMOS::Distribution_t> LibLookup_t;
   LibLookup_t m_libdistributionlookup;
 
 private:

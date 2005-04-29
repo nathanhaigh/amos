@@ -18,7 +18,7 @@
 
 using namespace AMOS;
 using namespace std;
-typedef std::map<ID_t, Tile_t *> SeqTileMap_t;
+typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
 class CoverageLevel
 {
@@ -29,9 +29,11 @@ public:
      m_curpos(0)
   { }
 
+  typedef std::multiset<int> EndPoints;
+
   void addEndpoints(int curloffset, int curroffset)
   {
-    multiset<int>::iterator vi, vi2;
+    EndPoints::iterator vi, vi2;
 
     // find end points that have already passed
     vi = m_endpoints.begin();
@@ -62,7 +64,7 @@ public:
 
   void finalize()
   {
-    multiset<int>::iterator vi, vi2;
+    EndPoints::iterator vi, vi2;
 
     // Handle remaining end points
     vi = m_endpoints.begin();
@@ -90,7 +92,7 @@ public:
   int m_maxdepth;
   int m_curpos;
 
-  multiset<int> m_endpoints;
+  EndPoints m_endpoints;
 };
 
 struct FeatOrderCmp
@@ -830,7 +832,7 @@ void InsertWidget::paintCanvas()
   {
     unsigned int type = 0;
 
-    map<ID_t, Distribution_t>::const_iterator li;
+    DataStore::LibLookup_t::iterator li;
     for (li =  m_datastore->m_libdistributionlookup.begin();
          li != m_datastore->m_libdistributionlookup.end();
          li++)
