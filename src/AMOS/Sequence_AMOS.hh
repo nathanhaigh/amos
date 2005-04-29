@@ -36,14 +36,12 @@ namespace AMOS {
 class Sequence_t : public Universal_t
 {
 
-private:
+protected:
 
   uint8_t * seq_m;      //!< compressed seq and qual data or uncompressed seq
   uint8_t * qual_m;     //!< uncompressed qual data
   Size_t length_m;      //!< length of the sequence and quality data
 
-
-protected:
 
   static const uint8_t COMPRESS_BIT  = 0x1;   //!< compressed sequence flag
   static const uint8_t ADENINE_BITS  = 0x0;   //!< 'A' bit

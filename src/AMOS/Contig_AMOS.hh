@@ -28,7 +28,7 @@ namespace AMOS {
 //! gap characters in the consensus sequence instead of as a position list.
 //! The ungapped version of the consensus can be generated with the
 //! getUngapped... methods. Gap characters should be '-' but '*' is also
-//! acceptable. The compress and uncompress methods inherited from Sequence_t
+//! accepted. The compress and uncompress methods inherited from Sequence_t
 //! are made private because they would corrupt the gap characters.
 //!
 //==============================================================================
@@ -37,25 +37,20 @@ class Contig_t : public Sequence_t
   
 private:
 
+  std::vector<Pos_t> gaps_m;          //!< consensus gaps
   std::vector<Tile_t> reads_m;        //!< read tiling
 
 
   //--------------------------------------------------- compress ---------------
   //! \brief Reimplemented from Sequence_t as private to prohibit use
   //!
-  void compress ( )
-  {
-    Sequence_t::compress( );
-  }
+  void compress ( );
 
 
   //--------------------------------------------------- uncompress -------------
   //! \brief Reimplemented from Sequence_t as private to prohibit use
   //!
-  void uncompress ( )
-  {
-    Sequence_t::uncompress( );
-  }
+  void uncompress ( );
 
 
 protected:
@@ -105,8 +100,35 @@ public:
   virtual void clear ( )
   {
     Sequence_t::clear( );
+    gaps_m . clear( );
     reads_m . clear( );
   }
+
+
+  //--------------------------------------------------- gap2ungap --------------
+  //! \brief Translates a gapped position to an ungapped position
+  //!
+  //! This method requires linear time. If the gapped position points to a gap
+  //! the returned ungapped position will point to the position immediately
+  //! following the gap.
+  //!
+  //! \param The gapped position
+  //! \pre gap < getLength( )
+  //! \return The ungapped position
+  //!
+  Pos_t gap2ungap (Pos_t gap) const;
+
+
+  //--------------------------------------------------- ungap2gap --------------
+  //! \brief Translates an ungapped position to a gapped position
+  //!
+  //! This method requires linear time.
+  //!
+  //! \param The ungapped position
+  //! \pre ungap < getUngappedLength( )
+  //! \return The gapped position
+  //!
+  Pos_t ungap2gap (Pos_t ungap) const;
 
 
   //--------------------------------------------------- getNCode ---------------
@@ -143,6 +165,17 @@ public:
   //! \return The span of the layout
   //!
   Size_t getSpan ( ) const;
+
+
+  //--------------------------------------------------- getUngappedLength ------
+  //! \brief Get the ungapped consensus length
+  //!
+  //! Unlike getLength( ) which is constant time, this method requires linear
+  //! time.
+  //!
+  //! \return The ungapped length of the consensus sequence
+  //!
+  Size_t getUngappedLength ( ) const;
 
 
   //--------------------------------------------------- getUngappedQualString --

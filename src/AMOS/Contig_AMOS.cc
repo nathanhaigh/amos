@@ -19,6 +19,32 @@ using namespace std;
 const NCode_t Contig_t::NCODE = M_CONTIG;
 
 
+//----------------------------------------------------- gap2ungap --------------
+Pos_t Contig_t::gap2ungap (Pos_t gap) const
+{
+  Pos_t retval = gap;
+
+  for (Pos_t i = 0; i < gap; ++ i )
+    if ( ! isalpha (getBase (i) . first) )
+      -- retval;
+
+  return retval;
+}
+
+
+//----------------------------------------------------- ungap2gap --------------
+Size_t Contig_t::ungap2gap (Pos_t ungap) const
+{
+  Pos_t retval = ungap;
+
+  for (Pos_t i = 0; i <= retval; ++ i )
+    if ( ! isalpha (getBase (i) . first) )
+      ++ retval;
+
+  return retval;
+}
+
+
 //----------------------------------------------------- getSpan ----------------
 Size_t Contig_t::getSpan ( ) const
 {
@@ -46,6 +72,19 @@ Size_t Contig_t::getSpan ( ) const
     }
 
   return hi - lo;
+}
+
+
+//----------------------------------------------------- getUngappedLength ------
+Size_t Contig_t::getUngappedLength( ) const
+{
+  Size_t retval = length_m;
+
+  for (Pos_t i = 0; i < length_m; ++ i )
+    if ( ! isalpha (getBase (i) . first) )
+      -- retval;
+
+  return retval;
 }
 
 
