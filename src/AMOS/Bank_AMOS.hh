@@ -943,6 +943,16 @@ public:
   }
 
 
+  //--------------------------------------------------- getMaxIID --------------
+  //! \brief Searches through the bank for the largest IID
+  //!
+  //! \note O(n) time complexity
+  //!
+  //! \returns The maximum IID in the bank
+  //!
+  ID_t getMaxIID ( ) const;
+
+
   //--------------------------------------------------- getSize ----------------
   //! \brief Get the size of the bank, i.e. the number of stored records
   //!

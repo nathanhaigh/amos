@@ -533,6 +533,19 @@ void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
 }
 
 
+//----------------------------------------------------- getMaxIID --------------
+ID_t Bank_t::getMaxIID ( ) const
+{
+  ID_t max = NULL_ID;
+  IDMap_t::const_iterator i;
+
+  for ( i = idmap_m . begin( ); i != idmap_m . end( ); ++ i )
+    if ( i -> iid > max ) max = i -> iid;
+
+  return max;
+}
+
+
 //----------------------------------------------------- IIDtoBID ---------------
 ID_t Bank_t::IIDtoBID (ID_t iid) const
 {
