@@ -270,6 +270,7 @@ int main (int argc, char ** argv)
 
 
     cerr << "Finding reads that overlap [" << rangeStart << "," << rangeEnd << "]" << endl;
+    int count = 0;
     vector<Tile_t>::const_iterator ri;
     for (ri = rtiling.begin(); ri != rtiling.end(); ri++)
     {
