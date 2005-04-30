@@ -3,6 +3,7 @@
 
 #include <string>
 #include <qframe.h>
+#include "AlignmentInfo.hh"
 
 class ConsensusField : public QFrame
 {
@@ -11,6 +12,7 @@ class ConsensusField : public QFrame
 public:
     ConsensusField(const std::string & consensus,
                    const std::string & cstatsus,
+                   AlignmentInfo * ai,
                    int & gindex,
                    QWidget *parent=0,
                    const char *name=0);
@@ -34,6 +36,7 @@ protected:
 private:
     const std::string & m_consensus;
     const std::string & m_cstatus;
+    AlignmentInfo * m_alignment;
     int & m_gindex;
     int m_fontsize;
     bool m_shownumbers;

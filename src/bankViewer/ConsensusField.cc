@@ -18,12 +18,14 @@ static int max (int a, int b)
 
 ConsensusField::ConsensusField(const string & cons,
                                const string & cstatus,
+                               AlignmentInfo * ai,
                                int & gindex,
                                QWidget * parent,
                                const char * name)
    :QFrame(parent, name),
     m_consensus(cons),
     m_cstatus(cstatus),
+    m_alignment(ai),
     m_gindex(gindex)
 {
   m_shownumbers = 0;
@@ -125,6 +127,12 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
   for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
   {
+    int shifted = gindex;
+    if (m_alignment)
+    {
+      shifted = m_alignment->getContigPos(gindex);
+    }
+
     char b = m_consensus[gindex];
     s = b;
 
@@ -141,11 +149,19 @@ void ConsensusField::paintEvent(QPaintEvent * event)
                m_fontsize, m_lineheight, 
                Qt::AlignHCenter | Qt::AlignBottom, s);
 
-    if (m_cstatus[gindex] == 'X')
+    if (m_cstatus[gindex] == 'X' || m_cstatus[gindex] == '*')
     {
       p.setBrush(Qt::SolidPattern);
-      p.setPen(Qt::black);
-      p.setBrush(Qt::black);
+      if (m_cstatus[gindex] == '*')
+      {
+        p.setPen(Qt::red);
+        p.setBrush(Qt::red);
+      }
+      else
+      {
+        p.setPen(Qt::black);
+        p.setBrush(Qt::black);
+      }
 
       p.drawEllipse(xcoord+m_fontsize/2-m_diam/2-1, m_discoffset,
                     m_diam, m_diam);
@@ -160,7 +176,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
     p.setPen(Qt::black);
 
-    int n = gindex%10;
+    int n = shifted%10;
     int scaledfont = (int)max((int)(m_fontsize*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
 
@@ -174,9 +190,9 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     }
 
     // ticks and labels
-    if (n==0)
+    if (n==0 && m_consensus[gindex] != '*')
     {
-      s = QString::number(gindex);
+      s = QString::number(m_alignment->getContigPos(gindex));
 
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
                  xcoord+m_fontsize/2, m_lineoffset+2);
@@ -185,7 +201,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
                  100, m_fontsize*2, 
                  Qt::AlignHCenter | Qt::AlignCenter, s);
     }
-    else if (n==5)
+    else if (n==5 && m_consensus[gindex] != '*')
     {
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
                  xcoord+m_fontsize/2, m_lineoffset+2);
@@ -196,8 +212,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   {
     QPointArray indicator (3);
 
-    int hbase = m_tilehoffset + 10*m_basewidth + .25*m_fontsize;
-    int hstep = .25*m_fontsize;
+    int hbase = (int)(m_tilehoffset + 10*m_basewidth + .25*m_fontsize);
+    int hstep = (int)(.25*m_fontsize);
 
     indicator[0] = QPoint(hbase, 1);
     indicator[1] = QPoint(hbase + 2*hstep+1, 1);

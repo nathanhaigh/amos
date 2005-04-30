@@ -5,6 +5,7 @@
 #include "ConsensusField.hh"
 #include "RenderSeq.hh"
 #include "UIElements.hh"
+#include <qregexp.h>
 
 using namespace std;
 using namespace AMOS;
@@ -31,9 +32,14 @@ struct SNPTilingOrderCmp
 int SNPTilingOrderCmp::snpposition(0);
 
 
-TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * name, WFlags f)
+TilingFrame::TilingFrame(DataStore * datastore, 
+                         AlignmentInfo * ai,
+                         QWidget * parent, 
+                         const char * name, 
+                         WFlags f)
   :QFrame(parent, name, f),
-   m_datastore(datastore)
+   m_datastore(datastore),
+   m_alignment(ai)
 {
   m_gindex = 0;
   m_fontsize = 10;
@@ -44,7 +50,7 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
   toggleDisplayAllChromo(false);
   m_nextDiscrepancyBuffer = 10;
 
-  resize(500, 500);
+  resize(500, 100);
   m_sv = new QScrollView(this, "tilingscroll");
   m_sv->setHScrollBarMode(QScrollView::AlwaysOff);
   
@@ -52,6 +58,7 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
                                   m_renderedSeqs,
                                   m_consensus,
                                   m_cstatus,
+                                  m_alignment,
                                   m_gindex,
                                   m_fontsize,
                                   m_sv->viewport(),
@@ -60,7 +67,7 @@ TilingFrame::TilingFrame(DataStore * datastore, QWidget * parent, const char * n
   m_sv->addChild(m_tilingfield);
   m_sv->setPaletteBackgroundColor(UIElements::color_tiling);
 
-  m_consfield = new ConsensusField(m_consensus, m_cstatus,
+  m_consfield = new ConsensusField(m_consensus, m_cstatus, m_alignment,
                                    m_gindex, this, "cons");
 
   QBoxLayout * layout = new QVBoxLayout(this);
@@ -157,6 +164,21 @@ void TilingFrame::setContigId(int contigId)
       m_cstatus.resize(m_consensus.size(), ' ');
       m_renderedSeqs.clear();
 
+      if (m_alignment)
+      {
+        for (unsigned int i = 0; i < m_alignment->m_gaps.size(); i++)
+        {
+          m_consensus.insert(i+m_alignment->m_gaps[i], 1, '*');
+          m_cstatus.insert  (i+m_alignment->m_gaps[i], 1, '*');
+        }
+
+        m_consensus.insert(0, m_alignment->m_startshift, '*');
+        m_cstatus.insert  (0, m_alignment->m_startshift, '*');
+
+        m_consensus.append(m_alignment->m_endshift, '*');
+        m_cstatus.append  (m_alignment->m_endshift, '*');
+      }
+
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
 
       m_loadedStart = m_loadedEnd = -1;
@@ -194,8 +216,8 @@ void TilingFrame::loadContigRange(int gindex)
   gindex = min(gindex, m_consensus.size()-m_displaywidth+1);
   m_gindex = gindex;
 
-  int grangeStart = m_gindex;
-  int grangeEnd   = min(m_gindex + m_displaywidth+200, (int)m_consensus.length());
+  int grangeStart = m_alignment->getContigPos(m_gindex);
+  int grangeEnd   = m_alignment->getContigPos(min(m_gindex + m_displaywidth+200, (int)m_consensus.length()));
 
   if (grangeStart < m_loadedStart || grangeEnd > m_loadedEnd)
   {
@@ -240,11 +262,16 @@ void TilingFrame::loadContigRange(int gindex)
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
         {
-          if      (m_cstatus[gindex] == ' ')                   
-            { m_cstatus[gindex] = rendered.base(gindex); }
+          int global = m_alignment->getGlobalPos(gindex);
+          if (m_cstatus[global] == '*')
+          {
+            cerr << "err" << endl;
+          }
+          else if (m_cstatus[global] == ' ')                   
+            { m_cstatus[global] = rendered.base(gindex); }
 
-          else if (toupper(m_cstatus[gindex]) != toupper(rendered.base(gindex))) 
-            { m_cstatus[gindex] = 'X'; }
+          else if (toupper(m_cstatus[global]) != toupper(rendered.base(gindex))) 
+            { m_cstatus[global] = 'X'; }
         }
       }
     }
@@ -357,12 +384,12 @@ void TilingFrame::advancePrevDiscrepancy()
 
 void TilingFrame::highlightRead(int iid)
 {
-  if (iid != NULL_ID)
+  if ((ID_t)iid != NULL_ID)
   {
     vector<Tile_t>::iterator vi;
     for (vi =  m_tiling.begin(); vi != m_tiling.end(); vi++)
     {
-      if (vi->source == iid)
+      if (vi->source == (ID_t)iid)
       {
         setGindex(vi->offset);
       }
@@ -370,7 +397,6 @@ void TilingFrame::highlightRead(int iid)
   }
 }
 
-#include <qregexp.h>
 
 void TilingFrame::searchString(const QString & str, bool forward)
 {

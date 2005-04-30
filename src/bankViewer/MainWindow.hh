@@ -92,7 +92,12 @@ signals:
   void toggleDisplayAllChromo(bool);
   void setFontSize(int);
 
+  void advanceNextDiscrepancy();
+  void advancePrevDiscrepancy();
+
 private:
+  void initializeTiling(TilingFrame * tiling);
+
   QSpinBox * m_contigid;
   QSpinBox * m_gspin;
   QScrollBar * m_slider;
@@ -103,6 +108,7 @@ private:
   QMainWindow * m_featPicker;
   InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;
+  TilingFrame * m_tiling2;
   CGraphWindow * m_cgraphWindow;
 
   QPopupMenu * m_options;

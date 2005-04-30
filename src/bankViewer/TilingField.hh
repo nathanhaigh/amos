@@ -4,6 +4,7 @@
 #include <qwidget.h>
 #include <qtimer.h>
 #include "RenderSeq.hh"
+#include "AlignmentInfo.hh"
 
 #include "DataStore.hh"
 
@@ -15,6 +16,7 @@ public:
                 std::vector<RenderSeq_t> & renderedSeqs,
                 const std::string & consensus,
                 const std::string & cstatus,
+                AlignmentInfo * ai,
                 int & gindex,
                 int & fontsize,
                 QWidget *parent=0, 
@@ -44,6 +46,13 @@ protected:
 private:
     int getReadCov(int y);
 
+    const std::string & m_consensus;
+    const std::string & m_cstatus;
+    AlignmentInfo * m_alignment;
+
+    std::vector<RenderSeq_t> & m_renderedSeqs;
+    DataStore * m_datastore;
+
     int m_clickstate;
     QTimer * m_clickTimer;
     int m_yclick;
@@ -59,17 +68,13 @@ private:
     int m_tracespace;
     int m_snpcoloring;
 
-    const std::string & m_consensus;
-    const std::string & m_cstatus;
 
     bool m_highlightdiscrepancy;
     bool m_lowquallower;
     bool m_basecolors;
     bool m_fullseq;
 
-    std::vector<RenderSeq_t> & m_renderedSeqs;
 
-    DataStore * m_datastore;
 };
 
 

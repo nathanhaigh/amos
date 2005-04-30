@@ -7,9 +7,9 @@
 #include "TilingField.hh"
 #include "ConsensusField.hh"
 #include <qscrollview.h>
+#include "AlignmentInfo.hh"
 
 #include "DataStore.hh"
-
 
 
 class TilingFrame: public QFrame
@@ -18,6 +18,7 @@ class TilingFrame: public QFrame
 
 public:
   TilingFrame::TilingFrame(DataStore * datastore,
+                           AlignmentInfo * ai,
                            QWidget * parent = 0,
                            const char * name = 0,  
                            WFlags f = 0);
@@ -57,6 +58,9 @@ private:
 
     void loadContigRange(int gindex);
 
+    DataStore * m_datastore;
+    AlignmentInfo * m_alignment;
+
     int m_fontsize;
     int m_gindex;
     int m_displaywidth;
@@ -74,7 +78,6 @@ private:
     std::string m_consensus;
     std::string m_cstatus;
 
-    DataStore * m_datastore;
     std::vector<RenderSeq_t> m_renderedSeqs;
 
     TilingField * m_tilingfield;

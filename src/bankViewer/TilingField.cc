@@ -24,15 +24,17 @@ TilingField::TilingField(DataStore * datastore,
                          vector<RenderSeq_t> & renderedSeqs,
                          const string & consensus,
                          const string & cstatus,
+                         AlignmentInfo * ai,
                          int & gindex,
                          int & fontsize,
                          QWidget *parent, const char *name )
         : QWidget( parent, name ),
-          m_fontsize(fontsize),
-          m_gindex(gindex),
           m_consensus(consensus),
           m_cstatus(cstatus),
-          m_renderedSeqs(renderedSeqs)
+          m_alignment(ai),
+          m_renderedSeqs(renderedSeqs),
+          m_fontsize(fontsize),
+          m_gindex(gindex)
 {
   m_datastore = datastore;
   m_width=600;
@@ -157,6 +159,9 @@ void TilingField::paintEvent( QPaintEvent * )
   Pos_t grangeStart = m_gindex;
   Pos_t grangeEnd = min(m_gindex + displaywidth, m_consensus.size()-1);
 
+  Pos_t srangeStart = m_alignment->getContigPos(grangeStart);
+  Pos_t srangeEnd = m_alignment->getContigPos(grangeEnd);
+
 
 
   // Compute the exact height we want
@@ -169,13 +174,13 @@ void TilingField::paintEvent( QPaintEvent * )
        ri != m_renderedSeqs.end(); 
        ri++)
   {
-    int hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+    int hasOverlap = RenderSeq_t::hasOverlap(srangeStart, srangeEnd, 
                                              ri->m_loffset, ri->gappedLen(),
                                              clen);
 
     if (m_fullseq)
     {
-      hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+      hasOverlap = RenderSeq_t::hasOverlap(srangeStart, srangeEnd, 
                                            ri->m_lfoffset, ri->fullLen(),
                                            clen);
     }
@@ -216,11 +221,11 @@ void TilingField::paintEvent( QPaintEvent * )
   int tridim = m_fontsize/2;
   int trioffset = m_fontsize/2;
 
-  emit setTilingVisibleRange(m_datastore->m_contigId, grangeStart, grangeEnd);
+  emit setTilingVisibleRange(m_datastore->m_contigId, srangeStart, srangeEnd);
 
   #if DEBUG
   cerr << "paintTField:" << m_renderedSeqs.size()
-       << " [" << grangeStart << "," << grangeEnd << "]" << endl;
+       << " [" << srangeStart << "," << srangeEnd << "]" << endl;
   #endif
 
   for (ri =  m_renderedSeqs.begin();
@@ -229,15 +234,21 @@ void TilingField::paintEvent( QPaintEvent * )
   {
     if (ri->m_displaystart != -1)
     {
-      int hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+      int hasOverlap = RenderSeq_t::hasOverlap(srangeStart, srangeEnd, 
                                                ri->m_loffset, ri->gappedLen(),
                                                clen);
 
       if (m_fullseq)
       {
-        hasOverlap = RenderSeq_t::hasOverlap(grangeStart, grangeEnd, 
+        hasOverlap = RenderSeq_t::hasOverlap(srangeStart, srangeEnd, 
                                              ri->m_lfoffset, ri->fullLen(),
                                              clen);
+      }
+
+      if (!hasOverlap)
+      {
+        cerr << "wtf?" << endl;
+
       }
 
       ldcov = ri->m_displaystart;
@@ -307,23 +318,23 @@ void TilingField::paintEvent( QPaintEvent * )
           p.setPen(UIElements::color_tilingtrim);
           p.setBrush(UIElements::color_tilingtrim);
 
-          if (grangeStart < ri->m_loffset)
+          if (srangeStart < ri->m_loffset)
           {
-            int left  = max(grangeStart, ri->m_lfoffset);
-            int right = min(ri->m_loffset-1, grangeEnd);
+            int left  = max(srangeStart, ri->m_lfoffset);
+            int right = min(ri->m_loffset-1, srangeEnd);
 
-            int start = (left - grangeStart) * basewidth;
+            int start = (left - srangeStart) * basewidth;
 
             p.drawRect(tilehoffset + start, ldcov + 2, 
                        (right - left + 1) * basewidth, readheight - 4);
           }
 
-          if (grangeEnd > ri->m_roffset)
+          if (srangeEnd > ri->m_roffset)
           {
-            int left = max(grangeStart, ri->m_roffset+1);
-            int right = min(ri->m_rfoffset, grangeEnd);
+            int left = max(srangeStart, ri->m_roffset+1);
+            int right = min(ri->m_rfoffset, srangeEnd);
 
-            int start = (left - grangeStart) * basewidth;
+            int start = (left - srangeStart) * basewidth;
 
             p.drawRect(tilehoffset + start, ldcov + 2, 
                        (right - left + 1 ) * basewidth, readheight - 4);
@@ -337,8 +348,15 @@ void TilingField::paintEvent( QPaintEvent * )
         {
           int hoffset = tilehoffset + (gindex-grangeStart)*basewidth;
 
-          int qv = ri->qv(gindex, m_fullseq);
-          char b = ri->base(gindex, m_fullseq);
+          int shifted = m_alignment->getContigPos(gindex);
+
+          if (m_consensus[gindex] == '*')
+          {
+            continue;
+          }
+
+          int qv = ri->qv(shifted, m_fullseq);
+          char b = ri->base(shifted, m_fullseq);
 
           if (qv < 30 && m_lowquallower) { b = tolower(b); }
           else                           { b = toupper(b); }
@@ -422,19 +440,34 @@ void TilingField::paintEvent( QPaintEvent * )
                 rightboundary = ri->m_rfoffset;
               }
 
+              leftboundary = m_alignment->getGlobalPos(leftboundary);
+              rightboundary = m_alignment->getGlobalPos(rightboundary);
+
               // go beyond the range so the entire peak will be drawn
               for (int gindex =  max(leftboundary, grangeStart-1); 
                        gindex <= min(rightboundary, grangeEnd+1); 
                        gindex++)
               {
-                int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
+                if (m_consensus[gindex] == '*')
+                {
+                  continue;
+                }
 
-                int peakposition     = ri->pos(gindex, m_fullseq);
-                int nextpeakposition = ri->pos(gindex+1, m_fullseq);
+                int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
+                int shifted = m_alignment->getContigPos(gindex);
+
+                int peakposition     = ri->pos(shifted, m_fullseq);
+                int nextpeakposition = ri->pos(shifted+1, m_fullseq);
+
+                int count = 1;
+                while (m_consensus[gindex+count] == '*')
+                {
+                  count++;
+                }
 
                 // in 1 basewidth worth of pixels, cover hdelta worth of trace
                 int    hdelta = nextpeakposition - peakposition;
-                double hscale = ((double)(basewidth))/hdelta; // rc negative
+                double hscale = ((double)(count*basewidth))/hdelta; // rc negative
                       
                 int tpos = peakposition;
                 while ((!ri->m_rc && tpos < nextpeakposition) ||

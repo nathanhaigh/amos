@@ -10,6 +10,7 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qvbox.h>
+#include <qsplitter.h>
 
 #include "TilingFrame.hh"
 #include "InsertWindow.hh"
@@ -35,8 +36,29 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_cgraphWindow = NULL;
 
   QVBox * vbox = new QVBox(this, "vbox");
+  QSplitter * splitter = new QSplitter(Qt::Vertical, vbox, "spliter");
 
-  m_tiling = new TilingFrame(&m_datastore, vbox, "tilingframe");
+  DataStore * datastore2 = new DataStore();
+  datastore2->openBank("butcher/100.bnk");
+  datastore2->setContigId(1);
+  datastore2->m_db = "GB12";
+
+  AlignmentInfo * ai = new AlignmentInfo();
+  ai->m_gaps.push_back(286);
+  ai->m_gaps.push_back(286);
+  m_tiling  = new TilingFrame(&m_datastore, ai, splitter, "tilingframe");
+
+  ai = new AlignmentInfo();
+  ai->m_startshift = 99;
+  ai->m_endshift = 38000;
+  ai->m_gaps.push_back(172);
+  ai->m_gaps.push_back(176);
+  ai->m_gaps.push_back(176);
+  ai->m_gaps.push_back(176);
+  m_tiling2 = new TilingFrame(datastore2, ai, splitter, "tilingframe2");
+
+  initializeTiling(m_tiling);
+  initializeTiling(m_tiling2);
 
   m_slider = new QScrollBar(Horizontal, vbox, "slider");
   m_slider->setTracking(1);
@@ -93,6 +115,12 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   bNextDisc->setAccel(CTRL + Key_Space);
   bNextDisc->setMinimumWidth(20);
 
+  connect(bNextDisc, SIGNAL(clicked()),
+          this,      SIGNAL(advanceNextDiscrepancy()));
+
+  connect(bPrevDisc, SIGNAL(clicked()),
+          this,      SIGNAL(advancePrevDiscrepancy()));
+
   QAccel *a = new QAccel( this );
   a->connectItem(a->insertItem(Key_PageUp),   this, SLOT(jumpFGindex()) );
   a->connectItem(a->insertItem(Key_PageDown), this, SLOT(jumpPGindex()) );
@@ -148,8 +176,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
 
   // gindex
-  connect(this,     SIGNAL(gindexChanged(int)),
-          m_tiling, SLOT(setGindex(int)));
 
   connect(this,     SIGNAL(gindexChanged(int)),
           m_slider, SLOT(setValue(int)));
@@ -157,9 +183,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(this,     SIGNAL(gindexChanged(int)),
           m_gspin, SLOT(setValue(int)));
 
-  connect(m_tiling, SIGNAL(gindexChanged(int)),
-          this,     SLOT(setGindex(int)));
-          
   connect(m_gspin, SIGNAL(valueChanged(int)),
           this,     SLOT(setGindex(int)));
   
@@ -167,11 +190,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
           this,     SLOT(setGindex(int)));
 
 
-  // discrepancy advance
-  connect(bNextDisc, SIGNAL(clicked()),
-          m_tiling,    SLOT(advanceNextDiscrepancy()));
-  connect(bPrevDisc, SIGNAL(clicked()),
-          m_tiling,    SLOT(advancePrevDiscrepancy()));
 
   // contigid
   connect(m_contigid, SIGNAL(valueChanged(int)),
@@ -180,15 +198,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(this,       SIGNAL(contigIdSelected(int)),
           m_contigid, SLOT(setValue(int)));
 
-  connect(this,       SIGNAL(contigIdSelected(int)),
-          m_tiling,   SLOT(setContigId(int)));
-
-  // mainwindow <-> tiling
-  connect(m_tiling, SIGNAL(setGindexRange(int, int)),
-          this,     SLOT(setGindexRange(int, int)));
-
-  connect(this,     SIGNAL(highlightRead(int)),
-          m_tiling, SLOT(highlightRead(int)));
 
   // dbpick <-> tiling
   connect(dbpick, SIGNAL(textChanged(const QString &)),
@@ -196,41 +205,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   connect(this, SIGNAL(chromoDBSet(const QString &)),
           dbpick, SLOT(setText(const QString &)));
-
-
-
-  connect(this,        SIGNAL(toggleDisplayAllChromo(bool)),
-          m_tiling,    SLOT(toggleDisplayAllChromo(bool)));
-
-  connect(this,        SIGNAL(setFontSize(int)),
-          m_tiling,    SLOT(setFontSize(int)));
-
-  connect(this,        SIGNAL(toggleDisplayQV(bool)),
-          m_tiling,    SIGNAL(toggleDisplayQV(bool)));
-
-  connect(this,        SIGNAL(toggleLowQualityLowerCase(bool)),
-          m_tiling,    SIGNAL(toggleLowQualityLowerCase(bool)));
-
-  connect(this,        SIGNAL(toggleShowFullRange(bool)),
-          m_tiling,    SIGNAL(toggleShowFullRange(bool)));
-
-  connect(this,        SIGNAL(toggleHighlightDiscrepancy(bool)),
-          m_tiling,    SIGNAL(toggleHighlightDiscrepancy(bool)));
-
-  connect(this,        SIGNAL(toggleShowNumbers(bool)),
-          m_tiling,    SIGNAL(toggleShowNumbers(bool)));
-
-  connect(this,        SIGNAL(toggleBaseColors(bool)),
-          m_tiling,    SIGNAL(toggleBaseColors(bool)));
-
-  connect(this,        SIGNAL(toggleShowIndicator(bool)),
-          m_tiling,    SIGNAL(toggleShowIndicator(bool)));
-
-  connect(this,        SIGNAL(toggleSNPColoring(bool)),
-          m_tiling,    SIGNAL(toggleSNPColoring(bool)));
-
-  connect(this,        SIGNAL(searchString(const QString &, bool)),
-          m_tiling,    SLOT(searchString(const QString &, bool)));
 
 
   // Set defaults
@@ -246,6 +220,63 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   toggleShowIndicator();
   toggleHighlightDiscrepancy();
+}
+
+void MainWindow::initializeTiling(TilingFrame * tiling)
+{
+  connect(this,      SIGNAL(gindexChanged(int)),
+          tiling,    SLOT(setGindex(int)));
+
+  connect(tiling,    SIGNAL(gindexChanged(int)),
+          this,      SLOT(setGindex(int)));
+
+  connect(this,      SIGNAL(advanceNextDiscrepancy()),
+          tiling,    SLOT(advanceNextDiscrepancy()));
+
+  connect(this,      SIGNAL(advancePrevDiscrepancy()),
+          tiling,    SLOT(advancePrevDiscrepancy()));
+
+  connect(this,      SIGNAL(contigIdSelected(int)),
+          tiling,    SLOT(setContigId(int)));
+
+  connect(tiling,    SIGNAL(setGindexRange(int, int)),
+          this,      SLOT(setGindexRange(int, int)));
+
+  connect(this,      SIGNAL(highlightRead(int)),
+          tiling,    SLOT(highlightRead(int)));
+
+  connect(this,      SIGNAL(toggleDisplayAllChromo(bool)),
+          tiling,    SLOT(toggleDisplayAllChromo(bool)));
+
+  connect(this,      SIGNAL(setFontSize(int)),
+          tiling,    SLOT(setFontSize(int)));
+
+  connect(this,      SIGNAL(toggleDisplayQV(bool)),
+          tiling,    SIGNAL(toggleDisplayQV(bool)));
+
+  connect(this,      SIGNAL(toggleLowQualityLowerCase(bool)),
+          tiling,    SIGNAL(toggleLowQualityLowerCase(bool)));
+
+  connect(this,      SIGNAL(toggleShowFullRange(bool)),
+          tiling,    SIGNAL(toggleShowFullRange(bool)));
+
+  connect(this,      SIGNAL(toggleHighlightDiscrepancy(bool)),
+          tiling,    SIGNAL(toggleHighlightDiscrepancy(bool)));
+
+  connect(this,      SIGNAL(toggleShowNumbers(bool)),
+          tiling,    SIGNAL(toggleShowNumbers(bool)));
+
+  connect(this,      SIGNAL(toggleBaseColors(bool)),
+          tiling,    SIGNAL(toggleBaseColors(bool)));
+
+  connect(this,      SIGNAL(toggleShowIndicator(bool)),
+          tiling,    SIGNAL(toggleShowIndicator(bool)));
+
+  connect(this,      SIGNAL(toggleSNPColoring(bool)),
+          tiling,    SIGNAL(toggleSNPColoring(bool)));
+
+  connect(this,      SIGNAL(searchString(const QString &, bool)),
+          tiling,    SLOT(searchString(const QString &, bool)));
 
 }
 
@@ -258,7 +289,7 @@ void MainWindow::initializeSimpleServer(int port)
 
 void MainWindow::newConnect(ClientSocket * s)
 {
-  cerr << "New Connection" << endl;
+  statusBar()->message("New Connection");
 
   connect(s,           SIGNAL(logText(const QString &)),
           statusBar(), SLOT(message(const QString &)));
@@ -374,7 +405,7 @@ void MainWindow::showScaffoldPicker()
 void MainWindow::setContigId(int contigId)
 {
   if ((contigId != 0) &&
-      (contigId != m_datastore.m_contigId) &&
+      ((AMOS::ID_t)contigId != m_datastore.m_contigId) &&
       !m_datastore.setContigId(contigId))
   {
     QString s = "Viewing ";
