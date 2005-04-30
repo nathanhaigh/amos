@@ -19,7 +19,9 @@ bin_PROGRAMS = \
 	updateBankPositions \
 	extractContig \
 	bank2fasta \
-        findMissingMates
+    findMissingMates \
+    updateClrRanges
+
 #       dumpFeatures
 #	loadFeatures 
 
@@ -91,6 +93,13 @@ updateBankPositions_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 updateBankPositions_SOURCES = \
 	updateBankPositions.cc
+
+##-- updateClrRanges
+updateClrRanges_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+updateClrRanges_SOURCES = \
+	updateClrRanges.cc
 
 ##-- extractContig
 extractContig_LDADD = \
