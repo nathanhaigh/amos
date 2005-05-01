@@ -164,20 +164,17 @@ void TilingFrame::setContigId(int contigId)
       m_cstatus.resize(m_consensus.size(), ' ');
       m_renderedSeqs.clear();
 
-      if (m_alignment)
+      for (unsigned int i = 0; i < m_alignment->m_gaps.size(); i++)
       {
-        for (unsigned int i = 0; i < m_alignment->m_gaps.size(); i++)
-        {
-          m_consensus.insert(i+m_alignment->m_gaps[i], 1, '*');
-          m_cstatus.insert  (i+m_alignment->m_gaps[i], 1, '*');
-        }
-
-        m_consensus.insert(0, m_alignment->m_startshift, '*');
-        m_cstatus.insert  (0, m_alignment->m_startshift, '*');
-
-        m_consensus.append(m_alignment->m_endshift, '*');
-        m_cstatus.append  (m_alignment->m_endshift, '*');
+        m_consensus.insert(i+m_alignment->m_gaps[i], 1, '*');
+        m_cstatus.insert  (i+m_alignment->m_gaps[i], 1, '*');
       }
+
+      m_consensus.insert(0, m_alignment->m_startshift, '*');
+      m_cstatus.insert  (0, m_alignment->m_startshift, '*');
+
+      m_consensus.append(m_alignment->m_endshift, '*');
+      m_cstatus.append  (m_alignment->m_endshift, '*');
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
 

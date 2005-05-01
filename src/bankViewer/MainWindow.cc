@@ -35,36 +35,26 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_insertWindow = NULL;
   m_cgraphWindow = NULL;
 
-  QVBox * vbox = new QVBox(this, "vbox");
-  QSplitter * splitter = new QSplitter(Qt::Vertical, vbox, "spliter");
+  m_outervbox = new QVBox(this, "mainvbox");
+  setCentralWidget( m_outervbox);
 
-  DataStore * datastore2 = new DataStore();
-  datastore2->openBank("butcher/100.bnk");
-  datastore2->setContigId(1);
-  datastore2->m_db = "GB12";
+  m_multiTilingWidget = new QWidget(m_outervbox, "multiTilingWidget");
+  m_multiTilingWidget->show();
+
+  QVBoxLayout * multiTilingLayout = new QVBoxLayout(m_multiTilingWidget, 0, -1, "mtl");
 
   AlignmentInfo * ai = new AlignmentInfo();
-  ai->m_gaps.push_back(286);
-  ai->m_gaps.push_back(286);
-  m_tiling  = new TilingFrame(&m_datastore, ai, splitter, "tilingframe");
+  m_tiling  = new TilingFrame(&m_datastore, ai, m_multiTilingWidget, "origtilingframe");
+  initializeTiling(m_tiling, true);
+  m_tiling->show();
 
-  ai = new AlignmentInfo();
-  ai->m_startshift = 99;
-  ai->m_endshift = 38000;
-  ai->m_gaps.push_back(172);
-  ai->m_gaps.push_back(176);
-  ai->m_gaps.push_back(176);
-  ai->m_gaps.push_back(176);
-  m_tiling2 = new TilingFrame(datastore2, ai, splitter, "tilingframe2");
+  multiTilingLayout->addWidget(m_tiling);
 
-  initializeTiling(m_tiling);
-  initializeTiling(m_tiling2);
 
-  m_slider = new QScrollBar(Horizontal, vbox, "slider");
+  m_slider = new QScrollBar(Horizontal, m_outervbox, "slider");
   m_slider->setTracking(1);
   m_slider->setPageStep(20);
 
-  setCentralWidget(vbox);
 
   // Menubar
   QPopupMenu* file = new QPopupMenu(this);
@@ -180,14 +170,15 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(this,     SIGNAL(gindexChanged(int)),
           m_slider, SLOT(setValue(int)));
 
+  connect(m_slider, SIGNAL(valueChanged(int)),
+          this,     SLOT(setGindex(int)));
+
   connect(this,     SIGNAL(gindexChanged(int)),
           m_gspin, SLOT(setValue(int)));
 
   connect(m_gspin, SIGNAL(valueChanged(int)),
           this,     SLOT(setGindex(int)));
   
-  connect(m_slider, SIGNAL(valueChanged(int)),
-          this,     SLOT(setGindex(int)));
 
 
 
@@ -220,9 +211,51 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   toggleShowIndicator();
   toggleHighlightDiscrepancy();
+
+  m_querystore.openBank("amoscmp.bnk");
+
+  ReferenceAlignment ra0;
+  ra0.m_reference = "1047283846736";
+  ra0.m_query = "1";
+  ra0.m_rstart = 1;
+  ra0.m_rend = 1834;
+  ra0.m_qstart = 1;
+  ra0.m_qend = 1834;
+  ra0.m_percentid = 100.0;
+  m_referenceAlignments.insert(make_pair(ra0.m_reference, ra0));
+
+  ReferenceAlignment ra1;
+  ra1.m_reference = "1047283846736";
+  ra1.m_query = "2";
+  ra1.m_rstart = 2338;
+  ra1.m_rend = 14443;
+  ra1.m_qstart = 1;
+  ra1.m_qend = 12106;
+  ra1.m_percentid = 100.0;
+  m_referenceAlignments.insert(make_pair(ra1.m_reference, ra1));
+
+  ReferenceAlignment ra2;
+  ra2.m_reference = "1047283846736";
+  ra2.m_query = "3";
+  ra2.m_rstart = 15340;
+  ra2.m_rend = 22333;
+  ra2.m_qstart = 1;
+  ra2.m_qend = 6994;
+  ra2.m_percentid = 100.0;
+  m_referenceAlignments.insert(make_pair(ra2.m_reference, ra2));
+
+  ReferenceAlignment ra3;
+  ra3.m_reference = "1047283846736";
+  ra3.m_query = "4";
+  ra3.m_rstart = 22609;
+  ra3.m_rend = 540338;
+  ra3.m_qstart = 1;
+  ra3.m_qend = 517730;
+  ra3.m_percentid = 100.0;
+  m_referenceAlignments.insert(make_pair(ra3.m_reference, ra3));
 }
 
-void MainWindow::initializeTiling(TilingFrame * tiling)
+void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 {
   connect(this,      SIGNAL(gindexChanged(int)),
           tiling,    SLOT(setGindex(int)));
@@ -421,9 +454,50 @@ void MainWindow::setContigId(int contigId)
     s += " Reads: ";
     s += QString::number(m_datastore.m_contig.getReadTiling().size());
 
-    statusBar()->message(s);
+    ReferenceAlignments::iterator ri = m_referenceAlignments.find(m_datastore.m_contig.getEID());
+
+    while (ri != m_referenceAlignments.end() && ri->first == m_datastore.m_contig.getEID())
+    {
+      cerr << "Found alignment r:" << ri->second.m_reference << " q:" << ri->second.m_query << endl;
+
+      delete m_multiTilingWidget->layout();
+
+      QVBoxLayout * multiTilingLayout = new QVBoxLayout(m_multiTilingWidget, 0, -1,  "mtl2");
+
+      cerr << "r";
+      AlignmentInfo * rai = new AlignmentInfo();
+      m_tiling  = new TilingFrame(&m_datastore, rai, m_multiTilingWidget, "reftiling");
+      initializeTiling(m_tiling, true);
+      m_tiling->show();
+
+      multiTilingLayout->addWidget(m_tiling);
+
+
+      cerr << "q";
+      AlignmentInfo * qai = new AlignmentInfo();
+      m_querystore.setContigId(m_querystore.contig_bank.getIDMap().lookupBID(ri->second.m_query.c_str()));
+      TilingFrame * tiling = new TilingFrame(&m_querystore, qai, m_multiTilingWidget, "querytiling");
+      initializeTiling(tiling, false);
+      tiling->show();
+
+      multiTilingLayout->addWidget(tiling);
+
+      cerr << "q";
+      qai = new AlignmentInfo();
+      m_querystore.setContigId(m_querystore.contig_bank.getIDMap().lookupBID(ri->second.m_query.c_str()));
+      tiling = new TilingFrame(&m_querystore, qai, m_multiTilingWidget, "querytiling");
+      initializeTiling(tiling, false);
+      tiling->show();
+
+      multiTilingLayout->addWidget(tiling);
+
+
+      ri++;
+      break;
+    }
 
     emit contigIdSelected(m_datastore.m_contigId);
+    statusBar()->message(s);
 
     if (m_readPicker)
     {

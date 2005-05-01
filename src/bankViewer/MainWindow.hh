@@ -7,6 +7,8 @@
 #include <qscrollbar.h>
 #include <qpopupmenu.h>
 #include <qlineedit.h>
+#include <qsplitter.h>
+#include <qlayout.h>
 #include <string>
 
 #include "TilingFrame.hh"
@@ -20,6 +22,25 @@
 #include "InsertWindow.hh"
 #include "CGraphWindow.hh"
 #include "NetworkCom.hh"
+#include <map>
+
+class ReferenceAlignment
+{
+public:
+  ReferenceAlignment() {}
+  ~ReferenceAlignment() {}
+
+  string m_reference;
+  string m_query;
+
+  int m_rstart;
+  int m_rend;
+
+  int m_qstart;
+  int m_qend;
+
+  float m_percentid;
+};
 
 class MainWindow: public QMainWindow
 {
@@ -96,7 +117,7 @@ signals:
   void advancePrevDiscrepancy();
 
 private:
-  void initializeTiling(TilingFrame * tiling);
+  void initializeTiling(TilingFrame * tiling, bool isReference);
 
   QSpinBox * m_contigid;
   QSpinBox * m_gspin;
@@ -108,7 +129,6 @@ private:
   QMainWindow * m_featPicker;
   InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;
-  TilingFrame * m_tiling2;
   CGraphWindow * m_cgraphWindow;
 
   QPopupMenu * m_options;
@@ -126,8 +146,15 @@ private:
   int m_snpcoloringid;
 
   int m_gindex;
-
   DataStore m_datastore;
+
+  QVBox * m_outervbox;
+  QWidget * m_multiTilingWidget;
+
+  typedef std::multimap<string, ReferenceAlignment> ReferenceAlignments;
+
+  ReferenceAlignments m_referenceAlignments;
+  DataStore m_querystore;
 };
 
 #endif
