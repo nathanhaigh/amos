@@ -21,6 +21,7 @@ const NCode_t Index_t::NCODE = M_INDEX;
 //----------------------------------------------------- buildContigFeature -----
 void Index_t::buildContigFeature (const std::string bankname)
 {
+  clear( );
   setType (Contig_t::NCODE, Feature_t::NCODE);
 
   Feature_t fea;
@@ -43,6 +44,7 @@ void Index_t::buildContigFeature (const std::string bankname)
 //----------------------------------------------------- buildContigScaffold ----
 void Index_t::buildContigScaffold (const std::string bankname)
 {
+  clear( );
   setType (Contig_t::NCODE, Scaffold_t::NCODE);
 
   Scaffold_t scf;
@@ -68,6 +70,7 @@ void Index_t::buildContigScaffold (const std::string bankname)
 //----------------------------------------------------- buildReadContig --------
 void Index_t::buildReadContig (const std::string bankname)
 {
+  clear( );
   setType (Read_t::NCODE, Contig_t::NCODE);
 
   Contig_t ctg;
@@ -93,6 +96,7 @@ void Index_t::buildReadContig (const std::string bankname)
 //----------------------------------------------------- buildReadLibrary -------
 void Index_t::buildReadLibrary (const std::string bankname)
 {
+  clear( );
   setType (Read_t::NCODE, Library_t::NCODE);
 
   Read_t red;
@@ -118,6 +122,7 @@ void Index_t::buildReadLibrary (const std::string bankname)
 //----------------------------------------------------- buildReadMate ----------
 void Index_t::buildReadMate (const std::string bankname)
 {
+  clear( );
   setType (Read_t::NCODE, Read_t::NCODE);
 
   Fragment_t frg;
@@ -141,6 +146,7 @@ void Index_t::buildReadMate (const std::string bankname)
 //----------------------------------------------------- buildScaffoldFeature ---
 void Index_t::buildScaffoldFeature (const std::string bankname)
 {
+  clear( );
   setType (Scaffold_t::NCODE, Feature_t::NCODE);
 
   Feature_t fea;
