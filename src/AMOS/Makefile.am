@@ -22,7 +22,6 @@ amosinclude_HEADERS = \
 	Layout_AMOS.hh \
 	Library_AMOS.hh \
 	Link_AMOS.hh \
-	Matepair_AMOS.hh \
 	Message_AMOS.hh \
 	Overlap_AMOS.hh \
 	Read_AMOS.hh \
@@ -108,7 +107,6 @@ libAMOS_a_SOURCES = \
 	Layout_AMOS.cc \
 	Library_AMOS.cc \
 	Link_AMOS.cc \
-	Matepair_AMOS.cc \
 	Message_AMOS.cc \
 	Overlap_AMOS.cc \
 	Read_AMOS.cc \

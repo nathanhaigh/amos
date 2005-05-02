@@ -5,7 +5,6 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	bank-clean \
-	bank-index \
 	bank-mapping \
 	bank-report \
 	bank-transact \
@@ -19,11 +18,10 @@ bin_PROGRAMS = \
 	updateBankPositions \
 	extractContig \
 	bank2fasta \
-    findMissingMates \
-    updateClrRanges
-
-#       dumpFeatures
-#	loadFeatures 
+	findMissingMates \
+	updateClrRanges \
+	dumpFeatures \
+	loadFeatures
 
 dist_bin_SCRIPTS = \
 	bank-unlock.pl
@@ -66,13 +64,6 @@ bank_clean_LDADD = \
 bank_clean_SOURCES = \
 	bank-clean.cc
 
-##-- bank-index
-bank_index_LDADD = \
-	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
-bank_index_SOURCES = \
-	bank-index.cc
-
 ##-- bank-report
 bank_report_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -109,18 +100,18 @@ extractContig_SOURCES = \
 	extractContig.cc
 
 ##-- loadFeatures
-#loadFeatures_LDADD = \
-#	$(top_builddir)/src/Common/libCommon.a \
-#	$(top_builddir)/src/AMOS/libAMOS.a
-#loadFeatures_SOURCES = \
-#	loadFeatures.cc
+loadFeatures_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+loadFeatures_SOURCES = \
+	loadFeatures.cc
 
 ##-- dumpFeatures
-#dumpFeatures_LDADD = \
-#	$(top_builddir)/src/Common/libCommon.a \
-#	$(top_builddir)/src/AMOS/libAMOS.a
-#dumpFeatures_SOURCES = \
-#	dumpFeatures.cc
+dumpFeatures_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+dumpFeatures_SOURCES = \
+	dumpFeatures.cc
 
 ##-- findMissingMates
 findMissingMates_LDADD = \

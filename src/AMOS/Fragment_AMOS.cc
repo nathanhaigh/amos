@@ -29,7 +29,7 @@ void Fragment_t::clear ( )
 {
   Universal_t::clear( );
   size_m = 0;
-  library_m = source_m . first = NULL_ID;
+  library_m = source_m . first = reads_m . first = reads_m . second = NULL_ID;
   source_m . second = NULL_NCODE;
   type_m = NULL_FRAGMENT;
 }
@@ -75,6 +75,24 @@ void Fragment_t::readMessage (const Message_t & msg)
         source_m . second = Encode (str);
       }
 
+    if ( msg . exists (F_READ1) )
+      {
+        ss . str (msg . getField (F_READ1));
+        ss >> reads_m . first;
+        if ( !ss )
+          AMOS_THROW_ARGUMENT ("Invalid read1 link format");
+        ss . clear( );
+      }
+ 
+    if ( msg . exists (F_READ2) )
+      {
+        ss . str (msg . getField (F_READ2));
+        ss >> reads_m . second;
+        if ( !ss )
+          AMOS_THROW_ARGUMENT ("Invalid read2 link format");
+        ss . clear( );
+      }
+
     if ( msg . exists (F_TYPE) )
       {
         ss . str (msg . getField (F_TYPE));
@@ -99,6 +117,8 @@ void Fragment_t::readRecord (istream & fix, istream & var)
   readLE (fix, &size_m);
   readLE (fix, &(source_m . first));
   readLE (fix, &(source_m . second));
+  readLE (fix, &(reads_m . first));
+  readLE (fix, &(reads_m . second));
   type_m = fix . get( );
 }
 
@@ -153,6 +173,20 @@ void Fragment_t::writeMessage (Message_t & msg) const
         ss . str (NULL_STRING);
       }
 
+    if ( reads_m . first != NULL_ID )
+      {
+        ss << reads_m . first;
+        msg . setField (F_READ1, ss . str( ));
+        ss . str (NULL_STRING);
+      }
+
+    if ( reads_m . second != NULL_ID )
+      {
+        ss << reads_m . second;
+        msg . setField (F_READ2, ss . str( ));
+        ss . str (NULL_STRING);
+      }
+
     if ( type_m != NULL_FRAGMENT )
       {
         ss << type_m;
@@ -177,5 +211,7 @@ void Fragment_t::writeRecord (ostream & fix, ostream & var) const
   writeLE (fix, &size_m);
   writeLE (fix, &(source_m . first));
   writeLE (fix, &(source_m . second));
+  writeLE (fix, &(reads_m . first));
+  writeLE (fix, &(reads_m . second));
   fix . put (type_m);
 }

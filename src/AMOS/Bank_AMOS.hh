@@ -389,14 +389,6 @@ protected:
   void appendBID (IBankable_t & obj);
 
 
-  //--------------------------------------------------- EIDtoBID ---------------
-  //! \brief Converts an EID to a BID
-  //!
-  //! \throws ArgumentException_t
-  //!
-  ID_t EIDtoBID (const std::string & eid) const;
-
-
   //--------------------------------------------------- fetchBID ---------------
   //! \brief Fetch an object by BID
   //!
@@ -436,14 +428,6 @@ protected:
     else
       return openPartition (npartitions_m - 1);
   }
-
-
-  //--------------------------------------------------- IIDtoBID ---------------
-  //! \brief Converts an IID to a BID
-  //!
-  //! \throws ArgumentException_t
-  //!
-  ID_t IIDtoBID (ID_t iid) const;
 
 
   //--------------------------------------------------- init -------------------
@@ -888,7 +872,7 @@ public:
   //!
   void fetch (ID_t iid, IBankable_t & obj)
   {
-    fetchBID (IIDtoBID (iid), obj);
+    fetchBID (lookupBID (iid), obj);
     obj . iid_m = iid;
     obj . eid_m . assign (idmap_m . lookupEID (iid));
   }
@@ -899,7 +883,7 @@ public:
   //!
   void fetch (const std::string & eid, IBankable_t & obj)
   {
-    fetchBID (EIDtoBID (eid), obj);
+    fetchBID (lookupBID (eid), obj);
     obj . iid_m = idmap_m . lookupIID (eid);
     obj . eid_m . assign (eid);
   }
@@ -1003,6 +987,24 @@ public:
   }
 
 
+  //--------------------------------------------------- lookupBID --------------
+  //! \brief Converts an IID to a BID, throw exception on failure
+  //!
+  //! \throws ArgumentException_t
+  //! \return The BID of the specified IID
+  //!
+  ID_t lookupBID (ID_t iid) const;
+
+
+  //--------------------------------------------------- lookupBID --------------
+  //! \brief Converts an EID to a BID, throw exception on failure
+  //!
+  //! \throws ArgumentException_t
+  //! \return The BID of the specified EID
+  //!
+  ID_t lookupBID (const std::string & eid) const;
+
+
   //--------------------------------------------------- lookupEID --------------
   //! \brief Converts an IID to an EID
   //!
@@ -1066,7 +1068,7 @@ public:
   //!
   void remove (ID_t iid)
   {
-    removeBID (IIDtoBID (iid));
+    removeBID (lookupBID (iid));
     idmap_m . remove (iid);
   }
 
@@ -1076,7 +1078,7 @@ public:
   //!
   void remove (const std::string & eid)
   {
-    removeBID (EIDtoBID (eid));
+    removeBID (lookupBID (eid));
     idmap_m . remove (eid);
   }
 

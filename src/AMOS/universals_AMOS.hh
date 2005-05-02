@@ -22,7 +22,6 @@
 #include "Layout_AMOS.hh"
 #include "Library_AMOS.hh"
 #include "Link_AMOS.hh"
-#include "Matepair_AMOS.hh"
 #include "Overlap_AMOS.hh"
 #include "Read_AMOS.hh"
 #include "ScaffoldEdge_AMOS.hh"

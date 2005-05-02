@@ -24,7 +24,7 @@ typedef char FragmentType_t;
 //!
 //! A single piece of DNA from which a group of reads were sequenced. This
 //! allows for the hierarchical clustering of reads that come from the same
-//! fragment.
+//! fragment. Mate-pair information is also stored in this type.
 //!
 //==============================================================================
 class Fragment_t : public Universal_t
@@ -35,6 +35,7 @@ private:
   ID_t library_m;                     //!< IID of the parent library
   Size_t size_m;                      //!< size of the fragment, 0 if not known
   std::pair<ID_t, NCode_t> source_m;  //!< source of the fragment
+  std::pair<ID_t, ID_t> reads_m;      //!< the pair of mated read IIDs
   FragmentType_t type_m;              //!< type of fragment
 
 
@@ -69,7 +70,7 @@ public:
   Fragment_t ( )
   {
     size_m = 0;
-    library_m = source_m . first = NULL_ID;
+    library_m = source_m . first = reads_m . first = reads_m . second = NULL_ID;
     source_m . second = NULL_NCODE;
     type_m = NULL_FRAGMENT;
   }
@@ -115,10 +116,26 @@ public:
   }
 
 
+  //--------------------------------------------------- getMatePair ------------
+  //! \brief Get the paired sequencing reads for this fragment
+  //!
+  //! Orientation of the pair can be deduced from the fragment type. An INSERT
+  //! fragment will have innie mates and a TRANSPOSON fragment will have outie
+  //! mates.
+  //!
+  //! \return The mated reads
+  //!
+  std::pair<ID_t, ID_t> getMatePair ( ) const
+  {
+    return reads_m;
+  }
+
+
   //--------------------------------------------------- getSize ----------------
   //! \brief Get the size of the fragment, if known
   //!
-  //! Size will be 0 if unknown
+  //! Size will be 0 if unknown. If exact size is unknown, the parent library
+  //! of this fragment should contain an estimated size distribution.
   //!
   //! \return The size of the fragment
   //!
@@ -169,7 +186,23 @@ public:
   }
 
 
-  //--------------------------------------------------- getSize ----------------
+  //--------------------------------------------------- setMatePair ------------
+  //! \brief Set the paired sequencing reads for this fragment
+  //!
+  //! Orientation of the pair can be stored in the fragment type. An INSERT
+  //! fragment will have innie mates and a TRANSPOSON fragment will have outie
+  //! mates.
+  //!
+  //! \param reads The new pair of read IIDs
+  //! \return void
+  //!
+  void setReads (std::pair<ID_t, ID_t> reads)
+  {
+    reads_m = reads;
+  }
+
+
+  //--------------------------------------------------- setSize ----------------
   //! \brief Set the size of the fragment, if known
   //!
   //! \param size The size of the fragment

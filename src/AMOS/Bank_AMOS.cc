@@ -43,7 +43,7 @@ const Size_t Bank_t::DEFAULT_BUFFER_SIZE    = 1024;
 const Size_t Bank_t::DEFAULT_PARTITION_SIZE = 1000000;
 const Size_t Bank_t::MAX_OPEN_PARTITIONS    = 20;
 
-const string Bank_t::BANK_VERSION     =  "2.6";
+const string Bank_t::BANK_VERSION     =  "2.7";
 
 const string Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string Bank_t::IFO_STORE_SUFFIX = ".ifo";
@@ -159,7 +159,7 @@ void Bank_t::appendBID (IBankable_t & obj)
 //----------------------------------------------------- assignEID --------------
 void Bank_t::assignEID (ID_t iid, const string & eid)
 {
-  ID_t bid = IIDtoBID (iid);
+  ID_t bid = lookupBID (iid);
   string peid (idmap_m . lookupEID (iid));
   idmap_m . remove (iid);
 
@@ -176,7 +176,7 @@ void Bank_t::assignEID (ID_t iid, const string & eid)
 //----------------------------------------------------- assignIID --------------
 void Bank_t::assignIID (const string & eid, ID_t iid)
 {
-  ID_t bid = EIDtoBID (eid);
+  ID_t bid = lookupBID (eid);
   ID_t piid = idmap_m . lookupIID (eid);
   idmap_m . remove (eid);
 
@@ -484,20 +484,6 @@ void Bank_t::destroy ( )
 }
 
 
-//----------------------------------------------------- EIDtoBID ---------------
-ID_t Bank_t::EIDtoBID (const string & eid) const
-{
-  ID_t bid = idmap_m . lookupBID (eid);
-  if ( bid == NULL_ID || bid > last_bid_m )
-    {
-      stringstream ss;
-      ss << "EID '" << eid << "' does not exist in bank";
-      AMOS_THROW_ARGUMENT (ss . str( ));
-    }
-  return bid;
-}
-
-
 //----------------------------------------------------- exists -----------------
 bool Bank_t::exists (const string & dir) const
 {
@@ -546,8 +532,22 @@ ID_t Bank_t::getMaxIID ( ) const
 }
 
 
-//----------------------------------------------------- IIDtoBID ---------------
-ID_t Bank_t::IIDtoBID (ID_t iid) const
+//----------------------------------------------------- lookupBID --------------
+ID_t Bank_t::lookupBID (const string & eid) const
+{
+  ID_t bid = idmap_m . lookupBID (eid);
+  if ( bid == NULL_ID || bid > last_bid_m )
+    {
+      stringstream ss;
+      ss << "EID '" << eid << "' does not exist in bank";
+      AMOS_THROW_ARGUMENT (ss . str( ));
+    }
+  return bid;
+}
+
+
+//----------------------------------------------------- lookupBID --------------
+ID_t Bank_t::lookupBID (ID_t iid) const
 {
   ID_t bid = idmap_m . lookupBID (iid);
   if ( bid == NULL_ID || bid > last_bid_m )
@@ -710,7 +710,7 @@ void Bank_t::removeBID (ID_t bid)
 //----------------------------------------------------- replace ----------------
 void Bank_t::replace (ID_t iid, IBankable_t & obj)
 {
-  ID_t bid = IIDtoBID (iid);
+  ID_t bid = lookupBID (iid);
   string peid (idmap_m . lookupEID (iid));
   idmap_m . remove (iid);
 
@@ -736,7 +736,7 @@ void Bank_t::replace (ID_t iid, IBankable_t & obj)
 //----------------------------------------------------- replace ----------------
 void Bank_t::replace (const string & eid, IBankable_t & obj)
 {
-  ID_t bid = EIDtoBID (eid);
+  ID_t bid = lookupBID (eid);
   ID_t piid = idmap_m . lookupIID (eid);
   idmap_m . remove (eid);
 

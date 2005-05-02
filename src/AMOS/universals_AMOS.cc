@@ -26,7 +26,6 @@ UniversalSet_t::UniversalSet_t ( )
   objs_m . push_back (new Library_t( ));
   objs_m . push_back (new Fragment_t( ));
   objs_m . push_back (new Read_t( ));
-  objs_m . push_back (new Matepair_t( ));
   objs_m . push_back (new Overlap_t( ));
   objs_m . push_back (new Kmer_t( ));
   objs_m . push_back (new Layout_t( ));

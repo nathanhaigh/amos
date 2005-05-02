@@ -16,12 +16,148 @@ using namespace std;
 
 //================================================ Index_t =====================
 const NCode_t Index_t::NCODE = M_INDEX;
-const string  Index_t::CONTIG_TO_FEATURE  = "CTG->FEA";
-const string  Index_t::CONTIG_TO_SCAFFOLD = "CTG->SCF";
-const string  Index_t::READ_TO_CONTIG     = "RED->CTG";
-const string  Index_t::READ_TO_LIBRARY    = "RED->LIB";
-const string  Index_t::READ_TO_MATE       = "RED->RED";
 
+
+//----------------------------------------------------- buildContigFeature -----
+void Index_t::buildContigFeature (const std::string bankname)
+{
+  setType (Contig_t::NCODE, Feature_t::NCODE);
+
+  Feature_t fea;
+  pair<NCode_t, ID_t> src;
+  BankStream_t fea_bank (Feature_t::NCODE);
+
+  fea_bank . open (bankname, B_READ);
+
+  while ( fea_bank >> fea )
+    {
+      src = fea . getSource( );
+      if ( src . first != NULL_ID  &&  src . second == Contig_t::NCODE )
+        insert (src . first, fea . getIID( ));
+    }
+
+  fea_bank . close( );
+}
+
+
+//----------------------------------------------------- buildContigScaffold ----
+void Index_t::buildContigScaffold (const std::string bankname)
+{
+  setType (Contig_t::NCODE, Scaffold_t::NCODE);
+
+  Scaffold_t scf;
+  vector<Tile_t>::const_iterator cur;
+  vector<Tile_t>::const_iterator end;
+  BankStream_t scf_bank (Scaffold_t::NCODE);
+
+  scf_bank . open (bankname, B_READ);
+
+  while ( scf_bank >> scf )
+    {
+      end = scf . getContigTiling( ) . end( );
+      if ( scf . getIID( ) != NULL_ID )
+        for ( cur = scf . getContigTiling( ) . begin( ); cur != end; ++ cur )
+          if ( cur -> source != NULL_ID )
+            insert (cur -> source, scf . getIID( ));
+    }
+
+  scf_bank . close( );
+}
+
+
+//----------------------------------------------------- buildReadContig --------
+void Index_t::buildReadContig (const std::string bankname)
+{
+  setType (Read_t::NCODE, Contig_t::NCODE);
+
+  Contig_t ctg;
+  vector<Tile_t>::const_iterator cur;
+  vector<Tile_t>::const_iterator end;
+  BankStream_t ctg_bank (Contig_t::NCODE);
+
+  ctg_bank . open (bankname, B_READ);
+
+  while ( ctg_bank >> ctg )
+    {
+      end = ctg . getReadTiling( ) . end( );
+      if ( ctg . getIID( ) != NULL_ID )
+        for ( cur = ctg . getReadTiling( ) . begin( ); cur != end; ++ cur )
+          if ( cur -> source != NULL_ID )
+            insert (cur -> source, ctg . getIID( ));
+    }
+
+  ctg_bank . close( );
+}
+
+
+//----------------------------------------------------- buildReadLibrary -------
+void Index_t::buildReadLibrary (const std::string bankname)
+{
+  setType (Read_t::NCODE, Library_t::NCODE);
+
+  Read_t red;
+  Fragment_t frg;
+  Bank_t frg_bank (Fragment_t::NCODE);
+  BankStream_t red_bank (Read_t::NCODE);
+
+  frg_bank . open (bankname, B_READ);
+  red_bank . open (bankname, B_READ);
+
+  while ( red_bank >> red )
+    {
+      frg_bank . fetch (red . getFragment( ), frg);
+      if ( red . getIID( ) != NULL_ID  &&  frg . getLibrary( ) != NULL_ID )
+        insert (red . getIID( ), frg . getLibrary( ));
+    }
+
+  frg_bank . close( );
+  red_bank . close( );
+}
+
+
+//----------------------------------------------------- buildReadMate ----------
+void Index_t::buildReadMate (const std::string bankname)
+{
+  setType (Read_t::NCODE, Read_t::NCODE);
+
+  Fragment_t frg;
+  pair<ID_t, ID_t> mtp;
+  BankStream_t frg_bank (Fragment_t::NCODE);
+
+  while ( frg_bank >> frg )
+    {
+      mtp = frg . getMatePair( );
+      if ( mtp . first != NULL_ID  &&  mtp . second != NULL_ID )
+        {
+          insert (mtp . first, mtp . second);
+          insert (mtp . second, mtp . first);
+        }
+    }
+
+  frg_bank . close( );
+}
+
+
+//----------------------------------------------------- buildScaffoldFeature ---
+void Index_t::buildScaffoldFeature (const std::string bankname)
+{
+  setType (Scaffold_t::NCODE, Feature_t::NCODE);
+
+  Feature_t fea;
+  pair<NCode_t, ID_t> src;
+  BankStream_t fea_bank (Feature_t::NCODE);
+
+  fea_bank . open (bankname, B_READ);
+
+  while ( fea_bank >> fea )
+    {
+      src = fea . getSource( );
+      if ( src . first != NULL_ID  &&  src . second == Scaffold_t::NCODE )
+        insert (src . first, fea . getIID( ));
+    }
+
+  fea_bank . close( );
+}
 
 
 //----------------------------------------------------- readMessage ------------

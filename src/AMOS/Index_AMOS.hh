@@ -10,7 +10,7 @@
 #ifndef __Index_AMOS_HH
 #define __Index_AMOS_HH 1
 
-#include "Universal_AMOS.hh"
+#include "universals_AMOS.hh"
 #include <utility>
 
 
@@ -53,12 +53,6 @@ public:
 
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
-
-  static const std::string CONTIG_TO_FEATURE;  //!< Suggested EID
-  static const std::string CONTIG_TO_SCAFFOLD; //!< Suggested EID
-  static const std::string READ_TO_CONTIG;     //!< Suggested EID
-  static const std::string READ_TO_LIBRARY;    //!< Suggested EID
-  static const std::string READ_TO_MATE;       //!< Suggested EID
 
 
   typedef HASHMAP::hash_multimap<ID_t, ID_t>::iterator iterator;
@@ -126,6 +120,94 @@ public:
   {
     return index_m . begin( );
   }
+
+
+  //--------------------------------------------------- buildContigFeature -----
+  //! \brief Builds the index with contig features
+  //!
+  //! Builds the index with contig features, i.e. the index will contain a
+  //! set of all associated features for each contig IID. Will throw an
+  //! exception if there was any trouble opening and reading from the banks.
+  //!
+  //! \param bankname Name of the bank directory to index
+  //! \throws ArgumentException_t
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void buildContigFeature (const std::string bankname);
+
+
+  //--------------------------------------------------- buildContigScaffold ----
+  //! \brief Builds the index with contig to scaffold links
+  //!
+  //! Builds the index with contig to scaffold links, i.e. the index will
+  //! reference the containing scaffold(s) for each contig IID. Will throw an
+  //! exception if there was any trouble opening and reading from the banks.
+  //!
+  //! \param bankname Name of the bank directory to index
+  //! \throws ArgumentException_t
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void buildContigScaffold (const std::string bankname);
+
+
+  //--------------------------------------------------- buildReadContig --------
+  //! \brief Builds the index with read to contig links
+  //!
+  //! Builds the index with read to contig links, i.e. the index will
+  //! reference the containing contig(s) for each read IID. Will throw an
+  //! exception if there was any trouble opening and reading from the banks.
+  //!
+  //! \param bankname Name of the bank directory to index
+  //! \throws ArgumentException_t
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void buildReadContig (const std::string bankname);
+
+
+  //--------------------------------------------------- buildReadLibrary -------
+  //! \brief Builds the index with read to library links
+  //!
+  //! Builds the index with read to library links, i.e. the index will
+  //! reference the parent library for each read IID. Will throw an exception
+  //! if there was any trouble opening and reading from the banks.
+  //!
+  //! \param bankname Name of the bank directory to index
+  //! \throws ArgumentException_t
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void buildReadLibrary (const std::string bankname);
+
+
+  //--------------------------------------------------- buildReadMate ----------
+  //! \brief Builds the index with read mates
+  //!
+  //! Builds the index with read mates, i.e. the index will reference the
+  //! the mate of each read IID. Will throw an exception if there was any
+  //! trouble opening and reading from the banks.
+  //! \throws ArgumentException_t
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void buildReadMate (const std::string bankname);
+
+
+  //--------------------------------------------------- buildScaffoldFeature ---
+  //! \brief Builds the index with scaffold features
+  //!
+  //! Builds the index with scaffold features, i.e. the index will contain a
+  //! set of all associated features for each scaffold IID. Will throw an
+  //! exception if there was any trouble opening and reading from the banks.
+  //!
+  //! \param bankname Name of the bank directory to index
+  //! \throws ArgumentException_t
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void buildScaffoldFeature (const std::string bankname);
 
 
   //--------------------------------------------------- end --------------------
