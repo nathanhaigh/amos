@@ -4,14 +4,14 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	shotgunSim \
+	asmQC2 \
 	asmQC
 
 dist_bin_SCRIPTS = \
 	coords2cam.pl \
 	fixlib.pl \
 	postCAqc.pl \
-	tiling2cam.pl \
-	asmQC.pl
+	tiling2cam.pl
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -28,6 +28,14 @@ asmQC_LDADD = \
 asmQC_SOURCES = \
 	asmQC.cc
 
+##-- asmQC2
+asmQC2_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
+
+asmQC2_SOURCES = \
+	asmQC2.cc
 
 ##-- shotgunSim
 shotgunSim_LDADD = \
@@ -36,4 +44,5 @@ shotgunSim_LDADD = \
 
 shotgunSim_SOURCES = \
 	shotgunSim.cc
+
 ##-- END OF MAKEFILE --##
