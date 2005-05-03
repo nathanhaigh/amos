@@ -3,7 +3,7 @@
 # initialize
 AC_PREREQ(2.59)
 AC_INIT([AMOS Assembler],
-        [1.2.9],
+        [1.3.0],
         [amos@tigr.org],
         [amos])
 AC_PREFIX_DEFAULT([`pwd`])
@@ -31,9 +31,6 @@ AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_CPP
 AC_PATH_PROG(PERL, [perl], [:])
-if test "${PERL}" = ":" ; then
-   AC_MSG_ERROR([perl required to run ${PACKAGE_NAME} scripts])
-fi
 AC_PATH_PROG(NUCMER, [nucmer], [:])
 
 # check for libraries
@@ -66,9 +63,10 @@ AC_STRUCT_TM
 AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
 AMOS_C_BITFIELDS
+AMOS_QT
 
 # check for functions which can be replaced with libGNU modules:
-#   getopt strtod strtol
+# getopt strtod strtol
 gl_GETOPT
 gl_FUNC_STRTOD
 gl_FUNC_STRTOL
