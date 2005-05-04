@@ -55,12 +55,12 @@ void Scaffold_t::readMessage (const Message_t & msg)
   try {
     vector<Message_t>::const_iterator i;
 
-    if ( msg . exists (F_CONTIGEDGE) )
+    if ( msg . exists (F_EDGE) )
       {
 	ID_t iid;
 	istringstream ss;
     
-	ss . str (msg . getField (F_CONTIGEDGE));
+	ss . str (msg . getField (F_EDGE));
 
 	while ( ss )
 	  {
@@ -135,7 +135,7 @@ void Scaffold_t::writeMessage (Message_t & msg) const
 	    s . append (ss . str( ));
 	    ss . str (NULL_STRING);
 	  }
-	msg . setField (F_CONTIGEDGE, s);
+	msg . setField (F_EDGE, s);
       }
 
     if ( !contigs_m . empty( ) )
