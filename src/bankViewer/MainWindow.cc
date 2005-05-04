@@ -24,7 +24,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
            : QMainWindow( parent, name )
 {
   setCaption("Assembly Investigator");
-  m_gindex = -1;
+  m_gindex = 0;
 
   m_contigPicker = NULL;
   m_readPicker = NULL;
@@ -212,6 +212,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   toggleShowIndicator();
   toggleHighlightDiscrepancy();
 
+#if 0
   m_querystore.openBank("amoscmp.bnk");
 
   ReferenceAlignment ra0;
@@ -253,6 +254,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   ra3.m_qend = 517730;
   ra3.m_percentid = 100.0;
   m_referenceAlignments.insert(make_pair(ra3.m_reference, ra3));
+#endif
 }
 
 void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
