@@ -2,11 +2,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-extern "C"
-{
-  #include "Read.h"
-}
-
 
 using namespace AMOS;
 using namespace std;
@@ -364,7 +359,13 @@ static string chromodbpath(const string & base,
 }
 
 
-void * DataStore::fetchTrace(const AMOS::Read_t & read)
+
+extern "C"
+{
+  #include "Read.h"
+}
+
+char * DataStore::fetchTrace(const AMOS::Read_t & read)
 {
   string readname = read.getEID();
 
@@ -396,5 +397,5 @@ void * DataStore::fetchTrace(const AMOS::Read_t & read)
     }
   }
 
-  return (void *) trace;
+  return (char *) trace;
 }

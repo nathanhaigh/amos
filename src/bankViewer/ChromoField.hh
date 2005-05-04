@@ -6,16 +6,6 @@
 #include <string>
 #include <vector>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-#include <Read.h>
-
-#ifdef __cplusplus
-}
-#endif
 
 class RenderSeq_t;
 

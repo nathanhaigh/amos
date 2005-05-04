@@ -14,6 +14,10 @@
 using namespace std;
 using namespace AMOS;
 
+extern "C"
+{
+#include <Read.h>
+}
 
 ChromoField::ChromoField(RenderSeq_t * read, 
                          const string & db, 
@@ -30,7 +34,7 @@ ChromoField::ChromoField(RenderSeq_t * read,
   m_read = read;
   if (!m_read->m_trace) { return; }
 
-  Read * m_trace = m_read->m_trace;
+  Read * m_trace = (Read *) m_read->m_trace;
 
   int vscale=24;
   int tickwidth = 2;
@@ -291,7 +295,8 @@ int ChromoField::getWindowPos(int gindex)
     if (m_read->m_rc)
     {
       gseqpos = m_read->m_pos.size() - gseqpos;
-      retval = (int)((m_read->m_trace->NPoints-m_read->m_pos[gseqpos])* m_hscale);
+      Read * m_trace = (Read *) m_read->m_trace;
+      retval = (int)((m_trace->NPoints-m_read->m_pos[gseqpos])* m_hscale);
     }
     else
     {

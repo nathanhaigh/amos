@@ -60,7 +60,7 @@ public:
   AMOS::Read_t m_read;
   AMOS::Tile_t * m_tile;
 
-  Read * m_trace;
+  char * m_trace;
   bool m_displayTrace;
 
   static bool hasOverlap(AMOS::Pos_t rangeStart, // 0-based exact offset of range

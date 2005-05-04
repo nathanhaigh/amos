@@ -231,7 +231,7 @@ void RenderSeq_t::loadTrace(DataStore * datastore)
   if (m_pos.empty()) { cerr << endl; return; }
   
   cerr << "and trace" << endl;
-  m_trace = (Read *) datastore->fetchTrace(m_read);
+  m_trace = datastore->fetchTrace(m_read);
   if (!m_trace) { cerr << "=NULL" << endl; return; }
 
   if (m_rc)

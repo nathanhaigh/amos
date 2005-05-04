@@ -20,6 +20,13 @@ static int max (int a, int b)
 using namespace AMOS;
 using namespace std;
 
+extern "C"
+{
+#include <Read.h>
+}
+
+
+
 TilingField::TilingField(DataStore * datastore,
                          vector<RenderSeq_t> & renderedSeqs,
                          const string & consensus,
@@ -403,6 +410,7 @@ void TilingField::paintEvent( QPaintEvent * )
           if (ri->m_trace)
           {
             unsigned short * trace = NULL;
+            Read * chromotrace = (Read *) ri->m_trace;
 
             for (int channel = 0; channel < 4; channel++)
             {
@@ -410,20 +418,20 @@ void TilingField::paintEvent( QPaintEvent * )
               {
                 switch (channel)
                 {
-                  case 0: trace = ri->m_trace->traceA; UIElements::setBasePen(pen, 'A'); break;
-                  case 1: trace = ri->m_trace->traceC; UIElements::setBasePen(pen, 'C'); break;
-                  case 2: trace = ri->m_trace->traceG; UIElements::setBasePen(pen, 'G'); break;
-                  case 3: trace = ri->m_trace->traceT; UIElements::setBasePen(pen, 'T'); break;
+                  case 0: trace = chromotrace->traceA; UIElements::setBasePen(pen, 'A'); break;
+                  case 1: trace = chromotrace->traceC; UIElements::setBasePen(pen, 'C'); break;
+                  case 2: trace = chromotrace->traceG; UIElements::setBasePen(pen, 'G'); break;
+                  case 3: trace = chromotrace->traceT; UIElements::setBasePen(pen, 'T'); break;
                 };
               }
               else
               {
                 switch (channel)
                 {
-                  case 0: trace = ri->m_trace->traceA; UIElements::setBasePen(pen, 'T'); break;
-                  case 1: trace = ri->m_trace->traceC; UIElements::setBasePen(pen, 'G'); break;
-                  case 2: trace = ri->m_trace->traceG; UIElements::setBasePen(pen, 'C'); break;
-                  case 3: trace = ri->m_trace->traceT; UIElements::setBasePen(pen, 'A'); break;
+                  case 0: trace = chromotrace->traceA; UIElements::setBasePen(pen, 'T'); break;
+                  case 1: trace = chromotrace->traceC; UIElements::setBasePen(pen, 'G'); break;
+                  case 2: trace = chromotrace->traceG; UIElements::setBasePen(pen, 'C'); break;
+                  case 3: trace = chromotrace->traceT; UIElements::setBasePen(pen, 'A'); break;
                 };
               }
 

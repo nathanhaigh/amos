@@ -21,7 +21,7 @@ public:
   int setContigId(int id);
 
 
-  void * fetchTrace(const AMOS::Read_t & read);
+  char * fetchTrace(const AMOS::Read_t & read);
 
   void fetchScaffold(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
   void fetchContig(AMOS::ID_t contigid, AMOS::Contig_t & contig);
