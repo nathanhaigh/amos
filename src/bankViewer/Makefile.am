@@ -35,37 +35,7 @@ bankViewer_MOCSOURCES = \
         TilingFrame.cc         \
         UIElements.cc          
 
-bankViewer_MOC = \
-        BufferedLineEdit.moc.cc    \
-        CGraphContig.moc.cc        \
-        CGraphEdge.moc.cc          \
-        CGraphView.moc.cc          \
-        CGraphWindow.moc.cc        \
-        ChromoField.moc.cc         \
-        ChromoPicker.moc.cc        \
-        ConsensusField.moc.cc      \
-        ContigCanvasItem.moc.cc    \
-        ContigPicker.moc.cc        \
-        CoverageCanvasItem.moc.cc  \
-        DataStore.moc.cc           \
-        FeatureBrowser.moc.cc      \
-        FeatureCanvasItem.moc.cc   \
-        InsertCanvasItem.moc.cc    \
-        Insert.moc.cc              \
-        InsertField.moc.cc         \
-        InsertPosition.moc.cc      \
-        InsertWidget.moc.cc        \
-        InsertWindow.moc.cc        \
-        LibraryPicker.moc.cc       \
-        MainWindow.moc.cc          \
-        NetworkCom.moc.cc          \
-        ReadInfo.moc.cc            \
-        ReadPicker.moc.cc          \
-        RenderSeq.moc.cc           \
-        ScaffoldPicker.moc.cc      \
-        TilingField.moc.cc         \
-        TilingFrame.moc.cc         \
-        UIElements.moc.cc          
+bankViewer_MOC = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 
 bankViewer_SOURCES =             \
         main.cc                  \
