@@ -110,6 +110,17 @@ public:
   }
 
 
+  //--------------------------------------------------- getRange ---------------
+  //! \brief Get the feature range
+  //!
+  //! \return The feature range
+  //!
+  Range_t getRange ( ) const
+  {
+    return range_m;
+  }
+
+
   //--------------------------------------------------- getSource --------------
   //! \brief Get the feature source IID and type
   //!
@@ -125,6 +136,29 @@ public:
   }
 
 
+  //--------------------------------------------------- getType ----------------
+  //! \brief Get the feature type
+  //!
+  //! \return The feature type
+  //!
+  FeatureType_t getType ( ) const
+  {
+    return type_m;
+  }
+
+
+  //--------------------------------------------------- setRange ---------------
+  //! \brief Set the feature range
+  //!
+  //! \param range The new feature range
+  //! \return void
+  //!
+  void setRange (Range_t range)
+  {
+    range_m = range;
+  }
+
+
   //--------------------------------------------------- setSource --------------
   //! \brief Set the feature source IID and type
   //!
@@ -134,6 +168,18 @@ public:
   void setSource (std::pair<ID_t, NCode_t> source)
   {
     source_m = source;
+  }
+
+
+  //--------------------------------------------------- setType ----------------
+  //! \brief Set the feature type
+  //!
+  //! \param type The new feature type
+  //! \return void
+  //!
+  void setType (FeatureType_t type)
+  {
+    type_m = type;
   }
 
 
