@@ -53,15 +53,12 @@ void PrintUsage (const char * s);
 int main (int argc, char ** argv)
 {
   int exitcode = EXIT_SUCCESS;
-  Read_t red;
   Fragment_t frg;
   Library_t lib;
-  Matepair_t mtp;
+  pair<ID_t, ID_t> mtp;
 
-  Bank_t red_bank (Read_t::NCODE);
-  Bank_t frg_bank (Fragment_t::NCODE);
+  BankStream_t frg_bank (Fragment_t::NCODE);
   BankStream_t lib_bank (Library_t::NCODE);
-  BankStream_t mtp_bank (Matepair_t::NCODE);
 
   long int cntw = 0;             // written object count
 
@@ -72,37 +69,33 @@ int main (int argc, char ** argv)
   try {
 
     BankMode_t bm = OPT_BankSpy ? B_SPY : B_READ;
-    mtp_bank . open (OPT_BankName, bm);
-    red_bank . open (OPT_BankName, bm);
     frg_bank . open (OPT_BankName, bm);
     lib_bank . open (OPT_BankName, bm);
 
     //-- Iterate through each library in the bank
     while ( lib_bank >> lib )
       {
-	cout << "library\t" << lib . getIID( ) << '\t'
-	     << lib . getDistribution( ) . mean -
-	  (lib . getDistribution( ) . sd * 3) << '\t'
-	     << lib . getDistribution( ) . mean +
-	  (lib . getDistribution( ) . sd * 3) << endl;
+	cout << "library\t" << lib . getIID( )
+             << '\t'
+	     << lib.getDistribution( ).mean - (lib.getDistribution( ).sd * 3)
+             << '\t'
+	     << lib.getDistribution( ).mean + (lib.getDistribution( ).sd * 3)
+             << endl;
       }
 
-    //-- Iterate through each object in the bank
-    while ( mtp_bank >> mtp )
+    //-- Iterate through each fragment in the bank
+    while ( frg_bank >> frg )
       {
-	//-- Get the library record for this insert
-	red_bank . fetch (mtp . getReads( ) . first, red);
-	frg_bank . fetch (red . getFragment( ), frg);
-
-	cout << mtp . getReads( ) . first << '\t'
-	     << mtp . getReads( ) . second << '\t'
-	     << frg . getLibrary( ) << endl;
-
-	cntw ++;
+        mtp = frg . getMatePair( );
+        if ( mtp . first != NULL_ID && mtp . second != NULL_ID )
+          {
+            cout << mtp . first << '\t' << mtp . second << '\t'
+                 << frg . getLibrary( )
+                 << endl;
+            cntw ++;
+          }
       }
 
-    mtp_bank . close( );
-    red_bank . close( );
     frg_bank . close( );
     lib_bank . close( );
   }
