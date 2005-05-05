@@ -123,7 +123,7 @@ public:
 
 
   //--------------------------------------------------- buildContigFeature -----
-  //! \brief Builds the index with contig features
+  //! \brief Builds the index with Contig_t Feature_t's
   //!
   //! Builds the index with contig features, i.e. the index will contain a
   //! set of all associated features for each contig IID. Will throw an
@@ -138,7 +138,7 @@ public:
 
 
   //--------------------------------------------------- buildContigScaffold ----
-  //! \brief Builds the index with contig to scaffold links
+  //! \brief Builds the index with Contig_t to Scaffold_t mappings
   //!
   //! Builds the index with contig to scaffold links, i.e. the index will
   //! reference the containing scaffold(s) for each contig IID. Will throw an
@@ -153,7 +153,7 @@ public:
 
 
   //--------------------------------------------------- buildReadContig --------
-  //! \brief Builds the index with read to contig links
+  //! \brief Builds the index with Read_t to Contig_t mappings
   //!
   //! Builds the index with read to contig links, i.e. the index will
   //! reference the containing contig(s) for each read IID. Will throw an
@@ -168,7 +168,7 @@ public:
 
 
   //--------------------------------------------------- buildReadLibrary -------
-  //! \brief Builds the index with read to library links
+  //! \brief Builds the index with Read_t to Library_t mappings
   //!
   //! Builds the index with read to library links, i.e. the index will
   //! reference the parent library for each read IID. Will throw an exception
@@ -183,7 +183,7 @@ public:
 
 
   //--------------------------------------------------- buildReadMate ----------
-  //! \brief Builds the index with read mates
+  //! \brief Builds the index with mated Read_t's
   //!
   //! Builds the index with read mates, i.e. the index will reference the
   //! the mate of each read IID. Will throw an exception if there was any
@@ -196,7 +196,7 @@ public:
 
 
   //--------------------------------------------------- buildScaffoldFeature ---
-  //! \brief Builds the index with scaffold features
+  //! \brief Builds the index with Scaffold_t Feature_t's
   //!
   //! Builds the index with scaffold features, i.e. the index will contain a
   //! set of all associated features for each scaffold IID. Will throw an
