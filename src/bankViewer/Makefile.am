@@ -48,14 +48,14 @@ bankViewer_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
                    $(top_builddir)/src/Common/libCommon.a   \
                    $(top_builddir)/src/AMOS/libAMOS.a       \
                    $(top_builddir)/src/Slice/libSlice.a     \
-                   /local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/lib/libread.a
+                   $(top_builddir)/src/Staden/read/libread.a
 
 AM_CPPFLAGS = \
     $(QT_CXXFLAGS)  \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/Slice  \
 	-I$(top_srcdir)/src/AMOS   \
-    -I/local/devel/SE/IO_Lib/mschatz/SE/IO_Lib/install/${HOSTTYPE}/include/io_lib/
+    -I$(top_srcdir)/src/Staden/read
 
 
 CLEANFILES = $(BUILT_SOURCES)
