@@ -117,10 +117,10 @@ struct Mate_t
 {
   ReadMap_t * read;                     // points to read mate or NULL
   int minoff, maxoff;                   // min and max offsets
-  AMOS::MateType_t type;
-  //////////////// need to implement transposon, etc. ////////////////
+  AMOS::FragmentType_t type;
+  //TODO implement transposon mates, etc.
 
-  Mate_t ( ) { read = NULL; type = AMOS::Matepair_t::END; }
+  Mate_t ( ) { read = NULL; type = AMOS::Fragment_t::INSERT; }
 };
 
 struct ReadAlign_t
@@ -1528,15 +1528,12 @@ void ParseAlign (Mapping_t & mapping)
 //------------------------------------------------------------ ParseMates ----//
 void ParseMates (Mapping_t & mapping)
 {
-  AMOS::Read_t red;
   AMOS::Fragment_t frg;
   AMOS::Library_t lib;
-  AMOS::Matepair_t mtp;
+  pair<AMOS::ID_t, AMOS::ID_t> mtp;
 
-  AMOS::Bank_t red_bank (AMOS::Read_t::NCODE);
-  AMOS::Bank_t frg_bank (AMOS::Fragment_t::NCODE);
   AMOS::Bank_t lib_bank (AMOS::Library_t::NCODE);
-  AMOS::BankStream_t mtp_bank (AMOS::Matepair_t::NCODE);
+  AMOS::BankStream_t frg_bank (AMOS::Fragment_t::NCODE);
 
   ReadMap_t * rmp, temprm;
   pair<
@@ -1545,16 +1542,16 @@ void ParseMates (Mapping_t & mapping)
     > rmpip;
 
   try {
-    mtp_bank . open (OPT_BankName, AMOS::B_READ);
-    red_bank . open (OPT_BankName, AMOS::B_READ);
     frg_bank . open (OPT_BankName, AMOS::B_READ);
     lib_bank . open (OPT_BankName, AMOS::B_READ);
 
     //-- Populate the mate records
-    while ( mtp_bank >> mtp )
+    while ( frg_bank >> frg )
       {
+        mtp = frg . getMatePair( );
+
 	//-- Find the read
-	temprm . id = mtp . getReads( ) . first;
+	temprm . id = mtp . first;
 	rmpip = equal_range (mapping . reads . begin( ),
 			     mapping . reads . end( ),
 			     &temprm, ReadIdCmp_t( ));
@@ -1566,7 +1563,7 @@ void ParseMates (Mapping_t & mapping)
 	rmp = *(rmpip . first);
 
 	//-- Find the mate
-	temprm . id = mtp . getReads( ) . second;
+	temprm . id = mtp . second;
 	rmpip = equal_range (mapping . reads . begin( ),
 			     mapping . reads . end( ),
 			     &temprm, ReadIdCmp_t( ));
@@ -1581,8 +1578,6 @@ void ParseMates (Mapping_t & mapping)
 	rmp -> mate . read -> mate . read = rmp;
 
 	//-- Get the library record for this insert
-	red_bank . fetch (rmp -> id, red);
-	frg_bank . fetch (red . getFragment( ), frg);
 	lib_bank . fetch (frg . getLibrary( ), lib);
 
 	//-- Set the mate offsets
@@ -1599,8 +1594,6 @@ void ParseMates (Mapping_t & mapping)
 	 << "  could not retrieve mate-pair information" << endl;
   }
 
-  mtp_bank . close( );
-  red_bank . close( );
   frg_bank . close( );
   lib_bank . close( );
 }
