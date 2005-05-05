@@ -27,23 +27,17 @@ void Distribution_t::readMessage (const Message_t & msg)
   try {
     istringstream ss;
 
-    if ( msg . exists (F_MEAN) )
-      {
-	ss . str (msg . getField (F_MEAN));
-	ss >> mean;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid mean format");
-	ss . clear( );
-      }
+    ss . str (msg . getField (F_MEAN));
+    ss >> mean;
+    if ( !ss )
+      AMOS_THROW_ARGUMENT ("Invalid mean format");
+    ss . clear( );
 
-    if ( msg . exists (F_SD) )
-      {
-	ss . str (msg . getField (F_SD));
-	ss >> sd;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid standard deviation format");
-	ss . clear( );
-      }
+    ss . str (msg . getField (F_SD));
+    ss >> sd;
+    if ( !ss )
+      AMOS_THROW_ARGUMENT ("Invalid standard deviation format");
+    ss . clear( );
   }
   catch (ArgumentException_t) {
     
@@ -71,13 +65,19 @@ void Distribution_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Distribution_t::getNCode( ));
 
-    ss << mean;
-    msg . setField (F_MEAN, ss . str( ));
-    ss . str (NULL_STRING);
+    if ( mean != 0 )
+      {
+        ss << mean;
+        msg . setField (F_MEAN, ss . str( ));
+        ss . str (NULL_STRING);
+      }
 
-    ss << sd;
-    msg . setField (F_SD, ss . str( ));
-    ss . str (NULL_STRING);
+    if ( sd != 0 )
+      {
+        ss << sd;
+        msg . setField (F_SD, ss . str( ));
+        ss . str (NULL_STRING);
+      }
   }
   catch (ArgumentException_t) {
 

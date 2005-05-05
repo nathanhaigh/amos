@@ -65,22 +65,15 @@ void Overlap_t::readMessage (const Message_t & msg)
   try {
     istringstream ss;
 
-    if ( msg . exists (F_READ1) )
+    if ( msg . exists (F_READS) )
       {
-	ss . str (msg . getField (F_READ1));
-	ss >> reads_m . first;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid read1 link format");
-	ss . clear( );
-      }
-
-    if ( msg . exists (F_READ2) )
-      {
-	ss . str (msg . getField (F_READ2));
-	ss >> reads_m . second;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid read2 link format");
-	ss . clear( );
+        ss . str (msg . getField (F_READS));
+        ss >> reads_m . first;
+        ss . ignore( );
+        ss >> reads_m . second;
+        if ( !ss )
+          AMOS_THROW_ARGUMENT ("Invalid nodes format");
+        ss . clear( );
       }
 
     if ( msg . exists (F_ADJACENCY) )
@@ -184,18 +177,11 @@ void Overlap_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Overlap_t::NCODE);
 
-    if ( reads_m . first != NULL_ID )
+    if ( reads_m . first != NULL_ID  ||  reads_m . second != NULL_ID )
       {
-	ss << reads_m . first;
-	msg . setField (F_READ1, ss . str( ));
-	ss . str (NULL_STRING);
-      }
-
-    if ( reads_m . second != NULL_ID )
-      {
-	ss << reads_m . second;
-	msg . setField (F_READ2, ss . str( ));
-	ss . str (NULL_STRING);
+        ss << reads_m . first << ',' << reads_m . second;
+        msg . setField (F_READS, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     if ( getAdjacency( ) != NULL_ADJACENCY )

@@ -81,22 +81,15 @@ void Link_t::readMessage (const Message_t & msg)
 
     istringstream ss;
 
-    if ( msg . exists (F_NODE1) )
+    if ( msg . exists (F_NODES) )
       {
-	ss . str (msg . getField (F_NODE1));
-	ss >> nods_m . first;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid node1 link format");
-	ss . clear( );
-      }
-
-    if ( msg . exists (F_NODE2) )
-      {
-	ss . str (msg . getField (F_NODE2));
-	ss >> nods_m . second;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid node2 link format");
-	ss . clear( );
+	ss . str (msg . getField (F_NODES));
+        ss >> nods_m . first;
+        ss . ignore( );
+        ss >> nods_m . second;
+        if ( !ss )
+          AMOS_THROW_ARGUMENT ("Invalid nodes format");
+        ss . clear( );
       }
 
     if ( msg . exists (F_OBJECT) )
@@ -235,17 +228,10 @@ void Link_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Link_t::NCODE);
 
-    if ( nods_m . first != NULL_ID )
+    if ( nods_m . first != NULL_ID  ||  nods_m . second != NULL_ID )
       {
-        ss << nods_m . first;
-        msg . setField (F_NODE1, ss . str( ));
-        ss . str (NULL_STRING);
-      }
-
-    if ( nods_m . second != NULL_ID )
-      {
-        ss << nods_m . second;
-        msg . setField (F_NODE2, ss . str( ));
+        ss << nods_m . first << ',' << nods_m . second;
+        msg . setField (F_NODES, ss . str( ));
         ss . str (NULL_STRING);
       }
 
