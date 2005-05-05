@@ -12,7 +12,7 @@ int main(int argc, char ** argv)
   if (argc != 4)
   {
     cerr << "Usage: extractContig bankname contigid newbank" << endl;
-    cerr << "Extracts selected contig and associated reads, fragments, mates, and libraries" << endl
+    cerr << "Extracts selected contig and associated reads, fragments, and libraries" << endl
          << "and writes them to new bank" << endl;
 
     return EXIT_FAILURE;
@@ -22,13 +22,11 @@ int main(int argc, char ** argv)
   Bank_t read_bank(Read_t::NCODE);
   Bank_t fragment_bank(Fragment_t::NCODE);
   Bank_t library_bank(Library_t::NCODE);
-  BankStream_t mate_bank(Matepair_t::NCODE);
 
   Bank_t newcontig_bank(Contig_t::NCODE);
   Bank_t newread_bank(Read_t::NCODE);
   Bank_t newfragment_bank(Fragment_t::NCODE);
   Bank_t newlibrary_bank(Library_t::NCODE);
-  Bank_t newmate_bank(Matepair_t::NCODE);
 
   string bank_name = argv[1];
   string contigid  = argv[2];
@@ -42,25 +40,21 @@ int main(int argc, char ** argv)
     contig_bank.open(bank_name);
     read_bank.open(bank_name);
     fragment_bank.open(bank_name);
-    mate_bank.open(bank_name);
     library_bank.open(bank_name);
 
-    if (!newcontig_bank.exists(new_name))   { newcontig_bank.create(new_name);   }
-    if (!newread_bank.exists(new_name))     { newread_bank.create(new_name);     }
-    if (!newfragment_bank.exists(new_name)) { newfragment_bank.create(new_name); }
-    if (!newlibrary_bank.exists(new_name))  { newlibrary_bank.create(new_name);  }
-    if (!newmate_bank.exists(new_name))     { newmate_bank.create(new_name);     }
+    if(!newcontig_bank.exists(new_name)){newcontig_bank.create(new_name);}
+    if(!newread_bank.exists(new_name)){newread_bank.create(new_name);}
+    if(!newfragment_bank.exists(new_name)){newfragment_bank.create(new_name);}
+    if(!newlibrary_bank.exists(new_name)){newlibrary_bank.create(new_name);}
 
     newcontig_bank.open(new_name);
     newread_bank.open(new_name);
     newfragment_bank.open(new_name);
-    newmate_bank.open(new_name);
     newlibrary_bank.open(new_name);
 
     Contig_t contig;
     Read_t read;
     Fragment_t fragment;
-    Matepair_t mate;
     Library_t library;
 
     contig_bank.fetch(atoi(contigid.c_str()), contig);
@@ -97,18 +91,6 @@ int main(int argc, char ** argv)
     if (!newcontig_bank.existsIID(contig.getIID()))
     {
       newcontig_bank.append(contig);
-    }
-
-    while (mate_bank >> mate)
-    {
-      if (newread_bank.existsIID(mate.getReads().first) ||
-          newread_bank.existsIID(mate.getReads().second))
-      {
-        if (!newmate_bank.existsIID(mate.getIID()))
-        {
-          newmate_bank.append(mate);
-        }
-      }
     }
   }
   catch (Exception_t & e)

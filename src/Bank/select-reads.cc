@@ -3,7 +3,7 @@
 //! \author Mike Schatz
 //! \date 03/14/2005
 //!
-//! \brief Dumps RED, FRG, MTP, LIB messages associated with a list of reads
+//! \brief Dumps RED, FRG, LIB messages associated with a list of reads
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,7 @@
 #include <iostream>
 #include <cassert>
 #include <unistd.h>
-#include <map>
+#include <algorithm>
 using namespace std;
 using namespace AMOS;
 
@@ -50,7 +50,7 @@ void PrintHelp (const char * s);
 //!
 void PrintUsage (const char * s);
 
-typedef map<AMOS::ID_t, char> idmap;
+typedef HASHMAP::hash_map<AMOS::ID_t, char> idmap;
 
 
 
@@ -61,12 +61,11 @@ int main (int argc, char ** argv)
   Read_t red1, red2;
   Fragment_t frg;
   Library_t lib;
-  Matepair_t mtp;
+  pair<ID_t, ID_t> mtp;
 
   Bank_t red_bank (Read_t::NCODE);
-  Bank_t frg_bank (Fragment_t::NCODE);
+  BankStream_t frg_bank (Fragment_t::NCODE);
   BankStream_t lib_bank (Library_t::NCODE);
-  BankStream_t mtp_bank (Matepair_t::NCODE);
 
   long int cntw = 0;             // written object count
 
@@ -77,7 +76,6 @@ int main (int argc, char ** argv)
   try {
 
     BankMode_t bm = OPT_BankSpy ? B_SPY : B_READ;
-    mtp_bank . open (OPT_BankName, bm);
     red_bank . open (OPT_BankName, bm);
     frg_bank . open (OPT_BankName, bm);
     lib_bank . open (OPT_BankName, bm);
@@ -120,23 +118,22 @@ int main (int argc, char ** argv)
     int extra = 0;   
 
     //-- Iterate through each object in the mate bank
-    while ( mtp_bank >> mtp )
+    while ( frg_bank >> frg )
     {
-      idmap::iterator r1 = iidsToPrint.find(mtp.getReads().first);
-      idmap::iterator r2 = iidsToPrint.find(mtp.getReads().second);
+      mtp = frg . getMatePair( );
+      idmap::iterator r1 = iidsToPrint.find(mtp . first);
+      idmap::iterator r2 = iidsToPrint.find(mtp . second);
 
       if (r1 != iidsToPrint.end() || r2 != iidsToPrint.end())
       {
         // Always print r1
         if (r1 == iidsToPrint.end())
         {
-          mtp.flip();
-          r1 = r2;
-          r2 = iidsToPrint.end();
+          swap (mtp.first,mtp.second);
+          swap (r1, r2);
         }
 
-        red_bank.fetch(mtp.getReads().first, red1);
-        frg_bank.fetch(red1.getFragment(), frg);
+        red_bank.fetch(mtp.first, red1);
 
         frg.writeMessage(msg);
         msg.write(cout);
@@ -148,7 +145,7 @@ int main (int argc, char ** argv)
 
         if (r2 != iidsToPrint.end() || OPT_AutoIncludeMates)
         {
-          red_bank . fetch (mtp . getReads( ) . second, red2);
+          red_bank . fetch (mtp . second, red2);
           iidsToPrint[red2.getIID()] = 1;
           red2.writeMessage(msg);
           msg.write(cout);
@@ -158,9 +155,6 @@ int main (int argc, char ** argv)
           {
             extra++;
           }
-
-          mtp.writeMessage(msg);
-          msg.write(cout);
         }
       }
     }
@@ -181,7 +175,9 @@ int main (int argc, char ** argv)
         if (ii->second == 0)
         {
           red_bank.fetch(ii->first, red1);
-          frg_bank.fetch(red1.getFragment(), frg);
+
+          frg_bank.seekg(frg_bank.lookupBID(red1.getFragment()));
+          frg_bank >> frg;
 
           frg.writeMessage(msg);
           msg.write(cout);
@@ -197,7 +193,6 @@ int main (int argc, char ** argv)
       cerr << "Included " << unmated << " unmated reads" << endl;
     }
 
-    mtp_bank.close();
     red_bank.close();
     frg_bank.close();
     lib_bank.close();

@@ -18,8 +18,8 @@ bin_PROGRAMS = \
 	updateBankPositions \
 	extractContig \
 	bank2fasta \
-	findMissingMates \
 	updateClrRanges
+#	findMissingMates
 
 dist_bin_SCRIPTS = \
 	bank-unlock.pl
@@ -98,11 +98,11 @@ extractContig_SOURCES = \
 	extractContig.cc
 
 ##-- findMissingMates
-findMissingMates_LDADD = \
-	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
-findMissingMates_SOURCES = \
-	findMissingMates.cc
+#findMissingMates_LDADD = \
+#	$(top_builddir)/src/Common/libCommon.a \
+#	$(top_builddir)/src/AMOS/libAMOS.a
+#findMissingMates_SOURCES = \
+#	findMissingMates.cc
 
 ##-- dumpmates
 dumpmates_LDADD = \
