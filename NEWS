@@ -19,14 +19,32 @@ that free software is useless without the proper documentation, so we
 are working hard to make a comprehensive HTML users manual for the
 entire project so stay tuned (see AMOS website). In the meantime, we
 will be more than happy to provide support and "virtual" documentation
-via Email.  PLEASE, do not hesitate to contact us; you will receive a
+via email.  PLEASE, do not hesitate to contact us; you will receive a
 prompt reply.
 
 
 Version Release History
 =======================
 
+Version 1.3.0 - May 2005
+
+     * `bankViewer' first version released!!!
+        * provides GUI interface for AMOS bank browsing
+     * `libAMOS'
+        * Matepair_t replaced with extra field in Fragment_t
+        * Group_t added for object groups
+        * Link_t added for general object links
+        * Edge_t added for general object edges
+        * Index_t added for object IID indexing
+        * Feature_t object modifed to be more general
+        * Universal_t gained extra status char
+        * ReverseComplement() method added
+     * `tigger' efficiency enhancement
+     * `AmosFoundation.pm' added
+     * `libread' Staden trace IO library packaged
+
 Version 1.2.9 - February 2005
+
      * `tarchive2amos' bug fixes
      * `amos2ace' bug fixes
      * `hash-overlap' self-overlap bug fixed
@@ -81,5 +99,4 @@ Version 1.2.3 - August 2004
      * Added `AMOScmp' comparative assembly pipeline.
 
 
-January 2005
-
+May 2005

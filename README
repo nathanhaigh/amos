@@ -57,7 +57,7 @@ be set with the `--enable-FEATURE' `--disable-FEATURE' switches.
 
    - AMOScmp        build `AMOScmp' pipeline dependencies [ARG=no]
    - minimus        build `minimus' pipeline dependencies [ARG=no]
-   - all            build all dependencies [ARG=yes]
+   - all            build all pipeline dependencies [ARG=yes]
 
 By default, the entire source base is built and installed as specified
 by the `--enable-all' feature. However, by turning this feature off
@@ -67,6 +67,17 @@ pipeline, we can type the following to ensure only the `minimus'
 dependencies are built and installed:
 
    `configure --disable-all --enable-minimus'
+
+  In addition, certain parts of the AMOS package require the X
+windowing system along with the Qt libraries. Parameters for these
+packages may be modified with the following options:
+
+   --x-includes=DIR      X include files are in DIR
+   --x-libraries=DIR     X library files are in DIR
+   --with-x              use the X Window System
+   --with-Qt-dir=DIR     Directory in which to find the Qt /include,
+                         /bin, and /lib subdirectories.
+   --with-Qt-lib=LIB     Use -lLIB to link with the Qt library
 
 
 Dependencies
@@ -88,6 +99,14 @@ your system PATH, all is well, if not you will need to instruct
 `configure' where it is located by setting the environment variable
 NUCMER to the full path of `nucmer' (see the Defining Variables
 section in the `INSTALL' file).
+
+   The AMOS Bank Viewer relies on X windows and the Qt toolkit. If Qt
+is not centrally installed on your system, you will need to do so to
+make use of this graphical viewer. The configure script should be able
+to identify most standard Qt installations, however you may need to
+set the `--with-Qt-dir' configure option to the location of your Qt
+package. If all else fails, you may have to build the bank viewer
+independently. If so, the source resides in AMOS/src/bankViewer.
 
 
 Documentation
@@ -124,5 +143,4 @@ details.
    large overhead imposed by whole genome (WGA) assemblers.
 
 
-August 2004
-
+May 2005
