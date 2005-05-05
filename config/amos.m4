@@ -1,4 +1,4 @@
-##-- CUSTOM AMOS MACROS --##
+#-- CUSTOM AMOS MACROS --##
 
 ##-- AMOS_BUILD_CONDITIONAL([NAME], [DEFAULT])
 ##   sets an automake conditional BUILD_NAME with --enable-NAME --disable-NAME
@@ -15,7 +15,7 @@ AC_CACHE_CHECK([whether to build $1],
                [ac_cv_enable_$1],
                [ac_cv_enable_$1=$2])
 AM_CONDITIONAL([BUILD_$1],
-               [test "${ac_cv_enable_$1}" = yes])
+               [test x"${ac_cv_enable_$1}" = x"yes"])
 ])
 
 
@@ -53,7 +53,7 @@ AC_CACHE_CHECK([whether bitfields are packed htol],
                [ac_cv_c_bitfields_htol=no],
                [ac_cv_c_bitfields_htol=no])])
 
-if test $ac_cv_c_bitfields_htol = yes; then
+if test x"$ac_cv_c_bitfields_htol" = x"yes"; then
   AC_DEFINE(BITFIELDS_HTOL, 1,
             [Define to 1 if C compiler packs bits hi-order to lo-order])
 fi
@@ -89,11 +89,7 @@ fi
 # The following variables are set to either "yes" or "no"
 #
 #   have_qt                      // if Qt was found somewhere
-#   amos_cv_qt_test_result       // if the Qt build test worked
-#
-# Will set automake conditional
-#
-#   BUILD_QT                     // true if amos_cv_qt_test_result
+#   have_qt_test                 // if Qt worked
 #
 # Additionally, the following variables are exported:
 #
@@ -198,7 +194,7 @@ AC_DEFUN([AMOS_QT],
     else
       # Use cached value or do search, starting with suggestions from
       # the command line
-      AC_CACHE_VAL(amos_cv_have_qt,
+      AC_CACHE_VAL(ac_cv_have_qt,
       [
         # We are not given a solution and there is no cached value.
         amos_qt_dir=NO
@@ -213,17 +209,17 @@ AC_DEFUN([AMOS_QT],
            test "$amos_qt_lib_dir" = NO ||
            test "$amos_qt_lib" = NO; then
           # Problem with finding complete Qt.  Cache the known absence of Qt.
-          amos_cv_have_qt="have_qt=no"
+          ac_cv_have_qt="have_qt=no"
         else
           # Record where we found Qt for the cache.
-          amos_cv_have_qt="have_qt=yes                  \
+          ac_cv_have_qt="have_qt=yes                  \
                        amos_qt_dir=$amos_qt_dir         \
                amos_qt_include_dir=$amos_qt_include_dir \
                    amos_qt_bin_dir=$amos_qt_bin_dir     \
                       amos_qt_LIBS=\"$amos_qt_LIBS\""
         fi
       ])dnl
-      eval "$amos_cv_have_qt"
+      eval "$ac_cv_have_qt"
     fi # all $amos_qt_* are set
   fi   # $have_qt reflects the system status
   if test x"$have_qt" = xyes; then
@@ -278,9 +274,9 @@ AC_DEFUN([AMOS_QT],
 
   # Check if Qt can actually be used as expected
   AC_MSG_CHECKING(whether Qt works)
-  AC_CACHE_VAL(amos_cv_qt_test_result,
+  AC_CACHE_VAL(ac_cv_qt_test_result,
   [
-    amos_cv_qt_test_result="no"
+    ac_cv_qt_test_result="no"
 
     if test x"$have_qt" = xyes; then
       cat > amos_qt_test.h << EOF
@@ -313,26 +309,27 @@ EOF
         if AC_TRY_EVAL("$CXX $QT_CXXFLAGS -c $CXXFLAGS -o moc_amos_qt_test.o moc_amos_qt_test.$ac_ext"); then
           if AC_TRY_EVAL("$CXX $QT_CXXFLAGS -c $CXXFLAGS -o amos_qt_main.o amos_qt_main.$ac_ext"); then
             if AC_TRY_EVAL("$CXX $QT_LIBS $LIBS -o amos_qt_main amos_qt_main.o moc_amos_qt_test.o"); then
-              amos_cv_qt_test_result="yes"
+              ac_cv_qt_test_result="yes"
             fi
           fi
         fi
       fi
 
-      if test "$amos_cv_qt_test_result" = "no"; then
+      if test "$ac_cv_qt_test_result" = "no"; then
         echo "$as_me: failed program was:" >&AS_MESSAGE_LOG_FD()
         sed 's/^/| /' amos_qt_main.$ac_ext >&AS_MESSAGE_LOG_FD()
       fi
 
     fi # if have_qt
-  ])dnl AC_CACHE_VAL amos_cv_qt_test_result
-  AC_MSG_RESULT([$amos_cv_qt_test_result])
+  ])dnl AC_CACHE_VAL ac_cv_qt_test_result
+  AC_MSG_RESULT([$ac_cv_qt_test_result])
   rm -f amos_qt_test.h moc_amos_qt_test.$ac_ext moc_amos_qt_test.o \
         amos_qt_main.$ac_ext amos_qt_main.o amos_qt_main
 
-  AM_CONDITIONAL([BUILD_QT],
-                 [test "${ac_cv_qt_test_result}" = "yes"])
+  have_qt_test=$ac_cv_qt_test_result
 ])
+
+
 
 # Internal subroutine of AMOS_QT
 # Set amos_qt_dir amos_qt_lib

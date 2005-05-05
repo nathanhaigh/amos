@@ -36,6 +36,7 @@ AC_PATH_PROG(NUCMER, [nucmer], [:])
 # check for libraries
 AC_CHECK_LIB(m, pow)
 AC_CHECK_LIB(c, fopen)
+AC_CHECK_LIB(z, main, [have_libz=yes], [have_libz=no])
 
 # check for headers
 AC_HEADER_DIRENT
@@ -59,6 +60,7 @@ AC_C_CONST
 AC_C_INLINE
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+AC_TYPE_MODE_T
 AC_STRUCT_TM
 AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
@@ -104,6 +106,9 @@ AMOS_BUILD_CONDITIONAL([AMOScmp], [no])
 AMOS_BUILD_CONDITIONAL([minimus], [no])
 AMOS_BUILD_CONDITIONAL([all], [yes])
 
+AM_CONDITIONAL(BUILD_LIBZ, [test x"${have_libz}" = x"yes"])
+AM_CONDITIONAL(BUILD_QT, [test x"${have_qt_test}" = x"yes"])
+
 # makefiles to configure
 AC_CONFIG_FILES(
    [ \
@@ -131,6 +136,9 @@ AC_CONFIG_FILES(
    src/Utils/Makefile \
    src/PerlModules/Makefile \
    src/Pipeline/Makefile \
+   src/Staden/Makefile \
+   src/Staden/read/Makefile \
+   src/Staden/progs/Makefile \
    ]
 )
 
@@ -144,7 +152,7 @@ echo \
   C compiler:          ${CC} ${CFLAGS}
   C++ compiler:        ${CXX} ${CXXFLAGS}"
 
-if test "${GCC}" = "yes" ; then
+if test x"${GCC}" = x"yes" ; then
    gcc_version=`${CC} --version | head -n 1`
    echo "  GCC version:         ${gcc_version}"
 else
@@ -174,7 +182,7 @@ case "${host}" in
   *sparc*solaris*)
     case "${gcc_version}" in
       *2.*.*)
-        if test "${enable_largefile}" != no; then
+        if test x"${enable_largefile}" != x"no"; then
         echo "WARNING! TIGR suns using GCC 2.x.x will bomb on largefile support"
         echo "   use \`configure --disable-largefile' to avoid"
         fi
@@ -199,12 +207,12 @@ case "${gcc_version}" in
   ;;
 esac
 
-if test "${NUCMER}" = ":"  ||  ! test -x "${NUCMER}"; then
+if test x"${NUCMER}" = x":"  ||  ! test -x "${NUCMER}"; then
   echo "WARNING! nucmer was not found, but is required to run AMOScmp"
   echo "   install nucmer if planning on using AMOScmp"
 fi
 
-if test "${PERL}" = ":"  ||  ! test -x "${PERL}"; then
+if test x"${PERL}" = x":"  ||  ! test -x "${PERL}"; then
   echo "WARNING! perl was not found, but is required to run AMOS scripts"
   echo "   install perl if planning on using AMOS scripts"
 fi

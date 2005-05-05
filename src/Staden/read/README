@@ -1,0 +1,114 @@
+/*
+ * Copyright (c) Medical Research Council 1994. All rights reserved.
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * this copyright and notice appears in all copies.
+ *
+ * This file was written by James Bonfield, Simon Dear, Rodger Staden,
+ * as part of the Staden Package at the MRC Laboratory of Molecular
+ * Biology, Hills Road, Cambridge, CB2 2QH, United Kingdom.
+ *
+ * MRC disclaims all warranties with regard to this software.
+ */
+ 
+			     The Read I/O library
+			     ====================
+
+This library provides a programmatic interface to the Read structure. The Read
+structure is a standardised interface to the SCF, ABI, ALF, plain, and
+Experiment file formats. With Experiment files, the Read structure read is the
+one referenced by the LT and LN experiment lines. For the plain (PLN) format,
+most information will, obviously, be missing from the structure returned.
+
+The library is a superset of the SCF, ABI, ALF and EXP libraries, and hence
+only the read and io-utils libraries needs to be linked with.
+
+The following functions are provided:
+
+Read *read_read(char *fn, int format)
+int write_seq(char *fn, Read *read, int format)
+Read *read_allocate(int num_points, int num_bases)
+void read_deallocate(Read *read)
+Read *scf2read(Scf *scf)
+Scf *read2scf(Read *read)
+
+
+Usage
+-----
+
+The requirements for utilising this I/O library are:
+
+a) #include <Read.h>
+   You may need to adjust your include path to find this file using the -I
+   option to the compiler.
+
+b) Link with "-lread -lio-utils".
+   You may need to adjust your library path using the -L option to the
+   compiler. See the documents for the io-utils library too.
+
+Routines returning pointers return NULL for failure, or a valid pointer for
+success. Routines returning integer return 0 for success, and -1 for failure.
+
+
+A Detailed Description
+----------------------
+
+/*
+ * Read a sequence from a file "fn" of format "format". If "format" is 0
+ * (TT_ANY), we automatically determine the correct format. Otherwise format
+ * should be one of TT_SCF, TT_ABI, TT_ALF, TT_PLN or TT_EXP.
+ *
+ * Returns:
+ *   Read *   for success
+ *   NULLRead for failure
+ */
+Read *read_read(char *fn, int format)
+
+
+/*
+ * Write a sequence to a file "fn" of format "format". If "format" is 0,
+ * we choose our favourite - SCF.
+ *
+ * Returns:
+ *   0 for success
+ *  -1 for failure
+ */
+int write_seq(char *fn, Read *read, int format)
+
+
+/*
+ * Allocate a new sequence, with the given sizes.
+ * Returns:
+ *   "Read *" for success
+ *   "NULLRead" for failure
+ */
+Read *read_allocate(int num_points, int num_bases)
+
+
+/*
+ * Free memory allocated to a sequence by read_allocate().
+ */
+void read_deallocate(Read *read)
+
+
+/*
+ * Translates an Scf structure into a Read structure.
+ * The Scf structure is left unchanged.
+ *
+ * Returns:
+ *    A pointer to an allocated Read structure upon success.
+ *    NULLRead upon failure.
+ */
+Read *scf2read(Scf *scf)
+
+
+/*
+ * Translates a Read structure into a Scf structure.
+ * The Read structure is left unchanged.
+ *
+ * Returns:
+ *    A pointer to an allocated Scf structure upon success.
+ *    NULL upon failure.
+ */
+Scf *read2scf(Read *read)

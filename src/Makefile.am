@@ -22,7 +22,8 @@ SUBDIRS += \
 	Converters \
 	Utils \
 	PerlModules \
-	Pipeline
+	Pipeline \
+	Staden
 endif BUILD_all
 
 if BUILD_AMOScmp
