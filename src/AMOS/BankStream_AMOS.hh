@@ -211,6 +211,16 @@ public:
   bool isOpen ( ) const { return Bank_t::isOpen( ); }
 
 
+  //--------------------------------------------------- lookupBID --------------
+  ID_t lookupBID (ID_t iid) const
+  { return Bank_t::lookupBID(iid); }
+
+
+  //--------------------------------------------------- lookupBID --------------
+  ID_t lookupBID (const std::string & eid) const
+  { return Bank_t::lookupBID(eid); }
+
+
   //--------------------------------------------------- lookupEID --------------
   const std::string & lookupEID (ID_t iid) const
   { return Bank_t::lookupEID(iid); }
