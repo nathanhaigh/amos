@@ -36,7 +36,12 @@ AC_PATH_PROG(NUCMER, [nucmer], [:])
 # check for libraries
 AC_CHECK_LIB(m, pow)
 AC_CHECK_LIB(c, fopen)
-AC_CHECK_LIB(z, main, [have_libz=yes], [have_libz=no])
+AC_CHECK_LIB(z, main)
+case ${LIBS} in
+  *"-lz "*)
+  have_libz=yes
+  ;;
+esac
 
 # check for headers
 AC_HEADER_DIRENT
