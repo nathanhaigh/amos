@@ -11,6 +11,7 @@ bin_PROGRAMS = \
 	hash-overlap \
 	kmer-count \
 	kmer-cov \
+	kmer-cov-plot \
 	make-consensus \
 	merge-contigs \
 	missing-reads \
@@ -93,6 +94,13 @@ kmer_cov_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 kmer_cov_SOURCES = \
 	kmer-cov.cc
+
+##-- kmer-cov-plot
+kmer_cov_plot_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+kmer_cov_plot_SOURCES = \
+	kmer-cov-plot.cc
 
 ##-- make-consensus
 make_consensus_LDADD = \
