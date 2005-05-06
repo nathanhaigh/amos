@@ -1,6 +1,6 @@
 #-- CUSTOM AMOS MACROS --##
 
-##-- AMOS_BUILD_CONDITIONAL([NAME], [DEFAULT])
+##-- AMOS_BUILD_CONDITIONAL([NAME], [DEFAULT]) ---------------------------------
 ##   sets an automake conditional BUILD_NAME with --enable-NAME --disable-NAME
 ##   --enable-NAME or --enable-NAME=yes will set BUILD_NAME to TRUE
 ##   anything else will set BUILD_NAME to FALSE
@@ -19,7 +19,7 @@ AM_CONDITIONAL([BUILD_$1],
 ])
 
 
-##-- AMOS_C_BITFIELDS
+##-- AMOS_C_BITFIELDS ----------------------------------------------------------
 ##   checks whether C compiler packs bits hi to lo or lo to hi. will set the
 ##   BITFIELDS_HTOL define if the compiler packs hi to lo, or leave undefined
 ##   if compiler packs lo to hi. HTOL, that is the compiler packs its bitfields
@@ -60,7 +60,7 @@ fi
 ])
 
 
-##-- AMOS_QT
+##-- AMOS_QT -------------------------------------------------------------------
 # @synopsis AMOS_QT [--with-Qt-dir=DIR] [--with-Qt-lib=LIB]
 #
 # @summary Search for Trolltech's Qt GUI framework.
@@ -163,7 +163,7 @@ AC_DEFUN([AMOS_QT],
   if test x"$with_Qt_dir" = x"no" ||
      test x"$with_Qt_lib" = x"no"; then
     # user disabled Qt. Leave cache alone.
-    have_qt="User disabled Qt."
+    have_qt="disabled"
   else
     # "yes" is a bogus option
     if test x"$with_Qt_dir" = xyes; then
@@ -180,17 +180,25 @@ AC_DEFUN([AMOS_QT],
     fi
     # Check whether we were supplied with an answer already
     if test x"$with_Qt_dir" != x; then
-      have_qt=yes
       amos_qt_dir="$with_Qt_dir"
       amos_qt_include_dir="$with_Qt_dir/include"
       amos_qt_bin_dir="$with_Qt_dir/bin"
       amos_qt_lib_dir="$with_Qt_dir/lib"
-      # Only search for the lib if the user did not define one already
-      if test x"$amos_qt_lib" = x; then
-        amos_qt_lib="`ls $amos_qt_lib_dir/libqt* | sed -n 1p |
-                     sed s@$amos_qt_lib_dir/lib@@ | [sed s@[.].*@@]`"
+
+      if test -x "$amos_qt_dir" &&
+         test -x "$amos_qt_include_dir" &&
+         test -x "$amos_qt_bin_dir" &&
+         test -x "$amos_qt_lib_dir"; then
+        have_qt=yes
+        # Only search for the lib if the user did not define one already
+        if test x"$amos_qt_lib" = x; then
+          amos_qt_lib="`ls $amos_qt_lib_dir/libqt* | sed -n 1p |
+                       sed s@$amos_qt_lib_dir/lib@@ | [sed s@[.].*@@]`"
+        fi
+        amos_qt_LIBS="-L$amos_qt_lib_dir -l$amos_qt_lib $X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt -lXi $X_EXTRA_LIBS"
+      else
+        have_qt=no
       fi
-      amos_qt_LIBS="-L$amos_qt_lib_dir -l$amos_qt_lib $X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt -lXi $X_EXTRA_LIBS"
     else
       # Use cached value or do search, starting with suggestions from
       # the command line
@@ -330,7 +338,7 @@ EOF
 ])
 
 
-
+##-- AMOS_PATH_QT_DIRECT -------------------------------------------------------
 # Internal subroutine of AMOS_QT
 # Set amos_qt_dir amos_qt_lib
 AC_DEFUN([AMOS_PATH_QT_DIRECT],
