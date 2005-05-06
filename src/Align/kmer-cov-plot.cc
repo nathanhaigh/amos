@@ -4,10 +4,6 @@
 //
 //  Last Modified:  22 March 2004
 //
-//  Read a list of short kmers (31 bases or less) and then
-//  compute what regions of the fasta sequences read from
-//  stdin are covered by them (or their reverse complement).
-
 
 #include  "delcher.hh"
 #include  "fasta.hh"
@@ -23,11 +19,6 @@ using namespace std;
 
 
 const int  MAX_LINE = 1000;
-const double  DEFAULT_UNIQUE_CUTOFF = 50.0;
-  // Default value for global  Unique_Cutoff
-const double  DEFAULT_REPEAT_CUTOFF = 90.0;
-  // Default value for global  Repeat_Cutoff
-
 typedef  long long unsigned  Mer_t;
 
 typedef map<Mer_t, unsigned short> MerTable_t;
@@ -36,75 +27,22 @@ typedef map<Mer_t, unsigned short> MerTable_t;
 static Mer_t  Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
 static Mer_t  Extract_Mask = 0;
 static Mer_t  Forward_Mask;
-static Mer_t  Hash_Mask;
-static int  Hash_Shift = 0;
-static Mer_t  * Hash_Table = NULL;
-static int  Hash_Table_Size = 0;
 static int  Kmer_Len = 0;
 static string  Kmer_File_Name;
   // Name of file kmers
-static bool  Make_Fasta = false;
-  // If set true by the -f option, also generate fasta files
-  // of sequences that are unique, repeat and unsure.
-static double  Repeat_Cutoff = DEFAULT_REPEAT_CUTOFF;
-  // Strings covered >= this percent are classified repeat
-  // Inbetween is unsure.
-static double  Unique_Cutoff = DEFAULT_UNIQUE_CUTOFF;
-  // Strings covered < this percent are classified unique
 
-
-static unsigned  Char_To_Binary
-    (char ch);
-static void  Fasta_To_Binary
-    (const string & s, Mer_t & mer);
-static void  Forward_Add_Ch
-    (Mer_t & mer, char ch);
-static void  Reverse_Add_Ch
-    (Mer_t & mer, char ch);
-static int  Hash
-    (Mer_t mer);
-static bool  Hash_Find
-    (Mer_t mer);
-static void  Hash_Insert
-    (Mer_t mer);
-static void  Parse_Command_Line
-    (int argc, char * argv []);
-static void  Print_Mer_Coverage
-    (const string & s, double & percent_covered);
-static void  Read_Mers
-    (const char * fname, MerTable_t & mer_table);
-static void  Usage
-    (const char * command);
-
+static unsigned  Char_To_Binary (char ch);
+static void  Fasta_To_Binary (const string & s, Mer_t & mer);
+static void  Forward_Add_Ch (Mer_t & mer, char ch);
+static void  Reverse_Add_Ch (Mer_t & mer, char ch);
+static void  Parse_Command_Line (int argc, char * argv []);
+static void  Print_Mer_Coverage (const string & s, double & percent_covered);
+static void  Read_Mers (const char * fname, MerTable_t & mer_table);
+static void  Usage (const char * command);
 static void  Compute_Mer_Coverage (const string & s, const MerTable_t & mer_table);
+static char BinaryToAscii(char b);
+static void MerToAscii(Mer_t mer, string & s);
 
-char BinaryToAscii(char b)
-{
-  switch(b)
-  {
-    case 0: return 'A';
-    case 1: return 'C';
-    case 2: return 'G';
-    case 3: return 'T';
-  }
-
-  return '*';
-}
-
-static void MerToAscii(Mer_t mer, string & s)
-{
-  s.clear();
-
-  for (int i = 0; i < Kmer_Len; i++)
-  {
-    char a = BinaryToAscii(mer & 0x3);
-    mer >>= 2;
-
-    s.append(1, a);
-  }
-
-  reverse(s.begin(), s.end());
-}
 
 
 
@@ -135,6 +73,34 @@ int  main (int argc, char * argv [])
   cerr << count << "sequences processed" << endl;
 
   return  0;
+}
+
+static char BinaryToAscii(char b)
+{
+  switch(b)
+  {
+    case 0: return 'A';
+    case 1: return 'C';
+    case 2: return 'G';
+    case 3: return 'T';
+  }
+
+  return '*';
+}
+
+static void MerToAscii(Mer_t mer, string & s)
+{
+  s.clear();
+
+  for (int i = 0; i < Kmer_Len; i++)
+  {
+    char a = BinaryToAscii(mer & 0x3);
+    mer >>= 2;
+
+    s.append(1, a);
+  }
+
+  reverse(s.begin(), s.end());
 }
 
 
@@ -221,20 +187,9 @@ static void  Parse_Command_Line
    while  (! errflg && ((ch = getopt (argc, argv, "fhr:u:")) != EOF))
      switch  (ch)
        {
-        case  'f' :
-          Make_Fasta = true;
-          break;
 
         case  'h' :
           errflg = true;
-          break;
-
-        case  'r' :
-          Repeat_Cutoff = strtod (optarg, NULL);
-          break;
-
-        case  'u' :
-          Unique_Cutoff = strtod (optarg, NULL);
           break;
 
         case  '?' :
@@ -386,17 +341,14 @@ static void  Usage
 
   {
    fprintf (stderr,
-           "USAGE:  kmer-cov  <kmer-file>\n"
+           "USAGE:  kmer-cov-plot  <kmer-file>\n"
            "\n"
            "Read a list of short kmers (31 bases or less) from <kmer-file>\n"
-           "and then compute what regions of the fasta sequences read from\n"
-           "stdin are covered by them (or their reverse complement).\n"
+           "and a fasta file on stdin and print the kmer coverage at each \n"
+           "position (prints max (forkmercov, revkmercov))\n"
            "\n"
            "Options:\n"
-           "  -f      Output unique/repeat/unsure fasta sequences\n"
            "  -h      Print this usage message\n"
-           "  -r <x>  Repeats are > <x>%% covered by kmers\n"
-           "  -u <x>  Uniques are <= <x>%% covered by kmers\n"
            "\n");
 
    return;
