@@ -70,7 +70,7 @@ int  main (int argc, char * argv [])
     count++;
   }
 
-  cerr << count << "sequences processed" << endl;
+  cerr << count << " sequences processed" << endl;
 
   return  0;
 }
@@ -248,14 +248,23 @@ static void  Compute_Mer_Coverage (const string & s, const MerTable_t & mer_tabl
    }
 
    string fmer, rmer;
+   MerTable_t::const_iterator fi, ri;
+   unsigned int fcount = 0;
+   unsigned int rcount = 0;
 
    for  (j = 0;  i < n;  i ++, j ++)
    {
      Forward_Add_Ch (fwd_mer, s [i]);
      Reverse_Add_Ch (rev_mer, s [i]);
 
-     unsigned int fcount = mer_table.find(fwd_mer)->second;
-     unsigned int rcount = mer_table.find(rev_mer)->second;
+     fcount = 0;
+     rcount = 0;
+
+     fi = mer_table.find(fwd_mer);
+     ri = mer_table.find(rev_mer);
+
+     if (fi != mer_table.end()) { fcount = fi->second; }
+     if (ri != mer_table.end()) { rcount = ri->second; }
 
      MerToAscii(fwd_mer, fmer);
      MerToAscii(rev_mer, rmer);
