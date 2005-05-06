@@ -1226,6 +1226,11 @@ void OutputLayouts (const Assembly_t & assembly)
 
 	lay . setIID (++ctgs);
 
+        ostringstream ss;
+        ss << ctgs << ' '
+           << *((*cpi)->tiles.front( )->read->place->head->ref->id);
+        lay . setEID (ss . str( ));
+
 	for ( tpi  = (*cpi) -> tiles . begin( );
 	      tpi != (*cpi) -> tiles . end( ); ++ tpi )
 	  {
