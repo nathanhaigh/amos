@@ -12,7 +12,7 @@ public:
          AMOS::ID_t bid, AMOS::ID_t bcontig, AMOS::Tile_t * btile, 
          AMOS::ID_t libid, AMOS::Distribution_t distribution,
          int conslen,
-         AMOS::MateType_t matetype);
+         AMOS::FragmentType_t matetype);
 
   void setActive(int i, Insert * other, bool includeLibrary);
   int getProjectedPosition(AMOS::Tile_t * tile, AMOS::Distribution_t dist);
@@ -29,7 +29,7 @@ public:
   int m_arc;
   int m_brc;
 
-  AMOS::MateType_t m_matetype;
+  AMOS::FragmentType_t m_matetype;
 
   Insert * m_other;
   InsertCanvasItem * m_canvasItem;

@@ -387,7 +387,7 @@ void InsertWidget::computeInsertHappiness()
       insert = new Insert(aid, acontig, atile,
                           AMOS::NULL_ID, AMOS::NULL_ID, NULL,
                           libid, dist, m_tilingwidth, 
-                          AMOS::Matepair_t::NULL_MATE);
+                          AMOS::FragmentType_t::NULL_FRAGMENT);
     }
     else
     {

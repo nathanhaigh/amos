@@ -110,13 +110,13 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
         featcount++;
         new FeatureListItem(m_table,
                             QString::number(contigid),
-                            QString(fi->eid),
+                            QString(fi->getEID()),
                             QString((QChar)(char)fi->type),
                             QString(fi->group),
                             QString::number(fi->range.isReverse() ? fi->range.end : fi->range.begin),
                             QString::number(fi->range.begin),
                             QString::number(fi->range.end),
-                            QString(fi->comment));
+                            QString(fi->getComment()));
       }
       contigid++;
     }

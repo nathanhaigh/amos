@@ -30,7 +30,7 @@ Insert::Insert(ID_t     aid,
                ID_t     libid,
                Distribution_t dist,
                int conslen,
-               AMOS::MateType_t matetype)
+               AMOS::FragmentType_t matetype)
 {
   m_atile   = atile;
   m_aid     = aid;
@@ -80,7 +80,7 @@ Insert::Insert(ID_t     aid,
     m_state = Happy;
     m_active = 2;
 
-    if (m_matetype == Matepair_t::TRANSPOSON)
+    if (m_matetype == FragmentType_t::TRANSPOSON)
     {
       if (m_arc) { m_actual = brange.begin - arange.end; }
       else       { m_actual = arange.begin - brange.end; }
@@ -196,7 +196,7 @@ bool Insert::reasonablyConnected() const
 {
   if (!m_atile || !m_btile) { return false; }
 
-  if (m_matetype == Matepair_t::TRANSPOSON)
+  if (m_matetype == FragmentType_t::TRANSPOSON)
   {
     return true;
   }

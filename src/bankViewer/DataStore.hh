@@ -37,7 +37,6 @@ public:
   AMOS::BankStream_t read_bank;
   AMOS::BankStream_t frag_bank;
   AMOS::BankStream_t lib_bank;
-  AMOS::BankStream_t mate_bank;
   AMOS::BankStream_t scaffold_bank;
 
   AMOS::BankStream_t edge_bank;
@@ -55,7 +54,7 @@ public:
 
   AMOS::Contig_t m_contig;
 
-  typedef HASHMAP::hash_map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::MateType_t> > MateLookupMap;
+  typedef HASHMAP::hash_map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::FragmentType_t> > MateLookupMap;
   MateLookupMap m_readmatelookup;
 
 
@@ -70,7 +69,6 @@ public:
 
 private:
 
-  void indexMates();
   void indexFrags();
   void indexReads();
   void indexLibraries();

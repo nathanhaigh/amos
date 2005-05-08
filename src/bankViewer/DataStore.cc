@@ -11,7 +11,6 @@ DataStore::DataStore()
     read_bank(Read_t::NCODE),
     frag_bank(Fragment_t::NCODE),
     lib_bank(Library_t::NCODE),
-    mate_bank(Matepair_t::NCODE),
     scaffold_bank(Scaffold_t::NCODE),
     edge_bank(ContigEdge_t::NCODE),
     link_bank(ContigLink_t::NCODE)
@@ -61,13 +60,10 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
-    mate_bank.open(bankname, B_SPY);
     frag_bank.open(bankname, B_SPY);
     lib_bank.open(bankname,  B_SPY);
 
     indexLibraries();
-    indexMates();
-
     indexFrags();
     indexReads();
   }
@@ -112,6 +108,9 @@ void DataStore::indexFrags()
   m_fragliblookup.clear();
   m_fragliblookup.resize(frag_bank.getSize());
 
+  m_readmatelookup.clear();
+  m_readmatelookup.resize(frag_bank.getSize() * 2);
+
   cerr << "Indexing frags... ";
 
   Fragment_t frg;
@@ -120,9 +119,14 @@ void DataStore::indexFrags()
   while (frag_bank >> frg)
   {
     m_fragliblookup.insert(make_pair(frg.getIID(), frg.getLibrary()));
+
+    std::pair<ID_t, ID_t> mates = frg.getMatePair();
+    m_readmatelookup.insert(make_pair(mates.first,  pair<AMOS::ID_t, AMOS::FragmentType_t> (mates.second, frg.getType())));
+    m_readmatelookup.insert(make_pair(mates.second, pair<AMOS::ID_t, AMOS::FragmentType_t> (mates.first,  frg.getType())));
   }
 
-  cerr << m_fragliblookup.size() << " fragments" << endl;
+  cerr << m_fragliblookup.size() << " fragments ["
+       << m_readmatelookup.size() << " mated reads]" << endl;
 }
 
 void DataStore::indexLibraries()
@@ -141,24 +145,6 @@ void DataStore::indexLibraries()
   }
 
   cerr << m_libdistributionlookup.size() << " libraries" << endl;
-}
-
-void DataStore::indexMates()
-{
-  m_readmatelookup.clear();
-  m_readmatelookup.resize(mate_bank.getSize() * 2);
-
-  cerr << "Indexing mates... ";
-
-  mate_bank.seekg(1);
-  Matepair_t mates;
-  while (mate_bank >> mates)
-  {
-    m_readmatelookup.insert(make_pair(mates.getReads().first, pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().second, mates.getType())));
-    m_readmatelookup.insert(make_pair(mates.getReads().second, pair<AMOS::ID_t, AMOS::MateType_t> (mates.getReads().first,  mates.getType())));
-  }
-
-  cerr << m_readmatelookup.size() << " mated reads" << endl;
 }
 
 void DataStore::indexContigs()
