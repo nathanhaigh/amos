@@ -13,7 +13,8 @@ DataStore::DataStore()
     lib_bank(Library_t::NCODE),
     scaffold_bank(Scaffold_t::NCODE),
     edge_bank(ContigEdge_t::NCODE),
-    link_bank(ContigLink_t::NCODE)
+    link_bank(ContigLink_t::NCODE),
+    feat_bank(Feature_t::NCODE)
 {
   m_contigId = 0;
   m_loaded = false;
@@ -80,6 +81,15 @@ int DataStore::openBank(const string & bankname)
   catch (Exception_t & e)
   {
     cerr << "Contig Graph not available\n";
+  }
+
+  try
+  {
+    feat_bank.open(bankname, B_SPY);
+  }
+  catch (const Exception_t & e)
+  {
+    cerr << "Features not available" << endl;
   }
 
   return retval;

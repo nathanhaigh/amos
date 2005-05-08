@@ -128,13 +128,12 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     {
       FeatureCanvasItem * fitem = (FeatureCanvasItem *) * it;
       s += " Feature EID: ";
-      s += fitem->m_feat.eid + " Group:";
-      s += fitem->m_feat.group + " Comment:";
-      s += fitem->m_feat.comment + " Type:";
-      s += (char)fitem->m_feat.type;
-      s += " [" +  QString::number(fitem->m_feat.range.begin) + ",";
-      s += QString::number(fitem->m_feat.range.end) + "]";
-      s += " " + QString::number(fitem->m_feat.range.getLength()) + "bp";
+      s += fitem->m_feat.getEID() + " Group:";
+      s += fitem->m_feat.getComment() + " Type:";
+      s += (char)fitem->m_feat.getType();
+      s += " [" +  QString::number(fitem->m_feat.getRange().begin) + ",";
+      s += QString::number(fitem->m_feat.getRange().end) + "]";
+      s += " " + QString::number(fitem->m_feat.getRange().getLength()) + "bp";
 
       jump = false;
       emitstatus = true;

@@ -10,6 +10,7 @@
 #include <vector>
 
 using namespace std;
+using namespace AMOS;
 
 
 
@@ -17,16 +18,16 @@ class FeatureListItem : public QListViewItem
 {
 public:
   FeatureListItem(QListView * parent, 
-                  QString contigid,
                   QString eid,
                   QString type,
-                  QString group,
-                  QString offset,
-                  QString end5,
-                  QString end3,
+                  QString ncode,
+                  QString siid,
+                  QString dir,
+                  QString start,
+                  QString end,
                   QString comment)
                
-    : QListViewItem(parent, contigid, eid, type, group, offset, end5, end3, comment)
+    : QListViewItem(parent, eid, type, ncode, siid, dir, start, end, comment)
     {
       
     }
@@ -35,7 +36,7 @@ public:
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 0 || col == 4 || col == 5 || col == 6)
+    if (col == 1 || col == 5 || col == 6)
     {
       return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
     }
@@ -75,13 +76,13 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
   connect(eidpick, SIGNAL(returnPressed()),
           this,    SLOT(acceptSelected()));
 
-  m_table->addColumn("Contig ID");
   m_table->addColumn("EID");
   m_table->addColumn("Type");
-  m_table->addColumn("Group");
-  m_table->addColumn("Offset");
-  m_table->addColumn("End5");
-  m_table->addColumn("End3");
+  m_table->addColumn("Source Type");
+  m_table->addColumn("Source IID");
+  m_table->addColumn("Dir");
+  m_table->addColumn("Start");
+  m_table->addColumn("End");
   m_table->addColumn("Comment");
 
   m_datastore = datastore;
@@ -95,35 +96,28 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
 
   try
   {
-    int featcount = 0;
-    int contigid = 1;
-    datastore->contig_bank.seekg(1);
-    AMOS::Contig_t contig;
+    QString status = "Select from " ;
+    status += QString::number(datastore->feat_bank.getSize()) + " features";
+    statusBar()->message(status);
 
-    while (datastore->contig_bank >> contig)
+    Feature_t feat;
+    datastore->feat_bank.seekg(1);
+
+    while (datastore->feat_bank >> feat)
     {
-      vector<AMOS::Feature_t>::iterator fi;
-      for (fi =  contig.getFeatures().begin();
-           fi != contig.getFeatures().end();
-           fi++)
-      {
-        featcount++;
-        new FeatureListItem(m_table,
-                            QString::number(contigid),
-                            QString(fi->getEID()),
-                            QString((QChar)(char)fi->type),
-                            QString(fi->group),
-                            QString::number(fi->range.isReverse() ? fi->range.end : fi->range.begin),
-                            QString::number(fi->range.begin),
-                            QString::number(fi->range.end),
-                            QString(fi->getComment()));
-      }
-      contigid++;
+      AMOS::Range_t range = feat.getRange();
+
+      new FeatureListItem(m_table,
+                          QString(feat.getEID()),
+                          QString((QChar)(char)feat.getType()),
+                          QString::number(feat.getSource().second),
+                          QString::number(feat.getSource().first),
+                          QString((QChar)(range.isReverse()?'R':'F')),
+                          QString::number(range.getLo()),
+                          QString::number(range.getHi()),
+                          QString(feat.getComment()));
     }
 
-    QString status = "Select from " ;
-    status += QString::number(featcount) + " features";
-    statusBar()->message(status);
   }
   catch (AMOS::Exception_t & e)
   {
@@ -135,20 +129,24 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
 
 void FeatureBrowser::itemSelected(QListViewItem * item)
 {
-  int contigid = atoi(item->text(0));
-  int gindex = atoi(item->text(4));
-
-  if (contigid != m_datastore->m_contigId)
+  if (item->text(2) == Contig_t::NCODE)
   {
-    emit setContigId(contigid);
-  }
+    ID_t iid = atoi(item->text(3));
+    ID_t bid = m_datastore->contig_bank.lookupBID(iid);
 
-  emit setGindex(gindex);
+    int offset = atoi(item->text(4));
+
+    if (bid != m_datastore->m_contigId)
+    {
+      emit setContigId(bid);
+    }
+
+    emit setGindex(offset);
+  }
 }
 
 void FeatureBrowser::selecteid(const QString & eid)
 {
-  cerr << eid << endl;
   QListViewItem * item = m_table->findItem(eid, 1);
   if (item)
   {

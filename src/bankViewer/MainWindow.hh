@@ -39,6 +39,8 @@ public:
   int m_qstart;
   int m_qend;
 
+  int m_chain;
+
   float m_percentid;
 };
 

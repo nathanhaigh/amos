@@ -60,14 +60,14 @@ Insert::Insert(ID_t     aid,
   { 
     m_arc = atile->range.isReverse(); 
     arange.setBegin(atile->offset);
-    arange.setEnd(atile->offset + atile->range.getLength() + atile->gaps.size()-1);
+    arange.setEnd(atile->offset + atile->getGappedLength() - 1);
   }
 
   if (btile) 
   { 
     m_brc = btile->range.isReverse(); 
     brange.setBegin(btile->offset);
-    brange.setEnd(btile->offset + btile->range.getLength() + btile->gaps.size()-1);
+    brange.setEnd(btile->offset + btile->getGappedLength() - 1);
   }
 
   if (atile && btile)
@@ -80,7 +80,7 @@ Insert::Insert(ID_t     aid,
     m_state = Happy;
     m_active = 2;
 
-    if (m_matetype == FragmentType_t::TRANSPOSON)
+    if (m_matetype == Fragment_t::TRANSPOSON)
     {
       if (m_arc) { m_actual = brange.begin - arange.end; }
       else       { m_actual = arange.begin - brange.end; }
@@ -183,7 +183,7 @@ int Insert::getProjectedPosition(Tile_t * tile, Distribution_t dist)
 {
   if (tile->range.isReverse())
   {
-    return (int)(tile->offset + tile->range.getLength() + tile->gaps.size() - 1 - dist.mean - MAXSTDEV*dist.sd - READLEN);
+    return (int)(tile->offset + tile->getGappedLength() - 1 - dist.mean - MAXSTDEV*dist.sd - READLEN);
   }
   else
   {
@@ -196,7 +196,7 @@ bool Insert::reasonablyConnected() const
 {
   if (!m_atile || !m_btile) { return false; }
 
-  if (m_matetype == FragmentType_t::TRANSPOSON)
+  if (m_matetype == Fragment_t::TRANSPOSON)
   {
     return true;
   }
@@ -207,8 +207,7 @@ bool Insert::reasonablyConnected() const
 
 
   /*  //This would force reads that overlap to be disconnected 
-         (m_state == CompressedMate && (m_actual > (m_atile->range.getLength() + m_atile->gaps.size() +
-                                                    m_btile->range.getLength() + m_btile->gaps.size())));
+         (m_state == CompressedMate && (m_actual > (m_atile->getGappedLength() + m_btile->getGappedLength())));
   */
 }
 
@@ -222,13 +221,13 @@ void Insert::setActive(int i, Insert * other, bool includeLibrary)
   if (i == 0) { tile = m_atile; }
   else        { tile = m_btile; }
 
-  int len = tile->range.getLength() + tile->gaps.size()-1;
+  int len = tile->getGappedLength();
 
   if (includeLibrary)
   {
     if (tile->range.isReverse())
     {
-      m_roffset = tile->offset + len;
+      m_roffset = tile->offset + len - 1;
 
       if (m_dist.mean > len)
       {
@@ -249,17 +248,17 @@ void Insert::setActive(int i, Insert * other, bool includeLibrary)
       }
       else
       {
-        m_roffset = m_loffset + len + MIN3PRIMETRIM;
+        m_roffset = m_loffset + len + MIN3PRIMETRIM - 1;
       }
     }
   }
   else
   {
     m_loffset = tile->offset;
-    m_roffset = tile->offset + len;
+    m_roffset = tile->offset + len - 1;
   }
 
-  m_length = (m_roffset - m_loffset);
+  m_length = m_roffset - m_loffset + 1;
 }
 
 static const char * happystr       = "Happy";

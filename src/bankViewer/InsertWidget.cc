@@ -99,8 +99,8 @@ struct FeatOrderCmp
 {
   bool operator() (const AMOS::Feature_t & a, const AMOS::Feature_t & b)
   {
-    int aoffset = a.range.isReverse() ? a.range.end : a.range.begin;
-    int boffset = b.range.isReverse() ? b.range.end : b.range.begin;
+    int aoffset = a.getRange().getLo();
+    int boffset = b.getRange().getLo();
 
     int offdiff = boffset - aoffset;
 
@@ -110,8 +110,8 @@ struct FeatOrderCmp
       return true;
     }
 
-    int lendiff = (b.range.getLength()) -
-                  (a.range.getLength());
+    int lendiff = (b.getRange().getLength()) -
+                  (a.getRange().getLength());
 
     if (lendiff)
     {
@@ -387,7 +387,7 @@ void InsertWidget::computeInsertHappiness()
       insert = new Insert(aid, acontig, atile,
                           AMOS::NULL_ID, AMOS::NULL_ID, NULL,
                           libid, dist, m_tilingwidth, 
-                          AMOS::FragmentType_t::NULL_FRAGMENT);
+                          AMOS::Fragment_t::NULL_FRAGMENT);
     }
     else
     {
@@ -513,24 +513,27 @@ void InsertWidget::initializeTiling()
         m_tiling.push_back(mappedTile);
       }
 
-      const vector<Feature_t> & cfeats = contig.getFeatures();
-      vector<Feature_t>::const_iterator fi;
-      for (fi = cfeats.begin(); fi != cfeats.end(); fi++)
+      Feature_t feat;
+      m_datastore->feat_bank.seekg(1);
+
+      while (m_datastore->feat_bank >> feat)
       {
-        Feature_t feat(*fi);
-
-        if (ci->range.isReverse())
+        if (feat.getSource().second == Contig_t::NCODE &&
+            feat.getSource().first == contig.getIID())
         {
-          feat.range.swap();
+          if (ci->range.isReverse())
+          {
+            feat.getRange().swap();
 
-          feat.range.begin = (ci->range.getLength() - feat.range.begin);
-          feat.range.end   = (ci->range.getLength() - feat.range.end);
+            feat.getRange().begin = (ci->range.getLength() - feat.getRange().begin);
+            feat.getRange().end   = (ci->range.getLength() - feat.getRange().end);
+          }
+
+          feat.getRange().begin += ci->offset;
+          feat.getRange().end   += ci->offset;
+
+          m_features.push_back(feat);
         }
-
-        feat.range.begin += ci->offset;
-        feat.range.end   += ci->offset;
-
-        m_features.push_back(feat);
       }
     }
 
@@ -548,7 +551,17 @@ void InsertWidget::initializeTiling()
     m_tilingwidth = m_datastore->m_contig.getLength();
     m_tiling      = m_datastore->m_contig.getReadTiling();
 
-    m_features = m_datastore->m_contig.getFeatures();
+    Feature_t feat;
+    m_datastore->feat_bank.seekg(1);
+
+    while (m_datastore->feat_bank >> feat)
+    {
+      if (feat.getSource().second == Contig_t::NCODE &&
+          feat.getSource().first == m_datastore->m_contig.getIID())
+      {
+        m_features.push_back(feat);
+      }
+    }
   }
 
   sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
@@ -774,7 +787,7 @@ void InsertWidget::paintCanvas()
     vector<AMOS::Feature_t>::iterator fi;
     for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
-      int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
+      int offset = fi->getRange().getLo();
 
       // First fit into the layout
       for (li =  layout.begin(), layoutpos = 0;
@@ -785,12 +798,12 @@ void InsertWidget::paintCanvas()
       }
 
       if (li == layout.end()) { layout.push_back(0); }
-      layout[layoutpos] = offset + fi->range.getLength() + layoutgutter;
+      layout[layoutpos] = offset + fi->getRange().getLength() + layoutgutter;
 
       int vpos = voffset + layoutpos * lineheight;
 
       FeatureCanvasItem * fitem = new FeatureCanvasItem((int)(m_hscale * (offset+m_hoffset)), vpos,
-                                                        (int)(m_hscale*fi->range.getLength()), m_seqheight,
+                                                        (int)(m_hscale*fi->getRange().getLength()), m_seqheight,
                                                         *fi, m_icanvas);
       fitem->show();
     }
@@ -935,9 +948,9 @@ void InsertWidget::paintCanvas()
     vector<AMOS::Feature_t>::iterator fi;
     for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
-      int offset = fi->range.isReverse() ? fi->range.end : fi->range.begin;
+      int offset = fi->getRange().getLo();
       QCanvasRectangle * rect = new QCanvasRectangle((int)((m_hoffset+offset) * m_hscale), 0, 
-                                                     (int)(fi->range.getLength() * m_hscale), voffset, 
+                                                     (int)(fi->getRange().getLength() * m_hscale), voffset, 
                                                      m_icanvas);
       rect->setBrush(QColor(59,49,31));
       rect->setPen(QColor(139,119,111));

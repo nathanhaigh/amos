@@ -213,8 +213,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   toggleHighlightDiscrepancy();
 
 #if 0
-  m_querystore.openBank("amoscmp.bnk");
-
   ReferenceAlignment ra0;
   ra0.m_reference = "1047283846736";
   ra0.m_query = "1";
@@ -223,6 +221,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   ra0.m_qstart = 1;
   ra0.m_qend = 1834;
   ra0.m_percentid = 100.0;
+  ra0.m_chain = 0;
   m_referenceAlignments.insert(make_pair(ra0.m_reference, ra0));
 
   ReferenceAlignment ra1;
@@ -233,6 +232,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   ra1.m_qstart = 1;
   ra1.m_qend = 12106;
   ra1.m_percentid = 100.0;
+  ra0.m_chain = 1;
   m_referenceAlignments.insert(make_pair(ra1.m_reference, ra1));
 
   ReferenceAlignment ra2;
@@ -243,6 +243,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   ra2.m_qstart = 1;
   ra2.m_qend = 6994;
   ra2.m_percentid = 100.0;
+  ra0.m_chain = 2;
   m_referenceAlignments.insert(make_pair(ra2.m_reference, ra2));
 
   ReferenceAlignment ra3;
@@ -253,6 +254,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   ra3.m_qstart = 1;
   ra3.m_qend = 517730;
   ra3.m_percentid = 100.0;
+  ra0.m_chain = 3;
   m_referenceAlignments.insert(make_pair(ra3.m_reference, ra3));
 #endif
 }
@@ -261,21 +263,6 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 {
   connect(this,      SIGNAL(gindexChanged(int)),
           tiling,    SLOT(setGindex(int)));
-
-  connect(tiling,    SIGNAL(gindexChanged(int)),
-          this,      SLOT(setGindex(int)));
-
-  connect(this,      SIGNAL(advanceNextDiscrepancy()),
-          tiling,    SLOT(advanceNextDiscrepancy()));
-
-  connect(this,      SIGNAL(advancePrevDiscrepancy()),
-          tiling,    SLOT(advancePrevDiscrepancy()));
-
-  connect(this,      SIGNAL(contigIdSelected(int)),
-          tiling,    SLOT(setContigId(int)));
-
-  connect(tiling,    SIGNAL(setGindexRange(int, int)),
-          this,      SLOT(setGindexRange(int, int)));
 
   connect(this,      SIGNAL(highlightRead(int)),
           tiling,    SLOT(highlightRead(int)));
@@ -310,9 +297,26 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
   connect(this,      SIGNAL(toggleSNPColoring(bool)),
           tiling,    SIGNAL(toggleSNPColoring(bool)));
 
-  connect(this,      SIGNAL(searchString(const QString &, bool)),
-          tiling,    SLOT(searchString(const QString &, bool)));
+  if (isReference)
+  {
+    connect(tiling,    SIGNAL(gindexChanged(int)),
+            this,      SLOT(setGindex(int)));
 
+    connect(tiling,    SIGNAL(setGindexRange(int, int)),
+            this,      SLOT(setGindexRange(int, int)));
+
+    connect(this,      SIGNAL(contigIdSelected(int)),
+            tiling,    SLOT(setContigId(int)));
+    
+    connect(this,      SIGNAL(searchString(const QString &, bool)),
+            tiling,    SLOT(searchString(const QString &, bool)));
+
+    connect(this,      SIGNAL(advanceNextDiscrepancy()),
+            tiling,    SLOT(advanceNextDiscrepancy()));
+
+    connect(this,      SIGNAL(advancePrevDiscrepancy()),
+            tiling,    SLOT(advancePrevDiscrepancy()));
+  }
 }
 
 void MainWindow::initializeSimpleServer(int port)
@@ -456,46 +460,66 @@ void MainWindow::setContigId(int contigId)
     s += " Reads: ";
     s += QString::number(m_datastore.m_contig.getReadTiling().size());
 
-    ReferenceAlignments::iterator ri = m_referenceAlignments.find(m_datastore.m_contig.getEID());
 
-    while (ri != m_referenceAlignments.end() && ri->first == m_datastore.m_contig.getEID())
+
+    int m_showalignments = 0;
+    if (m_showalignments)
     {
-      cerr << "Found alignment r:" << ri->second.m_reference << " q:" << ri->second.m_query << endl;
+      vector<ReferenceAlignment> alignments;
+      ReferenceAlignments::iterator ri = m_referenceAlignments.find(m_datastore.m_contig.getEID());
+
+      while (ri != m_referenceAlignments.end() && ri->first == m_datastore.m_contig.getEID())
+      {
+        cerr << "Found alignment r:" << ri->second.m_reference << " q:" << ri->second.m_query << endl;
+        alignments.push_back(ri->second);
+        ri++;
+      }
 
       delete m_multiTilingWidget->layout();
-
       QVBoxLayout * multiTilingLayout = new QVBoxLayout(m_multiTilingWidget, 0, -1,  "mtl2");
+      QSplitter * splitter = new QSplitter(Qt::Vertical, m_multiTilingWidget, "splitter");
+      splitter->show();
+      multiTilingLayout->addWidget(splitter);
 
+      vector<ReferenceAlignment>::iterator ai;
       cerr << "r";
       AlignmentInfo * rai = new AlignmentInfo();
-      m_tiling  = new TilingFrame(&m_datastore, rai, m_multiTilingWidget, "reftiling");
+
+      if (!alignments.empty())
+      {
+        rai->m_gaps.push_back(143);
+        rai->m_gaps.push_back(3790);
+      }
+      
+      m_tiling  = new TilingFrame(&m_datastore, rai, splitter, "reftiling");
       initializeTiling(m_tiling, true);
       m_tiling->show();
 
-      multiTilingLayout->addWidget(m_tiling);
+      for (ai =  alignments.begin();
+           ai != alignments.end();
+           ai++)
+      {
+        cerr << "q";
+        DataStore * qs = new DataStore;
+        qs->openBank("amoscmp.bnk");
+        qs->setContigId(qs->contig_bank.getIDMap().lookupBID(ai->m_query.c_str()));
 
+        AlignmentInfo * qai = new AlignmentInfo();
 
-      cerr << "q";
-      AlignmentInfo * qai = new AlignmentInfo();
-      m_querystore.setContigId(m_querystore.contig_bank.getIDMap().lookupBID(ri->second.m_query.c_str()));
-      TilingFrame * tiling = new TilingFrame(&m_querystore, qai, m_multiTilingWidget, "querytiling");
-      initializeTiling(tiling, false);
-      tiling->show();
+        int count = 0;
+        for (int i = 0; i < rai->m_gaps.size(); i++)
+        {
+          if (rai->m_gaps[i] < ai->m_rstart) { count++; }
+        }
 
-      multiTilingLayout->addWidget(tiling);
+        qai->m_startshift = ai->m_rstart - ai->m_qstart + count;
+        qai->m_endshift = m_datastore.m_contig.getLength() - ai->m_rend;
 
-      cerr << "q";
-      qai = new AlignmentInfo();
-      m_querystore.setContigId(m_querystore.contig_bank.getIDMap().lookupBID(ri->second.m_query.c_str()));
-      tiling = new TilingFrame(&m_querystore, qai, m_multiTilingWidget, "querytiling");
-      initializeTiling(tiling, false);
-      tiling->show();
-
-      multiTilingLayout->addWidget(tiling);
-
-
-      ri++;
-      break;
+        TilingFrame * tiling = new TilingFrame(qs, qai, splitter, "querytiling");
+        tiling->setContigId(qs->m_contigId);
+        initializeTiling(tiling, false);
+        tiling->show();
+      }
     }
 
     emit contigIdSelected(m_datastore.m_contigId);
