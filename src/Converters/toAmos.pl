@@ -545,7 +545,7 @@ sub parseFrgFile {
 	    my $nm = $$fields{src};
 	    my @lines = split('\n', $nm);
 	    $nm = $lines[0]; # join('', @lines);
-	    if ($byaccession || $nm eq "" || $nm !~ /^\s*$/)){
+	    if ($byaccession || $nm =~ /^\s*$/){
 		$seqnames{$iid} = $id;
 	    } else {
 		$seqnames{$iid} = $nm;
