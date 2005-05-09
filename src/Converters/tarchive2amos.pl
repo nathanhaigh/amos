@@ -536,6 +536,13 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    print FRAG "eid:$seq2ins{$fid}\n";           # external fragment id
 	    print FRAG "lib:$lib2id{$ins2lib{$seq2ins{$fid}}}\n";  
 	    print FRAG "typ:I\n";              # INSERT
+
+            my $ins = $seq2ins{$fid};
+            if (exists $end5{$ins} && exists $end3{$ins} &&
+                exists $seq2id{$end5{$ins}} && exists $seq2id{$end3{$ins}}){
+                print FRAG "rds:$seq2id{$end5{$ins}},$seq2id{$end3{$ins}}\n";
+            }
+
 	    print FRAG "}\n";	    
 	    $doneins{$ins2id{$seq2ins{$fid}}} = 1;
 	}
@@ -575,26 +582,6 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 
 if (! defined $silent){
     print STDERR "doing mates\n";
-}
-
-
-while (my ($ins, $lib) = each %ins2lib){
-    if (exists $end5{$ins} && exists $end3{$ins}){
-	if (! exists $seq2id{$end5{$ins}} ||
-	    ! exists $seq2id{$end3{$ins}}){
-	    next;
-	}
-	my $id = getId();
-	print FRAG "{MTP\n";
-	print FRAG "iid:$id\n";
-	print FRAG "rd1:$seq2id{$end5{$ins}}\n";
-	print FRAG "rd2:$seq2id{$end3{$ins}}\n";
-	print FRAG "com:\n";
-	print FRAG "$ins\n";
-	print FRAG ".\n";
-	print FRAG "typ:E\n"; # END READS
-	print FRAG "}\n";
-    }
 }
 
 if (! defined $silent){

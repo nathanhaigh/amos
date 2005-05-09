@@ -35,6 +35,7 @@ my %libids;
 my %frg2lib;
 my %rd2lib;
 my %rdids;
+my %mates;
 
 my $err = $base->TIGR_GetOptions("i=s"   => \$infile,
 				 "o=s"   => \$outfile);
@@ -82,6 +83,10 @@ while (my $record = getRecord(\*STDIN)){
     
     if ($type eq "FRG"){
 	$frg2lib{$$fields{"iid"}} = $$fields{"lib"};
+        if ( exists $$fields{"rds"} ) {
+            $$fields{"rds"} =~ /^(\d+),(\d+)/;
+            $mates{$1} = $2;
+        }
     } # type is FRG
 
     if ($type eq "RED"){
@@ -96,13 +101,14 @@ while (my $record = getRecord(\*STDIN)){
 
 	$rdids{$$fields{"iid"}} = $seqname;
     } # type is RED
-    if ($type eq "MTP"){
-	
-	if ($rd2lib{$$fields{rd1}} != $rd2lib{$$fields{rd2}}){
-	    $base->bail("Reads $$fields{rd1} and $$fields{rd2} don't appear to map to the same library ($rd2lib{$$fields{rd1}} != $rd2lib{$$fields{rd2}})");
-	}
-	print "$rdids{$$fields{rd1}}\t$rdids{$$fields{rd2}}\t$rd2lib{$$fields{rd1}}\n";
-    } # type is MTP
 } # while each record
+
+foreach my $rd1 ( keys %mates ) {
+    my $rd2 = $mates{$rd1};
+    if ($rd2lib{$rd1} != $rd2lib{$rd1}){
+        $base->bail("Reads $rd1 and $rd2 don't appear to map to the same library ($rd2lib{$rd1} != $rd2lib{$rd2})");
+    }
+    print "$rdids{$rd1}\t$rdids{$rd2}\t$rd2lib{$rd1}\n";
+} # for each mate
 
 exit(0);
