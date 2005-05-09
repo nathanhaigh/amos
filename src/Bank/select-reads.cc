@@ -276,7 +276,7 @@ void PrintHelp (const char * s)
     << "-M            Dump mates of eids as well\n"
     << endl;
   cerr
-    << "Takes an AMOS bank directory and dumps RED, FRG, MTP, & LIB messages\n"
+    << "Takes an AMOS bank directory and dumps RED, FRG & LIB messages\n"
     << "associated with list of reads to stdout" << endl;
   return;
 }
