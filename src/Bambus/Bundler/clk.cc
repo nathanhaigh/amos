@@ -136,7 +136,7 @@ int main(int argc, char **argv)
     }
 
 
-  Bank_t frag_bank (Fragment_t::NCODE);
+  BankStream_t frag_bank (Fragment_t::NCODE);
   if (! frag_bank.exists(globals["bank"])){
     cerr << "No fragment account found in bank " << globals["bank"] << endl;
     exit(1);
