@@ -540,11 +540,13 @@ int main(int argc, char **argv)
   if (feats)
     {
       try {
-        if ( feat_stream.exists(globals["bank"]) ){
-          feat_stream.open(globals["bank"], B_READ|B_WRITE);
-        } else {
-          feat_stream.create(globals["bank"], B_READ|B_WRITE);
-        }
+       if (! feat_stream.exists(globals["bank"])){
+	 //         cerr << "No feat account found in bank " << globals["bank"] << endl;
+//         exit(1);
+	 feat_stream.create(globals["bank"], B_READ|B_WRITE);
+       } else {
+	 feat_stream.open(globals["bank"], B_READ|B_WRITE);
+       }
       } catch (Exception_t & e)
         {
           cerr << "Failed to open feat account in bank " << globals["bank"] 
@@ -569,6 +571,7 @@ int main(int argc, char **argv)
   hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > rd2posn; // position in contig
   hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > ctglen;   // length of contig
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > ctgname;   // name of contig
+
 
   set<ID_t> ctgIDs;
   while (contig_stream >> ctg)
@@ -607,29 +610,45 @@ int main(int argc, char **argv)
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > rd2name;
 
   while (frag_bank >> frag){
+
     frag.status = MP_GOOD;
     mtp = frag.getMatePair();
-    read_bank.fetch(mtp.first, rd1); // get the read
-    read_bank.fetch(mtp.second, rd2);
-    rd2name[mtp.first] = rd1.getEID();
-    rd2name[mtp.second] = rd2.getEID();
-    rd2frg[mtp.first] = frag.getIID();
-    rd2frg[mtp.second] = frag.getIID();
-    rd2lib[mtp.first] = frag.getLibrary();
-    rd2lib[mtp.second] = frag.getLibrary();
-    libIDs.insert(frag.getLibrary());
+
+    if (mtp.first != 0) 
+      read_bank.fetch(mtp.first, rd1); // get the read
+    if (mtp.second != 0)
+      read_bank.fetch(mtp.second, rd2);
+
+    if (mtp.first == 0 || mtp.second == 0) {
+      if (perinsert)
+	insertFile << "UNMATED: "
+		   << ((mtp.first != 0) ? mtp.first : mtp.second)
+		   << "(" << ((mtp.first != 0) ? rd1.getEID() : rd2.getEID())
+		   << ") " << endl;
+      continue;
+    }
 
     if (frag.getType() != Fragment_t::INSERT) {// we only handle end reads
       //      cerr << "Type is " << frag.getType() << endl;
       if (perinsert)
 	insertFile << "NOT END MATES: "
 		   << mtp.first 
-		   << "(" << rd2name[mtp.first] << ") " 
+		   << "(" << rd1.getEID() << ") " 
 		   << mtp.second 
-		   << "(" << rd2name[mtp.second] << ") "
+		   << "(" << rd2.getEID() << ") "
 		   << "\n";
       continue;
     }
+
+
+    rd2name[mtp.first] = rd1.getEID();
+    rd2name[mtp.second] = rd2.getEID();
+    //    rd2frg[mtp.first] = frag.getIID();
+    //    rd2frg[mtp.second] = frag.getIID();
+    rd2lib[mtp.first] = frag.getLibrary();
+    rd2lib[mtp.second] = frag.getLibrary();
+    libIDs.insert(frag.getLibrary());
+
 
     list<AnnotatedFragment>::iterator ti; 
     if (rd2ctg[mtp.first] == rd2ctg[mtp.second]){
