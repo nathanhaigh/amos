@@ -86,12 +86,11 @@ int main(int argc, char **argv)
   }
   try {
     library_bank.open(globals["bank"], B_READ);
-  } catch (Exception_t & e)
-    {
-      cerr << "Failed to open library account in bank " << globals["bank"] 
-	   << ": " << endl << e << endl;
-      exit(1);
-    }
+  } catch (Exception_t & e) {
+    cerr << "Failed to open library account in bank " << globals["bank"] 
+	 << ": " << endl << e << endl;
+    exit(1);
+  }
   
   Bank_t contig_bank (Contig_t::NCODE);
   BankStream_t contig_stream (Contig_t::NCODE);
@@ -102,26 +101,25 @@ int main(int argc, char **argv)
   try {
     contig_bank.open(globals["bank"], B_READ);
     contig_stream.open(globals["bank"], B_READ);
-  } catch (Exception_t & e)
-    {
+  } catch (Exception_t & e) {
       cerr << "Failed to open contig account in bank " << globals["bank"] 
 	   << ": " << endl << e << endl;
       exit(1);
-    }
-
-  BankStream_t mate_bank (Matepair_t::NCODE);
-  if (! mate_bank.exists(globals["bank"])){
-    cerr << "No mate account found in bank " << globals["bank"] << endl;
-    exit(1);
   }
-  try {
-    mate_bank.open(globals["bank"], B_READ);
-  } catch (Exception_t & e)
-    {
-      cerr << "Failed to open mate account in bank " << globals["bank"] 
-	   << ": " << endl << e << endl;
-      exit(1);
-    }
+
+// Replaced by new frag methods
+//   BankStream_t mate_bank (Matepair_t::NCODE);
+//   if (! mate_bank.exists(globals["bank"])){
+//     cerr << "No mate account found in bank " << globals["bank"] << endl;
+//     exit(1);
+//   }
+//   try {
+//     mate_bank.open(globals["bank"], B_READ);
+//   } catch (Exception_t & e) {
+//     cerr << "Failed to open mate account in bank " << globals["bank"] 
+// 	 << ": " << endl << e << endl;
+//     exit(1);
+//   }
 
   Bank_t read_bank (Read_t::NCODE);
   if (! read_bank.exists(globals["bank"])){
@@ -181,7 +179,7 @@ int main(int argc, char **argv)
 
   while (contig_stream >> ctg)
     for (vector<Tile_t>::iterator ti = ctg.getReadTiling().begin(); 
-	 ti != ctg.getReadTiling().end(); ti++){
+	 ti != ctg.getReadTiling().end(); ti++) {
       rd2ctg[ti->source] = ctg.getIID();
 
       Pos_t f, l; // coords of beginning/end of read
@@ -200,25 +198,37 @@ int main(int argc, char **argv)
       ctglen[ctg.getIID()] = ctg.getLength();
     }
       //      cerr << "Read " << ti->source << " lives in contig " << ctg.getIID() << endl;;
-  
-  Matepair_t mtp;
-  list<Matepair_t> mtl;
+
+  // todo: replace matepair with fragment
+  //Matepair_t mtp;
+  //  list<Matepair_t> mtl;
+
+  list<Fragment_t> frl;
+
   Read_t rd1;
   Fragment_t frg;
   set<ID_t> libIDs;
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2lib;
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2frg;
-  while (mate_bank >> mtp)
-    if (rd2ctg[mtp.getReads().first] != rd2ctg[mtp.getReads().second]){
+
+  //  while (mate_bank >> mtp)
+  while (frag_bank >> frg) {
+    if ( rd2ctg[frg.getMatePair().first] != rd2ctg[frg.getMatePair().second] ) {
+
       // keep this matepair as it links two different contigs
-      mtl.push_back(mtp);
-      read_bank.fetch(mtp.getReads().first, rd1); // get the read
-      frag_bank.fetch(rd1.getFragment(), frg); // get the fragment
-      rd2frg[mtp.getReads().first] = rd1.getFragment();
+      frl.push_back(frg);
+      read_bank.fetch(frg.getMatePair().first, rd1); // get the read
+
+      // no longer need to fetch frag already have the frag
+      //      frag_bank.fetch(rd1.getFragment(), frg); // get the fragment
+
+      rd2frg[frg.getMatePair().first] = rd1.getFragment();
+
       libIDs.insert(frg.getLibrary());
-      rd2lib[mtp.getReads().first] = frg.getLibrary();
-      //      cerr << "linking " << rd2ctg[mtp.getReads().first] << " and " << rd2ctg[mtp.getReads().second] << endl;
+      rd2lib[frg.getMatePair().first] = frg.getLibrary();
+      // cerr << "linking " << rd2ctg[mtp.getReads().first] << " and " << rd2ctg[mtp.getReads().second] << endl;
     }
+  }
   
   // now we get the library information for each library
   hash_map<ID_t, pair<Pos_t, SD_t>, hash<ID_t>, equal_to<ID_t> > lib2size;
@@ -231,10 +241,10 @@ int main(int argc, char **argv)
 
   // now we are ready to make up contig links
   ContigLink_t ctl;
-  for (list<Matepair_t>::iterator mi = mtl.begin(); mi != mtl.end(); mi++){
+  for (list<Fragment_t>::iterator mi = frl.begin(); mi != frl.end(); mi++){
     ID_t 
-      rdA = mi->getReads().first, 
-      rdB = mi->getReads().second;
+      rdA = mi->getMatePair().first, 
+      rdB = mi->getMatePair().second;
 
     ID_t libId = rd2lib[rdA];
 
@@ -306,7 +316,7 @@ int main(int argc, char **argv)
   frag_bank.close();
   library_bank.close();
   contig_bank.close();
-  mate_bank.close();
+//  mate_bank.close();
 
   return(0);
 } // main
