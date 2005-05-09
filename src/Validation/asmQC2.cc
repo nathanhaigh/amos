@@ -26,19 +26,17 @@ using namespace HASHMAP;
 enum MateStatus {MP_GOOD, MP_SHORT, MP_LONG, MP_NORMAL, MP_OUTIE, MP_SINGMATE, 
 		 MP_LINKING};
 
-class AnnotatedMatePair: public Matepair_t
+class AnnotatedFragment: public Fragment_t
 {
 public:
   MateStatus status;
   Pos_t deviation;    // how far it deviates from mean
-  float rank;           // rank in sorted library list
+  float rank;         // rank in sorted library list
   Pos_t size;
-  ID_t lib;
-  AnnotatedMatePair() : Matepair_t() {
+  AnnotatedFragment() : Fragment_t() {
     status = MP_GOOD;
     deviation = 0;
     rank = 0;
-    lib = 0;
   }
 };
 
@@ -47,10 +45,10 @@ struct RankedRange {
   float range;
 };
 
-struct cmpMtp :
-  public binary_function<list<AnnotatedMatePair>::iterator, list<AnnotatedMatePair>::iterator, bool>
+struct cmpFrag :
+  public binary_function<list<AnnotatedFragment>::iterator, list<AnnotatedFragment>::iterator, bool>
 {
-  bool operator () (list<AnnotatedMatePair>::iterator a, list<AnnotatedMatePair>::iterator b)
+  bool operator () (list<AnnotatedFragment>::iterator a, list<AnnotatedFragment>::iterator b)
   {
     return a->size < b->size;
   }
@@ -196,7 +194,7 @@ bool GetOptions(int argc, char ** argv)
 // returns the distance between the reads implied by the ranges within
 // the contig of length Len.  Returns 0 if the reads are improperly
 // oriented or if they are too close to the end of the contig (closer than End)
-int mateLen (AnnotatedMatePair & m, Range_t & a, Range_t & b, int Len, int End)
+int mateLen (AnnotatedFragment & m, Range_t & a, Range_t & b, int Len, int End)
 {
   int oriA;
   int oriB;
@@ -424,20 +422,6 @@ int main(int argc, char **argv)
       exit(1);
     }
 
-  BankStream_t mate_bank (Matepair_t::NCODE);
-  if (! mate_bank.exists(globals["bank"])){
-    cerr << "No mate account found in bank " << globals["bank"] << endl;
-    exit(1);
-  }
-  try {
-    mate_bank.open(globals["bank"], B_READ);
-  } catch (Exception_t & e)
-    {
-      cerr << "Failed to open mate account in bank " << globals["bank"] 
-           << ": " << endl << e << endl;
-      exit(1);
-    }
-  
   Bank_t read_bank (Read_t::NCODE);
   if (! read_bank.exists(globals["bank"])){
     cerr << "No read account found in bank " << globals["bank"] << endl;
@@ -452,20 +436,20 @@ int main(int argc, char **argv)
       exit(1);
     }
 
-
-  Bank_t frag_bank (Fragment_t::NCODE);
+  BankStream_t frag_bank (Fragment_t::NCODE);
   if (! frag_bank.exists(globals["bank"])){
-    cerr << "No fragment account found in bank " << globals["bank"] << endl;
+    cerr << "No frag account found in bank " << globals["bank"] << endl;
     exit(1);
   }
   try {
     frag_bank.open(globals["bank"], B_READ);
   } catch (Exception_t & e)
     {
-      cerr << "Failed to open fragment account in bank " << globals["bank"] 
+      cerr << "Failed to open frag account in bank " << globals["bank"] 
            << ": " << endl << e << endl;
       exit(1);
     }
+
 
   // Stream through the contigs and retrieve map of read positions within ctgs.
   Contig_t ctg;
@@ -500,55 +484,58 @@ int main(int argc, char **argv)
 
   contig_stream.close();
 
-  AnnotatedMatePair mtp;
-  list<AnnotatedMatePair> mtl;
+  AnnotatedFragment frag;
+  pair<ID_t, ID_t> mtp;
+  list<AnnotatedFragment> mtl;
   Read_t rd1, rd2;
-  Fragment_t frg;
   set<ID_t> libIDs;
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2lib;
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2frg;
-  hash_map<ID_t, list<list<AnnotatedMatePair>::iterator>, hash<ID_t>, equal_to<ID_t> > lib2mtp;
-  hash_map<ID_t, list<list<AnnotatedMatePair>::iterator>, hash<ID_t>, equal_to<ID_t> > ctg2mtp;
+  hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > lib2frag;
+  hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > ctg2frag;
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > rd2name;
 
-  while (mate_bank >> mtp){
-    mtp.status = MP_GOOD;
-    read_bank.fetch(mtp.getReads().first, rd1); // get the read
-    read_bank.fetch(mtp.getReads().second, rd2);
-    rd2name[rd1.getIID()] = rd1.getEID();
-    rd2name[rd2.getIID()] = rd2.getEID();
-    frag_bank.fetch(rd1.getFragment(), frg); // get the fragment
-    rd2frg[mtp.getReads().first] = rd1.getFragment();
-    libIDs.insert(frg.getLibrary());
-    rd2lib[mtp.getReads().first] = frg.getLibrary();
-    mtp.lib = frg.getLibrary();
+  while (frag_bank >> frag){
 
-    if (mtp.getType() != Matepair_t::END) {// we only handle end reads
-      //      cerr << "Type is " << mtp.getType() << endl;
+    frag.status = MP_GOOD;
+    mtp = frag.getMatePair();
+    read_bank.fetch(mtp.first, rd1); // get the read
+    read_bank.fetch(mtp.second, rd2);
+
+    rd2name[mtp.first] = rd1.getEID();
+    rd2name[mtp.second] = rd2.getEID();
+    rd2frg[mtp.first] = frag.getIID();
+    rd2frg[mtp.second] = frag.getIID();
+    rd2lib[mtp.first] = frag.getLibrary();
+    rd2lib[mtp.second] = frag.getLibrary();
+    libIDs.insert(frag.getLibrary());
+
+    if (frag.getType() != Fragment_t::INSERT) {// we only handle end reads
+      //      cerr << "Type is " << frag.getType() << endl;
       continue;
     }
 
-    list<AnnotatedMatePair>::iterator ti; 
-    if (rd2ctg[mtp.getReads().first] == rd2ctg[mtp.getReads().second]){
+    list<AnnotatedFragment>::iterator ti; 
+    if (rd2ctg[mtp.first] == rd2ctg[mtp.second]){
       // mate-pair between reads within the same contig
 
-      //      ctgIDs.insert(rd2ctg[mtp.getReads().first]);
-      ti = mtl.insert(mtl.end(), mtp);
+      //      ctgIDs.insert(rd2ctg[mtp.first]);
+      ti = mtl.insert(mtl.end(), frag);
 
-      lib2mtp[frg.getLibrary()].push_back(ti);
-      ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
+      lib2frag[frag.getLibrary()].push_back(ti);
+      ctg2frag[rd2ctg[mtp.first]].push_back(ti);
     } else {
-      if (rd2ctg[mtp.getReads().first] == 0 ||
-	  rd2ctg[mtp.getReads().second] == 0) { // mate should be in contig
-	mtp.status = MP_SINGMATE;
-	ti = mtl.insert(mtl.end(), mtp);
-	lib2mtp[frg.getLibrary()].push_back(ti);
-	ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
+      if (rd2ctg[mtp.first] == 0 ||
+	  rd2ctg[mtp.second] == 0) { // mate should be in contig
+	frag.status = MP_SINGMATE;
+	ti = mtl.insert(mtl.end(), frag);
+	lib2frag[frag.getLibrary()].push_back(ti);
+	ctg2frag[rd2ctg[mtp.first]].push_back(ti);
       } else {
-	mtp.status = MP_LINKING;
-	ti = mtl.insert(mtl.end(), mtp);
-	lib2mtp[frg.getLibrary()].push_back(ti);
-	ctg2mtp[rd2ctg[mtp.getReads().first]].push_back(ti);
+	frag.status = MP_LINKING;
+	ti = mtl.insert(mtl.end(), frag);
+	lib2frag[frag.getLibrary()].push_back(ti);
+	ctg2frag[rd2ctg[mtp.first]].push_back(ti);
       }
     }
   }
@@ -571,17 +558,17 @@ int main(int argc, char **argv)
   
   for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
     // for each library
-    vector<list<AnnotatedMatePair>::iterator> sizes;
+    vector<list<AnnotatedFragment>::iterator> sizes;
     pair<Pos_t, SD_t> libsize = lib2size[*li];
     
-    for (list<list<AnnotatedMatePair>::iterator>::iterator 
-	   mi = lib2mtp[*li].begin(); mi != lib2mtp[*li].end(); mi++){
+    for (list<list<AnnotatedFragment>::iterator>::iterator 
+	   mi = lib2frag[*li].begin(); mi != lib2frag[*li].end(); mi++){
       if ((*mi)->status != MP_GOOD)
 	continue;
       // for each mate pair
-      Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getReads().first], 
-			 rd2posn[(*mi)->getReads().second], 
-			 ctglen[rd2ctg[(*mi)->getReads().first]], 
+      Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getMatePair().first], 
+			 rd2posn[(*mi)->getMatePair().second], 
+			 ctglen[rd2ctg[(*mi)->getMatePair().first]], 
 			 libsize.first + 3 * libsize.second);
 
       (*mi)->size = sz;
@@ -590,7 +577,7 @@ int main(int argc, char **argv)
     } // if recomputing library sizes
 
     // sort mates within library and assign ranks
-    sort(sizes.begin(), sizes.end(), cmpMtp());
+    sort(sizes.begin(), sizes.end(), cmpFrag());
     int lastidx = 0;
     Pos_t lastsize = sizes[0]->size;
     float rank;
@@ -621,33 +608,33 @@ int main(int argc, char **argv)
 
     Contig_t newcontig;
 
-    hash_map<ID_t, list<list<AnnotatedMatePair>::iterator>, hash<ID_t>, equal_to<ID_t> > byLib;
+    hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > byLib;
 
 
     // Group good mate pairs by library
-    for (list<list<AnnotatedMatePair>::iterator>::iterator 
-	   mi = ctg2mtp[*ctg].begin(); mi != ctg2mtp[*ctg].end(); mi++){
+    for (list<list<AnnotatedFragment>::iterator>::iterator 
+	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
 
       if ((*mi)->status == MP_GOOD)
-	byLib[(*mi)->lib].push_back(*mi);
+	byLib[(*mi)->getLibrary()].push_back(*mi);
     }
 
 
     // Process them by library
-    for (hash_map<ID_t, list<list<AnnotatedMatePair>::iterator>, hash<ID_t>, equal_to<ID_t> >::iterator bl = byLib.begin(); bl != byLib.end(); bl++){
+    for (hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> >::iterator bl = byLib.begin(); bl != byLib.end(); bl++){
       
       vector<pair<Pos_t, float> > lefts, rights;
       
       cout << "#Lib " << bl->first << endl;
 
-      for (list<list<AnnotatedMatePair>::iterator>::iterator
+      for (list<list<AnnotatedFragment>::iterator>::iterator
 	     mi = bl->second.begin(); mi != bl->second.end(); mi++){
 	
 	if ((*mi)->status == MP_GOOD){
 	  Pos_t left, right;
 	  float rank = (*mi)->rank;
-	  left = rd2posn[((*mi)->getReads()).first].getBegin(); 
-	  right = rd2posn[((*mi)->getReads()).second].getBegin(); 
+	  left = rd2posn[((*mi)->getMatePair()).first].getBegin(); 
+	  right = rd2posn[((*mi)->getMatePair()).second].getBegin(); 
 
 	  if (left < right) {
 	    lefts.push_back(pair<Pos_t, float>(left, rank));
@@ -762,7 +749,6 @@ int main(int argc, char **argv)
   frag_bank.close();
   read_bank.close();
   library_bank.close();
-  mate_bank.close();
 
   return(0);
 } // main

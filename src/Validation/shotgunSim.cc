@@ -457,21 +457,14 @@ int main(int argc, char ** argv)
 	cout << "iid:" << frgid << "\n";
 	cout << "lib:" << fragments[seq][f].libid << "\n";
 	cout << "typ:I\n";
+        if ( doRead == 0 )
+          cout << "rds:" << numseq + 1 << ',' << numseq + 2 << '\n';
 	cout << "}\n";
 	if (doRead <= 0)
 	  printRED(rev, ++numseq, frgid);
       }
-
       if (doRead >= 0)
 	printRED(forw, ++numseq, frgid);
-
-      if (frgid != 0 && doRead == 0){
-	cout << "{MTP\n";
-	cout << "rd1:" << numseq - 1 << "\n";
-	cout << "rd2:" << numseq << "\n";
-	cout << "typ:E\n";
-	cout << "}\n";
-      }
     } // for each fragment in this sequence
     
     seq++;
