@@ -61,5 +61,10 @@ SUBDIRS += \
 	Pipeline
 endif BUILD_minimus
 
+if BUILD_QT
+SUBDIRS += \
+	bankViewer
+endif BUILD_QT
+
 
 ##-- END OF MAKEFILE --##
