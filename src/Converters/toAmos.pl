@@ -280,7 +280,16 @@ while (my ($ins, $lib) = each %seenlib){
 	die ("Have not seen library $lib yet: possible error in input\n");
     }
     print OUT "lib:$libid{$lib}\n";
-    print OUT "typ:I\n";
+
+    if ( exists $forw{$ins} && exists $rev{$ins} ) {
+        print OUT "rds:$forw{$ins},$rev{$ins}\n";
+    }
+
+    if ( exists $inserttype{$ins} && $inserttype{$ins} eq "T") {
+        print OUT "typ:T\n";
+    } else {
+        print OUT "typ:I\n";
+    }
     print OUT "}\n";
 }
 
@@ -322,13 +331,13 @@ while (<TMPSEQ>){
 		@poss = map(hex, @poss);
 #		print "got $#poss pieces\n";
 
-		print OUT "pos:\n";
+		print OUT "bcp:\n";
 		for (my $p = 0; $p <= $#poss; $p += 15){
 		    print OUT join(" ", @poss[$p .. $p + 14]), "\n";
 		}
 		print OUT ".\n";
 	    }# else {
-#		print "What pos: $rid $seqnames{$rid}\n";
+#		print "What bcp: $rid $seqnames{$rid}\n";
 #	    }
 	}
 	if  (! exists $seqinsert{$rid}){
@@ -349,25 +358,6 @@ close(TMPSEQ);
 if (defined $posfile){ close(POS);}
 
 unlink("$tmprefix.seq") || $base->bail("Cannot remove $tmprefix.seq: $!\n");
-
-# then all the links
-
-my $linkId = 0;
-while (my ($ins, $rd) = each %forw){
-    if (exists $rev{$ins}){
-	$linkId++;
-	print OUT "{MTP\n";
-	print OUT "iid:$linkId\n";
-	print OUT "rd1:$forw{$ins}\n";
-	print OUT "rd2:$rev{$ins}\n";
-	if (exists $inserttype{$ins} && $inserttype{$ins} eq "T"){
-	    print OUT "typ:T\n";
-	} else {
-	    print OUT "typ:E\n";
-	}
-	print OUT "}\n";
-    }
-}
 
 # then all the contigs
 
@@ -939,8 +929,7 @@ sub parseAsmFile {
 	} # if type eq SCF
 	if ($type eq "CLK"){
 	    print TMPSCF "{CTE\n";
-	    print TMPSCF "ct1:$ctgids{$$fields{co1}}\n";
-	    print TMPSCF "ct2:$ctgids{$$fields{co2}}\n";
+            print TMPSCF "nds:$ctgids{$$fields{co1}},$ctgids{$$fields{co2}}\n";
 	    print TMPSCF "adj:$$fields{ori}\n";
 	    print TMPSCF "sze:$$fields{mea}\n";
 	    print TMPSCF "std:$$fields{std}\n";
