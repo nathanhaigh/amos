@@ -905,6 +905,21 @@ public:
   }
 
 
+  //--------------------------------------------------- getIDMapSize -----------
+  //! \brief Get the number of objects in the Bank with and IID or EID
+  //!
+  //! Returns the total number of ID'ed objects stored in the bank. This number
+  //! only includes object which have an associated IID or EID. Use getSize()
+  //! to get the total number of objects in the bank.
+  //!
+  //! \return The number of ID'ed objects stored in the bank
+  //!
+  Size_t getIDMapSize ( ) const
+  {
+    return idmap_m . getSize( );
+  }
+
+
   //--------------------------------------------------- getIndexSize -----------
   //! \brief Get the number of indices used by the bank
   //!
@@ -939,6 +954,9 @@ public:
 
   //--------------------------------------------------- getSize ----------------
   //! \brief Get the size of the bank, i.e. the number of stored records
+  //!
+  //! This method returns the total number of objects stored in the bank,
+  //! including anonymous objects which have no associated IID or EID.
   //!
   //! \return The size of the bank, or 0 if the bank is empty
   //!

@@ -177,6 +177,10 @@ public:
   const IDMap_t & getIDMap ( ) const { return Bank_t::getIDMap( ); }
 
 
+  //--------------------------------------------------- getIDMapSize -----------
+  Size_t getIDMapSize ( ) const { return Bank_t::getIDMapSize( ); }
+
+
   //--------------------------------------------------- getMaxIID --------------
   ID_t getMaxIID ( ) const { return Bank_t::getMaxIID( ); }
 
