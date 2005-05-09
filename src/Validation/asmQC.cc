@@ -539,12 +539,12 @@ int main(int argc, char **argv)
   BankStream_t feat_stream (Feature_t::NCODE);
   if (feats)
     {
-      if (! feat_stream.exists(globals["bank"])){
-        cerr << "No feat account found in bank " << globals["bank"] << endl;
-        exit(1);
-      }
       try {
-        feat_stream.open(globals["bank"], B_READ|B_WRITE);
+        if ( feat_stream.exists(globals["bank"]) ){
+          feat_stream.open(globals["bank"], B_READ|B_WRITE);
+        } else {
+          feat_stream.create(globals["bank"], B_READ|B_WRITE);
+        }
       } catch (Exception_t & e)
         {
           cerr << "Failed to open feat account in bank " << globals["bank"] 
