@@ -214,14 +214,26 @@ case "${gcc_version}" in
 esac
 
 if test x"${NUCMER}" = x":"  ||  ! test -x "${NUCMER}"; then
-  echo "WARNING! nucmer was not found, but is required to run AMOScmp"
+  echo "WARNING! nucmer was not found but is required to run AMOScmp"
   echo "   install nucmer if planning on using AMOScmp"
 fi
 
 if test x"${PERL}" = x":"  ||  ! test -x "${PERL}"; then
-  echo "WARNING! perl was not found, but is required to run AMOS scripts"
+  echo "WARNING! perl was not found but is required to run AMOS scripts"
   echo "   install perl if planning on using AMOS scripts"
 fi
 
+if test x"${have_qt}" != x"yes"; then
+  echo "WARNING! Qt toolkit was not found but is required to run AMOS GUIs"
+  echo "   install Qt toolkit if planning on using AMOS GUIs"
+elif test x"${have_qt_test}" != x"yes"; then
+  echo "WARNING! Qt toolkit malfunctioning but is required to run AMOS GUIs"
+  echo "   try compiling GUIs manually or reinstall Qt toolkit"
+fi
+
+if test x"${have_libz}" != x"yes"; then
+  echo "WARNING! libz was not found but is required for certain read trace IO"
+  echo "   install libz if planning on using compressed trace formats"
+fi
 
 ##-- END OF CONFIGURE --##

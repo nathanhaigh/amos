@@ -362,7 +362,7 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
   amos_prev_ver=0
   for amos_dir in $amos_dirs; do
     amos_this_ver=`egrep -w '#define QT_VERSION' $amos_dir/$qt_direct_test_header | sed s/'#define QT_VERSION'//`
-    if expr $amos_this_ver '>' $amos_prev_ver > /dev/null; then
+    if expr $amos_this_ver '>' $amos_prev_ver &> /dev/null; then
       amos_qt_include_dir=$amos_dir
       amos_prev_ver=$amos_this_ver
     fi
@@ -372,14 +372,14 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
   # That would be $amos_qt_include_dir stripped from its last element:
   amos_possible_qt_dir=`dirname $amos_qt_include_dir`
   if test -x $amos_possible_qt_dir/bin/moc &&
-     ls $amos_possible_qt_dir/lib/libqt* > /dev/null; then
+     ls $amos_possible_qt_dir/lib/libqt* &> /dev/null; then
     # Then the rest is a piece of cake
     amos_qt_dir=$amos_possible_qt_dir
     amos_qt_bin_dir="$amos_qt_dir/bin"
     amos_qt_lib_dir="$amos_qt_dir/lib"
     # Only look for lib if the user did not supply it already
     if test x"$amos_qt_lib" = xNO; then
-      amos_qt_lib="`ls $amos_qt_lib_dir/libqt* | sed -n 1p |
+      amos_qt_lib="`ls $amos_qt_lib_dir/libqt* 2>/dev/null | sed -n 1p |
                    sed s@$amos_qt_lib_dir/lib@@ | [sed s@[.].*@@]`"
     fi
     amos_qt_LIBS="-L$amos_qt_lib_dir -l$amos_qt_lib $X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt -lXi $X_EXTRA_LIBS"
@@ -450,9 +450,9 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
             `ls -dr /opt/qt* 2>/dev/null`
           "
           for amos_dir in $amos_dir_list; do
-            if ls $amos_dir/libqt*; then
+            if ls $amos_dir/libqt* &> /dev/null; then
               # Gamble that it's the first one...
-              amos_qt_lib="`ls $amos_dir/libqt* | sed -n 1p |
+              amos_qt_lib="`ls $amos_dir/libqt* 2>/dev/null | sed -n 1p |
                           sed s@$amos_dir/lib@@ | sed s/[.].*//`"
               amos_qt_lib_dir="$amos_dir"
               break
