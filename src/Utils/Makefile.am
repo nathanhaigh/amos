@@ -17,7 +17,8 @@ dist_bin_SCRIPTS = \
 	getlengths.pl \
 	preTA.pl \
 	pullTArchive.pl \
-	runTA.pl
+	runTA.pl \
+	preassembleFrgs.pl
 # runAmos.pl 
 
 
