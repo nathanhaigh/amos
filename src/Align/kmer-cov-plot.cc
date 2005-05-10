@@ -90,7 +90,7 @@ static char BinaryToAscii(char b)
 
 static void MerToAscii(Mer_t mer, string & s)
 {
-  s.clear();
+  s.erase();
 
   for (int i = 0; i < Kmer_Len; i++)
   {
