@@ -8,7 +8,8 @@ dist_bin_SCRIPTS =
 if BUILD_all
 dist_bin_SCRIPTS += \
 	AMOScmp.acf \
-	minimus.acf
+	minimus.acf \
+	assembleRNAs.acf
 endif BUILD_all
 
 if BUILD_AMOScmp
