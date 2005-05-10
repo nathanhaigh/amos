@@ -17,7 +17,7 @@ FASTA   = $(PREF).fasta
 ## Building AMOS bank
 20: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(TGT)
 
-## Assemblying fragments
+## Assembling fragments
 30: $(BINDIR)/preassembleFrgs $(BANK)
 
 ## Outputting contigs
