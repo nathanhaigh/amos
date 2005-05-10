@@ -1,0 +1,27 @@
+# `minimus' - The AMOS Lightweight Assembler Pipeline
+
+#--------------------------------------- USER DEFINED VALUES ------------------#
+TGT = $(strip .frg PREFIX).afg
+#------------------------------------------------------------------------------#
+PREF = $(strip .frg PREFIX)
+
+BINDIR  = /usr/local/bin
+
+BANK    = $(PREF).bank
+CONTIG  = $(PREF).contig
+FASTA   = $(PREF).fasta
+
+## Converting to AFG
+10: $(BINDIR)/toAmos -f $(PREFIX) -o $(TGT)
+
+## Building AMOS bank
+20: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(TGT)
+
+## Assemblying fragments
+30: $(BINDIR)/preassembleFrgs $(BANK)
+
+## Outputting contigs
+50: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
+
+## Converting to FastA file
+60: $(BINDIR)/bank2fasta -b $(BANK) > $(FASTA)
