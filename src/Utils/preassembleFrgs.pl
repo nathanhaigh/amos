@@ -17,11 +17,18 @@ if ($#ARGV < 0 || $#ARGV == 0 && $ARGV[0] eq "-h"){
 my $bank = $ARGV[0];
 my $temp = "TEMP";
 
+my $amospath = $ENV{AMOSBIN};
+
+my $report = (defined $amospath) ? "$amospath/bank-report" : "bank-report";
+my $overlap = (defined $amospath) ? "$amospath/hash-overlap" : "hash-overlap";
+my $tigger = (defined $amospath) ? "$amospath/tigger" : "tigger";
+my $consensus = (defined $amospath) ? "$amospath/make-consensus" : "make-consensus";
+
 my %frgrds;
 my %rdidx;
 my %clears;
 
-open(TMP, "bank-report -b $bank RED |") || die ("Cannot report bank: $!\n");
+open(TMP, "$report -b $bank RED |") || die ("Cannot report bank: $!\n");
 
 while (my $record = getRecord(\*TMP)){
     my ($rec, $fields, $recs) = parseRecord($record);
@@ -47,9 +54,9 @@ while (my ($frg, $seqs) = each %frgrds){
     
     close(TMPSEQ);
     
-    system ("/local/asmg/scratch/mihai/AMOS/Linux/bin/hash-overlap -B $bank -I $temp.list");
+    system ("$overlap -B $bank -I $temp.list");
 
 } # for each fragment
 
-system("tigger -b $bank");
-system("make-consensus -B -b $bank");
+system("$tigger -b $bank");
+system("$consensus -B -b $bank");
