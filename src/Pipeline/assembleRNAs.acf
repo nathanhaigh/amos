@@ -18,10 +18,10 @@ FASTA   = $(PREF).fasta
 20: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(TGT)
 
 ## Assembling fragments
-30: $(BINDIR)/preassembleFrgs $(BANK)
+30: (export AMOSBIN=$(BINDIR); $(BINDIR)/preassembleFrgs $(BANK))
 
 ## Outputting contigs
-50: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
+40: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
 
 ## Converting to FastA file
-60: $(BINDIR)/bank2fasta -b $(BANK) > $(FASTA)
+50: $(BINDIR)/bank2fasta -b $(BANK) > $(FASTA)
