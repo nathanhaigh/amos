@@ -513,28 +513,34 @@ void InsertWidget::initializeTiling()
         m_tiling.push_back(mappedTile);
       }
 
-      Feature_t feat;
-      m_datastore->feat_bank.seekg(1);
-
-      while (m_datastore->feat_bank >> feat)
-      {
-        if (feat.getSource().second == Contig_t::NCODE &&
-            feat.getSource().first == contig.getIID())
+      if (m_datastore->feat_bank.isOpen()) 
         {
-          if (ci->range.isReverse())
-          {
-            feat.getRange().swap();
+          Feature_t feat;
+          m_datastore->feat_bank.seekg(1);
 
-            feat.getRange().begin = (ci->range.getLength() - feat.getRange().begin);
-            feat.getRange().end   = (ci->range.getLength() - feat.getRange().end);
-          }
+          while (m_datastore->feat_bank >> feat)
+            {
+              if (feat.getSource().second == Contig_t::NCODE &&
+                  feat.getSource().first == contig.getIID())
+                {
+                  Range_t rng = feat.getRange( );
 
-          feat.getRange().begin += ci->offset;
-          feat.getRange().end   += ci->offset;
+                  if (ci->range.isReverse())
+                    {
+                      rng.swap();
+                      rng.begin = (ci->range.getLength() - feat.getRange().begin);
+                      rng.end = (ci->range.getLength() - feat.getRange().end);
+                    }
 
-          m_features.push_back(feat);
+                  rng.begin += ci->offset;
+                  rng.end   += ci->offset;
+
+                  feat.setRange(rng);
+                  m_features.push_back(feat);
+                }
+            }
         }
-      }
+
     }
 
     cerr << "done." << endl;
@@ -551,17 +557,20 @@ void InsertWidget::initializeTiling()
     m_tilingwidth = m_datastore->m_contig.getLength();
     m_tiling      = m_datastore->m_contig.getReadTiling();
 
-    Feature_t feat;
-    m_datastore->feat_bank.seekg(1);
-
-    while (m_datastore->feat_bank >> feat)
-    {
-      if (feat.getSource().second == Contig_t::NCODE &&
-          feat.getSource().first == m_datastore->m_contig.getIID())
+    if (m_datastore->feat_bank.isOpen())
       {
-        m_features.push_back(feat);
+        Feature_t feat;
+        m_datastore->feat_bank.seekg(1);
+        
+        while (m_datastore->feat_bank >> feat)
+          {
+            if (feat.getSource().second == Contig_t::NCODE &&
+                feat.getSource().first == m_datastore->m_contig.getIID())
+              {
+                m_features.push_back(feat);
+              }
+          }
       }
-    }
   }
 
   sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
