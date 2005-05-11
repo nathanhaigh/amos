@@ -25,16 +25,18 @@ while (<>)
 {
   my @vals = split /\s+/, $_;
 
-  my $cstart = $vals[3];
-  my $cend = $vals[4];
+  my $cid = shift @vals;
+  my $type = shift @vals;
+  my $cstart = shift @vals;
+  my $cend = shift @vals;
 
-  if ($vals[0] != $contigid)
+  if ($cid != $contigid)
   {
     printEnd();
 
     $laststart = -10000000;
     $rend      = -10000000;
-    $contigid = $vals[0];
+    $contigid = $cid;
   }
 
   if ($cstart < $laststart)
@@ -59,7 +61,7 @@ while (<>)
 
   $laststart = $cstart;
 
-  push @reasons, "$vals[2]\t$cstart\t$cend";
+  push @reasons, "@vals\t$cstart\t$cend";
 }
 
 printEnd();

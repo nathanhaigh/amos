@@ -11,7 +11,12 @@ dist_bin_SCRIPTS = \
 	coords2cam.pl \
 	fixlib.pl \
 	postCAqc.pl \
-	tiling2cam.pl
+	tiling2cam.pl \
+    cavalidate.acf \
+    findTcovSnp.pl \
+    clusterSnps.pl \
+    listSurrogates.pl \
+    suspiciousfeat2region.pl
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
