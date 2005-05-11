@@ -68,7 +68,7 @@ while ($record = getCARecord(\*IN))
 		my $pos = $$lfields{"pos"};
         my ($l, $r) = split(',', $pos);
 
-        print "$thiscontig U $thisunitig $l $r $status{$thisunitig}\n"; 
+        print "$thiscontig U $l $r SURROGATE $thisunitig $status{$thisunitig}\n"; 
       }
     }
   }
