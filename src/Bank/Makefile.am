@@ -155,9 +155,14 @@ load_overlaps_SOURCES = \
 	load-overlaps.cc
 
 ##-- bank2fasta
+bank2fasta_CPPFLAGS = \
+	-I$(top_srcdir)/src/Common \
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_builddir)/src/GNU
 bank2fasta_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
 bank2fasta_SOURCES = \
 	bank2fasta.cc
 
