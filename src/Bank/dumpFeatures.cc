@@ -13,8 +13,10 @@ int main (int argc, char ** argv)
     return EXIT_FAILURE;
   }
 
-  BankStream_t contig_bank(Contig_t::NCODE);
-  Contig_t contig;
+  BankStream_t feat_bank(Feature_t::NCODE);
+  Bank_t contig_bank(Contig_t::NCODE);
+
+  Feature_t feat;
 
   string bank_name = argv[1];
 
@@ -23,25 +25,23 @@ int main (int argc, char ** argv)
   try
   {
     contig_bank.open(bank_name, B_READ);
+    feat_bank.open(bank_name, B_READ);
 
-    while (contig_bank >> contig)
+    while (feat_bank >> feat)
     {
-      const vector <AMOS::Feature_t> & feats = contig.getFeatures();
-      vector<AMOS::Feature_t>::const_iterator fi;
-
-      for (fi = feats.begin(); fi != feats.end(); fi++)
+      if (feat.getSource().second == Contig_t::NCODE)
       {
-        cout << contig.getEID() << " "
-             << fi->type        << " "
-             << fi->group       << " "
-             << fi->range.begin << " "
-             << fi->range.end   << " "
-             << fi->comment
+        cout << contig_bank.lookupEID(feat.getSource().first) << " "
+             << feat.getType()        << " "
+             << feat.getRange().begin << " "
+             << feat.getRange().end   << " "
+             << feat.getComment()
              << endl;
       }
     }
 
     contig_bank.close();
+    feat_bank.close();
   }
   catch (Exception_t & e)
   {

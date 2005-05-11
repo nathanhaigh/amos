@@ -17,7 +17,7 @@ int main (int argc, char ** argv)
   }
 
   Bank_t contig_bank(Contig_t::NCODE);
-  Contig_t contig;
+  Bank_t feat_bank(Feature_t::NCODE);
   ifstream features;
 
   string bank_name = argv[1];
@@ -37,8 +37,8 @@ int main (int argc, char ** argv)
     }
 
     contig_bank.open(bank_name);
+    feat_bank.open(bank_name);
 
-    string group;
     string eid;
     int end3;
     int end5;
@@ -51,7 +51,6 @@ int main (int argc, char ** argv)
 
     while (features >> eid 
                     >> type 
-                    >> group 
                     >> end5 
                     >> end3) 
     {
@@ -64,27 +63,28 @@ int main (int argc, char ** argv)
         getline(features, comment);
       }
 
+      range.begin = end5;
+      range.end = end3;
+
       Feature_t feat;
-      feat.type = type;
-      feat.group = group;
-      feat.range.setRange(end5,end3);
-      feat.comment = comment;
+      feat.setType(type);
+      feat.setRange(range);
+      feat.setComment(comment);
 
 
       if (DEBUG)
       {
         cerr << "contigeid: " << eid << endl
-             << "type: " << type << endl
-             << "group: " << group << endl
-             << "range: " << end5 << "," << end3 << endl
-             << "coment: \"" << comment << "\"" << endl;
+             << "type: "      << type << endl
+             << "range: "     << end5 << "," << end3 << endl
+             << "coment: \""  << comment << "\"" << endl;
       }
 
       if (LOAD)
       {
-        contig_bank.fetch(eid.c_str(), contig);
-        contig.getFeatures().push_back(feat);
-        contig_bank.replace(eid.c_str(), contig);
+        ID_t iid = contig_bank.lookupIID(eid);
+        feat.setSource(std::make_pair(iid, Contig_t::NCODE));
+        feat_bank.append(feat);
       }
 
       featurecount++;
@@ -95,6 +95,7 @@ int main (int argc, char ** argv)
          << "Loaded " << featurecount << " features" << endl;
     
     contig_bank.close();
+    feat_bank.close();
   }
   catch (Exception_t & e)
   {

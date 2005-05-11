@@ -18,7 +18,10 @@ bin_PROGRAMS = \
 	updateBankPositions \
 	extractContig \
 	bank2fasta \
-	updateClrRanges
+	updateClrRanges \
+    dumpFeatures \
+    loadFeatures
+
 #	findMissingMates
 
 dist_bin_SCRIPTS = \
@@ -109,6 +112,20 @@ dumpmates_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 dumpmates_SOURCES = \
 	dumpmates.cc
+
+##-- dumpFeatures
+dumpFeatures_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+dumpFeatures_SOURCES = \
+	dumpFeatures.cc
+
+##-- loadFeatures
+loadFeatures_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+loadFeatures_SOURCES = \
+	loadFeatures.cc
 
 ##-- select-reads
 select_reads_LDADD = \
