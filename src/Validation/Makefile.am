@@ -3,9 +3,9 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	shotgunSim \
 	asmQC2 \
 	asmQC
+#	shotgunSim \
 
 dist_bin_SCRIPTS = \
 	coords2cam.pl \
@@ -43,11 +43,11 @@ asmQC2_SOURCES = \
 	asmQC2.cc
 
 ##-- shotgunSim
-shotgunSim_LDADD = \
-	-lgsl \
-	-lgslcblas
-
-shotgunSim_SOURCES = \
-	shotgunSim.cc
+#shotgunSim_LDADD = \
+#	-lgsl \
+#	-lgslcblas
+#
+#shotgunSim_SOURCES = \
+#	shotgunSim.cc
 
 ##-- END OF MAKEFILE --##

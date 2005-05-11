@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <string>
 
 // C++ includes
 #include <fstream>
@@ -427,7 +428,7 @@ int main(int argc, char ** argv)
 
   // now the fragments are all built, we just need to write out the files
   in.clear();  // clear flags
-  in.seekg(0, ios_base::beg); // re-process input file
+  in.seekg(0, ifstream::beg); // re-process input file
   
   int seq = 0;
   string sequence;
