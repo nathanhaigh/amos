@@ -69,7 +69,7 @@ fi
 # binary utilities. The macro supports several different versions of
 # the Qt framework being installed on the same machine. Without
 # options, the macro is designed to look for the latest library,
-# i.e., the highest definition of QT_VERSION in qglobal.h. By use of
+# i.e., the highest definition of QT_VERSION_STR in qglobal.h. By use of
 # one or more options a different library may be selected. There are
 # two different sets of options. Both sets contain the option
 # --with-Qt-lib=LIB which can be used to force the use of a
@@ -343,7 +343,7 @@ EOF
 # Set amos_qt_dir amos_qt_lib
 AC_DEFUN([AMOS_PATH_QT_DIRECT],
 [
-  # The following header file is expected to define QT_VERSION.
+  # The following header file is expected to define QT_VERSION_STR.
   qt_direct_test_header=qglobal.h
   # Look for the header file in a standard set of common directories.
   amos_include_path_list="
@@ -361,7 +361,7 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
   # Now look for the newest in this list
   amos_prev_ver=0
   for amos_dir in $amos_dirs; do
-    amos_this_ver=`egrep -w '#define QT_VERSION' $amos_dir/$qt_direct_test_header | sed s/'#define QT_VERSION'//`
+    amos_this_ver=`egrep -w '#define QT_VERSION_STR' $amos_dir/$qt_direct_test_header | cut -f2 -d \" | sed 's/\.//g'`
     if expr $amos_this_ver '>' $amos_prev_ver &> /dev/null; then
       amos_qt_include_dir=$amos_dir
       amos_prev_ver=$amos_this_ver
