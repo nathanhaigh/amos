@@ -36,9 +36,11 @@ trimByOvl_SOURCES = \
 
 ##-- ContigIterator
 ContigIterator_CPPFLAGS = \
-	-I$(top_srcdir)/src/AMOS
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_builddir)/src/GNU
 ContigIterator_LDADD = \
-        $(top_builddir)/src/AMOS/libAMOS.a
+        $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
 ContigIterator_SOURCES = \
 	ContigIterator.cc
 

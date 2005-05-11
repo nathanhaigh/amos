@@ -7,6 +7,7 @@
 #include "config.h"
 #endif
 
+#include "foundation_AMOS.hh"
 #include <getopt.h>
 #include <map>
 #include <set>
@@ -16,7 +17,6 @@
 #include <queue>
 #include <math.h>
 #include <functional>
-#include "foundation_AMOS.hh"
 
 using namespace std;
 using namespace AMOS;
