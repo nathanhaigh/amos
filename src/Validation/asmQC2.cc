@@ -3,9 +3,7 @@
 // This program reads a set of contigs from a bank then reports 
 // regions where mate-pair information indicates a problem
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "foundation_AMOS.hh"
 
 #include <getopt.h>
 #include <map>
@@ -15,7 +13,7 @@
 #include <string>
 #include <math.h>
 #include <functional>
-#include "foundation_AMOS.hh"
+#include <stdlib.h>
 
 using namespace std;
 using namespace AMOS;
@@ -336,7 +334,7 @@ int main(int argc, char **argv)
   }
 
   if (globals.find("numsd") != globals.end())
-    NUM_SD = strtof(globals["numsd"].c_str(), NULL);
+    NUM_SD = (float)strtod(globals["numsd"].c_str(), NULL);
   cout << "Mates within " << NUM_SD 
        << " standard deviations from mean considered good" << endl;
 

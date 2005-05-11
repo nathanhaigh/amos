@@ -3,9 +3,7 @@
 // This program reads a set of contigs from a bank then reports 
 // regions where mate-pair information indicates a problem
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "foundation_AMOS.hh"
 
 #include <getopt.h>
 #include <map>
@@ -15,7 +13,7 @@
 #include <string>
 #include <math.h>
 #include <functional>
-#include "foundation_AMOS.hh"
+#include <stdlib.h>
 
 using namespace std;
 using namespace AMOS;
@@ -242,13 +240,13 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
   for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
     mean += *li;
   }
-  mean = (Pos_t) round (mean * 1.0 / numObs);
+  mean = (Pos_t) rint (mean * 1.0 / numObs);
 
   SD_t stdev = 0;
   for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
     stdev += (*li - mean) * (*li - mean);
   }
-  stdev = (SD_t) round(sqrt(stdev * 1.0 / (numObs - 1)));
+  stdev = (SD_t) rint(sqrt(stdev * 1.0 / (numObs - 1)));
   
   Pos_t origm = mean;
   SD_t origs = stdev;
@@ -266,7 +264,7 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
   if (numObs == 0) return pair<Pos_t, SD_t> (0, 0);
   // this should also be an assert
 
-  mean = (Pos_t) round (mean * 1.0 / numObs);
+  mean = (Pos_t) rint (mean * 1.0 / numObs);
  
   stdev = 0;
   for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
@@ -274,7 +272,7 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
       stdev += (*li - mean) * (*li - mean);
   }
 
-  stdev = (SD_t) round(sqrt(stdev * 1.0 / (numObs - 1)));
+  stdev = (SD_t) rint(sqrt(stdev * 1.0 / (numObs - 1)));
 
   return pair<Pos_t, SD_t>(mean, stdev);
 }
@@ -417,7 +415,7 @@ int main(int argc, char **argv)
   }
 
   if (globals.find("numsd") != globals.end())
-    NUM_SD = strtof(globals["numsd"].c_str(), NULL);
+    NUM_SD = (float)strtod(globals["numsd"].c_str(), NULL);
   cout << "Mates within " << NUM_SD 
        << " standard deviations from mean considered good" << endl;
 
