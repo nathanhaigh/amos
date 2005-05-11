@@ -67,12 +67,12 @@ int main( int argc, char **argv )
     if (v == "-c" && i+1 < a.argc())
     {
       i++; v = a.argv()[i];
-      w.addChromoPath(QString(v));
+      w.addChromoPath(QString(v.c_str()));
     }
     else if (v == "-d" && i+1 < a.argc())
     {
       i++; v = a.argv()[i];
-      w.addChromoDB(QString(v));
+      w.addChromoDB(QString(v.c_str()));
     }
     else if (v == "-p" && i+1 < a.argc())
     {
@@ -83,7 +83,7 @@ int main( int argc, char **argv )
     else if (v == "-D" && i+1 < a.argc())
     {
       i++; v = a.argv()[i];
-      w.setChromoDB(QString(v));
+      w.setChromoDB(QString(v.c_str()));
     }
     else if (v[0] == '-')
     {
