@@ -5,7 +5,7 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	asmQC2 \
 	asmQC
-#	shotgunSim \
+#	shotgunSim
 
 dist_bin_SCRIPTS = \
 	coords2cam.pl \
