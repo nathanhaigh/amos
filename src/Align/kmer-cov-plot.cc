@@ -5,14 +5,14 @@
 //  Last Modified:  22 March 2004
 //
 
+#include "foundation_AMOS.hh"
 #include  "delcher.hh"
 #include  "fasta.hh"
-#include "foundation_AMOS.hh"
 
 #include  <string>
 #include  <vector>
-#include  <map>
 using namespace std;
+using namespace HASHMAP;
 
 
 #define  DEBUG  0
@@ -21,7 +21,7 @@ using namespace std;
 const int  MAX_LINE = 1000;
 typedef  long long unsigned  Mer_t;
 
-typedef map<Mer_t, unsigned short> MerTable_t;
+typedef hash_map<Mer_t, unsigned short, hash<unsigned long> > MerTable_t;
 
 
 static Mer_t  Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
