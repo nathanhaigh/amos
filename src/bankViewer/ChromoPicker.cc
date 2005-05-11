@@ -62,14 +62,14 @@ ChromoPicker::ChromoPicker(DataStore * datastore,
        vi != m_datastore->m_chromopaths.end();
        vi++)
   {
-    new ChromoListItem(m_table, "Path", *vi);
+    new ChromoListItem(m_table, QString("Path"), *vi);
   }
 
   for (vi = m_datastore->m_chromodbs.begin();
        vi != m_datastore->m_chromodbs.end();
        vi++)
   {
-    new ChromoListItem(m_table, "DB", *vi);
+    new ChromoListItem(m_table, QString("DB"), *vi);
   }
 
 
@@ -117,12 +117,12 @@ void ChromoPicker::addNew()
   QString type = m_typepick->text();
   QString path = m_pathpick->text();
 
-  if (type == "Path")
+  if (type == QString("Path"))
   {
     m_datastore->m_chromopaths.push_back((std::string)path.ascii());
     new ChromoListItem(m_table, type, path);
   }
-  else if (type == "DB")
+  else if (type == QString("DB"))
   {
     m_datastore->m_chromodbs.push_back((std::string)path.ascii());
     new ChromoListItem(m_table, type, path);
