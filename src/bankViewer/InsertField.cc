@@ -37,7 +37,7 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
 
   AMOS::ID_t iid = ins->m_aid;
   emit readIIDHighlighted(QString::number(iid));
-  emit readEIDHighlighted(QString(m_datastore->read_bank.lookupEID(iid)));
+  emit readEIDHighlighted(QString(m_datastore->read_bank.lookupEID(iid).c_str()));
 
   getInsertString(s, ins->m_active, ins, 0);
   getInsertString(s, !ins->m_active, ins, 1);
@@ -128,8 +128,10 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     {
       FeatureCanvasItem * fitem = (FeatureCanvasItem *) * it;
       s += " Feature EID: ";
-      s += fitem->m_feat.getEID() + " Comment:";
-      s += fitem->m_feat.getComment() + " Type:";
+      s += fitem->m_feat.getEID().c_str();
+      s += " Comment:";
+      s += fitem->m_feat.getComment().c_str();
+      s += " Type:";
       s += (char)fitem->m_feat.getType();
       s += " [" +  QString::number(fitem->m_feat.getRange().begin) + ",";
       s += QString::number(fitem->m_feat.getRange().end) + "]";
@@ -144,7 +146,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
       s += " Contig ID: " + QString::number(m_datastore->contig_bank.getIDMap().lookupBID(citem->m_tile.source));
       s += " IID: " + QString::number(citem->m_tile.source);
-      s += " EID: " + QString(m_datastore->contig_bank.lookupEID(citem->m_tile.source));
+      s += " EID: " + QString(m_datastore->contig_bank.lookupEID(citem->m_tile.source).c_str());
       s += " [" + QString::number(citem->m_tile.offset) +
            ","  + QString::number(citem->m_tile.offset + citem->m_tile.range.getLength()) +
            "]";
@@ -236,7 +238,7 @@ void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int se
     }
 
     s += "[";
-    s += "e:" + QString(m_datastore->read_bank.lookupEID(iid));
+    s += "e:" + QString(m_datastore->read_bank.lookupEID(iid).c_str());
     s += " i:" + QString::number(iid);
     s += " c:" + QString::number(contigiid);
     s += "]";

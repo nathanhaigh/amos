@@ -108,14 +108,14 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
       AMOS::Range_t range = feat.getRange();
 
       new FeatureListItem(m_table,
-                          QString(feat.getEID()),
+                          QString(feat.getEID().c_str()),
                           QString((QChar)(char)feat.getType()),
                           QString::number(feat.getSource().second),
                           QString::number(feat.getSource().first),
                           QString((QChar)(range.isReverse()?'R':'F')),
                           QString::number(range.getLo()),
                           QString::number(range.getHi()),
-                          QString(feat.getComment()));
+                          QString(feat.getComment().c_str()));
     }
 
   }

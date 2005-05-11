@@ -205,7 +205,7 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
           new ScaffoldListItem(scaffolditem, 	 
                              QString::number(m_datastore->contig_bank.getIDMap().lookupBID(ti->source)),
                              QString::number(ti->source), 	 
-                             QString(m_datastore->contig_bank.lookupEID(ti->source)),
+                             QString(m_datastore->contig_bank.lookupEID(ti->source).c_str()),
                              QString::number(ti->offset), 	 
                              QString::number(ti->range.getLength() + ti->gaps.size()),
                              oo);

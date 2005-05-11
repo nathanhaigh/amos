@@ -62,14 +62,14 @@ ChromoPicker::ChromoPicker(DataStore * datastore,
        vi != m_datastore->m_chromopaths.end();
        vi++)
   {
-    new ChromoListItem(m_table, QString("Path"), *vi);
+    new ChromoListItem(m_table, QString("Path"), QString(vi->c_str()));
   }
 
   for (vi = m_datastore->m_chromodbs.begin();
        vi != m_datastore->m_chromodbs.end();
        vi++)
   {
-    new ChromoListItem(m_table, QString("DB"), *vi);
+    new ChromoListItem(m_table, QString("DB"), QString(vi->c_str()));
   }
 
 

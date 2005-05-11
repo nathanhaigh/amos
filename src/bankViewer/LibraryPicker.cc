@@ -105,7 +105,7 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
 
         new LibListItem(m_table,
                         QString::number(lib.getIID()),
-                        lib.getEID(),
+                        lib.getEID().c_str(),
                         QString::number(dist.mean),
                         QString::number(dist.sd));
         count++;

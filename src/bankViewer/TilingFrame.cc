@@ -160,7 +160,7 @@ void TilingFrame::setContigId(int contigId)
       m_tiling = m_datastore->m_contig.getReadTiling();
       m_consensus = m_datastore->m_contig.getSeqString();
 
-      m_cstatus.clear();
+      m_cstatus.erase();
       m_cstatus.resize(m_consensus.size(), ' ');
       m_renderedSeqs.clear();
 
@@ -170,8 +170,8 @@ void TilingFrame::setContigId(int contigId)
         m_cstatus.insert  (i+m_alignment->m_gaps[i], 1, '*');
       }
 
-      m_consensus.insert(0, m_alignment->m_startshift, '*');
-      m_cstatus.insert  (0, m_alignment->m_startshift, '*');
+      m_consensus.insert((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
+      m_cstatus.insert  ((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
 
       m_consensus.append(m_alignment->m_endshift, '*');
       m_cstatus.append  (m_alignment->m_endshift, '*');
@@ -401,7 +401,7 @@ void TilingFrame::searchString(const QString & str, bool forward)
   {
     int pos;
     QRegExp regex(str);
-    QString qcons(m_consensus);
+    QString qcons(m_consensus.c_str());
 
     int gindex = m_gindex + m_nextDiscrepancyBuffer;
 

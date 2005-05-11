@@ -145,7 +145,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
       int len = ti->range.getLength() + ti->gaps.size();
       new ReadListItem(m_table,
                        QString::number(ti->source),
-                       red.getEID(),
+                       red.getEID().c_str(),
                        QString(QChar(type)),
                        QString(QChar(mateType)),
                        QString::number(ti->offset),

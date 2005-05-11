@@ -39,7 +39,7 @@ char RenderSeq_t::base(Pos_t gindex, bool outsideclr) const
 
 void RenderSeq_t::getBases(string & alignedBases, Pos_t grangeStart, Pos_t grangeEnd)
 {
-  alignedBases.clear();
+  alignedBases.erase();
 
   int gindex;
 

@@ -200,7 +200,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
           new ContigListItem(contigitem, 	 
                              QString("Read"),
                              QString::number(ti->source), 	 
-                             QString(m_datastore->read_bank.lookupEID(ti->source)),
+                             QString(m_datastore->read_bank.lookupEID(ti->source).c_str()),
                              QString::number(ti->offset), 	 
                              QString::number(ti->range.getLength() + ti->gaps.size()),
                              QString("")); 	 
