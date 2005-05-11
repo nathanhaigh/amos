@@ -1,10 +1,17 @@
 #include <iostream>
 #include <qapplication.h>
-#include <qsplashscreen.h>
 #include <qpainter.h>
 
 #include "MainWindow.hh"
 #include "icons/AAI.xpm"
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_QT_333
+#include <qsplashscreen.h>
+#endif
 
 using namespace std;
 
@@ -39,8 +46,11 @@ int main( int argc, char **argv )
     p.end();
   }
 
+
+#ifdef HAVE_QT_333
   QSplashScreen * splash = new QSplashScreen(pixmap);
   splash->show();
+#endif
 
   MainWindow w(NULL, "mainwindow");
   w.setGeometry( 100, 100, 700, 355 );
@@ -93,8 +103,10 @@ int main( int argc, char **argv )
     }
   }
 
+#ifdef HASQTSPLASH
   splash->finish(&w);
   delete splash;
+#endif
 
   return a.exec();
 }

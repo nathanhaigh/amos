@@ -36,7 +36,7 @@ public:
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 1 || col == 5 || col == 6)
+    if (col == 2 || col == 3 || col == 5 || col == 6)
     {
       return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
     }
@@ -129,12 +129,12 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
 
 void FeatureBrowser::itemSelected(QListViewItem * item)
 {
-  if (item->text(2) == Contig_t::NCODE)
+  if (atoi(item->text(2)) == Contig_t::NCODE)
   {
     ID_t iid = atoi(item->text(3));
     ID_t bid = m_datastore->contig_bank.lookupBID(iid);
 
-    int offset = atoi(item->text(4));
+    int offset = atoi(item->text(5));
 
     if (bid != m_datastore->m_contigId)
     {

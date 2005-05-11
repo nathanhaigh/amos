@@ -128,7 +128,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     {
       FeatureCanvasItem * fitem = (FeatureCanvasItem *) * it;
       s += " Feature EID: ";
-      s += fitem->m_feat.getEID() + " Group:";
+      s += fitem->m_feat.getEID() + " Comment:";
       s += fitem->m_feat.getComment() + " Type:";
       s += (char)fitem->m_feat.getType();
       s += " [" +  QString::number(fitem->m_feat.getRange().begin) + ",";
