@@ -1,6 +1,6 @@
 Welcome to AMOS Assembler. A Modular Open Source Assembler.
-website: <http://www.tigr.org/software/AMOS>
-contact: <amos@tigr.org>
+website: <http://amos.sourceforge.net>
+contact: <amos-help@lists.sourceforge.net>
 
    AMOS is open source software. Please see the `COPYING' file for
 details. For documentation, please refer to the Documentation
@@ -94,7 +94,7 @@ the Defining Variables section in the `INSTALL' file).
    AMOScmp makes use of the NUCmer whole genome alignment utility
 which is part of the MUMmer package. If you wish to run AMOScmp, you
 will need download and install MUMmer (available for free from
-<http://www.tigr.org/software/mummer>). If `nucmer' is available from
+<http://mummer.sourceforge.net>). If `nucmer' is available from
 your system PATH, all is well, if not you will need to instruct
 `configure' where it is located by setting the environment variable
 NUCMER to the full path of `nucmer' (see the Defining Variables
@@ -115,7 +115,7 @@ Documentation
    Currently, AMOS is not released with a comprehensive manual. This
 is coming soon (see `NEWS'). In the meantime, check out the `doc'
 directory included in this distribution or point your browser to the
-AMOS website <http://www.tigr.org/software/AMOS>
+AMOS website <http://amos.sourceforge.net>
 
 
 Pipeline

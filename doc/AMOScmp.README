@@ -26,7 +26,7 @@ Dependencies
 part of the MUMmer package. MUMmer is freely available and can be
 downloaded from:
 
-<http://www.tigr.org/software/mummer>
+<http://mummer.sourceforge.net>
 
 Please follow the installation instructions in the `README' file in
 the base directory of this distribution to ensure AMOS can find and
