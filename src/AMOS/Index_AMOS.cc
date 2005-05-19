@@ -129,6 +129,8 @@ void Index_t::buildReadMate (const std::string bankname)
   pair<ID_t, ID_t> mtp;
   BankStream_t frg_bank (Fragment_t::NCODE);
 
+  frg_bank . open (bankname, B_READ);
+
   while ( frg_bank >> frg )
     {
       mtp = frg . getMatePair( );
