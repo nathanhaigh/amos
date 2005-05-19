@@ -337,11 +337,12 @@ public:
   //! single value will be picked (in no guaranteed fasion) and returned
   //!
   //! \param key The key to lookup
-  //! \return An IID value associated with the given key
+  //! \return An IID value associated with the given key or NULL_ID if none
   //!
   ID_t lookup (ID_t key) const
   {
-    return (index_m . find (key)) -> second;
+    const_iterator i = index_m . find (key);
+    return ( i == end( ) ? NULL_ID : i -> second );
   }
 
 
