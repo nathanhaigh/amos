@@ -32,7 +32,10 @@ int main (int argc, char ** argv)
 {
   if (argc != 2)
   {
-    cerr << "Usage: create-demo-contig bankname/-" << endl;
+    cerr << "Usage: bank-tutorial bankname/-" << endl
+         << endl
+         << "  Creates a 3 read contig and writes it directly into a binary bank" << endl
+         << "  named bankname, or write to stdout if - is specified." << endl;
     return EXIT_FAILURE;
   }
 
