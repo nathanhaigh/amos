@@ -211,6 +211,7 @@ void TilingFrame::loadContigRange(int gindex)
   m_displaywidth = (width()-tilehoffset)/basewidth;
 
   gindex = min(gindex, m_consensus.size()-m_displaywidth+1);
+  gindex = max(gindex, 0);
   m_gindex = gindex;
 
   int grangeStart = m_alignment->getContigPos(m_gindex);
