@@ -350,6 +350,7 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
     /usr/include
     `ls -dr /usr/include/qt* 2>/dev/null`
     `ls -dr /usr/lib/qt*/include 2>/dev/null`
+    `ls -dr /usr/lib64/qt*/include 2>/dev/null`
     `ls -dr /usr/local/qt*/include 2>/dev/null`
     `ls -dr /opt/qt*/include 2>/dev/null`
   "
@@ -446,6 +447,7 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
             /usr/local/lib
             /opt/lib
             `ls -dr /usr/lib/qt* 2>/dev/null`
+            `ls -dr /usr/lib64/qt* 2>/dev/null`
             `ls -dr /usr/local/qt* 2>/dev/null`
             `ls -dr /opt/qt* 2>/dev/null`
           "
