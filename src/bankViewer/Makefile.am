@@ -35,14 +35,22 @@ bankViewer_MOCSOURCES = \
         TilingFrame.cc         \
         UIElements.cc          
 
-bankViewer_MOC = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
+nodist_bankViewer_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
+
+bankViewerHeaders = $(bankViewer_MOCSOURCES:.cc=.hh) AlignmentInfo.hh
+BUILT_SOURCES = $(bankViewer_MOC)
+CLEANFILES = $(bankViewer_MOC)
 
 bankViewer_SOURCES =             \
         main.cc                  \
-        $(bankViewer_MOCSOURCES) \
-        $(bankViewer_MOC)
+        $(bankViewer_MOCSOURCES)
 
-BUILT_SOURCES = $(bankViewer_MOC)
+EXTRA_DIST = \
+       bankViewer.pro \
+       $(bankViewerHeaders) \
+       icons/AAI.xpm \
+       icons/fontdecrease.xpm \
+       icons/fontincrease.xpm
 
 bankViewer_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
                    $(top_builddir)/src/Common/libCommon.a   \
@@ -58,4 +66,3 @@ AM_CPPFLAGS = \
     -I$(top_srcdir)/src/Staden/read
 
 
-CLEANFILES = $(BUILT_SOURCES)
