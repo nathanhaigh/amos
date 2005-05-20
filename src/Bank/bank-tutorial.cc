@@ -3,7 +3,7 @@
 
 /*
  * Encode and store a 3 read contig. Write the object directly
- * into a bank.
+ * into a bank, or into a message stream printed to stdout. 
  *
  * Original Reads: (Clear range indicated with [])
  * seq1: A[GCACCGGT]AAA
@@ -41,6 +41,8 @@ int main (int argc, char ** argv)
   BankStream_t read_bank(Read_t::NCODE);
   string bank_name = argv[1];
 
+  // Write to stdout if the bank_name is "-", otherwise write the binary
+  // objects directly to a bank named bank_name.
   bool printmsg = (bank_name == "-");
 
   Read_t read; 
@@ -73,9 +75,10 @@ int main (int argc, char ** argv)
     // Here I set the quality values to be 1,2,3,...,12.
     read.setSequence("AGCACCGGTAAA", "123456789:;<");
 
-    // Clear ranges are stored (s,e] with exclusive start, 
-    // and inclusive end coordinates. In this case the base after 1 
-    // is the first good base, and 9 is the last good base
+    // Clear ranges are stored [s,e) with inclusive start, 
+    // and exclusive end coordinates (0-based). In this case, base 1 (0-based)
+    // is the first good base, and base 9 (0-based) is the first bad base.
+    // The length of the clear range is therefore e-s.
     read.setClearRange(Range_t(1,9));
 
     // The objects can be written directly to a binary bank, 
@@ -84,7 +87,7 @@ int main (int argc, char ** argv)
     else          { read_bank << read; }
       
 
-    // Objects can be reused, but be careful to reset every value!
+    // Objects can be reused, but be careful to reset every value or call obj.clear()!
     read.setIID(2);
     read.setEID("seq2");
     read.setSequence("ACGGATCAACTTTAC", "123456789:;<=>?");
@@ -110,13 +113,13 @@ int main (int argc, char ** argv)
     // The source field indicates the iid of the read
     tile.source = 1;
     
-    // The offset is the 0 based offset where the leftmost base of the read
-    // matches the leftmost base of the consensus
+    // The offset is the 0-based position where the leftmost base of the read
+    // tiles the leftmost base of the consensus
     tile.offset = 0;
 
     // Range indicates the actual range of the read used in the contig
-    // If the numbers are reversed, it indicates the reads was reverse
-    // complemented, and are stored [e,s)
+    // If the numbers are reversed, it indicates the read was reverse
+    // complemented, and is stored (e,s]. 
     tile.range = Range_t(9,1); 
 
     // There can be any number of reads, so they are stored in a vector
@@ -127,8 +130,8 @@ int main (int argc, char ** argv)
     tile.range = Range_t(3,11);
     
     // This indicates there should be 1 gap inserted into the read after 3
-    // bases of the aligned clear range. Gaps for rc reads are still stored
-    // left to right.
+    // bases of the aligned clear range. Gaps for reversed reads are still stored
+    // left to right (contig orientation).
     tile.gaps.push_back(3);
     tiling.push_back(tile);
 
