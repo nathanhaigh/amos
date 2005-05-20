@@ -1295,8 +1295,17 @@ void OutputMapping (Mapping_t & mapping)
       //-- For each read mapping to this reference
       for ( rmpi = rmpip . first; rmpi != rmpip . second; ++ rmpi )
 	{
+          long int s = (*rmpi) -> place -> beg;
+          long int e = (*rmpi) -> place -> beg + (*rmpi) -> len - 1;
+          if ( (*rmpi) -> place -> head -> ori == REVERSE_CHAR )
+            {
+              long int t = s;
+              s = e;
+              e = t;
+            }
+
 	  out << (*rmpi) -> id << '\t'
-	      << (*rmpi) -> place -> beg << '\t'
+	      << s << '\t' << e << '\t'
 	      << ((*rmpi) -> place -> head -> ori == FORWARD_CHAR ? '+' : '-');
 	  if ( (*rmpi) -> mate . read == NULL )
 	    out << "\tNULL";

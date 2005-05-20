@@ -6,6 +6,9 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	layout-align
 
+noinst_PROGRAMS = \
+	libcalc
+
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -13,12 +16,17 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS
 
 
-##-- Bundler
+#-- layout-align
 layout_align_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
 layout_align_SOURCES = \
 	layout-align.cc
 
+#-- libcalc
+libcalc_LDADD = \
+	$(top_builddir)/src/AMOS/libAMOS.a
+libcalc_SOURCES = \
+	libcalc.cc
 
 ##-- END OF MAKEFILE --##
