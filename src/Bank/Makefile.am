@@ -20,7 +20,8 @@ bin_PROGRAMS = \
 	bank2fasta \
 	updateClrRanges \
     dumpFeatures \
-    loadFeatures
+    loadFeatures \
+    bank-tutorial
 
 #	findMissingMates
 
@@ -126,6 +127,13 @@ loadFeatures_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 loadFeatures_SOURCES = \
 	loadFeatures.cc
+
+##-- bank-tutorial
+bank_tutorial_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+bank_tutorial_SOURCES = \
+	bank-tutorial.cc
 
 ##-- select-reads
 select_reads_LDADD = \
