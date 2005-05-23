@@ -1211,20 +1211,32 @@ void OutputLayouts (const Assembly_t & assembly)
 {
   vector<Contig_t *>::const_iterator cpi;
   vector<Tile_t *>::const_iterator tpi;
-  long int ctgs = 0;
+  AMOS::ID_t ctgs = 0;
+  AMOS::ID_t scfs = 0;
+  const string * cid = NULL;
+  const string * pid = NULL;
 
   AMOS::BankStream_t lay_bank (AMOS::Layout_t::NCODE);
+  AMOS::BankStream_t scf_bank (AMOS::Scaffold_t::NCODE);
 
   try {
     lay_bank . create (OPT_BankName, AMOS::B_WRITE);
+    scf_bank . create (OPT_BankName, AMOS::B_WRITE);
+
+    AMOS::Scaffold_t scf;
 
     for ( cpi = assembly . contigs . begin( );
 	  cpi != assembly . contigs . end( ); ++ cpi )
       {
 	AMOS::Layout_t lay;
-	AMOS::Tile_t tle;
+	AMOS::Tile_t red;
+        AMOS::Tile_t ctg;
 
 	lay . setIID (++ctgs);
+        ctg . source = ctgs;
+        ctg . offset = (*cpi) -> tiles . front( ) -> read -> place -> beg;
+        ctg . range . setRange (0, (*cpi) -> len);
+        cid = (*cpi)->tiles.front( )->read->place->head->ref->id;
 
         ostringstream ss;
         ss << ctgs << ' '
@@ -1234,23 +1246,74 @@ void OutputLayouts (const Assembly_t & assembly)
 	for ( tpi  = (*cpi) -> tiles . begin( );
 	      tpi != (*cpi) -> tiles . end( ); ++ tpi )
 	  {
-	    tle . source = (*tpi) -> read -> id;
-	    tle . offset = (*tpi) -> off;
-	    tle . range . begin = (*tpi) -> beg;
-	    tle . range . end   = (*tpi) -> end;
+	    red . source = (*tpi) -> read -> id;
+	    red . offset = (*tpi) -> off;
+	    red . range . begin = (*tpi) -> beg;
+	    red . range . end   = (*tpi) -> end;
 
-	    lay . getTiling( ) . push_back (tle);
+	    lay . getTiling( ) . push_back (red);
 	  }
 
 	lay_bank << lay;
+
+        if ( pid != NULL && cid != pid )
+          {
+            scf . setIID (++scfs);
+            scf . setEID (*pid);
+            scf_bank << scf;
+            scf . clear( );
+          }
+
+        scf . getContigTiling( ) . push_back (ctg);
+
+        pid = cid;
+      }
+
+    if ( ! scf . getContigTiling( ) . empty( ) )
+      {
+        scf . setIID (++scfs);
+        scf . setEID (*pid);
+        scf_bank << scf;
+        scf . clear( );
       }
 
     lay_bank . close( );
+    scf_bank . close( );
   }
   catch (const AMOS::Exception_t & e) {
     cerr << "WARNING: " << e . what( )
 	 << "  could not output layouts to bank" << endl;
   }
+
+//   ctgs = 0;
+//   for ( cpi = assembly . contigs . begin( );
+// 	cpi != assembly . contigs . end( ); ++ cpi )
+//     {
+//       out
+// 	<< "C " << ++ctgs << '\t'
+// 	<< (*cpi) -> tiles . size( ) << '\t'
+// 	<< *((*cpi)->tiles.front( )->read->place->head->ref->id) << '\t'
+// 	<< (*cpi) -> tiles . front( ) -> read -> place -> beg << "-"
+// 	<< (*cpi) -> tiles . front( ) -> read -> place -> beg
+// 	+ (*cpi) -> len - 1 << endl;
+
+//       for ( tpi  = (*cpi) -> tiles . begin( );
+// 	    tpi != (*cpi) -> tiles . end( ); ++ tpi )
+// 	{
+// 	  out
+// 	    << (*tpi) -> read -> id << ' '
+// 	    << (*tpi) -> off + (*tpi) -> beg - 1 << ' '
+// 	    << (*tpi) -> off + (*tpi) -> end - 1 << '\t'
+
+// 	    << (*tpi) -> read -> place -> tbeg -
+// 	    (*tpi) -> read -> place -> beg << '\t'
+// 	    << (*tpi) -> read -> place -> end -
+// 	    (*tpi) -> read -> place -> tend << '\t'
+// 	    << (*tpi) -> read -> place -> idy << endl;
+// 	}
+
+//       out << endl;
+//     }
 }
 
 
