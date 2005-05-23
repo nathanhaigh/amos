@@ -38,8 +38,9 @@ bankViewer_MOCSOURCES = \
 nodist_bankViewer_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 
 bankViewerHeaders = $(bankViewer_MOCSOURCES:.cc=.hh) AlignmentInfo.hh
-BUILT_SOURCES = $(bankViewer_MOC)
-CLEANFILES = $(bankViewer_MOC)
+
+BUILT_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
+CLEANFILES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 
 bankViewer_SOURCES =             \
         main.cc                  \
@@ -63,6 +64,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/Slice  \
 	-I$(top_srcdir)/src/AMOS   \
-    -I$(top_srcdir)/src/Staden/read
+	-I$(top_srcdir)/src/Staden/read
 
 
