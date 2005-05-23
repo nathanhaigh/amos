@@ -15,15 +15,18 @@ Generate a report on the slice level discrepanices present in a contig.
 
   Options
   -------
-  -l     Prune low quality discrepancies from report
+  -l      Prune low quality discrepancies from report (no qv > 30)
 
-  -[no]q Print Quality Values of each base   [ Default: -noq ]
-  -[no]r Print Read Ids of each base         [ Default: -r   ]
-  -[no]i Print count of each lib id          [ Default: -noi ]
-  -[no]b Print each base                     [ Default: -b   ]
-  -[no]H Print a header for the columns      [ Default: -h   ]
-  -amb   Only print contig positions with an ambiguity code
+  -[no]q  Print Quality Values of each base   [ Default: -noq ]
+  -[no]r  Print Read Ids of each base         [ Default: -r   ]
+  -[no]i  Print count of each lib id          [ Default: -noi ]
+  -[no]b  Print each base                     [ Default: -b   ]
+  -[no]H  Print a header for the columns      [ Default: -h   ]
+  -amb    Only print contig positions with an ambiguity code
 
+  -minqv  Specify minimum cummulative qv of disagreeing reads
+  -minsnp Specify minimum number of consistent disagreeing reads
+  -qvs    Print Quality Values stats (max, avg) [ Default: -noqvs ]
 ~;
 
 my $VERSION = "findTcovSnp Version 1.00 (Build " . (qw/$Revision$/ )[1] . ")";
@@ -49,6 +52,9 @@ MAIN:
   my $doPrintBase = 1;
   my $doPrintHeader = 1;
   my $doAmbOnly = 0;
+  my $minqv = 0;
+  my $minsnp = 0;
+  my $printqvstats = 0;
 
   my $LIBPREFIX = 4;
   my $HIGHQUALITY = 30;
@@ -56,13 +62,16 @@ MAIN:
   # now we handle the input options
   my $result = $tf->TIGR_GetOptions
                (
-                 'l!'  => \$prunelq,
-                 'q!'  => \$doPrintQuals,
-                 'r!'  => \$doPrintReads,
-                 'i!'  => \$doPrintLibs,
-                 'b!'  => \$doPrintBase,
-                 'H!'  => \$doPrintHeader,
-                 'amb!' => \$doAmbOnly,
+                 'l!'       => \$prunelq,
+                 'q!'       => \$doPrintQuals,
+                 'r!'       => \$doPrintReads,
+                 'i!'       => \$doPrintLibs,
+                 'b!'       => \$doPrintBase,
+                 'H!'       => \$doPrintHeader,
+                 'qvs!'     => \$printqvstats,
+                 'amb!'     => \$doAmbOnly,
+                 'minqv=s'  => \$minqv,
+                 'minsnp=s' => \$minsnp,
                );
 
   $tf->bail("Command line parsing failed") if (!$result);
@@ -93,10 +102,11 @@ MAIN:
   {
     print "AsmblId\tGPos\tUPos\tConsensus\tdcov\tconflicts";
 
-    print "\t(Base)"  if $doPrintBase;
-    print "\t{Reads}" if $doPrintReads;
-    print "\t<Libs>"  if $doPrintLibs;
-    print "\t[Quals]" if $doPrintQuals;
+    print "\t(Base)"   if $doPrintBase;
+    print "\t{Reads}"  if $doPrintReads;
+    print "\t<Libs>"   if $doPrintLibs;
+    print "\t[Quals]"  if $doPrintQuals;
+    print "\tmax\tavg" if $printqvstats;
 
     print "\n";
   }
@@ -104,6 +114,7 @@ MAIN:
   open TCOV, "< $prefix.tcov"
     or $tf->bail("Can't open $prefix.tcov ($!)");
 
+  OUTER:
   while (<TCOV>)
   {
     my ($asmbl_id, $g, $u, $c, $cqv, $bases, $quals, $reads) = split /\s+/, $_;
@@ -112,8 +123,8 @@ MAIN:
     my @bases = split //, uc($bases);
 
     my $foundsnp = grep { $_ ne $bases[0] } @bases;
-    next if !$foundsnp;  ## Skip homogeneous slices
-    next if ($doAmbOnly && ($c eq "A" || $c eq "C" || $c eq "G" || $c eq "T" || $c eq "-"));
+    next OUTER if !$foundsnp;  ## Skip homogeneous slices
+    next OUTER if ($doAmbOnly && ($c eq "A" || $c eq "C" || $c eq "G" || $c eq "T" || $c eq "-"));
 
     $snpcount++;
     
@@ -149,31 +160,47 @@ MAIN:
 
     my $cons = $order[0]; ## Grab the majority element
 
-    if ($prunelq)
+    if ($prunelq || $minqv || $minsnp)
     {
       ## Test for presense of hq snp
-      my $foundhq = 0;
+      my $foundhq  = 0;
+      my $foundqv  = 0;
+      my $foundsnp = 0;
 
       FINDHQ:
       foreach my $e (@order[1..$#order]) ## Skip the majority element
       {
         my @quals = @{$quals{$e}};
 
+        if ($count{$e} >= $minsnp)
+        {
+          $foundsnp = 1;
+        }
+
+        my $cqv = 0;
+
         foreach my $q (@quals)
         {
+          $cqv += $q;
           if ($q >= $HIGHQUALITY)
           {
             $foundhq = 1;
-            last FINDHQ;
           }
+        }
+
+        if ($cqv >= $minqv)
+        {
+          $foundqv = 1;
         }
       }
 
-      if (!$foundhq)
+      if (($prunelq && !$foundhq) ||
+          ($minqv   && !$foundqv) ||
+          ($minsnp  && !$foundsnp))
       {
         ## Skip strictly low quality snps
         $lqsnpcount++;
-        next;
+        next OUTER;
       }
     }
 
@@ -195,6 +222,26 @@ MAIN:
 
       print "\t[", join(":", @{$quals{$b}}), "]" 
         if $doPrintQuals;
+
+      if ($printqvstats)
+      {
+        my $s = 0;
+        my $c = 0;
+        my $m = 0;
+        foreach my $q (@{$quals{$b}})
+        {
+          if ($q > $m) { $m = $q; }
+          $s += $q;
+          $c++;
+        }
+        my $avg = sprintf("%0.1f", $s/$c);
+        print "\t$m\t$avg";
+      }
+
+
+
+
+
     }
     print "\n";
   }
