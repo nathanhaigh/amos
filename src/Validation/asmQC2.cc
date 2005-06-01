@@ -258,7 +258,7 @@ float zscore (int nlib, float librank, int cov, float covrank){
   float meana = na * (nlib + 1) / 2;
   float meanb = nb * (nlib + 1) / 2;
 
-  float stdev = sqrt(na * nb * (nlib + 1) / 12);
+  float stdev = sqrt((float)na * nb * (nlib + 1) / 12);
 
   float zscore = (branksum - meanb > 0) ? (branksum - meanb + 0.5) : (branksum -meanb - 0.5);
 
