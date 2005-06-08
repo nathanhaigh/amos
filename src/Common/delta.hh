@@ -17,8 +17,9 @@
 #include <fstream>
 #include <cstdlib>
 #include <iostream>
-
-
+#include <map>
+#include <sstream>
+//#include <algorithm>
 
 
 const std::string NUCMER_STRING = "NUCMER";
@@ -27,15 +28,20 @@ const std::string NUCMER_STRING = "NUCMER";
 const std::string PROMER_STRING = "PROMER";
 //!< String identifier for data produced by PROmer
 
+typedef unsigned char DataType_t;
+const DataType_t NULL_DATA = 0;
+const DataType_t NUCMER_DATA = 1;
+const DataType_t PROMER_DATA = 2;
 
-
+typedef unsigned char Dir_t;
+const Dir_t FORWARD_DIR = 0;
+const Dir_t REVERSE_DIR = 1;
 
 
 //===================================================== DeltaAlignment_t =======
-//! \brief A single delta encoded alignment region
-//!
-//==============================================================================
-struct DeltaAlignment_t {
+struct DeltaAlignment_t
+//!< A single delta encoded alignment region
+{
 
   unsigned long int sR;
   //!< Start coordinate in the reference
@@ -48,6 +54,15 @@ struct DeltaAlignment_t {
 
   unsigned long int eQ;
   //!< End coordinate in the reference
+
+  unsigned long int idyc;
+  //!< number of mismatches in the alignment
+
+  unsigned long int simc;
+  //!< number of similarity scores < 1 in the alignment
+
+  unsigned long int stpc;
+  //!< number of stop codons in the alignment
 
   float idy;
   //!< Percent identity [0 - 100]
@@ -75,14 +90,10 @@ struct DeltaAlignment_t {
 };
 
 
-
-
 //===================================================== DeltaRecord_t ==========
-//! \brief A delta record representing the alignments between two sequences
-//!
-//! \see DeltaAlignment_t
-//==============================================================================
-struct DeltaRecord_t {
+struct DeltaRecord_t
+//!< A delta record representing the alignments between two sequences
+{
 
   std::string idR;
   //!< Reference contig ID
@@ -112,9 +123,6 @@ struct DeltaRecord_t {
     aligns.clear ( );
   }
 };
-
-
-
 
 
 //===================================================== DeltaReader_t ==========
@@ -334,6 +342,127 @@ public:
     assert (is_open_m);
     return query_path_m;
   }
+};
+
+
+//===================================================== DeltaEdgelet_t =========
+struct DeltaEdgelet_t
+//!< A piece of a delta graph edge, a single alignment
+{
+  unsigned char isGOOD : 1;   // meets the requirements
+  unsigned char isQLIS : 1;   // is part of the query's LIS
+  unsigned char isRLIS : 1;   // is part of the reference's LIS
+  unsigned char isGLIS : 1;   // is part of the reference/query LIS
+  unsigned char dirR   : 1;   // reference match direction
+  unsigned char dirQ   : 1;   // query match direction
+
+  float idy, sim, stp;                    // percent identity [0 - 1]
+  unsigned long int idyc, simc, stpc;     // idy, sim, stp counts
+  unsigned long int loQ, hiQ, loR, hiR;   // alignment bounds
+
+  std::string delta;                           // delta information
+
+  DeltaEdgelet_t ( )
+  {
+    isGOOD = true;
+    isQLIS = isRLIS = isGLIS = false;
+    dirR = dirQ = FORWARD_DIR;
+    idy = sim = stp = 0;
+    idyc = simc = stpc = 0;
+    loQ = hiQ = loR = hiR = 0;
+  }
+};
+
+struct DeltaNode_t;
+
+//===================================================== DeltaEdge_t ============
+struct DeltaEdge_t
+//!< A delta graph edge, alignments between a single reference and query
+{
+  DeltaNode_t * refnode;      // the adjacent reference node
+  DeltaNode_t * qrynode;      // the adjacent query node
+  std::vector<DeltaEdgelet_t *> edgelets;  // the set of individual alignments
+
+  DeltaEdge_t ( )
+  {
+    refnode = qrynode = NULL;
+  }
+
+  ~DeltaEdge_t ( )
+  {
+    std::vector<DeltaEdgelet_t *>::iterator i;
+    for ( i = edgelets . begin( ); i != edgelets . end( ); ++ i )
+      delete (*i);
+  }
+
+  void build (const DeltaRecord_t & rec);
+};
+
+
+//===================================================== DeltaNode_t ============
+struct DeltaNode_t
+//!< A delta graph node, contains the sequence information
+{
+  const std::string * id;               // the id of the sequence
+  unsigned long int len;           // the length of the sequence
+  std::vector<DeltaEdge_t *> edges;     // the set of related edges
+
+  DeltaNode_t ( )
+  {
+    id = NULL;
+    len = 0;
+  }
+
+  // DeltaGraph_t will take care of destructing the edges
+};
+
+
+//===================================================== DeltaGraph_t ===========
+//! \brief A graph of sequences (nodes) and their alignments (edges)
+//!
+//!  A bipartite graph with two partite sets, R and Q, where R is the set of
+//!  reference sequences and Q is the set of query sequences. These nodes are
+//!  named "DeltaNode_t". We connect a node in R to a node in Q if an alignment
+//!  is present between the two sequences. The group of all alignments between
+//!  the two is named "DeltaEdge_t" and a single alignment between the two is
+//!  named a "DeltaEdgelet_t". Alignment coordinates reference the forward
+//!  strand and are stored lo before hi.
+//!
+//==============================================================================
+class DeltaGraph_t
+{
+public:
+
+  //-- The reference and query delta graph nodes (1 node per sequence)
+  std::map<std::string, DeltaNode_t> refnodes;
+  std::map<std::string, DeltaNode_t> qrynodes;
+
+  std::string refpath;
+  std::string qrypath;
+  DataType_t datatype;
+
+  DeltaGraph_t ( )
+  {
+    datatype = NULL_DATA;
+  }
+
+  ~DeltaGraph_t ( )
+  {
+    //-- Make sure the edges only get destructed once
+    std::map<std::string, DeltaNode_t>::iterator i;
+    std::vector<DeltaEdge_t *>::iterator j;
+    for ( i = refnodes . begin( ); i != refnodes . end( ); ++ i )
+      for ( j  = i -> second . edges . begin( );
+            j != i -> second . edges . end( ); ++ j )
+        delete (*j);
+  }
+
+  void build (const std::string & deltapath);
+  void FlagGLIS (float epsilon = -1);
+  void FlagScore (long int minlen, float minidy);
+  void FlagQLIS (float epsilon = -1, float maxolap = 100.0);
+  void FlagRLIS (float epsilon = -1, float maxolap = 100.0);
+  void FlagUNIQ (float minuniq);
 };
 
 #endif // #ifndef __DELTA_HH
