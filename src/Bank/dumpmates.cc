@@ -18,6 +18,8 @@ using namespace AMOS;
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
+bool   OPT_UseEIDs = false;          // print EIDs instead of IIDs
+
 
 
 
@@ -57,6 +59,7 @@ int main (int argc, char ** argv)
   Library_t lib;
   pair<ID_t, ID_t> mtp;
 
+  Bank_t red_bank (Read_t::NCODE);
   BankStream_t frg_bank (Fragment_t::NCODE);
   BankStream_t lib_bank (Library_t::NCODE);
 
@@ -72,12 +75,19 @@ int main (int argc, char ** argv)
     frg_bank . open (OPT_BankName, bm);
     lib_bank . open (OPT_BankName, bm);
 
+    if ( OPT_UseEIDs )
+      red_bank . open (OPT_BankName, bm);
+
     //-- Iterate through each library in the bank
     while ( lib_bank >> lib )
       {
-	cout << "library\t" << lib . getIID( )
-             << '\t'
-	     << lib.getDistribution( ).mean - (lib.getDistribution( ).sd * 3)
+        if ( OPT_UseEIDs )
+          cout << "library\t" << lib . getEID( );
+        else
+          cout << "library\t" << lib . getIID( );
+
+        cout << '\t'
+             << lib.getDistribution( ).mean - (lib.getDistribution( ).sd * 3)
              << '\t'
 	     << lib.getDistribution( ).mean + (lib.getDistribution( ).sd * 3)
              << endl;
@@ -89,15 +99,20 @@ int main (int argc, char ** argv)
         mtp = frg . getMatePair( );
         if ( mtp . first != NULL_ID && mtp . second != NULL_ID )
           {
-            cout << mtp . first << '\t' << mtp . second << '\t'
-                 << frg . getLibrary( )
-                 << endl;
+            if ( OPT_UseEIDs )
+              cout << red_bank . lookupEID (mtp . first) << '\t'
+                   << red_bank . lookupEID (mtp . second);
+            else
+              cout << mtp . first << '\t' << mtp . second;
+
+            cout << '\t' << frg . getLibrary( ) << endl;
             cntw ++;
           }
       }
 
     frg_bank . close( );
     lib_bank . close( );
+    red_bank . close( );
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
@@ -121,9 +136,13 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "ehsv")) != EOF) )
     switch (ch)
       {
+      case 'e':
+        OPT_UseEIDs = true;
+        break;
+
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
@@ -160,6 +179,7 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
+    << "-e            Report objects by EID instead of IID\n"
     << "-h            Display help information\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
