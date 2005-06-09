@@ -14,22 +14,6 @@
 using namespace std;
 
 
-struct EdgeletQCmp_t
-//!< Compares query lo coord
-{
-  bool operator( ) (const DeltaEdgelet_t * i, const DeltaEdgelet_t * j) const
-  { return ( i -> loQ < j -> loQ ); }
-};
-
-
-struct EdgeletRCmp_t
-//!< Compares reference lo coord
-{
-  bool operator( ) (const DeltaEdgelet_t * i, const DeltaEdgelet_t * j) const
-  { return ( i -> loR < j -> loR ); }
-};
-
-
 struct LIS_t
 //!< LIS score
 {
@@ -315,8 +299,52 @@ void DeltaEdge_t::build (const DeltaRecord_t & rec)
 
 
 //===================================================== DeltaGraph_t ===========
+struct EdgeletQCmp_t
+//!< Compares query lo coord
+{
+  bool operator( ) (const DeltaEdgelet_t * i, const DeltaEdgelet_t * j) const
+  {
+    if ( i -> loQ < j -> loQ )
+      return true;
+    else if ( i -> loQ > j -> loQ )
+      return false;
+    else if ( ScoreLocal (0, i->hiQ - i->loQ + 1, 0, 0, i->idy, 0) >
+              ScoreLocal (0, j->hiQ - j->loQ + 1, 0, 0, j->idy, 0) )
+      return true;
+    else
+      return false;
+  }
+};
+
+
+struct EdgeletRCmp_t
+//!< Compares reference lo coord
+{
+  bool operator( ) (const DeltaEdgelet_t * i, const DeltaEdgelet_t * j) const
+  {
+    if ( i -> loR < j -> loR )
+      return true;
+    else if ( i -> loR > j -> loR )
+      return false;
+    else if ( ScoreLocal (0, i->hiR - i->loR + 1, 0, 0, i->idy, 0) >
+              ScoreLocal (0, j->hiR - j->loR + 1, 0, 0, j->idy, 0) )
+      return true;
+    else
+      return false;
+  }
+};
+
+
+struct NULLPred_t
+//!< Return true if Edgelet not null
+{
+  bool operator( ) (const void * i) const
+  { return (i != NULL); }
+};
+
+
 //----------------------------------------------------- build ------------------
-void DeltaGraph_t::build (const string & deltapath)
+void DeltaGraph_t::build (const string & deltapath, bool isdeltas)
 {
   DeltaReader_t dr;
   DeltaEdge_t * dep;
@@ -337,7 +365,7 @@ void DeltaGraph_t::build (const string & deltapath)
     datatype = NULL_DATA;
 
   //-- Read in the next graph edge, i.e. a new delta record
-  while ( dr . readNext( ) )
+  while ( dr . readNext (isdeltas) )
     {
       dep = new DeltaEdge_t( );
 
@@ -379,8 +407,124 @@ void DeltaGraph_t::build (const string & deltapath)
 }
 
 
-//-------------------------------------------------------------- FlagGLIS ------
-void DeltaGraph_t::FlagGLIS (float epsilon)
+//------------------------------------------------------------------- clean ----
+void DeltaGraph_t::clean( )
+{
+  map<string, DeltaNode_t>::iterator i;
+  map<string, DeltaNode_t>::iterator ii;
+  std::vector<DeltaEdge_t *>::iterator j;
+  std::vector<DeltaEdgelet_t *>::iterator k;
+
+  //-- For all ref nodes
+  for ( i = refnodes . begin( ); i != refnodes . end( ); )
+    {
+      //-- For all edges
+      for ( j  = i -> second . edges . begin( );
+            j != i -> second . edges . end( ); ++ j )
+        {
+          //-- For all edgelets
+          for ( k  = (*j) -> edgelets . begin( );
+                k != (*j) -> edgelets . end( ); ++ k )
+            {
+              if ( ! (*k) -> isGOOD )
+                {
+                  //-- Delete the bad edgelet and mark for erasure
+                  delete (*k);
+                  *k = NULL;
+                }
+            }
+
+          //-- Erase the marked edgelets
+          k = partition ((*j) -> edgelets . begin( ),
+                         (*j) -> edgelets . end( ),
+                         NULLPred_t( ));
+          (*j) -> edgelets . erase (k, (*j) -> edgelets . end( ));
+
+          //-- Mark the edge if empty
+          if ( (*j) -> edgelets . empty( ) )
+            *j = NULL;
+        }
+
+      //-- Erase the marked edges
+      j = partition (i -> second . edges . begin( ),
+                     i -> second . edges . end( ),
+                     NULLPred_t( ));
+      i -> second . edges . erase (j, i -> second . edges . end( ));
+
+      //-- Erase the node if empty
+      ii = i ++;
+      if ( ii -> second . edges . empty( ) )
+        refnodes . erase (ii);
+    }
+
+  //-- For all qry nodes
+  for ( i = qrynodes . begin( ); i != qrynodes . end( ); )
+    {
+      for ( j  = i -> second . edges . begin( );
+            j != i -> second . edges . end( ); ++ j )
+        {
+          //-- Delete the edge if empty and mark for erasure
+          if ( (*j) -> edgelets . empty( ) )
+            {
+              delete (*j);
+              *j = NULL;
+            }
+        }
+
+      //-- Erase the marked edges
+      j = partition (i -> second . edges . begin( ),
+                     i -> second . edges . end( ),
+                     NULLPred_t( ));
+      i -> second . edges . erase (j, i -> second . edges . end( ));
+
+      //-- Erase the node if empty
+      ii = i ++;
+      if ( ii -> second . edges . empty( ) )
+        qrynodes . erase (ii);
+    }
+ 
+}
+
+
+//------------------------------------------------------------ getNodeCount ----
+long int DeltaGraph_t::getNodeCount( )
+{
+  long int sum = refnodes . size( ) + qrynodes . size( );
+  return sum;
+}
+
+
+//------------------------------------------------------------ getEdgeCount ----
+long int DeltaGraph_t::getEdgeCount( )
+{
+  long int sum = 0;
+
+  map<string, DeltaNode_t>::iterator i;
+  for ( i = refnodes . begin( ); i != refnodes . end( ); ++ i )
+    sum += i -> second . edges . size( );
+
+  return sum;
+}
+
+
+//--------------------------------------------------------- getEdgeletCount ----
+long int DeltaGraph_t::getEdgeletCount( )
+{
+  long int sum = 0;
+
+  map<string, DeltaNode_t>::iterator i;
+  std::vector<DeltaEdge_t *>::iterator j;
+  for ( i = refnodes . begin( ); i != refnodes . end( ); ++ i )
+    for ( j  = i -> second . edges . begin( );
+          j != i -> second . edges . end( ); ++ j )
+      sum += (*j) -> edgelets . size( );
+
+  return sum;
+}
+
+
+//-------------------------------------------------------------- glagGLIS ------
+void DeltaGraph_t::flagGLIS (float epsilon)
 {
   LIS_t * lis = NULL;
   long int lis_size = 0;
@@ -527,8 +671,8 @@ void DeltaGraph_t::FlagGLIS (float epsilon)
 }
 
 
-//------------------------------------------------------------- FlagScore ------
-void DeltaGraph_t::FlagScore (long int minlen, float minidy)
+//------------------------------------------------------------- flagScore ------
+void DeltaGraph_t::flagScore (long int minlen, float minidy)
 {
   map<string, DeltaNode_t>::const_iterator mi;
   vector<DeltaEdge_t *>::const_iterator ei;
@@ -553,8 +697,8 @@ void DeltaGraph_t::FlagScore (long int minlen, float minidy)
 }
 
 
-//-------------------------------------------------------------- FlagQLIS ------
-void DeltaGraph_t::FlagQLIS (float epsilon, float maxolap)
+//-------------------------------------------------------------- flagQLIS ------
+void DeltaGraph_t::flagQLIS (float epsilon, float maxolap)
 {
   LIS_t * lis = NULL;
   long int lis_size = 0;
@@ -606,7 +750,7 @@ void DeltaGraph_t::FlagQLIS (float epsilon, float maxolap)
 
               leni = lis[i] . a -> hiQ - lis[i] . a -> loQ + 1;
               lis[i] . score =
-                ScoreLocal (0, leni, 0, 0, lis[i].a->idy, maxolap);
+                ScoreLocal (0, leni, 0, 0, lis[i].a->idy, 0);
 
               lis[i] . from = -1;
               lis[i] . diff = 0;
@@ -657,8 +801,8 @@ void DeltaGraph_t::FlagQLIS (float epsilon, float maxolap)
 }
 
 
-//-------------------------------------------------------------- FlagRLIS ------
-void DeltaGraph_t::FlagRLIS (float epsilon, float maxolap)
+//-------------------------------------------------------------- flagRLIS ------
+void DeltaGraph_t::flagRLIS (float epsilon, float maxolap)
 {
   LIS_t * lis = NULL;
   long int lis_size = 0;
@@ -710,7 +854,7 @@ void DeltaGraph_t::FlagRLIS (float epsilon, float maxolap)
 
               leni = lis[i] . a -> hiR - lis[i] . a -> loR + 1;
               lis[i] . score =
-                ScoreLocal (0, leni, 0, 0, lis[i].a->idy, maxolap);
+                ScoreLocal (0, leni, 0, 0, lis[i].a->idy, 0);
 
               lis[i] . from = -1;
               lis[i] . diff = 0;
@@ -761,8 +905,8 @@ void DeltaGraph_t::FlagRLIS (float epsilon, float maxolap)
 }
 
 
-//-------------------------------------------------------------- FlagUNIQ ------
-void DeltaGraph_t::FlagUNIQ (float minuniq)
+//-------------------------------------------------------------- flagUNIQ ------
+void DeltaGraph_t::flagUNIQ (float minuniq)
 {
   unsigned long int i, uniq, len;
 

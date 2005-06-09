@@ -257,9 +257,9 @@ public:
   //! \pre delta file must be open
   //! \return true on success, false on EOF
   //!
-  inline bool readNext ( )
+  inline bool readNext (bool isdeltas = true)
   {
-    return readNextRecord (true);
+    return readNextRecord (isdeltas);
   }
 
 
@@ -448,6 +448,11 @@ public:
 
   ~DeltaGraph_t ( )
   {
+    clear( );
+  }
+
+  void clear ( )
+  {
     //-- Make sure the edges only get destructed once
     std::map<std::string, DeltaNode_t>::iterator i;
     std::vector<DeltaEdge_t *>::iterator j;
@@ -455,14 +460,27 @@ public:
       for ( j  = i -> second . edges . begin( );
             j != i -> second . edges . end( ); ++ j )
         delete (*j);
+
+    refnodes.clear( );
+    qrynodes.clear( );
+    refpath.erase( );
+    qrypath.erase( );
+    datatype = NULL_DATA;
   }
 
-  void build (const std::string & deltapath);
-  void FlagGLIS (float epsilon = -1);
-  void FlagScore (long int minlen, float minidy);
-  void FlagQLIS (float epsilon = -1, float maxolap = 100.0);
-  void FlagRLIS (float epsilon = -1, float maxolap = 100.0);
-  void FlagUNIQ (float minuniq);
+  void build (const std::string & deltapath, bool isdeltas = true);
+
+  void clean ( );
+
+  long int getNodeCount ( );
+  long int getEdgeCount ( );
+  long int getEdgeletCount ( );
+
+  void flagGLIS (float epsilon = -1);
+  void flagScore (long int minlen, float minidy);
+  void flagQLIS (float epsilon = -1, float maxolap = 100.0);
+  void flagRLIS (float epsilon = -1, float maxolap = 100.0);
+  void flagUNIQ (float minuniq);
 };
 
 #endif // #ifndef __DELTA_HH
