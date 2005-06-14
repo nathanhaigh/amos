@@ -15,7 +15,7 @@ AUTOMAKE_OPTIONS = 1.8 gnits
 
 noinst_LIBRARIES = libGNU.a
 
-libGNU_a_SOURCES =
+libGNU_a_SOURCES = gnu.c
 libGNU_a_LIBADD = @LIBOBJS@
 EXTRA_DIST =
 BUILT_SOURCES =
