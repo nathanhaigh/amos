@@ -4,11 +4,11 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	layout-align \
-	layout-paths
+	layout-align
 
 noinst_PROGRAMS = \
-	libcalc
+	libcalc \
+	layout-paths
 
 
 ##-- GLOBAL INCLUDE

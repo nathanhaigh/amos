@@ -11,6 +11,8 @@
 #include "delta.hh"
 #include "delta.cc"
 #include "amp.hh"
+#include <climits>
+#include <list>
 using namespace std;
 
 const char * _NAME_ = "layout-paths";
@@ -21,21 +23,47 @@ const char * _NAME_ = "layout-paths";
 string  OPT_AlignName;                // alignment name parameter
 
 int     OPT_MaxTrim        = 20;      // maximum ignorable trim length
-int     OPT_Fuzzy          =  3;      // fuzzy equals tolerance
+int     OPT_Fuzzy          = 3;       // fuzzy equals tolerance
 int     OPT_Seed           = -1;      // random seed
 
-float   OPT_MinIdentity    = 70.0;    // min identity to tile
+float   OPT_MinIdentity    = 0.0;     // min identity to tile
 
 
 //============================================================= Constants ====//
+const long int LHAND = -LONG_MAX;
+const long int RHAND =  LONG_MAX;
 
+struct Signature_t
+{
+  vector<const DeltaNode_t *> nodes;  // supporting queries
+  vector<long int> vect;              // alignment signature
+  // [sR] [eR] [nodeR] [gapQ] [sR] [eR] [nodeR] [gapQ] ...
+};
+
+struct Edgeletfoo_t
+//!< Compares query lo coord
+{
+  bool operator() (const DeltaEdgelet_t * a, const DeltaEdgelet_t * b) const
+  { return ( a -> loQ < b -> loQ ); }
+};
 
 
 //========================================================== Fuction Decs ====//
 
+//------------------------------------------------------ RecordSignatures ----//
+//! \brief Reads the alignment graph and records the alignment signatures
+//!
+//! \post Populates the sigs vector, one per aligned sequence
+//! \return void
+//!
+void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs);
+
+
 //------------------------------------------------------------- ParseArgs ----//
 //! \brief Sets the global OPT_% values from the command line arguments
 //!
+//! \param argc
+//! \param argv
 //! \return void
 //!
 void ParseArgs (int argc, char ** argv);
@@ -61,98 +89,66 @@ void PrintUsage (const char * s);
 
 //========================================================== Inline Funcs ====//
 
-//------------------------------------------------------------ PrintDelta ----//
-void PrintDelta (const DeltaGraph_t & graph)
-{
-  bool header;
-  unsigned long int s1, e1, s2, e2;
-  map<string, DeltaNode_t>::const_iterator mi;
-  vector<DeltaEdge_t *>::const_iterator ei;
-  vector<DeltaEdgelet_t *>::const_iterator eli;
-  //-- Print the file header
-  cout
-    << graph . refpath << ' ' << graph . qrypath << endl
-    << (graph.datatype == PROMER_DATA ? PROMER_STRING : NUCMER_STRING) << endl;
-  for ( mi = graph.qrynodes.begin( ); mi != graph.qrynodes.end( ); ++ mi )
-    {
-      for ( ei  = (mi -> second) . edges . begin( );
-            ei != (mi -> second) . edges . end( ); ++ ei )
-        {
-          header = false;
-          for ( eli  = (*ei) -> edgelets . begin( );
-                eli != (*ei) -> edgelets . end( ); ++ eli )
-            {
-              if ( ! (*eli) -> isGOOD )
-                continue;
- 
-              //-- Print the sequence header
-              if ( ! header )
-                {
-                  cout
-                    << '>'
-                    << *((*ei) -> refnode -> id) << ' '
-                    << *((*ei) -> qrynode -> id) << ' '
-                    << (*ei) -> refnode -> len << ' '
-                    << (*ei) -> qrynode -> len << endl;
-                  header = true;
-                }
- 
- 
-              //-- Print the alignment
-              s1 = (*eli) -> loR;
-              e1 = (*eli) -> hiR;
-              s2 = (*eli) -> loQ;
-              e2 = (*eli) -> hiQ;
-              if ( (*eli) -> dirR == REVERSE_DIR )
-                Swap (s1, e1);
-              if ( (*eli) -> dirQ == REVERSE_DIR )
-                Swap (s2, e2);
-              cout
-                << s1 << ' ' << e1 << ' ' << s2 << ' ' << e2 << ' '
-                << (*eli) -> idyc << ' '
-                << (*eli) -> simc << ' '
-                << (*eli) -> stpc << endl
-                << (*eli) -> delta;
-            }
-        }
-    }
-}
- 
-
-
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
   DeltaGraph_t graph;
+  list<Signature_t> sigs;
 
   //-- COMMAND
   ParseArgs (argc, argv);          // parse the command line arguments
   srand (OPT_Seed);
 
-  graph . build (OPT_AlignName);
-  graph . clean( );
-
-  cerr << graph . getNodeCount( ) << '\t'
-       << graph . getEdgeCount( ) << '\t'
-       << graph . getEdgeletCount( ) << endl;
-
+  //-- GET/CLEAN ALIGNMENTS
+  graph . build (OPT_AlignName, false);
   graph . flagScore (0, OPT_MinIdentity);
+  graph . flagQLIS( );
   graph . clean( );
 
-  cerr << graph . getNodeCount( ) << '\t'
-       << graph . getEdgeCount( ) << '\t'
-       << graph . getEdgeletCount( ) << endl;
-
-  graph . flagQLIS ( );
-  graph . clean( );
-
-  cerr << graph . getNodeCount( ) << '\t'
-       << graph . getEdgeCount( ) << '\t'
-       << graph . getEdgeletCount( ) << endl;
-
-  PrintDelta (graph);
+  //-- GENERATE SIGNATURES
+  RecordSignatures (graph, sigs);
 
   return EXIT_SUCCESS;
+}
+
+
+//------------------------------------------------------ RecordSignatures ----//
+void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs)
+{
+  vector<DeltaEdgelet_t *> edgelets;
+
+  map<string, DeltaNode_t>::const_iterator mi;
+  vector<DeltaEdge_t *>::const_iterator ei;
+  vector<DeltaEdgelet_t *>::iterator eli;
+
+  for ( mi = graph.qrynodes.begin( ); mi != graph.qrynodes.end( ); ++ mi )
+    {
+      sigs . push_back (Signature_t());
+      sigs . back( ) . nodes . push_back (&(mi -> second));
+
+      //-- Collect the alignments for this query
+      //   graph should be clean, so no need to worry about bad alignments
+      edgelets . clear( );
+      for ( ei  = (mi -> second) . edges . begin( );
+            ei != (mi -> second) . edges . end( ); ++ ei )
+        for ( eli  = (*ei) -> edgelets . begin( );
+              eli != (*ei) -> edgelets . end( ); ++ eli )
+          edgelets . push_back (*eli);
+
+      assert ( !edgelets.empty( ) );
+
+      //-- Sort by loQ
+      sort (edgelets . begin( ), edgelets . end( ), Edgeletfoo_t( ));
+
+      vector<DeltaEdgelet_t *>::iterator first = edgelets.begin();
+      vector<DeltaEdgelet_t *>::iterator last = -- edgelets.end();
+
+      for ( eli = edgelets.begin( ); eli != edgelets.end( ); ++ eli )
+        {
+
+        }
+    }
+
 }
 
 
