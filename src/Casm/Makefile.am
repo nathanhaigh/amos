@@ -4,11 +4,11 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	layout-align
+	casm-layout
 
 noinst_PROGRAMS = \
-	libcalc \
-	layout-paths
+	casm-libsize \
+	casm-path
 
 
 ##-- GLOBAL INCLUDE
@@ -17,26 +17,26 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS
 
 
-#-- layout-align
-layout_align_LDADD = \
+#-- casm-layout
+casm_layout_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-layout_align_SOURCES = \
-	layout-align.cc
+casm_layout_SOURCES = \
+	casm-layout.cc
 
 
-#-- layout-paths
-layout_paths_LDADD = \
+#-- casm-path
+casm_path_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-layout_paths_SOURCES = \
-	layout-paths.cc
+casm_path_SOURCES = \
+	casm-path.cc
 
 
-#-- libcalc
-libcalc_LDADD = \
+#-- casm-libsize
+casm_libsize_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
-libcalc_SOURCES = \
-	libcalc.cc
+casm_libsize_SOURCES = \
+	casm-libsize.cc
 
 ##-- END OF MAKEFILE --##

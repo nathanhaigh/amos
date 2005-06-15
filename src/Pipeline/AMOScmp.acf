@@ -30,7 +30,7 @@ OUTPUTS  = $(CONTIG) $(FASTA)
 30: $(NUCMER) --maxmatch --prefix=$(PREFIX) $(REF) $(SEQS)
 
 ## Running layout
-40: $(BINDIR)/layout-align -U $(LAYOUT) -C $(CONFLICT) -b $(BANK) $(ALIGN)
+40: $(BINDIR)/casm-layout -U $(LAYOUT) -C $(CONFLICT) -b $(BANK) $(ALIGN)
 
 ## Running consensus
 50: $(BINDIR)/make-consensus -B -b $(BANK)
@@ -38,5 +38,5 @@ OUTPUTS  = $(CONTIG) $(FASTA)
 ## Outputting contigs
 60: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
 
-## Converting to FastA file
-70: $(BINDIR)/ctg2fasta < $(CONTIG) > $(FASTA)
+## Outputting fasta
+70: $(BINDIR)/bank2fasta -b $(BANK) > $(FASTA)

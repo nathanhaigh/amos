@@ -40,7 +40,7 @@ struct Signature_t
   // [sR] [eR] [nodeR] [gapQ] [sR] [eR] [nodeR] [gapQ] ...
 };
 
-struct Edgeletfoo_t
+struct EdgeletCmp_t
 //!< Compares query lo coord
 {
   bool operator() (const DeltaEdgelet_t * a, const DeltaEdgelet_t * b) const
@@ -138,7 +138,7 @@ void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs)
       assert ( !edgelets.empty( ) );
 
       //-- Sort by loQ
-      sort (edgelets . begin( ), edgelets . end( ), Edgeletfoo_t( ));
+      sort (edgelets . begin( ), edgelets . end( ), EdgeletCmp_t( ));
 
       vector<DeltaEdgelet_t *>::iterator first = edgelets.begin();
       vector<DeltaEdgelet_t *>::iterator last = -- edgelets.end();
