@@ -26,6 +26,11 @@ prompt reply.
 Version Release History
 =======================
 
+Version 1.3.1 - June 2005
+
+     * minor release for OSX Tiger and GCC 4.0 compatibility
+     * `AMOScmp` administrative updates
+
 Version 1.3.0 - May 2005
 
      * `bankViewer' first version released!!!
