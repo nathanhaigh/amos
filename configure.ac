@@ -224,11 +224,13 @@ if test x"${PERL}" = x":"  ||  ! test -x "${PERL}"; then
 fi
 
 if test x"${have_qt}" != x"yes"; then
-  echo "WARNING! Qt toolkit was not found but is required to run AMOS GUIs"
-  echo "   install Qt toolkit if planning on using AMOS GUIs"
+  echo "WARNING! Qt3 toolkit was not found but is required to run AMOS GUIs"
+  echo "   install Qt3 or locate Qt3 with configure to build GUIs"
+  echo "   see config.log for more information on what went wrong"
 elif test x"${have_qt_test}" != x"yes"; then
-  echo "WARNING! Qt toolkit malfunctioning but is required to run AMOS GUIs"
-  echo "   try compiling GUIs manually or reinstall Qt toolkit"
+  echo "WARNING! Qt3 toolkit malfunctioning but is required to run AMOS GUIs"
+  echo "   try compiling GUIs manually or reinstall Qt3 toolkit to build GUIs"
+  echo "   see config.log for more information on what went wrong"
 fi
 
 if test x"${have_libz}" != x"yes"; then

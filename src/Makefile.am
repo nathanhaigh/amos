@@ -24,6 +24,10 @@ SUBDIRS += \
 	PerlModules \
 	Pipeline \
 	Staden
+if BUILD_QT
+SUBDIRS += \
+	bankViewer
+endif BUILD_QT
 endif BUILD_all
 
 if BUILD_AMOScmp
@@ -60,11 +64,6 @@ SUBDIRS += \
 	PerlModules \
 	Pipeline
 endif BUILD_minimus
-
-if BUILD_QT
-SUBDIRS += \
-	bankViewer
-endif BUILD_QT
 
 
 ##-- END OF MAKEFILE --##
