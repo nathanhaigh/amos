@@ -301,6 +301,7 @@ public:
 
 
 //===================================================== DeltaEdgelet_t =========
+struct DeltaEdge_t;
 struct DeltaEdgelet_t
 //!< A piece of a delta graph edge, a single alignment
 {
@@ -311,6 +312,7 @@ struct DeltaEdgelet_t
   unsigned char dirR   : 1;   //!< reference match direction
   unsigned char dirQ   : 1;   //!< query match direction
 
+  DeltaEdge_t * edge;
   float idy, sim, stp;                    //!< percent identity [0 - 1]
   unsigned long int idyc, simc, stpc;     //!< idy, sim, stp counts
   unsigned long int loQ, hiQ, loR, hiR;   //!< alignment bounds

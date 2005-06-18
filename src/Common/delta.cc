@@ -324,6 +324,8 @@ void DeltaEdge_t::build (const DeltaRecord_t & rec)
       //-- Set the edgelet
       p = new DeltaEdgelet_t( );
 
+      p -> edge = this;
+
       p -> idy = i -> idy / 100.0;
       p -> sim = i -> sim / 100.0;
       p -> stp = i -> stp / 100.0;
