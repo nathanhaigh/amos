@@ -8,7 +8,7 @@ bin_PROGRAMS = \
 
 noinst_PROGRAMS = \
 	casm-libsize \
-	casm-path
+	casm-breaks
 
 
 ##-- GLOBAL INCLUDE
@@ -25,12 +25,12 @@ casm_layout_SOURCES = \
 	casm-layout.cc
 
 
-#-- casm-path
-casm_path_LDADD = \
+#-- casm-breaks
+casm_breaks_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-casm_path_SOURCES = \
-	casm-path.cc
+casm_breaks_SOURCES = \
+	casm-breaks.cc
 
 
 #-- casm-libsize

@@ -15,7 +15,7 @@
 #include <list>
 using namespace std;
 
-const char * _NAME_ = "layout-paths";
+const char * _NAME_ = "casm-breaks";
 
 
 
@@ -28,12 +28,22 @@ int      OPT_Seed           = -1;      // random seed
 
 float    OPT_MinIdentity    = 0.0;     // min identity to tile
 
-long int MAXIMAL = LONG_MAX;           // maximum integer
+const long int MAXIMAL    = LONG_MAX;  // maximum integer
+
+const char     LBREAK     = 'L';       // left break \____
+const char     RBREAK     = 'R';       // right break ____/
+const char     TANDEM     = 'T';       // tandem collapse
+const char     INSERT     = 'I';       // reference insertion
+const char     DELETION   = 'D';       // reference deletion
+const char     INVERSION  = 'V';       // inversion
+const char     UNKNOWN    = 'X';       // unknown
 
 
 //============================================================= Constants ====//
 struct Signature_t
 {
+  long int fc;     // foward support
+  long int rc;     // reverse support
   list<const DeltaNode_t *> qry;      // supporting queries
 
   vector<const DeltaNode_t *> ref;    // reference ids
@@ -43,87 +53,10 @@ struct Signature_t
   // [sR]---[eR]   [sR]---[eR]   [sR]---[eR]
   //   [nodeR]       [nodeR]       [nodeR]
   //           [gap]         [gap]
+
+  Signature_t ( ) { fc = rc = 0; }
 };
 
-
-bool operator==(const Signature_t & a, const Signature_t & b)
-{
-  //-- ** BEWARE ** of overflow for MAXIMAL values, use subtraction only!
-
-  bool forward = true;
-  vector<long int>::const_iterator i, j;
-  vector<long int>::const_reverse_iterator k;
-  long int ii, jj, kk;
-
-  //-- Check the pos vector
-  for ( i  = a . pos . begin( ), j  = b . pos . begin( );
-        i != a . pos . end( ) && j != b . pos . end( );
-        ++ i, ++ j )
-    {
-      ii = labs(*i); jj = labs(*j);
-      if ( ii - OPT_Fuzzy > jj  ||  jj - OPT_Fuzzy > ii )
-        break;
-    }
-
-  //-- If forward failed, try reverse
-  if ( i != a . pos . end( ) || j != b . pos . end( ) )
-    {
-      for ( i  = a . pos . begin( ), k  = b . pos . rbegin( );
-            i != a . pos . end( ) && k != b . pos . rend( );
-            ++ i, ++ k )
-        {
-          ii = labs(*i);
-          kk = labs(*k);
-          if ( ii - OPT_Fuzzy > kk  ||  kk - OPT_Fuzzy > ii )
-            break;
-        }
-
-      //-- Nothing worked, return false
-      if ( i != a . pos . end( ) || k != b . pos . rend( ) )
-        return false;
-
-      forward = false;
-    }
-
-
-  //-- Check the gap vector
-  if ( forward )
-    {
-      for ( i  = a . gap . begin( ), j  = b . gap . begin( );
-            i != a . gap . end( ) && j != b . gap . end( );
-            ++ i, ++ j )
-        {
-          ii = labs(*i); jj = labs(*j);
-          if ( ii - OPT_Fuzzy > jj  ||  jj - OPT_Fuzzy > ii )
-            break;
-        }
-
-      if ( i != a . gap . end( ) || j != b . gap . end( ) )
-        return false;
-    }
-  else
-    {
-      for ( i  = a . gap . begin( ), k  = b . gap . rbegin( );
-            i != a . gap . end( ) && k != b . gap . rend( );
-            ++ i, ++ k )
-        {
-          ii = labs(*i);
-          kk = labs(*k);
-          if ( ii - OPT_Fuzzy > kk  ||  kk - OPT_Fuzzy > ii )
-            break;
-        }
-
-      if ( i != a . gap . end( ) || k != b . gap . rend( ) )
-        return false;
-    }
-
-
-  //-- Check the reference vector
-  if ( a . ref != b . ref )
-    return false;
-
-  return true;
-}
 
 struct EdgeletCmp_t
 //!< Compares query lo coord
@@ -140,14 +73,31 @@ struct EdgeletCmp_t
 //!
 //! \pre sigs vector is populated
 //! \post Like signatures have been collapsed
+//! \param sigs The list of signatures
 //! \return void
 //!
 void CombineSignatures (list<Signature_t> & sigs);
 
 
+//----------------------------------------------------- CompareSignatures ----//
+//! \brief Compares two signatures for equality
+//!
+//! Returns 1 if signatures match in foward direction, -1 if match in reverse,
+//! or 0 if they don't match.
+//!
+//! \param a First signature
+//! \param b Second signature
+//! \return 1,-1 for match, 0 for no match
+//!
+int CompareSignatures (const Signature_t & a, const Signature_t & b);
+
+
 //------------------------------------------------------ RecordSignatures ----//
 //! \brief Reads the alignment graph and records the alignment signatures
 //!
+//! \param graph Alignment graph
+//! \param sigs Empty signature list
+//! \pre Alignment graph has been filtered and cleaned
 //! \post Populates the sigs vector, one per aligned sequence
 //! \return void
 //!
@@ -206,6 +156,8 @@ int main (int argc, char ** argv)
   //-- COMBINE SIGNATURES
   CombineSignatures (sigs);
 
+
+  //--------------------------- OUTPUT ---------------------------
   list<Signature_t>::iterator s;
   for ( s = sigs . begin( ); s != sigs . end( ); ++ s )
     {
@@ -218,7 +170,8 @@ int main (int argc, char ** argv)
           vector<const DeltaNode_t *>::const_iterator r;
           vector<long int>::const_iterator g;
 
-          cout << s -> qry . size( ) << '\n';
+          cout << s -> qry . size( ) << " ("
+               << s -> fc << ',' << s -> rc << ")\n";
 
           for ( r = s -> ref . begin( ); r != s -> ref . end( ); ++ r )
             cout << *((*r)->id) << '\t';
@@ -252,6 +205,8 @@ int main (int argc, char ** argv)
           cout << endl;
         }
     }
+  //--------------------------- OUTPUT ---------------------------
+
 
   return EXIT_SUCCESS;
 }
@@ -260,16 +215,30 @@ int main (int argc, char ** argv)
 //----------------------------------------------------- CombineSignatures ----//
 void CombineSignatures (list<Signature_t> & sigs)
 {
+  int cmp;
   list<Signature_t>::iterator i, j;
 
+  //-- Walk through the list and combine everything that's equal
   for ( i = sigs . begin( ); i != sigs . end( ); ++ i )
     {
-      j = i;
-      ++ j;
+      j = i; ++ j;
       while ( j != sigs . end( ) )
         {
-          if ( *i == *j )
+          cmp = CompareSignatures (*i, *j);
+
+          if ( cmp )
             {
+              if ( cmp > 0 ) // forward match
+                {
+                  i -> fc += j -> fc;
+                  i -> rc += j -> rc;
+                }
+              else // reverse match
+                {
+                  i -> fc += j -> rc;
+                  i -> rc += j -> fc;
+                }
+
               i -> qry . splice (i -> qry . end( ), j -> qry);
               j = sigs . erase (j);
             }
@@ -277,6 +246,75 @@ void CombineSignatures (list<Signature_t> & sigs)
             ++ j;
         }
     }
+}
+
+
+//----------------------------------------------------- CompareSignatures ----//
+int CompareSignatures (const Signature_t & a, const Signature_t & b)
+{
+  //-- ** BEWARE ** of overflow for MAXIMAL values, use subtraction only!
+  int match = 1;
+  vector<long int>::const_iterator i, j;
+  vector<long int>::const_reverse_iterator k;
+
+  //-- Check the forward pos vector
+  for ( i  = a . pos . begin( ), j  = b . pos . begin( );
+        i != a . pos . end( ) && j != b . pos . end( ); ++ i, ++ j )
+    if ( labs(*i) - OPT_Fuzzy > labs(*j)
+         ||
+         labs(*j) - OPT_Fuzzy > labs(*i) )
+      break;
+
+  //-- If not the same forward positions, try reverse
+  if ( i != a . pos . end( ) || j != b . pos . end( ) )
+    {
+      for ( i  = a . pos . begin( ), k  = b . pos . rbegin( );
+            i != a . pos . end( ) && k != b . pos . rend( ); ++ i, ++ k )
+        if ( labs(*i) - OPT_Fuzzy > labs(*k)
+             ||
+             labs(*k) - OPT_Fuzzy > labs(*i) )
+          break;
+      
+      //-- Different or same reverse positions?
+      match = ( i != a . pos . end( ) || k != b . pos . rend( ) ) ? 0 : -1;
+    }
+
+  //-- 'match' is now either 1 for forward, -1 for reverse or 0 for no match
+
+  //-- Check the gap vector
+  if ( match == 1 )
+    {
+      for ( i  = a . gap . begin( ), j  = b . gap . begin( );
+            i != a . gap . end( ) && j != b . gap . end( ); ++ i, ++ j )
+        if ( labs(*i) - OPT_Fuzzy > labs(*j)
+             ||
+             labs(*j) - OPT_Fuzzy > labs(*i) )
+          break;
+
+      //-- If not the same forward gaps
+      if ( i != a . gap . end( ) || j != b . gap . end( ) )
+        match = 0;
+    }
+  else if ( match == -1 )
+    {
+      for ( i  = a . gap . begin( ), k  = b . gap . rbegin( );
+            i != a . gap . end( ) && k != b . gap . rend( ); ++ i, ++ k )
+        if ( labs(*i) - OPT_Fuzzy > labs(*k)
+             ||
+             labs(*k) - OPT_Fuzzy > labs(*i) )
+          break;
+
+      //-- If not the same reverse gaps
+      if ( i != a . gap . end( ) || k != b . gap . rend( ) )
+        match = 0;
+    }
+
+
+  //-- If not the same references
+  if ( match != 0  &&  a . ref != b . ref )
+    match = 0;
+  
+  return match;
 }
 
 
@@ -318,6 +356,7 @@ void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs)
       sigs . push_back (Signature_t());
       Signature_t & sig = sigs . back( );
       sig . qry . push_back (&(mi -> second));
+      sig . fc ++;
 
       //-- Collect the alignments for this query
       //   graph should be clean, so no need to worry about bad alignments
