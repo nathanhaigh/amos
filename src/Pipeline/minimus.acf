@@ -30,4 +30,4 @@ OUTPUTS = $(CONTIG) $(FASTA)
 50: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
 
 ## Converting to FastA file
-60: $(BINDIR)/ctg2fasta < $(CONTIG) > $(FASTA)
+60: $(BINDIR)/bank2fasta -b $(BANK) > $(FASTA)
