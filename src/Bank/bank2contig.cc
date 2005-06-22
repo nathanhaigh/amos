@@ -57,7 +57,7 @@ int main (int argc, char ** argv)
 //         else           { cout << s; }
 //       }
 //       else { cout << contig.getIID(); }
-      cout << contig.getIID() << endl;
+      cout << contig.getIID();
 
       const string cons = contig.getSeqString();
 
