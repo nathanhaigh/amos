@@ -17,6 +17,9 @@ BINDIR = /local/asmg_devel/mschatz/WGA/AMOS/bin
 ## bank2contig
 40: $(BINDIR)/bank2contig $(PREFIX).bnk > $(PREFIX).contig
 
+## frg2ta
+45: $(BINDIR)/frg2ta $(PREFIX).frg
+
 ## getCoverage
 50: /usr/local/bin/getCoverage -t --gapped -R -a all -M $(PREFIX).contig
 
