@@ -380,18 +380,36 @@ int main(int argc, char **argv)
       column++;
       cout << "Column " << column << ":" << endl;
       cout << "Consensus: " << col.consensus.first << ", " << col.consensus.second << endl;
-      for (int i = 0; i < col.col.size(); i++)
+      int nbases = 0;
+      int ndisc = 0;
+      char minqual = 0;
+      for (int i = 0; i < col.col.size(); i++){
 	if (!col.col[i].empty()) {
+	  bool good = false;
+	  //ndisc++;
+	  //	  nbases += col.col[i].size();
 	  cout << "Base " << baseHash(i) << ": ";
-	  for (int j = 0; j < col.col[i].size(); j++)
+	  for (int j = 0; j < col.col[i].size(); j++){
+	    char qual = col.col[i][j].second - '0';
+	    if (qual >= 30) {nbases++; good = true;}
+	    if (minqual == 0 || minqual > qual)
+	      minqual = qual;
+	    
 	    cout << col.col[i][j].first << "(" << col.col[i][j].second << ") ";
+	  }
+	  if (good) ndisc++;
 	  cout << endl;
 	}
-    }
-
+      } // for each different base
+      //      cout << col.col.size() << " " << nbases << " " << minqual << endl;
+      if (ndisc > 1 && minqual >= 30)
+	cout << "Discrepancy " << (int)minqual << " " << ndisc << endl;
+      if (nbases > 1)
+	cout << "DEEP " << nbases << endl;
+    }// for each column 
     cout << endl;
   }
-
+  
   return(0);
 } // main
     
