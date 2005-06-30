@@ -25,6 +25,7 @@ dist_bin_SCRIPTS = \
 	ctg2fasta.pl \
 	ctg2umdcontig.pl \
 	frg2fasta.pl \
+	frg2ta.pl \
 	ta2ace.pl \
 	tarchive2amos.pl \
 	tarchive2ca.pl \
