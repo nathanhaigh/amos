@@ -18,6 +18,7 @@ DataStore::DataStore()
 {
   m_contigId = 0;
   m_loaded = false;
+  m_traceycalled = 0;
 
   m_chromodbs.push_back("/local/chromo/Chromatograms/");
   m_chromodbs.push_back("/local/chromo2/Chromatograms/");
@@ -25,6 +26,16 @@ DataStore::DataStore()
   m_chromodbs.push_back("/local/asmg/scratch/mschatz/Chromatograms/");
 
 //  m_chromopaths.push_back("/home/mschatz/build/sample/32774/chromo");
+}
+
+DataStore::~DataStore()
+{
+  if (m_traceycalled)
+  {
+    cerr << "Cleaning chromos directory" << endl;
+    string cmd = "/bin/rm -rf chromos";
+    system(cmd.c_str());
+  }
 }
 
 int DataStore::openBank(const string & bankname)
@@ -391,6 +402,18 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read)
       path += readname;
       trace = read_reading((char *)path.c_str(), TT_ANY);
     }
+  }
+
+  if (!trace)
+  {
+    string program = "/local/devel/SE/bin/TraceyApp";
+    m_traceycalled = 1;
+
+    string cmd = program + " -fast " + readname;
+    system(cmd.c_str());
+
+    string path = "chromos/" + readname;
+    trace = read_reading((char *)path.c_str(), TT_ANY);
   }
 
   return (char *) trace;

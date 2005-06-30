@@ -16,6 +16,7 @@ class DataStore
 public:
 
   DataStore();
+  ~DataStore();
 
   int openBank(const string & bank_name);
   int setContigId(int id);
@@ -75,6 +76,8 @@ private:
   void indexLibraries();
   void indexContigs();
   void indexScaffolds();
+
+  bool m_traceycalled;
 };
 
 
