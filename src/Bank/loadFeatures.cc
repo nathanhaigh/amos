@@ -37,7 +37,14 @@ int main (int argc, char ** argv)
     }
 
     contig_bank.open(bank_name);
-    feat_bank.open(bank_name);
+    if (feat_bank.exists(bank_name))
+    {
+      feat_bank.open(bank_name);
+    }
+    else
+    {
+      feat_bank.create(bank_name);
+    }
 
     string eid;
     int end3;

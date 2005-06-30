@@ -63,13 +63,11 @@ public:
   ~Render_t();
   void load(Bank_t & read_bank, vector<Tile_t>::const_iterator tile);
 
-  Read_t read;
   string m_nucs;
   string m_qual;
   bool m_rc;
   Pos_t m_offset;
 
-private:
   Read_t m_read;
 };
 
@@ -145,15 +143,25 @@ struct TilingOrderCmp
 
 int main (int argc, char ** argv)
 {
-  if (argc != 2)
+  if (argc != 3)
   {
-    cerr << "Usage: bank2coverage bankname" << endl;
+    cerr << "Usage: bank2coverage bankname outprefix" << endl;
     return EXIT_FAILURE;
   }
 
   BankStream_t contig_bank(Contig_t::NCODE);
   Bank_t read_bank(Read_t::NCODE);
   string bank_name = argv[1];
+  string outprefix = argv[2];
+
+  string tcovfile  = outprefix + ".tcov";
+  string idtblfile = outprefix + ".idTbl";
+
+  ofstream tstream(tcovfile.c_str());
+  if (!tstream.is_open()) { AMOS_THROW_IO("Could not open " + tcovfile); }
+
+  ofstream itbl(idtblfile.c_str());
+  if (!itbl.is_open()) { AMOS_THROW_IO("Could not open " + idtblfile); }
 
   cerr << "Processing " << bank_name << " at " << Date() << endl;
 
@@ -168,6 +176,7 @@ int main (int argc, char ** argv)
     
     while (contig_bank >> contig)
     {
+      string eid = contig.getEID();
       std::vector<Tile_t> & tiling = contig.getReadTiling();
       const string & consensus = contig.getSeqString();
       const Pos_t clen = consensus.size();
@@ -187,8 +196,14 @@ int main (int argc, char ** argv)
            vi++, vectorpos++)
       {
         Render_t rendered;
+        rendered.load(read_bank, vi);
+
+        itbl << vectorpos + vectoroffset 
+             << " " << rendered.m_read.getEID() 
+             << " " << (rendered.m_rc ? '1' : '0') 
+             << endl;
+
         renderedSeqs.push_back(rendered);
-        renderedSeqs[vectorpos].load(read_bank, vi);
       }
 
       vector<int> reads;
@@ -247,35 +262,35 @@ int main (int argc, char ** argv)
 
         // Print Slice
 
-        cout << contig_count << " "
-             << gindex+1 << " "
-             << coordinate << " " 
-             << consensus[gindex] << " "
-             << cqv;
+        tstream << eid << " "
+                << gindex+1 << " "
+                << coordinate << " " 
+                << consensus[gindex] << " "
+                << cqv;
 
         if (consensus[gindex] != '-') { index++; }
 
         if (dcov)
         {
-          cout << " " << s.bc << " ";
+          tstream << " " << s.bc << " ";
 
           int j;
           for (j = 0; j < dcov; j++)
           {
-            if (j) { cout << ":"; }
-            cout << (int) s.qv[j];
+            if (j) { tstream << ":"; }
+            tstream << (int) s.qv[j];
           }
 
-          cout << " ";
+          tstream << " ";
 
           for (j = 0; j < dcov; j++)
           {
-            if (j) { cout << ":"; }
-            cout << (int) reads[j];
+            if (j) { tstream << ":"; }
+            tstream << (int) reads[j];
           }
         }
 
-        cout << endl;
+        tstream << endl;
       }
 
       delete [] s.bc;
