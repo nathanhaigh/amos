@@ -5,7 +5,8 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	zipcontigs \
-    revcontig
+    revcontig \
+    insertgapcontig
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -14,6 +15,14 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_srcdir)/src/Foundation
 
+##-- simple-overlap
+insertgapcontig_LDADD = \
+	$(top_builddir)/src/Align/libAlign.a \
+	$(top_builddir)/src/Slice/libSlice.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+insertgapcontig_SOURCES = \
+	insertgapcontig.cc 
 
 ##-- simple-overlap
 revcontig_LDADD = \
