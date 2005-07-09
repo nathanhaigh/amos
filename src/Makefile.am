@@ -6,6 +6,7 @@ SUBDIRS += \
 	GNU \
 	AMOS \
 	Common \
+    Foundation \
 	Graph \
 	Slice \
 	CelMsg \
@@ -23,7 +24,8 @@ SUBDIRS += \
 	Utils \
 	PerlModules \
 	Pipeline \
-	Staden
+	Staden \
+    Contig
 if BUILD_QT
 SUBDIRS += \
 	bankViewer

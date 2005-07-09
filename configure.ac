@@ -145,6 +145,8 @@ AC_CONFIG_FILES(
    src/Staden/read/Makefile \
    src/Staden/progs/Makefile \
    src/bankViewer/Makefile \
+   src/Contig/Makefile \
+   src/Foundation/Makefile \
    ]
 )
 
