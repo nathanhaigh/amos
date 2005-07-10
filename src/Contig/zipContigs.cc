@@ -31,7 +31,7 @@ int main (int argc, char ** argv)
 "of the alignment is specified with -O, and gaps can be inserted into both\n"
 "slice files using -r and -q.\n"
 "\n"
-"   Usage: zipcontigs [options] bnk queryid referenceid\n"
+"   Usage: zipcontigs [options] bnk qryeid refeid joineid\n"
 "\n"
 "   query.slice     Slice file of query contig (typically smaller than reference)\n"
 "   reference.slice Slice file of reference contig\n"
@@ -82,21 +82,23 @@ int main (int argc, char ** argv)
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
 
-    if (argvv.size() != 3)
+    if (argvv.size() != 4)
     {
-      cerr << "Usage: zipcontigs [options] bankname refcontig querycontig" << endl;
+      cerr << "Usage: zipcontigs [options] bankname refeid qryeid joineid" << endl;
       return EXIT_FAILURE;
     }
 
     string bankname = argvv.front(); argvv.pop_front();
     string refeid = argvv.front(); argvv.pop_front();
     string qryeid = argvv.front(); argvv.pop_front();
+    string jeid   = argvv.front(); argvv.pop_front();
 
     Bank_t contig_bank(Contig_t::NCODE);
 
     cerr << "Processing " << bankname << " at " << Date() << endl;
 
     contig_bank.open(bankname, B_READ|B_WRITE);
+    ID_t jiid     = contig_bank.getMaxIID()+1;
 
     Contig_t ref, qry;
 
@@ -115,7 +117,24 @@ int main (int argc, char ** argv)
     cerr << " m_gapCoordinateOffset(0)=" <<  m_gapCoordinateOffset<< endl;
     cerr << " m_referenceConsensus(0)=" <<   m_referenceConsensus<< endl;
 
+    int shift = 0;
 
+    vector<Tile_t> & rtiling = ref.getReadTiling();
+    vector<Tile_t> & qtiling = qry.getReadTiling();
+    vector<Tile_t>::iterator qi;
+
+    for (qi =  qtiling.begin();
+         qi != qtiling.end();
+         qi++)
+    {
+      qi->offset += shift;
+      rtiling.push_back(*qi);
+    }
+
+    ref.setIID(jiid);
+    ref.setEID(jeid);
+    cerr << "Appending iid: " << jiid << " eid: " << jeid << endl;
+    contig_bank.append(ref);
     
     contig_bank.close();
   }
