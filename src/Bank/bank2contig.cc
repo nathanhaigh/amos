@@ -50,14 +50,13 @@ int main (int argc, char ** argv)
 
       cout << "##";
 
-//       if (USE_EID) 
-//       { 
-//         string s(contig.getEID());
-//         if (s.empty()) { cout << contig.getIID(); }
-//         else           { cout << s; }
-//       }
-//       else { cout << contig.getIID(); }
-      cout << contig.getIID();
+      if (USE_EID) 
+      { 
+        string s(contig.getEID());
+        if (s.empty()) { cout << contig.getIID(); }
+        else           { cout << s; }
+      }
+      else { cout << contig.getIID(); }
 
       const string cons = contig.getSeqString();
 
