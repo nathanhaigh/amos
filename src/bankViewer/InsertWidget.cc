@@ -886,7 +886,7 @@ void InsertWidget::paintCanvas()
       {
         if (m_partitionTypes)
         {
-          if ((*ii)->m_state != types[type]) { continue; }
+          if (((char)(*ii)->m_state) != types[type]) { continue; }
         }
         else
         {

@@ -2,7 +2,7 @@
 #include "amp.hh"
 #include "fasta.hh"
 
-// Reverse complement a given contig
+// inserts a gap column into a contig at a specified position
 
 using namespace AMOS;
 using namespace std;
@@ -31,68 +31,7 @@ int main (int argc, char ** argv)
     contig_bank.open(bank_name, B_READ|B_WRITE);
     contig_bank.fetch(contigid, contig);
 
-    string qual(contig.getQualString());
-    string seq(contig.getSeqString());
-
-    seq.insert(gindex, "-", 1); 
-    qual.insert(gindex, "N", 1); 
-
-    cerr << "Reseting consensus";
-    contig.setSequence(seq, qual);
-    cerr << "." << endl;
-
-    cerr << "Adjusting tiling";
-    std::vector<Tile_t> & tiling = contig.getReadTiling();
-    vector<Tile_t>::iterator i;
-    for (i =  tiling.begin();
-         i != tiling.end();
-         i++)
-    {
-      if (i->offset > gindex)
-      {
-        // insert before read, shift over 1
-        i->offset++;
-      }
-      else if (i->offset + i->getGappedLength() - 1 < gindex)
-      {
-        // insert after read, nothing to do
-      }
-      else
-      {
-        // gap inserted into read
-        int gseqpos = gindex - i->offset;
-
-        // create a new vector of gaps, with a gap at gseqpos
-        vector<Pos_t> newgaps; 
-
-        // count gaps that occur before gap we are inserting
-        int gapcount = 0;
-        vector<Pos_t>::iterator g;
-        for (g =  i->gaps.begin();
-             g != i->gaps.end();
-             g++, gapcount++)
-        {
-          int cgseqpos = *g+gapcount;
-          if (cgseqpos > gseqpos) { break; }
-
-          // gap precedes gap we are inserting
-          newgaps.push_back(*g);
-        }
-
-        newgaps.push_back(gseqpos-gapcount);
-
-        for (;
-             g != i->gaps.end();
-             g++)
-        {
-          newgaps.push_back(*g);
-        }
-
-        i->gaps = newgaps;
-      }
-    }
-
-    cerr << "." << endl;
+    contig.insertGapColumn(gindex);
 
     contig_bank.replace(contig.getIID(), contig);
     contig_bank.close();

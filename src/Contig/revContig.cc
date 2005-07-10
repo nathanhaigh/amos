@@ -30,33 +30,7 @@ int main (int argc, char ** argv)
     contig_bank.open(bank_name, B_READ|B_WRITE);
     contig_bank.fetch(contigid, contig);
 
-    string qual(contig.getQualString());
-    string seq(contig.getSeqString());
-    Reverse_Complement(seq);
-    reverse(qual.begin(), qual.end());
-    contig.setSequence(seq, qual);
-
-    std::vector<Tile_t> & tiling = contig.getReadTiling();
-    vector<Tile_t>::iterator i;
-    for (i =  tiling.begin();
-         i != tiling.end();
-         i++)
-    {
-      i->range.swap();
-      i->offset = seq.length() - (i->offset + i->getGappedLength());
-
-      Pos_t len = i->range.getLength();
-
-      vector<Pos_t>::iterator g;
-      for (g =  i->gaps.begin();
-           g != i->gaps.end();
-           g++)
-      {
-        *g = len - *g;
-      }
-
-      reverse(i->gaps.begin(), i->gaps.end());
-    }
+    contig.reverseComplement();
 
     contig_bank.replace(contig.getIID(), contig);
     contig_bank.close();

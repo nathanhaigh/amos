@@ -234,6 +234,22 @@ public:
   std::string getUngappedSeqString (Range_t range) const;
 
 
+
+  //--------------------------------------------------- insertGapColumn -------
+  //! \brief Insert a gap column at the specified position in the contig
+  //!
+  //! Inserts a gap into the consensus and tiling reads at the specified position.
+  //! The downstream reads are shifted appropriately, and the consensus grows by
+  //! 1bp.
+  //!
+  //! \param gindex The gapped consensus position to insert the gap column
+  //! \pre 0 <= gindex <= |consensus|
+  //! \throws ArgumentException
+  //! \return void
+  //!
+  void insertGapColumn (Pos_t gindex);
+
+
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
 
@@ -254,6 +270,16 @@ public:
   //! \return true if a message was read, false if no message read (EOF)
   //!
   bool readUMD (std::istream & in);
+
+  //--------------------------------------------------- reverseComplement ------
+  //! \brief Reverse Complement the contig and layout of reads
+  //!
+  //! Reverse complements the consensus, reverses the consensus quality values
+  //! and flips the orientations of the tiling reads. Note: The scaffold and contig
+  //! edges are NOT updated.
+  //! \return void
+  //!
+  void reverseComplement();
 
 
   //--------------------------------------------------- setReadTiling ----------

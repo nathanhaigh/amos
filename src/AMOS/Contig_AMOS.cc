@@ -146,6 +146,76 @@ string Contig_t::getUngappedSeqString (Range_t range) const
 }
 
 
+
+//----------------------------------------------------- insertGapColumn --------
+void Contig_t::insertGapColumn (Pos_t gindex)
+{
+  // Insert gap into the consensus
+  string qual(getQualString());
+  string seq(getSeqString());
+
+  if (gindex > seq.length())
+  {
+    AMOS_THROW_ARGUMENT("Invalid position specified for inserting gap column");
+  }
+
+  seq.insert(gindex, "-", 1); 
+  qual.insert(gindex, "N", 1); // TODO: Set qv more intelligently
+  setSequence(seq, qual);
+
+  // Adjust the reads
+  vector<Tile_t>::iterator i;
+  for (i =  reads_m.begin();
+       i != reads_m.end();
+       i++)
+  {
+    if (i->offset > gindex)
+    {
+      // insert before read, shift over 1
+      i->offset++;
+    }
+    else if (i->offset + i->getGappedLength() - 1 < gindex)
+    {
+      // insert after read, nothing to do
+    }
+    else
+    {
+      // gap inserted into read
+      int gseqpos = gindex - i->offset;
+
+      // create a new vector of gaps, with a gap at gseqpos
+      vector<Pos_t> newgaps; 
+
+      // count gaps that occur before gap we are inserting
+      int gapcount = 0;
+      vector<Pos_t>::iterator g;
+      for (g =  i->gaps.begin();
+           g != i->gaps.end();
+           g++, gapcount++)
+      {
+        int cgseqpos = *g+gapcount;
+        if (cgseqpos > gseqpos) { break; }
+
+        newgaps.push_back(*g);
+      }
+
+      // Add new gap
+      newgaps.push_back(gseqpos-gapcount);
+
+      // Copy gaps following the inserted gap
+      while (g != i->gaps.end())
+      {
+        newgaps.push_back(*g);
+        g++;
+      }
+
+      i->gaps = newgaps;
+    }
+  }
+}
+
+
+
 //----------------------------------------------------- readMessage ------------
 void Contig_t::readMessage (const Message_t & msg)
 {
@@ -243,6 +313,38 @@ bool Contig_t::readUMD (istream & in)
   }
 
   return true;
+}
+
+void Contig_t::reverseComplement()
+{
+  // Reverse the consensus
+  string qual(getQualString());
+  string seq(getSeqString());
+  AMOS::ReverseComplement(seq);
+  reverse(qual.begin(), qual.end());
+  setSequence(seq, qual);
+
+  // Flip the orientation of the reads
+  vector<Tile_t>::iterator i;
+  for (i =  reads_m.begin();
+       i != reads_m.end();
+       i++)
+  {
+    i->range.swap();
+    i->offset = seq.length() - (i->offset + i->getGappedLength());
+
+    Pos_t len = i->range.getLength();
+
+    vector<Pos_t>::iterator g;
+    for (g =  i->gaps.begin();
+         g != i->gaps.end();
+         g++)
+    {
+      *g = len - *g;
+    }
+
+    reverse(i->gaps.begin(), i->gaps.end());
+  }
 }
 
 
