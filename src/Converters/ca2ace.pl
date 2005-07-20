@@ -6,12 +6,10 @@
 #
 
 use strict;
-use TIGR::Foundation;
-use TIGR::FASTAreader;
-use TIGR::FASTArecord;
+use AMOS::AmosFoundation;
 use AMOS::AmosLib;
 
-my $base = new TIGR::Foundation;
+my $base = new AMOS::AmosFoundation;
 my $GREP = "/bin/grep";
 
 if (! defined $base){
@@ -19,7 +17,7 @@ if (! defined $base){
 }
 
 my $VERSION = '$Revision$ ';
-$base->setVersionInfo($VERSION);
+$base->setVersion($VERSION);
 
 my $HELPTEXT = q~
    ca2ace [opts] [infile]
@@ -31,15 +29,15 @@ my $HELPTEXT = q~
         -p <phd_dir>    Location of the PHD directory
     ~;
 
-$base->setHelpInfo($HELPTEXT);
+$base->setHelpText($HELPTEXT);
 
 my $infile;
 my $outfile;
-my $chromodir = "../chromat_dir";
-my $phddir = "../phd_dir";
+my $chromodir = "";
+my $phddir = "";
 my $frgfile;
 
-my $err = $base->TIGR_GetOptions(
+my $err = $base->getOptions(
 				 "i=s" => \$infile,
 				 "o=s" => \$outfile,
 				 "c=s" => \$chromodir,

@@ -8,7 +8,7 @@
 
 use IO::File;
 use File::Basename;
-use TIGR::Foundation;
+use AMOS::AmosFoundation;
 use AMOS::AmosLib;
 use strict;
 
@@ -20,7 +20,7 @@ my $MY_HELPTEXT = qq~
     ca2scaff -i file.asm -o prefix [-details -f file.frg] -clk
 ~;
 
-my $base = new TIGR::Foundation;
+my $base = new AMOS::AmosFoundation;
 
 if (! defined $base){
     print STDERR "Nasty error, hide!\n";
@@ -28,8 +28,9 @@ if (! defined $base){
 }
 
 
-$base->setHelpInfo($MY_HELPTEXT);
-$base->setVersionInfo($MY_VERSION);
+$base->setHelpText($MY_HELPTEXT);
+$base->setUsage($MY_HELPTEXT);
+$base->setVersion($MY_VERSION);
 
 my $infile;
 my $outfile;
@@ -37,7 +38,7 @@ my $frgfile;
 my $dodetails;
 my $doclk;
 
-my $err = $base->TIGR_GetOptions("i=s" => \$infile,
+my $err = $base->getOptions("i=s" => \$infile,
 				 "o=s" => \$outfile,
 				 "details" => \$dodetails,
 				 "f=s" => \$frgfile,

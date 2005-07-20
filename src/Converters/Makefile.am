@@ -30,7 +30,11 @@ dist_bin_SCRIPTS = \
 	tarchive2amos.pl \
 	tarchive2ca.pl \
 	toAmos.pl \
-	toArachne.pl
+	toArachne.pl \
+	scaff2fasta.pl \
+	parsecasm.pl \
+	castats.pl \
+	ca2singletons.pl
 
 
 ##-- END OF MAKEFILE --##
