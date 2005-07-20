@@ -36,6 +36,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   new QLabel("Zoom", options, "zoomlbl");
   QSlider * zoom = new QSlider(1, 80, 4, 16, Qt::Horizontal, options, "zoom");
 
+  new QLabel(" VZoom", options, "vzoomlbl");
+  QSlider * vzoom = new QSlider(1, 40, 4, 16, Qt::Horizontal, options, "vzoom");
+
   new QLabel(" Happy Distance:", options, "happylbl");
   m_happypick = new QLineEdit(options, "happypick");
   m_happypick->setText(QString::number(Insert::MAXSTDEV));
@@ -110,6 +113,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(zoom, SIGNAL(valueChanged(int)),
           iw,   SLOT(setZoom(int)));
 
+  connect(vzoom, SIGNAL(valueChanged(int)),
+          iw,   SLOT(setVZoom(int)));
+
   connect(this, SIGNAL(paintCanvas()),
           iw,   SLOT(paintCanvas()));
 
@@ -154,6 +160,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 
   zoom->setValue(14);
+  zoom->setValue(16);
 }
 
 

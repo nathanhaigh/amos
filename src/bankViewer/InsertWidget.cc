@@ -317,6 +317,22 @@ void InsertWidget::setZoom(int zoom)
   m_ifield->setWorldMatrix(newzoom);
 }
 
+void InsertWidget::setVZoom(int vzoom)
+{
+  double yfactor = 16.0/vzoom;
+
+  QWMatrix matrix = m_ifield->worldMatrix();
+  QWMatrix imatrix = m_ifield->inverseWorldMatrix();
+
+  // reset to identity
+  m_ifield->setWorldMatrix(imatrix);
+
+  // set zoom
+  QWMatrix newzoom(matrix.m11(), matrix.m12(), matrix.m21(), yfactor,
+                   matrix.dx(), matrix.dy());
+  m_ifield->setWorldMatrix(newzoom);
+}
+
 void InsertWidget::flushInserts()
 {
   vector<Insert *>::iterator i;

@@ -41,6 +41,7 @@ public slots:
 
   void setTilingVisibleRange(int, int, int);
   void setZoom(int);
+  void setVZoom(int);
   void paintCanvas();
   void setConnectMates(bool);
   void setPartitionTypes(bool);
