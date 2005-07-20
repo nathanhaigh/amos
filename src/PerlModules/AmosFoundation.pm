@@ -42,6 +42,8 @@ BEGIN {
     @EXPORT      = qw(&getOptions
                       &setHelpText
 		      &setUsage
+		      &setVersion
+		      &getVersion
                       &setLogFile
                       &setLogLevel
                       &getHelpText
@@ -189,6 +191,35 @@ sub getLogFile
     return $self->{'logFile'};
 }# getLogfile
 
+=item B<$base->setVersion("version"); >
+
+Assigns the version to be returned when program called with -V option.
+
+=cut
+
+sub setVersion
+{
+    my $self = shift;
+
+    if (@_) {
+	$self->{'Version'} = shift;
+    }
+
+    return $self->{'Version'};
+}# setVersion
+
+=item B<$version = $base->getVersion(); >
+
+Retrieves program version.
+
+=cut
+
+sub getVersion
+{
+    my $self = shift;
+
+    return $self->{'Version'};
+}# getVersion
 
 =item B<$base->setLogLevel(2); >
 
