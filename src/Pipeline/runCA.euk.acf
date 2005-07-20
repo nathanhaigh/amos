@@ -1,4 +1,3 @@
-#!/fs/sz-user-supported/Linux-i686/bin/runAmos -C
 
 # this is where Celera Assembler is installed
 CAPATH = /fs/sz-user-supported/Linux-i686/CA3.06
