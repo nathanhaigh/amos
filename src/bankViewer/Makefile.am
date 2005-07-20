@@ -31,6 +31,7 @@ bankViewer_MOCSOURCES = \
         ReadPicker.cc          \
         RenderSeq.cc           \
         ScaffoldPicker.cc      \
+        SplashScreen.cc        \
         TilingField.cc         \
         TilingFrame.cc         \
         UIElements.cc          

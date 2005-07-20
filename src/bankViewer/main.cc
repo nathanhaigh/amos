@@ -11,6 +11,8 @@
 
 #ifdef HAVE_QT_333
 #include <qsplashscreen.h>
+#else
+#include "SplashScreen.hh"
 #endif
 
 using namespace std;
@@ -50,6 +52,8 @@ int main( int argc, char **argv )
 #ifdef HAVE_QT_333
   QSplashScreen * splash = new QSplashScreen(pixmap);
   splash->show();
+#else
+  SplashScreen * splash = new SplashScreen(pixmap);
 #endif
 
   MainWindow w(NULL, "mainwindow");
@@ -103,10 +107,8 @@ int main( int argc, char **argv )
     }
   }
 
-#ifdef HASQTSPLASH
   splash->finish(&w);
   delete splash;
-#endif
 
   return a.exec();
 }
