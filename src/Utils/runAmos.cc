@@ -196,7 +196,7 @@ string substVars(string & in)
 	  }
 	  string v = variables[string(vname)];
 	  string s = string(suff);
-	  if (v.substr(v.size() - s.size()) == s){ // if suffix in string
+	  if (s.size() < v.size() && v.substr(v.size() - s.size()) == s){ // if suffix in string
 	    v = v.substr(0, v.size() - s.size());
 	  }
 	  out += v;
