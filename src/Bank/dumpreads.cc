@@ -20,6 +20,15 @@ bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_UseEIDs = false;          // print EIDs instead of IIDs
 bool   OPT_UseRaw  = false;          // pull entire seqlen
 
+string OPT_IIDFile;  // Filename of IIDs to dump
+string OPT_EIDFile;  // Filename of EIDs to dump
+
+long int cnts = 0;             // seen object count
+long int cntw = 0;             // written object count
+
+int OPT_basesperline = 70;
+
+
 
 //========================================================== Fuction Decs ====//
 //----------------------------------------------------- ParseArgs --------------
@@ -47,6 +56,36 @@ void PrintHelp (const char * s);
 //!
 void PrintUsage (const char * s);
 
+void dumpRead(Read_t & red)
+{
+  cnts++;
+
+  if ( red . getLength( ) <= 0 )
+    {
+      cerr << "WARNING: read with IID " << red . getIID( )
+           << " has no sequence, skipped\n";
+      return;
+    }
+  if ( ! OPT_UseRaw && red . getClearRange( ) . getLength( ) <= 0 )
+    {
+      cerr << "WARNING: read with IID " << red . getIID( )
+           << " has no clear range sequence, skipped\n";
+      return;
+    }
+
+  if ( OPT_UseEIDs )
+    cout << ">" << red . getEID( ) << endl;
+  else
+    cout << ">" << red . getIID( ) << endl;
+
+  if ( OPT_UseRaw )
+    WrapString (cout, red . getSeqString( ), OPT_basesperline);
+  else
+    WrapString (cout, red . getSeqString(red . getClearRange( )), OPT_basesperline);
+
+  cntw++;
+}
+
 
 
 //========================================================= Function Defs ====//
@@ -55,9 +94,6 @@ int main (int argc, char ** argv)
   int exitcode = EXIT_SUCCESS;
   BankStream_t red_bank (Read_t::NCODE);
   Read_t red;
-
-  long int cnts = 0;             // seen object count
-  long int cntw = 0;             // written object count
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -70,36 +106,53 @@ int main (int argc, char ** argv)
     else
       red_bank . open (OPT_BankName, B_READ);
 
-    //-- Iterate through each object in the bank
-    while ( red_bank >> red )
+    ifstream file;
+    string id;
+
+    if (!OPT_EIDFile.empty())
+    {
+      // Dump just the specified list of EIDs
+      file.open(OPT_EIDFile.c_str());
+
+      if (!file)
       {
-	cnts ++;
-
-        if ( red . getLength( ) <= 0 )
-          {
-            cerr << "WARNING: read with IID " << red . getIID( )
-                 << " has no sequence, skipped\n";
-            continue;
-          }
-        if ( ! OPT_UseRaw && red . getClearRange( ) . getLength( ) <= 0 )
-          {
-            cerr << "WARNING: read with IID " << red . getIID( )
-                 << " has no clear range sequence, skipped\n";
-            continue;
-          }
-
-	if ( OPT_UseEIDs )
-	  cout << ">" << red . getEID( ) << endl;
-	else
-	  cout << ">" << red . getIID( ) << endl;
-
-        if ( OPT_UseRaw )
-          WrapString (cout, red . getSeqString( ), 70);
-        else
-          WrapString (cout, red . getSeqString(red . getClearRange( )), 70);
-
-	cntw ++;
+        throw Exception_t("Couldn't open EID File",
+                          __LINE__, __FILE__);
       }
+
+      while (file >> id)
+      {
+        red_bank.seekg(red_bank.getIDMap().lookupBID(id));
+        red_bank >> red;
+        dumpRead(red);
+      }
+    }
+    else if (!OPT_IIDFile.empty())
+    {
+      // Dump just the specified list of EIDs
+      file.open(OPT_IIDFile.c_str());
+
+      if (!file)
+      {
+        throw Exception_t("Couldn't open IID File",
+                          __LINE__, __FILE__);
+      }
+
+      while (file >> id)
+      {
+        red_bank.seekg(red_bank.getIDMap().lookupBID(atoi(id.c_str())));
+        red_bank >> red;
+        dumpRead(red);
+      }
+    }
+    else
+    {
+      //-- Iterate through each object in the bank
+      while ( red_bank >> red )
+      {
+        dumpRead(red);
+      }
+    }
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
@@ -124,12 +177,20 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "ehrsv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "ehrsvE:I:L:")) != EOF) )
     switch (ch)
       {
       case 'e':
 	OPT_UseEIDs = true;
 	break;
+
+      case 'E':
+      OPT_EIDFile = optarg;
+      break;
+
+      case 'I':
+      OPT_IIDFile = optarg;
+      break;
 
       case 'h':
         PrintHelp (argv[0]);
@@ -138,6 +199,10 @@ void ParseArgs (int argc, char ** argv)
 
       case 'r':
         OPT_UseRaw = true;
+        break;
+
+      case 'L':
+        OPT_basesperline = atoi(optarg);
         break;
 
       case 's':
@@ -176,6 +241,9 @@ void PrintHelp (const char * s)
     << "-r            Ignore clear range and dump entire sequence\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
+    << "-E file       Dump just the eids listed in file\n"
+    << "-I file       Dump just the iids listed in file\n"
+    << "-L num        Set the maximum number of bases per line (Default: 70)\n"
     << endl;
   
   cerr
