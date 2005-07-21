@@ -228,11 +228,12 @@ void RenderSeq_t::loadTrace(DataStore * datastore)
 
   m_pos = m_read.getBasePositions();
   cerr << "Load Positions [" << m_pos.size() << "] ";
-  if (m_pos.empty()) { cerr << endl; return; }
+  if (m_pos.empty()) { cerr << "(load from trace)"; }
   
-  cerr << "and trace" << endl;
-  m_trace = datastore->fetchTrace(m_read);
+  cerr << " load trace" << endl;
+  m_trace = datastore->fetchTrace(m_read, m_pos);
   if (!m_trace) { cerr << "=NULL" << endl; return; }
+  if (m_pos.empty()) { cerr << ". No Positions" << endl; return; }
 
   if (m_rc)
   {
@@ -261,6 +262,13 @@ void RenderSeq_t::loadTrace(DataStore * datastore)
 
     m_pos.insert(m_pos.begin()+gappos, 1, (left+right)/2);
   }
+
+  if (m_pos.size() != m_quals.size())
+  {
+    cerr << "Warning for eid: " << m_read.getEID() << endl;
+    cerr << "m_pos.size()=" << m_pos.size() << " m_quals.size()=" << m_quals.size() << endl;
+  }
+
 }
 
 int RenderSeq_t::getGSeqPos(int gindex)

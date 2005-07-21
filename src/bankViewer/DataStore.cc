@@ -33,7 +33,7 @@ DataStore::~DataStore()
   if (m_traceycalled)
   {
     cerr << "Cleaning chromos directory" << endl;
-    string cmd = "/bin/rm -rf chromos";
+    string cmd = "/bin/rm -rf chromo";
     system(cmd.c_str());
   }
 }
@@ -372,7 +372,8 @@ extern "C"
   #include "Read.h"
 }
 
-char * DataStore::fetchTrace(const AMOS::Read_t & read)
+char * DataStore::fetchTrace(const AMOS::Read_t & read, 
+                             std::vector<int16_t> & positions )
 {
   string readname = read.getEID();
 
@@ -406,14 +407,32 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read)
 
   if (!trace)
   {
-    string program = "/local/devel/SE/bin/TraceyApp";
-    m_traceycalled = 1;
+    if (!m_traceycalled)
+    {
+      system("mkdir chromo");
+      m_traceycalled = 1;
+    }
+    
+    string path = "chromo/" + readname + ".scf";
+    string cmd = "curl \"http://www.ncbi.nlm.nih.gov/Traces/trace.fcgi?cmd=java&j=scf&val="+ readname + "&ti=" + readname + "\" -o chromo/" + readname + ".scf -s";
 
-    string cmd = program + " -fast " + readname;
-    system(cmd.c_str());
+    //cerr << "**** Executing: \"" << cmd << "\"" << endl;
 
-    string path = "chromos/" + readname;
-    trace = read_reading((char *)path.c_str(), TT_ANY);
+    int retval = system(cmd.c_str());
+
+    if (!retval)
+    {
+      trace = read_reading((char *)path.c_str(), TT_ANY);
+    }
+  }
+
+  // Load positions out of trace
+  if (trace && positions.empty() && trace->basePos)
+  {
+    for (int i = 0; i < trace->NBases; i++)
+    {
+      positions.push_back(trace->basePos[i]);
+    }
   }
 
   return (char *) trace;
