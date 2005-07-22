@@ -3,6 +3,8 @@
 // Generate a celamy cam file for the reads that are in the contig file.
 // Output goes to stdout
 
+#include  "foundation_AMOS.hh"
+#include  "delcher.hh"
 #include  <cstdio>
 #include  <cstdlib>
 #include  <cmath>
@@ -11,6 +13,8 @@
 #include  <algorithm>
 #include  <cassert>
 using namespace std;
+using namespace AMOS;
+using namespace HASHMAP;
 
 
 const int  MAX_LINE = 1000;
@@ -63,6 +67,7 @@ struct  Extent_t
 
 struct  Read_Info_t
   {
+   long long int  uid;
    int  mate;
    int  dst;
    long long int  unitig_id;
@@ -129,6 +134,7 @@ struct  Contig_Pos_t
    Contig_Pos_t  ()
      {
       scaff_id = -1;
+      len = 0;
      }
   };
 
@@ -163,11 +169,18 @@ struct  Con_Data_t
 
 static int  Bad_Start_Row;
 static int  Good_Start_Row = 10;
+// static long long int  ID_Offset = 0;
+// static long long int  ID_Offset = 1047274077950;
+  // Value to subtract from read IDs to get reasonable values
+  // no longer used
 static int  Missing_Start_Row;
 
 static vector <Dst_Info_t>  Dst;
 static vector <Read_Info_t>  Read;
 
+
+static long long int  Hash_Mask = 1;
+HASHMAP :: hash_map <long unsigned, int>  ID_Map;
 
 
 bool  Contig_Cmp
@@ -214,6 +227,8 @@ static void  Output_Single_Read
      int len, int start_row, const char * tag);
 static void  Print_Colour_Headers
     (void);
+static int  Read_Subscript
+    (long long int id);
 static int  Search
     (const vector <Contig_Pos_t> & pos, long long int id);
 static void  Set_Position
@@ -242,6 +257,7 @@ int  main
    float  cov;
    short  copy_ct;
    int  unitig_ct;
+   int  short_id1, short_id2;
    long long int  id1, id2, hi_id;
    int  a, b, c;
    int  hi_read = 0;
@@ -253,6 +269,11 @@ int  main
             argv [0]);
         exit (EXIT_FAILURE);
        }
+
+   Hash_Mask <<= 32;
+   Hash_Mask --;
+     // Used to mask just the right 32 bits of uids.  Presume these
+     // are unique for reads.
 
    fp = fopen (argv [1], "r");
    assert (fp != NULL);
@@ -281,15 +302,9 @@ int  main
           {
            sscanf (line + 4, "%lld %lld %lf %lf %s",
                & id1, & id2, & mean, & stddev, ori);
-           if  (id1 > id2)
-               hi_id = id1;
-             else
-               hi_id = id2;
-           if  (hi_id > hi_read)
-               {
-                hi_read = hi_id;
-                Read . resize (hi_read + 1);
-               }
+
+           short_id1 = Read_Subscript (id1);
+           short_id2 = Read_Subscript (id2);
 
            if  (ori [0] != 'I')
                {
@@ -299,15 +314,23 @@ int  main
                 exit (EXIT_FAILURE);
                }
 
-           if  (Read [id1] . mate != -1 || Read [id2] . mate != -1)
+           if  (Read [short_id1] . mate != -1)
                {
                 fprintf (stderr, "ERROR:  Duplicate mate\n");
-                fprintf (stderr, "id1 = %lld  mate = %d\n", id1, Read [id1] . mate);
-                fprintf (stderr, "id2 = %lld  mate = %d\n", id2, Read [id2] . mate);
+                fprintf (stderr, "id1 = %lld  mate = %lld\n", id1,
+                     Read [Read [short_id1] . mate] . uid);
                 exit (EXIT_FAILURE);
                }
-           Read [id1] . mate = id2;
-           Read [id2] . mate = id1;
+           if  (Read [short_id2] . mate != -1)
+               {
+                fprintf (stderr, "ERROR:  Duplicate mate\n");
+                fprintf (stderr, "id2 = %lld  mate = %lld\n", id2,
+                     Read [Read [short_id2] . mate] . uid);
+                exit (EXIT_FAILURE);
+               }
+
+           Read [short_id1] . mate = short_id2;
+           Read [short_id2] . mate = short_id1;
 
            n = Dst . size ();
            found = false;
@@ -325,19 +348,16 @@ int  main
                 new_dst . stddev = stddev;
                 Dst . push_back (new_dst);
                }
-           Read [id1] . dst = i;
-           Read [id2] . dst = i;
+           Read [short_id1] . dst = i;
+           Read [short_id2] . dst = i;
            
           }
       else if  (strcmp (tag, "UTG") == 0)
           {
            sscanf (line + 4, "%lld %lld %d %d %s",
                & id1, & id2, & a, & b, typ);
-           if  (id1 > hi_read)
-               {
-                hi_read = id1;
-                Read . resize (hi_read + 1);
-               }
+
+           short_id1 = Read_Subscript (id1);
 
            if  (typ [0] != 'R')
                {
@@ -347,20 +367,17 @@ int  main
                 exit (EXIT_FAILURE);
                }
 
-           assert (Read [id1] . unitig_id == -1);
-           Read [id1] . unitig_id = id2;
-           Read [id1] . u_a_pos = a;
-           Read [id1] . u_b_pos = b;
+           assert (Read [short_id1] . unitig_id == -1);
+           Read [short_id1] . unitig_id = id2;
+           Read [short_id1] . u_a_pos = a;
+           Read [short_id1] . u_b_pos = b;
           }
       else if  (strcmp (tag, "CCO") == 0)
           {
            sscanf (line + 4, "%lld %lld %d %d %s",
                & id1, & id2, & a, & b, typ);
-           if  (id1 > hi_read)
-               {
-                hi_read = id1;
-                Read . resize (hi_read + 1);
-               }
+
+           short_id1 = Read_Subscript (id1);
 
            if  (typ [0] != 'R')
                {
@@ -370,10 +387,10 @@ int  main
                 exit (EXIT_FAILURE);
                }
 
-           assert (Read [id1] . contig_id == -1);
-           Read [id1] . contig_id = id2;
-           Read [id1] . c_a_pos = a;
-           Read [id1] . c_b_pos = b;
+           assert (Read [short_id1] . contig_id == -1);
+           Read [short_id1] . contig_id = id2;
+           Read [short_id1] . c_a_pos = a;
+           Read [short_id1] . c_b_pos = b;
           }
       else if  (strcmp (tag, "UNI") == 0)
           {
@@ -431,6 +448,8 @@ int  main
            c . gap_stddev = stddev;
            contig . push_back (c);
           }
+      else if  (strcmp (tag, "ULK") == 0)
+          ;  // Skip
         else
           {
            fprintf (stderr, "ERROR:  Unexpected tag\n");
@@ -653,7 +672,7 @@ fprintf (stderr, "### %d reads\n", n);
            j = Read [i] . mate;
            if  (j < 0)
                {
-                sprintf (tag, "Single read %d (Utg%lld)", i, Read [i] . unitig_id);
+                sprintf (tag, "Single read %lld (Utg%lld)", Read [i] . uid, Read [i] . unitig_id);
                 Output_Single_Read (i, Single_Read_Col_Id, Single_Mate_Col_Id,
                     SINGLE_READ_LEN, Good_Start_Row, tag);
                }
@@ -666,8 +685,9 @@ fprintf (stderr, "### %d reads\n", n);
                     {
                      int  mean;
 
-                     sprintf (tag, "Read %d (Utg%lld) mate %d (Utg%lld) not in picture",
-                         i, Read [i] . unitig_id, j, Read [j] . unitig_id);
+                     sprintf (tag, "Read %lld (Utg%lld) mate %lld (Utg%lld) not in picture",
+                         Read [i] . uid, Read [i] . unitig_id, Read [j] . uid,
+                         Read [j] . unitig_id);
                      mean = int (Dst [Read [i] . dst] . mean);
                      Output_Single_Read (i, Infer_Read_Col_Id, Infer_Mate_Col_Id,
                           mean, Missing_Start_Row, tag);
@@ -789,24 +809,25 @@ static void  Output_Mates
                || Read [j] . cam_a < Read [i] . cam_a + 200
                || Read [j] . cam_a > Read [i] . cam_a + mean + 10 * sd)
             {
-             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
-                 i, Read [i] . unitig_id, j, Read [j] . unitig_id,
-                 (Read [j] . cam_a + Read [j] . cam_b) / 2);
+             sprintf (tag, "Read %lld (Utg%lld) has bad mate %lld (Utg%lld) at coord %d",
+                 Read [i] . uid, Read [i] . unitig_id, Read [j]. uid,
+                 Read [j] . unitig_id, (Read [j] . cam_a + Read [j] . cam_b) / 2);
              Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
                   Bad_Start_Row, tag);
                  
-             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
-                 j, Read [j] . unitig_id, i, Read [i] . unitig_id,
-                 (Read [i] . cam_a + Read [i] . cam_b) / 2);
+             sprintf (tag, "Read %lld (Utg%lld) has bad mate %lld (Utg%lld) at coord %d",
+                 Read [j]. uid, Read [j] . unitig_id, Read [i] . uid,
+                 Read [i] . unitig_id, (Read [i] . cam_a + Read [i] . cam_b) / 2);
              Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
                   Bad_Start_Row, tag);
             }
         else if  (Read [j] . cam_a > Read [j] . cam_b)
             {
              diff = Read [j] . cam_a - Read [i] . cam_a;
-             sprintf (tag, "Mated reads %d (Utg%lld) and %d (Utg%lld)"
+             sprintf (tag, "Mated reads %lld (Utg%lld) and %lld (Utg%lld)"
                  "  diff=%d mn=%d sd=%d distort=%+.1fsd",
-                 i, Read [i] . unitig_id, j, Read [j] . unitig_id,
+                 Read [i] . uid, Read [i] . unitig_id, Read [j] . uid,
+                 Read [j] . unitig_id,
                  diff, mean, sd, double (diff - mean) / sd);
              if  (mean - 3 * sd <= diff && diff <= mean + 3 * sd)
                  Output_Pair (i, j, Good_Read_Col_Id, Good_Mate_Col_Id,
@@ -822,14 +843,16 @@ static void  Output_Mates
                || Read [i] . cam_a < Read [j] . cam_a + 200
                || Read [i] . cam_a > Read [j] . cam_a + mean + 10 * sd)
             {
-             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
-                 i, Read [i] . unitig_id, j, Read [j] . unitig_id,
+             sprintf (tag, "Read %lld (Utg%lld) has bad mate %lld (Utg%lld) at coord %d",
+                 Read [i] . uid, Read [i] . unitig_id, Read [j] . uid,
+                 Read [j] . unitig_id,
                  (Read [j] . cam_a + Read [j] . cam_b) / 2);
              Output_Single_Read (i, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
                   Bad_Start_Row, tag);
                  
-             sprintf (tag, "Read %d (Utg%lld) has bad mate %d (Utg%lld) at coord %d",
-                 j, Read [j] . unitig_id, i, Read [i] . unitig_id,
+             sprintf (tag, "Read %lld (Utg%lld) has bad mate %lld (Utg%lld) at coord %d",
+                 Read [j] . uid, Read [j] . unitig_id, Read [i] . uid,
+                 Read [i] . unitig_id,
                  (Read [i] . cam_a + Read [i] . cam_b) / 2);
              Output_Single_Read (j, Bad_Read_Col_Id, Bad_Mate_Col_Id, mean,
                   Bad_Start_Row, tag);
@@ -837,9 +860,10 @@ static void  Output_Mates
         else if  (Read [j] . cam_a <= Read [j] . cam_b)
             {
              diff = Read [i] . cam_a - Read [j] . cam_a;
-             sprintf (tag, "Mated reads %d (Utg%lld) and %d (Utg%lld)"
+             sprintf (tag, "Mated reads %lld (Utg%lld) and %lld (Utg%lld)"
                  "  diff=%d mn=%d sd=%d distort=%+.1fsd",
-                 j, Read [j] . unitig_id, i, Read [i] . unitig_id,
+                 Read [j] . uid, Read [j] . unitig_id, Read [i] . uid,
+                 Read [i] . unitig_id,
                  diff, mean, sd, double (diff - mean) / sd);
              if  (mean - 3 * sd <= diff && diff <= mean + 3 * sd)
                  Output_Pair (j, i, Good_Read_Col_Id, Good_Mate_Col_Id,
@@ -1048,6 +1072,33 @@ static void  Print_Colour_Headers
        Infer_Mate_Col_Id, Infer_Mate_Col_Def, "InferMate");
 
    return;
+  }
+
+
+
+static int  Read_Subscript
+    (long long int id)
+
+//  Return the subscript in global vector  Read  of the read with uid  id .
+//  Use global  ID_Map  for the lookup.  Only use the rightmost 32 bits
+//  of  id , assuming they're unique.
+//  If it's not already there, add a new entry to the back of  Read
+//  and return it's subscript.
+
+  {
+   static Read_Info_t  empty_read;
+   static int  read_size = 0;
+   long unsigned  buff;
+
+   buff = id & Hash_Mask;
+   if  (ID_Map . find (buff) == ID_Map . end ())
+       {
+        ID_Map [buff] = read_size ++;
+        empty_read . uid = id;
+        Read . push_back (empty_read);
+       }
+
+   return  ID_Map [buff];
   }
 
 

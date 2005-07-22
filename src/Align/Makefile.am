@@ -143,6 +143,9 @@ ovl_degr_dist_SOURCES = \
 	ovl-degr-dist.cc
 
 ##-- readinfo2cam
+readinfo2cam_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
 readinfo2cam_SOURCES = \
 	readinfo2cam.cc
 
