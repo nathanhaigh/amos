@@ -91,19 +91,24 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
   m_table->setRootIsDecorated(true);
   m_table->setAllColumnsShowFocus(true);
 
+  loadTable();
+}
+
+void FeatureBrowser::loadTable()
+{
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
 
   try
   {
     QString status = "Select from " ;
-    status += QString::number(datastore->feat_bank.getSize()) + " features";
+    status += QString::number(m_datastore->feat_bank.getSize()) + " features";
     statusBar()->message(status);
 
     Feature_t feat;
-    datastore->feat_bank.seekg(1);
+    m_datastore->feat_bank.seekg(1);
 
-    while (datastore->feat_bank >> feat)
+    while (m_datastore->feat_bank >> feat)
     {
       AMOS::Range_t range = feat.getRange();
 
@@ -121,7 +126,7 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
   }
   catch (AMOS::Exception_t & e)
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    statusBar()->message("Features not available");
   }
 
   setCursor(orig);
@@ -164,4 +169,7 @@ void FeatureBrowser::acceptSelected()
   }
 }
 
-
+void FeatureBrowser::refreshTable()
+{
+  loadTable();
+}

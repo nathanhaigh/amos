@@ -19,12 +19,15 @@ public slots:
   void itemSelected(QListViewItem * item);
   void selecteid(const QString & eid);
   void acceptSelected();
+  void refreshTable();
 
 signals:
   void setGindex(int);
   void setContigId(int);
 
 private:
+  void loadTable();
+
   DataStore * m_datastore;
   QListView * m_table;
 };

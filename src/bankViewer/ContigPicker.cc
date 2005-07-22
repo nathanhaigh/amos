@@ -274,3 +274,8 @@ void ContigPicker::toggleShowReads()
   loadTable(false);
 }
 
+
+void ContigPicker::refreshTable()
+{
+  loadTable(false);
+}

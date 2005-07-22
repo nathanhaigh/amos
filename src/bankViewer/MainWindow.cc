@@ -428,6 +428,9 @@ void MainWindow::chooseContig()
           this,           SLOT(setContigId(int)));
   connect(m_contigPicker, SIGNAL(setGindex(int)),
           this,           SLOT(setGindex(int)));
+
+  connect(this,           SIGNAL(bankSelected()),
+          m_contigPicker, SLOT(refreshTable()));
 }
 
 
@@ -439,6 +442,9 @@ void MainWindow::showScaffoldPicker()
           this,           SLOT(setContigId(int)));
   connect(scaffoldPicker, SIGNAL(setGindex(int)),
           this,           SLOT(setGindex(int)));
+
+  connect(this,           SIGNAL(bankSelected()),
+          scaffoldPicker, SLOT(refreshTable()));
 }
 
 void MainWindow::setContigId(int contigId)
@@ -524,12 +530,6 @@ void MainWindow::setContigId(int contigId)
 
     emit contigIdSelected(m_datastore.m_contigId);
     statusBar()->message(s);
-
-    if (m_readPicker)
-    {
-      m_readPicker->close();
-      m_readPicker = NULL;
-    }
   }
 }
 
@@ -539,9 +539,9 @@ void MainWindow::setBankname(std::string bankname)
   {
     if (!m_datastore.openBank(bankname))
     {
-      emit bankSelected(bankname);
       m_contigid->setRange(1, m_datastore.contig_bank.getSize());
       setContigId(1);
+      emit bankSelected();
     }
   }
 }
@@ -663,6 +663,9 @@ void MainWindow::showReadPicker()
   m_readPicker = new ReadPicker(&m_datastore, this, "readPicker");
   connect(m_readPicker, SIGNAL(highlightRead(int)),
           this,         SIGNAL(highlightRead(int)));
+
+  connect(this, SIGNAL(contigIdSelected(int)),
+          m_readPicker, SLOT(contigIdSelected(int)));
 }
 
 void MainWindow::showLibPicker()
@@ -670,6 +673,9 @@ void MainWindow::showLibPicker()
   if (m_libPicker) { m_libPicker->close(); }
 
   m_libPicker = new LibraryPicker(&m_datastore, this, "libPicker");
+  connect(this, SIGNAL(bankSelected()),
+          m_libPicker, SLOT(refreshTable()));
+
 }
 
 void MainWindow::showChromoPicker()
@@ -689,6 +695,9 @@ void MainWindow::showFeatureBrowser()
 
   connect(m_featPicker,   SIGNAL(setContigId(int)),
           this,           SLOT(setContigId(int)));
+
+  connect(this,           SIGNAL(bankSelected()),
+          m_featPicker,   SLOT(refreshTable()));
 }
 
 void MainWindow::addChromoPath(const QString & path)

@@ -20,11 +20,14 @@ public slots:
   void selectiid(const QString & iid);
   void selecteid(const QString & eid);
   void acceptSelected();
+  void refreshTable();
 
 signals:
   void highlightRead(int);
 
 private:
+  void loadTable();
+
   DataStore * m_datastore;
   QListView * m_table;
 };

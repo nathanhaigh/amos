@@ -86,20 +86,28 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
   m_table->setRootIsDecorated(true);
   m_table->setAllColumnsShowFocus(true);
 
+  m_datastore = datastore;
+
+  loadTable();
+}
+
+void LibraryPicker::loadTable()
+{
+  m_table->clear();
   QCursor orig = cursor();
 
-  if (!datastore->m_libdistributionlookup.empty())
+  if (!m_datastore->m_libdistributionlookup.empty())
   {
     setCursor(Qt::waitCursor);
 
     try
     {
-      datastore->lib_bank.seekg(1);
+      m_datastore->lib_bank.seekg(1);
 
       AMOS::Library_t lib;
       int count = 0;
 
-      while (datastore->lib_bank >> lib)
+      while (m_datastore->lib_bank >> lib)
       {
         AMOS::Distribution_t dist = lib.getDistribution();
 
@@ -116,10 +124,14 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
     }
     catch (AMOS::Exception_t & e)
     {
-      cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+      cerr << "Library Information not available " << e;
     }
 
     setCursor(orig);
+  }
+  else
+  {
+    statusBar()->message("Library Information not available");
   }
 }
 
@@ -160,3 +172,7 @@ void LibraryPicker::acceptSelected()
 }
 
 
+void LibraryPicker::refreshTable()
+{
+  loadTable();
+}

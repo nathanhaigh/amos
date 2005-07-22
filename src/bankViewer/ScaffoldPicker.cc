@@ -271,3 +271,8 @@ void ScaffoldPicker::toggleShowContigs()
   loadTable(false);
 }
 
+void ScaffoldPicker::refreshTable()
+{
+  loadTable(false);
+}
+

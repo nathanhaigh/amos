@@ -65,6 +65,8 @@ ReadPicker::ReadPicker(DataStore * datastore,
   resize(800,500);
   show();
 
+  m_datastore = datastore;
+
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");
   QLineEdit * iidpick = new QLineEdit(tool, "iidpick");
@@ -90,7 +92,6 @@ ReadPicker::ReadPicker(DataStore * datastore,
   connect(iidpick, SIGNAL(returnPressed()),
           this,    SLOT(acceptSelected()));
 
-
   m_table->addColumn("IID");
   m_table->addColumn("EID");
   m_table->addColumn("Type");
@@ -108,34 +109,41 @@ ReadPicker::ReadPicker(DataStore * datastore,
   m_table->setRootIsDecorated(true);
   m_table->setAllColumnsShowFocus(true);
 
+  loadTable();
+}
+
+void ReadPicker::loadTable()
+{
+  m_table->clear();
+
   try
   {
     QCursor orig = cursor();
     setCursor(Qt::waitCursor);
 
     QString status = "Select from " ;
-    status += QString::number(datastore->m_contig.getReadTiling().size()) 
+    status += QString::number(m_datastore->m_contig.getReadTiling().size()) 
            + " reads";
     statusBar()->message(status);
 
     vector<AMOS::Tile_t>::iterator ti;
-    for (ti =  datastore->m_contig.getReadTiling().begin();
-         ti != datastore->m_contig.getReadTiling().end();
+    for (ti =  m_datastore->m_contig.getReadTiling().begin();
+         ti != m_datastore->m_contig.getReadTiling().end();
          ti++)
     {
-      AMOS::ID_t libid = datastore->getLibrary(ti->source);
-      AMOS::Distribution_t dist = datastore->getLibrarySize(libid);
+      AMOS::ID_t libid = m_datastore->getLibrary(ti->source);
+      AMOS::Distribution_t dist = m_datastore->getLibrarySize(libid);
 
       AMOS::Read_t red;
-      datastore->fetchRead(ti->source, red);
+      m_datastore->fetchRead(ti->source, red);
 
       char type = red.getType();
       if (type == 0) { type = '?'; }
 
-      DataStore::MateLookupMap::iterator mi = datastore->m_readmatelookup.find(ti->source);
+      DataStore::MateLookupMap::iterator mi = m_datastore->m_readmatelookup.find(ti->source);
       char mateType = '?';
 
-      if (mi != datastore->m_readmatelookup.end())
+      if (mi != m_datastore->m_readmatelookup.end())
       {
         mateType = mi->second.second;
         if (mateType == 0) { mateType = '?'; }
@@ -200,6 +208,11 @@ void ReadPicker::acceptSelected()
   {
     itemSelected(item);
   }
+}
+
+void ReadPicker::contigIdSelected(int contigid)
+{
+  loadTable();
 }
 
 

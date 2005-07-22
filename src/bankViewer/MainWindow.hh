@@ -97,7 +97,7 @@ public slots:
 
 
 signals:
-  void bankSelected(std::string bankname);
+  void bankSelected();
   void contigIdSelected(int contigId);
   void gindexChanged(int gindex);
   void highlightRead(int iid);

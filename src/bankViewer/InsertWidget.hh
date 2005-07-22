@@ -39,6 +39,8 @@ public:
 public slots:
   void initializeTiling();
 
+  void refreshWidget();
+
   void setTilingVisibleRange(int, int, int);
   void setZoom(int);
   void setVZoom(int);

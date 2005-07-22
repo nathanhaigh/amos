@@ -19,6 +19,7 @@ DataStore::DataStore()
   m_contigId = 0;
   m_loaded = false;
   m_traceycalled = 0;
+  m_scaffoldId = AMOS::NULL_ID;
 
   m_chromodbs.push_back("/local/chromo/Chromatograms/");
   m_chromodbs.push_back("/local/chromo2/Chromatograms/");
@@ -48,59 +49,70 @@ int DataStore::openBank(const string & bankname)
     contig_bank.open(bankname, B_SPY);
 
     m_bankname = bankname;
+    m_contigId = AMOS::NULL_ID;
+    m_scaffoldId = AMOS::NULL_ID;
+
+    m_readmatelookup.clear();
+    m_readcontiglookup.clear();
+    m_fragliblookup.clear();
+    m_readfraglookup.clear();
+    m_contigscafflookup.clear();
+    m_libdistributionlookup.clear();
 
     indexContigs();
-
-    m_contigId = 0;
   }
   catch (Exception_t & e)
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    cerr << "ERROR in openBank():\n" << e;
     retval = 1;
   }
 
-  try
+  if (!retval)
   {
-    scaffold_bank.open(bankname, B_SPY);
-    indexScaffolds();
-  }
-  catch (Exception_t & e)
-  {
-    cerr << "Scaffold information not available" << endl;
+    m_scaffoldId = AMOS::NULL_ID;
 
-  }
+    try
+    {
+      scaffold_bank.open(bankname, B_SPY);
+      indexScaffolds();
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "Scaffold information not available" << endl;
+    }
 
-  try
-  {
-    frag_bank.open(bankname, B_SPY);
-    lib_bank.open(bankname,  B_SPY);
+    try
+    {
+      frag_bank.open(bankname, B_SPY);
+      lib_bank.open(bankname,  B_SPY);
 
-    indexLibraries();
-    indexFrags();
-    indexReads();
-  }
-  catch (Exception_t & e)
-  {
-    cerr << "Mates not available\n";
-  }
+      indexLibraries();
+      indexFrags();
+      indexReads();
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "Mates not available\n";
+    }
 
-  try
-  {
-    edge_bank.open(bankname, B_SPY);
-    link_bank.open(bankname, B_SPY);
-  }
-  catch (Exception_t & e)
-  {
-    cerr << "Contig Graph not available\n";
-  }
+    try
+    {
+      edge_bank.open(bankname, B_SPY);
+      link_bank.open(bankname, B_SPY);
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "Contig Graph not available\n";
+    }
 
-  try
-  {
-    feat_bank.open(bankname, B_SPY);
-  }
-  catch (const Exception_t & e)
-  {
-    cerr << "Features not available" << endl;
+    try
+    {
+      feat_bank.open(bankname, B_SPY);
+    }
+    catch (const Exception_t & e)
+    {
+      cerr << "Features not available" << endl;
+    }
   }
 
   return retval;
@@ -243,7 +255,7 @@ int DataStore::setContigId(int id)
   }
   catch (Exception_t & e)
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    cerr << "ERROR in setContigId()\n" << e;
     retval = 1;
   }
 
@@ -252,26 +264,54 @@ int DataStore::setContigId(int id)
 
 void DataStore::fetchRead(ID_t readid, Read_t & read)
 {
-  read_bank.seekg(read_bank.getIDMap().lookupBID(readid));
-  read_bank >> read;
+  try
+  {
+    read_bank.seekg(read_bank.getIDMap().lookupBID(readid));
+    read_bank >> read;
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR in fetchRead()\n" << e;
+  }
 }
 
 void DataStore::fetchContig(ID_t contigid, Contig_t & contig)
 {
-  contig_bank.seekg(contigid);
-  contig_bank >> contig;
+  try
+  {
+    contig_bank.seekg(contigid);
+    contig_bank >> contig;
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR in fetchContig()\n" << e;
+  }
 }
 
 void DataStore::fetchScaffold(ID_t scaffid, Scaffold_t & scaff)
 {
-  scaffold_bank.seekg(scaffid);
-  scaffold_bank >> scaff;
+  try
+  {
+    scaffold_bank.seekg(scaffid);
+    scaffold_bank >> scaff;
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR in fetchScaffold()\n" << e;
+  }
 }
 
 void DataStore::fetchFrag(ID_t fragid, Fragment_t & frag)
 {
-  frag_bank.seekg(frag_bank.getIDMap().lookupBID(fragid));
-  frag_bank >> frag;
+  try
+  {
+    frag_bank.seekg(frag_bank.getIDMap().lookupBID(fragid));
+    frag_bank >> frag;
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR in fetchFrag()\n" << e;
+  }
 }
 
 AMOS::ID_t DataStore::getLibrary(ID_t readid)

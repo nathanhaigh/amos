@@ -152,6 +152,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(newContig()),
           iw,   SLOT(contigChanged()));
 
+  connect(parent, SIGNAL(bankSelected()),
+          iw,   SLOT(refreshWidget()));
+
   connect(iw, SIGNAL(readIIDHighlighted(const QString &)),
           iidpick, SLOT(setText(const QString &)));
 

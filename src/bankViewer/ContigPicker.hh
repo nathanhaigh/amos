@@ -22,6 +22,7 @@ public slots:
   void selecteid(const QString & eid);
   void acceptSelected();
   void toggleShowReads();
+  void refreshTable();
 
 signals:
   void contigSelected(int);

@@ -487,7 +487,7 @@ void InsertWidget::initializeTiling()
   m_currentScaffold = m_datastore->m_scaffoldId;
   m_tiling.clear();
 
-  if (m_paintScaffold && m_datastore->m_scaffoldId != AMOS::NULL_ID)
+  if (m_paintScaffold && m_currentScaffold != AMOS::NULL_ID)
   {
     Scaffold_t scaffold;
     m_datastore->fetchScaffold(m_datastore->m_scaffoldId, scaffold);
@@ -804,7 +804,7 @@ void InsertWidget::paintCanvas()
     voffset += (layout.size() + 1) * lineheight;
   }
 
-  if (m_showFeatures)
+  if (m_showFeatures && !m_features.empty())
   {
     cerr << " features";
     layout.clear();
@@ -1204,5 +1204,7 @@ void InsertWidget::contigChanged()
   initializeTiling();
 }
 
-
-
+void InsertWidget::refreshWidget()
+{
+  initializeTiling();
+}

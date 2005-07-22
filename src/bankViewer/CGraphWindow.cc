@@ -55,7 +55,6 @@ CGraphWindow::CGraphWindow(DataStore * datastore,
 
 void CGraphWindow::drawGraph()
 {
-  cerr << "drawGraph()" << endl;
   // clear and flush
   QCanvasItemList list = m_canvas->allItems();
   QCanvasItemList::Iterator it = list.begin();
@@ -137,17 +136,17 @@ void CGraphWindow::drawGraph()
     vmax = (vmax ? vmax : 1);
 
     m_canvas->resize(5*m_contigWidth+2*m_gutter,vmax*lineheight+m_gutter);
-    m_canvas->update();
 
     QString status = "Viewing contig graph for contig " + QString::number(m_datastore->m_contigId);
     statusBar()->message(status);
   }
   catch (Exception_t & e)
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     QString status = "Contig graph not available";
     statusBar()->message(status);
   }
+
+  m_canvas->update();
 }
 
 void CGraphWindow::drawNeighbor(ContigEdge_t * edge, 
