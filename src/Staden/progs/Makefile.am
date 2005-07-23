@@ -5,7 +5,8 @@ bin_PROGRAMS = \
 	trace_comment \
 	trace_comments \
 	trace_convert \
-	trace_seq
+	trace_seq \
+    trace_scf_dump
 
 AM_CPPFLAGS = \
         -I$(top_srcdir)/src/Staden/read
@@ -29,5 +30,10 @@ trace_seq_LDADD = \
 	$(top_builddir)/src/Staden/read/libread.a
 trace_seq_SOURCES = \
 	trace_seq.c
+
+trace_scf_dump_LDADD = \
+	$(top_builddir)/src/Staden/read/libread.a
+trace_scf_dump_SOURCES = \
+	trace_scf_dump.c
 
 ##-- END OF MAKEFILE --##
