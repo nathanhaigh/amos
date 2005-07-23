@@ -28,8 +28,8 @@ typedef unsigned char uint1;
 typedef signed char   int1;
 typedef uint16_t      uint2;
 typedef int16_t       int2;
-typedef uint64_t      uint4;
-typedef int64_t       int4;
+typedef uint32_t      uint4;
+typedef int32_t       int4;
 
 /* For backwards compatibility */
 typedef  int1   int_1;
@@ -105,6 +105,7 @@ typedef int4 int_fl;		/* f_implicit */
 # define le_int2(x) iswap_int2((x))
 # define le_int1(x) (x)
 #else
+# define SP_LITTLE_ENDIAN 1
 # define be_int4(x) iswap_int4((x))
 # define be_int2(x) iswap_int2((x))
 # define be_int1(x) (x)

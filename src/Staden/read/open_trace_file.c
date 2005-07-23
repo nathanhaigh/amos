@@ -37,6 +37,9 @@ static char fileIdentifier[] = "$Id$";
  *
  * #### MHH, Oct. 1, 2003: Added .ztr, and changed order (most likely extensions first).
  $Log$
+ Revision 1.1  2005/05/05 16:44:18  aphillip
+ added Staden trace IO package
+
  Revision 1.4  2004/02/20 22:24:31  mholmes
  Fixes bug found by Saul Kravitz (failed to open a .ab1 file when full filename speccified).
 
@@ -334,6 +337,8 @@ static FILE *find_file_dir(char *file, char *dirname) {
 	return NULL;
     }
 
+    fprintf(stderr, "open_file_trace file: %s\n", file);
+
     /* read directory entries until we find a match */
     strcpy(fname, "");
     while (strlen(fname) == 0 && (dp = readdir(dfd)) != NULL) {
@@ -356,7 +361,6 @@ static FILE *find_file_dir(char *file, char *dirname) {
 		/* this file is not a candidate */
 		continue;
 	    }
-	}
 
         /* see if the extension matches something we recognize */
         for (i = 0; i < num_magics; i++) {
@@ -367,6 +371,7 @@ static FILE *find_file_dir(char *file, char *dirname) {
 	    }
 	}
     }
+	}
 
     /* close the directory */
     closedir(dfd);
@@ -378,6 +383,8 @@ static FILE *find_file_dir(char *file, char *dirname) {
 	    strcpy(fullpath, fname);
 	else
 	    sprintf(fullpath, "%s/%s", path, fname);
+
+        fprintf(stderr, "open_trace_file fullpath: %s\n", fullpath);
 	
 	/* open the file and return its file pointer */
 	return fopen_compressed(fullpath, NULL);
