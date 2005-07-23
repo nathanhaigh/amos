@@ -5,6 +5,8 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qtoolbutton.h>
+#include <qcheckbox.h>
+#include <qpopupmenu.h>
 
 #include "foundation_AMOS.hh"
 
@@ -18,10 +20,9 @@ class ChromoListItem : public QListViewItem
 {
 public:
   ChromoListItem(QListView * parent, 
-                 QString type,
                  QString path)
                
-    : QListViewItem(parent, type, path) {}
+    : QListViewItem(parent, path) {}
 };
 
 
@@ -36,19 +37,41 @@ ChromoPicker::ChromoPicker(DataStore * datastore,
   resize(550,500);
   show();
 
-  QToolBar * tool = new QToolBar(this, "tools");
-  new QLabel("Type:", tool, "typelbl");
-  m_typepick = new QLineEdit(tool, "typepick");
+  QToolBar * cmdtool = new QToolBar(this, "cmdtools");
+  new QLabel("Fetch CMD:", cmdtool, "fetchlabel");
+  m_fetchpick = new QLineEdit(cmdtool, "fetchpick");
+  m_fetchpick->setText(m_datastore->m_tracecmd);
+  m_fetchpick->setMinimumWidth(800);
+  m_fetchpick->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Expanding));
 
-  new QLabel("  Path:", tool, "pathlbl");
+  QToolBar * restool = new QToolBar(this, "restools");
+  new QLabel("Fetch Result:", restool, "fetchresultlabel");
+  m_fetchresultpick = new QLineEdit(restool, "fetchresultpick");
+  m_fetchresultpick->setText(m_datastore->m_tracecmdpath);
+  m_fetchresultpick->setMinimumWidth(500);
+
+  m_enabled = new QCheckBox("Enable", restool);
+  m_enabled->setChecked(m_datastore->m_tracecmdenabled);
+
+  QToolBar * cachetool = new QToolBar(this, "cachetools");
+  new QLabel("Fetch Cache:", cachetool, "fetchcachelbl");
+  m_fetchcachepick = new QLineEdit(cachetool, "fetchresultpick");
+  m_fetchcachepick->setText(m_datastore->m_tracecache);
+  m_fetchcachepick->setMinimumWidth(800);
+
+
+  QToolBar * tool = new QToolBar(this, "dbtools");
+  new QLabel("Add Directory:", tool, "pathlbl");
   m_pathpick = new QLineEdit(tool, "pathpick");
+  m_pathpick->setMinimumWidth(500);
 
   QToolButton* add = new QToolButton(QPixmap(), "Add", "Add new chromatogram location",
                                      this, SLOT(addNew()), tool);
   add->setText("Add");
 
-  m_table->addColumn("Type");
-  m_table->addColumn("Path");
+
+
+  m_table->addColumn("Directory");
 
   m_table->setShowSortIndicator(true);
   m_table->setRootIsDecorated(true);
@@ -58,20 +81,12 @@ ChromoPicker::ChromoPicker(DataStore * datastore,
 
   vector<string>::iterator vi;
 
-  for (vi = m_datastore->m_chromopaths.begin();
-       vi != m_datastore->m_chromopaths.end();
+  for (vi = m_datastore->m_tracepaths.begin();
+       vi != m_datastore->m_tracepaths.end();
        vi++)
   {
-    new ChromoListItem(m_table, QString("Path"), QString(vi->c_str()));
+    new ChromoListItem(m_table, QString(vi->c_str()));
   }
-
-  for (vi = m_datastore->m_chromodbs.begin();
-       vi != m_datastore->m_chromodbs.end();
-       vi++)
-  {
-    new ChromoListItem(m_table, QString("DB"), QString(vi->c_str()));
-  }
-
 
   setCursor(orig);
 }
@@ -114,18 +129,10 @@ void ChromoPicker::acceptSelected()
 
 void ChromoPicker::addNew()
 {
-  QString type = m_typepick->text();
-  QString path = m_pathpick->text();
-
-  if (type == QString("Path"))
+  if (m_pathpick->text() != "")
   {
-    m_datastore->m_chromopaths.push_back((std::string)path.ascii());
-    new ChromoListItem(m_table, type, path);
+    m_datastore->m_tracepaths.push_back((std::string)m_pathpick->text().ascii());
+    new ChromoListItem(m_table, m_pathpick->text());
+    m_pathpick->setText("");
   }
-  else if (type == QString("DB"))
-  {
-    m_datastore->m_chromodbs.push_back((std::string)path.ascii());
-    new ChromoListItem(m_table, type, path);
-  }
-
 }

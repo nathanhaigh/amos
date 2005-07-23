@@ -646,9 +646,9 @@ void MainWindow::fontDecrease()
 
 void MainWindow::setChromoDB(const QString & db)
 {
-  if (m_datastore.m_db != db.ascii())
+  if (m_datastore.m_tracedb != db.ascii())
   {
-    m_datastore.m_db = db.ascii();
+    m_datastore.m_tracedb = db.ascii();
     emit chromoDBSet(db);
   }
 }
@@ -699,12 +699,11 @@ void MainWindow::showFeatureBrowser()
 
 void MainWindow::addChromoPath(const QString & path)
 {
-  m_datastore.m_chromopaths.push_back(path.ascii());
+  m_datastore.m_tracepaths.push_back(path.ascii());
 }
 
 void MainWindow::addChromoDB(const QString & db)
 {
-  m_datastore.m_chromodbs.push_back(db.ascii());
 }
 
 void MainWindow::jumpFGindex()
@@ -727,4 +726,9 @@ void MainWindow::findPrev()
 {
   const QString & str = m_searchedit->text();
   emit searchString(str, false);
+}
+
+void MainWindow::enableTraceFetch(bool dofetch)
+{
+  m_datastore.m_tracecmdenabled = dofetch;
 }

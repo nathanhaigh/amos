@@ -19,26 +19,28 @@ DataStore::DataStore()
     link_bank(ContigLink_t::NCODE),
     feat_bank(Feature_t::NCODE)
 {
-  m_contigId = 0;
   m_loaded = false;
-  m_traceycalled = 0;
+  m_contigId = AMOS::NULL_ID;
   m_scaffoldId = AMOS::NULL_ID;
 
-  m_chromodbs.push_back("/local/chromo/Chromatograms/");
-  m_chromodbs.push_back("/local/chromo2/Chromatograms/");
-  m_chromodbs.push_back("/local/chromo3/Chromatograms/");
-  m_chromodbs.push_back("/local/asmg/scratch/mschatz/Chromatograms/");
+  m_tracepaths.push_back("/local/chromo/Chromatograms/%TRACEDB%/ABISSed/%EID3%/%EID4%/%EID5%/");
+  m_tracepaths.push_back("/local/chromo2/Chromatograms/%TRACEDB%/ABISSed/%EID3%/%EID4%/%EID5%/");
+  m_tracepaths.push_back("/local/chromo3/Chromatograms/%TRACEDB%/ABISSed/%EID3%/%EID4%/%EID5%/");
 
-//  m_chromopaths.push_back("/home/mschatz/build/sample/32774/chromo");
+  m_tracecache        = ".tracecache";
+  m_tracecachecreated = 0;
+  m_tracecmd          = "curl \"http://www.ncbi.nlm.nih.gov/Traces/trace.fcgi?cmd=java&j=scf&val=%EID%&ti=%EID%\" -s -o %TRACECACHE%/%EID%";
+  m_tracecmdpath      = "%TRACECACHE%/%EID%";
+  m_tracecmdenabled   = 0;
 }
 
 DataStore::~DataStore()
 {
-  if (m_traceycalled)
+  if (m_tracecachecreated)
   {
-    //cerr << "Cleaning chromos directory" << endl;
-    //string cmd = "/bin/rm -rf chromo";
-    //system(cmd.c_str());
+    cerr << "Cleaning tracecache directory: " << m_tracecache << endl;
+    string cmd = "/bin/rm -rf " + m_tracecache;
+    system(cmd.c_str());
   }
 }
 
@@ -395,17 +397,49 @@ ID_t DataStore::lookupScaffoldId(ID_t contigid)
   }
 }
 
-static string chromodbpath(const string & base,
-                    const string & db,
-                    const string & readname)
-{
-  string path = base + db;
-  path += (string)"/ABISSed/" +
-          readname[0]+readname[1]+readname[2] + "/" +
-          readname[0]+readname[1]+readname[2]+readname[3] + "/" +
-          readname[0]+readname[1]+readname[2]+readname[3]+readname[4]+ "/";
 
-  return path;        
+static void replaceAll(string & str,
+                       const string & token,
+                       const string & value)
+{
+  int pos;
+
+  while ((pos = str.find(token)) != str.npos)
+  {
+    str.replace(pos, token.length(), value);
+  }
+}
+
+static string replaceTokens(const string & str,
+                            const string & eid,
+                            const string & iid, 
+                            const string & tracecache,
+                            const string & tracedb)
+{
+  string result = str;
+
+  string eid3 = (string)"" + eid[0] + eid[1] + eid[2];
+  string eid4 = (string)"" + eid[0] + eid[1] + eid[2] + eid[3];
+  string eid5 = (string)"" + eid[0] + eid[1] + eid[2] + eid[3] + eid[4];
+
+  string iid3 = (string)"" + iid[0] + iid[1] + iid[2];
+  string iid4 = (string)"" + iid[0] + iid[1] + iid[2] + iid[3];
+  string iid5 = (string)"" + iid[0] + iid[1] + iid[2] + iid[3] + iid[4];
+
+  replaceAll(result, "%EID%",  eid);
+  replaceAll(result, "%EID3%", eid3);
+  replaceAll(result, "%EID4%", eid4);
+  replaceAll(result, "%EID5%", eid5);
+
+  replaceAll(result, "%IID%",  iid);
+  replaceAll(result, "%IID3%", iid3);
+  replaceAll(result, "%IID4%", iid4);
+  replaceAll(result, "%IID5%", iid5);
+
+  replaceAll(result, "%TRACECACHE%", tracecache);
+  replaceAll(result, "%TRACEDB%",    tracedb);
+
+  return result;
 }
 
 
@@ -418,48 +452,44 @@ extern "C"
 char * DataStore::fetchTrace(const AMOS::Read_t & read, 
                              std::vector<int16_t> & positions )
 {
-  string readname = read.getEID();
+  string eid = read.getEID();
+
+  char iidarr[16];
+  sprintf(iidarr, "%d", read.getIID());
+  string iid(iidarr);
 
   Read * trace = NULL;
 
   string path;
 
   vector <string>::iterator ci;
-  for (ci =  m_chromopaths.begin();
-       ci != m_chromopaths.end() && !trace;
+  for (ci =  m_tracepaths.begin();
+       ci != m_tracepaths.end() && !trace;
        ci++)
   {
-    path = *ci + "/";
-    path += readname;
+    path = replaceTokens(*ci, eid, iid, m_tracecache, m_tracedb);
+
+    if (path[path.length()-1] == '/')
+    {
+      path += eid;
+    }
+
     trace = read_reading((char *)path.c_str(), TT_ANY);
   }
 
-
-  for (ci =  m_chromodbs.begin();
-       ci != m_chromodbs.end() && !trace;
-       ci++)
+  if (!trace && m_tracecmdenabled)
   {
-    path = chromodbpath(*ci, m_db, readname);
-    if (DIR * dir = opendir(path.c_str()))
+    if (!m_tracecachecreated)
     {
-      closedir(dir);
-      path += readname;
-      trace = read_reading((char *)path.c_str(), TT_ANY);
+      int retval = mkdir(m_tracecache.c_str(), 
+                         S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH );
+      m_tracecachecreated = !retval;
     }
-  }
 
-  if (!trace && 0)
-  {
-    if (!m_traceycalled)
-    {
-      int retval = mkdir("chromo", S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH );
-      m_traceycalled = 1;
-    }
-    
-    string path = "chromo/" + readname + ".scf";
-    string cmd = "curl \"http://www.ncbi.nlm.nih.gov/Traces/trace.fcgi?cmd=java&j=scf&val="+ readname + "&ti=" + readname + "\" -o chromo/" + readname + ".scf -s";
+    string cmd = replaceTokens(m_tracecmd, eid, iid, m_tracecache, m_tracedb);
+    path = replaceTokens(m_tracecmdpath, eid, iid, m_tracecache, m_tracedb);
 
-    //cerr << "**** Executing: \"" << cmd << "\"" << endl;
+    cerr << "**** Executing: \"" << cmd << "\"" << endl;
 
     int retval = system(cmd.c_str());
 
@@ -476,12 +506,6 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read,
     {
       positions.push_back(trace->basePos[i]);
     }
-  }
-
-  if (trace)
-  {
-    cerr << "Loaded trace: " << trace->trace_name << endl;
-
   }
 
   return (char *) trace;

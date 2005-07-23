@@ -44,11 +44,15 @@ public:
   AMOS::BankStream_t edge_bank;
   AMOS::Bank_t       link_bank;
 
-  std::string m_db;
   std::string m_bankname;
 
-  std::vector <string> m_chromodbs;
-  std::vector <string> m_chromopaths;
+  std::vector <string> m_tracepaths;
+  std::string m_tracecache;
+  std::string m_tracecmd;
+  std::string m_tracecmdpath;
+  std::string m_tracedb;
+  bool m_tracecmdenabled;
+  
 
   AMOS::ID_t m_contigId;
   AMOS::ID_t m_scaffoldId;
@@ -77,7 +81,7 @@ private:
   void indexContigs();
   void indexScaffolds();
 
-  bool m_traceycalled;
+  bool m_tracecachecreated;
 };
 
 

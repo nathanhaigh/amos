@@ -238,8 +238,8 @@ void RenderSeq_t::loadTrace(DataStore * datastore)
   
   cerr << " load trace" << endl;
   m_trace = datastore->fetchTrace(m_read, m_pos);
-  if (!m_trace) { cerr << "=NULL" << endl; return; }
-  if (m_pos.empty()) { cerr << ". No Positions" << endl; return; }
+  if (!m_trace) { cerr << "Trace Not Found" << endl; return; }
+  if (m_pos.empty()) { cerr << "Trace Positions Not Available" << endl; return; }
 
   if (m_rc)
   {

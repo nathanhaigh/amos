@@ -28,6 +28,7 @@ int main( int argc, char **argv )
            << "  -c <path>   Add a chromatogram path"        << endl
            << "  -d <dbpath> Add a chromatogram db path"     << endl
            << "  -D <DB>     Set the chromatogram DB"        << endl
+           << "  -T          Enable Trace Fetch cmd"         << endl
            << "  -p <port>   Initialize Server on this port" << endl
            << "  -h          Display this help"              << endl;
 
@@ -88,6 +89,10 @@ int main( int argc, char **argv )
     {
       i++; v = a.argv()[i];
       w.setChromoDB(QString(v.c_str()));
+    }
+    else if (v == "-T")
+    {
+      w.enableTraceFetch(true);
     }
     else if (v[0] == '-')
     {

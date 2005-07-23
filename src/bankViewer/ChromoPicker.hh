@@ -4,7 +4,10 @@
 #include <string>
 #include <qmainwindow.h>
 #include <qlistview.h>
+#include <qcheckbox.h>
 #include "DataStore.hh"
+
+#include <qradiobutton.h>
 
 using std::string;
 
@@ -30,8 +33,12 @@ private:
   DataStore * m_datastore;
   QListView * m_table;
 
-  QLineEdit * m_typepick;
   QLineEdit * m_pathpick;
+  QLineEdit * m_fetchpick;
+  QLineEdit * m_fetchresultpick;
+  QLineEdit * m_fetchcachepick;
+  QLineEdit * m_fetchdbpick;
+  QCheckBox * m_enabled;
 };
 
 

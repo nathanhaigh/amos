@@ -59,6 +59,7 @@ public slots:
   void newConnect(ClientSocket * s);
   void setContigLocation(QString, int);
   void initializeSimpleServer(int port);
+  void enableTraceFetch(bool dofetch);
 
   void addChromoPath(const QString &);
   void addChromoDB(const QString &);

@@ -135,7 +135,7 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 
   m_renderedSeqs[dcov].loadTrace(m_datastore);
   ReadInfo * readinfo = new ReadInfo(&m_renderedSeqs[dcov], 
-                                     m_datastore->m_db, 
+                                     m_datastore->m_tracedb, 
                                      m_consensus,
                                      m_cstatus,
                                      this, 
