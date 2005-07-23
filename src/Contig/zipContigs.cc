@@ -100,13 +100,13 @@ int main (int argc, char ** argv)
     contig_bank.open(bankname, B_READ|B_WRITE);
     ID_t jiid     = contig_bank.getMaxIID()+1;
 
-    Contig_t ref, qry;
+    Contig_t rcontig, qcontig;
 
-    contig_bank.fetch(refeid, ref);
-    contig_bank.fetch(qryeid, qry);
+    contig_bank.fetch(refeid, rcontig);
+    contig_bank.fetch(qryeid, qcontig);
 
-    cerr << "Ref: " << refeid << " len: " << ref.getSeqString().length() << endl;
-    cerr << "Qry: " << qryeid << " len: " << qry.getSeqString().length() << endl;
+    cerr << "Ref: " << refeid << " len: " << rcontig.getSeqString().length() << endl;
+    cerr << "Qry: " << qryeid << " len: " << qcontig.getSeqString().length() << endl;
 
     cerr << " m_alignStart(0)=" <<           m_alignStart << endl;
     cerr << " m_queryGaps(\"\")=" <<         m_queryGaps<< endl;
@@ -119,23 +119,81 @@ int main (int argc, char ** argv)
 
     int shift = 0;
 
-    vector<Tile_t> & rtiling = ref.getReadTiling();
-    vector<Tile_t> & qtiling = qry.getReadTiling();
-    vector<Tile_t>::iterator qi;
+    string rcons(rcontig.getSeqString());
+    string qcons(qcontig.getSeqString());
 
-    for (qi =  qtiling.begin();
-         qi != qtiling.end();
-         qi++)
+    Pos_t rgindex = 0;
+    Pos_t qgindex = 0;
+
+    vector <Pos_t> rgaps;
+    vector <Pos_t> qgaps;
+
+    int rlen = rcons.length();
+    int qlen = qcons.length();
+
+    while (rgindex < rlen && qgindex < qlen) 
     {
-      qi->offset += shift;
-      rtiling.push_back(*qi);
+      if (rcons[rgindex] == '-' && qcons[qgindex] == '-')
+      {
+        // Let gaps zip together
+        rgindex++;
+        qgindex++;
+        cerr << "-";
+      }
+      else if (rcons[rgindex] == '-')
+      {
+        qgaps.push_back(qgindex);
+        rgindex++;
+        cerr << "r";
+      }
+      else if (qcons[qgindex] == '-')
+      {
+        rgaps.push_back(rgindex);
+        qgindex++;
+        cerr << "q";
+      }
+      else
+      {
+        rgindex++;
+        qgindex++;
+        cerr << ".";
+      }
     }
 
-    ref.setIID(jiid);
-    ref.setEID(jeid);
+
+    // Apply Gaps
+
+    cerr << cerr << "Applying " << rgaps.size() << " reference gaps" << endl;
+    vector <Pos_t>::reverse_iterator gi;
+    for (gi = rgaps.rbegin(); gi != rgaps.rend(); gi++)
+    {
+      rcontig.insertGapColumn(*gi);
+    }
+
+    cerr << "Applying " << qgaps.size() << " query gaps" << endl;
+    for (gi = qgaps.rbegin(); gi != qgaps.rend(); gi++)
+    {
+      qcontig.insertGapColumn(*gi);
+    }
+
+    // Merge Tilings into rcontig
+    vector<Tile_t> & rtiling = rcontig.getReadTiling();
+    vector<Tile_t> & qtiling = qcontig.getReadTiling();
+    vector<Tile_t>::iterator ti;
+
+    cerr << "Merging " << qtiling.size() << " query reads" << endl;
+
+    for (ti =  qtiling.begin(); ti != qtiling.end(); ti++)
+    {
+      ti->offset += shift;
+      rtiling.push_back(*ti);
+    }
+
+    // save to bank, rcontig gets new name
+    rcontig.setIID(jiid);
+    rcontig.setEID(jeid);
     cerr << "Appending iid: " << jiid << " eid: " << jeid << endl;
-    contig_bank.append(ref);
-    
+    contig_bank.append(rcontig);
     contig_bank.close();
   }
   catch (Exception_t & e)
