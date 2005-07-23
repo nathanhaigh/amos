@@ -402,42 +402,50 @@ static void replaceAll(string & str,
                        const string & token,
                        const string & value)
 {
-  int pos;
+  int startpos;
+  int endpos;
 
-  while ((pos = str.find(token)) != str.npos)
+  string searchtoken = "%" + token;
+
+  while ((startpos = str.find(searchtoken)) != str.npos)
   {
-    str.replace(pos, token.length(), value);
+    string replaceval;
+    endpos = startpos+searchtoken.length();
+
+    if (str[endpos] == '%')
+    {
+      replaceval = value;
+    }
+    else
+    {
+      // Figure out how long of a prefix of value to replace
+      int len = atoi(str.c_str()+endpos);
+      if (len > value.length()) { len = value.length(); }
+
+      // grab the first len characters of value
+      replaceval = value.substr(0, len);
+
+      // find the end token
+      while (str[endpos] != '%' && (endpos < str.length()))
+      {
+        endpos++;
+      }
+    }
+
+    str.replace(startpos, endpos-startpos+1, replaceval);
   }
 }
 
-static string replaceTokens(const string & str,
-                            const string & eid,
-                            const string & iid, 
-                            const string & tracecache,
-                            const string & tracedb)
+string DataStore::replaceTraceTokens(const string & str,
+                                const string & eid,
+                                const string & iid)
 {
-  string result = str;
+  string result(str);
 
-  string eid3 = (string)"" + eid[0] + eid[1] + eid[2];
-  string eid4 = (string)"" + eid[0] + eid[1] + eid[2] + eid[3];
-  string eid5 = (string)"" + eid[0] + eid[1] + eid[2] + eid[3] + eid[4];
-
-  string iid3 = (string)"" + iid[0] + iid[1] + iid[2];
-  string iid4 = (string)"" + iid[0] + iid[1] + iid[2] + iid[3];
-  string iid5 = (string)"" + iid[0] + iid[1] + iid[2] + iid[3] + iid[4];
-
-  replaceAll(result, "%EID%",  eid);
-  replaceAll(result, "%EID3%", eid3);
-  replaceAll(result, "%EID4%", eid4);
-  replaceAll(result, "%EID5%", eid5);
-
-  replaceAll(result, "%IID%",  iid);
-  replaceAll(result, "%IID3%", iid3);
-  replaceAll(result, "%IID4%", iid4);
-  replaceAll(result, "%IID5%", iid5);
-
-  replaceAll(result, "%TRACECACHE%", tracecache);
-  replaceAll(result, "%TRACEDB%",    tracedb);
+  replaceAll(result, "TRACECACHE", m_tracecache);
+  replaceAll(result, "TRACEDB",    m_tracedb);
+  replaceAll(result, "EID",  eid);
+  replaceAll(result, "IID",  iid);
 
   return result;
 }
@@ -467,14 +475,15 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read,
        ci != m_tracepaths.end() && !trace;
        ci++)
   {
-    path = replaceTokens(*ci, eid, iid, m_tracecache, m_tracedb);
+    path = replaceTraceTokens(*ci, eid, iid);
 
-    if (path[path.length()-1] == '/')
+    DIR * dir = opendir(path.c_str());
+    if (dir)
     {
-      path += eid;
+      closedir(dir);
+      path += "/" + eid;
+      trace = read_reading((char *)path.c_str(), TT_ANY);
     }
-
-    trace = read_reading((char *)path.c_str(), TT_ANY);
   }
 
   if (!trace && m_tracecmdenabled)
@@ -486,8 +495,8 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read,
       m_tracecachecreated = !retval;
     }
 
-    string cmd = replaceTokens(m_tracecmd, eid, iid, m_tracecache, m_tracedb);
-    path = replaceTokens(m_tracecmdpath, eid, iid, m_tracecache, m_tracedb);
+    string cmd = replaceTraceTokens(m_tracecmd, eid, iid);
+    path = replaceTraceTokens(m_tracecmdpath, eid, iid);
 
     cerr << "**** Executing: \"" << cmd << "\"" << endl;
 

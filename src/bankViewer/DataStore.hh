@@ -21,6 +21,10 @@ public:
   int openBank(const string & bank_name);
   int setContigId(int id);
 
+  string replaceTraceTokens(const string & str,
+                            const string & eid,
+                            const string & iid);
+
 
   char * fetchTrace(const AMOS::Read_t & read, std::vector<int16_t> & positions);
 
