@@ -202,6 +202,12 @@ bool RenderSeq_t::hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
 {
   int retval = 1;
 
+  if (seqOffset + seqLen > contigLen)
+  {
+    // wraps around right edge.
+    seqOffset = seqOffset - contigLen;
+  }
+
   if (seqOffset >= (Pos_t) 0)
   {
     if ((seqOffset > rangeEnd)                  // sequence right flanks
@@ -265,7 +271,7 @@ void RenderSeq_t::loadTrace(DataStore * datastore)
 
   if (m_pos.size() != m_quals.size())
   {
-    cerr << "Warning for eid: " << m_read.getEID() << endl;
+    cerr << "Warning for eid: " << m_read.getEID() << " iid: " << m_read.getIID() << endl;
     cerr << "m_pos.size()=" << m_pos.size() << " m_quals.size()=" << m_quals.size() << endl;
   }
 

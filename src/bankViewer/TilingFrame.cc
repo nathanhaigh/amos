@@ -260,7 +260,8 @@ void TilingFrame::loadContigRange(int gindex)
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
         {
-          int global = m_alignment->getGlobalPos(gindex);
+          int circ = gindex % m_consensus.length();
+          int global = m_alignment->getGlobalPos(circ);
           if (m_cstatus[global] == '*')
           {
             cerr << "err" << endl;
