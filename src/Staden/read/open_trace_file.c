@@ -37,6 +37,9 @@ static char fileIdentifier[] = "$Id$";
  *
  * #### MHH, Oct. 1, 2003: Added .ztr, and changed order (most likely extensions first).
  $Log$
+ Revision 1.2  2005/07/23 01:31:18  mschatz
+ Fix trace bug, size bug
+
  Revision 1.1  2005/05/05 16:44:18  aphillip
  added Staden trace IO package
 
@@ -76,7 +79,7 @@ static char fileIdentifier[] = "$Id$";
  Committed Mike Holmes' changes so that ztr extensions are searched
 
  */
-static char *magics[] = {"", ".ztr", ".gz", ".bz", ".Z", ".z", ".bz2", ".sz"};
+static char *magics[] = {"", ".ztr", ".gz", ".bz", ".Z", ".z", ".bz2", ".sz", ".scf"};
 
 /*
  * Initially produce a new search path where all "::"s are replaced with
@@ -336,8 +339,6 @@ static FILE *find_file_dir(char *file, char *dirname) {
 	/* error -- can't open directory path */
 	return NULL;
     }
-
-    fprintf(stderr, "open_file_trace file: %s\n", file);
 
     /* read directory entries until we find a match */
     strcpy(fname, "");
