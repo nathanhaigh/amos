@@ -2,6 +2,9 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 using namespace AMOS;
 using namespace std;
@@ -33,9 +36,9 @@ DataStore::~DataStore()
 {
   if (m_traceycalled)
   {
-    cerr << "Cleaning chromos directory" << endl;
-    string cmd = "/bin/rm -rf chromo";
-    system(cmd.c_str());
+    //cerr << "Cleaning chromos directory" << endl;
+    //string cmd = "/bin/rm -rf chromo";
+    //system(cmd.c_str());
   }
 }
 
@@ -445,11 +448,11 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read,
     }
   }
 
-  if (!trace)
+  if (!trace && 0)
   {
     if (!m_traceycalled)
     {
-      system("mkdir chromo");
+      int retval = mkdir("chromo", S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH );
       m_traceycalled = 1;
     }
     
@@ -473,6 +476,12 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read,
     {
       positions.push_back(trace->basePos[i]);
     }
+  }
+
+  if (trace)
+  {
+    cerr << "Loaded trace: " << trace->trace_name << endl;
+
   }
 
   return (char *) trace;

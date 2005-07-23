@@ -367,13 +367,10 @@ void MainWindow::setContigLocation(const QString contigid, int pos)
 
 void MainWindow::chooseBank()
 {
-  QString s = QFileDialog::getExistingDirectory(
-                   "/local/asmg/work/mschatz/AMOS",
-                   this,
-                   "get existing directory",
-                   "Choose a Bank",
-                   TRUE );
-
+  QString s = QFileDialog::getExistingDirectory("", this,
+                                                "Open a Bank",
+                                                "Open a Bank",
+                                                TRUE );
   if (!s.isEmpty())
   {
     setBankname(s.ascii());
