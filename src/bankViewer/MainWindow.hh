@@ -84,6 +84,7 @@ public slots:
   void fontIncrease();
   void fontDecrease();
 
+  void showAssemblyStats();
   void showReadPicker();
   void showLibPicker();
   void showChromoPicker();

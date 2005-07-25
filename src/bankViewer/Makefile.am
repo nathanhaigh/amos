@@ -4,6 +4,7 @@ bin_PROGRAMS = bankViewer
 	$(QT_MOC) -o $@ $<
 
 bankViewer_MOCSOURCES = \
+        AssemblyStats.cc       \
         BufferedLineEdit.cc    \
         CGraphContig.cc        \
         CGraphEdge.cc          \

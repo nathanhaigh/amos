@@ -14,6 +14,7 @@
 
 #include "TilingFrame.hh"
 #include "InsertWindow.hh"
+#include "AssemblyStats.hh"
 
 #include "icons/fontdecrease.xpm"
 #include "icons/fontincrease.xpm"
@@ -62,6 +63,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()));
   file->insertItem("Chromatogram P&aths...",   this,  SLOT(showChromoPicker()));
   file->insertSeparator();
+  file->insertItem("&Assembly Statistics...", this, SLOT(showAssemblyStats()));
   file->insertItem("&Contig Picker...", this,  SLOT(chooseContig()));
   file->insertItem("&Scaffold Information...", this,  SLOT(showScaffoldPicker()));
   file->insertItem("&Read Information...",   this,  SLOT(showReadPicker()));
@@ -673,6 +675,14 @@ void MainWindow::showLibPicker()
   m_libPicker = new LibraryPicker(&m_datastore, this, "libPicker");
   connect(this, SIGNAL(bankSelected()),
           m_libPicker, SLOT(refreshTable()));
+
+}
+
+void MainWindow::showAssemblyStats()
+{
+  AssemblyStats * asmStats = new AssemblyStats(&m_datastore, this, "libPicker");
+  connect(this, SIGNAL(bankSelected()),
+          asmStats, SLOT(refreshTable()));
 
 }
 
