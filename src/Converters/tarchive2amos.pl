@@ -29,6 +29,7 @@ my $seqId;
 my %end5;       # the reads at the 5', resp. 3', end of an insert
 my %end3;
 my %means;      # mean and standard deviation for libraries
+my %libraries;  # all libraries in the input
 my %stdevs;
 my %clr;        # clear range for each sequence
 my %seq2ins;    # insert name for each sequence
@@ -292,7 +293,13 @@ if (defined $mates){
 } 
 
 # now we are ready to print the library information
-while (my ($lib, $mean) = each %means){
+while (my ($lib, $mean) = each %libraries){
+    $mean = $means{$lib};
+    if (! defined $mean){
+	$mean = 33333;
+	$stdevs{$lib} = 3333.3;
+	$base->log("No mean found for $lib, setting to 33333\n");
+    }
     my $libid = getId();
     $lib2id{$lib} = $libid;
 
@@ -378,15 +385,17 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	if ($hasqual == 1){
 	    ($qhead, $qrec) = $qualparse->getRecord();
 	    $qhead =~ /^(\S+)/;
-	    my $qid = $1;
+	    $qid = $1;
 	    $fhead =~ /^(\S+)/;
-	    my $fid = $1;
+	    $fid = $1;
+
+#	    print "$fid and $qid match\n";
 	    
-	    if ($fid != $qid){
+	    if ($fid ne $qid){
 		$base->bail("fasta and qual records have different IDs: $fid vs $qid\n");
 	    }
 	}
-
+	
 	if ($fhead =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
 # if TIGR formatted, fetch the clear range
 #	    print STDERR "got TIGR: $1 $2 $3\n";
@@ -404,7 +413,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		$clr{$fid} = "$l,$r";
 	    }
 	} elsif ($fhead =~ /^gnl\|ti\|(\d+).* name:(\S+)/) {
-#	    print STDERR "got ncbi: $1 $2\n";
+#	    print "got ncbi: $1 $2\n";
 	    # NCBI formatted using keywords
 	    $fid = $1;
 	    $fidname = $2;
@@ -423,11 +432,11 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 # NCBI formatted, first is the trace id then the trace name
 	    $fid = $1;
 	    $fidname = $2;
-
+	    
 	    if (! defined $fidname || $fidname eq "bases"){
 		$fidname = $fid;
 	    }
-
+	    
 	    if (defined $clears && 
 		! exists $clr{$fid} && 
 		! exists $clr{$fidname}) {
@@ -438,11 +447,10 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {
 		$clr{$fid} = $clr{$fidname};
 	    }
-	}
+	} # processing depending on FASTA header
 	
-
 	my $recId = getId();
-
+	
 	if (defined $mates){
 	    for (my $r = 0; $r <= $#pairregexp; $r++){
 		my ($freg, $revreg) = split(' ', $pairregexp[$r]);
@@ -505,11 +513,18 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	} # if defined mates
 
 	my $seqlen = length($frec);
-	my @quals;
+	my @quals = ();
 	if ($hasqual == 1){
-	    @quals = split(' ', $qrec);
+#	    print $fid, "\n";
+#	    print $qid, "\n";
+#	    print $qrec, "\n";
+	    $qrec =~ s/^ //;
+#	    $qrec =~ s/ +/ /g;
+	    @quals = split(/ +/, $qrec);
+#	    print join(',', @quals), "\n";
 	    if ($#quals + 1 != $seqlen) {
-		$base->bail("Fasta and quality disagree: $seqlen vs " . $#quals + 1 . "\n");
+#		print join(',', @quals), "\n";
+		$base->bail("Fasta and quality for $fid($fidname) disagree: $seqlen vs " . sprintf("%d\n", $#quals + 1));
 	    }
 	} else {
 	    for (my $q = 0; $q < $seqlen; $q++){ # fill in qualities with 20
@@ -705,22 +720,25 @@ sub EndTag
 		$base->log("trace $seqId has no library\n");
 	    }
 	}
-	if (! defined $mean && ! exists $means{$library}){
-	    if (! defined $silent){
-		$base->log("library $library has no mean - replacing with 33333\n");
-	    }
-	    $means{$library} = 33333;
-	    $mean = 33333;
-	} elsif (defined $mean && ! exists $means{$library}) { 
+	$libraries{$library} = 1;
+#	if (! defined $mean && ! exists $means{$library}){
+#	    if (! defined $silent){
+#		$base->log("library $library has no mean - replacing with 33333\n");
+#	    }
+#	    $means{$library} = 33333;
+#	    $mean = 33333;
+#	} els
+	if (defined $mean && ! exists $means{$library}) { 
 	    $means{$library} = $mean;
 	}
 	
-	if (! defined $stdev && ! exists $stdevs{$library}){
-	    if (! defined $silent){
-		$base->log("library $library has no stdev - replacing with 10% of $mean\n");
-	    }
-	    $stdevs{$library} = $mean * 0.1;
-	} elsif (defined $stdev && ! exists $stdevs{$library}){
+#	if (! defined $stdev && ! exists $stdevs{$library}){
+#	    if (! defined $silent){
+#		$base->log("library $library has no stdev - replacing with 10% of $mean\n");
+#	    }
+#	    $stdevs{$library} = $mean * 0.1;
+#	} els
+	if (defined $stdev && ! exists $stdevs{$library}){
 	    $stdevs{$library} = $stdev;
 	}
 	
