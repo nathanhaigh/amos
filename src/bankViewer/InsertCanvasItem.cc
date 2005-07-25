@@ -32,8 +32,10 @@ void InsertCanvasItem::drawShape (QPainter & p)
     drawTile(m_insert->m_btile, p, 'B');
   }
 
-  p.drawLine((int)x(),                 (int) (y()) + (int)height()-1,
-             (int)x() + (int) width(), (int) (y()) + (int)height()-1);
+  //p.setPen(QColor(255,255,0));
+
+  p.drawLine((int)x(),                   (int) (y()) + (int)height()-1,
+             (int)x() + (int) width()-1, (int) (y()) + (int)height()-1);
 
   if (m_highlight)
   {
