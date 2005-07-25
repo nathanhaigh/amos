@@ -16,7 +16,7 @@ RenderSeq_t::~RenderSeq_t()
 { }
 
 
-char RenderSeq_t::base(Pos_t gindex, bool outsideclr) const
+char RenderSeq_t::base(Pos_t gindex, bool outsideclr, Pos_t conslen) const
 {
   int leftboundary = m_loffset;
   int rightboundary = m_roffset;
@@ -25,6 +25,16 @@ char RenderSeq_t::base(Pos_t gindex, bool outsideclr) const
   {
     leftboundary = m_lfoffset;
     rightboundary = m_rfoffset;
+  }
+
+  if (conslen != -1 && m_roffset >= conslen)
+  {
+    // read is circular
+
+    if (gindex < m_loffset)
+    {
+      gindex += conslen;
+    }
   }
 
   if (gindex < leftboundary || gindex > rightboundary)
@@ -73,7 +83,7 @@ void RenderSeq_t::getBases(string & alignedBases, Pos_t grangeStart, Pos_t grang
 
 }
 
-int RenderSeq_t::qv(Pos_t gindex, bool outsideclr) const
+int RenderSeq_t::qv(Pos_t gindex, bool outsideclr, Pos_t conslen) const
 {
   int leftboundary = m_loffset;
   int rightboundary = m_roffset;
@@ -82,6 +92,16 @@ int RenderSeq_t::qv(Pos_t gindex, bool outsideclr) const
   {
     leftboundary = m_lfoffset;
     rightboundary = m_rfoffset;
+  }
+  
+  if (conslen != -1 && m_roffset >= conslen)
+  {
+    // read is circular
+
+    if (gindex < m_loffset)
+    {
+      gindex += conslen;
+    }
   }
 
   if (gindex < leftboundary || gindex > rightboundary)
@@ -94,7 +114,7 @@ int RenderSeq_t::qv(Pos_t gindex, bool outsideclr) const
   }
 }
 
-int RenderSeq_t::pos(Pos_t gindex, bool outsideclr) const
+int RenderSeq_t::pos(Pos_t gindex, bool outsideclr, Pos_t conslen) const
 {
   int leftboundary = m_loffset;
   int rightboundary = m_roffset;
@@ -103,6 +123,16 @@ int RenderSeq_t::pos(Pos_t gindex, bool outsideclr) const
   {
     leftboundary = m_lfoffset;
     rightboundary = m_rfoffset;
+  }
+
+  if (conslen != -1 && m_roffset >= conslen)
+  {
+    // read is circular
+
+    if (gindex < m_loffset)
+    {
+      gindex += conslen;
+    }
   }
 
 

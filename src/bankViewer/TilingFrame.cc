@@ -22,8 +22,8 @@ struct SNPTilingOrderCmp
   static int snpposition;
   bool operator() (const RenderSeq_t & a, const RenderSeq_t & b)
   {
-    char abase = a.base(snpposition);
-    char bbase = b.base(snpposition);
+    char abase = a.base(snpposition, false, 10000000);
+    char bbase = b.base(snpposition, false, 10000000);
 
     return abase < bbase;
   }
@@ -267,9 +267,9 @@ void TilingFrame::loadContigRange(int gindex)
             cerr << "err" << endl;
           }
           else if (m_cstatus[global] == ' ')                   
-            { m_cstatus[global] = rendered.base(gindex); }
+            { m_cstatus[global] = rendered.base(gindex, false, m_consensus.length()); }
 
-          else if (toupper(m_cstatus[global]) != toupper(rendered.base(gindex))) 
+          else if (toupper(m_cstatus[global]) != toupper(rendered.base(gindex, false, m_consensus.length()))) 
             { m_cstatus[global] = 'X'; }
         }
       }
@@ -349,7 +349,7 @@ void TilingFrame::sortColumns(int gindex)
        vi != m_renderedSeqs.end();
        vi++)
   {
-    vi->bgcolor = vi->base(gindex);
+    vi->bgcolor = vi->base(gindex, false, m_consensus.length());
   }
   repaint();
 }

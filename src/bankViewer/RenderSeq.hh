@@ -20,9 +20,9 @@ public:
   void load(DataStore * datastore, AMOS::Tile_t * tile);
   void loadTrace(DataStore * datastore);
 
-  char base(AMOS::Pos_t gindex, bool outsideclr = false) const;
-  int    qv(AMOS::Pos_t gindex, bool outsideclr = false) const;
-  int   pos(AMOS::Pos_t gindex, bool outsideclr = false) const;
+  char base(AMOS::Pos_t gindex, bool outsideclr = false, AMOS::Pos_t conslen=-1) const;
+  int    qv(AMOS::Pos_t gindex, bool outsideclr = false, AMOS::Pos_t conslen=-1) const;
+  int   pos(AMOS::Pos_t gindex, bool outsideclr = false, AMOS::Pos_t conslen=-1) const;
 
   void getBases(std::string & alignedBases, 
                 AMOS::Pos_t grangeStart, 

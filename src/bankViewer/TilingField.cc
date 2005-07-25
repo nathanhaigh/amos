@@ -362,8 +362,8 @@ void TilingField::paintEvent( QPaintEvent * )
             continue;
           }
 
-          int qv = ri->qv(shifted, m_fullseq);
-          char b = ri->base(shifted, m_fullseq);
+          int qv = ri->qv(shifted, m_fullseq, m_consensus.length());
+          char b = ri->base(shifted, m_fullseq, m_consensus.length());
 
           if (qv < 30 && m_lowquallower) { b = tolower(b); }
           else                           { b = toupper(b); }
@@ -464,8 +464,8 @@ void TilingField::paintEvent( QPaintEvent * )
                 int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
                 int shifted = m_alignment->getContigPos(gindex);
 
-                int peakposition     = ri->pos(shifted, m_fullseq);
-                int nextpeakposition = ri->pos(shifted+1, m_fullseq);
+                int peakposition     = ri->pos(shifted, m_fullseq, m_consensus.length());
+                int nextpeakposition = ri->pos(shifted+1, m_fullseq, m_consensus.length());
 
                 int count = 1;
                 while (m_consensus[gindex+count] == '*')
