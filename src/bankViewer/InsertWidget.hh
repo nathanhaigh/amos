@@ -113,6 +113,10 @@ private:
   int m_seqheight;
   int m_hoffset;
 
+  int m_contigid;
+  int m_gstart;
+  int m_gend;
+
   typedef std::vector<Insert *> InsertList_t;
   InsertList_t m_inserts;
 

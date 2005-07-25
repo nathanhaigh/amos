@@ -159,7 +159,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_currentScaffold = AMOS::NULL_ID;
 
-  m_seqheight = 3;
+  m_seqheight = 4;
   m_tilingwidth = 0;
 
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, this, "qcv");
@@ -294,6 +294,10 @@ void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
   m_ifield->ensureVisible(mapx, mapy);
 
   m_icanvas->update();
+
+  m_contigid = contigid;
+  m_gstart = gstart;
+  m_gend = gend;
 }
 
 void InsertWidget::setZoom(int zoom)
@@ -315,6 +319,8 @@ void InsertWidget::setZoom(int zoom)
   QWMatrix newzoom(xfactor, matrix.m12(), matrix.m21(), matrix.m22(),
                    matrix.dx(), matrix.dy());
   m_ifield->setWorldMatrix(newzoom);
+
+  setTilingVisibleRange(m_contigid, m_gstart, m_gend);
 }
 
 void InsertWidget::setVZoom(int vzoom)
@@ -927,8 +933,15 @@ void InsertWidget::paintCanvas()
         layout[layoutpos] = (*ii)->m_roffset + layoutgutter;
 
         int inserthpos =   (int)(m_hscale * ((*ii)->m_loffset + m_hoffset)); 
-        int insertlength = (int)(m_hscale * (*ii)->m_length);
+        int insertlength = (int)(m_hscale * ((*ii)->m_length-1));
 
+        if (((*ii)->m_loffset + (*ii)->m_length - 1) != (*ii)->m_roffset)
+        {
+          cerr << "loffset: " << (*ii)->m_loffset
+               << " length: " << (*ii)->m_length
+               << " l+l: " << (*ii)->m_loffset + (*ii)->m_length - 1
+               << " roffset: " << (*ii)->m_roffset << endl;
+        }
 
         InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
                                                         insertlength, m_seqheight,

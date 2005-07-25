@@ -37,31 +37,34 @@ ChromoPicker::ChromoPicker(DataStore * datastore,
   resize(550,500);
   show();
 
+  QToolBar * fetchtool = new QToolBar(this, "cmdtools");
+  new QLabel("Trace AutoFetch", fetchtool, "fetchlabel");
+  m_enabled = new QCheckBox("Enable", fetchtool);
+  m_enabled->setChecked(m_datastore->m_tracecmdenabled);
+
   QToolBar * cmdtool = new QToolBar(this, "cmdtools");
-  new QLabel("Fetch CMD:", cmdtool, "fetchlabel");
+  new QLabel("Command:", cmdtool, "fetchlabel");
   m_fetchpick = new QLineEdit(cmdtool, "fetchpick");
   m_fetchpick->setText(m_datastore->m_tracecmd);
   m_fetchpick->setMinimumWidth(800);
   m_fetchpick->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Expanding));
 
   QToolBar * restool = new QToolBar(this, "restools");
-  new QLabel("Fetch Result:", restool, "fetchresultlabel");
+  new QLabel("Result:", restool, "fetchresultlabel");
   m_fetchresultpick = new QLineEdit(restool, "fetchresultpick");
   m_fetchresultpick->setText(m_datastore->m_tracecmdpath);
   m_fetchresultpick->setMinimumWidth(500);
 
-  m_enabled = new QCheckBox("Enable", restool);
-  m_enabled->setChecked(m_datastore->m_tracecmdenabled);
 
   QToolBar * cachetool = new QToolBar(this, "cachetools");
-  new QLabel("Fetch Cache:", cachetool, "fetchcachelbl");
+  new QLabel("Cache:", cachetool, "fetchcachelbl");
   m_fetchcachepick = new QLineEdit(cachetool, "fetchresultpick");
   m_fetchcachepick->setText(m_datastore->m_tracecache);
   m_fetchcachepick->setMinimumWidth(800);
 
 
   QToolBar * tool = new QToolBar(this, "dbtools");
-  new QLabel("Add Directory:", tool, "pathlbl");
+  new QLabel("Add Trace Directory:", tool, "pathlbl");
   m_pathpick = new QLineEdit(tool, "pathpick");
   m_pathpick->setMinimumWidth(500);
 

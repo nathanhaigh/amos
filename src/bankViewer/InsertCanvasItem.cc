@@ -32,8 +32,8 @@ void InsertCanvasItem::drawShape (QPainter & p)
     drawTile(m_insert->m_btile, p, 'B');
   }
 
-  p.drawLine((int)(x()),           (int) (y() + height()),
-             (int)(x() + width()), (int) (y() + height()));
+  p.drawLine((int)x(),                 (int) (y()) + (int)height()-1,
+             (int)x() + (int) width(), (int) (y()) + (int)height()-1);
 
   if (m_highlight)
   {
@@ -51,9 +51,9 @@ void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p, char type)
 
   int hoffset = (int)((1/hscale)*x() - m_insert->m_loffset);
 
-  int readLength = tile->range.getLength() + tile->gaps.size();
+  int readLength = tile->getGappedLength();
   p.drawRect((int)(hscale*(tile->offset+hoffset)), (int) y(), 
-             (int)(hscale*readLength), height());
+             (int)(hscale*readLength), (int)height());
 
   if (tile->offset+hoffset < x())
   {

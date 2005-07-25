@@ -27,6 +27,8 @@ DataStore::DataStore()
   m_tracepaths.push_back("/local/chromo2/Chromatograms/%TRACEDB%/ABISSed/%EID3%/%EID4%/%EID5%/");
   m_tracepaths.push_back("/local/chromo3/Chromatograms/%TRACEDB%/ABISSed/%EID3%/%EID4%/%EID5%/");
 
+  m_tracepaths.push_back("/fs/szasmg/Chromatograms/%TRACEDB%/");
+
   m_tracecache        = ".tracecache";
   m_tracecachecreated = 0;
   m_tracecmd          = "curl \"http://www.ncbi.nlm.nih.gov/Traces/trace.fcgi?cmd=java&j=scf&val=%EID%&ti=%EID%\" -s -o %TRACECACHE%/%EID%";

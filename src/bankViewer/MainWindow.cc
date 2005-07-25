@@ -201,10 +201,11 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   // Set defaults
   m_gspin->setValue(0);
   m_slider->setFocus();
-  dbpick->setText("DMG");
+  dbpick->setText("GB6");
 
   // If not mpop, enable
-  if (strcmp(getenv("USER"), "mpop") && strcmp(getenv("USER"), "mschatz"))
+  //if (strcmp(getenv("USER"), "mpop") && strcmp(getenv("USER"), "mschatz"))
+  if (strcmp(getenv("USER"), "mpop"))
   {
     toggleBaseColors();
   }
