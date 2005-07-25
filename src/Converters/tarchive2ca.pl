@@ -212,7 +212,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	$fid = $1;
 	$qhead =~ /^(\S+)/;
 	$qid = $1;
-	if ($fid != $qid) {
+	if ($fid ne $qid) {
 	    $base->bail("fasta and qual records have different IDs: $fid vs $qid\n");
 	}
 	
@@ -273,9 +273,10 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	my $recId = getId();
 
 	my $seqlen = length($frec);
-	my @quals = split(' ', $qrec);
+	$qrec =~ s/^ //;
+	my @quals = split(/ +/, $qrec);
 	if ($#quals + 1 != $seqlen) {
-	    die ("Fasta and quality disagree: $seqlen vs " . $#quals + 1 . "\n");
+	    $base->bail("Fasta and quality for $fid($fidname) disagree: $seqlen vs " . sprintf("%d\n", $#quals + 1));
 	}
 
 	my $caqual = "";
