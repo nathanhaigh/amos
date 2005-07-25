@@ -1,10 +1,10 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 use strict;
 
 use AMOS::AmosLib;
 use AMOS::ParseFasta;
-use TIGR::Foundation;
+use AMOS::AmosFoundation;
 use XML::Parser;
 use IO::Handle;
 use POSIX qw(tmpnam);
@@ -43,17 +43,21 @@ my @pairregexp; # read mating regular expressions
 
 my $gzip = "gzip";
 
-my $base = new TIGR::Foundation;
+my $base = new AMOS::AmosFoundation;
 
 if (! defined $base) {
     die ("Walk, do not run, to the nearest exit!\n");
 }
 
+#$base->setLogLevel(1);
+
 my $VERSION = '$Revision$ ';
-$base->setVersionInfo($VERSION);
+$base->setVersion($VERSION);
+
+$base->setLogFile("tarchive2amos.log");
 
 my $HELPTEXT = qq~
-    tarchive2amos -o <prefix> [-c <clip>] [-m <mates>] [options] fasta1 ... fastan
+    tarchive2amos -o <prefix> [-c <clip>] [-m <mates>] [-l <lib>] [options] fasta1 ... fastan
 
    <prefix>   - prefix for the output files
    <clip>     - file containing clear ranges for the reads.  If this file
@@ -61,6 +65,8 @@ my $HELPTEXT = qq~
            from the output.
    <mates>    - file containing mate-pair information as specified in the BAMBUS
            documentation.  This file replaces information provided in .xml files
+   <lib>      - file containing mean/stdev information for libraries. Overrides
+           .xml input.
    fasta1 ... fastan - list of files to be converted.
            The program assumes that for each program called <file>.seq there
            is a <file>.qual and a <file>.xml.  If no .xml file is present 
@@ -76,7 +82,7 @@ to a bank)
 provided (default $DEFAULT_QUAL)
 ~;
 
-$base->setHelpInfo($HELPTEXT);
+$base->setHelpText($HELPTEXT);
 
 my $outprefix;
 my $clears;
@@ -84,14 +90,16 @@ my $mates ;     # name of file containing mate pairs
 my $ID = 1;
 my $TEM_ID = 1;  # generic identifier for reads with no template
 my $silent;
-my $err = $base->TIGR_GetOptions("o=s"    => \$outprefix,
-				 "c=s"    => \$clears,
-				 "m=s"    => \$mates,
-                                 "i=i"    => \$ID,
-				 "silent" => \$silent,
-				 "min=i"    => \$MINSEQ,
-				 "max=i"    => \$MAXSEQ,
-				 "qual=i"   => \$DEFAULT_QUAL);
+my $libs;
+my $err = $base->getOptions("o=s"    => \$outprefix,
+			    "c=s"    => \$clears,
+			    "m=s"    => \$mates,
+			    "l=s"    => \$libs,
+			    "i=i"    => \$ID,
+			    "silent" => \$silent,
+			    "min=i"    => \$MINSEQ,
+			    "max=i"    => \$MAXSEQ,
+			    "qual=i"   => \$DEFAULT_QUAL);
 
 if ($err == 0) {
     $base->bail("Command line processing failed\n");
@@ -118,13 +126,32 @@ if ($outprefix =~ /\.afg$/){
     $fragname = "$outprefix.afg";
 }
 
+if (defined $libs){
+    open(LIB, $libs) || die ("Cannot open $libs: $!");
+    while (<LIB>){
+	chomp;
+	if (/^(\S+)\t(\d+.?\d*)\t(\d+.?\d*)$/){
+	    $means{$1} = $2;
+	    $stdevs{$1} = $3;
+	} else {
+	    print STDERR "Cannot parse line $. of $libs: $_\n";
+	}
+    }
+    close(LIB);
+}
+
 # get the clear ranges if externally determined
 if (defined $clears){
+#    print "Processing $clears\n";
     open(CLR, $clears) || $base->bail("Cannot open $clears: $!\n");
     while (<CLR>){
 	chomp;
 	my @fields = split(' ', $_);
+#	if ($fields[0] =~ /gnl\|ti\|/){
+	$fields[0] =~ s/gnl\|ti\|//;
+#	}
 	$clr{$fields[0]} = "$fields[1],$fields[2]";
+#	print "clear is $fields[0] $fields[1] $fields[2]\n";
     }
     close(CLR);
 }
@@ -202,7 +229,7 @@ if (defined $mates){
 	    my @recs = split('\t', $_);
 
 	    if ($#recs < 3 || $#recs > 4){
-		$base->logError("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n", 1);
+		$base->log("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n", 1);
 		next;
 	    }
 	    
@@ -223,7 +250,7 @@ if (defined $mates){
 	if (/^pair/){
 	    my @recs = split('\t', $_);
 	    if ($#recs != 2){
-		$base->logError("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n");
+		$base->log("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n");
 		next;
 	    }
 	    push(@pairregexp, "$recs[1] $recs[2]");
@@ -241,7 +268,7 @@ if (defined $mates){
 	# now we just deal with the pair lines
 	my @recs = split('\t', $_);
 	if ($#recs < 1 || $#recs > 2){
-	    $base->logError("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n");
+	    $base->log("Improperly formated line $. in \"$mates\".\nMaybe you didn't use TABs to separate fields\n");
 	    next;
 	}
 
@@ -251,7 +278,7 @@ if (defined $mates){
 	if (defined $recs[2]){
 	    $ins2lib{$insname} = $recs[2];
 	} else {
-	    $base->logError("$insname has no library\n");
+	    $base->log("$insname has no library\n");
 	}
 	
 	$end5{$insname} = $recs[0];
@@ -373,7 +400,24 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		next;
 	    }
 	    # allow XML or clear file to override the clear range info
-	    if (! exists $clr{$fid}) {$clr{$fid} = "$l,$r";}
+	    if (! exists $clr{$fid}) {
+		$clr{$fid} = "$l,$r";
+	    }
+	} elsif ($fhead =~ /^gnl\|ti\|(\d+).* name:(\S+)/) {
+#	    print STDERR "got ncbi: $1 $2\n";
+	    # NCBI formatted using keywords
+	    $fid = $1;
+	    $fidname = $2;
+	    if (defined $clears && 
+		! exists $clr{$fid} && 
+		! exists $clr{$fidname}) {
+		# clear range file decides with sequences stay and which go
+		$base->log("Couldn't find clear for $fid or $fidname\n");
+		next;
+	    }
+	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {
+		$clr{$fid} = $clr{$fidname};
+	    }
 	} elsif ($fhead =~ /^ ?(\S+) ?(\S+)?/){
 #	    print STDERR "got ncbi: $1 $2\n";
 # NCBI formatted, first is the trace id then the trace name
@@ -384,13 +428,18 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		$fidname = $fid;
 	    }
 
-	    if (defined $clears && ! exists $clr{$fid} && ! exists $clr{$fidname}) {
+	    if (defined $clears && 
+		! exists $clr{$fid} && 
+		! exists $clr{$fidname}) {
+		$base->log("Couldn't find clear for $fid or $fidname\n");
 		# clear range file decides which sequences stay and which go
 		next;
 	    }
-	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {$clr{$fid} = $clr{$fidname};}
+	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {
+		$clr{$fid} = $clr{$fidname};
+	    }
 	}
-
+	
 
 	my $recId = getId();
 
@@ -447,7 +496,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 			}
 		    }
 		    if ($found == 0){
-			$base->logError("Cannot find library for \"$insertname\"");
+			$base->log("Cannot find library for \"$insertname\"");
 		    }
 
 		    last;
@@ -500,7 +549,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    $seqlen = length($frec);
 	    if (defined $MAXSEQ && $seqlen > $MAXSEQ){
 		if (! defined $silent){
-		    $base->logError("skipping sequence $fidname due to length $seqlen\n");
+		    $base->log("skipping sequence $fidname due to length $seqlen\n");
 		}
 		delete $seq2id{$fidname};
 		delete $seq2id{$fid};
@@ -509,7 +558,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	}
 	if ($seq_rend - $seq_lend < $MINSEQ){
 	    if (! defined $silent){
-		$base->logError("skipping sequence $fidname since it's short\n");
+		$base->log("skipping sequence $fidname since it's short\n");
 	    }
 	    delete $seq2id{$fidname};
 	    delete $seq2id{$fid};	
@@ -523,7 +572,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	if (! exists $seq2ins{$fid} ||
 	    ! exists $ins2id{$seq2ins{$fid}}){
 	    if ($hasxml || defined $mates){
-		$base->logError("Found a sequence without a template - probably not in XML or mates file: $fidname\n");
+		$base->log("Found a sequence without a template - probably not in XML or mates file: $fidname\n");
 		next;
 	    } #else {
 	#	$seq2ins{$fid} = 0; #insid
@@ -545,7 +594,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    print TMPRED substr($caqual, $s, 60), "\n";
 	}
 	if ($seq_rend > $seqlen){
-	    $base->logError("right end of clear range $seq_rend > $seqlen - shrinking it\n");
+	    $base->log("right end of clear range $seq_rend > $seqlen - shrinking it\n");
 	    $seq_rend = $seqlen;
 	}
 	print TMPRED ".\n";
@@ -644,46 +693,47 @@ sub EndTag
     if ($tag eq "trace"){
 	if (! defined $seqId){
 	    if (! defined $silent){
-		print "trace has no name???\n";
+		$base->log("trace has no name???\n");
 	    }
 	}
-	if (defined $clears && ! defined $clr{$seqId}){
-	    return; # only handle reads with a clear range
-	}
+#	if (defined $clears && 
+#	    ! defined $clr{$seqId}){
+#	    return; # only handle reads with a clear range
+#	}
 	if (! defined $library){
 	    if (! defined $silent){
-		print "trace $seqId has no library\n";
+		$base->log("trace $seqId has no library\n");
 	    }
 	}
-	if (! defined $mean){
+	if (! defined $mean && ! exists $means{$library}){
 	    if (! defined $silent){
-		print "library $library has no mean - replacing with 33333\n";
+		$base->log("library $library has no mean - replacing with 33333\n");
 	    }
 	    $means{$library} = 33333;
 	    $mean = 33333;
-	} else {
+	} elsif (defined $mean && ! exists $means{$library}) { 
 	    $means{$library} = $mean;
 	}
 	
-	if (! defined $stdev){
+	if (! defined $stdev && ! exists $stdevs{$library}){
 	    if (! defined $silent){
-		print "library $library has no stdev - replacing with 10% of $mean\n";
+		$base->log("library $library has no stdev - replacing with 10% of $mean\n");
 	    }
 	    $stdevs{$library} = $mean * 0.1;
-	} else {
+	} elsif (defined $stdev && ! exists $stdevs{$library}){
 	    $stdevs{$library} = $stdev;
 	}
 	
 	if (! defined $template){
 	    $template = "TEM_" . $TEM_ID++;
 	    if (! defined $silent){
-		print "trace $seqId has no template.  Setting to $template\n";
+		$base->log("trace $seqId has no template.  Setting to $template\n");
 	    }
 	} 
 	
 	if (! defined $end) {
 	    if (! defined $silent){
-		print "trace $seqId has no end\n";
+		$base->log("trace $seqId has no end\n");
 	    }
 	}
 	
