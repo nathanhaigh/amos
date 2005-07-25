@@ -42,6 +42,10 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
   getInsertString(s, ins->m_active, ins, 0);
   getInsertString(s, !ins->m_active, ins, 1);
 
+ // if (ins->m_atile) cerr << "a:" << (ins->m_atile->offset + ins->m_atile->getGappedLength() -1) << endl;
+ // if (ins->m_btile) cerr << "b:" << (ins->m_btile->offset + ins->m_btile->getGappedLength() -1) << endl;
+ // cerr << "i:" << ins->m_roffset << endl;
+
   s += QString(" [") + (char)ins->m_state + "] ";
 
   s += " Actual: "   + QString::number(ins->m_actual);
@@ -242,5 +246,6 @@ void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int se
     s += " i:" + QString::number(iid);
     s += " c:" + QString::number(contigiid);
     s += "]";
+
   }
 }
