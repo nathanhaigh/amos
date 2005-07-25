@@ -18,7 +18,8 @@ dist_bin_SCRIPTS = \
 	preTA.pl \
 	pullTArchive.pl \
 	runTA.pl \
-	preassembleFrgs.pl
+	preassembleFrgs.pl \
+	ktrimfrg.pl
 # runAmos.pl 
 
 
