@@ -1,14 +1,15 @@
 # `minimus' - The AMOS Lightweight Assembler Pipeline
 
 #--------------------------------------- USER DEFINED VALUES ------------------#
-TGT = $(PREFIX).afg
+PREF = $(strip .afg PREFIX)
+TGT = $(PREF).afg
 #------------------------------------------------------------------------------#
 
 BINDIR  = /usr/local/bin
 
-BANK    = $(PREFIX).bank
-CONTIG  = $(PREFIX).contig
-FASTA   = $(PREFIX).fasta
+BANK    = $(PREF).bank
+CONTIG  = $(PREF).contig
+FASTA   = $(PREF).fasta
 
 INPUTS  = $(TGT)
 OUTPUTS = $(CONTIG) $(FASTA)
