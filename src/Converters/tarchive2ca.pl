@@ -3,12 +3,12 @@
 use strict;
 
 use AMOS::AmosLib;
-use TIGR::Foundation;
+use AMOS::AmosFoundation;
+use AMOS::ParseFasta;
 use XML::Parser;
 use IO::Handle;
 
-my $ENDTRIM = 40;
-my $MINSEQ = 100;
+my $MINSEQ = 64;
 my $MAXSEQ = 2048;
 
 my $tag; # XML tag
@@ -28,30 +28,34 @@ my %stdevs;
 my %inserts;
 my %clr;
 
-my $gzip = "/usr/local/bin/gzip";
+my $gzip = "gzip";
 
-my $base = new TIGR::Foundation;
+my $base = new AMOS::AmosFoundation;
 
 if (! defined $base) {
     die ("Walk, do not run, to the nearest exit!\n");
 }
 
+#$base->setLogLevel(1);
+
 my $VERSION = '1.0 ($Revision$)';
-$base->setVersionInfo($VERSION);
+$base->setVersion($VERSION);
+
+$base->setLogFile("tarchive2ca.log");
 
 my $HELPTEXT = qq~
     tarchive2ca -o <out_prefix> [-c <clear_ranges>] [-l <libinfo>] fasta1 ... fastan
-
-   <out_prefix> - prefix for the output files
-   <clear_ranges> - file containing clear ranges for the reads.  If this file
-           is provided, any sequence that does not appear in it is excluded
-           from the output.
-   <libinfo> - tab-delimited file of lib_id, mean, stdev
-   fasta1 ... fastan - list of files to be converted.
+    
+    <out_prefix> - prefix for the output files
+    <clear_ranges> - file containing clear ranges for the reads.  If this file
+    is provided, any sequence that does not appear in it is excluded
+    from the output.
+    <libinfo> - tab-delimited file of lib_id, mean, stdev
+    fasta1 ... fastan - list of files to be converted.
            The program assumes that for each program called <file>.seq there
            is a <file>.qual and a <file>.xml.  
     ~;
-$base->setHelpInfo($HELPTEXT);
+$base->setHelpText($HELPTEXT);
 
 
 my $outprefix;
@@ -59,11 +63,11 @@ my $clears;
 my $ID = 1;
 my $silent;
 my $libfile;
-my $err = $base->TIGR_GetOptions("o=s" => \$outprefix,
-				 "c=s" => \$clears,
-                                 "i=i" => \$ID,
-				 "l=s" => \$libfile,
-				 "silent" => \$silent);
+my $err = $base->getOptions("o=s" => \$outprefix,
+			    "c=s" => \$clears,
+			    "i=i" => \$ID,
+			    "l=s" => \$libfile,
+			    "silent" => \$silent);
 if ($err == 0) {
     $base->bail("Command line processing failed\n");
 }
@@ -83,6 +87,9 @@ my %seqs;
 my %seqId;
 my %lib ;
 
+if ($outprefix =~ /\.frg$/){
+    $outprefix =~ s/\.frg$//;
+}
 my $fragname = "$outprefix.frg";
 my $dstname = "$outprefix.dst";
 
@@ -156,7 +163,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
     }
 
     $xml->parse($XML);
-    
+
     close($XML);
 
     if (defined $clears){
@@ -164,6 +171,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	while (<CLR>){
 	    chomp;
 	    my @fields = split(' ', $_);
+	    $fields[0] =~ s/gnl\|ti\|//;
 	    $clr{$fields[0]} = "$fields[1],$fields[2]";
 	}
 	close(CLR);
@@ -184,50 +192,83 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	open(QUAL, "$qualname") ||
 	    $base->bail("Cannot open $qualname: $!\n");
     }
-    
+
     if (! defined $silent){
 	print STDERR "Parsing $seqname and $qualname\n";
     }
 
-    my ($frec, $fhead) = getFastaContent(\*SEQ, undef);
-    my ($qrec, $qhead) = getFastaContent(\*QUAL, 1);
-    
-    while (defined $fhead){
-	$fhead =~ />(\S+) ?(\S+)?/;
-	my $fid = $1;
-	my $fidname = $2;
+    my $seqparse = new AMOS::ParseFasta(\*SEQ);
+    my $qualparse = new AMOS::ParseFasta(\*QUAL, ">", " ");
 
-	if (! defined $fidname || $fidname eq "bases"){
-	    $fidname = $fid;
+    my $fhead; my $frec;
+    my $qhead; my $qrec;
+    while (($fhead, $frec) = $seqparse->getRecord()){
+	my $qid;
+	my $fid;
+	my $fidname;
+
+	($qhead, $qrec) = $qualparse->getRecord();
+	$fhead =~ /^(\S+)/;
+	$fid = $1;
+	$qhead =~ /^(\S+)/;
+	$qid = $1;
+	if ($fid != $qid) {
+	    $base->bail("fasta and qual records have different IDs: $fid vs $qid\n");
 	}
 	
-	$qhead =~ />(\S+)/;
-	my $qid = $1;
-	
-	if ($fid != $qid){
-	    die ("fasta and qual records have different IDs: $fid vs $qid\n");
-	}
-
-	# if TIGR formatted, fetch the clear range
-	if ($fhead =~ />(\S+) \d+ \d+ \d+ (\d+) (\d+)/){
+	if ($fhead =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
+# if TIGR formatted, fetch the clear range
+#	    print STDERR "got TIGR: $1 $2 $3\n";
 	    my $l = $2;
 	    my $r = $3;
 	    $l--;
 	    $fidname = $1;
-	    $clr{$fidname} = "$l,$r";
-	}
+	    $fid = $1;
+	    if (defined $clears && ! exists $clr{$fid}){
+		# clear range file decides which sequences stay and which go
+		next;
+	    }
+	    # allow XML or clear file to override the clear range info
+	    if (! exists $clr{$fid}) {
+		$clr{$fid} = "$l,$r";
+	    }
+	} elsif ($fhead =~ /^gnl\|ti\|(\d+).* name:(\S+)/) {
+#	    print STDERR "got ncbi: $1 $2\n";
+	    # NCBI formatted using keywords
+	    $fid = $1;
+	    $fidname = $2;
+	    if (defined $clears && 
+		! exists $clr{$fid} && 
+		! exists $clr{$fidname}) {
+		# clear range file decides with sequences stay and which go
+		$base->log("Couldn't find clear for $fid or $fidname\n");
+		next;
+	    }
+	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {
+		$clr{$fid} = $clr{$fidname};
+	    }
+	} elsif ($fhead =~ /^ ?(\S+) ?(\S+)?/){
+#	    print STDERR "got ncbi: $1 $2\n";
+# NCBI formatted, first is the trace id then the trace name
+	    $fid = $1;
+	    $fidname = $2;
 
-	($frec, $fhead) = getFastaContent(\*SEQ, undef);
-	($qrec, $qhead) = getFastaContent(\*QUAL, 1);
-	
+	    if (! defined $fidname || $fidname eq "bases"){
+		$fidname = $fid;
+	    }
 
-	if (eof(SEQ)){
-	    $frec .= $fhead;
-	    $qrec .= " $qhead";
-	    $fhead = undef;
-	}
-#	printFastaSequence(\*SEQ, "$fid 0 0 0 $seq_lend $seq_rend", $frec);
-#	printFastaQual(\*QUAL, "$fid", $qrec);
+	    if (defined $clears && 
+		! exists $clr{$fid} && 
+		! exists $clr{$fidname}) {
+		$base->log("Couldn't find clear for $fid or $fidname\n");
+		# clear range file decides which sequences stay and which go
+		next;
+	    }
+	    if (exists $clr{$fidname} && ! exists $clr{$fid}) {
+		$clr{$fid} = $clr{$fidname};
+	    }
+	} # done parsing head
+
 
 	my $recId = getId();
 
@@ -247,36 +288,20 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    $caqual .= chr(ord('0') + $qv);
 	}
 	
-	if (! defined $silent){
-	    print STDERR "$recId $fidname\r";
+	if (! defined $silent && ($recId % 100 == 0)){
+	    print STDERR "$recId\r";
 	}
 	
-	if (! exists $clr{$fidname}){
-	    if (defined $clears){
-		next;
-	    }
-	    if (! defined $silent){
-		print "$fid has no clear range\n";
-	    }
-	    $clr{$fidname} = "0,$seqlen";
-	} 
+	if (! exists $clr{$fid}){
+	    $clr{$fid} = "0,$seqlen";
+	}
 
 	$seqId{$fidname} = $recId;
 
 	my $seq_lend;
 	my $seq_rend;
-	if (! defined $clears){
-	    ($seq_lend, $seq_rend) = split(',', $clr{$fidname});
-	} else {
-	    if (! exists $clr{$fid}) {
-		if (! defined $silent) {
-		    print "sequence $fidname has no clear range\n";
-		}
-		delete $seqId{$fidname};
-		next;
-	    }
-	    ($seq_lend, $seq_rend) = split(',', $clr{$fid});
-	}
+
+	($seq_lend, $seq_rend) = split(',', $clr{$fid});
 
 	if ($seqlen > $MAXSEQ){
 	    $frec = substr($frec, 0, $seq_rend + 1);
@@ -284,7 +309,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    $seqlen = length($frec);
 	    if ($seqlen > $MAXSEQ){
 		if (! defined $silent){
-		    print "skipping sequence $fidname due to length $seqlen\n";
+		    $base->log("skipping sequence $fidname due to length $seqlen\n");
 		}
 		delete $seqId{$fidname};
 		next;
@@ -292,7 +317,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	}
 	    if ($seq_rend - $seq_lend < $MINSEQ){
 		if (! defined $silent){
-		print "skipping sequence $fidname since it's short\n";
+		$base->log("skipping sequence $fidname since it's short\n");
 	    }
 	    delete $seqId{$fidname};
 	    next;
@@ -366,7 +391,7 @@ while (my ($lib, $mean) = each %means){
 	    ! exists $seqId{$end5{$tmplte}} ||
 	    ! exists $seqId{$end3{$tmplte}}){
 	    if (! defined $silent){
-		print "Template $tmplte ($tem) does not have both mates\n";
+		$base->log("Template $tmplte ($tem) does not have both mates\n");
 	    }
 	} else {
             $seentem{$tmplte} = 1;
@@ -429,22 +454,22 @@ sub EndTag
     if ($tag eq "trace"){
 	if (! defined $seqId){
 	    if (! defined $silent){
-		print "trace has no name???\n";
+		$base->log("trace has no name???\n");
 	    }
 	}
 	if (! defined $library){
 	    if (! defined $silent){
-		print "trace $seqId has no library\n";
+		$base->log("trace $seqId has no library\n");
 	    }
 	}
         if (! defined $mean  &&  ! exists $means{$library}){
             if (! defined $silent){
-                print "library $library has no mean - replacing with 33333\n";
+                $base->log("library $library has no mean - replacing with 33333\n");
             }
             $means{$library} = 33333; 
             $mean = 33333;
         } else {
-            if (! exists $means{$library}){
+            if (defined $mean && ! exists $means{$library}){
                 $means{$library} = $mean;
             } else {
                 $mean = $means{$library};
@@ -453,10 +478,10 @@ sub EndTag
         
         if (! defined $stdev  &&  ! exists $stdevs{$library}){
             if (! defined $silent){
-                print "library $library has no stdev - replacing with 10% of $mean\n";
+                $base->log("library $library has no stdev - replacing with 10% of $mean\n");
             }
-            $stdevs{$library} = $mean * 0.1;
-            $stdev = $mean * 0.1;
+            $stdevs{$library} = $means{$library} * 0.1;
+            $stdev = $means{$library} * 0.1;
         } else {
             if (! exists $stdevs{$library}){
                 $stdevs{$library} = $stdev;
@@ -467,13 +492,13 @@ sub EndTag
 	
 	if (! defined $template){
 	    if (! defined $silent){
-		print "trace $seqId has no template\n";
+		$base->log("trace $seqId has no template\n");
 	    }
 	} 
 	
 	if (! defined $end) {
 	    if (! defined $silent){
-		print "trace $seqId has no end\n";
+		$base->log("trace $seqId has no end\n");
 	    }
 	}
 	
@@ -495,7 +520,7 @@ sub EndTag
 	
 	if (defined $clipl && defined $clipr){
 	    $clipr--;
-	    $clr{$seqId} = "$clipl,$clipr";
+	    if (! defined $clears) {$clr{$seqId} = "$clipl,$clipr";}
 	}
     }
 
@@ -540,33 +565,6 @@ sub Text
 sub pi
 {
 
-}
-
-sub getFastaContent
-{
-    my $file = shift;
-    my $isqual = shift;
-    
-#    print STDERR "in $file\n";
-
-    if (eof($file)){
-	return undef;
-    }
-
-    $_ = <$file>;
-
-    chomp;
-    my $outline = "";
-
-    while (! eof($file) && $_ !~ /^>/){
-	if (defined $isqual){
-	    $outline .= " ";
-	}
-	$outline .= $_;
-	$_ = <$file>;
-	chomp;
-    }
-    return ($outline, $_);
 }
 
 sub printFragHeader
