@@ -6,7 +6,8 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	zipcontigs \
     revcontig \
-    insertgapcontig
+    insertgapcontig \
+    trimcontig
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -15,7 +16,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_srcdir)/src/Foundation
 
-##-- simple-overlap
+##-- insertgapcontig
 insertgapcontig_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
@@ -24,7 +25,8 @@ insertgapcontig_LDADD = \
 insertgapcontig_SOURCES = \
 	insertgapcontig.cc 
 
-##-- simple-overlap
+
+##-- revcontig
 revcontig_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
@@ -34,7 +36,19 @@ revcontig_SOURCES = \
 	revcontig.cc 
 
 
-##-- simple-overlap
+
+##-- trimcontig
+trimcontig_LDADD = \
+	$(top_builddir)/src/Align/libAlign.a \
+	$(top_builddir)/src/Slice/libSlice.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+trimcontig_SOURCES = \
+	trimcontig.cc 
+
+
+##-- zipcontigs
 zipcontigs_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
@@ -43,4 +57,3 @@ zipcontigs_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 zipcontigs_SOURCES = \
 	zipcontigs.cc 
-##-- END OF MAKEFILE --##
