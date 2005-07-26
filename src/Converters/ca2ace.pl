@@ -71,9 +71,9 @@ if (! defined $outfile){
 
 $frgfile = "$prefix.frg";
 
-# get rid of trailing slashes
-$chromodir =~ s/\/+$//;
-$phddir =~ s/\/+$//;
+# append trailing slashes
+$chromodir =~ s/[^\/]$/\// unless $chromodir eq "";
+$phddir =~ s/[^\/]$/\// unless $phddir eq "";;
 
 
 # Here's the process
@@ -331,8 +331,8 @@ while (my $record = getRecord(\*IN)){
 		$end5++; #all coordinates are 1 based
 		print SEQOUT sprintf("QA %d %d %d %d\n", 
 				     $end5, $end3, $end5, $end3);
-		my $chrmfile = $chromodir . "/$seqName";
-		my $phdfile = $phddir . "/$seqName.phd.1";
+		my $chrmfile = $chromodir . "$seqName";
+		my $phdfile = $phddir . "$seqName.phd.1";
 		my $time;
 		
 		if (-r $phdfile){
