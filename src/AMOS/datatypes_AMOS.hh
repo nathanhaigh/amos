@@ -344,7 +344,7 @@ struct Tile_t : public IMessagable_t
   //!
   //! \return The gapped length of the tile
   //!
-  Size_t getGappedLength ( )
+  Size_t getGappedLength ( ) const
   {
     return (range . getLength( ) + gaps . size( ));
   }
