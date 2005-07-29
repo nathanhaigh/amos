@@ -10,6 +10,7 @@
 #include <vector>
 
 using namespace std;
+using namespace AMOS;
 
 
 #define DIV(a,b) (b?(double(a)/b):0.0)
@@ -59,19 +60,108 @@ void AssemblyStats::loadTable()
   QCursor orig = cursor();
   m_currow = 0;
 
-  if (m_datastore->scaffold_bank)
+  if (m_datastore->scaffold_bank.isOpen())
   {
+    vector<int> bases;
+    vector<int> spans;
+    vector<int> contigs;
+    int totalcontigs = 0;
+    int totalbases = 0;
+    int totalspan = 0;
+    int numscaffolds = 0;
+
+    int largescaffolds = 0;
+    int largescaffoldspan = 0;
+    int largescaffoldThreshold = 2000;
+
+    AMOS::Scaffold_t scf;
+
+    m_datastore->scaffold_bank.seekg(1);
+    while (m_datastore->scaffold_bank >> scf)
+    {
+      int s = scf.getSpan();
+      int b = 0;
+      vector<Tile_t>::const_iterator ci;
+      const vector<Tile_t> & ctiling = scf.getContigTiling();
+      for (ci =  ctiling.begin();
+           ci != ctiling.end();
+           ci++)
+      {
+        b+=ci->getGappedLength();
+      }
+
+      totalcontigs += ctiling.size();
+      totalbases += b;
+      totalspan += s;
+
+      contigs.push_back(ctiling.size());
+      spans.push_back(s);
+      bases.push_back(b);
+
+      numscaffolds++;
+
+      if (s >= largescaffoldThreshold)
+      {
+        largescaffolds++;
+        largescaffoldspan += s;
+      }
+    }
+
+    sort(contigs.begin(), contigs.end(), less<int>());
+    sort(bases.begin(),   bases.end(),   less<int>());
+    sort(spans.begin(),   spans.end(),   less<int>());
+
+    int n50bases = 0;
+
+    int basesthreshold = totalbases/2;
+    int curbases = 0;
+
+    for (n50bases = numscaffolds-1; n50bases >= 0; n50bases--)
+    {
+      curbases += bases[n50bases];
+      if (curbases >= basesthreshold)
+      {
+        break;
+      }
+    }
+
+
+
+
+
+
     addRow("[Scaffolds]", "");
-    addRow("TotalScaffolds", m_datastore->scaffold_bank.getSize());
+    addRow("TotalScaffolds", numscaffolds);
+    addRow("TotalContigsInScaffolds", totalcontigs);
+    addRow("MeanContigsPerScaffold", DIV(totalcontigs, numscaffolds));
+    addRow("MinContigsPerScaffold", contigs[0]);
+    addRow("MaxContigsPerScaffold", contigs[contigs.size()-1]);
+    addRow("", "");
+
+    addRow("TotalBasesInScaffolds", totalbases);
+    addRow("MeanBasesInScaffolds", DIV(totalbases, numscaffolds));
+    addRow("MaxBasesInScaffolds", bases[numscaffolds-1]);
+    addRow("N50ScaffoldBases", bases[n50bases]);
+    addRow("", "");
+
+
+    addRow("TotalSpanOfScaffolds", totalspan);
+    addRow("MeanSpanOfScaffolds", DIV(totalspan, numscaffolds));
+    addRow("MinScaffoldSpan", spans[0]);
+    addRow("MaxScaffoldSpan", spans[numscaffolds-1]);
+    addRow("IntraScaffoldGaps", totalcontigs - numscaffolds);
+    addRow("2KbScaffolds", largescaffolds);
+    addRow("2KbScaffoldSpan", largescaffoldspan);
+    addRow("2KbScaffoldPercent", DIV(largescaffoldspan, totalspan) * 100.0);
+    addRow("MeanSequenceGapSize", DIV(totalspan-totalbases, totalcontigs-numscaffolds));
 
     addRow("", "");
   }
 
   int LARGETHRESHOLD = 10000;
 
-  if (m_datastore->contig_bank)
+  if (m_datastore->contig_bank.isOpen())
   {
-    m_datastore->contig_bank.seekg(1);
     AMOS::Contig_t ctg;
     vector<int> sizes;
     vector<int> largesizes;
@@ -88,6 +178,7 @@ void AssemblyStats::loadTable()
     int smallreads = 0;
 
 
+    m_datastore->contig_bank.seekg(1);
     while (m_datastore->contig_bank >> ctg)
     {
       int l = ctg.getLength();
@@ -111,7 +202,7 @@ void AssemblyStats::loadTable()
       }
     }
 
-    sort(sizes.begin( ), sizes.end( ), greater<int>( ) );
+    sort(sizes.begin( ), sizes.end( ), less<int>( ) );
 
     int thresh = totalsize / 2;
     int cum = 0;
