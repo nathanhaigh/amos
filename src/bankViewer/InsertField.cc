@@ -188,6 +188,8 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       else                  { s += " Read"; }
 
       s += " Coverage " + QString::number(citem->y() + citem->height() - citem->m_coveragePlot[i].y());
+      s += " [" + QString::number(citem->m_meanLevel) + "]";
+
       jump = true;
       emitstatus = true;
     }

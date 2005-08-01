@@ -679,10 +679,14 @@ void InsertWidget::paintCanvas()
 
     int curloffset = 0, curroffset = 0;
 
+    int totalinsertlen = 0;
+
     for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
     {
       curloffset = (*ii)->m_loffset;
       curroffset = (*ii)->m_roffset;
+
+      totalinsertlen += (curroffset - curloffset + 1);
 
       insertCL.addEndpoints(curloffset, curroffset);
     }
@@ -693,19 +697,35 @@ void InsertWidget::paintCanvas()
     QPointArray readCoverage(m_tiling.size()*4); 
     CoverageLevel readCL(readCoverage);
 
+    int totalbases = 0;
+    int readspan = 0;
+
     vector<Tile_t>::iterator ti;
     for (ti = m_tiling.begin(); ti != m_tiling.end(); ti++)
     {
+      int len = ti->getGappedLength();
+
       curloffset = ti->offset;
-      curroffset = ti->offset + ti->range.getLength() + ti->gaps.size() - 1;
+      curroffset = ti->offset + len - 1;
+
+      if (curroffset > readspan) { readspan = curroffset; }
+
+      totalbases += len;
 
       readCL.addEndpoints(curloffset, curroffset);
     }
 
     readCL.finalize();
 
+    double meaninsertcoverage = ((double)totalinsertlen) / (insertCoverage[insertCoverage.count()-1].x() - insertCoverage[0].x());
+    double meanreadcoverage = ((double)totalbases) / readspan;
+    cerr << endl;
+    cerr << "Mean read coverage: " << meanreadcoverage << endl;
+    cerr << "Mean insert coverage: " << meaninsertcoverage << endl;
+
     insertCL.normalize(m_hscale, m_hoffset, voffset + insertCL.m_maxdepth);
     readCL.normalize(m_hscale, m_hoffset, voffset + insertCL.m_maxdepth);
+
 
 
     // You can't paint the entire coverage plot in one go because
@@ -715,24 +735,30 @@ void InsertWidget::paintCanvas()
     int i = 0;
     while (1)
     {
+      // Insert Coverage
       int size = min(1000, (int)(insertCoverage.count() - i));
       QPointArray window(size);
       for (int j = 0; j < size; j++)
       {
         window[j] = insertCoverage[i+j];
       }
+
+      int width = window[size-1].x()-window[0].x()+1;
       new CoverageCanvasItem(window[0].x(), voffset,
-                             window[size-1].x()-window[0].x()+1, insertCL.m_maxdepth, 
-                             true, window, m_icanvas);
+                             width, insertCL.m_maxdepth, 
+                             true, window, m_icanvas, meaninsertcoverage);
+
       i+= size;
 
       if (i == insertCoverage.count()) { break; }
       i--;
     }
 
+
     i = 0;
     while (1)
     {
+      // Read Coverage
       int size = min(1000, (int)(readCoverage.count() - i));
       QPointArray window(size);
       for (int j = 0; j < size; j++)
@@ -744,7 +770,8 @@ void InsertWidget::paintCanvas()
 
       new CoverageCanvasItem(window[0].x(), voffset,
                              width, insertCL.m_maxdepth, 
-                             false, window, m_icanvas);
+                             false, window, m_icanvas, meanreadcoverage);
+
       i+= size;
 
       if (i == readCoverage.count()) { break; }

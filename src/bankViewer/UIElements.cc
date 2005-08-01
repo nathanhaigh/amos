@@ -30,6 +30,9 @@ QColor UIElements::color_featorf(Qt::white);
 QColor UIElements::color_featsnp(Qt::red);
 QColor UIElements::color_featdefault(Qt::white);
 
+QColor UIElements::color_insertcoverage(Qt::magenta);
+QColor UIElements::color_readcoverage(Qt::green);
+
 
 QColor & UIElements::getSNPColoring(char base, bool dark)
 {

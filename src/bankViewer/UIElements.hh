@@ -45,6 +45,9 @@ public:
   static QColor color_featorf;
   static QColor color_featsnp;
   static QColor color_featdefault;
+
+  static QColor color_insertcoverage;
+  static QColor color_readcoverage;
 };
 
 
