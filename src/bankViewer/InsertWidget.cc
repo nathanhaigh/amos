@@ -23,26 +23,39 @@ typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 class CoverageLevel
 {
 public:
-  CoverageLevel(QPointArray & coverage):
-     m_coverage(coverage),
+  CoverageLevel(int numpoints, ID_t libid, Distribution_t dist) :
+     m_coverage(numpoints),
+     m_cestat(numpoints),
+     m_libid(libid),
+     m_dist(dist),
      m_maxdepth(0),
-     m_curpos(0)
+     m_curpos(0),
+     m_sum(0)
   { }
 
-  typedef std::multiset<int> EndPoints;
+  typedef std::multimap<int, int> EndPoints;
+
+  QPointArray m_coverage;
+  QPointArray m_cestat;
+
+  ID_t m_libid;
+  Distribution_t m_dist;
+
+  int m_maxdepth;
+  int m_curpos;
 
   void addEndpoints(int curloffset, int curroffset)
   {
     EndPoints::iterator vi, vi2;
+    int eps = m_endpoints.size();
 
     // find end points that have already passed
     vi = m_endpoints.begin();
     while (vi != m_endpoints.end())
     {
-      if (*vi <= curloffset) 
+      if (vi->first <= curloffset) 
       { 
-        m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size());
-        m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size()-1);
+        eps = handlePoint(vi->first, eps, -vi->second);
         vi2 = vi; vi2++; m_endpoints.erase(vi); vi = vi2;
       }
       else
@@ -51,14 +64,17 @@ public:
       }
     }
 
-    // Add this insert's beginning and end
-    m_coverage[m_curpos++]=QPoint(curloffset, m_endpoints.size());
-    m_coverage[m_curpos++]=QPoint(curloffset, m_endpoints.size()+1);
-    m_endpoints.insert(curroffset);
+    int len = curroffset - curloffset + 1;
 
-    if (m_endpoints.size() > (unsigned int) m_maxdepth) 
-    { 
-      m_maxdepth = m_endpoints.size(); 
+    // Add this insert's beginning and end
+    eps = handlePoint(curloffset, eps, +len);
+    m_endpoints.insert(make_pair(curroffset, len));
+
+    if (eps > m_maxdepth) { m_maxdepth = eps; }
+
+    if (eps != m_endpoints.size())
+    {
+      cerr << "eps: " << eps << " m_endpoints.size():" << m_endpoints.size() << endl;
     }
   }
 
@@ -66,31 +82,91 @@ public:
   {
     EndPoints::iterator vi, vi2;
 
+    int eps = m_endpoints.size();
+
     // Handle remaining end points
-    vi = m_endpoints.begin();
-    while (vi != m_endpoints.end())
+    
+    for (EndPoints::iterator vi = m_endpoints.begin(); vi != m_endpoints.end(); vi++)
     {
-      m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size());
-      m_coverage[m_curpos++]=QPoint(*vi, m_endpoints.size()-1);
-      vi2 = vi; vi2++; m_endpoints.erase(vi); vi = vi2;
+      eps = handlePoint(vi->first, eps, -vi->second);
+    }
+
+    m_endpoints.clear();
+
+    if (eps != 0 || m_endpoints.size() != 0)
+    {
+      cerr << "not zero eps: " << eps << " m_endpoints.size():" << m_endpoints.size() << endl;
+    }
+
+    if (m_sum != 0)
+    {
+      cerr << "not zero sum: " << m_sum << endl;
     }
   }
 
-  void normalize(float hscale, int hoffset, int voffset)
+  void finalizeCE(int vheight)
   {
-    int size = m_coverage.size();
+    int half = vheight / 2;
 
+    for (int i = 0; i < m_curpos; i++)
+    {
+      double numerator = m_cestat[i].y() - m_dist.mean;
+      double denominator = m_dist.sd * sqrt((double)m_coverage[i].y());
+      double val = (denominator) ? (numerator)/(denominator) :  numerator / 0.0001;
+
+      if (m_coverage[i].y() == 0) { val = 0; }
+
+      val *= 100;
+      val /= 2;
+
+      if (val > half)       { val = half; }
+      else if (val < -half) { val = -half; }
+
+      val += half;
+
+      m_cestat[i].setY((int)val);
+      //cerr << "lib: " << m_libid << " x: " << m_cestat[i].x() << " ce: " << m_cestat[i].y() 
+      //     << " val: " << val << " = " << numerator << " / " << denominator << endl;
+    }
+  }
+
+  void normalize(float hscale, int hoffset, int voffset, bool adjustCE)
+  {
     // Adjust coordinates for painting
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < m_curpos; i++)
     {
       m_coverage[i].setX((int)((m_coverage[i].x()+hoffset) * hscale));
       m_coverage[i].setY(voffset-m_coverage[i].y());
+
+      if (adjustCE)
+      {
+        m_cestat[i].setX((int)((m_cestat[i].x()+hoffset) * hscale));
+        m_cestat[i].setY(voffset-m_cestat[i].y());
+      }
     }
   }
 
-  QPointArray & m_coverage;
-  int m_maxdepth;
-  int m_curpos;
+
+private:
+  int handlePoint(int pos, int eps, int sumdelta)
+  {
+    m_coverage[m_curpos] = QPoint(pos, eps); 
+    m_cestat[m_curpos]   = QPoint(pos, eps ? m_sum/eps : 0); 
+    m_curpos++; 
+
+    if (sumdelta < 0) { eps--; }
+    else              { eps++; }
+
+    m_sum += sumdelta;
+
+    m_coverage[m_curpos] = QPoint(pos, eps); 
+    m_cestat[m_curpos]   = QPoint(pos, eps ? m_sum/eps : 0); 
+    m_curpos++; 
+
+    return eps;
+  }
+
+  int m_sum;
 
   EndPoints m_endpoints;
 };
@@ -602,6 +678,40 @@ void InsertWidget::initializeTiling()
   paintCanvas();
 }
 
+
+// You can't paint the entire coverage plot in one go because
+// of the silly 16 bit limitation in qpainter/x11, so break the coverage
+// into small pieces, and draw each separately.
+    
+void InsertWidget::paintCoverage(QPointArray & arr, int arrLen, 
+                                 int voffset, int vheight,
+                                 int libid,
+                                 double baseLevel,
+                                 QColor color)
+{
+  int i = 0;
+  while (1)
+  {
+    int size = min(1000, (arrLen - i));
+    QPointArray window(size);
+    for (int j = 0; j < size; j++)
+    {
+      window[j] = arr[i+j];
+    }
+
+    int width = window[size-1].x()-window[0].x()+1;
+
+    new CoverageCanvasItem(window[0].x(), voffset,
+                           width, vheight, 
+                           libid, baseLevel,
+                           window, m_icanvas, color);
+    i+= size;
+
+    if (i >= arrLen) { break; }
+    i--;
+  }
+}
+
 void InsertWidget::paintCanvas()
 {
   QApplication::setOverrideCursor( QCursor(Qt::WaitCursor) );
@@ -669,16 +779,42 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  if (m_coveragePlot)
+  int m_cestats = 1;
+
+  typedef map <ID_t, QColor> LibColorMap;
+  LibColorMap libColorMap;
+
+  if (m_colorByLibrary || m_cestats)
+  {
+    unsigned int type = 0;
+
+    DataStore::LibLookup_t::iterator li;
+    for (li =  m_datastore->m_libdistributionlookup.begin();
+         li != m_datastore->m_libdistributionlookup.end();
+         li++)
+    {
+      libColorMap[li->first] = UIElements::getInsertColor((Insert::MateState)Insert::allstates[type]);
+      type++;
+
+      if (type >= strlen(Insert::allstates))
+      {
+        type = 0;
+      }
+    }
+  }
+  
+  if (m_coveragePlot || m_cestats)
   {
     cerr << " coverage";
 
     // coverage will change at each endpoint of each insert
-    QPointArray insertCoverage(m_inserts.size()*4); 
-    CoverageLevel insertCL(insertCoverage);
+    CoverageLevel insertCL(m_inserts.size()*4, 0, Distribution_t());
+
+    typedef map<ID_t, CoverageLevel> LibStats;
+    LibStats libStats;
+    LibStats::iterator li;
 
     int curloffset = 0, curroffset = 0;
-
     int totalinsertlen = 0;
 
     for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
@@ -689,13 +825,32 @@ void InsertWidget::paintCanvas()
       totalinsertlen += (curroffset - curloffset + 1);
 
       insertCL.addEndpoints(curloffset, curroffset);
+
+      if (m_cestats && ((*ii)->m_acontig == (*ii)->m_bcontig))
+      {
+        li = libStats.find((*ii)->m_libid);
+
+        if (li == libStats.end())
+        {
+          li = libStats.insert(make_pair((*ii)->m_libid, CoverageLevel(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
+        }
+
+        li->second.addEndpoints(curloffset, curroffset);
+      }
+    }
+
+    if (m_cestats)
+    {
+      for (li = libStats.begin(); li != libStats.end(); li++)
+      {
+        li->second.finalize();
+      }
     }
 
     insertCL.finalize();
-    int covwidth = (int)((insertCoverage[insertCoverage.count()-1].x() + m_hoffset) * m_hscale);
+    int covwidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
 
-    QPointArray readCoverage(m_tiling.size()*4); 
-    CoverageLevel readCL(readCoverage);
+    CoverageLevel readCL(m_tiling.size()*4, 0, Distribution_t());
 
     int totalbases = 0;
     int readspan = 0;
@@ -717,81 +872,57 @@ void InsertWidget::paintCanvas()
 
     readCL.finalize();
 
-    double meaninsertcoverage = ((double)totalinsertlen) / (insertCoverage[insertCoverage.count()-1].x() - insertCoverage[0].x());
+    double meaninsertcoverage = ((double)totalinsertlen) / (insertCL.m_coverage[insertCL.m_curpos-1].x() - insertCL.m_coverage[0].x());
     double meanreadcoverage = ((double)totalbases) / readspan;
     cerr << endl;
     cerr << "Mean read coverage: " << meanreadcoverage << endl;
     cerr << "Mean insert coverage: " << meaninsertcoverage << endl;
 
-    insertCL.normalize(m_hscale, m_hoffset, voffset + insertCL.m_maxdepth);
-    readCL.normalize(m_hscale, m_hoffset, voffset + insertCL.m_maxdepth);
+    int vheight = max(insertCL.m_maxdepth, 100);
 
+    insertCL.normalize(m_hscale, m_hoffset, voffset + vheight, false);
+    readCL.normalize(m_hscale, m_hoffset, voffset + vheight, false);
 
+    if (m_coveragePlot)
+    {
+      paintCoverage(insertCL.m_coverage, insertCL.m_curpos,
+                    voffset, vheight,
+                    -1, meaninsertcoverage, 
+                    UIElements::color_insertcoverage);
 
-    // You can't paint the entire coverage plot in one go because
-    // of the silly 16 bit limitation in qpainter/x11, so break the coverage
-    // into small pieces, and draw each separately.
+      paintCoverage(readCL.m_coverage, readCL.m_curpos,
+                    voffset, vheight, 
+                    -2, meanreadcoverage,
+                    UIElements::color_readcoverage);
+    }
+
+    if (m_cestats)
+    {
+      for (li = libStats.begin(); li != libStats.end(); li++)
+      {
+        li->second.finalizeCE(vheight);
+        li->second.normalize(m_hscale, m_hoffset, voffset + vheight, true);
+        paintCoverage(li->second.m_cestat, li->second.m_curpos,
+                      voffset, vheight,
+                      (int)li->second.m_libid, (int)vheight/2,
+                      (libColorMap[li->second.m_libid]));
+      }
+    }
 
     int i = 0;
     while (1)
     {
-      // Insert Coverage
-      int size = min(1000, (int)(insertCoverage.count() - i));
-      QPointArray window(size);
-      for (int j = 0; j < size; j++)
-      {
-        window[j] = insertCoverage[i+j];
-      }
-
-      int width = window[size-1].x()-window[0].x()+1;
-      new CoverageCanvasItem(window[0].x(), voffset,
-                             width, insertCL.m_maxdepth, 
-                             true, window, m_icanvas, meaninsertcoverage);
-
-      i+= size;
-
-      if (i == insertCoverage.count()) { break; }
-      i--;
-    }
-
-
-    i = 0;
-    while (1)
-    {
-      // Read Coverage
-      int size = min(1000, (int)(readCoverage.count() - i));
-      QPointArray window(size);
-      for (int j = 0; j < size; j++)
-      {
-        window[j] = readCoverage[i+j];
-      }
-
-      int width = window[size-1].x()-window[0].x()+1;
-
-      new CoverageCanvasItem(window[0].x(), voffset,
-                             width, insertCL.m_maxdepth, 
-                             false, window, m_icanvas, meanreadcoverage);
-
-      i+= size;
-
-      if (i == readCoverage.count()) { break; }
-      i--;
-    }
-
-    i = 0;
-    while (1)
-    {
       int size = min(1000, covwidth - i);
       QCanvasRectangle * covbg = new QCanvasRectangle(i, voffset, 
-                                                      size+1, insertCL.m_maxdepth, m_icanvas);
+                                                      size+1, vheight, m_icanvas);
       covbg->setBrush(QColor(60,60,60));
       covbg->setPen(QColor(60,60,60));
       covbg->setZ(-2);
       covbg->show();
 
       QCanvasLine * base = new QCanvasLine(m_icanvas);
-      base->setPoints(i, voffset+insertCL.m_maxdepth, 
-                      i+size, voffset+insertCL.m_maxdepth);
+      base->setPoints(i, voffset+vheight,
+                      i+size, voffset+vheight);
       base->setPen(Qt::white);
       base->setZ(1);
       base->show();
@@ -801,7 +932,7 @@ void InsertWidget::paintCanvas()
       i-=100;
     }
 
-    voffset += insertCL.m_maxdepth + 2*gutter;
+    voffset += vheight + 2*gutter;
   }
 
   if (1)
@@ -896,27 +1027,6 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  typedef map <ID_t, QColor> LibColorMap;
-  LibColorMap libColorMap;
-
-  if (m_colorByLibrary)
-  {
-    unsigned int type = 0;
-
-    DataStore::LibLookup_t::iterator li;
-    for (li =  m_datastore->m_libdistributionlookup.begin();
-         li != m_datastore->m_libdistributionlookup.end();
-         li++)
-    {
-      libColorMap[li->first] = UIElements::getInsertColor((Insert::MateState)types[type]);
-      type++;
-
-      if (type >= types.size())
-      {
-        type = 0;
-      }
-    }
-  }
 
   int m_drawInserts = 1;
   if (m_drawInserts)

@@ -6,15 +6,20 @@
 class CoverageCanvasItem : public QCanvasRectangle
 {
 public:
-  CoverageCanvasItem(int x, int y, int width, int height, bool isClone,
-                     QPointArray & arr, QCanvas * canvas, double meanLevel);
+  CoverageCanvasItem(int x, int y, int width, int height, 
+                     int libid, double baseLevel,
+                     QPointArray & arr, QCanvas * canvas,
+                     const QColor & color);
 
   static const int RTTI;
   int rtti () const { return RTTI; }
-  QPointArray m_coveragePlot;
-  bool m_isClone;
 
-  double m_meanLevel;
+  QPointArray m_points;
+
+  int         m_libid;
+  double      m_baseLevel;
+  QColor      m_color;
+
 
 protected:
   void drawShape (QPainter & p);

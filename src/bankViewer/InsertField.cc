@@ -166,9 +166,9 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       int i = 1;
       int click = real.x();
 
-      for (i = 1; i < citem->m_coveragePlot.size(); i++)
+      for (i = 1; i < citem->m_points.size(); i++)
       {
-        int xval = citem->m_coveragePlot[i].x();
+        int xval = citem->m_points[i].x();
         if (xval > click)
         {
           break;
@@ -179,16 +179,23 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
       if (0)
       {
-        int xval = citem->m_coveragePlot[i].x();
+        int xval = citem->m_points[i].x();
         xval = 16*xval - m_hoffset;
         cerr << "i: " << i << " xval: " << xval << endl;
       }
 
-      if (citem->m_isClone) { s += " Clone"; }
-      else                  { s += " Read"; }
+      if (citem->m_libid < 0)
+      {
+        if (citem->m_libid == -1)      { s += " Clone"; }
+        else if (citem->m_libid == -2) { s += " Read";  }
 
-      s += " Coverage " + QString::number(citem->y() + citem->height() - citem->m_coveragePlot[i].y());
-      s += " [" + QString::number(citem->m_meanLevel) + "]";
+        s += " Coverage " + QString::number(citem->y() + citem->height() - citem->m_points[i].y());
+        s += " [" + QString::number(citem->m_baseLevel) + "]";
+      }
+      else
+      {
+
+      }
 
       jump = true;
       emitstatus = true;

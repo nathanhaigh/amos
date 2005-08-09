@@ -79,6 +79,10 @@ private:
   void computeInsertHappiness();
   void clearCanvas();
   void initializeVisibleRectangle();
+  void paintCoverage(QPointArray & arr, int arrLen, 
+                     int voffset, int vheight, 
+                     int libid, double baseLine,
+                     QColor color);
 
   DataStore      * m_datastore;
   InsertField    * m_ifield;
