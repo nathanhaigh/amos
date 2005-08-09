@@ -14,6 +14,7 @@
 #include  "delcher.hh"
 #include  <string>
 #include  <vector>
+#include  <cstring>
 
 
 const int  DEFAULT_FASTA_WIDTH = 60;
@@ -43,6 +44,8 @@ void  Reverse_String
     (char * s);
 void  Reverse_String
     (std::string & s);
+
+int  Fasta_Read_String  (FILE *, char * &, long int &, char [], int);
 
 
 #endif // #ifndef __FASTA_HH

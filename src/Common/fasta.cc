@@ -11,7 +11,6 @@
 #include  "fasta.hh"
 using namespace std;
 
-
 static const char  Complement_Table []
     = "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
       " nnnnnnnnn*nn-.nnnnnnnnnnnnnnnnn"
@@ -340,3 +339,84 @@ void  Reverse_String
 
 
 
+int Fasta_Read_String  (FILE * fp, char * & T, long int & Size, char Name [],
+		  int Partial)
+
+/* Read next string from  fp  (assuming FASTA format) into  T [1 ..]
+*  which has  Size  characters.  Allocate extra memory if needed
+*  and adjust  Size  accordingly.  Return  TRUE  if successful,  FALSE
+*  otherwise (e.g., EOF).  Partial indicates if first line has
+*  numbers indicating a subrange of characters to read.
+*/
+
+  {
+    const int max_line = 1024;
+    const int fasta_incr = 10000;
+
+   char  * P, Line [max_line];
+   long int  Len, Lo, Hi;
+   int  Ch, Ct;
+
+   while  ((Ch = fgetc (fp)) != EOF && Ch != '>')
+     ;
+
+   if  (Ch == EOF)
+       return  FALSE;
+
+   fgets (Line, max_line, fp);
+   Len = strlen (Line);
+   assert (Len > 0 && Line [Len - 1] == '\n');
+   P = strtok (Line, " \t\n");
+   if  (P != NULL)
+       strcpy (Name, P);
+     else
+       Name [0] = '\0';
+   Lo = 0;  Hi = LONG_MAX;
+   if  (Partial)
+       {
+        P = strtok (NULL, " \t\n");
+        if  (P != NULL)
+            {
+             Lo = strtol (P, NULL, 10);
+             P = strtok (NULL, " \t\n");
+             if  (P != NULL)
+                 Hi = strtol (P, NULL, 10);
+            }
+        assert (Lo <= Hi);
+       }
+
+   Ct = 0;
+   T [0] = '\0';
+   Len = 1;
+   while  ((Ch = fgetc (fp)) != EOF && Ch != '>')
+     {
+      if  (isspace (Ch))
+          continue;
+
+      Ct ++;
+      if  (Ct < Lo || Ct > Hi)
+          continue;
+
+      if  (Len >= Size)
+          {
+           Size += fasta_incr;
+           T = (char *) Safe_realloc (T, Size);
+          }
+      Ch = tolower (Ch);
+
+      if  (! isalpha (Ch) && Ch != '*')
+          {
+           fprintf (stderr, "Unexpected character `%c\' in string %s\n",
+                                 Ch, Name);
+           Ch = 'x';
+          }
+
+      T [Len ++] = Ch;
+     }
+
+   T [Len] = '\0';
+   if  (Ch == '>')
+       ungetc (Ch, fp);
+
+   return  TRUE;
+  }

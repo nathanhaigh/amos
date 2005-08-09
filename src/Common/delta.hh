@@ -11,13 +11,13 @@
 #ifndef __DELTA_HH
 #define __DELTA_HH
 
+#include <map>
 #include <cassert>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <cstdlib>
 #include <iostream>
-#include <map>
 
 
 const std::string NUCMER_STRING = "NUCMER"; //!< nucmer id string
@@ -300,8 +300,32 @@ public:
 
 
 
-//===================================================== DeltaEdgelet_t =========
+//===================================================== SNP_t ==================
+struct DeltaEdgelet_t;
 struct DeltaEdge_t;
+struct DeltaNode_t;
+struct SNP_t
+     //!< A single nuc/aa poly
+{
+  long int buff;
+  char cQ, cR;
+  long int pQ, pR;
+  int conQ, conR;
+  std::string ctxQ, ctxR;
+  DeltaEdgelet_t * lp;
+  DeltaEdge_t * ep;
+
+  SNP_t ( )
+  {
+    cQ = cR = 0;
+    buff = pQ = pR = 0;
+    conQ = conR = 0;
+  };
+};
+
+
+
+//===================================================== DeltaEdgelet_t =========
 struct DeltaEdgelet_t
 //!< A piece of a delta graph edge, a single alignment
 {
@@ -313,33 +337,45 @@ struct DeltaEdgelet_t
   unsigned char dirQ   : 1;   //!< query match direction
 
   DeltaEdge_t * edge;
+  DeltaEdgelet_t * next;                  //!< stores chaining info
   float idy, sim, stp;                    //!< percent identity [0 - 1]
   unsigned long int idyc, simc, stpc;     //!< idy, sim, stp counts
   unsigned long int loQ, hiQ, loR, hiR;   //!< alignment bounds
+  int frmQ, frmR;                         //!< reading frame
 
   std::string delta;                      //!< delta information
+  std::vector<SNP_t *> snps;              //!< snps for this edgelet
 
   DeltaEdgelet_t ( )
   {
+    next = NULL;
     isGOOD = true;
     isQLIS = isRLIS = isGLIS = false;
     dirR = dirQ = FORWARD_DIR;
     idy = sim = stp = 0;
     idyc = simc = stpc = 0;
     loQ = hiQ = loR = hiR = 0;
+    frmQ = frmR = 1;
+  }
+
+  ~DeltaEdgelet_t ( )
+  {
+    std::vector<SNP_t *>::iterator i;
+    for ( i = snps . begin( ); i != snps . end( ); ++ i )
+      delete (*i);
   }
 };
 
 
 
 //===================================================== DeltaEdge_t ============
-struct DeltaNode_t;
 struct DeltaEdge_t
 //!< A delta graph edge, alignments between a single reference and query
 {
   DeltaNode_t * refnode;      //!< the adjacent reference node
   DeltaNode_t * qrynode;      //!< the adjacent query node
   std::vector<DeltaEdgelet_t *> edgelets;  //!< the set of individual alignments
+  std::vector<DeltaEdgelet_t *> chains;    //!< stores GLIS chains
 
   DeltaEdge_t ( )
   {
@@ -361,17 +397,24 @@ struct DeltaEdge_t
 struct DeltaNode_t
 //!< A delta graph node, contains the sequence information
 {
-  const std::string * id;             //!< the id of the sequence
-  unsigned long int len;              //!< the length of the sequence
-  std::vector<DeltaEdge_t *> edges;   //!< the set of related edges
+  const std::string * id;                //!< the id of the sequence
+  char * seq;                            //!< the DNA sequence
+  unsigned long int len;                 //!< the length of the sequence
+  std::vector<DeltaEdge_t *> edges;      //!< the set of related edges
+  std::vector<DeltaEdgelet_t *> chains;  //!< stores RLIS/QLIS chains
 
   DeltaNode_t ( )
   {
     id = NULL;
+    seq = NULL;
     len = 0;
   }
 
+  ~DeltaNode_t ( )
+  {
+    free (seq);
   // DeltaGraph_t will take care of destructing the edges
+  }
 };
 
 
@@ -414,6 +457,11 @@ public:
 
   //--------------------------------------------------- build ------------------
   //! \brief Build a new graph from a deltafile
+  //!
+  //! Does not populate:
+  //! node->seq
+  //! edgelet->frmR/frmQ
+  //! edgelet->snps
   //!
   //! \param deltapath The path of the deltafile to read
   //! \param getdeltas Read the delta-encoded gap positions? yes/no
@@ -548,6 +596,14 @@ public:
   //! \return void
   //!
   void flagUNIQ (float minuniq);
+
+
+  //--------------------------------------------------- loadSequences ----------
+  //! \brief Load the sequence information into the DeltaNodes
+  //!
+  //! \return void
+  //!
+  void loadSequences ( );
 
 
   //--------------------------------------------------- outputDelta ------------

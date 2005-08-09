@@ -9,9 +9,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "delta.hh"
+#include "fasta.hh"
 #include "delcher.hh"
 #include <cmath>
 #include <sstream>
+#include <algorithm>
 using namespace std;
 
 
@@ -392,7 +394,7 @@ void DeltaGraph_t::build (const string & deltapath, bool getdeltas)
       //-- Find the reference node in the graph, add a new one if necessary
       insret = refnodes . insert
         (map<string, DeltaNode_t>::value_type
-         (dr . getRecord( ) . idR, DeltaNode_t( )));
+         (dr.getRecord( ).idR, DeltaNode_t( )));
       dep -> refnode = &((insret . first) -> second);
 
       //-- If a new reference node
@@ -406,7 +408,7 @@ void DeltaGraph_t::build (const string & deltapath, bool getdeltas)
       //-- Find the query node in the graph, add a new one if necessary
       insret = qrynodes . insert
         (map<string, DeltaNode_t>::value_type
-         (dr . getRecord( ) . idQ, DeltaNode_t( )));
+         (dr.getRecord( ).idQ, DeltaNode_t( )));
       dep -> qrynode = &((insret . first) -> second);
 
       //-- If a new query node
@@ -431,8 +433,8 @@ void DeltaGraph_t::clean( )
 {
   map<string, DeltaNode_t>::iterator i;
   map<string, DeltaNode_t>::iterator ii;
-  std::vector<DeltaEdge_t *>::iterator j;
-  std::vector<DeltaEdgelet_t *>::iterator k;
+  vector<DeltaEdge_t *>::iterator j;
+  vector<DeltaEdgelet_t *>::iterator k;
 
   //-- For all ref nodes
   for ( i = refnodes . begin( ); i != refnodes . end( ); )
@@ -532,7 +534,7 @@ long int DeltaGraph_t::getEdgeletCount( )
   long int sum = 0;
 
   map<string, DeltaNode_t>::iterator i;
-  std::vector<DeltaEdge_t *>::iterator j;
+  vector<DeltaEdge_t *>::iterator j;
   for ( i = refnodes . begin( ); i != refnodes . end( ); ++ i )
     for ( j  = i -> second . edges . begin( );
           j != i -> second . edges . end( ); ++ j )
@@ -542,7 +544,7 @@ long int DeltaGraph_t::getEdgeletCount( )
 }
 
 
-//-------------------------------------------------------------- glagGLIS ------
+//-------------------------------------------------------------- flagGLIS ------
 void DeltaGraph_t::flagGLIS (float epsilon)
 {
   LIS_t * lis = NULL;
@@ -552,8 +554,8 @@ void DeltaGraph_t::flagGLIS (float epsilon)
 
   vector<DeltaEdgelet_t *> edgelets;
 
-  map<string, DeltaNode_t>::const_iterator mi;
-  vector<DeltaEdge_t *>::const_iterator ei;
+  map<string, DeltaNode_t>::iterator mi;
+  vector<DeltaEdge_t *>::iterator ei;
   vector<DeltaEdgelet_t *>::iterator eli;
 
 
@@ -564,28 +566,36 @@ void DeltaGraph_t::flagGLIS (float epsilon)
       for ( ei  = (mi -> second) . edges . begin( );
             ei != (mi -> second) . edges . end( ); ++ ei )
         {
+          //-- Clear any previous chains
+          (*ei) -> chains . clear( );
+
           //-- Collect all the good edgelets
           edgelets . clear( );
           for ( eli  = (*ei) -> edgelets . begin( );
                 eli != (*ei) -> edgelets . end( ); ++ eli )
-            if ( (*eli) -> isGOOD )
-              {
-                edgelets . push_back (*eli);
+            {
+              //-- Clear any previous chain info
+              (*eli) -> next = NULL;
 
-                //-- Fix the coordinates to make global LIS work
-                if ( (*eli) -> dirR == (*eli) -> dirQ )
-                  {
-                    (*eli) -> dirQ = FORWARD_DIR;
-                  }
-                else
-                  {
-                    if ( (*eli) -> dirQ == REVERSE_DIR )
-                      Swap ((*eli) -> loQ, (*eli) -> hiQ);
-                    (*eli) -> loQ = RevC ((*eli) -> loQ, (*ei)->qrynode->len);
-                    (*eli) -> hiQ = RevC ((*eli) -> hiQ, (*ei)->qrynode->len);
-                    (*eli) -> dirQ = REVERSE_DIR;
-                  }
-              }
+              if ( (*eli) -> isGOOD )
+                {
+                  edgelets . push_back (*eli);
+                  
+                  //-- Fix the coordinates to make global LIS work
+                  if ( (*eli) -> dirR == (*eli) -> dirQ )
+                    {
+                      (*eli) -> dirQ = FORWARD_DIR;
+                    }
+                  else
+                    {
+                      if ( (*eli) -> dirQ == REVERSE_DIR )
+                        Swap ((*eli) -> loQ, (*eli) -> hiQ);
+                      (*eli) -> loQ = RevC ((*eli) -> loQ, (*ei)->qrynode->len);
+                      (*eli) -> hiQ = RevC ((*eli) -> hiQ, (*ei)->qrynode->len);
+                      (*eli) -> dirQ = REVERSE_DIR;
+                    }
+                }
+            }
 
           //-- Resize and initialize
           n = edgelets . size( );
@@ -659,9 +669,18 @@ void DeltaGraph_t::flagGLIS (float epsilon)
           else end = beg + 1;
 
           //-- Flag the edgelets
+          DeltaEdgelet_t * last;
           for ( ; beg < end; ++ beg )
-            for ( i = allbest[beg]; i >= 0  &&  i < n; i = lis[i] . from )
-              lis[i] . a -> isGLIS = true;
+            {
+              last = NULL;
+              for ( i = allbest[beg]; i >= 0  &&  i < n; i = lis[i] . from )
+                {
+                  lis[i] . a -> isGLIS = true;
+                  lis[i] . a -> next = last;
+                  last = lis[i] . a;
+                }
+              (*ei) -> chains . push_back (last);
+            }
 
           //-- Repair the coordinates
           for ( eli = edgelets . begin( ); eli != edgelets . end( ); ++ eli )
@@ -726,22 +745,33 @@ void DeltaGraph_t::flagQLIS (float epsilon, float maxolap)
 
   vector<DeltaEdgelet_t *> edgelets;
 
-  map<string, DeltaNode_t>::const_iterator mi;
-  vector<DeltaEdge_t *>::const_iterator ei;
+  map<string, DeltaNode_t>::iterator mi;
+  vector<DeltaEdge_t *>::iterator ei;
   vector<DeltaEdgelet_t *>::iterator eli;
 
 
   //-- For each query sequence
   for ( mi = qrynodes . begin( ); mi != qrynodes . end( ); ++ mi )
     {
-      //-- Collect all the good edgelets
+      //-- Clean any previous chains
+      (mi -> second) . chains . clear( );
+
+      //-- For each reference aligning to this query
       edgelets . clear( );
       for ( ei  = (mi -> second) . edges . begin( );
             ei != (mi -> second) . edges . end( ); ++ ei )
-        for ( eli  = (*ei) -> edgelets . begin( );
-              eli != (*ei) -> edgelets . end( ); ++ eli )
-          if ( (*eli) -> isGOOD )
-            edgelets . push_back (*eli);
+        {
+          //-- Collect all the good edgelets
+          for ( eli  = (*ei) -> edgelets . begin( );
+                eli != (*ei) -> edgelets . end( ); ++ eli )
+            {
+              //-- Clean any previous chain info
+              (*eli) -> next = NULL;
+              
+              if ( (*eli) -> isGOOD )
+                edgelets . push_back (*eli);
+            }
+        }
 
       //-- Resize and initialize
       n = edgelets . size( );
@@ -807,9 +837,18 @@ void DeltaGraph_t::flagQLIS (float epsilon, float maxolap)
       else end = beg + 1;
 
       //-- Flag the edgelets
+      DeltaEdgelet_t * last;
       for ( ; beg < end; ++ beg )
-        for ( i = allbest[beg]; i >= 0  &&  i < n; i = lis[i] . from )
-          lis[i] . a -> isQLIS = true;
+        {
+          last = NULL;
+          for ( i = allbest[beg]; i >= 0  &&  i < n; i = lis[i] . from )
+            {
+              lis[i] . a -> isQLIS = true;
+              lis[i] . a -> next = last;
+              last = lis[i] . a;
+            }
+          (mi -> second) . chains . push_back (last);
+        }
 
       for ( eli = edgelets . begin( ); eli != edgelets . end( ); ++ eli )
         if ( ! (*eli) -> isQLIS )
@@ -830,22 +869,33 @@ void DeltaGraph_t::flagRLIS (float epsilon, float maxolap)
 
   vector<DeltaEdgelet_t *> edgelets;
 
-  map<string, DeltaNode_t>::const_iterator mi;
-  vector<DeltaEdge_t *>::const_iterator ei;
+  map<string, DeltaNode_t>::iterator mi;
+  vector<DeltaEdge_t *>::iterator ei;
   vector<DeltaEdgelet_t *>::iterator eli;
 
 
   //-- For each reference sequence
   for ( mi = refnodes . begin( ); mi != refnodes . end( ); ++ mi )
     {
-      //-- Collect all the good edgelets
+      //-- Clean any previous chains
+      (mi -> second) . chains . clear( );
+
+      //-- For each query aligning to this reference
       edgelets . clear( );
       for ( ei  = (mi -> second) . edges . begin( );
             ei != (mi -> second) . edges . end( ); ++ ei )
-        for ( eli  = (*ei) -> edgelets . begin( );
-              eli != (*ei) -> edgelets . end( ); ++ eli )
-          if ( (*eli) -> isGOOD )
-            edgelets . push_back (*eli);
+        {
+          //-- Collect all the good edgelets
+          for ( eli  = (*ei) -> edgelets . begin( );
+                eli != (*ei) -> edgelets . end( ); ++ eli )
+            {
+              //-- Clean any previous chain info
+              (*eli) -> next = NULL;
+
+              if ( (*eli) -> isGOOD )
+                edgelets . push_back (*eli);
+            }
+        }
 
       //-- Resize
       n = edgelets . size( );
@@ -911,9 +961,18 @@ void DeltaGraph_t::flagRLIS (float epsilon, float maxolap)
       else end = beg + 1;
       
       //-- Flag the edgelets
+      DeltaEdgelet_t * last;
       for ( ; beg < end; ++ beg )
-        for ( i = allbest[beg]; i >= 0  &&  i < n; i = lis[i] . from )
-          lis[i] . a -> isRLIS = true;
+        {
+          last = NULL;
+          for ( i = allbest[beg]; i >= 0  &&  i < n; i = lis[i] . from )
+           {
+             lis[i] . a -> isRLIS = true;
+             lis[i] . a -> next = last;
+             last = lis[i] . a;
+           }
+          (mi -> second) . chains . push_back (last);
+        }
 
       for ( eli = edgelets . begin( ); eli != edgelets . end( ); ++ eli )
         if ( ! (*eli) -> isRLIS )
@@ -1032,6 +1091,79 @@ void DeltaGraph_t::flagUNIQ (float minuniq)
         }
     }
   free (qry_cov);
+}
+
+
+//----------------------------------------------------- loadSequences ----------
+void DeltaGraph_t::loadSequences ( )
+{
+  const int init_size = 10000;
+  const int max_line = 1024;
+
+  map<string, DeltaNode_t>::iterator mi;
+
+  FILE * qryfile, * reffile;
+  char * R = NULL;
+  char * Q = NULL;
+  char id [max_line];
+  long int initsize;
+  long int len;
+
+  //-- Read in the reference sequences
+  reffile = File_Open (refpath . c_str( ), "r");
+  initsize = init_size;
+  R = (char *) Safe_malloc (initsize);
+  while ( Fasta_Read_String (reffile, R, initsize, id, FALSE) )
+    if ( (mi = refnodes . find (id)) != refnodes . end( ) )
+      {
+        len = strlen (R + 1);
+        mi -> second . seq = (char *) Safe_malloc (len + 2);
+        mi -> second . seq[0] = '\0';
+        strcpy (mi -> second . seq + 1, R + 1);
+        if ( (unsigned long) len != mi -> second . len )
+          {
+            cerr << "ERROR: Reference input does not match delta file\n";
+            exit (EXIT_FAILURE);
+          }
+      }
+  fclose (reffile);
+  free (R);
+
+  //-- Read in the query sequences
+  qryfile = File_Open (qrypath . c_str( ), "r");
+  initsize = init_size;
+  Q = (char *) Safe_malloc (initsize);
+  while ( Fasta_Read_String (qryfile, Q, initsize, id, FALSE) )
+    if ( (mi = qrynodes . find (id)) != qrynodes . end( ) )
+      {
+        len = strlen (Q + 1);
+        mi -> second . seq = (char *) Safe_malloc (len + 2);
+        mi -> second . seq[0] = '\0';
+        strcpy (mi -> second . seq + 1, Q + 1);
+        if ( (unsigned long) len != mi -> second . len )
+          {
+            cerr << "ERROR: Query input does not match delta file\n";
+            exit (EXIT_FAILURE);
+          }
+      }
+  fclose (qryfile);
+  free (Q);
+
+
+  //-- Check that we found all the sequences
+  for ( mi = refnodes.begin( ); mi != refnodes.end( ); ++ mi )
+    if ( mi -> second . seq == NULL )
+      {
+        cerr << "ERROR: '" << mi -> first << "' not found in reference file\n";
+        exit (EXIT_FAILURE);
+      }
+
+  for ( mi = qrynodes.begin( ); mi != qrynodes.end( ); ++ mi )
+    if ( mi -> second . seq == NULL )
+      {
+        cerr << "ERROR: '" << mi -> first << "' not found in query file\n";
+        exit (EXIT_FAILURE);
+      }
 }
 
 
