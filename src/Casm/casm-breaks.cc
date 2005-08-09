@@ -13,37 +13,34 @@
 #include "amp.hh"
 #include <climits>
 #include <list>
+#include <sstream>
 using namespace std;
-
-const char * _NAME_ = "casm-breaks";
-
+using namespace AMOS;
+using namespace HASHMAP;
 
 
 //=============================================================== Options ====//
-string   OPT_AlignName;                // alignment name parameter
+string   OPT_AlignName;                  // alignment name parameter
+string   OPT_BankName;                   // bank name parameter
 
-int      OPT_MaxTrim        = 20;      // maximum ignorable trim length
-int      OPT_Fuzzy          = 3;       // fuzzy equals tolerance
-int      OPT_Seed           = -1;      // random seed
+int      OPT_MaxTrim        = 20;        // maximum ignorable trim length
+int      OPT_Fuzzy          = 3;         // fuzzy equals tolerance
+int      OPT_Seed           = -1;        // random seed
+//int      OPT_Redundancy
 
-float    OPT_MinIdentity    = 0.0;     // min identity to tile
+float    OPT_MinIdentity    = 0.0;       // min identity to tile
+float    OPT_Epsilon        = 3.0;      // negligible alignment %difference
+//float    OPT_Majority
 
-const long int MAXIMAL    = LONG_MAX;  // maximum integer
-
-const char     LBREAK     = 'L';       // left break \____
-const char     RBREAK     = 'R';       // right break ____/
-const char     TANDEM     = 'T';       // tandem collapse
-const char     INSERT     = 'I';       // reference insertion
-const char     DELETION   = 'D';       // reference deletion
-const char     INVERSION  = 'V';       // inversion
-const char     UNKNOWN    = 'X';       // unknown
+const long int MAXIMAL      = LONG_MAX;  // maximum integer
 
 
 //============================================================= Constants ====//
 struct Signature_t
+//!< mis-alignment signature
 {
-  long int fc;     // foward support
-  long int rc;     // reverse support
+  long int fc;                        // foward support
+  long int rc;                        // reverse support
   list<const DeltaNode_t *> qry;      // supporting queries
 
   vector<const DeltaNode_t *> ref;    // reference ids
@@ -55,6 +52,34 @@ struct Signature_t
   //           [gap]         [gap]
 
   Signature_t ( ) { fc = rc = 0; }
+};
+
+
+struct Placement_t
+//!< placement of a read on the reference
+{
+  ID_t iid;                           // iid of the read
+  const DeltaNode_t * read;           // read alignment info
+  const DeltaEdgelet_t * chain;       // head of the alignment chain
+  Placement_t * mate;                 // mated read's placement
+
+  Placement_t ( ) { iid = NULL_ID; read = NULL; chain = NULL; mate = NULL; }
+};
+
+
+struct Mapping_t
+//!< placements of reads on the reference
+{
+  vector<Placement_t *> reads;
+  list<Signature_t> sigs;
+
+  Mapping_t ( ) { }
+  ~Mapping_t ( )
+  {
+    vector<Placement_t *>::iterator ppi;
+    for ( ppi = reads . begin( ); ppi != reads . end( ); ++ ppi )
+      delete (*ppi);
+  }
 };
 
 
@@ -73,10 +98,10 @@ struct EdgeletCmp_t
 //!
 //! \pre sigs vector is populated
 //! \post Like signatures have been collapsed
-//! \param sigs The list of signatures
+//! \param mapping The mapping containing the list of signatures
 //! \return void
 //!
-void CombineSignatures (list<Signature_t> & sigs);
+void CombineSignatures (Mapping_t & mapping);
 
 
 //----------------------------------------------------- CompareSignatures ----//
@@ -92,16 +117,53 @@ void CombineSignatures (list<Signature_t> & sigs);
 int CompareSignatures (const Signature_t & a, const Signature_t & b);
 
 
+//--------------------------------------------------------- GetAlignments ----//
+//! \brief Read in the alignment info
+//!
+//! \param graph The empty alignment graph
+//! \return void
+//!
+void GetAlignments (DeltaGraph_t & graph);
+
+
+//-------------------------------------------------------------- GetReads ----//
+//! \brief Read in the read and mate info, if any
+//!
+//! \param graph The filled alignment graph
+//! \param mapping The empty read mapping
+//! \return void
+//!
+void GetReads (const DeltaGraph_t & graph, Mapping_t & mapping);
+
+
+//----------------------------------------------------------- PlaceUnique ----//
+//! \brief Place reads with an unambiguous mapping to the reference
+//!
+//! \param mapping The read mapping
+//! \return void
+//!
+void PlaceUnique (Mapping_t & mapping);
+
+
+//---------------------------------------------------------- PlaceRepeats ----//
+//! \brief Place reads with an ambiguous mapping to the reference
+//!
+//! \param mapping The read mapping
+//! \return void
+//!
+void PlaceRepeats (Mapping_t & mapping);
+
+
 //------------------------------------------------------ RecordSignatures ----//
 //! \brief Reads the alignment graph and records the alignment signatures
 //!
 //! \param graph Alignment graph
-//! \param sigs Empty signature list
+//! \param mapping The mapping containing the empty signature list
 //! \pre Alignment graph has been filtered and cleaned
-//! \post Populates the sigs vector, one per aligned sequence
+//! \post Populates the sigs list, one per aligned sequence
 //! \return void
 //!
-void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs);
+void RecordSignatures (const DeltaGraph_t & graph, Mapping_t & mapping);
 
 
 //------------------------------------------------------------- ParseArgs ----//
@@ -138,91 +200,96 @@ void PrintUsage (const char * s);
 int main (int argc, char ** argv)
 {
   DeltaGraph_t graph;
-  list<Signature_t> sigs;
+  Mapping_t mapping;
 
   //-- COMMAND
   ParseArgs (argc, argv);          // parse the command line arguments
   srand (OPT_Seed);
 
   //-- GET/CLEAN ALIGNMENTS
-  graph . build (OPT_AlignName, false);
-  graph . flagScore (0, OPT_MinIdentity);
-  graph . flagQLIS( );
-  graph . clean( );
+  cerr << "Building alignment graph\n";
+  GetAlignments (graph);
 
+  //-- GET READS
+  cerr << "Fetching read and mate information\n";
+  GetReads (graph, mapping);
+
+  //-- PLACE UNAMBIGUOUS READS
+  cerr << "Placing unique reads\n";
+  PlaceUnique (mapping);
+
+  //-- PLACE READS IN REPEATS
+  cerr << "Placing repetitive reads\n";
+  PlaceRepeats (mapping);
+
+  /*
   //-- GENERATE SIGNATURES
-  RecordSignatures (graph, sigs);
+  RecordSignatures (graph, mapping);
 
   //-- COMBINE SIGNATURES
-  CombineSignatures (sigs);
+  CombineSignatures (mapping);
 
-
-  //--------------------------- OUTPUT ---------------------------
+  //-- START OUTPUT
   list<Signature_t>::iterator s;
-  for ( s = sigs . begin( ); s != sigs . end( ); ++ s )
+  for ( s = mapping . sigs . begin( ); s != mapping . sigs . end( ); ++ s )
     {
-      if ( s -> pos . size( ) != 2 ||
-           labs (s -> pos . front( )) != MAXIMAL ||
-           labs (s -> pos . back( )) != MAXIMAL )
-        {
-          list<const DeltaNode_t *>::const_iterator q;
-          vector<long int>::const_iterator p;
-          vector<const DeltaNode_t *>::const_iterator r;
-          vector<long int>::const_iterator g;
+      list<const DeltaNode_t *>::const_iterator q;
+      vector<long int>::const_iterator p;
+      vector<const DeltaNode_t *>::const_iterator r;
+      vector<long int>::const_iterator g;
 
-          cout << s -> qry . size( ) << " ("
-               << s -> fc << ',' << s -> rc << ")\n";
+      cout << s -> qry . size( ) << " ("
+           << s -> fc << ',' << s -> rc << ")\n";
 
-          for ( r = s -> ref . begin( ); r != s -> ref . end( ); ++ r )
-            cout << *((*r)->id) << '\t';
-          cout << '\n';
+      for ( r = s -> ref . begin( ); r != s -> ref . end( ); ++ r )
+        cout << *((*r)->id) << '\t';
+      cout << '\n';
   
-          g = s -> gap . begin( );
-          for ( p = s -> pos . begin( ); p != s -> pos . end( ); ++ p )
-            {
-              if ( labs (*p) == MAXIMAL )
-                cout << 'B';
-              else
-                cout << labs (*p);
+      g = s -> gap . begin( );
+      for ( p = s -> pos . begin( ); p != s -> pos . end( ); ++ p )
+        {
+          if ( labs (*p) == MAXIMAL )
+            cout << 'B';
+          else
+            cout << labs (*p);
 
-              if ( *p < *(++ p) )
-                cout << " <- ";
-              else
-                cout << " -> ";
+          if ( *p < *(++ p) )
+            cout << " <- ";
+          else
+            cout << " -> ";
 
-              if ( labs (*p) == MAXIMAL )
-                cout << 'E';
-              else
-                cout << labs (*p);
+          if ( labs (*p) == MAXIMAL )
+            cout << 'E';
+          else
+            cout << labs (*p);
 
-              if ( g != s -> gap . end( ) )
-                cout << " |" << *(g++) << "| ";
-            }
-          cout << '\n';
-
-          for ( q = s -> qry . begin( ); q != s -> qry . end( ); ++ q )
-            cout << *((*q)->id) << '\n';
-          cout << endl;
+          if ( g != s -> gap . end( ) )
+            cout << " |" << *(g++) << "| ";
         }
-    }
-  //--------------------------- OUTPUT ---------------------------
+      cout << '\n';
 
+      for ( q = s -> qry . begin( ); q != s -> qry . end( ); ++ q )
+        cout << *((*q)->id) << '\n';
+      cout << endl;
+    }
+  //-- END OUTPUT
+  */
 
   return EXIT_SUCCESS;
 }
 
 
 //----------------------------------------------------- CombineSignatures ----//
-void CombineSignatures (list<Signature_t> & sigs)
+void CombineSignatures (Mapping_t & mapping)
 {
   int cmp;
   list<Signature_t>::iterator i, j;
 
   //-- Walk through the list and combine everything that's equal
-  for ( i = sigs . begin( ); i != sigs . end( ); ++ i )
+  for ( i = mapping . sigs . begin( ); i != mapping . sigs . end( ); ++ i )
     {
       j = i; ++ j;
-      while ( j != sigs . end( ) )
+      while ( j != mapping . sigs . end( ) )
         {
           cmp = CompareSignatures (*i, *j);
 
@@ -240,7 +307,7 @@ void CombineSignatures (list<Signature_t> & sigs)
                 }
 
               i -> qry . splice (i -> qry . end( ), j -> qry);
-              j = sigs . erase (j);
+              j = mapping . sigs . erase (j);
             }
           else
             ++ j;
@@ -318,6 +385,197 @@ int CompareSignatures (const Signature_t & a, const Signature_t & b)
 }
 
 
+
+//--------------------------------------------------------- GetAlignments ----//
+void GetAlignments (DeltaGraph_t & graph)
+{
+  //-- Short and sweet thanks to delta.hh
+  cerr << "  build\n";
+  graph . build (OPT_AlignName, false);
+  cerr << "  flag score\n";
+  graph . flagScore (0, OPT_MinIdentity);
+  cerr << "  flags QLIS\n";
+  graph . flagQLIS (OPT_Epsilon);
+  cerr << "  clean\n";
+  graph . clean ( );
+}
+
+
+//-------------------------------------------------------------- GetReads ----//
+void GetReads (const DeltaGraph_t & graph, Mapping_t & mapping)
+{
+  //-- If a bank exists, try and populate the read/mate info from it
+  if ( ! OPT_BankName . empty( ) )
+    {
+      Index_t mtpx, libx;
+      Bank_t red_bank (Read_t::NCODE);
+
+      //-- Mate info
+      cerr << "  getting mate info from bank\n";
+      try {
+        mtpx . buildReadMate (OPT_BankName);
+        libx . buildReadLibrary (OPT_BankName);
+      } catch (const Exception_t & e) {
+        cerr << "WARNING: " << e . what( ) << endl
+             << "  could not collect mate-pair information from bank\n";
+      }
+
+      //-- Read info
+      cerr << "  getting read info from bank\n";
+      try {
+        red_bank . open (OPT_BankName, B_READ);
+
+        //-- Check if alignment file uses IIDs or EIDs
+        bool isIID = true;
+        if ( ! graph . qrynodes . empty( ) )
+          {
+            ID_t tempid;
+            string tempstr (*(graph.qrynodes.begin( )->second.id));
+            istringstream ss (tempstr);
+            ss >> tempid;
+            if ( ! ss || ! red_bank . existsIID (tempid) )
+              {
+                if ( red_bank . existsEID (tempstr) )
+                  isIID = false;
+                else
+                  AMOS_THROW ("Query IDs do not match the read bank");
+              }
+          }
+        if ( isIID )
+          cerr << "  looks like alignment uses IIDs\n";
+        else
+          cerr << "  looks like alignment uses EIDs\n";
+
+        //-- Iterating through the IDMap will be quicker than streaming
+        ID_t r1, r2;
+        string s1, s2;
+        Placement_t * p1, * p2;
+        ostringstream ss;
+        Index_t::iterator ii;
+        map<string, DeltaNode_t>::const_iterator mi;
+
+        IDMap_t::const_iterator idmi;
+        const IDMap_t & idmap = red_bank . getIDMap( );
+        IDMap_t seen (idmap . getBuckets( ));
+        for ( idmi = idmap . begin( ); idmi != idmap . end( ); ++ idmi )
+          {
+            if ( idmi -> iid == NULL_ID )
+              AMOS_THROW ("All read objects must have an IID");
+
+            //-- If we've seen it already, don't do it again
+            if ( seen . exists (idmi -> iid) )
+              continue;
+
+            r1 = idmi -> iid;
+            r2 = mtpx . lookup (r1);
+
+            seen . insert (r1);
+            seen . insert (r2);
+
+            //-- Translate from IID to alignment ID
+            if ( isIID )
+              {
+                ss . str("");
+                ss << r1;
+                s1 = ss . str( );
+                ss . str("");
+                ss << r2;
+                s2 = ss . str( );
+              }
+            else
+              {
+                s1 = idmi -> eid;
+                s2 = idmap . lookupEID (r2);
+              }
+
+            //-- Add the read to the mapping
+            p1 = new Placement_t( );
+            p1 -> iid = r1;
+            mi = graph . qrynodes . find (s1 . c_str( ));
+            if ( mi != graph . qrynodes . end( ) )
+              p1 -> read = &(mi->second);
+            mapping . reads . push_back (p1);
+
+            //-- Add it's mate to the mapping
+            if ( r2 != NULL_ID )
+              {
+                p2 = new Placement_t( );
+                p2 -> iid = r2;
+                mi = graph . qrynodes . find (s2 . c_str( ));
+                if ( mi != graph . qrynodes . end( ) )
+                  p2 -> read = &(mi->second);
+                mapping . reads . push_back (p2);
+
+                //-- Link the mates
+                p1 -> mate = p2;
+                p2 -> mate = p1;
+              }
+          }
+
+        red_bank . close( );
+      }
+      catch (const Exception_t & e) {
+        cerr << "WARNING: " << e . what( ) << endl
+             << "  could not collect read information from bank\n";
+      }
+    }
+
+  //-- If no bank reads, populate from alignment info
+  if ( mapping . reads . empty( ) )
+    {
+      cerr << "  getting partial list of reads from alignment graph\n";
+
+      map<string, DeltaNode_t>::const_iterator mi;
+      for ( mi = graph.qrynodes.begin( ); mi != graph.qrynodes.end( ); ++ mi )
+        {
+          Placement_t * pp = new Placement_t( );
+          pp -> read = &(mi -> second);
+          mapping . reads . push_back (pp);
+        }
+    }
+}
+
+
+//----------------------------------------------------------- PlaceUnique ----//
+void PlaceUnique (Mapping_t & mapping)
+{
+  vector<Placement_t *>::iterator ppi;
+
+  for ( ppi = mapping.reads.begin( ); ppi != mapping.reads.end( ); ++ ppi )
+    {
+      //-- Skip if no alignments or already placed
+      if ( (*ppi) -> read == NULL || (*ppi) -> chain != NULL )
+        continue;
+      
+      //-- If unambiguous mapping, place the read
+      if ( (*ppi) -> read -> chains . size( ) == 1 )
+        {
+          (*ppi) -> chain = (*ppi) -> read -> chains . back( );
+        }
+    }
+}
+
+
+//---------------------------------------------------------- PlaceRepeats ----//
+void PlaceRepeats (Mapping_t & mapping)
+{
+  vector<Placement_t *>::iterator ppi;
+
+  for ( ppi = mapping.reads.begin( ); ppi != mapping.reads.end( ); ++ ppi )
+    {
+      //-- Skip if no alignments or already placed
+      if ( (*ppi) -> read == NULL || (*ppi) -> chain != NULL )
+        continue;
+      
+      //-- If ambiguous mapping, place the read
+      if ( (*ppi) -> read -> chains . size( ) != 1 )
+        {
+
+        }
+    }
+}
+
+
 //------------------------------------------------------ RecordSignatures ----//
 //
 // Signatures will be generated as group of integer vectors, such that for the
@@ -338,7 +596,7 @@ int CompareSignatures (const Signature_t & a, const Signature_t & b)
 // maximal, that is cannot be extended without reaching the end of the query,
 // it is marked with the MAXIMAL value to indicate the break as incidental.
 //
-void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs)
+void RecordSignatures (const DeltaGraph_t & graph, Mapping_t & mapping)
 {
   long int qlen;
   const string * qid;
@@ -352,11 +610,6 @@ void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs)
     {
       qid = mi->second.id;
       qlen = mi->second.len;
-
-      sigs . push_back (Signature_t());
-      Signature_t & sig = sigs . back( );
-      sig . qry . push_back (&(mi -> second));
-      sig . fc ++;
 
       //-- Collect the alignments for this query
       //   graph should be clean, so no need to worry about bad alignments
@@ -376,6 +629,18 @@ void RecordSignatures (const DeltaGraph_t & graph, list<Signature_t> & sigs)
       long int pos;
       vector<DeltaEdgelet_t *>::iterator first = edgelets . begin( );
       vector<DeltaEdgelet_t *>::iterator last = -- edgelets . end( );
+
+      //-- If alignment is clean, we don't need a signature from it
+      if ( first == last &&
+           (*first)->loQ <= OPT_MaxTrim &&
+           (*first)->hiQ > qlen - OPT_MaxTrim )
+        continue;
+
+      //-- Make a signature
+      mapping . sigs . push_back (Signature_t());
+      Signature_t & sig = mapping . sigs . back( );
+      sig . qry . push_back (&(mi -> second));
+      sig . fc ++;
 
       for ( eli = edgelets . begin( ); eli != edgelets . end( ); ++ eli )
         {
@@ -413,15 +678,23 @@ void ParseArgs (int argc, char ** argv)
   optarg = NULL;
 
   while ( !errflg  &&
-  ((ch = getopt (argc, argv, "f:hi:s:t:")) != EOF) )
+  ((ch = getopt (argc, argv, "b:e:f:hi:s:t:")) != EOF) )
     switch (ch)
       {
+      case 'b':
+        OPT_BankName = optarg;
+        break;
+
+      case 'e':
+        OPT_Epsilon = atof (optarg);
+        break;
+
       case 'f':
         OPT_Fuzzy = atoi (optarg);
         break;
 
       case 'h':
-        PrintHelp (_NAME_);
+        PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
         break;
 
@@ -443,8 +716,8 @@ void ParseArgs (int argc, char ** argv)
 
   if ( errflg > 0 || optind != argc - 1 )
     {
-      PrintUsage (_NAME_);
-      cout << "Try '" << _NAME_ << " -h' for more information.\n";
+      PrintUsage (argv[0]);
+      cout << "Try '" << argv[0] << " -h' for more information.\n";
       exit (EXIT_FAILURE);
     }
 
@@ -461,14 +734,18 @@ void PrintHelp (const char * s)
   cout
     << ".NAME.\n\n"
     << s << "\n\n"
-    << "Highlights structural disagreements between reference and query\n\n";
+    << "Comparative assembly layout\n\n";
 
   PrintUsage (s);
 
   cout
     << ".OPTIONS.\n\n"
-    << "-f uint       Set the fuzzy equals tolerance, default "
-    << OPT_Fuzzy << endl
+    << "-b string     Bank for mate/read info and layout/scaffold output\n"
+    << "-e float      Treat all repeats within e percent of the best LIS\n"
+    << "              score as equivalent [0, 100], default "
+    << OPT_Epsilon << endl
+    << "-f uint       Set the fuzzy equals tolerance for break positions,\n"
+    << "              default " << OPT_Fuzzy << endl
     << "-h            Display help information\n"
     << "-i float      Set the minimum alignment identity, default "
     << OPT_MinIdentity << endl
@@ -480,23 +757,19 @@ void PrintHelp (const char * s)
 
   cout
     << ".DESCRIPTION.\n\n"
-    << s << " highlights structural disagreements between reference and query\n"
-    << "sequences by determining the 'path' each query takes through the\n"
-    << "reference. The paths are generated by charting the reference position\n"
-    << "and direction of the best alignments for each query. For redundant\n"
-    << "query sequence data (e.g. shotgun sequencing reads) similar paths are\n"
-    << "combined to form supporting evidence of polymorphism between the\n"
-    << "reference and query. For each break in the path, the number of reads\n"
-    << "spanning the break are also collected to provide counter evidence.\n"
-    << endl
-    << "This is an effective way of detecting misassemblies in a set of\n"
-    << "contigs. By mapping the original set of sequencing reads to the\n"
-    << "contig set, this program can identify the reads that disagree with\n"
-    << "the assembly and report the alternate structure they support.\n\n";
+    << s << " constructs a comparative assembly layout by mapping the queries\n"
+    << "to the reference while compensating for any structural differences\n"
+    << "between the reference and query sequences. Intermediate output is\n"
+    << "also available for each query's position on the reference and the\n"
+    << "positions on the reference where a significant number of query\n"
+    << "sequences disagree with the reference. This output is also handy for\n"
+    << "assembly validation, where the original sequencing reads are mapped\n"
+    << "to the resulting assembly in order to identify trouble spots where\n"
+    << "a number of reads disagree with the consensus.\n\n";
 
   cout
     << ".KEYWORDS.\n\n"
-    << "validation, comparison, assembly\n\n";
+    << "assembly, validation, comparison\n\n";
 
   return;
 }
