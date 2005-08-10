@@ -24,6 +24,7 @@ public slots:
   void toggleConnectMates();
   void togglePartitionTypes();
   void toggleCoveragePlot();
+  void toggleCEStatistic();
   void toggleFeatures();
   void toggleColorByLibrary();
   void togglePaintScaffold();
@@ -42,6 +43,7 @@ signals:
   void setConnectMates(bool);
   void setPartitionTypes(bool);
   void setCoveragePlot(bool);
+  void setCEStatistic(bool);
   void setFeatures(bool);
   void setColorByLibrary(bool);
   void setPaintScaffold(bool);
@@ -62,6 +64,7 @@ private:
   int m_featid;
   int m_libcolorid;
   int m_scaffid;
+  int m_ceid;
 };
 
 #endif

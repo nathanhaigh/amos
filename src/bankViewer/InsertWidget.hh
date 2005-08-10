@@ -48,6 +48,7 @@ public slots:
   void setConnectMates(bool);
   void setPartitionTypes(bool);
   void setCoveragePlot(bool);
+  void setCEStatistic(bool);
   void setPaintScaffold(bool);
   void setFeatures(bool);
   void setColorByLibrary(bool);
@@ -101,6 +102,7 @@ private:
   int m_connectMates;
   int m_partitionTypes;
   int m_coveragePlot;
+  int m_cestats;
   int m_showFeatures;
   int m_colorByLibrary;
   int m_paintScaffold;

@@ -49,12 +49,42 @@ InsertWindow::InsertWindow(DataStore * datastore,
   new QLabel(" EID:", options, "eidlbl");
   BufferedLineEdit * eidpick = new BufferedLineEdit(options, "eidpick");
 
+  const char * states = Insert::allstates;
 
-  // MenuBar
+  // Libraries
+  QPopupMenu * m_libmenu = new QPopupMenu(this);
+  menuBar()->insertItem("Libraries", m_libmenu);
+
+  unsigned int type = 0;
+
+  DataStore::LibLookup_t::iterator li;
+  for (li =  datastore->m_libdistributionlookup.begin();
+       li != datastore->m_libdistributionlookup.end();
+       li++)
+  {
+    char state = states[type];
+    QPixmap rect(10,10);
+
+    QPainter p(&rect);
+    p.fillRect(rect.rect(), UIElements::getInsertColor((Insert::MateState)state));
+    p.end();
+
+    QString name = QString::number(li->first); 
+    name += " [" + QString::number(li->second.mean); 
+    name += " +/- " + QString::number(li->second.sd);
+    name += "]";
+
+    m_libmenu->insertItem(QIconSet(rect), name);
+
+    type++;
+    if (type >= strlen(Insert::allstates)) { type = 0; }
+  }
+
+
+  // Display Types
   m_typesmenu = new QPopupMenu(this);
   menuBar()->insertItem("&Display Types", m_typesmenu);
 
-  const char * states = Insert::allstates;
   for (unsigned int i = 0; i < strlen(states); i++)
   {
     char state = states[i];
@@ -71,6 +101,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
     m_typesmenu->setItemChecked(m_types[state].first, m_types[state].second);
   }
 
+  // Options
   m_optionsmenu = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_optionsmenu);
   m_scaffid = m_optionsmenu->insertItem("&Scaffold Plot", this, SLOT(togglePaintScaffold()));
@@ -84,6 +115,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
   m_optionsmenu->setItemChecked(m_coverageid, true);
+
+  m_ceid = m_optionsmenu->insertItem("C&E Statisitic", this, SLOT(toggleCEStatistic()));
+  m_optionsmenu->setItemChecked(m_ceid, true);
 
   m_featid = m_optionsmenu->insertItem("Show F&eatures", this, SLOT(toggleFeatures()));
   m_optionsmenu->setItemChecked(m_featid, true);
@@ -139,6 +173,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(setCoveragePlot(bool)),
           iw,   SLOT(setCoveragePlot(bool)));
+
+  connect(this, SIGNAL(setCEStatistic(bool)),
+          iw,   SLOT(setCEStatistic(bool)));
 
   connect(this, SIGNAL(setPaintScaffold(bool)),
           iw,   SLOT(setPaintScaffold(bool)));
@@ -216,6 +253,14 @@ void InsertWindow::toggleCoveragePlot()
   m_optionsmenu->setItemChecked(m_coverageid, b);
 
   emit setCoveragePlot(b);
+}
+
+void InsertWindow::toggleCEStatistic()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_ceid);
+  m_optionsmenu->setItemChecked(m_ceid, b);
+
+  emit setCEStatistic(b);
 }
 
 void InsertWindow::togglePaintScaffold()

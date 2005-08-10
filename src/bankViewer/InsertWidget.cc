@@ -14,162 +14,13 @@
 #include "FeatureCanvasItem.hh"
 #include "ContigCanvasItem.hh"
 #include "UIElements.hh"
+#include "CoverageStats.hh"
 
 
 using namespace AMOS;
 using namespace std;
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
-class CoverageLevel
-{
-public:
-  CoverageLevel(int numpoints, ID_t libid, Distribution_t dist) :
-     m_coverage(numpoints),
-     m_cestat(numpoints),
-     m_libid(libid),
-     m_dist(dist),
-     m_maxdepth(0),
-     m_curpos(0),
-     m_sum(0)
-  { }
-
-  typedef std::multimap<int, int> EndPoints;
-
-  QPointArray m_coverage;
-  QPointArray m_cestat;
-
-  ID_t m_libid;
-  Distribution_t m_dist;
-
-  int m_maxdepth;
-  int m_curpos;
-
-  void addEndpoints(int curloffset, int curroffset)
-  {
-    EndPoints::iterator vi, vi2;
-    int eps = m_endpoints.size();
-
-    // find end points that have already passed
-    vi = m_endpoints.begin();
-    while (vi != m_endpoints.end())
-    {
-      if (vi->first <= curloffset) 
-      { 
-        eps = handlePoint(vi->first, eps, -vi->second);
-        vi2 = vi; vi2++; m_endpoints.erase(vi); vi = vi2;
-      }
-      else
-      { 
-        break; 
-      }
-    }
-
-    int len = curroffset - curloffset + 1;
-
-    // Add this insert's beginning and end
-    eps = handlePoint(curloffset, eps, +len);
-    m_endpoints.insert(make_pair(curroffset, len));
-
-    if (eps > m_maxdepth) { m_maxdepth = eps; }
-
-    if (eps != m_endpoints.size())
-    {
-      cerr << "eps: " << eps << " m_endpoints.size():" << m_endpoints.size() << endl;
-    }
-  }
-
-  void finalize()
-  {
-    EndPoints::iterator vi, vi2;
-
-    int eps = m_endpoints.size();
-
-    // Handle remaining end points
-    
-    for (EndPoints::iterator vi = m_endpoints.begin(); vi != m_endpoints.end(); vi++)
-    {
-      eps = handlePoint(vi->first, eps, -vi->second);
-    }
-
-    m_endpoints.clear();
-
-    if (eps != 0 || m_endpoints.size() != 0)
-    {
-      cerr << "not zero eps: " << eps << " m_endpoints.size():" << m_endpoints.size() << endl;
-    }
-
-    if (m_sum != 0)
-    {
-      cerr << "not zero sum: " << m_sum << endl;
-    }
-  }
-
-  void finalizeCE(int vheight)
-  {
-    int half = vheight / 2;
-
-    for (int i = 0; i < m_curpos; i++)
-    {
-      double numerator = m_cestat[i].y() - m_dist.mean;
-      double denominator = m_dist.sd * sqrt((double)m_coverage[i].y());
-      double val = (denominator) ? (numerator)/(denominator) :  numerator / 0.0001;
-
-      if (m_coverage[i].y() == 0) { val = 0; }
-
-      val *= 100;
-      val /= 2;
-
-      if (val > half)       { val = half; }
-      else if (val < -half) { val = -half; }
-
-      val += half;
-
-      m_cestat[i].setY((int)val);
-      //cerr << "lib: " << m_libid << " x: " << m_cestat[i].x() << " ce: " << m_cestat[i].y() 
-      //     << " val: " << val << " = " << numerator << " / " << denominator << endl;
-    }
-  }
-
-  void normalize(float hscale, int hoffset, int voffset, bool adjustCE)
-  {
-    // Adjust coordinates for painting
-    for (int i = 0; i < m_curpos; i++)
-    {
-      m_coverage[i].setX((int)((m_coverage[i].x()+hoffset) * hscale));
-      m_coverage[i].setY(voffset-m_coverage[i].y());
-
-      if (adjustCE)
-      {
-        m_cestat[i].setX((int)((m_cestat[i].x()+hoffset) * hscale));
-        m_cestat[i].setY(voffset-m_cestat[i].y());
-      }
-    }
-  }
-
-
-private:
-  int handlePoint(int pos, int eps, int sumdelta)
-  {
-    m_coverage[m_curpos] = QPoint(pos, eps); 
-    m_cestat[m_curpos]   = QPoint(pos, eps ? m_sum/eps : 0); 
-    m_curpos++; 
-
-    if (sumdelta < 0) { eps--; }
-    else              { eps++; }
-
-    m_sum += sumdelta;
-
-    m_coverage[m_curpos] = QPoint(pos, eps); 
-    m_cestat[m_curpos]   = QPoint(pos, eps ? m_sum/eps : 0); 
-    m_curpos++; 
-
-    return eps;
-  }
-
-  int m_sum;
-
-  EndPoints m_endpoints;
-};
 
 struct FeatOrderCmp
 {
@@ -229,6 +80,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_connectMates   = 1;
   m_partitionTypes = 1;
   m_coveragePlot   = 1;
+  m_cestats        = 1;
   m_showFeatures   = 1;
   m_paintScaffold  = 1;
   m_colorByLibrary = 0;
@@ -779,8 +631,6 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  int m_cestats = 1;
-
   typedef map <ID_t, QColor> LibColorMap;
   LibColorMap libColorMap;
 
@@ -808,9 +658,9 @@ void InsertWidget::paintCanvas()
     cerr << " coverage";
 
     // coverage will change at each endpoint of each insert
-    CoverageLevel insertCL(m_inserts.size()*4, 0, Distribution_t());
+    CoverageStats insertCL(m_inserts.size()*4, 0, Distribution_t());
 
-    typedef map<ID_t, CoverageLevel> LibStats;
+    typedef map<ID_t, CoverageStats> LibStats;
     LibStats libStats;
     LibStats::iterator li;
 
@@ -832,7 +682,7 @@ void InsertWidget::paintCanvas()
 
         if (li == libStats.end())
         {
-          li = libStats.insert(make_pair((*ii)->m_libid, CoverageLevel(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
+          li = libStats.insert(make_pair((*ii)->m_libid, CoverageStats(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
         }
 
         li->second.addEndpoints(curloffset, curroffset);
@@ -850,7 +700,7 @@ void InsertWidget::paintCanvas()
     insertCL.finalize();
     int covwidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
 
-    CoverageLevel readCL(m_tiling.size()*4, 0, Distribution_t());
+    CoverageStats readCL(m_tiling.size()*4, 0, Distribution_t());
 
     int totalbases = 0;
     int readspan = 0;
@@ -1169,6 +1019,12 @@ void InsertWidget::setPartitionTypes(bool b)
 void InsertWidget::setCoveragePlot(bool b)
 {
   m_coveragePlot = b;
+  paintCanvas();
+} 
+
+void InsertWidget::setCEStatistic(bool b)
+{
+  m_cestats = b;
   paintCanvas();
 }
 
