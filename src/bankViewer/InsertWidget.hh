@@ -52,6 +52,7 @@ public slots:
   void setPaintScaffold(bool);
   void setFeatures(bool);
   void setColorByLibrary(bool);
+  void setTintHappiness(bool);
   void contigChanged();
   void computePos(int);
   void setHappyDistance(float);
@@ -80,7 +81,10 @@ private:
   void computeInsertHappiness();
   void clearCanvas();
   void initializeVisibleRectangle();
-  void paintCoverage(QPointArray & arr, int arrLen, 
+  void paintCoverage(QPointArray & arr, 
+                     std::vector<double> & rawvalues,
+                     bool copyraw,
+                     int arrLen, 
                      int voffset, int vheight, 
                      int libid, double baseLine,
                      QColor color);
@@ -99,13 +103,14 @@ private:
   int m_yvel;
   int m_autoplay;
 
-  int m_connectMates;
-  int m_partitionTypes;
-  int m_coveragePlot;
-  int m_cestats;
-  int m_showFeatures;
-  int m_colorByLibrary;
-  int m_paintScaffold;
+  bool m_connectMates;
+  bool m_partitionTypes;
+  bool m_coveragePlot;
+  bool m_cestats;
+  bool m_showFeatures;
+  bool m_colorByLibrary;
+  bool m_paintScaffold;
+  bool m_tintHappiness;
 
   int m_tilingwidth;
   float m_hscale;

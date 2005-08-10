@@ -23,11 +23,13 @@ public slots:
 
   void toggleConnectMates();
   void togglePartitionTypes();
+  void toggleTintHappiness();
   void toggleCoveragePlot();
   void toggleCEStatistic();
   void toggleFeatures();
   void toggleColorByLibrary();
   void togglePaintScaffold();
+
   void loadHappyDistance();
 
 signals:
@@ -47,6 +49,7 @@ signals:
   void setFeatures(bool);
   void setColorByLibrary(bool);
   void setPaintScaffold(bool);
+  void setTintHappiness(bool);
 
 private:
 
@@ -65,6 +68,7 @@ private:
   int m_libcolorid;
   int m_scaffid;
   int m_ceid;
+  int m_tintid;
 };
 
 #endif

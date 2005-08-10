@@ -23,8 +23,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
                            const char * name)
   : QMainWindow(parent, name)
 {
-  resize(600, 300);
-  setCaption("Inserts");
+  resize(800,600);
+  setCaption("AI - Inserts");
 
   statusBar()->message("Ready", 2000);
   statusBar()->setSizeGripEnabled(false);
@@ -53,7 +53,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   // Libraries
   QPopupMenu * m_libmenu = new QPopupMenu(this);
-  menuBar()->insertItem("Libraries", m_libmenu);
+  menuBar()->insertItem("&Libraries", m_libmenu);
 
   unsigned int type = 0;
 
@@ -95,6 +95,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
     p.end();
 
     QString name = Insert::getInsertTypeStr((Insert::MateState)state);
+    name += (QString)" [" + state + "]";
 
     m_types[state].first = m_typesmenu->insertItem(QIconSet(rect), name);
     m_types[state].second = true;
@@ -113,11 +114,14 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_partitiontypesid = m_optionsmenu->insertItem("&Partition Types", this, SLOT(togglePartitionTypes()));
   m_optionsmenu->setItemChecked(m_partitiontypesid, true);
 
+  m_tintid = m_optionsmenu->insertItem("&Tint Happiness", this, SLOT(toggleTintHappiness()));
+  m_optionsmenu->setItemChecked(m_tintid, false);
+
   m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
   m_optionsmenu->setItemChecked(m_coverageid, true);
 
   m_ceid = m_optionsmenu->insertItem("C&E Statisitic", this, SLOT(toggleCEStatistic()));
-  m_optionsmenu->setItemChecked(m_ceid, true);
+  m_optionsmenu->setItemChecked(m_ceid, false);
 
   m_featid = m_optionsmenu->insertItem("Show F&eatures", this, SLOT(toggleFeatures()));
   m_optionsmenu->setItemChecked(m_featid, true);
@@ -174,6 +178,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(setCoveragePlot(bool)),
           iw,   SLOT(setCoveragePlot(bool)));
 
+  connect(this, SIGNAL(setTintHappiness(bool)),
+          iw,   SLOT(setTintHappiness(bool)));
+
   connect(this, SIGNAL(setCEStatistic(bool)),
           iw,   SLOT(setCEStatistic(bool)));
 
@@ -199,8 +206,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
           eidpick, SLOT(setText(const QString &)));
 
 
-  zoom->setValue(14);
-  zoom->setValue(16);
+  zoom->setValue(32);
 }
 
 
@@ -277,6 +283,14 @@ void InsertWindow::toggleFeatures()
   m_optionsmenu->setItemChecked(m_featid, b);
 
   emit setFeatures(b);
+}
+
+void InsertWindow::toggleTintHappiness()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_tintid);
+  m_optionsmenu->setItemChecked(m_tintid, b);
+
+  emit setTintHappiness(b);
 }
 
 void InsertWindow::toggleColorByLibrary()

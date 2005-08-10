@@ -5,13 +5,14 @@ using namespace std;
 
 CoverageStats::CoverageStats(int numpoints, ID_t libid, Distribution_t dist) :
    m_coverage(numpoints),
-   m_cestat(numpoints),
    m_libid(libid),
    m_dist(dist),
    m_maxdepth(0),
    m_curpos(0),
    m_sum(0)
-{ }
+{ 
+  m_cestat.resize(numpoints);
+}
 
 
 void CoverageStats::addEndpoints(int curloffset, int curroffset)
@@ -80,39 +81,35 @@ void CoverageStats::finalizeCE(int vheight)
 
   for (int i = 0; i < m_curpos; i++)
   {
-    double numerator = m_cestat[i].y() - m_dist.mean;
-    double denominator = m_dist.sd * sqrt((double)m_coverage[i].y());
+    double numerator = (m_cestat[i] - m_dist.mean) * sqrt((double)m_coverage[i].y());    
+    double denominator = m_dist.sd;
     double val = (denominator) ? (numerator)/(denominator) :  numerator / 0.0001;
 
-    if (m_coverage[i].y() == 0) { val = 0; }
+    // cestat gets the raw ce value
+    m_cestat[i] = val;
 
-    val *= 100;
-    val /= 2;
+    int plotval = (int)(val*8);
 
-    if (val > half)       { val = half; }
-    else if (val < -half) { val = -half; }
+    if (plotval > half)       { plotval = half; }
+    else if (plotval < -half) { plotval = -half; }
 
-    val += half;
+    plotval += half;
 
-    m_cestat[i].setY((int)val);
-    //cerr << "lib: " << m_libid << " x: " << m_cestat[i].x() << " ce: " << m_cestat[i].y() 
-    //     << " val: " << val << " = " << numerator << " / " << denominator << endl;
+    // coverage gets the value to plot
+    m_coverage[i].setY(plotval);
+
+    //cerr << "lib: " << m_libid << " x: " << m_coverage[i].x() << " plotted: " << m_coverage[i].y() 
+    //     << " ce: " << val << " = " << numerator << " / " << denominator << endl;
   }
 }
 
-void CoverageStats::normalize(float hscale, int hoffset, int voffset, bool adjustCE)
+void CoverageStats::normalize(float hscale, int hoffset, int voffset)
 {
   // Adjust coordinates for painting
   for (int i = 0; i < m_curpos; i++)
   {
     m_coverage[i].setX((int)((m_coverage[i].x()+hoffset) * hscale));
     m_coverage[i].setY(voffset-m_coverage[i].y());
-
-    if (adjustCE)
-    {
-      m_cestat[i].setX((int)((m_cestat[i].x()+hoffset) * hscale));
-      m_cestat[i].setY(voffset-m_cestat[i].y());
-    }
   }
 }
 
@@ -120,7 +117,7 @@ void CoverageStats::normalize(float hscale, int hoffset, int voffset, bool adjus
 int CoverageStats::handlePoint(int pos, int eps, int sumdelta)
 {
   m_coverage[m_curpos] = QPoint(pos, eps); 
-  m_cestat[m_curpos]   = QPoint(pos, eps ? m_sum/eps : 0); 
+  m_cestat[m_curpos]   = eps ? m_sum/eps : 0; 
   m_curpos++; 
 
   if (sumdelta < 0) { eps--; }
@@ -129,7 +126,7 @@ int CoverageStats::handlePoint(int pos, int eps, int sumdelta)
   m_sum += sumdelta;
 
   m_coverage[m_curpos] = QPoint(pos, eps); 
-  m_cestat[m_curpos]   = QPoint(pos, eps ? m_sum/eps : 0); 
+  m_cestat[m_curpos]   = eps ? m_sum/eps : 0; 
   m_curpos++; 
 
   return eps;

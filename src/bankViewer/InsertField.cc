@@ -17,12 +17,10 @@ InsertField::InsertField(DataStore * datastore,
    m_datastore(datastore),
    m_hoffset(hoffset)
 {
-
-   QWMatrix m = worldMatrix();
-   m.translate(20, 0);
-   m.scale( 0.05, 1.0 );
-   setWorldMatrix( m );
-
+  QWMatrix m = worldMatrix();
+  m.translate(20, 0);
+  m.scale( 0.05, 1.0 );
+  setWorldMatrix( m );
 }
 
 void InsertField::highlightInsert(InsertCanvasItem * iitem, 
@@ -194,7 +192,8 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       }
       else
       {
-
+        s += " Lib: " + QString::number(citem->m_libid);
+        s += " " + QString::number(citem->m_raw[i]);
       }
 
       jump = true;

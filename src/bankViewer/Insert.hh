@@ -18,6 +18,7 @@ public:
   int getProjectedPosition(AMOS::Tile_t * tile, AMOS::Distribution_t dist);
   void printInsert() const;
   bool reasonablyConnected() const;
+  bool ceConnected() const;
 
   int m_loffset;
   int m_roffset;

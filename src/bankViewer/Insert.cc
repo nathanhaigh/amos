@@ -6,6 +6,7 @@ using namespace std;
 const int MAXTRANSPOSONDIST = 100;
 const int MIN3PRIMETRIM = 250;
 const int REASONABLY_CONNECTED_SD = 10;
+const int CE_CONNECTED_SD = 8;
 const int READLEN = 500;
 
 float Insert::MAXSTDEV = 2;
@@ -209,6 +210,18 @@ bool Insert::reasonablyConnected() const
   /*  //This would force reads that overlap to be disconnected 
          (m_state == CompressedMate && (m_actual > (m_atile->getGappedLength() + m_btile->getGappedLength())));
   */
+}
+
+bool Insert::ceConnected() const
+{
+  if (m_acontig != m_bcontig) {return false;}
+  if (m_matetype == Fragment_t::TRANSPOSON)
+  {
+    return false;
+  }
+
+  return ((m_state == Happy) || (m_state == CompressedMate) || (m_state == StretchedMate)) && 
+         (abs(m_actual - m_dist.mean) < (CE_CONNECTED_SD * m_dist.sd));
 }
 
 void Insert::setActive(int i, Insert * other, bool includeLibrary)

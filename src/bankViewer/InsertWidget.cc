@@ -80,10 +80,11 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_connectMates   = 1;
   m_partitionTypes = 1;
   m_coveragePlot   = 1;
-  m_cestats        = 1;
+  m_cestats        = 0;
   m_showFeatures   = 1;
   m_paintScaffold  = 1;
   m_colorByLibrary = 0;
+  m_tintHappiness  = 0;
 
   m_currentScaffold = AMOS::NULL_ID;
 
@@ -178,6 +179,12 @@ InsertWidget::~InsertWidget()
 
 void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
 {
+  if (contigid == AMOS::NULL_ID) { return; }
+
+  m_contigid = contigid;
+  m_gstart = gstart;
+  m_gend = gend;
+
   if (m_paintScaffold && m_datastore->m_scaffoldId != AMOS::NULL_ID)
   {
     vector<Tile_t>::const_iterator ci;
@@ -222,10 +229,6 @@ void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
   m_ifield->ensureVisible(mapx, mapy);
 
   m_icanvas->update();
-
-  m_contigid = contigid;
-  m_gstart = gstart;
-  m_gend = gend;
 }
 
 void InsertWidget::setZoom(int zoom)
@@ -535,7 +538,10 @@ void InsertWidget::initializeTiling()
 // of the silly 16 bit limitation in qpainter/x11, so break the coverage
 // into small pieces, and draw each separately.
     
-void InsertWidget::paintCoverage(QPointArray & arr, int arrLen, 
+void InsertWidget::paintCoverage(QPointArray & arr, 
+                                 vector<double> & rawvalues,
+                                 bool copyRaw,
+                                 int arrLen, 
                                  int voffset, int vheight,
                                  int libid,
                                  double baseLevel,
@@ -546,9 +552,15 @@ void InsertWidget::paintCoverage(QPointArray & arr, int arrLen,
   {
     int size = min(1000, (arrLen - i));
     QPointArray window(size);
+    vector<double> windowraw(size);
+
     for (int j = 0; j < size; j++)
     {
       window[j] = arr[i+j];
+      if (copyRaw)
+      {
+        windowraw[j] = rawvalues[i+j];
+      }
     }
 
     int width = window[size-1].x()-window[0].x()+1;
@@ -556,7 +568,8 @@ void InsertWidget::paintCoverage(QPointArray & arr, int arrLen,
     new CoverageCanvasItem(window[0].x(), voffset,
                            width, vheight, 
                            libid, baseLevel,
-                           window, m_icanvas, color);
+                           window, windowraw, copyRaw,
+                           m_icanvas, color);
     i+= size;
 
     if (i >= arrLen) { break; }
@@ -676,7 +689,7 @@ void InsertWidget::paintCanvas()
 
       insertCL.addEndpoints(curloffset, curroffset);
 
-      if (m_cestats && ((*ii)->m_acontig == (*ii)->m_bcontig))
+      if (m_cestats && (*ii)->ceConnected())
       {
         li = libStats.find((*ii)->m_libid);
 
@@ -728,19 +741,26 @@ void InsertWidget::paintCanvas()
     cerr << "Mean read coverage: " << meanreadcoverage << endl;
     cerr << "Mean insert coverage: " << meaninsertcoverage << endl;
 
-    int vheight = max(insertCL.m_maxdepth, 100);
+    int mincestatheight = 100;
+    int vheight = insertCL.m_maxdepth;
+    if (m_cestats && (insertCL.m_maxdepth < mincestatheight))
+    {
+      vheight = mincestatheight;
+    }
 
-    insertCL.normalize(m_hscale, m_hoffset, voffset + vheight, false);
-    readCL.normalize(m_hscale, m_hoffset, voffset + vheight, false);
+    insertCL.normalize(m_hscale, m_hoffset, voffset + vheight);
+    readCL.normalize(m_hscale, m_hoffset, voffset + vheight);
 
     if (m_coveragePlot)
     {
-      paintCoverage(insertCL.m_coverage, insertCL.m_curpos,
+      paintCoverage(insertCL.m_coverage, insertCL.m_cestat, false,
+                    insertCL.m_curpos,
                     voffset, vheight,
                     -1, meaninsertcoverage, 
                     UIElements::color_insertcoverage);
 
-      paintCoverage(readCL.m_coverage, readCL.m_curpos,
+      paintCoverage(readCL.m_coverage, readCL.m_cestat, false,
+                    readCL.m_curpos,
                     voffset, vheight, 
                     -2, meanreadcoverage,
                     UIElements::color_readcoverage);
@@ -751,8 +771,9 @@ void InsertWidget::paintCanvas()
       for (li = libStats.begin(); li != libStats.end(); li++)
       {
         li->second.finalizeCE(vheight);
-        li->second.normalize(m_hscale, m_hoffset, voffset + vheight, true);
-        paintCoverage(li->second.m_cestat, li->second.m_curpos,
+        li->second.normalize(m_hscale, m_hoffset, voffset + vheight);
+        paintCoverage(li->second.m_coverage, li->second.m_cestat, true,
+                      li->second.m_curpos,
                       voffset, vheight,
                       (int)li->second.m_libid, (int)vheight/2,
                       (libColorMap[li->second.m_libid]));
@@ -958,7 +979,32 @@ void InsertWidget::paintCanvas()
 
       if (!layout.empty()) 
       { 
-        voffset += (layout.size() + 1) * lineheight;
+        if (m_tintHappiness && m_partitionTypes)
+        {
+          QCanvasRectangle * covbg = new QCanvasRectangle(0, voffset-3, 
+                                                          (int)(m_hscale*(rightmost-leftmost)), 
+                                                          (layout.size() * lineheight)+6,
+                                                          m_icanvas);
+          QColor color = UIElements::getInsertColor((Insert::MateState)types[type]);
+
+          int h, s, v;
+          color.hsv(&h, &s, &v);
+
+          s /= 2; v /= 2;
+          color.setHsv(h, s, v);
+
+          covbg->setPen(color);
+
+          s /= 2; v /= 2;
+          color.setHsv(h, s, v);
+
+          covbg->setBrush(color);
+          covbg->setBrush(QBrush(color, Qt::Dense5Pattern));
+          covbg->setZ(-2);
+          covbg->show();
+        }
+        
+        voffset += (layout.size() + 2) * lineheight;
       }
 
       if (!m_partitionTypes)
@@ -994,6 +1040,8 @@ void InsertWidget::paintCanvas()
   m_icanvas->update();
   cerr << "." << endl;
 
+  setTilingVisibleRange(m_contigid, m_gstart, m_gend);
+
   QApplication::restoreOverrideCursor();
 }
 
@@ -1025,6 +1073,12 @@ void InsertWidget::setCoveragePlot(bool b)
 void InsertWidget::setCEStatistic(bool b)
 {
   m_cestats = b;
+  paintCanvas();
+}
+
+void InsertWidget::setTintHappiness(bool b)
+{
+  m_tintHappiness = b;
   paintCanvas();
 }
 

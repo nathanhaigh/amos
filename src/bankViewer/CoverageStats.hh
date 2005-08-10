@@ -2,8 +2,9 @@
 #define COVERAGE_STATS_HH_ 1
 
 #include <foundation_AMOS.hh>
-#include <map>
 #include <qpointarray.h>
+#include <map>
+#include <vector>
 
 class CoverageStats
 {
@@ -12,8 +13,8 @@ public:
 
   typedef std::multimap<int, int> EndPoints;
 
-  QPointArray m_coverage;
-  QPointArray m_cestat;
+  QPointArray  m_coverage;
+  std::vector<double> m_cestat;
 
   AMOS::ID_t m_libid;
   AMOS::Distribution_t m_dist;
@@ -24,7 +25,7 @@ public:
   void addEndpoints(int curloffset, int curroffset);
   void finalize();
   void finalizeCE(int vheight);
-  void normalize(float hscale, int hoffset, int voffset, bool adjustCE);
+  void normalize(float hscale, int hoffset, int voffset);
 
 private:
   int handlePoint(int pos, int eps, int sumdelta);
