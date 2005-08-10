@@ -49,9 +49,9 @@ void AssemblyStats::addRow(QString tag, int value)
   addRow(tag, QString::number(value, 'g', 12));
 }
 
-void AssemblyStats::addRow(QString tag, double  value)
+void AssemblyStats::addRow(QString tag, double value)
 {
-  addRow(tag, QString::number(value, 'g', 12));
+  addRow(tag, QString::number(value, 'f', 2));
 }
 
 

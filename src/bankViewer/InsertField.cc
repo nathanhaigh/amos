@@ -188,12 +188,12 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
         else if (citem->m_libid == -2) { s += " Read";  }
 
         s += " Coverage " + QString::number(citem->y() + citem->height() - citem->m_points[i].y());
-        s += " [" + QString::number(citem->m_baseLevel) + "]";
+        s += " [" + QString::number(citem->m_baseLevel, 'f', 2) + "]";
       }
       else
       {
         s += " Lib: " + QString::number(citem->m_libid);
-        s += " " + QString::number(citem->m_raw[i]);
+        s += " " + QString::number(citem->m_raw[i], 'f', 3);
       }
 
       jump = true;
