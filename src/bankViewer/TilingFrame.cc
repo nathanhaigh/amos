@@ -90,6 +90,9 @@ TilingFrame::TilingFrame(DataStore * datastore,
   connect(this,        SIGNAL(togglePolymorphismView(bool)),
           m_tilingfield, SLOT(togglePolymorphismView(bool)));
 
+  connect(this,        SIGNAL(toggleQVColoring(bool)),
+          m_tilingfield, SLOT(toggleQVColoring(bool)));
+
   connect(this,        SIGNAL(toggleLowQualityLowerCase(bool)),
           m_tilingfield, SLOT(toggleLowQualityLowerCase(bool)));
 

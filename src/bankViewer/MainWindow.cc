@@ -84,6 +84,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_options->insertSeparator();
   m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleDisplayQV()));
   m_lowquallowerid = m_options->insertItem("Lower Case &Low QV",       this, SLOT(toggleLowQualityLowerCase()));
+  m_qvcolorid      = m_options->insertItem("Q&V Coloring",             this, SLOT(toggleQVColoring()));
   m_options->insertSeparator();
   m_snpcoloringid  = m_options->insertItem("SN&P Coloring",            this, SLOT(toggleSNPColoring()));
   m_highid         = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
@@ -285,6 +286,9 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 
   connect(this,      SIGNAL(toggleDisplayQV(bool)),
           tiling,    SIGNAL(toggleDisplayQV(bool)));
+
+  connect(this,      SIGNAL(toggleQVColoring(bool)),
+          tiling,    SIGNAL(toggleQVColoring(bool)));
 
   connect(this,      SIGNAL(toggleLowQualityLowerCase(bool)),
           tiling,    SIGNAL(toggleLowQualityLowerCase(bool)));
@@ -610,6 +614,14 @@ void MainWindow::toggleLowQualityLowerCase()
   m_options->setItemChecked(m_lowquallowerid, b);
 
   emit toggleLowQualityLowerCase(b);
+}
+
+void MainWindow::toggleQVColoring()
+{
+  bool b = !m_options->isItemChecked(m_qvcolorid);
+  m_options->setItemChecked(m_qvcolorid, b);
+
+  emit toggleQVColoring(b);
 }
 
 void MainWindow::toggleBaseColors()

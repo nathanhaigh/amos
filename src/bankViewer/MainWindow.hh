@@ -78,6 +78,7 @@ public slots:
   void toggleDisplayAllChromo();
   void toggleLowQualityLowerCase();
   void toggleBaseColors();
+  void toggleQVColoring();
   void toggleShowFullRange();
   void toggleDisplayQV();
   void togglePolymorphismView();
@@ -117,6 +118,7 @@ signals:
   void toggleHighlightDiscrepancy(bool);
   void toggleDisplayAllChromo(bool);
   void togglePolymorphismView(bool);
+  void toggleQVColoring(bool);
   void setFontSize(int);
 
   void advanceNextDiscrepancy();
@@ -151,6 +153,7 @@ private:
   int m_showfullid;
   int m_snpcoloringid;
   int m_polyid;
+  int m_qvcolorid;
 
   int m_gindex;
   DataStore m_datastore;

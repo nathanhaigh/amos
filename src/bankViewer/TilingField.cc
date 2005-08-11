@@ -6,7 +6,7 @@
 #include <qpointarray.h>
 #include "UIElements.hh"
 
-#define DEBUG 0
+#define DEBUGQV 0
 
 static int min (int a, int b)
 {
@@ -56,6 +56,7 @@ TilingField::TilingField(DataStore * datastore,
   m_snpcoloring = true;
   m_basecolors = false;
   m_polymorphismView = false;
+  m_qvcoloring = false;
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),
@@ -78,7 +79,7 @@ int TilingField::getReadCov(int y)
   {
     if (y >= ri->m_displaystart && y < ri->m_displayend)
     {
-      #if DEBUG
+      #if DEBUGQV
       cerr << "Hit " << ri->m_read.getEID() << " [" << dcov << "]" << endl;
       #endif
 
@@ -95,7 +96,7 @@ void TilingField::mousePressEvent(QMouseEvent *e)
 
 void TilingField::singleClick()
 {
-  #if DEBUG
+  #if DEBUGQV
   cerr << "Timer fired! single click" << endl;
   #endif
 
@@ -114,7 +115,7 @@ void TilingField::singleClick()
 
 void TilingField::mouseReleaseEvent( QMouseEvent * e)
 {
-  #if DEBUG
+  #if DEBUGQV
   cerr << "mouserelease state:" << m_clickstate << endl;
   #endif
 
@@ -125,7 +126,7 @@ void TilingField::mouseReleaseEvent( QMouseEvent * e)
 
 void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 {
-  #if DEBUG
+  #if DEBUGQV
   cerr << "doubleclick, stop timer" << endl;
   #endif
 
@@ -231,7 +232,7 @@ void TilingField::paintEvent( QPaintEvent * )
 
   emit setTilingVisibleRange(m_datastore->m_contigId, srangeStart, srangeEnd);
 
-  #if DEBUG
+  #if DEBUGQV
   cerr << "paintTField:" << m_renderedSeqs.size()
        << " [" << srangeStart << "," << srangeEnd << "]" << endl;
   #endif
@@ -371,11 +372,29 @@ void TilingField::paintEvent( QPaintEvent * )
 
           s = b;
 
-          if (m_highlightdiscrepancy && b != ' ' && toupper(b) != toupper(m_consensus[gindex]))
+          bool bad = m_highlightdiscrepancy && (toupper(b) != toupper(m_consensus[gindex]));
+
+          if ((bad || m_qvcoloring) && b != ' ')
           {
-            p.setBrush(UIElements::color_discrepancy);
-            p.setPen(UIElements::color_discrepancy);
-            p.drawRect(hoffset, ldcov, m_fontsize, lineheight);
+            QColor bg;
+
+            int h = 0, s = 0, v = 60 + qv*3;
+
+            if (bad && m_qvcoloring)
+            {
+              h = 300; s = 220 ; v = (int)(160 + 1.5*qv);
+            }
+
+            bg.setHsv(h,s,v);
+
+            if (bad && !m_qvcoloring)
+            {
+              bg = UIElements::color_discrepancy;
+            }
+
+            p.setBrush(bg);
+            p.setPen(bg);
+            p.drawRect(hoffset-basespace/2, ldcov, m_fontsize+basespace, lineheight);
           }
 
           // Bases
@@ -592,5 +611,11 @@ void TilingField::toggleSNPColoring(bool doColor)
 void TilingField::togglePolymorphismView(bool doPV)
 {
   m_polymorphismView = doPV;
+  repaint();
+}
+
+void TilingField::toggleQVColoring(bool doqvc)
+{
+  m_qvcoloring = doqvc;
   repaint();
 }

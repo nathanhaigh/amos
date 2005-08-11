@@ -36,6 +36,7 @@ public slots:
     void toggleBaseColors(bool);
     void toggleShowFullRange(bool);
     void toggleSNPColoring(bool);
+    void toggleQVColoring(bool);
     void singleClick();
 
 signals:
@@ -61,22 +62,20 @@ private:
     int & m_fontsize;
     int & m_gindex;
     
-    int m_displayqv;
     int m_height;
     int m_width;
-    int m_stabletiling;
     int m_traceheight;
     int m_tracespace;
-    int m_snpcoloring;
-    int m_polymorphismView;
 
-
+    bool m_displayqv;
+    bool m_stabletiling;
+    bool m_snpcoloring;
+    bool m_polymorphismView;
+    bool m_qvcoloring;
     bool m_highlightdiscrepancy;
     bool m_lowquallower;
     bool m_basecolors;
     bool m_fullseq;
-
-
 };
 
 

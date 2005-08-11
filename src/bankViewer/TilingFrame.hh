@@ -51,6 +51,7 @@ signals:
     void toggleSNPColoring(bool);
     void togglePolymorphismView(bool);
     void toggleHighlightDiscrepancy(bool);
+    void toggleQVColoring(bool);
 
 protected:
     void paintEvent(QPaintEvent *);
