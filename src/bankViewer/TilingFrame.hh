@@ -49,6 +49,7 @@ signals:
     void toggleLowQualityLowerCase(bool);
     void toggleBaseColors(bool);
     void toggleSNPColoring(bool);
+    void togglePolymorphismView(bool);
     void toggleHighlightDiscrepancy(bool);
 
 protected:

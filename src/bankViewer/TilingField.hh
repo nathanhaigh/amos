@@ -31,6 +31,7 @@ public:
 public slots:
     void toggleHighlightDiscrepancy(bool);
     void toggleDisplayQV(bool);
+    void togglePolymorphismView(bool);
     void toggleLowQualityLowerCase(bool);
     void toggleBaseColors(bool);
     void toggleShowFullRange(bool);
@@ -67,6 +68,7 @@ private:
     int m_traceheight;
     int m_tracespace;
     int m_snpcoloring;
+    int m_polymorphismView;
 
 
     bool m_highlightdiscrepancy;

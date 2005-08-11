@@ -80,6 +80,7 @@ public slots:
   void toggleBaseColors();
   void toggleShowFullRange();
   void toggleDisplayQV();
+  void togglePolymorphismView();
 
   void fontIncrease();
   void fontDecrease();
@@ -115,6 +116,7 @@ signals:
   void toggleSNPColoring(bool);
   void toggleHighlightDiscrepancy(bool);
   void toggleDisplayAllChromo(bool);
+  void togglePolymorphismView(bool);
   void setFontSize(int);
 
   void advanceNextDiscrepancy();
@@ -148,6 +150,7 @@ private:
   int m_basecolorid;
   int m_showfullid;
   int m_snpcoloringid;
+  int m_polyid;
 
   int m_gindex;
   DataStore m_datastore;

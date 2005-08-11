@@ -55,6 +55,7 @@ TilingField::TilingField(DataStore * datastore,
   m_fullseq = false;
   m_snpcoloring = true;
   m_basecolors = false;
+  m_polymorphismView = false;
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),
@@ -380,6 +381,12 @@ void TilingField::paintEvent( QPaintEvent * )
           // Bases
           p.setPen((m_basecolors) ? UIElements::getBaseColor(b) : black);
           p.setFont(QFont("Helvetica", m_fontsize));
+
+          if (m_polymorphismView && toupper(b) == toupper(m_consensus[gindex]))
+          {
+            s = '.';
+          }
+
           p.drawText(hoffset, ldcov, 
                      m_fontsize, lineheight,
                      Qt::AlignHCenter | Qt::AlignBottom, s);
@@ -579,5 +586,11 @@ void TilingField::toggleLowQualityLowerCase(bool dolower)
 void TilingField::toggleSNPColoring(bool doColor)
 {
   m_snpcoloring = doColor;
+  repaint();
+}
+
+void TilingField::togglePolymorphismView(bool doPV)
+{
+  m_polymorphismView = doPV;
   repaint();
 }

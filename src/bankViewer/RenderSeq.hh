@@ -81,8 +81,7 @@ public:
         return true;
       }
 
-      int lendiff = (b.range.getLength() + b.gaps.size()) -
-                    (a.range.getLength() + a.gaps.size());
+      int lendiff = (b.getGappedLength()) - (a.getGappedLength());
 
       if (lendiff)
       {

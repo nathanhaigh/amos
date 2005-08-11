@@ -72,16 +72,23 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   file->insertSeparator();
   file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 
+  //m_indicatorid    = m_options->insertItem("Show &Indicator",          this, SLOT(toggleShowIndicator()));
+  //m_posid          = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
+  m_indicatorid = -1;
+  m_posid = -1;
+
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
-  m_snpcoloringid  = m_options->insertItem("SN&P Coloring",            this, SLOT(toggleSNPColoring()));
   m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange()));
-  m_posid          = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
-  m_indicatorid    = m_options->insertItem("Show &Indicator",          this, SLOT(toggleShowIndicator()));
+  m_options->insertSeparator();
   m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleDisplayQV()));
-  m_lowquallowerid = m_options->insertItem("Lower Case &Low QV", this, SLOT(toggleLowQualityLowerCase()));
+  m_lowquallowerid = m_options->insertItem("Lower Case &Low QV",       this, SLOT(toggleLowQualityLowerCase()));
+  m_options->insertSeparator();
+  m_snpcoloringid  = m_options->insertItem("SN&P Coloring",            this, SLOT(toggleSNPColoring()));
   m_highid         = m_options->insertItem("&Highlight Discrepancies", this, SLOT(toggleHighlightDiscrepancy()));
+  m_polyid         = m_options->insertItem("&Polymorphism View",       this, SLOT(togglePolymorphismView()));
+  m_options->insertSeparator();
   m_prefetch       = m_options->insertItem("&Prefetch Chromatograms",  this, SLOT(toggleDisplayAllChromo()));
 
   m_options->setItemChecked(m_snpcoloringid, true);
@@ -290,6 +297,9 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 
   connect(this,      SIGNAL(toggleShowNumbers(bool)),
           tiling,    SIGNAL(toggleShowNumbers(bool)));
+
+  connect(this,      SIGNAL(togglePolymorphismView(bool)),
+          tiling,    SIGNAL(togglePolymorphismView(bool)));
 
   connect(this,      SIGNAL(toggleBaseColors(bool)),
           tiling,    SIGNAL(toggleBaseColors(bool)));
@@ -633,6 +643,15 @@ void MainWindow::toggleDisplayAllChromo()
 
   emit toggleDisplayAllChromo(b);
 }
+
+void MainWindow::togglePolymorphismView()
+{
+  bool b = !m_options->isItemChecked(m_polyid);
+  m_options->setItemChecked(m_polyid, b);
+
+  emit togglePolymorphismView(b);
+}
+
 
 void MainWindow::fontIncrease()
 {
