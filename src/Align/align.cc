@@ -3579,7 +3579,7 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
   {
    vector <Gapped_MA_Bead_t>  active_bead;
    string  seq_column, qual_column;
-   libSlice_Consensus  * cns;
+   libSlice_Consensus  cns;
    static libSlice_Slice  sl;
    int  col_len;
    static int  max_len = 0;
@@ -3664,9 +3664,9 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 
       libSlice_getConsensus (& sl, & cns, NULL, 0);
 
-      consensus [i] = cns -> consensus;
+      consensus [i] = cns . consensus;
       con_qual [i] = MIN_QUALITY
-          + Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR));
+          + Min (cns . qvConsensus, unsigned (MAX_QUALITY_CHAR));
 
       if  (Verbose > 3)
           {
@@ -3681,11 +3681,9 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
              printf (" %02d", (signed) qual_column [j]);
            putchar ('\n');
 
-           cout << "         cons = " << cns -> consensus << "  qv = "
-                << Min (cns -> qvConsensus, unsigned (MAX_QUALITY_CHAR)) << endl;
+           cout << "         cons = " << cns . consensus << "  qv = "
+                << Min (cns . qvConsensus, unsigned (MAX_QUALITY_CHAR)) << endl;
           }
-
-      free (cns);
      }
 
    return;

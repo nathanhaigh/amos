@@ -405,14 +405,14 @@ void libSlice_setRecallEmpty(int recallEmpty)
  *  Note: It is the callers responsibility to free the result.
  *
  *  @param s Pointer to a slice.
- *  @param result Cargo pointer for storing results.
+ *  @param result Pointer for storing results.
  *  @param dist Table of distribution of the bases.
  *  @param highQualityThreshold Threshold for ambiguity codes.
  *  @param doAmbiguity Flag to calculte ambiguity codes.
  *  @return errorCode 0 on sucess.
  */
 int libSlice_getConsensusParam(const libSlice_Slice *s, 
-                               libSlice_Consensus ** result, 
+                               libSlice_Consensus * result, 
                                const libSlice_BaseDistribution * dist,
                                int highQualityThreshold,
                                int doAmbiguity) 
@@ -472,13 +472,6 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
     return -1;
   }
 
-  *result = (libSlice_Consensus *) malloc (sizeof(libSlice_Consensus));
-
-  if (!*result)
-  {
-    return -2;
-  }
-
   if (highQualityThreshold < 0)
   {
     doAmbiguity = 0;
@@ -486,23 +479,23 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
 
   if (!s->dcov && !m_recallEmpty)
   {
-    (*result)->qvA   = 0;
-    (*result)->qvC   = 0;
-    (*result)->qvG   = 0;
-    (*result)->qvT   = 0;
-    (*result)->qvGap = 0;
+    (result)->qvA   = 0;
+    (result)->qvC   = 0;
+    (result)->qvG   = 0;
+    (result)->qvT   = 0;
+    (result)->qvGap = 0;
 
-    (*result)->cpA   = 0.2;
-    (*result)->cpC   = 0.2;
-    (*result)->cpG   = 0.2;
-    (*result)->cpT   = 0.2;
-    (*result)->cpGap = 0.2;
+    (result)->cpA   = 0.2;
+    (result)->cpC   = 0.2;
+    (result)->cpG   = 0.2;
+    (result)->cpT   = 0.2;
+    (result)->cpGap = 0.2;
 
-    (*result)->qvConsensus = 0;
-    (*result)->ambiguityFlags = 0;
+    (result)->qvConsensus = 0;
+    (result)->ambiguityFlags = 0;
 
     // Just set the consensensus to be the old consensus
-    (*result)->consensus = s->c;
+    (result)->consensus = s->c;
   }
   else
   {
@@ -668,31 +661,31 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
     fprintf(stderr, "%Lf\n", cpGap - cpA);
     */
 
-    (*result)->qvA   = qvA;
-    (*result)->qvC   = qvC;
-    (*result)->qvG   = qvG;
-    (*result)->qvT   = qvT;
-    (*result)->qvGap = qvGap;
+    (result)->qvA   = qvA;
+    (result)->qvC   = qvC;
+    (result)->qvG   = qvG;
+    (result)->qvT   = qvT;
+    (result)->qvGap = qvGap;
 
-    (*result)->cpA   = cpA;
-    (*result)->cpC   = cpC;
-    (*result)->cpG   = cpG;
-    (*result)->cpT   = cpT;
-    (*result)->cpGap = cpGap;
+    (result)->cpA   = cpA;
+    (result)->cpC   = cpC;
+    (result)->cpG   = cpG;
+    (result)->cpT   = cpT;
+    (result)->cpGap = cpGap;
 
-    (*result)->qvConsensus = cqv;
+    (result)->qvConsensus = cqv;
 
     // This finds all ambiguity flags
-    (*result)->ambiguityFlags = 
+    (result)->ambiguityFlags = 
             libSlice_calculateAmbiguityFlags(cpA, cpC, cpG, cpT, cpGap,
                                              highQualityThreshold,
                                              baseCount);
     if (doAmbiguity)
     {
-      consensus = libSlice_convertAmbiguityFlags((*result)->ambiguityFlags);
+      consensus = libSlice_convertAmbiguityFlags((result)->ambiguityFlags);
     }
 
-    (*result)->consensus = consensus;
+    (result)->consensus = consensus;
   }
 
   return retval;
@@ -990,7 +983,7 @@ int libSlice_updateAmbiguity(const libSlice_Slice * s,
 //! Calculates the consensus of a slice with NO ambiguity codes
 /*! 
  *  @param s Pointer to a slice.
- *  @param result Cargo pointer for storing results.
+ *  @param result Pointer for storing results.
  *  @param dist Table of distribution of the bases.
  *  @param highQualityThreshold Threshold for ambiguity codes.
  *  @return errorCode 0 on sucess.
@@ -998,7 +991,7 @@ int libSlice_updateAmbiguity(const libSlice_Slice * s,
  *  @see _getConsensus
  */
 int libSlice_getConsensus(const libSlice_Slice *s, 
-                          libSlice_Consensus ** result, 
+                          libSlice_Consensus * result, 
                           const libSlice_BaseDistribution * dist,
                           int highQualityThreshold)
 {
@@ -1008,7 +1001,7 @@ int libSlice_getConsensus(const libSlice_Slice *s,
 //! Calculates the consensus of a slice with ambiguity codes
 /*! 
  *  @param s Pointer to a slice.
- *  @param result Cargo pointer for storing results.
+ *  @param result Pointer for storing results.
  *  @param dist Table of distribution of the bases.
  *  @param highQualityThreshold Threshold for ambiguity codes.
  *  @return errorCode 0 on sucess.
@@ -1016,7 +1009,7 @@ int libSlice_getConsensus(const libSlice_Slice *s,
  *  @see _getConsensus
  */
 int libSlice_getConsensusWithAmbiguity(const libSlice_Slice *s, 
-                                       libSlice_Consensus ** result, 
+                                       libSlice_Consensus * result, 
                                        const libSlice_BaseDistribution * dist,
                                        int highQualityThreshold)
 {
@@ -1034,7 +1027,7 @@ int libSlice_getConsensusWithAmbiguity(const libSlice_Slice *s,
 //! Calculates the Consensus Quality Values for a range of slices
 /*! 
  *  @param s Array of slices
- *  @param results Cargo pointer to array of results
+ *  @param results Array of results
  *  @param len Length of slices (and results)
  *  @param dist Table of distribution of the bases
  *  @param highQualityThreshold Threshold for ambiguity codes.
@@ -1044,7 +1037,7 @@ int libSlice_getConsensusWithAmbiguity(const libSlice_Slice *s,
  *  @see _getConsensus
  */
 int libSlice_getConsensusRangeParam(const libSlice_Slice s [], 
-                                    libSlice_Consensus *** results, 
+                                    libSlice_Consensus results [], 
                                     int len,
                                     const libSlice_BaseDistribution * dist,
                                     int highQualityThreshold,
@@ -1053,17 +1046,9 @@ int libSlice_getConsensusRangeParam(const libSlice_Slice s [],
   int retval = 0;
   int i;
 
-  // Create an array of pointers to store results
-  *results = (libSlice_Consensus **) 
-                 malloc (len * sizeof(libSlice_Consensus *));
-  
-  // It is the responsibility of getConsQC to allocate each individual result
-  // Initialize each pointer to NULL as a check for consistency.
-  memset(*results, 0, len * sizeof(libSlice_Consensus *));
-
   for(i = 0; i < len; i++)
   {
-    retval += libSlice_getConsensusParam(&s[i], &((*results)[i]), dist,
+    retval += libSlice_getConsensusParam(&s[i], &results[i], dist,
                                          highQualityThreshold, doAmbiguity);
   }
   
@@ -1073,7 +1058,7 @@ int libSlice_getConsensusRangeParam(const libSlice_Slice s [],
 //! Calculates the consensus of an array of slice with no ambiguity codes
 /*! 
  *  @param s Array of slices
- *  @param results Cargo pointer to array of results
+ *  @param results Array of results
  *  @param len Length of slices (and results)
  *  @param dist Table of distribution of the bases
  *  @param highQualityThreshold Threshold for ambiguity codes.
@@ -1082,7 +1067,7 @@ int libSlice_getConsensusRangeParam(const libSlice_Slice s [],
  *  @see _getConsensusRange
  */
 int libSlice_getConsensusRange(const libSlice_Slice s [], 
-                               libSlice_Consensus *** results, 
+                               libSlice_Consensus results [], 
                                int len,
                                const libSlice_BaseDistribution * dist,
                                int highQualityThreshold)
@@ -1095,7 +1080,7 @@ int libSlice_getConsensusRange(const libSlice_Slice s [],
 //! Calculates the consensus of an array of slice with ambiguity codes
 /*! 
  *  @param s Array of slices
- *  @param results Cargo pointer to array of results
+ *  @param results Array of results
  *  @param len Length of slices (and results)
  *  @param dist Table of distribution of the bases
  *  @param highQualityThreshold Threshold for ambiguity codes.
@@ -1104,32 +1089,13 @@ int libSlice_getConsensusRange(const libSlice_Slice s [],
  *  @see _getConsensusRange
  */
 int libSlice_getConsensusRangeWithAmbiguity(const libSlice_Slice s [], 
-                                         libSlice_Consensus *** results, 
+                                         libSlice_Consensus results [], 
                                          int len,
                                          const libSlice_BaseDistribution * dist,
                                          int highQualityThreshold)
 {
   return libSlice_getConsensusRangeParam(s, results, len, dist, 
                                          highQualityThreshold, 1);
-}
-
-//! Frees the results of getConsensusRange
-/*! 
- *  @param results Array of pointers of results to free
- *  @param len Length of the array
- */
-void libSlice_freeConsensusRange(libSlice_Consensus **results, int len)
-{
-  if (results && len)
-  {
-    int i;
-    for (i = 0; i < len; i++)
-    {
-      if (results[i]) free(results[i]);
-    }
-
-    free(results);
-  }
 }
 
 //@}

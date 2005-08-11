@@ -134,7 +134,7 @@ void libSlice_setRecallEmpty(int recallEmpty);
 // Internal function: Calculates the consensus and consensus quality 
 //                    values for a single slice
 int libSlice_getConsensusParam(const libSlice_Slice * s, 
-                               libSlice_Consensus ** result, 
+                               libSlice_Consensus * result, 
                                const libSlice_BaseDistribution * dist,
                                int highQualityThreshold,
                                int doAmbiguity); 
@@ -154,14 +154,14 @@ int libSlice_updateAmbiguity(const libSlice_Slice * s,
 // Wrapper to calculate the consensus and consensus quality values 
 // for a range of slices without using ambiguity codes
 int libSlice_getConsensus(const libSlice_Slice * s, 
-                          libSlice_Consensus ** results, 
+                          libSlice_Consensus * results, 
                           const libSlice_BaseDistribution * dist,
                           int highQualityThreshold);
          
 // Wrapper to calculate the consensus and consensus quality values 
 // for a range of slices with using ambiguity codes
 int libSlice_getConsensusWithAmbiguity(const libSlice_Slice * s, 
-                                       libSlice_Consensus ** results, 
+                                       libSlice_Consensus * results, 
                                        const libSlice_BaseDistribution * dist,
                                        int highQualityThreshold);
 //@}
@@ -174,7 +174,7 @@ int libSlice_getConsensusWithAmbiguity(const libSlice_Slice * s,
 // Internal function: Calculates the consensus and consensus quality 
 //                    values for an array of slices
 int libSlice_getConsensusRangeParam(const libSlice_Slice s[],
-                                    libSlice_Consensus *** results, 
+                                    libSlice_Consensus results[], 
                                     int len,  
                                     const libSlice_BaseDistribution * dist,
                                     int highQualityThreshold,
@@ -182,20 +182,17 @@ int libSlice_getConsensusRangeParam(const libSlice_Slice s[],
 
 // Calculates the consensus of an array of slice with no ambiguity codes
 int libSlice_getConsensusRange(const libSlice_Slice s[],
-                               libSlice_Consensus *** results, 
+                               libSlice_Consensus results[], 
                                int len,  
                                const libSlice_BaseDistribution * dist,
                                int highQualityThreshold);
 
 // Calculates the consensus of an array of slice with ambiguity codes
 int libSlice_getConsensusRangeWithAmbiguity(const libSlice_Slice s[],
-                                         libSlice_Consensus *** results, 
+                                         libSlice_Consensus results[], 
                                          int len,  
                                          const libSlice_BaseDistribution * dist,
                                          int highQualityThreshold);
-
-// Frees the results of getConsensusRange
-void libSlice_freeConsensusRange(libSlice_Consensus **results, int len);
 
 //@}
 
