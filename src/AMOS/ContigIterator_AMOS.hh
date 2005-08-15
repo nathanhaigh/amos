@@ -178,6 +178,7 @@ private:
   AMOS::Contig_t m_contig;
 
   static int     s_tilingreadsoffset;
+  int            m_tilingreadsoffset;
 };
 
 

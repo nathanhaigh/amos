@@ -246,7 +246,7 @@ void printSNPReport(ContigIterator_t ci)
          sl != column.m_basefrequencies.end(); 
          sl++)
     {
-      char base = (*sl)->m_base;
+      char base = toupper((*sl)->m_base);
 
       ostringstream reads;
       ostringstream quals;

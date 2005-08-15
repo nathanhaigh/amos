@@ -37,6 +37,7 @@ TiledRead_t::TiledRead_t(Tile_t tile, Read_t red, int readidx)
 int ContigIterator_t::s_tilingreadsoffset(0);
 
 ContigIterator_t::ContigIterator_t(Contig_t & ctg, Bank_t * rdbank)
+ : m_tilingreadsoffset(s_tilingreadsoffset)
 {
   m_gindex = -1;
   m_uindex = 1;
@@ -51,6 +52,7 @@ ContigIterator_t::ContigIterator_t(Contig_t & ctg, Bank_t * rdbank)
   sort(tiling.begin(), tiling.end(), cmpTile());
   m_currenttile = 0;
   m_tilingreads = tiling.size();
+  s_tilingreadsoffset += m_tilingreads;
 }
 
 int ContigIterator_t::uindex() const
@@ -68,7 +70,7 @@ void ContigIterator_t::renderTile(Tile_t & tile, int tilingindex)
   Read_t rd;
     
   m_readBank->fetch(tile.source, rd);
-  TiledRead_t trd(tile, rd, tilingindex+s_tilingreadsoffset);
+  TiledRead_t trd(tile, rd, tilingindex+m_tilingreadsoffset);
 
   ReadList_t::iterator ins = m_tiled.insert(m_tiled.end(), trd);
 
