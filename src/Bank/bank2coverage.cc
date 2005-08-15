@@ -247,15 +247,13 @@ int main (int argc, char ** argv)
 
         // Compute consensus qv
 
-        libSlice_Consensus * consensusResults;
+        libSlice_Consensus consensusResults;
         s.c = consensus[gindex];
         s.dcov = dcov;
         s.bc[dcov] = '\0';
 
         libSlice_getConsensusParam(&s, &consensusResults, NULL, 0, 0);
-        int cqv = consensusResults->qvConsensus;
-
-        free(consensusResults);
+        int cqv = consensusResults.qvConsensus;
 
         int coordinate = index;
         if (consensus[gindex] == '-' && coordinate > 1) { coordinate--; }
