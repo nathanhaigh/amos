@@ -1,6 +1,6 @@
 // $Id$
 
-#include "ContigIterator.hh"
+#include "ContigIterator_AMOS.hh"
 
 using namespace std;
 using namespace AMOS;
@@ -49,10 +49,10 @@ ContigIterator_t::ContigIterator_t(Contig_t & ctg, Bank_t * rdbank)
   m_consqual = m_contig.getQualString();
 
   vector<Tile_t> & tiling = m_contig.getReadTiling();
-  sort(tiling.begin(), tiling.end(), cmpTile());
+  sort(tiling.begin(), tiling.end(), TileOrderCmp());
   m_currenttile = 0;
-  m_tilingreads = tiling.size();
-  s_tilingreadsoffset += m_tilingreads;
+  m_numreads = tiling.size();
+  s_tilingreadsoffset += m_numreads;
 }
 
 int ContigIterator_t::uindex() const
@@ -72,7 +72,7 @@ void ContigIterator_t::renderTile(Tile_t & tile, int tilingindex)
   m_readBank->fetch(tile.source, rd);
   TiledRead_t trd(tile, rd, tilingindex+m_tilingreadsoffset);
 
-  ReadList_t::iterator ins = m_tiled.insert(m_tiled.end(), trd);
+  TiledReadList_t::iterator ins = m_tilingreads.insert(m_tilingreads.end(), trd);
 
   m_ends.push(ins);
 }
@@ -84,9 +84,9 @@ bool ContigIterator_t::advanceNext()
   if (m_gindex != -1 && m_consensus[m_gindex] != '-') { m_uindex++; }
   m_gindex++;
 
-  TileVector_t & tiling = m_contig.getReadTiling();
+  vector<Tile_t> & tiling = m_contig.getReadTiling();
 
-  while (m_currenttile < m_tilingreads && tiling[m_currenttile].offset <= m_gindex)
+  while (m_currenttile < m_numreads && tiling[m_currenttile].offset <= m_gindex)
   { 
     renderTile(tiling[m_currenttile], m_currenttile);
     m_currenttile++;
@@ -94,7 +94,7 @@ bool ContigIterator_t::advanceNext()
 
   while (!m_ends.empty() && m_ends.top()->m_roffset < m_gindex)
   { 
-    m_tiled.erase(m_ends.top());
+    m_tilingreads.erase(m_ends.top());
     m_ends.pop();
   }
 
@@ -111,7 +111,7 @@ bool ContigIterator_t::seek(Pos_t gindex)
   if (!reuseexistingtiling)
   {
     // Can't go backwards, so flush the tiling and reload from scratch
-    m_tiled.clear();
+    m_tilingreads.clear();
     while (!m_ends.empty()) { m_ends.pop(); }
     m_currenttile = 0;
   }
@@ -120,9 +120,9 @@ bool ContigIterator_t::seek(Pos_t gindex)
   m_uindex = m_contig.gap2ungap(gindex)+1;
 
   // load the reads that overlap this position
-  TileVector_t & tiling = m_contig.getReadTiling();
+  vector<Tile_t> & tiling = m_contig.getReadTiling();
 
-  while (m_currenttile < m_tilingreads && tiling[m_currenttile].offset <= m_gindex)
+  while (m_currenttile < m_numreads && tiling[m_currenttile].offset <= m_gindex)
   {
     Pos_t roffset = tiling[m_currenttile].offset + tiling[m_currenttile].getGappedLength() - 1;
     if (roffset >= m_gindex)
@@ -138,7 +138,7 @@ bool ContigIterator_t::seek(Pos_t gindex)
   {
     while (!m_ends.empty() && m_ends.top()->m_roffset < m_gindex)
     { 
-      m_tiled.erase(m_ends.top());
+      m_tilingreads.erase(m_ends.top());
       m_ends.pop();
     }
   }
@@ -149,11 +149,11 @@ bool ContigIterator_t::seek(Pos_t gindex)
 
 bool ContigIterator_t::hasSNP() const
 {
-  ReadList_t::const_iterator tle;
-  ReadList_t::const_iterator end;
+  TiledReadList_t::const_iterator tle;
+  TiledReadList_t::const_iterator end;
 
   char lastbase = ' ';
-  for (tle = m_tiled.begin(); tle != m_tiled.end(); tle++)
+  for (tle = m_tilingreads.begin(); tle != m_tilingreads.end(); tle++)
   {
     char base = tle->base(m_gindex);
 
@@ -169,16 +169,11 @@ bool ContigIterator_t::hasSNP() const
 }
 
 BaseStats_t::BaseStats_t(char base)
- : m_base(base), 
-   m_count(0),
-   m_cumqv(0),
-   m_maxqv(0)
+ : m_base(base), m_cumqv(0), m_maxqv(0)
 { }
 
-void BaseStats_t::addRead(ReadList_t::iterator & tile, Pos_t gindex)
+void BaseStats_t::addRead(TiledReadList_t::const_iterator tile, Pos_t gindex)
 {
-  m_count++;
-
   int qv = tile->qv(gindex);
   m_cumqv += qv;
 
@@ -187,46 +182,53 @@ void BaseStats_t::addRead(ReadList_t::iterator & tile, Pos_t gindex)
   m_reads.push_back(tile);
 }
 
-Column_t::Column_t()
- : m_depth(0)
-{ }
-
-Column_t ContigIterator_t::getColumn()
+Column_t::Column_t(ContigIterator_t & ci)
+ : m_gindex(ci.gindex()),
+   m_uindex(ci.uindex()),
+   m_cons(ci.cons()),
+   m_cqv(ci.cqv()),
+   m_depth(0)
 {
-  Column_t column;
-  ReadList_t::iterator tle;
-  StatsMap::iterator si;
+  TiledReadList_t::const_iterator tle;
+  map<char, BaseStats_t>::iterator si;
 
-  for (tle = m_tiled.begin(); tle != m_tiled.end(); tle++)
+  for (tle = ci.getTilingReads().begin(); tle != ci.getTilingReads().end(); tle++)
   { 
     assert(m_gindex >= tle->m_loffset &&
            m_gindex <= tle->m_roffset);
 
-    column.m_depth++;
+    m_depth++;
 
     char base = tle->base(m_gindex);
 
-    si = column.m_baseinfo.find(base);
-    if (si == column.m_baseinfo.end())
+    si = m_baseinfo.find(base);
+    if (si == m_baseinfo.end())
     {
-      BaseStats_t stats(base);
-      si = column.m_baseinfo.insert(make_pair(base, stats)).first;
+      si = m_baseinfo.insert(make_pair(base, BaseStats_t(base))).first;
     }
 
     si->second.addRead(tle, m_gindex);
   }
+}
 
-  for (si =  column.m_baseinfo.begin();
-       si != column.m_baseinfo.end();
+Column_t ContigIterator_t::getColumn()
+{
+  return Column_t(*this);
+}
+
+vector<BaseStats_t *> Column_t::sortBaseInfo(BaseStatsCmp cmp)
+{
+  vector<BaseStats_t *> retval;
+
+  for (map<char, BaseStats_t>::iterator si = m_baseinfo.begin();
+       si != m_baseinfo.end();
        si++)
   {
-    column.m_basefrequencies.push_back(&si->second);
-    column.m_baseqv.push_back(&si->second);
+    retval.push_back(&si->second);
   }
 
-  sort(column.m_basefrequencies.begin(), column.m_basefrequencies.end(), BaseStatsFreqCmp());
-  sort(column.m_baseqv.begin(),          column.m_baseqv.end(),          BaseStatsQVCmp());
+  sort(retval.begin(), retval.end(), BaseStatsFreqCmp());
 
-  return column;
+  return retval;
 }
 

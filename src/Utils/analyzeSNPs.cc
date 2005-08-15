@@ -8,7 +8,7 @@
 #include <functional>
 
 #include <Slice.h>
-#include "ContigIterator.hh"
+#include "ContigIterator_AMOS.hh"
 
 using namespace std;
 using namespace AMOS;
@@ -141,7 +141,7 @@ void printTCOV(ContigIterator_t ci)
   ostringstream quals;
   ostringstream reads;
 
-  const ReadList_t & tiling = ci.getTilingReads();
+  const TiledReadList_t & tiling = ci.getTilingReads();
 
   slice.dcov = tiling.size();
   slice.bc = new char [slice.dcov+1];
@@ -153,7 +153,7 @@ void printTCOV(ContigIterator_t ci)
     slice.rc = new char [slice.dcov];
     slice.c  = cons;
 
-    ReadList_t::const_iterator ri;
+    TiledReadList_t::const_iterator ri;
     for (ri = tiling.begin(), cur = 0; cur < slice.dcov; ri++, cur++)
     {
       char b = ri->base(gindex);
@@ -201,7 +201,7 @@ void printTCOV(ContigIterator_t ci)
 
 void printSNPReportHeader()
 {
-  cout << "AmblID\tGPos\tUPos\tConsensus\tdcov\tconflicts";
+  cout << "AsmblID\tGPos\tUPos\tConsensus\tdcov\tconflicts";
 
   if (SR_PRINTBASE) { cout << "\t(Base)";  }
   if (SR_PRINTREAD) { cout << "\t{Reads}"; }
@@ -214,21 +214,21 @@ void printSNPReportHeader()
 
 void printSNPReport(ContigIterator_t ci)
 {
-  Column_t column = ci.getColumn();
+  Column_t column(ci.getColumn());
+
   int dcov = column.m_depth;
   int gindex = ci.gindex();
 
   bool foundGoodSNP = false;
 
-  StatsList::iterator sl = column.m_basefrequencies.begin();
-  sl++; // skip the consensus, only look at conflicting bases
+  vector<BaseStats_t *> freq(column.sortBaseInfo(BaseStatsCmp()));
 
-  while (!foundGoodSNP && sl != column.m_basefrequencies.end())
+  // skip the consensus, only look at conflicting bases
+  for (int i = 1; !foundGoodSNP && i < freq.size(); i++)
   {
-    foundGoodSNP = ((*sl)->m_count >= SR_MINAGREEINGCONFLICTS) &&
-                   ((*sl)->m_cumqv >= SR_MINAGREEINGQV) &&
-                   ((*sl)->m_maxqv >= SR_MINCONFLICTQV);
-    sl++;
+    foundGoodSNP = (freq[i]->m_reads.size() >= SR_MINAGREEINGCONFLICTS) &&
+                   (freq[i]->m_cumqv        >= SR_MINAGREEINGQV) &&
+                   (freq[i]->m_maxqv        >= SR_MINCONFLICTQV);
   }
 
   if (foundGoodSNP)
@@ -240,21 +240,19 @@ void printSNPReport(ContigIterator_t ci)
          << ci.uindex() << "\t"
          << ci.cons()   << "\t"
          << dcov        << "\t"
-         << dcov - column.m_basefrequencies[0]->m_count;
+         << dcov - freq[0]->m_reads.size();
 
-    for (sl =  column.m_basefrequencies.begin(); 
-         sl != column.m_basefrequencies.end(); 
-         sl++)
+    for (int i = 0; i < freq.size(); i++)
     {
-      char base = toupper((*sl)->m_base);
+      char base = toupper(freq[i]->m_base);
 
       ostringstream reads;
       ostringstream quals;
       ostringstream libs;
 
       bool first = true;
-      BaseGroup_t::iterator ri;
-      for (ri = (*sl)->m_reads.begin(); ri != (*sl)->m_reads.end(); ri++)
+      vector<TiledReadList_t::const_iterator>::const_iterator ri;
+      for (ri = freq[i]->m_reads.begin(); ri != freq[i]->m_reads.end(); ri++)
       {
         if (!first) { reads << ":"; quals << ":"; libs << ":"; }
         first = false;
@@ -269,7 +267,7 @@ void printSNPReport(ContigIterator_t ci)
         }
       }
 
-      if (SR_PRINTBASE) { cout << "\t" << base << "(" << (*sl)->m_count << ")"; }
+      if (SR_PRINTBASE) { cout << "\t" << base << "(" << freq[i]->m_reads.size() << ")"; }
       if (SR_PRINTREAD) { cout << "\t{" << reads.str() << "}"; }
       if (SR_PRINTLIBS) { cout << "\t<" << libs.str() << ">";  }
       if (SR_PRINTQUAL) { cout << "\t[" << quals.str() << "]"; }
@@ -348,7 +346,7 @@ int main(int argc, char **argv)
     }
   }
 
-  if (SR_PRINTHEADER) { printSNPReportHeader(); }
+  if (PRINTSNPREPORT && SR_PRINTHEADER) { printSNPReportHeader(); }
 
   int snpcount = 0;
   Contig_t ctg;

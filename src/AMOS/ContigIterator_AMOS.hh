@@ -1,7 +1,20 @@
+////////////////////////////////////////////////////////////////////////////////
+//! \file
+//! \author Michael Schatz
+//! \date 08/15/2005
+//!
+//! \brief Header for ContigIterator and related classes
+//!
+////////////////////////////////////////////////////////////////////////////////
+
+
+
 #ifndef CONTIG_ITERATOR_HH
 #define CONTIG_ITERATOR_HH 1
 
-#include <foundation_AMOS.hh>
+#include "Contig_AMOS.hh"
+#include "Read_AMOS.hh"
+
 #include <map>
 #include <list>
 #include <vector>
@@ -9,47 +22,77 @@
 #include <queue>
 #include <functional>
 
+namespace AMOS 
+{
+
+/*! @brief A read within a contig "rendered" with gaps inserted
+ *  
+ *  An enhanced version of a read object which with the sequence and 
+ *  quality values rendered with the gaps inserted.
+ *  
+ */
 
 class TiledRead_t 
 {
 public:
 
-  TiledRead_t(AMOS::Tile_t tile, AMOS::Read_t red, int readidx);
+  //! The tile information is used to render the sequence from the read. readidx is an index to assign
+  TiledRead_t(Tile_t tile, Read_t red, int readidx);
 
-  inline char base(AMOS::Pos_t gindex) const
+  //! Returns the base at a given gapped consensus position or ' ' if outside the tiled range
+  char base(Pos_t gindex) const
   {
     if (gindex < m_loffset || gindex > m_roffset) { return ' '; }
     return m_seq[gindex-m_loffset];
   }
   
-  inline int qv(AMOS::Pos_t gindex) const
+  //! Returns the qv at a given gapped consensus position or -1 if outside the tiled range
+  int qv(Pos_t gindex) const
   {
-    if (gindex < m_loffset || gindex > m_roffset) { return 0; }
-    return m_qual[gindex-m_loffset] - AMOS::MIN_QUALITY;
+    if (gindex < m_loffset || gindex > m_roffset) { return -1; }
+    return m_qual[gindex-m_loffset] - MIN_QUALITY;
   }
 
-  int m_readidx;
+  //! Callee assigned index for read
+  int32_t m_readidx;
 
-  AMOS::Pos_t m_roffset;
-  AMOS::Pos_t m_loffset;
+  //! Left offset of the read in the contig
+  Pos_t m_loffset;
 
-  char m_isRC;
+  //! Right offset of the read in the contig
+  Pos_t m_roffset;
 
-  AMOS::ID_t  m_fragid;
-  AMOS::ID_t  m_iid;
+  //! Boolean indicating if the read has been reversed
+  bool m_isRC;
+
+  //! iid of the read's fragment
+  ID_t m_fragid;
+
+  //! iid of the read
+  ID_t m_iid;
+
+  //! eid of the read
   std::string m_eid;
 
 private:
+  //! rendered sequence
   std::string m_seq;
+  
+  //! rendered qual
   std::string m_qual;
 };
 
-typedef std::list<TiledRead_t> ReadList_t;
-typedef std::vector<AMOS::Tile_t> TileVector_t;
+typedef std::list<TiledRead_t> TiledReadList_t;
 
-struct cmpTile 
+/*! @brief A binary function for determining the canonical sort order for reads
+ *  
+ *  Sorts by offset, then read length, and finally by iid
+ *
+ */
+
+struct TileOrderCmp
 {
-  bool operator () (const AMOS::Tile_t & a, const AMOS::Tile_t & b)
+  bool operator () (const Tile_t & a, const Tile_t & b)
   {
     int offdiff = b.offset - a.offset;
 
@@ -72,43 +115,61 @@ struct cmpTile
 };
 
 
-struct cmpPosIt 
-{
-  bool operator () (const ReadList_t::iterator & a, const ReadList_t::iterator & b)
-  {
-    return (a->m_roffset > b->m_roffset);
-  }
-};
 
-typedef std::vector<ReadList_t::iterator> BaseGroup_t;
+
+/*! @brief Maintains statistics the Column_t about reads which share the same base at the current position
+ *
+ *  Reads that agree at the current contig position are stored in the same
+ *  BaseStats_t object. The object maintains a list of reads that agree, and
+ *  some general statistics on the bases that tile that position.
+ *  
+ */
 
 class BaseStats_t
 {
 public:
+  //! The base this BaseStats_t will represent
   BaseStats_t(char base);
-  void addRead(ReadList_t::iterator & tile, AMOS::Pos_t gindex);
 
+  //! The base this BaseStats_t represents
   char m_base;
-  int  m_count;
+
+  //! The cumulative quality value of the reads that tile the current position that are m_base
   int  m_cumqv;
+
+  //! The maximum quality value of the reads that tile the current position that are m_base
   int  m_maxqv;
 
-  BaseGroup_t m_reads;
+  //! A vector of reads that tile the current position that are m_base
+  std::vector<TiledReadList_t::const_iterator> m_reads;
+
+  //! Used to add a read to the BaseStats_t
+  void addRead(TiledReadList_t::const_iterator tile, Pos_t gindex);
 };
 
 
-typedef std::map<char, BaseStats_t> StatsMap;
-typedef std::vector<BaseStats_t *> StatsList;
 
+//! Base class for BaseStats_t sorting functors
+struct BaseStatsCmp : public std::binary_function<const BaseStats_t *, const BaseStats_t *, bool>
+{
+  virtual bool operator() (const BaseStats_t * a, const BaseStats_t * b) {std::cerr << "error";}
+};
+
+
+
+//! Functor for sorting BaseStats_t by count of reads of each base
 struct BaseStatsFreqCmp
 {
   bool operator() (const BaseStats_t * a, const BaseStats_t * b)
   {
-    return a->m_count > b->m_count;
+    return a->m_reads.size() > b->m_reads.size();
   }
 };
 
-struct BaseStatsQVCmp
+
+
+//! Functor for sorting BaseStats_t by the cumulative quality value of reads of each base
+struct BaseStatsQVCmp : public BaseStatsCmp
 {
   bool operator() (const BaseStats_t * a, const BaseStats_t * b)
   {
@@ -119,67 +180,156 @@ struct BaseStatsQVCmp
 
 
 
+class ContigIterator_t;
+
+/*! @brief Maintains data on reads at a given contig position
+ *
+ *  Organizes the reads at the current position in the contig
+ *  by the base each read has at that position. The reads
+ *  are collected into the m_baseinfo map which maps from
+ *  base to BaseStats_t. The sortBaseInfo() method can be used
+ *  to iterate through each base present at the current position.
+ *
+ *  Warning: The column data becomes invalid if the contig iterator
+ *           position is changed!
+ *  
+ */
+
 class Column_t 
 {
 public:
-  Column_t ();
+  //! Object can only be used for a single position!
+  Column_t (ContigIterator_t & ci);
 
-  int  m_depth;
-  char m_consensus;
-  int  m_consqual;
+  //! 0-based gapped index
+  Pos_t m_gindex;
+  
+  //! 1-based ungapped index
+  Pos_t m_uindex;
 
-  StatsMap  m_baseinfo;
+  //! Current consenus
+  char m_cons;
+  
+  //! Consensus quality value
+  int m_cqv;
 
-  StatsList m_basefrequencies;
-  StatsList m_baseqv;
+  //! Total depth of coverage
+  int32_t m_depth;
+
+  //! Map for collecting read information about each base
+  std::map<char, BaseStats_t> m_baseinfo;
+
+  //! Returns a vector of BaseStats_t sorted by the BaseStatsCmp operator
+  std::vector<BaseStats_t *> sortBaseInfo(BaseStatsCmp cmp);
 };
 
 
 
-
+/*! @brief Used for iterating through a contig on a per-consensus position basis
+ * 
+ *  Internally, the ContigIterator maintains a list of reads which tile the current
+ *  contig position. This list can be accessed via the getTilingReads() method. In
+ *  addition, you can also use the getColumn() method to create a Column_t object
+ *  which sorts the reads by the base at the current consensus position rather
+ *  than the position of the read in the layout. Use the 
+ *  hasSNP() method to determine if the tiling at the current position is uniform
+ *  or if it has a SNP.
+ *
+ *  Note: You must call advanceNext() or seek() to initialize the object
+ */
 
 class ContigIterator_t 
 {
 public:
-  ContigIterator_t(AMOS::Contig_t & ctg, AMOS::Bank_t * rdbank);
+  //! Constructor for iterator. You must call seek() or advanceNext() before using
+  ContigIterator_t(Contig_t & ctg, Bank_t * rdbank);
 
-  bool seek(AMOS::Pos_t gindex);
+  //! Seek to random position in O(numreads) time. Returns if the current position is valid
+  bool seek(Pos_t gindex);
+
+  //! Advance to next position (gindex+1) in O(maxdepth) time. Returns if the current position is valid
   bool advanceNext();
 
+  //! Returns the current 1-based ungapped contig position
+  Pos_t uindex() const;
+
+  //! Returns the current 0-based gapped contig position
+  Pos_t gindex() const { return m_gindex; }
+
+  //! Returns if there is a SNP at the current position
   bool hasSNP() const;
 
-  inline char cons()   const { return m_consensus[m_gindex]; }
-  inline int  cqv()    const { return m_consqual[m_gindex];  }
+  //! Returns the consenus at the current position
+  char cons()   const { return m_consensus[m_gindex]; }
+  
+  //! Returns the consensus quality value at this current position
+  int cqv()    const { return m_consqual[m_gindex] - MIN_QUALITY;  }
 
-         AMOS::Pos_t  uindex() const;
-  inline AMOS::Pos_t  gindex() const { return m_gindex; }
-
+  //! Returns a Column_t of the current position
   Column_t getColumn();
 
-  inline const ReadList_t &     getTilingReads() const { return m_tiled;  }
-  inline const AMOS::Contig_t & getContig()      const { return m_contig; }
+  //! Get a reference to the contig object
+  const Contig_t &        getContig()      const { return m_contig; }
+
+
+  //! Get list of reads tiling current position
+  const TiledReadList_t & getTilingReads() const { return m_tilingreads; }
+
+
 
 
 private:
-  void renderTile(AMOS::Tile_t & tile, int tilingIndex);
+  //! Renders a particular read by loading sequence and inserting gaps
+  void renderTile(Tile_t & tile, int tilingIndex);
 
-  AMOS::Bank_t * m_readBank;
-  std::priority_queue<ReadList_t::iterator, std::vector<ReadList_t::iterator>, cmpPosIt > m_ends;
+  //! Sort operator for maintain end position queue
+  struct ReadListItEndCmp
+  {
+    bool operator () (const TiledReadList_t::iterator & a, const TiledReadList_t::iterator & b)
+    {
+      return (a->m_roffset > b->m_roffset);
+    }
+  };
 
-  std::string    m_consensus;
-  std::string    m_consqual;
-  AMOS::Pos_t    m_gindex;
-  AMOS::Pos_t    m_uindex;
+  //! Keeps track of the next read to end
+  std::priority_queue<TiledReadList_t::iterator, std::vector<TiledReadList_t::iterator>, ReadListItEndCmp > m_ends;
 
-  int            m_currenttile;
+  //! Pointer to the readbank
+  Bank_t * m_readBank;
 
-  int            m_tilingreads;
-  ReadList_t     m_tiled;
-  AMOS::Contig_t m_contig;
+  //! Consensus
+  std::string m_consensus;
 
-  static int     s_tilingreadsoffset;
-  int            m_tilingreadsoffset;
+  //! Consensus quality
+  std::string m_consqual;
+
+  //! Current 0-based gapped contig position
+  Pos_t m_gindex;
+
+  //! Current 1-based ungapped contig position
+  Pos_t m_uindex;
+
+  //! Next read to consider in the tiling
+  int32_t m_currenttile;
+
+  //! Number of reads in the contig
+  int32_t m_numreads;
+
+  //! Contig object
+  Contig_t m_contig;
+
+  //! How many reads have been seen in previous contigs
+  static int32_t s_tilingreadsoffset;
+  
+  //! Current offset to use for readidx
+  int32_t m_tilingreadsoffset;
+
+  //! Get List of reads tiling current position
+  TiledReadList_t m_tilingreads;
 };
+
+
+} // namespace AMOS
 
 
 #endif

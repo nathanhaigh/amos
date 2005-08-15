@@ -10,6 +10,7 @@ amosinclude_HEADERS = \
 	BankStream_AMOS.hh \
 	Bank_AMOS.hh \
 	ContigEdge_AMOS.hh \
+    ContigIterator_AMOS.hh \
 	ContigLink_AMOS.hh \
 	Contig_AMOS.hh \
 	Edge_AMOS.hh \
@@ -95,6 +96,7 @@ libAMOS_a_SOURCES = \
 	BankStream_AMOS.cc \
 	Bank_AMOS.cc \
 	ContigEdge_AMOS.cc \
+    ContigIterator_AMOS.cc \
 	ContigLink_AMOS.cc \
 	Contig_AMOS.cc \
 	Edge_AMOS.cc \

@@ -22,20 +22,9 @@ dist_bin_SCRIPTS = \
 	ktrimfrg.pl
 # runAmos.pl 
 
-amoslib_LIBRARIES = \
-    libUtils.a
-
-amosinclude_HEADERS = \
-    ContigIterator.hh
-
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS
-
-libUtils_a_SOURCES = \
-    ContigIterator.cc
-
-
 
 ##-- analyzeSNPs
 analyzeSNPs_CPPFLAGS = \
@@ -44,7 +33,6 @@ analyzeSNPs_CPPFLAGS = \
     -I$(top_srcdir)/src/Slice
 
 analyzeSNPs_LDADD = \
-        $(top_builddir)/src/Utils/libUtils.a \
         $(top_builddir)/src/AMOS/libAMOS.a \
 	    $(top_builddir)/src/GNU/libGNU.a \
         $(top_builddir)/src/Slice/libSlice.a
