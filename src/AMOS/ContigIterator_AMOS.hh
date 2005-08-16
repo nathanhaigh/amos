@@ -149,34 +149,24 @@ public:
 
 
 
-//! Base class for BaseStats_t sorting functors
-struct BaseStatsCmp : public std::binary_function<const BaseStats_t *, const BaseStats_t *, bool>
-{
-  virtual bool operator() (const BaseStats_t * a, const BaseStats_t * b) {std::cerr << "error";}
-};
-
-
-
-//! Functor for sorting BaseStats_t by count of reads of each base
-struct BaseStatsFreqCmp
+//! Functor for sorting BaseStats_t by count of reads of each base, then cumqv, then maxqv
+struct BaseStatsCmp
 {
   bool operator() (const BaseStats_t * a, const BaseStats_t * b)
   {
+    if (a->m_reads.size() == b->m_reads.size())
+    {
+      if (a->m_cumqv == b->m_cumqv)
+      {
+        return a->m_maxqv > b->m_maxqv;
+      }
+
+      return a->m_cumqv > b->m_cumqv;
+    }
+    
     return a->m_reads.size() > b->m_reads.size();
   }
 };
-
-
-
-//! Functor for sorting BaseStats_t by the cumulative quality value of reads of each base
-struct BaseStatsQVCmp : public BaseStatsCmp
-{
-  bool operator() (const BaseStats_t * a, const BaseStats_t * b)
-  {
-    return a->m_cumqv > b->m_cumqv;
-  }
-};
-
 
 
 
@@ -201,6 +191,9 @@ public:
   //! Object can only be used for a single position!
   Column_t (ContigIterator_t & ci);
 
+  //! Returns a vector of m_baseinfo sorted by BaseStatsCmp
+  std::vector<BaseStats_t *> getBaseInfo();
+
   //! 0-based gapped index
   Pos_t m_gindex;
   
@@ -218,9 +211,6 @@ public:
 
   //! Map for collecting read information about each base
   std::map<char, BaseStats_t> m_baseinfo;
-
-  //! Returns a vector of BaseStats_t sorted by the BaseStatsCmp operator
-  std::vector<BaseStats_t *> sortBaseInfo(BaseStatsCmp cmp);
 };
 
 

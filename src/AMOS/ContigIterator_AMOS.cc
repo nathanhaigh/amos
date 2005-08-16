@@ -216,7 +216,7 @@ Column_t ContigIterator_t::getColumn()
   return Column_t(*this);
 }
 
-vector<BaseStats_t *> Column_t::sortBaseInfo(BaseStatsCmp cmp)
+vector<BaseStats_t *> Column_t::getBaseInfo()
 {
   vector<BaseStats_t *> retval;
 
@@ -227,7 +227,7 @@ vector<BaseStats_t *> Column_t::sortBaseInfo(BaseStatsCmp cmp)
     retval.push_back(&si->second);
   }
 
-  sort(retval.begin(), retval.end(), BaseStatsFreqCmp());
+  sort(retval.begin(), retval.end(), BaseStatsCmp());
 
   return retval;
 }
