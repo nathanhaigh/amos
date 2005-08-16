@@ -6,6 +6,7 @@
 #include <string>
 #include <queue>
 #include <functional>
+#include "amp.hh"
 
 #include <Slice.h>
 #include "ContigIterator_AMOS.hh"
@@ -16,12 +17,9 @@ using namespace AMOS;
 
 #define endl "\n"
 
+bool TCOV = 0;
+bool SNPREPORT = 0;
 bool PRINTALL = 0;
-bool PRINTSNPS = 0;
-bool PRINTSNPREPORT = 0;
-
-bool USEIID = 0;
-bool USEEID = 0;
 
 string BANKNAME;
 
@@ -35,6 +33,10 @@ int SR_MINAGREEINGCONFLICTS = 0;
 int SR_MINAGREEINGQV = 0;
 int SR_MINCONFLICTQV = 0;
 
+int ONE_BASED_GINDEX = 0;
+bool USEIID = 0;
+bool USEEID = 0;
+
 map<ID_t, ID_t> frg2lib;
 
 
@@ -45,25 +47,29 @@ void printHelpText()
     ".NAME.\n"
     "analyzeSNPs - scans multiple alignment of reads looking for snps\n"
     "\n.USAGE.\n"
-    "analyzeSNPs -b[ank] <bank_name>\n"
+    "analyzeSNPs -b[ank] <bank_name> [OPTIONS]\n"
     "\n.OPTIONS.\n"
     "-h, -help     print out help message\n"
-    "-b, -bank     bank where assembly is stored\n"
-    "-a, -all      print all positions in TCOV format\n"
-    "-s, -snps     print only positions with snps in TCOV format (Default)\n\n"
+    "-b, -bank     bank where assembly is stored\n\n"
 
+    "-T, -tcov     print snp positions in TCOV format (DEFAULT)\n"
     "-S, -report   print a report on the snps\n"
-    "-H            skip header on snp report\n"
-    "-B            skip printing bases in snp report\n"
-    "-r            print readname in snp report\n"
-    "-l            print libid in snp report\n"
-    "-q            print qvs in snp report\n"
-    "-M, -minsnps <val> Set Minimum number of consistent disagreeing reads to report\n"
-    "-C, -cumqv   <val> Set Minimum conflicting cummulative qv to report\n"
-    "-Q, -minqv   <val> Set Minimum conflicting qv to report\n\n"
+    "-a, -all      print all positions (not just SNP positions)\n\n"
 
-    "-E, -eid      use eids\n"
-    "-I, -iid      use iids\n"
+    "SNP Report Options\n"
+    "-H            Skip header\n"
+    "-B            Skip printing bases\n"
+    "-r            Print readnames\n"
+    "-l            Print libid\n"
+    "-q            Print qvs\n"
+    "-M, -minsnps  <val> Set Minimum number of consistent disagreeing reads to report\n"
+    "-C, -cumqv    <val> Set Minimum conflicting cummulative qv to report\n"
+    "-Q, -minqv    <val> Set Minimum conflicting qv to report\n\n"
+
+    "General Options\n"
+    "-E, -eid      Display eids\n"
+    "-I, -iid      Display iids\n"
+    "-1            Display 1-based gapped coordinates\n\n"
     "\n.DESCRIPTION.\n"
     "\n.KEYWORDS.\n"
     "AMOS bank\n"
@@ -76,10 +82,13 @@ bool GetOptions(int argc, char ** argv)
   static struct option long_options[] = {
     {"help",      0, 0, 'h'},
     {"bank",      1, 0, 'b'},
-    {"all",       0, 0, 'a'},
-    {"snps",      0, 0, 's'},
+
+    {"tcov",      0, 0, 'T'},
+    {"T",         0, 0, 'T'},
     {"report",    0, 0, 'S'},
     {"S",         0, 0, 'S'},
+    {"all",       0, 0, 'a'},
+
     {"H",         0, 0, 'H'},
     {"B",         0, 0, 'B'},
     {"r",         0, 0, 'r'},
@@ -88,8 +97,11 @@ bool GetOptions(int argc, char ** argv)
     {"minsnps",   1, 0, 'M'},
     {"cumqv",     1, 0, 'C'},
     {"minqv",     1, 0, 'Q'},
+
     {"eid",       0, 0, 'e'},
     {"iid",       0, 0, 'i'},
+    {"1",         0, 0, '1'},
+
     {0, 0, 0, 0}
   };
   
@@ -99,11 +111,11 @@ bool GetOptions(int argc, char ** argv)
     switch (c)
     {
       case 'h': printHelpText(); exit(0); break;
-
       case 'b': BANKNAME = optarg;   break;
-      case 's': PRINTSNPS = 1;       break;
+
+      case 'T': TCOV = 1;            break;
+      case 'S': SNPREPORT = 1;       break;
       case 'a': PRINTALL = 1;        break;
-      case 'S': PRINTSNPREPORT = 1;  break;
 
       case 'H': SR_PRINTHEADER = 0;  break;
       case 'B': SR_PRINTBASE = 0;    break;
@@ -115,13 +127,17 @@ bool GetOptions(int argc, char ** argv)
       case 'C': SR_MINAGREEINGQV        = atoi(optarg); break;
       case 'Q': SR_MINCONFLICTQV        = atoi(optarg); break;
 
-      case 'e': USEEID = 1;          break;
-      case 'i': USEIID = 1;          break;
-      case '?': return false;
+      case 'e': USEEID = 1;           break;
+      case 'i': USEIID = 1;           break;
+      case '1': ONE_BASED_GINDEX = 1; break;
+
+      case '?': 
+         cerr << "Error processing options: " << argv[optind-1] << endl; 
+         return false;
     };
   }
 
-  if (!PRINTSNPS && !PRINTSNPREPORT && !PRINTALL) { PRINTSNPS = 1; }
+  if (!SNPREPORT) { TCOV = 1; }
 
   //cerr << "SR_MINAGREEINGCONFLICTS: " << SR_MINAGREEINGCONFLICTS << endl; 
   //cerr << "SR_MINAGREEINGQV:        " << SR_MINAGREEINGQV        << endl; 
@@ -130,7 +146,7 @@ bool GetOptions(int argc, char ** argv)
   return true;
 }
 
-void printTCOV(ContigIterator_t ci)
+int printTCOV(ContigIterator_t ci)
 {
   libSlice_Slice slice;
   libSlice_Consensus consensusResults;
@@ -184,8 +200,8 @@ void printTCOV(ContigIterator_t ci)
   if (USEEID) {cout << ci.getContig().getEID() << " "; }
   else        {cout << ci.getContig().getIID() << " "; }
 
-  cout << gindex+1    << " "
-       << ci.uindex() << " "
+  cout << gindex+ONE_BASED_GINDEX << " "
+       << ci.uindex()             << " "
        << ci.cons();
 
   if (slice.dcov)
@@ -196,6 +212,8 @@ void printTCOV(ContigIterator_t ci)
 
   cout << endl;
   delete slice.bc;
+
+  return 1;
 }
 
 
@@ -212,7 +230,7 @@ void printSNPReportHeader()
 }
 
 
-void printSNPReport(ContigIterator_t ci)
+int printSNPReport(ContigIterator_t ci)
 {
   Column_t column(ci.getColumn());
 
@@ -221,9 +239,9 @@ void printSNPReport(ContigIterator_t ci)
 
   bool foundGoodSNP = false;
 
-  vector<BaseStats_t *> freq(column.sortBaseInfo(BaseStatsCmp()));
+  vector<BaseStats_t *> freq(column.getBaseInfo());
 
-  // skip the consensus, only look at conflicting bases
+  // start at 1 to skip the consensus, only look at conflicting bases
   for (int i = 1; !foundGoodSNP && i < freq.size(); i++)
   {
     foundGoodSNP = (freq[i]->m_reads.size() >= SR_MINAGREEINGCONFLICTS) &&
@@ -236,10 +254,10 @@ void printSNPReport(ContigIterator_t ci)
     if (USEEID) { cout << ci.getContig().getEID() << "\t"; }
     else        { cout << ci.getContig().getIID() << "\t"; }
 
-    cout << gindex+1    << "\t"
-         << ci.uindex() << "\t"
-         << ci.cons()   << "\t"
-         << dcov        << "\t"
+    cout << gindex+ONE_BASED_GINDEX << "\t"
+         << ci.uindex()             << "\t"
+         << ci.cons()               << "\t"
+         << dcov                    << "\t"
          << dcov - freq[0]->m_reads.size();
 
     for (int i = 0; i < freq.size(); i++)
@@ -275,6 +293,8 @@ void printSNPReport(ContigIterator_t ci)
 
     cout << endl;
   }
+
+  return foundGoodSNP;
 }
 
 
@@ -286,8 +306,6 @@ int main(int argc, char **argv)
 {
   if (! GetOptions(argc, argv))
   {
-    cerr << "Command line parsing failed" << endl;
-    printHelpText();
     exit(1);
   }
 
@@ -346,31 +364,50 @@ int main(int argc, char **argv)
     }
   }
 
-  if (PRINTSNPREPORT && SR_PRINTHEADER) { printSNPReportHeader(); }
+  if (SNPREPORT && SR_PRINTHEADER) { printSNPReportHeader(); }
 
+  int bases = 0;
   int snpcount = 0;
+  int displaycount = 0;
+  int contigcount = 0;
+
+  int ccount = contig_stream.getSize();
+
+  cerr << "Searching " << ccount << " contigs";
+
+  ProgressDots_t dots(ccount, 50);
+
   Contig_t ctg;
   while (contig_stream >> ctg) 
   {
     ContigIterator_t ci(ctg, &read_bank);
+    contigcount++;
+
+    dots.update(contigcount);
 
     while (ci.advanceNext())
     {
+      bases++;
+
       bool hasSNP = ci.hasSNP();
       if (hasSNP) { snpcount++; }
 
-      if ((hasSNP && PRINTSNPS) || PRINTALL)
+      if (TCOV && (hasSNP || PRINTALL))
       {
-        printTCOV(ci);
+        displaycount += printTCOV(ci);
       }
 
-      if (hasSNP && PRINTSNPREPORT)
+      if (SNPREPORT && (hasSNP || PRINTALL))
       {
-        printSNPReport(ci);
+        displaycount += printSNPReport(ci);
       }
     }
   }
 
-  cerr << snpcount << " SNPs found" << endl;
+  dots.end();
+
+  cerr << endl
+       << displaycount << " positions reported of " << snpcount << " total SNPs found." << endl;
+  cerr << "Searched " << bases << " positions in " << contigcount << " contigs." << endl; 
 }
 
