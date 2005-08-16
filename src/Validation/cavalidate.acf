@@ -1,9 +1,7 @@
-## Convert a CA assembly to AMOS land, run validation steps
+## Convert a CA assembly to AMOS, run validation steps
 
 INPUTS = $(PREFIX).asm $(PREFIX).frg
-
-#BINDIR = /local/asmg/Linux/bin
-BINDIR = /local/asmg_devel/mschatz/WGA/AMOS/bin
+BINDIR=/fs/sz-user-supported/Linux-i686/bin
 
 ## toAmos
 10: $(BINDIR)/toAmos -f $(PREFIX).frg -a $(PREFIX).asm -o $(PREFIX).afg
@@ -14,20 +12,11 @@ BINDIR = /local/asmg_devel/mschatz/WGA/AMOS/bin
 ## asmQC
 30: $(BINDIR)/asmQC -b $(PREFIX).bnk -feat -numsd 2
 
-## bank2contig
-40: $(BINDIR)/bank2contig $(PREFIX).bnk > $(PREFIX).contig
-
-## frg2ta
-45: $(BINDIR)/frg2ta $(PREFIX).frg
-
-## getCoverage
-50: /usr/local/bin/getCoverage -t --gapped -R -a all -M $(PREFIX).contig
-
-## findTcovSnps
-60: $(BINDIR)/findTcovSnp -noH $(PREFIX) > $(PREFIX).snps
+## analyzeSNPs
+40: $(BINDIR)/analyzeSNPs -b $(PREFIX).bnk -S -cumqv 40 -minsnps 2 -r -e -H > $(PREFIX).snps
 
 ## ClusterSnps
-70: $(BINDIR)/clusterSnps $(PREFIX).snps > $(PREFIX).snp.feat
+50: $(BINDIR)/clusterSnps $(PREFIX).snps > $(PREFIX).snp.feat
 
 ## Load SNP Features
 80: $(BINDIR)/loadFeatures $(PREFIX).bnk $(PREFIX).snp.feat
