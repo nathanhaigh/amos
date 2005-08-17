@@ -1,4 +1,5 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
+
 
 use TIGR::Foundation;
 use AMOS::AmosLib;
@@ -8,6 +9,9 @@ use POSIX qw(tmpnam);
 $ENV{TMPDIR} = ".";
 
 use strict;
+
+my $INCLUDE_DEGEN = 0;
+my $INCLUDE_SURROGATE = 0;
 
 # more to do
 # 1. allow to specify clear ranges from a separate file
@@ -21,12 +25,17 @@ my $HELP = q~
            [-i insertfile | -map dstmap]
            [-gq goodqual] [-bq badqual]
            [-pos posfile]
+           [-S] [-D]
 
     toAmos is primarily designed for converting the output of an assembly
 program into the AMOS format so that it can be stored in an AMOS bank.
 
     If you simply need a program to generate assembly inputs for one the 
-AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos.
+AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos. 
+
+ASM File Options:
+ -S Include Surrogate Unitigs as AMOS Contigs
+ -D Include Degenerate Unitigs as AMOS Contigs
 ~;
 
 my $base = new TIGR::Foundation();
@@ -72,7 +81,9 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "s=s"   => \$fastafile,
 				 "pos=s" => \$posfile,
 				 "id=i"  => \$minSeqId,
-				 "acc"   => \$byaccession);
+				 "acc"   => \$byaccession,
+                 "S"     => \$INCLUDE_SURROGATE,
+                 "D"     => \$INCLUDE_DEGEN);
 
 
 my $matesDone = 0;
@@ -365,10 +376,12 @@ open(TMPCTG, "$tmprefix.ctg")
     || $base->bail("Cannot open $tmprefix.ctg: $!\n");
 
 while (<TMPCTG>){
-    if (/^\#(\d+)/){
+    if (/^\#(\d+) (.)/){
 	my $cid = $1;
+    my $sts = $2;
 	print OUT "{CTG\n";
 	print OUT "iid:$cid\n";
+    print OUT "sts:$sts\n";
 	if (exists $ctgnames{$cid}){
 	    print OUT "eid:$ctgnames{$cid}\n";
 	}
@@ -846,7 +859,13 @@ sub parseAsmFile {
 
     while (my $record = getRecord($IN)){
 	my ($type, $fields, $recs) = parseRecord($record);
-	if ($type eq "CCO"){
+	if (($type eq "CCO") || 
+        ($INCLUDE_DEGEN     && ($type eq "UTG") && $$fields{sta} eq "N") || 
+        ($INCLUDE_SURROGATE && ($type eq "UTG") && $$fields{sta} eq "S")){
+
+        my $sts = "C";
+        $sts = $$fields{sta} if $type eq "UTG";
+
 	    my $id = getCAId($$fields{acc});
 	    my $iid = $minCtgId++;
 	    my $contiglen = $$fields{len};
@@ -860,7 +879,7 @@ sub parseAsmFile {
 	    my @consensus = split('\n', $consensus);
 	    $consensus = join('', @consensus);
 
-	    print TMPCTG "#$iid\n";
+	    print TMPCTG "#$iid $sts\n";
 	    print TMPCTG $$fields{cns};
 	    print TMPCTG "#\n";
 	    print TMPCTG $$fields{qlt};
@@ -1185,7 +1204,7 @@ sub parseContigFile {
 
 	if (/^\#(\S+)\((\d+)\) .*\{(\d+) (\d+)\} <(\d+) (\d+)>/){
 	    if ($incontig == 1){
-		print TMPCTG "#$iid\n";
+		print TMPCTG "#$iid C\n";
 		for (my $c = 0; $c < length($consensus); $c+=60){
 		    print TMPCTG substr($consensus, $c, 60), "\n";
 		}
