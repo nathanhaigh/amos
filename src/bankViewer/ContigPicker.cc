@@ -22,35 +22,38 @@ public:
                  QString id,
                  QString iid,
                  QString eid,
+                 QString status,
                  QString length,
                  QString reads)
                
-    : QListViewItem(parent, id, iid, eid, length, reads) {}
+    : QListViewItem(parent, id, iid, eid, status, length, reads) {}
 
   ContigListItem(QListView * parent, 
                  QString id,
                  QString iid,
                  QString eid,
+                 QString status,
                  QString offset,
                  QString length,
                  QString reads)
                
-    : QListViewItem(parent, id, iid, eid, offset, length, reads) {}
+    : QListViewItem(parent, id, iid, eid, status, offset, length, reads) {}
 
   ContigListItem(ContigListItem * parent, 
                  QString id,
                  QString iid,
                  QString eid,
+                 QString status,
                  QString offset,
                  QString length,
                  QString reads)
                
-    : QListViewItem(parent, id, iid, eid, offset, length, reads) {}
+    : QListViewItem(parent, id, iid, eid, status, offset, length, reads) {}
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 2)
+    if (col == 2 || col == 3)
     {
       return key(col,ascending).compare(i->key(col,ascending));
     }
@@ -133,6 +136,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
     m_table->addColumn("Id");
     m_table->addColumn("IID");
     m_table->addColumn("EID");
+    m_table->addColumn("Status");
     m_table->addColumn("Offset");
     m_table->addColumn("Length");
     m_table->addColumn("Reads");
@@ -142,6 +146,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
     m_table->addColumn("Id");
     m_table->addColumn("IID");
     m_table->addColumn("EID");
+    m_table->addColumn("Status");
     m_table->addColumn("Length");
     m_table->addColumn("Reads");
   }
@@ -169,6 +174,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
                                         QString::number(contigid), 
                                         QString::number(contig.getIID()),
                                         QString(contig.getEID().c_str()), 
+                                        QString(QChar(contig.getStatus())),
                                         QString(""),
                                         QString::number(contiglen), 
                                         QString::number(numreads));
@@ -179,6 +185,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
                                         QString::number(contigid), 
                                         QString::number(contig.getIID()),
                                         QString(contig.getEID().c_str()), 
+                                        QString(QChar(contig.getStatus())),
                                         QString::number(contiglen), 
                                         QString::number(numreads));
       }
@@ -201,6 +208,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
                              QString("Read"),
                              QString::number(ti->source), 	 
                              QString(m_datastore->read_bank.lookupEID(ti->source).c_str()),
+                             QString(""),
                              QString::number(ti->offset), 	 
                              QString::number(ti->range.getLength() + ti->gaps.size()),
                              QString("")); 	 
