@@ -80,10 +80,30 @@ InsertWindow::InsertWindow(DataStore * datastore,
     if (type >= strlen(Insert::allstates)) { type = 0; }
   }
 
+  QPopupMenu * m_featmenu = new QPopupMenu(this);
+  menuBar()->insertItem("&Features", m_featmenu);
+
+  for (type = 0; type < strlen(UIElements::allFeatureTypes); type++)
+  {
+    char feat = UIElements::allFeatureTypes[type];
+    QPixmap rect(10,10);
+
+    QPainter p(&rect);
+    p.fillRect(rect.rect(), UIElements::getFeatureColor((AMOS::FeatureType_t)feat));
+    p.end();
+
+    QString name = UIElements::getFeatureStr((AMOS::FeatureType_t)feat);
+    name += (QString)" [" + feat + "]";
+
+    m_featmenu->insertItem(QIconSet(rect), name);
+  }
+
+
+
 
   // Display Types
   m_typesmenu = new QPopupMenu(this);
-  menuBar()->insertItem("&Display Types", m_typesmenu);
+  menuBar()->insertItem("&Mate Types", m_typesmenu);
 
   for (unsigned int i = 0; i < strlen(states); i++)
   {
@@ -108,14 +128,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_scaffid = m_optionsmenu->insertItem("&Scaffold Plot", this, SLOT(togglePaintScaffold()));
   m_optionsmenu->setItemChecked(m_scaffid, true);
 
-  m_connectmatesid = m_optionsmenu->insertItem("&Connect Mates", this, SLOT(toggleConnectMates()));
-  m_optionsmenu->setItemChecked(m_connectmatesid, true);
-
-  m_partitiontypesid = m_optionsmenu->insertItem("&Partition Types", this, SLOT(togglePartitionTypes()));
-  m_optionsmenu->setItemChecked(m_partitiontypesid, true);
-
-  m_tintid = m_optionsmenu->insertItem("&Tint Happiness", this, SLOT(toggleTintHappiness()));
-  m_optionsmenu->setItemChecked(m_tintid, false);
+  m_optionsmenu->insertSeparator();
 
   m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
   m_optionsmenu->setItemChecked(m_coverageid, true);
@@ -125,6 +138,20 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   m_featid = m_optionsmenu->insertItem("Show F&eatures", this, SLOT(toggleFeatures()));
   m_optionsmenu->setItemChecked(m_featid, true);
+
+  m_tintfeatid = m_optionsmenu->insertItem("&Tint Features", this, SLOT(toggleTintFeatures()));
+  m_optionsmenu->setItemChecked(m_tintfeatid, false);
+
+  m_optionsmenu->insertSeparator();
+
+  m_connectmatesid = m_optionsmenu->insertItem("&Connect Mates", this, SLOT(toggleConnectMates()));
+  m_optionsmenu->setItemChecked(m_connectmatesid, true);
+
+  m_partitiontypesid = m_optionsmenu->insertItem("&Partition Types", this, SLOT(togglePartitionTypes()));
+  m_optionsmenu->setItemChecked(m_partitiontypesid, true);
+
+  m_tintid = m_optionsmenu->insertItem("&Tint Happiness", this, SLOT(toggleTintHappiness()));
+  m_optionsmenu->setItemChecked(m_tintid, false);
 
   m_libcolorid = m_optionsmenu->insertItem("Color By &Library", this, SLOT(toggleColorByLibrary()));
   m_optionsmenu->setItemChecked(m_libcolorid, false);
@@ -180,6 +207,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(this, SIGNAL(setTintHappiness(bool)),
           iw,   SLOT(setTintHappiness(bool)));
+
+  connect(this, SIGNAL(setTintFeatures(bool)),
+          iw,   SLOT(setTintFeatures(bool)));
 
   connect(this, SIGNAL(setCEStatistic(bool)),
           iw,   SLOT(setCEStatistic(bool)));
@@ -291,6 +321,14 @@ void InsertWindow::toggleTintHappiness()
   m_optionsmenu->setItemChecked(m_tintid, b);
 
   emit setTintHappiness(b);
+}
+
+void InsertWindow::toggleTintFeatures()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_tintfeatid);
+  m_optionsmenu->setItemChecked(m_tintfeatid, b);
+
+  emit setTintFeatures(b);
 }
 
 void InsertWindow::toggleColorByLibrary()

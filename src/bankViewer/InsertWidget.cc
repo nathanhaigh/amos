@@ -85,6 +85,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_paintScaffold  = 1;
   m_colorByLibrary = 0;
   m_tintHappiness  = 0;
+  m_tintFeatures   = 0;
 
   m_currentScaffold = AMOS::NULL_ID;
 
@@ -702,13 +703,6 @@ void InsertWidget::paintCanvas()
       }
     }
 
-    if (m_cestats)
-    {
-      for (li = libStats.begin(); li != libStats.end(); li++)
-      {
-        li->second.finalize();
-      }
-    }
 
     insertCL.finalize();
     int covwidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
@@ -737,31 +731,27 @@ void InsertWidget::paintCanvas()
 
     double meaninsertcoverage = ((double)totalinsertlen) / (insertCL.m_coverage[insertCL.m_curpos-1].x() - insertCL.m_coverage[0].x());
     double meanreadcoverage = ((double)totalbases) / readspan;
-    cerr << endl;
-    cerr << "Mean read coverage: " << meanreadcoverage << endl;
-    cerr << "Mean insert coverage: " << meaninsertcoverage << endl;
 
-    int mincestatheight = 100;
-    int vheight = insertCL.m_maxdepth;
-    if (m_cestats && (insertCL.m_maxdepth < mincestatheight))
-    {
-      vheight = mincestatheight;
-    }
-
-    insertCL.normalize(m_hscale, m_hoffset, voffset + vheight);
-    readCL.normalize(m_hscale, m_hoffset, voffset + vheight);
+    int cestatsheight = 100;
+    int covheight = insertCL.m_maxdepth;
+    int cestatsoffset = voffset;
 
     if (m_coveragePlot)
     {
+      cestatsoffset += covheight + 2*gutter;
+
+      insertCL.normalize(m_hscale, m_hoffset, voffset + covheight);
+      readCL.normalize(m_hscale, m_hoffset, voffset + covheight);
+
       paintCoverage(insertCL.m_coverage, insertCL.m_cestat, false,
                     insertCL.m_curpos,
-                    voffset, vheight,
+                    voffset, covheight,
                     -1, meaninsertcoverage, 
                     UIElements::color_insertcoverage);
 
       paintCoverage(readCL.m_coverage, readCL.m_cestat, false,
                     readCL.m_curpos,
-                    voffset, vheight, 
+                    voffset, covheight, 
                     -2, meanreadcoverage,
                     UIElements::color_readcoverage);
     }
@@ -770,12 +760,13 @@ void InsertWidget::paintCanvas()
     {
       for (li = libStats.begin(); li != libStats.end(); li++)
       {
-        li->second.finalizeCE(vheight);
-        li->second.normalize(m_hscale, m_hoffset, voffset + vheight);
+        li->second.finalize();
+        li->second.finalizeCE(cestatsheight);
+        li->second.normalize(m_hscale, m_hoffset, cestatsoffset + cestatsheight);
         paintCoverage(li->second.m_coverage, li->second.m_cestat, true,
                       li->second.m_curpos,
-                      voffset, vheight,
-                      (int)li->second.m_libid, (int)vheight/2,
+                      cestatsoffset, cestatsheight,
+                      (int)li->second.m_libid, (int)(cestatsheight/2),
                       (libColorMap[li->second.m_libid]));
       }
     }
@@ -784,26 +775,42 @@ void InsertWidget::paintCanvas()
     while (1)
     {
       int size = min(1000, covwidth - i);
-      QCanvasRectangle * covbg = new QCanvasRectangle(i, voffset, 
-                                                      size+1, vheight, m_icanvas);
-      covbg->setBrush(QColor(60,60,60));
-      covbg->setPen(QColor(60,60,60));
-      covbg->setZ(-2);
-      covbg->show();
 
-      QCanvasLine * base = new QCanvasLine(m_icanvas);
-      base->setPoints(i, voffset+vheight,
-                      i+size, voffset+vheight);
-      base->setPen(Qt::white);
-      base->setZ(1);
-      base->show();
+      if (m_coveragePlot)
+      {
+        QCanvasRectangle * covbg = new QCanvasRectangle(i, voffset, 
+                                                        size+1, covheight, m_icanvas);
+        covbg->setBrush(QColor(60,60,60));
+        covbg->setPen(QColor(60,60,60));
+        covbg->setZ(-3);
+        covbg->show();
+
+        QCanvasLine * base = new QCanvasLine(m_icanvas);
+        base->setPoints(i, voffset+covheight,
+                        i+size, voffset+covheight);
+        base->setPen(Qt::white);
+        base->setZ(1);
+        base->show();
+      }
+
+      if (m_cestats)
+      {
+        QCanvasRectangle * covbg = new QCanvasRectangle(i, cestatsoffset, 
+                                                        size+1, cestatsheight, m_icanvas);
+        covbg->setBrush(QColor(60,60,60));
+        covbg->setPen(QColor(60,60,60));
+        covbg->setZ(-3);
+        covbg->show();
+      }
+
       i+= size;
 
       if (i >= covwidth) { break; }
       i-=100;
     }
 
-    voffset += vheight + 2*gutter;
+    if (m_coveragePlot) { voffset += covheight     + 2*gutter; }
+    if (m_cestats)      { voffset += cestatsheight + 2*gutter; }
   }
 
   if (1)
@@ -1014,7 +1021,7 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  if (m_showFeatures && 0)
+  if (m_showFeatures && m_tintFeatures)
   {
     vector<AMOS::Feature_t>::iterator fi;
     for (fi = m_features.begin(); fi != m_features.end(); fi++)
@@ -1091,6 +1098,12 @@ void InsertWidget::setPaintScaffold(bool b)
 void InsertWidget::setFeatures(bool b)
 {
   m_showFeatures = b;
+  paintCanvas();
+}
+
+void InsertWidget::setTintFeatures(bool b)
+{
+  m_tintFeatures = b;
   paintCanvas();
 }
 

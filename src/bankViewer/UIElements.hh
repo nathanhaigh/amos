@@ -48,6 +48,9 @@ public:
 
   static QColor color_insertcoverage;
   static QColor color_readcoverage;
+
+  static const char * allFeatureTypes;
+  static const char * getFeatureStr(AMOS::FeatureType_t type);
 };
 
 

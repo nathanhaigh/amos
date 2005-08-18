@@ -53,6 +53,7 @@ public slots:
   void setFeatures(bool);
   void setColorByLibrary(bool);
   void setTintHappiness(bool);
+  void setTintFeatures(bool);
   void contigChanged();
   void computePos(int);
   void setHappyDistance(float);
@@ -111,6 +112,7 @@ private:
   bool m_colorByLibrary;
   bool m_paintScaffold;
   bool m_tintHappiness;
+  bool m_tintFeatures;
 
   int m_tilingwidth;
   float m_hscale;

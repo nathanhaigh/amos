@@ -23,12 +23,13 @@ QColor UIElements::color_tilingtrim(204, 153, 153);
 QColor UIElements::color_snpgap(Qt::cyan);
 
 QColor UIElements::color_featrepeat(Qt::white);
-QColor UIElements::color_featunitig(Qt::cyan);
 QColor UIElements::color_featjoin(Qt::white);
-QColor UIElements::color_featcoverage(Qt::magenta);
 QColor UIElements::color_featorf(Qt::white);
-QColor UIElements::color_featsnp(Qt::red);
 QColor UIElements::color_featdefault(Qt::white);
+
+QColor UIElements::color_featunitig(Qt::cyan);
+QColor UIElements::color_featcoverage(Qt::magenta);
+QColor UIElements::color_featsnp(Qt::red);
 
 QColor UIElements::color_insertcoverage(Qt::magenta);
 QColor UIElements::color_readcoverage(Qt::green);
@@ -71,6 +72,31 @@ QColor & UIElements::getFeatureColor(AMOS::FeatureType_t type)
     default: return color_featdefault;
   };
 }
+
+static const char * repeatstr = "Repeat";
+static const char * unitigstr = "Unitig";
+static const char * joinstr = "Join";
+static const char * coveragestr = "Coverage";
+static const char * orfstr = "ORF";
+static const char * snpstr = "SNP";
+static const char * otherstr = "Other";
+
+const char * UIElements::allFeatureTypes = "UCPX";
+
+const char * UIElements::getFeatureStr(AMOS::FeatureType_t type)
+{
+  switch (type)
+  {
+    case 'R':  return repeatstr;
+    case 'U':  return unitigstr;
+    case 'J':  return joinstr;
+    case 'C':  return coveragestr;
+    case 'O':  return orfstr;
+    case 'P':  return snpstr;
+    default:   return otherstr;
+  };
+}
+
 
 QColor & UIElements::getBaseColor(char base)
 {
