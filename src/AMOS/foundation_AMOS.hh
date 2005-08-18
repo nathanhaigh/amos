@@ -18,5 +18,6 @@
 #include "messages_AMOS.hh"
 #include "universals_AMOS.hh"
 #include "IDMap_AMOS.hh"
+#include "ContigIterator_AMOS.hh"
 
 #endif // #ifndef __foundation_AMOS_HH
