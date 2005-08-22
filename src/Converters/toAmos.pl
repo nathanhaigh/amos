@@ -1202,7 +1202,7 @@ sub parseContigFile {
 	    next;
 	}
 
-	if (/^\#(\S+)\((\d+)\) .*\{(\d+) (\d+)\} <(\d+) (\d+)>/){
+	if (/^\#(\S+)\((\S+)\) .*\{(\S+) (\S+)\} <(\S+) (\S+)>/){
 	    if ($incontig == 1){
 		print TMPCTG "#$iid C\n";
 		for (my $c = 0; $c < length($consensus); $c+=60){
