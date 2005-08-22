@@ -8,6 +8,7 @@ bin_PROGRAMS = \
     revcontig \
     insertgapcontig \
     trimcontig \
+    rotateContig \
     splitContig
 
 ##-- GLOBAL INCLUDE
@@ -35,6 +36,14 @@ revcontig_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 revcontig_SOURCES = \
 	revcontig.cc 
+
+rotateContig_LDADD = \
+	$(top_builddir)/src/Align/libAlign.a \
+	$(top_builddir)/src/Slice/libSlice.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+rotateContig_SOURCES = \
+    rotateContig.cc
 
 ##-- splitContig
 splitContig_LDADD = \
