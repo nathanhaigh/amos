@@ -4,10 +4,10 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	zipcontigs \
-    revcontig \
-    insertgapcontig \
-    trimcontig \
+	zipContigs \
+    revContig \
+    insertGapColumn \
+    trimContig \
     rotateContig \
     splitContig
 
@@ -19,23 +19,23 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Foundation
 
 ##-- insertgapcontig
-insertgapcontig_LDADD = \
+insertGapColumn_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-insertgapcontig_SOURCES = \
-	insertgapcontig.cc 
+insertGapColumn_SOURCES = \
+	insertGapColumn.cc 
 
 
-##-- revcontig
-revcontig_LDADD = \
+##-- revContig
+revContig_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-revcontig_SOURCES = \
-	revcontig.cc 
+revContig_SOURCES = \
+	revContig.cc 
 
 rotateContig_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
@@ -57,23 +57,23 @@ splitContig_SOURCES = \
 
 
 
-##-- trimcontig
-trimcontig_LDADD = \
+##-- trimContig
+trimContig_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
-trimcontig_SOURCES = \
-	trimcontig.cc 
+trimContig_SOURCES = \
+	trimContig.cc 
 
 
 ##-- zipcontigs
-zipcontigs_LDADD = \
+zipContigs_LDADD = \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
-zipcontigs_SOURCES = \
-	zipcontigs.cc 
+zipContigs_SOURCES = \
+	zipContigs.cc 
