@@ -7,18 +7,146 @@
 using namespace AMOS;
 using namespace std;
 
-int m_alignStart(0);
-string m_queryGaps("");
-string m_referenceGaps("");
-int m_promoteAlignmentGaps(0);
-int m_reverseQuery(0);
-int m_ungappedCoordinates(0);
-int m_gapCoordinateOffset(0);
-int m_referenceConsensus(0);
+// Trim 'lefttrim' bases from a contig by trimming the consensus and then
+// adjusting the offset and clear range of the tiling reads, or by 
+// dropping the read entirely from the multiple alignment
+void leftTrimContig(Contig_t & contig, int lefttrim)
+{
+  string cons = contig.getSeqString();
+  string cqual = contig.getQualString();
 
+  cerr << "Left Trimming " << lefttrim << " bases from " << cons.length() << endl;
+
+  cons  = cons.substr(lefttrim,  cons.length() - lefttrim);
+  cqual = cqual.substr(lefttrim, cqual.length() - lefttrim);
+
+  contig.setSequence(cons,cqual);
+
+  int curread = 0;
+  int tilecount = 0;
+  vector<Tile_t> & tiling = contig.getReadTiling();
+
+  for (curread = 0; curread < tiling.size(); curread++)
+  {
+    if (tiling[curread].getRightOffset() >= lefttrim)
+    {
+      // This read should exist in the new tiling
+      tiling[curread].offset -= lefttrim;
+      
+      if (tiling[curread].offset < 0)
+      {
+        // fix range and gaps
+        int trim = -tiling[curread].offset;
+        tiling[curread].offset = 0;
+
+        vector<Pos_t> & gaps = tiling[curread].gaps;
+        int curgap = 0;
+        int gapstodrop = 0;
+        int gapstokeep = 0;
+
+        for (curgap = 0; curgap < gaps.size(); curgap++)
+        {
+          if (gaps[curgap] + curgap < trim) { gapstodrop++; }
+          else
+          {
+            gaps[gapstokeep] = gaps[curgap]-(trim-gapstodrop);
+            gapstokeep++;
+          }
+        }
+
+        gaps.resize(gapstokeep);
+
+        if (tiling[curread].range.isReverse())
+        {
+          tiling[curread].range.begin -= (trim - gapstodrop);
+        }
+        else
+        {
+          tiling[curread].range.begin += (trim - gapstodrop);
+        }
+      }
+
+      tiling[tilecount] = tiling[curread];
+      tilecount++;
+    }
+  }
+
+  tiling.resize(tilecount);
+}
+
+// Trim 'righttrim' bases from a contig by trimming the last righttrim bases
+// from the consensus, and then adjusting the clear range of the tiling
+// reads, or by dropping them entirely from the contig.
+void rightTrimContig(Contig_t & contig, int righttrim)
+{
+  string cons = contig.getSeqString();
+  string cqual = contig.getQualString();
+
+  cerr << "Right Trimming " << righttrim << " bases from " << cons.length() << endl;
+
+  cons  = cons.substr(0,  cons.length()  - righttrim);
+  cqual = cqual.substr(0, cqual.length() - righttrim);
+
+  int newend = cons.length() - 1;
+
+  contig.setSequence(cons,cqual);
+
+  int curread = 0;
+  int tilecount = 0;
+  vector<Tile_t> & tiling = contig.getReadTiling();
+
+  for (curread = 0; curread < tiling.size(); curread++)
+  {
+    if (tiling[curread].offset <= newend)
+    {
+      // This read should exist in the new tiling
+      if (tiling[curread].getRightOffset() > newend)
+      {
+        // fix range and gaps
+        int trim = tiling[curread].getRightOffset() - newend;
+        int last = newend - tiling[curread].offset;
+
+        vector<Pos_t> & gaps = tiling[curread].gaps;
+        int curgap = 0;
+        int gapstodrop = 0;
+        int gapstokeep = 0;
+
+        for (curgap = 0; curgap < gaps.size(); curgap++)
+        {
+          if (gaps[curgap] + curgap > last) { gapstodrop++; }
+          else
+          {
+            gaps[gapstokeep] = gaps[curgap];
+            gapstokeep++;
+          }
+        }
+
+        gaps.resize(gapstokeep);
+
+        if (tiling[curread].range.isReverse())
+        {
+          tiling[curread].range.end += (trim - gapstodrop);
+        }
+        else
+        {
+          tiling[curread].range.end -= (trim - gapstodrop);
+        }
+      }
+
+      tiling[tilecount] = tiling[curread];
+      tilecount++;
+    }
+  }
+
+  tiling.resize(tilecount);
+}
 
 int main (int argc, char ** argv)
 {
+  int lefttrim(0);
+  int righttrim(0);
+  int contigiid(0);
+  string contigeid;
 
   int retval = 0;
   AMOS_Foundation * tf = NULL;
@@ -28,173 +156,52 @@ int main (int argc, char ** argv)
     string version =  "Version 1.0";
     string dependencies = "";
     string helptext = 
-"Zip together a query slice file onto a reference slice file. The beginning\n"
-"of the alignment is specified with -O, and gaps can be inserted into both\n"
-"slice files using -r and -q.\n"
+"Trim a contig by removing a specified number of bases from either the left\n"
+"or right end of the contig. Reads that span the trim regions will either\n"
+"have their clear range adjusted or be entirely removed from the tiling as\n"
+"appropriate.\n"
 "\n"
-"   Usage: zipcontigs [options] bnk qryeid refeid joineid\n"
+"   Usage: trimContig [options] bnk\n"
 "\n"
-"   query.slice     Slice file of query contig (typically smaller than reference)\n"
-"   reference.slice Slice file of reference contig\n"
-"\n"
-"   zipSlice Options\n"
-"   ----------------\n"
-"   -R Query should be reversed before merging\n"
-"   -1 Coordinates of gaps are 1-based\n"
-"   -U Coordinates of gaps to insert are ungapped\n"
-"   -p Automatically promote preexisting gaps\n"
-"   --refcons Use the consensus of the reference for merged slices\n"
-"             (Uses the query consensus by default)\n"
-"\n"
-"   -q <csl> Comma separated list of positions to insert gaps in the query\n"
-"   -r <csl> Comma separated list of positions to insert gaps in the reference\n"
-"\n"
-"   -O <offset> Specify alignment offset from query to reference\n"
-"               (negative means reference left flanks query (always 0-based))\n";
+"   -L <val> Trim val bases from left side\n"
+"   -R <val> Trim val bases from right side\n"
+"   -E id    EID of contig to trim\n"
+"   -I id    IID of contig to trim\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
-    tf->getOptions()->addOptionResult("O|alignmentoffset=i", &m_alignStart,
-                                      "Specify alignment offset from query to reference\n           negative means reference left flanks query (always 0-based)");
+    tf->getOptions()->addOptionResult("L=i", &lefttrim, "Left trim amount");
+    tf->getOptions()->addOptionResult("R=i", &righttrim, "Right trim amount");
 
-    tf->getOptions()->addOptionResult("q|querygaps=s", &m_queryGaps,
-                                      "Specify gaps in query slices");
-
-    tf->getOptions()->addOptionResult("r|referencegaps=s", &m_referenceGaps,
-                                      "Specify gaps in reference slices");
-
-    tf->getOptions()->addOptionResult("p|promoteAlignmentGaps!", &m_promoteAlignmentGaps,
-                                      "Toggle if alignment gaps should automatically be promoted");
-
-    tf->getOptions()->addOptionResult("R|reversequery!", &m_reverseQuery,
-                                      "Query should be reversed before merging");
-
-    tf->getOptions()->addOptionResult("U|ungapped!", &m_ungappedCoordinates,
-                                      "Coordinates are all ungapped");
-
-    tf->getOptions()->addOptionResult("1", &m_gapCoordinateOffset,
-                                      "Coordinates of gaps are 1-based");
-
-    tf->getOptions()->addOptionResult("refcons", &m_referenceConsensus,
-                                      "Use the consensus of the reference for the merged slices");
-
+    tf->getOptions()->addOptionResult("I=i", &contigiid, "Contig IID");
+    tf->getOptions()->addOptionResult("E=s", &contigeid, "Contig EID");
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
 
-    if (argvv.size() != 4)
+    if (argvv.size() != 1)
     {
-      cerr << "Usage: zipcontigs [options] bankname refeid qryeid joineid" << endl;
+      cerr << "Usage: trimContig [options] bankname" << endl;
       return EXIT_FAILURE;
     }
 
     string bankname = argvv.front(); argvv.pop_front();
-    string refeid = argvv.front(); argvv.pop_front();
-    string qryeid = argvv.front(); argvv.pop_front();
-    string jeid   = argvv.front(); argvv.pop_front();
-
     Bank_t contig_bank(Contig_t::NCODE);
 
     cerr << "Processing " << bankname << " at " << Date() << endl;
 
     contig_bank.open(bankname, B_READ|B_WRITE);
-    ID_t jiid     = contig_bank.getMaxIID()+1;
+    Contig_t contig;
 
-    Contig_t rcontig, qcontig;
+    if (!contigeid.empty()) { contig_bank.fetch(contigeid, contig); }
+    else                    { contig_bank.fetch(contigiid, contig); }
 
-    contig_bank.fetch(refeid, rcontig);
-    contig_bank.fetch(qryeid, qcontig);
+    // trim right first so we don't have to shift trim after left trim
+    if (righttrim) { rightTrimContig(contig, righttrim); }
+    if (lefttrim)  { leftTrimContig(contig, lefttrim); }
 
-    cerr << "Ref: " << refeid << " len: " << rcontig.getSeqString().length() << endl;
-    cerr << "Qry: " << qryeid << " len: " << qcontig.getSeqString().length() << endl;
-
-    cerr << " m_alignStart(0)=" <<           m_alignStart << endl;
-    cerr << " m_queryGaps(\"\")=" <<         m_queryGaps<< endl;
-    cerr << " m_referenceGaps(\"\")=" <<     m_referenceGaps<< endl;
-    cerr << " m_promoteAlignmentGaps(0)=" << m_promoteAlignmentGaps<< endl;
-    cerr << " m_reverseQuery(0)=" <<         m_reverseQuery<< endl;
-    cerr << " m_ungappedCoordinates(0)=" <<  m_ungappedCoordinates<< endl;
-    cerr << " m_gapCoordinateOffset(0)=" <<  m_gapCoordinateOffset<< endl;
-    cerr << " m_referenceConsensus(0)=" <<   m_referenceConsensus<< endl;
-
-    int shift = 0;
-
-    string rcons(rcontig.getSeqString());
-    string qcons(qcontig.getSeqString());
-
-    Pos_t rgindex = 0;
-    Pos_t qgindex = 0;
-
-    vector <Pos_t> rgaps;
-    vector <Pos_t> qgaps;
-
-    int rlen = rcons.length();
-    int qlen = qcons.length();
-
-    while (rgindex < rlen && qgindex < qlen) 
-    {
-      if (rcons[rgindex] == '-' && qcons[qgindex] == '-')
-      {
-        // Let gaps zip together
-        rgindex++;
-        qgindex++;
-        cerr << "-";
-      }
-      else if (rcons[rgindex] == '-')
-      {
-        qgaps.push_back(qgindex);
-        rgindex++;
-        cerr << "r";
-      }
-      else if (qcons[qgindex] == '-')
-      {
-        rgaps.push_back(rgindex);
-        qgindex++;
-        cerr << "q";
-      }
-      else
-      {
-        rgindex++;
-        qgindex++;
-        cerr << ".";
-      }
-    }
-
-
-    // Apply Gaps
-
-    cerr << cerr << "Applying " << rgaps.size() << " reference gaps" << endl;
-    vector <Pos_t>::reverse_iterator gi;
-    for (gi = rgaps.rbegin(); gi != rgaps.rend(); gi++)
-    {
-      rcontig.insertGapColumn(*gi);
-    }
-
-    cerr << "Applying " << qgaps.size() << " query gaps" << endl;
-    for (gi = qgaps.rbegin(); gi != qgaps.rend(); gi++)
-    {
-      qcontig.insertGapColumn(*gi);
-    }
-
-    // Merge Tilings into rcontig
-    vector<Tile_t> & rtiling = rcontig.getReadTiling();
-    vector<Tile_t> & qtiling = qcontig.getReadTiling();
-    vector<Tile_t>::iterator ti;
-
-    cerr << "Merging " << qtiling.size() << " query reads" << endl;
-
-    for (ti =  qtiling.begin(); ti != qtiling.end(); ti++)
-    {
-      ti->offset += shift;
-      rtiling.push_back(*ti);
-    }
-
-    // save to bank, rcontig gets new name
-    rcontig.setIID(jiid);
-    rcontig.setEID(jeid);
-    cerr << "Appending iid: " << jiid << " eid: " << jeid << endl;
-    contig_bank.append(rcontig);
+    contig_bank.replace(contig.getIID(), contig);
     contig_bank.close();
   }
   catch (Exception_t & e)
