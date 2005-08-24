@@ -169,12 +169,13 @@ void Contig_t::insertGapColumn (Pos_t gindex)
        i != reads_m.end();
        i++)
   {
-    if (i->offset > gindex)
+    if (i->offset >= gindex)
     {
       // insert before read, shift over 1
+      // Don't insert starting gaps
       i->offset++;
     }
-    else if (i->offset + i->getGappedLength() - 1 < gindex)
+    else if (i->getRightOffset() < gindex)
     {
       // insert after read, nothing to do
     }

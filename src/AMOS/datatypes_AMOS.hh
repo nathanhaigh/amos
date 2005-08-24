@@ -357,6 +357,20 @@ struct Tile_t : public IMessagable_t
   }
 
 
+  //--------------------------------------------------- getRightOffset --------
+  //! \brief Gets the exact right offset of the tile
+  //!
+  //! offset + (range . getLength( ) + gaps . size( )) - 1
+  //!
+  //! \return The right offset of the tile
+  //!
+
+  Pos_t getRightOffset() const
+  {
+    return offset + range.getLength() + gaps.size() - 1;
+  }
+
+
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
 
