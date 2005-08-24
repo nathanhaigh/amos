@@ -17,8 +17,8 @@ void leftTrimContig(Contig_t & contig, int lefttrim)
 
   cerr << "Left Trimming " << lefttrim << " bases from " << cons.length() << endl;
 
-  cons  = cons.substr(lefttrim,  cons.length() - lefttrim);
-  cqual = cqual.substr(lefttrim, cqual.length() - lefttrim);
+  cons.erase(0, lefttrim);
+  cqual.erase(0, lefttrim);
 
   contig.setSequence(cons,cqual);
 
@@ -82,12 +82,12 @@ void rightTrimContig(Contig_t & contig, int righttrim)
   string cons = contig.getSeqString();
   string cqual = contig.getQualString();
 
+  int newlength = cons.length() - righttrim;
+
   cerr << "Right Trimming " << righttrim << " bases from " << cons.length() << endl;
 
-  cons  = cons.substr(0,  cons.length()  - righttrim);
-  cqual = cqual.substr(0, cqual.length() - righttrim);
-
-  int newend = cons.length() - 1;
+  cons.resize(newlength);
+  cqual.resize(newlength);
 
   contig.setSequence(cons,cqual);
 
@@ -97,14 +97,16 @@ void rightTrimContig(Contig_t & contig, int righttrim)
 
   for (curread = 0; curread < tiling.size(); curread++)
   {
-    if (tiling[curread].offset <= newend)
+    if (tiling[curread].offset < newlength)
     {
       // This read should exist in the new tiling
-      if (tiling[curread].getRightOffset() > newend)
+
+      if (tiling[curread].getRightOffset() >= newlength)
       {
+        // This read extends beyond new width
         // fix range and gaps
-        int trim = tiling[curread].getRightOffset() - newend;
-        int last = newend - tiling[curread].offset;
+        int trim = tiling[curread].getRightOffset() - newlength + 1;
+        int last = newlength - 1 - tiling[curread].offset;
 
         vector<Pos_t> & gaps = tiling[curread].gaps;
         int curgap = 0;
