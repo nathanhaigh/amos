@@ -19,6 +19,7 @@ string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_UseEIDs = false;          // print EIDs instead of IIDs
 bool   OPT_UseRaw  = false;          // pull entire seqlen
+bool   OPT_DumpQual = false;         // dump qualities
 
 string OPT_IIDFile;  // Filename of IIDs to dump
 string OPT_EIDFile;  // Filename of EIDs to dump
@@ -56,6 +57,26 @@ void PrintHelp (const char * s);
 //!
 void PrintUsage (const char * s);
 
+
+void DumpQuals(ostream & out, const string & quals, int lineLen)
+{
+  int len = quals.length();
+  char buffer[16];
+
+  for (int i = 0; i < len; i++)
+  {
+    // Print each number followed by a character
+    // '\n' if last number in that row or final element
+    // ' ' otherwise
+
+    sprintf (buffer, "%.2d%c", quals[i] - AMOS::MIN_QUALITY,
+             ( ( ( i % ( lineLen ) == ( lineLen - 1 ) ) ) || ( i == len - 1 ) ) ? '\n' : ' ' );
+
+    out << buffer;
+  }
+}
+
+
 void dumpRead(Read_t & red)
 {
   cnts++;
@@ -78,10 +99,16 @@ void dumpRead(Read_t & red)
   else
     cout << ">" << red . getIID( ) << endl;
 
-  if ( OPT_UseRaw )
-    WrapString (cout, red . getSeqString( ), OPT_basesperline);
+  if (OPT_DumpQual)
+  {
+    if (OPT_UseRaw) { DumpQuals(cout, red.getQualString(), OPT_basesperline); }
+    else            { DumpQuals(cout, red.getQualString(red.getClearRange()), OPT_basesperline); }
+  }
   else
-    WrapString (cout, red . getSeqString(red . getClearRange( )), OPT_basesperline);
+  {
+    if (OPT_UseRaw) { WrapString (cout, red . getSeqString( ), OPT_basesperline); }
+    else            { WrapString (cout, red . getSeqString(red . getClearRange( )), OPT_basesperline); }
+  }
 
   cntw++;
 }
@@ -177,7 +204,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "ehrsvE:I:L:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "ehrsvqE:I:L:")) != EOF) )
     switch (ch)
       {
       case 'e':
@@ -199,6 +226,11 @@ void ParseArgs (int argc, char ** argv)
 
       case 'r':
         OPT_UseRaw = true;
+        break;
+
+      case 'q':
+        OPT_DumpQual = true;
+        OPT_basesperline = 17;
         break;
 
       case 'L':
@@ -239,6 +271,7 @@ void PrintHelp (const char * s)
     << "-e            Use EIDs for FastA header instead of IIDs\n"
     << "-h            Display help information\n"
     << "-r            Ignore clear range and dump entire sequence\n"
+    << "-q            Dump qualities in fasta format instead of sequence\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << "-E file       Dump just the eids listed in file\n"
