@@ -100,6 +100,7 @@ int main (int argc, char ** argv)
   IDMap readliblookup;
   IDMap frgliblookup;
   IDMap redctglookup;
+  IDMap ctgscflookup;
 
   Scaffold_t scaff;
   Contig_t contig;
@@ -173,6 +174,17 @@ int main (int argc, char ** argv)
     }
     cerr << redctglookup.size() << " reads in contigs" << endl;
 
+    cerr << "Index scaffolds... ";
+    while (scf_bank >> scaff)
+    {
+      for (ri = scaff.getContigTiling().begin();
+           ri != scaff.getContigTiling().end();
+           ri++)
+      {
+        ctgscflookup[ri->source] = scaff.getIID();
+      }
+    }
+    cerr << ctgscflookup.size() << " contigs in scaffolds" << endl;
 
 
     if (contigiid == AMOS::NULL_ID)
@@ -246,16 +258,20 @@ int main (int argc, char ** argv)
 
     cout << endl << endl;
 
-    cout << ">Ctg\tFreq\tDir" << endl;
+    cout << ">Ctg\tScaff\tFreq\tDir" << endl;
      
     for (fi = fctgfreq.begin(); fi != fctgfreq.end(); fi++)
     {
-      cout << fi->first << "\t" << fi->second << "\tF" << endl;
+      cout << fi->first << "\t" 
+           << ctgscflookup[fi->first] << "\t"
+           << fi->second << "\tF" << endl;
     }
 
     for (fi = rctgfreq.begin(); fi != rctgfreq.end(); fi++)
     {
-      cout << fi->first << "\t" << fi->second << "\tR" << endl;
+      cout << fi->first << "\t" 
+           << ctgscflookup[fi->first] << "\t"
+           << fi->second << "\tR" << endl;
     }
 
     cout << endl << endl;
