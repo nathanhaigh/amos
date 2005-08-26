@@ -12,9 +12,9 @@ public:
   ~ContigSequence();
 
   int m_readcount;
-
   std::vector<AMOS::Tile_t>::iterator m_tile;
   AMOS::Read_t m_read;
+
 
   const std::string & getSeqname() const;
 
@@ -57,19 +57,11 @@ public:
 
 private:
   void swap(long a, long b);
-  int extractFirstQuality(std::string & qualstring, bool doErase);
 
   void renderSequence();
 
   std::string m_nuc;
   std::string m_qual;
-
-  std::string m_rightTrim;
-  std::string m_rightTrimQual;
-
-  std::string m_leftTrim;
-  std::string m_leftTrimReversed;
-  std::string m_leftTrimQual;
 };
 
 #endif

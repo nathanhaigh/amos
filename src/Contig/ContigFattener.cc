@@ -675,6 +675,7 @@ void ContigFattener::mergeExtension(unsigned int & cpos,
       {
         // Don't use gaps that are already present since we hit the end of allow range
         insertGapSlice(cpos, read);
+        consensus = m_contig.getSeqString();
         lastConsPos++;
       }
       else
@@ -822,7 +823,7 @@ int ContigFattener::fattenLeft(ContigSequence * read, int distance)
 
     unsigned int rpos = 0;
     unsigned int cpos = m_contig.ungap2gap(consstart-1);
-    while (consensus[gindex] == '-')
+    while (consensus[gindex+1] == '-')
     {
       gindex++;
     }

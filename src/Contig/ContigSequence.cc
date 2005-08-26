@@ -14,14 +14,18 @@ ContigSequence::ContigSequence(vector<Tile_t>::iterator & tile, Read_t & read)
 
 void ContigSequence::renderSequence()
 {
+  cerr << "range: [" << m_tile->range.begin << " " << m_tile->range.end;
   m_nuc = m_read.getSeqString(m_tile->range);
   m_qual = m_read.getQualString(m_tile->range);
 
-  //cerr << "range: " << m_tile->range.begin << " " << m_tile->range.end << endl;
+  cerr << ") gaps:";
+
 
   for (int i = 0; i < m_tile->gaps.size(); i++)
   {
     int gappos = m_tile->gaps[i] + i;
+    cerr << " " << gappos;
+
     m_nuc.insert(gappos, 1,  '-');
 
     char lqv = (gappos > 0) ? m_qual[gappos-1] : -1;
@@ -33,6 +37,8 @@ void ContigSequence::renderSequence()
 
     m_qual.insert(gappos, 1, gapqv);
   }
+
+  cerr << "." << endl;
 }
 
 ContigSequence::~ContigSequence()
@@ -338,52 +344,14 @@ int ContigSequence::get3TrimLength()
 
 string ContigSequence::getLeftTrim()
 {
-  // TODO
-  return "TODOLEFTTRIM";
-
-#if 0
-  string reversed;
-
-  // We are getting the right trim, but reverse complimenting it
-  m_leftTrim = m_readData->getRawNucData(false);
-  m_leftTrimQual = m_readData->getRawQualData(false);
-
-  m_leftTrimReversed = "";
-  for (int i = m_leftTrim.size()-1; i >= 0; i--)
-  {
-    char base = m_leftTrim[i];
-    m_leftTrimReversed.push_back(libSlice_getCompliment(base));
-  }
-
-  return m_leftTrimReversed;
-#endif
+  Range_t r(m_read.getLength(), m_tile->range.getHi());
+  return m_read.getSeqString(r);
 }
 
 string ContigSequence::getRightTrim()
 {
   Range_t r(m_tile->range.getHi(), m_read.getLength());
   return m_read.getSeqString(r);
-}
-
-int ContigSequence::extractFirstQuality(string & qualstring, bool doErase)
-{
-  int qualval = 0;
-
-  string::size_type endpos = qualstring.find(' ');
-
-  if (endpos == qualstring.npos)
-  {
-    qualval = atoi(qualstring.c_str());
-    if (doErase) { qualstring = ""; }
-  }
-  else
-  {
-    const string & qualstr = qualstring.substr(0, endpos);
-    qualval = atoi(qualstr.c_str());
-    if (doErase) { qualstring.erase(0, endpos+1); }
-  }
-
-  return qualval;
 }
 
 int ContigSequence::extendLeft(const string & extendLeft)
@@ -398,49 +366,41 @@ int ContigSequence::extendLeft(const string & extendLeft)
     unsigned int addedBases = extendLeft.size();
     m_tile->offset -= addedBases;
 
-    m_nuc = extendLeft + m_nuc;
-    int qualval = m_qual[0];
+    vector<Pos_t> newgaps;
+    int gapcount = 0;
 
-    for (int i = addedBases-1; i >= 0; i--)
+    for (int i = 0; i < addedBases; i++)
     {
       if (extendLeft[i] != '-')
       {
         basesExtended++;
-        qualval = extractFirstQuality(m_leftTrimQual, true);
-        m_leftTrim.erase(0, 1);
       }
       else
       {
-        if (!m_leftTrimQual.empty())
-        {
-          int nextqv = extractFirstQuality(m_leftTrimQual, false);
-          if (nextqv < qualval) { qualval = nextqv; }
-        }
-      }
+        int gseqpos = i;
+        int seqpos = gseqpos - gapcount;
 
-      m_qual.insert(m_qual.begin(), qualval);
+        newgaps.push_back(seqpos);
+        gapcount++;
+      }
     }
 
-    cerr << "TODO extendLeft()" << endl;
+    for (int g = 0; g < m_tile->gaps.size(); g++)
+    {
+      newgaps.push_back(m_tile->gaps[g] + basesExtended);
+    }
 
-#if 0
+    m_tile->gaps = newgaps;
 
-    m_readData->flushTrimmedSeqSide(false);
-
-    m_readData->addNucData(m_leftTrim.c_str(), false);
-    m_readData->addQualData(m_leftTrimQual.c_str(), false);
-
-    long clrleft = m_readData->getClrleft();
-    long clrright = m_readData->getClrright();
-
-    m_readData->setClrData(clrleft, clrright + basesExtended);
-#endif
+    m_tile->range.begin += basesExtended;
 
     /*
     cerr << "Left Extension of r" << getReadID()
          << " by " << basesExtended 
          << " (" << addedBases << ")" << endl;
     */
+
+    renderSequence();
   }
 
   return basesExtended;
