@@ -97,8 +97,11 @@ ContigSequenceSlice ContigFattener::getTilingSlice(int gindex)
   ContigSequenceSlice retval;
 
   vector<Tile_t> & tiling = m_contig.getReadTiling();
+  sort(tiling.begin(), tiling.end(), TileOrderCmp());
+
+  int count;
   vector<Tile_t>::iterator ti;
-  for (ti = tiling.begin(); ti != tiling.end(); ti++)
+  for (count = 0, ti = tiling.begin(); ti != tiling.end(); ti++, count++)
   {
     if (!(ti->offset > gindex || ti->getRightOffset() < gindex))
     {
@@ -106,6 +109,7 @@ ContigSequenceSlice ContigFattener::getTilingSlice(int gindex)
       m_read_bank.fetch(ti->source, rr);
 
       ContigSequence cs(ti, rr);
+      cs.m_readcount = count;
       retval.push_back(cs);
     }
   }
@@ -144,6 +148,8 @@ void ContigFattener::growContigLeft(bool requireConfirmation)
   // Stretch the contig with the best candidate
   if (best)
   {
+    ID_t bestiid = best->getIID();
+
     if (m_verbose)
     {
       cerr << "best read to left extend is r" << best->getReadID()
@@ -158,26 +164,45 @@ void ContigFattener::growContigLeft(bool requireConfirmation)
     fattenContig(0, bestExtension+500, 1, 0);
     bestExtension += (m_contig.getLength() - origSize); // add extra gaps
 
-    cerr << "TODO: growContigLeft()" << endl;
-    for (int gindex = bestExtension-1; gindex >= 0; gindex--)
-    {
-      ContigSequenceSlice tilingSlice = getTilingSlice(gindex);
-      if (tilingSlice.size() > 1)
-      {
-        confirmedDistance++;
-      }
-      else
-      {
-        if (requireConfirmation && 
-            (tilingSlice.begin() != tilingSlice.end()) &&
-            (tilingSlice.begin())->getReadID() == best->getReadID())
-        {
-          cerr << "@TrimContigLeft=" << gindex+1 << endl;
-          leftTrimContig(m_contig, gindex+1);
-          dumpRange(best->getOffset(), bestExtension+10, best);
-        }
 
-        break;
+    int confirmedOffset = m_contig.getLength();
+    int confirmedRead = -1;
+
+    vector<Tile_t> & tiling = m_contig.getReadTiling();
+    vector<Tile_t>::iterator ti;
+
+    for (ti = tiling.begin(); ti != tiling.end(); ti++)
+    {
+      if (ti->source != bestiid && 
+          ti->offset < confirmedOffset)
+      {
+        confirmedOffset = ti->offset;
+        confirmedRead = ti->source;
+      }
+    }
+
+    confirmedDistance = (bestExtension - confirmedOffset);
+
+    if (requireConfirmation)
+    {
+      cerr << "@TrimContigLeft=" << confirmedOffset << endl;
+      leftTrimContig(m_contig, confirmedOffset);
+
+      int count;
+      tiling = m_contig.getReadTiling();
+      
+      for (count=0, ti = tiling.begin(); ti != tiling.end(); ti++, count++)
+      {
+        if (ti->source == bestiid)
+        {
+          Read_t read;
+          m_read_bank.fetch(ti->source, read);
+          best = new ContigSequence(ti, read);
+          best->m_readcount = count;
+          dumpRange(0, bestExtension+10, best);
+          delete best;
+          break;
+        }
       }
     }
   }
@@ -217,6 +242,7 @@ void ContigFattener::growContigRight(bool requireConfirmation)
   // Stretch the contig with the best candidate
   if (best)
   {
+    int bestiid = best->getIID();
     int oldSize = m_contig.getLength();
     if (m_verbose)
     {
@@ -224,32 +250,53 @@ void ContigFattener::growContigRight(bool requireConfirmation)
            << " by " << bestExtension << "bp" << endl;
     }
 
-    extendRead(best->getSeqname(), -1);
+
+    extendRead(best, -1);
     
     // Now fatten the contig to match out to the new end
     fattenContig(oldSize-1, m_contig.getLength(), 0, 1);
 
-    cerr << "TODO: growContigRight()" << endl;
-    for (int i = oldSize; i < m_contig.getLength(); i++)
-    {
-      ContigSequenceSlice tilingSlice = getTilingSlice(i);
-      if (tilingSlice.size() > 1)
-      {
-        confirmedDistance++;
-      }
-      else
-      {
-        if (requireConfirmation && 
-            (tilingSlice.begin() != tilingSlice.end()) &&
-             tilingSlice.begin()->getReadID() == best->getReadID())
-        {
-          // We need to trim from i to end since these are unconfirmed
-          cerr << "@TrimContigRight=" << m_contig.getLength()-i << endl;
-          rightTrimContig(m_contig, m_contig.getLength()-i);
-          //best->trimReadRight(i);
-        }
+    int confirmedOffset = oldSize;
+    int confirmedRead = -1;
+    
+    vector<Tile_t> & tiling = m_contig.getReadTiling();
+    vector<Tile_t>::iterator ti;
 
-        break;
+    for (ti = tiling.begin(); ti != tiling.end(); ti++)
+    {
+      if (ti->source != bestiid &&
+          ti->getRightOffset() > confirmedOffset)
+      {
+        confirmedOffset = ti->getRightOffset();
+        confirmedRead = ti->source;
+      }
+    }
+
+    confirmedDistance = confirmedOffset - oldSize;
+
+    if (requireConfirmation)
+    {
+      int trimdistance = m_contig.getLength() - confirmedOffset;
+      cerr << "@TrimContigRight=" << trimdistance << endl;
+      rightTrimContig(m_contig, trimdistance);
+
+      int count;
+      tiling = m_contig.getReadTiling();
+
+      for (count = 0, ti = tiling.begin(); ti != tiling.end(); ti++, count++)
+      {
+        if (ti->source == bestiid)
+        {
+          Read_t read;
+          m_read_bank.fetch(ti->source, read);
+          best = new ContigSequence(ti, read);
+          best->m_readcount = count;
+
+          dumpRange(ti->offset-10, m_contig.getLength(), best);
+
+          delete best;
+          break;
+        }
       }
     }
   }

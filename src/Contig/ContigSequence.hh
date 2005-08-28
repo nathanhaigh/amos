@@ -48,6 +48,7 @@ public:
   int extendLeft(const std::string & extendLeft);
 
   int getReadID() const;
+  AMOS::ID_t getIID() const { return m_read.getIID(); }
 
 
   bool isReverseCompliment() const;

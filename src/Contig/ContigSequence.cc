@@ -7,24 +7,29 @@ using namespace std;
 
 ContigSequence::ContigSequence(vector<Tile_t>::iterator & tile, Read_t & read)
  : m_tile(tile),
-   m_read(read)
+   m_read(read),
+   m_readcount(-1)
 {
   renderSequence();
 }
 
 void ContigSequence::renderSequence()
 {
+#ifdef DEBUGRENDER
   cerr << "range: [" << m_tile->range.begin << " " << m_tile->range.end;
+#endif
+
   m_nuc = m_read.getSeqString(m_tile->range);
   m_qual = m_read.getQualString(m_tile->range);
 
+#ifdef DEBUGRENDER
   cerr << ") gaps:";
+#endif
 
 
   for (int i = 0; i < m_tile->gaps.size(); i++)
   {
     int gappos = m_tile->gaps[i] + i;
-    cerr << " " << gappos;
 
     m_nuc.insert(gappos, 1,  '-');
 
@@ -36,9 +41,15 @@ void ContigSequence::renderSequence()
                  : (rqv != -1) ? rqv : lqv;
 
     m_qual.insert(gappos, 1, gapqv);
+
+#ifdef DEBUGRENDER
+    cerr << " " << gappos;
+#endif
   }
 
+#ifdef DEBUGRENDER
   cerr << "." << endl;
+#endif
 }
 
 ContigSequence::~ContigSequence()

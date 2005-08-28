@@ -11,7 +11,7 @@ void leftTrimContig(Contig_t & contig, int lefttrim)
   string cons = contig.getSeqString();
   string cqual = contig.getQualString();
 
-  cerr << "Left Trimming " << lefttrim << " bases from " << cons.length() << endl;
+  cerr << "Left Trimming " << lefttrim << " bases from consensus length of " << cons.length() << endl;
 
   cons.erase(0, lefttrim);
   cqual.erase(0, lefttrim);
