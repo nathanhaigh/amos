@@ -828,7 +828,8 @@ void Bank_t::syncIFO (IFOMode_t mode)
 	ifo_stream >> line;                // bank version
 	if ( line != BANK_VERSION )
 	  AMOS_THROW_IO
-	    ("Could not read bank, incompatible bank version " + line);
+	    ("Could not read bank, expected version: "
+             + BANK_VERSION + ", saw version: " + line);
 	getline (ifo_stream, line, '=');
 	ifo_stream >> banktype;            // bank type
 	if ( banktype != banktype_m )
