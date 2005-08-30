@@ -10,7 +10,6 @@ $ENV{TMPDIR} = ".";
 
 use strict;
 
-my $INCLUDE_DEGEN = 0;
 my $INCLUDE_SURROGATE = 0;
 
 # more to do
@@ -20,12 +19,11 @@ my $INCLUDE_SURROGATE = 0;
 my $VERSION = '$Revision$ ';
 my $HELP = q~
     toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)
-           (-c contig|-a asm|-ta tasm|-ace ace|-s fasta|-q qual) 
+           (-c contig|-a asm [-S]|-ta tasm|-ace ace|-s fasta|-q qual) 
            -o outfile 
            [-i insertfile | -map dstmap]
            [-gq goodqual] [-bq badqual]
            [-pos posfile]
-           [-S] [-D]
 
     toAmos is primarily designed for converting the output of an assembly
 program into the AMOS format so that it can be stored in an AMOS bank.
@@ -35,7 +33,6 @@ AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos.
 
 ASM File Options:
  -S Include Surrogate Unitigs as AMOS Contigs
- -D Include Degenerate Unitigs as AMOS Contigs
 ~;
 
 my $base = new TIGR::Foundation();
@@ -82,8 +79,7 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "pos=s" => \$posfile,
 				 "id=i"  => \$minSeqId,
 				 "acc"   => \$byaccession,
-                 "S"     => \$INCLUDE_SURROGATE,
-                 "D"     => \$INCLUDE_DEGEN);
+                 "S"     => \$INCLUDE_SURROGATE);
 
 
 my $matesDone = 0;
@@ -860,11 +856,11 @@ sub parseAsmFile {
     while (my $record = getRecord($IN)){
 	my ($type, $fields, $recs) = parseRecord($record);
 	if (($type eq "CCO") || 
-        ($INCLUDE_DEGEN     && ($type eq "UTG") && $$fields{sta} eq "N") || 
-        ($INCLUDE_SURROGATE && ($type eq "UTG") && $$fields{sta} eq "S")){
+        ($INCLUDE_SURROGATE && ($type eq "UTG") && ($$fields{sta} eq "S"))){
 
         my $sts = "C";
         $sts = $$fields{sta} if $type eq "UTG";
+        $sts = $$fields{pla} if $type eq "CCO";
 
 	    my $id = getCAId($$fields{acc});
 	    my $iid = $minCtgId++;
