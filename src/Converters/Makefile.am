@@ -34,7 +34,8 @@ dist_bin_SCRIPTS = \
 	scaff2fasta.pl \
 	parsecasm.pl \
 	castats.pl \
-	ca2singletons.pl
+	ca2singletons.pl \
+	phd2afg.pl
 
 
 ##-- END OF MAKEFILE --##

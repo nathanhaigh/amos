@@ -69,9 +69,11 @@ my $HELPTEXT = qq~
    <lib>      - file containing mean/stdev information for libraries. Overrides
            .xml input.
    fasta1 ... fastan - list of files to be converted.
-           The program assumes that for each program called <file>.seq there
-           is a <file>.qual and a <file>.xml.  If no .xml file is present 
-           the program will only produce a set of RED (read) records.  
+           The program assumes that for each file called <file>.seq there
+           is a <file>.qual and a <file>.xml. (alternatively the files may
+           be called fasta.<file>, qual.<file> and xml.<file>).
+           If no .xml file is present the program will only produce a set of 
+           RED (read) records.  
 
 Options
 
