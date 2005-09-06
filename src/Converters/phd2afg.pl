@@ -64,20 +64,28 @@ if (defined $matefile){
     close(MATE);
 }
 
-my $ll = $minSeqId++;
+my $ll = $minSeqID++;
 $libraries{$ll} = "0 0";
 $libnames{$ll} = "dummy";
 $libid{$ll} = $ll;
 
+my $needdummy = 0;
 while (my ($sid, $sname) = each %seqnames){
     if (! exists $seqinsert{$sid}){
-	my $id = $minSeqId++;
+	my $id = $minSeqID++;
 	$seqinsert{$sid} = $id;
 #	$insid{$id} = $id;
 	$seenlib{$id} = $ll;
 	$insertlib{$ll} .= "$id ";
 	$forw{$id} = $sid;
+	$needdummy = 1;
     }
+}
+
+if ($needdummy == 0){
+    delete $libraries{$ll};
+    delete $libnames{$ll};
+    delete $libid{$ll};
 }
 
 my $date = localtime();
@@ -105,17 +113,26 @@ while (my ($lib, $range) = each %libraries){
     }
     print OUT "{DST\n";
     print OUT "mea:$mean\n";
-    print OUT "std:$sd\n";
+    print OUT "std:", sprintf("%.2f\n", $sd);
     print OUT "}\n";
     print OUT "}\n";
 }
 
 # then all the inserts
 while (my ($ins, $lib) = each %seenlib){
+    if (! exists $insid{$ins}) {
+	$insid{$ins} = $minSeqID++;
+    };
     print OUT "{FRG\n";
-    print OUT "iid:$ins\n";
-#    if (! exists $insid{$ins}) {$insid{$ins} = $ins};
+    print OUT "eid:$ins\n";
+    print OUT "iid:$insid{$ins}\n";
     print OUT "lib:$libid{$lib}\n";
+
+# add rds.  
+    if (exists $forw{$ins} && exists $rev{$ins}){
+	print OUT "rds:$forw{$ins},$rev{$ins}\n";
+    }
+
     print OUT "typ:I\n";
     print OUT "}\n";
 }
@@ -132,6 +149,8 @@ while (my ($sid, $sname) = each %seqnames){
     parsePHDFile(\*SEQ, \$seq, \$qual, \$pos, \$cll, \$clr);
     close(SEQ);
 
+    if ($cll < 0 || $clr < 0){next;} # skip bad sequences
+
     print OUT "{RED\n";
     print OUT "iid:$sid\n";
     print OUT "eid:$sname\n";
@@ -145,16 +164,21 @@ while (my ($sid, $sname) = each %seqnames){
 	print OUT substr($qual, $i, 60), "\n";
     }
     print OUT ".\n";
-    print OUT "pos:\n";
-    for (my $i = 0; $i < length($pos); $i+=60){
-	print OUT substr($pos, $i, 60), "\n";
+    print OUT "bcp:\n";
+    my @posn = split(' ', $pos);
+    for (my $i = 0; $i <= $#posn; $i+=15){
+	if ($i + 14 <= $#posn){
+	    print OUT join(" ", @posn[$i .. $i+14]), "\n";
+	} else {
+	    print OUT join(" ", @posn[$i .. $#posn]), "\n";
+	}
     }
     print OUT ".\n";
     print OUT "clr:$cll,$clr\n";
     if (! exists $seqinsert{$sid}){
 	die ("Cannot find insert for $sid $sname\n");
     }
-    print OUT "frg:$seqinsert{$sid}\n";
+    print OUT "frg:$insid{$seqinsert{$sid}}\n";
     print OUT "}\n";
 }
 
@@ -202,11 +226,11 @@ sub parsePHDFile()
 	    $$seq .= $base;
 	    if ($q > 60) {$q = 60;}
 	    $$qual .= chr(ord('0') + $q);
-	    if ($#posn == -1){
-		push @posn, $p;
-	    } else {
-		push @posn, $p - $posn[$#posn]; # delta encoding
-	    }
+#	    if ($#posn == -1){
+	    push @posn, $p;
+#	    } else {
+#		push @posn, $p; # - $posn[$#posn]; # delta encoding
+#	    }
 	}
     }
 
@@ -307,19 +331,27 @@ sub parseMatesFile {
 	    my ($freg, $revreg) = split(' ', $pairregexp[$r]);
 	    print STDERR "trying $freg and $revreg on $nm\n";
 	    if ($nm =~ /$freg/){
-		print STDERR "got forw $1\n";
-imhere
-		if (! exists $forw{$1}){
-		    $forw{$1} = $sid;
-		    $seqinsert{$sid} = $1;
+		my $iname = "";
+		for (my $in = 1; $in <= $#+; $in++){
+		    $iname .= substr($nm, $-[$in], $+[$in] - $-[$in]);
+		}
+		print STDERR "got forw $iname\n";
+#imhere
+		if (! exists $forw{$iname}){
+		    $forw{$iname} = $sid;
+		    $seqinsert{$sid} = $iname;
 		}
 		last;
 	    }
 	    if ($nm =~ /$revreg/){
-		print STDERR "got rev $1\n";
-		if (! exists $rev{$1}){
-		    $rev{$1} = $sid;
-		    $seqinsert{$sid} = $1;
+		my $iname = "";
+		for (my $in = 1; $in <= $#+; $in++){
+		    $iname .= substr($nm, $-[$in], $+[$in] - $-[$in]);
+		}
+		print STDERR "got rev $iname\n";
+		if (! exists $rev{$iname}){
+		    $rev{$iname} = $sid;
+		    $seqinsert{$sid} = $iname;
 		}
 		last;
 	    }
