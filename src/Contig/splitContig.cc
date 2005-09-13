@@ -19,6 +19,7 @@ using namespace AMOS;
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
+bool   OPT_SNPAnalysis = false;
 typedef map <ID_t, ID_t> IDMap;
 
 string contigeid;
@@ -276,59 +277,57 @@ int main (int argc, char ** argv)
 
     cout << endl << endl;
 
-
-    cerr << "Analyzing SNPs" << endl;
-
-    cout << ">Pos Base([CTG,FRQ])" << endl;
-
-    ContigIterator_t ctgit(contig, &read_bank);
-    while (ctgit.advanceNext())
+    if (OPT_SNPAnalysis)
     {
-      if (ctgit.hasSNP())
+      cerr << "Analyzing SNPs" << endl;
+
+      cout << ">Pos Base([CTG,FRQ])" << endl;
+
+      ContigIterator_t ctgit(contig, &read_bank);
+      while (ctgit.advanceNext())
       {
-        Column_t column(ctgit.getColumn());
-        vector<BaseStats_t *> freq(column.getBaseInfo());
-
-        cout << ctgit.gindex();
-
-        for (int i = 0; i < freq.size(); i++)
+        if (ctgit.hasSNP())
         {
-          map<ID_t, int> ctgfreq;
-          map<ID_t, int>::iterator cfi;
+          Column_t column(ctgit.getColumn());
+          vector<BaseStats_t *> freq(column.getBaseInfo());
 
-          char base = toupper(freq[i]->m_base);
+          cout << ctgit.gindex();
 
-          // Figure out which matecontigs these reads represent
-          vector<TiledReadList_t::const_iterator>::const_iterator ri;
-          for (ri = freq[i]->m_reads.begin(); ri != freq[i]->m_reads.end(); ri++)
+          for (int i = 0; i < freq.size(); i++)
           {
-            ID_t matectg = redmatectg[(*ri)->m_iid];
-            cfi = ctgfreq.find(matectg);
-            if (cfi == ctgfreq.end()){cfi = ctgfreq.insert(make_pair(matectg, 0)).first; }
-            cfi->second++;
+            map<ID_t, int> ctgfreq;
+            map<ID_t, int>::iterator cfi;
+
+            char base = toupper(freq[i]->m_base);
+
+            // Figure out which matecontigs these reads represent
+            vector<TiledReadList_t::const_iterator>::const_iterator ri;
+            for (ri = freq[i]->m_reads.begin(); ri != freq[i]->m_reads.end(); ri++)
+            {
+              ID_t matectg = redmatectg[(*ri)->m_iid];
+              cfi = ctgfreq.find(matectg);
+              if (cfi == ctgfreq.end()){cfi = ctgfreq.insert(make_pair(matectg, 0)).first; }
+              cfi->second++;
+            }
+
+            // Dump frequency of matecontigs
+            cout << "\t" << base << "(";
+            bool first = true;
+            for (cfi = ctgfreq.begin(); cfi != ctgfreq.end(); cfi++)
+            {
+              if (!first) { cout << " "; }
+              first = false;
+
+              cout << "[" << cfi->first << "," << cfi->second << "]";
+            }
+
+            cout << ")";
           }
 
-          // Dump frequency of matecontigs
-          cout << "\t" << base << "(";
-          bool first = true;
-          for (cfi = ctgfreq.begin(); cfi != ctgfreq.end(); cfi++)
-          {
-            if (!first) { cout << " "; }
-            first = false;
-
-            cout << "[" << cfi->first << "," << cfi->second << "]";
-          }
-
-          cout << ")";
+          cout << endl;
         }
-
-        cout << endl;
       }
     }
-
-
-
-
 
     red_bank.close();
     frg_bank.close();
@@ -356,34 +355,21 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvEI")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvEIS")) != EOF) )
+  {
     switch (ch)
-      {
-      case 'h':
-        PrintHelp (argv[0]);
-        exit (EXIT_SUCCESS);
-        break;
+    {
+      case 'h': PrintHelp (argv[0]); exit (EXIT_SUCCESS); break;
+      case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
 
-      case 's':
-	OPT_BankSpy = true;
-	break;
+      case 's': OPT_BankSpy = true;      break;
+      case 'S': OPT_SNPAnalysis = true;  break;
+      case 'E': contigeid = argv[optind++]; break;
+      case 'I': contigiid = atoi(argv[optind++]); break;
 
-      case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
-
-      case 'E':
-         contigeid = argv[optind++];
-         break;
-
-      case 'I':
-          contigiid = atoi(argv[optind++]);
-          break;
-
-      default:
-        errflg ++;
-      }
+      default: errflg ++;
+    }
+  }
 
   if (errflg > 0 || optind != argc - 1)
   {
