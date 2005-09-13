@@ -5,10 +5,10 @@ using namespace AMOS;
 using namespace std;
 
 
-ContigSequence::ContigSequence(vector<Tile_t>::iterator & tile, Read_t & read)
+ContigSequence::ContigSequence(vector<Tile_t>::iterator & tile, Read_t & read, int readcount)
  : m_tile(tile),
    m_read(read),
-   m_readcount(-1)
+   m_readcount(readcount)
 {
   renderSequence();
 }
@@ -55,29 +55,6 @@ void ContigSequence::renderSequence()
 ContigSequence::~ContigSequence()
 {
 
-}
-
-const string & ContigSequence::getSeqname() const
-{
-  return m_read.getEID();
-}
-
-bool ContigSequence::isReverseCompliment() const
-{
-  return m_tile->range.isReverse();
-}
-
-int ContigSequence::getReadID() const
-{
-  return m_readcount;
-//  return m_read.getIID();
-}
-
-char & ContigSequence::operator[](long gindex)
-{
-  long position = gindex - m_tile->offset;
-
-  return m_nuc[position];
 }
 
 char ContigSequence::base(long gindex)
@@ -140,14 +117,6 @@ float ContigSequence::getAvgQV(long offset, int count) const
   return (i) ? ((float) qvsum) / i : 0.0;
 }
 
-
-void ContigSequence::adjustOffset(long gindex, int delta)
-{
-  if (m_tile->offset >= gindex)
-  {
-    m_tile->offset += delta;
-  }
-}
 
 void ContigSequence::swap(long a, long b)
 {
@@ -234,30 +203,6 @@ int ContigSequence::rightTwiddle(long gindex, int & twiddleDistance, char cons)
   return retval;
 }
 
-void ContigSequence::erase(long gindex)
-{
-  long position = gindex - m_tile->offset;
-
-  if (position >= 0 && position < m_nuc.length())
-  {
-    if (m_nuc[position] != '-')
-    {
-      cerr << "Error: erasing " << m_nuc[position] << " at " << position 
-           << " in r" << getReadID() << endl;
-
-      throw amosException("erasing non-gap element from read!",
-                          "ContigSequence::erase");
-    }
-
-    m_nuc.erase(m_nuc.begin() + position);
-    if (!m_qual.empty()) { m_qual.erase(m_qual.begin() + position); }
-  }
-  else if (position < 0)
-  {
-    // A slice was erased to the left of this read
-    m_tile->offset--;
-  }
-}
 
 void ContigSequence::dumpRange(long gindexstart, long gindexend)
 {
@@ -291,81 +236,24 @@ void ContigSequence::dump()
   cerr << m_nuc << endl;
 }
 
-long ContigSequence::getRightEnd() const
-{
-  return m_tile->getRightOffset();
-}
-
-long ContigSequence::getOffset() const
-{
-  return m_tile->offset;
-}
-
-long ContigSequence::stripRightGaps()
-{
-  cerr << "TODO: stripRightGaps()" << endl;
-
-  int rightGaps = 0;
-  while (m_nuc[m_nuc.length()-1-rightGaps] == '-')
-  {
-    rightGaps++;
-  }
-
-  if (rightGaps)
-  {
-    cerr << "Stripping " << rightGaps << 
-            " rightGaps from r" << getReadID() << endl;
-
-    m_nuc.resize(m_nuc.size()-rightGaps);
-    if (!m_qual.empty()) { m_qual.resize(m_qual.size()-rightGaps); }
-  }
-
-  return getRightEnd();
-}
-
-long ContigSequence::stripLeftGaps()
-{
-  cerr << "TODO: stripLeftGaps()" << endl;
-
-  int leftGaps = 0;
-
-  while (m_nuc[leftGaps] == '-')
-  {
-    leftGaps++;
-  }
-
-  if (leftGaps)
-  {
-    cerr << "Stripping " << leftGaps << 
-            " leftGaps from r" << getReadID() << endl;
-
-    m_nuc.erase(0, leftGaps);
-    if (!m_qual.empty()) { m_qual.erase(m_qual.begin(), m_qual.begin()+leftGaps); }
-    
-    m_tile->offset += leftGaps;
-  }
-
-  return m_tile->offset;
-}
-
 int ContigSequence::get3TrimLength()
 {
   return m_read.getLength() - m_tile->range.getHi();
 }
 
-string ContigSequence::getLeftTrim()
-{
-  Range_t r(m_read.getLength(), m_tile->range.getHi());
-  return m_read.getSeqString(r);
-}
-
-string ContigSequence::getRightTrim()
+string ContigSequence::get3Trim()
 {
   Range_t r(m_tile->range.getHi(), m_read.getLength());
+
+  if (m_tile->range.isReverse())
+  {
+    r.swap();
+  }
+
   return m_read.getSeqString(r);
 }
 
-int ContigSequence::extendLeft(const string & extendLeft)
+int ContigSequence::extend3Left(const string & extendLeft)
 {
   int basesExtended = 0;
 
@@ -417,7 +305,7 @@ int ContigSequence::extendLeft(const string & extendLeft)
   return basesExtended;
 }
 
-int ContigSequence::extendRight(const string & extendRight)
+int ContigSequence::extend3Right(const string & extendRight)
 {
   int basesExtended = 0;
 

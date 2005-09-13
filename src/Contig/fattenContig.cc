@@ -39,7 +39,7 @@ void fattenContig(Contig_t & contig, Bank_t & read_bank)
 
   if (s_extensionDistance)
   {
-    fattener.extendRead(s_readToExtend, s_extensionDistance);
+    fattener.extend3Read(s_readToExtend, s_extensionDistance);
   }
 
   if (s_growContig)

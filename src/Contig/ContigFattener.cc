@@ -13,9 +13,6 @@ ContigFattener::ContigFattener(Contig_t & contig,
     m_read_bank(read_bank),
     m_verbose(verbose)
 {
-  m_gindex = contig.getLength();
-  
-
   // recall to be non-ambiguous consensus for fattening
   recallCons();
 }
@@ -44,7 +41,7 @@ ContigSequence * ContigFattener::getContigSequence(const string & eid)
   return NULL;
 }
 
-void ContigFattener::extendRead(ContigSequence * read, int distance)
+void ContigFattener::extend3Read(ContigSequence * read, int distance)
 {
   int distanceExtended = 0;
   int trimLength = read->get3TrimLength();
@@ -63,11 +60,11 @@ void ContigFattener::extendRead(ContigSequence * read, int distance)
   {
     if (read->isReverseCompliment())
     {
-      distanceExtended = extendLeft(read, distance);
+      distanceExtended = extend3Left(read, distance);
     }
     else
     {
-      distanceExtended = extendRight(read, distance);
+      distanceExtended = extend3Right(read, distance);
     }
   }
 
@@ -78,17 +75,17 @@ void ContigFattener::extendRead(ContigSequence * read, int distance)
 }
 
 // Public API
-void ContigFattener::extendRead(const string & seqname, int distance)
+void ContigFattener::extend3Read(const string & seqname, int distance)
 {
   ContigSequence * read = getContigSequence(seqname);
   if (read)
   {
-    extendRead(read, distance);
+    extend3Read(read, distance);
   }
   else
   {
     throw amosException("Specified read (" + seqname + ") not found", 
-                        "ContigFattener::extendRead");
+                        "ContigFattener::extend3Read");
   }
 }
 
@@ -108,8 +105,7 @@ ContigSequenceSlice ContigFattener::getTilingSlice(int gindex)
       Read_t rr;
       m_read_bank.fetch(ti->source, rr);
 
-      ContigSequence cs(ti, rr);
-      cs.m_readcount = count;
+      ContigSequence cs(ti, rr, count);
       retval.push_back(cs);
     }
   }
@@ -157,7 +153,7 @@ void ContigFattener::growContigLeft(bool requireConfirmation)
     }
 
     // best->offset == 0, so this extended by exactly bestExtension bp
-    extendRead(best, -1);
+    extend3Read(best, -1);
 
     // Now fatten the contig to the new beginning
     int origSize = m_contig.getLength();
@@ -197,8 +193,7 @@ void ContigFattener::growContigLeft(bool requireConfirmation)
         {
           Read_t read;
           m_read_bank.fetch(ti->source, read);
-          best = new ContigSequence(ti, read);
-          best->m_readcount = count;
+          best = new ContigSequence(ti, read, count);
           dumpRange(0, bestExtension+10, best);
           delete best;
           break;
@@ -251,7 +246,7 @@ void ContigFattener::growContigRight(bool requireConfirmation)
     }
 
 
-    extendRead(best, -1);
+    extend3Read(best, -1);
     
     // Now fatten the contig to match out to the new end
     fattenContig(oldSize-1, m_contig.getLength(), 0, 1);
@@ -289,8 +284,7 @@ void ContigFattener::growContigRight(bool requireConfirmation)
         {
           Read_t read;
           m_read_bank.fetch(ti->source, read);
-          best = new ContigSequence(ti, read);
-          best->m_readcount = count;
+          best = new ContigSequence(ti, read, count);
 
           dumpRange(ti->offset-10, m_contig.getLength(), best);
 
@@ -345,8 +339,7 @@ void ContigFattener::fattenContig(int fattenRangeStart, int fattenRangeEnd,
   {
     Read_t rr;
     m_read_bank.fetch(i->source, rr);
-    ContigSequence * read = new ContigSequence(i, rr);
-    read->m_readcount = count;
+    ContigSequence * read = new ContigSequence(i, rr, count);
 
     int fattenRead = 0;
     int distanceExtended = 0;
@@ -369,7 +362,7 @@ void ContigFattener::fattenContig(int fattenRangeStart, int fattenRangeEnd,
 
       if (fattenRead && trimLength)
       {
-        distanceExtended = fattenLeft(read, -1);
+        distanceExtended = fatten3Left(read, -1);
       }
     }
     else
@@ -385,7 +378,7 @@ void ContigFattener::fattenContig(int fattenRangeStart, int fattenRangeEnd,
 
       if (fattenRead && trimLength)
       {
-        distanceExtended = fattenRight(read, -1);
+        distanceExtended = fatten3Right(read, -1);
       }
     }
 
@@ -416,10 +409,10 @@ void ContigFattener::fattenContig(int fattenRangeStart, int fattenRangeEnd,
 
 
 
-int ContigFattener::extendLeft(ContigSequence * read, int distance)
+int ContigFattener::extend3Left(ContigSequence * read, int distance)
 {
   int retval = 0;
-  string leftTrim = read->getLeftTrim();
+  string leftTrim = read->get3Trim();
   if (distance == -1) { distance = leftTrim.size(); }
 
   if (distance > (int)leftTrim.size())
@@ -427,14 +420,14 @@ int ContigFattener::extendLeft(ContigSequence * read, int distance)
     cerr << "distance(" << distance 
          << ") > leftTrim(" << leftTrim.size() << endl;
 
-    throw amosException("distance > leftTrim.size()", "extendLeft");
+    throw amosException("distance > leftTrim.size()", "extend3Left");
   }
 
   int origoffset = read->getOffset();
   if (origoffset != 0)
   {
     // We need to fatten this read to the left end of the contig
-    int distanceAligned = fattenLeft(read, distance);
+    int distanceAligned = fatten3Left(read, distance);
 
     retval += distanceAligned;
 
@@ -475,7 +468,7 @@ int ContigFattener::extendLeft(ContigSequence * read, int distance)
     }
 
     // Finally, extend the read
-    retval += read->extendLeft(leftTrim);
+    retval += read->extend3Left(leftTrim);
 
     dumpRange(read->getOffset()-10, newoffset+10, read);
   }
@@ -483,10 +476,10 @@ int ContigFattener::extendLeft(ContigSequence * read, int distance)
   return retval;
 }
 
-int ContigFattener::extendRight(ContigSequence * read, int distance)
+int ContigFattener::extend3Right(ContigSequence * read, int distance)
 {
   int retval = 0;
-  string rightTrim = read->getRightTrim();
+  string rightTrim = read->get3Trim();
   if (distance == -1) { distance = rightTrim.size(); }
 
   if (distance > (int)rightTrim.size())
@@ -494,7 +487,7 @@ int ContigFattener::extendRight(ContigSequence * read, int distance)
     cerr << "distance(" << distance 
          << ") > rightTrim(" << rightTrim.size() << endl;
 
-    throw amosException("distance > rightTrim.size()", "extendRight");
+    throw amosException("distance > rightTrim.size()", "extend3Right");
   }
 
 
@@ -502,7 +495,7 @@ int ContigFattener::extendRight(ContigSequence * read, int distance)
   if (origend != m_contig.getLength()-1)
   {
     // We need to fatten this read to the right end of the contig
-    int distanceAligned = fattenRight(read, distance);
+    int distanceAligned = fatten3Right(read, distance);
     retval += distanceAligned;
 
     distance -= distanceAligned;
@@ -532,7 +525,7 @@ int ContigFattener::extendRight(ContigSequence * read, int distance)
 
     // Finally, extend the read
     rightTrim.resize(distance);
-    retval += read->extendRight(rightTrim);
+    retval += read->extend3Right(rightTrim);
 
     dumpRange(origend-10, read->getRightEnd()+10, read);
   }
@@ -780,7 +773,7 @@ void ContigFattener::mergeExtension(unsigned int & cpos,
 
 #include "sw_align.hh"
 
-int ContigFattener::fattenLeft(ContigSequence * read, int distance)
+int ContigFattener::fatten3Left(ContigSequence * read, int distance)
 {
   DeltaVector delta;
   long int gindex = read->getOffset()-1;
@@ -795,7 +788,7 @@ int ContigFattener::fattenLeft(ContigSequence * read, int distance)
     return 0;
   }
 
-  string leftTrim = "r" + read->getLeftTrim();
+  string leftTrim = "r" + read->get3Trim();
 
   if (distance != -1)
   {
@@ -894,7 +887,7 @@ int ContigFattener::fattenLeft(ContigSequence * read, int distance)
                    read, delta, true, +1);
 
     cpos--; // Return to original gindex position
-    retval = read->extendLeft(leftTrim+rightEdgeGaps);
+    retval = read->extend3Left(leftTrim+rightEdgeGaps);
     dumpRange(read->getOffset()-10, cpos+10, read);
   }
   else 
@@ -905,7 +898,7 @@ int ContigFattener::fattenLeft(ContigSequence * read, int distance)
   return retval;
 }
 
-int ContigFattener::fattenRight(ContigSequence * read, int distance)
+int ContigFattener::fatten3Right(ContigSequence * read, int distance)
 {
   DeltaVector delta;
 
@@ -920,7 +913,7 @@ int ContigFattener::fattenRight(ContigSequence * read, int distance)
     return 0;
   }
 
-  string rightTrim = "r" + read->getRightTrim();
+  string rightTrim = "r" + read->get3Trim();
   if (distance != -1)
   {
     if (m_verbose) { cerr << "Trimming Right Trim to " << distance+1 << endl; }
@@ -1011,7 +1004,7 @@ int ContigFattener::fattenRight(ContigSequence * read, int distance)
 
     mergeExtension(cpos, lastConsPos, rpos, rightTrim, consensus, read, delta, true, +1);
 
-    retval = read->extendRight(rightTrim);
+    retval = read->extend3Right(rightTrim);
     dumpRange(gindex-10, read->getRightEnd()+10, read);
   }
   else
@@ -1026,87 +1019,180 @@ int ContigFattener::fattenRight(ContigSequence * read, int distance)
 
 void ContigFattener::stripSequenceEdgeGaps()
 {
-  cerr << "TODO: stripSequenceEdgeGaps()" << endl;
-  return;
+  vector<Tile_t> & tiling = m_contig.getReadTiling();
+  vector<Tile_t>::iterator ti;
 
-#if 0
-
-  ReadVector::iterator r;
-
-  for (r =  m_readVector.begin();
-       r != m_readVector.end();
-       r++)
+  for (ti = tiling.begin(); ti != tiling.end(); ti++)
   {
-    ContigSequence * seq = *r;
-
-    // Strip the left gaps
-    long origoffset = seq->getOffset();
-    long newoffset = seq->stripLeftGaps();
-
-    if (newoffset != origoffset)
-    {
-      m_tiling.setDirty(origoffset, newoffset-origoffset);
-    }
-
-    // String the right gaps
-    long origend = seq->getRightEnd();
-    long newend = seq->stripRightGaps();
-    
-    if (newend != origend)
-    {
-      m_tiling.setDirty(newend+1, origend-newend);
-    }
+    int gapcount;
+    gapcount = stripLeftGaps(ti);
+    gapcount = stripRightGaps(ti);
   }
-#endif
 }
 
-
-
-#if 0
-void Contig::stripGapSlices()
+int ContigFattener::stripLeftGaps(vector<Tile_t>::iterator ti)
 {
-  for (long gindex = m_gindex-1; gindex >= 0; gindex--)
+  int leftGaps = 0;
+  vector<Pos_t> newgaps;
+  vector<Pos_t>::iterator gi;
+
+  for (gi = ti->gaps.begin(); gi != ti->gaps.end(); gi++)
   {
-    const ContigSequenceSlice & tilingSlice = getTilingSlice(gindex);
-
-    ContigSequenceSlice::const_iterator t;
-    unsigned int depth = tilingSlice.size();
-    bool allGap = depth; // never all gap in zero coverage
-
-    for (t =  tilingSlice.begin();
-         t != tilingSlice.end();
-         t++)
+    if (*gi == 0)
     {
-      if ((*t)->base(gindex) != '-')
+      leftGaps++;
+    }
+    else
+    {
+      newgaps.push_back(*gi);
+    }
+  }
+
+  if (leftGaps)
+  {
+    cerr << "Stripping " << leftGaps << 
+            " leftGaps from r" << ti->source << endl;
+
+    ti->gaps = newgaps;
+    ti->offset += leftGaps;
+  }
+
+  return leftGaps;
+}
+
+int ContigFattener::stripRightGaps(vector<Tile_t>::iterator ti)
+{
+  int rightGaps = 0;
+  vector<Pos_t> newgaps;
+  vector<Pos_t>::iterator gi;
+
+  for (gi = ti->gaps.begin(); gi != ti->gaps.end(); gi++)
+  {
+    if (*gi == ti->range.getHi())
+    {
+      rightGaps++;
+    }
+    else
+    {
+      newgaps.push_back(*gi);
+    }
+  }
+
+  if (rightGaps)
+  {
+    cerr << "Stripping " << rightGaps << 
+            " rightGaps from r" << ti->source << endl;
+
+    ti->gaps = newgaps;
+  }
+
+  return rightGaps;
+}
+
+
+
+void ContigFattener::stripGapSlices()
+{
+  vector<Pos_t> allGapPositions;
+  ContigIterator_t ci(m_contig, &m_read_bank);
+
+  while (ci.advanceNext())
+  {
+    const TiledReadList_t & tiling = ci.getTilingReads();
+
+    if (!tiling.empty())
+    {
+      Pos_t gindex = ci.gindex();
+      bool allGaps = true;
+      TiledReadList_t::const_iterator ri;
+      for (ri = tiling.begin(); ri != tiling.end(); ri++)
       {
-        allGap = false;
-        break;
+        char b = ri->base(gindex);
+
+        if (b != '-')
+        {
+          allGaps = false;
+          break;
+        }
+      }
+      
+      if (allGaps)
+      {
+        allGapPositions.push_back(gindex);
       }
     }
+  }
 
-    if (allGap)
+  // Remove from right to left, so coordinates will remain accurate
+  for (int i = allGapPositions.size()-1; i >= 0; i--)
+  {
+    removeGapColumn(allGapPositions[i]);
+  }
+}
+
+void ContigFattener::removeGapColumn(Pos_t gindex)
+{
+  string qual(m_contig.getQualString());
+  string seq(m_contig.getSeqString());
+  
+  if (seq[gindex] != '-')
+  {
+    AMOS_THROW_ARGUMENT("Specified position is not a gap column");
+  }
+
+  seq.erase(gindex, 1);
+  qual.erase(gindex, 1);
+
+  m_contig.setSequence(seq,qual);
+
+  vector<Tile_t> & tiling = m_contig.getReadTiling();
+  vector<Tile_t>::iterator ti;
+  for (ti =  tiling.begin();
+       ti != tiling.end();
+       ti++)
+  {
+    if (gindex < ti->offset)
     {
-      if (m_verbose) { cerr << "All gap at " << gindex << endl; }
-      
-      // remove the entire column of tiling, 
-      // effectively slide the tiling one position left
-      m_consensus.erase(gindex, 1);
-      m_tiling.eraseTilingSlice(gindex);
-      m_gindex--;
+      // just shift the read down
+      ti->offset--;
+    }
+    else if (gindex <= ti->getRightOffset())
+    {
+      // offset <= gindex <= roffset
+      // shift the read down, erase gap
 
-      // Erase the gap (and shift downstream offsets)
-      ReadVector::iterator r;
-      for (r =  m_readVector.begin();
-           r != m_readVector.end();
-           r++)
+      int gseqpos = gindex - ti->offset;
+
+      vector<Pos_t> newgaps;
+      vector<Pos_t>::iterator gi;
+      bool foundGap = false;
+      int gapcount = 0;
+
+      for (gi = ti->gaps.begin(); gi != ti->gaps.end(); gi++, gapcount++)
       {
-        (*r)->erase(gindex);
+        if (*gi + gapcount == gseqpos)
+        {
+          foundGap = true;
+        }
+        else
+        {
+          // sequence position remains the same for all gaps
+          newgaps.push_back(*gi);
+        }
       }
+
+      if (!foundGap)
+      {
+        AMOS_THROW_ARGUMENT("Specified position is not a gap in read");
+      }
+
+      ti->gaps = newgaps;
+
+      // if gindex==offset, remove gap, but don't shift offset
     }
   }
 }
 
-#endif
 
 void ContigFattener::printPos(long gindexstart, long gindexend)
 {
