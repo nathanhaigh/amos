@@ -5,6 +5,7 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	bank-clean \
+    bank-combine \
 	bank-mapping \
 	bank-report \
 	bank-transact \
@@ -36,6 +37,13 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Slice \
 	-I$(top_srcdir)/src/AMOS
 
+
+##-- bank-combine
+bank_combine_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+bank_combine_SOURCES = \
+	bank-combine.cc
 
 ##-- bank-mapping
 bank_mapping_LDADD = \
