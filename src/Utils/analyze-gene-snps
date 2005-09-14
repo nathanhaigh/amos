@@ -1,0 +1,23 @@
+#!/fs/sz-user-supported/Linux-i686/bin/runAmos -C
+
+## Aligning seqs
+10: nucmer ../GiBVsegF_current .fasta 443.fasta
+
+## Dumping alignment
+20: show-aligns out.delta GIBVseqF 443 > GiBVsegF-443.align
+
+## Listing Snps
+30: findSNPs  GiBVsegF-443.align | tr -d ',' > GiBVsegF-443.snps
+
+## Copy gene file
+40: cp GiBVsegF.genes.tab GiBVsegF-443.tab
+ 
+## Mark SNPs
+50: awk '{c=2; t="score"; if ($15=="I"){c=3;t="sequence_similarity"} print "forward\t"c"\t"$11"\t"$11+length($13)"\t"t"\t"$15}' GiBVsegF-443.snps >> GiBVsegF-443.tab
+ 
+## "Create PNG"
+60: cgview -i GiBVsegF-443.tab -f png -o GiBVsegF-443.png  -R true -r true -H 1000 -W 1000
+ 
+## analyzing gene snps
+70: gene-snps.pl GiBVsegF.genes.tab GiBVsegF-443.snps GiBVsegF_current.fasta > GiBVsegF-443.snpanalysis
+
