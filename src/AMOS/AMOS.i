@@ -1,29 +1,27 @@
 %module "AMOS"
 %{
-#include "foundation_AMOS.hh"
-using namespace AMOS;
+#include "utility_AMOS.hh"
+#include "inttypes_AMOS.hh"
+#include "exceptions_AMOS.hh"
+#include "datatypes_AMOS.hh"
+#include "databanks_AMOS.hh"
+#include "messages_AMOS.hh"
+#include "universals_AMOS.hh"
 %}
 
 %include "std_string.i"
 
 %apply unsigned int { uint32_t }
 
-%include "inttypes_AMOS.hh"
-%include "Bank_AMOS.hh"
-%include "Message_AMOS.hh"
-%include "Universal_AMOS.hh"
-%include "Sequence_AMOS.hh"
-%include "Read_AMOS.hh"
-%include "Contig_AMOS.hh"
+%include "../inttypes_AMOS.hh"
+%include "../Bank_AMOS.hh"
+%include "../Message_AMOS.hh"
+%include "../Universal_AMOS.hh"
+%include "../Sequence_AMOS.hh"
+%include "../Read_AMOS.hh"
+%include "../Contig_AMOS.hh"
 
 
-36,37c36,37
-< const char     MAX_QUALITY = '0' + 63;   //!< max quality score definition
-< const char     NULL_CHAR   = '\0';       //!< null char
----
-> const char     MAX_QUALITY = (63);   //!< max quality score definition
-> const char     NULL_CHAR2   = 0;       //!< null char
-39c39
-< const std::string  NULL_STRING = &NULL_CHAR; //!< null string
----
-> const std::string  NULL_STRING = &NULL_CHAR2; //!< null string
+// make clean; make CXXFLAGS=-fPIC
+// swig -perl5 -c++ AMOS.i
+// g++ -shared -fPIC -I/usr/lib64/perl5/5.8.0/x86_64-linux-thread-multi/CORE AMOS_wrap.cxx libAMOS.a -o AMOS.so 
