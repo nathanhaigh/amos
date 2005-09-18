@@ -1,4 +1,5 @@
 #include "CoverageStats.hh"
+#include <math.h>
 
 using namespace AMOS;
 using namespace std;
