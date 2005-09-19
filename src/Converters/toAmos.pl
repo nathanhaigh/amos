@@ -176,7 +176,7 @@ if (defined $tasmfile) {
 }
 
 if (defined $acefile){
-    die("This option is not yet fully functional\n");
+#    die("This option is not yet fully functional\n");
 
     $outprefix = $acefile;
     open(IN, $acefile) || $base->bail("Cannot open $acefile: $!\n");
@@ -374,10 +374,10 @@ open(TMPCTG, "$tmprefix.ctg")
 while (<TMPCTG>){
     if (/^\#(\d+) (.)/){
 	my $cid = $1;
-    my $sts = $2;
+	my $sts = $2;
 	print OUT "{CTG\n";
 	print OUT "iid:$cid\n";
-    print OUT "sts:$sts\n";
+	print OUT "sts:$sts\n";
 	if (exists $ctgnames{$cid}){
 	    print OUT "eid:$ctgnames{$cid}\n";
 	}
@@ -1037,6 +1037,7 @@ sub parseACEFile {
 
     my $inContig = 0;
     my $inSequence = 0;
+    my $inQual = 0;
 
     my $contigName;
     my $contigLen;
@@ -1047,20 +1048,25 @@ sub parseACEFile {
     my $seq;
     my @gaps;
     my $iid;
+    my $first = 1;
+    my $qual = "";
     while (<$IN>){
 	if (/^CO (\S+) (\d+) (\d+)/){
+	    if ($first != 1){print TMPCTG "#\n";}
+	    $first = 0;
 	    $contigName = $1;
 	    $iid = $minCtgId++;
 	    $ctgnames{$iid} = $contigName;
 	    $ctgids{$contigName} = $iid;
 	    $contigLen = $2;
+#	    $contigs{$iid} = $contigLen;
 	    $contigSeqs = $3;
 	    $inContig = 1;
 	    $seq = "";
 	    %offset = ();
 	    next;
 	}
-	if ($inContig && /^\s*$/){
+	if ($inContig == 1 && /^\s*$/){ # end of contig
 	    $inContig = 0;
 	    $seq =~ s/\*/-/g;
 	    @gaps = (); 
@@ -1070,28 +1076,79 @@ sub parseACEFile {
 		$gap = index($seq, "-", $gap + 1);
 	    }
 	    $contigs{$iid} = $contigLen;
-	    
+	    # print consensus record
+	    print TMPCTG "#$iid C\n";
+	    for (my $c = 0; $c < length($seq); $c+= 60){
+		print TMPCTG substr($seq, $c, 60), "\n";
+	    }
+	    print TMPCTG "#\n";
+#	    my $qual = $seq;
+#	    $qual =~ s/./X/;
+#	    # print quality values (all Xs
+#	    for (my $c = 0; $c < length($qual); $c += 60){
+#		print TMPCTG substr($qual, $c, 60), "\n";
+#	    }
+
 	    next;
 	}
-	if ($inSequence && $_ =~ /^\s*$/){
+
+	if ($inSequence == 1 && $_ =~ /^\s*$/){
 	    $inSequence = 0;
 	    next;
 	}
 
-	if ($inContig || $inSequence) {
+	if ($inContig == 1 || $inSequence == 1) {
 	    chomp;
 	    $seq .= $_;
 	    next;
 	}
 
+	if (/^BQ/){
+	    $inQual = 1;
+	    $qual = "";
+	    next;
+	}
+
+	if ($inQual == 1 && $_ =~ /^\s*$/){
+	    $inQual = 0;
+	    my $tmpqual = $qual;
+	    my $qual = "";
+	    my $q = 0;
+	    # create quality values for consensus gaps
+	    for (my $c = 0; $c < length($seq); $c++){
+		if (substr($seq, $c, 1) == "-"){
+		    $qual .= substr($tmpqual, $q, 1); # next seen quality
+		} else {
+		    $qual .= substr($tmpqual, $q++, 1);
+		}
+	    }
+	    for (my $c = 0; $c < length($qual); $c += 60){
+		print TMPCTG substr($qual, $c, 60), "\n";
+	    }
+	}
+
+	if ($inQual == 1){
+	    chomp;
+	    $_ =~ s/^\s+//;
+	    my @quals = split(' ', $_);
+	    for (my $q = 0; $q <= $#quals; $q++){
+		if ($quals[$q] > 60) {$quals[$q] = 60;}
+		$qual .= chr(ord("0")+ $quals[$q]);
+	    }
+	}
+	
 	
 	if (/^AF (\S+) (\w) (-?\d+)/){
-	    $offset{$1} = $3;
+	    # AF record contains the offset of the sequence
+	    # in the contig, 1-based.  Also indicates whether sequence
+	    # is reverse complemented
+	    $offset{$1} = $3 - 1;
 	    $rc{$1} = $2;
 	    next;
 	}
 	
 	if (/^RD (\S+)/){
+	    # indicates start of a sequence record
 	    $inSequence = 1;
 	    $seqName = $1;
 	    $seq = "";
@@ -1099,44 +1156,63 @@ sub parseACEFile {
 	}
 
 	if (/^QA -?(\d+) -?(\d+) (\d+) (\d+)/){
+	    # at this point the sequence ended
 	    my $offset = $offset{$seqName};
-	    my $cll = $3;
+	    my $cll = $3 - 1;
 	    my $clr = $4;
 	    my $end5 = $1;
 	    my $end3 = $2;
-	    $seq =~ s/\*/-/g;
-	    my $len = length($seq);
-	    $offset += $cll - 2;
-	    $seq = substr($seq, $cll - 1, $clr - $cll + 1);
-	    
-	    my $i = 0;
-	    my $asml = $offset;
-	    my $asmr = $asml + $clr - $cll + 1;
-	    while ($i <= $#gaps && $offset > $gaps[$i]){
-		$asml--; $asmr--; $i++;
-	    } # get rid of gaps from offset here
-	    while ($i <= $#gaps && $offset + $clr - $cll + 1 > $gaps[$i]){
-		$asmr--; $i++;
-	    }
 
-	    if ($rc{$seqName} eq "C"){ # make coordinates with respect to forw strand
-		$cll = $len - $cll + 1;
-		$clr = $len - $clr + 1;
-		my $tmp = $cll;
-		$cll = $clr;
+	    # ACE files contain *s instead of -s
+	    $seq =~ s/\*/-/g;
+
+	    # shift offset to beginning of clear range
+	    # otherwise it points to the beginning of the entire sequence
+	    # shown in the file
+	    $len = length($seq);
+	    $offset += $cll;
+	    
+	    # @sdels contains the positions of gaps in the sequence
+	    my $ndel = 0;
+	    my @sdels = ();
+	    # gap positions are wrt to the clear range
+	    # in the aligned orientation
+	    $seq = substr($seq, $cll, $clr - $cll);
+	    for (my $s = 0; $s < length($seq); $s++){
+                if (substr($seq, $s, 1) eq "-"){
+                    push @sdels, $ndel;
+                } else {
+                    $ndel++;
+                }
+            }
+	    if ($rc{$seqName} eq "C"){
+		$seq = reverseComplement($seq);
+	    }
+	    
+
+	    # if read is reversed swap cll and clr
+	    if ($rc{$seqName} eq "C"){
+		my $tmp = $len - $cll;
+		$cll = $len - $clr;
 		$clr = $tmp;
 	    }
+
+	    my $i = 0;
+	    my $asml = $offset;
+	    my $asmr = $asml + $clr - $cll;
 
 	    while ($seq =~ /-/g){ #make $clr ungapped
 		$clr--;
 	    }
 
+	    # if reverse complemented, reverse the assembly range
 	    if ($rc{$seqName} eq "C"){
-		my $tmp = $cll;
-		$cll = $clr;
-		$clr = $tmp;
+		my $tmp = $asml;
+		$asml = $asmr;
+		$asmr = $tmp;
 	    }
         
+	    # assign sequence id and populate all necessary data-structures
 	    my $seqId;
 	    if (! exists $seqids{$seqName}){
 		$seqId = $minSeqId++;
@@ -1149,9 +1225,12 @@ sub parseACEFile {
 	    $contigseq{$iid} .= "$seqId ";
 	    $seq_range{$seqId} = "$cll $clr";
 	    $asm_range{$seqId} = "$asml $asmr";
+	    print TMPCTG "#$seqId\n";
+	    print TMPCTG join (" ", @sdels), "\n";
 	    next;
 	}
     } # while <$IN>
+    print TMPCTG "#\n";
 } #parseAceFile
 
 
