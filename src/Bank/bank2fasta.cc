@@ -39,6 +39,8 @@ void printHelpText()
     "-b, -bank     bank where assembly is stored\n"
     "-eid          report eids\n"
     "-iid          report iids (default)\n"
+    "-E file       Dump just the contig eids listed in file\n"
+    "-I file       Dump just the contig iids listed in file\n"
     "\n.DESCRIPTION.\n"
     "\n.KEYWORDS.\n"
     "AMOS bank, Converters\n"
@@ -55,12 +57,13 @@ bool GetOptions(int argc, char ** argv)
     {"bank",      1, 0, 'b'},
     {"eid",       0, 0, 'e'},
     {"iid",       0, 0, 'i'},
+    {"E",         1, 0, 'E'},
+    {"I",         1, 0, 'I'},
     {0, 0, 0, 0}
   };
   
   int c;
-  while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -
-         1){
+  while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
     switch (c){
     case 'h':
       printHelpText();
@@ -77,6 +80,12 @@ bool GetOptions(int argc, char ** argv)
       globals["iid"] = "true";
       globals["eid"] = "false";
       break;
+    case 'E':
+      globals["eidfile"] = string(optarg);
+      break;
+    case 'I':
+      globals["iidfile"] = string(optarg);
+      break;
     case '?':
       return false;
     }
@@ -84,6 +93,24 @@ bool GetOptions(int argc, char ** argv)
 
   return true;
 } // GetOptions
+
+void printFasta(const Contig_t & ctg)
+{
+  string seq = ctg.getSeqString();
+  if (globals["eid"] == "true") { cout << ">" << ctg.getEID(); }
+  else                          { cout << ">" << ctg.getIID(); }
+
+  int nout = 0;
+  for (int i = 0; i < seq.length(); i++)
+  {
+    if (seq[i] == '-') { continue; }
+    if (nout % 60 == 0) { cout << endl; }
+
+    nout++;
+    cout << seq[i];
+  }
+  cout << endl;
+}
 
 //----------------------------------------------
 int main(int argc, char **argv)
@@ -109,37 +136,74 @@ int main(int argc, char **argv)
     cerr << "No contig account found in bank " << globals["bank"] << endl;
     exit(1);
   }
-  try {
+
+
+  try 
+  {
     contig_stream.open(globals["bank"], B_READ);
-  } catch (Exception_t & e)
-    {
-      cerr << "Failed to open contig account in bank " << globals["bank"] 
-           << ": " << endl << e << endl;
-      exit(1);
-    }
-
-  Contig_t ctg;
-  while (contig_stream >> ctg) {
-    string seq = ctg.getSeqString();
-    if (globals["eid"] == "true")
-      cout << ">" << ctg.getEID();
-    else
-      cout << ">" << ctg.getIID();
-
-    int nout = 0;
-    for (int i = 0; i < seq.length(); i++){
-      if (seq[i] == '-')
-	continue;
-      if (nout % 60 == 0)
-	cout << endl;
-      nout++;
-
-      cout << seq[i];
-    }
-    cout << endl;
+  } 
+  catch (Exception_t & e)
+  {
+    cerr << "Failed to open contig account in bank " << globals["bank"] 
+         << ": " << endl << e << endl;
+    exit(1);
   }
 
-  contig_stream.close();
+
+  try
+  {
+    Contig_t ctg;
+    ifstream file;
+    string id;
+
+    if (!globals["eidfile"].empty())
+    {
+      file.open(globals["eidfile"].c_str());
+      
+      if (!file)
+      {
+        throw Exception_t("Couldn't open EID File", __LINE__, __FILE__);
+      }
+
+      while (file >> id)
+      {
+        contig_stream.seekg(contig_stream.getIDMap().lookupBID(id));
+        contig_stream >> ctg;
+        printFasta(ctg);
+      }
+    }
+    else if (!globals["iidfile"].empty())
+    {
+      file.open(globals["iidfile"].c_str());
+
+      if (!file)
+      {
+        throw Exception_t("Couldn't open IID File", __LINE__, __FILE__);
+      }
+
+      while (file >> id)
+      {
+        contig_stream.seekg(contig_stream.getIDMap().lookupBID(atoi(id.c_str())));
+        contig_stream >> ctg;
+        printFasta(ctg);
+      }
+    }
+    else
+    {
+      while (contig_stream >> ctg) 
+      {
+        printFasta(ctg);
+      }
+    }
+
+    contig_stream.close();
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    return EXIT_FAILURE;
+  }
+
 
   return(0);
 } // main
