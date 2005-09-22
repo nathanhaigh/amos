@@ -55,12 +55,11 @@ my $SIZEFASTA    = "$commonbin/sizeFasta";
 
 my $NUCMER       = "$platformbin/nucmer";
 my $SHOWALIGNS   = "$platformbin/show-aligns";
-my $GETCOVERAGE  = "$platformbin/getCoverage";
-my $SLICE2CONTIG = "$platformbin/slice2contig";
-my $SLICE2TASM   = "$platformbin/slice2tasm";
-my $SLICE2FASTA  = "$platformbin/slice2fasta";
-my $TRSLICE      = "$platformbin/trSlice";
-my $ZIPSLICE     = "$platformbin/zipSlice";
+
+my $BANK2CONTIG  = "$platformbin/bank2contig";
+my $BANK2FASTA   = "$platformbin/bank2fasta";
+my $ZIPCONTIGS   = "$platformbin/zipContigs";
+
 
 my @DEPENDS = 
 (
@@ -69,13 +68,10 @@ my @DEPENDS =
   $NUCMER,       
   $SHOWALIGNS,
   $SIZEFASTA,    
-  $GETCOVERAGE,  
-  $SLICE2CONTIG, 
-  $SLICE2TASM,   
-  $SLICE2FASTA,  
-  $TRSLICE,
-  $ZIPSLICE,     
   $CAT,
+  $BANK2CONTIG,
+  $BANK2FASTA,
+  $ZIPCONTIGS,
 );
 
 my $tf = new TIGR::Foundation;
@@ -383,7 +379,6 @@ MAIN:
   my $docircular = 0;
   my $docontig   = 1;
   my $dorecall   = 0;
-  my $dotcov     = 1;
   my $dofasta    = 0;
   my $dotasm     = 0;
 
@@ -395,7 +390,6 @@ MAIN:
   my $deltafile = ".delta";
   my $alignfile = ".aligns";
   my $snpfile   = ".snps";
-  my $zipslice  = ".slice"; 
 
   $tf->addDependInfo(@DEPENDS);
   $tf->setHelpInfo($HELPTEXT);
@@ -411,7 +405,6 @@ MAIN:
 
                  'C|circular!', \$docircular,
                  'contig!',     \$docontig,
-                 'tcov!',       \$dotcov,
                  'fasta!',      \$dofasta,
                  'tasm!',       \$dotasm,
                  'recall!',     \$dorecall,
@@ -424,15 +417,14 @@ MAIN:
   $tf->bail("Converting circular contigs to tasm is unsupported")
     if ($dotasm && $docircular);
 
-  $dotcov = 0 if (!$docontig);
-
-  my $reference = shift || die $USAGE;
-  my $query     = shift || die $USAGE;
+  my $bank      = shift; die $USAGE if !defined $bank;
+  my $reference = shift; die $USAGE if !defined $reference;
+  my $query     = shift; die $USAGE if !defined $query;
 
   my $debug = $tf->getDebugLevel();
   $tf->setDebugLevel(1) if (!$debug);
 
-  foreach my $s (\$zipslice, \$alignfile, \$snpfile, \$deltafile)
+  foreach my $s (\$alignfile, \$snpfile, \$deltafile)
   {
     $$s = $outprefix.$$s;
   }
@@ -442,46 +434,26 @@ MAIN:
   ## Strip .contig or .qual
   foreach my $p (\$reference, \$query)
   {
-    if ($$p =~ /\.contig$/ || $$p =~ /\.slice$/)
-    {
-      $$p =~ s/\.[^\.]*$//; 
-    }
-
     $ids{$$p} = $$p;
   }
 
   echo "Reference prefix is \"$reference\"\n";
   echo "Query prefix is \"$query\"\n";
 
-  if ($dorecall)
-  {
-    $tf->bail("Must provide qual files when recalling the consensus")
-      if (!-r "$outprefix.qual" && (!-r "$reference.qual" || !-r "$query.qual"));
-  }
+  $tf->bail("Can't access bank $bank")
+    if (! -r "$bank");
 
   foreach my $prefix ($reference, $query)
   {
-    if (! -r "$prefix.slice")
-    {
-      $tf->bail("Must provide $prefix.slice or $prefix.contig")
-        if ( ! -r "$prefix.contig");
-
-      runCmd("$GETCOVERAGE -M -p -l $prefix.contig > $prefix.slice");
-    }
-
-
     if (-r "$prefix.fasta")
     {
       $ids{$prefix} = getFastaId("$prefix.fasta")
     }
     else
     {
-      runCmd("$SLICE2FASTA $prefix.slice -o $prefix.fasta -i $ids{$prefix}");
-    }
-
-    if ($dotcov && -r "$prefix.contig" && ! -r "$prefix.tcov")
-    {
-      runCmd("$GETCOVERAGE --silent -M -t --gapped $prefix.contig");
+      runCmd("echo $prefix > eidlist");
+      runCmd("$BANK2FASTA -b $bank -E eidlist -e");
+      runCmd("rm eidlist");
     }
   }
 
@@ -504,7 +476,7 @@ MAIN:
   my $aligndata = loadSNPs($snpfile, $chain, $refshift, $queryfasta, $docircular, 
                            $reference, $query, $outprefix);
 
-  if (! -r $zipslice )
+  if (1)
   {
     my $recall = "";
     $recall = "-c -a 3" if $dorecall; ## Recall conic
@@ -512,10 +484,9 @@ MAIN:
     my $o = $aligndata->{offset};
 
     ## everything from nucmer is 1-based ungapped
-    my $cmd = "$ZIPSLICE --refcons $query.slice $reference.slice";
+    my $cmd = "$ZIPCONTIGS --refcons $bank $query $reference $outprefix";
     $cmd   .= " --debug 4 $recall -1 -U -O $o"; 
     $cmd   .= " -R" if ($aligndata->{direction} eq "R");
-    $cmd   .= " -o $zipslice";
     
     my $rgaps = createGapList($aligndata->{reference});
     $cmd .= " -r $rgaps" if defined $rgaps;
@@ -523,27 +494,17 @@ MAIN:
     my $qgaps = createGapList($aligndata->{query});
     $cmd .= " -q $qgaps" if defined $qgaps;
 
-    runCmd($cmd, "zipSlice");
+    runCmd($cmd, "zipContigs");
   }
 
-  if ($docontig)
-  {
-    my $circular = "";
-    $circular = "-C" if $docircular;
+  runCmd("echo $outprefix > eidlist");
 
-    runCmd("$SLICE2CONTIG $zipslice -o $outprefix.contig $circular -i $outprefix");
+  runCmd("$BANK2CONTIG $bank -E eidlist > $outprefix.contig")
+    if ($docontig);
 
-    runCmd("$CAT $query.qual $reference.qual > $outprefix.qual")
-      if (-r "$query.qual" && -r "$reference.qual" && !-r "$outprefix.qual");
-
-    runCmd("$GETCOVERAGE --silent --gapped -M -t $outprefix.contig")
-      if ($dotcov);
-  }
-
-  runCmd("$SLICE2TASM $zipslice -o $outprefix.tasm")
-    if ($dotasm);
-
-  runCmd("$SLICE2FASTA $zipslice -o $outprefix.fasta -i $outprefix")
+  runCmd("$BANK2FASTA $bank -E eidlist > $outprefix.fasta")
     if ($dofasta);
+
+  runCmd("rm eidlist");
 }
 
