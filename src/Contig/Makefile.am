@@ -29,11 +29,17 @@ fattenContig_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 fattenContig_SOURCES = \
+    ContigUtils.hh \
     ContigUtils.cc \
+    ContigSequence.hh \
     ContigSequence.cc \
+    tigrinc.hh \
     tigrinc.cc \
+    ContigFattener.hh \
     ContigFattener.cc \
 	fattenContig.cc  \
+    sw_align.hh \
+    sw_alignscore.hh \
     sw_align.cc
 
 
