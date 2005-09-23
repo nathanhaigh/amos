@@ -37,6 +37,9 @@ static char fileIdentifier[] = "$Id$";
  *
  * #### MHH, Oct. 1, 2003: Added .ztr, and changed order (most likely extensions first).
  $Log$
+ Revision 1.3  2005/07/23 02:07:06  mschatz
+ Add scf to list of known extensions
+
  Revision 1.2  2005/07/23 01:31:18  mschatz
  Fix trace bug, size bug
 
@@ -79,7 +82,7 @@ static char fileIdentifier[] = "$Id$";
  Committed Mike Holmes' changes so that ztr extensions are searched
 
  */
-static char *magics[] = {"", ".ztr", ".gz", ".bz", ".Z", ".z", ".bz2", ".sz", ".scf"};
+static char *magics[] = {"", ".ztr", ".gz", ".bz", ".Z", ".z", ".bz2", ".sz", ".scf", ".ab1"};
 
 /*
  * Initially produce a new search path where all "::"s are replaced with
