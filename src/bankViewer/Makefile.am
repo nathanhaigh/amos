@@ -1,4 +1,5 @@
-bin_PROGRAMS = bankViewer
+bin_PROGRAMS = bankViewer \
+               cestat-cov
 
 %.moc.cc: %.hh
 	$(QT_MOC) -o $@ $<
@@ -69,4 +70,16 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS   \
 	-I$(top_srcdir)/src/Staden/read
 
+cestat_cov_SOURCES = \
+  cestat-cov.cc \
+  Insert.cc \
+  DataStore.cc \
+  CoverageStats.cc
 
+
+
+
+cestat_cov_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+                   $(top_builddir)/src/Common/libCommon.a   \
+                   $(top_builddir)/src/AMOS/libAMOS.a      \
+                   $(top_builddir)/src/Staden/read/libread.a
