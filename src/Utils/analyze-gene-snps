@@ -1,7 +1,7 @@
 #!/fs/sz-user-supported/Linux-i686/bin/runAmos -C
 
 ## Aligning seqs
-10: nucmer ../GiBVsegF_current .fasta 443.fasta
+10: nucmer ../GiBVsegF_current.fasta 443.fasta
 
 ## Dumping alignment
 20: show-aligns out.delta GIBVseqF 443 > GiBVsegF-443.align
@@ -17,7 +17,14 @@
  
 ## "Create PNG"
 60: cgview -i GiBVsegF-443.tab -f png -o GiBVsegF-443.png  -R true -r true -H 1000 -W 1000
+
+## Create tcovStats file
+70: getCoverage -s -M 443.contig --nogaps
  
 ## analyzing gene snps
-70: gene-snps.pl GiBVsegF.genes.tab GiBVsegF-443.snps GiBVsegF_current.fasta > GiBVsegF-443.snpanalysis
+80: gene-snps.pl GiBVsegF.genes.tab GiBVsegF-443.snps GiBVsegF_current.fasta 443.tcovStats > GiBVsegF-443.snpanalysis
+
+## plot snps-vs-coverage
+90: R --no-save < snps-coverage.R
+
 

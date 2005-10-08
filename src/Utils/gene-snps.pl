@@ -1,16 +1,18 @@
 #!/usr/bin/perl -w
 use strict;
 
-my $USAGE = "gene-snps.pl gene.tab snps gene.fasta\n";
+my $USAGE = "gene-snps.pl gene.tab snps gene.fasta tcovStats\n";
 
 
 my $tabfile = shift @ARGV or die $USAGE;
 my $snpsfile = shift @ARGV or die $USAGE;
 my $fastafile = shift @ARGV or die $USAGE;
+my $statsfile = shift @ARGV or die $USAGE;
 
 open TABFILE, "< $tabfile" or die "Can't open $tabfile ($!)\n";
 open SNPS,    "< $snpsfile" or die "can't open $snpsfile ($!)\n";
 open FASTA,   "< $fastafile" or die "Can't open $fastafile ($!)\n";
+open STATS,   "< $statsfile" or die "Can't open $statsfile ($!)\n";
 
 my $consensus;
 my @genes;
@@ -43,12 +45,6 @@ my %rc =
 );
 
 
-while (<FASTA>)
-{
-  next if />/;
-  chomp;
-  $consensus .= $_;
-}
 
 sub translate
 {
@@ -119,6 +115,45 @@ sub printGene
   print "\n\n";
 }
 
+sub printSNPDistance
+{
+  my $label = shift;
+  my $len = shift;
+  my $count = shift;
+
+  my $density = sprintf("%.02f", ($count *1000) / $len);
+
+  my $distance = ($count) ? sprintf("%.02f", $len / $count+1) : "*";
+  print "$label density: $density snp/Kbp, distance: $distance bp/snp ($len bp $count snps)";
+}
+
+
+my %qdepth;
+my $totalbases = 0;
+my $totalpos = 0;
+## Load the dcov
+while (<STATS>)
+{
+  my @vals = split /\s+/, $_;
+  my $cov = $vals[3];
+
+  $qdepth{$vals[0]} = $cov;
+  $totalbases += $cov;
+  $totalpos++;
+}
+
+
+## Load the consensus
+while (<FASTA>)
+{
+  next if />/;
+  chomp;
+  $consensus .= $_;
+}
+
+
+
+## Load the gene coordinates
 while (<TABFILE>)
 {
   next if /^#/;
@@ -154,10 +189,15 @@ while (<TABFILE>)
   #printGene($gene);
 }
 
-#exit;
+
+
+## Load the snps
+
+my %qsnppos;
 
 my $snpcount = 0;
 my $lastsnp = -1000;
+my $snpcov = 0;
 
 while (<SNPS>)
 {
@@ -165,6 +205,7 @@ while (<SNPS>)
 
   my @vals = split /\s+/, $_;
   my $rpos = $vals[10];
+  my $qpos = $vals[11];
   my $type = $vals[14];
   my $rseq = $vals[15];
   my $qseq = $vals[16];
@@ -175,7 +216,12 @@ while (<SNPS>)
   if ($rpos - $lastsnp < 3) { $f = '*'; }
   $lastsnp = $rpos;
 
-  print "$rpos$f\t$len\t$type\t$rseq\t$qseq";
+  my $cov = $qdepth{$qpos};
+  $snpcov += $cov;
+
+  $qsnppos{$qpos} = 1;
+
+  print "$rpos$f\t$len\t$type\t$rseq\t$qseq\t$cov";
 
   foreach my $g (@genes)
   {
@@ -250,20 +296,6 @@ while (<SNPS>)
 
 print "\n\n";
 
-sub printSNPDistance
-{
-  my $label = shift;
-  my $len = shift;
-  my $count = shift;
-
-  my $density = sprintf("%.02f", ($count *1000) / $len);
-
-  my $distance = ($count) ? sprintf("%.02f", $len / $count+1) : "*";
-  print "$label density: $density snp/Kbp, distance: $distance bp/snp ($len bp $count snps)";
-}
-
-print "\n";
-
 
 my $genelen = 0;
 my $genesnps = 0;
@@ -310,4 +342,46 @@ printSNPDistance("Overall", $reflen, $snpcount); print "\n";
 
 my $nonsyn = $genesnps - $synonymous;
 print "SNP codon Position: $codonposition{1} $codonposition{2} $codonposition{3} S:$synonymous N:$nonsyn\n";
+
+print "\n\n";
+
+{
+  my $adepth = sprintf ("%.02f", $totalbases/$totalpos);
+  my $sdepth = sprintf ("%.02f", $snpcov/$snpcount);
+
+  print "All  (bases, positions, avgdepth): $totalbases $totalpos $adepth\n";
+  print "Snps (bases, positions, avgdepth): $snpcov $snpcount $sdepth\n";
+}
+
+
+print "Wstart Wend WSize Adepth SNPs\n";
+
+my $windowsize = 500;
+my $windowshift = $windowsize/2;
+my $wstart = 1;
+
+while ($wstart < $totalpos)
+{
+  my $wend = $wstart + $windowsize;
+  my $snpcount = 0;
+  my $totalbases = 0;
+  my $windowpos = 0;
+
+  for (my $i = $wstart; ($i < $wend) && ($i < $totalpos); $i++)
+  {
+    $windowpos++;
+    $totalbases += $qdepth{$i};
+
+    if (exists $qsnppos{$i})
+    {
+      $snpcount++;
+    }
+  }
+
+  my $avgdepth = ($windowpos) ? sprintf("%.02f", $totalbases/$windowpos) : "0.0";
+
+  print "$wstart $wend $windowpos $avgdepth $snpcount\n";
+  $wstart += $windowshift;
+}
+
 
