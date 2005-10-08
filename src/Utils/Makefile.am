@@ -6,7 +6,9 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	trimByOvl \
 	runAmos \
-	analyzeSNPs
+	analyzeSNPs \
+    recallConsensus
+
 
 dist_bin_SCRIPTS = \
 	benchmark_qual.pl \
@@ -41,6 +43,22 @@ analyzeSNPs_LDADD = \
 
 analyzeSNPs_SOURCES = \
 	analyzeSNPs.cc
+
+##-- recallConsensus
+recallConsensus_CPPFLAGS = \
+	-I$(top_srcdir)/src/GNU \
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_srcdir)/src/Common \
+    -I$(top_srcdir)/src/Slice
+
+recallConsensus_LDADD = \
+        $(top_builddir)/src/AMOS/libAMOS.a \
+	    $(top_builddir)/src/GNU/libGNU.a \
+	    $(top_builddir)/src/Common/libCommon.a \
+        $(top_builddir)/src/Slice/libSlice.a
+
+recallConsensus_SOURCES = \
+	recallConsensus.cc
 
 
 ##-- trimByOvl
