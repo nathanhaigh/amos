@@ -203,7 +203,8 @@ void computeCEStats(Scaffold_t & scaff)
       li->second.finalize();
       li->second.finalizeCE(cestatsheight);
 
-      for (int i = 0; i < li->second.m_curpos; i++)
+      // This are stored as oldvalue newvalue so skip every other one
+      for (int i = 1; i < li->second.m_curpos; i+=2)
       {
         cout << li->second.m_coverage[i].x() << " " << li->second.m_cestat[i] << endl;
       }
