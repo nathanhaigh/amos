@@ -170,12 +170,25 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
 
       ScaffoldListItem * scaffolditem;
 
-      scaffolditem = new ScaffoldListItem(m_table,  
-                                      QString::number(scaffid), 
-                                      QString::number(scaffold.getIID()),
-                                      QString(scaffold.getEID().c_str()), 
-                                      QString::number(span), 
-                                      QString::number(numcontigs));
+      if (m_showContigs)
+      {
+        scaffolditem = new ScaffoldListItem(m_table,  
+                                        QString::number(scaffid), 
+                                        QString::number(scaffold.getIID()),
+                                        QString(scaffold.getEID().c_str()), 
+                                        "",
+                                        QString::number(span), 
+                                        QString::number(numcontigs));
+      }
+      else
+      {
+        scaffolditem = new ScaffoldListItem(m_table,  
+                                        QString::number(scaffid), 
+                                        QString::number(scaffold.getIID()),
+                                        QString(scaffold.getEID().c_str()), 
+                                        QString::number(span), 
+                                        QString::number(numcontigs));
+      }
 
       scaffid++;
 
