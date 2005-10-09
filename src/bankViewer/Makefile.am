@@ -1,5 +1,6 @@
 bin_PROGRAMS = bankViewer \
-               cestat-cov
+               cestat-cov \
+               insert-sizes
 
 %.moc.cc: %.hh
 	$(QT_MOC) -o $@ $<
@@ -76,10 +77,18 @@ cestat_cov_SOURCES = \
   DataStore.cc \
   CoverageStats.cc
 
-
-
-
 cestat_cov_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
                    $(top_builddir)/src/Common/libCommon.a   \
                    $(top_builddir)/src/AMOS/libAMOS.a      \
                    $(top_builddir)/src/Staden/read/libread.a
+
+insert_sizes_SOURCES = \
+  insert-sizes.cc \
+  Insert.cc \
+  DataStore.cc \
+  CoverageStats.cc
+
+insert_sizes_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a      \
+                     $(top_builddir)/src/Staden/read/libread.a
