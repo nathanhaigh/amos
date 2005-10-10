@@ -285,4 +285,5 @@ void ContigPicker::toggleShowReads()
 
 void ContigPicker::refreshTable()
 {
-  loadTable(false;}
+  loadTable(false);
+}
