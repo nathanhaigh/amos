@@ -13,7 +13,7 @@
 
 using namespace std;
 
-
+int FIELD_OFFSET=4;
 
 class ContigListItem : public QListViewItem
 {
@@ -235,7 +235,7 @@ void ContigPicker::itemSelected(QListViewItem * item)
   int offset = 0;
   if (item->parent())
   {
-    offset = atoi(item->text(3));
+    offset = atoi(item->text(FIELD_OFFSET));
     item = item->parent();
   }
 
@@ -285,5 +285,4 @@ void ContigPicker::toggleShowReads()
 
 void ContigPicker::refreshTable()
 {
-  loadTable(false);
-}
+  loadTable(false;}
