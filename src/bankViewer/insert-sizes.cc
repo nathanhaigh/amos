@@ -25,6 +25,9 @@ MateLookupMap m_readmatelookup;
 
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
+int FRAGMENTSTRLEN = 3;
+int m_verbose = 0;
+
 DataStore * m_datastore;
 int m_tilingwidth;
 int m_connectMates = 1;
@@ -299,8 +302,6 @@ int main (int argc, char ** argv)
 
       vector<Insert *>::iterator i;
 
-      int FRAGMENTSTRLEN = 5;
-      int m_verbose = 0;
       
       for (i =  m_inserts.begin();
            i != m_inserts.end();
@@ -365,22 +366,16 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvExy")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvf:")) != EOF) )
     switch (ch)
       {
-      case 'h':
-        PrintHelp (argv[0]);
-        exit (EXIT_SUCCESS);
-        break;
+      case 'h': PrintHelp (argv[0]); exit (EXIT_SUCCESS); break;
 
-      case 's':
-	OPT_BankSpy = true;
-	break;
+      case 's': OPT_BankSpy = true; break;
 
-      case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
+      case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
+
+      case 'f': FRAGMENTSTRLEN = atoi(optarg); break;
 
 
       default:
@@ -409,9 +404,7 @@ void PrintHelp (const char * s)
     << "-h            Display help information\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
-    << "-E contigeid  Contig eid of interest\n"
-    << "-x start      Start of range\n"
-    << "-y end        End of range\n"
+    << "-f len        Number of characters of seqname to use as sublibrary (default=3)\n"
     << endl;
   cerr
     << "Finds all reads that should overlap a given contig range. Includes reads that\n"
