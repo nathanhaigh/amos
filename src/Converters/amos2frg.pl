@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 use AMOS::AmosLib;
 use TIGR::Foundation;
@@ -148,6 +148,17 @@ std:$$sfs{std}
 	$rd2lib{$$fields{"iid"}} = $frg2lib{$$fields{"frg"}};
 	$rdids{$$fields{"iid"}} = $acc;
 /`/;
+
+my @clr = split /,/, $$fields{clr};
+if ($clr[0] > $clr[1])
+{
+  my $t = $clr[0];
+  $clr[0] = $clr[1];
+  $clr[1] = $t;
+  $$fields{clr} = "$clr[0],$clr[1]";
+}
+
+
 print qq~{FRG
 act:A
 acc:$acc
