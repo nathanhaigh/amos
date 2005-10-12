@@ -21,6 +21,7 @@ string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
 string OPT_EIDList;
 bool   OPT_AutoIncludeMates = false;
+bool   OPT_NullMates = false;
 
 
 
@@ -131,6 +132,11 @@ int main (int argc, char ** argv)
         {
           swap (mtp.first,mtp.second);
           swap (r1, r2);
+
+          if (OPT_NullMates)
+          {
+            frg.setReads(make_pair(NULL_ID, NULL_ID));
+          }
         }
 
         red_bank.fetch(mtp.first, red1);
@@ -220,7 +226,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvEM")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvEMN")) != EOF) )
   {
     switch (ch)
     {
@@ -244,6 +250,10 @@ void ParseArgs (int argc, char ** argv)
 
       case 'M':
         OPT_AutoIncludeMates = true;
+        break;
+
+      case 'N':
+        OPT_NullMates = true;
         break;
 
       default:
@@ -274,6 +284,7 @@ void PrintHelp (const char * s)
     << "-v            Display the compatible bank version\n"
     << "-E EIDLIST    Specify file containing list of eid's to extract\n"
     << "-M            Dump mates of eids as well\n"
+    << "-N            Nullify mates if not printing pair\n"
     << endl;
   cerr
     << "Takes an AMOS bank directory and dumps RED, FRG & LIB messages\n"
