@@ -5,6 +5,7 @@
 using namespace AMOS;
 using namespace std;
 
+bool OPT_LayoutOnly = 0;
 bool OPT_UseEIDs = 0;
 bool OPT_UseIIDs = 0;
 string OPT_BankName;
@@ -27,6 +28,7 @@ void PrintHelp (const char * s)
        << "-i            Use IIDs for names\n"
        << "-E file       Dump just the contig eids listed in file\n"
        << "-I file       Dump just the contig iids listed in file\n"
+       << "-L            Just create a layout file (no sequence\n"
        << endl;
   
   cerr << "Takes an AMOS bank directory and dumps the contigs to stdout\n\n";
@@ -37,7 +39,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiLE:I:")) != EOF) )
   {
     switch (ch)
     {
@@ -53,6 +55,7 @@ void ParseArgs (int argc, char ** argv)
 
       case 'e': OPT_UseEIDs = true;   break;
       case 'i': OPT_UseIIDs = true;   break;
+      case 'L': OPT_LayoutOnly = true;    break;
       case 'E': OPT_EIDFile = optarg; break;
       case 'I': OPT_IIDFile = optarg; break;
 
@@ -121,7 +124,10 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
        << " "  << cons.length()
        << " bases, 00000000 checksum." << endl;
 
-  Fasta_Print(stdout, cons.c_str(), NULL, 60);
+  if (!OPT_LayoutOnly)
+  {
+    Fasta_Print(stdout, cons.c_str(), NULL, 60);
+  }
 
   vector<Tile_t>::const_iterator i;
   for (i =  tiling.begin();
@@ -129,10 +135,9 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
        i++)
   {
     bool rc = 0;
-    read_bank.fetch(i->source, read);
     Range_t range = i->range;
     Range_t clr = range;
-    Pos_t gappedLen = i->range.getLength() + i->gaps.size();
+    Pos_t gappedLen = i->getGappedLength();
 
     if (i->range.begin > i->range.end) { clr.end++; rc = 1; } 
     else                               { clr.begin++; }
@@ -141,14 +146,14 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
 
     if (OPT_UseEIDs) 
     { 
-      string s(read.getEID());
+      string s = read_bank.lookupEID(i->source);
       int i = s.find(' ');
       if (i != s.npos) { s = s.substr(0,i); }
       cout << s;
     }
     else 
     { 
-      cout << read.getIID(); 
+      cout << i->source;
     }
 
     cout << "(" << i->offset 
@@ -159,22 +164,27 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
          << " "  << getUngappedPos(cons, i->offset + gappedLen - 1)
          << ">"  << endl;
 
-    if (rc) { range.swap(); }
-    string sequence = read.getSeqString(range);
-    if (rc) { Reverse_Complement(sequence); }
-
-    Pos_t gapcount = 0;
-
-    vector<Pos_t>::const_iterator g;
-    for (g  = i->gaps.begin();
-         g != i->gaps.end();
-         g++)
+    if (!OPT_LayoutOnly)
     {
-      sequence.insert(*g+gapcount, "-", 1);
-      gapcount++;
-    }
+      read_bank.fetch(i->source, read);
+      if (rc) { range.swap(); }
+      string sequence = read.getSeqString(range);
+      if (rc) { Reverse_Complement(sequence); }
 
-    Fasta_Print(stdout, sequence.c_str(), NULL, 60);
+      Pos_t gapcount = 0;
+
+      vector<Pos_t>::const_iterator g;
+      for (g  = i->gaps.begin();
+           g != i->gaps.end();
+           g++)
+      {
+        sequence.insert(*g+gapcount, "-", 1);
+        gapcount++;
+      }
+
+
+      Fasta_Print(stdout, sequence.c_str(), NULL, 60);
+    }
   }
 }
 
