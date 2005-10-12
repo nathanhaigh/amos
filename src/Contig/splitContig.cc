@@ -20,6 +20,7 @@ using namespace AMOS;
 string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_SNPAnalysis = false;
+bool   OPT_Verbose = false;
 typedef map <ID_t, ID_t> IDMap;
 
 string contigeid;
@@ -218,7 +219,10 @@ int main (int argc, char ** argv)
     IDMap::const_iterator ci;
     IDMap::const_iterator mi;
 
-    cout << ">Read\tCtg\tDir" << endl;
+    if (OPT_Verbose)
+    {
+      cout << ">Read\tCtg\tDir" << endl;
+    } 
 
     for (ri = rtiling.begin(); ri != rtiling.end(); ri++)
     {
@@ -232,7 +236,11 @@ int main (int argc, char ** argv)
         
         if (ci != redctglookup.end())
         {
-          cout << eid << "\t" << ci->second << "\t" << dir << endl;
+          if (OPT_Verbose)
+          {
+            cout << eid << "\t" << ci->second << "\t" << dir << endl;
+          }
+
           redmatectg[ri->source] = ci->second;
 
           if (dir == 'F')
@@ -252,15 +260,28 @@ int main (int argc, char ** argv)
       }
       else
       {
-        cout << eid << "\t***\t" << dir << endl;
+        if (OPT_Verbose)
+        {
+          cout << eid << "\t***\t" << dir << endl;
+        }
         redmatectg[ri->source] = AMOS::NULL_ID;
       }
     }
 
-    cout << endl << endl;
+    if (OPT_Verbose)
+    {
+      cout << endl << endl;
+    }
 
     cout << ">Ctg\tScaff\tFreq\tDir" << endl;
      
+    for (fi = rctgfreq.begin(); fi != rctgfreq.end(); fi++)
+    {
+      cout << fi->first << "\t" 
+           << ctgscflookup[fi->first] << "\t"
+           << fi->second << "\tR" << endl;
+    }
+
     for (fi = fctgfreq.begin(); fi != fctgfreq.end(); fi++)
     {
       cout << fi->first << "\t" 
@@ -268,12 +289,6 @@ int main (int argc, char ** argv)
            << fi->second << "\tF" << endl;
     }
 
-    for (fi = rctgfreq.begin(); fi != rctgfreq.end(); fi++)
-    {
-      cout << fi->first << "\t" 
-           << ctgscflookup[fi->first] << "\t"
-           << fi->second << "\tR" << endl;
-    }
 
     cout << endl << endl;
 
@@ -364,6 +379,7 @@ void ParseArgs (int argc, char ** argv)
 
       case 's': OPT_BankSpy = true;      break;
       case 'S': OPT_SNPAnalysis = true;  break;
+      case 'V': OPT_Verbose = true;  break;
       case 'E': contigeid = argv[optind++]; break;
       case 'I': contigiid = atoi(argv[optind++]); break;
 
@@ -401,6 +417,8 @@ void PrintHelp (const char * s)
     << "-v            Display the compatible bank version\n"
     << "-E contigeid  Contig eid of interest\n"
     << "-I contigeid  Contig iid of interest\n"
+    << "-S            Perform SNP analysis in addition to mates\n"
+    << "-V            Verbose mode\n"
     << endl;
   return;
 }
