@@ -11,7 +11,7 @@ int main(int argc, char ** argv)
 {
   if (argc != 4)
   {
-    cerr << "Usage: extractContig bankname contigid newbank" << endl;
+    cerr << "Usage: extractContig bankname contigiid newbank" << endl;
     cerr << "Extracts selected contig and associated reads, fragments, and libraries" << endl
          << "and writes them to new bank" << endl;
 

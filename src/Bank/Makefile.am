@@ -20,6 +20,7 @@ bin_PROGRAMS = \
 	extractContig \
 	bank2fasta \
 	updateClrRanges \
+	updateLibSizes \
     dumpFeatures \
     loadFeatures \
     bank-tutorial
@@ -101,6 +102,13 @@ updateClrRanges_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 updateClrRanges_SOURCES = \
 	updateClrRanges.cc
+
+##-- updateLibSizes
+updateLibSizes_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+updateLibSizes_SOURCES = \
+	updateLibSizes.cc
 
 ##-- extractContig
 extractContig_LDADD = \
