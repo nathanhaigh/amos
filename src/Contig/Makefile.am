@@ -9,6 +9,7 @@ bin_PROGRAMS = \
     revContig \
     rotateContig \
     splitContig \
+    stitchContigs \
     trimContig \
 	zipContigs 
 
@@ -82,6 +83,16 @@ splitContig_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 splitContig_SOURCES = \
 	splitContig.cc 
+
+##-- trimContig
+stitchContigs_LDADD = \
+	$(top_builddir)/src/Align/libAlign.a \
+	$(top_builddir)/src/Slice/libSlice.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+stitchContigs_SOURCES = \
+	stitchContigs.cc 
 
 
 
