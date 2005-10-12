@@ -13,6 +13,7 @@ int main (int argc, char ** argv)
 {
   int lefttrim(0);
   int righttrim(0);
+  int lengthtrim(0);
   int contigiid(0);
   string contigeid;
 
@@ -33,6 +34,7 @@ int main (int argc, char ** argv)
 "\n"
 "   -L <val> Trim val bases from left side\n"
 "   -R <val> Trim val bases from right side\n"
+"   -N <val> Right trim contig to new length\n"
 "   -E id    EID of contig to trim\n"
 "   -I id    IID of contig to trim\n";
 
@@ -41,6 +43,7 @@ int main (int argc, char ** argv)
     tf->disableOptionHelp();
     tf->getOptions()->addOptionResult("L=i", &lefttrim, "Left trim amount");
     tf->getOptions()->addOptionResult("R=i", &righttrim, "Right trim amount");
+    tf->getOptions()->addOptionResult("N=i", &lengthtrim, "New Contig Length");
 
     tf->getOptions()->addOptionResult("I=i", &contigiid, "Contig IID");
     tf->getOptions()->addOptionResult("E=s", &contigeid, "Contig EID");
@@ -66,8 +69,9 @@ int main (int argc, char ** argv)
     else                    { contig_bank.fetch(contigiid, contig); }
 
     // trim right first so we don't have to shift trim after left trim
-    if (righttrim) { rightTrimContig(contig, righttrim); }
-    if (lefttrim)  { leftTrimContig(contig, lefttrim); }
+    if (lengthtrim) { lengthTrimContig(contig, lengthtrim); }
+    if (righttrim)  { rightTrimContig(contig, righttrim); }
+    if (lefttrim)   { leftTrimContig(contig, lefttrim); }
 
     contig_bank.replace(contig.getIID(), contig);
     contig_bank.close();

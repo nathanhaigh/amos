@@ -70,15 +70,14 @@ void leftTrimContig(Contig_t & contig, int lefttrim)
   tiling.resize(tilecount);
 }
 
-// Trim 'righttrim' bases from a contig by trimming the last righttrim bases
-// from the consensus, and then adjusting the clear range of the tiling
-// reads, or by dropping them entirely from the contig.
-void rightTrimContig(Contig_t & contig, int righttrim)
+
+// Right trim the contig to the new length
+void lengthTrimContig(Contig_t & contig, int newlength)
 {
   string cons = contig.getSeqString();
   string cqual = contig.getQualString();
 
-  int newlength = cons.length() - righttrim;
+  int righttrim = cons.length() - newlength;
 
   cerr << "Right Trimming " << righttrim << " bases from " << cons.length() << endl;
 
@@ -137,6 +136,16 @@ void rightTrimContig(Contig_t & contig, int righttrim)
   }
 
   tiling.resize(tilecount);
+}
+
+// Trim 'righttrim' bases from a contig by trimming the last righttrim bases
+// from the consensus, and then adjusting the clear range of the tiling
+// reads, or by dropping them entirely from the contig.
+void rightTrimContig(Contig_t & contig, int righttrim)
+{
+  int clen = contig.getLength();
+
+  lengthTrimContig(contig, clen-righttrim);
 }
 
 

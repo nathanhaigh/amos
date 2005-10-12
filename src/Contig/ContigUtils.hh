@@ -5,6 +5,7 @@
 
 void leftTrimContig(AMOS::Contig_t & contig, int lefttrim);
 void rightTrimContig(AMOS::Contig_t & contig, int righttrim);
+void lengthTrimContig(AMOS::Contig_t & contig, int righttrim);
 
 
 void shiftContigRight(AMOS::Contig_t & contig, int contigShiftDistance);
