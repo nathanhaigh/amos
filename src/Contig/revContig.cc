@@ -32,8 +32,46 @@ int main (int argc, char ** argv)
 
     contig.reverseComplement();
 
-    contig_bank.replace(contig.getIID(), contig);
+    ID_t iid = contig.getIID();
+
+    contig_bank.replace(iid, contig);
     contig_bank.close();
+
+    Bank_t scaffold_bank(Scaffold_t::NCODE);
+    try 
+    {
+      // try to reverse the contig in the scaffold as well
+      scaffold_bank.open(bank_name, B_READ|B_WRITE);
+      Scaffold_t scaffold;
+
+      AMOS::IDMap_t::const_iterator ci;
+      for (ci = scaffold_bank.getIDMap().begin();
+           ci;
+           ci++)
+      {
+        scaffold_bank.fetch(ci->iid, scaffold);
+
+        vector<Tile_t> & tiling = scaffold.getContigTiling();
+        vector<Tile_t>::iterator ti;
+
+        for (ti =  tiling.begin();
+             ti != tiling.end();
+             ti++)
+        {
+          if (ti->source == iid)
+          {
+            ti->range.swap();
+
+            scaffold_bank.replace(scaffold.getIID(), scaffold);
+            cout << "Updated scaffold i" << scaffold.getIID() << endl;
+          }
+        }
+      }
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "WARNING: Scaffold not updated!" << endl;
+    }
   }
   catch (Exception_t & e)
   {
