@@ -14,6 +14,10 @@ int main (int argc, char ** argv)
   if (argc != 3)
   {
     cerr << "Usage: revcontig bankname eid" << endl;
+    cerr << endl
+         << "Reverse complements the selected contig, reads, and scaffold info" << endl
+         << "TODO: Fix features, contig graph as well" << endl;
+
     return EXIT_FAILURE;
   }
 
