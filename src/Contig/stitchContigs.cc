@@ -57,13 +57,17 @@ int main (int argc, char ** argv)
 
     Bank_t master_bank(Contig_t::NCODE);
     Bank_t patch_bank(Contig_t::NCODE);
-    Bank_t read_bank(Read_t::NCODE);
+
+    Bank_t master_reads(Read_t::NCODE);
+    Bank_t patch_reads(Read_t::NCODE);
 
     cerr << "Starting stitch at " << Date() << endl;
 
     master_bank.open(masterbank, B_READ);
-    read_bank.open(masterbank, B_READ);
+    master_reads.open(masterbank, B_READ);
+
     patch_bank.open(patchbank, B_READ);
+    patch_reads.open(patchbank, B_READ);
 
     Contig_t master;
     Contig_t patch;
@@ -78,8 +82,11 @@ int main (int argc, char ** argv)
 
     vector<Tile_t> newtiling;
 
-    ID_t leftiid = read_bank.lookupIID(leftstitchread);
-    ID_t rightiid = read_bank.lookupIID(rightstitchread);
+    ID_t mleftiid = master_reads.lookupIID(leftstitchread);
+    ID_t mrightiid = master_reads.lookupIID(rightstitchread);
+
+    ID_t pleftiid = patch_reads.lookupIID(leftstitchread);
+    ID_t prightiid = patch_reads.lookupIID(rightstitchread);
 
     vector<Tile_t>::iterator mti;
     vector<Tile_t>::iterator pti;
@@ -90,6 +97,8 @@ int main (int argc, char ** argv)
     vector<Tile_t> & ptiling = patch.getReadTiling();
     sort(ptiling.begin(), ptiling.end(), TileOrderCmp());
 
+
+    // Find the left read in the master
     int mcount = 0;
     int rightmost = 0;
 
@@ -102,7 +111,7 @@ int main (int argc, char ** argv)
         rightmost = mti->offset + mti->getGappedLength();
       }
 
-      if (mti->source == leftiid)
+      if (mti->source == mleftiid)
       {
         cout << "Found left stitch read in master (" << mcount << ")" << endl;
         break;
@@ -120,21 +129,24 @@ int main (int argc, char ** argv)
 
     int masterbaseoffset = mti->offset;
 
-    cout << "cons = mcons[0, " << masterbaseoffset - 1 << "]" << endl;
+    cout << "Left Consensus = mcons[0, " << masterbaseoffset - 1 << "]" << endl;
 
     string cons = mcons.substr(0, masterbaseoffset);
     string qual = mqual.substr(0, masterbaseoffset);
 
+
+
+    // find the left read in the patch, copy those reads into the new vector untit right read
     int pcount = 0;
 
     int origoffset = 0;
-    int patchbaseoffset = 0;
+    int patchbaseoffset = -1;
     bool stitchreads = false;
     for (pti =  ptiling.begin();
          pti != ptiling.end();
          pti++, pcount++)
     {
-      if (pti->source == leftiid)
+      if (pti->source == pleftiid)
       {
         patchbaseoffset = pti->offset;
         stitchreads = true;
@@ -145,10 +157,12 @@ int main (int argc, char ** argv)
       {
         origoffset = pti->offset;
         pti->offset = pti->offset - patchbaseoffset + masterbaseoffset;
+
+        pti->source = master_reads.lookupIID(patch_reads.lookupEID(pti->source));
         newtiling.push_back(*pti);
       }
 
-      if (pti->source == rightiid)
+      if (pti->source == mrightiid) // right read was converted, so use mrightiid
       {
         if (!stitchreads)
         {
@@ -161,7 +175,20 @@ int main (int argc, char ** argv)
       }
     }
 
+    if (patchbaseoffset == -1)
+    {
+      cout << "Didn't find left or right read in patch!" << endl;
+      throw "ERROR";
+    }
+
+    if (pti == ptiling.end())
+    {
+      cout << "Didn't find right read in patch" << endl;
+      throw "ERROR";
+    }
+
     int len = origoffset + pti->getGappedLength() - patchbaseoffset;
+    cout << "Patch Consensus[" << cons.length() << "].append pcons[" << patchbaseoffset << "," << len << "]" << endl;
 
     if (len < rightmost-masterbaseoffset)
     {
@@ -185,7 +212,6 @@ int main (int argc, char ** argv)
       cout << "Left stitch consensus match (len = " << mc.length() << ")" << endl;
     }
 
-    cout << "cons[" << cons.length() << "].append pcons[" << patchbaseoffset << "," << len << "]" << endl;
     cons.append(pcons, patchbaseoffset, len);
     qual.append(pqual, patchbaseoffset, len);
 
@@ -202,8 +228,8 @@ int main (int argc, char ** argv)
         newtiling.push_back(*mti);
       }
 
-      // rightiid is the last read from patch, don't stitch it
-      if (mti->source == rightiid)
+      // mrightiid is the last read from patch, don't stitch it
+      if (mti->source == mrightiid)
       {
         stitchreads = true;
         masterbaseoffset = mti->offset;
@@ -237,7 +263,7 @@ int main (int argc, char ** argv)
     }
 
     len = mcons.length() - startroffset;
-    cout << "cons[" << cons.length() << "].append mcons[" << startroffset << "," << len << "]" << endl;
+    cout << "Right Consensus [" << cons.length() << "].append mcons[" << startroffset << "," << len << "]" << endl;
     cons.append(mcons, startroffset, len);
     qual.append(mcons, startroffset, len);
 
@@ -246,9 +272,17 @@ int main (int argc, char ** argv)
 
     master_bank.close();
 
-    master_bank.open(masterbank, B_READ|B_WRITE);
-    master_bank.replace(master.getIID(), master);
-    master_bank.close();
+    try
+    {
+      master_bank.open(masterbank, B_READ|B_WRITE);
+      master_bank.replace(master.getIID(), master);
+      master_bank.close();
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "ERROR Saving results!!!\n" << e;
+      return 1;
+    }
   }
   catch (Exception_t & e)
   {
