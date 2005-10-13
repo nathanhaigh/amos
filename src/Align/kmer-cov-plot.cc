@@ -17,6 +17,8 @@ using namespace HASHMAP;
 
 #define  DEBUG  0
 
+bool OPT_DisplayKmers = false;
+
 
 const int  MAX_LINE = 1000;
 typedef  long long unsigned  Mer_t;
@@ -184,9 +186,11 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "fhr:u:")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "hK")) != EOF))
      switch  (ch)
        {
+
+         case 'K' : OPT_DisplayKmers = true; break;
 
         case  'h' :
           errflg = true;
@@ -219,12 +223,6 @@ static void  Parse_Command_Line
 
 
 static void  Compute_Mer_Coverage (const string & s, const MerTable_t & mer_table)
-
-//  Print regions in string  s  that are covered
-//  by mers (or their reverse-complements) in
-//  the global hash table.  Set  percent_covered  to
-//  the percentage of the entire read covered by the mers
-
 {
    Mer_t  fwd_mer = 0, rev_mer = 0;
    int  i, j, n;
@@ -266,14 +264,22 @@ static void  Compute_Mer_Coverage (const string & s, const MerTable_t & mer_tabl
      if (fi != mer_table.end()) { fcount = fi->second; }
      if (ri != mer_table.end()) { rcount = ri->second; }
 
-     MerToAscii(fwd_mer, fmer);
-     MerToAscii(rev_mer, rmer);
-
      unsigned int mcount = (fcount > rcount) ? fcount : rcount;
 
-     printf("%d %d %d %d %s %s\n", 
-            i, mcount, fcount, rcount, 
-            fmer.c_str(), rmer.c_str()); 
+     if (OPT_DisplayKmers)
+     {
+       MerToAscii(fwd_mer, fmer);
+       MerToAscii(rev_mer, rmer);
+
+       printf("%d\t%d\t%d\t%d\t%s\t%s\n", 
+              i, mcount, fcount, rcount, 
+              fmer.c_str(), rmer.c_str()); 
+     }
+     else
+     {
+       printf("%d\t%d\t%d\t%d\n", 
+              i, mcount, fcount, rcount);
+     }
    }
 
    return;
@@ -358,6 +364,7 @@ static void  Usage
            "\n"
            "Options:\n"
            "  -h      Print this usage message\n"
+           "  -K      Display the actual kmer in addtion to the counts\n"
            "\n");
 
    return;
