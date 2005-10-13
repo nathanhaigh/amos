@@ -10,9 +10,11 @@ bin_PROGRAMS = \
 	bank-report \
 	bank-transact \
 	dumpmates \
+	findMissingMates \
 	select-reads \
 	dumpreads \
 	grow-readbank \
+    listReadPlacedStatus \
 	load-overlaps \
 	bank2contig  \
 	bank2coverage \
@@ -25,7 +27,6 @@ bin_PROGRAMS = \
     loadFeatures \
     bank-tutorial
 
-#	findMissingMates
 
 dist_bin_SCRIPTS = \
 	bank-unlock.pl
@@ -118,11 +119,18 @@ extractContig_SOURCES = \
 	extractContig.cc
 
 ##-- findMissingMates
-#findMissingMates_LDADD = \
-#	$(top_builddir)/src/Common/libCommon.a \
-#	$(top_builddir)/src/AMOS/libAMOS.a
-#findMissingMates_SOURCES = \
-#	findMissingMates.cc
+findMissingMates_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+findMissingMates_SOURCES = \
+	findMissingMates.cc
+
+##-- listReadPlacedStatus
+listReadPlacedStatus_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+listReadPlacedStatus_SOURCES = \
+	listReadPlacedStatus.cc
 
 ##-- dumpmates
 dumpmates_LDADD = \
