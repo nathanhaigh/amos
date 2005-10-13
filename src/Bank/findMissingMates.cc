@@ -19,6 +19,7 @@ using namespace AMOS;
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
+bool   OPT_UseScaffolds = false;
 typedef map <ID_t, ID_t> IDMap;
 
 string contigeid;
@@ -93,7 +94,6 @@ int main (int argc, char ** argv)
   Read_t red;
   Fragment_t frg;
   Library_t lib;
-  Matepair_t mtp;
 
   map <ID_t, Distribution_t> libmap;
   map <ID_t, Pos_t> readlens;
@@ -108,7 +108,6 @@ int main (int argc, char ** argv)
 
   BankStream_t lib_bank (Library_t::NCODE);
   BankStream_t frg_bank (Fragment_t::NCODE);
-  BankStream_t mtp_bank (Matepair_t::NCODE);
   BankStream_t ctg_bank (Contig_t::NCODE);
   BankStream_t scf_bank (Scaffold_t::NCODE);
   BankStream_t red_bank (Read_t::NCODE);
@@ -121,11 +120,15 @@ int main (int argc, char ** argv)
 
     BankMode_t bm = OPT_BankSpy ? B_SPY : B_READ;
     red_bank . open (OPT_BankName, bm);
-    mtp_bank . open (OPT_BankName, bm);
     frg_bank . open (OPT_BankName, bm);
     lib_bank . open (OPT_BankName, bm);
     ctg_bank . open (OPT_BankName, bm);
-    scf_bank . open (OPT_BankName, bm);
+
+    if (OPT_UseScaffolds)
+    {
+      cerr << "Opening scaffold bank" << endl;
+      scf_bank . open (OPT_BankName, bm);
+    }
 
 
     while ( lib_bank >> lib )
@@ -139,9 +142,14 @@ int main (int argc, char ** argv)
     while (frg_bank >> frg)
     {
       frgliblookup[frg.getIID()] = frg.getLibrary();
+
+      std::pair<ID_t, ID_t> mtp = frg.getMatePair();
+
+      mates[mtp.first] = mtp.second;
+      mates[mtp.second] = mtp.first;
     }
     cerr << frgliblookup.size() << " fragments" << endl;
-
+    cerr << mates.size() << " mates" << endl;
 
     cerr << "Indexing reds... ";
     while (red_bank >> red)
@@ -158,30 +166,24 @@ int main (int argc, char ** argv)
     cerr << readliblookup.size() << " reads in fragments" << endl;
 
 
-    cerr << "Indexing mates... ";
-    while ( mtp_bank >> mtp )
+    if (OPT_UseScaffolds)
     {
-      mates[mtp.getReads().first]  = mtp.getReads().second;
-      mates[mtp.getReads().second] = mtp.getReads().first;
-    }
-    cerr << mates.size() << " mates" << endl;
-
-
-    cerr << "Indexing scaffolds... ";
-    int scaffcount = 0;
-    while (scf_bank >> scaff)
-    {
-      scaffcount++;
-      vector<Tile_t> & ctiling = scaff.getContigTiling();
-      vector<Tile_t>::const_iterator ci;
-
-      for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
+      cerr << "Indexing scaffolds... ";
+      int scaffcount = 0;
+      while (scf_bank >> scaff)
       {
-        contigscafflookup[ci->source] = scaff.getIID();
+        scaffcount++;
+        vector<Tile_t> & ctiling = scaff.getContigTiling();
+        vector<Tile_t>::const_iterator ci;
+
+        for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
+        {
+          contigscafflookup[ci->source] = scaff.getIID();
+        }
       }
+      cerr << contigscafflookup.size() << " contigs in " 
+           << scaffcount << " scaffolds" << endl;
     }
-    cerr << contigscafflookup.size() << " contigs in " 
-         << scaffcount << " scaffolds" << endl;
 
 
 
@@ -346,11 +348,14 @@ int main (int argc, char ** argv)
     }
 
     red_bank.close();
-    mtp_bank.close();
     frg_bank.close();
     lib_bank.close();
     ctg_bank.close();
-    scf_bank.close();
+    
+    if (OPT_UseScaffolds)
+    {
+      scf_bank.close();
+    }
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
