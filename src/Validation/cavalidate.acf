@@ -36,3 +36,6 @@ BINDIR=/fs/sz-user-supported/Linux-i686/bin
 
 ## Create Suspicious Regions
 1020: $(BINDIR)/suspiciousfeat2region $(PREFIX).suspicious.feat > $(PREFIX).suspicious.regions
+
+## Create Fasta
+1030: $(BINDIR)/bank2fasta -e -b $(PREFIX).bnk > $(PREFIX).fasta
