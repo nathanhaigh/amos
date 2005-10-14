@@ -6,6 +6,7 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
     fattenContig \
     insertGapColumn \
+    manageContigs \
     revContig \
     rotateContig \
     splitContig \
@@ -52,6 +53,16 @@ insertGapColumn_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 insertGapColumn_SOURCES = \
 	insertGapColumn.cc 
+
+##-- manageContigs
+manageContigs_LDADD = \
+	$(top_builddir)/src/Align/libAlign.a \
+	$(top_builddir)/src/Slice/libSlice.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+manageContigs_SOURCES = \
+	manageContigs.cc 
 
 
 ##-- revContig
