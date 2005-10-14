@@ -181,7 +181,6 @@ void ReadPicker::itemSelected(QListViewItem * item)
 
 void ReadPicker::selectiid(const QString & iid)
 {
-  cerr << iid << endl;
   QListViewItem * item = m_table->findItem(iid, 0);
   if (item)
   {
@@ -192,7 +191,6 @@ void ReadPicker::selectiid(const QString & iid)
 
 void ReadPicker::selecteid(const QString & eid)
 {
-  cerr << eid << endl;
   QListViewItem * item = m_table->findItem(eid, 1);
   if (item)
   {
