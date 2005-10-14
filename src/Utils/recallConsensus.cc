@@ -18,6 +18,9 @@ using namespace AMOS;
 #define endl "\n"
 
 string BANKNAME;
+int USEIID = 0;
+int USEEID = 1;
+int ONE_BASED_GINDEX = 0;
 
 void printHelpText()
 {
@@ -64,7 +67,7 @@ bool GetOptions(int argc, char ** argv)
   return true;
 }
 
-int recallSlice(ContigIterator_t ci)
+pair<char,char> recallSlice(ContigIterator_t ci)
 {
   libSlice_Slice slice;
   libSlice_Consensus consensusResults;
@@ -131,7 +134,7 @@ int recallSlice(ContigIterator_t ci)
   cout << endl;
   delete slice.bc;
 
-  return 1;
+  return make_pair('A', 'X');
 }
 
 
