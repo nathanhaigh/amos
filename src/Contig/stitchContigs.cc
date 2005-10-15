@@ -82,7 +82,7 @@ int main (int argc, char ** argv)
 
     if (argvv.size() != 2)
     {
-      cerr << "Usage: trimContig [options] master.bnk patch.bnk" << endl;
+      cerr << "Usage: stitchContigs [options] master.bnk patch.bnk" << endl;
       return 0;
     }
 
