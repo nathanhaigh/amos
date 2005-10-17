@@ -12,7 +12,7 @@ int main (int argc, char ** argv)
 {
   if (argc != 3)
   {
-    cerr << "Usage: bank2contig bankname featfile" << endl;
+    cerr << "Usage: loadFeatures bankname featfile" << endl;
     return EXIT_FAILURE;
   }
 
@@ -84,18 +84,26 @@ int main (int argc, char ** argv)
         cerr << "contigeid: " << eid << endl
              << "type: "      << type << endl
              << "range: "     << end5 << "," << end3 << endl
-             << "coment: \""  << comment << "\"" << endl;
+             << "coment: \""  << comment << "\"" << endl << endl;
       }
 
       if (LOAD)
       {
         ID_t iid = contig_bank.lookupIID(eid);
-        feat.setSource(std::make_pair(iid, Contig_t::NCODE));
-        feat_bank.append(feat);
+
+        if (iid != AMOS::NULL_ID)
+        {
+          feat.setSource(std::make_pair(iid, Contig_t::NCODE));
+          feat_bank.append(feat);
+          featurecount++;
+          cerr << ".";
+        }
+        else
+        {
+          cerr << "WARNING: Contig eid " << eid << " not found, skipping" << endl;
+        }
       }
 
-      featurecount++;
-      cerr << ".";
     }
 
     cerr << endl
