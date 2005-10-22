@@ -206,7 +206,11 @@ int main (int argc, char ** argv)
     IDMap::iterator si = contigscafflookup.find(contigiid);
     if (si == contigscafflookup.end())
     {
-      cerr << "Contig not in scaffold, using original read tiling" << endl;
+      if (OPT_UseScaffolds)
+      {
+        cerr << "Contig not in scaffold, using original read tiling" << endl;
+      }
+
       ctg_bank.seekg(ctg_bank.getIDMap().lookupBID(contigiid));
       ctg_bank >> contig;
       rtiling = contig.getReadTiling();
@@ -305,7 +309,6 @@ int main (int argc, char ** argv)
         cout << red_bank.lookupEID(ri->source) << endl;
       }
 
-
       IDMap::const_iterator mi = mates.find(ri->source);
       if (mi != mates.end())
       {
@@ -353,9 +356,9 @@ int main (int argc, char ** argv)
                    << "\t" << (ri->range.isReverse() ? "F" : "R") 
                    << endl;
             }
-            else
+            else if (hasovl)
             {
-              cout << red_bank.lookupEID(mi->second) << endl;
+              cout <<  red_bank.lookupEID(mi->second) << endl;
             }
           }
           else if (verbosemode)
@@ -404,7 +407,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvVE:I:x:y:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvVE:I:x:y:S")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -426,6 +429,7 @@ void ParseArgs (int argc, char ** argv)
       case 'x': rangeStart = atoi(optarg); break;
       case 'y': rangeEnd   = atoi(optarg); break;
       case 'V': verbosemode = true; break;
+      case 'S': OPT_UseScaffolds = true; break;
 
       default:
         errflg ++;
@@ -460,6 +464,7 @@ void PrintHelp (const char * s)
     << "-h            Display help information\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
+    << "-S            Looks for mates by virtue of the scaffold\n"
     << "-E contigeid  Contig eid of interest\n"
     << "-I contigiid  Contig iid of interest\n"
     << "-x start      Start of range\n"
