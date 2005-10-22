@@ -22,9 +22,11 @@ bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_UseScaffolds = false;
 typedef map <ID_t, ID_t> IDMap;
 
+ID_t   contigiid = AMOS::NULL_ID;
 string contigeid;
 int    rangeStart = -1;
 int    rangeEnd = -1;
+bool   verbosemode = false;
 
 
 
@@ -188,7 +190,11 @@ int main (int argc, char ** argv)
 
 
     // load read tiling for scaffold of this contig
-    ID_t contigiid = ctg_bank.lookupIID(contigeid.c_str());
+    if (contigiid == AMOS::NULL_ID)
+    {
+      contigiid = ctg_bank.lookupIID(contigeid.c_str());
+    }
+
     if (contigiid == AMOS::NULL_ID)
     {
       cerr << "contigiid == AMOS::NULL_ID" << endl;
@@ -276,19 +282,29 @@ int main (int argc, char ** argv)
     vector<Tile_t>::const_iterator ri;
     for (ri = rtiling.begin(); ri != rtiling.end(); ri++)
     {
+      bool hasovl = false;
       if (hasOverlap(rangeStart, rangeEnd, 
                      ri->offset, ri->range.getLength() + ri->gaps.size(),
                      10000000))
       {
-        cout << "*";
+        hasovl = true;
       }
 
-      cout << "read: " << ri->source 
-           << "\t" << red_bank.lookupEID(ri->source) 
-           << "\t" << ri->offset 
-           << "\t" << ri->offset+ri->gaps.size()+ri->range.getLength()-1 
-           << "\t" << (ri->range.isReverse() ? "R" : "F") 
-           << endl;
+      if (verbosemode)
+      {
+        if (hasovl) { cout << "*"; }
+        cout << "read: " << ri->source 
+             << "\t" << red_bank.lookupEID(ri->source) 
+             << "\t" << ri->offset 
+             << "\t" << ri->offset+ri->gaps.size()+ri->range.getLength()-1 
+             << "\t" << (ri->range.isReverse() ? "R" : "F") 
+             << endl;
+      }
+      else if (hasovl)
+      {
+        cout << red_bank.lookupEID(ri->source) << endl;
+      }
+
 
       IDMap::const_iterator mi = mates.find(ri->source);
       if (mi != mates.end())
@@ -317,31 +333,42 @@ int main (int argc, char ** argv)
               projectedEnd   = ri->offset + li->second.mean + NUMSD*li->second.sd;
             }
 
+            hasovl = false;
+
             if (hasOverlap(rangeStart, rangeEnd, 
                            projectedStart, projectedEnd - projectedStart + 1,
                            10000000))
             {
-              cout << "*";
+              hasovl = true;
             }
 
-            cout << "mate: " << mi->second 
-                 << "\t" << red_bank.lookupEID(mi->second) 
-                 << "\t" << projectedStart 
-                 << "\t" << projectedEnd 
-                 << "\t" << (ri->range.isReverse() ? "F" : "R") 
-                 << endl;
+            if (verbosemode)
+            {
+              if (hasovl) { cout << "*"; }
+
+              cout << "mate: " << mi->second 
+                   << "\t" << red_bank.lookupEID(mi->second) 
+                   << "\t" << projectedStart 
+                   << "\t" << projectedEnd 
+                   << "\t" << (ri->range.isReverse() ? "F" : "R") 
+                   << endl;
+            }
+            else
+            {
+              cout << red_bank.lookupEID(mi->second) << endl;
+            }
           }
-          else
+          else if (verbosemode)
           {
             cout << "no dist" << endl;
           }
         }
-        else
+        else if (verbosemode)
         {
           cout << "no lib" << endl;
         }
       }
-      else
+      else if (verbosemode)
       {
         cout << "no mate" << endl;
       }
@@ -377,7 +404,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvExy")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvVE:I:x:y:")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -394,17 +421,11 @@ void ParseArgs (int argc, char ** argv)
 	exit (EXIT_SUCCESS);
 	break;
 
-      case 'E':
-         contigeid = argv[optind++];
-         break;
-
-      case 'x':
-          rangeStart = atoi(argv[optind++]);
-          break;
-
-      case 'y':
-          rangeEnd = atoi(argv[optind++]);
-          break;
+      case 'E': contigeid  = optarg; break;
+      case 'I': contigiid  = atoi(optarg); break;
+      case 'x': rangeStart = atoi(optarg); break;
+      case 'y': rangeEnd   = atoi(optarg); break;
+      case 'V': verbosemode = true; break;
 
       default:
         errflg ++;
@@ -418,7 +439,8 @@ void ParseArgs (int argc, char ** argv)
   }
 
 
-  if (rangeStart == -1 || rangeEnd == -1 || contigeid.empty())
+  if (rangeStart == -1 || rangeEnd == -1 || 
+      (contigeid.empty() && contigiid == AMOS::NULL_ID))
   {
     cerr << "Range coordinates and contig id are required" << endl;
     exit (EXIT_FAILURE);
@@ -439,6 +461,7 @@ void PrintHelp (const char * s)
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << "-E contigeid  Contig eid of interest\n"
+    << "-I contigiid  Contig iid of interest\n"
     << "-x start      Start of range\n"
     << "-y end        End of range\n"
     << endl;
