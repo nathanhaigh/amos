@@ -40,8 +40,31 @@ my %codon =
 
 my %rc = 
 (
+  "." => ".",
   "A" => "T", "T" => "A",
   "C" => "G", "G" => "C",
+);
+
+my %ambiguity=
+(
+  "A" => ["A"],
+  "C" => ["C"],
+  "G" => ["G"],
+  "T" => ["T"],
+
+  "M" => ["A", "C"],
+  "R" => ["A", "G"],
+  "W" => ["A", "T"],
+  "S" => ["C", "G"],
+  "Y" => ["C", "T"],
+  "K" => ["G", "T"],
+
+  "V" => ["A", "C", "G"],
+  "H" => ["A", "C", "T"],
+  "D" => ["A", "G", "T"],
+  "B" => ["C", "G", "T"],
+
+  "N" => ["A", "C", "G", "T"],
 );
 
 
@@ -142,6 +165,8 @@ while (<STATS>)
   $totalpos++;
 }
 
+print "Loaded query contig coverage information totalpos: $totalpos\n";
+
 
 ## Load the consensus
 while (<FASTA>)
@@ -150,6 +175,8 @@ while (<FASTA>)
   chomp;
   $consensus .= $_;
 }
+
+print "Loaded reference consensus len=",length($consensus),"\n";
 
 
 
@@ -181,6 +208,7 @@ while (<TABFILE>)
   $gene->{rc}       = ($strand eq "reverse") ? 1 : 0;
   $gene->{snpcount} = 0;
   $gene->{synonymous} = 0;
+  $gene->{nonsynonymous} = 0;
   $gene->{codonposition}->{1} = 0;
   $gene->{codonposition}->{2} = 0;
   $gene->{codonposition}->{3} = 0;
@@ -188,6 +216,8 @@ while (<TABFILE>)
   push @genes, $gene;
   #printGene($gene);
 }
+
+print "Loaded gene data for ", scalar @genes, " genes\n";
 
 
 
@@ -198,6 +228,7 @@ my %qsnppos;
 my $snpcount = 0;
 my $lastsnp = -1000;
 my $snpcov = 0;
+my $ambsnpcount = 0;
 
 while (<SNPS>)
 {
@@ -220,7 +251,7 @@ while (<SNPS>)
   $snpcov += $cov;
 
   $qsnppos{$qpos} = 1;
-
+  
   print "$rpos$f\t$len\t$type\t$rseq\t$qseq\t$cov";
 
   foreach my $g (@genes)
@@ -230,15 +261,20 @@ while (<SNPS>)
     {
       my $s = $g->{start};
       my $e = $g->{end};
+      my $rc = $g->{rc};
 
       $g->{snpcount}++;
-      print "\t|\t$g->{label} ($s, $e)";
+
+      print "\t|\t$g->{label} ($s, $e) $rc";
+
+      last if ($len > 1 || $rseq eq "." || $qseq eq ".");
+
+      my @ambiguities = @{$ambiguity{uc($qseq)}};
 
       my $codonposition = 0;
       my $origdna = "";
-      my $newdna = "";
 
-      if ($g->{rc})
+      if ($rc)
       {
         my $geneseqoffset = $e - $rpos;
         $codonposition = $geneseqoffset % 3;
@@ -246,18 +282,15 @@ while (<SNPS>)
         $origdna = uc(substr($consensus, $rpos-(2-$codonposition)-1, 3));
 
         $origdna = reverseCompliment($origdna);
-        $rseq = $rc{uc($rseq)};
+        my $rseqrc = $rc{uc($rseq)};
 
-        if (substr($origdna, $codonposition, 1) ne uc($rseq))
+        if (substr($origdna, $codonposition, 1) ne uc($rseqrc))
         {
-
-          print " ERROR: orig[$codonposition]:$origdna != $rseq";
+          print " ERROR: orig[$codonposition]:$origdna != $rseqrc";
+          last;
         }
 
         substr($origdna, $codonposition, 1) = lc(substr($origdna, $codonposition, 1));
-
-        $newdna = $origdna;
-        substr($newdna, $codonposition, 1) = lc($rc{uc($qseq)});
       }
       else
       {
@@ -269,23 +302,53 @@ while (<SNPS>)
         if (substr($origdna, $codonposition, 1) ne uc($rseq))
         {
           print " ERROR: orig[$codonposition]:$origdna != $rseq";
+          last;
         }
 
         substr($origdna, $codonposition, 1) = lc(substr($origdna, $codonposition, 1));
-
-        $newdna = $origdna;
-        substr($newdna, $codonposition, 1) = $qseq;
       }
 
-      my $origaa = $codon{uc($origdna)};
-      my $newaa = $codon{uc($newdna)};
-
       my $cpos = $codonposition+1;
-      my $syn = ($origaa eq $newaa) ? 1 : 0;
-      print "\t| $cpos $origdna -> $newdna | $origaa -> $newaa $syn";
+      print "\t| $cpos";
 
       $g->{codonposition}->{$cpos}++;
-      $g->{synonymous} += $syn;
+
+      foreach $qseq (@ambiguities)
+      {
+        if (uc($qseq) eq uc($rseq))
+        {
+          # print "| skip $qseq -> $rseq";
+          next;
+        }
+        $ambsnpcount++;
+
+        my $newdna = "";
+
+        if ($rc)
+        {
+          $newdna = $origdna;
+          substr($newdna, $codonposition, 1) = lc($rc{uc($qseq)});
+        }
+        else
+        {
+          $newdna = $origdna;
+          substr($newdna, $codonposition, 1) = $qseq;
+        }
+
+        my $origaa = $codon{uc($origdna)};
+        my $newaa = $codon{uc($newdna)};
+
+        my $syn = ($origaa eq $newaa) ? 1 : 0;
+        print " | $origaa ($origdna) -> $newaa ($newdna) $syn";
+
+        $g->{synonymous}     += $syn;
+        $g->{nonsynonymous} += 1-$syn;
+      }
+
+      if (scalar @ambiguities > 1)
+      {
+        print " | @@@";
+      }
 
       last;
     }
@@ -302,8 +365,9 @@ my $genesnps = 0;
 
 my %codonposition = (1=>0,2=>0,3=>0);
 my $synonymous = 0;
+my $nonsynonymous = 0;
 
-foreach my $g (@genes)
+foreach my $g (sort {$a->{label} cmp $b->{label}} @genes)
 {
   my $gl = $g->{end} - $g->{start} + 1;
   my $sc = $g->{snpcount};
@@ -324,10 +388,16 @@ foreach my $g (@genes)
   }
 
   my $syn = $g->{synonymous};
-  my $non = $sc - $syn;
+  my $non = $g->{nonsynonymous};
   print " S:$syn N:$non\n";
 
   $synonymous += $syn;
+  $nonsynonymous += $non;
+
+  if ($sc != ($syn + $non))
+  {
+    print "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non)\n";
+  }
 }
 
 print "\n";
@@ -340,8 +410,12 @@ my $noncodingsnps = $snpcount - $genesnps;
 printSNPDistance("Non-Coding", $noncodinglen, $noncodingsnps); print "\n";
 printSNPDistance("Overall", $reflen, $snpcount); print "\n";
 
-my $nonsyn = $genesnps - $synonymous;
-print "SNP codon Position: $codonposition{1} $codonposition{2} $codonposition{3} S:$synonymous N:$nonsyn\n";
+print "SNP codon Position: $codonposition{1} $codonposition{2} $codonposition{3} S:$synonymous N:$nonsynonymous\n";
+
+if ($codonposition{1} + $codonposition{2} + $codonposition{3} != ($synonymous + $nonsynonymous))
+{
+  print "ERROR with totals!!!\n";
+}
 
 print "\n\n";
 
@@ -366,8 +440,9 @@ while ($wstart < $totalpos)
   my $snpcount = 0;
   my $totalbases = 0;
   my $windowpos = 0;
+  my $i;
 
-  for (my $i = $wstart; ($i < $wend) && ($i < $totalpos); $i++)
+  for ($i = $wstart; ($i < $wend) && ($i < $totalpos); $i++)
   {
     $windowpos++;
     $totalbases += $qdepth{$i};
@@ -380,7 +455,7 @@ while ($wstart < $totalpos)
 
   my $avgdepth = ($windowpos) ? sprintf("%.02f", $totalbases/$windowpos) : "0.0";
 
-  print "$wstart $wend $windowpos $avgdepth $snpcount\n";
+  print "#$wstart $i $windowpos $avgdepth $snpcount\n";
   $wstart += $windowshift;
 }
 
