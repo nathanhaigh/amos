@@ -45,7 +45,7 @@ while (<>)
   chomp;
   my @vals = split /\s+/, $_;
 
-  if (!defined $contigid || $contigid != $vals[0])
+  if (!defined $contigid || $contigid ne $vals[0])
   {
     printResults();
 
