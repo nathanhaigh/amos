@@ -25,6 +25,9 @@
 80: gene-snps.pl GiBVsegF.genes.tab GiBVsegF-443.snps GiBVsegF_current.fasta 443.tcovStats > GiBVsegF-443.snpanalysis
 
 ## plot snps-vs-coverage
-90: R --no-save < snps-coverage.R
+90: 
+grep '#' GiBVsegF-443.snpanalysis  | awk '{print $4,$5}' > cov
+R --no-save < snps-coverage.R
+.
 
 
