@@ -31,10 +31,10 @@ sub printResults
 {
   if ($snpcount)
   {
-    my $dist = $lastsnppos - $firstsnppos;
-    my $density = ($snpcount > 2) ? sprintf("%.02f", $dist / ($snpcount-1)) : "1.00";
+    my $span = $lastsnppos - $firstsnppos + 1;
+    my $dist = ($snpcount > 1) ? sprintf("%.02f", $span / ($snpcount-1)) : "1.00";
 
-    print "$contigid P $firstsnppos $lastsnppos HIGH_SNP $snpcount $density\n";
+    print "$contigid P $firstsnppos $lastsnppos HIGH_SNP $snpcount $dist\n";
   }
 }
 
