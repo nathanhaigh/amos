@@ -272,13 +272,13 @@ static void  Compute_Mer_Coverage (const string & s, const MerTable_t & mer_tabl
        MerToAscii(rev_mer, rmer);
 
        printf("%d\t%d\t%d\t%d\t%s\t%s\n", 
-              i, mcount, fcount, rcount, 
+              i-Kmer_Len+1, mcount, fcount, rcount, 
               fmer.c_str(), rmer.c_str()); 
      }
      else
      {
        printf("%d\t%d\t%d\t%d\n", 
-              i, mcount, fcount, rcount);
+              i-Kmer_Len+1, mcount, fcount, rcount);
      }
    }
 
