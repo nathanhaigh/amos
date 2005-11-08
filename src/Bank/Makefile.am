@@ -25,7 +25,8 @@ bin_PROGRAMS = \
 	updateLibSizes \
     dumpFeatures \
     loadFeatures \
-    bank-tutorial
+    bank-tutorial \
+    renameReads
 
 
 dist_bin_SCRIPTS = \
@@ -170,6 +171,13 @@ dumpreads_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 dumpreads_SOURCES = \
 	dumpreads.cc
+
+##-- renameReads
+renameReads_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+renameReads_SOURCES = \
+	renameReads.cc
 
 ##-- grow-readbank
 grow_readbank_LDADD = \
