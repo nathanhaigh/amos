@@ -12,6 +12,7 @@
 #include <cassert>
 #include <unistd.h>
 #include <map>
+#include <cmath>
 
 #include "DataStore.hh"
 #include "Insert.hh"
