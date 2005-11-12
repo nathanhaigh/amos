@@ -67,6 +67,120 @@ bool GetOptions(int argc, char ** argv)
   return true;
 }
 
+
+int bitcount(char c)
+{
+  int sum = 0;
+
+  for (int i = 0; i < 8; i++)
+  {
+    char mask = 1 << i;
+    sum += ((c & mask) ? 1 : 0);
+  }
+
+  return sum;
+}
+
+char deamb(char b)
+{
+  char flags;
+  char upper = toupper(b);
+
+  switch (upper)
+  {
+    case 'A': flags = AMBIGUITY_FLAGBIT_A; break;
+    case 'C': flags = AMBIGUITY_FLAGBIT_C; break;
+    case 'G': flags = AMBIGUITY_FLAGBIT_G; break;
+    case 'T': flags = AMBIGUITY_FLAGBIT_T; break;
+
+    case 'W': flags = AMBIGUITY_FLAGBIT_A | AMBIGUITY_FLAGBIT_T; break;
+    case 'M': flags = AMBIGUITY_FLAGBIT_A | AMBIGUITY_FLAGBIT_C; break;
+    case 'R': flags = AMBIGUITY_FLAGBIT_A | AMBIGUITY_FLAGBIT_G; break;
+    case 'S': flags = AMBIGUITY_FLAGBIT_C | AMBIGUITY_FLAGBIT_G; break;
+    case 'Y': flags = AMBIGUITY_FLAGBIT_C | AMBIGUITY_FLAGBIT_T; break;
+    case 'K': flags = AMBIGUITY_FLAGBIT_G | AMBIGUITY_FLAGBIT_T; break;
+
+    case 'V': flags = AMBIGUITY_FLAGBIT_A | AMBIGUITY_FLAGBIT_C | AMBIGUITY_FLAGBIT_G; break;
+    case 'H': flags = AMBIGUITY_FLAGBIT_A | AMBIGUITY_FLAGBIT_C | AMBIGUITY_FLAGBIT_T; break;
+    case 'D': flags = AMBIGUITY_FLAGBIT_A | AMBIGUITY_FLAGBIT_G | AMBIGUITY_FLAGBIT_T; break;
+    case 'B': flags = AMBIGUITY_FLAGBIT_C | AMBIGUITY_FLAGBIT_G | AMBIGUITY_FLAGBIT_T; break;
+
+    case '-': flags = AMBIGUITY_FLAGBIT_GAP; break;
+
+    default:
+      flags = AMBIGUITY_FLAGBIT_A | AMBIGUITY_FLAGBIT_C | AMBIGUITY_FLAGBIT_G | AMBIGUITY_FLAGBIT_T;
+  };
+
+  return flags;
+}
+
+
+
+bool normalizeSlice(libSlice_Slice * ambslice, libSlice_Slice * newslice)
+{
+  int ambcount = 0;
+  for (int i = 0; i < ambslice->dcov; i++)
+  {
+    ambcount += bitcount(deamb(ambslice->bc[i]));
+  }
+
+  if (ambcount == ambslice->dcov)
+  {
+    return false;
+  }
+
+  cerr << " dcov: " << ambslice->dcov << " " << ambcount;
+
+  newslice->dcov = ambcount;
+  newslice->bc = new char[ambcount+1];
+  newslice->rc = new char[ambcount];
+  newslice->qv = new char[ambcount];
+  newslice->c = ambslice->c;
+
+  int cur = 0;
+  for (int i = 0; i < ambslice->dcov; i++)
+  {
+    cerr << " " << ambslice->bc[i] << "[" << (int) ambslice->qv[i] << "]";
+    char flags = deamb(ambslice->bc[i]); 
+    int ambcount = bitcount(flags);
+
+    if (flags & AMBIGUITY_FLAGBIT_A)
+    {
+      newslice->bc[cur] = 'A'; 
+      newslice->qv[cur] = ambslice->qv[i]; 
+      newslice->rc[cur] = ambslice->rc[i];
+      cur++;
+    }
+
+    if (flags & AMBIGUITY_FLAGBIT_C)
+    {
+      newslice->bc[cur] = 'C'; 
+      newslice->qv[cur] = ambslice->qv[i]; 
+      newslice->rc[cur] = ambslice->rc[i];
+      cur++;
+    }
+
+    if (flags & AMBIGUITY_FLAGBIT_G)
+    {
+      newslice->bc[cur] = 'G'; 
+      newslice->qv[cur] = ambslice->qv[i]; 
+      newslice->rc[cur] = ambslice->rc[i];
+      cur++;
+    }
+    
+    if (flags & AMBIGUITY_FLAGBIT_T)
+    {
+      newslice->bc[cur] = 'T'; 
+      newslice->qv[cur] = ambslice->qv[i]; 
+      newslice->rc[cur] = ambslice->rc[i];
+      cur++;
+    }
+  }
+  newslice->bc[cur] = '\0';
+
+  return true;
+}
+
 pair<char,char> recallSlice(ContigIterator_t ci)
 {
   libSlice_Slice slice;
@@ -75,6 +189,8 @@ pair<char,char> recallSlice(ContigIterator_t ci)
   int gindex = ci.gindex();
 
   char cons = ci.cons();
+  char cqv  = ci.cqv();
+
   ostringstream quals;
   ostringstream reads;
 
@@ -114,27 +230,48 @@ pair<char,char> recallSlice(ContigIterator_t ci)
 
     libSlice_getConsensusParam(&slice, &consensusResults, NULL, 0, 0);
 
-    delete slice.qv;
-    delete slice.rc;
+
+    cons = consensusResults.consensus;
+    cqv = consensusResults.qvConsensus;
+
+    libSlice_Slice normal;
+    if (normalizeSlice(&slice, &normal))
+    {
+      libSlice_getConsensusParam(&normal, &consensusResults, NULL, 0, 1);
+      libSlice_updateAmbiguityConic(&normal, &consensusResults, 0, 0);
+
+      if (USEEID) {cerr << ci.getContig().getEID() << " "; }
+      else        {cerr << ci.getContig().getIID() << " "; }
+
+      cerr << gindex+ONE_BASED_GINDEX << " "
+           << ci.uindex()             << " "
+           << ci.cons();
+      
+      cerr << " " << (int) cqv << " " << slice.bc << " " << quals.str() << " " << reads.str();
+     
+      cons = libSlice_convertAmbiguityFlags(consensusResults.ambiguityFlags);
+      cqv = consensusResults.qvConsensus;
+
+      cerr << " New " << cons << " " << (int) cqv << " " <<  normal.bc;
+
+      for (int j = 0; j < normal.dcov; j++)
+      {
+        cerr << ":" << (int) normal.qv[j];
+      }
+      cerr << endl;
+
+      delete normal.bc; normal.bc=NULL;
+      delete normal.rc; normal.rc=NULL;
+      delete normal.qv; normal.qv=NULL;
+    }
+
+    delete slice.qv; slice.qv=NULL;
+    delete slice.rc; slice.rc=NULL;
   }
 
-  if (USEEID) {cout << ci.getContig().getEID() << " "; }
-  else        {cout << ci.getContig().getIID() << " "; }
+  delete slice.bc; slice.bc=NULL;
 
-  cout << gindex+ONE_BASED_GINDEX << " "
-       << ci.uindex()             << " "
-       << ci.cons();
-
-  if (slice.dcov)
-  {
-    cout << " " << consensusResults.qvConsensus;
-    cout << " " << slice.bc << " " << quals.str() << " " << reads.str();
-  }
-
-  cout << endl;
-  delete slice.bc;
-
-  return make_pair('A', 'X');
+  return make_pair(cons, cqv);
 }
 
 
@@ -154,12 +291,12 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  BankStream_t contig_stream (Contig_t::NCODE);
+  Bank_t contig_bank (Contig_t::NCODE);
   Bank_t read_bank (Read_t::NCODE);
 
   try 
   {
-    contig_stream.open(BANKNAME, B_READ);
+    contig_bank.open(BANKNAME, B_READ | B_WRITE);
   } 
   catch (Exception_t & e)
   {
@@ -181,19 +318,21 @@ int main(int argc, char **argv)
   }
 
   int bases = 0;
-  int snpcount = 0;
-  int displaycount = 0;
   int contigcount = 0;
 
-  int ccount = contig_stream.getSize();
+  int ccount = contig_bank.getSize();
 
   cerr << "Recalling " << ccount << " contigs";
 
   ProgressDots_t dots(ccount, 50);
 
   Contig_t ctg;
-  while (contig_stream >> ctg) 
+  AMOS::IDMap_t::const_iterator bi;
+  for (bi = contig_bank.getIDMap().begin();
+       bi;
+       bi++)
   {
+    contig_bank.fetch(bi->iid, ctg);
     ContigIterator_t ci(ctg, &read_bank);
     contigcount++;
 
@@ -204,16 +343,21 @@ int main(int argc, char **argv)
 
     while (ci.advanceNext())
     {
+      bases++;
       pair<char, char> c = recallSlice(ci);
-      cons += c.first;
-      cqual += c.second;
+      cons.append(1, c.first);
+      cqual.append(1, c.second+'0');
     }
+
+    ctg.setSequence(cons.c_str(), cqual.c_str());
+
+    contig_bank.replace(bi->iid, ctg);
+ //break;
   }
 
   dots.end();
 
-  cerr << endl
-       << displaycount << " positions reported of " << snpcount << " total SNPs found." << endl;
+  cerr << endl;
   cerr << "Searched " << bases << " positions in " << contigcount << " contigs." << endl; 
 }
 
