@@ -271,14 +271,16 @@ int DataStore::setContigId(int id)
 
 void DataStore::fetchRead(ID_t readid, Read_t & read)
 {
+  ID_t bid = 0;
   try
   {
-    read_bank.seekg(read_bank.getIDMap().lookupBID(readid));
+    bid = read_bank.getIDMap().lookupBID(readid);
+    read_bank.seekg(bid);
     read_bank >> read;
   }
   catch (Exception_t & e)
   {
-    cerr << "ERROR in fetchRead()\n" << e;
+    cerr << "ERROR: Can't fetch read iid:" << readid << " bid: " << bid << "\n" << e;
   }
 }
 
