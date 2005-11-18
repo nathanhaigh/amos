@@ -83,6 +83,7 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 
 
 my $matesDone = 0;
+my $readsDone = 0;
 
 # this is where all my data live
 my %contigs;    # contig ids to contig length map
@@ -132,6 +133,7 @@ if (defined $frgfile){
     parseFrgFile(\*IN);
     close(IN);
     $matesDone = 1;
+    $readsDone = 1;
 }
 
 if (defined $fastafile){
@@ -144,6 +146,7 @@ if (defined $fastafile){
 	parseFastaFile(\*IN);
     }
     close(IN);
+    $readsDone = 1;
 }
 
 if (defined $posfile){
@@ -632,6 +635,7 @@ sub parseFastaFile
 
 	my $id = $minSeqId++;
 	$seqnames{$id} = $seqname;
+#	print STDERR "got $seqname $id\n";
 	$seqids{$seqname} = $id;
 
 	# so we don't overwrite an externally provided clear range
@@ -1215,6 +1219,7 @@ sub parseACEFile {
 	    # assign sequence id and populate all necessary data-structures
 	    my $seqId;
 	    if (! exists $seqids{$seqName}){
+#		print STDERR "Couldnt find id for $seqName\n";
 		$seqId = $minSeqId++;
 		$seqids{$seqName} = $seqId;
 		$seqnames{$seqId} = $seqName;
@@ -1225,6 +1230,28 @@ sub parseACEFile {
 	    $contigseq{$iid} .= "$seqId ";
 	    $seq_range{$seqId} = "$cll $clr";
 	    $asm_range{$seqId} = "$asml $asmr";
+	    if ($readsDone == 0){ # no read info, must generate
+		my $qualdata = "";
+		$seq =~ s/-//g;
+		print TMPSEQ "#$seqId\n";
+		for (my $i = 0; $i <= length($seq); $i+= 60){
+		    print TMPSEQ substr($seq, $i, 60), "\n";
+		}
+		print TMPSEQ "#\n";
+		for (my $i = 0; $i < $cll; $i++){
+		    $qualdata .= chr(ord('0') + $BADQUAL);
+		}
+		for (my $i = $cll; $i < $clr; $i++){
+		    $qualdata .= chr(ord('0') + $GOODQUAL);
+		}
+		for (my $i = $clr; $i < length($seq); $i++){
+		    $qualdata .= chr(ord('0') + $BADQUAL);
+		}
+		for (my $i = 0; $i <= length($qualdata); $i+= 60){
+		    print TMPSEQ substr($qualdata, $i, 60), "\n";
+		}
+		print TMPSEQ "#\n";
+	    } # if $readsDone == 0
 	    print TMPCTG "#$seqId\n";
 	    print TMPCTG join (" ", @sdels), "\n";
 	    next;
