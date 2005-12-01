@@ -345,8 +345,8 @@ int main(int argc, char **argv)
     {
       bases++;
       pair<char, char> c = recallSlice(ci);
-      cons.append(1, c.first);
-      cqual.append(1, c.second+'0');
+      cons.push_back(c.first);
+      cqual.push_back(c.second+'0');
     }
 
     ctg.setSequence(cons.c_str(), cqual.c_str());
