@@ -32,6 +32,13 @@ TiledRead_t::TiledRead_t(Tile_t tile, Read_t red, int readidx)
   m_loffset = tile.offset;
   m_roffset = tile.offset + tile.getGappedLength() - 1;
   m_isRC = tile.range.isReverse();
+
+  int l = m_seq.size();
+
+  for (int i = 0; i < l; i++)
+  {
+    m_seq[i] = toupper(m_seq[i]);
+  }
 }
 
 int ContigIterator_t::s_tilingreadsoffset(0);
