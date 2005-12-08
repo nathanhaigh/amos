@@ -14,6 +14,7 @@ dist_bin_SCRIPTS = \
 	benchmark_qual.pl \
 	benchmark_seq.pl \
 	ctgovl.pl \
+    filter_contig.pl \
 	cvgChop.pl \
 	getN50.pl \
 	getlengths.pl \
