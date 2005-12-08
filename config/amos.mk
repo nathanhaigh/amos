@@ -47,6 +47,8 @@ install-bin-scripts-hook: $(dist_bin_SCRIPTS) $(bin_SCRIPTS)
                 || exit 1; \
                 ;; \
               *) \
+                echo " configuring '$$b'"; \
+                cp "$(DESTDIR)$(bindir)/$$f" "$(DESTDIR)$(bindir)/$$b" \
                 ;; \
             esac; \
             rm -f "$(DESTDIR)$(bindir)/$$f"; \
