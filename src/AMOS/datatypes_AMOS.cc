@@ -65,19 +65,13 @@ void Distribution_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Distribution_t::getNCode( ));
 
-    if ( mean != 0 )
-      {
-        ss << mean;
-        msg . setField (F_MEAN, ss . str( ));
-        ss . str (NULL_STRING);
-      }
+    ss << mean;
+    msg . setField (F_MEAN, ss . str( ));
+    ss . str (NULL_STRING);
 
-    if ( sd != 0 )
-      {
-        ss << sd;
-        msg . setField (F_SD, ss . str( ));
-        ss . str (NULL_STRING);
-      }
+    ss << sd;
+    msg . setField (F_SD, ss . str( ));
+    ss . str (NULL_STRING);
   }
   catch (ArgumentException_t) {
 

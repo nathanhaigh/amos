@@ -31,7 +31,7 @@ namespace AMOS {
 //! a large number of objects to a bank, this class is more efficient.
 //!
 //==============================================================================
-class BankStream_t : private Bank_t
+class BankStream_t : public Bank_t
 {
 
 protected:
@@ -44,16 +44,19 @@ protected:
 
 
   //--------------------------------------------------- init -------------------
-  void init ( )
+  //! \brief Initializes the stream variables
+  //!
+  void init()
   {
     eof_m = false;
     curr_bid_m = 1;
+    tellgok_m = tellpok_m = true;
     triples_m . resize (1);
   }
 
 
   //--------------------------------------------------- inrange ----------------
-  bool inrange ( )
+  bool inrange()
   {
     return ( curr_bid_m > 0  &&  curr_bid_m <= last_bid_m );
   }
@@ -61,8 +64,9 @@ protected:
 
   bool eof_m;                         //!< eof error flag
   ID_t curr_bid_m;                    //!< BID to be returned on next get
+  bool tellgok_m;                     //!< tellg() is pointing to curr_bid_m
+  bool tellpok_m;                     //!< tellp() is pointing to last_bid_m
   std::vector<const IDMap_t::HashTriple_t *> triples_m;   //!< BID,EID,IID map
-
 
 public:
 
@@ -93,7 +97,18 @@ public:
   BankStream_t (NCode_t type)
     : Bank_t (type)
   {
-    init( );
+    init();
+    triples_m [NULL_ID] = NULL;
+    buffer_size_m = DEFAULT_BUFFER_SIZE;
+    max_partitions_m = MAX_OPEN_PARTITIONS;
+  }
+
+
+  //--------------------------------------------------- BankStream_t -----------
+  BankStream_t (const std::string & type)
+    : Bank_t (type)
+  {
+    init();
     triples_m [NULL_ID] = NULL;
     buffer_size_m = DEFAULT_BUFFER_SIZE;
     max_partitions_m = MAX_OPEN_PARTITIONS;
@@ -101,47 +116,69 @@ public:
 
 
   //--------------------------------------------------- ~BankStream_t ----------
-  ~BankStream_t ( )
+  ~BankStream_t()
   {
     if ( is_open_m )
-      close( );
+      close();
   }
 
 
-  //--------------------------------------------------- clear ------------------
-  void clear ( )
+  //--------------------------------------------------- append -----------------
+  void append (IBankable_t & obj)
   {
-    Bank_t::clear( );
-    init( );
+    operator<< (obj);
+  }
+
+
+  //--------------------------------------------------- assignEID --------------
+  void assignEID (ID_t iid, const std::string & eid);
+
+
+  //--------------------------------------------------- assignIID --------------
+  void assignIID (const std::string & eid, ID_t iid);
+
+
+  //--------------------------------------------------- clean ------------------
+  //! \post Stream reset to the beginning
+  //! \post Invalidates all bankstreamoff's and BID's
+  //!
+  void clean();
+
+
+  //--------------------------------------------------- clear ------------------
+  void clear()
+  {
+    init();
+    Bank_t::clear();
   }
 
 
   //--------------------------------------------------- close ------------------
-  void close ( )
+  void close()
   {
-    Bank_t::close( );
-    init( );
+    init();
+    Bank_t::close();
   }
+
+
+  //--------------------------------------------------- concat -----------------
+  void concat (BankStream_t & source);
 
 
   //--------------------------------------------------- create -----------------
   void create (const std::string & dir, BankMode_t mode = B_READ | B_WRITE)
   {
+    init();
     Bank_t::create (dir, mode);
-    init( );
   }
 
 
   //--------------------------------------------------- destroy ----------------
-  void destroy ( )
+  void destroy()
   {
-    Bank_t::destroy( );
-    init( );
+    init();
+    Bank_t::destroy();
   }
-
-
-  //--------------------------------------------------- empty ------------------
-  bool empty ( ) const { return Bank_t::empty( ); }
 
 
   //--------------------------------------------------- eof --------------------
@@ -154,47 +191,25 @@ public:
   //!
   //! \return true if eof flag has been set, false otherwise
   //!
-  bool eof ( ) const
+  bool eof() const
   {
     return ( is_open_m ? eof_m : true );
   }
 
 
-  //--------------------------------------------------- exists -----------------
-  bool exists (const std::string & dir) { return Bank_t::exists(dir); }
+  //--------------------------------------------------- fetch ------------------
+  void fetch (ID_t iid, IBankable_t & obj)
+  {
+    tellgok_m = false;
+    Bank_t::fetch (iid, obj);
+  }
 
-
-  //--------------------------------------------------- existsEID --------------
-  bool existsEID (const std::string & eid) const
-  { return Bank_t::existsEID(eid); }
-
-
-  //--------------------------------------------------- existsIID --------------
-  bool existsIID (ID_t iid) const { return Bank_t::existsIID(iid); }
-
-
-  //--------------------------------------------------- getIDMap ---------------
-  const IDMap_t & getIDMap ( ) const { return Bank_t::getIDMap( ); }
-
-
-  //--------------------------------------------------- getIDMapSize -----------
-  Size_t getIDMapSize ( ) const { return Bank_t::getIDMapSize( ); }
-
-
-  //--------------------------------------------------- getMaxIID --------------
-  ID_t getMaxIID ( ) const { return Bank_t::getMaxIID( ); }
-
-
-  //--------------------------------------------------- getSize ----------------
-  Size_t getSize ( ) const { return Bank_t::getSize( ); }
-
-
-  //--------------------------------------------------- getStatus --------------
-  signed char getStatus ( ) const { return Bank_t::getStatus( ); }
-
-
-  //--------------------------------------------------- getType ----------------
-  NCode_t getType ( ) const { return Bank_t::getType( ); }
+  //--------------------------------------------------- fetch ------------------
+  void fetch (const std::string & eid, IBankable_t & obj)
+  {
+    tellgok_m = false;
+    Bank_t::fetch (eid, obj);
+  }
 
 
   //--------------------------------------------------- ignore -----------------
@@ -211,32 +226,42 @@ public:
   BankStream_t & ignore (bankstreamoff n);
 
 
-  //--------------------------------------------------- isOpen -----------------
-  bool isOpen ( ) const { return Bank_t::isOpen( ); }
-
-
-  //--------------------------------------------------- lookupBID --------------
-  ID_t lookupBID (ID_t iid) const
-  { return Bank_t::lookupBID(iid); }
-
-
-  //--------------------------------------------------- lookupBID --------------
-  ID_t lookupBID (const std::string & eid) const
-  { return Bank_t::lookupBID(eid); }
-
-
-  //--------------------------------------------------- lookupEID --------------
-  const std::string & lookupEID (ID_t iid) const
-  { return Bank_t::lookupEID(iid); }
-
-
-  //--------------------------------------------------- lookupIID --------------
-  ID_t lookupIID (const std::string & eid) const
-  { return Bank_t::lookupIID(eid); }
-
-
   //--------------------------------------------------- open -------------------
   void open (const std::string & dir, BankMode_t mode = B_READ | B_WRITE);
+
+
+  //--------------------------------------------------- remove -----------------
+  //! \post Invalidates only the BID of the removed object
+  //!
+  void remove (ID_t iid)
+  {
+    tellgok_m = tellpok_m = false;
+
+    ID_t bid = lookupBID (iid);
+    removeBID (bid);
+    triples_m [bid] = NULL;
+    idmap_m . remove (iid);
+  }
+
+
+  //--------------------------------------------------- remove -----------------
+  void remove (const std::string & eid)
+  {
+    tellgok_m = tellpok_m = false;
+
+    ID_t bid = lookupBID (eid);
+    removeBID (bid);
+    triples_m [bid] = NULL;
+    idmap_m . remove (eid);
+  }
+
+
+  //--------------------------------------------------- replace ----------------
+  void replace (ID_t iid, IBankable_t & obj);
+
+
+  //--------------------------------------------------- replace ----------------
+  void replace (const std::string & eid, IBankable_t & obj);
 
 
   //--------------------------------------------------- seekg ------------------
@@ -258,11 +283,17 @@ public:
   {
     if ( ! is_open_m  ||  ! (mode_m & B_READ) )
       AMOS_THROW_IO ("Cannot seekg: bank not open for reading");
-    
-    if ( dir == BEGIN ) curr_bid_m = 1;
-    else if ( dir == END ) curr_bid_m = last_bid_m + 1;
-    // else dir == CURR, do nothing
+
+    tellgok_m = false;
+    switch ( dir )
+      {
+      case BEGIN: curr_bid_m = 1; break;
+      case END:   curr_bid_m = last_bid_m + 1; break;
+      case CURR:  tellgok_m = true; break;
+      default:    AMOS_THROW ("Cannot seekg: bad bankseekdir value");
+      }
     ignore (off);
+
     return *this;
   }
 
@@ -284,14 +315,15 @@ public:
     if ( ! is_open_m  ||  ! (mode_m & B_READ) )
       AMOS_THROW_IO ("Cannot seekg: bank not open for reading");
 
-    curr_bid_m = pos;
-    eof_m = !inrange( );
+    if ( pos != curr_bid_m )
+      {
+        tellgok_m = false;
+        curr_bid_m = pos;
+        eof_m = !inrange();
+      }
+
     return *this;
   }
-
-
-  //--------------------------------------------------- setStatus --------------
-  void setStatus (signed char status) { Bank_t::setStatus(status); }
 
 
   //--------------------------------------------------- tellg ------------------
@@ -304,7 +336,7 @@ public:
   //!
   //! \return The current position of the get pointer
   //!
-  ID_t tellg ( )
+  ID_t tellg() const
   {
     return curr_bid_m;
   }
@@ -320,20 +352,20 @@ public:
   //!
   //! \return The current position of the put pointer
   //!
-  ID_t tellp ( )
+  ID_t tellp() const
   {
     return last_bid_m + 1;
   }
 
 
-  //--------------------------------------------------- operator bool( ) -------
+  //--------------------------------------------------- operator bool() --------
   //! \brief Cast the BankStream to a bool reflecting the state of !eof()
   //!
   //! \return The evaluation of !eof()
   //!
-  operator bool ( ) const
+  operator bool() const
   {
-    return ! eof( );
+    return !eof();
   }
 
 
@@ -342,9 +374,9 @@ public:
   //!
   //! \return The evaluation of eof()
   //!
-  bool operator! ( ) const
+  bool operator!() const
   {
-    return eof ( );
+    return eof();
   }
 
 

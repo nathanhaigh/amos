@@ -20,4 +20,6 @@
 #include "IDMap_AMOS.hh"
 #include "ContigIterator_AMOS.hh"
 
+#define Bank BankStream
+
 #endif // #ifndef __foundation_AMOS_HH

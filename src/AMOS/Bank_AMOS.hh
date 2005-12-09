@@ -622,23 +622,23 @@ public:
   //! \param type The type of bank to construct
   //!
   Bank_t (NCode_t type)
-    : banktype_m (type),
-      buffer_size_m (DEFAULT_BUFFER_SIZE),
-      max_partitions_m (MAX_OPEN_PARTITIONS)
+    : banktype_m (type)
   {
     init( );
     status_m = 0;
+    buffer_size_m = DEFAULT_BUFFER_SIZE;
+    max_partitions_m = MAX_OPEN_PARTITIONS;
   }
 
 
   //--------------------------------------------------- Bank_t -----------------
   Bank_t (const std::string & type)
-    : banktype_m (Encode(type)),
-      buffer_size_m (DEFAULT_BUFFER_SIZE),
-      max_partitions_m (MAX_OPEN_PARTITIONS)
+    : banktype_m (Encode(type))
   {
     init( );
     status_m = 0;
+    buffer_size_m = DEFAULT_BUFFER_SIZE;
+    max_partitions_m = MAX_OPEN_PARTITIONS;
   }
 
 

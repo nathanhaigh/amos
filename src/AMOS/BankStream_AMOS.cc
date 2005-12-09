@@ -19,6 +19,70 @@ const Size_t BankStream_t::DEFAULT_BUFFER_SIZE = 1024;
 const Size_t BankStream_t::MAX_OPEN_PARTITIONS = 2;
 
 
+//----------------------------------------------------- assignEID --------------
+void BankStream_t::assignEID (ID_t iid, const string & eid)
+{
+  ID_t bid = lookupBID (iid);
+  string peid (idmap_m . lookupEID (iid));
+  idmap_m . remove (iid);
+
+  try {
+    triples_m [bid] = idmap_m . insert (iid, eid, bid);
+  }
+  catch (Exception_t) {
+    triples_m [bid] = idmap_m . insert (iid, peid, bid);
+    throw;
+  }
+}
+
+
+//----------------------------------------------------- assignIID --------------
+void BankStream_t::assignIID (const string & eid, ID_t iid)
+{
+  ID_t bid = lookupBID (eid);
+  ID_t piid = idmap_m . lookupIID (eid);
+  idmap_m . remove (eid);
+
+  try {
+    triples_m [bid] = idmap_m . insert (iid, eid, bid);
+  }
+  catch (Exception_t) {
+    triples_m [bid] = idmap_m . insert (piid, eid, bid);
+    throw;
+  }
+}
+
+
+//----------------------------------------------------- clean ------------------
+void BankStream_t::clean()
+{
+  Bank_t::clean();
+
+  init();
+
+  const IDMap_t::HashTriple_t * tp = NULL;
+  triples_m . resize (last_bid_m + 1, tp);
+  for ( IDMap_t::const_iterator idmi = getIDMap( ) . begin( );
+        idmi != getIDMap( ) . end( ); ++ idmi )
+    triples_m [idmi -> bid] = idmi;
+}
+
+
+//----------------------------------------------------- concat -----------------
+void BankStream_t::concat (BankStream_t & s)
+{
+  Bank_t::concat (s);
+
+  eof_m = !inrange();
+
+  const IDMap_t::HashTriple_t * tp = NULL;
+  triples_m . resize (last_bid_m + 1, tp);
+  for ( IDMap_t::const_iterator idmi = getIDMap( ) . begin( );
+        idmi != getIDMap( ) . end( ); ++ idmi )
+    triples_m [idmi -> bid] = idmi;
+}
+
+
 //----------------------------------------------------- ignore -----------------
 BankStream_t & BankStream_t::ignore (bankstreamoff n)
 {
@@ -26,8 +90,8 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
     AMOS_THROW_IO ("Cannot ignore: bank not open for reading");
 
   ID_t lid;
-  bankstreamoff off;
   BankFlags_t bf;
+  bankstreamoff off;
   BankPartition_t * partition;
   Size_t skip = fix_size_m - sizeof (bankstreamoff) - sizeof (BankFlags_t);
 
@@ -36,8 +100,12 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
       lid = curr_bid_m;
       partition = localizeBID (lid);
       off = lid * fix_size_m;
-      if ( (std::streamoff)partition -> fix . tellg( ) != off )
-	partition -> fix . seekg (off, ios::beg);
+
+      if ( !tellgok_m )
+        {
+          partition -> fix . seekg (off, ios::beg);
+          tellgok_m = true;
+        }
  
       partition -> fix . ignore (sizeof (bankstreamoff));
       readLE (partition -> fix, &bf);
@@ -97,8 +165,12 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
       lid = curr_bid_m;
       partition = localizeBID (lid);
       off = lid * fix_size_m;
-      if ( (std::streamoff)partition -> fix . tellg( ) != off )
-	partition -> fix . seekg (off, ios::beg);
+
+      if ( !tellgok_m )
+        {
+          partition -> fix . seekg (off, ios::beg);
+          tellgok_m = true;
+        }
 
       readLE (partition -> fix, &vpos);
       readLE (partition -> fix, &flags);
@@ -120,7 +192,7 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
   else
     {
       obj . iid_m = trip -> iid;
-      obj . eid_m = trip -> eid;
+      obj . eid_m . assign (trip -> eid);
     }
 
   obj . flags_m = flags;
@@ -156,7 +228,13 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
     obj . flags_m . is_removed  = false;
     obj . flags_m . is_modified = false;
 
-    //-- files should alread be seeked to end
+    if ( !tellpok_m )
+      {
+        partition -> fix . seekp (0, ios::end);
+        partition -> var . seekp (0, ios::end);
+        tellpok_m = true;
+      }
+
     //-- data is written in the following order to the FIX and VAR streams
     //   FIX = [VAR streampos] [BankableFlags] [OBJECT FIX] [VAR size]
     //   VAR = [OBJECT VAR]
@@ -190,4 +268,60 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
   }
 
   return *this;
+}
+
+
+//----------------------------------------------------- replace ----------------
+void BankStream_t::replace (ID_t iid, IBankable_t & obj)
+{
+  tellgok_m = tellpok_m = false;
+
+  ID_t bid = lookupBID (iid);
+  string peid (idmap_m . lookupEID (iid));
+  idmap_m . remove (iid);
+
+  try {
+    triples_m [bid] = idmap_m . insert (obj . iid_m, obj . eid_m, bid);
+  }
+  catch (Exception_t) {
+    triples_m [bid] = idmap_m . insert (iid, peid, bid);
+    throw;
+  }
+
+  try {
+    replaceBID (bid, obj);
+  }
+  catch (Exception_t) {
+    idmap_m . remove (obj . iid_m);
+    triples_m [bid] = idmap_m . insert (iid, peid, bid);
+    throw;
+  }
+}
+
+
+//----------------------------------------------------- replace ----------------
+void BankStream_t::replace (const string & eid, IBankable_t & obj)
+{
+  tellgok_m = tellpok_m = false;
+
+  ID_t bid = lookupBID (eid);
+  ID_t piid = idmap_m . lookupIID (eid);
+  idmap_m . remove (eid);
+
+  try {
+    triples_m [bid] = idmap_m . insert (obj . iid_m, obj . eid_m, bid);
+  }
+  catch (Exception_t) {
+    triples_m [bid] = idmap_m . insert (piid, eid, bid);
+    throw;
+  }
+
+  try {
+    replaceBID (bid, obj);
+  }
+  catch (Exception_t) {
+    idmap_m . remove (obj . eid_m);
+    triples_m [bid] = idmap_m . insert (piid, eid, bid);
+    throw;
+  }
 }
