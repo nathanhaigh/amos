@@ -77,10 +77,10 @@ int main (int argc, char ** argv)
   char act;                           // action enumeration
   ifstream msgfile;                   // the message file stream
 
-  BankSet_t bnks;                     // all the banks
+  BankStreamSet_t bnks;                     // all the banks
   UniversalSet_t objs;                // all the objects
 
-  Bank_t * bp;                        // current bank
+  BankStream_t * bp;                        // current bank
   Universal_t * op;                   // current object
 
 
@@ -96,7 +96,7 @@ int main (int argc, char ** argv)
 
     //-- If OPT_ForceCreate, blast away existing banks
     if ( OPT_ForceCreate )
-      for ( BankSet_t::iterator i = bnks . begin( ); i != bnks . end( ); ++ i )
+      for ( BankStreamSet_t::iterator i = bnks.begin(); i != bnks.end(); ++ i )
         if ( i -> exists (OPT_BankName) )
           {
             i -> open (OPT_BankName);
