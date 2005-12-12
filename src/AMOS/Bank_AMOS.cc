@@ -513,6 +513,7 @@ void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
   readLE (partition -> fix, &(obj . flags_m));
   partition -> var . seekg (vpos);
   obj . readRecord (partition -> fix, partition -> var);
+  partition -> fix . ignore (sizeof (Size_t));
 
   if ( ! partition -> fix . good( )  ||  ! partition -> var . good( ) )
     AMOS_THROW_IO ("Unknown file read error in fetch, bank corrupted");
@@ -653,7 +654,7 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
 
   try {
     //-- Open the FIX and VAR partition files
-    ios::openmode mode = ios::binary | ios::ate | ios::in;
+    ios::openmode mode = ios::binary | ios::in;
     if ( (mode_m & B_WRITE) )
       mode |= ios::out;
 

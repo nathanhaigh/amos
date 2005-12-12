@@ -101,11 +101,8 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
       partition = localizeBID (lid);
       off = lid * fix_size_m;
 
-      if ( !tellgok_m )
-        {
-          partition -> fix . seekg (off, ios::beg);
-          tellgok_m = true;
-        }
+      if ( off != partition -> fix . tellg() )
+        partition -> fix . seekg (off, ios::beg);
  
       partition -> fix . ignore (sizeof (bankstreamoff));
       readLE (partition -> fix, &bf);
@@ -125,6 +122,7 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
 void BankStream_t::open (const std::string & dir, BankMode_t mode)
 {
   Bank_t::open (dir, mode);
+
   init( );
   
   const IDMap_t::HashTriple_t * tp = NULL;
@@ -166,11 +164,8 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
       partition = localizeBID (lid);
       off = lid * fix_size_m;
 
-      if ( !tellgok_m )
-        {
-          partition -> fix . seekg (off, ios::beg);
-          tellgok_m = true;
-        }
+      if ( off != partition -> fix . tellg() )
+        partition -> fix . seekg (off, ios::beg);
 
       readLE (partition -> fix, &vpos);
       readLE (partition -> fix, &flags);
@@ -197,6 +192,7 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 
   obj . flags_m = flags;
   obj . readRecord (partition -> fix, partition -> var);
+  partition -> fix . ignore (sizeof (Size_t));
 
   if ( ! partition -> fix . good( )  ||  ! partition -> var . good( ) )
     AMOS_THROW_IO ("Unknown file read error in stream fetch, bank corrupted");
@@ -228,11 +224,11 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
     obj . flags_m . is_removed  = false;
     obj . flags_m . is_modified = false;
 
-    if ( !tellpok_m )
+    if ( !ate_m )
       {
         partition -> fix . seekp (0, ios::end);
         partition -> var . seekp (0, ios::end);
-        tellpok_m = true;
+        ate_m = true;
       }
 
     //-- data is written in the following order to the FIX and VAR streams
@@ -274,7 +270,7 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
 //----------------------------------------------------- replace ----------------
 void BankStream_t::replace (ID_t iid, IBankable_t & obj)
 {
-  tellgok_m = tellpok_m = false;
+  ate_m = false;
 
   ID_t bid = lookupBID (iid);
   string peid (idmap_m . lookupEID (iid));
@@ -302,7 +298,7 @@ void BankStream_t::replace (ID_t iid, IBankable_t & obj)
 //----------------------------------------------------- replace ----------------
 void BankStream_t::replace (const string & eid, IBankable_t & obj)
 {
-  tellgok_m = tellpok_m = false;
+  ate_m = false;
 
   ID_t bid = lookupBID (eid);
   ID_t piid = idmap_m . lookupIID (eid);

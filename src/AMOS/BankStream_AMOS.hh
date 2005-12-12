@@ -50,7 +50,7 @@ protected:
   {
     eof_m = false;
     curr_bid_m = 1;
-    tellgok_m = tellpok_m = true;
+    ate_m = false;
     triples_m . resize (1);
   }
 
@@ -64,8 +64,7 @@ protected:
 
   bool eof_m;                         //!< eof error flag
   ID_t curr_bid_m;                    //!< BID to be returned on next get
-  bool tellgok_m;                     //!< tellg() is pointing to curr_bid_m
-  bool tellpok_m;                     //!< tellp() is pointing to last_bid_m
+  bool ate_m;                         //!< put pointers at end of bank
   std::vector<const IDMap_t::HashTriple_t *> triples_m;   //!< BID,EID,IID map
 
 public:
@@ -162,6 +161,8 @@ public:
 
 
   //--------------------------------------------------- concat -----------------
+  //! \post Invalidates all source bankstreamoff's and BID's
+  //!
   void concat (BankStream_t & source);
 
 
@@ -200,14 +201,12 @@ public:
   //--------------------------------------------------- fetch ------------------
   void fetch (ID_t iid, IBankable_t & obj)
   {
-    tellgok_m = false;
     Bank_t::fetch (iid, obj);
   }
 
   //--------------------------------------------------- fetch ------------------
   void fetch (const std::string & eid, IBankable_t & obj)
   {
-    tellgok_m = false;
     Bank_t::fetch (eid, obj);
   }
 
@@ -235,7 +234,7 @@ public:
   //!
   void remove (ID_t iid)
   {
-    tellgok_m = tellpok_m = false;
+    ate_m = false;
 
     ID_t bid = lookupBID (iid);
     removeBID (bid);
@@ -247,7 +246,7 @@ public:
   //--------------------------------------------------- remove -----------------
   void remove (const std::string & eid)
   {
-    tellgok_m = tellpok_m = false;
+    ate_m = false;
 
     ID_t bid = lookupBID (eid);
     removeBID (bid);
@@ -284,12 +283,11 @@ public:
     if ( ! is_open_m  ||  ! (mode_m & B_READ) )
       AMOS_THROW_IO ("Cannot seekg: bank not open for reading");
 
-    tellgok_m = false;
     switch ( dir )
       {
       case BEGIN: curr_bid_m = 1; break;
       case END:   curr_bid_m = last_bid_m + 1; break;
-      case CURR:  tellgok_m = true; break;
+      case CURR:  break;
       default:    AMOS_THROW ("Cannot seekg: bad bankseekdir value");
       }
     ignore (off);
@@ -317,7 +315,6 @@ public:
 
     if ( pos != curr_bid_m )
       {
-        tellgok_m = false;
         curr_bid_m = pos;
         eof_m = !inrange();
       }
