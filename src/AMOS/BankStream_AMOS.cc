@@ -101,8 +101,7 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
       partition = localizeBID (lid);
       off = lid * fix_size_m;
 
-      if ( off != partition -> fix . tellg() )
-        partition -> fix . seekg (off, ios::beg);
+      partition -> fix . seekg (off);
  
       partition -> fix . ignore (sizeof (bankstreamoff));
       readLE (partition -> fix, &bf);
@@ -164,8 +163,7 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
       partition = localizeBID (lid);
       off = lid * fix_size_m;
 
-      if ( off != partition -> fix . tellg() )
-        partition -> fix . seekg (off, ios::beg);
+      partition -> fix . seekg (off);
 
       readLE (partition -> fix, &vpos);
       readLE (partition -> fix, &flags);
@@ -175,8 +173,7 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
       ++ curr_bid_m;
     }
 
-  if ( (std::streamoff)partition -> var . tellg( ) != vpos )
-    partition -> var . seekg (vpos);
+  partition -> var . seekg (vpos);
 
   const IDMap_t::HashTriple_t * trip = triples_m [curr_bid_m - 1];
   if ( trip == NULL )

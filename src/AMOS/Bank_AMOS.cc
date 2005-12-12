@@ -339,7 +339,7 @@ void Bank_t::concat (Bank_t & s)
     {
       //-- Seek to the beginning of source partition
       sp = s . getPartition (i);
-      sp -> fix . seekg (0, ios::beg);
+      sp -> fix . seekg (0);
 
       while ( true )
 	{
@@ -508,7 +508,7 @@ void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
 
   bankstreamoff vpos;
   bankstreamoff off = bid * fix_size_m;
-  partition -> fix . seekg (off, ios::beg);
+  partition -> fix . seekg (off);
   readLE (partition -> fix, &vpos);
   readLE (partition -> fix, &(obj . flags_m));
   partition -> var . seekg (vpos);
@@ -654,7 +654,7 @@ Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
 
   try {
     //-- Open the FIX and VAR partition files
-    ios::openmode mode = ios::binary | ios::in;
+    ios::openmode mode = ios::binary | ios::ate | ios::in;
     if ( (mode_m & B_WRITE) )
       mode |= ios::out;
 
@@ -695,10 +695,10 @@ void Bank_t::removeBID (ID_t bid)
 
   BankFlags_t flags;
   bankstreamoff off = bid * fix_size_m + sizeof (bankstreamoff);
-  partition -> fix . seekg (off, ios::beg);
+  partition -> fix . seekg (off);
   readLE (partition -> fix, &flags);
   flags . is_removed = true;
-  partition -> fix . seekp (off, ios::beg);
+  partition -> fix . seekp (off);
   writeLE (partition -> fix, &flags);
 
   if ( ! partition -> fix . good( )  ||  ! partition -> var . good( ) )
@@ -776,7 +776,7 @@ void Bank_t::replaceBID (ID_t bid, IBankable_t & obj)
   BankPartition_t * partition = localizeBID (bid);
 
   bankstreamoff off = bid * fix_size_m;
-  partition -> fix . seekp (off, ios::beg);
+  partition -> fix . seekp (off);
   partition -> var . seekp (0, ios::end);
   bankstreamoff vpos = partition -> var . tellp( );
   writeLE (partition -> fix, &vpos);
