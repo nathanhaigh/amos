@@ -16,6 +16,7 @@ bin_PROGRAMS = \
 	merge-contigs \
 	missing-reads \
 	ovl-degr-dist \
+    po-align \
 	readinfo2cam \
 	running-cmp \
 	show-ma-asm \
@@ -101,6 +102,13 @@ kmer_cov_plot_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 kmer_cov_plot_SOURCES = \
 	kmer-cov-plot.cc
+
+##-- po-align
+po_align_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+po_align_SOURCES = \
+	po-align.cc
 
 ##-- make-consensus
 make_consensus_LDADD = \
