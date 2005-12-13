@@ -178,7 +178,7 @@ public:
       {
         while (np < cur->m_offset-1)
         {
-          cerr << ".";
+          cerr << "-";
           np++;
         }
 
@@ -299,6 +299,8 @@ public:
       return;
     }
 
+    int verbose = 0;
+
     cerr << endl << endl;
     cerr << "align:" << m_reads
          << " iid: " << id 
@@ -313,7 +315,6 @@ public:
     deque<PONode *>::iterator fi;
     vector<PONode *>::iterator pi, ppi;
 
-    int verbose = 0;
     if (verbose) {cerr << "        *     "; for (int i = 0; i < len; i++) { cerr << "   " << str[i] << "     "; } cerr << endl;}
 
     offset -= 30;
@@ -337,7 +338,7 @@ public:
         (*pi)->m_aligndir[0] = '*';
         (*pi)->m_state = m_aligncount;
 
-        if (verbose) { printAlignRow(m_startnode); }
+        if (verbose) { printAlignRow(*pi); }
 
         for (ppi = (*pi)->m_right.begin(); ppi != (*pi)->m_right.end(); ppi++)
         {
@@ -349,6 +350,7 @@ public:
     if (fringe.empty())
     {
       cerr << "No nodes at appropriate distance!!!" << endl;
+      exit(1);
     }
 
     vector<PONode *> endnodes;
@@ -356,6 +358,10 @@ public:
     int      bestscore = 0;
     char     bestdir   = '^';
     PONode * bestnode  = NULL;
+
+    int      bestcolscore = 0;
+    char     bestcoldir = ' ';
+    PONode * bestcolnode = NULL;
 
     int ENDSPACEFREE = 1;
 
@@ -446,6 +452,16 @@ public:
 
         if (verbose) { printAlignRow(n); }
 
+        // Keep track of the node with the best score in the rightmost
+        // column for end-space free where the graph is longer than
+        // the sequence.
+        if (n->m_alignscore[len] > bestcolscore)
+        {
+          bestcolscore = n->m_alignscore[len];
+          bestcoldir = n->m_aligndir[len];
+          bestcolnode = n;
+        }
+
         // mark this node as aligned, and add its right children
         n->m_state = m_aligncount;
 
@@ -470,7 +486,7 @@ public:
 
     // Find the best scoring alignment
 
-    PONode * cur;
+    PONode * cur = NULL;
     PONode * right = NULL;
 
     int pos = len;
@@ -481,6 +497,19 @@ public:
       {
         cur = *pi; bestscore = (*pi)->m_alignscore[pos]; 
       }
+    }
+
+    if (bestcolscore > bestscore)
+    {
+      bestscore = bestcolscore;
+      bestdir = bestcoldir;
+      cur = bestcolnode;
+    }
+
+    if (cur == NULL)
+    {
+      cerr << "WTF? No cur" << endl;
+      return;
     }
 
     //while (cur != m_startnode && pos > 0)
@@ -544,7 +573,7 @@ public:
     }
 
     m_readstarts[m_reads] = right;
-    cerr << "first: "; right->label(cerr) << endl;
+    if (verbose) { cerr << "first: "; right->label(cerr) << endl; }
 
     // this string was fully incorporated into the POA
     m_aligncount++;
@@ -607,14 +636,10 @@ int main (int argc, char ** argv)
         read_bank.fetch(ti->source, red);
 
         string seq = red.getSeqString(ti->range);
-
-        //seq = seq.substr(0,400);
         graph.align(seq, ti->source, ti->offset);
-
-        graph.dumpMSA();
       }
 
-      graph.dumpDot();
+      graph.dumpMSA();
     }
   }
   catch (const Exception_t & e) 
