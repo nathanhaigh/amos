@@ -7,6 +7,7 @@ amoslib_LIBRARIES = \
 	libCommon.a
 
 amosinclude_HEADERS = \
+	alloc.hh \
 	amp.hh \
 	delcher.hh \
 	delta.hh \
