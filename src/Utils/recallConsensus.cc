@@ -317,47 +317,58 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  int bases = 0;
-  int contigcount = 0;
-
-  int ccount = contig_bank.getSize();
-
-  cerr << "Recalling " << ccount << " contigs";
-
-  ProgressDots_t dots(ccount, 50);
-
-  Contig_t ctg;
-  AMOS::IDMap_t::const_iterator bi;
-  for (bi = contig_bank.getIDMap().begin();
-       bi;
-       bi++)
+  try
   {
-    contig_bank.fetch(bi->iid, ctg);
-    ContigIterator_t ci(ctg, &read_bank);
-    contigcount++;
+    int bases = 0;
+    int contigcount = 0;
 
-    dots.update(contigcount);
+    int ccount = contig_bank.getSize();
 
-    string cons;
-    string cqual;
+    cerr << "Recalling " << ccount << " contigs";
 
-    while (ci.advanceNext())
+    ProgressDots_t dots(ccount, 50);
+
+    Contig_t ctg;
+    AMOS::IDMap_t::const_iterator bi;
+    for (bi = contig_bank.getIDMap().begin();
+         bi;
+         bi++)
     {
-      bases++;
-      pair<char, char> c = recallSlice(ci);
-      cons.push_back(c.first);
-      cqual.push_back(c.second+'0');
+      contig_bank.fetch(bi->iid, ctg);
+      ContigIterator_t ci(ctg, &read_bank);
+      contigcount++;
+
+      dots.update(contigcount);
+
+      string cons;
+      string cqual;
+
+      while (ci.advanceNext())
+      {
+        bases++;
+        pair<char, char> c = recallSlice(ci);
+        cons.push_back(c.first);
+   //     cqual.push_back(c.second+'0');
+        cqual.push_back('X');
+      }
+
+
+      ctg.setSequence(cons.c_str(), cqual.c_str());
+      contig_bank.replace(bi->iid, ctg);
+   //break;
     }
 
-    ctg.setSequence(cons.c_str(), cqual.c_str());
+    dots.end();
+    cerr << endl;
+    cerr << "Searched " << bases << " positions in " << contigcount << " contigs." << endl; 
 
-    contig_bank.replace(bi->iid, ctg);
- //break;
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "Error recalling consensus: " << endl << e << endl;
+    exit(1);
   }
 
-  dots.end();
 
-  cerr << endl;
-  cerr << "Searched " << bases << " positions in " << contigcount << " contigs." << endl; 
 }
 
