@@ -51,11 +51,24 @@ class PONode
 {
 public:
   static int s_num;
-  PONode(char base): m_base(base), m_state(0), m_num(s_num++), m_offset(0) {}
+  PONode(char base): m_base(base), m_state(0), m_num(s_num++), m_offset(0), m_nextvisit(-1) {}
 
   void addSeq(int id)       { m_seqs.push_back(id); }
   void addRight(PONode * n) { m_right.push_back(n); }
   void addLeft(PONode * n)  { m_left.push_back(n);  }
+
+  void trimLeft(PONode *n)
+  {
+    vector<PONode *>::iterator vi;
+    for (vi = m_left.begin(); vi != m_left.end(); vi++)
+    {
+      if (*vi == n)
+      {
+        m_left.erase(vi);
+        return;
+      }
+    }
+  }
 
   ostream & label(ostream & os)
   {
@@ -90,6 +103,8 @@ public:
   int m_state;
   int m_num;
   int m_offset;
+  int m_nextvisit;
+
   vector <int> m_seqs;
   vector <PONode *> m_left;
   vector <PONode *> m_right;
@@ -116,6 +131,8 @@ public:
   PONode * m_startnode;
 
   map<int, PONode *> m_readstarts;
+  map<int, ID_t> m_readcount2iid;
+  map<int, int> m_readtrim;
 
   vector<PONode *> m_nodes;
 
@@ -152,60 +169,105 @@ public:
     }
   }
 
+
   void dumpMSA()
   {
     cerr << "DumpMSA" << endl;
 
     assignOffset();
 
-    vector<PONode *>::iterator pi;
-
     // Print the dotted msa for each read
     for (int readcount = 0; readcount < m_reads; readcount++)
     {
-      int np = 0;
-      PONode * cur = m_readstarts[readcount];
-      cerr << ">" << readcount << " " << cur->m_offset << endl;
+      cerr << ">" << readcount << "\t";
+      int offset = getStartOffset(readcount);
+      cerr << offset << "\t";
+      for (int j = 0; j < offset; j++) { cerr << " "; }
+      cerr << '\'';
 
-      for (int j = 0; j < cur->m_offset; j++)
+      string aligned = getAlignedString(readcount);
+      cerr << aligned << endl;
+    }
+  }
+
+  int getStartOffset(int readcount)
+  {
+    PONode * n = m_readstarts[readcount];
+
+    int trim = m_readtrim[readcount];
+    while (trim)
+    {
+      n = n->m_right[0];
+      trim--;
+    }
+
+    return n->m_offset - trim;
+  }
+
+  string getAlignedString(int readcount)
+  {
+    string aligned;
+    PONode * cur = m_readstarts[readcount];
+
+    int trim = m_readtrim[readcount];
+
+    while (trim)
+    {
+      aligned.push_back(cur->m_base);
+      cur = cur->m_right[0];
+      trim--;
+    }
+
+    int np = cur->m_offset;
+    while (cur)
+    {
+      while (np < cur->m_offset-1)
       {
-        cerr << " ";
+        aligned.push_back('-');
+        np++;
       }
 
-      np = cur->m_offset;
+      np=cur->m_offset;
+      aligned.push_back(cur->m_base);
 
-      while (cur)
+      // find the edge with the read
+      int bestdist = -1;
+      PONode * best = NULL;
+
+      vector<PONode *>::iterator pi;
+
+      for (pi = cur->m_right.begin(); pi != cur->m_right.end(); pi++)
       {
-        while (np < cur->m_offset-1)
+        if ((*pi)->hasSeq(readcount))
         {
-          cerr << "-";
-          np++;
-        }
-
-        np=cur->m_offset;
-        cerr << cur->m_base;
-
-        // find the edge with the read
-        int bestdist = -1;
-        PONode * best = NULL;
-
-        for (pi = cur->m_right.begin(); pi != cur->m_right.end(); pi++)
-        {
-          if ((*pi)->hasSeq(readcount))
+          if (!best || (*pi)->m_offset < bestdist)
           {
-            if (!best || (*pi)->m_offset < bestdist)
-            {
-              best = *pi;
-              bestdist = (*pi)->m_offset;
-            }
+            best = *pi;
+            bestdist = (*pi)->m_offset;
           }
         }
-
-        cur = best;
       }
 
-      cerr << endl;
+      cur = best;
     }
+
+    return aligned;
+  }
+
+  vector<int> getGaps(int readcount)
+  {
+    vector<int> retval;
+    string aligned = getAlignedString(readcount);
+
+    for (int i = 0; i < aligned.length(); i++)
+    {
+      if (aligned[i] == '-')
+      {
+        retval.push_back(i - retval.size());
+      }
+    }
+
+    return retval;
   }
 
   void dumpDot()
@@ -293,31 +355,35 @@ public:
 
   void align(const string & str, int id, int offset)
   {
+    m_readcount2iid[m_reads] = id;
+
     if (m_reads == 0)
     {
       seed(str);
       return;
     }
 
+    int len = str.length();
+    assignOffset();
+
     int verbose = 0;
+    //if (m_reads == 148) { verbose = 1; }
 
     cerr << endl << endl;
     cerr << "align:" << m_reads
          << " iid: " << id 
-         << " off: " << offset 
-         << " "      << str << endl;
+         << " off: " << offset
+         << " "      << str.substr(0,20) << endl;
 
-    int len = str.length();
+    if (verbose) { dumpMSA(); cerr << "        *     "; for (int i = 0; i < len; i++) { cerr << "   " << str[i] << "     "; } cerr << endl;}
 
-    assignOffset();
 
     deque<PONode *> fringe;
     deque<PONode *>::iterator fi;
     vector<PONode *>::iterator pi, ppi;
 
-    if (verbose) {cerr << "        *     "; for (int i = 0; i < len; i++) { cerr << "   " << str[i] << "     "; } cerr << endl;}
-
-    offset -= 30;
+    // Find nodes to start aligning at
+    offset -= 10;
     if (offset < 0) { offset = 0; }
 
     for (pi = m_nodes.begin(); pi != m_nodes.end(); pi++)
@@ -353,18 +419,41 @@ public:
       exit(1);
     }
 
+    // Mark nodes that will be visited in this alignment
+    int visit = 0;
+    deque<PONode *> tovisit;
+    for (fi = fringe.begin(); fi != fringe.end(); fi++) { tovisit.push_back(*fi); }
+    while (!tovisit.empty())
+    {
+      PONode * n = tovisit.front();
+      tovisit.pop_front();
+      if (n->m_nextvisit != m_aligncount)
+      {
+        n->m_nextvisit = m_aligncount;
+        visit++;
+        for (ppi = n->m_right.begin(); ppi != n->m_right.end(); ppi++)
+        {
+          tovisit.push_back(*ppi);
+        }
+      }
+    }
+    //cerr << "visit: " << visit << endl;
+
+
+
     vector<PONode *> endnodes;
 
     int      bestscore = 0;
     char     bestdir   = '^';
     PONode * bestnode  = NULL;
 
-    int      bestcolscore = 0;
+    int      bestcolscore = -100000;
     char     bestcoldir = ' ';
     PONode * bestcolnode = NULL;
 
     int ENDSPACEFREE = 1;
 
+    // Align bases
     while (!fringe.empty())
     {
       PONode * n = fringe.front();
@@ -379,7 +468,7 @@ public:
       bool allgood = true;
       for (pi = n->m_left.begin(); pi != n->m_left.end(); pi++)
       {
-        if ((*pi)->m_state != m_aligncount)
+        if (((*pi)->m_state != m_aligncount) && ((*pi)->m_nextvisit == m_aligncount))
         {
           allgood = false;
           break;
@@ -399,12 +488,15 @@ public:
         // find the row[0] value
         for (pi = n->m_left.begin(); pi != n->m_left.end(); pi++)
         {
-          int piscore = (*pi)->m_alignscore[0] + INDEL;
-
-          if (bestnode == NULL || SCORECMP(piscore, bestscore))
+          if ((*pi)->m_state == m_aligncount)
           {
-            bestscore = piscore;
-            bestnode = *pi;
+            int piscore = (*pi)->m_alignscore[0] + INDEL;
+
+            if (bestnode == NULL || SCORECMP(piscore, bestscore))
+            {
+              bestscore = piscore;
+              bestnode = *pi;
+            }
           }
         }
 
@@ -430,18 +522,21 @@ public:
           // Now try all previous nodes as both indel and mismatch
           for (pi = n->m_left.begin(); pi != n->m_left.end(); pi++)
           {
-            // match
-            int m = (*pi)->m_alignscore[i-1] + basecmp(n->m_base, str[i-1]);
-            if (SCORECMP(m, bestscore))
+            if ((*pi)->m_state == m_aligncount)
             {
-              bestnode = *pi; bestscore = m; bestdir = '\\';
-            }
+              // match
+              int m = (*pi)->m_alignscore[i-1] + basecmp(n->m_base, str[i-1]);
+              if (SCORECMP(m, bestscore))
+              {
+                bestnode = *pi; bestscore = m; bestdir = '\\';
+              }
 
-            // indel
-            m = (*pi)->m_alignscore[i] + INDEL;
-            if (SCORECMP(m, bestscore))
-            {
-              bestnode = *pi; bestscore = m; bestdir = '^';
+              // indel
+              m = (*pi)->m_alignscore[i] + INDEL;
+              if (SCORECMP(m, bestscore))
+              {
+                bestnode = *pi; bestscore = m; bestdir = '^';
+              }
             }
           }
 
@@ -481,13 +576,14 @@ public:
 
     // Now backtrack to find the optimal alignment
 
-    cerr << "Merge alignment" << endl;
+    //cerr << "Merge alignment" << endl;
 
 
     // Find the best scoring alignment
 
     PONode * cur = NULL;
     PONode * right = NULL;
+    bestscore = -10000;
 
     int pos = len;
     // Explicitly check all of the end nodes for best match
@@ -509,13 +605,27 @@ public:
     if (cur == NULL)
     {
       cerr << "WTF? No cur" << endl;
+      dumpMSA();
+      cerr << "Endnodes.size: " << endnodes.size() << endl;
+      cerr << "bestscore: " << bestscore
+           << " bestcolscore: " << bestcolscore << endl;
+      if (bestcolnode)
+      {
+        cerr << "bestcolnode: " << bestcolnode->m_num
+             << endl;
+      }
+      else
+      {
+        cerr << "bestcolnode: NULL" << endl;
+      }
+
       return;
     }
 
     //while (cur != m_startnode && pos > 0)
     while (pos > 0)
     {
-      cerr << '.';
+      //cerr << '.';
       char strbase = str[pos-1];
 
       bestdir = cur->m_aligndir[pos];
@@ -572,6 +682,24 @@ public:
       cur = left;
     }
 
+    // Might need to trim the prefix of reads
+    cur = right;
+    int trim = 0;
+    while (cur->m_right.size() == 1)
+    {
+      trim++;
+      cur->m_right[0]->trimLeft(cur);
+      cur = cur->m_right[0];
+    }
+
+    if (trim)
+    {
+      cerr << endl;
+      cerr << "###Trim: " << trim << endl;
+    }
+
+    m_readtrim[m_reads] = trim;
+
     m_readstarts[m_reads] = right;
     if (verbose) { cerr << "first: "; right->label(cerr) << endl; }
 
@@ -588,10 +716,10 @@ int main (int argc, char ** argv)
   if (argc == 1)
   {
     POGraph g;
-    g.align("TTTTTTTTTGTGT", 0, 0);
-    g.align("TTTTTTTTTGTGT", 1, 7);
-    g.dumpMSA();
+    g.align("AAAAAAAAAA", 0, 0);
+    g.align("TAAAAAAA", 1, 0);
     g.dumpDot();
+    g.dumpMSA();
     return 0;
   }
 
@@ -606,16 +734,15 @@ int main (int argc, char ** argv)
 
   BankStream_t lay_bank(Layout_t::NCODE);
   Bank_t read_bank(Read_t::NCODE);
-  //Bank_t ctg_bank(Contig_t::NCODE);
+  Bank_t ctg_bank(Contig_t::NCODE);
 
   try
   {
     lay_bank.open(bankname, B_READ);
     read_bank.open(bankname, B_READ);
 
-   // if (!ctg_bank.exists(bankname)){ctg_bank.create(bankname);}
-   // ctg_bank.open(bankname, B_READ | B_WRITE);
-
+    if (!ctg_bank.exists(bankname)){ctg_bank.create(bankname);}
+    ctg_bank.open(bankname, B_READ | B_WRITE);
 
     Layout_t lay;
     int count = 0;
@@ -623,6 +750,7 @@ int main (int argc, char ** argv)
     while (lay_bank >> lay)
     {
       cerr << "Processing layout " << count << " i: " << lay.getIID() << " e:" << lay.getEID() << endl;
+      count++;
 
       vector<Tile_t> & tiling = lay.getTiling();
       sort(tiling.begin(), tiling.end(), TileOrderCmp());
@@ -640,6 +768,37 @@ int main (int argc, char ** argv)
       }
 
       graph.dumpMSA();
+
+      int c = 0;
+      for (ti = tiling.begin(); ti != tiling.end(); ti++)
+      {
+        ti->offset = graph.getStartOffset(c);
+        ti->gaps = graph.getGaps(c);
+        c++;
+      }
+
+      Contig_t ctg;
+      ctg.setReadTiling(tiling);
+      
+      int span = ctg.getSpan();
+
+      string cons;
+      string qual;
+      for (int j = 0; j < span; j++)
+      {
+        cons.push_back('X');
+        qual.push_back('X');
+      }
+
+      string eid(lay.getEID());
+      eid += "_poalign";
+
+      ctg.setSequence(cons,qual);
+      ctg.setEID(eid);
+      ctg.setIID(ctg_bank.getMaxIID()+1);
+
+      ctg_bank.append(ctg);
+      break;
     }
   }
   catch (const Exception_t & e) 
