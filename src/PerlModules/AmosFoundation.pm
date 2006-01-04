@@ -53,6 +53,7 @@ BEGIN {
 		      &log
 		      &bail
 		      &new
+                      &setMihaiMode
                       $VERSION
                       $VERSION_STRING
                       @DEPEND);
@@ -292,6 +293,10 @@ sub log
     my $date = strftime "%F %T| ", localtime;
     
     $self->{'logStream'}->print($date . $message . "\n");
+
+    if ( defined $self->{'MihaiMode'} ) {
+        print STDERR ($date . $message . "\n");
+    }
 }# die
 
 
@@ -349,7 +354,11 @@ sub getOptions
     return $getopt_code;
 }
 
-
+sub setMihaiMode
+{
+    my $self = shift;
+    $self->{'MihaiMode'} = 1;
+}
 
 =back
 

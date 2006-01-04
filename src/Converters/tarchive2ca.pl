@@ -42,6 +42,7 @@ my $VERSION = '1.0 ($Revision$)';
 $base->setVersion($VERSION);
 
 $base->setLogFile("tarchive2ca.log");
+$base->setMihaiMode();
 
 my $HELPTEXT = qq~
     tarchive2ca -o <out_prefix> [-c <clear_ranges>] [-l <libinfo>] fasta1 ... fastan
