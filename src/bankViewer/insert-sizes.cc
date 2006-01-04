@@ -82,6 +82,9 @@ void computeInsertHappiness(vector<Tile_t> m_tiling)
   int mated = 0;
   int unmated = 0;
   int matelisted = 0;
+  
+  int happycount = 0;
+  int unhappycount = 0;
 
   vector<Tile_t>::iterator ti;
 
@@ -154,6 +157,15 @@ void computeInsertHappiness(vector<Tile_t> m_tiling)
                           libid, dist, m_tilingwidth, 
                           mi->second.second);
 
+      if (insert->m_state == 'H')
+      {
+        happycount++;
+      }
+      else
+      {
+        unhappycount++;
+      }
+
 
       if (m_connectMates && insert->reasonablyConnected())
       {
@@ -187,6 +199,9 @@ void computeInsertHappiness(vector<Tile_t> m_tiling)
   cerr << "mated: "   << mated 
        << " matelisted: " << matelisted
        << " unmated: " << unmated << endl;
+
+  cerr << "happy: " << happycount
+       << " unhappy: " << unhappycount << endl;
 }
 
 
