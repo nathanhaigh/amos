@@ -81,6 +81,7 @@ public slots:
   void toggleQVColoring();
   void toggleShowFullRange();
   void toggleDisplayQV();
+  void toggleShowConsQV();
   void togglePolymorphismView();
 
   void fontIncrease();
@@ -113,6 +114,7 @@ signals:
   void toggleShowIndicator(bool);
   void toggleDisplayQV(bool);
   void toggleLowQualityLowerCase(bool);
+  void toggleShowConsQV(bool);
   void toggleBaseColors(bool);
   void toggleSNPColoring(bool);
   void toggleHighlightDiscrepancy(bool);
@@ -144,6 +146,7 @@ private:
 
   int m_posid;
   int m_qvid;
+  int m_cqvid;
   int m_indicatorid;
   int m_highid;
   int m_prefetch;

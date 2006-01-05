@@ -52,6 +52,7 @@ signals:
     void togglePolymorphismView(bool);
     void toggleHighlightDiscrepancy(bool);
     void toggleQVColoring(bool);
+    void toggleShowConsQV(bool);
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -78,6 +79,7 @@ private:
 
     std::vector<AMOS::Tile_t> m_tiling;
     std::string m_consensus;
+    std::string m_consqual;
     std::string m_cstatus;
 
     std::vector<RenderSeq_t> m_renderedSeqs;

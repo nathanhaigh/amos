@@ -20,16 +20,18 @@ int min (int a, int b)
 struct SNPTilingOrderCmp
 {
   static int snpposition;
+  static int contiglen;
   bool operator() (const RenderSeq_t & a, const RenderSeq_t & b)
   {
-    char abase = a.base(snpposition, false, 10000000);
-    char bbase = b.base(snpposition, false, 10000000);
+    char abase = a.base(snpposition, false, contiglen);
+    char bbase = b.base(snpposition, false, contiglen);
 
     return abase < bbase;
   }
 };
 
 int SNPTilingOrderCmp::snpposition(0);
+int SNPTilingOrderCmp::contiglen(0);
 
 
 TilingFrame::TilingFrame(DataStore * datastore, 
@@ -67,8 +69,13 @@ TilingFrame::TilingFrame(DataStore * datastore,
   m_sv->addChild(m_tilingfield);
   m_sv->setPaletteBackgroundColor(UIElements::color_tiling);
 
-  m_consfield = new ConsensusField(m_consensus, m_cstatus, m_alignment,
-                                   m_gindex, this, "cons");
+  m_consfield = new ConsensusField(m_consensus, 
+                                   m_cstatus, 
+                                   m_consqual, 
+                                   m_alignment,
+                                   m_gindex, 
+                                   this, 
+                                   "cons");
 
   QBoxLayout * layout = new QVBoxLayout(this);
   layout->addWidget(m_consfield);
@@ -107,6 +114,9 @@ TilingFrame::TilingFrame(DataStore * datastore,
 
   connect(this,        SIGNAL(toggleBaseColors(bool)),
           m_consfield,   SLOT(toggleBaseColors(bool)));
+
+  connect(this,        SIGNAL(toggleShowConsQV(bool)),
+          m_consfield,   SLOT(toggleShowConsQV(bool)));
 
   connect(this,        SIGNAL(toggleShowIndicator(bool)),
           m_consfield,   SLOT(toggleShowIndicator(bool)));
@@ -165,6 +175,7 @@ void TilingFrame::setContigId(int contigId)
     {
       m_tiling = m_datastore->m_contig.getReadTiling();
       m_consensus = m_datastore->m_contig.getSeqString();
+      m_consqual = m_datastore->m_contig.getQualString();
 
       m_cstatus.erase();
       m_cstatus.resize(m_consensus.size(), ' ');
@@ -173,14 +184,17 @@ void TilingFrame::setContigId(int contigId)
       for (unsigned int i = 0; i < m_alignment->m_gaps.size(); i++)
       {
         m_consensus.insert(i+m_alignment->m_gaps[i], 1, '*');
+        m_consqual.insert (i+m_alignment->m_gaps[i], 1, '*');
         m_cstatus.insert  (i+m_alignment->m_gaps[i], 1, '*');
       }
 
       m_consensus.insert((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
       m_cstatus.insert  ((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
+      m_consqual.insert ((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
 
       m_consensus.append(m_alignment->m_endshift, '*');
       m_cstatus.append  (m_alignment->m_endshift, '*');
+      m_consqual.append (m_alignment->m_endshift, '*');
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
 
@@ -348,6 +362,7 @@ void TilingFrame::advanceNextDiscrepancy()
 void TilingFrame::sortColumns(int gindex)
 {
   SNPTilingOrderCmp::snpposition = gindex;
+  SNPTilingOrderCmp::contiglen = m_consensus.length();
   stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SNPTilingOrderCmp());
 
   vector<RenderSeq_t>::iterator vi;

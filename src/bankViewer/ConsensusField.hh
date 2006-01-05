@@ -12,6 +12,7 @@ class ConsensusField : public QFrame
 public:
     ConsensusField(const std::string & consensus,
                    const std::string & cstatsus,
+                   const std::string & consqual,
                    AlignmentInfo * ai,
                    int & gindex,
                    QWidget *parent=0,
@@ -22,6 +23,7 @@ public:
 public slots:
     void setFontSize(int fontsize);
     void toggleShowNumbers(bool doShow);
+    void toggleShowConsQV(bool doShow);
     void toggleHighlightDiscrepancy(bool doShow);
     void toggleBaseColors(bool show);
     void toggleShowIndicator(bool show);
@@ -36,6 +38,7 @@ protected:
 private:
     const std::string & m_consensus;
     const std::string & m_cstatus;
+    const std::string & m_consqual;
     AlignmentInfo * m_alignment;
     int & m_gindex;
     int m_fontsize;
@@ -43,6 +46,7 @@ private:
     bool m_highlightdiscrepancy;
     bool m_basecolors;
     bool m_showIndicator;
+    bool m_displayQV;
 
     int m_lineheight;
     int m_tilehoffset;

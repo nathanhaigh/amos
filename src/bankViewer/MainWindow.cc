@@ -83,6 +83,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange()));
   m_options->insertSeparator();
   m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleDisplayQV()));
+  m_cqvid          = m_options->insertItem("Show &Consensus QV",       this, SLOT(toggleShowConsQV()));
   m_lowquallowerid = m_options->insertItem("Lower Case &Low QV",       this, SLOT(toggleLowQualityLowerCase()));
   m_qvcolorid      = m_options->insertItem("Q&V Coloring",             this, SLOT(toggleQVColoring()));
   m_options->insertSeparator();
@@ -286,6 +287,9 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 
   connect(this,      SIGNAL(toggleDisplayQV(bool)),
           tiling,    SIGNAL(toggleDisplayQV(bool)));
+
+  connect(this,      SIGNAL(toggleShowConsQV(bool)),
+          tiling,    SIGNAL(toggleShowConsQV(bool)));
 
   connect(this,      SIGNAL(toggleQVColoring(bool)),
           tiling,    SIGNAL(toggleQVColoring(bool)));
@@ -606,6 +610,14 @@ void MainWindow::toggleDisplayQV()
   m_options->setItemChecked(m_qvid, b);
 
   emit toggleDisplayQV(b);
+}
+
+void MainWindow::toggleShowConsQV()
+{
+  bool b = !m_options->isItemChecked(m_cqvid);
+  m_options->setItemChecked(m_cqvid, b);
+
+  emit toggleShowConsQV(b);
 }
 
 void MainWindow::toggleLowQualityLowerCase()

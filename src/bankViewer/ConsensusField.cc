@@ -18,6 +18,7 @@ static int max (int a, int b)
 
 ConsensusField::ConsensusField(const string & cons,
                                const string & cstatus,
+                               const string & consqual,
                                AlignmentInfo * ai,
                                int & gindex,
                                QWidget * parent,
@@ -25,6 +26,7 @@ ConsensusField::ConsensusField(const string & cons,
    :QFrame(parent, name),
     m_consensus(cons),
     m_cstatus(cstatus),
+    m_consqual(consqual),
     m_alignment(ai),
     m_gindex(gindex)
 {
@@ -41,6 +43,7 @@ ConsensusField::ConsensusField(const string & cons,
 
   m_rangestart = -1;
   m_rangeend = -1;
+  m_displayQV = false;
 }
 
 void ConsensusField::setFontSize(int fontsize)
@@ -124,6 +127,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   }
 
 
+  int fudge = 0;
+  if (m_displayQV) { fudge = m_fontsize*.25; }
 
   for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
   {
@@ -149,6 +154,20 @@ void ConsensusField::paintEvent(QPaintEvent * event)
                m_fontsize, m_lineheight, 
                Qt::AlignHCenter | Qt::AlignBottom, s);
 
+
+    if (m_displayQV)
+    {
+      p.setPen(Qt::black);
+      p.setFont(QFont("Helvetica", m_fontsize*.6));
+
+      b = m_consqual[gindex];
+      s = QString::number(b-AMOS::MIN_QUALITY);
+
+      p.drawText(xcoord, m_consoffset-m_fontsize-5,
+                 m_fontsize, m_lineheight,
+                 Qt::AlignHCenter | Qt::AlignBottom, s);
+    }
+
     if (m_cstatus[gindex] == 'X' || m_cstatus[gindex] == '*')
     {
       p.setBrush(Qt::SolidPattern);
@@ -163,7 +182,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
         p.setBrush(Qt::black);
       }
 
-      p.drawEllipse(xcoord+m_fontsize/2-m_diam/2-1, m_discoffset,
+
+      p.drawEllipse(xcoord+m_fontsize/2-m_diam/2-1, m_discoffset-fudge,
                     m_diam, m_diam);
                     
       if (m_highlightdiscrepancy)
@@ -244,6 +264,12 @@ void ConsensusField::toggleBaseColors(bool show)
 void ConsensusField::toggleShowIndicator(bool show)
 {
   m_showIndicator = show;
+  repaint();
+}
+
+void ConsensusField::toggleShowConsQV(bool show)
+{
+  m_displayQV = show;
   repaint();
 }
 
