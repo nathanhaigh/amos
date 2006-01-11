@@ -2,10 +2,13 @@
 #include "TilingField.hh"
 #include <qscrollview.h>
 #include <qlayout.h>
+#include <qapplication.h>
+#include <qcursor.h>
 #include "ConsensusField.hh"
 #include "RenderSeq.hh"
 #include "UIElements.hh"
 #include <qregexp.h>
+#include <set>
 
 using namespace std;
 using namespace AMOS;
@@ -149,7 +152,7 @@ void TilingFrame::toggleDisplayAllChromo(bool display)
       ri->m_displayTrace = true;
     }
 
-    repaint();
+    update();
   }
   else
   {
@@ -161,10 +164,10 @@ void TilingFrame::toggleDisplayAllChromo(bool display)
 void TilingFrame::paintEvent(QPaintEvent * event)
 {
   QFrame::paintEvent(event);
-  m_consfield->repaint();
+  m_consfield->update();
 
   m_tilingfield->setSize(width(), m_sv->visibleHeight());
-  m_tilingfield->repaint();
+  m_tilingfield->update();
 }
 
 void TilingFrame::setContigId(int contigId)
@@ -217,12 +220,11 @@ void TilingFrame::setFontSize(int fontsize )
   m_fontsize = fontsize;
 
   emit fontSizeChanged(m_fontsize);
-  repaint();
+  update();
 }
 
 void TilingFrame::loadContigRange(int gindex)
 {
-  //cerr << "TF:setgindex: " << gindex << endl;
   if (m_tiling.empty()) { return; }
 
   int basespace = 5;
@@ -239,35 +241,67 @@ void TilingFrame::loadContigRange(int gindex)
 
   if (grangeStart < m_loadedStart || grangeEnd > m_loadedEnd)
   {
+    QApplication::setOverrideCursor( QCursor(Qt::WaitCursor) );
+
     m_loadedStart = max(0, grangeStart-m_loadedWidth/2);
     m_loadedEnd   = min(m_consensus.length(), grangeEnd+m_loadedWidth/2);
+
+    int writepos = 0;
+    int vectorpos = 0;
+    int orig = m_renderedSeqs.size();
+    int erase = 0;
+
+    // remove sequences that are no longer in the view window
+    //cerr << "checking to erase: " << orig << endl;
+
+    set<ID_t> keepset;
+
+    for (vectorpos = 0; vectorpos < orig; vectorpos++)
+    {
+      RenderSeq_t & r = m_renderedSeqs[vectorpos];
+      if (RenderSeq_t::hasOverlap(m_loadedStart, m_loadedEnd,
+                                  r.m_tile->offset, r.gappedLen(),
+                                  m_consensus.length()))
+      {
+        if (writepos != vectorpos)
+        {
+          m_renderedSeqs[writepos] = r;
+        }
+
+        writepos++;
+        keepset.insert(r.m_tile->source);
+      }
+      else
+      {
+        erase++;
+      }
+    }
+
+    m_renderedSeqs.resize(writepos);
+
       
     // Render the aligned sequences
     vector<Tile_t>::iterator vi;
+    vector<Tile_t>::iterator viend = m_tiling.end();
 
-    int orig = m_renderedSeqs.size();
+    orig = m_renderedSeqs.size();
     int kept = 0;
     vector<RenderSeq_t>::iterator ri;
+    int clen = m_consensus.length();
 
-    for (vi =  m_tiling.begin(); vi != m_tiling.end(); vi++)
+    for (vi = m_tiling.begin(); vi != viend; vi++)
     {
       int hasOverlap = RenderSeq_t::hasOverlap(m_loadedStart, m_loadedEnd,
-                                               vi->offset, vi->range.getLength() + vi->gaps.size(),
-                                               m_consensus.length());
+                                               vi->offset, vi->getGappedLength(),
+                                               clen);
       if (hasOverlap)
       {
         // see if this has already been rendered
         bool found = false;
-        for (ri =  m_renderedSeqs.begin();
-             ri != m_renderedSeqs.end();
-             ri++)
+
+        if (keepset.find(vi->source) != keepset.end())
         {
-          if (ri->m_tile->source == vi->source)
-          {
-            kept++;
-            found = true;
-            break;
-          }
+          found = true;
         }
 
         if (found) { continue; }
@@ -280,41 +314,30 @@ void TilingFrame::loadContigRange(int gindex)
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
         {
-          int circ = gindex % m_consensus.length();
+          int circ = gindex % clen;
           int global = m_alignment->getGlobalPos(circ);
-          if (m_cstatus[global] == '*')
-          {
-            cerr << "err" << endl;
-          }
-          else if (m_cstatus[global] == ' ')                   
-            { m_cstatus[global] = rendered.base(gindex, false, m_consensus.length()); }
 
-          else if (toupper(m_cstatus[global]) != toupper(rendered.base(gindex, false, m_consensus.length()))) 
-            { m_cstatus[global] = 'X'; }
+          if (m_cstatus[global] != 'X')
+          {
+            if (m_cstatus[global] == '*')
+            {
+              cerr << "err" << endl;
+            }
+            else if (m_cstatus[global] == ' ')                   
+            { 
+              m_cstatus[global] = rendered.base(gindex, false, clen); 
+            }
+            else if (toupper(m_cstatus[global]) != toupper(rendered.base(gindex, false, clen))) 
+            { 
+              m_cstatus[global] = 'X'; 
+            }
+          }
         }
       }
     }
+    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << kept << " of: " << orig << " erased: " << erase << endl;
 
-    // remove sequences that are no longer in the view window
-    int vectorpos = 0;
-    for (ri = m_renderedSeqs.begin(); ri != m_renderedSeqs.end();)
-         
-    {
-      if (!RenderSeq_t::hasOverlap(m_loadedStart, m_loadedEnd,
-                                   ri->m_tile->offset, ri->gappedLen(),
-                                   m_consensus.length()))
-      {
-        m_renderedSeqs.erase(ri);
-        ri = m_renderedSeqs.begin() + vectorpos;
-      }
-      else
-      {
-        vectorpos++;
-        ri++;
-      }
-    }
-
-    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << kept << " of: " << orig << endl;
+    QApplication::restoreOverrideCursor();
   }
 }
 
@@ -327,7 +350,7 @@ void TilingFrame::setGindex(int gindex)
 
   loadContigRange(gindex);
   emit gindexChanged(gindex);
-  repaint();
+  update();
 }
 
 void TilingFrame::advanceNextDiscrepancy()
@@ -372,7 +395,7 @@ void TilingFrame::sortColumns(int gindex)
   {
     vi->bgcolor = vi->base(gindex, false, m_consensus.length());
   }
-  repaint();
+  update();
 }
 
 void TilingFrame::advancePrevDiscrepancy()
