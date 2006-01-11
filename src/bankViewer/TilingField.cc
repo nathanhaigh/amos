@@ -43,6 +43,7 @@ TilingField::TilingField(DataStore * datastore,
           m_fontsize(fontsize),
           m_gindex(gindex)
 {
+
   m_datastore = datastore;
   m_width=600;
   m_height=0;
@@ -110,7 +111,7 @@ void TilingField::singleClick()
     m_renderedSeqs[dcov].loadTrace(m_datastore);
   }
 
-  repaint();
+  update();
 }
 
 void TilingField::mouseReleaseEvent( QMouseEvent * e)
@@ -150,7 +151,7 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
 
 
 
-void TilingField::paintEvent( QPaintEvent * )
+void TilingField::paintEvent( QPaintEvent * paintevent )
 {
   if (m_renderedSeqs.empty()) { resize(m_width, m_height); return; }
 
@@ -170,8 +171,6 @@ void TilingField::paintEvent( QPaintEvent * )
 
   Pos_t srangeStart = m_alignment->getContigPos(grangeStart);
   Pos_t srangeEnd = m_alignment->getContigPos(grangeEnd);
-
-
 
   // Compute the exact height we want
   vector<RenderSeq_t>::iterator ri;
@@ -202,6 +201,7 @@ void TilingField::paintEvent( QPaintEvent * )
       if (m_displayqv)        { readheight += lineheight; }
       if (ri->m_displayTrace) { readheight += m_tracespace; }
 
+      dcov++;
       ldcov += readheight;
       ri->m_displayend = ldcov;
     }
@@ -214,12 +214,23 @@ void TilingField::paintEvent( QPaintEvent * )
 
   // +1 takes care of 0dcov regions
   int height = ldcov + 1;
+  if (height > 32000) { height = 32000; }
+
+  if (m_width != this->width() || height != this->height())
+  {
+    //cerr << "Resize: " << m_width << "x" << height << endl;
+    resize(m_width, height);
+    return;
+  }
+
+  int drawtop = paintevent->rect().top();
+  int drawbottom = paintevent->rect().bottom();
+
   QString s;
 
   QPixmap pix(m_width, height);
-  pix.fill(this, 0,0);
-
   QPainter p(&pix);
+  p.setClipRegion(paintevent->region());
   QPen pen;
   pen.setColor(black);
   p.setPen(pen);
@@ -230,12 +241,14 @@ void TilingField::paintEvent( QPaintEvent * )
   int tridim = m_fontsize/2;
   int trioffset = m_fontsize/2;
 
-  emit setTilingVisibleRange(m_datastore->m_contigId, srangeStart, srangeEnd);
 
   #if DEBUGQV
-  cerr << "paintTField:" << m_renderedSeqs.size()
+  cerr << "paintTField:" << m_renderedSeqs.size() << " dcov: " << dcov << " height: " << height
        << " [" << srangeStart << "," << srangeEnd << "]" << endl;
+  cerr << "Draw top: " << drawtop << " bottom: " << drawbottom << endl;
   #endif
+
+  dcov = 0;
 
   for (ri =  m_renderedSeqs.begin();
        ri != m_renderedSeqs.end(); 
@@ -257,15 +270,19 @@ void TilingField::paintEvent( QPaintEvent * )
       if (!hasOverlap)
       {
         cerr << "wtf?" << endl;
-
       }
 
       ldcov = ri->m_displaystart;
+      dcov++;
 
       int readheight = lineheight; // seqname
       if (m_displayqv)        { readheight += lineheight; }
       if (ri->m_displayTrace) { readheight += m_tracespace; }
 
+      if ((ldcov > height) || (ldcov > drawbottom) || ((ldcov+readheight) < drawtop))
+      {
+        continue;
+      }
 
       QColor bgcolor;
       if (m_snpcoloring)
@@ -278,20 +295,13 @@ void TilingField::paintEvent( QPaintEvent * )
       }
     
       // background rectangle
-      if (dcov % 2)
-      {
-        bgcolor = bgcolor.light(150);
-      }
-      else
-      {
-        bgcolor = bgcolor.light(175);
-      }
+      if (dcov % 2) { bgcolor = bgcolor.light(175); }
+      else          { bgcolor = bgcolor.light(150); }
 
       p.setPen(bgcolor);
       p.setBrush(bgcolor);
 
       p.drawRect(0, ldcov, m_width, readheight);
-      dcov++;
 
       // black pen
       p.setPen(black);
@@ -378,18 +388,20 @@ void TilingField::paintEvent( QPaintEvent * )
           {
             QColor bg;
 
-            int h = 0, s = 0, v = 60 + qv*3;
-
-            if (bad && m_qvcoloring)
-            {
-              h = 300; s = 220 ; v = (int)(160 + 1.5*qv);
-            }
-
-            bg.setHsv(h,s,v);
-
             if (bad && !m_qvcoloring)
             {
               bg = UIElements::color_discrepancy;
+            }
+            else
+            {
+              int h = 0, s = 0, v = 60 + qv*3;
+
+              if (bad && m_qvcoloring)
+              {
+                h = 300; s = 220 ; v = (int)(160 + 1.5*qv);
+              }
+
+              bg.setHsv(h,s,v);
             }
 
             p.setBrush(bg);
@@ -549,15 +561,13 @@ void TilingField::paintEvent( QPaintEvent * )
   }
 
   p.end();
-
+  
   p.begin(this);
+  p.setClipRegion(paintevent->region());
   p.drawPixmap(0, 0, pix);
   p.end();
 
-  if (m_width != this->width() || height != this->height())
-  {
-    resize(m_width, height);
-  }
+  emit setTilingVisibleRange(m_datastore->m_contigId, srangeStart, srangeEnd);
 }
 
 
@@ -575,47 +585,47 @@ void TilingField::setSize(int width, int height)
 void TilingField::toggleHighlightDiscrepancy(bool show)
 {
   m_highlightdiscrepancy = show;
-  repaint();
+  update();
 }
 
 void TilingField::toggleBaseColors(bool showColors)
 {
   m_basecolors = showColors;
-  repaint();
+  update();
 }
 
 void TilingField::toggleShowFullRange(bool showFull)
 {
   m_fullseq = showFull;
-  repaint();
+  update();
 }
 
 void TilingField::toggleDisplayQV(bool show)
 {
   m_displayqv = show;
-  repaint();
+  update();
 }
 
 void TilingField::toggleLowQualityLowerCase(bool dolower)
 {
   m_lowquallower = dolower;
-  repaint();
+  update();
 }
 
 void TilingField::toggleSNPColoring(bool doColor)
 {
   m_snpcoloring = doColor;
-  repaint();
+  update();
 }
 
 void TilingField::togglePolymorphismView(bool doPV)
 {
   m_polymorphismView = doPV;
-  repaint();
+  update();
 }
 
 void TilingField::toggleQVColoring(bool doqvc)
 {
   m_qvcoloring = doqvc;
-  repaint();
+  update();
 }
