@@ -21,8 +21,9 @@ public:
   }
 
   // contig gindex -> global numbering
-  int getGlobalPos(int gindex)
+  inline int getGlobalPos(int gindex)
   {
+    return gindex;
     int retval = gindex;
     for (unsigned int i = 0; i < m_gaps.size(); i++)
     {
