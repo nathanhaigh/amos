@@ -175,14 +175,11 @@ void RenderSeq_t::load(DataStore * datastore, Tile_t * tile)
 {
   m_tile = tile;
   datastore->fetchRead(tile->source, m_read);
-  Range_t range = tile->range;
 
   m_loffset = tile->offset;
-  m_roffset = tile->offset + tile->range.getLength() + tile->gaps.size() - 1; 
+  m_roffset = tile->offset + tile->getGappedLength() - 1; 
 
-  m_rc = 0;
-  if (tile->range.begin > tile->range.end) { m_rc = 1; range.swap();} 
-
+  m_rc = tile->range.isReverse();
   m_rangebegin = m_tile->range.begin;
 
   // Render the full gapped sequence
@@ -198,13 +195,15 @@ void RenderSeq_t::load(DataStore * datastore, Tile_t * tile)
   }
 
   // last aligned base is the first plus the gapped aligned range
-  m_rangeend = m_rangebegin + m_tile->range.getLength() + m_tile->gaps.size() -1;
+  m_rangeend = m_rangebegin + m_tile->getGappedLength() -1;
+
+  vector<Pos_t>::const_iterator lastgap = m_tile->gaps.end();
 
   // Insert gaps
   Pos_t gapcount;
   vector<Pos_t>::const_iterator g;
   for (g =  m_tile->gaps.begin(), gapcount = 0; 
-       g != m_tile->gaps.end(); 
+       g != lastgap;
        g++, gapcount++)
   {
     unsigned int gappos = *g+gapcount+m_rangebegin;
