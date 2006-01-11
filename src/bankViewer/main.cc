@@ -4,6 +4,7 @@
 
 #include "MainWindow.hh"
 #include "icons/AAI.xpm"
+#include <qcursor.h>
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -38,6 +39,7 @@ int main( int argc, char **argv )
 
   QApplication a( argc, argv );
 
+
   QPixmap pixmap((const char **)AAI_xpm);
   
   if (a.argc() > 1)
@@ -49,13 +51,14 @@ int main( int argc, char **argv )
     p.end();
   }
 
-
 #ifdef HAVE_QT_333
   QSplashScreen * splash = new QSplashScreen(pixmap);
   splash->show();
 #else
   SplashScreen * splash = new SplashScreen(pixmap);
 #endif
+
+  splash->setCursor(Qt::waitCursor);
 
   MainWindow w(NULL, "mainwindow");
   w.setGeometry( 100, 100, 700, 355 );
