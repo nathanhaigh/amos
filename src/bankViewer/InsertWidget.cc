@@ -437,13 +437,33 @@ void InsertWidget::initializeTiling()
 
     cerr << "Mapping read tiling for " << m_ctiling.size() << " contigs... ";
 
-    vector<Tile_t>::const_iterator ci;
+    int lendiff = 0;
+
+    vector<Tile_t>::iterator ci;
     for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
     {
       Contig_t contig;
       m_datastore->fetchContig(ci->source, contig);
 
+      ci->offset += lendiff; // shift the start of the contig by the cummulative length difference
+
       int clen = contig.getLength();
+
+      Range_t scaffrange = ci->range;
+
+      // Ensure contig coordinates are gapped
+      if (scaffrange.isReverse())
+      {
+        scaffrange.begin = scaffrange.end+clen;
+        lendiff += scaffrange.begin - ci->range.begin;
+      }
+      else
+      {
+        scaffrange.end = scaffrange.begin+clen; 
+        lendiff += scaffrange.end - ci->range.end;
+      }
+
+      ci->range = scaffrange;
 
       vector<Tile_t> & rtiling = contig.getReadTiling();
       vector<Tile_t>::const_iterator ri;
