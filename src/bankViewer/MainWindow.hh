@@ -58,6 +58,7 @@ public slots:
   void chooseContig();
   void newConnect(ClientSocket * s);
   void setContigLocation(QString, int);
+  void jumpToRead(int iid);
   void initializeSimpleServer(int port);
   void enableTraceFetch(bool dofetch);
 

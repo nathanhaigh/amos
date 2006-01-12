@@ -25,12 +25,13 @@ signals:
 
   void readIIDHighlighted(const QString &);
   void readEIDHighlighted(const QString &);
+  void jumpToRead(int iid);
 
 
 public slots:
+  void highlightRead(int iid);
   void highlightIID(const QString & qeid);
   void highlightEID(const QString & qeid);
-  void highlightIID(AMOS::ID_t iid);
 
 protected:
   void contentsMousePressEvent(QMouseEvent* e);

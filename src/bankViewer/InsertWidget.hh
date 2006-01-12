@@ -72,6 +72,9 @@ signals:
   void setGindex(int gindex);
   void setContigId(int contigid);
 
+  void jumpToRead(int iid);
+
+  void highlightRead(int iid);
   void highlightIID(const QString & qiid);
   void highlightEID(const QString & qeid);
 

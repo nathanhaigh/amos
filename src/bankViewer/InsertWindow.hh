@@ -57,6 +57,8 @@ signals:
   void setTintFeatures(bool);
   void setTintHappiness(bool);
 
+  void highlightRead(int);
+
 private:
 
   void buildLibraryMenu();

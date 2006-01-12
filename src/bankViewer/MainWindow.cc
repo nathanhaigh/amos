@@ -274,16 +274,16 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 {
   connect(this,      SIGNAL(gindexChanged(int)),
-          tiling,    SLOT(setGindex(int)));
+          tiling,      SLOT(setGindex(int)));
 
   connect(this,      SIGNAL(highlightRead(int)),
-          tiling,    SLOT(highlightRead(int)));
+          tiling,      SLOT(highlightRead(int)));
 
   connect(this,      SIGNAL(toggleDisplayAllChromo(bool)),
-          tiling,    SLOT(toggleDisplayAllChromo(bool)));
+          tiling,      SLOT(toggleDisplayAllChromo(bool)));
 
   connect(this,      SIGNAL(setFontSize(int)),
-          tiling,    SLOT(setFontSize(int)));
+          tiling,      SLOT(setFontSize(int)));
 
   connect(this,      SIGNAL(toggleDisplayQV(bool)),
           tiling,    SIGNAL(toggleDisplayQV(bool)));
@@ -320,22 +320,22 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 
   if (isReference)
   {
-    connect(tiling,    SIGNAL(gindexChanged(int)),
+    connect(tiling,  SIGNAL(gindexChanged(int)),
             this,      SLOT(setGindex(int)));
 
-    connect(tiling,    SIGNAL(setGindexRange(int, int)),
+    connect(tiling,  SIGNAL(setGindexRange(int, int)),
             this,      SLOT(setGindexRange(int, int)));
 
-    connect(this,      SIGNAL(contigIdSelected(int)),
+    connect(this,    SIGNAL(contigIdSelected(int)),
             tiling,    SLOT(setContigId(int)));
     
-    connect(this,      SIGNAL(searchString(const QString &, bool)),
+    connect(this,    SIGNAL(searchString(const QString &, bool)),
             tiling,    SLOT(searchString(const QString &, bool)));
 
-    connect(this,      SIGNAL(advanceNextDiscrepancy()),
+    connect(this,    SIGNAL(advanceNextDiscrepancy()),
             tiling,    SLOT(advanceNextDiscrepancy()));
 
-    connect(this,      SIGNAL(advancePrevDiscrepancy()),
+    connect(this,    SIGNAL(advancePrevDiscrepancy()),
             tiling,    SLOT(advancePrevDiscrepancy()));
   }
 }
@@ -384,6 +384,27 @@ void MainWindow::setContigLocation(const QString contigid, int pos)
   setGindex(pos);
 }
 
+void MainWindow::jumpToRead(int iid)
+{
+  DataStore::IdLookup_t::iterator rcl = m_datastore.m_readcontiglookup.find(iid);
+  if (rcl != m_datastore.m_readcontiglookup.end())
+  {
+    setContigId(rcl->second);
+    vector<AMOS::Tile_t>::iterator ti;
+    for (ti = m_datastore.m_contig.getReadTiling().begin();
+         ti != m_datastore.m_contig.getReadTiling().end();
+         ti++)
+    {
+      if (ti->source == iid)
+      {
+        emit setGindex(ti->offset);
+        emit highlightRead(ti->source);
+        break;
+      }
+    }
+  }
+}
+
 
 
 void MainWindow::chooseBank()
@@ -418,6 +439,9 @@ void MainWindow::showInserts()
 
     connect(this,           SIGNAL(bankSelected()),
             m_insertWindow, SLOT(bankChanged()));
+
+    connect(this,           SIGNAL(highlightRead(int)),
+            m_insertWindow, SIGNAL(highlightRead(int)));
   }
 
   m_insertWindow->show();
@@ -710,8 +734,8 @@ void MainWindow::showReadPicker()
   connect(m_readPicker, SIGNAL(highlightRead(int)),
           this,         SIGNAL(highlightRead(int)));
 
-  connect(this, SIGNAL(contigIdSelected(int)),
-          m_readPicker, SLOT(contigIdSelected(int)));
+  connect(this,         SIGNAL(contigIdSelected(int)),
+          m_readPicker,   SLOT(contigIdSelected(int)));
 }
 
 void MainWindow::showLibPicker()

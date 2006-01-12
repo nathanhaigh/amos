@@ -132,7 +132,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_libcolorid = m_optionsmenu->insertItem("Color By &Library", this, SLOT(toggleColorByLibrary()));
   m_optionsmenu->setItemChecked(m_libcolorid, false);
 
-  m_matecolorid = m_optionsmenu->insertItem("Color By &Mated Contig", this, SLOT(toggleColorByMate()));
+  m_matecolorid = m_optionsmenu->insertItem("Color By Lin&ked Contig", this, SLOT(toggleColorByMate()));
   m_optionsmenu->setItemChecked(m_matecolorid, false);
 
   // Main Widget
@@ -208,6 +208,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(newContig()),
           iw,   SLOT(contigChanged()));
 
+  connect(this, SIGNAL(highlightRead(int)),
+          iw,   SIGNAL(highlightRead(int)));
+
   connect(parent, SIGNAL(bankSelected()),
           iw,   SLOT(refreshWidget()));
 
@@ -216,6 +219,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(iw, SIGNAL(readEIDHighlighted(const QString &)),
           eidpick, SLOT(setText(const QString &)));
+
+  connect(iw, SIGNAL(jumpToRead(int)),
+          parent, SLOT(jumpToRead(int)));
 
 
   zoom->setValue(32);

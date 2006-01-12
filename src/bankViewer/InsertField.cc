@@ -68,16 +68,16 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
 void InsertField::highlightEID(const QString & qeid)
 {
   AMOS::ID_t iid = m_datastore->read_bank.lookupIID(qeid.ascii());
-  highlightIID(iid);
+  highlightRead(iid);
 }
 
 void InsertField::highlightIID(const QString & qiid)
 {
   AMOS::ID_t iid = (AMOS::ID_t) (qiid.toUInt());
-  highlightIID(iid);
+  highlightRead(iid);
 }
 
-void InsertField::highlightIID(AMOS::ID_t iid)
+void InsertField::highlightRead(int iid)
 {
   if (iid == AMOS::NULL_ID)
   {
@@ -108,6 +108,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   QCanvasItemList l = canvas()->collisions(real);
 
   int gindex = 16*real.x() - m_hoffset;
+  int jumptoread = 0;
 
   bool jump = true;
   bool emitstatus = true;
@@ -121,6 +122,11 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
       bool highlight = !iitem->m_highlight;
       bool highlightBuddy = e->button() == RightButton;
+
+      if (e->state() == Qt::ControlButton)
+      {
+        jumptoread = iitem->m_insert->m_bid;
+      }
 
       highlightInsert(iitem, highlight, highlightBuddy);
       jump = false;
@@ -209,6 +215,11 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   if (jump)
   {
     emit setGindex(gindex);
+  }
+
+  if (jumptoread)
+  {
+    emit jumpToRead(jumptoread);
   }
 }
 
