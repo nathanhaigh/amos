@@ -48,7 +48,7 @@ public:
     CompressedMate = 'C',
     OrientationViolation = 'O',
     MissingMate = 'M',
-    LinkingMate = 'L',
+    SingletonMate = 'L',
     NoMate = 'N',
   };
 

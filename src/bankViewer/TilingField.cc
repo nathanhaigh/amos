@@ -229,8 +229,11 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   QString s;
 
   QPixmap pix(m_width, height);
+  pix.fill(this, 0, 0);
+
   QPainter p(&pix);
   p.setClipRegion(paintevent->region());
+
   QPen pen;
   pen.setColor(black);
   p.setPen(pen);

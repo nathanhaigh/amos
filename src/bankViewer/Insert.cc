@@ -129,7 +129,7 @@ Insert::Insert(ID_t     aid,
   }
   else if (atile)
   {
-    m_state = LinkingMate;
+    m_state = MissingMate;
     m_loffset = arange.begin;
     m_roffset = arange.end;
 
@@ -139,31 +139,18 @@ Insert::Insert(ID_t     aid,
       m_length = m_roffset - m_loffset + 1;
       m_active = 0;
     }
-    else
+    else if (bcontig == NULL_ID)
     {
-      int projected = getProjectedPosition(atile, m_dist);
-
-      if (m_arc)
-      { if (projected > 0)       { m_state = MissingMate; } }
-      else
-      { if (projected < conslen) { m_state = MissingMate; } }
+      m_state = SingletonMate;
     }
-  }
-  else if (btile)
-  {
-    m_state = LinkingMate;
-    m_loffset = brange.begin;
-    m_roffset = brange.end;
-
-    int projected = getProjectedPosition(btile, m_dist);
-
-    if (m_brc)
-    { if (projected > 0)       { m_state = MissingMate; } }
-    else
-    { if (projected < conslen) { m_state = MissingMate; } }
   }
   else
   {
+    if (btile)
+    {
+      throw "btile, but no atile!";
+    }
+
     throw "No Tile!";
   }
 
@@ -278,9 +265,9 @@ static const char * happystr       = "Happy";
 static const char * stretchedstr   = "Stretched Mate";
 static const char * compressedstr  = "Compressed Mate";
 static const char * orientationstr = "Orientation Violation";
-static const char * missingstr     = "Missing Mate";
-static const char * linkingstr     = "Linking Mate";
-static const char * unmatedstr     = "No Mate";
+static const char * missingstr     = "Linking Mate";
+static const char * singletonstr   = "Singleton Mate";
+static const char * unmatedstr     = "Unmated";
 static const char * unknownstr     = "Unknown";
 
 const char * Insert::getInsertTypeStr(MateState state)
@@ -292,7 +279,7 @@ const char * Insert::getInsertTypeStr(MateState state)
     case CompressedMate:       return compressedstr;
     case OrientationViolation: return orientationstr;
     case MissingMate:          return missingstr;
-    case LinkingMate:          return linkingstr;
+    case SingletonMate:        return singletonstr;
     case NoMate:               return unmatedstr;
     default:                   return unknownstr;
   }

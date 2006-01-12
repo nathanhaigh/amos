@@ -285,7 +285,6 @@ void TilingFrame::loadContigRange(int gindex)
     vector<Tile_t>::iterator viend = m_tiling.end();
 
     orig = m_renderedSeqs.size();
-    int kept = 0;
     vector<RenderSeq_t>::iterator ri;
     int clen = m_consensus.length();
 
@@ -335,7 +334,7 @@ void TilingFrame::loadContigRange(int gindex)
         }
       }
     }
-    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << kept << " of: " << orig << " erased: " << erase << endl;
+    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << orig << " erased: " << erase << endl;
 
     QApplication::restoreOverrideCursor();
   }

@@ -19,7 +19,7 @@ void InsertPosition::setVisibleRange(int start, double scale)
   m_start = start;
   m_scale = scale;
 
-  repaint();
+  update();
 }
 
 void InsertPosition::paintEvent(QPaintEvent * e)

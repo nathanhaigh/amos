@@ -10,7 +10,7 @@ QColor UIElements::color_discrepancy(153, 102, 255);
 QColor UIElements::color_Happy(Qt::green);
 QColor UIElements::color_StretchedMate(Qt::blue);
 QColor UIElements::color_CompressedMate(QColor(255,165,0));
-QColor UIElements::color_LinkingMate(Qt::yellow);
+QColor UIElements::color_SingletonMate(Qt::yellow);
 QColor UIElements::color_OrientationViolation(Qt::red);
 QColor UIElements::color_MissingMate(Qt::magenta);
 QColor UIElements::color_NoMate(Qt::cyan);
@@ -131,7 +131,7 @@ QColor & UIElements::getInsertColor(Insert::MateState state)
     case Insert::Happy:                return color_Happy;
     case Insert::StretchedMate:        return color_StretchedMate;
     case Insert::CompressedMate:       return color_CompressedMate;
-    case Insert::LinkingMate:          return color_LinkingMate;
+    case Insert::SingletonMate:        return color_SingletonMate;
     case Insert::OrientationViolation: return color_OrientationViolation;
     case Insert::MissingMate:          return color_MissingMate;
     case Insert::NoMate:               return color_NoMate;

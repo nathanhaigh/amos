@@ -84,6 +84,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_showFeatures   = 1;
   m_paintScaffold  = 1;
   m_colorByLibrary = 0;
+  m_colorByMate    = 0;
   m_tintHappiness  = 0;
   m_tintFeatures   = 0;
 
@@ -665,8 +666,9 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  typedef map <ID_t, QColor> LibColorMap;
-  LibColorMap libColorMap;
+  typedef map <ID_t, QColor> ColorMap;
+  ColorMap libColorMap;
+  ColorMap contigColorMap;
 
   if (m_colorByLibrary || m_cestats)
   {
@@ -981,25 +983,41 @@ void InsertWidget::paintCanvas()
         InsertCanvasItem * iitem = new InsertCanvasItem(inserthpos, vpos,
                                                         insertlength, m_seqheight,
                                                         *ii, m_icanvas);
+
+        QColor insertcolor(UIElements::getInsertColor((*ii)->m_state));
+
         if (m_colorByLibrary)
         {
-          QColor insertcolor(Qt::cyan);
+          insertcolor = Qt::cyan;
 
-          LibColorMap::const_iterator lci = libColorMap.find((*ii)->m_libid);
+          ColorMap::const_iterator lci = libColorMap.find((*ii)->m_libid);
 
           if (lci != libColorMap.end())
           {
             insertcolor = lci->second;
           }
-
-          iitem->setPen(insertcolor);
-          iitem->setBrush(insertcolor);
         }
-        else
+        else if (m_colorByMate && ((*ii)->m_state == Insert::MissingMate))
         {
-          iitem->setPen(UIElements::getInsertColor((*ii)->m_state));
-          iitem->setBrush(UIElements::getInsertColor((*ii)->m_state));
+          ColorMap::iterator cci = contigColorMap.find((*ii)->m_bcontig);
+
+          if (cci == contigColorMap.end())
+          {
+            int s = contigColorMap.size();
+            int i = s % strlen(Insert::allstates);
+            int j = (s / strlen(Insert::allstates)) % 2;
+
+            insertcolor = UIElements::getInsertColor((Insert::MateState)Insert::allstates[i]);
+            if (j == 1) { insertcolor = insertcolor.dark(200);  }
+
+            cci = contigColorMap.insert(make_pair((*ii)->m_bcontig, insertcolor)).first;
+          }
+
+          insertcolor = cci->second;
         }
+
+        iitem->setPen(insertcolor);
+        iitem->setBrush(insertcolor);
 
         iitem->show();
       }
@@ -1130,6 +1148,12 @@ void InsertWidget::setTintFeatures(bool b)
 void InsertWidget::setColorByLibrary(bool b)
 {
   m_colorByLibrary = b;
+  paintCanvas();
+}
+
+void InsertWidget::setColorByMate(bool b)
+{
+  m_colorByMate = b;
   paintCanvas();
 }
 

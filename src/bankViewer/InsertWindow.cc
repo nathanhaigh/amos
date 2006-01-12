@@ -21,7 +21,8 @@ using namespace std;
 InsertWindow::InsertWindow(DataStore * datastore,
                            QWidget * parent,
                            const char * name)
-  : QMainWindow(parent, name)
+  : QMainWindow(parent, name),
+    m_datastore(datastore)
 {
   resize(800,600);
   setCaption("AI - Inserts");
@@ -50,35 +51,13 @@ InsertWindow::InsertWindow(DataStore * datastore,
   BufferedLineEdit * eidpick = new BufferedLineEdit(options, "eidpick");
 
   const char * states = Insert::allstates;
-
-  // Libraries
-  QPopupMenu * m_libmenu = new QPopupMenu(this);
-  menuBar()->insertItem("&Libraries", m_libmenu);
-
   unsigned int type = 0;
 
-  DataStore::LibLookup_t::iterator li;
-  for (li =  datastore->m_libdistributionlookup.begin();
-       li != datastore->m_libdistributionlookup.end();
-       li++)
-  {
-    char state = states[type];
-    QPixmap rect(10,10);
+  // Libraries
+  m_libmenu = new QPopupMenu(this);
+  menuBar()->insertItem("&Libraries", m_libmenu);
+  buildLibraryMenu();
 
-    QPainter p(&rect);
-    p.fillRect(rect.rect(), UIElements::getInsertColor((Insert::MateState)state));
-    p.end();
-
-    QString name = QString::number(li->first); 
-    name += " [" + QString::number(li->second.mean); 
-    name += " +/- " + QString::number(li->second.sd);
-    name += "]";
-
-    m_libmenu->insertItem(QIconSet(rect), name);
-
-    type++;
-    if (type >= strlen(Insert::allstates)) { type = 0; }
-  }
 
   QPopupMenu * m_featmenu = new QPopupMenu(this);
   menuBar()->insertItem("&Features", m_featmenu);
@@ -97,9 +76,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
     m_featmenu->insertItem(QIconSet(rect), name);
   }
-
-
-
 
   // Display Types
   m_typesmenu = new QPopupMenu(this);
@@ -155,6 +131,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   m_libcolorid = m_optionsmenu->insertItem("Color By &Library", this, SLOT(toggleColorByLibrary()));
   m_optionsmenu->setItemChecked(m_libcolorid, false);
+
+  m_matecolorid = m_optionsmenu->insertItem("Color By &Mated Contig", this, SLOT(toggleColorByMate()));
+  m_optionsmenu->setItemChecked(m_matecolorid, false);
 
   // Main Widget
   InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
@@ -223,6 +202,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(setColorByLibrary(bool)),
           iw,   SLOT(setColorByLibrary(bool)));
 
+  connect(this, SIGNAL(setColorByMate(bool)),
+          iw,   SLOT(setColorByMate(bool)));
+
   connect(this, SIGNAL(newContig()),
           iw,   SLOT(contigChanged()));
 
@@ -237,6 +219,37 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 
   zoom->setValue(32);
+}
+
+void InsertWindow::buildLibraryMenu()
+{
+  m_libmenu->clear();
+
+  unsigned int type = 0;
+  const char * states = Insert::allstates;
+
+  DataStore::LibLookup_t::iterator li;
+  for (li =  m_datastore->m_libdistributionlookup.begin();
+       li != m_datastore->m_libdistributionlookup.end();
+       li++)
+  {
+    char state = states[type];
+    QPixmap rect(10,10);
+
+    QPainter p(&rect);
+    p.fillRect(rect.rect(), UIElements::getInsertColor((Insert::MateState)state));
+    p.end();
+
+    QString name = QString::number(li->first); 
+    name += " [" + QString::number(li->second.mean); 
+    name += " +/- " + QString::number(li->second.sd);
+    name += "]";
+
+    m_libmenu->insertItem(QIconSet(rect), name);
+
+    type++;
+    if (type >= strlen(Insert::allstates)) { type = 0; }
+  }
 }
 
 
@@ -337,4 +350,17 @@ void InsertWindow::toggleColorByLibrary()
   m_optionsmenu->setItemChecked(m_libcolorid, b);
 
   emit setColorByLibrary(b);
+}
+
+void InsertWindow::toggleColorByMate()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_matecolorid);
+  m_optionsmenu->setItemChecked(m_matecolorid, b);
+
+  emit setColorByMate(b);
+}
+
+void InsertWindow::bankChanged()
+{
+  buildLibraryMenu();
 }

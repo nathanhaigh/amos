@@ -52,6 +52,7 @@ public slots:
   void setPaintScaffold(bool);
   void setFeatures(bool);
   void setColorByLibrary(bool);
+  void setColorByMate(bool);
   void setTintHappiness(bool);
   void setTintFeatures(bool);
   void contigChanged();
@@ -110,6 +111,7 @@ private:
   bool m_cestats;
   bool m_showFeatures;
   bool m_colorByLibrary;
+  bool m_colorByMate;
   bool m_paintScaffold;
   bool m_tintHappiness;
   bool m_tintFeatures;

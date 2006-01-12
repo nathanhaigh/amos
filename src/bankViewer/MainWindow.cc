@@ -415,10 +415,13 @@ void MainWindow::showInserts()
 
     connect(this,           SIGNAL(contigIdSelected(int)),
             m_insertWindow, SLOT(contigChanged()));
+
+    connect(this,           SIGNAL(bankSelected()),
+            m_insertWindow, SLOT(bankChanged()));
   }
 
   m_insertWindow->show();
-//  m_tiling->repaint();
+  m_tiling->update();
 }
 
 void MainWindow::showCGraph()
