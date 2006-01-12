@@ -252,25 +252,25 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 void ConsensusField::toggleHighlightDiscrepancy(bool show)
 {
   //m_highlightdiscrepancy = show;
-  //repaint();
+  //update();
 }
 
 void ConsensusField::toggleBaseColors(bool show)
 {
   m_basecolors = show;
-  repaint();
+  update();
 }
 
 void ConsensusField::toggleShowIndicator(bool show)
 {
   m_showIndicator = show;
-  repaint();
+  update();
 }
 
 void ConsensusField::toggleShowConsQV(bool show)
 {
   m_displayQV = show;
-  repaint();
+  update();
 }
 
 void ConsensusField::mouseReleaseEvent( QMouseEvent * e)
