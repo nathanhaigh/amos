@@ -7,7 +7,8 @@ using namespace AMOS;
 using namespace std;
 
 int s_verbose(0);
-int MIN_CONTIG_SIZE(25);
+int MIN_CONTIG_SIZE(0);
+int DISPLAY_ALL(0);
 
 
 int main (int argc, char ** argv)
@@ -28,14 +29,16 @@ int main (int argc, char ** argv)
 "   -------------------\n"
 "   -v|--verbose  Produce a verbose output\n"
 "   -m|--min_contig_size <size> Minimum number of reads\n"
+"   -d|--display_all_links  Display full graph, not just max\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
 
-    tf->getOptions()->addOptionResult("v|verbose",         &s_verbose, "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("v|verbose",           &s_verbose,       "Be verbose when reporting");
     tf->getOptions()->addOptionResult("m|min_contig_size=i", &MIN_CONTIG_SIZE, "Minimum Number of reads");
+    tf->getOptions()->addOptionResult("d|display_all_links", &DISPLAY_ALL,     "Display all graph transitions");
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -52,7 +55,10 @@ int main (int argc, char ** argv)
     ReadLookup read2contig;
     string lastbank;
 
-    cerr << "MinContigSize: " << MIN_CONTIG_SIZE << endl;
+    if (s_verbose)
+    {
+      cerr << "MinContigSize: " << MIN_CONTIG_SIZE << endl;
+    }
 
     cout << "digraph G" << endl
          << "{" << endl
@@ -64,35 +70,37 @@ int main (int argc, char ** argv)
       cerr << "Processing " << bankname << " at " << Date() << endl;
 
       Bank_t contig_bank(Contig_t::NCODE);
-      Bank_t read_bank(Read_t::NCODE);
-
       contig_bank.open(bankname, B_READ);
+
+      //Bank_t read_bank(Read_t::NCODE);
       //read_bank.open(bankname, B_READ);
 
       bankname = bankname.substr(0, bankname.find_first_of("/ "));
 
-
       const IDMap_t & contigmap = contig_bank.getIDMap();
       IDMap_t::const_iterator c;
 
-      if (first)
+      // Just print a node for each contig
+      cout << "{ rank=same;" << endl;
+      cout << bankname << endl;
+      for (c = contigmap.begin(); c!= contigmap.end(); c++)
       {
-        // Just print a node for each contig
-        for (c = contigmap.begin(); c!= contigmap.end(); c++)
+        Contig_t contig;
+        contig_bank.fetch(c->iid, contig);
+
+        int tilingsize = contig.getReadTiling().size();
+
+        if (tilingsize >= MIN_CONTIG_SIZE)
         {
-          Contig_t contig;
-          contig_bank.fetch(c->iid, contig);
-
-          int tilingsize = contig.getReadTiling().size();
-
-          if (tilingsize >= MIN_CONTIG_SIZE)
-          {
-            cout << bankname << "." << c->iid << endl;
-          }
+          cout << "\"" << bankname << "." << c->iid << "\" " 
+               << "[label=\"" << c->iid << "\\n[" << tilingsize << "]\"]" << endl;
         }
       }
-      else
+      cout << "}" << endl;
+
+      if (!first)
       {
+        cout << lastbank << " -> " << bankname << endl;
         // Draw an edge
         for (c = contigmap.begin(); c!= contigmap.end(); c++)
         {
@@ -105,52 +113,74 @@ int main (int argc, char ** argv)
           ContigStatus oldcontigcount;
           ContigStatus::iterator cs;
 
-          int tilingsize = 0;
-
-          // Count where each read was in the old contig
-          for (ti = contig.getReadTiling().begin(); ti != contig.getReadTiling().end(); ti++)
-          {
-            tilingsize++;
-            ReadLookup::iterator r2c = read2contig.find(ti->source);
-
-            ID_t oldcontig;
-            if (r2c == read2contig.end()) { oldcontig = 0; }
-            else                          { oldcontig = r2c->second; }
-
-            cs = oldcontigcount.find(oldcontig);
-            if (cs == oldcontigcount.end())
-            {
-              oldcontigcount.insert(make_pair(oldcontig, 1));
-            }
-            else
-            {
-              cs->second++;
-            }
-          }
-
-          // Find the most similiar contig
-          ID_t oldmax = oldcontigcount.begin()->first;
-          int oldmaxcount = oldcontigcount.begin()->second;
-
-          for (cs = oldcontigcount.begin(); cs != oldcontigcount.end(); cs++)
-          {
-            if (cs->second > oldmaxcount)
-            {
-              oldmax = cs->first;
-              oldmaxcount = cs->second;
-            }
-          }
+          int tilingsize = contig.getReadTiling().size();
 
           if (tilingsize >= MIN_CONTIG_SIZE)
           {
-            // Print the pair
-            cout << lastbank << "." << oldmax << " -> " 
-                 << bankname << "." << c->iid 
-                 << " [label=\"" << oldmaxcount 
-                 << "/" << tilingsize << "\"]" << endl;
+            // Count where each read was in the old contig
+            for (ti = contig.getReadTiling().begin(); ti != contig.getReadTiling().end(); ti++)
+            {
+              ReadLookup::iterator r2c = read2contig.find(ti->source);
+
+              ID_t oldcontig;
+              if (r2c == read2contig.end()) { oldcontig = 0; }
+              else                          { oldcontig = r2c->second; }
+
+              cs = oldcontigcount.find(oldcontig);
+              if (cs == oldcontigcount.end())
+              {
+                oldcontigcount.insert(make_pair(oldcontig, 1));
+              }
+              else
+              {
+                cs->second++;
+              }
+            }
+
+            // Find the most similiar contig
+            ID_t oldmax = oldcontigcount.begin()->first;
+            int oldmaxcount = oldcontigcount.begin()->second;
+
+            if (DISPLAY_ALL)
+            {
+              for (cs = oldcontigcount.begin(); cs != oldcontigcount.end(); cs++)
+              {
+                oldmax = cs->first;
+                oldmaxcount = cs->second;
+
+                if (oldmaxcount >= MIN_CONTIG_SIZE)
+                {
+                  // Print the pair
+                  cout << "\"" << lastbank << "." << oldmax << "\" -> " 
+                       << "\"" << bankname << "." << c->iid << "\""
+                       << " [label=\"" << oldmaxcount << "\"]" << endl;
+                }
+              }
+            }
+            else
+            {
+              for (cs = oldcontigcount.begin(); cs != oldcontigcount.end(); cs++)
+              {
+                if (cs->second > oldmaxcount)
+                {
+                  oldmax = cs->first;
+                  oldmaxcount = cs->second;
+                }
+              }
+
+              if (oldmaxcount >= MIN_CONTIG_SIZE)
+              {
+                // Print the pair
+                cout << "\"" << lastbank << "." << oldmax << "\" -> " 
+                     << "\"" << bankname << "." << c->iid << "\""
+                     << " [label=\"" << oldmaxcount << "/" << tilingsize << "\"]" << endl;
+              }
+            }
           }
         }
       }
+
+      cout << endl << endl;
 
       first = false;
       lastbank = bankname;
@@ -168,8 +198,6 @@ int main (int argc, char ** argv)
           read2contig.insert(make_pair(ti->source, c->iid));
         }
       }
-
-      cout << endl << endl;
     }
 
     cout << "}" << endl;
