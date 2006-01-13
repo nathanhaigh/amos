@@ -414,7 +414,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    if (! exists $clr{$fid}) {
 		$clr{$fid} = "$l,$r";
 	    }
-	} elsif ($fhead =~ /^gnl\|ti\|(\d+).* name:(\S+)/) {
+	} elsif ($fhead =~ /^gnl\|ti\|(\d+).* name:(\S+)/ ||
+		 $fhead =~ /^gnl\|ti\|(\d+)\s+(\S+)/) {
 #	    print "got ncbi: $1 $2\n";
 	    # NCBI formatted using keywords
 	    $fid = $1;
