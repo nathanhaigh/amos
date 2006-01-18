@@ -18,6 +18,8 @@ class InsertWindow : public QMainWindow
 public:
   InsertWindow(DataStore * datastore, QWidget* parent=0, const char* name=0);
 
+  static int s_persistant;
+
 public slots:
   void bankChanged();
   void contigChanged();

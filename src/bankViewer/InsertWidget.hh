@@ -59,6 +59,9 @@ public slots:
   void computePos(int);
   void setHappyDistance(float);
 
+  void setPersistant(bool);
+  void setErrorRate(int);
+
   void start();
   void stopbreak();
   void left();
@@ -118,6 +121,9 @@ private:
   bool m_paintScaffold;
   bool m_tintHappiness;
   bool m_tintFeatures;
+
+  bool m_persistant;
+  int m_error;
 
   int m_tilingwidth;
   float m_hscale;

@@ -97,6 +97,10 @@ int main( int argc, char **argv )
     {
       w.enableTraceFetch(true);
     }
+    else if (v == "-P")
+    {
+      InsertWindow::s_persistant = 1;
+    }
     else if (v[0] == '-')
     {
       cerr << "Option " << v << " not understood, ignoring" << endl;

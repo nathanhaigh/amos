@@ -37,8 +37,8 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
   emit readIIDHighlighted(QString::number(iid));
   emit readEIDHighlighted(QString(m_datastore->read_bank.lookupEID(iid).c_str()));
 
-  getInsertString(s, ins->m_active, ins, 0);
-  getInsertString(s, !ins->m_active, ins, 1);
+  getInsertString(s, ins->m_active, ins, 0, iitem);
+  getInsertString(s, !ins->m_active, ins, 1, iitem);
 
  // if (ins->m_atile) cerr << "a:" << (ins->m_atile->offset + ins->m_atile->getGappedLength() -1) << endl;
  // if (ins->m_btile) cerr << "b:" << (ins->m_btile->offset + ins->m_btile->getGappedLength() -1) << endl;
@@ -125,7 +125,14 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
       if (e->state() == Qt::ControlButton)
       {
-        jumptoread = iitem->m_insert->m_bid;
+        if (iitem->m_contigcolor)
+        {
+          jumptoread = iitem->m_alinkedread;
+        }
+        else
+        {
+          jumptoread = iitem->m_insert->m_bid;
+        }
       }
 
       highlightInsert(iitem, highlight, highlightBuddy);
@@ -236,15 +243,17 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
 
 
 
-void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int second)
+void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int second, InsertCanvasItem * iitem)
 {
   AMOS::ID_t iid = ins->m_aid;
   AMOS::ID_t contigiid = ins->m_acontig;
+  AMOS::ID_t linked = iitem->m_alinked;
 
   if (selectb)
   {
     iid = ins->m_bid;
     contigiid = ins->m_bcontig;
+    linked = iitem->m_blinked;
   }
 
   if (iid != AMOS::NULL_ID)
@@ -264,7 +273,7 @@ void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int se
     s += "e:" + QString(m_datastore->read_bank.lookupEID(iid).c_str());
     s += " i:" + QString::number(iid);
     s += " c:" + QString::number(contigiid);
+    s += " l:" + QString::number(linked);
     s += "]";
-
   }
 }

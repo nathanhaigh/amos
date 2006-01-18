@@ -6,6 +6,8 @@
 #include <qslider.h>
 #include <qpopupmenu.h>
 #include <qtoolbutton.h>
+#include <qcheckbox.h>
+#include <qspinbox.h>
 #include <qaccel.h>
 #include <qmenubar.h>
 #include <qpixmap.h>
@@ -225,7 +227,27 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 
   zoom->setValue(32);
+
+  if (s_persistant)
+  {
+    // Persistant Toolbar
+    QToolBar * persistant = new QToolBar(this, "persistant");
+    persistant->setLabel("Persistant");
+
+    new QLabel("Persistant", persistant, "persistlbl");
+    QCheckBox * persist = new QCheckBox(persistant, "persistantcheck");
+
+    new QLabel("Error rate", persistant, "eratelbl");
+    QSpinBox * spin = new QSpinBox(0,19,1,persistant, "eratespin");
+
+    connect(persist, SIGNAL(toggled(bool)),
+            iw,      SLOT(setPersistant(bool)));
+    connect(spin,    SIGNAL(valueChanged(int)),
+            iw,      SLOT(setErrorRate(int)));
+  }
 }
+
+int InsertWindow::s_persistant(0);
 
 void InsertWindow::buildLibraryMenu()
 {

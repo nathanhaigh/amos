@@ -88,6 +88,10 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_tintHappiness  = 0;
   m_tintFeatures   = 0;
 
+  m_persistant = false;
+  m_error = 0;
+
+
   m_currentScaffold = AMOS::NULL_ID;
 
   m_seqheight = 4;
@@ -311,7 +315,7 @@ void InsertWidget::computeInsertHappiness()
     seqtileLookup[ti->source] = &(*ti);
   }
 
-  cerr << "Loading mates" << endl;
+  //cerr << "Loading mates" << endl;
   Insert * insert;
   DataStore::MateLookupMap::iterator mi;
 
@@ -406,9 +410,9 @@ void InsertWidget::computeInsertHappiness()
 
   sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
 
-  cerr << "mated: "   << mated 
-       << " matelisted: " << matelisted
-       << " unmated: " << unmated << endl;
+  //cerr << "mated: "   << mated 
+  //     << " matelisted: " << matelisted
+  //     << " unmated: " << unmated << endl;
 }
 
 void InsertWidget::clearCanvas()
@@ -561,6 +565,28 @@ void InsertWidget::initializeTiling()
   paintCanvas();
 }
 
+typedef map <ID_t, QColor> ColorMap;
+QColor getContigColor(ColorMap & contigColorMap, ID_t iid)
+{
+  ColorMap::iterator cci = contigColorMap.find(iid);
+
+  if (cci == contigColorMap.end())
+  {
+    int s = contigColorMap.size();
+    int i = s % strlen(Insert::allstates);
+    int j = (s / strlen(Insert::allstates)) % 2;
+
+    //cerr << "new color: " << iid << " s: " << s << "i: " << i << " j: " << j << endl;
+
+    QColor color = UIElements::getInsertColor((Insert::MateState)Insert::allstates[i]);
+    if (j == 1) { color = color.dark(200);  }
+
+    cci = contigColorMap.insert(make_pair(iid, color)).first;
+  }
+
+  return cci->second;
+}
+
 
 // You can't paint the entire coverage plot in one go because
 // of the silly 16 bit limitation in qpainter/x11, so break the coverage
@@ -672,7 +698,6 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  typedef map <ID_t, QColor> ColorMap;
   ColorMap libColorMap;
   ColorMap contigColorMap;
 
@@ -992,7 +1017,22 @@ void InsertWidget::paintCanvas()
 
         QColor insertcolor(UIElements::getInsertColor((*ii)->m_state));
 
-        if (m_colorByLibrary)
+        if (m_persistant)
+        {
+          iitem->m_contigcolor = true;
+
+          iitem->m_alinkedread = m_datastore->getPersistantRead((*ii)->m_aid, m_error);
+          iitem->m_alinked = m_datastore->lookupContigId(iitem->m_alinkedread);
+          iitem->m_acolor = getContigColor(contigColorMap, iitem->m_alinked);
+
+          if ((*ii)->m_bid)
+          {
+            iitem->m_blinkedread = m_datastore->getPersistantRead((*ii)->m_bid, m_error);
+            iitem->m_blinked = m_datastore->lookupContigId(iitem->m_blinkedread);
+            iitem->m_bcolor = getContigColor(contigColorMap, iitem->m_blinked);
+          }
+        }
+        else if (m_colorByLibrary)
         {
           insertcolor = Qt::cyan;
 
@@ -1005,21 +1045,7 @@ void InsertWidget::paintCanvas()
         }
         else if (m_colorByMate && ((*ii)->m_state == Insert::MissingMate))
         {
-          ColorMap::iterator cci = contigColorMap.find((*ii)->m_bcontig);
-
-          if (cci == contigColorMap.end())
-          {
-            int s = contigColorMap.size();
-            int i = s % strlen(Insert::allstates);
-            int j = (s / strlen(Insert::allstates)) % 2;
-
-            insertcolor = UIElements::getInsertColor((Insert::MateState)Insert::allstates[i]);
-            if (j == 1) { insertcolor = insertcolor.dark(200);  }
-
-            cci = contigColorMap.insert(make_pair((*ii)->m_bcontig, insertcolor)).first;
-          }
-
-          insertcolor = cci->second;
+          insertcolor = getContigColor(contigColorMap, (*ii)->m_bcontig);
         }
 
         iitem->setPen(insertcolor);
@@ -1160,6 +1186,18 @@ void InsertWidget::setColorByLibrary(bool b)
 void InsertWidget::setColorByMate(bool b)
 {
   m_colorByMate = b;
+  paintCanvas();
+}
+
+void InsertWidget::setPersistant(bool b)
+{
+  m_persistant = b;
+  paintCanvas();
+}
+
+void InsertWidget::setErrorRate(int error)
+{
+  m_error = error;
   paintCanvas();
 }
 

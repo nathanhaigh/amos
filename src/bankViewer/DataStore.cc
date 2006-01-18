@@ -455,6 +455,21 @@ string DataStore::replaceTraceTokens(const string & str,
 }
 
 
+AMOS::ID_t DataStore::getPersistantRead(AMOS::ID_t readiid, int errorrate)
+{
+  string eid = read_bank.lookupEID(readiid);
+  eid = eid.substr(0, eid.find_first_of("_")+1);
+
+  char buffer[16];
+  sprintf(buffer, "%04d", errorrate);
+  eid += buffer;
+
+  ID_t newiid = read_bank.lookupIID(eid);
+  return newiid;
+}
+
+
+
 
 extern "C"
 {
@@ -523,3 +538,5 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read,
 
   return (char *) trace;
 }
+
+

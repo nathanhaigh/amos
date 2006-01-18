@@ -16,6 +16,15 @@ public:
   Insert * m_insert;
   bool m_highlight;
 
+  bool m_contigcolor;
+  QColor m_acolor;
+  int m_alinked;
+  int m_alinkedread;
+
+  QColor m_bcolor;
+  int m_blinked;
+  int m_blinkedread;
+
 protected:
   void drawShape (QPainter & p);
 

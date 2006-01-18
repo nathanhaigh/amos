@@ -77,6 +77,8 @@ public:
   typedef HASHMAP::hash_map<AMOS::ID_t, AMOS::Distribution_t> LibLookup_t;
   LibLookup_t m_libdistributionlookup;
 
+  AMOS::ID_t getPersistantRead(AMOS::ID_t readiid, int errorrate);
+
 private:
 
   void indexFrags();
