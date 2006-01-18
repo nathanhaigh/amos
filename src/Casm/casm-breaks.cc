@@ -245,6 +245,7 @@ int main (int argc, char ** argv)
   //-- COMBINE SIGNATURES
   CombineSignatures (mapping);
 
+  CleanSignatures (mapping);
 
   //-- OUTPUT
   cerr << "Outputting read paths\n";
