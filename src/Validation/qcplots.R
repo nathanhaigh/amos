@@ -8,7 +8,7 @@ t<-t(l)
 
 s<-seq(-20,90,by=5)
 
-postscript("stats.ps", paper="letter")
+#postscript("stats.ps", paper="letter")
 
 par(mfrow=c(3,4))
 
@@ -79,5 +79,5 @@ abline(v=s,lty="dotted")
 axis(side=2)
 axis(at=s, side=1)
 
-dev.off()
+#dev.off()
 
