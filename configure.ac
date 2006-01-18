@@ -147,6 +147,7 @@ AC_CONFIG_FILES(
    src/bankViewer/Makefile \
    src/Contig/Makefile \
    src/Foundation/Makefile \
+   src/Persistant/Makefile \
    ]
 )
 

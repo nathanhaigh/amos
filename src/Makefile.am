@@ -25,7 +25,9 @@ SUBDIRS += \
 	PerlModules \
 	Pipeline \
 	Staden \
-    Contig
+    Contig \
+    Persistant
+
 if BUILD_QT
 SUBDIRS += \
 	bankViewer

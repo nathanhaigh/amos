@@ -4,8 +4,7 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	asmQC2 \
-	asmQC \
-    barcode-graph
+	asmQC
 #	shotgunSim
 
 dist_bin_SCRIPTS = \
@@ -43,16 +42,6 @@ asmQC2_LDADD = \
 
 asmQC2_SOURCES = \
 	asmQC2.cc
-
-##-- barcode-graph
-barcode_graph_LDADD = \
-	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
-
-barcode_graph_SOURCES = \
-	barcode-graph.cc
 
 ##-- shotgunSim
 #shotgunSim_LDADD = \
