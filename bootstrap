@@ -8,17 +8,15 @@
 # If this script generates some warnings, run autoupdate on the
 # configure.ac file.
 #
-if test -f "/usr/local/bin/autoconf"; then
-   export ACLOCAL="/usr/local/bin/aclocal"
-   export AUTOHEADER="/usr/local/bin/autoheader"
-   export AUTOCONF="/usr/local/bin/autoconf"
-   export AUTOMAKE="/usr/local/bin/automake"
-else
-   export ACLOCAL="aclocal"
-   export AUTOHEADER="autoheader"
-   export AUTOCONF="autoconf"
-   export AUTOMAKE="automake"
-fi
+ACLOCAL="aclocal"
+AUTOHEADER="autoheader"
+AUTOCONF="autoconf"
+AUTOMAKE="automake"
+
+export ACLOCAL
+export AUTOHEADER
+export AUTOCONF
+export AUTOMAKE
 
 echo "+ collecting m4 macros"
 ${ACLOCAL} -I config \
