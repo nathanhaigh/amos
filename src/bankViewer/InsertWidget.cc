@@ -908,6 +908,13 @@ void InsertWidget::paintCanvas()
     for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
       int offset = fi->getRange().getLo();
+      int length = fi->getRange().getLength();
+
+      if (fi->getType() == 'B')
+      {
+        length = 500;
+        offset -= length/2;
+      }
 
       // First fit into the layout
       for (li =  layout.begin(), layoutpos = 0;
@@ -918,12 +925,12 @@ void InsertWidget::paintCanvas()
       }
 
       if (li == layout.end()) { layout.push_back(0); }
-      layout[layoutpos] = offset + fi->getRange().getLength() + layoutgutter;
+      layout[layoutpos] = offset + length + layoutgutter;
 
       int vpos = voffset + layoutpos * lineheight;
 
       FeatureCanvasItem * fitem = new FeatureCanvasItem((int)(m_hscale * (offset+m_hoffset)), vpos,
-                                                        (int)(m_hscale*fi->getRange().getLength()), m_seqheight,
+                                                        (int)(m_hscale*length), m_seqheight,
                                                         *fi, m_icanvas);
       fitem->show();
     }

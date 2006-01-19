@@ -11,3 +11,28 @@ FeatureCanvasItem::FeatureCanvasItem(int x, int y, int width, int height,
   setPen(UIElements::getFeatureColor(feat.getType()));
   setBrush(UIElements::getFeatureColor(feat.getType()));
 }
+
+void FeatureCanvasItem::drawShape(QPainter & p)
+{
+  if (m_feat.getType() == 'B')
+  {
+    p.drawLine((int) x(),                 (int) y(),
+               (int) (x() + width() - 1), (int) y());
+
+    if (m_feat.getRange().isReverse())
+    {
+      p.drawRect((int) (x() + width() - width()/2),   (int) y(),
+                 (int) (width()/2),                   (int) height());
+    }
+    else
+    {
+      p.drawRect((int) x(),                 (int) y(),
+                 (int) (width()/2),         (int) height());
+    }
+  }
+  else
+  {
+    p.drawRect((int) x(),      (int) y(),
+               (int) width(),  (int) height());
+  }
+}

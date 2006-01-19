@@ -29,6 +29,7 @@ QColor UIElements::color_featdefault(Qt::white);
 
 QColor UIElements::color_featunitig(Qt::cyan);
 QColor UIElements::color_featcoverage(Qt::magenta);
+QColor UIElements::color_featbreak(QColor(255,165,0));
 QColor UIElements::color_featsnp(Qt::red);
 
 QColor UIElements::color_insertcoverage(Qt::magenta);
@@ -69,6 +70,7 @@ QColor & UIElements::getFeatureColor(AMOS::FeatureType_t type)
     case 'C':  return color_featcoverage;
     case 'O':  return color_featorf;
     case 'P':  return color_featsnp;
+    case 'B':  return color_featbreak;
     default: return color_featdefault;
   };
 }
@@ -80,13 +82,15 @@ static const char * coveragestr = "Coverage";
 static const char * orfstr = "ORF";
 static const char * snpstr = "SNP";
 static const char * otherstr = "Other";
+static const char * breakstr = "Breakpoint";
 
-const char * UIElements::allFeatureTypes = "UCPX";
+const char * UIElements::allFeatureTypes = "UCPBX";
 
 const char * UIElements::getFeatureStr(AMOS::FeatureType_t type)
 {
   switch (type)
   {
+    case 'B':  return breakstr;
     case 'R':  return repeatstr;
     case 'U':  return unitigstr;
     case 'J':  return joinstr;

@@ -13,7 +13,10 @@ public:
 
   static const int RTTI;
   int rtti () const { return RTTI; }
+
+  void FeatureCanvasItem::drawShape(QPainter & p);
   AMOS::Feature_t & m_feat;
+
 
 private:
 };

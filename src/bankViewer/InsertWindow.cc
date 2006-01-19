@@ -73,8 +73,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
     p.fillRect(rect.rect(), UIElements::getFeatureColor((AMOS::FeatureType_t)feat));
     p.end();
 
-    QString name = UIElements::getFeatureStr((AMOS::FeatureType_t)feat);
-    name += (QString)" [" + feat + "]";
+    QString name = (QString)"[" + feat + "] ";
+    name += UIElements::getFeatureStr((AMOS::FeatureType_t)feat);
 
     m_featmenu->insertItem(QIconSet(rect), name);
   }
@@ -92,8 +92,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
     p.fillRect(rect.rect(), UIElements::getInsertColor((Insert::MateState)state));
     p.end();
 
-    QString name = Insert::getInsertTypeStr((Insert::MateState)state);
-    name += (QString)" [" + state + "]";
+    QString name = (QString)"[" + state + "] ";
+    name += Insert::getInsertTypeStr((Insert::MateState)state);
 
     m_types[state].first = m_typesmenu->insertItem(QIconSet(rect), name);
     m_types[state].second = true;
