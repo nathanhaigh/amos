@@ -1,9 +1,12 @@
 #include "DataStore.hh"
+#include "Insert.hh"
 #include <sys/types.h>
 #include <dirent.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include "amp.hh"
 
 
 using namespace AMOS;
@@ -466,6 +469,150 @@ AMOS::ID_t DataStore::getPersistantRead(AMOS::ID_t readiid, int errorrate)
 
   ID_t newiid = read_bank.lookupIID(eid);
   return newiid;
+}
+
+
+typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
+
+
+void DataStore::calculateInserts(vector<Tile_t> & tiling,
+                                 vector<Insert *> & inserts,
+                                 bool connectMates,
+                                 int verbose)
+{
+  if (verbose) { cerr << "Loading mates" << endl; }
+
+  SeqTileMap_t seqtileLookup;
+
+  int mated = 0;
+  int unmated = 0;
+  int matelisted = 0;
+  
+  int happycount = 0;
+  int unhappycount = 0;
+
+  vector<Tile_t>::iterator ti;
+
+  // map iid -> tile * (within this contig)
+  for (ti =  tiling.begin();
+       ti != tiling.end();
+       ti++)
+  {
+    seqtileLookup[ti->source] = &(*ti);
+  }
+
+
+  Insert * insert;
+  MateLookupMap::iterator mi;
+
+  ProgressDots_t dots(seqtileLookup.size(), 50);
+  int count = 0;
+
+  // For each read in the contig
+  SeqTileMap_t::iterator ai;
+  for (ai =  seqtileLookup.begin();
+       ai != seqtileLookup.end();
+       ai++)
+  {
+    count++;
+    if (verbose) { dots.update(count); }
+
+    if (ai->second == NULL)
+    {
+      //cerr << "Skipping already seen read" << endl;
+      continue;
+    }
+
+    ID_t aid = ai->first;
+    ID_t acontig = lookupContigId(aid);
+    Tile_t * atile = ai->second;
+
+    AMOS::ID_t libid = getLibrary(aid);
+    AMOS::Distribution_t dist = getLibrarySize(libid);
+
+    // Does it have a mate
+    mi = m_readmatelookup.find(aid);
+    if (mi == m_readmatelookup.end())
+    {
+      unmated++;
+      insert = new Insert(aid, acontig, atile,
+                          AMOS::NULL_ID, AMOS::NULL_ID, NULL,
+                          libid, dist,
+                          AMOS::Fragment_t::NULL_FRAGMENT);
+    }
+    else
+    {
+      matelisted++;
+
+      ID_t bid = mi->second.first;
+      ID_t bcontig = AMOS::NULL_ID;
+      Tile_t * btile = NULL;
+      bcontig = lookupContigId(bid);
+
+      SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
+
+      if (bi != seqtileLookup.end())
+      {
+        mated++;
+
+        btile = bi->second;
+        bi->second = NULL;
+      }
+
+      insert = new Insert(aid, acontig, atile, 
+                          bid, bcontig, btile, 
+                          libid, dist, 
+                          mi->second.second);
+
+      if (insert->m_state == 'H')
+      {
+        happycount++;
+      }
+      else
+      {
+        unhappycount++;
+      }
+
+
+      if (connectMates && insert->reasonablyConnected())
+      {
+        // A and B are within this contig, and should be drawn together
+        insert->m_active = 2;
+      }
+      else if (btile)
+      {
+        // A and B are within this contig, but not reasonably connected
+        Insert * j = new Insert(*insert);
+        j->setActive(1, insert, connectMates);
+        inserts.push_back(j);
+
+        insert->setActive(0, j, connectMates);
+      }
+      else 
+      { 
+        // Just A is valid
+        insert->setActive(0, NULL, connectMates); 
+      }
+    }
+
+    inserts.push_back(insert);
+
+    // Mark that this read has been taken care of already
+    ai->second = NULL;
+  }
+
+  sort(inserts.begin(), inserts.end(), Insert::TilingOrderCmp());
+
+  if (verbose)
+  {
+    cerr << endl;
+
+    cerr << "mated: "   << mated 
+         << " matelisted: " << matelisted
+         << " unmated: " << unmated
+         << " happy: " << happycount
+         << " unhappy: " << unhappycount << endl;
+  }
 }
 
 

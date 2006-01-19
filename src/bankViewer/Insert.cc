@@ -30,7 +30,6 @@ Insert::Insert(ID_t     aid,
                Tile_t * btile,
                ID_t     libid,
                Distribution_t dist,
-               int conslen,
                AMOS::FragmentType_t matetype)
 {
   m_atile   = atile;

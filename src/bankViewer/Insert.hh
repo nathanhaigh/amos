@@ -11,7 +11,6 @@ public:
   Insert(AMOS::ID_t aid, AMOS::ID_t acontig, AMOS::Tile_t * atile, 
          AMOS::ID_t bid, AMOS::ID_t bcontig, AMOS::Tile_t * btile, 
          AMOS::ID_t libid, AMOS::Distribution_t distribution,
-         int conslen,
          AMOS::FragmentType_t matetype);
 
   void setActive(int i, Insert * other, bool includeLibrary);

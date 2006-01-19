@@ -4,10 +4,14 @@
 #include "foundation_AMOS.hh"
 #include <string>
 #include <map>
+#include <vector>
 
 using std::string;
 using std::map;
 using std::pair;
+using std::vector;
+
+class Insert;
 
 
 
@@ -78,6 +82,12 @@ public:
   LibLookup_t m_libdistributionlookup;
 
   AMOS::ID_t getPersistantRead(AMOS::ID_t readiid, int errorrate);
+
+  void calculateInserts(vector<AMOS::Tile_t> & tiling, 
+                        vector<Insert *> & inserts,
+                        bool connectMates,
+                        int verbose);
+
 
 private:
 

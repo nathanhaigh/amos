@@ -26,125 +26,9 @@ MateLookupMap m_readmatelookup;
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
 DataStore * m_datastore;
-int m_tilingwidth;
 int m_connectMates = 1;
 typedef std::vector<Insert *> InsertList_t;
 InsertList_t m_inserts;
-
-
-void computeInsertHappiness(vector<Tile_t> m_tiling)
-{
-  SeqTileMap_t seqtileLookup;
-
-  int mated = 0;
-  int unmated = 0;
-  int matelisted = 0;
-
-  vector<Tile_t>::iterator ti;
-
-  // map iid -> tile * (within this contig)
-  for (ti =  m_tiling.begin();
-       ti != m_tiling.end();
-       ti++)
-  {
-    seqtileLookup[ti->source] = &(*ti);
-  }
-
-  cerr << "Loading mates" << endl;
-  Insert * insert;
-  MateLookupMap::iterator mi;
-
-  int count = 0;
-
-  // For each read in the contig
-  SeqTileMap_t::iterator ai;
-  for (ai =  seqtileLookup.begin();
-       ai != seqtileLookup.end();
-       ai++)
-  {
-    count++;
-
-    if (ai->second == NULL)
-    {
-      //cerr << "Skipping already seen read" << endl;
-      continue;
-    }
-
-    ID_t aid = ai->first;
-    ID_t acontig = m_datastore->lookupContigId(aid);
-    Tile_t * atile = ai->second;
-
-    AMOS::ID_t libid = m_datastore->getLibrary(aid);
-    AMOS::Distribution_t dist = m_datastore->getLibrarySize(libid);
-
-    // Does it have a mate
-    mi = m_datastore->m_readmatelookup.find(aid);
-    if (mi == m_datastore->m_readmatelookup.end())
-    {
-      unmated++;
-      insert = new Insert(aid, acontig, atile,
-                          AMOS::NULL_ID, AMOS::NULL_ID, NULL,
-                          libid, dist, m_tilingwidth, 
-                          AMOS::Fragment_t::NULL_FRAGMENT);
-    }
-    else
-    {
-      matelisted++;
-
-      ID_t bid = mi->second.first;
-      ID_t bcontig = AMOS::NULL_ID;
-      Tile_t * btile = NULL;
-      bcontig = m_datastore->lookupContigId(bid);
-
-      SeqTileMap_t::iterator bi = seqtileLookup.find(bid);
-
-      if (bi != seqtileLookup.end())
-      {
-        mated++;
-
-        btile = bi->second;
-        bi->second = NULL;
-      }
-
-      insert = new Insert(aid, acontig, atile, 
-                          bid, bcontig, btile, 
-                          libid, dist, m_tilingwidth, 
-                          mi->second.second);
-
-
-      if (m_connectMates && insert->reasonablyConnected())
-      {
-        // A and B are within this contig, and should be drawn together
-        insert->m_active = 2;
-      }
-      else if (btile)
-      {
-        // A and B are within this contig, but not reasonably connected
-        Insert * j = new Insert(*insert);
-        j->setActive(1, insert, m_connectMates);
-        m_inserts.push_back(j);
-
-        insert->setActive(0, j, m_connectMates);
-      }
-      else 
-      { 
-        // Just A is valid
-        insert->setActive(0, NULL, m_connectMates); 
-      }
-    }
-
-    m_inserts.push_back(insert);
-
-    // Mark that this read has been taken care of already
-    ai->second = NULL;
-  }
-
-  sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
-
-  cerr << "mated: "   << mated 
-       << " matelisted: " << matelisted
-       << " unmated: " << unmated << endl;
-}
 
 
 
@@ -279,9 +163,6 @@ int main (int argc, char ** argv)
       vector <Tile_t> rtiling;
       SeqTileMap_t seqtileLookup;
 
-      m_tilingwidth = scaff.getSpan();
-    
-
       vector<Tile_t> & ctiling = scaff.getContigTiling();
       vector<Tile_t>::const_iterator ci;
 
@@ -316,7 +197,8 @@ int main (int argc, char ** argv)
       }
 
       cerr << rtiling.size() << " reads mapped" << endl;
-      computeInsertHappiness(rtiling);
+
+      m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
 
       computeCEStats(scaff);
 
