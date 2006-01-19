@@ -67,6 +67,7 @@ TilingField::TilingField(DataStore * datastore,
 
   setMinimumSize(m_width, m_height);
   setPalette(QPalette(UIElements::color_tiling));
+  setWFlags(Qt::WRepaintNoErase);
 }
 
 int TilingField::getReadCov(int y)
