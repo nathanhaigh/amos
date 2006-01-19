@@ -584,7 +584,7 @@ void OutputFeatures (const Mapping_t & mapping)
             {
               s = e = labs (*pi);
               
-              if ( *pi < *(pi+1) ) ++ s;
+              if ( *pi > *(pi+1) ) ++ s;
               else ++ e;
 
               out << "{FEA\n"
@@ -907,15 +907,8 @@ void PrintHelp (const char * s)
 
   cout
     << ".DESCRIPTION.\n\n"
-    << s << " constructs a comparative assembly layout by mapping the queries\n"
-    << "to the reference while compensating for any structural differences\n"
-    << "between the reference and query sequences. Intermediate output is\n"
-    << "also available for each query's position on the reference and the\n"
-    << "positions on the reference where a significant number of query\n"
-    << "sequences disagree with the reference. This output is also handy for\n"
-    << "assembly validation, where the original sequencing reads are mapped\n"
-    << "to the resulting assembly in order to identify trouble spots where\n"
-    << "a number of reads disagree with the consensus.\n\n";
+    << s << " in development\n"
+    << endl;
 
   cout
     << ".KEYWORDS.\n\n"
