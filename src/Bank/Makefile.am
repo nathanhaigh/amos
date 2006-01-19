@@ -26,7 +26,8 @@ bin_PROGRAMS = \
     dumpFeatures \
     loadFeatures \
     bank-tutorial \
-    renameReads
+    renameReads \
+    simplifyLibraries
 
 
 dist_bin_SCRIPTS = \
@@ -205,5 +206,17 @@ bank2fasta_LDADD = \
 	$(top_builddir)/src/GNU/libGNU.a
 bank2fasta_SOURCES = \
 	bank2fasta.cc
+
+##-- simplifyLibraries
+simplifyLibraries_CPPFLAGS = \
+	-I$(top_srcdir)/src/Common \
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_builddir)/src/GNU
+simplifyLibraries_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
+simplifyLibraries_SOURCES = \
+	simplifyLibraries.cc
 
 ##-- END OF MAKEFILE --##
