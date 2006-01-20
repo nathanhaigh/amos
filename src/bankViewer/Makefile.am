@@ -26,6 +26,7 @@ bankViewer_MOCSOURCES = \
         Insert.cc              \
         InsertField.cc         \
         InsertPosition.cc      \
+        InsertStats.cc         \
         InsertWidget.cc        \
         InsertWindow.cc        \
         LibraryPicker.cc       \

@@ -9,7 +9,13 @@
 
 #include <vector>
 
+#include "Insert.hh"
+#include "InsertStats.hh"
+#include "DataStore.hh"
+
+
 using namespace std;
+using namespace AMOS;
 
 
 
@@ -137,7 +143,32 @@ void LibraryPicker::loadTable()
 
 void LibraryPicker::itemSelected(QListViewItem * item)
 {
-  //emit highlightRead(atoi(item->text(0)));
+  ID_t libid = atoi(item->text(0));
+  cerr << "Selected iid: " << libid << endl;
+
+  InsertStats stats;
+
+  Contig_t contig;
+  m_datastore->contig_bank.seekg(1);
+  while (m_datastore->contig_bank >> contig)
+  {
+    vector<Insert *> inserts;
+    vector<Insert *>::iterator vi;
+    m_datastore->calculateInserts(contig.getReadTiling(), inserts, 1, 1);
+
+    for (vi = inserts.begin(); vi != inserts.end(); vi++)
+    {
+      if (((*vi)->m_libid == libid) && ((*vi)->ceConnected()))
+      {
+        stats.addSize((*vi)->m_actual);
+      }
+
+      delete *vi;
+    }
+  }
+
+  cerr << "mean: " << stats.mean() << endl;
+  cerr << "stdev: " << stats.stdev() << endl;
 }
 
 void LibraryPicker::selectiid(const QString & iid)

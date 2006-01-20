@@ -1,12 +1,11 @@
 #ifndef LIBRARY_PICKER_HH__
 #define LIBRARY_PICKER_HH__ 1
 
-#include <string>
 #include <qmainwindow.h>
 #include <qlistview.h>
-#include "DataStore.hh"
 
-using std::string;
+
+class DataStore;
 
 class LibraryPicker : public QMainWindow
 {
