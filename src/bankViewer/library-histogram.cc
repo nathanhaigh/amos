@@ -17,6 +17,7 @@
 #include "DataStore.hh"
 #include "Insert.hh"
 #include "InsertStats.hh"
+#include <stdio.h>
 
 using namespace std;
 using namespace AMOS;
@@ -28,8 +29,8 @@ int m_verbose = 1;
 
 DataStore * m_datastore;
 int m_connectMates = 1;
-typedef std::vector<Insert *> InsertList_t;
-InsertList_t m_inserts;
+
+
 
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
@@ -85,102 +86,73 @@ int main (int argc, char ** argv)
     m_datastore = new DataStore();
     m_datastore->openBank(OPT_BankName);
 
+    map<ID_t, InsertStats *> librarystats;
+    map<ID_t, InsertStats *>::iterator li;
 
-    map <string, InsertStats *> fragstats;
-    map <string, InsertStats *>::iterator fi;
+    m_datastore->contig_bank.seekg(1);
 
+    int contigcount = 0;
 
-    cerr << "Processing scaffolds... ";
-    int scaffcount = 0;
-    m_datastore->scaffold_bank.seekg(1);
-    while (m_datastore->scaffold_bank >> scaff)
+    Contig_t contig;
+    m_datastore->contig_bank.seekg(1);
+    while (m_datastore->contig_bank >> contig)
     {
-      scaffcount++;
-      vector <Tile_t> rtiling;
-      SeqTileMap_t seqtileLookup;
+      contigcount++;
+      vector<Insert *> inserts;
+      vector<Insert *>::iterator vi;
+      m_datastore->calculateInserts(contig.getReadTiling(), inserts, 1, 0);
 
-      vector<Tile_t> & ctiling = scaff.getContigTiling();
-      vector<Tile_t>::const_iterator ci;
-
-      cerr << "Mapping reads to scaffold " << scaff.getEID() << "... ";
-
-      for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
+      for (vi = inserts.begin(); vi != inserts.end(); vi++)
       {
-        m_datastore->fetchContig(ci->source, contig);
-
-        int clen = contig.getLength();
-
-        vector<Tile_t> & crtiling = contig.getReadTiling();
-        vector<Tile_t>::const_iterator ri;
-        for (ri = crtiling.begin(); ri != crtiling.end(); ri++)
+        if ((*vi)->ceConnected())
         {
-          Tile_t mappedTile;
-          mappedTile.source = ri->source;
-          mappedTile.gaps   = ri->gaps;
-          mappedTile.range  = ri->range;
+          li = librarystats.find((*vi)->m_libid);
 
-          int offset = ri->offset;
-          if (ci->range.isReverse())
+          if (li == librarystats.end())
           {
-            mappedTile.range.swap();
-            offset = clen - (offset + ri->range.getLength() + ri->gaps.size());
+            li = librarystats.insert(make_pair((*vi)->m_libid, new InsertStats())).first;
           }
 
-          mappedTile.offset = ci->offset + offset;
-
-          rtiling.push_back(mappedTile);
-        }
-      }
-
-      cerr << rtiling.size() << " reads mapped" << endl;
-
-      m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
-
-      vector<Insert *>::iterator i;
-
-      
-      for (i =  m_inserts.begin();
-           i != m_inserts.end();
-           i++)
-      {
-        if ((*i)->m_active == 2)
-        {
-          string fragment = m_datastore->read_bank.lookupEID((*i)->m_aid).substr(0,FRAGMENTSTRLEN);
-
-          if (m_verbose)
-          {
-            cout << (*i)->m_libid << "\t"
-                 << fragment << "\t"
-                 << m_datastore->read_bank.lookupEID((*i)->m_aid) << "\t" 
-                 << m_datastore->read_bank.lookupEID((*i)->m_bid) << "\t"
-                 << (*i)->m_actual << endl;
-          }
-
-          fi = fragstats.find(fragment);
-          if (fi == fragstats.end())
-          {
-            fi = fragstats.insert(make_pair(fragment, new InsertStats())).first;
-          }
-
-          fi->second->addSize((*i)->m_actual);
+          li->second->addSize((*vi)->m_actual);
         }
 
-        delete (*i);
+        delete *vi;
+      }
+    }
+
+    cout << "contigs: " << contigcount   << endl;
+
+    for (li = librarystats.begin(); li != librarystats.end(); li++)
+    {
+      cout << endl;
+      cout << "library: " << li->first 
+           << " count: "  << li->second->count()
+           << " mean: "   << li->second->mean()
+           << " stdev: "  << li->second->stdev() << endl;
+
+      int buckets = 50;
+      li->second->histogram(buckets, false);
+      cout << "low: "         << li->second->m_low 
+           << " high: "       << li->second->m_high 
+           << " buckets: "    << buckets 
+           << " bucketsize: " << li->second->m_bucketsize << endl;
+
+      double starsize = li->second->m_maxcount / 25;
+
+      for (int i = 0; i < buckets; i++)
+      {
+        printf("%10.02f %6d: ", li->second->m_bucketlow[i], li->second->m_buckets[i]);
+
+        for (int j = 0; j < li->second->m_buckets[i]/starsize; j++)
+        {
+          cout << "*";
+        }
+
+        cout << endl;
       }
 
-      m_inserts.clear();
-    }
 
-    cout << endl;
-    cout << "SubLibrary Summaries" << endl;
-    for (fi = fragstats.begin(); fi != fragstats.end(); fi++)
-    {
-      cout << fi->first << "\t"
-           << fi->second->count() << "\t"
-           << fi->second->mean() << "\t"
-           << fi->second->stdev() << endl;
     }
-
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl

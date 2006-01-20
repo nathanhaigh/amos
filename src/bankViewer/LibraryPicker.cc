@@ -148,10 +148,13 @@ void LibraryPicker::itemSelected(QListViewItem * item)
 
   InsertStats stats;
 
+  int contigcount = 0;
+
   Contig_t contig;
   m_datastore->contig_bank.seekg(1);
   while (m_datastore->contig_bank >> contig)
   {
+    contigcount++;
     vector<Insert *> inserts;
     vector<Insert *>::iterator vi;
     m_datastore->calculateInserts(contig.getReadTiling(), inserts, 1, 1);
@@ -167,8 +170,10 @@ void LibraryPicker::itemSelected(QListViewItem * item)
     }
   }
 
-  cerr << "mean: " << stats.mean() << endl;
-  cerr << "stdev: " << stats.stdev() << endl;
+  cerr << "contigs: " << contigcount   << endl;
+  cerr << "count: "   << stats.count() << endl;
+  cerr << "mean: "    << stats.mean()  << endl;
+  cerr << "stdev: "   << stats.stdev() << endl;
 }
 
 void LibraryPicker::selectiid(const QString & iid)
