@@ -110,7 +110,7 @@ int main (int argc, char ** argv)
 
           if (li == librarystats.end())
           {
-            li = librarystats.insert(make_pair((*vi)->m_libid, new InsertStats())).first;
+            li = librarystats.insert(make_pair((*vi)->m_libid, new InsertStats(""))).first;
           }
 
           li->second->addSize((*vi)->m_actual);

@@ -6,7 +6,10 @@
 using namespace std;
 
 
-InsertStats::InsertStats() {}
+InsertStats::InsertStats(const string & label)
+ : m_label(label)
+{
+}
 
 void InsertStats::addSize(int size)
 {
@@ -22,6 +25,8 @@ int InsertStats::count() const
 
 double InsertStats::mean() const 
 { 
+  if (m_sizes.size() == 0) { return 0; }
+
   long sum = 0; 
   for (int i = 0; i < m_sizes.size(); i++)
     { sum += m_sizes[i]; }
@@ -32,6 +37,8 @@ double InsertStats::mean() const
 
 double InsertStats::stdev() const
 {
+  if (m_sizes.size() == 0) { return 0; }
+
   double mea = mean();
 
   double sumdiff = 0;
@@ -49,6 +56,8 @@ double InsertStats::stdev() const
 
 void InsertStats::histogram(int buckets, bool fitzero)
 {
+  if (m_sizes.size() == 0) { return; }
+
   m_buckets.resize(buckets);
   m_bucketlow.resize(buckets);
 
@@ -84,4 +93,23 @@ void InsertStats::histogram(int buckets, bool fitzero)
   {
     if (m_buckets[i] > m_maxcount) { m_maxcount = m_buckets[i]; }
   }
+}
+
+int InsertStats::withinSD(double numsd) const
+{
+  double mea = mean();
+  double sd = stdev();
+
+  double lo = mea - numsd * sd;
+  double hi = mea + numsd * sd;
+
+  int count = 0;
+
+  vector<int>::const_iterator vi;
+  for (vi = m_sizes.begin(); vi != m_sizes.end(); vi++)
+  {
+    count += (lo <= *vi && *vi <= hi);
+  }
+
+  return count;
 }

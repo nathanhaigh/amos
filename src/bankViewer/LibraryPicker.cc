@@ -4,6 +4,8 @@
 
 #include <qlabel.h>
 #include <qlineedit.h>
+#include <qmenubar.h>
+#include <qpopupmenu.h>
 
 #include "foundation_AMOS.hh"
 
@@ -12,6 +14,7 @@
 #include "Insert.hh"
 #include "InsertStats.hh"
 #include "DataStore.hh"
+#include "HistogramWindow.hh"
 
 
 using namespace std;
@@ -26,9 +29,10 @@ public:
               QString iid,
               QString eid,
               QString mean,
-              QString sd)
+              QString sd,
+              QString count)
                
-    : QListViewItem(parent, iid, eid, mean, sd) { }
+    : QListViewItem(parent, iid, eid, mean, sd, count) { }
 
 
   int compare(QListViewItem *i, int col,
@@ -56,6 +60,11 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
   setCaption("Library Information");
   resize(550,500);
   show();
+
+  QPopupMenu * menu = new QPopupMenu(this);
+  menuBar()->insertItem("&Actions", menu);
+  menu->insertItem("&Insert Size Histogram", this, SLOT(acceptSelected()));
+  menu->insertItem("&Clear Range Length Histogram", this, SLOT(readLengthSelected()));
 
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");
@@ -87,6 +96,7 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
   m_table->addColumn("EID");
   m_table->addColumn("Mean");
   m_table->addColumn("Stdev");
+  m_table->addColumn("Inserts");
 
   m_table->setShowSortIndicator(true);
   m_table->setRootIsDecorated(true);
@@ -117,11 +127,26 @@ void LibraryPicker::loadTable()
       {
         AMOS::Distribution_t dist = lib.getDistribution();
 
+        ID_t libid = lib.getIID();
+        int frag = 0;
+
+        DataStore::IdLookup_t::iterator li;
+        for (li = m_datastore->m_fragliblookup.begin();
+             li != m_datastore->m_fragliblookup.end();
+             li++)
+        {
+          if (li->second == libid)
+          {
+            frag++;
+          }
+        }
+
         new LibListItem(m_table,
-                        QString::number(lib.getIID()),
+                        QString::number(libid),
                         lib.getEID().c_str(),
                         QString::number(dist.mean),
-                        QString::number(dist.sd));
+                        QString::number(dist.sd),
+                        QString::number(frag));
         count++;
       }
 
@@ -144,36 +169,31 @@ void LibraryPicker::loadTable()
 void LibraryPicker::itemSelected(QListViewItem * item)
 {
   ID_t libid = atoi(item->text(0));
-  cerr << "Selected iid: " << libid << endl;
 
-  InsertStats stats;
-
-  int contigcount = 0;
+  char buffer[32];
+  sprintf(buffer, "%d", libid);
+  InsertStats * stats = new InsertStats((string)"Insert Size Histogram for Library " + buffer);
 
   Contig_t contig;
   m_datastore->contig_bank.seekg(1);
   while (m_datastore->contig_bank >> contig)
   {
-    contigcount++;
     vector<Insert *> inserts;
     vector<Insert *>::iterator vi;
-    m_datastore->calculateInserts(contig.getReadTiling(), inserts, 1, 1);
+    m_datastore->calculateInserts(contig.getReadTiling(), inserts, 1, 0);
 
     for (vi = inserts.begin(); vi != inserts.end(); vi++)
     {
       if (((*vi)->m_libid == libid) && ((*vi)->ceConnected()))
       {
-        stats.addSize((*vi)->m_actual);
+        stats->addSize((*vi)->m_actual);
       }
 
       delete *vi;
     }
   }
 
-  cerr << "contigs: " << contigcount   << endl;
-  cerr << "count: "   << stats.count() << endl;
-  cerr << "mean: "    << stats.mean()  << endl;
-  cerr << "stdev: "   << stats.stdev() << endl;
+  new HistogramWindow(stats, this, "hist");
 }
 
 void LibraryPicker::selectiid(const QString & iid)
@@ -211,4 +231,35 @@ void LibraryPicker::acceptSelected()
 void LibraryPicker::refreshTable()
 {
   loadTable();
+}
+
+void LibraryPicker::readLengthSelected()
+{
+  QListViewItem * item = m_table->selectedItem();
+  if (item)
+  {
+    ID_t libid = atoi(item->text(0));
+
+    char buffer[32];
+    sprintf(buffer, "%d", libid);
+    InsertStats * stats = new InsertStats((string)"Clear Range Length Histogram for Library " + buffer);
+
+    Contig_t contig;
+    m_datastore->contig_bank.seekg(1);
+    while (m_datastore->contig_bank >> contig)
+    {
+      vector<Tile_t>::iterator ti;
+      for (ti = contig.getReadTiling().begin(); 
+           ti != contig.getReadTiling().end();
+           ti++)
+      {
+        if (m_datastore->getLibrary(ti->source) == libid)
+        {
+          stats->addSize(ti->range.getLength());
+        }
+      }
+    }
+
+    new HistogramWindow(stats, this, "hist");
+  }
 }

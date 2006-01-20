@@ -159,7 +159,7 @@ int main (int argc, char ** argv)
           fi = fragstats.find(fragment);
           if (fi == fragstats.end())
           {
-            fi = fragstats.insert(make_pair(fragment, new InsertStats())).first;
+            fi = fragstats.insert(make_pair(fragment, new InsertStats(""))).first;
           }
 
           fi->second->addSize((*i)->m_actual);

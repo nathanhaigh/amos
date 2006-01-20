@@ -23,6 +23,8 @@ bankViewer_MOCSOURCES = \
         DataStore.cc           \
         FeatureBrowser.cc      \
         FeatureCanvasItem.cc   \
+        HistogramWidget.cc     \
+        HistogramWindow.cc     \
         InsertCanvasItem.cc    \
         Insert.cc              \
         InsertField.cc         \

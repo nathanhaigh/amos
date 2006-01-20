@@ -20,6 +20,7 @@ public slots:
   void selecteid(const QString & eid);
   void acceptSelected();
   void refreshTable();
+  void readLengthSelected();
 
 signals:
   void highlightRead(int);
