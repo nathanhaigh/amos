@@ -1,6 +1,10 @@
 #include "ReadInfo.hh"
 #include <qlabel.h>
 #include <qlayout.h>
+#include "ChromoField.hh"
+#include "RenderSeq.hh"
+
+
 
 using namespace std;
 

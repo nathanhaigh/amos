@@ -4,9 +4,6 @@
 #include <qwidget.h>
 #include <string>
 
-#include "InsertField.hh"
-#include "InsertPosition.hh"
-#include "DataStore.hh"
 
 #include <qslider.h>
 #include <qtimer.h>
@@ -16,13 +13,16 @@
 #include <string>
 #include "foundation_AMOS.hh"
 #include "Insert.hh"
-#include "DataStore.hh"
 
 #include <map>
 
 using std::map;
 using std::pair;
 
+
+class DataStore;
+class InsertField;
+class InsertPosition;
 
 
 class InsertWidget : public QWidget

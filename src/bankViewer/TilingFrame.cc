@@ -1,5 +1,7 @@
 #include "TilingFrame.hh"
 #include "TilingField.hh"
+#include <set>
+
 #include <qscrollview.h>
 #include <qlayout.h>
 #include <qapplication.h>
@@ -7,8 +9,9 @@
 #include "ConsensusField.hh"
 #include "RenderSeq.hh"
 #include "UIElements.hh"
+#include "DataStore.hh"
+#include "AlignmentInfo.hh"
 #include <qregexp.h>
-#include <set>
 
 using namespace std;
 using namespace AMOS;
@@ -254,7 +257,7 @@ void TilingFrame::loadContigRange(int gindex)
     // remove sequences that are no longer in the view window
     //cerr << "checking to erase: " << orig << endl;
 
-    set<ID_t> keepset;
+    std::set<ID_t> keepset;
 
     for (vectorpos = 0; vectorpos < orig; vectorpos++)
     {

@@ -1,5 +1,7 @@
 #include "RenderSeq.hh"
 
+#include "DataStore.hh"
+
 using namespace std;
 using namespace AMOS;
 

@@ -2,10 +2,11 @@
 #define READINFO_HH_ 1
 
 #include <qdialog.h>
-#include "RenderSeq.hh"
 #include <string>
 #include <qscrollview.h>
-#include "ChromoField.hh"
+#include "RenderSeq.hh"
+
+class ChromoField;
 
 class ReadInfo: public QDialog
 {

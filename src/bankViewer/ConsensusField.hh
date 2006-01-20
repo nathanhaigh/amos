@@ -3,7 +3,8 @@
 
 #include <string>
 #include <qframe.h>
-#include "AlignmentInfo.hh"
+
+class AlignmentInfo;
 
 class ConsensusField : public QFrame
 {

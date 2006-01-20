@@ -5,6 +5,8 @@
 #include <qstring.h>
 #include <qpointarray.h>
 #include "UIElements.hh"
+#include "DataStore.hh"
+#include "AlignmentInfo.hh"
 
 #define DEBUGQV 0
 

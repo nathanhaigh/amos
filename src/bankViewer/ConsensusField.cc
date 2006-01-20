@@ -3,6 +3,7 @@
 #include <qpen.h>
 #include <qpainter.h>
 #include "UIElements.hh"
+#include "AlignmentInfo.hh"
 
 using namespace std;
 

@@ -9,6 +9,8 @@
 
 #include "foundation_AMOS.hh"
 #include "RenderSeq.hh"
+#include "DataStore.hh"
+
 
 #include <vector>
 

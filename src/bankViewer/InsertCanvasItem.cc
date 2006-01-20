@@ -2,6 +2,8 @@
 #include "UIElements.hh"
 #include <qpainter.h>
 
+#include "Insert.hh"
+
 const int InsertCanvasItem::RTTI = 132545;
 
 using namespace std;

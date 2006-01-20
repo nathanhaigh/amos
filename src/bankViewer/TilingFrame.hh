@@ -2,14 +2,17 @@
 #define TILINGFRAME_HH_ 1
 
 #include <qframe.h>
-#include <string>
-#include "RenderSeq.hh"
-#include "TilingField.hh"
-#include "ConsensusField.hh"
 #include <qscrollview.h>
-#include "AlignmentInfo.hh"
+#include <string>
 
-#include "DataStore.hh"
+#include "foundation_AMOS.hh"
+#include "RenderSeq.hh"
+
+
+class DataStore;
+class TilingField;
+class AlignmentInfo;
+class ConsensusField;
 
 
 class TilingFrame: public QFrame

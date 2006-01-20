@@ -7,6 +7,8 @@
 #include "CGraphView.hh"
 #include "CGraphEdge.hh"
 
+#include "DataStore.hh"
+
 using namespace AMOS;
 using namespace std;
 

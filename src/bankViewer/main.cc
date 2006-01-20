@@ -3,6 +3,7 @@
 #include <qpainter.h>
 
 #include "MainWindow.hh"
+#include "InsertWindow.hh"
 #include "icons/AAI.xpm"
 #include <qcursor.h>
 

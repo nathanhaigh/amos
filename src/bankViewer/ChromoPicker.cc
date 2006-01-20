@@ -9,6 +9,8 @@
 #include <qpopupmenu.h>
 
 #include "foundation_AMOS.hh"
+#include "DataStore.hh"
+
 
 #include <vector>
 

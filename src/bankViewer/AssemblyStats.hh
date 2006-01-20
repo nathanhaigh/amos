@@ -4,8 +4,9 @@
 #include <qmainwindow.h>
 #include <qstring.h>
 #include <qtable.h>
-#include "DataStore.hh"
 #include <string>
+
+class DataStore;
 
 using std::string;
 

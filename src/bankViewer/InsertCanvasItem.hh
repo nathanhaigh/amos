@@ -4,6 +4,8 @@
 #include <qcanvas.h>
 #include "Insert.hh"
 
+class Insert;
+
 
 class InsertCanvasItem : public QCanvasRectangle
 {

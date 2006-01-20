@@ -4,9 +4,10 @@
 #include <string>
 #include <qmainwindow.h>
 #include <qlistview.h>
-#include "DataStore.hh"
 
 using std::string;
+
+class DataStore;
 
 class FeatureBrowser : public QMainWindow
 {

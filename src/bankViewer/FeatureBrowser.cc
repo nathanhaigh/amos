@@ -4,6 +4,7 @@
 
 #include <qlabel.h>
 #include <qlineedit.h>
+#include "DataStore.hh"
 
 #include "foundation_AMOS.hh"
 

@@ -6,6 +6,8 @@
 #include <qtoolbar.h>
 #include <qlineedit.h>
 #include <qmenubar.h>
+#include "DataStore.hh"
+
 
 #include "foundation_AMOS.hh"
 

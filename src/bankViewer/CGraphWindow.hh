@@ -5,10 +5,13 @@
 #include <qcanvas.h>
 #include <qlistview.h>
 
-#include "DataStore.hh"
-#include "vector"
+#include <vector>
+#include "foundation_AMOS.hh"
+
 
 using std::vector;
+
+class DataStore;
 
 class CGraphWindow : public QMainWindow
 {

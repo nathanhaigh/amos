@@ -14,6 +14,7 @@
 #include <qpainter.h>
 #include <qlineedit.h>
 
+#include "DataStore.hh"
 #include "UIElements.hh"
 #include "BufferedLineEdit.hh"
 

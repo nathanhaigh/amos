@@ -6,9 +6,8 @@
 #include "foundation_AMOS.hh"
 #include "amp.hh"
 #include "fasta.hh"
-#include "DataStore.hh"
 
-#include "ChromoField.hh"
+class DataStore;
 
 class RenderSeq_t
 {

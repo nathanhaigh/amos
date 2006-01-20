@@ -64,11 +64,7 @@ public:
     sumdiff /= m_sizes.size() -1;
 
     return sqrt(sumdiff);
-
   }
-
-
-private:
 
   vector<int> m_sizes;
 };

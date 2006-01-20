@@ -15,6 +15,10 @@
 #include "ContigCanvasItem.hh"
 #include "UIElements.hh"
 #include "CoverageStats.hh"
+#include "InsertField.hh"
+#include "InsertPosition.hh"
+#include "DataStore.hh"
+
 
 
 using namespace AMOS;

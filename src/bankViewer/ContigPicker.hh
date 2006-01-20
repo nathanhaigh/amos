@@ -5,9 +5,10 @@
 #include <qmainwindow.h>
 #include <qlistview.h>
 #include <qpopupmenu.h>
-#include "DataStore.hh"
 
 using std::string;
+
+class DataStore;
 
 class ContigPicker : public QMainWindow
 {

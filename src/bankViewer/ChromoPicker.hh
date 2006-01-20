@@ -5,11 +5,12 @@
 #include <qmainwindow.h>
 #include <qlistview.h>
 #include <qcheckbox.h>
-#include "DataStore.hh"
 
 #include <qradiobutton.h>
 
 using std::string;
+
+class DataStore;
 
 class ChromoPicker : public QMainWindow
 {

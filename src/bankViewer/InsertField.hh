@@ -2,10 +2,10 @@
 #define INSERT_FIELD_HH_ 1
 
 #include <qcanvas.h>
-#include "DataStore.hh"
-#include "InsertCanvasItem.hh"
 
 class Insert;
+class InsertCanvasItem;
+class DataStore;
 
 class InsertField : public QCanvasView
 {

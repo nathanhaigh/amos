@@ -4,6 +4,9 @@
 #include "FeatureCanvasItem.hh"
 #include "ContigCanvasItem.hh"
 #include "CoverageCanvasItem.hh"
+#include "DataStore.hh"
+#include "InsertCanvasItem.hh"
+
 
 #include <iostream>
 using namespace std;

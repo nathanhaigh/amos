@@ -4,9 +4,9 @@
 #include <qwidget.h>
 #include <qtimer.h>
 #include "RenderSeq.hh"
-#include "AlignmentInfo.hh"
 
-#include "DataStore.hh"
+class DataStore;
+class AlignmentInfo;
 
 class TilingField : public QWidget
 {

@@ -12,9 +12,19 @@
 #include <qvbox.h>
 #include <qsplitter.h>
 
-#include "TilingFrame.hh"
 #include "InsertWindow.hh"
 #include "AssemblyStats.hh"
+#include "TilingFrame.hh"
+#include "ContigPicker.hh"
+#include "ScaffoldPicker.hh"
+#include "ReadPicker.hh"
+#include "FeatureBrowser.hh"
+#include "LibraryPicker.hh"
+#include "ChromoPicker.hh"
+#include "InsertWindow.hh"
+#include "CGraphWindow.hh"
+#include "AlignmentInfo.hh"
+
 
 #include "icons/fontdecrease.xpm"
 #include "icons/fontincrease.xpm"

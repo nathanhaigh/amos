@@ -10,19 +10,22 @@
 #include <qsplitter.h>
 #include <qlayout.h>
 #include <string>
-
-#include "TilingFrame.hh"
-#include "ContigPicker.hh"
-#include "ScaffoldPicker.hh"
-#include "ReadPicker.hh"
-#include "FeatureBrowser.hh"
-#include "LibraryPicker.hh"
-#include "ChromoPicker.hh"
-#include "DataStore.hh"
-#include "InsertWindow.hh"
-#include "CGraphWindow.hh"
-#include "NetworkCom.hh"
 #include <map>
+
+#include "NetworkCom.hh"
+#include "DataStore.hh"
+
+class TilingFrame;
+class ContigPicker;
+class ScaffoldPicker;
+class ReadPicker;
+class FeatureBrowser;
+class LibraryPicker;
+class ChromoPicker;
+class InsertWindow;
+class CGraphWindow;
+
+
 
 class ReferenceAlignment
 {
@@ -30,8 +33,8 @@ public:
   ReferenceAlignment() {}
   ~ReferenceAlignment() {}
 
-  string m_reference;
-  string m_query;
+  std::string m_reference;
+  std::string m_query;
 
   int m_rstart;
   int m_rend;
@@ -165,7 +168,7 @@ private:
   QVBox * m_outervbox;
   QWidget * m_multiTilingWidget;
 
-  typedef std::multimap<string, ReferenceAlignment> ReferenceAlignments;
+  typedef std::multimap<std::string, ReferenceAlignment> ReferenceAlignments;
 
   ReferenceAlignments m_referenceAlignments;
   DataStore m_querystore;
