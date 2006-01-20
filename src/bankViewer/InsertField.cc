@@ -276,7 +276,12 @@ void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int se
     s += "e:" + QString(m_datastore->read_bank.lookupEID(iid).c_str());
     s += " i:" + QString::number(iid);
     s += " c:" + QString::number(contigiid);
-    s += " l:" + QString::number(linked);
+
+    if (iitem->m_contigcolor)
+    {
+      s += " l:" + QString::number(linked);
+    }
+
     s += "]";
   }
 }

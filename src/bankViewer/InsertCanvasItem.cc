@@ -11,8 +11,8 @@ using namespace std;
 InsertCanvasItem::InsertCanvasItem(int x, int y, int width, int height,
                                    Insert * insert, QCanvas * canvas)
   : QCanvasRectangle(x, y, width, height, canvas),
-  m_insert(insert), m_highlight(false), m_contigcolor(false)
-  
+  m_insert(insert), m_highlight(false), m_contigcolor(false),
+  m_alinked(0), m_alinkedread(0), m_blinked(0), m_blinkedread(0)
 {
   m_insert->m_canvasItem = this;
 }
