@@ -60,6 +60,7 @@ public:
   static const FeatureType_t COVERAGE;
   static const FeatureType_t ORF;
   static const FeatureType_t POLYMORPHISM;
+  static const FeatureType_t BREAKPOINT;
 
 
   //--------------------------------------------------------- Feature_t --------
