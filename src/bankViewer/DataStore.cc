@@ -582,7 +582,12 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
       else if (btile)
       {
         // A and B are within this contig, but not reasonably connected
-        Insert * j = new Insert(*insert);
+        //Insert * j = new Insert(*insert);
+
+        Insert * j = new Insert(aid, acontig, atile,
+                                bid, bcontig, btile,
+                                libid, dist,
+                                mi->second.second);
         j->setActive(1, insert, connectMates);
         inserts.push_back(j);
 

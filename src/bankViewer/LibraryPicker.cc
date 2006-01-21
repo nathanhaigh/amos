@@ -62,7 +62,7 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
   show();
 
   QPopupMenu * menu = new QPopupMenu(this);
-  menuBar()->insertItem("&Actions", menu);
+  menuBar()->insertItem("&Display", menu);
   menu->insertItem("&Insert Size Histogram", this, SLOT(acceptSelected()));
   menu->insertItem("&Clear Range Length Histogram", this, SLOT(readLengthSelected()));
 
@@ -198,7 +198,6 @@ void LibraryPicker::itemSelected(QListViewItem * item)
 
 void LibraryPicker::selectiid(const QString & iid)
 {
-  cerr << iid << endl;
   QListViewItem * item = m_table->findItem(iid, 0);
   if (item)
   {
@@ -209,7 +208,6 @@ void LibraryPicker::selectiid(const QString & iid)
 
 void LibraryPicker::selecteid(const QString & eid)
 {
-  cerr << eid << endl;
   QListViewItem * item = m_table->findItem(eid, 1);
   if (item)
   {

@@ -7,9 +7,11 @@
 
 #include <iostream>
 
+using namespace std;
+
 HistogramWidget::HistogramWidget(InsertStats * stats, QWidget * parent, const char * name)
  : QWidget(parent, name),
-   m_stats(stats), m_fitzero(true), m_grid(true), m_shademean(false), m_shadesd(2.0)
+   m_stats(stats), m_fitzero(true), m_grid(true), m_shademean(true), m_shadesd(2.0)
 {
   setMinimumSize(550, 500);
   setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose);
@@ -100,6 +102,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
 
     int labelwidth = 100;
     int numbuckets = (int)(labelwidth / xscale);
+    if (numbuckets == 0) { numbuckets = 1; }
 
     for (int i = 0; i < buckets; i++)
     {
@@ -119,6 +122,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
 
     // ylables
     int yjump = (int)(100/yscale);
+    if (yjump == 0) { yjump = 1; }
     for (int j = m_stats->m_maxcount; j >= 0; j -= yjump)
     {
       int ycoord = (int)(histbottom - j * yscale);
@@ -148,11 +152,13 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
                  (int)(m_stats->m_buckets[i]*yscale));
     }
 
+
+    // text
     int textline1 = histbottom + 30;
     int textline2 = textline1 + 20;
 
-    label = "Sample Mean: " + QString::number(m_stats->mean()) +
-            "   SD: " + QString::number(m_stats->stdev()) +
+    label = "Sample Mean: " + QString::number(m_stats->mean(), 'f', 2) +
+            "   SD: " + QString::number(m_stats->stdev(), 'f', 2) +
             "   Count: " + QString::number(m_stats->count());
 
     p.drawText(histleft, textline1,

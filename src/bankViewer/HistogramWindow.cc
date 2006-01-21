@@ -46,7 +46,7 @@ HistogramWindow::HistogramWindow(InsertStats * stats, QWidget * parent, const ch
 
   new QLabel(" Shade Mean", options, "meanlbl");
   QCheckBox * mean = new QCheckBox(options, "meancheck");
-  mean->setChecked(false);
+  mean->setChecked(true);
 
   connect(mean,   SIGNAL(toggled(bool)),
           widget, SLOT(setShadeMean(bool)));
