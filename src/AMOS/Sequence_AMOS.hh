@@ -212,6 +212,40 @@ public:
   }
 
 
+
+  //--------------------------------------------------- getGCContent --------------
+  //! \brief Get the gc content of the sequence
+  //!
+  //! \return The gc content of the sequence
+  //!
+  double getGCContent ( ) const
+  {
+    int gc = 0;
+    int all = 0;
+
+    // skip ambiguities, gaps
+
+    for (int i = 0; i < length_m; i++)
+    {
+      switch(getBase(i).first)
+      {
+        case 'A':
+        case 'a': 
+        case 'T':
+        case 't': all++; break;
+
+        case 'C':
+        case 'c':
+        case 'G':
+        case 'g': all++; gc++; break;
+      };
+    }
+
+    return (all) ? ((double)gc)/all : 0.0;
+  }
+
+
+
   //--------------------------------------------------- getLength --------------
   //! \brief Get the length of the sequence
   //!
