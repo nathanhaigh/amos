@@ -308,6 +308,7 @@ void TilingFrame::loadContigRange(int gindex)
 
         if (found) { continue; }
 
+
         // hasn't been rendered before
         RenderSeq_t rendered;
         rendered.load(m_datastore, &*vi);
@@ -316,7 +317,9 @@ void TilingFrame::loadContigRange(int gindex)
 
         for (int gindex = rendered.m_loffset; gindex <= rendered.m_roffset; gindex++)
         {
-          int circ = gindex % clen;
+          int circ = gindex;
+          if (circ < 0) { circ += clen; }
+          circ = circ % clen;
           int global = m_alignment->getGlobalPos(circ);
 
           if (m_cstatus[global] != 'X')
