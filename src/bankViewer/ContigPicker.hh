@@ -24,6 +24,9 @@ public slots:
   void acceptSelected();
   void toggleShowReads();
   void refreshTable();
+  void contigSizeHistogram();
+  void contigReadHistogram();
+  void contigGCHistogram();
 
 signals:
   void contigSelected(int);

@@ -8,6 +8,8 @@
 #include <qmenubar.h>
 #include "DataStore.hh"
 
+#include "InsertStats.hh"
+#include "HistogramWindow.hh"
 
 #include "foundation_AMOS.hh"
 
@@ -20,15 +22,18 @@ int FIELD_OFFSET=4;
 class ContigListItem : public QListViewItem
 {
 public:
+  static bool showreads;
+
   ContigListItem(QListView * parent, 
                  QString id,
                  QString iid,
                  QString eid,
                  QString status,
                  QString length,
-                 QString reads)
+                 QString reads,
+                 QString gccontent)
                
-    : QListViewItem(parent, id, iid, eid, status, length, reads) {}
+    : QListViewItem(parent, id, iid, eid, status, length, reads, gccontent) {}
 
   ContigListItem(QListView * parent, 
                  QString id,
@@ -37,9 +42,10 @@ public:
                  QString status,
                  QString offset,
                  QString length,
-                 QString reads)
+                 QString reads,
+                 QString gccontent)
                
-    : QListViewItem(parent, id, iid, eid, status, offset, length, reads) {}
+    : QListViewItem(parent, id, iid, eid, status, offset, length, reads, gccontent) {}
 
   ContigListItem(ContigListItem * parent, 
                  QString id,
@@ -48,9 +54,10 @@ public:
                  QString status,
                  QString offset,
                  QString length,
-                 QString reads)
+                 QString reads,
+                 QString gccontent)
                
-    : QListViewItem(parent, id, iid, eid, status, offset, length, reads) {}
+    : QListViewItem(parent, id, iid, eid, status, offset, length, reads, gccontent) {}
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
@@ -60,9 +67,19 @@ public:
       return key(col,ascending).compare(i->key(col,ascending));
     }
 
+    if ((showreads && col == 7) || (!showreads && col == 6))
+    {
+      double diff = atof(key(col,ascending)) - atof(i->key(col,ascending));
+      if      (diff < 0) { return -1; }
+      else if (diff > 0) { return 1;}
+      return 0;
+    }
+
     return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
   }
 };
+
+bool ContigListItem::showreads(false);
 
 #include "BufferedLineEdit.hh"
 
@@ -80,6 +97,14 @@ ContigPicker::ContigPicker(DataStore * datastore,
   setCaption("Contig Chooser");
   resize(500,500);
   show();
+
+
+  QPopupMenu * menu = new QPopupMenu(this);
+  menuBar()->insertItem("&Display", menu);
+  menu->insertItem("&Contig Length Histogram", this, SLOT(contigSizeHistogram()));
+  menu->insertItem("&Contig Read Count Histogram", this, SLOT(contigReadHistogram()));
+  menu->insertItem("&Contig GC Content Histogram", this, SLOT(contigGCHistogram()));
+
 
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
@@ -142,6 +167,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
     m_table->addColumn("Offset");
     m_table->addColumn("Length");
     m_table->addColumn("Reads");
+    m_table->addColumn("GC Content");
   }
   else
   {
@@ -151,6 +177,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
     m_table->addColumn("Status");
     m_table->addColumn("Length");
     m_table->addColumn("Reads");
+    m_table->addColumn("GC Content");
   }
 
   try
@@ -167,6 +194,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
     {
       int contiglen = contig.getLength();
       int numreads = contig.getReadTiling().size();
+      double gccontent = contig.getGCContent();
 
       ContigListItem * contigitem;
 
@@ -179,7 +207,8 @@ void ContigPicker::loadTable(bool jumpToCurrent)
                                         QString(QChar(contig.getStatus())),
                                         QString(""),
                                         QString::number(contiglen), 
-                                        QString::number(numreads));
+                                        QString::number(numreads),
+                                        QString::number(gccontent, 'f', 4));
       }
       else
       {
@@ -189,7 +218,8 @@ void ContigPicker::loadTable(bool jumpToCurrent)
                                         QString(contig.getEID().c_str()), 
                                         QString(QChar(contig.getStatus())),
                                         QString::number(contiglen), 
-                                        QString::number(numreads));
+                                        QString::number(numreads),
+                                        QString::number(gccontent, 'f', 4));
       }
 
       if (contigid == m_datastore->m_contigId)
@@ -213,6 +243,7 @@ void ContigPicker::loadTable(bool jumpToCurrent)
                              QString(""),
                              QString::number(ti->offset), 	 
                              QString::number(ti->range.getLength() + ti->gaps.size()),
+                             QString(""),
                              QString("")); 	 
         }
       }
@@ -280,6 +311,7 @@ void ContigPicker::toggleShowReads()
   m_options->setItemChecked(m_showreadsid, b);
 
   m_showReads = b;
+  ContigListItem::showreads = b;
 
   loadTable(false);
 }
@@ -288,4 +320,46 @@ void ContigPicker::toggleShowReads()
 void ContigPicker::refreshTable()
 {
   loadTable(false);
+}
+
+void ContigPicker::contigSizeHistogram()
+{
+  InsertStats * stats = new InsertStats((string)"Contig Size Histogram");
+
+  AMOS::Contig_t contig;
+  m_datastore->contig_bank.seekg(1);
+  while (m_datastore->contig_bank >> contig)
+  {
+    stats->addSize(contig.getLength());
+  }
+
+  new HistogramWindow(stats, this, "hist");
+}
+
+void ContigPicker::contigReadHistogram()
+{
+  InsertStats * stats = new InsertStats((string)"Contig Read Count Histogram");
+
+  AMOS::Contig_t contig;
+  m_datastore->contig_bank.seekg(1);
+  while (m_datastore->contig_bank >> contig)
+  {
+    stats->addSize(contig.getReadTiling().size());
+  }
+
+  new HistogramWindow(stats, this, "hist");
+}
+
+void ContigPicker::contigGCHistogram()
+{
+  InsertStats * stats = new InsertStats((string)"Contig GC Histogram");
+
+  AMOS::Contig_t contig;
+  m_datastore->contig_bank.seekg(1);
+  while (m_datastore->contig_bank >> contig)
+  {
+    stats->addSize(contig.getGCContent());
+  }
+
+  new HistogramWindow(stats, this, "hist");
 }

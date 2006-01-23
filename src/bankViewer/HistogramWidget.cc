@@ -47,7 +47,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
 
   int gutter     = 20;
   int histtop    = 50;
-  int bottomtext = 80;
+  int bottomtext = 100;
   int histheight = height - histtop - bottomtext;
   int histbottom = histtop + histheight;
 
@@ -104,6 +104,9 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
     int numbuckets = (int)(labelwidth / xscale);
     if (numbuckets == 0) { numbuckets = 1; }
 
+    int prec = 0;
+    if (m_stats->m_high <= 1) { prec = 3; }
+
     for (int i = 0; i < buckets; i++)
     {
       if (i % numbuckets == 0)
@@ -112,7 +115,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
 
         if (m_grid) { p.drawLine(xcoord, histtop, xcoord, histbottom+5); }
 
-        label = QString::number((int)m_stats->m_bucketlow[i]);
+        label = QString::number(m_stats->m_bucketlow[i], 'f', prec);
 
         p.drawText(xcoord-labelwidth, histbottom,
                    labelwidth*2, 30, Qt::AlignCenter, label);
@@ -146,22 +149,32 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
       int xwidth = (int)xscale;
       if (xwidth == 0) { xwidth = 1; }
 
+      int yheight = (int)(m_stats->m_buckets[i]*yscale);
+      if (m_stats->m_buckets[i] && yheight < 5) { yheight = 5; }
+
       p.drawRect((int)(histleft+i*xscale), 
-                 (int)(histbottom - (m_stats->m_buckets[i]*yscale)),
-                 (int)(xscale), 
-                 (int)(m_stats->m_buckets[i]*yscale));
+                 (int)(histbottom - yheight),
+                 (int)(xwidth), 
+                 (int)(yheight));
     }
 
 
     // text
     int textline1 = histbottom + 30;
     int textline2 = textline1 + 20;
+    int textline3 = textline2 + 20;
+
+    label = "Sample Range: " + QString::number(m_stats->m_low, 'f', 2) +
+            " - " + QString::number(m_stats->m_high, 'f', 2);
+
+    p.drawText(histleft, textline1,
+               histwidth, 30, Qt::AlignLeft | Qt::AlignVCenter, label);
 
     label = "Sample Mean: " + QString::number(m_stats->mean(), 'f', 2) +
             "   SD: " + QString::number(m_stats->stdev(), 'f', 2) +
             "   Count: " + QString::number(m_stats->count());
 
-    p.drawText(histleft, textline1,
+    p.drawText(histleft, textline2,
                histwidth, 30, Qt::AlignLeft | Qt::AlignVCenter, label);
 
 
@@ -172,7 +185,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
             " SD: " + QString::number(withincount) +
             " (" + QString::number(withinperc, 'f', 2) + "%)";
 
-    p.drawText(histleft, textline2,
+    p.drawText(histleft, textline3,
                histwidth, 30, Qt::AlignLeft | Qt::AlignVCenter, label);
   }
 

@@ -11,7 +11,7 @@ InsertStats::InsertStats(const string & label)
 {
 }
 
-void InsertStats::addSize(int size)
+void InsertStats::addSize(double size)
 {
   m_sizes.push_back(size); 
 }
@@ -27,11 +27,11 @@ double InsertStats::mean() const
 { 
   if (m_sizes.size() == 0) { return 0; }
 
-  long sum = 0; 
+  double sum = 0; 
   for (int i = 0; i < m_sizes.size(); i++)
     { sum += m_sizes[i]; }
 
-  return ((double)sum) / m_sizes.size();
+  return (sum) / m_sizes.size();
 }
 
 
@@ -64,17 +64,22 @@ void InsertStats::histogram(int buckets, bool fitzero)
   m_low = m_sizes[0];
   m_high = m_sizes[0];
 
-  vector<int>::iterator vi;
+  vector<double>::iterator vi;
   for (vi = m_sizes.begin(); vi != m_sizes.end(); vi++)
   {
     if (*vi < m_low)  { m_low  = *vi; }
     if (*vi > m_high) { m_high = *vi; }
   }
 
-  int base = m_low;
-  if (fitzero) { base = 0; }
+  double base = m_low;
+  if (fitzero) { base = 0.0; }
 
-  m_bucketsize = ((double)m_high - base + 1) / (buckets);
+  m_bucketsize = (m_high - base + 1) / (buckets);
+
+  if (m_high <= 1.0)
+  {
+    m_bucketsize = 1.0L / buckets;
+  }
 
   for (int i = 0; i < buckets; i++)
   {
@@ -84,7 +89,7 @@ void InsertStats::histogram(int buckets, bool fitzero)
 
   for (vi = m_sizes.begin(); vi != m_sizes.end(); vi++)
   {
-    int bucket = floor(((*vi) - base)/m_bucketsize);
+    int bucket = (int)floor(((*vi) - base)/m_bucketsize);
     m_buckets[bucket]++;
   }
 
@@ -105,7 +110,7 @@ int InsertStats::withinSD(double numsd) const
 
   int count = 0;
 
-  vector<int>::const_iterator vi;
+  vector<double>::const_iterator vi;
   for (vi = m_sizes.begin(); vi != m_sizes.end(); vi++)
   {
     count += (lo <= *vi && *vi <= hi);

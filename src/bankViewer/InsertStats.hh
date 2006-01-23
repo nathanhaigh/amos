@@ -10,21 +10,21 @@ public:
   InsertStats(const std::string & label);
   std::string m_label;
 
-  void   addSize(int size);
+  void   addSize(double size);
 
   int    count() const;
   double mean()  const;
   double stdev() const;
   int    withinSD(double numsd) const;
 
-  std::vector<int> m_sizes;
+  std::vector<double> m_sizes;
 
   void   histogram(int buckets, bool fitzero=true);
   std::vector<int>    m_buckets;
   std::vector<double> m_bucketlow;
   double m_bucketsize;
-  int m_low;
-  int m_high;
+  double m_low;
+  double m_high;
   int m_maxcount;
 };
 
