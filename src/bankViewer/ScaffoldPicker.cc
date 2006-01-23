@@ -241,6 +241,17 @@ void ScaffoldPicker::itemSelected(QListViewItem * item)
     emit contigSelected(atoi(item->text(0)));
     emit setGindex(offset);
   }
+  else
+  {
+    AMOS::Scaffold_t scaffold;
+    m_datastore->fetchScaffold(atoi(item->text(0)), scaffold);
+
+    AMOS::ID_t contigiid = scaffold.getContigTiling().begin()->source;
+    AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(contigiid);
+
+    emit contigSelected(bid);
+    emit setGindex(offset);
+  }
 }
 
 void ScaffoldPicker::selectiid(const QString & iid)
