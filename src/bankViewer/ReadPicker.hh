@@ -22,6 +22,9 @@ public slots:
   void acceptSelected();
   void contigIdSelected(int contigid);
 
+  void readSizeHistogram();
+  void readGCHistogram();
+
 signals:
   void highlightRead(int);
 

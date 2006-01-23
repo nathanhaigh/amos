@@ -1,11 +1,14 @@
 #include "ReadPicker.hh"
 #include <qcursor.h>
 #include <qstatusbar.h>
+#include <qmenubar.h>
 
 #include <qlabel.h>
 #include <qlineedit.h>
 
 #include "foundation_AMOS.hh"
+#include "HistogramWindow.hh"
+
 
 #include <vector>
 
@@ -28,28 +31,33 @@ public:
                  QString seql,
                  QString seqr,
                  QString libid,
-                 QString mean)
+                 QString gccontent)
                
     : QListViewItem(parent, iid, eid, type, matetype, offset, endoffset, len, dir) 
     {
       setText(8, seql);
       setText(9, seqr);
       setText(10, libid);
-      setText(11, mean);
+      setText(11, gccontent);
     }
 
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 1 || col == 2 || col==3 || col == 7)
+    if (col == 11)
+    {
+      double diff = atof(key(col,ascending)) - atof(i->key(col,ascending));
+      if      (diff < 0) { return -1; }
+      else if (diff > 0) { return 1;}
+      return 0;
+    }
+    else if (col == 1 || col == 2 || col==3 || col == 7)
     {
       return key(col,ascending).compare(i->key(col,ascending));
     }
-    else
-    {
-      return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
-    }
+
+    return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
   }
 };
 
@@ -57,7 +65,7 @@ public:
 ReadPicker::ReadPicker(DataStore * datastore,
                        QWidget * parent, 
                        const char * name)
-  :QMainWindow(parent, name)
+  :QMainWindow(parent, name), m_datastore(datastore)
 {
   m_table = new QListView(this, "readpickertbl");
   setCentralWidget(m_table);
@@ -65,7 +73,11 @@ ReadPicker::ReadPicker(DataStore * datastore,
   resize(800,500);
   show();
 
-  m_datastore = datastore;
+  QPopupMenu * menu = new QPopupMenu(this);
+  menuBar()->insertItem("&Display", menu);
+  menu->insertItem("&Read Length Histogram",     this, SLOT(readSizeHistogram()));
+  menu->insertItem("&Read GC Content Histogram", this, SLOT(readGCHistogram()));
+
 
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");
@@ -103,7 +115,7 @@ ReadPicker::ReadPicker(DataStore * datastore,
   m_table->addColumn("CLR Begin");
   m_table->addColumn("CLR End");
   m_table->addColumn("Lib ID");
-  m_table->addColumn("Lib Mean");
+  m_table->addColumn("GC Content");
 
   m_table->setShowSortIndicator(true);
   m_table->setRootIsDecorated(true);
@@ -137,6 +149,8 @@ void ReadPicker::loadTable()
       AMOS::Read_t red;
       m_datastore->fetchRead(ti->source, red);
 
+      double gccontent = red.getGCContent();
+
       char type = red.getType();
       if (type == 0) { type = '?'; }
 
@@ -163,7 +177,7 @@ void ReadPicker::loadTable()
                        QString::number(ti->range.begin),
                        QString::number(ti->range.end),
                        QString::number(libid),
-                       QString::number(dist.mean));
+                       QString::number(gccontent, 'f', 4));
     }
 
     setCursor(orig);
@@ -213,4 +227,43 @@ void ReadPicker::contigIdSelected(int contigid)
   loadTable();
 }
 
+
+void ReadPicker::readSizeHistogram()
+{
+  char buffer[16];
+  sprintf(buffer, "%d", m_datastore->m_contigId);
+
+  InsertStats * stats = new InsertStats((string)"Clear Range Length Histogram for Contig " + buffer);
+
+  vector<AMOS::Tile_t>::iterator ti;
+  for (ti =  m_datastore->m_contig.getReadTiling().begin();
+       ti != m_datastore->m_contig.getReadTiling().end();
+       ti++)
+  {
+    stats->addSize(ti->range.getLength());
+  }
+
+  new HistogramWindow(stats, this, "hist");
+}
+
+void ReadPicker::readGCHistogram()
+{
+  char buffer[16];
+  sprintf(buffer, "%d", m_datastore->m_contigId);
+
+  InsertStats * stats = new InsertStats((string)"Read GC Content Histogram for Contig " + buffer);
+
+  vector<AMOS::Tile_t>::iterator ti;
+  for (ti =  m_datastore->m_contig.getReadTiling().begin();
+       ti != m_datastore->m_contig.getReadTiling().end();
+       ti++)
+  {
+    AMOS::Read_t red;
+    m_datastore->fetchRead(ti->source, red);
+
+    stats->addSize(red.getGCContent());
+  }
+
+  new HistogramWindow(stats, this, "hist");
+}
 

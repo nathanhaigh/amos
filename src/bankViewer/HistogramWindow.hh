@@ -3,7 +3,8 @@
 
 #include <qmainwindow.h>
 
-class InsertStats;
+#include "InsertStats.hh"
+
 class QLineEdit;
 
 class HistogramWindow : public QMainWindow

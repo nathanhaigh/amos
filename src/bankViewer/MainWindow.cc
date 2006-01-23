@@ -70,15 +70,16 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   // Menubar
   QPopupMenu* file = new QPopupMenu(this);
   menuBar()->insertItem("&File", file);
-  file->insertItem("&Open Bank...",     this,  SLOT(chooseBank()));
+  file->insertItem("&Open Bank...",            this,  SLOT(chooseBank()));
   file->insertItem("Chromatogram P&aths...",   this,  SLOT(showChromoPicker()));
   file->insertSeparator();
-  file->insertItem("&Assembly Statistics...", this, SLOT(showAssemblyStats()));
-  file->insertItem("&Contig Picker...", this,  SLOT(chooseContig()));
+  file->insertItem("&Assembly Statistics...",  this,  SLOT(showAssemblyStats()));
+  file->insertItem("&Library Information...",  this,  SLOT(showLibPicker()));
   file->insertItem("&Scaffold Information...", this,  SLOT(showScaffoldPicker()));
-  file->insertItem("&Read Information...",   this,  SLOT(showReadPicker()));
+  file->insertItem("&Contig Information...",   this,  SLOT(chooseContig()));
+  file->insertItem("&Read Information...",     this,  SLOT(showReadPicker()));
+  file->insertSeparator();
   file->insertItem("&Feature Browser...",   this,  SLOT(showFeatureBrowser()));
-  file->insertItem("&Library Information...",   this,  SLOT(showLibPicker()));
   file->insertSeparator();
   file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
 

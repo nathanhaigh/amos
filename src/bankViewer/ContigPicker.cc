@@ -352,7 +352,7 @@ void ContigPicker::contigReadHistogram()
 
 void ContigPicker::contigGCHistogram()
 {
-  InsertStats * stats = new InsertStats((string)"Contig GC Histogram");
+  InsertStats * stats = new InsertStats((string)"Contig GC Content Histogram");
 
   AMOS::Contig_t contig;
   m_datastore->contig_bank.seekg(1);

@@ -11,6 +11,9 @@
 #include "RenderSeq.hh"
 #include "DataStore.hh"
 
+#include "InsertStats.hh"
+#include "HistogramWindow.hh"
+
 
 #include <vector>
 
@@ -76,6 +79,12 @@ ScaffoldPicker::ScaffoldPicker(DataStore * datastore,
   setCaption("Scaffold Information");
   resize(500,500);
   show();
+
+
+  QPopupMenu * menu = new QPopupMenu(this);
+  menuBar()->insertItem("&Display", menu);
+  menu->insertItem("&Scaffold Span Histogram", this, SLOT(scaffoldSizeHistogram()));
+  menu->insertItem("&Scaffold Contig Count Histogram", this, SLOT(scaffoldContigHistogram()));
 
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
@@ -276,5 +285,34 @@ void ScaffoldPicker::toggleShowContigs()
 void ScaffoldPicker::refreshTable()
 {
   loadTable(false);
+}
+
+void ScaffoldPicker::scaffoldSizeHistogram()
+{
+  InsertStats * stats = new InsertStats((string)"Scaffold Span Histogram");
+
+  AMOS::Scaffold_t scaffold;
+  m_datastore->scaffold_bank.seekg(1);
+  while (m_datastore->scaffold_bank >> scaffold)
+  {
+    stats->addSize(scaffold.getSpan());
+  }
+
+  new HistogramWindow(stats, this, "hist");
+}
+
+void ScaffoldPicker::scaffoldContigHistogram()
+{
+  InsertStats * stats = new InsertStats((string)"Scaffold Contig Count Histogram");
+
+  AMOS::Scaffold_t scaffold;
+  m_datastore->scaffold_bank.seekg(1);
+  while (m_datastore->scaffold_bank >> scaffold)
+  {
+    int span = scaffold.getSpan();
+    stats->addSize(scaffold.getContigTiling().size());
+  }
+
+  new HistogramWindow(stats, this, "hist");
 }
 

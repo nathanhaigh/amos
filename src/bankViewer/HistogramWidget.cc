@@ -90,7 +90,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
 
       mean /= m_stats->m_bucketsize;
 
-      p.setPen(Qt::green);
+      p.setPen(Qt::red);
       p.drawLine((int)(histleft + mean*xscale),  histtop,
                  (int)(histleft + mean*xscale), histbottom);
     }
@@ -105,7 +105,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
     if (numbuckets == 0) { numbuckets = 1; }
 
     int prec = 0;
-    if (m_stats->m_high <= 1) { prec = 3; }
+    if (m_stats->m_high <= 1) { prec = 4; }
 
     for (int i = 0; i < buckets; i++)
     {
@@ -164,8 +164,11 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
     int textline2 = textline1 + 20;
     int textline3 = textline2 + 20;
 
-    label = "Sample Range: " + QString::number(m_stats->m_low, 'f', 2) +
-            " - " + QString::number(m_stats->m_high, 'f', 2);
+    prec = 2;
+    if (m_stats->m_high <= 1) { prec = 4; }
+
+    label = "Sample Range: " + QString::number(m_stats->m_low, 'f', prec) +
+            " - " + QString::number(m_stats->m_high, 'f', prec);
 
     p.drawText(histleft, textline1,
                histwidth, 30, Qt::AlignLeft | Qt::AlignVCenter, label);

@@ -29,8 +29,8 @@ AssemblyStats::AssemblyStats(DataStore * datastore,
   show();
 
   m_table->setLeftMargin(0);
-  m_table->verticalHeader()->setLabel(0, "Field");
-  m_table->verticalHeader()->setLabel(1, "Value");
+  m_table->horizontalHeader()->setLabel(0, "Field");
+  m_table->horizontalHeader()->setLabel(1, "Value");
 
   m_datastore = datastore;
 
@@ -256,6 +256,7 @@ void AssemblyStats::loadTable()
     addRow("", "");
 
     // Small Contigs
+    addRow("[SmallContigs]", "");
     addRow("TotalSmallContigs", smallcount);
     addRow("SmallContigLength", smallsize);
     addRow("MeanSmallContigSize", DIV(smallsize, smallcount));

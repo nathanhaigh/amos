@@ -240,7 +240,7 @@ void LibraryPicker::readLengthSelected()
 
     char buffer[32];
     sprintf(buffer, "%d", libid);
-    InsertStats * stats = new InsertStats((string)"Clear Range Length Histogram for Library " + buffer);
+    InsertStats * stats = new InsertStats((string)"Reads in Contigs Clear Range Length Histogram for Library " + buffer);
 
     Contig_t contig;
     m_datastore->contig_bank.seekg(1);

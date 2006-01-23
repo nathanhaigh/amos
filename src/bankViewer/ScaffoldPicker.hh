@@ -25,6 +25,9 @@ public slots:
   void toggleShowContigs();
   void refreshTable();
 
+  void scaffoldSizeHistogram();
+  void scaffoldContigHistogram();
+
 signals:
   void contigSelected(int);
   void setGindex(int);
