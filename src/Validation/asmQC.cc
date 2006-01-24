@@ -22,16 +22,18 @@ using namespace HASHMAP;
 #define endl "\n"
 
 enum MateStatus {MP_GOOD, MP_SHORT, MP_LONG, MP_NORMAL, MP_OUTIE, MP_SINGMATE, 
-		 MP_LINKING};
+		 MP_LINKING, MP_SPANNING};
 
 class AnnotatedFragment: public Fragment_t
 {
 public:
   MateStatus status;
-  Pos_t deviation;    // how far it deviates from mean
+  Pos_t size;    // computed fragment size
+  ID_t contig1, contig2;
+  ID_t scaff1, scaff2;
   AnnotatedFragment() : Fragment_t() {
     status = MP_GOOD;
-    deviation = 0;
+    size = 0;
   }
 };
 
@@ -49,6 +51,7 @@ void printHelpText()
     "\n.OPTIONS.\n"
     "-h, -help     print out help message\n"
     "-b, -bank     bank where assembly is stored\n"
+    "-scaff      take into account scaffolds when reporting results\n"
     "-feat         write contig features into the bank\n"
     "-recompute    recompute library sizes\n"
     "-update       update bank with recomputed library sizes\n"
@@ -98,12 +101,12 @@ bool GetOptions(int argc, char ** argv)
     {"perinsert", 1, 0, 'p'},
     {"meachange", 1, 0, 'c'},
     {"sdchange",  1, 0, 'C'},
+    {"scaff", 0, 0, 'B'},
     {0, 0, 0, 0}
   };
   
   int c;
-  while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -
-         1){
+  while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
     switch (c){
     case 'h':
       printHelpText();
@@ -112,8 +115,17 @@ bool GetOptions(int argc, char ** argv)
     case 'b':
       globals["bank"] = string(optarg);
       break;
+    case 'B':
+      globals["scaff"] = string("true");
+      break;
     case 'm':
       globals["minobs"] = string(optarg);
+      break;
+    case 'M':
+      globals["singlemate"] = string(optarg);
+      break;
+    case 's':
+      globals["shortcvg"] = string(optarg);
       break;
     case 'S':
       globals["numsd"] = string(optarg);
@@ -121,23 +133,17 @@ bool GetOptions(int argc, char ** argv)
     case 'g':
       globals["goodcvg"] = string(optarg);
       break;
-    case 's':
-      globals["shortcvg"] = string(optarg);
-      break;
     case 'l':
       globals["longcvg"] = string(optarg);
+      break;
+    case 'L':
+      globals["linking"] = string(optarg);
       break;
     case 'n':
       globals["normalcvg"] = string(optarg);
       break;
     case 'o':
       globals["outiecvg"] = string(optarg);
-      break;
-    case 'L':
-      globals["linking"] = string(optarg);
-      break;
-    case 'M':
-      globals["singlemate"] = string(optarg);
       break;
     case 'r':
       globals["recompute"] = string("true");
@@ -224,7 +230,8 @@ int mateLen (AnnotatedFragment & m, Range_t & a, Range_t & b, int Len, int End)
     return 0; // mate-pair too close to end to count
   }
 
-  return abs(a.getBegin() - b.getBegin());
+  m.size = abs(a.getBegin() - b.getBegin());
+  return m.size;
 }// mateLen
 
 
@@ -278,14 +285,75 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
 }
 
 // get regions that are below or above a specified coverage
-void getCvg(list<pair<Pos_t, Pos_t> > & ranges,
+void getCvg(list<list<AnnotatedFragment>::iterator>::iterator begin,
+	    list<list<AnnotatedFragment>::iterator>::iterator end,
+	    hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > & posmap,
+	    MateStatus status,
+	    ID_t id, 
 	    list<pair<Pos_t, Pos_t> > & interest,
 	    Pos_t ctglen, int coverage, bool above)
 {
   vector<Pos_t> starts, ends;
-
+  list<pair<Pos_t, Pos_t> > ranges;
   interest.clear();
   
+  for (list<list<AnnotatedFragment>::iterator>::iterator mi = begin; mi != end; mi++){
+      if ((*mi)->status == status){
+	Pos_t left, right;
+
+	if (status == MP_GOOD){
+	  left = posmap[((*mi)->getMatePair()).first].getEnd(); // use end of reads
+	  right = posmap[((*mi)->getMatePair()).second].getEnd(); 
+	} else if (status == MP_LONG || status == MP_SHORT) {
+	  left = posmap[((*mi)->getMatePair()).first].getBegin(); // use beginning of reads
+	  right = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	} else if (status == MP_NORMAL || status == MP_OUTIE) {
+	  left = posmap[((*mi)->getMatePair()).first].getBegin(); 
+	  right = posmap[((*mi)->getMatePair()).first].getEnd(); 
+	  left = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	  right = posmap[((*mi)->getMatePair()).second].getEnd(); 
+	} else if (status == MP_SINGMATE) {
+	  if ((*mi)->contig1 != 0) {
+	    left = posmap[((*mi)->getMatePair()).first].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).first].getEnd(); 
+	  } else {
+	    left = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).second].getEnd(); 
+	  }
+	} else if (status == MP_SPANNING){ // check contig ids
+	  if ((*mi)->contig1 == id) {
+	    left = posmap[((*mi)->getMatePair()).first].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).first].getEnd(); 
+	  } else {
+	    left = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).second].getEnd(); 
+	  }
+	} else if (status = MP_LINKING) { // check scaffold ids
+	  if ((*mi)->scaff1 == id) {
+	    left = posmap[((*mi)->getMatePair()).first].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).first].getEnd(); 
+	  } else if ((*mi)->scaff2 == id ) {
+	    left = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).second].getEnd(); 
+	  } else if ((*mi)->scaff1 == 0 && (*mi)->contig1 == id) {
+	    left = posmap[((*mi)->getMatePair()).first].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).first].getEnd(); 
+	  } else if ((*mi)->scaff2 == 0 && (*mi)->contig2 == id) {
+	    left = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	    right = posmap[((*mi)->getMatePair()).second].getEnd(); 
+	  } else {
+	    cerr << "One of the IDs should match\n";
+	    assert(0);
+	  }
+	}
+
+	if (left < right)
+	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
+	else
+	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
+      }
+  }
+
   if (ranges.size() == 0 && above) return;
   if (ranges.size() == 0 && coverage >= 0) {
     // all contig is below needed coverage
@@ -374,6 +442,7 @@ int main(int argc, char **argv)
   bool feats = false;     // add features to bank
   bool debug = false;     // write debugging info to STDERR
   bool perinsert = false; // do per-insert output
+  bool byscaff = false;   // results reported by scaffold
 
   if (globals.find("debug") != globals.end()){
     debug = true;
@@ -467,6 +536,12 @@ int main(int argc, char **argv)
   }
   cout << endl;
 
+  if (globals.find("scaff") != globals.end()){
+    byscaff = true;
+    cout << "Reporting results by scaffold.  In this mode linking clones connect different scaffolds." << endl;
+  }
+  cout << endl;
+
   // open necessary files
   if (globals.find("bank") == globals.end()){ // no bank was specified
     cerr << "A bank must be specified" << endl;
@@ -539,8 +614,6 @@ int main(int argc, char **argv)
     {
       try {
        if (! feat_stream.exists(globals["bank"])){
-	 //         cerr << "No feat account found in bank " << globals["bank"] << endl;
-//         exit(1);
 	 feat_stream.create(globals["bank"], B_READ|B_WRITE);
        } else {
 	 feat_stream.open(globals["bank"], B_READ|B_WRITE);
@@ -553,6 +626,25 @@ int main(int argc, char **argv)
         }
     }
 
+  BankStream_t scaff_stream (Scaffold_t::NCODE);
+  if (byscaff){
+    try {
+      if (! scaff_stream.exists(globals["bank"])){
+	cerr << "No scaffold accound found in bank " << globals["bank"] << endl;
+	cerr << "Try running code without -byscaff option" << endl;
+	exit(1);
+      } else {
+	scaff_stream.open(globals["bank"], B_READ);
+      }
+    } catch (Exception_t & e)
+      {
+	cerr << "Failed to open scaffold account in bank " << globals["bank"]
+	     << ": " << endl << e << endl;
+	exit(1);
+      }
+  }
+  
+
   ofstream insertFile;
   if (perinsert){
     insertFile.open(globals["perinsert"].c_str(), ofstream::out);
@@ -562,14 +654,58 @@ int main(int argc, char **argv)
     }
   }
 
-  // Stream through the contigs and retrieve map of read positions within ctgs.
+  //**********************************************
+  // LOAD SCAFFOLD INFO
+  // ctg2scaff <- scaffold IID for each contig
+  // ctg2posn <- position of contig in scaffold
+  // scaffspan <- span of scaffold
+  Scaffold_t scaff;
+  
+  hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > ctg2scaff;   // map from contig to scaffold
+  hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > ctg2posn; // position in scaffold
+  hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > scaffspan; // span of scaffold
+
+  set<ID_t> scfIDs;
+
+  if (byscaff){
+    while (scaff_stream >> scaff){
+      scaffspan[scaff.getIID()] = scaff.getSpan();
+      scfIDs.insert(scaff.getIID());
+      //     cerr << "Span of " << scaff.getIID() << " is " << scaff.getSpan() << endl;
+      for (vector<Tile_t>::iterator ti = scaff.getContigTiling().begin();
+	   ti != scaff.getContigTiling().end(); ti++){
+	ctg2scaff[ti->source] = scaff.getIID();
+	
+	Pos_t f, l; // coords of beginning/end of contig
+	if (ti->range.getEnd() < ti->range.getBegin()) { // reverse
+	  f = ti->offset + ti->range.getBegin() - ti->range.getEnd();
+	  l = ti->offset;
+	} else {
+	  f = ti->offset;
+	  l = ti->offset + ti->range.getEnd() - ti->range.getBegin();
+	}
+	ctg2posn[ti->source] = Range_t(f, l);
+      } // for each tile
+    } // while scaff_stream
+  } // if (byscaff)
+  
+
+  //********************************************
+  // LOAD CONTIG INFO
+  // rd2ctg <- contig IID for each read
+  // rd2scfid <- scaffold IID for each read
+  // rd2posn <- coordinates of reads in contigs
+  // rd2scaff <- coordinates of reads in scaffolds
+  // ctglen <- length of contigs
+  // ctgname <- EIDs of contigs
   Contig_t ctg;
   
-  hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2ctg;     // map from read to contig
-  hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > rd2posn; // position in contig
-  hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > ctglen;   // length of contig
+  hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2ctg;      // map from read to contig
+  hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2scfid;    // map from read to scaffold
+  hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > rd2posn;  // position in contig
+  hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > rd2scaff; // position in scaffold
+  hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > ctglen;    // length of contig
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > ctgname;   // name of contig
-
 
   set<ID_t> ctgIDs;
   while (contig_stream >> ctg)
@@ -587,15 +723,44 @@ int main(int argc, char **argv)
 	l = ti->offset + ti->range.getEnd() - ti->range.getBegin() + 
 	  ti->gaps.size();
       }
+      
       rd2posn[ti->source] = 
-        Range_t(f, l);
-
+	Range_t(f, l);
+      
+      //      cerr << "Coords in contig " << ctg.getIID() << " for read " << ti->source << " = " << f << ", " << l << endl;
+      
+      if (byscaff) { // coordinates are based on scaffold
+	rd2scfid[ti->source] = ctg2scaff[ctg.getIID()];
+	if (         rd2posn[ti->source].isReverse() &&   ctg2posn[ctg.getIID()].isReverse()){ // both reverse
+	  rd2scaff[ti->source] = Range_t(ctg2posn[ctg.getIID()].getBegin() - f, ctg2posn[ctg.getIID()].getBegin() - l);
+	} else if (! rd2posn[ti->source].isReverse() &&   ctg2posn[ctg.getIID()].isReverse()){ // contig reverse
+	  rd2scaff[ti->source] = Range_t(ctg2posn[ctg.getIID()].getBegin() - f, ctg2posn[ctg.getIID()].getBegin() - l);
+	} else if (  rd2posn[ti->source].isReverse() && ! ctg2posn[ctg.getIID()].isReverse()){ // read reverse
+	  rd2scaff[ti->source] = Range_t(ctg2posn[ctg.getIID()].getBegin() + f, ctg2posn[ctg.getIID()].getBegin() + l);
+	} else if (! rd2posn[ti->source].isReverse() && ! ctg2posn[ctg.getIID()].isReverse()){ // both forward
+	  rd2scaff[ti->source] = Range_t(ctg2posn[ctg.getIID()].getBegin() + f, ctg2posn[ctg.getIID()].getBegin() + l);
+	}
+	//	cerr << "Coords in scaffold " << ctg2scaff[ctg.getIID()] << " for read " << ti->source << " = " << rd2posn[ti->source].getBegin() << ", " 
+	//	     << rd2posn[ti->source].getEnd() << endl;
+	//	cerr << "Contig coords for contig " << ctg.getIID() << " = " << ctg2posn[ctg.getIID()].getBegin() << ", " << ctg2posn[ctg.getIID()].getEnd() << endl;
+      } 
+      
       ctglen[ctg.getIID()] = ctg.getLength();
       ctgname[ctg.getIID()] = ctg.getEID();
-    }
-
+    } // for each tile
+  // for each contig
+  
   contig_stream.close();
 
+
+  //*********************************************
+  // LOAD FRAGMENT AND READ INFORMATION
+  // rd2name <- EID of read
+  // rd2lib <- library read belongs to
+  // mtl <- list of all mate pairs
+  // lib2frag <- list of fragments in library
+  // ctg2frag <- list of fragments in contig
+  // scf2frag <- list of fragments in scaffold
   AnnotatedFragment frag;
   pair<ID_t, ID_t> mtp;
   list<AnnotatedFragment> mtl;
@@ -605,18 +770,19 @@ int main(int argc, char **argv)
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2frg;
   hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > lib2frag;
   hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > ctg2frag;
+  hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > scf2frag;
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > rd2name;
 
   while (frag_bank >> frag){
-
+    
     frag.status = MP_GOOD;
     mtp = frag.getMatePair();
-
+    
     if (mtp.first != 0) 
       read_bank.fetch(mtp.first, rd1); // get the read
     if (mtp.second != 0)
       read_bank.fetch(mtp.second, rd2);
-
+    
     if (mtp.first == 0 || mtp.second == 0) {
       if (perinsert)
 	insertFile << "UNMATED: "
@@ -625,9 +791,8 @@ int main(int argc, char **argv)
 		   << ") " << endl;
       continue;
     }
-
+    
     if (frag.getType() != Fragment_t::INSERT) {// we only handle end reads
-      //      cerr << "Type is " << frag.getType() << endl;
       if (perinsert)
 	insertFile << "NOT END MATES: "
 		   << mtp.first 
@@ -637,12 +802,10 @@ int main(int argc, char **argv)
 		   << "\n";
       continue;
     }
-
-
+    
+    
     rd2name[mtp.first] = rd1.getEID();
     rd2name[mtp.second] = rd2.getEID();
-    //    rd2frg[mtp.first] = frag.getIID();
-    //    rd2frg[mtp.second] = frag.getIID();
     rd2lib[mtp.first] = frag.getLibrary();
     rd2lib[mtp.second] = frag.getLibrary();
     libIDs.insert(frag.getLibrary());
@@ -651,19 +814,33 @@ int main(int argc, char **argv)
     list<AnnotatedFragment>::iterator ti; 
     if (rd2ctg[mtp.first] == rd2ctg[mtp.second]){
       // mate-pair between reads within the same contig
-
-      //      ctgIDs.insert(rd2ctg[mtp.first]);
+      frag.contig1 = rd2ctg[mtp.first];
+      frag.contig2 = rd2ctg[mtp.first];
+      if (rd2scfid[mtp.first] != 0){
+	frag.scaff1 = rd2scfid[mtp.first];
+	frag.scaff2 = rd2scfid[mtp.first];
+      } else {
+	frag.scaff1 = frag.scaff2 = 0;
+      }
       ti = mtl.insert(mtl.end(), frag);
-
+      
       lib2frag[frag.getLibrary()].push_back(ti);
       ctg2frag[rd2ctg[mtp.first]].push_back(ti);
+      if (rd2scfid[mtp.first] != 0) 
+	scf2frag[rd2scfid[mtp.first]].push_back(ti);
     } else {
       if (rd2ctg[mtp.first] == 0 ||
-	  rd2ctg[mtp.second] == 0) { // mate should be in contig
+	  rd2ctg[mtp.second] == 0) { // mate should be in some contig
 	frag.status = MP_SINGMATE;
+	frag.contig1 = rd2ctg[mtp.first];
+	frag.contig2 = rd2ctg[mtp.second];
+	frag.scaff1 = rd2scfid[mtp.first];
+	frag.scaff2 = rd2scfid[mtp.second];
 	ti = mtl.insert(mtl.end(), frag);
 	lib2frag[frag.getLibrary()].push_back(ti);
 	ctg2frag[rd2ctg[mtp.first]].push_back(ti);
+	if (rd2scfid[mtp.first] != 0) scf2frag[rd2scfid[mtp.first]].push_back(ti);
+	if (rd2scfid[mtp.second] != 0) scf2frag[rd2scfid[mtp.second]].push_back(ti);
 	if (perinsert)
 	  insertFile << "SINGLETON_MATE: " 
 		     << mtp.first 
@@ -675,26 +852,55 @@ int main(int argc, char **argv)
 		     << rd2ctg[mtp.second] 
 		     << "\n";
       } else {
-	frag.status = MP_LINKING;
+	if (byscaff && ((rd2scfid[mtp.first] != rd2scfid[mtp.second]) || rd2scfid[mtp.first] == 0)) 
+	  frag.status = MP_LINKING;  // links two different scaffolds.  0 - indicates contig is not in a scaffold
+	else 
+	  frag.status = MP_SPANNING; // spans gap between contigs
+	frag.contig1 = rd2ctg[mtp.first];
+	frag.contig2 = rd2ctg[mtp.second];
+	frag.scaff1 = rd2scfid[mtp.first];
+	frag.scaff2 = rd2scfid[mtp.second];
 	ti = mtl.insert(mtl.end(), frag);
 	lib2frag[frag.getLibrary()].push_back(ti);
 	ctg2frag[rd2ctg[mtp.first]].push_back(ti);
+	ctg2frag[rd2ctg[mtp.second]].push_back(ti);
+	if (rd2scfid[mtp.first] != 0) 
+	  scf2frag[rd2scfid[mtp.first]].push_back(ti);
+	if (rd2scfid[mtp.first] != 0 && rd2scfid[mtp.second] != 0 
+	    && rd2scfid[mtp.first] != rd2scfid[mtp.second]) 
+	  scf2frag[rd2scfid[mtp.second]].push_back(ti);
 	
-	if (perinsert)
-	  insertFile << "LINKING: " 
-		     << mtp.first 
-		     << "(" << rd2name[mtp.first] << ") " 
-		     << mtp.second 
-		     << "(" << rd2name[mtp.second] << ") "
-		     << " in separate contigs: "
-		     << rd2ctg[mtp.first] << ", "
-		     << rd2ctg[mtp.second] 
-		     << "\n";
+	if (perinsert) {
+	  if (frag.status == MP_SPANNING)
+	    insertFile << "SPANNING: " 
+		       << mtp.first 
+		       << "(" << rd2name[mtp.first] << ") " 
+		       << mtp.second 
+		       << "(" << rd2name[mtp.second] << ") "
+		       << " in separate contigs: "
+		       << rd2ctg[mtp.first] << ", "
+		       << rd2ctg[mtp.second] 
+		       << "\n";
+	  else // LINKING
+	    insertFile << "LINKING: " 
+		       << mtp.first 
+		       << "(" << rd2name[mtp.first] << ") " 
+		       << mtp.second 
+		       << "(" << rd2name[mtp.second] << ") "
+		       << " in separate scaffolds: "
+		       << rd2scfid[mtp.first] << ", "
+		       << rd2scfid[mtp.second]
+		       << "\n";
+	}
       }
     }
   }
   
-  // now we get the library information for each library
+  //**********************************************************
+  // GET LIBRARY INFO
+  //
+  // lib2name <- EID of library
+  // lib2size <- mean, stdev pair
   hash_map<ID_t, pair<Pos_t, SD_t>, hash<ID_t>, equal_to<ID_t> > lib2size;
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > lib2name;
   Library_t lib;
@@ -715,18 +921,28 @@ int main(int argc, char **argv)
     
     for (list<list<AnnotatedFragment>::iterator>::iterator 
 	   mi = lib2frag[*li].begin(); mi != lib2frag[*li].end(); mi++){
-      if ((*mi)->status != MP_GOOD)
-	continue;
       // for each mate pair
-      Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getMatePair().first], 
-			 rd2posn[(*mi)->getMatePair().second], 
-			 ctglen[rd2ctg[(*mi)->getMatePair().first]], 
-			 libsize.first + 3 * libsize.second);
+      if ((*mi)->status == MP_GOOD) {
+	Pos_t sz = mateLen(**mi, rd2posn[(*mi)->getMatePair().first], 
+			   rd2posn[(*mi)->getMatePair().second], 
+			   ctglen[rd2ctg[(*mi)->getMatePair().first]], 
+			   libsize.first + 3 * libsize.second);
 
-      if (recompute && sz != 0) {
-	sizes.push_back(sz);
+	if (recompute && sz != 0) {
+	  sizes.push_back(sz);
+	}
       }
-    } // if recomputing library sizes
+
+      // rerun mateLen if necessary for scaffolds
+      // this step should assign MP_OUTIE and MP_NORMAL tags to mates
+      // spanning contig boundaries. These are not used to recompute
+      // library sizes
+      if (byscaff && (*mi)->status == MP_SPANNING){
+	mateLen(**mi, rd2scaff[(*mi)->getMatePair().first],
+		rd2scaff[(*mi)->getMatePair().second],
+		scaffspan[rd2scfid[(*mi)->getMatePair().first]], 0);
+      } // if byscaff
+    } 
 
     // compute new sizes
     pair<Pos_t, SD_t> newSize;
@@ -771,7 +987,7 @@ int main(int argc, char **argv)
 	   mi = lib2frag[*li].begin(); mi != lib2frag[*li].end(); mi++){
       // for each mate pair
       // turn off end check 
-      if ((*mi)->status != MP_GOOD){
+      if ((*mi)->status != MP_GOOD && (*mi)->status != MP_SPANNING){
 	if (perinsert){
 	  if ((*mi)->status == MP_OUTIE)
 	    insertFile << "OUTIE: ";
@@ -789,19 +1005,40 @@ int main(int argc, char **argv)
 	continue; // only interested in mates not already tagged
       }
 
-      Pos_t sz = mateLen(**mi, rd2posn[((*mi)->getMatePair()).first], 
-			 rd2posn[((*mi)->getMatePair()).second], 
-			 ctglen[rd2ctg[((*mi)->getMatePair()).first]], 0);
+      if ((*mi)->status == MP_SPANNING && ! byscaff)
+	continue;  // only in scaffolds do we measure spanning clones
 
-      if (debug && sz != 0)
-	cerr << "MATE " << *li << " " << sz << endl;
-      
-      // sz == 0 implies mis-orientation
+      Pos_t sz;
+      if ((*mi)->status == MP_SPANNING) { // byscaff && ctg2scaff[rd2ctg[(*mi)->getMatePair().first]] != 0) // make sure scaffold exists, otherwise go with size within contig
+	(*mi)->status = MP_GOOD;  // in scaffolds spanning is good
+	sz = mateLen(**mi, rd2scaff[(*mi)->getMatePair().first],
+		     rd2scaff[(*mi)->getMatePair().second],
+		     scaffspan[rd2scfid[(*mi)->getMatePair().first]], 0);
+      } else
+	sz = mateLen(**mi, rd2posn[((*mi)->getMatePair()).first], 
+		     rd2posn[((*mi)->getMatePair()).second], 
+		     ctglen[rd2ctg[((*mi)->getMatePair()).first]], 0);
+
+      if (sz == 0 && ! byscaff){
+	cerr << "Zero size? " << ((*mi)->getMatePair()).first << " (" << rd2posn[((*mi)->getMatePair()).first].getBegin() << ", "
+	     << rd2posn[((*mi)->getMatePair()).first].getEnd() << ") - "
+	     << ((*mi)->getMatePair()).second << " (" << rd2posn[((*mi)->getMatePair()).second].getBegin() << ", "
+	     << rd2posn[((*mi)->getMatePair()).second].getEnd() << ") " << ctglen[rd2ctg[((*mi)->getMatePair()).first]] << "\n";
+      } else if (sz == 0 && byscaff){
+	cerr << "Zero size? " << ((*mi)->getMatePair()).first << " (" << rd2scaff[((*mi)->getMatePair()).first].getBegin() << ", "
+	     << rd2scaff[((*mi)->getMatePair()).first].getEnd() << ") - "
+	     << ((*mi)->getMatePair()).second << " (" << rd2scaff[((*mi)->getMatePair()).second].getBegin() << ", "
+	     << rd2scaff[((*mi)->getMatePair()).second].getEnd() << ") " << scaffspan[rd2scfid[((*mi)->getMatePair()).first]] << "\n";
+	cerr << "Scaffold " << rd2scfid[((*mi)->getMatePair()).first] << " contig " << rd2ctg[((*mi)->getMatePair()).first] << endl;
+	cerr << "Scaffold " << rd2scfid[((*mi)->getMatePair()).second] << " contig " << rd2ctg[((*mi)->getMatePair()).second] << endl;
+	cerr << (*mi)->status << endl;
+      }
+      assert (sz != 0); // sz == 0 implies mis-orientation.  shouldn't have made it this far
+
       if (abs(sz - newSize.first) > newSize.second * NUM_SD) {
 	// farther than NUM_SD standard deviations from the mean
 	if (sz < newSize.first){
 	  (*mi)->status = MP_SHORT; // too short
-	  (*mi)->deviation = newSize.first - sz;
 	  if (perinsert)
 	    insertFile << "SHORT " 
 		       << ((*mi)->getMatePair()).first 
@@ -815,7 +1052,6 @@ int main(int argc, char **argv)
 		
 	} else { 
 	  (*mi)->status = MP_LONG; // too long
-	  (*mi)->deviation = sz - newSize.first;
 	  if (perinsert)
 	    insertFile << "LONG " 
 		       << ((*mi)->getMatePair()).first 
@@ -840,42 +1076,30 @@ int main(int argc, char **argv)
 		     << "\n";
     } // for each mate pair
   }// for each library
-
+  
   if (recompute) 
     cout << endl;
     
-  for (set<ID_t>::iterator ctg = ctgIDs.begin(); ctg != ctgIDs.end(); ctg++) {
 
+  //*****************************************************************************
+  // Now all the tough work is done.  It remains to report on all the problems
+  // we've encountered.
+  //
+  // First we'll handle scaffolds, then the contigs that don't belong to scaffolds
+  //*****************************************************************************
+
+  for (set<ID_t>::iterator ctg = ctgIDs.begin(); ctg != ctgIDs.end(); ctg++) {
+    
     list<pair<Pos_t, Pos_t> > ranges;  // ranges we are interested in
     list<pair<Pos_t, Pos_t> > interest;
+
+    if (byscaff && ctg2scaff[*ctg] != 0)
+      continue;  // contig in scaffold.  Skip since it's been handled in the scaffold section
 
     cout << ">Contig_" << *ctg << " " << ctgname[*ctg] << " " 
 	 << ctglen[*ctg] << " bases" << endl;
 
-    // find coverage by good mates
-    for (list<list<AnnotatedFragment>::iterator>::iterator 
-	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
-      if ((*mi)->status == MP_GOOD){
-	Pos_t left, right;
-	left = rd2posn[((*mi)->getMatePair()).first].getEnd(); // use end of reads
-	right = rd2posn[((*mi)->getMatePair()).second].getEnd(); 
-
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-
-	if (debug)
-	  cerr << "Good mate " 
-	       << ((*mi)->getMatePair()).first 
-	       << "(" << rd2name[((*mi)->getMatePair()).first] << ") " 
-	       << ((*mi)->getMatePair()).second 
-	       << "(" << rd2name[((*mi)->getMatePair()).second] << ") "
-	       << endl;
-      }
-    } // for each mate in the contig
-
-    getCvg(ranges, interest, ctglen[*ctg], MIN_GOOD_CVG, false); 
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_GOOD, *ctg, interest, ctglen[*ctg], MIN_GOOD_CVG, false); 
 
     // report interesting ranges
 
@@ -899,25 +1123,9 @@ int main(int argc, char **argv)
       cout << endl;
     }
 
-    ranges.clear();
-
     // find coverage by short mates
-    for (list<list<AnnotatedFragment>::iterator>::iterator 
-	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
-      if ((*mi)->status == MP_SHORT){
-	Pos_t left, right;
-	// use beginnings of reads
-	left = rd2posn[((*mi)->getMatePair()).first].getBegin(); 
-	right = rd2posn[((*mi)->getMatePair()).second].getBegin(); 
 
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-      }
-    } // for each mate in the contig
-
-    getCvg(ranges, interest, ctglen[*ctg], MAX_SHORT_CVG, true); 
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_SHORT, *ctg, interest, ctglen[*ctg], MAX_SHORT_CVG, true); 
 
     // report interesting ranges
 
@@ -940,25 +1148,9 @@ int main(int argc, char **argv)
       cout << endl;
     }
 
-    ranges.clear();
-
     // find coverage by long mates
-    for (list<list<AnnotatedFragment>::iterator>::iterator 
-	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
-      if ((*mi)->status == MP_LONG){
-	Pos_t left, right;
-	// use beginnings of reads
-	left = rd2posn[((*mi)->getMatePair()).first].getBegin(); 
-	right = rd2posn[((*mi)->getMatePair()).second].getBegin(); 
 
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-      }
-    } // for each mate in the contig
-
-    getCvg(ranges, interest, ctglen[*ctg], MAX_LONG_CVG, true); 
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_LONG, *ctg, interest, ctglen[*ctg], MAX_LONG_CVG, true); 
 
     // report interesting ranges
 
@@ -981,38 +1173,9 @@ int main(int argc, char **argv)
       cout << endl;
     }
     
-    ranges.clear();
-
     // find coverage by normal reads
-    for (list<list<AnnotatedFragment>::iterator>::iterator 
-	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
-      if ((*mi)->status == MP_NORMAL){
-	Pos_t left, right;
 
-	left = rd2posn[((*mi)->getMatePair()).first].getBegin(); 
-	right = rd2posn[((*mi)->getMatePair()).first].getEnd(); 
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-
-	left = rd2posn[((*mi)->getMatePair()).second].getBegin(); 
-	right = rd2posn[((*mi)->getMatePair()).second].getEnd(); 
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-	if (debug)
-	  cerr << "Same orientation mates " 
-	       << ((*mi)->getMatePair()).first 
-	       << "(" << rd2name[((*mi)->getMatePair()).first] << ") " 
-	       << ((*mi)->getMatePair()).second 
-	       << "(" << rd2name[((*mi)->getMatePair()).second] << ") "
-	       << endl;
-      }
-    } // for each mate in the contig
-
-    getCvg(ranges, interest, ctglen[*ctg], MAX_NORMAL_CVG, true); 
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_NORMAL, *ctg, interest, ctglen[*ctg], MAX_NORMAL_CVG, true); 
 
     // report interesting ranges
 
@@ -1035,41 +1198,7 @@ int main(int argc, char **argv)
       cout << endl;
     }
 
-    ranges.clear();
-
-    // find coverage by outie reads
-    for (list<list<AnnotatedFragment>::iterator>::iterator 
-	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
-      if ((*mi)->status == MP_OUTIE){
-	Pos_t left, right;
-
-	//	if ((*mi)->getType() == Fragment_t::TRANSPOSON)
-	//	  continue;  // transposons are not errors
-	left = rd2posn[((*mi)->getMatePair()).first].getBegin(); 
-	right = rd2posn[((*mi)->getMatePair()).first].getEnd(); 
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-
-	left = rd2posn[((*mi)->getMatePair()).second].getBegin(); 
-	right = rd2posn[((*mi)->getMatePair()).second].getEnd(); 
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-
-	if (debug)
-	  cerr << "Outie mates " 
-	       << ((*mi)->getMatePair()).first 
-	       << "(" << rd2name[((*mi)->getMatePair()).first] << ") " 
-	       << ((*mi)->getMatePair()).second 
-	       << "(" << rd2name[((*mi)->getMatePair()).second] << ") "
-	       << endl;
-      }
-    } // for each mate in the contig
-
-    getCvg(ranges, interest, ctglen[*ctg], MAX_OUTIE_CVG, true); 
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_OUTIE, *ctg, interest, ctglen[*ctg], MAX_OUTIE_CVG, true); 
 
     // report interesting ranges
 
@@ -1092,37 +1221,8 @@ int main(int argc, char **argv)
       cout << endl;
     }
 
-    ranges.clear();
-
     // find coverage by linking reads
-    for (list<list<AnnotatedFragment>::iterator>::iterator 
-	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
-      if ((*mi)->status == MP_LINKING){
-	Pos_t left, right;
-
-	if (rd2ctg[((*mi)->getMatePair()).first] == *ctg) {
-	  left = rd2posn[((*mi)->getMatePair()).first].getBegin(); 
-	  right = rd2posn[((*mi)->getMatePair()).first].getEnd(); 
-	} else {
-	  left = rd2posn[((*mi)->getMatePair()).second].getBegin(); 
-	  right = rd2posn[((*mi)->getMatePair()).second].getEnd(); 
-	}
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-
-	if (debug)
-	  cerr << "Linking mates " 
-	       << ((*mi)->getMatePair()).first 
-	       << "(" << rd2name[((*mi)->getMatePair()).first] << ") " 
-	       << ((*mi)->getMatePair()).second 
-	       << "(" << rd2name[((*mi)->getMatePair()).second] << ") "
-	       << endl;
-      }
-    } // for each mate in the contig
-
-    getCvg(ranges, interest, ctglen[*ctg], MAX_LINKING_CVG, true); 
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_LINKING, *ctg, interest, ctglen[*ctg], MAX_LINKING_CVG, true); 
 
     // report interesting ranges
 
@@ -1145,37 +1245,33 @@ int main(int argc, char **argv)
       cout << endl;
     }
 
-    ranges.clear();
+    // find coverage by spanning reads
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_SPANNING, *ctg, interest, ctglen[*ctg], MAX_LINKING_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_LINKING_CVG << "X or more linking coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("HIGH_SPANNING_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*ctg, Contig_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
 
     // find coverage by single mate reads
-    for (list<list<AnnotatedFragment>::iterator>::iterator 
-	   mi = ctg2frag[*ctg].begin(); mi != ctg2frag[*ctg].end(); mi++){
-      if ((*mi)->status == MP_SINGMATE){
-	Pos_t left, right;
 
-	if (rd2ctg[((*mi)->getMatePair()).first] == *ctg) {
-	  left = rd2posn[((*mi)->getMatePair()).first].getBegin(); 
-	  right = rd2posn[((*mi)->getMatePair()).first].getEnd(); 
-	} else {
-	  left = rd2posn[((*mi)->getMatePair()).second].getBegin(); 
-	  right = rd2posn[((*mi)->getMatePair()).second].getEnd(); 
-	}
-	if (left < right)
-	  ranges.push_back(pair<Pos_t, Pos_t>(left, right));
-	else
-	  ranges.push_back(pair<Pos_t, Pos_t>(right, left));
-
-	if (debug)
-	  cerr << "Singleton mates " 
-	       << ((*mi)->getMatePair()).first 
-	       << "(" << rd2name[((*mi)->getMatePair()).first] << ") " 
-	       << ((*mi)->getMatePair()).second 
-	       << "(" << rd2name[((*mi)->getMatePair()).second] << ") "
-	       << endl;
-      }
-    } // for each mate in the contig
-
-    getCvg(ranges, interest, ctglen[*ctg], MAX_SINGLEMATE_CVG, true); 
+    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_SINGMATE, *ctg, interest, ctglen[*ctg], MAX_SINGLEMATE_CVG, true); 
 
     // report interesting ranges
 
@@ -1197,10 +1293,188 @@ int main(int argc, char **argv)
       }
       cout << endl;
     }
-
-    ranges.clear();
-
   } // for each contig
+
+
+  for (set<ID_t>::iterator scf = scfIDs.begin(); scf != scfIDs.end(); scf++) {
+
+    list<pair<Pos_t, Pos_t> > ranges;  // ranges we are interested in
+    list<pair<Pos_t, Pos_t> > interest;
+
+    cout << ">Scaffold_" << *scf << " " << scaffspan[*scf] << " bases" << endl;
+
+    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_GOOD, *scf, interest, scaffspan[*scf], MIN_GOOD_CVG, false); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MIN_GOOD_CVG << "X" 
+	   << ((MIN_GOOD_CVG != 0) ? " or less": "") << " clone coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("LOW_GOOD_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
+
+    // find coverage by short mates
+
+    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_SHORT, *scf, interest, scaffspan[*scf], MAX_SHORT_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_SHORT_CVG << "X or more short mate coverage"
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("HIGH_SHORT_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
+
+    // find coverage by long mates
+
+    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_LONG, *scf, interest, scaffspan[*scf], MAX_LONG_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_LONG_CVG << "X or more long mate coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("HIGH_LONG_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
+    
+    // find coverage by normal reads
+
+    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_NORMAL, *scf, interest, scaffspan[*scf], MAX_NORMAL_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_NORMAL_CVG 
+	   << "X or more same-orientation coverage" <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("HIGH_NORMAL_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
+
+    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_OUTIE, *scf, interest, scaffspan[*scf], MAX_OUTIE_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_OUTIE_CVG << "X or more outie coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("HIGH_OUTIE_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
+
+    // find coverage by linking reads
+    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_LINKING, *scf, interest, scaffspan[*scf], MAX_LINKING_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_LINKING_CVG << "X or more linking coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("HIGH_LINKING_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
+
+    // find coverage by single mate reads
+    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_SINGMATE, *scf, interest, scaffspan[*scf], MAX_SINGLEMATE_CVG, true); 
+
+    // report interesting ranges
+
+    if (interest.size() > 0){
+      cout << "Regions of " << MAX_SINGLEMATE_CVG << "X or more singleton mate coverage" 
+	   <<endl;
+      
+      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	   ii != interest.end(); ii++){
+	cout << ii->first << "\t" << ii->second << endl;
+	if (feats){
+	  Feature_t f;
+	  f.setComment("HIGH_SINGLEMATE_CVG");
+	  f.setRange(Range_t(ii->first, ii->second));
+          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	  f.setType(Feature_t::COVERAGE);
+          feat_stream << f;
+	}
+      }
+      cout << endl;
+    }
+  } // for each scaffold
+
+
 
   frag_bank.close();
   read_bank.close();
