@@ -53,6 +53,10 @@ void InsertField::highlightInsert(InsertCanvasItem * iitem,
   s += " Expected: " + QString::number(ins->m_dist.mean - Insert::MAXSTDEV*ins->m_dist.sd) 
     +  " - "         + QString::number(ins->m_dist.mean + Insert::MAXSTDEV*ins->m_dist.sd);
 
+  s += " Coordinates: " + QString::number(ins->m_loffset)
+    +  " - "            + QString::number(ins->m_roffset);
+    
+
   emit setStatus(s);
 
   canvas()->setChanged(iitem->boundingRect());

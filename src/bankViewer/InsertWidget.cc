@@ -69,7 +69,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_hscale = .06250;
 
-  m_iposition = new InsertPosition(this, "insertposition");
+  m_iposition = new InsertPosition(m_datastore, this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
   m_icanvas->setBackgroundColor(Qt::black);
 
@@ -127,6 +127,9 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   connect(m_ifield, SIGNAL(visibleRange(int, double)),
           m_iposition, SLOT(setVisibleRange(int,double)));
+
+  connect(this,    SIGNAL(currentScaffoldCoordinate(int)),
+          m_iposition, SLOT(setScaffoldCoordinate(int)));
 
   connect(m_ifield, SIGNAL(setStatus(const QString &)),
           this,     SIGNAL(setStatus(const QString &)));
@@ -245,6 +248,8 @@ void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
   m_ifield->ensureVisible(mapx, mapy);
 
   m_icanvas->update();
+
+  emit currentScaffoldCoordinate(gstart);
 }
 
 void InsertWidget::setZoom(int zoom)
@@ -492,6 +497,11 @@ void InsertWidget::paintCoverage(QPointArray & arr,
                                  double baseLevel,
                                  QColor color)
 {
+  if (arr.isEmpty())
+  {
+    return;
+  }
+
   int i = 0;
   while (1)
   {
@@ -509,7 +519,6 @@ void InsertWidget::paintCoverage(QPointArray & arr,
     }
 
     int width = window[size-1].x()-window[0].x()+1;
-
     new CoverageCanvasItem(window[0].x(), voffset,
                            width, vheight, 
                            libid, baseLevel,
@@ -617,6 +626,7 @@ void InsertWidget::paintCanvas()
 
     // coverage will change at each endpoint of each insert
     CoverageStats insertCL(m_inserts.size()*4, 0, Distribution_t());
+    insertCL.addEndpoints(m_hoffset, m_hoffset);
 
     typedef map<ID_t, CoverageStats> LibStats;
     LibStats libStats;
@@ -624,32 +634,40 @@ void InsertWidget::paintCanvas()
 
     int curloffset = 0, curroffset = 0;
     int totalinsertlen = 0;
+    int rightmost = 0;
 
     for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
     {
-      curloffset = (*ii)->m_loffset;
-      curroffset = (*ii)->m_roffset;
+      if ((*ii)->m_roffset > rightmost) { rightmost = (*ii)->m_roffset; }
 
-      totalinsertlen += (curroffset - curloffset + 1);
-
-      insertCL.addEndpoints(curloffset, curroffset);
-
-      if (m_cestats && (*ii)->ceConnected())
+      // Only count reasonablyConnected mates towards insert coverage
+      if ((*ii)->reasonablyConnected())
       {
-        li = libStats.find((*ii)->m_libid);
+        curloffset = (*ii)->m_loffset;
+        curroffset = (*ii)->m_roffset;
 
-        if (li == libStats.end())
+        totalinsertlen += (curroffset - curloffset + 1);
+
+        insertCL.addEndpoints(curloffset, curroffset);
+
+        if (m_cestats && (*ii)->ceConnected())
         {
-          li = libStats.insert(make_pair((*ii)->m_libid, CoverageStats(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
-        }
+          li = libStats.find((*ii)->m_libid);
 
-        li->second.addEndpoints(curloffset, curroffset);
+          if (li == libStats.end())
+          {
+            li = libStats.insert(make_pair((*ii)->m_libid, CoverageStats(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
+          }
+
+          li->second.addEndpoints(curloffset, curroffset);
+        }
       }
     }
 
+    insertCL.addEndpoints(rightmost,rightmost);
+
 
     insertCL.finalize();
-    int covwidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
 
     CoverageStats readCL(m_tiling.size()*4, 0, Distribution_t());
 
@@ -673,11 +691,16 @@ void InsertWidget::paintCanvas()
 
     readCL.finalize();
 
+    int inswidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
+    int redwidth = (int)((readCL.m_coverage[readCL.m_curpos-1].x() + m_hoffset) * m_hscale);
+
+    int covwidth = (inswidth > redwidth) ? inswidth : redwidth;
+
     double meaninsertcoverage = ((double)totalinsertlen) / (insertCL.m_coverage[insertCL.m_curpos-1].x() - insertCL.m_coverage[0].x());
     double meanreadcoverage = ((double)totalbases) / readspan;
 
     int cestatsheight = 100;
-    int covheight = insertCL.m_maxdepth;
+    int covheight = (insertCL.m_maxdepth > readCL.m_maxdepth) ? insertCL.m_maxdepth : readCL.m_maxdepth;
     int cestatsoffset = voffset;
 
     if (m_coveragePlot)
@@ -686,7 +709,7 @@ void InsertWidget::paintCanvas()
 
       insertCL.normalize(m_hscale, m_hoffset, voffset + covheight);
       readCL.normalize(m_hscale, m_hoffset, voffset + covheight);
-
+      
       paintCoverage(insertCL.m_coverage, insertCL.m_cestat, false,
                     insertCL.m_curpos,
                     voffset, covheight,

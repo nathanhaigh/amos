@@ -84,6 +84,8 @@ signals:
   void readIIDHighlighted(const QString & qiid);
   void readEIDHighlighted(const QString & qeid);
 
+  void currentScaffoldCoordinate(int);
+
 private:
   void flushInserts();
   void computeInsertHappiness();

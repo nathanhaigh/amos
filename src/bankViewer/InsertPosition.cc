@@ -1,16 +1,18 @@
 #include "InsertPosition.hh"
 #include <iostream>
 #include <qpainter.h>
+#include "DataStore.hh"
 
 using namespace std;
 
-InsertPosition::InsertPosition(QWidget * parent, const char * name)
- : QWidget(parent, name)
+InsertPosition::InsertPosition(DataStore * datastore, QWidget * parent, const char * name)
+ : QWidget(parent, name), m_datastore(datastore)
 {
-  setMinimumHeight(30);
+  setMinimumHeight(50);
 
   m_start = 0;
   m_scale = 1;
+  m_pos = 0;
 }
 
 
@@ -22,14 +24,33 @@ void InsertPosition::setVisibleRange(int start, double scale)
   update();
 }
 
+void InsertPosition::setScaffoldCoordinate(int pos)
+{
+  m_pos = pos;
+  update();
+}
+
 void InsertPosition::paintEvent(QPaintEvent * e)
 {
-  int linepos = 21;
+  int linepos = 45;
 
   QPainter p(this);
   p.setBrush(Qt::black);
   p.drawRect(rect());
   p.setPen(Qt::white);
+  p.setFont(QFont("Helvetica", 12));
+
+  int center = (int) width()/2;
+
+  QString label = "Scaffold: " + QString::number(m_datastore->m_scaffoldId);
+  label += "  Contig: " + QString::number(m_datastore->m_contigId);
+
+  label += "  Position: " + QString::number(m_pos);
+
+  label += "  Viewing: " + QString::number(m_start, 'f', 0)
+        +  " - " + QString::number((int)m_start+(width() / m_scale), 'f', 0);
+
+  p.drawText(center-400, 2, 800, 25, Qt::AlignCenter, label);
 
   int distance = (int)(100/m_scale); // 50 pixels between tick marks
 
@@ -75,7 +96,7 @@ void InsertPosition::paintEvent(QPaintEvent * e)
         pos = QString::number(i);
       }
 
-      p.drawText((i-m_start) * m_scale - 50, 4, 100, 15,  
+      p.drawText((i-m_start) * m_scale - 50, linepos-15, 100, 15,  
                  Qt::AlignHCenter | Qt::AlignBottom, pos);
     }
   }
