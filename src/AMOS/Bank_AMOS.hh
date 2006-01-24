@@ -412,7 +412,11 @@ protected:
   BankPartition_t * getPartition (ID_t id)
   {
     if ( partitions_m [id] -> fix . is_open( ) )
-      return partitions_m [id];
+      {
+        partitions_m [id]->fix.clear();
+        partitions_m [id]->var.clear();
+        return partitions_m [id];
+      }
     else
       return openPartition (id);
   }
@@ -423,10 +427,7 @@ protected:
   //!
   BankPartition_t * getLastPartition ( )
   {
-    if ( partitions_m . back( ) -> fix . is_open( ) )
-      return partitions_m . back( );
-    else
-      return openPartition (npartitions_m - 1);
+    return getPartition (npartitions_m - 1);
   }
 
 
