@@ -107,6 +107,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_scaffid = m_optionsmenu->insertItem("&Scaffold Plot", this, SLOT(togglePaintScaffold()));
   m_optionsmenu->setItemChecked(m_scaffid, true);
 
+  m_showscaffid = m_optionsmenu->insertItem("Show Scaffol&d", this, SLOT(toggleShowScaffold()));
+  m_optionsmenu->setItemChecked(m_showscaffid, true);
+
   m_optionsmenu->insertSeparator();
 
   m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
@@ -115,11 +118,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_ceid = m_optionsmenu->insertItem("C&E Statisitic", this, SLOT(toggleCEStatistic()));
   m_optionsmenu->setItemChecked(m_ceid, false);
 
-  m_featid = m_optionsmenu->insertItem("Show F&eatures", this, SLOT(toggleFeatures()));
+  m_featid = m_optionsmenu->insertItem("Show &Features", this, SLOT(toggleFeatures()));
   m_optionsmenu->setItemChecked(m_featid, true);
-
-  m_tintfeatid = m_optionsmenu->insertItem("&Tint Features", this, SLOT(toggleTintFeatures()));
-  m_optionsmenu->setItemChecked(m_tintfeatid, false);
 
   m_optionsmenu->insertSeparator();
 
@@ -129,8 +129,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_partitiontypesid = m_optionsmenu->insertItem("&Partition Types", this, SLOT(togglePartitionTypes()));
   m_optionsmenu->setItemChecked(m_partitiontypesid, true);
 
-  m_tintid = m_optionsmenu->insertItem("&Tint Happiness", this, SLOT(toggleTintHappiness()));
-  m_optionsmenu->setItemChecked(m_tintid, false);
+  m_optionsmenu->insertSeparator();
 
   m_libcolorid = m_optionsmenu->insertItem("Color By &Library", this, SLOT(toggleColorByLibrary()));
   m_optionsmenu->setItemChecked(m_libcolorid, false);
@@ -174,6 +173,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(m_happypick, SIGNAL(returnPressed()),
           this,        SLOT(loadHappyDistance()));
+
+  connect(this,        SIGNAL(setShowScaffold(bool)),
+          iw,          SLOT(setShowScaffold(bool)));
 
   connect(this,        SIGNAL(setHappyDistance(float)),
           iw,          SLOT(setHappyDistance(float)));
@@ -387,6 +389,14 @@ void InsertWindow::toggleColorByMate()
   m_optionsmenu->setItemChecked(m_matecolorid, b);
 
   emit setColorByMate(b);
+}
+
+void InsertWindow::toggleShowScaffold()
+{
+  bool b = !m_optionsmenu->isItemChecked(m_showscaffid);
+  m_optionsmenu->setItemChecked(m_showscaffid, b);
+
+  emit setShowScaffold(b);
 }
 
 void InsertWindow::bankChanged()

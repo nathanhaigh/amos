@@ -91,6 +91,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_colorByMate    = 0;
   m_tintHappiness  = 0;
   m_tintFeatures   = 0;
+  m_showscaffold   = 1;
 
   m_persistant = false;
   m_error = 0;
@@ -105,6 +106,9 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   connect(this,     SIGNAL(highlightIID(const QString &)),
           m_ifield,   SLOT(highlightIID(const QString &)));
+
+  connect(this,     SIGNAL(canvasCleared()),
+          m_ifield,   SLOT(canvasCleared()));
 
   connect(this,     SIGNAL(highlightRead(int)),
           m_ifield,   SLOT(highlightRead(int)));
@@ -323,6 +327,7 @@ void InsertWidget::clearCanvas()
 
   initializeVisibleRectangle();
   m_icanvas->update();
+  emit canvasCleared();
 }
 
 void InsertWidget::initializeTiling()
@@ -524,6 +529,7 @@ void InsertWidget::paintCoverage(QPointArray & arr,
                            libid, baseLevel,
                            window, windowraw, copyRaw,
                            m_icanvas, color);
+
     i+= size;
 
     if (i >= arrLen) { break; }
@@ -626,7 +632,7 @@ void InsertWidget::paintCanvas()
 
     // coverage will change at each endpoint of each insert
     CoverageStats insertCL(m_inserts.size()*4, 0, Distribution_t());
-    insertCL.addEndpoints(m_hoffset, m_hoffset);
+    insertCL.addEndpoints(leftmost, leftmost);
 
     typedef map<ID_t, CoverageStats> LibStats;
     LibStats libStats;
@@ -785,6 +791,9 @@ void InsertWidget::paintCanvas()
     cerr << " contigs";
     layout.clear();
 
+    if (m_showscaffold) { voffset += lineheight; }
+    int rightmost = 0;
+
     for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
     {
       int offset = ci->offset;
@@ -800,6 +809,11 @@ void InsertWidget::paintCanvas()
       if (li == layout.end()) { layout.push_back(0); }
       layout[layoutpos] = offset + ci->range.getLength() + layoutgutter;
 
+      if (offset+ci->range.getLength() > rightmost)
+      {
+        rightmost = offset+ci->range.getLength();
+      }
+
       int vpos = voffset + layoutpos * lineheight;
 
       ContigCanvasItem * contig = new ContigCanvasItem((int)(m_hscale*(offset + m_hoffset)),
@@ -808,6 +822,32 @@ void InsertWidget::paintCanvas()
                                                        m_seqheight,
                                                        *ci, m_icanvas);
       contig->show();
+
+      if (m_showscaffold)
+      {
+        QCanvasRectangle * rect = new QCanvasRectangle(contig->x()+(contig->boundingRect().width())/2-3, voffset-lineheight, 
+                                                       6, vpos-voffset+lineheight+m_seqheight, m_icanvas);
+        rect->setPen(contig->pen());
+        rect->setBrush(contig->brush());
+        rect->show();
+      }
+    }
+
+    if (m_showscaffold)
+    {
+      int i = 0;
+      while (i < rightmost)
+      {
+        int len = min(100000, rightmost-i);
+        QCanvasRectangle * scaff = new QCanvasRectangle((int)(m_hscale*(m_hoffset+i)), voffset-lineheight,
+                                                        (int)(len * m_hscale),
+                                                         1, m_icanvas);
+        scaff->setPen(Qt::blue);
+        scaff->setBrush(Qt::blue);
+        scaff->show();
+
+        i += len;
+      }
     }
 
     voffset += (layout.size() + 1) * lineheight;
@@ -1119,6 +1159,12 @@ void InsertWidget::setPersistant(bool b)
 void InsertWidget::setErrorRate(int error)
 {
   m_error = error;
+  paintCanvas();
+}
+
+void InsertWidget::setShowScaffold(bool b)
+{
+  m_showscaffold = b;
   paintCanvas();
 }
 

@@ -18,7 +18,9 @@ InsertField::InsertField(DataStore * datastore,
                          const char * name)
  : QCanvasView(canvas, parent, name),
    m_datastore(datastore),
-   m_hoffset(hoffset)
+   m_hoffset(hoffset),
+   m_featrect(NULL),
+   m_feat(NULL)
 {
   QWMatrix m = worldMatrix();
   m.translate(20, 0);
@@ -124,6 +126,43 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
   for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
   {
+    if (((*it)->rtti() == FeatureCanvasItem::RTTI) || 
+        ((*it)->rtti() == ContigCanvasItem::RTTI))
+    {
+
+      if (!m_featrect)
+      {
+        m_featrect = new QCanvasRectangle((*it)->x(), 0, 
+                                          (*it)->boundingRect().width(), canvas()->height(), 
+                                          canvas());
+        m_featrect->setBrush(QColor(59,49,31));
+        m_featrect->setPen(QColor(139,119,111));
+        m_featrect->setZ(-2);
+        m_featrect->show();
+      }
+      else
+      {
+        if (m_feat == *it)
+        {
+          if (m_featrect->isVisible()) { m_featrect->hide(); }
+          else                         { m_featrect->show(); }
+        }
+        else
+        {
+          canvas()->setChanged(m_featrect->boundingRect());
+          m_featrect->setSize((*it)->boundingRect().width(), canvas()->height());
+          m_featrect->move((*it)->x(), 0);
+          m_featrect->show();
+        }
+      }
+
+      m_feat = *it;
+      canvas()->setChanged(m_featrect->boundingRect());
+      canvas()->update();
+
+    }
+
+
     if ((*it)->rtti() == InsertCanvasItem::RTTI)
     {
       InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
@@ -288,4 +327,10 @@ void InsertField::getInsertString(QString & s, int selectb, Insert * ins, int se
 
     s += "]";
   }
+}
+
+void InsertField::canvasCleared()
+{
+  m_featrect = NULL;
+  m_feat = NULL;
 }

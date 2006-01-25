@@ -3,9 +3,9 @@
 
 #include <qcanvas.h>
 
+class DataStore;
 class Insert;
 class InsertCanvasItem;
-class DataStore;
 
 class InsertField : public QCanvasView
 {
@@ -33,6 +33,8 @@ public slots:
   void highlightIID(const QString & qeid);
   void highlightEID(const QString & qeid);
 
+  void canvasCleared();
+
 protected:
   void contentsMousePressEvent(QMouseEvent* e);
   void viewportPaintEvent(QPaintEvent * e);
@@ -42,6 +44,9 @@ private:
   void getInsertString(QString & s, int which, Insert * ins, int isSecond, InsertCanvasItem * iitem);
   DataStore * m_datastore;
   int & m_hoffset;
+
+  QCanvasRectangle * m_featrect;
+  QCanvasItem * m_feat;
 };
 
 #endif

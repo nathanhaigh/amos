@@ -35,6 +35,7 @@ public slots:
   void toggleColorByLibrary();
   void toggleColorByMate();
   void togglePaintScaffold();
+  void toggleShowScaffold();
 
   void loadHappyDistance();
 
@@ -58,6 +59,7 @@ signals:
   void setPaintScaffold(bool);
   void setTintFeatures(bool);
   void setTintHappiness(bool);
+  void setShowScaffold(bool);
 
   void highlightRead(int);
 
@@ -86,6 +88,7 @@ private:
   int m_tintid;
   int m_tintfeatid;
   int m_matecolorid;
+  int m_showscaffid;
 };
 
 #endif

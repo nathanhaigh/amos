@@ -58,6 +58,7 @@ public slots:
   void contigChanged();
   void computePos(int);
   void setHappyDistance(float);
+  void setShowScaffold(bool);
 
   void setPersistant(bool);
   void setErrorRate(int);
@@ -74,6 +75,8 @@ signals:
   void setStatus(const QString & message);
   void setGindex(int gindex);
   void setContigId(int contigid);
+
+  void canvasCleared();
 
   void jumpToRead(int iid);
 
@@ -123,6 +126,7 @@ private:
   bool m_paintScaffold;
   bool m_tintHappiness;
   bool m_tintFeatures;
+  bool m_showscaffold;
 
   bool m_persistant;
   int m_error;
