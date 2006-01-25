@@ -101,9 +101,9 @@ ContigPicker::ContigPicker(DataStore * datastore,
 
   QPopupMenu * menu = new QPopupMenu(this);
   menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Contig Length Histogram", this, SLOT(contigSizeHistogram()));
-  menu->insertItem("&Contig Read Count Histogram", this, SLOT(contigReadHistogram()));
-  menu->insertItem("&Contig GC Content Histogram", this, SLOT(contigGCHistogram()));
+  menu->insertItem("&Contig Length Histogram...", this, SLOT(contigSizeHistogram()));
+  menu->insertItem("&Contig Read Count Histogram...", this, SLOT(contigReadHistogram()));
+  menu->insertItem("&Contig GC Content Histogram...", this, SLOT(contigGCHistogram()));
 
 
   m_options = new QPopupMenu(this);

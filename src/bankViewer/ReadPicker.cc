@@ -75,8 +75,8 @@ ReadPicker::ReadPicker(DataStore * datastore,
 
   QPopupMenu * menu = new QPopupMenu(this);
   menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Read Length Histogram",     this, SLOT(readSizeHistogram()));
-  menu->insertItem("&Read GC Content Histogram", this, SLOT(readGCHistogram()));
+  menu->insertItem("&Read Length Histogram...",     this, SLOT(readSizeHistogram()));
+  menu->insertItem("&Read GC Content Histogram...", this, SLOT(readGCHistogram()));
 
 
   QToolBar * tool = new QToolBar(this, "tools");

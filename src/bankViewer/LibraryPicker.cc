@@ -63,8 +63,8 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
 
   QPopupMenu * menu = new QPopupMenu(this);
   menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Insert Size Histogram", this, SLOT(acceptSelected()));
-  menu->insertItem("&Clear Range Length Histogram", this, SLOT(readLengthSelected()));
+  menu->insertItem("&Insert Size Histogram...", this, SLOT(acceptSelected()));
+  menu->insertItem("&Clear Range Length Histogram...", this, SLOT(readLengthSelected()));
 
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");

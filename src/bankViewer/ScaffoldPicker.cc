@@ -83,8 +83,8 @@ ScaffoldPicker::ScaffoldPicker(DataStore * datastore,
 
   QPopupMenu * menu = new QPopupMenu(this);
   menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Scaffold Span Histogram", this, SLOT(scaffoldSizeHistogram()));
-  menu->insertItem("&Scaffold Contig Count Histogram", this, SLOT(scaffoldContigHistogram()));
+  menu->insertItem("&Scaffold Span Histogram...", this, SLOT(scaffoldSizeHistogram()));
+  menu->insertItem("&Scaffold Contig Count Histogram...", this, SLOT(scaffoldContigHistogram()));
 
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);

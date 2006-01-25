@@ -8,7 +8,7 @@ using namespace std;
 InsertPosition::InsertPosition(DataStore * datastore, QWidget * parent, const char * name)
  : QWidget(parent, name), m_datastore(datastore)
 {
-  setMinimumHeight(50);
+  setMinimumHeight(60);
 
   m_start = 0;
   m_scale = 1;
@@ -32,7 +32,7 @@ void InsertPosition::setScaffoldCoordinate(int pos)
 
 void InsertPosition::paintEvent(QPaintEvent * e)
 {
-  int linepos = 45;
+  int linepos = 55;
 
   QPainter p(this);
   p.setBrush(Qt::black);
@@ -96,7 +96,7 @@ void InsertPosition::paintEvent(QPaintEvent * e)
         pos = QString::number(i);
       }
 
-      p.drawText((i-m_start) * m_scale - 50, linepos-15, 100, 15,  
+      p.drawText((i-m_start) * m_scale - 50, linepos-20, 100, 20,  
                  Qt::AlignHCenter | Qt::AlignBottom, pos);
     }
   }
