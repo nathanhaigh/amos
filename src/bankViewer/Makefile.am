@@ -1,7 +1,8 @@
 bin_PROGRAMS = bankViewer \
                cestat-cov \
                insert-sizes \
-               library-histogram
+               library-histogram \
+               list-linked-contigs
 
 %.moc.cc: %.hh
 	$(QT_MOC) -o $@ $<
@@ -104,6 +105,16 @@ library_histogram_SOURCES = \
   InsertStats.cc
 
 library_histogram_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a      \
+                     $(top_builddir)/src/Staden/read/libread.a
+
+list_linked_contigs_SOURCES = \
+  list-linked-contigs.cc \
+  Insert.cc \
+  DataStore.cc
+
+list_linked_contigs_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a      \
                      $(top_builddir)/src/Staden/read/libread.a
