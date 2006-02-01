@@ -32,7 +32,7 @@ struct SNPTilingOrderCmp
     char abase = a.base(snpposition, false, contiglen);
     char bbase = b.base(snpposition, false, contiglen);
 
-    return abase < bbase;
+    return toupper(abase) < toupper(bbase);
   }
 };
 
