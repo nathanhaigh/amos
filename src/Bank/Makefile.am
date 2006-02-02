@@ -27,8 +27,7 @@ bin_PROGRAMS = \
     loadFeatures \
     bank-tutorial \
     renameReads \
-    simplifyLibraries \
-    find-duplicate-reads
+    simplifyLibraries
 
 
 dist_bin_SCRIPTS = \
@@ -219,17 +218,5 @@ simplifyLibraries_LDADD = \
 	$(top_builddir)/src/GNU/libGNU.a
 simplifyLibraries_SOURCES = \
 	simplifyLibraries.cc
-
-##-- find-duplicate-reads
-find_duplicate_reads_CPPFLAGS = \
-	-I$(top_srcdir)/src/Common \
-	-I$(top_srcdir)/src/AMOS \
-	-I$(top_builddir)/src/GNU
-find_duplicate_reads_LDADD = \
-	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a
-find_duplicate_reads_SOURCES = \
-	find-duplicate-reads.cc
 
 ##-- END OF MAKEFILE --##

@@ -24,7 +24,7 @@ long hashstring(const string & s)
       default: j = 0; break;
     };
 
-    retval += j << ((len * 2) % 63);
+    retval += j << ((i * 2) % 63);
   }
 
   return retval;
@@ -57,6 +57,7 @@ int main(int argc, char ** argv)
     const IDMap_t & readmap = red_bank.getIDMap();
     IDMap_t::const_iterator r;
 
+    int count = 0;
     for (r = readmap.begin(); r!= readmap.end(); r++)
     {
       Read_t red;
@@ -66,7 +67,12 @@ int main(int argc, char ** argv)
       long hash = hashstring(seq);
 
       hash2read.insert(make_pair(hash, r->iid));
+      count++;
     }
+
+    cerr << "Loaded " << count << " reads." << endl;
+
+    count = 0;
 
 
     multimap<long, ID_t>::const_iterator h1;
@@ -78,6 +84,8 @@ int main(int argc, char ** argv)
       red_bank.fetch(h1->second, r1);
       string seq1 = r1.getSeqString();
 
+      int l = seq1.length();
+
       int dups = 0;
 
       h2 = h1;
@@ -88,18 +96,41 @@ int main(int argc, char ** argv)
         red_bank.fetch(h2->second, r2);
 
         string seq2 = r2.getSeqString();
+        count++;
 
-        if (seq1 == seq2)
+        if (l == seq2.length())
         {
-          dups++;
 
-          if (dups == 1) { cout << r1.getEID(); }
-          cout << "\t" << r2.getEID();
+          bool match = true;
+          for (int i = 0; i < l; i++)
+          {
+            char s1 = toupper(seq1[i]);
+            char s2 = toupper(seq2[i]);
+
+            if (s1 == 'N') { s1 = 'A'; }
+            if (s2 == 'N') { s2 = 'A'; }
+
+            if (s1 != s2)
+            {
+              match = false;
+              break;
+            }
+          }
+
+          if (match)
+          {
+            dups++;
+
+            if (dups == 1) { cout << r1.getEID(); }
+            cout << "\t" << r2.getEID();
+          }
         }
       }
 
       if (dups) { cout << endl; }
     }
+
+    cerr << "Made " << count << " comparisons" << endl;
   }
   catch (Exception_t & e)
   {
