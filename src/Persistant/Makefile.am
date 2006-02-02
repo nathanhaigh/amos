@@ -4,10 +4,11 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
     barcode-graph \
-    build-persistant-bank
+    build-persistent-bank \
+    persistent-read-dist
 
 dist_bin_SCRIPTS = \
-    persistant-assembly.pl
+    persistent-assembly.pl
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -26,15 +27,24 @@ barcode_graph_LDADD = \
 barcode_graph_SOURCES = \
 	barcode-graph.cc
 
-##-- build-persistant-bank
-build_persistant_bank_LDADD = \
+##-- build-persistent-bank
+build_persistent_bank_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 
-build_persistant_bank_SOURCES = \
-	build-persistant-bank.cc
+build_persistent_bank_SOURCES = \
+	build-persistent-bank.cc
 
+##-- persistent_read_dist
+persistent_read_dist_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+
+persistent_read_dist_SOURCES = \
+	persistent-read-dist.cc
 
 ##-- END OF MAKEFILE --##

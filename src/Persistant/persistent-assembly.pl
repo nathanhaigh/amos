@@ -28,6 +28,16 @@ $start = 0  if !defined $start;
 $end   = 20 if !defined $end;
 $inc   = 1  if !defined $inc;
 
+foreach my $file ("$prefix.frg", 
+                  "$prefix.frgStore", 
+                  "$prefix.gkpStore", 
+                  "$prefix.ofg", 
+                  "$prefix.ovlStore", 
+                  "runca.amos.opteron")
+{
+  die "Required file $file is missing\n" if (! -r $file);
+}
+
 
 for (my $i=$start; $i <= $end; $i+=$inc)
 {
