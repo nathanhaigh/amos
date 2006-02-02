@@ -27,6 +27,12 @@ BINDIR=/fs/sz-user-supported/Linux-i686/bin
 ## Load Surrogates
 100: $(BINDIR)/loadFeatures $(PREFIX).bnk $(PREFIX).surrogate.feat
 
+## Find High Read Coveage
+110: $(BINDIR)/analyze-read-depth $(PREFIX).bnk -c 1000 -x 3 > $(PREFIX).depth.feat
+
+## Load Coverage Features
+120: $(BINDIR)/loadFeatures $(PREFIX).bnk $(PREFIX).depth.feat
+
 
 ## Dump Features
 1000: $(BINDIR)/dumpFeatures $(PREFIX).bnk > $(PREFIX).all.feat
