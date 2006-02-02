@@ -4,7 +4,8 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	asmQC2 \
-	asmQC
+	asmQC \
+    analyze-read-depth
 #	shotgunSim
 
 dist_bin_SCRIPTS = \
@@ -24,6 +25,16 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_builddir)/src/GNU \
     -I$(top_srcdir)/src/Foundation
+
+##-- analyze-read-depth
+analyze_read_depth_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+
+analyze_read_depth_SOURCES = \
+	analyze-read-depth.cc
 
 ##-- asmQC
 asmQC_LDADD = \
