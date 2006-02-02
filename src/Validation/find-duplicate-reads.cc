@@ -36,7 +36,7 @@ int main(int argc, char ** argv)
 {
   if (argc != 2)
   {
-    cerr << "Usage: simplifyLibraries bankname" << endl;
+    cerr << "Usage: find-duplicate-reads bankname" << endl;
     return EXIT_FAILURE;
   }
 
