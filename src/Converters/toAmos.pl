@@ -11,6 +11,7 @@ $ENV{TMPDIR} = ".";
 use strict;
 
 my $INCLUDE_SURROGATE = 0;
+my $UTG_MESSAGES = 0;
 
 # more to do
 # 1. allow to specify clear ranges from a separate file
@@ -33,6 +34,7 @@ AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos.
 
 ASM File Options:
  -S Include Surrogate Unitigs as AMOS Contigs
+ -utg Include all UTG Unitig messages as AMOS Contigs
 ~;
 
 my $base = new TIGR::Foundation();
@@ -79,7 +81,8 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "pos=s" => \$posfile,
 				 "id=i"  => \$minSeqId,
 				 "acc"   => \$byaccession,
-                 "S"     => \$INCLUDE_SURROGATE);
+                 "S"     => \$INCLUDE_SURROGATE,
+                 "utg"   => \$UTG_MESSAGES);
 
 
 my $matesDone = 0;
@@ -860,7 +863,9 @@ sub parseAsmFile {
     while (my $record = getRecord($IN)){
 	my ($type, $fields, $recs) = parseRecord($record);
 	if (($type eq "CCO") || 
-        ($INCLUDE_SURROGATE && ($type eq "UTG") && ($$fields{sta} eq "S"))){
+        ($INCLUDE_SURROGATE && ($type eq "UTG") && ($$fields{sta} eq "S")) ||
+        ($UTG_MESSAGES && ($type eq "UTG"))
+        ){
 
         my $sts = "C";
         $sts = $$fields{sta} if $type eq "UTG";
