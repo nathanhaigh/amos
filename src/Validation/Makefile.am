@@ -18,7 +18,8 @@ dist_bin_SCRIPTS = \
     findTcovSnp.pl \
     clusterSnps.pl \
     listSurrogates.pl \
-    suspiciousfeat2region.pl
+    suspiciousfeat2region.pl \
+    find-query-breaks.pl
     
 
 ##-- GLOBAL INCLUDE
