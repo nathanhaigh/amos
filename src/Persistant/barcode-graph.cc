@@ -93,7 +93,7 @@ int main (int argc, char ** argv)
         if (tilingsize >= MIN_CONTIG_SIZE)
         {
           cout << "\"" << bankname << "." << c->iid << "\" " 
-               << "[label=\"" << c->iid << "\\n[" << tilingsize << "]\"]" << endl;
+               << "[label=\"" << c->iid << "\\n[" << tilingsize << "r " << contig.getLength() << "bp]\"]" << endl;
         }
       }
       cout << "}" << endl;
