@@ -6,10 +6,8 @@
 using namespace AMOS;
 using namespace std;
 
-int s_verbose(0);
-int MIN_CONTIG_SIZE(0);
-int DISPLAY_ALL(0);
-
+int MINDELTA(0);
+int PRINTDIFFERENT(0);
 
 int main (int argc, char ** argv)
 {
@@ -25,16 +23,22 @@ int main (int argc, char ** argv)
 "\n"
 "   Usage: persistent-read-dist [options] bank1 ... bankn\n"
 "\n"
+"Output format:\n"
+">lastbank-currentbank\n"
+"curcontigeid lastcontigeid read1 read2 dist olddist delta\n"
+"\n"
 "   Options\n"
 "   -------------------\n"
-"   -v|--verbose  Produce a verbose output\n"
+"   -d <val>  Only display abs(delta) >= val\n"
+"   -p        Also display distance between reads not in same lastbank contig\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
 
-    tf->getOptions()->addOptionResult("v|verbose",           &s_verbose,       "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("d=i", &MINDELTA,       "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("p",   &PRINTDIFFERENT, "Be verbose when reporting");
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -49,12 +53,9 @@ int main (int argc, char ** argv)
 
     typedef map<ID_t, pair<ID_t,int> > ReadPosLookup;
     ReadPosLookup read2contigpos;
-    string lastbank;
 
-    if (s_verbose)
-    {
-      cerr << "MinContigSize: " << MIN_CONTIG_SIZE << endl;
-    }
+    string lastbank;
+    IDMap_t lastcontigmap;
 
     while (!argvv.empty())
     {
@@ -64,12 +65,15 @@ int main (int argc, char ** argv)
       Bank_t contig_bank(Contig_t::NCODE);
       contig_bank.open(bankname, B_READ);
 
-      //Bank_t read_bank(Read_t::NCODE);
-      //read_bank.open(bankname, B_READ);
+      Bank_t read_bank(Read_t::NCODE);
 
+      if (!first) { read_bank.open(bankname, B_READ); }
       bankname = bankname.substr(0, bankname.find_first_of("/ "));
 
-      cout << ">" << bankname << endl;
+      if (!first)
+      {
+        cout << ">" << lastbank << "-" << bankname << endl;
+      }
 
       const IDMap_t & contigmap = contig_bank.getIDMap();
       IDMap_t::const_iterator c;
@@ -103,6 +107,7 @@ int main (int argc, char ** argv)
 
               int olddist = 0;
               int delta = 0;
+              int absdelta = 0;
 
               // Distance is only defined if the two reads existed in the same contig before
               if (r1 != read2contigpos.end() &&
@@ -111,14 +116,28 @@ int main (int argc, char ** argv)
               {
                 olddist = abs(r1->second.second - r2->second.second);
                 delta = dist-olddist;
-              }
+                absdelta = abs(delta);
 
-              cout << c->iid << "\t" 
-                   << t1->source << "\t" 
-                   << t2->source << "\t" 
-                   << dist << "\t"
-                   << olddist << "\t"
-                   << delta << endl;
+                if (absdelta >= MINDELTA)
+                {
+                  cout << c->eid << "\t" 
+                       << lastcontigmap.lookupEID(r1->second.first) << "\t"
+                       << read_bank.lookupEID(t1->source) << "\t" 
+                       << read_bank.lookupEID(t2->source) << "\t" 
+                       << dist << "\t"
+                       << olddist << "\t"
+                       << delta << endl;
+                }
+              }
+              else if (PRINTDIFFERENT)
+              {
+                cout << c->eid << "\t" 
+                     << "*\t"
+                     << read_bank.lookupEID(t1->source) << "\t" 
+                     << read_bank.lookupEID(t2->source) << "\t" 
+                     << dist << "\t"
+                     << "*\t*" << endl;
+              }
             }
           }
         }
@@ -142,6 +161,9 @@ int main (int argc, char ** argv)
           read2contigpos.insert(make_pair(ti->source, make_pair(c->iid, t1pos)));
         }
       }
+
+      lastbank = bankname;
+      lastcontigmap = contigmap;
     }
   }
   catch (Exception_t & e)
