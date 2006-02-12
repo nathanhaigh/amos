@@ -305,15 +305,20 @@ while (<SNPS>)
         my $exonpos = 0;
         my $last = 0;
 
+        my $geneseq;
+
         foreach my $exon (sort {$b->{start} <=> $a->{start}} @{$genegroups{$g->{label}}})
         {
+          $geneseq .= reverseCompliment(substr($consensus, $exon->{start}-1, $exon->{len}));
           if ($exon->{start} eq $g->{start})
           {
             $last = 1;
-            last;
           }
 
-          $exonpos += $exon->{len}
+          if (!$last)
+          {
+            $exonpos += $exon->{len};
+          }
         }
 
         die "WTF" if !$last;
@@ -321,16 +326,12 @@ while (<SNPS>)
         my $geneseqoffset = $e - $rpos + $exonpos;
         $codonposition = $geneseqoffset % 3;
 
-        my $conspos = $rpos-(2-$codonposition)-1;
+        #my $conspos = $rpos-(2-$codonposition)-1;
+        #$origdna = uc(substr($consensus, $conspos, 3));
 
-        if (($conspos < $s) || $conspos+3 > $e)
-        {
-          die "Aw shit rc... $s $e $conspos";
-        }
+        $geneseqoffset -= $codonposition;
+        $origdna = uc(substr($geneseq, $geneseqoffset, 3));
 
-        $origdna = uc(substr($consensus, $conspos, 3));
-
-        $origdna = reverseCompliment($origdna);
         my $rseqrc = $rc{uc($rseq)};
 
         if (substr($origdna, $codonposition, 1) ne uc($rseqrc))
@@ -374,7 +375,7 @@ while (<SNPS>)
 
         if (substr($origdna, $codonposition, 1) ne uc($rseq))
         {
-          print " ERROR: $origdna\[$codonposition]:$origdna != $rseq";
+          print " ERROR: orig[$codonposition]:$origdna != $rseq";
           last;
         }
 
