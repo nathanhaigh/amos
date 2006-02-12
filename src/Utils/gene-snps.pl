@@ -16,7 +16,9 @@ open STATS,   "< $statsfile" or die "Can't open $statsfile ($!)\n";
 
 my $consensus;
 my @genes;
+my %genegroups;
 my $reflen = 0;
+my %genestats;
 
 my %codon =
 (
@@ -119,14 +121,20 @@ sub reverseCompliment
 
 sub printGene
 {
-  my $gene = shift;
-  print "GENE: $gene->{label} $gene->{start} $gene->{end} $gene->{rc}\n";
+  my $genegroup = shift;
+  
+  my $seq;
+  foreach my $gene (sort {$a->{start} <=> $b->{start}} @$genegroup)
+  {
+    print "GENE: $gene->{label} $gene->{start} $gene->{end} $gene->{rc}\n";
 
-  my $s = $gene->{start};
-  my $e = $gene->{end};
+    my $s = $gene->{start};
+    my $e = $gene->{end};
 
-  my $seq = substr($consensus, $s-1, $e-$s+1);
-  $seq = reverseCompliment($seq) if $gene->{rc};
+    $seq .= substr($consensus, $s-1, $e-$s+1);
+  }
+
+  $seq = reverseCompliment($seq) if $genegroup->[0]->{rc};
   my $trans = translate($seq);
 
   print ">dna\n";
@@ -180,6 +188,7 @@ print "Loaded reference consensus len=",length($consensus),"\n";
 
 
 
+
 ## Load the gene coordinates
 while (<TABFILE>)
 {
@@ -201,25 +210,40 @@ while (<TABFILE>)
   my $end    = $val[3];
   my $label  = $val[5];
 
-  my $gene;
-  $gene->{start}    = $start;
-  $gene->{end}      = $end;
-  $gene->{label}    = $label;
-  $gene->{rc}       = ($strand eq "reverse") ? 1 : 0;
-  $gene->{snpcount} = 0;
-  $gene->{synonymous} = 0;
-  $gene->{nonsynonymous} = 0;
-  $gene->{codonposition}->{1} = 0;
-  $gene->{codonposition}->{2} = 0;
-  $gene->{codonposition}->{3} = 0;
+  my $exon;
+  $exon->{start}    = $start;
+  $exon->{end}      = $end;
+  $exon->{len}      = $end - $start + 1;
+  $exon->{label}    = $label;
+  $exon->{rc}       = ($strand eq "reverse") ? 1 : 0;
+  $exon->{snpcount} = 0;
+  $exon->{synonymous} = 0;
+  $exon->{nonsynonymous} = 0;
+  $exon->{codonposition}->{1} = 0;
+  $exon->{codonposition}->{2} = 0;
+  $exon->{codonposition}->{3} = 0;
 
-  push @genes, $gene;
-  #printGene($gene);
+  $genestats{$label}->{label} = $label;
+  $genestats{$label}->{len} += $end - $start + 1;
+  $genestats{$label}->{snpcount} = 0;
+  $genestats{$label}->{synonymous} = 0;
+  $genestats{$label}->{nonsynonymous} = 0;
+  $genestats{$label}->{codonposition}->{1} = 0;
+  $genestats{$label}->{codonposition}->{2} = 0;
+  $genestats{$label}->{codonposition}->{3} = 0;
+
+  push @{$genegroups{$label}}, $exon;
+
+  push @genes, $exon;
 }
 
-print "Loaded gene data for ", scalar @genes, " genes\n";
+print "Loaded gene data for ", scalar keys %genegroups,
+      " genes (", scalar @genes, " exons)\n";
 
-
+foreach my $l (sort {$genegroups{$a}->[0]->{start} <=> $genegroups{$b}->[0]->{start}} keys %genegroups)
+{
+  #printGene($genegroups{$l});
+}
 
 ## Load the snps
 
@@ -262,8 +286,10 @@ while (<SNPS>)
       my $s = $g->{start};
       my $e = $g->{end};
       my $rc = $g->{rc};
+      my $l = $g->{label};
 
       $g->{snpcount}++;
+      $genestats{$l}->{snpcount}++;
 
       print "\t|\t$g->{label} ($s, $e) $rc";
 
@@ -276,10 +302,33 @@ while (<SNPS>)
 
       if ($rc)
       {
-        my $geneseqoffset = $e - $rpos;
+        my $exonpos = 0;
+        my $last = 0;
+
+        foreach my $exon (sort {$b->{start} <=> $a->{start}} @{$genegroups{$g->{label}}})
+        {
+          if ($exon->{start} eq $g->{start})
+          {
+            $last = 1;
+            last;
+          }
+
+          $exonpos += $exon->{len}
+        }
+
+        die "WTF" if !$last;
+
+        my $geneseqoffset = $e - $rpos + $exonpos;
         $codonposition = $geneseqoffset % 3;
 
-        $origdna = uc(substr($consensus, $rpos-(2-$codonposition)-1, 3));
+        my $conspos = $rpos-(2-$codonposition)-1;
+
+        if (($conspos < $s) || $conspos+3 > $e)
+        {
+          die "Aw shit rc... $s $e $conspos";
+        }
+
+        $origdna = uc(substr($consensus, $conspos, 3));
 
         $origdna = reverseCompliment($origdna);
         my $rseqrc = $rc{uc($rseq)};
@@ -294,14 +343,38 @@ while (<SNPS>)
       }
       else
       {
-        my $geneseqoffset = $rpos - $s; 
+        my $exonpos = 0;
+        my $last = 0;
+        my $geneseq;
+        foreach my $exon (sort {$a->{start} <=> $b->{start}} @{$genegroups{$g->{label}}})
+        {
+          $geneseq .= substr($consensus, $exon->{start}-1, $exon->{len});
+
+          if ($exon->{start} eq $g->{start})
+          {
+            $last = 1;
+          }
+
+          if (!$last)
+          {
+            $exonpos += $exon->{len};
+            print " $exonpos";
+          }
+        }
+
+        die "WTF" if !$last;
+
+        my $geneseqoffset = $rpos - $s + $exonpos; 
         $codonposition = $geneseqoffset % 3;
 
-        $origdna = uc(substr($consensus, $rpos-$codonposition-1, 3));
+ #       my $conspos = $rpos-$codonposition-1;
+        $geneseqoffset -= $codonposition;
+
+        $origdna = uc(substr($geneseq, $geneseqoffset, 3));
 
         if (substr($origdna, $codonposition, 1) ne uc($rseq))
         {
-          print " ERROR: orig[$codonposition]:$origdna != $rseq";
+          print " ERROR: $origdna\[$codonposition]:$origdna != $rseq";
           last;
         }
 
@@ -312,6 +385,7 @@ while (<SNPS>)
       print "\t| $cpos";
 
       $g->{codonposition}->{$cpos}++;
+      $genestats{$l}->{codonposition}->{$cpos}++;
 
       foreach $qseq (@ambiguities)
       {
@@ -343,6 +417,8 @@ while (<SNPS>)
 
         $g->{synonymous}     += $syn;
         $g->{nonsynonymous} += 1-$syn;
+        $genestats{$l}->{synonymous} += $syn;
+        $genestats{$l}->{nonsynonymous} += 1-$syn;
       }
 
       if (scalar @ambiguities > 1)
@@ -359,23 +435,51 @@ while (<SNPS>)
 
 print "\n\n";
 
+print "gene stats:\n";
 
+foreach my $genename (sort {$a cmp $b} keys %genestats)
+{
+  my $g = $genestats{$genename};
+  my $gl = $g->{len};
+  my $sc = $g->{snpcount};
+
+  printSNPDistance("\"$g->{label}\"", $gl, $sc);
+
+  print " |";
+
+  for (my $i = 1; $i <= 3; $i++)
+  {
+    my $c = $g->{codonposition}->{$i};
+    print " $c";
+  }
+
+  my $syn = $g->{synonymous};
+  my $non = $g->{nonsynonymous};
+  print " S:$syn N:$non\n";
+
+  if ($sc != ($syn + $non))
+  {
+    print "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non)\n";
+  }
+}
+
+print "\n\nexon stats:\n";
+
+my %codonposition = (1=>0,2=>0,3=>0);
 my $genelen = 0;
 my $genesnps = 0;
 
-my %codonposition = (1=>0,2=>0,3=>0);
 my $synonymous = 0;
 my $nonsynonymous = 0;
-
 foreach my $g (sort {$a->{label} cmp $b->{label}} @genes)
 {
-  my $gl = $g->{end} - $g->{start} + 1;
+  my $gl = $g->{len};
   my $sc = $g->{snpcount};
 
   $genelen  += $gl;
   $genesnps += $sc;
  
-  printSNPDistance("\"$g->{label}\"", $gl, $sc);
+  printSNPDistance("\"$g->{label}\" start:$g->{start} end:$g->{end}", $gl, $sc);
 
   print " |";
 

@@ -1,32 +1,45 @@
 #!/fs/sz-user-supported/Linux-i686/bin/runAmos -C
 
+REFERENCE="GiBVsegF"
+QUERY="443"
+
+## reference.fasta
+## reference.genes.tab
+## query.contig
+## snps-coverage.R
+
+
+## Creating Query Fasta
+5: contig2fasta $(QUERY).contig > $(QUERY).fasta
+
+
 ## Aligning seqs
-10: nucmer ../GiBVsegF_current.fasta 443.fasta
+10: nucmer $(REFERENCE).fasta $(QUERY).fasta
 
 ## Dumping alignment
-20: show-aligns out.delta GIBVseqF 443 > GiBVsegF-443.align
+20: show-aligns out.delta $(REFERENCE) $(QUERY) > $(REFERENCE)-$(QUERY).align
 
 ## Listing Snps
-30: findSNPs  GiBVsegF-443.align | tr -d ',' > GiBVsegF-443.snps
+30: findSNPs  $(REFERENCE)-$(QUERY).align | tr -d ',' > $(REFERENCE)-$(QUERY).snps
 
 ## Copy gene file
-40: cp GiBVsegF.genes.tab GiBVsegF-443.tab
+40: cp $(REFERENCE).genes.tab $(REFERENCE)-$(QUERY).tab
  
 ## Mark SNPs
-50: awk '{c=2; t="score"; if ($15=="I"){c=3;t="sequence_similarity"} print "forward\t"c"\t"$11"\t"$11+length($13)"\t"t"\t"$15}' GiBVsegF-443.snps >> GiBVsegF-443.tab
+50: awk '{c=2; t="score"; if ($15=="I"){c=3;t="sequence_similarity"} print "forward\t"c"\t"$11"\t"$11+length($13)"\t"t"\t"$15}' $(REFERENCE)-$(QUERY).snps >> $(REFERENCE)-$(QUERY).tab
  
 ## "Create PNG"
-60: cgview -i GiBVsegF-443.tab -f png -o GiBVsegF-443.png  -R true -r true -H 1000 -W 1000
+60: cgview -i $(REFERENCE)-$(QUERY).tab -f png -o $(REFERENCE)-$(QUERY).png  -R true -r true -H 1000 -W 1000
 
 ## Create tcovStats file
-70: getCoverage -s -M 443.contig --nogaps
+70: getCoverage -s -M $(QUERY).contig --nogaps
  
 ## analyzing gene snps
-80: gene-snps.pl GiBVsegF.genes.tab GiBVsegF-443.snps GiBVsegF_current.fasta 443.tcovStats > GiBVsegF-443.snpanalysis
+80: gene-snps.pl $(REFERENCE).genes.tab $(REFERENCE)-$(QUERY).snps $(REFERENCE).fasta $(QUERY).tcovStats > $(REFERENCE)-$(QUERY).snpanalysis
 
 ## plot snps-vs-coverage
 90: 
-grep '#' GiBVsegF-443.snpanalysis  | awk '{print $4,$5}' > cov
+grep '#' $(REFERENCE)-$(QUERY).snpanalysis  | awk '{print $4,$5}' > cov
 R --no-save < snps-coverage.R
 .
 
