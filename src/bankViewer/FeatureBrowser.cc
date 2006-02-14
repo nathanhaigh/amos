@@ -116,7 +116,7 @@ void FeatureBrowser::loadTable()
       new FeatureListItem(m_table,
                           QString(feat.getEID().c_str()),
                           QString((QChar)(char)feat.getType()),
-                          QString::number(feat.getSource().second),
+                          QString((QChar)(char)feat.getSource().second),
                           QString::number(feat.getSource().first),
                           QString((QChar)(range.isReverse()?'R':'F')),
                           QString::number(range.getLo()),
@@ -135,12 +135,12 @@ void FeatureBrowser::loadTable()
 
 void FeatureBrowser::itemSelected(QListViewItem * item)
 {
-  if (atoi(item->text(2)) == Contig_t::NCODE)
-  {
-    ID_t iid = atoi(item->text(3));
-    ID_t bid = m_datastore->contig_bank.lookupBID(iid);
+  int offset = atoi(item->text(5));
+  ID_t iid = atoi(item->text(3));
 
-    int offset = atoi(item->text(5));
+  if (item->text(2)[0] == Contig_t::NCODE)
+  {
+    ID_t bid = m_datastore->contig_bank.lookupBID(iid);
 
     if (bid != m_datastore->m_contigId)
     {
@@ -148,6 +148,40 @@ void FeatureBrowser::itemSelected(QListViewItem * item)
     }
 
     emit setGindex(offset);
+  }
+  else if (item->text(2)[0] == Scaffold_t::NCODE)
+  {
+    AMOS::Scaffold_t scaffold;
+
+    ID_t bid = m_datastore->scaffold_bank.lookupBID(iid);
+    m_datastore->fetchScaffold(bid, scaffold);
+
+    bid = 0;
+
+    vector<Tile_t>::iterator ti;
+    for (ti = scaffold.getContigTiling().begin();
+         ti != scaffold.getContigTiling().end();
+         ti++)
+    {
+      if ((ti->offset <= offset) && (offset <= ti->getRightOffset()))
+      {
+        bid = m_datastore->contig_bank.getIDMap().lookupBID(ti->source);
+        offset -= ti->offset;
+
+        if (ti->range.isReverse())
+        {
+          offset = ti->getGappedLength() - offset;
+        }
+
+        break;
+      }
+    }
+
+    if (bid)
+    {
+      emit setContigId(bid);
+      emit setGindex(offset);
+    }
   }
 }
 

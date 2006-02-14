@@ -340,7 +340,7 @@ void TilingFrame::loadContigRange(int gindex)
         }
       }
     }
-    cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << orig << " erased: " << erase << endl;
+    //cerr << "Loaded [" << m_loadedStart << "," << m_loadedEnd << "]:" << m_renderedSeqs.size() << " kept:" << orig << " erased: " << erase << endl;
 
     QApplication::restoreOverrideCursor();
   }

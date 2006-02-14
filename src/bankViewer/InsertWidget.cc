@@ -344,6 +344,18 @@ void InsertWidget::initializeTiling()
 
     m_tilingwidth = scaffold.getSpan();
 
+    Feature_t feat;
+    m_datastore->feat_bank.seekg(1);
+
+    while (m_datastore->feat_bank >> feat)
+    {
+      if (feat.getSource().second == Scaffold_t::NCODE &&
+          feat.getSource().first == scaffold.getIID())
+      {
+        m_features.push_back(feat);
+      }
+    }
+
     m_ctiling = scaffold.getContigTiling();
     sort(m_ctiling.begin(), m_ctiling.end(), RenderSeq_t::TilingOrderCmp());
 
@@ -424,14 +436,8 @@ void InsertWidget::initializeTiling()
             feat.setRange(rng);
             m_features.push_back(feat);
           }
-          else if (feat.getSource().second == Scaffold_t::NCODE &&
-                   feat.getSource().first == scaffold.getIID())
-          {
-            m_features.push_back(feat);
-          }
         }
       }
-
     }
 
     cerr << "done." << endl;
@@ -449,19 +455,19 @@ void InsertWidget::initializeTiling()
     m_tiling      = m_datastore->m_contig.getReadTiling();
 
     if (m_datastore->feat_bank.isOpen())
+    {
+      Feature_t feat;
+      m_datastore->feat_bank.seekg(1);
+      
+      while (m_datastore->feat_bank >> feat)
       {
-        Feature_t feat;
-        m_datastore->feat_bank.seekg(1);
-        
-        while (m_datastore->feat_bank >> feat)
-          {
-            if (feat.getSource().second == Contig_t::NCODE &&
-                feat.getSource().first == m_datastore->m_contig.getIID())
-              {
-                m_features.push_back(feat);
-              }
-          }
+        if (feat.getSource().second == Contig_t::NCODE &&
+            feat.getSource().first == m_datastore->m_contig.getIID())
+        {
+          m_features.push_back(feat);
+        }
       }
+    }
   }
 
   sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
