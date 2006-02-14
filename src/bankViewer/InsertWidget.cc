@@ -400,32 +400,37 @@ void InsertWidget::initializeTiling()
       }
 
       if (m_datastore->feat_bank.isOpen()) 
+      {
+        Feature_t feat;
+        m_datastore->feat_bank.seekg(1);
+
+        while (m_datastore->feat_bank >> feat)
         {
-          Feature_t feat;
-          m_datastore->feat_bank.seekg(1);
+          if (feat.getSource().second == Contig_t::NCODE &&
+              feat.getSource().first == contig.getIID())
+          {
+            Range_t rng = feat.getRange( );
 
-          while (m_datastore->feat_bank >> feat)
+            if (ci->range.isReverse())
             {
-              if (feat.getSource().second == Contig_t::NCODE &&
-                  feat.getSource().first == contig.getIID())
-                {
-                  Range_t rng = feat.getRange( );
-
-                  if (ci->range.isReverse())
-                    {
-                      rng.swap();
-                      rng.begin = (ci->range.getLength() - feat.getRange().begin);
-                      rng.end = (ci->range.getLength() - feat.getRange().end);
-                    }
-
-                  rng.begin += ci->offset;
-                  rng.end   += ci->offset;
-
-                  feat.setRange(rng);
-                  m_features.push_back(feat);
-                }
+              rng.swap();
+              rng.begin = (ci->range.getLength() - feat.getRange().begin);
+              rng.end = (ci->range.getLength() - feat.getRange().end);
             }
+
+            rng.begin += ci->offset;
+            rng.end   += ci->offset;
+
+            feat.setRange(rng);
+            m_features.push_back(feat);
+          }
+          else if (feat.getSource().second == Scaffold_t::NCODE &&
+                   feat.getSource().first == scaffold.getIID())
+          {
+            m_features.push_back(feat);
+          }
         }
+      }
 
     }
 
