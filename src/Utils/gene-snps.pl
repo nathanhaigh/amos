@@ -244,9 +244,13 @@ while (<TABFILE>)
 print "Loaded gene data for ", scalar keys %genegroups,
       " genes (", scalar @genes, " exons)\n";
 
-foreach my $l (sort {$genegroups{$a}->[0]->{start} <=> $genegroups{$b}->[0]->{start}} keys %genegroups)
+if (0)
 {
-  #printGene($genegroups{$l});
+  foreach my $l (sort {$genegroups{$a}->[0]->{start} <=> 
+                       $genegroups{$b}->[0]->{start}} keys %genegroups)
+  {
+    printGene($genegroups{$l});
+  }
 }
 
 ## Load the snps
@@ -291,7 +295,7 @@ while (<SNPS>)
       my $e = $g->{end};
       my $rc = $g->{rc};
       my $l = $g->{label};
-      my $rcc = $rc ? "1" : "0";
+      my $rcc = $rc ? "-" : "+";
 
       $g->{snpcount}++;
       $genestats{$l}->{snpcount}++;
@@ -346,10 +350,6 @@ while (<SNPS>)
 
         my $geneseqoffset = $e - $rpos + $exonpos;
         $codonposition = $geneseqoffset % 3;
-
-        #my $conspos = $rpos-(2-$codonposition)-1;
-        #$origdna = uc(substr($consensus, $conspos, 3));
-
         $geneseqoffset -= $codonposition;
 
         $origdna = uc(substr($geneseq, $geneseqoffset, 3));
@@ -380,7 +380,6 @@ while (<SNPS>)
           if (!$last)
           {
             $exonpos += $exon->{len};
-            print " $exonpos";
           }
         }
 
@@ -474,6 +473,8 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
     print " $c";
   }
 
+  print " |";
+
   my $syn = $g->{synonymous};
   my $non = $g->{nonsynonymous};
   my $del = $g->{deletion};
@@ -484,6 +485,74 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
   {
     die "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non) + del ($del) + ins ($ins)\n";
   }
+
+  my $geneseq;
+  if ($g->{rc})
+  {
+    foreach my $exon (sort {$b->{start} <=> $a->{start}} @{$genegroups{$genename}})
+    {
+      my $raw = substr($consensus, $exon->{start}-1, $exon->{len});
+      $geneseq .= reverseCompliment($raw);
+    }
+  }
+  else
+  {
+    foreach my $exon (sort {$a->{start} <=> $b->{start}} @{$genegroups{$genename}})
+    {
+      $geneseq .= substr($consensus, $exon->{start}-1, $exon->{len});
+    }
+  }
+
+  my $genelen = length($geneseq);
+  die "Invalid genelength" if ($genelen % 3);
+
+  my @bases = qw/A C G T/;
+
+  my $possiblesyn = 0;
+  for (my $i = 0; $i < $genelen-3; $i+=3)
+  {
+    my $codon = uc(substr($geneseq, $i, 3));
+
+    for (my $j = 0; $j < 3; $j++)
+    {
+      my $o = substr($codon, $j, 1);
+
+      foreach my $b (@bases)
+      {
+        next if $b eq $o;
+
+        my $newcodon = $codon;
+        substr($newcodon, $j, 1) = $b;
+
+        if ($codon{$newcodon} eq $codon{$codon})
+        {
+          $possiblesyn++;
+        }
+      }
+    }
+  }
+
+  $possiblesyn /= 3;
+  my $possiblenon = $genelen - 3 - $possiblesyn;
+
+  my $ps = $syn / $possiblesyn;
+  my $pn = $non / $possiblenon;
+
+  my $ds = (-3 * log (1 - ((4*$ps)/3))) / 4;
+  my $dn = (-3 * log (1 - ((4*$pn)/3))) / 4;
+
+  $possiblesyn = sprintf("%.02f", $possiblesyn);
+  $possiblenon = sprintf("%.02f", $possiblenon);
+  $ps = sprintf("%.02f", $ps);
+  $pn = sprintf("%.02f", $pn);
+  $ds = sprintf("%.02f", $ds);
+  $dn = sprintf("%.02f", $dn);
+
+
+  my $dsdn = ($dn != 0) ? sprintf("%.02f", $ds/$dn) : "*";
+  print "S: $possiblesyn N: $possiblenon Sd: $syn Ns: $non pS: $ps pN: $pn dS: $ds dN: $dn dS/dN: $dsdn\n";
+
+  print "\n";
 }
 
 print "\n\nexon stats:\n";
