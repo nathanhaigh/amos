@@ -97,7 +97,7 @@ sub translate
   
   if ($c != 0)
   {
-    print "ERROR: c = $c, s = $s\n";
+    die "ERROR: c = $c, s = $s\n";
   }
 
   return $trans;
@@ -219,6 +219,8 @@ while (<TABFILE>)
   $exon->{snpcount} = 0;
   $exon->{synonymous} = 0;
   $exon->{nonsynonymous} = 0;
+  $exon->{deletion} = 0;
+  $exon->{insertion} = 0;
   $exon->{codonposition}->{1} = 0;
   $exon->{codonposition}->{2} = 0;
   $exon->{codonposition}->{3} = 0;
@@ -228,6 +230,8 @@ while (<TABFILE>)
   $genestats{$label}->{snpcount} = 0;
   $genestats{$label}->{synonymous} = 0;
   $genestats{$label}->{nonsynonymous} = 0;
+  $genestats{$label}->{deletion} = 0;
+  $genestats{$label}->{insertion} = 0;
   $genestats{$label}->{codonposition}->{1} = 0;
   $genestats{$label}->{codonposition}->{2} = 0;
   $genestats{$label}->{codonposition}->{3} = 0;
@@ -287,13 +291,28 @@ while (<SNPS>)
       my $e = $g->{end};
       my $rc = $g->{rc};
       my $l = $g->{label};
+      my $rcc = $rc ? "1" : "0";
 
       $g->{snpcount}++;
       $genestats{$l}->{snpcount}++;
 
-      print "\t|\t$g->{label} ($s, $e) $rc";
+      print "\t|\t$g->{label} ($s, $e) $rcc";
 
-      last if ($len > 1 || $rseq eq "." || $qseq eq ".");
+      if ($rseq =~ /\./)
+      {
+        $g->{insertion}++;
+        $genestats{$l}->{insertion}++;
+        last;
+      }
+
+      if ($qseq =~ /\./)
+      {
+        $g->{deletion}++;
+        $genestats{$l}->{deletion}++;
+        last;
+      }
+
+      last if ($len > 1);
 
       my @ambiguities = @{$ambiguity{uc($qseq)}};
 
@@ -309,7 +328,9 @@ while (<SNPS>)
 
         foreach my $exon (sort {$b->{start} <=> $a->{start}} @{$genegroups{$g->{label}}})
         {
-          $geneseq .= reverseCompliment(substr($consensus, $exon->{start}-1, $exon->{len}));
+          my $raw = substr($consensus, $exon->{start}-1, $exon->{len});
+          $geneseq .= reverseCompliment($raw);
+
           if ($exon->{start} eq $g->{start})
           {
             $last = 1;
@@ -330,14 +351,14 @@ while (<SNPS>)
         #$origdna = uc(substr($consensus, $conspos, 3));
 
         $geneseqoffset -= $codonposition;
+
         $origdna = uc(substr($geneseq, $geneseqoffset, 3));
 
         my $rseqrc = $rc{uc($rseq)};
 
         if (substr($origdna, $codonposition, 1) ne uc($rseqrc))
         {
-          print " ERROR: orig[$codonposition]:$origdna != $rseqrc";
-          last;
+          die " ERROR: orig[$codonposition]:$origdna != $rseqrc";
         }
 
         substr($origdna, $codonposition, 1) = lc(substr($origdna, $codonposition, 1));
@@ -375,8 +396,7 @@ while (<SNPS>)
 
         if (substr($origdna, $codonposition, 1) ne uc($rseq))
         {
-          print " ERROR: orig[$codonposition]:$origdna != $rseq";
-          last;
+          die " ERROR: orig[$codonposition]:$origdna != $rseq";
         }
 
         substr($origdna, $codonposition, 1) = lc(substr($origdna, $codonposition, 1));
@@ -456,11 +476,13 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
 
   my $syn = $g->{synonymous};
   my $non = $g->{nonsynonymous};
-  print " S:$syn N:$non\n";
+  my $del = $g->{deletion};
+  my $ins = $g->{insertion};
+  print " S:$syn N:$non D:$del I:$ins\n";
 
-  if ($sc != ($syn + $non))
+  if ($sc != ($syn + $non + $del + $ins))
   {
-    print "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non)\n";
+    die "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non) + del ($del) + ins ($ins)\n";
   }
 }
 
@@ -472,6 +494,8 @@ my $genesnps = 0;
 
 my $synonymous = 0;
 my $nonsynonymous = 0;
+my $insertions = 0;
+my $deletions = 0;
 foreach my $g (sort {$a->{label} cmp $b->{label}} @genes)
 {
   my $gl = $g->{len};
@@ -494,14 +518,18 @@ foreach my $g (sort {$a->{label} cmp $b->{label}} @genes)
 
   my $syn = $g->{synonymous};
   my $non = $g->{nonsynonymous};
-  print " S:$syn N:$non\n";
+  my $del = $g->{deletion};
+  my $ins = $g->{insertion};
+  print " S:$syn N:$non D:$del I:$ins\n";
 
   $synonymous += $syn;
   $nonsynonymous += $non;
+  $deletions += $del;
+  $insertions += $ins;
 
-  if ($sc != ($syn + $non))
+  if ($sc != ($syn + $non + $del + $ins))
   {
-    print "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non)\n";
+    die "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non) + del ($del) + ins ($ins)\n";
   }
 }
 
@@ -519,7 +547,7 @@ print "SNP codon Position: $codonposition{1} $codonposition{2} $codonposition{3}
 
 if ($codonposition{1} + $codonposition{2} + $codonposition{3} != ($synonymous + $nonsynonymous))
 {
-  print "ERROR with totals!!!\n";
+  die "ERROR with codon totals!!!\n";
 }
 
 print "\n\n";
