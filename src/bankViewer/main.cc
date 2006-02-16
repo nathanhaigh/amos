@@ -42,15 +42,19 @@ int main( int argc, char **argv )
 
 
   QPixmap pixmap((const char **)AAI_xpm);
+  QPainter p (&pixmap);
   
+  p.drawText(120, 180, 200, 48, 
+             Qt::AlignLeft | Qt::AlignBottom, 
+             PACKAGE_STRING);
+
   if (a.argc() > 1)
   {
-    QPainter p (&pixmap);
-    p.drawText(180, 200, 200, 48, 
+    p.drawText(120, 200, 200, 48, 
                Qt::AlignLeft | Qt::AlignBottom, 
                "Loading assembly...");
-    p.end();
   }
+  p.end();
 
 #ifdef HAVE_QT_333
   QSplashScreen * splash = new QSplashScreen(pixmap);
