@@ -88,13 +88,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
       p.drawRect((int)(histleft + leftsd * xscale),      histtop,
                  (int)((rightsd - leftsd + 1) * xscale), histheight);
 
-      mean /= m_stats->m_bucketsize;
-
-      p.setPen(Qt::red);
-      p.drawLine((int)(histleft + mean*xscale),  histtop,
-                 (int)(histleft + mean*xscale), histbottom);
     }
-
 
     // Xlabels
     pen.setStyle(Qt::DotLine);
@@ -156,6 +150,15 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
                  (int)(histbottom - yheight),
                  (int)(xwidth), 
                  (int)(yheight));
+    }
+
+    if (m_shademean)
+    {
+      double mean = m_stats->mean();
+      mean /= m_stats->m_bucketsize;
+      p.setPen(Qt::red);
+      p.drawLine((int)(histleft + mean*xscale),  histtop,
+                 (int)(histleft + mean*xscale), histbottom);
     }
 
 

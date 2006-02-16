@@ -64,7 +64,11 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
   QPopupMenu * menu = new QPopupMenu(this);
   menuBar()->insertItem("&Display", menu);
   menu->insertItem("&Insert Size Histogram...", this, SLOT(acceptSelected()));
-  menu->insertItem("&Clear Range Length Histogram...", this, SLOT(readLengthSelected()));
+  menu->insertItem("&Contig Clear Range Length Histogram...", this, SLOT(clrLengthSelected()));
+  menu->insertSeparator();
+  menu->insertItem("&Read GC Content Histogram (All)...",    this, SLOT(allGCContentSelected()));
+  menu->insertItem("&Clear Range Length Histogram (All)...", this, SLOT(allClrLengthSelected()));
+  menu->insertItem("&Full Range Length Histogram (All)...", this, SLOT(allReadLengthSelected()));
 
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");
@@ -231,7 +235,7 @@ void LibraryPicker::refreshTable()
   loadTable();
 }
 
-void LibraryPicker::readLengthSelected()
+void LibraryPicker::clrLengthSelected()
 {
   QListViewItem * item = m_table->selectedItem();
   if (item)
@@ -259,5 +263,95 @@ void LibraryPicker::readLengthSelected()
     }
 
     new HistogramWindow(stats, this, "hist");
+  }
+}
+
+void LibraryPicker::allGCContentSelected()
+{
+  QListViewItem * item = m_table->selectedItem();
+  if (item)
+  {
+    QCursor orig = cursor();
+    setCursor(Qt::waitCursor);
+
+    ID_t libid = atoi(item->text(0));
+
+    char buffer[32];
+    sprintf(buffer, "%d", libid);
+    InsertStats * stats = new InsertStats((string)"GC Content Histogram for Library " + buffer + " (All Reads)");
+
+    Read_t red;
+    m_datastore->read_bank.seekg(1);
+
+    while (m_datastore->read_bank >> red)
+    {
+      if (m_datastore->getLibrary(red.getIID()) == libid)
+      {
+        stats->addSize(red.getGCContent());
+      }
+    }
+
+    new HistogramWindow(stats, this, "hist");
+    setCursor(orig);
+  }
+}
+
+void LibraryPicker::allClrLengthSelected()
+{
+  QListViewItem * item = m_table->selectedItem();
+  if (item)
+  {
+    QCursor orig = cursor();
+    setCursor(Qt::waitCursor);
+
+    ID_t libid = atoi(item->text(0));
+
+    char buffer[32];
+    sprintf(buffer, "%d", libid);
+    InsertStats * stats = new InsertStats((string)"Clear Range Length Histogram for Library " + buffer + " (All Reads)");
+
+    Read_t red;
+    m_datastore->read_bank.seekg(1);
+
+    while (m_datastore->read_bank >> red)
+    {
+      if (m_datastore->getLibrary(red.getIID()) == libid)
+      {
+        stats->addSize(red.getClearRange().getLength());
+      }
+    }
+
+    new HistogramWindow(stats, this, "hist");
+    setCursor(orig);
+  }
+}
+
+void LibraryPicker::allReadLengthSelected()
+{
+  QListViewItem * item = m_table->selectedItem();
+  if (item)
+  {
+    QCursor orig = cursor();
+    setCursor(Qt::waitCursor);
+
+    ID_t libid = atoi(item->text(0));
+
+    char buffer[32];
+    sprintf(buffer, "%d", libid);
+    InsertStats * stats = new InsertStats((string)"Full Range Length Histogram for Library " + buffer + " (All Reads)");
+
+    Read_t red;
+    m_datastore->read_bank.seekg(1);
+
+    while (m_datastore->read_bank >> red)
+    {
+      if (m_datastore->getLibrary(red.getIID()) == libid)
+      {
+        stats->addSize(red.getLength());
+      }
+    }
+
+    new HistogramWindow(stats, this, "hist");
+    setCursor(orig);
   }
 }

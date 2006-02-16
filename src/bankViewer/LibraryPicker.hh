@@ -18,9 +18,14 @@ public slots:
   void itemSelected(QListViewItem * item);
   void selectiid(const QString & iid);
   void selecteid(const QString & eid);
-  void acceptSelected();
   void refreshTable();
-  void readLengthSelected();
+
+  void acceptSelected();
+  void clrLengthSelected();
+
+  void allGCContentSelected();
+  void allClrLengthSelected();
+  void allReadLengthSelected();
 
 signals:
   void highlightRead(int);
