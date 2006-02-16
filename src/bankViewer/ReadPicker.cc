@@ -149,7 +149,7 @@ void ReadPicker::loadTable()
       AMOS::Read_t red;
       m_datastore->fetchRead(ti->source, red);
 
-      double gccontent = red.getGCContent();
+      double gccontent = red.getGCContent(red.getClearRange());
 
       char type = red.getType();
       if (type == 0) { type = '?'; }
@@ -261,7 +261,7 @@ void ReadPicker::readGCHistogram()
     AMOS::Read_t red;
     m_datastore->fetchRead(ti->source, red);
 
-    stats->addSize(red.getGCContent());
+    stats->addSize(red.getGCContent(red.getClearRange()));
   }
 
   new HistogramWindow(stats, this, "hist");

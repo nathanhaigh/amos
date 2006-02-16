@@ -66,7 +66,7 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
   menu->insertItem("&Insert Size Histogram...", this, SLOT(acceptSelected()));
   menu->insertItem("&Contig Clear Range Length Histogram...", this, SLOT(clrLengthSelected()));
   menu->insertSeparator();
-  menu->insertItem("&Read GC Content Histogram (All)...",    this, SLOT(allGCContentSelected()));
+  menu->insertItem("&Read Clear Range GC Content Histogram (All)...", this, SLOT(allGCContentSelected()));
   menu->insertItem("&Clear Range Length Histogram (All)...", this, SLOT(allClrLengthSelected()));
   menu->insertItem("&Full Range Length Histogram (All)...", this, SLOT(allReadLengthSelected()));
 
@@ -287,7 +287,7 @@ void LibraryPicker::allGCContentSelected()
     {
       if (m_datastore->getLibrary(red.getIID()) == libid)
       {
-        stats->addSize(red.getGCContent());
+        stats->addSize(red.getGCContent(red.getClearRange()));
       }
     }
 

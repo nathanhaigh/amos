@@ -26,18 +26,19 @@ public:
                   QString dir,
                   QString start,
                   QString end,
+                  QString length,
                   QString comment)
                
-    : QListViewItem(parent, eid, type, ncode, siid, dir, start, end, comment)
+    : QListViewItem(parent, eid, type, ncode, siid, dir, start, end, length)
     {
-      
+      setText(8, comment);
     }
 
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 2 || col == 3 || col == 5 || col == 6)
+    if (col == 2 || col == 3 || col == 5 || col == 6 || col == 7)
     {
       return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
     }
@@ -84,6 +85,7 @@ FeatureBrowser::FeatureBrowser(DataStore * datastore,
   m_table->addColumn("Dir");
   m_table->addColumn("Start");
   m_table->addColumn("End");
+  m_table->addColumn("Length");
   m_table->addColumn("Comment");
 
   m_datastore = datastore;
@@ -121,6 +123,7 @@ void FeatureBrowser::loadTable()
                           QString((QChar)(range.isReverse()?'R':'F')),
                           QString::number(range.getLo()),
                           QString::number(range.getHi()),
+                          QString::number(range.getLength()),
                           QString(feat.getComment().c_str()));
     }
 

@@ -176,8 +176,8 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
     p.drawText(histleft, textline1,
                histwidth, 30, Qt::AlignLeft | Qt::AlignVCenter, label);
 
-    label = "Sample Mean: " + QString::number(m_stats->mean(), 'f', 2) +
-            "   SD: " + QString::number(m_stats->stdev(), 'f', 2) +
+    label = "Sample Mean: " + QString::number(m_stats->mean(), 'f', prec) +
+            "   SD: " + QString::number(m_stats->stdev(), 'f', prec) +
             "   Count: " + QString::number(m_stats->count());
 
     p.drawText(histleft, textline2,
