@@ -216,16 +216,19 @@ public:
   //--------------------------------------------------- getGCContent --------------
   //! \brief Get the gc content of the sequence
   //!
-  //! \return The gc content of the sequence
+  //! \return The gc content for the specified range of the sequence
   //!
-  double getGCContent ( ) const
+  double getGCContent (const Range_t & rng) const
   {
     int gc = 0;
     int all = 0;
 
+    int start = rng.getLo();
+    int stop = rng.getHi();
+
     // skip ambiguities, gaps
 
-    for (int i = 0; i < length_m; i++)
+    for (int i = start; i < stop; i++)
     {
       switch(getBase(i).first)
       {
@@ -242,6 +245,16 @@ public:
     }
 
     return (all) ? ((double)gc)/all : 0.0;
+  }
+
+  //--------------------------------------------------- getGCContent --------------
+  //! \brief Get the gc content of the sequence
+  //!
+  //! \return The gc content of the full range of the sequence
+  //!
+  double getGCContent ( ) const
+  {
+    return getGCContent(Range_t(0, length_m));
   }
 
 
