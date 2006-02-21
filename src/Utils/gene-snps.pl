@@ -541,15 +541,15 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
   my $ds = (-3 * log (1 - ((4*$ps)/3))) / 4;
   my $dn = (-3 * log (1 - ((4*$pn)/3))) / 4;
 
+  my $dsdn = ($dn != 0) ? sprintf("%.04f", $ds/$dn) : "*";
+
   $possiblesyn = sprintf("%.02f", $possiblesyn);
   $possiblenon = sprintf("%.02f", $possiblenon);
-  $ps = sprintf("%.02f", $ps);
-  $pn = sprintf("%.02f", $pn);
-  $ds = sprintf("%.02f", $ds);
-  $dn = sprintf("%.02f", $dn);
+  $ps          = sprintf("%.07f", $ps);
+  $pn          = sprintf("%.07f", $pn);
+  $ds          = sprintf("%.07f", $ds);
+  $dn          = sprintf("%.07f", $dn);
 
-
-  my $dsdn = ($dn != 0) ? sprintf("%.02f", $ds/$dn) : "*";
   print "S: $possiblesyn N: $possiblenon Sd: $syn Ns: $non pS: $ps pN: $pn dS: $ds dN: $dn dS/dN: $dsdn\n";
 
   print "\n";
