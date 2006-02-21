@@ -90,6 +90,8 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
   vector<Tile_t> & contigs = scaff.getContigTiling();
   vector<Tile_t>::const_iterator ci;
 
+  sort(contigs.begin(), contigs.end(), TileOrderCmp());
+
   cout << ">";
   if (OPT_UseEIDs)
   {
@@ -127,7 +129,12 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
       }
 
       contig_bank.fetch(ci->source, contig);
-      seq += contig.getUngappedSeqString();
+
+      string s = contig.getUngappedSeqString();
+      
+      if (ci->range.isReverse()) { ReverseComplement(s); }
+
+      seq.append(s);
     }
     else
     {
