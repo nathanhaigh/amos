@@ -18,6 +18,7 @@ bin_PROGRAMS = \
 	load-overlaps \
 	bank2contig  \
 	bank2coverage \
+    bank2scaff    \
 	updateBankPositions \
 	extractContig \
 	bank2fasta \
@@ -70,6 +71,13 @@ bank2coverage_LDADD = \
 	$(top_builddir)/src/Slice/libSlice.a
 bank2coverage_SOURCES = \
 	bank2coverage.cc
+
+##-- bank2scaff
+bank2scaff_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+bank2scaff_SOURCES = \
+	bank2scaff.cc
 
 ##-- bank-clean
 bank_clean_LDADD = \
