@@ -114,6 +114,19 @@ my $minCtgId = $minSeqId;  # where to start numbering contigs
 
 my $outprefix;
 
+if (! defined $outfile){
+    die "You must specify an output file with option -o\n";
+}
+elsif ($outfile eq "-")
+{
+  open(OUT, ">&STDOUT") || $base->bail("Can't open stdout: $!\n");
+}
+else
+{
+  open(OUT, ">$outfile") || $base->bail("Cannot open $outfile: $!\n");
+}
+
+
 my $tmprefix = "tmp.$$"; #tmpnam();
 
 open(TMPSEQ, ">$tmprefix.seq") 
@@ -123,12 +136,6 @@ open(TMPCTG, ">$tmprefix.ctg")
 open(TMPSCF, ">$tmprefix.scf")
     || $base->bail("Cannot open $tmprefix.scf: $!\n");
 
-#first get the contig information
-
-if (! defined $outfile){
-    $base->bail("You must specify an output file with option -o\n");
-}
-open(OUT, ">$outfile") || $base->bail("Cannot open $outfile: $!\n");
 
 #then figure out the mates
 if (defined $frgfile){
