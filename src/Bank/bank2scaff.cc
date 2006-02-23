@@ -9,6 +9,9 @@ bool OPT_UseEIDs = 0;
 bool OPT_UseIIDs = 0;
 bool OPT_FASTA = 0;
 int  OPT_Spacer = 100;
+int  OPT_MinGapSize = 100;
+bool OPT_UseExpected = 0;
+
 string OPT_BankName;
 
 string OPT_EIDFile;
@@ -31,6 +34,8 @@ void PrintHelp (const char * s)
        << "-I file Dump just the contig iids listed in file\n\n"
 
        << "-f      Print the scaffold consensus sequences in multi-fasta format\n"
+       << "-g      Use the estimated gaps size to space contigs\n"
+       << "-G val  Gaps < val will have val N's between them (-g)\n"
        << "-N val  Specify number of N's to place between contigs\n"
        << endl;
   
@@ -46,7 +51,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:gG:")) != EOF) )
   {
     switch (ch)
     {
@@ -65,12 +70,16 @@ void ParseArgs (int argc, char ** argv)
       case 'E': OPT_EIDFile = optarg; break;
       case 'I': OPT_IIDFile = optarg; break;
 
-      case 'f': OPT_FASTA   = true;   break;
-      case 'N': OPT_Spacer  = atoi(optarg); break;
+      case 'f': OPT_FASTA   = true;            break;
+      case 'g': OPT_UseExpected = true;        break;
+      case 'G': OPT_MinGapSize = atoi(optarg); break;
+      case 'N': OPT_Spacer  = atoi(optarg);    break;
 
       default: errflg ++;
       }
   }
+
+  if (OPT_UseExpected) { OPT_FASTA = true; }
 
   if ( errflg > 0 || optind != argc - 1 )
   {
@@ -118,14 +127,33 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
   Contig_t contig;
 
   int lastrightoffset;
+  int gapsize = 0;
 
   for (ci = contigs.begin(); ci != contigs.end(); ci++)
   {
+    if (ci != contigs.begin())
+    {
+      gapsize = ci->offset - lastrightoffset;
+    }
+
+    lastrightoffset = ci->getRightOffset();
+
     if (OPT_FASTA)
     {
       if (ci != contigs.begin())
       {
-        seq.append(OPT_Spacer, 'N');
+        int spaces = OPT_Spacer;
+
+        if (OPT_UseExpected)
+        {
+          spaces = gapsize;
+
+          if (gapsize < OPT_MinGapSize)
+          {
+            spaces = OPT_MinGapSize;
+          }
+        }
+        seq.append(spaces, 'N');
       }
 
       contig_bank.fetch(ci->source, contig);
@@ -140,7 +168,6 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
     {
       if (ci != contigs.begin())
       {
-        int gapsize = ci->offset - lastrightoffset;
         cout << " " <<  gapsize << endl;
       }
 
@@ -157,7 +184,6 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
       else                       { cout << " BE "; }
 
       cout << ci->range.getLength();
-      lastrightoffset = ci->getRightOffset();
     }
   }
 
@@ -167,7 +193,7 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
   }
   else
   {
-    int gapsize = 0; // No gap after last contig
+    gapsize = 0; // No gap after last contig
     cout << " " <<  gapsize << endl;
   }
 }
