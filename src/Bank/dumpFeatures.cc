@@ -9,7 +9,7 @@ int main (int argc, char ** argv)
 {
   if (argc != 2)
   {
-    cerr << "Usage: bank2contig bankname" << endl;
+    cerr << "Usage: dumpFeatures bankname" << endl;
     return EXIT_FAILURE;
   }
 
