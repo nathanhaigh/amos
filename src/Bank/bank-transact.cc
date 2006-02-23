@@ -63,71 +63,24 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
+int exitcode = EXIT_SUCCESS;
+long int cnts = 0;                  // messages seen
+long int cnta = 0;                  // objects appended
+long int cntd = 0;                  // objects deleted
+long int cntr = 0;                  // objects replaced
+NCode_t ncode;                      // current NCode
+char act;                           // action enumeration
 
-//========================================================= Function Defs ====//
-int main (int argc, char ** argv)
+BankStreamSet_t bnks;               // all the banks
+UniversalSet_t objs;                // all the objects
+
+BankStream_t * bp;                  // current bank
+Universal_t * op;                   // current object
+
+
+void HandleMessage(Message_t & msg)
 {
-  int exitcode = EXIT_SUCCESS;
-  long int cnts = 0;                  // messages seen
-  long int cnta = 0;                  // objects appended
-  long int cntd = 0;                  // objects deleted
-  long int cntr = 0;                  // objects replaced
-  Message_t msg;                      // current message
-  NCode_t ncode;                      // current NCode
-  char act;                           // action enumeration
-  ifstream msgfile;                   // the message file stream
-
-  BankStreamSet_t bnks;                     // all the banks
-  UniversalSet_t objs;                // all the objects
-
-  BankStream_t * bp;                        // current bank
-  Universal_t * op;                   // current object
-
-
-  //-- Parse the command line arguments
-  ParseArgs (argc, argv);
-
-  //-- Output the current time and bank directory
-  cerr << "START DATE: " << Date( ) << endl;
-  cerr << "Bank is: " << OPT_BankName << endl;
-
-  //-- BEGIN: MAIN EXCEPTION CATCH
-  try {
-
-    //-- If OPT_ForceCreate, blast away existing banks
-    if ( OPT_ForceCreate )
-      for ( BankStreamSet_t::iterator i = bnks.begin(); i != bnks.end(); ++ i )
-        if ( i -> exists (OPT_BankName) )
-          {
-            i -> open (OPT_BankName);
-            i -> destroy ( );
-          }
-
-    //-- Compress RED and SEQ if option is turned on
-    if ( OPT_Compress )
-      {
-        ((Read_t &)objs [Read_t::NCODE]) . compress( );
-        ((Sequence_t &)objs [Sequence_t::NCODE]) . compress( );
-      }
-
-    //-- Open the message file
-    msgfile . open (OPT_MessageName . c_str( ));
-    msgfile . seekg (0, ios::end);
-    ProgressDots_t dots (msgfile . tellg( ), 50);
-    msgfile . seekg (0, ios::beg);
-
-    if ( ! msgfile )
-      AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
-
-    cerr << "    0%                                            100%" << endl
-         << "AFG ";
-
-    //-- Read the message file
-    while ( msg . read (msgfile) )
-      {
         cnts ++;
-        dots . update (msgfile . tellg( ));
-
         ncode = msg . getMessageCode( );
 
         if ( ! objs . exists (ncode) )
@@ -136,13 +89,13 @@ int main (int argc, char ** argv)
                  << "  unknown message type '" << Decode (ncode)
                  << "' ignored" << endl;
             exitcode = EXIT_FAILURE;
-            continue;
+            return;
           }
 
         bp = & (bnks [ncode]);
         op = & (objs [ncode]);
         if ( bp -> getStatus( ) )
-          continue; // skip objects missing a bank
+          return; // skip objects missing a bank
 
         //-- Parse the message
         try {
@@ -155,7 +108,7 @@ int main (int argc, char ** argv)
                << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
                << ", message ignored" << endl;
           exitcode = EXIT_FAILURE;
-          continue;
+          return;
         }
 
         //-- Open the bank if necessary
@@ -174,7 +127,7 @@ int main (int argc, char ** argv)
                << "' bank, all messages ignored" << endl;
           bp -> setStatus (1);
           exitcode = EXIT_FAILURE;
-          continue;
+          return;
         }
 
         //-- Get the message action code
@@ -223,7 +176,7 @@ int main (int argc, char ** argv)
                << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
                << " to bank, message ignored" << endl;
           exitcode = EXIT_FAILURE;
-          continue;
+          return;
         }
         catch (const ArgumentException_t & e) {
           cerr << "ERROR: " << e . what( ) << endl
@@ -232,11 +185,82 @@ int main (int argc, char ** argv)
                << (msg . exists (F_IID) ? msg . getField (F_IID) : "NULL")
                << ", message ignored" << endl;
           exitcode = EXIT_FAILURE;
-          continue;
+          return;
         }
       }
 
-    dots . end( );
+
+
+//========================================================= Function Defs ====//
+int main (int argc, char ** argv)
+{
+
+  Message_t msg;                      // current message
+
+  //-- Parse the command line arguments
+  ParseArgs (argc, argv);
+
+  //-- Output the current time and bank directory
+  cerr << "START DATE: " << Date( ) << endl;
+  cerr << "Bank is: " << OPT_BankName << endl;
+
+  //-- BEGIN: MAIN EXCEPTION CATCH
+  try {
+
+    //-- If OPT_ForceCreate, blast away existing banks
+    if ( OPT_ForceCreate )
+      for ( BankStreamSet_t::iterator i = bnks.begin(); i != bnks.end(); ++ i )
+        if ( i -> exists (OPT_BankName) )
+          {
+            i -> open (OPT_BankName);
+            i -> destroy ( );
+          }
+
+    //-- Compress RED and SEQ if option is turned on
+    if ( OPT_Compress )
+      {
+        ((Read_t &)objs [Read_t::NCODE]) . compress( );
+        ((Sequence_t &)objs [Sequence_t::NCODE]) . compress( );
+      }
+
+
+
+    //-- Read the Messages
+    if (OPT_MessageName == "-")
+    {
+      cerr << "Reading messages from standard in" << endl;
+      while ( msg . read (cin) )
+      {
+        HandleMessage(msg);
+      }
+    }
+    else
+    {
+      //-- Open the message file
+      ifstream  msgfile;                   // the message file stream
+      msgfile . open (OPT_MessageName . c_str( ));
+      msgfile . seekg (0, ios::end);
+      ProgressDots_t dots (msgfile.tellg(), 50);
+
+      msgfile . seekg (0, ios::beg);
+
+      if ( ! msgfile )
+        AMOS_THROW_IO ("Could not open message file " + OPT_MessageName);
+
+      cerr << "    0%                                            100%" << endl
+           << "AFG ";
+
+      //-- Read the message file
+      while ( msg . read (msgfile) )
+        {
+          dots . update (msgfile . tellg( ));
+          HandleMessage(msg);
+        }
+
+      dots . end( );
+      msgfile . close( );
+    }
+
     bnks . closeAll( );
   }
   catch (const Exception_t & e) {
@@ -246,7 +270,6 @@ int main (int argc, char ** argv)
   }
   //-- END: MAIN EXCEPTION CATCH
 
-  msgfile . close( );
 
   //-- Output the end time
   cerr << "Messages read: " << cnts << endl
