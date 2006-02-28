@@ -55,6 +55,7 @@ int DataStore::openBank(const string & bankname)
 
   try
   {
+    cerr << "Opening " << bankname << endl;
     read_bank.open(bankname,   B_SPY);
     contig_bank.open(bankname, B_SPY);
 

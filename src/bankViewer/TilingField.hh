@@ -76,6 +76,8 @@ private:
     bool m_lowquallower;
     bool m_basecolors;
     bool m_fullseq;
+
+    bool m_doubleclick;
 };
 
 

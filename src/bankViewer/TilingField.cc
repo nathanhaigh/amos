@@ -60,6 +60,7 @@ TilingField::TilingField(DataStore * datastore,
   m_basecolors = false;
   m_polymorphismView = false;
   m_qvcoloring = false;
+  m_doubleclick = false;
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),
@@ -123,8 +124,16 @@ void TilingField::mouseReleaseEvent( QMouseEvent * e)
   cerr << "mouserelease state:" << m_clickstate << endl;
   #endif
 
-  m_clickTimer->start(400, true);
-  m_yclick = e->y();
+  if (m_doubleclick)
+  {
+    // Eat the release from the doubleclick
+    m_doubleclick = false;
+  }
+  else
+  {
+    m_clickTimer->start(400, true);
+    m_yclick = e->y();
+  }
 }
 
 
@@ -135,6 +144,7 @@ void TilingField::mouseDoubleClickEvent( QMouseEvent *e )
   #endif
 
   m_clickTimer->stop();
+  m_doubleclick = true;
 
   int dcov = getReadCov(e->y());
   if (dcov == -1) { return; }
@@ -248,7 +258,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   int trioffset = m_fontsize/2;
 
 
-  #if DEBUGQV
+  #if 0
   cerr << "paintTField:" << m_renderedSeqs.size() << " dcov: " << dcov << " height: " << height
        << " [" << srangeStart << "," << srangeEnd << "]" << endl;
   cerr << "Draw top: " << drawtop << " bottom: " << drawbottom << endl;
