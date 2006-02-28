@@ -236,7 +236,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvExy")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsv")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -280,13 +280,10 @@ void PrintHelp (const char * s)
     << "-h            Display help information\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
-    << "-E contigeid  Contig eid of interest\n"
-    << "-x start      Start of range\n"
-    << "-y end        End of range\n"
     << endl;
   cerr
-    << "Finds all reads that should overlap a given contig range. Includes reads that\n"
-    << "should be present by the virtue of their mate and the scaffold\n\n";
+    << "Print the CE-statistic value at the beginning and end of each"
+    << "insert across each scaffold separated by library\n\n";
   return;
 }
 
