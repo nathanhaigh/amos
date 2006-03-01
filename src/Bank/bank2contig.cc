@@ -6,6 +6,7 @@ using namespace AMOS;
 using namespace std;
 
 bool OPT_LayoutOnly = 0;
+bool OPT_SimpleLayout = false;
 bool OPT_UseEIDs = 0;
 bool OPT_UseIIDs = 0;
 string OPT_BankName;
@@ -28,7 +29,8 @@ void PrintHelp (const char * s)
        << "-i            Use IIDs for names\n"
        << "-E file       Dump just the contig eids listed in file\n"
        << "-I file       Dump just the contig iids listed in file\n"
-       << "-L            Just create a layout file (no sequence\n"
+       << "-L            Just create a layout file (no sequence)\n"
+       << "-S            Simple Layout style\n"
        << endl;
   
   cerr << "Takes an AMOS bank directory and dumps the contigs to stdout\n\n";
@@ -39,7 +41,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiLE:I:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiLSE:I:")) != EOF) )
   {
     switch (ch)
     {
@@ -58,6 +60,7 @@ void ParseArgs (int argc, char ** argv)
       case 'L': OPT_LayoutOnly = true;    break;
       case 'E': OPT_EIDFile = optarg; break;
       case 'I': OPT_IIDFile = optarg; break;
+      case 'S': OPT_SimpleLayout = true; break;
 
       default: errflg ++;
       }
@@ -101,89 +104,107 @@ Pos_t getUngappedPos(const string & str, Pos_t offset)
 void printContig(Contig_t & contig, Bank_t & read_bank)
 {
   Read_t read; 
-  const std::vector<Tile_t> & tiling = contig.getReadTiling();
+  std::vector<Tile_t> & tiling = contig.getReadTiling();
+  sort(tiling.begin(), tiling.end(), TileOrderCmp());
 
-  cout << "##";
-
-  if (OPT_UseEIDs) 
-  { 
-    string s(contig.getEID());
-    int i = s.find(' ');
-    if (i != s.npos) { s = s.substr(0,i); }
-    if (s.empty()) { cout << contig.getIID(); }
-    else           { cout << s; }
-  }
-  else 
-  { 
-    cout << contig.getIID(); 
-  }
-
-  const string cons = contig.getSeqString();
-
-  cout << " "  << tiling.size()
-       << " "  << cons.length()
-       << " bases, 00000000 checksum." << endl;
-
-  if (!OPT_LayoutOnly)
+  if (OPT_SimpleLayout)
   {
-    Fasta_Print(stdout, cons.c_str(), NULL, 60);
+    string contigeid = contig.getEID();
+
+    vector<Tile_t>::const_iterator ti;
+    for (ti = tiling.begin(); ti != tiling.end(); ti++)
+    {
+      cout << contigeid << "\t"
+           << read_bank.lookupEID(ti->source) << "\t"
+           << (ti->range.isReverse() ? 1 : 0) << "\t"
+           << ti->offset
+           << endl;
+    }
   }
-
-  vector<Tile_t>::const_iterator i;
-  for (i =  tiling.begin();
-       i != tiling.end();
-       i++)
+  else
   {
-    bool rc = 0;
-    Range_t range = i->range;
-    Range_t clr = range;
-    Pos_t gappedLen = i->getGappedLength();
-
-    if (i->range.begin > i->range.end) { clr.end++; rc = 1; } 
-    else                               { clr.begin++; }
-
-    cout << "#";
+    cout << "##";
 
     if (OPT_UseEIDs) 
     { 
-      string s = read_bank.lookupEID(i->source);
+      string s(contig.getEID());
       int i = s.find(' ');
       if (i != s.npos) { s = s.substr(0,i); }
-      cout << s;
+      if (s.empty()) { cout << contig.getIID(); }
+      else           { cout << s; }
     }
     else 
     { 
-      cout << i->source;
+      cout << contig.getIID(); 
     }
 
-    cout << "(" << i->offset 
-         << ((rc) ? ") [RC] " : ") [] ") << gappedLen
-         << " bases, 00000000 checksum."
-         << " {" << clr.begin << " " << clr.end << "}"
-         << " <" << getUngappedPos(cons, i->offset)
-         << " "  << getUngappedPos(cons, i->offset + gappedLen - 1)
-         << ">"  << endl;
+    const string cons = contig.getSeqString();
+
+    cout << " "  << tiling.size()
+         << " "  << cons.length()
+         << " bases, 00000000 checksum." << endl;
 
     if (!OPT_LayoutOnly)
     {
-      read_bank.fetch(i->source, read);
-      if (rc) { range.swap(); }
-      string sequence = read.getSeqString(range);
-      if (rc) { Reverse_Complement(sequence); }
+      Fasta_Print(stdout, cons.c_str(), NULL, 60);
+    }
 
-      Pos_t gapcount = 0;
+    vector<Tile_t>::const_iterator i;
+    for (i =  tiling.begin();
+         i != tiling.end();
+         i++)
+    {
+      bool rc = 0;
+      Range_t range = i->range;
+      Range_t clr = range;
+      Pos_t gappedLen = i->getGappedLength();
 
-      vector<Pos_t>::const_iterator g;
-      for (g  = i->gaps.begin();
-           g != i->gaps.end();
-           g++)
-      {
-        sequence.insert(*g+gapcount, "-", 1);
-        gapcount++;
+      if (i->range.begin > i->range.end) { clr.end++; rc = 1; } 
+      else                               { clr.begin++; }
+
+      cout << "#";
+
+      if (OPT_UseEIDs) 
+      { 
+        string s = read_bank.lookupEID(i->source);
+        int i = s.find(' ');
+        if (i != s.npos) { s = s.substr(0,i); }
+        cout << s;
+      }
+      else 
+      { 
+        cout << i->source;
       }
 
+      cout << "(" << i->offset 
+           << ((rc) ? ") [RC] " : ") [] ") << gappedLen
+           << " bases, 00000000 checksum."
+           << " {" << clr.begin << " " << clr.end << "}"
+           << " <" << getUngappedPos(cons, i->offset)
+           << " "  << getUngappedPos(cons, i->offset + gappedLen - 1)
+           << ">"  << endl;
 
-      Fasta_Print(stdout, sequence.c_str(), NULL, 60);
+      if (!OPT_LayoutOnly)
+      {
+        read_bank.fetch(i->source, read);
+        if (rc) { range.swap(); }
+        string sequence = read.getSeqString(range);
+        if (rc) { Reverse_Complement(sequence); }
+
+        Pos_t gapcount = 0;
+
+        vector<Pos_t>::const_iterator g;
+        for (g  = i->gaps.begin();
+             g != i->gaps.end();
+             g++)
+        {
+          sequence.insert(*g+gapcount, "-", 1);
+          gapcount++;
+        }
+
+
+        Fasta_Print(stdout, sequence.c_str(), NULL, 60);
+      }
     }
   }
 }
