@@ -5,7 +5,8 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
     barcode-graph \
     build-persistent-bank \
-    persistent-read-dist
+    persistent-read-dist \
+    read-evolution
 
 dist_bin_SCRIPTS = \
     persistent-assembly.pl
@@ -46,5 +47,15 @@ persistent_read_dist_LDADD = \
 
 persistent_read_dist_SOURCES = \
 	persistent-read-dist.cc
+
+##-- read-evolution
+read_evolution_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+
+read_evolution_SOURCES = \
+	read-evolution.cc
 
 ##-- END OF MAKEFILE --##
