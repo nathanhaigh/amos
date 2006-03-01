@@ -8,6 +8,125 @@ using namespace std;
 
 int MINDELTA(0);
 int PRINTDIFFERENT(0);
+int USESCAFFOLD(0);
+
+
+typedef map<ID_t, pair<ID_t,int> > ReadPosLookup;
+ReadPosLookup read2contigpos;
+
+IDMap_t lastcontigmap;
+
+vector<Tile_t> getScaffoldReadTiling(Scaffold_t & scaffold, 
+                                     Bank_t & contig_bank)
+{
+  vector<Tile_t> scaffreads;
+  vector <Tile_t>::iterator ci;
+
+  for (ci = scaffold.getContigTiling().begin();
+       ci != scaffold.getContigTiling().end();
+       ci++)
+  {
+    Contig_t contig;
+    contig_bank.fetch(ci->source, contig);
+
+    if (ci->range.isReverse())
+    {
+      contig.reverseComplement();
+    }
+
+    int clen = contig.getLength(); 
+
+    vector <Tile_t>::iterator ri;
+    for (ri = contig.getReadTiling().begin();
+         ri != contig.getReadTiling().end();
+         ri++)
+    {
+      Tile_t mappedTile;
+      mappedTile.source = ri->source;
+      mappedTile.gaps   = ri->gaps;
+      mappedTile.range  = ri->range;
+      mappedTile.offset = ci->offset + ri->offset;
+      scaffreads.push_back(mappedTile);
+    }
+  }
+
+  return scaffreads;
+}
+
+
+void printReadDistance(const string & cureid,
+                       vector<Tile_t> & tiling,
+                       Bank_t & read_bank)
+{
+  vector<Tile_t>::const_iterator t1;
+  vector<Tile_t>::const_iterator t2;
+
+  int tilingsize = tiling.size();
+
+  for (t1 = tiling.begin(); t1 != tiling.end(); t1++)
+  {
+    int t1pos = t1->offset;
+    if (t1->range.isReverse()) { t1pos = t1pos + t1->getGappedLength(); }
+
+    for (t2 = t1+1; t2 != tiling.end(); t2++)
+    {
+      int t2pos = t2->offset;
+      if (t2->range.isReverse()) { t2pos = t2pos + t2->getGappedLength(); }
+
+      int dist = abs(t2pos - t1pos);
+      int olddist = 0;
+      int delta = 0;
+      int absdelta = 0;
+
+      ReadPosLookup::const_iterator r1 = read2contigpos.find(t1->source);
+      ReadPosLookup::const_iterator r2 = read2contigpos.find(t2->source);
+
+      // Distance is only defined if the two reads existed in the same contig before
+      if (r1 != read2contigpos.end() &&
+          r2 != read2contigpos.end() &&
+          r1->second.first == r2->second.first)
+      {
+        olddist = abs(r1->second.second - r2->second.second);
+        delta = dist-olddist;
+        absdelta = abs(delta);
+
+        if (absdelta >= MINDELTA)
+        {
+          cout << cureid << "\t" 
+               << lastcontigmap.lookupEID(r1->second.first) << "\t"
+               << read_bank.lookupEID(t1->source) << "\t" 
+               << read_bank.lookupEID(t2->source) << "\t" 
+               << dist << "\t"
+               << olddist << "\t"
+               << delta << endl;
+        }
+      }
+      else if (PRINTDIFFERENT)
+      {
+        cout << cureid << "\t" 
+             << "*\t"
+             << read_bank.lookupEID(t1->source) << "\t" 
+             << read_bank.lookupEID(t2->source) << "\t" 
+             << dist << "\t"
+             << "*\t*" << endl;
+      }
+    }
+  }
+}
+
+
+
+void recordReadPosition(const vector<Tile_t> & tiling, ID_t iid)
+{
+  vector<Tile_t>::const_iterator ti;
+  for (ti = tiling.begin(); ti != tiling.end(); ti++)
+  {
+    int t1pos = ti->offset;
+    if (ti->range.isReverse()) { t1pos = t1pos + ti->getGappedLength(); }
+
+    read2contigpos.insert(make_pair(ti->source, make_pair(iid, t1pos)));
+  }
+}
 
 int main (int argc, char ** argv)
 {
@@ -24,13 +143,14 @@ int main (int argc, char ** argv)
 "   Usage: persistent-read-dist [options] bank1 ... bankn\n"
 "\n"
 "Output format:\n"
-">lastbank-currentbank\n"
+">currentbank-lastbank\n"
 "curcontigeid lastcontigeid read1 read2 dist olddist delta\n"
 "\n"
 "   Options\n"
 "   -------------------\n"
 "   -d <val>  Only display abs(delta) >= val\n"
-"   -p        Also display distance between reads not in same lastbank contig\n"
+"   -p        Display distances between reads not in same lastbank contig\n"
+"   -s        Use scaffolds when computing distances\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
@@ -39,6 +159,7 @@ int main (int argc, char ** argv)
 
     tf->getOptions()->addOptionResult("d=i", &MINDELTA,       "Be verbose when reporting");
     tf->getOptions()->addOptionResult("p",   &PRINTDIFFERENT, "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("s",   &USESCAFFOLD,    "Be verbose when reporting");
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -49,121 +170,92 @@ int main (int argc, char ** argv)
       return EXIT_FAILURE;
     }
 
+    string lastbank;
+    string bankname = argvv.front();
     bool first = true;
 
-    typedef map<ID_t, pair<ID_t,int> > ReadPosLookup;
-    ReadPosLookup read2contigpos;
-
-    string lastbank;
-    IDMap_t lastcontigmap;
+    cerr << "Loading read id map" << endl;
+    Bank_t read_bank(Read_t::NCODE);
+    read_bank.open(bankname, B_READ); 
 
     while (!argvv.empty())
     {
-      string bankname = argvv.front(); argvv.pop_front();
+      bankname = argvv.front(); argvv.pop_front();
       cerr << "Processing " << bankname << " at " << Date() << endl;
 
+      Bank_t scaffold_bank(Scaffold_t::NCODE);
       Bank_t contig_bank(Contig_t::NCODE);
       contig_bank.open(bankname, B_READ);
 
-      Bank_t read_bank(Read_t::NCODE);
+      if (USESCAFFOLD)
+      {
+        scaffold_bank.open(bankname, B_READ);
+      }
 
-      if (!first) { read_bank.open(bankname, B_READ); }
       bankname = bankname.substr(0, bankname.find_first_of("/ "));
 
       if (!first)
       {
-        cout << ">" << lastbank << "-" << bankname << endl;
-      }
-
-      const IDMap_t & contigmap = contig_bank.getIDMap();
-      IDMap_t::const_iterator c;
-
-      for (c = contigmap.begin(); c!= contigmap.end(); c++)
-      {
-        Contig_t contig;
-        contig_bank.fetch(c->iid, contig);
-
-        vector<Tile_t>::const_iterator t1;
-        vector<Tile_t>::const_iterator t2;
-
-        int tilingsize = contig.getReadTiling().size();
-
-        if (!first)
-        {
-          for (t1 = contig.getReadTiling().begin(); t1 != contig.getReadTiling().end(); t1++)
-          {
-            int t1pos = t1->offset;
-            if (t1->range.isReverse()) { t1pos = t1pos + t1->getGappedLength(); }
-
-            for (t2 = t1+1; t2 != contig.getReadTiling().end(); t2++)
-            {
-              int t2pos = t2->offset;
-              if (t2->range.isReverse()) { t2pos = t2pos + t2->getGappedLength(); }
-
-              int dist = abs(t2pos - t1pos);
-
-              ReadPosLookup::const_iterator r1 = read2contigpos.find(t1->source);
-              ReadPosLookup::const_iterator r2 = read2contigpos.find(t2->source);
-
-              int olddist = 0;
-              int delta = 0;
-              int absdelta = 0;
-
-              // Distance is only defined if the two reads existed in the same contig before
-              if (r1 != read2contigpos.end() &&
-                  r2 != read2contigpos.end() &&
-                  r1->second.first == r2->second.first)
-              {
-                olddist = abs(r1->second.second - r2->second.second);
-                delta = dist-olddist;
-                absdelta = abs(delta);
-
-                if (absdelta >= MINDELTA)
-                {
-                  cout << c->eid << "\t" 
-                       << lastcontigmap.lookupEID(r1->second.first) << "\t"
-                       << read_bank.lookupEID(t1->source) << "\t" 
-                       << read_bank.lookupEID(t2->source) << "\t" 
-                       << dist << "\t"
-                       << olddist << "\t"
-                       << delta << endl;
-                }
-              }
-              else if (PRINTDIFFERENT)
-              {
-                cout << c->eid << "\t" 
-                     << "*\t"
-                     << read_bank.lookupEID(t1->source) << "\t" 
-                     << read_bank.lookupEID(t2->source) << "\t" 
-                     << dist << "\t"
-                     << "*\t*" << endl;
-              }
-            }
-          }
-        }
-      }
-
-      read2contigpos.clear();
-      first = false;
-
-      for (c = contigmap.begin(); c!= contigmap.end(); c++)
-      {
-        Contig_t contig;
-        contig_bank.fetch(c->iid, contig);
-
-        vector<Tile_t>::const_iterator ti;
-
-        for (ti = contig.getReadTiling().begin(); ti != contig.getReadTiling().end(); ti++)
-        {
-          int t1pos = ti->offset;
-          if (ti->range.isReverse()) { t1pos = t1pos + ti->getGappedLength(); }
-
-          read2contigpos.insert(make_pair(ti->source, make_pair(c->iid, t1pos)));
-        }
+        cout << ">" << bankname << "-" << lastbank << endl;
       }
 
       lastbank = bankname;
-      lastcontigmap = contigmap;
+
+      IDMap_t::const_iterator c;
+      if (USESCAFFOLD)
+      {
+        const IDMap_t & scaffoldmap = scaffold_bank.getIDMap();
+
+        if (!first)
+        {
+          for (c = scaffoldmap.begin(); c != scaffoldmap.end(); c++)
+          {
+            Scaffold_t scaffold;
+            scaffold_bank.fetch(c->iid, scaffold);
+            vector <Tile_t> scaffreads = getScaffoldReadTiling(scaffold, contig_bank);
+            printReadDistance(c->eid, scaffreads, read_bank);
+          }
+
+          read2contigpos.clear();
+        }
+
+        for (c = scaffoldmap.begin(); c != scaffoldmap.end(); c++)
+        {
+          Scaffold_t scaffold;
+          scaffold_bank.fetch(c->iid, scaffold);
+          vector <Tile_t> scaffreads = getScaffoldReadTiling(scaffold, contig_bank);
+          recordReadPosition(scaffreads, c->iid);
+        }
+
+        lastcontigmap = scaffoldmap;
+      }
+      else
+      {
+        const IDMap_t & contigmap = contig_bank.getIDMap();
+
+        if (!first)
+        {
+          for (c = contigmap.begin(); c!= contigmap.end(); c++)
+          {
+            Contig_t contig;
+            contig_bank.fetch(c->iid, contig);
+            printReadDistance(c->eid, contig.getReadTiling(), read_bank);
+          }
+          
+          read2contigpos.clear();
+        }
+
+        for (c = contigmap.begin(); c!= contigmap.end(); c++)
+        {
+          Contig_t contig;
+          contig_bank.fetch(c->iid, contig);
+          recordReadPosition(contig.getReadTiling(), c->iid);
+        }
+
+        lastcontigmap = contigmap;
+      }
+
+      first = false;
     }
   }
   catch (Exception_t & e)
