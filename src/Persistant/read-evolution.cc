@@ -34,6 +34,8 @@ int main (int argc, char ** argv)
   int startpos = -1;
   int endpos = -1;
 
+  int USETILENUM = 0;
+
   try
   {
     string version =  "Version 1.0";
@@ -49,6 +51,8 @@ int main (int argc, char ** argv)
 "   -C <eid>  Examine reads in current contig eid\n"
 "   -x <val>  Examine starting at this position\n"
 "   -y <val>  Examine stopping at this position\n"
+"\n"
+"   -t        Use tiling index instead of offset\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
@@ -60,6 +64,8 @@ int main (int argc, char ** argv)
 
     tf->getOptions()->addOptionResult("x=i", &startpos, "Be verbose when reporting");
     tf->getOptions()->addOptionResult("y=i", &endpos, "Be verbose when reporting");
+
+    tf->getOptions()->addOptionResult("t",   &USETILENUM, "Be verbose when reporting");
 
     tf->handleStandardOptions();
 
@@ -88,18 +94,18 @@ int main (int argc, char ** argv)
     Bank_t cread_bank(Read_t::NCODE);
 
 
+    map<ID_t, int> oldcontigreadcount;
+
+
     ocontig_bank.open(otherbankname, B_READ);
     oread_bank.open(otherbankname, B_READ);
 
     ccontig_bank.open(curbankname, B_READ);
     cread_bank.open(curbankname, B_READ);
 
-    map<string, ID_t> cureid2curiid;
-
     IDMap_t::const_iterator c;
     const IDMap_t & crm = cread_bank.getIDMap();
     const IDMap_t & orm = oread_bank.getIDMap();
-
 
     // Record the contig and position of each read in the old bank
     const IDMap_t & ocm = ocontig_bank.getIDMap();
@@ -108,11 +114,21 @@ int main (int argc, char ** argv)
       Contig_t contig;
       ocontig_bank.fetch(c->iid, contig);
 
+      sort(contig.getReadTiling().begin(), contig.getReadTiling().end(), TileOrderCmp());
+
+      oldcontigreadcount.insert(make_pair(contig.getIID(), contig.getReadTiling().size()));
+
+      int tilenum = 0;
       vector<Tile_t>::iterator t;
       for (t = contig.getReadTiling().begin(); t != contig.getReadTiling().end(); t++)
       {
         ID_t curiid = crm.lookupIID(orm.lookupEID(t->source));
-        read2contigpos.insert(make_pair(curiid, ReadPosInfo(c->iid, t->offset, t->range.isReverse())));
+
+        int val = t->offset;
+        if (USETILENUM) { val = tilenum; }
+
+        read2contigpos.insert(make_pair(curiid, ReadPosInfo(c->iid, val, t->range.isReverse())));
+        tilenum++;
       }
     }
 
@@ -185,14 +201,25 @@ int main (int argc, char ** argv)
 
 
     // Print the header line of old contigs
-    printf("%-15s% 15s", " ", contig.getEID().c_str());
+    printf("%-15s% 10s ", "== CONTIGS == ", contig.getEID().c_str());
     for (old =  oldcontigs.begin();
          old != oldcontigs.end();
          old++)
     {
-      printf("% 15s", ocm.lookupEID(*old).c_str());
+      printf("% 10s ", ocm.lookupEID(*old).c_str());
     }
     cout << endl;
+
+    printf("%-15s% 10d ", "== READS ==", contig.getReadTiling().size());
+    for (old =  oldcontigs.begin();
+         old != oldcontigs.end();
+         old++)
+    {
+      printf("% 10d ", oldcontigreadcount[*old]);
+    }
+    cout << endl;
+
+
 
 
     // Print where the read was in the other contigs
@@ -213,7 +240,7 @@ int main (int argc, char ** argv)
 
       if (check)
       {
-        printf("%-15s%14d%c", 
+        printf("%-15s%10d%c", 
                crm.lookupEID(t->source).c_str(),
                t->offset,
                (t->range.isReverse() ? '-' : '+'));
@@ -228,11 +255,11 @@ int main (int argc, char ** argv)
           {
             if (*old == rpl->second.m_contigiid)
             {
-              printf("%14d%c", rpl->second.m_offset, (rpl->second.m_rc ? '-' : '+'));
+              printf("%10d%c", rpl->second.m_offset, (rpl->second.m_rc ? '-' : '+'));
             }
             else
             {
-              printf("%15s", " ");
+              printf("%10s ", " ");
             }
           }
         }
