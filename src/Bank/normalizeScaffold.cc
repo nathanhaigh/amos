@@ -9,6 +9,8 @@ string OPT_BankName;
 
 string OPT_EIDFile;
 string OPT_IIDFile;
+string OPT_scaffeid;
+int    OPT_scaffiid;
 
 void PrintUsage (const char * s)
 {
@@ -23,6 +25,8 @@ void PrintHelp (const char * s)
        << "-v      Display the compatible bank version\n"
        << "-E file Just normalize the scaffolds eids listed in file\n"
        << "-I file Just normalize the scaffolds iids listed in file\n\n"
+       << "-e eid  Just normalize the specified scaffold eid\n"
+       << "-i iid  Just normalize the specified scaffold iid\n"
        << endl;
   
   cerr << "Normalizes the scaffolds in a AMOS bank by ensuring all of the\n"
@@ -36,7 +40,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hvE:I:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hvE:I:e:i:")) != EOF) )
   {
     switch (ch)
     {
@@ -52,6 +56,8 @@ void ParseArgs (int argc, char ** argv)
 
       case 'E': OPT_EIDFile = optarg; break;
       case 'I': OPT_IIDFile = optarg; break;
+      case 'i': OPT_scaffiid = atoi(optarg); break;
+      case 'e': OPT_scaffeid = optarg; break;
 
       default: errflg ++;
       }
@@ -112,7 +118,7 @@ int main (int argc, char ** argv)
 
   Bank_t scaff_bank(Scaffold_t::NCODE);
   Bank_t contig_bank(Contig_t::NCODE);
-  Bank_t feat_bank(Feature_t::NCODE);
+  BankStream_t feat_bank(Feature_t::NCODE);
 
   cerr << "Processing " << OPT_BankName << " at " << Date() << endl;
 
@@ -125,7 +131,15 @@ int main (int argc, char ** argv)
     ifstream file;
     string id;
 
-    if (!OPT_EIDFile.empty())
+    if (!OPT_scaffeid.empty()) { OPT_scaffiid = scaff_bank.lookupIID(OPT_scaffeid); }
+
+    if (OPT_scaffiid)
+    {
+      scaff_bank.fetch(OPT_scaffiid, scaffold);
+      bool changed = normalizeScaffold(scaffold, contig_bank);
+      if (changed) { scaff_bank.replace(OPT_scaffiid, scaffold); }
+    }
+    else if (!OPT_EIDFile.empty())
     {
       file.open(OPT_EIDFile.c_str());
       
@@ -171,17 +185,15 @@ int main (int argc, char ** argv)
     if (!contigFeaturesToFlip.empty())
     {
       Feature_t feat;
-      map<ID_t, int>::iterator mi;
 
-      AMOS::IDMap_t::const_iterator si;
-      for (si = feat_bank.getIDMap().begin(); si; si++)
+      feat_bank.open(OPT_BankName, B_READ | B_WRITE);
+      ID_t bid = feat_bank.tellg();
+
+      while (feat_bank >> feat)
       {
-      //  feat_bank.fetchBID(si->bid, feat);
-
         if  (feat.getSource().second == Contig_t::NCODE)
         {
-          mi = contigFeaturesToFlip.find(feat.getSource().first);
-          cerr << "Can't flip features even though I need to!!!" << endl;
+          map<ID_t, int>::iterator mi = contigFeaturesToFlip.find(feat.getSource().first);
 
           if (mi != contigFeaturesToFlip.end())
           {
@@ -192,8 +204,10 @@ int main (int argc, char ** argv)
             feat.setRange(rng);
           }
 
-     //     feat_bank.replaceBID(si->bid, feat);
+          feat_bank.replaceByBID(bid, feat);
         }
+
+        bid = feat_bank.tellg();
       }
     }
 
