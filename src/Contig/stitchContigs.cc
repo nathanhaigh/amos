@@ -139,6 +139,9 @@ int main (int argc, char ** argv)
     patch_bank.fetch(patchiid, patch);
 
     // master
+    int oldmasterlen = master.getLength();
+    int oldmaster2len = 0;
+    int rightmasterbaseoffset = 0;
     string mcons = master.getSeqString();
     string mqual = master.getQualString();
 
@@ -317,6 +320,7 @@ int main (int argc, char ** argv)
 
       if (master2iid)
       {
+        oldmaster2len = master2.getLength();
         while (mti != master.getReadTiling().end())
         {
           masterreads.insert(mti->source);
@@ -347,6 +351,8 @@ int main (int argc, char ** argv)
           int roffset = mti->offset + mti->getGappedLength();
           cout << "  Found right stitch read in master, offset: " << mti->offset << endl;
 
+          rightmasterbaseoffset = roffset;
+
           checkClr(mti, pti, "right");
 
           // Ensure the consensi across the right stitch read are identical
@@ -375,10 +381,10 @@ int main (int argc, char ** argv)
       }
     }
 
+    int newmasterlen = newcons.length();
+
     master.setReadTiling(newtiling);
     master.setSequence(newcons, newqual);
-
-
 
     cout << endl;
     cout << "Replaced " << masterreads.size() 
@@ -479,8 +485,163 @@ int main (int argc, char ** argv)
 
       master_bank.close();
 
+      if (oldmasterlen != newmasterlen || master2iid)
+      {
+        Bank_t scaff_bank(Scaffold_t::NCODE);
+        scaff_bank.open(masterbank, B_READ|B_WRITE);
+
+        Scaffold_t masterscaff;
+        Scaffold_t master2scaff;
+
+        bool foundmaster = false;
+        bool foundmaster2 = false;
+
+        cout << "Updating scaffold" << endl;
+
+        vector<Tile_t>::iterator ci;
+
+        const IDMap_t & scaffmap = scaff_bank.getIDMap();
+        IDMap_t::const_iterator si;
+        for (si = scaffmap.begin(); si != scaffmap.end(); si++)
+        {
+          Scaffold_t scaff;
+          scaff_bank.fetch(si->iid, scaff);
+
+          for (ci = scaff.getContigTiling().begin();
+               ci != scaff.getContigTiling().end();
+               ci++)
+          {
+            if (ci->source == masteriid)
+            {
+              masterscaff = scaff;
+              foundmaster = true;
+              cout << "  Found masterscaffold i:" << masterscaff.getIID() << endl;
+            }
+            else if (ci->source == master2iid)
+            {
+              master2scaff = scaff;
+              foundmaster2 = true;
+              cout << "  Found master2scaffold i:" << master2scaff.getIID() << endl;
+            }
+          }
+
+          if (foundmaster && (!master2iid || foundmaster2))
+          {
+            break;
+          }
+        }
+
+        if (foundmaster)
+        {
+          cout << "  Creating new scaffold" << endl;
+          vector<Tile_t> newcontigs;
+
+          sort(masterscaff.getContigTiling().begin(), masterscaff.getContigTiling().end(), TileOrderCmp());
+
+          // masterscaff must contain masteriid
+
+          for (ci =  masterscaff.getContigTiling().begin();
+               ci != masterscaff.getContigTiling().end();
+               ci++)
+          {
+            if (ci->source == masteriid)
+            {
+              break;
+            }
+
+            newcontigs.push_back(*ci);
+          }
+
+          if (ci->range.isReverse())
+          {
+            cerr << "reversed master contigs are unsupported" << endl;
+            exit(EXIT_FAILURE);
+          }
+
+          int offsetadjust = newmasterlen - oldmasterlen;
+          ci->range.setEnd(ci->range.getEnd() + offsetadjust);
+
+          ci->source = master.getIID();
+          int newmasterright = ci->getRightOffset();
+
+          cout << "  Found mastercontig, adjusting downstream offsets by " << offsetadjust << endl;
+
+          newcontigs.push_back(*ci);
+
+          if (master2iid && foundmaster2)
+          {
+            vector<Tile_t> & ctiling = (master2scaff.getIID() == masterscaff.getIID()) ? masterscaff.getContigTiling() : master2scaff.getContigTiling();
+
+            if (master2scaff.getIID() != masterscaff.getIID())
+            {
+              sort(ctiling.begin(), ctiling.end(), TileOrderCmp());
+              ci = ctiling.begin();
+            }
+
+            bool copycontigs = false;
+            while (ci != ctiling.end())
+            {
+              if (copycontigs)
+              {
+                ci->offset += offsetadjust;
+                newcontigs.push_back(*ci);
+              }
+
+              if (ci->source == master2iid)
+              {
+                offsetadjust = newmasterright - ci->getRightOffset();
+                copycontigs = true;
+              }
+
+              ci++;
+            }
+          }
+          else
+          {
+            // Just adjust the downstream offsets
+            while (ci != masterscaff.getContigTiling().end())
+            {
+              ci->offset += offsetadjust;
+              newcontigs.push_back(*ci);
+              ci++;
+            }
+          }
+
+          masterscaff.setContigTiling(newcontigs);
+
+          if (savetonew)
+          {
+            masterscaff.setIID(scaff_bank.getMaxIID()+1);
+            masterscaff.setEID(masterscaff.getEID() + "_stitched");
+            scaff_bank.append(masterscaff);
+
+            cout << "Saved new scaffold i:" << masterscaff.getIID() << " e:" << masterscaff.getEID() << endl;
+          }
+          else
+          {
+            scaff_bank.replace(masterscaff.getIID(), masterscaff);
+            cout << "Updated scaffold i:" << masterscaff.getIID() << " e:" << masterscaff.getEID() << endl;
+
+            if (master2iid && master2scaff.getIID() && (masterscaff.getIID() != master2scaff.getIID())) 
+            { 
+              cout << "Removed scaffold i:" << master2scaff.getIID() << " e:" << master2scaff.getEID() << endl;
+              scaff_bank.remove(master2scaff.getIID()); 
+            }
+          }
+        }
+        else if (foundmaster2)
+        {
+          cerr << "Error master not in scaffold, but master2 is" << endl;
+          exit(EXIT_FAILURE);
+        }
+      }
+
       BankStream_t feat_bank(Feature_t::NCODE);
       feat_bank.open(masterbank, B_READ|B_WRITE);
+
+
+      // Update the features, and add a new one about the join
+      vector<Feature_t> newfeatures;
 
       Feature_t feat;
       feat.setRange(Range_t(leftfeatoffset, rightfeatoffset));
@@ -489,9 +650,94 @@ int main (int argc, char ** argv)
 
       char buffer[16];
       snprintf(buffer, 16, "%d", patchiid);
-      feat.setComment((string) "Left: " + leftstitchread + " right: " + rightstitchread + " patch: " + buffer);
+      feat.setComment((string) "Left: " + leftstitchread + " right: " + rightstitchread + " patch i: " + buffer);
+      newfeatures.push_back(feat);
 
-      feat_bank << feat;
+
+      ID_t bid = feat_bank.tellg();
+      while (feat_bank >> feat)
+      {
+        bool change = false;
+        bool remove = false;
+
+        if (feat.getSource().second == Contig_t::NCODE)
+        {
+          if (feat.getSource().first == masteriid)
+          {
+            change = true; // This ensures new iid gets set
+            feat.setSource(make_pair(master.getIID(), Contig_t::NCODE));
+
+            if (feat.getRange().getHi() < leftfeatoffset)
+            {
+              // before patch, keep the coord unchanged
+            }
+            else if (!master2iid && (feat.getRange().getLo() > rightmasterbaseoffset))
+            {
+              // past patch region, adjust coords
+              Range_t rng = feat.getRange();
+              rng.begin = newmasterlen - (oldmasterlen - rng.begin);
+              rng.end   = newmasterlen - (oldmasterlen - rng.end);
+              feat.setRange(rng);
+            }
+            else
+            {
+              // in patch   or past patch region, but in master2
+              remove = true;
+            }
+          }
+          else if (master2iid && feat.getSource().first == master2iid)
+          {
+            change = true;
+            feat.setSource(make_pair(master.getIID(), Contig_t::NCODE));
+
+            if (feat.getRange().getLo() > rightmasterbaseoffset)
+            {
+              // after patch region, adjust coordinates
+              Range_t rng = feat.getRange();
+              rng.begin = newmasterlen - (oldmaster2len - rng.begin);
+              rng.end   = newmasterlen - (oldmaster2len - rng.end);
+              feat.setRange(rng);
+            }
+            else
+            {
+              // before patch region, clobber feature
+              remove = true;
+            }
+          }
+        }
+
+        if (remove)
+        {
+          if (!savetonew)
+          {
+            feat_bank.removeByBID(bid);
+          }
+        }
+        else if (change)
+        {
+          if (savetonew)
+          {
+            newfeatures.push_back(feat);
+          }
+          else
+          {
+            feat_bank.replaceByBID(bid, feat);
+          }
+        }
+
+        bid = feat_bank.tellg();
+      }
+
+
+      cout << "Saving new features: ";
+      for (int i = 0; i < newfeatures.size(); i++)
+      {
+        cout << ".";
+        feat_bank << newfeatures[i];
+
+ //       Message_t msg; newfeatures[i].writeMessage (msg); msg.write (cout);
+      }
+      cout << endl;
 
       feat_bank.close();
     }
