@@ -257,19 +257,27 @@ public:
   //--------------------------------------------------- remove -----------------
   void removeByBID(ID_t bid)
   {
+    if (bid < 0 || bid > last_bid_m)
+    {
+      AMOS_THROW_IO ("Cannot replaceByBID: outside valid bid range");
+    }
+
     ate_m = false;
     removeBID(bid);
 
-    if (triples_m[bid]->iid) 
-    { 
-      idmap_m.remove(triples_m[bid]->iid); 
-    }
-    else if (!triples_m[bid]->eid.empty()) 
-    { 
-      idmap_m.remove(triples_m[bid]->eid); 
-    }
+    if (triples_m[bid])
+    {
+      if (triples_m[bid]->iid) 
+      { 
+        idmap_m.remove(triples_m[bid]->iid); 
+      }
+      else if (!triples_m[bid]->eid.empty()) 
+      { 
+        idmap_m.remove(triples_m[bid]->eid); 
+      }
 
-    triples_m[bid] = NULL;
+      triples_m[bid] = NULL;
+    }
   }
 
 

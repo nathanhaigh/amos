@@ -323,13 +323,25 @@ void BankStream_t::replace (const string & eid, IBankable_t & obj)
 //--------------------------------------------------- replaceByBID -----------
 void BankStream_t::replaceByBID(ID_t bid, IBankable_t & obj)
 {
-  if (triples_m[bid]->iid) 
-  { 
-    replace(triples_m[bid]->iid, obj);
+  if (bid < 0 || bid > last_bid_m)
+  {
+    AMOS_THROW_IO ("Cannot replaceByBID: outside valid bid range");
   }
-  else if (!triples_m[bid]->eid.empty()) 
-  { 
-    replace(triples_m[bid]->eid, obj);
+
+  if (triples_m[bid])
+  {
+    if (triples_m[bid]->iid) 
+    { 
+      replace(triples_m[bid]->iid, obj);
+    }
+    else if (!triples_m[bid]->eid.empty()) 
+    { 
+      replace(triples_m[bid]->eid, obj);
+    }
+    else
+    {
+      cerr << "WTF???" << endl;
+    }
   }
   else
   {
