@@ -254,6 +254,14 @@ public:
     idmap_m . remove (eid);
   }
 
+  //--------------------------------------------------- remove -----------------
+  void removeByBID(ID_t bid)
+  {
+    // TODO: Check if object has an iid or eid and handle
+    ate_m = false;
+    removeBID(bid);
+  }
+
 
   //--------------------------------------------------- replace ----------------
   void replace (ID_t iid, IBankable_t & obj);
