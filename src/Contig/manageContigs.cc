@@ -25,7 +25,9 @@ int main (int argc, char ** argv)
 "\n"
 "   Usage: manageContigs [options] contig.bnk\n"
 "   -C <iid>      IID of contig to copy\n"
+"   -c <eid>      EID of contig to copy\n"
 "   -D <iid>      IID of contig to delete\n"
+"   -d <eid>      EID of contig to delete\n"
 "   -e <eidfile>  EID of reads to delete\n"
 "   -i <iidfile>  IID of reads to delete\n"
 "\n";
@@ -35,13 +37,20 @@ int main (int argc, char ** argv)
     string readeids;
     string readiids;
 
+    string copyeid;
+    string deleteeid;
+
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
-    tf->getOptions()->addOptionResult("C=i", &copyiid, "Copy iid");
+    tf->getOptions()->addOptionResult("C=i", &copyiid,   "Copy iid");
     tf->getOptions()->addOptionResult("D=i", &deleteiid, "Delete iid");
-    tf->getOptions()->addOptionResult("e=s", &readeids, "Delete eid");
-    tf->getOptions()->addOptionResult("i=s", &readiids, "Delete eid");
+
+    tf->getOptions()->addOptionResult("c=s", &copyeid,   "Copy eid");
+    tf->getOptions()->addOptionResult("d=s", &deleteeid, "Delete eid");
+
+    tf->getOptions()->addOptionResult("e=s", &readeids,  "Delete eid");
+    tf->getOptions()->addOptionResult("i=s", &readiids,  "Delete iid");
 
     tf->handleStandardOptions();
 
@@ -60,6 +69,9 @@ int main (int argc, char ** argv)
 
     ctg_bank.open(bankname, B_READ | B_WRITE);
 
+    if (!copyeid.empty())   { copyiid = ctg_bank.lookupIID(copyeid); }
+    if (!deleteeid.empty()) { deleteiid = ctg_bank.lookupIID(deleteeid); }
+
     if (copyiid != 0)
     {
       Contig_t contig;
@@ -76,6 +88,37 @@ int main (int argc, char ** argv)
     else if (deleteiid != 0)
     {
       ctg_bank.remove(deleteiid);
+
+      vector<ID_t> bidstodelete;
+
+      BankStream_t feat_bank(Feature_t::NCODE);
+      feat_bank.open(bankname, B_READ|B_WRITE);
+      ID_t bid = feat_bank.tellg();
+
+      Feature_t feat;
+      while (feat_bank >> feat)
+      {
+        if ((feat.getSource().first == deleteiid) &&
+            (feat.getSource().second == Contig_t::NCODE))
+        {
+          bidstodelete.push_back(bid);
+        }
+        
+        bid = feat_bank.tellg();
+      }
+
+      cerr << "Removing Associated Features: ";
+
+      for (int i = 0; i < bidstodelete.size(); i++)
+      {
+        cerr << ".";
+        feat_bank.removeByBID(bidstodelete[i]);
+      }
+
+      cerr << endl;
+
+      feat_bank.close();
+
     }
     else if (!readeids.empty() || !readiids.empty())
     {
