@@ -40,9 +40,11 @@ int main (int argc, char ** argv)
 
   string leftstitchread;
   string rightstitchread;
-  int masteriid;
-  int patchiid;
+  int masteriid = 0;
+  int master2iid = 0;
+  int patchiid = 0;
   int breakcontig = 0;
+  int savetonew = 0;
 
   int retval = 0;
   AMOS_Foundation * tf = NULL;
@@ -54,6 +56,9 @@ int main (int argc, char ** argv)
 
   try
   {
+    string m, m2, p;
+
+
     string version =  "Version 1.0";
     string dependencies = "";
     string helptext = 
@@ -61,20 +66,32 @@ int main (int argc, char ** argv)
 "\n"
 "   Usage: stitchContigs [options] master.bnk patch.bnk\n"
 "   -b            Break master contig with patch\n"
+"   -n            Save results to a new contig\n\n"
 "   -L <seqname>  Leftmost read to start patch\n"
-"   -R <seqname>  Rightmost read to end patch\n"
+"   -R <seqname>  Rightmost read to end patch\n\n"
 "   -M <iid>      IID of master contig\n"
+"   -m <eid>      EID of master contig\n"
+"   -G <iid>      IID of right master contig (when closing gaps)\n"
+"   -g <eid>      EID of right master contig (when closing gaps)\n"
 "   -P <iid>      IID of patch contig\n"
+"   -p <eid>      EID of patch contig\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
-    tf->getOptions()->addOptionResult("L=s", &leftstitchread, "Left");
+    tf->getOptions()->addOptionResult("L=s", &leftstitchread,  "Left");
     tf->getOptions()->addOptionResult("R=s", &rightstitchread, "Right");
-    tf->getOptions()->addOptionResult("M=i", &masteriid, "Contig IID");
-    tf->getOptions()->addOptionResult("P=i", &patchiid, "Contig IID");
+    tf->getOptions()->addOptionResult("M=i", &masteriid,       "Contig IID");
+    tf->getOptions()->addOptionResult("G=i", &master2iid,      "Contig IID");
+    tf->getOptions()->addOptionResult("P=i", &patchiid,        "Contig IID");
+
+    tf->getOptions()->addOptionResult("m=s", &m,  "Contig EID");
+    tf->getOptions()->addOptionResult("g=s", &m2, "Contig EID");
+    tf->getOptions()->addOptionResult("p=s", &p,  "Contig EID");
+
     tf->getOptions()->addOptionResult("b",   &breakcontig, "BreakContig");
+    tf->getOptions()->addOptionResult("n",   &savetonew,   "BreakContig");
 
     tf->handleStandardOptions();
 
@@ -83,6 +100,11 @@ int main (int argc, char ** argv)
     if (argvv.size() != 2)
     {
       cerr << "Usage: stitchContigs [options] master.bnk patch.bnk" << endl;
+      while (argvv.size() != 0)
+      {
+        cerr << "argv: " << argvv.front() << endl;
+        argvv.pop_front();
+      }
       return 0;
     }
 
@@ -96,29 +118,29 @@ int main (int argc, char ** argv)
     string masterbank = argvv.front(); argvv.pop_front();
     string patchbank  = argvv.front(); argvv.pop_front();
 
-
     cerr << "Starting stitch at " << Date() << endl;
 
     // Initialize
 
-    Contig_t master, patch;
+    Contig_t master, master2, patch;
 
     master_reads.open(masterbank, B_READ);
     master_bank.open(masterbank, B_READ);
-    master_bank.fetch(masteriid, master);
 
     patch_reads.open(patchbank, B_READ);
     patch_bank.open(patchbank, B_READ);
+
+    if (!m.empty())  { masteriid = master_bank.lookupIID(m); }
+    if (!m2.empty()) { master2iid = master_bank.lookupIID(m2); }
+    if (!p.empty())  { patchiid  = patch_bank.lookupIID(p); }
+
+    master_bank.fetch(masteriid, master);
+    if (master2iid) { master_bank.fetch(master2iid, master2); }
     patch_bank.fetch(patchiid, patch);
 
     // master
-
     string mcons = master.getSeqString();
     string mqual = master.getQualString();
-
-    vector<Tile_t> & mtiling = master.getReadTiling();
-    sort(mtiling.begin(), mtiling.end(), TileOrderCmp());
-    vector<Tile_t>::iterator mti = mtiling.begin();
 
     // patch
     string pcons = patch.getSeqString();
@@ -151,9 +173,20 @@ int main (int argc, char ** argv)
     int masterbaseoffset = 0;
     int patchbaseoffset = 0;
 
+    int leftfeatoffset = 0;
+    int rightfeatoffset = 0;
+
+
+    sort(master.getReadTiling().begin(), master.getReadTiling().end(), TileOrderCmp());
+    vector<Tile_t>::iterator mti = master.getReadTiling().begin();
+
+    set<ID_t> patchreads;
+    set<ID_t> masterreads;
+
     if (!leftstitchread.empty())
     {
       // Find the left read in the master
+      vector<Tile_t> & mtiling = master.getReadTiling();
 
       cout << "Handling Left" << endl;
 
@@ -186,6 +219,8 @@ int main (int argc, char ** argv)
 
       newcons = mcons.substr(0, masterbaseoffset);
       newqual = mqual.substr(0, masterbaseoffset);
+
+      leftfeatoffset = masterbaseoffset;
 
       // Find the left read in the patch
       while (pti != ptiling.end())
@@ -248,6 +283,8 @@ int main (int argc, char ** argv)
 
         break;
       }
+
+      patchreads.insert(pti->source);
       pti++;
     }
 
@@ -264,14 +301,34 @@ int main (int argc, char ** argv)
     newcons.append(pcons, patchbaseoffset, len);
     newqual.append(pqual, patchbaseoffset, len);
 
+    rightfeatoffset = newcons.size() - 1;
+
 
     if (!rightstitchread.empty())
     {
       cout << endl;
       cout << "Handling Right" << endl;
+
       // handle right flank from master
       bool stitchreads = false;
       patchbaseoffset = pti->offset; // pti must exist
+
+      vector<Tile_t> & mtiling = (master2iid) ? master2.getReadTiling() : master.getReadTiling();
+
+      if (master2iid)
+      {
+        while (mti != master.getReadTiling().end())
+        {
+          masterreads.insert(mti->source);
+          mti++;
+        }
+
+        sort(mtiling.begin(), mtiling.end(), TileOrderCmp());
+        mti = mtiling.begin();
+
+        mcons = master2.getSeqString();
+        mqual = master2.getQualString();
+      }
 
       while (mti != mtiling.end())
       {
@@ -303,6 +360,11 @@ int main (int argc, char ** argv)
           newqual.append(mcons, roffset, len);
         }
 
+        if (!stitchreads)
+        {
+          masterreads.insert(mti->source);
+        }
+
         mti++;
       }
 
@@ -316,14 +378,122 @@ int main (int argc, char ** argv)
     master.setReadTiling(newtiling);
     master.setSequence(newcons, newqual);
 
+
+
+    cout << endl;
+    cout << "Replaced " << masterreads.size() 
+         << " reads from master with " << patchreads.size()
+         << " reads from patch" << endl;
+
+    int dup = 0;
+    map<ID_t, ID_t> newpatchreads;
+    map<ID_t, ID_t>::iterator npi;
+
+    set<ID_t>::iterator pi;
+    set<ID_t>::iterator mi;
+
+    for (pi = patchreads.begin(); pi != patchreads.end(); pi++)
+    {
+      mi = masterreads.find(*pi);
+      if (mi == masterreads.end())
+      {
+        newpatchreads.insert(make_pair(*pi, 0));
+      }
+      else
+      {
+        dup++;
+      }
+    }
+
+    cout << "Duplicated patch reads: " << dup << endl;
+    cout << "New patch reads: " << newpatchreads.size() << endl;
+
+    if (!newpatchreads.empty())
+    {
+      const IDMap_t & cm = master_bank.getIDMap();
+      IDMap_t::const_iterator c;
+      for (c = cm.begin(); c != cm.end(); c++)
+      {
+        Contig_t contig;
+        master_bank.fetch(c->iid, contig);
+
+        vector<Tile_t>::iterator ti;
+
+        int patchcount = 0;
+        for (ti = contig.getReadTiling().begin(); ti != contig.getReadTiling().end(); ti++)
+        {
+          npi = newpatchreads.find(ti->source);
+
+          if (npi != newpatchreads.end())
+          {
+            npi->second = contig.getIID();
+            cout << "    " << master_reads.lookupEID(ti->source) << " " << contig.getEID() << endl;
+            patchcount++;
+          }
+        }
+
+        if (patchcount)
+        {
+          cout << patchcount << " of " << contig.getReadTiling().size() 
+               << " reads in contig " << contig.getEID() << " were used in patch!\n";
+        }
+      }
+
+      for (npi = newpatchreads.begin(); npi != newpatchreads.end(); npi++)
+      {
+        if (npi->second == 0)
+        {
+          cout << "    " << master_reads.lookupEID(npi->first) << " NULL" << endl;
+        }
+      }
+    }
+
     master_bank.close();
+
+    cout << endl;
 
     // save the new contig
     try
     {
       master_bank.open(masterbank, B_READ|B_WRITE);
-      master_bank.replace(master.getIID(), master);
+
+      if (savetonew)
+      {
+        master.setIID(master_bank.getMaxIID()+1);
+        master.setEID(master.getEID() + "_stitched");
+        master_bank.append(master);
+
+        cout << "Saved new contig i:" << master.getIID() << " e:" << master.getEID() << endl;
+      }
+      else
+      {
+        master_bank.replace(master.getIID(), master);
+        cout << "Updated contig i:" << master.getIID() << " e:" << master.getEID() << endl;
+
+        if (master2iid) 
+        { 
+          cout << "Removed contig i:" << master2iid << " e:" << master_bank.lookupEID(master2iid) << endl;
+          master_bank.remove(master2iid); 
+        }
+      }
+
       master_bank.close();
+
+      BankStream_t feat_bank(Feature_t::NCODE);
+      feat_bank.open(masterbank, B_READ|B_WRITE);
+
+      Feature_t feat;
+      feat.setRange(Range_t(leftfeatoffset, rightfeatoffset));
+      feat.setSource(make_pair(master.getIID(), Contig_t::NCODE));
+      feat.setType(Feature_t::JOIN);
+
+      char buffer[16];
+      snprintf(buffer, 16, "%d", patchiid);
+      feat.setComment((string) "Left: " + leftstitchread + " right: " + rightstitchread + " patch: " + buffer);
+
+      feat_bank << feat;
+
+      feat_bank.close();
     }
     catch (Exception_t & e)
     {
