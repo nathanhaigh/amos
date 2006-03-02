@@ -20,6 +20,7 @@ bin_PROGRAMS = \
 	bank2coverage \
     bank2scaff    \
     normalizeScaffold \
+    revScaffold \
 	updateBankPositions \
 	extractContig \
 	bank2fasta \
@@ -107,6 +108,13 @@ normalizeScaffold_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 normalizeScaffold_SOURCES = \
 	normalizeScaffold.cc
+
+##-- revScaffold
+revScaffold_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+revScaffold_SOURCES = \
+	revScaffold.cc
 
 ##-- updateBankPositions
 updateBankPositions_LDADD = \
