@@ -257,9 +257,19 @@ public:
   //--------------------------------------------------- remove -----------------
   void removeByBID(ID_t bid)
   {
-    // TODO: Check if object has an iid or eid and handle
     ate_m = false;
     removeBID(bid);
+
+    if (triples_m[bid]->iid) 
+    { 
+      idmap_m.remove(triples_m[bid]->iid); 
+    }
+    else if (!triples_m[bid]->eid.empty()) 
+    { 
+      idmap_m.remove(triples_m[bid]->eid); 
+    }
+
+    triples_m[bid] = NULL;
   }
 
 
@@ -269,6 +279,10 @@ public:
 
   //--------------------------------------------------- replace ----------------
   void replace (const std::string & eid, IBankable_t & obj);
+
+
+  //--------------------------------------------------- replaceByBID -----------
+  void replaceByBID(ID_t bid, IBankable_t & obj);
 
 
   //--------------------------------------------------- seekg ------------------

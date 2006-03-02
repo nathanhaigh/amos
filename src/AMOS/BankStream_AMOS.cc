@@ -318,3 +318,24 @@ void BankStream_t::replace (const string & eid, IBankable_t & obj)
     throw;
   }
 }
+
+
+//--------------------------------------------------- replaceByBID -----------
+void BankStream_t::replaceByBID(ID_t bid, IBankable_t & obj)
+{
+  if (triples_m[bid]->iid) 
+  { 
+    replace(triples_m[bid]->iid, obj);
+  }
+  else if (!triples_m[bid]->eid.empty()) 
+  { 
+    replace(triples_m[bid]->eid, obj);
+  }
+  else
+  {
+    ate_m = false;
+    replaceBID(bid, obj);
+    triples_m[bid] = idmap_m.insert(obj.iid_m, obj.eid_m, bid);
+  }
+}
+
