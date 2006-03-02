@@ -32,7 +32,7 @@ void PrintHelp (const char * s)
        << endl;
   
   cerr << "Reverse the specified scaffold(s) including underlying contigs\n"
-       << "Also fixes contig features, but not contig links\n"
+       << "Doesn't update scaffold features, nor contig links\n"
        << endl;
 }
 
@@ -98,7 +98,6 @@ void flipScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
     contig_bank.fetch(ci->source, contig);
     contig.reverseComplement();
     contig_bank.replace(ci->source, contig);
-    contigFeaturesToFlip.insert(make_pair(ci->source, contig.getLength()));
 
     ci->offset = span - ci->getRightOffset();
     ci->range.swap();
@@ -114,7 +113,7 @@ int main (int argc, char ** argv)
 
   Bank_t scaff_bank(Scaffold_t::NCODE);
   Bank_t contig_bank(Contig_t::NCODE);
-  Bank_t feat_bank(Feature_t::NCODE);
+  BankStream_t feat_bank(Feature_t::NCODE);
 
   cerr << "Processing " << OPT_BankName << " at " << Date() << endl;
 
@@ -172,36 +171,6 @@ int main (int argc, char ** argv)
       cerr << "No Scaffold specified!" << endl;
     }
 
-    if (!contigFeaturesToFlip.empty())
-    {
-      Feature_t feat;
-      map<ID_t, int>::iterator mi;
-
-      AMOS::IDMap_t::const_iterator si;
-      for (si = feat_bank.getIDMap().begin(); si; si++)
-      {
-      //  feat_bank.fetchBID(si->bid, feat);
-
-        if  (feat.getSource().second == Contig_t::NCODE)
-        {
-          mi = contigFeaturesToFlip.find(feat.getSource().first);
-          cerr << "Can't flip features even though I need to!!!" << endl;
-
-          if (mi != contigFeaturesToFlip.end())
-          {
-            Range_t rng = feat.getRange();
-            rng.begin = mi->second - rng.begin - 1;
-            rng.end = mi->second - rng.end - 1;
-
-            feat.setRange(rng);
-          }
-
-     //     feat_bank.replaceBID(si->bid, feat);
-        }
-      }
-    }
-
-    feat_bank.close();
     contig_bank.close();
     scaff_bank.close();
   }
