@@ -8,6 +8,19 @@
 using namespace AMOS;
 using namespace std;
 
+ID_t lookup(Bank_t & bnk, const string & eid)
+{
+  ID_t retval = bnk.lookupIID(eid);
+
+  if (!retval)
+  {
+    cerr << "EID " << eid << " not found!" << endl;
+    throw Exception_t("Invalid eid", __LINE__, __FILE__);
+  }
+
+  return retval;
+}
+
 void checkClr(vector<Tile_t>::iterator & mti, vector<Tile_t>::iterator & pti, const string & side)
 {
   if (mti->range != pti->range)
@@ -130,18 +143,21 @@ int main (int argc, char ** argv)
     patch_reads.open(patchbank, B_READ);
     patch_bank.open(patchbank, B_READ);
 
-    if (!m.empty())  { masteriid = master_bank.lookupIID(m); }
-    if (!m2.empty()) { master2iid = master_bank.lookupIID(m2); }
-    if (!p.empty())  { patchiid  = patch_bank.lookupIID(p); }
+    if (!m.empty())  { masteriid  = lookup(master_bank, m);  }
+    if (!m2.empty()) { master2iid = lookup(master_bank, m2); }
+    if (!p.empty())  { patchiid   = lookup(patch_bank, p);   }
 
     master_bank.fetch(masteriid, master);
     if (master2iid) { master_bank.fetch(master2iid, master2); }
     patch_bank.fetch(patchiid, patch);
 
-    // master
     int oldmasterlen = master.getLength();
     int oldmaster2len = 0;
     int rightmasterbaseoffset = 0;
+    int patchleftoffset = 0;
+    int patchrightoffset = 0;
+
+    // master
     string mcons = master.getSeqString();
     string mqual = master.getQualString();
 
@@ -230,6 +246,7 @@ int main (int argc, char ** argv)
       {
         if (pti->source == pleftiid)
         {
+          patchleftoffset = pti->offset;
           patchbaseoffset = pti->offset;
           cout << "  Found left stitch read in patch, offset: " << pti->offset << endl;
           checkClr(mti, pti, "left");
@@ -283,6 +300,7 @@ int main (int argc, char ** argv)
 
         lentocheck = rightmost - porigoffset;
         rightmost = porigoffset + pti->getGappedLength();
+        patchrightoffset = rightmost;
 
         break;
       }
@@ -496,6 +514,7 @@ int main (int argc, char ** argv)
         bool foundmaster = false;
         bool foundmaster2 = false;
 
+        cout << endl;
         cout << "Updating scaffold" << endl;
 
         vector<Tile_t>::iterator ci;
@@ -533,7 +552,7 @@ int main (int argc, char ** argv)
 
         if (foundmaster)
         {
-          cout << "  Creating new scaffold" << endl;
+          cout << "  Updating scaffold information" << endl;
           vector<Tile_t> newcontigs;
 
           sort(masterscaff.getContigTiling().begin(), masterscaff.getContigTiling().end(), TileOrderCmp());
@@ -641,6 +660,7 @@ int main (int argc, char ** argv)
 
 
       // Update the features, and add a new one about the join
+      cout << "Updating features: ";
       vector<Feature_t> newfeatures;
 
       Feature_t feat;
@@ -650,13 +670,14 @@ int main (int argc, char ** argv)
 
       char buffer[16];
       snprintf(buffer, 16, "%d", patchiid);
-      feat.setComment((string) "Left: " + leftstitchread + " right: " + rightstitchread + " patch i: " + buffer);
+      feat.setComment((string) "Stitch from patch i:" + buffer + " left: " + leftstitchread + " right: " + rightstitchread);
       newfeatures.push_back(feat);
 
+      cout << "n";
 
-      ID_t bid = feat_bank.tellg();
       while (feat_bank >> feat)
       {
+        ID_t bid = feat_bank.tellg()-1;
         bool change = false;
         bool remove = false;
 
@@ -667,9 +688,12 @@ int main (int argc, char ** argv)
             change = true; // This ensures new iid gets set
             feat.setSource(make_pair(master.getIID(), Contig_t::NCODE));
 
+            //cout << "master: " << feat.getRange().getLo() << "," << feat.getRange().getHi() << endl;
+
             if (feat.getRange().getHi() < leftfeatoffset)
             {
               // before patch, keep the coord unchanged
+              cout << "m";
             }
             else if (!master2iid && (feat.getRange().getLo() > rightmasterbaseoffset))
             {
@@ -678,11 +702,14 @@ int main (int argc, char ** argv)
               rng.begin = newmasterlen - (oldmasterlen - rng.begin);
               rng.end   = newmasterlen - (oldmasterlen - rng.end);
               feat.setRange(rng);
+
+              cout << "u";
             }
             else
             {
               // in patch   or past patch region, but in master2
               remove = true;
+              cout << "r";
             }
           }
           else if (master2iid && feat.getSource().first == master2iid)
@@ -697,11 +724,13 @@ int main (int argc, char ** argv)
               rng.begin = newmasterlen - (oldmaster2len - rng.begin);
               rng.end   = newmasterlen - (oldmaster2len - rng.end);
               feat.setRange(rng);
+              cout << "2";
             }
             else
             {
               // before patch region, clobber feature
               remove = true;
+              cout << "r";
             }
           }
         }
@@ -724,15 +753,37 @@ int main (int argc, char ** argv)
             feat_bank.replaceByBID(bid, feat);
           }
         }
-
-        bid = feat_bank.tellg();
       }
 
+      BankStream_t patch_feat(Feature_t::NCODE);
+      patch_feat.open(patchbank, B_READ);
+      
+      while (patch_feat >> feat)
+      {
+        if ((feat.getSource().second == Contig_t::NCODE) &&
+            (feat.getSource().first  == patchiid))
+        {
+          Range_t rng = feat.getRange();
 
-      cout << "Saving new features: ";
+          // Check for contained features
+          if ((rng.getLo() >= patchleftoffset) &&
+              (rng.getHi() <= patchrightoffset))
+          {
+            rng.begin = leftfeatoffset + (rng.begin - patchleftoffset);
+            rng.end   = leftfeatoffset + (rng.end   - patchleftoffset);
+
+            feat.setRange(rng);
+            feat.setSource(make_pair(master.getIID(), Contig_t::NCODE));
+
+            newfeatures.push_back(feat);
+
+            cout << "p";
+          }
+        }
+      }
+
       for (int i = 0; i < newfeatures.size(); i++)
       {
-        cout << ".";
         feat_bank << newfeatures[i];
 
  //       Message_t msg; newfeatures[i].writeMessage (msg); msg.write (cout);
