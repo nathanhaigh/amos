@@ -3,11 +3,8 @@
 INPUTS = $(PREFIX).asm $(PREFIX).frg
 BINDIR=/fs/sz-user-supported/Linux-i686/bin
 
-## toAmos
-10: $(BINDIR)/toAmos -f $(PREFIX).frg -a $(PREFIX).asm -o $(PREFIX).afg -S
-
-## bank-transact
-20: $(BINDIR)/bank-transact -m $(PREFIX).afg -b $(PREFIX).bnk -c
+## toAmos & bank-transact
+10: $(BINDIR)/toAmos -f $(PREFIX).frg -a $(PREFIX).asm -o - -S | $(BINDIR)/bank-transact -m - -b $(PREFIX).bnk -c
 
 ## asmQC
 30: $(BINDIR)/asmQC -b $(PREFIX).bnk -feat -numsd 2
