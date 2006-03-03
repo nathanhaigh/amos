@@ -15,8 +15,9 @@ int main (int argc, char ** argv)
   {
     cerr << "Usage: revcontig bankname eid" << endl;
     cerr << endl
-         << "Reverse complements the selected contig, reads, and scaffold info" << endl
-         << "TODO: Fix features, contig graph as well" << endl;
+         << "Reverse complements the selected contig and associated" << endl
+         << "reads, scaffold, features info" << endl
+         << "TODO: Fix contig graph as well" << endl;
 
     return EXIT_FAILURE;
   }
@@ -35,10 +36,11 @@ int main (int argc, char ** argv)
     contig_bank.fetch(contigid, contig);
 
     contig.reverseComplement();
+    int contiglen = contig.getLength();
 
-    ID_t iid = contig.getIID();
+    ID_t contigiid = contig.getIID();
 
-    contig_bank.replace(iid, contig);
+    contig_bank.replace(contigiid, contig);
     contig_bank.close();
 
     Bank_t scaffold_bank(Scaffold_t::NCODE);
@@ -62,7 +64,7 @@ int main (int argc, char ** argv)
              ti != tiling.end();
              ti++)
         {
-          if (ti->source == iid)
+          if (ti->source == contigiid)
           {
             ti->range.swap();
 
@@ -75,6 +77,45 @@ int main (int argc, char ** argv)
     catch (Exception_t & e)
     {
       cerr << "WARNING: Scaffold not updated!" << endl;
+      cerr << e << endl;
+    }
+
+    try
+    {
+      BankStream_t feat_bank(Feature_t::NCODE);
+
+      Feature_t feat;
+
+      cout << "Reversing features:";
+
+      feat_bank.open(bank_name, B_READ | B_WRITE);
+      ID_t bid = feat_bank.tellg();
+
+      while (feat_bank >> feat)
+      {
+        if ((feat.getSource().second == Contig_t::NCODE) &&
+            (feat.getSource().first == contigiid))
+        {
+          Range_t rng = feat.getRange();
+          rng.begin = contiglen - rng.begin - 1;
+          rng.end   = contiglen - rng.end - 1;
+          feat.setRange(rng);
+
+          feat_bank.replaceByBID(bid, feat);
+          cout << ".";
+        }
+
+        bid = feat_bank.tellg();
+      }
+
+      cout << endl;
+
+      feat_bank.close();
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "WARNING: Features not updated!" << endl;
+      cerr << e << endl;
     }
   }
   catch (Exception_t & e)
