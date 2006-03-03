@@ -6,7 +6,8 @@ bin_PROGRAMS = \
     barcode-graph \
     build-persistent-bank \
     persistent-read-dist \
-    read-evolution
+    read-evolution \
+    gap-closure-reads
 
 dist_bin_SCRIPTS = \
     persistent-assembly.pl
@@ -57,5 +58,15 @@ read_evolution_LDADD = \
 
 read_evolution_SOURCES = \
 	read-evolution.cc
+
+##-- gap-closure-reads
+gap_closure_reads_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+
+gap_closure_reads_SOURCES = \
+	gap-closure-reads.cc
 
 ##-- END OF MAKEFILE --##
