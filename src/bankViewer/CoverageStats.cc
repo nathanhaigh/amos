@@ -133,3 +133,11 @@ int CoverageStats::handlePoint(int pos, int eps, int sumdelta)
   return eps;
 }
 
+
+void CoverageStats::addPoint(int x, int y)
+{
+  m_coverage[m_curpos] = QPoint(x,y);
+  m_curpos++;
+
+  if (y > m_maxdepth) { m_maxdepth = y; }
+}

@@ -27,6 +27,8 @@ public:
   void finalizeCE(int vheight);
   void normalize(float hscale, int hoffset, int voffset);
 
+  void addPoint(int x, int y);
+
 private:
   int handlePoint(int pos, int eps, int sumdelta);
   int m_sum;
