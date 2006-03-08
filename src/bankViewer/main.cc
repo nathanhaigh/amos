@@ -69,7 +69,6 @@ int main( int argc, char **argv )
   MainWindow w(NULL, "mainwindow");
   w.setGeometry( 100, 100, 700, 355 );
   a.setMainWidget( &w );
-  w.show();
 
 
   int state = 0;
@@ -132,6 +131,7 @@ int main( int argc, char **argv )
 
   splash->finish(&w);
   delete splash;
+  w.show();
 
   return a.exec();
 }
