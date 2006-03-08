@@ -14,19 +14,28 @@ TiledRead_t::TiledRead_t(Tile_t tile, Read_t red, int readidx)
       m_iid(red.getIID()),
       m_eid(red.getEID())
 {
-  for (int i = 0; i < tile.gaps.size(); i++)
+  int gappos;
+
+  try
   {
-    int gappos = tile.gaps[i] + i;
-    m_seq.insert(gappos, 1,  '-');
+    for (int i = 0; i < tile.gaps.size(); i++)
+    {
+      gappos = tile.gaps[i] + i;
+      m_seq.insert(gappos, 1,  '-');
 
-    char lqv = (gappos > 0) ? m_qual[gappos-1] : -1;
-    char rqv = (gappos < m_qual.size()) ? m_qual[gappos] : -1;
+      char lqv = (gappos > 0) ? m_qual[gappos-1] : -1;
+      char rqv = (gappos < m_qual.size()) ? m_qual[gappos] : -1;
 
-    char gapqv = (lqv < rqv)
-                 ? (lqv != -1) ? lqv : rqv
-                 : (rqv != -1) ? rqv : lqv;
+      char gapqv = (lqv < rqv)
+                   ? (lqv != -1) ? lqv : rqv
+                   : (rqv != -1) ? rqv : lqv;
 
-    m_qual.insert(gappos, 1, gapqv);
+      m_qual.insert(gappos, 1, gapqv);
+    }
+  }
+  catch(...)
+  {
+    AMOS_THROW_ARGUMENT((string)"Error inserting gaps into read: " + red.getEID());
   }
 
   m_loffset = tile.offset;
@@ -75,7 +84,7 @@ int ContigIterator_t::uindex() const
 void ContigIterator_t::renderTile(Tile_t & tile, int tilingindex)
 {
   Read_t rd;
-    
+
   m_readBank->fetch(tile.source, rd);
   TiledRead_t trd(tile, rd, tilingindex+m_tilingreadsoffset);
 
@@ -88,24 +97,27 @@ void ContigIterator_t::renderTile(Tile_t & tile, int tilingindex)
 // Move to the next position
 bool ContigIterator_t::advanceNext()
 {
+  int len = m_consensus.size();
+  if (m_gindex >= len) { return false; }
+
   if (m_gindex != -1 && m_consensus[m_gindex] != '-') { m_uindex++; }
   m_gindex++;
 
   vector<Tile_t> & tiling = m_contig.getReadTiling();
 
-  while (m_currenttile < m_numreads && tiling[m_currenttile].offset <= m_gindex)
+  while ((m_currenttile < m_numreads) && (tiling[m_currenttile].offset <= m_gindex))
   { 
     renderTile(tiling[m_currenttile], m_currenttile);
     m_currenttile++;
   }
 
-  while (!m_ends.empty() && m_ends.top()->m_roffset < m_gindex)
+  while (!m_ends.empty() && (m_ends.top()->m_roffset < m_gindex))
   { 
     m_tilingreads.erase(m_ends.top());
     m_ends.pop();
   }
 
-  return !(m_gindex == m_consensus.size());
+  return (m_gindex < len);
 }
 
 // Seek to a random position in the contig
