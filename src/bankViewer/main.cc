@@ -32,6 +32,7 @@ int main( int argc, char **argv )
            << "  -D <DB>     Set the chromatogram DB"        << endl
            << "  -T          Enable Trace Fetch cmd"         << endl
            << "  -p <port>   Initialize Server on this port" << endl
+           << "  -K <kmer>   Load File of kmers"             << endl
            << "  -h          Display this help"              << endl;
 
       exit (1);
@@ -97,6 +98,11 @@ int main( int argc, char **argv )
     {
       i++; v = a.argv()[i];
       w.setChromoDB(QString(v.c_str()));
+    }
+    else if (v == "-K" && i+1 < a.argc())
+    {
+      i++; v = a.argv()[i];
+      w.loadKmers(v);
     }
     else if (v == "-T")
     {

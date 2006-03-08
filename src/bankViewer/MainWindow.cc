@@ -824,3 +824,8 @@ void MainWindow::enableTraceFetch(bool dofetch)
 {
   m_datastore.m_tracecmdenabled = dofetch;
 }
+
+void MainWindow::loadKmers(std::string file)
+{
+  m_datastore.Read_Mers(file.c_str());
+}

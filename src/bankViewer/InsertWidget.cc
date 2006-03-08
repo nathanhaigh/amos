@@ -92,6 +92,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_tintHappiness  = 0;
   m_tintFeatures   = 0;
   m_showscaffold   = 1;
+  m_kmercoverageplot = 1;
 
   m_persistant = false;
   m_error = 0;
@@ -332,6 +333,12 @@ void InsertWidget::clearCanvas()
 
 void InsertWidget::initializeTiling()
 {
+  if (m_kmerstats)
+  {
+    delete m_kmerstats;
+    m_kmerstats = NULL;
+  }
+
   m_features.clear();
   m_ctiling.clear();
   m_currentScaffold = m_datastore->m_scaffoldId;
@@ -359,6 +366,11 @@ void InsertWidget::initializeTiling()
     m_ctiling = scaffold.getContigTiling();
     sort(m_ctiling.begin(), m_ctiling.end(), RenderSeq_t::TilingOrderCmp());
 
+    if (m_kmercoverageplot && !m_datastore->mer_table.empty())
+    {
+      m_kmerstats = new CoverageStats(scaffold.getSpan(), 0, Distribution_t());
+    }
+
     cerr << "Mapping read tiling for " << m_ctiling.size() << " contigs... ";
 
     int lendiff = 0;
@@ -378,16 +390,43 @@ void InsertWidget::initializeTiling()
       // Ensure contig coordinates are gapped
       if (scaffrange.isReverse())
       {
-        scaffrange.begin = scaffrange.end+clen;
-        lendiff += scaffrange.begin - ci->range.begin;
-      }
-      else
-      {
-        scaffrange.end = scaffrange.begin+clen; 
-        lendiff += scaffrange.end - ci->range.end;
+        contig.reverseComplement();
+        scaffrange.swap();
       }
 
+      scaffrange.end = scaffrange.begin+clen; 
+      lendiff += scaffrange.end - ci->range.end;
+
       ci->range = scaffrange;
+
+      if (m_kmerstats)
+      {
+        string cons = contig.getSeqString();
+
+        for (int i = 0; i < clen; i++)
+        {
+          DataStore::Mer_t fwd_mer = 0, rev_mer = 0;
+          int merlen = 0;
+          int j = i;
+
+          while(merlen < m_datastore->Kmer_Len && j < clen)
+          {
+            if (cons[j] != '-')
+            {
+              m_datastore->Forward_Add_Ch(fwd_mer, cons[j]);
+              m_datastore->Reverse_Add_Ch(rev_mer, cons[j]);
+              merlen++;
+            }
+            j++;
+          }
+
+          if (j >= clen) { break; }
+
+          int mc = m_datastore->getMerCoverage(fwd_mer, rev_mer);
+          if (mc > 200) { mc = 200; }
+          m_kmerstats->addPoint(i+ci->offset, mc);
+        }
+      }
 
       vector<Tile_t> & rtiling = contig.getReadTiling();
       vector<Tile_t>::const_iterator ri;
@@ -400,12 +439,6 @@ void InsertWidget::initializeTiling()
         mappedTile.range  = ri->range;
 
         int offset = ri->offset;
-        if (ci->range.isReverse())
-        {
-          mappedTile.range.swap();
-          offset = clen - (offset + ri->range.getLength() + ri->gaps.size());
-        }
-
         mappedTile.offset = ci->offset + offset;
 
         m_tiling.push_back(mappedTile);
@@ -720,6 +753,11 @@ void InsertWidget::paintCanvas()
     int covheight = (insertCL.m_maxdepth > readCL.m_maxdepth) ? insertCL.m_maxdepth : readCL.m_maxdepth;
     int cestatsoffset = voffset;
 
+    if (m_kmerstats && m_kmerstats->m_maxdepth > covheight)
+    {
+      covheight = m_kmerstats->m_maxdepth;
+    }
+
     if (m_coveragePlot)
     {
       cestatsoffset += covheight + 2*gutter;
@@ -738,6 +776,16 @@ void InsertWidget::paintCanvas()
                     voffset, covheight, 
                     -2, meanreadcoverage,
                     UIElements::color_readcoverage);
+
+      if (m_kmerstats)
+      {
+        m_kmerstats->normalize(m_hscale, m_hoffset, voffset + covheight);
+        paintCoverage(m_kmerstats->m_coverage, m_kmerstats->m_cestat, false,
+                      m_kmerstats->m_curpos,
+                      voffset, covheight, 
+                      -3, 0.0,
+                      Qt::yellow);
+      }
     }
 
     if (m_cestats)

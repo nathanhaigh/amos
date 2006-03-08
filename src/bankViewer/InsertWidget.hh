@@ -23,6 +23,7 @@ using std::pair;
 class DataStore;
 class InsertField;
 class InsertPosition;
+class CoverageStats;
 
 
 class InsertWidget : public QWidget
@@ -127,6 +128,7 @@ private:
   bool m_tintHappiness;
   bool m_tintFeatures;
   bool m_showscaffold;
+  bool m_kmercoverageplot;
 
   bool m_persistant;
   int m_error;
@@ -155,6 +157,7 @@ private:
   std::vector<AMOS::Feature_t> m_features;
 
   std::map<char, std::pair<int, bool> > & m_types;
+  CoverageStats * m_kmerstats;
 };
 
 #endif

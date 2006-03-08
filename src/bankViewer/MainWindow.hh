@@ -55,6 +55,7 @@ public:
   MainWindow(QWidget *parent=0, const char *name=0 );
 
   void setBankname(std::string bankname);
+  void loadKmers(std::string file);
 
 public slots:
   void chooseBank();

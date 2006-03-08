@@ -7,6 +7,8 @@
 #include <sys/stat.h>
 
 #include "amp.hh"
+#include "delcher.hh"
+#include "fasta.hh"
 
 
 using namespace AMOS;
@@ -37,6 +39,7 @@ DataStore::DataStore()
   m_tracecmd          = "curl \"http://www.ncbi.nlm.nih.gov/Traces/trace.fcgi?cmd=java&j=scf&val=%EID%&ti=%EID%\" -s -o %TRACECACHE%/%EID%";
   m_tracecmdpath      = "%TRACECACHE%/%EID%";
   m_tracecmdenabled   = 0;
+  Kmer_Len = 0;
 }
 
 DataStore::~DataStore()
@@ -620,6 +623,171 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
          << " unhappy: " << unhappycount << endl;
   }
 }
+
+
+static unsigned  Char_To_Binary (char ch)
+//  Return the binary equivalent of  ch .
+  {
+   switch  (tolower (ch))
+     {
+      case  'a' :
+      case  'n' :
+        return  0;
+      case  'c' :
+        return  1;
+      case  'g' :
+        return  2;
+      case  't' :
+        return  3;
+      default :
+        return 0;
+     }
+   return  0;
+  }
+
+
+
+
+char BinaryToAscii(char b)
+{
+  switch(b)
+  {
+    case 0: return 'A';
+    case 1: return 'C';
+    case 2: return 'G';
+    case 3: return 'T';
+  }
+
+  return '*';
+}
+
+void DataStore::MerToAscii(Mer_t mer, string & s)
+{
+  s.erase();
+
+  for (int i = 0; i < Kmer_Len; i++)
+  {
+    char a = BinaryToAscii(mer & 0x3);
+    mer >>= 2;
+
+    s.append(1, a);
+  }
+
+  reverse(s.begin(), s.end());
+}
+
+
+void DataStore::Forward_Add_Ch (DataStore::Mer_t & mer, char ch)
+
+//  Add  ch  to  mer  on the right, sliding one character
+//  off the left end of  mer .
+
+  {
+   mer &= Forward_Mask;
+   mer <<= 2;
+   mer |= Char_To_Binary (ch);
+
+   return;
+  }
+
+void  DataStore::Reverse_Add_Ch (DataStore::Mer_t & mer, char ch)
+
+//  Add the Watson-Crick complement of  ch  to  mer  on the left,
+//  sliding one character off the right end of  mer .
+
+  {
+   mer >>= 2;
+   mer |= ((long long unsigned) (3 ^ Char_To_Binary (ch)) << (2 * Kmer_Len - 2));
+
+   return;
+  }
+
+void DataStore::Fasta_To_Binary (const string & s, Mer_t & mer)
+
+//  Convert string  s  to its binary equivalent in  mer .
+
+  {
+   int  i, n;
+
+   n = s . length ();
+   mer = 0;
+   for  (i = 0;  i < n;  i ++)
+     {
+      mer <<= 2;
+      mer |= Char_To_Binary (s [i]);
+     }
+
+   return;
+  }
+
+
+
+void  DataStore::Read_Mers (const char * fname)
+
+//  Read kmers from file name  fname  and save them
+//  in binary form in  mer_list .  Input format is
+//  a multi-fasta file.  Mers are assumed to contain only
+//  ACGT's
+
+{
+  FILE  * fp;
+  string  s, tag;
+  Mer_t  mer;
+
+  cerr << "Loading mers... ";
+
+  fp = File_Open (fname, "r", __FILE__, __LINE__);
+
+  mer_table . clear ();
+
+  while  (Fasta_Read (fp, s, tag))
+  {
+    unsigned short mercount = atoi(tag.c_str());
+
+    if  (Kmer_Len == 0)
+    {
+      Kmer_Len = s . length ();
+    }
+    else if  (Kmer_Len != int (s . length ()))
+    {
+      cerr << "New kmer " << s << " has length " << s.length() << " instead of " << Kmer_Len << endl;
+      throw "Error!";
+    }
+    Fasta_To_Binary (s, mer);
+
+ //  MerToAscii(mer, tag);
+ //   fprintf(stderr, "orig: %s mer: %032llx asc: %s\n", s.c_str(), mer, tag.c_str());
+
+    mer_table.insert(make_pair(mer, mercount));
+   }
+
+   cerr << mer_table.size() << " mers loaded." << endl;
+
+   Forward_Mask = ((long long unsigned) 1 << (2 * Kmer_Len - 2)) - 1;
+
+   return;
+}
+
+unsigned int DataStore::getMerCoverage(Mer_t fwd_mer, Mer_t rev_mer)
+{
+  unsigned int fcount = 0;
+  unsigned int rcount = 0;
+
+  MerTable_t::const_iterator fi = mer_table.find(fwd_mer);
+  MerTable_t::const_iterator ri = mer_table.find(rev_mer);
+
+  if (fi != mer_table.end()) { fcount = fi->second; }
+  if (ri != mer_table.end()) { rcount = ri->second; }
+
+  unsigned int mcount = (fcount > rcount) ? fcount : rcount;
+
+
+  return mcount;
+}
+
+
+
+
 
 
 

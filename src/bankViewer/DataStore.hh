@@ -15,6 +15,7 @@ class Insert;
 
 
 
+
 class DataStore
 {
 public:
@@ -87,6 +88,27 @@ public:
                         vector<Insert *> & inserts,
                         bool connectMates,
                         int verbose);
+
+
+
+
+
+  typedef  long long unsigned  Mer_t;
+  typedef map<Mer_t, unsigned short> MerTable_t;
+
+  MerTable_t mer_table;
+  int        Kmer_Len;
+
+  void Forward_Add_Ch (Mer_t & mer, char ch);
+  void Reverse_Add_Ch (Mer_t & mer, char ch);
+  void Read_Mers (const char * fname);
+  void MerToAscii(Mer_t mer, string & s);
+  void Fasta_To_Binary (const string & s, Mer_t & mer);
+  unsigned int getMerCoverage(Mer_t fwd_mer, Mer_t rev_mer);
+
+
+  Mer_t Forward_Mask;
+
 
 
 private:
