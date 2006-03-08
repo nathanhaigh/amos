@@ -390,14 +390,23 @@ void InsertWidget::initializeTiling()
       // Ensure contig coordinates are gapped
       if (scaffrange.isReverse())
       {
+        scaffrange.begin = scaffrange.end+clen;
+        lendiff += scaffrange.begin - ci->range.begin;
+      }
+      else
+      {
+        scaffrange.end = scaffrange.begin+clen; 
+        lendiff += scaffrange.end - ci->range.end;
+      }
+
+      ci->range = scaffrange;
+
+      // Flip the contig if necessary
+      if (scaffrange.isReverse())
+      {
         contig.reverseComplement();
         scaffrange.swap();
       }
-
-      scaffrange.end = scaffrange.begin+clen; 
-      lendiff += scaffrange.end - ci->range.end;
-
-      ci->range = scaffrange;
 
       if (m_kmerstats)
       {
@@ -437,9 +446,7 @@ void InsertWidget::initializeTiling()
         mappedTile.source = ri->source;
         mappedTile.gaps   = ri->gaps;
         mappedTile.range  = ri->range;
-
-        int offset = ri->offset;
-        mappedTile.offset = ci->offset + offset;
+        mappedTile.offset = ci->offset + ri->offset;
 
         m_tiling.push_back(mappedTile);
       }
@@ -477,6 +484,38 @@ void InsertWidget::initializeTiling()
   }
   else
   {
+    if (m_kmercoverageplot && !m_datastore->mer_table.empty())
+    {
+      string cons = m_datastore->m_contig.getSeqString();
+      int clen = cons.size();
+
+      m_kmerstats = new CoverageStats(clen, 0, Distribution_t());
+
+      for (int i = 0; i < clen; i++)
+      {
+        DataStore::Mer_t fwd_mer = 0, rev_mer = 0;
+        int merlen = 0;
+        int j = i;
+
+        while(merlen < m_datastore->Kmer_Len && j < clen)
+        {
+          if (cons[j] != '-')
+          {
+            m_datastore->Forward_Add_Ch(fwd_mer, cons[j]);
+            m_datastore->Reverse_Add_Ch(rev_mer, cons[j]);
+            merlen++;
+          }
+          j++;
+        }
+
+        if (j >= clen) { break; }
+
+        int mc = m_datastore->getMerCoverage(fwd_mer, rev_mer);
+        if (mc > 200) { mc = 200; }
+        m_kmerstats->addPoint(i, mc);
+      }
+    }
+
     Tile_t currentContig;
     currentContig.source = m_datastore->m_contig.getIID();
     currentContig.offset = 0;
