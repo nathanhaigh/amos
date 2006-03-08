@@ -94,6 +94,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_showscaffold   = 1;
   m_kmercoverageplot = 1;
 
+  m_kmerstats = NULL;
+
   m_persistant = false;
   m_error = 0;
 

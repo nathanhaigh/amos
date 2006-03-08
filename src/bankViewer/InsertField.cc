@@ -243,8 +243,9 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
       if (citem->m_libid < 0)
       {
-        if (citem->m_libid == -1)      { s += " Clone"; }
+             if (citem->m_libid == -1) { s += " Clone"; }
         else if (citem->m_libid == -2) { s += " Read";  }
+        else if (citem->m_libid == -3) { s += " Kmer";  }
 
         s += " Coverage " + QString::number(citem->y() + citem->height() - citem->m_points[i].y());
         s += " [" + QString::number(citem->m_baseLevel, 'f', 2) + "]";
