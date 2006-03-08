@@ -8,7 +8,7 @@
 using namespace AMOS;
 using namespace std;
 
-ID_t lookup(Bank_t & bnk, const string & eid)
+ID_t lookupIID(Bank_t & bnk, const string & eid)
 {
   ID_t retval = bnk.lookupIID(eid);
 
@@ -62,10 +62,14 @@ int main (int argc, char ** argv)
   int retval = 0;
   AMOS_Foundation * tf = NULL;
 
-  Bank_t master_bank(Contig_t::NCODE);
+  Bank_t master_contig(Contig_t::NCODE);
   Bank_t master_reads(Read_t::NCODE);
+  Bank_t master_scaff(Scaffold_t::NCODE);
+  BankStream_t master_feat(Feature_t::NCODE);
+
   Bank_t patch_bank(Contig_t::NCODE);
   Bank_t patch_reads(Read_t::NCODE);
+  BankStream_t patch_feat(Feature_t::NCODE);
 
   try
   {
@@ -137,18 +141,21 @@ int main (int argc, char ** argv)
 
     Contig_t master, master2, patch;
 
-    master_reads.open(masterbank, B_READ);
-    master_bank.open(masterbank, B_READ);
+    master_reads.open(masterbank, B_READ|B_WRITE);
+    master_contig.open(masterbank, B_READ);
+    master_feat.open(masterbank, B_READ|B_WRITE);
+    master_scaff.open(masterbank, B_READ|B_WRITE);
 
     patch_reads.open(patchbank, B_READ);
     patch_bank.open(patchbank, B_READ);
+    patch_feat.open(patchbank, B_READ);
 
-    if (!m.empty())  { masteriid  = lookup(master_bank, m);  }
-    if (!m2.empty()) { master2iid = lookup(master_bank, m2); }
-    if (!p.empty())  { patchiid   = lookup(patch_bank, p);   }
+    if (!m.empty())  { masteriid  = lookupIID(master_contig, m);  }
+    if (!m2.empty()) { master2iid = lookupIID(master_contig, m2); }
+    if (!p.empty())  { patchiid   = lookupIID(patch_bank, p);   }
 
-    master_bank.fetch(masteriid, master);
-    if (master2iid) { master_bank.fetch(master2iid, master2); }
+    master_contig.fetch(masteriid, master);
+    if (master2iid) { master_contig.fetch(master2iid, master2); }
     patch_bank.fetch(patchiid, patch);
 
     int oldmasterlen = master.getLength();
@@ -174,14 +181,14 @@ int main (int argc, char ** argv)
 
     if (!leftstitchread.empty())
     {
-      mleftiid = master_reads.lookupIID(leftstitchread);
-      pleftiid = patch_reads.lookupIID(leftstitchread);
+      mleftiid = lookupIID(master_reads, leftstitchread);
+      pleftiid = lookupIID(patch_reads, leftstitchread);
     }
 
     if (!rightstitchread.empty())
     {
-      mrightiid = master_reads.lookupIID(rightstitchread);
-      prightiid = patch_reads.lookupIID(rightstitchread);
+      mrightiid = lookupIID(master_reads, rightstitchread);
+      prightiid = lookupIID(patch_reads, rightstitchread);
     }
 
     // new
@@ -202,7 +209,7 @@ int main (int argc, char ** argv)
     set<ID_t> patchreads;
     set<ID_t> masterreads;
 
-    if (!leftstitchread.empty())
+    if (mleftiid)
     {
       // Find the left read in the master
       vector<Tile_t> & mtiling = master.getReadTiling();
@@ -286,7 +293,7 @@ int main (int argc, char ** argv)
 
       porigoffset = pti->offset;
       pti->offset = pti->offset - patchbaseoffset + masterbaseoffset;
-      pti->source = master_reads.lookupIID(patch_reads.lookupEID(pti->source));
+      pti->source = lookupIID(master_reads, patch_reads.lookupEID(pti->source));
       newtiling.push_back(*pti);
 
       if (pti->source == mrightiid) // right read was converted, so use mrightiid
@@ -305,11 +312,11 @@ int main (int argc, char ** argv)
         break;
       }
 
-      patchreads.insert(pti->source);
+      patchreads.insert(lookupIID(master_reads, patch_reads.lookupEID(pti->source)));
       pti++;
     }
 
-    if (!rightstitchread.empty() && (pti == ptiling.end()))
+    if (prightiid && (pti == ptiling.end()))
     {
       cout << "Didn't find right read in patch" << endl;
       throw "ERROR";
@@ -325,7 +332,7 @@ int main (int argc, char ** argv)
     rightfeatoffset = newcons.size() - 1;
 
 
-    if (!rightstitchread.empty())
+    if (prightiid)
     {
       cout << endl;
       cout << "Handling Right" << endl;
@@ -434,12 +441,12 @@ int main (int argc, char ** argv)
 
     if (!newpatchreads.empty())
     {
-      const IDMap_t & cm = master_bank.getIDMap();
+      const IDMap_t & cm = master_contig.getIDMap();
       IDMap_t::const_iterator c;
       for (c = cm.begin(); c != cm.end(); c++)
       {
         Contig_t contig;
-        master_bank.fetch(c->iid, contig);
+        master_contig.fetch(c->iid, contig);
 
         vector<Tile_t>::iterator ti;
 
@@ -472,42 +479,34 @@ int main (int argc, char ** argv)
       }
     }
 
-    master_bank.close();
-
     cout << endl;
 
     // save the new contig
     try
     {
-      master_bank.open(masterbank, B_READ|B_WRITE);
-
       if (savetonew)
       {
-        master.setIID(master_bank.getMaxIID()+1);
+        master.setIID(master_contig.getMaxIID()+1);
         master.setEID(master.getEID() + "_stitched");
-        master_bank.append(master);
+        master_contig.append(master);
 
         cout << "Saved new contig i:" << master.getIID() << " e:" << master.getEID() << endl;
       }
       else
       {
-        master_bank.replace(master.getIID(), master);
+        master_contig.replace(master.getIID(), master);
         cout << "Updated contig i:" << master.getIID() << " e:" << master.getEID() << endl;
 
         if (master2iid) 
         { 
-          cout << "Removed contig i:" << master2iid << " e:" << master_bank.lookupEID(master2iid) << endl;
-          master_bank.remove(master2iid); 
+          cout << "Removed contig i:" << master2iid << " e:" << master_contig.lookupEID(master2iid) << endl;
+          master_contig.remove(master2iid); 
         }
       }
 
-      master_bank.close();
 
       if (oldmasterlen != newmasterlen || master2iid)
       {
-        Bank_t scaff_bank(Scaffold_t::NCODE);
-        scaff_bank.open(masterbank, B_READ|B_WRITE);
-
         Scaffold_t masterscaff;
         Scaffold_t master2scaff;
 
@@ -519,12 +518,12 @@ int main (int argc, char ** argv)
 
         vector<Tile_t>::iterator ci;
 
-        const IDMap_t & scaffmap = scaff_bank.getIDMap();
+        const IDMap_t & scaffmap = master_scaff.getIDMap();
         IDMap_t::const_iterator si;
         for (si = scaffmap.begin(); si != scaffmap.end(); si++)
         {
           Scaffold_t scaff;
-          scaff_bank.fetch(si->iid, scaff);
+          master_scaff.fetch(si->iid, scaff);
 
           for (ci = scaff.getContigTiling().begin();
                ci != scaff.getContigTiling().end();
@@ -630,21 +629,21 @@ int main (int argc, char ** argv)
 
           if (savetonew)
           {
-            masterscaff.setIID(scaff_bank.getMaxIID()+1);
+            masterscaff.setIID(master_scaff.getMaxIID()+1);
             masterscaff.setEID(masterscaff.getEID() + "_stitched");
-            scaff_bank.append(masterscaff);
+            master_scaff.append(masterscaff);
 
             cout << "Saved new scaffold i:" << masterscaff.getIID() << " e:" << masterscaff.getEID() << endl;
           }
           else
           {
-            scaff_bank.replace(masterscaff.getIID(), masterscaff);
+            master_scaff.replace(masterscaff.getIID(), masterscaff);
             cout << "Updated scaffold i:" << masterscaff.getIID() << " e:" << masterscaff.getEID() << endl;
 
             if (master2iid && master2scaff.getIID() && (masterscaff.getIID() != master2scaff.getIID())) 
             { 
               cout << "Removed scaffold i:" << master2scaff.getIID() << " e:" << master2scaff.getEID() << endl;
-              scaff_bank.remove(master2scaff.getIID()); 
+              master_scaff.remove(master2scaff.getIID()); 
             }
           }
         }
@@ -654,10 +653,6 @@ int main (int argc, char ** argv)
           exit(EXIT_FAILURE);
         }
       }
-
-      BankStream_t feat_bank(Feature_t::NCODE);
-      feat_bank.open(masterbank, B_READ|B_WRITE);
-
 
       // Update the features, and add a new one about the join
       cout << "Updating features: ";
@@ -675,9 +670,9 @@ int main (int argc, char ** argv)
 
       cout << "n";
 
-      while (feat_bank >> feat)
+      while (master_feat >> feat)
       {
-        ID_t bid = feat_bank.tellg()-1;
+        ID_t bid = master_feat.tellg()-1;
         bool change = false;
         bool remove = false;
 
@@ -739,7 +734,7 @@ int main (int argc, char ** argv)
         {
           if (!savetonew)
           {
-            feat_bank.removeByBID(bid);
+            master_feat.removeByBID(bid);
           }
         }
         else if (change)
@@ -750,14 +745,11 @@ int main (int argc, char ** argv)
           }
           else
           {
-            feat_bank.replaceByBID(bid, feat);
+            master_feat.replaceByBID(bid, feat);
           }
         }
       }
 
-      BankStream_t patch_feat(Feature_t::NCODE);
-      patch_feat.open(patchbank, B_READ);
-      
       while (patch_feat >> feat)
       {
         if ((feat.getSource().second == Contig_t::NCODE) &&
@@ -784,13 +776,16 @@ int main (int argc, char ** argv)
 
       for (int i = 0; i < newfeatures.size(); i++)
       {
-        feat_bank << newfeatures[i];
+        master_feat << newfeatures[i];
 
  //       Message_t msg; newfeatures[i].writeMessage (msg); msg.write (cout);
       }
       cout << endl;
 
-      feat_bank.close();
+      master_feat.close();
+      master_scaff.close();
+      master_contig.close();
+      master_feat.close();
     }
     catch (Exception_t & e)
     {
