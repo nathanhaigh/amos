@@ -6,6 +6,7 @@ bin_PROGRAMS = \
     barcode-graph \
     build-persistent-bank \
     persistent-read-dist \
+    persistent-fix-contigs \
     read-evolution \
     gap-closure-reads
 
@@ -14,6 +15,7 @@ dist_bin_SCRIPTS = \
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
+    -I$(top_srcdir)/src/Contig \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_builddir)/src/GNU \
@@ -38,6 +40,17 @@ build_persistent_bank_LDADD = \
 
 build_persistent_bank_SOURCES = \
 	build-persistent-bank.cc
+
+##-- persistent-fix-contigs
+persistent_fix_contigs_LDADD = \
+    $(top_builddir)/src/Contig/libContigUtils.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+
+persistent_fix_contigs_SOURCES = \
+	persistent-fix-contigs.cc
 
 ##-- persistent_read_dist
 persistent_read_dist_LDADD = \

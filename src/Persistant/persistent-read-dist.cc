@@ -54,7 +54,7 @@ vector<Tile_t> getScaffoldReadTiling(Scaffold_t & scaffold,
 }
 
 
-void printReadDistance(const string & cureid,
+void printReadDistance(ID_t curiid,
                        vector<Tile_t> & tiling,
                        Bank_t & read_bank)
 {
@@ -66,12 +66,12 @@ void printReadDistance(const string & cureid,
   for (t1 = tiling.begin(); t1 != tiling.end(); t1++)
   {
     int t1pos = t1->offset;
-    if (t1->range.isReverse()) { t1pos = t1pos + t1->getGappedLength(); }
+    if (t1->range.isReverse()) { t1pos = t1pos + t1->getGappedLength() - 1; }
 
     for (t2 = t1+1; t2 != tiling.end(); t2++)
     {
       int t2pos = t2->offset;
-      if (t2->range.isReverse()) { t2pos = t2pos + t2->getGappedLength(); }
+      if (t2->range.isReverse()) { t2pos = t2pos + t2->getGappedLength() - 1; }
 
       int dist = abs(t2pos - t1pos);
       int olddist = 0;
@@ -92,7 +92,7 @@ void printReadDistance(const string & cureid,
 
         if (absdelta >= MINDELTA)
         {
-          cout << cureid << "\t" 
+          cout << curiid << "\t" 
                << lastcontigmap.lookupEID(r1->second.first) << "\t"
                << read_bank.lookupEID(t1->source) << "\t" 
                << read_bank.lookupEID(t2->source) << "\t" 
@@ -103,7 +103,7 @@ void printReadDistance(const string & cureid,
       }
       else if (PRINTDIFFERENT)
       {
-        cout << cureid << "\t" 
+        cout << curiid << "\t" 
              << "*\t"
              << read_bank.lookupEID(t1->source) << "\t" 
              << read_bank.lookupEID(t2->source) << "\t" 
@@ -122,7 +122,7 @@ void recordReadPosition(const vector<Tile_t> & tiling, ID_t iid)
   for (ti = tiling.begin(); ti != tiling.end(); ti++)
   {
     int t1pos = ti->offset;
-    if (ti->range.isReverse()) { t1pos = t1pos + ti->getGappedLength(); }
+    if (ti->range.isReverse()) { t1pos = t1pos + ti->getGappedLength() - 1; }
 
     read2contigpos.insert(make_pair(ti->source, make_pair(iid, t1pos)));
   }
@@ -142,6 +142,7 @@ int main (int argc, char ** argv)
 "\n"
 "   Usage: persistent-read-dist [options] bank1 ... bankn\n"
 "\n"
+"delta = curdist - olddist (negative means collapse in current\n"
 "Output format:\n"
 ">currentbank-lastbank\n"
 "curcontigeid lastcontigeid read1 read2 dist olddist delta\n"
@@ -213,7 +214,7 @@ int main (int argc, char ** argv)
             Scaffold_t scaffold;
             scaffold_bank.fetch(c->iid, scaffold);
             vector <Tile_t> scaffreads = getScaffoldReadTiling(scaffold, contig_bank);
-            printReadDistance(c->eid, scaffreads, read_bank);
+            printReadDistance(c->iid, scaffreads, read_bank);
           }
 
           read2contigpos.clear();
@@ -239,7 +240,7 @@ int main (int argc, char ** argv)
           {
             Contig_t contig;
             contig_bank.fetch(c->iid, contig);
-            printReadDistance(c->eid, contig.getReadTiling(), read_bank);
+            printReadDistance(c->iid, contig.getReadTiling(), read_bank);
           }
           
           read2contigpos.clear();
