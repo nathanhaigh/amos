@@ -1,6 +1,14 @@
 ##-- MAKE FRAGMENT FOR AMOS RULES
 include $(top_srcdir)/config/amos.mk
 
+amoslib_LIBRARIES = \
+	libContigUtils.a
+
+amosinclude_HEADERS = \
+	ContigUtils.hh
+
+
+
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
@@ -22,17 +30,18 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_srcdir)/src/Foundation
 
+libContigUtils_a_SOURCES = \
+    ContigUtils.cc
 
 ##-- fattenContig
 fattenContig_LDADD = \
+    $(top_builddir)/src/Contig/libContigUtils.a \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 fattenContig_SOURCES = \
-    ContigUtils.hh \
-    ContigUtils.cc \
     ContigSequence.hh \
     ContigSequence.cc \
     tigrinc.hh \
@@ -67,6 +76,7 @@ manageContigs_SOURCES = \
 
 ##-- revContig
 revContig_LDADD = \
+    $(top_builddir)/src/Contig/libContigUtils.a \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -97,11 +107,12 @@ splitContig_SOURCES = \
 
 ##-- trimContig
 stitchContigs_LDADD = \
+    $(top_builddir)/src/Contig/libContigUtils.a \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a 
 stitchContigs_SOURCES = \
 	stitchContigs.cc 
 
@@ -109,13 +120,13 @@ stitchContigs_SOURCES = \
 
 ##-- trimContig
 trimContig_LDADD = \
+    $(top_builddir)/src/Contig/libContigUtils.a \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 trimContig_SOURCES = \
-    ContigUtils.cc \
 	trimContig.cc 
 
 
