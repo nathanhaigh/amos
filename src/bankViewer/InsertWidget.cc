@@ -335,6 +335,8 @@ void InsertWidget::clearCanvas()
 
 void InsertWidget::initializeTiling()
 {
+  QApplication::setOverrideCursor( QCursor(Qt::WaitCursor) );
+
   if (m_kmerstats)
   {
     delete m_kmerstats;
@@ -488,6 +490,7 @@ void InsertWidget::initializeTiling()
   {
     if (m_kmercoverageplot && !m_datastore->mer_table.empty())
     {
+      cerr << "Computing kmer coverage" << endl;
       string cons = m_datastore->m_contig.getSeqString();
       int clen = cons.size();
 
@@ -549,6 +552,8 @@ void InsertWidget::initializeTiling()
 
   computeInsertHappiness();
   paintCanvas();
+
+  QApplication::restoreOverrideCursor();
 }
 
 typedef map <ID_t, QColor> ColorMap;
@@ -587,10 +592,7 @@ void InsertWidget::paintCoverage(QPointArray & arr,
                                  double baseLevel,
                                  QColor color)
 {
-  if (arr.isEmpty())
-  {
-    return;
-  }
+  if (arr.isEmpty()) { return; }
 
   int i = 0;
   while (1)
@@ -820,9 +822,13 @@ void InsertWidget::paintCanvas()
 
       if (m_kmerstats)
       {
-        m_kmerstats->normalize(m_hscale, m_hoffset, voffset + covheight);
-        paintCoverage(m_kmerstats->m_coverage, m_kmerstats->m_cestat, false,
-                      m_kmerstats->m_curpos,
+        CoverageStats kmer(*m_kmerstats);
+
+        kmer.m_coverage = m_kmerstats->m_coverage.copy();
+
+        kmer.normalize(m_hscale, m_hoffset, voffset + covheight);
+        paintCoverage(kmer.m_coverage, kmer.m_cestat, false,
+                      kmer.m_curpos,
                       voffset, covheight, 
                       -3, 0.0,
                       Qt::yellow);
