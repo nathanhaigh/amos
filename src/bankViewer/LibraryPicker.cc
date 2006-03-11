@@ -63,12 +63,12 @@ LibraryPicker::LibraryPicker(DataStore * datastore,
 
   QPopupMenu * menu = new QPopupMenu(this);
   menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Insert Size Histogram...", this, SLOT(acceptSelected()));
-  menu->insertItem("&Contig Clear Range Length Histogram...", this, SLOT(clrLengthSelected()));
+  menu->insertItem("&Insert Size Histogram (In Contig)...", this, SLOT(acceptSelected()));
+  menu->insertItem("&Clear Range Length Histogram (In Contig)...", this, SLOT(clrLengthSelected()));
   menu->insertSeparator();
-  menu->insertItem("&Read Clear Range GC Content Histogram (All)...", this, SLOT(allGCContentSelected()));
-  menu->insertItem("&Clear Range Length Histogram (All)...", this, SLOT(allClrLengthSelected()));
   menu->insertItem("&Full Range Length Histogram (All)...", this, SLOT(allReadLengthSelected()));
+  menu->insertItem("&Clear Range Length Histogram (All)...", this, SLOT(allClrLengthSelected()));
+  menu->insertItem("&Clear Range GC Content Histogram (All)...", this, SLOT(allGCContentSelected()));
 
   QToolBar * tool = new QToolBar(this, "tools");
   new QLabel("IID:", tool, "iidlbl");
