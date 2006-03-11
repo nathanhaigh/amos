@@ -56,6 +56,7 @@ signals:
     void toggleHighlightDiscrepancy(bool);
     void toggleQVColoring(bool);
     void toggleShowConsQV(bool);
+    void toggleShowUngapped(bool);
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -84,6 +85,7 @@ private:
     std::string m_consensus;
     std::string m_consqual;
     std::string m_cstatus;
+    std::vector<int> m_ugpos;
 
     std::vector<RenderSeq_t> m_renderedSeqs;
 

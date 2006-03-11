@@ -92,6 +92,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   menuBar()->insertItem("&Options", m_options);
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
   m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange()));
+  m_ungappedid     = m_options->insertItem("Ungapped Coordinates",     this, SLOT(toggleUngapped()));
   m_options->insertSeparator();
   m_qvid           = m_options->insertItem("Show &Quality Values",     this, SLOT(toggleDisplayQV()));
   m_cqvid          = m_options->insertItem("Show &Consensus QV",       this, SLOT(toggleShowConsQV()));
@@ -113,7 +114,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QToolBar * status = new QToolBar(this, "Status");
   status->setLabel("Status");
 
-  new QLabel("Position", status, "gindexlbl");
+  m_offsetlabel = new QLabel("Offset", status, "gindexlbl");
   m_gspin     = new QSpinBox(0,100, 1, status, "gindexspin");
   m_gspin->setMinimumWidth(100);
 
@@ -195,12 +196,12 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(m_slider, SIGNAL(valueChanged(int)),
           this,     SLOT(setGindex(int)));
 
-  connect(this,     SIGNAL(gindexChanged(int)),
-          m_gspin, SLOT(setValue(int)));
 
-  connect(m_gspin, SIGNAL(valueChanged(int)),
-          this,     SLOT(setGindex(int)));
-  
+  connect(this,     SIGNAL(gindexChanged(int)),
+          this,     SLOT(updateGSpin(int)));
+
+  connect(m_gspin,  SIGNAL(valueChanged(int)),
+          this,     SLOT(loadGSpin(int)));
 
 
 
@@ -328,6 +329,9 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 
   connect(this,      SIGNAL(toggleSNPColoring(bool)),
           tiling,    SIGNAL(toggleSNPColoring(bool)));
+
+  connect(this,      SIGNAL(toggleShowUngapped(bool)),
+          tiling,    SIGNAL(toggleShowUngapped(bool)));
 
   if (isReference)
   {
@@ -714,6 +718,56 @@ void MainWindow::togglePolymorphismView()
   emit togglePolymorphismView(b);
 }
 
+void MainWindow::toggleUngapped()
+{
+  bool b = !m_options->isItemChecked(m_ungappedid);
+  m_options->setItemChecked(m_ungappedid, b);
+
+  int gindex = m_gspin->value();
+
+
+  if (b) 
+  { 
+    m_offsetlabel->setText("Position"); 
+    m_gspin->setRange(1, m_datastore.gapped2ungapped(m_datastore.m_contig.getLength()));
+  }
+  else   
+  { 
+    m_offsetlabel->setText("Offset"); 
+    m_gspin->setRange(0, m_datastore.m_contig.getLength());
+    gindex = m_datastore.ungapped2gapped(gindex);
+  }
+
+
+  emit toggleShowUngapped(b);
+  setGindex(gindex);
+}
+
+void MainWindow::updateGSpin(int gindex)
+{
+  if (m_options->isItemChecked(m_ungappedid))
+  {
+    m_gspin->setValue(m_datastore.gapped2ungapped(gindex));
+  }
+  else
+  {
+    m_gspin->setValue(gindex);
+  }
+}
+
+void MainWindow::loadGSpin(int pos)
+{
+  if (m_options->isItemChecked(m_ungappedid))
+  {
+    setGindex(m_datastore.ungapped2gapped(pos));
+  }
+  else
+  {
+    setGindex(pos);
+  }
+}
+
+
 
 void MainWindow::fontIncrease()
 {
@@ -820,6 +874,7 @@ void MainWindow::findPrev()
   emit searchString(str, false);
 }
 
+
 void MainWindow::enableTraceFetch(bool dofetch)
 {
   m_datastore.m_tracecmdenabled = dofetch;
@@ -829,3 +884,4 @@ void MainWindow::loadKmers(std::string file)
 {
   m_datastore.Read_Mers(file.c_str());
 }
+

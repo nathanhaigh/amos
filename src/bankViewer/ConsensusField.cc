@@ -20,6 +20,7 @@ static int max (int a, int b)
 ConsensusField::ConsensusField(const string & cons,
                                const string & cstatus,
                                const string & consqual,
+                               const vector<int> & ugpos,
                                AlignmentInfo * ai,
                                int & gindex,
                                QWidget * parent,
@@ -28,6 +29,7 @@ ConsensusField::ConsensusField(const string & cons,
     m_consensus(cons),
     m_cstatus(cstatus),
     m_consqual(consqual),
+    m_ugpos(ugpos),
     m_alignment(ai),
     m_gindex(gindex)
 {
@@ -45,6 +47,7 @@ ConsensusField::ConsensusField(const string & cons,
   m_rangestart = -1;
   m_rangeend = -1;
   m_displayQV = false;
+  m_showUngapped = true;
 }
 
 void ConsensusField::setFontSize(int fontsize)
@@ -197,7 +200,12 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
     p.setPen(Qt::black);
 
+
     int n = shifted%10;
+
+    if (m_showUngapped) { n = m_ugpos[shifted] % 10; }
+
+
     int scaledfont = (int)max((int)(m_fontsize*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
 
@@ -211,9 +219,16 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     }
 
     // ticks and labels
-    if (n==0 && m_consensus[gindex] != '*')
+    if (n==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
     {
-      s = QString::number(m_alignment->getContigPos(gindex));
+      if (m_showUngapped)
+      {
+        s = QString::number(m_ugpos[gindex]);
+      }
+      else
+      {
+        s = QString::number(m_alignment->getContigPos(gindex));
+      }
 
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
                  xcoord+m_fontsize/2, m_lineoffset+2);
@@ -222,7 +237,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
                  100, m_fontsize*2, 
                  Qt::AlignHCenter | Qt::AlignCenter, s);
     }
-    else if (n==5 && m_consensus[gindex] != '*')
+    else if (n==5 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
     {
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
                  xcoord+m_fontsize/2, m_lineoffset+2);
@@ -271,6 +286,12 @@ void ConsensusField::toggleShowIndicator(bool show)
 void ConsensusField::toggleShowConsQV(bool show)
 {
   m_displayQV = show;
+  update();
+}
+
+void ConsensusField::toggleShowUngapped(bool use)
+{
+  m_showUngapped = use;
   update();
 }
 

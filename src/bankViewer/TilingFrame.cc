@@ -58,7 +58,6 @@ TilingFrame::TilingFrame(DataStore * datastore,
   toggleDisplayAllChromo(false);
   m_nextDiscrepancyBuffer = 10;
 
-  resize(500, 100);
   m_sv = new QScrollView(this, "tilingscroll");
   m_sv->setHScrollBarMode(QScrollView::AlwaysOff);
   
@@ -71,13 +70,13 @@ TilingFrame::TilingFrame(DataStore * datastore,
                                   m_fontsize,
                                   m_sv->viewport(),
                                   "tiling" );
-
   m_sv->addChild(m_tilingfield);
   m_sv->setPaletteBackgroundColor(UIElements::color_tiling);
 
   m_consfield = new ConsensusField(m_consensus, 
                                    m_cstatus, 
                                    m_consqual, 
+                                   m_ugpos,
                                    m_alignment,
                                    m_gindex, 
                                    this, 
@@ -96,6 +95,9 @@ TilingFrame::TilingFrame(DataStore * datastore,
 
   connect(m_consfield,   SIGNAL(sortColumns(int)),
           this,          SLOT(sortColumns(int)));
+
+  connect(this,          SIGNAL(toggleShowUngapped(bool)),
+          m_consfield,   SLOT(toggleShowUngapped(bool)));
 
   connect(this,        SIGNAL(toggleDisplayQV(bool)),
           m_tilingfield, SLOT(toggleDisplayQV(bool)));
@@ -183,24 +185,49 @@ void TilingFrame::setContigId(int contigId)
       m_consensus = m_datastore->m_contig.getSeqString();
       m_consqual = m_datastore->m_contig.getQualString();
 
+      int l = m_consensus.size();
+
       m_cstatus.erase();
-      m_cstatus.resize(m_consensus.size(), ' ');
+      m_cstatus.resize(l, ' ');
       m_renderedSeqs.clear();
+
+      int i = 0;
+      m_ugpos.resize(l);
+      while (i < l && m_consensus[i] == '-')
+      {
+        m_ugpos[i] = 0;
+        i++;
+      }
+
+      if (i < l)
+      {
+        m_ugpos[i] = 1;
+
+        for (i++; i < l; i++)
+        {
+          int last = m_ugpos[i-1];
+          if (m_consensus[i] == '-') { m_ugpos[i] = last; }
+          else                       { m_ugpos[i] = last+1; }
+        }
+      }
 
       for (unsigned int i = 0; i < m_alignment->m_gaps.size(); i++)
       {
         m_consensus.insert(i+m_alignment->m_gaps[i], 1, '*');
         m_consqual.insert (i+m_alignment->m_gaps[i], 1, '*');
         m_cstatus.insert  (i+m_alignment->m_gaps[i], 1, '*');
+        //m_ugpos.insert    (i+m_alignment->m_gaps[i], 1, -1); TODO
       }
 
       m_consensus.insert((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
       m_cstatus.insert  ((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
       m_consqual.insert ((unsigned) 0,(unsigned) m_alignment->m_startshift, '*');
+      // m_ugpos.insert    ((unsigned) 0,(unsigned) m_alignment->m_startshift, -1); TODO
 
       m_consensus.append(m_alignment->m_endshift, '*');
       m_cstatus.append  (m_alignment->m_endshift, '*');
       m_consqual.append (m_alignment->m_endshift, '*');
+      //m_ugpos.append    (m_alignment->m_endshift, -1); // TODO
 
       sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
 
@@ -208,7 +235,7 @@ void TilingFrame::setContigId(int contigId)
 
       m_consfield->setHighlightRange(-1,-1);
       setGindex(0);
-      emit setGindexRange(0, (int)m_consensus.size()-1);
+      emit setGindexRange(0, l-1);
     }
     catch (Exception_t & e)
     {

@@ -47,7 +47,7 @@ TilingField::TilingField(DataStore * datastore,
 {
 
   m_datastore = datastore;
-  m_width=600;
+  m_width=100;
   m_height=0;
   m_stabletiling = 0;
   m_highlightdiscrepancy = 0;
@@ -69,6 +69,9 @@ TilingField::TilingField(DataStore * datastore,
   m_clickstate = 0;
 
   setMinimumSize(m_width, m_height);
+
+  m_width=1000;
+  resize(m_width, 100);
   setPalette(QPalette(UIElements::color_tiling));
   setWFlags(Qt::WRepaintNoErase);
 }

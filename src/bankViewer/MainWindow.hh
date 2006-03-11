@@ -24,6 +24,7 @@ class LibraryPicker;
 class ChromoPicker;
 class InsertWindow;
 class CGraphWindow;
+class QLabel;
 
 
 
@@ -88,6 +89,7 @@ public slots:
   void toggleDisplayQV();
   void toggleShowConsQV();
   void togglePolymorphismView();
+  void toggleUngapped();
 
   void fontIncrease();
   void fontDecrease();
@@ -104,6 +106,9 @@ public slots:
 
   void findNext();
   void findPrev();
+
+  void updateGSpin(int gindex);
+  void loadGSpin(int pos);
 
 
 signals:
@@ -126,6 +131,7 @@ signals:
   void toggleDisplayAllChromo(bool);
   void togglePolymorphismView(bool);
   void toggleQVColoring(bool);
+  void toggleShowUngapped(bool);
   void setFontSize(int);
 
   void advanceNextDiscrepancy();
@@ -148,6 +154,7 @@ private:
 
   QPopupMenu * m_options;
   QLineEdit * m_searchedit;
+  QLabel * m_offsetlabel;
 
   int m_posid;
   int m_qvid;
@@ -162,6 +169,7 @@ private:
   int m_snpcoloringid;
   int m_polyid;
   int m_qvcolorid;
+  int m_ungappedid;
 
   int m_gindex;
   DataStore m_datastore;

@@ -265,6 +265,13 @@ int DataStore::setContigId(int id)
       m_scaffoldId = lookupScaffoldId(id);
       m_contigId = id;
       m_loaded = true;
+      m_contig_gaps.clear();
+      string cons = m_contig.getSeqString();
+      int l = m_contig.getLength();
+      for (int i = 0; i < l; i++)
+      {
+        if (cons[i] == '-') { m_contig_gaps.push_back(i); }
+      }
     }
   }
   catch (Exception_t & e)
@@ -622,6 +629,41 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
          << " happy: " << happycount
          << " unhappy: " << unhappycount << endl;
   }
+}
+
+int DataStore::gapped2ungapped(int gindex)
+{
+  int l = m_contig_gaps.size();
+
+  Pos_t retval = gindex;
+
+  int i = 0;
+  while (i < l && m_contig_gaps[i] <= gindex)
+  {
+    retval--;
+    i++;
+  }
+
+  retval++;
+
+  return retval;
+}
+
+
+int DataStore::ungapped2gapped(int pos)
+{
+  int l = m_contig_gaps.size();
+
+  Pos_t retval = pos-1;
+
+  int i = 0;
+  while (i < l && m_contig_gaps[i] <= retval)
+  {
+    retval++;
+    i++;
+  }
+
+  return retval;
 }
 
 
