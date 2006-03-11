@@ -81,28 +81,44 @@ void ParseArgs (int argc, char ** argv)
 
 
 
+vector<Pos_t> consensus_gaps;
 
-
-
-
-
-Pos_t getUngappedPos(const string & str, Pos_t offset)
+void indexConsensusGaps(const string & cons)
 {
-  Pos_t retval = 1;
+  consensus_gaps.clear();
 
-  for (Pos_t gindex = 0; gindex < offset; gindex++)
+  int l = cons.length();
+  
+  for (int i = 0; i < l; i++)
   {
-    if (str[gindex] != '-')
-    {
-      retval++;
-    }
+    if (cons[i] == '-') { consensus_gaps.push_back(i); }
   }
+}
+
+
+Pos_t getUngappedPosFast(const string & str, Pos_t offset)
+{
+  int l = consensus_gaps.size();
+
+  Pos_t retval = offset;
+
+  int i = 0;
+  while (i < l && consensus_gaps[i] <= offset)
+  {
+    retval--;
+    i++;
+  }
+
+  retval++;
 
   return retval;
 }
 
+
+
 void printContig(Contig_t & contig, Bank_t & read_bank)
 {
+
   Read_t read; 
   std::vector<Tile_t> & tiling = contig.getReadTiling();
   sort(tiling.begin(), tiling.end(), TileOrderCmp());
@@ -139,6 +155,7 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
     }
 
     const string cons = contig.getSeqString();
+    indexConsensusGaps(cons);
 
     cout << " "  << tiling.size()
          << " "  << cons.length()
@@ -180,8 +197,8 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
            << ((rc) ? ") [RC] " : ") [] ") << gappedLen
            << " bases, 00000000 checksum."
            << " {" << clr.begin << " " << clr.end << "}"
-           << " <" << getUngappedPos(cons, i->offset)
-           << " "  << getUngappedPos(cons, i->offset + gappedLen - 1)
+           << " <" << getUngappedPosFast(cons, i->offset)
+           << " "  << getUngappedPosFast(cons, i->offset + gappedLen - 1)
            << ">"  << endl;
 
       if (!OPT_LayoutOnly)
