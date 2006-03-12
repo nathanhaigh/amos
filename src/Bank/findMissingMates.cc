@@ -20,6 +20,7 @@ using namespace AMOS;
 string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_UseScaffolds = false;
+bool   OPT_MissingOnly = false;
 typedef map <ID_t, ID_t> IDMap;
 
 ID_t   contigiid = AMOS::NULL_ID;
@@ -202,6 +203,9 @@ int main (int argc, char ** argv)
     }
 
     vector <Tile_t> rtiling;
+    map<ID_t, Tile_t *> tilelookup;
+    map<ID_t, Tile_t *>::iterator tli;
+    vector<Tile_t>::iterator ri;
 
     IDMap::iterator si = contigscafflookup.find(contigiid);
     if (si == contigscafflookup.end())
@@ -248,7 +252,6 @@ int main (int argc, char ** argv)
         }
 
         vector<Tile_t> & crtiling = contig.getReadTiling();
-        vector<Tile_t>::const_iterator ri;
         for (ri = crtiling.begin(); ri != crtiling.end(); ri++)
         {
           Tile_t mappedTile;
@@ -272,6 +275,12 @@ int main (int argc, char ** argv)
       cerr << rtiling.size() << " reads mapped" << endl;
     }
 
+    tilelookup.clear();
+    for (ri = rtiling.begin(); ri != rtiling.end(); ri++)
+    {
+      tilelookup.insert(make_pair(ri->source, &(*ri)));
+    }
+
     if (rangeEnd < rangeStart)
     {
       int t = rangeEnd;
@@ -283,7 +292,6 @@ int main (int argc, char ** argv)
 
     cerr << "Finding reads that overlap [" << rangeStart << "," << rangeEnd << "]" << endl;
     int count = 0;
-    vector<Tile_t>::const_iterator ri;
     for (ri = rtiling.begin(); ri != rtiling.end(); ri++)
     {
       bool hasovl = false;
@@ -306,7 +314,7 @@ int main (int argc, char ** argv)
       }
       else if (hasovl)
       {
-        cout << red_bank.lookupEID(ri->source) << endl;
+        if (!OPT_MissingOnly) { cout << red_bank.lookupEID(ri->source) << endl; }
       }
 
       IDMap::const_iterator mi = mates.find(ri->source);
@@ -358,7 +366,15 @@ int main (int argc, char ** argv)
             }
             else if (hasovl)
             {
-              cout <<  red_bank.lookupEID(mi->second) << endl;
+              if (OPT_MissingOnly)
+              {
+                tli = tilelookup.find(mi->second);
+              }
+
+              if (!OPT_MissingOnly || tli == tilelookup.end())
+              {
+                cout <<  red_bank.lookupEID(mi->second) << endl;
+              }
             }
           }
           else if (verbosemode)
@@ -407,7 +423,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvVE:I:x:y:S")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvVE:I:x:y:SM")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -415,24 +431,17 @@ void ParseArgs (int argc, char ** argv)
         exit (EXIT_SUCCESS);
         break;
 
-      case 's':
-	OPT_BankSpy = true;
-	break;
-
-      case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
-
+      case 's': OPT_BankSpy = true; break; 
+      case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break; 
       case 'E': contigeid  = optarg; break;
       case 'I': contigiid  = atoi(optarg); break;
       case 'x': rangeStart = atoi(optarg); break;
       case 'y': rangeEnd   = atoi(optarg); break;
       case 'V': verbosemode = true; break;
       case 'S': OPT_UseScaffolds = true; break;
+      case 'M': OPT_MissingOnly = true; break;
 
-      default:
-        errflg ++;
+      default: errflg ++;
       }
 
   if (errflg > 0 || optind != argc - 1)
@@ -465,6 +474,7 @@ void PrintHelp (const char * s)
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << "-S            Looks for mates by virtue of the scaffold\n"
+    << "-M            Only display missing mates (not reads already present in range)\n"
     << "-E contigeid  Contig eid of interest\n"
     << "-I contigiid  Contig iid of interest\n"
     << "-x start      Start of range\n"
