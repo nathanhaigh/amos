@@ -13,6 +13,22 @@ int main (int argc, char ** argv)
   if (argc != 3)
   {
     cerr << "Usage: loadFeatures bankname featfile" << endl;
+    cerr << endl
+         << "Format of featfile is:" << endl
+         << "contigeid type end5 end3 [comment]" << endl
+         << endl
+         << "contigeid is the contig which has the feature" << endl
+         << "type is the single character feature type. "<< endl
+         << "end5 and end3 are the coordinates of the feature" << endl
+         << "[comment] is an optional comment describing the feature" << endl
+         << endl
+         << "Standard types are: " << endl
+         << "(B)reakpoint" << endl
+         << "(C)overage" << endl
+         << "(O)rf" << endl
+         << "(S)NP" << endl
+         << "(U)nitig" << endl;
+
     return EXIT_FAILURE;
   }
 
