@@ -24,12 +24,13 @@ using namespace AMOS;
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
 int FRAGMENTSTRLEN = 3;
-int m_verbose = 1;
+int m_verbose = 0;
 
 DataStore * m_datastore;
 int m_connectMates = 1;
 typedef std::vector<Insert *> InsertList_t;
 InsertList_t m_inserts;
+map <string, InsertStats *> fragstats;
 
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
@@ -62,6 +63,50 @@ void PrintHelp (const char * s);
 //!
 void PrintUsage (const char * s);
 
+void processInserts()
+{
+  map <string, InsertStats *>::iterator fi;
+  vector<Insert *>::iterator i;
+  
+  for (i =  m_inserts.begin();
+       i != m_inserts.end();
+       i++)
+  {
+    if ((*i)->m_active == 2)
+    {
+      string fragment = m_datastore->read_bank.lookupEID((*i)->m_aid).substr(0,FRAGMENTSTRLEN);
+
+      if (m_verbose)
+      {
+
+        ID_t fragid = m_datastore->m_readfraglookup.find((*i)->m_aid)->second;
+
+        cout << (*i)->m_libid << "\t"
+             << fragid << "\t"
+             << fragment << "\t"
+             << m_datastore->read_bank.lookupEID((*i)->m_aid) << "\t" 
+             << m_datastore->read_bank.lookupEID((*i)->m_bid) << "\t"
+             << (*i)->m_actual << endl;
+      }
+
+      fi = fragstats.find(fragment);
+      if (fi == fragstats.end())
+      {
+        char buffer[16];
+        sprintf(buffer, "%d", (*i)->m_libid);
+        fi = fragstats.insert(make_pair(fragment, new InsertStats(buffer))).first;
+      }
+
+      fi->second->addSize((*i)->m_actual);
+    }
+
+    delete (*i);
+  }
+
+  m_inserts.clear();
+}
+
+
 
 
 //========================================================= Function Defs ====//
@@ -86,96 +131,72 @@ int main (int argc, char ** argv)
     m_datastore->openBank(OPT_BankName);
 
 
-    map <string, InsertStats *> fragstats;
     map <string, InsertStats *>::iterator fi;
 
-
-    cerr << "Processing scaffolds... ";
-    int scaffcount = 0;
-    m_datastore->scaffold_bank.seekg(1);
-    while (m_datastore->scaffold_bank >> scaff)
+    if (m_datastore->scaffold_bank.isOpen())
     {
-      scaffcount++;
-      vector <Tile_t> rtiling;
-      SeqTileMap_t seqtileLookup;
-
-      vector<Tile_t> & ctiling = scaff.getContigTiling();
-      vector<Tile_t>::const_iterator ci;
-
-      cerr << "Mapping reads to scaffold " << scaff.getEID() << "... ";
-
-      for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
+      cerr << "Processing scaffolds... ";
+      m_datastore->scaffold_bank.seekg(1);
+      while (m_datastore->scaffold_bank >> scaff)
       {
-        m_datastore->fetchContig(ci->source, contig);
+        vector <Tile_t> rtiling;
+        SeqTileMap_t seqtileLookup;
 
-        int clen = contig.getLength();
+        vector<Tile_t> & ctiling = scaff.getContigTiling();
+        vector<Tile_t>::const_iterator ci;
 
-        vector<Tile_t> & crtiling = contig.getReadTiling();
-        vector<Tile_t>::const_iterator ri;
-        for (ri = crtiling.begin(); ri != crtiling.end(); ri++)
+        cerr << "Mapping reads to scaffold " << scaff.getEID() << "... ";
+
+        for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
         {
-          Tile_t mappedTile;
-          mappedTile.source = ri->source;
-          mappedTile.gaps   = ri->gaps;
-          mappedTile.range  = ri->range;
+          m_datastore->fetchContig(ci->source, contig);
 
-          int offset = ri->offset;
-          if (ci->range.isReverse())
+          int clen = contig.getLength();
+
+          vector<Tile_t> & crtiling = contig.getReadTiling();
+          vector<Tile_t>::const_iterator ri;
+          for (ri = crtiling.begin(); ri != crtiling.end(); ri++)
           {
-            mappedTile.range.swap();
-            offset = clen - (offset + ri->range.getLength() + ri->gaps.size());
+            Tile_t mappedTile;
+            mappedTile.source = ri->source;
+            mappedTile.gaps   = ri->gaps;
+            mappedTile.range  = ri->range;
+
+            int offset = ri->offset;
+            if (ci->range.isReverse())
+            {
+              mappedTile.range.swap();
+              offset = clen - (offset + ri->range.getLength() + ri->gaps.size());
+            }
+
+            mappedTile.offset = ci->offset + offset;
+
+            rtiling.push_back(mappedTile);
           }
-
-          mappedTile.offset = ci->offset + offset;
-
-          rtiling.push_back(mappedTile);
-        }
-      }
-
-      cerr << rtiling.size() << " reads mapped" << endl;
-
-      m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
-
-      vector<Insert *>::iterator i;
-
-      
-      for (i =  m_inserts.begin();
-           i != m_inserts.end();
-           i++)
-      {
-        if ((*i)->m_active == 2)
-        {
-          string fragment = m_datastore->read_bank.lookupEID((*i)->m_aid).substr(0,FRAGMENTSTRLEN);
-
-          if (m_verbose)
-          {
-            cout << (*i)->m_libid << "\t"
-                 << fragment << "\t"
-                 << m_datastore->read_bank.lookupEID((*i)->m_aid) << "\t" 
-                 << m_datastore->read_bank.lookupEID((*i)->m_bid) << "\t"
-                 << (*i)->m_actual << endl;
-          }
-
-          fi = fragstats.find(fragment);
-          if (fi == fragstats.end())
-          {
-            fi = fragstats.insert(make_pair(fragment, new InsertStats(""))).first;
-          }
-
-          fi->second->addSize((*i)->m_actual);
         }
 
-        delete (*i);
-      }
+        cerr << rtiling.size() << " reads mapped" << endl;
 
-      m_inserts.clear();
+        m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
+        processInserts();
+      }
+    }
+    else
+    {
+      m_datastore->contig_bank.seekg(1);
+      while (m_datastore->contig_bank >> contig)
+      {
+        m_datastore->calculateInserts(contig.getReadTiling(), m_inserts, m_connectMates, 1);
+        processInserts();
+      }
     }
 
     cout << endl;
     cout << "SubLibrary Summaries" << endl;
     for (fi = fragstats.begin(); fi != fragstats.end(); fi++)
     {
-      cout << fi->first << "\t"
+      cout << fi->second->m_label << "\t"
+           << fi->first << "\t"
            << fi->second->count() << "\t"
            << fi->second->mean() << "\t"
            << fi->second->stdev() << endl;
@@ -202,7 +223,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvf:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsdvf:")) != EOF) )
     switch (ch)
       {
       case 'h': PrintHelp (argv[0]); exit (EXIT_SUCCESS); break;
@@ -212,6 +233,8 @@ void ParseArgs (int argc, char ** argv)
       case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
 
       case 'f': FRAGMENTSTRLEN = atoi(optarg); break;
+
+      case 'd': m_verbose = 1; break;
 
 
       default:
@@ -241,10 +264,8 @@ void PrintHelp (const char * s)
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << "-f len        Number of characters of seqname to use as sublibrary (default=3)\n"
+    << "-d            Show details for each insert\n"
     << endl;
-  cerr
-    << "Finds all reads that should overlap a given contig range. Includes reads that\n"
-    << "should be present by the virtue of their mate and the scaffold\n\n";
   return;
 }
 
