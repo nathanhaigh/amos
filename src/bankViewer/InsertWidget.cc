@@ -354,16 +354,19 @@ void InsertWidget::initializeTiling()
     m_datastore->fetchScaffold(m_datastore->m_scaffoldId, scaffold);
 
     m_tilingwidth = scaffold.getSpan();
-
-    Feature_t feat;
-    m_datastore->feat_bank.seekg(1);
-
-    while (m_datastore->feat_bank >> feat)
+    
+    if (m_datastore->feat_bank.isOpen())
     {
-      if (feat.getSource().second == Scaffold_t::NCODE &&
-          feat.getSource().first == scaffold.getIID())
+      Feature_t feat;
+      m_datastore->feat_bank.seekg(1);
+
+      while (m_datastore->feat_bank >> feat)
       {
-        m_features.push_back(feat);
+        if (feat.getSource().second == Scaffold_t::NCODE &&
+            feat.getSource().first == scaffold.getIID())
+        {
+          m_features.push_back(feat);
+        }
       }
     }
 
