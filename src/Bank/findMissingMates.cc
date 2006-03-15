@@ -21,6 +21,7 @@ string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_UseScaffolds = false;
 bool   OPT_MissingOnly = false;
+bool   OPT_USEMATES = true;
 typedef map <ID_t, ID_t> IDMap;
 
 ID_t   contigiid = AMOS::NULL_ID;
@@ -316,80 +317,83 @@ int main (int argc, char ** argv)
       {
         if (!OPT_MissingOnly) { cout << red_bank.lookupEID(ri->source) << endl; }
       }
-
-      IDMap::const_iterator mi = mates.find(ri->source);
-      if (mi != mates.end())
+      
+      if (OPT_USEMATES)
       {
-        IDMap::const_iterator rli = readliblookup.find(ri->source);
-        if (rli != readliblookup.end())
+        IDMap::const_iterator mi = mates.find(ri->source);
+        if (mi != mates.end())
         {
-          map<ID_t, Distribution_t>::const_iterator li = libmap.find(rli->second);
-          if (li != libmap.end())
+          IDMap::const_iterator rli = readliblookup.find(ri->source);
+          if (rli != readliblookup.end())
           {
-            int projectedStart;
-            int projectedEnd;
-
-            int NUMSD = 3;
-            int readlen = readlens[mi->second];
-
-            if (ri->range.isReverse())
+            map<ID_t, Distribution_t>::const_iterator li = libmap.find(rli->second);
+            if (li != libmap.end())
             {
-              int roffset = ri->offset + ri->range.getLength() + ri->gaps.size() - 1;
-              projectedStart = roffset - li->second.mean - NUMSD*li->second.sd;
-              projectedEnd   = roffset - li->second.mean + NUMSD*li->second.sd + readlen;
-            }
-            else
-            {
-              projectedStart = ri->offset + li->second.mean - NUMSD*li->second.sd - readlen;
-              projectedEnd   = ri->offset + li->second.mean + NUMSD*li->second.sd;
-            }
+              int projectedStart;
+              int projectedEnd;
 
-            hasovl = false;
+              int NUMSD = 3;
+              int readlen = readlens[mi->second];
 
-            if (hasOverlap(rangeStart, rangeEnd, 
-                           projectedStart, projectedEnd - projectedStart + 1,
-                           10000000))
-            {
-              hasovl = true;
-            }
-
-            if (verbosemode)
-            {
-              if (hasovl) { cout << "*"; }
-
-              cout << "mate: " << mi->second 
-                   << "\t" << red_bank.lookupEID(mi->second) 
-                   << "\t" << projectedStart 
-                   << "\t" << projectedEnd 
-                   << "\t" << (ri->range.isReverse() ? "F" : "R") 
-                   << endl;
-            }
-            else if (hasovl)
-            {
-              if (OPT_MissingOnly)
+              if (ri->range.isReverse())
               {
-                tli = tilelookup.find(mi->second);
+                int roffset = ri->offset + ri->range.getLength() + ri->gaps.size() - 1;
+                projectedStart = roffset - li->second.mean - NUMSD*li->second.sd;
+                projectedEnd   = roffset - li->second.mean + NUMSD*li->second.sd + readlen;
+              }
+              else
+              {
+                projectedStart = ri->offset + li->second.mean - NUMSD*li->second.sd - readlen;
+                projectedEnd   = ri->offset + li->second.mean + NUMSD*li->second.sd;
               }
 
-              if (!OPT_MissingOnly || tli == tilelookup.end())
+              hasovl = false;
+
+              if (hasOverlap(rangeStart, rangeEnd, 
+                             projectedStart, projectedEnd - projectedStart + 1,
+                             10000000))
               {
-                cout <<  red_bank.lookupEID(mi->second) << endl;
+                hasovl = true;
               }
+
+              if (verbosemode)
+              {
+                if (hasovl) { cout << "*"; }
+
+                cout << "mate: " << mi->second 
+                     << "\t" << red_bank.lookupEID(mi->second) 
+                     << "\t" << projectedStart 
+                     << "\t" << projectedEnd 
+                     << "\t" << (ri->range.isReverse() ? "F" : "R") 
+                     << endl;
+              }
+              else if (hasovl)
+              {
+                if (OPT_MissingOnly)
+                {
+                  tli = tilelookup.find(mi->second);
+                }
+
+                if (!OPT_MissingOnly || tli == tilelookup.end())
+                {
+                  cout <<  red_bank.lookupEID(mi->second) << endl;
+                }
+              }
+            }
+            else if (verbosemode)
+            {
+              cout << "no dist" << endl;
             }
           }
           else if (verbosemode)
           {
-            cout << "no dist" << endl;
+            cout << "no lib" << endl;
           }
         }
         else if (verbosemode)
         {
-          cout << "no lib" << endl;
+          cout << "no mate" << endl;
         }
-      }
-      else if (verbosemode)
-      {
-        cout << "no mate" << endl;
       }
     }
 
@@ -423,7 +427,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvVE:I:x:y:SM")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvVE:I:x:y:SMm")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -440,6 +444,7 @@ void ParseArgs (int argc, char ** argv)
       case 'V': verbosemode = true; break;
       case 'S': OPT_UseScaffolds = true; break;
       case 'M': OPT_MissingOnly = true; break;
+      case 'm' :OPT_USEMATES  = false; break;
 
       default: errflg ++;
       }
@@ -475,6 +480,7 @@ void PrintHelp (const char * s)
     << "-v            Display the compatible bank version\n"
     << "-S            Looks for mates by virtue of the scaffold\n"
     << "-M            Only display missing mates (not reads already present in range)\n"
+    << "-m            Don't use mate information, just read tiling\n"
     << "-E contigeid  Contig eid of interest\n"
     << "-I contigiid  Contig iid of interest\n"
     << "-x start      Start of range\n"
