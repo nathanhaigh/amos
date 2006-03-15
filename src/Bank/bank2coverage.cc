@@ -41,21 +41,6 @@ inline bool hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
   return retval;
 }
 
-Pos_t getUngappedPos(const string & str, Pos_t offset)
-{
-  Pos_t retval = 1;
-
-  for (Pos_t gindex = 0; gindex < offset; gindex++)
-  {
-    if (str[gindex] != '-')
-    {
-      retval++;
-    }
-  }
-
-  return retval;
-}
-
 class Render_t
 {
 public:
@@ -217,7 +202,7 @@ int main (int argc, char ** argv)
       s.rc = new char [dcov];
 
       Pos_t gindex, index;
-      for (gindex = grangeStart, index = getUngappedPos(consensus, grangeStart); 
+      for (gindex = grangeStart, index = contig.gap2ungap(grangeStart); 
            gindex <= grangeEnd; 
            gindex++)
       {

@@ -79,43 +79,6 @@ void ParseArgs (int argc, char ** argv)
 }
 
 
-
-
-vector<Pos_t> consensus_gaps;
-
-void indexConsensusGaps(const string & cons)
-{
-  consensus_gaps.clear();
-
-  int l = cons.length();
-  
-  for (int i = 0; i < l; i++)
-  {
-    if (cons[i] == '-') { consensus_gaps.push_back(i); }
-  }
-}
-
-
-Pos_t getUngappedPosFast(const string & str, Pos_t offset)
-{
-  int l = consensus_gaps.size();
-
-  Pos_t retval = offset;
-
-  int i = 0;
-  while (i < l && consensus_gaps[i] <= offset)
-  {
-    retval--;
-    i++;
-  }
-
-  retval++;
-
-  return retval;
-}
-
-
-
 void printContig(Contig_t & contig, Bank_t & read_bank)
 {
 
@@ -197,8 +160,8 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
            << ((rc) ? ") [RC] " : ") [] ") << gappedLen
            << " bases, 00000000 checksum."
            << " {" << clr.begin << " " << clr.end << "}"
-           << " <" << getUngappedPosFast(cons, i->offset)
-           << " "  << getUngappedPosFast(cons, i->offset + gappedLen - 1)
+           << " <" << contig.gap2ungap(i->offset)
+           << " "  << contig.gap2ungap(i->getRightOffset())
            << ">"  << endl;
 
       if (!OPT_LayoutOnly)
