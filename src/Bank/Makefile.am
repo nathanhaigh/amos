@@ -43,7 +43,9 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/CelMsg \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/Slice \
-	-I$(top_srcdir)/src/AMOS
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_srcdir)/src/Foundation
+
 
 
 ##-- bank-combine
@@ -181,6 +183,7 @@ dumpFeatures_SOURCES = \
 
 ##-- loadFeatures
 loadFeatures_LDADD = \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
 loadFeatures_SOURCES = \

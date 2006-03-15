@@ -1,6 +1,8 @@
 #include "foundation_AMOS.hh"
 #include "amp.hh"
 #include "fasta.hh"
+#include "AMOS_Foundation.hh"
+
 
 using namespace AMOS;
 using namespace std;
@@ -10,41 +12,72 @@ int LOAD = 1;
 
 int main (int argc, char ** argv)
 {
-  if (argc != 3)
-  {
-    cerr << "Usage: loadFeatures bankname featfile" << endl;
-    cerr << endl
-         << "Format of featfile is:" << endl
-         << "contigeid type end5 end3 [comment]" << endl
-         << endl
-         << "contigeid is the contig which has the feature" << endl
-         << "type is the single character feature type. "<< endl
-         << "end5 and end3 are the coordinates of the feature" << endl
-         << "[comment] is an optional comment describing the feature" << endl
-         << endl
-         << "Standard types are: " << endl
-         << "(B)reakpoint" << endl
-         << "(C)overage" << endl
-         << "(O)rf" << endl
-         << "(S)NP" << endl
-         << "(U)nitig" << endl;
+  AMOS_Foundation * tf = NULL;
+  int retval = 0;
 
-    return EXIT_FAILURE;
-  }
-
-  Bank_t contig_bank(Contig_t::NCODE);
-  Bank_t feat_bank(Feature_t::NCODE);
-  ifstream features;
-
-  string bank_name = argv[1];
-  string feat_file = argv[2];
-
-  cerr << "Processing " << bank_name << " at " << Date() << endl;
-
-  Range_t range;
+  Contig_t contig;
+  ID_t contigloaded = 0;
 
   try
   {
+    string version =  "Version 1.0";
+    string dependencies = "";
+    string helptext = 
+"Load Features into a bank\n"
+"\n"
+"   Usage: loadFeatures [options] bankname featfile\n"
+"\n"
+"Format of featfile is:\n"
+"contigeid type end5 end3 [comment]\n"
+"\n"
+"contigeid is the contig which has the feature\n"
+"type is the single character feature type. \n"
+"end5 and end3 are the coordinates of the feature\n"
+"[comment] is an optional comment string describing the feature\n"
+"\n"
+"Standard types are: \n"
+" (B)reakpoint\n"
+" (C)overage\n"
+" (O)rf\n"
+" (S)NP\n"
+" (U)nitig\n" 
+"\n"
+"Options\n"
+"   -u Coordinates are ungapped\n"
+"   -i Contigid is the IID\n"
+"\n";
+ 
+    int CONVERTUNGAPPED = 0;
+    int USEIID = 0;
+
+    // Instantiate a new TIGR_Foundation object
+    tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
+    tf->disableOptionHelp();
+    tf->getOptions()->addOptionResult("u", &CONVERTUNGAPPED,  "Left");
+    tf->getOptions()->addOptionResult("i", &USEIID,  "Left");
+
+    tf->handleStandardOptions();
+
+    list<string> argvv = tf->getOptions()->getAllOtherData();
+
+    if (argvv.size() != 2)
+    {
+      cerr << "Usage: loadFeatures [options] bankname featfile" << endl;
+      return 0;
+    }
+
+
+    Bank_t contig_bank(Contig_t::NCODE);
+    Bank_t feat_bank(Feature_t::NCODE);
+    ifstream features;
+
+    string bank_name = argvv.front(); argvv.pop_front();
+    string feat_file = argvv.front(); argvv.pop_front();
+
+    cerr << "Loading features from " << feat_file << " into " << bank_name << endl;
+
+    Range_t range;
+
     features.open(feat_file.c_str());
 
     if (!features)
@@ -105,10 +138,37 @@ int main (int argc, char ** argv)
 
       if (LOAD)
       {
-        ID_t iid = contig_bank.lookupIID(eid);
+        ID_t iid;
+
+        if (USEIID)
+        {
+          iid = atoi(eid.c_str());
+
+          if (!contig_bank.existsIID(iid))
+          {
+            iid = AMOS::NULL_ID;
+          }
+        }
+        else
+        {
+          iid = contig_bank.lookupIID(eid);
+        }
 
         if (iid != AMOS::NULL_ID)
         {
+          if (CONVERTUNGAPPED)
+          {
+            if (iid != contigloaded)
+            {
+              contig_bank.fetch(iid, contig);
+              contigloaded = iid;
+            }
+
+            range.begin = contig.ungap2gap(range.begin);
+            range.end   = contig.ungap2gap(range.end);
+            feat.setRange(range);
+          }
+
           feat.setSource(std::make_pair(iid, Contig_t::NCODE));
           feat_bank.append(feat);
           featurecount++;
@@ -116,10 +176,9 @@ int main (int argc, char ** argv)
         }
         else
         {
-          cerr << "WARNING: Contig eid " << eid << " not found, skipping" << endl;
+          cerr << "WARNING: Contig " << eid << " not found, skipping" << endl;
         }
       }
-
     }
 
     cerr << endl
@@ -133,7 +192,25 @@ int main (int argc, char ** argv)
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     return EXIT_FAILURE;
   }
+  catch (const ExitProgramNormally & e)
+  {
+    retval = 0;
+  }
+  catch (const amosException & e)
+  {
+    cerr << e << endl;
+    retval = 100;
+  }
 
-  cerr << "End: " << Date() << endl;
-  return EXIT_SUCCESS;
+  try
+  {
+    if (tf) delete tf;
+  }
+  catch (const amosException & e)
+  {
+    cerr << "amosException while deleting tf: " << e << endl;
+    retval = 105;
+  }
+
+  return retval;;
 }
