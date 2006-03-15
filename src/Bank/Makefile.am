@@ -4,33 +4,34 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
+	bank2contig  \
+	bank2coverage \
+	bank2fasta \
+    bank2scaff \
 	bank-clean \
     bank-combine \
 	bank-mapping \
 	bank-report \
 	bank-transact \
+    bank-tutorial \
+    dumpFeatures \
 	dumpmates \
-	findMissingMates \
-	select-reads \
 	dumpreads \
+	extractContig \
+	findMissingMates \
 	grow-readbank \
     listReadPlacedStatus \
 	load-overlaps \
-	bank2contig  \
-	bank2coverage \
-    bank2scaff    \
-    normalizeScaffold \
-    revScaffold \
-	updateBankPositions \
-	extractContig \
-	bank2fasta \
-	updateClrRanges \
-	updateLibSizes \
-    dumpFeatures \
     loadFeatures \
-    bank-tutorial \
+    normalizeScaffold \
     renameReads \
-    simplifyLibraries
+    resetFragLibrary \
+    revScaffold \
+	select-reads \
+    simplifyLibraries \
+	updateBankPositions \
+	updateClrRanges \
+	updateLibSizes
 
 
 dist_bin_SCRIPTS = \
@@ -136,6 +137,13 @@ updateLibSizes_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 updateLibSizes_SOURCES = \
 	updateLibSizes.cc
+
+##-- resetFragLibrary
+resetFragLibrary_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+resetFragLibrary_SOURCES = \
+	resetFragLibrary.cc
 
 ##-- extractContig
 extractContig_LDADD = \
