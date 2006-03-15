@@ -118,7 +118,6 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
     }
 
     const string cons = contig.getSeqString();
-    indexConsensusGaps(cons);
 
     cout << " "  << tiling.size()
          << " "  << cons.length()
