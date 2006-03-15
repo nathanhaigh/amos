@@ -187,10 +187,10 @@ int main (int argc, char ** argv)
       Feature_t feat;
 
       feat_bank.open(OPT_BankName, B_READ | B_WRITE);
-      ID_t bid = feat_bank.tellg();
 
       while (feat_bank >> feat)
       {
+        ID_t bid = feat_bank.tellg()-1;
         if  (feat.getSource().second == Contig_t::NCODE)
         {
           map<ID_t, int>::iterator mi = contigFeaturesToFlip.find(feat.getSource().first);
@@ -206,8 +206,6 @@ int main (int argc, char ** argv)
 
           feat_bank.replaceByBID(bid, feat);
         }
-
-        bid = feat_bank.tellg();
       }
     }
 
