@@ -235,17 +235,19 @@ void reverseContig(AMOS::Bank_t & contig_bank,
   Contig_t contig;
   contig_bank.fetch(contigiid, contig);
   contig.reverseComplement();
-  int contiglen = contig.getLength();
   contig_bank.replace(contigiid, contig);
+
+  int contiglen = contig.getLength();
 
   try 
   {
     // try to reverse the contig in the scaffold as well
     Scaffold_t scaffold;
+    bool done = false;
 
     AMOS::IDMap_t::const_iterator ci;
     for (ci = scaffold_bank.getIDMap().begin();
-         ci;
+         ci && !done;
          ci++)
     {
       scaffold_bank.fetch(ci->iid, scaffold);
@@ -263,6 +265,8 @@ void reverseContig(AMOS::Bank_t & contig_bank,
 
           scaffold_bank.replace(scaffold.getIID(), scaffold);
           cout << "Updated scaffold i" << scaffold.getIID() << endl;
+          done = true;
+          break;
         }
       }
     }
