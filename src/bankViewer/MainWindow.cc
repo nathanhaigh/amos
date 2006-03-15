@@ -720,34 +720,32 @@ void MainWindow::togglePolymorphismView()
 
 void MainWindow::toggleUngapped()
 {
-  bool b = !m_options->isItemChecked(m_ungappedid);
-  m_options->setItemChecked(m_ungappedid, b);
+  bool ungapped = m_options->isItemChecked(m_ungappedid);
+  m_options->setItemChecked(m_ungappedid, !ungapped);
 
-  int gindex = m_gspin->value();
+  int pos = m_gspin->value();
 
-
-  if (b) 
-  { 
-    m_offsetlabel->setText("Position"); 
-    m_gspin->setRange(1, m_datastore.gapped2ungapped(m_datastore.m_contig.getLength()));
-  }
-  else   
+  if (ungapped) 
   { 
     m_offsetlabel->setText("Offset"); 
     m_gspin->setRange(0, m_datastore.m_contig.getLength());
-    gindex = m_datastore.ungapped2gapped(gindex);
+    pos = m_datastore.m_contig.ungap2gap(pos);
+  }
+  else
+  {
+    m_offsetlabel->setText("Position"); 
+    m_gspin->setRange(1, m_datastore.m_contig.gap2ungap(m_datastore.m_contig.getLength()));
   }
 
-
-  emit toggleShowUngapped(b);
-  setGindex(gindex);
+  emit toggleShowUngapped(!ungapped);
+  updateGSpin(pos);
 }
 
 void MainWindow::updateGSpin(int gindex)
 {
   if (m_options->isItemChecked(m_ungappedid))
   {
-    m_gspin->setValue(m_datastore.gapped2ungapped(gindex));
+    m_gspin->setValue(m_datastore.m_contig.gap2ungap(gindex));
   }
   else
   {
@@ -759,7 +757,7 @@ void MainWindow::loadGSpin(int pos)
 {
   if (m_options->isItemChecked(m_ungappedid))
   {
-    setGindex(m_datastore.ungapped2gapped(pos));
+    setGindex(m_datastore.m_contig.ungap2gap(pos));
   }
   else
   {

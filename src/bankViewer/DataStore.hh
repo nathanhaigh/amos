@@ -69,11 +69,6 @@ public:
 
   AMOS::Contig_t m_contig;
 
-  vector<int> m_contig_gaps;
-
-  int gapped2ungapped(int gindex);
-  int ungapped2gapped(int pos);
-
   typedef HASHMAP::hash_map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::FragmentType_t> > MateLookupMap;
   MateLookupMap m_readmatelookup;
 
