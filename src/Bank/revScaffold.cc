@@ -76,10 +76,7 @@ void ParseArgs (int argc, char ** argv)
 }
 
 
-map<ID_t, int> contigFeaturesToFlip;
-
-
-void flipScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
+void flipScaffold(Scaffold_t & scaff)
 {
   vector<Tile_t> & contigs = scaff.getContigTiling();
   vector<Tile_t>::iterator ci;
@@ -94,11 +91,6 @@ void flipScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
 
   for (ci = contigs.begin(); ci != contigs.end(); ci++)
   {
-    Contig_t contig;
-    contig_bank.fetch(ci->source, contig);
-    contig.reverseComplement();
-    contig_bank.replace(ci->source, contig);
-
     ci->offset = span - ci->getRightOffset();
     ci->range.swap();
   }
@@ -112,15 +104,12 @@ int main (int argc, char ** argv)
   ParseArgs (argc, argv);
 
   Bank_t scaff_bank(Scaffold_t::NCODE);
-  Bank_t contig_bank(Contig_t::NCODE);
-  BankStream_t feat_bank(Feature_t::NCODE);
 
   cerr << "Processing " << OPT_BankName << " at " << Date() << endl;
 
   try
   {
     scaff_bank.open(OPT_BankName, B_READ | B_WRITE);
-    contig_bank.open(OPT_BankName, B_READ | B_WRITE);
 
     Scaffold_t scaffold;
     ifstream file;
@@ -131,7 +120,7 @@ int main (int argc, char ** argv)
     if (OPT_scaffiid)
     {
       scaff_bank.fetch(OPT_scaffiid, scaffold);
-      flipScaffold(scaffold, contig_bank);
+      flipScaffold(scaffold);
       scaff_bank.replace(OPT_scaffiid, scaffold);
     }
     else if (!OPT_EIDFile.empty())
@@ -146,7 +135,7 @@ int main (int argc, char ** argv)
       while (file >> id)
       {
         scaff_bank.fetch(id, scaffold);
-        flipScaffold(scaffold, contig_bank);
+        flipScaffold(scaffold);
         scaff_bank.replace(id, scaffold);
       }
     }
@@ -162,7 +151,7 @@ int main (int argc, char ** argv)
       while (file >> id)
       {
         scaff_bank.fetch(atoi(id.c_str()), scaffold);
-        flipScaffold(scaffold, contig_bank);
+        flipScaffold(scaffold);
         scaff_bank.replace(scaffold.getIID(), scaffold);
       }
     }
@@ -171,7 +160,6 @@ int main (int argc, char ** argv)
       cerr << "No Scaffold specified!" << endl;
     }
 
-    contig_bank.close();
     scaff_bank.close();
   }
   catch (Exception_t & e)
