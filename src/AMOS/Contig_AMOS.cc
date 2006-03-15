@@ -1,4 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
+
 //! \file
 //! \author Adam M Phillippy
 //! \date 10/23/2003
@@ -19,27 +20,59 @@ using namespace std;
 const NCode_t Contig_t::NCODE = M_CONTIG;
 
 
-//----------------------------------------------------- gap2ungap --------------
-Pos_t Contig_t::gap2ungap (Pos_t gap) const
+//----------------------------------------------------- indexGaps --------------
+void Contig_t::indexGaps()
 {
+  if (gapsvalid_m) { return; }
+  gapsvalid_m = true;
+
+  gaps_m.clear();
+
+  Pos_t len = getLength();
+
+  for (Pos_t i = 0; i < len; i++)
+  {
+    if (getBase(i).first == '-')
+    {
+      gaps_m.push_back(i);
+    }
+  }
+}
+
+
+//----------------------------------------------------- gap2ungap --------------
+Pos_t Contig_t::gap2ungap (Pos_t gap)
+{
+  indexGaps();
+
+  int l = gaps_m.size();
+
   Pos_t retval = gap;
 
-  for (Pos_t i = 0; i < gap; ++ i )
-    if ( ! isalpha (getBase (i) . first) )
-      -- retval;
+  for (int i = 0; (i < l) && (gaps_m[i] <= gap); i++)
+  {
+    retval--;
+  }
+
+  retval++;
 
   return retval;
 }
 
 
 //----------------------------------------------------- ungap2gap --------------
-Size_t Contig_t::ungap2gap (Pos_t ungap) const
+Size_t Contig_t::ungap2gap (Pos_t ungap)
 {
-  Pos_t retval = ungap;
+  indexGaps();
 
-  for (Pos_t i = 0; i <= retval; ++ i )
-    if ( ! isalpha (getBase (i) . first) )
-      ++ retval;
+  int l = gaps_m.size();
+
+  Pos_t retval = ungap-1;
+
+  for (int i = 0; (i < l) && (gaps_m[i] <= retval); i++)
+  {
+    retval++;
+  }
 
   return retval;
 }
@@ -66,8 +99,8 @@ Size_t Contig_t::getSpan ( ) const
         {
           if ( ti -> offset < lo )
             lo = ti -> offset;
-          if ( ti -> offset + ti -> range . getLength( ) > hi )
-            hi = ti -> offset + ti -> range . getLength( );
+          if ( ti -> offset + ti -> getGappedLength( ) > hi )
+            hi = ti -> offset + ti -> getGappedLength( );
         }
     }
 
@@ -220,6 +253,7 @@ void Contig_t::insertGapColumn (Pos_t gindex)
 //----------------------------------------------------- readMessage ------------
 void Contig_t::readMessage (const Message_t & msg)
 {
+  gapsvalid_m = false;
   Sequence_t::readMessage (msg);
 
   try {
@@ -247,6 +281,7 @@ void Contig_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void Contig_t::readRecord (istream & fix, istream & var)
 {
+  gapsvalid_m = false;
   Sequence_t::readRecord (fix, var);
 
   Size_t sizet;
@@ -261,6 +296,7 @@ void Contig_t::readRecord (istream & fix, istream & var)
 //----------------------------------------------------- readUMD ----------------
 bool Contig_t::readUMD (istream & in)
 {
+  gapsvalid_m = false;
   string eid;
   Tile_t tile;
   istringstream ss;
@@ -321,6 +357,8 @@ void Contig_t::reverseComplement()
   // Reverse the consensus
   string qual(getQualString());
   string seq(getSeqString());
+  int conslen = seq.length();
+
   AMOS::ReverseComplement(seq);
   reverse(qual.begin(), qual.end());
   setSequence(seq, qual);
@@ -332,7 +370,7 @@ void Contig_t::reverseComplement()
        i++)
   {
     i->range.swap();
-    i->offset = seq.length() - (i->offset + i->getGappedLength());
+    i->offset = conslen - (i->offset + i->getGappedLength());
 
     Pos_t len = i->range.getLength();
 

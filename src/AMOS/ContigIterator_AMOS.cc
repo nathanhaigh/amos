@@ -136,7 +136,7 @@ bool ContigIterator_t::seek(Pos_t gindex)
   }
 
   m_gindex = gindex;
-  m_uindex = m_contig.gap2ungap(gindex)+1;
+  m_uindex = m_contig.gap2ungap(gindex);
 
   // load the reads that overlap this position
   vector<Tile_t> & tiling = m_contig.getReadTiling();

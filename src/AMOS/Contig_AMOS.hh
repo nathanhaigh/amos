@@ -36,10 +36,9 @@ class Contig_t : public Sequence_t
 {
   
 private:
-
+  bool gapsvalid_m;                   //<! indicates if gaps_m is up to date
   std::vector<Pos_t> gaps_m;          //!< consensus gaps
   std::vector<Tile_t> reads_m;        //!< read tiling
-
 
   //--------------------------------------------------- compress ---------------
   //! \brief Reimplemented from Sequence_t as private to prohibit use
@@ -52,6 +51,11 @@ private:
   //!
   void uncompress ( );
 
+
+  //--------------------------------------------------- indexGaps --------------
+  //! \brief Records the positions of the consensus gaps for fast coordinate translation
+  //!
+  void indexGaps();
 
 protected:
 
@@ -73,6 +77,7 @@ public:
   //! \brief Constructs an empty Contig_t object
   //!
   Contig_t ( )
+   : gapsvalid_m(false)
   {
 
   }
@@ -102,33 +107,34 @@ public:
     Sequence_t::clear( );
     gaps_m . clear( );
     reads_m . clear( );
+    gapsvalid_m = false;
   }
 
 
   //--------------------------------------------------- gap2ungap --------------
-  //! \brief Translates a gapped position to an ungapped position
+  //! \brief Translates a 0-based gapped position (offset) to a 1-based ungapped position (sequence coordinate)
   //!
-  //! This method requires linear time. If the gapped position points to a gap
-  //! the returned ungapped position will point to the position immediately
-  //! following the gap.
+  //! This method requires O(num gaps). If the gapped position points to a gap
+  //! the returned ungapped position will point to the base immediately
+  //! preceeding the gap.
   //!
   //! \param The gapped position
   //! \pre gap < getLength( )
   //! \return The ungapped position
   //!
-  Pos_t gap2ungap (Pos_t gap) const;
+  Pos_t gap2ungap (Pos_t gap);
 
 
   //--------------------------------------------------- ungap2gap --------------
-  //! \brief Translates an ungapped position to a gapped position
+  //! \brief Translates an 1-based ungapped position to a 0-based gapped position
   //!
-  //! This method requires linear time.
+  //! This method requires O(number gaps) time.
   //!
   //! \param The ungapped position
   //! \pre ungap < getUngappedLength( )
   //! \return The gapped position
   //!
-  Pos_t ungap2gap (Pos_t ungap) const;
+  Pos_t ungap2gap (Pos_t ungap);
 
 
   //--------------------------------------------------- getNCode ---------------
@@ -305,6 +311,27 @@ public:
     reads_m = layout . getTiling( );
   }
 
+  //--------------------------------------------------- setSequence -----------
+  //! \brief Set the consensus sequence of the contig
+  //!
+  //! See Sequence_t::setSequence()
+  //!
+  void setSequence (const char * seq, const char * qual)
+  {
+    gapsvalid_m = false;
+    Sequence_t::setSequence(seq, qual);
+  }
+
+  //--------------------------------------------------- setSequence -----------
+  //! \brief Set the consensus sequence of the contig
+  //!
+  //! See Sequence_t::setSequence()
+  //!
+  void setSequence (const std::string & seq, const std::string & qual)
+  {
+    gapsvalid_m = false;
+    Sequence_t::setSequence(seq, qual);
+  }
 
   //--------------------------------------------------- writeMessage -----------
   virtual void writeMessage (Message_t & msg) const;
