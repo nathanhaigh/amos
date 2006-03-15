@@ -35,6 +35,7 @@ int main (int argc, char ** argv)
   int endpos = -1;
 
   int USETILENUM = 0;
+  int PRINTIID = 0;
 
   try
   {
@@ -53,6 +54,7 @@ int main (int argc, char ** argv)
 "   -y <val>  Examine stopping at this position\n"
 "\n"
 "   -t        Use tiling index instead of offset\n"
+"   -i        Print contig IIDs instead of EIDs\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
@@ -66,6 +68,7 @@ int main (int argc, char ** argv)
     tf->getOptions()->addOptionResult("y=i", &endpos, "Be verbose when reporting");
 
     tf->getOptions()->addOptionResult("t",   &USETILENUM, "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("i",   &PRINTIID, "Be verbose when reporting");
 
     tf->handleStandardOptions();
 
@@ -201,12 +204,27 @@ int main (int argc, char ** argv)
 
 
     // Print the header line of old contigs
-    printf("%-15s% 10s ", "== CONTIGS == ", contig.getEID().c_str());
+    if (PRINTIID)
+    {
+      printf("%-15s% 10d ", "== CONTIGS == ", contig.getIID());
+    }
+    else
+    {
+      printf("%-15s% 10s ", "== CONTIGS == ", contig.getEID().c_str());
+    }
+
     for (old =  oldcontigs.begin();
          old != oldcontigs.end();
          old++)
     {
-      printf("% 10s ", ocm.lookupEID(*old).c_str());
+      if (PRINTIID)
+      {
+        printf("% 10d ", *old);
+      }
+      else
+      {
+        printf("% 10s ", ocm.lookupEID(*old).c_str());
+      }
     }
     cout << endl;
 
