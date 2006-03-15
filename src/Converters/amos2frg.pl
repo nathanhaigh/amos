@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 use AMOS::AmosLib;
 use TIGR::Foundation;
@@ -36,6 +36,7 @@ my $firstunv = 1;
 my %libids;
 my %frg2lib;
 my %rd2lib;
+my %rd2typ;
 my %rdids;
 my %mates;
 
@@ -57,7 +58,7 @@ if (defined $infile){
 # if infile is provided but outfile isn't make outfile by changing the extension
 if (! defined $outfile && defined $infile){
     $outfile = $infile;
-    $outfile =~ s/(.*)\.afg$/\1.frg/;
+    $outfile =~ s/\.afg$/.frg/;
 }
 
 # if outfile is provided (or computed above) simply open it
@@ -75,8 +76,6 @@ while (my $record = getRecord(\*STDIN)){
     if ($type eq "UNV"){
 	next unless $firstunv;
 	
-	/`/; 
-
 	print qq~{BAT
 bna:CeleraAssembler
 crt:$date
@@ -105,7 +104,6 @@ $$fields{com}.
 }
 ~;
 
-/`/; 
         $firstunv = 0;
     } # type is UNV
 
@@ -125,7 +123,6 @@ $$fields{com}.
         if ($$sfs{std} == 0) {
           $$sfs{std} = 3;
         }
-	/`/;
 print qq~{DST
 act:A
 acc:$acc
@@ -133,7 +130,6 @@ mea:$$sfs{mea}
 std:$$sfs{std}
 }
 ~;
-/`/;
     } # type is LIB
     
     if ($type eq "FRG"){
@@ -141,13 +137,13 @@ std:$$sfs{std}
         if ( exists $$fields{"rds"} ) {
             $$fields{"rds"} =~ /^(\d+),(\d+)/;
             $mates{$1} = $2;
+            $rd2typ{$1} = $$fields{"typ"};
         }
     } # type is FRG
 
     if ($type eq "RED"){
 	$rd2lib{$$fields{"iid"}} = $frg2lib{$$fields{"frg"}};
 	$rdids{$$fields{"iid"}} = $acc;
-/`/;
 
 my @clr = split /,/, $$fields{clr};
 if ($clr[0] > $clr[1])
@@ -174,7 +170,6 @@ $$fields{qlt}.
 clr:$$fields{clr}
 }
 ~;
-/`/;
 
     } # type is RED
 } # while each record
@@ -184,18 +179,28 @@ foreach my $rd1 ( keys %mates ) {
    if ($rd2lib{$rd1} != $rd2lib{$rd1}){
        $base->bail("Reads $rd1 and $rd2 don't appear to map to the same library ($rd2lib{$rd1} != $rd2lib{$rd2})");
    }
-/`/;
+
+my $typ = $rd2typ{$rd1};
+my $ori = "I";
+if ($typ eq "T") 
+{ 
+  $ori = "O"; 
+}
+else
+{
+  $typ = "M";
+}
+
 print qq~{LKG
 act:A
-typ:M
+typ:$typ
 fg1:$rdids{$rd1}
 fg2:$rdids{$rd2}
 etm:0
 dst:$libids{$rd2lib{$rd1}}
-ori:I
+ori:$ori
 }
 ~;
-/`/;
 } # for each mate
 
 exit(0);
