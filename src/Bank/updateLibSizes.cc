@@ -12,7 +12,7 @@ int main(int argc, char ** argv)
 {
   if (argc != 3)
   {
-    cerr << "Usage: updateClrRanges bankname libid.mea.std.txt" << endl;
+    cerr << "Usage: updateClrRanges bankname libiid.mea.std" << endl;
     return EXIT_FAILURE;
   }
 
