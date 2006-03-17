@@ -204,9 +204,9 @@ void checkClr(vector<Tile_t>::iterator & mti, vector<Tile_t>::iterator & pti, co
 {
   if (mti->range != pti->range)
   {
-    cout << "Clear range of " << side << " stitch read differs!!!" << endl;
-    cout << "master: " << mti->range.begin << "," << mti->range.end << endl;
-    cout << "patch: "  << pti->range.begin << "," << pti->range.end << endl;
+    cerr << "Clear range of " << side << " stitch read differs!!!" << endl;
+    cerr << "master: " << mti->range.begin << "," << mti->range.end << endl;
+    cerr << "patch: "  << pti->range.begin << "," << pti->range.end << endl;
 
     throw Exception_t("ERROR", __LINE__, __FILE__);
   }
@@ -216,14 +216,14 @@ void checkCons(const string & mc, const string & pc, const string & side)
 {
   if (mc != pc)
   {
-    cout << side << " stitch consensus mismatch!" << endl;
-    cout << "pc: " << pc << endl;
-    cout << "mc: " << mc << endl;
+    cerr << side << " stitch consensus mismatch!" << endl;
+    cerr << "pc: " << pc << endl;
+    cerr << "mc: " << mc << endl;
 
-    throw Exception_t("ERROR", __LINE__, __FILE__);
+    throw Exception_t("Stitch consensus mismatch", __LINE__, __FILE__);
   }
 
-  cout << "  " << side << " stitch consensus match (len = " << mc.length() << ")" << endl;
+  cerr << "  " << side << " stitch consensus match (len = " << mc.length() << ")" << endl;
 }
 
 
@@ -283,6 +283,7 @@ void reverseContig(AMOS::Bank_t & contig_bank,
 
     cout << "Reversing features:";
 
+    feat_bank.seekg(1);
     while (feat_bank >> feat)
     {
       ID_t bid = feat_bank.tellg() - 1;
@@ -300,8 +301,6 @@ void reverseContig(AMOS::Bank_t & contig_bank,
     }
 
     cout << endl;
-
-    feat_bank.close();
   }
   catch (Exception_t & e)
   {
@@ -329,7 +328,7 @@ void updateStitchFeatures(BankStream_t & master_feat,
                           bool savetonew)
 {
   // Update the features, and add a new one about the join
-  cout << "Updating features: ";
+  cerr << "Updating features: ";
   vector<Feature_t> newfeatures;
 
   Feature_t feat;
@@ -342,7 +341,7 @@ void updateStitchFeatures(BankStream_t & master_feat,
   feat.setComment((string) "Stitch from patch i:" + buffer + " left: " + leftstitchread + " right: " + rightstitchread);
   newfeatures.push_back(feat);
 
-  cout << "n";
+  cerr << "n";
 
   master_feat.seekg(1);
   while (master_feat >> feat)
@@ -425,6 +424,7 @@ void updateStitchFeatures(BankStream_t & master_feat,
     }
   }
 
+  patch_feat.seekg(1);
   while (patch_feat >> feat)
   {
     if ((feat.getSource().second == Contig_t::NCODE) &&
@@ -471,7 +471,8 @@ void stitchContigs(Bank_t & master_contig,
                    ID_t masteriid,
                    ID_t master2iid,
                    ID_t patchiid,
-                   bool savetonew)
+                   bool savetonew,
+                   bool perfectovl)
 {
   Contig_t master, master2, patch;
 
@@ -576,6 +577,7 @@ void stitchContigs(Bank_t & master_contig,
         patchleftoffset = pti->offset;
         patchbaseoffset = pti->offset;
         cout << "  Found left stitch read in patch, offset: " << pti->offset << endl;
+
         checkClr(mti, pti, "left");
         break;
       }
@@ -589,10 +591,13 @@ void stitchContigs(Bank_t & master_contig,
       throw Exception_t("ERROR", __LINE__, __FILE__);
     }
 
-    // Check that at least the consensi across the left stitch read are identical
-    string pc = pcons.substr(patchbaseoffset,  rightmost-masterbaseoffset);
-    string mc = mcons.substr(masterbaseoffset, rightmost-masterbaseoffset);
-    checkCons(mc, pc, "Left");
+    if (perfectovl)
+    {
+      // Check that at least the consensi across the left stitch read are identical
+      string pc = pcons.substr(patchbaseoffset,  rightmost-masterbaseoffset);
+      string mc = mcons.substr(masterbaseoffset, rightmost-masterbaseoffset);
+      checkCons(mc, pc, "Left");
+    }
   }
 
   cout << endl;
@@ -700,10 +705,13 @@ void stitchContigs(Bank_t & master_contig,
 
         checkClr(mti, pti, "right");
 
-        // Ensure the consensi across the right stitch read are identical
-        string mc = mcons.substr(masterbaseoffset, lentocheck);
-        string pc = pcons.substr(porigoffset, lentocheck);
-        checkCons(mc, pc, "Right");
+        if (perfectovl)
+        {
+          // Ensure the consensi across the right stitch read are identical
+          string mc = mcons.substr(masterbaseoffset, lentocheck);
+          string pc = pcons.substr(porigoffset, lentocheck);
+          checkCons(mc, pc, "Right");
+        }
 
         len = mcons.length() - roffset;
         cout << "  Right Consensus [" << newcons.length() << "].append mcons[" << roffset << "," << len << "]" << endl;
@@ -819,14 +827,23 @@ void stitchContigs(Bank_t & master_contig,
         newcontigs.push_back(*ci);
       }
 
+      int offsetadjust = newmasterlen - oldmasterlen;
+
       if (ci->range.isReverse())
       {
-        cerr << "reversed master contigs are unsupported" << endl;
-        exit(EXIT_FAILURE);
+        if (master2iid)
+        {
+          cerr << "reversed master contigs are unsupported for gap closure" << endl;
+          exit(EXIT_FAILURE);
+        }
+
+        ci->range.setBegin(ci->range.getBegin() + offsetadjust);
+      }
+      else
+      {
+        ci->range.setEnd(ci->range.getEnd() + offsetadjust);
       }
 
-      int offsetadjust = newmasterlen - oldmasterlen;
-      ci->range.setEnd(ci->range.getEnd() + offsetadjust);
 
       ci->source = master.getIID();
       int newmasterright = ci->getRightOffset();
@@ -834,6 +851,7 @@ void stitchContigs(Bank_t & master_contig,
       cout << "  Found mastercontig, adjusting downstream offsets by " << offsetadjust << endl;
 
       newcontigs.push_back(*ci);
+      ci++;
 
       if (master2iid && foundmaster2)
       {

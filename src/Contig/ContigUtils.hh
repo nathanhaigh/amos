@@ -37,7 +37,8 @@ void stitchContigs(AMOS::Bank_t & master_contig,
                    AMOS::ID_t masteriid,
                    AMOS::ID_t master2iid,
                    AMOS::ID_t patchiid,
-                   bool savetonew);
+                   bool savetonew,
+                   bool perfectovl);
 
 
 
