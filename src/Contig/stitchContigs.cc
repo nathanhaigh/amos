@@ -123,7 +123,7 @@ int main (int argc, char ** argv)
                   masterreads, patchreads,
                   stitchRegion,
                   masteriid, master2iid, patchiid,
-                  savetonew);
+                  savetonew, true);
 
 
 
