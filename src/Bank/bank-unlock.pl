@@ -9,7 +9,7 @@ if ( scalar (@ARGV) == 0 ) {
 
 foreach (@ARGV)
 {
-  my $dir = shift;
+  my $dir = $_;
 
   if ( !defined ($dir) || !(-d $dir) ) {
       print STDERR "ERROR: Cannot find bank dir '$dir'\n";
