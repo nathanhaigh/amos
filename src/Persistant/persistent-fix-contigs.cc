@@ -151,6 +151,7 @@ int main (int argc, char ** argv)
         int maxdist = 0;
 
 
+        sort(tiling.begin(), tiling.end(), TileOrderCmp());
         int tilingsize = tiling.size();
 
         for (m1 = tiling.begin(); m1 != tiling.end(); m1++)
@@ -231,14 +232,20 @@ int main (int argc, char ** argv)
 
         if (maxdist >= MINDELTA)
         {
+          bool dostitch = true;
+
           int rc = (patch1->second.m_offset > patch2->second.m_offset) ? 1 : 0;
 
           if (rc)
           {
              vector<Tile_t>::const_iterator t = master1;
-             master1 = master2;
-             master2 = t;
+             master1 = master2; master2 = t;
+
+             ReadPosLookup::const_iterator p = patch1;
+             patch1 = patch2; patch2 = p;
           }
+
+
 
           string leftstitchread  = master_reads.lookupEID(master1->source);
           string rightstitchread = master_reads.lookupEID(master2->source);
@@ -248,7 +255,46 @@ int main (int argc, char ** argv)
                << " delta: " << maxdist << " left: " << leftstitchread << " right: " << rightstitchread 
                << " " << rc << " " << endl;
 
-          if (DOSTITCH)
+          if ((patch1->second.m_offset + patch1->second.m_gappedlen) > 
+              (patch2->second.m_offset))
+          {
+            cerr << "patch1 contains patch2!!!" << endl;
+            dostitch = false;
+          }
+
+          if ((patch2->second.m_offset + patch2->second.m_gappedlen) > 
+              (patch1->second.m_offset))
+          {
+            cerr << "patch2 contains patch1!!!" << endl;
+            dostitch = false;
+          }
+
+          if (rc)
+          {
+             if ((patch1->second.m_rc == master1->range.isReverse()) ||
+                 (patch2->second.m_rc == master2->range.isReverse()))
+             {
+               cerr << "Impossible orientations rc1!!!";
+               dostitch = false;
+             }
+          }
+          else
+          {
+             if ((patch1->second.m_rc != master1->range.isReverse()) ||
+                 (patch2->second.m_rc != master2->range.isReverse()))
+             {
+               cerr << "Impossible orientations rc0!!!" << endl;
+               cerr << "patch1: " << patch1->second.m_rc << " " << patch1->second.m_offset << endl;
+               cerr << "master1: " << (master1->range.isReverse() ? 1 : 0) << " " << master1->offset << endl;
+
+               cerr << "patch2: " << patch2->second.m_rc << " " << patch2->second.m_offset << endl;
+               cerr << "master2: " << (master2->range.isReverse() ? 1 : 0) << " " << master2->offset << endl;
+
+               dostitch = false;
+             }
+          }
+
+          if (dostitch && DOSTITCH)
           {
             if (rc) { reverseContig(master_contig, master_scaff, master_feat, contig.getIID()); }
 
@@ -270,6 +316,7 @@ int main (int argc, char ** argv)
 
     if (CLOSEGAPS)
     {
+      map <ID_t, bool> patchrc;
       cerr << "Closing Gaps" << endl;
 
       const IDMap_t & scaffmap = master_scaff.getIDMap();
@@ -382,7 +429,34 @@ int main (int argc, char ** argv)
                    << " left: " << leftstitchread << " right: " << rightstitchread 
                    << " rc:" << rc << " rc1:"  << rc1 << " rc2: " << rc2 << endl;
 
-              if (DOSTITCH)
+              map <ID_t, bool>::iterator prc = patchrc.find(patchiid);
+
+              if (prc != patchrc.end())
+              {
+                if (prc->second)
+                {
+                  rc = !rc; rc1 = !rc1; rc2 = !rc2; 
+                  cout << "Patch was previously flipped: rc:" << rc << " rc1: " << rc1 << " rc2: " << rc2 <<  endl;
+                }
+              }
+
+              bool dostitch = true;
+
+              if ((patch1->second.m_offset + patch1->second.m_gappedlen) > 
+                  (patch2->second.m_offset + patch2->second.m_gappedlen))
+              {
+                cerr << "patch1 contains patch2!!!" << endl;
+ //               dostitch = false;
+              }
+
+              if ((patch2->second.m_offset + patch2->second.m_gappedlen) > 
+                  (patch1->second.m_offset + patch1->second.m_gappedlen))
+              {
+                cerr << "patch2 contains patch1!!!" << endl;
+   //             dostitch = false;
+              }
+
+              if (dostitch && DOSTITCH)
               {
                 if (rc)
                 {
@@ -390,6 +464,15 @@ int main (int argc, char ** argv)
                   reverseContig(patch_contig, patch_scaff, patch_feat, patchiid);
                   rc1 = !rc1;
                   rc2 = !rc2;
+
+                  if (prc != patchrc.end())
+                  {
+                    prc->second = !prc->second;
+                  }
+                  else
+                  {
+                    patchrc.insert(make_pair(patchiid, true));
+                  } 
                 }
 
                 if (rc1) { reverseContig(master_contig, master_scaff, master_feat, c1.getIID()); }
@@ -398,15 +481,23 @@ int main (int argc, char ** argv)
                 set<ID_t> masterreads, patchreads;
                 Range_t stitchRegion;
 
-                stitchContigs(master_contig, master_reads, master_scaff, master_feat,
-                              patch_contig,  patch_reads,  patch_feat,
-                              leftstitchread, rightstitchread, 
-                              masterreads, patchreads, stitchRegion,
-                              c1.getIID(), c2.getIID(), patch1->second.m_contigiid,
-                              false, PERFECT_OVL);
+                try
+                {
+                  stitchContigs(master_contig, master_reads, master_scaff, master_feat,
+                                patch_contig,  patch_reads,  patch_feat,
+                                leftstitchread, rightstitchread, 
+                                masterreads, patchreads, stitchRegion,
+                                c1.getIID(), c2.getIID(), patch1->second.m_contigiid,
+                                false, PERFECT_OVL);
 
-                master_contig.fetch(c1.getIID(), c1);
-                madestitch = true;
+                  master_contig.fetch(c1.getIID(), c1);
+                  madestitch = true;
+                }
+                catch (Exception_t & e)
+                {
+                  cerr << "Stitch failed: " << e << endl;
+                  madestitch = false;
+                }
 
                 cout << endl << endl;
               }
