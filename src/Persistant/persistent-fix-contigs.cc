@@ -44,6 +44,7 @@ int main (int argc, char ** argv)
 
   Bank_t patch_contig(Contig_t::NCODE);
   Bank_t patch_reads(Read_t::NCODE);
+  Bank_t patch_scaff(Scaffold_t::NCODE);
   BankStream_t patch_feat(Feature_t::NCODE);
 
   try
@@ -91,9 +92,10 @@ int main (int argc, char ** argv)
     master_feat.open(masterbankname,   mode);
     master_reads.open(masterbankname,  B_READ);
 
-    patch_contig.open(patchbankname, B_READ);
+    patch_contig.open(patchbankname, mode);
+    patch_scaff.open(patchbankname,  mode);
+    patch_feat.open(patchbankname,   mode);
     patch_reads.open(patchbankname,  B_READ);
-    patch_feat.open(patchbankname,   B_READ);
 
 
     // Record the position of every read in the patch bank
@@ -277,17 +279,21 @@ int main (int argc, char ** argv)
         Scaffold_t scaff;
         master_scaff.fetch(s->iid, scaff);
 
-
         vector<Tile_t> & ctiling = scaff.getContigTiling();
+        int l = ctiling.size();
+
+        // Check if there are potential gaps to close
+        if (l < 2) { continue; }
+
         sort(ctiling.begin(), ctiling.end(), TileOrderCmp());
 
-        int l = ctiling.size();
         Contig_t c1, c2;
 
-        for (int i = 0; i < l-1; i++)
+        master_contig.fetch(ctiling[0].source, c1);
+
+        for (int i = 1; i < l; i++)
         {
-          master_contig.fetch(ctiling[i].source, c1);
-          master_contig.fetch(ctiling[i+1].source, c2);
+          master_contig.fetch(ctiling[i].source, c2);
 
           set<ID_t> c1contigs;
           set<ID_t> c2contigs;
@@ -318,6 +324,8 @@ int main (int argc, char ** argv)
             }
           }
 
+          bool madestitch = false;
+
           if (!joincontigs.empty())
           {
             cout << ">Gap " << c1.getIID() << " " << c2.getIID()
@@ -335,7 +343,11 @@ int main (int argc, char ** argv)
 
               vector<Tile_t>::iterator master1, master2;
               ReadPosLookup::iterator  patch1, patch2;
-              for (master1 = c1.getReadTiling().begin(); master1 != c1.getReadTiling().end(); master1++)
+              vector<Tile_t> & c1tiling = c1.getReadTiling();
+              sort(c1tiling.begin(), c1tiling.end(), TileOrderCmp());
+              reverse(c1tiling.begin(), c1tiling.end());
+
+              for (master1 = c1tiling.begin(); master1 != c1tiling.end(); master1++)
               {
                 patch1 = read2contigpos.find(master1->source);
 
@@ -345,7 +357,9 @@ int main (int argc, char ** argv)
                 }
               }
 
-              for (master2 = c2.getReadTiling().begin(); master2 != c2.getReadTiling().end(); master2++)
+              vector<Tile_t> & c2tiling = c2.getReadTiling();
+              sort(c2tiling.begin(), c2tiling.end(), TileOrderCmp());
+              for (master2 = c2tiling.begin(); master2 != c2tiling.end(); master2++)
               {
                 patch2 = read2contigpos.find(master2->source);
 
@@ -362,45 +376,46 @@ int main (int argc, char ** argv)
               string leftstitchread  = master_reads.lookupEID(master1->source);
               string rightstitchread = master_reads.lookupEID(master2->source);
 
-              cout << ">Stitch mcontig: " << c1.getIID() << " mcontig2:" << c2.getIID() << " pcontig: " << patch1->second.m_contigiid 
+              ID_t patchiid = patch1->second.m_contigiid;
+
+              cout << ">Stitch mcontig: " << c1.getIID() << " mcontig2:" << c2.getIID() << " pcontig: " << patchiid
                    << " left: " << leftstitchread << " right: " << rightstitchread 
                    << " rc:" << rc << " rc1:"  << rc1 << " rc2: " << rc2 << endl;
 
               if (DOSTITCH)
               {
+                if (rc)
+                {
+                  cerr << "patchrc, reversing patch, rc1, rc2" << endl;
+                  reverseContig(patch_contig, patch_scaff, patch_feat, patchiid);
+                  rc1 = !rc1;
+                  rc2 = !rc2;
+                }
+
                 if (rc1) { reverseContig(master_contig, master_scaff, master_feat, c1.getIID()); }
                 if (rc2) { reverseContig(master_contig, master_scaff, master_feat, c2.getIID()); }
 
                 set<ID_t> masterreads, patchreads;
                 Range_t stitchRegion;
 
-                if (rc)
-                {
-                  cerr << "Skipping rc" << endl;
+                stitchContigs(master_contig, master_reads, master_scaff, master_feat,
+                              patch_contig,  patch_reads,  patch_feat,
+                              leftstitchread, rightstitchread, 
+                              masterreads, patchreads, stitchRegion,
+                              c1.getIID(), c2.getIID(), patch1->second.m_contigiid,
+                              false, PERFECT_OVL);
 
-                  if (0)
-                  {
-                  stitchContigs(master_contig, master_reads, master_scaff, master_feat,
-                                patch_contig,  patch_reads,  patch_feat,
-                                rightstitchread, leftstitchread, 
-                                masterreads, patchreads, stitchRegion,
-                                c2.getIID(), c1.getIID(), patch1->second.m_contigiid,
-                                false, PERFECT_OVL);
-                  }
-                }
-                else
-                {
-                  stitchContigs(master_contig, master_reads, master_scaff, master_feat,
-                                patch_contig,  patch_reads,  patch_feat,
-                                leftstitchread, rightstitchread, 
-                                masterreads, patchreads, stitchRegion,
-                                c1.getIID(), c2.getIID(), patch1->second.m_contigiid,
-                                false, PERFECT_OVL);
-                }
+                master_contig.fetch(c1.getIID(), c1);
+                madestitch = true;
 
                 cout << endl << endl;
               }
             }
+          }
+
+          if (!madestitch)
+          {
+            c1 = c2;
           }
         }
       }
