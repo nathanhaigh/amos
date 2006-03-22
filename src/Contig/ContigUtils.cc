@@ -314,7 +314,9 @@ void updateStitchFeatures(BankStream_t & master_feat,
                           BankStream_t & patch_feat,
                           Range_t & stitchRegion,
                           ID_t masteriid,
+                          bool masterrc,
                           ID_t master2iid,
+                          bool master2rc,
                           ID_t newmasteriid,
                           ID_t patchiid,
                           const string & leftstitchread,
@@ -359,26 +361,33 @@ void updateStitchFeatures(BankStream_t & master_feat,
 
         //cout << "master: " << feat.getRange().getLo() << "," << feat.getRange().getHi() << endl;
 
-        if (feat.getRange().getHi() < stitchRegion.begin)
+        if (masterrc)
         {
-          // before patch, keep the coord unchanged
-          cout << "m";
-        }
-        else if (!master2iid && (feat.getRange().getLo() > rightmasterbaseoffset))
-        {
-          // past patch region, adjust coords
-          Range_t rng = feat.getRange();
-          rng.begin = newmasterlen - (oldmasterlen - rng.begin);
-          rng.end   = newmasterlen - (oldmasterlen - rng.end);
-          feat.setRange(rng);
-
-          cout << "u";
+          cerr << "unsupported rc master feature" << endl;
         }
         else
         {
-          // in patch   or past patch region, but in master2
-          remove = true;
-          cout << "r";
+          if (feat.getRange().getHi() < stitchRegion.begin)
+          {
+            // before patch, keep the coord unchanged
+            cout << "m";
+          }
+          else if (!master2iid && (feat.getRange().getLo() > rightmasterbaseoffset))
+          {
+            // past patch region, adjust coords
+            Range_t rng = feat.getRange();
+            rng.begin = newmasterlen - (oldmasterlen - rng.begin);
+            rng.end   = newmasterlen - (oldmasterlen - rng.end);
+            feat.setRange(rng);
+
+            cout << "u";
+          }
+          else
+          {
+            // in patch   or past patch region, but in master2
+            remove = true;
+            cout << "r";
+          }
         }
       }
       else if (master2iid && feat.getSource().first == master2iid)
@@ -386,20 +395,27 @@ void updateStitchFeatures(BankStream_t & master_feat,
         change = true;
         feat.setSource(make_pair(newmasteriid, Contig_t::NCODE));
 
-        if (feat.getRange().getLo() > rightmasterbaseoffset)
+        if (master2rc)
         {
-          // after patch region, adjust coordinates
-          Range_t rng = feat.getRange();
-          rng.begin = newmasterlen - (oldmaster2len - rng.begin);
-          rng.end   = newmasterlen - (oldmaster2len - rng.end);
-          feat.setRange(rng);
-          cout << "2";
+          cerr << "unsupported rc master2 feature" << endl;
         }
         else
         {
-          // before patch region, clobber feature
-          remove = true;
-          cout << "r";
+          if (feat.getRange().getLo() > rightmasterbaseoffset)
+          {
+            // after patch region, adjust coordinates
+            Range_t rng = feat.getRange();
+            rng.begin = newmasterlen - (oldmaster2len - rng.begin);
+            rng.end   = newmasterlen - (oldmaster2len - rng.end);
+            feat.setRange(rng);
+            cout << "2";
+          }
+          else
+          {
+            // before patch region, clobber feature
+            remove = true;
+            cout << "r";
+          }
         }
       }
     }
@@ -760,7 +776,8 @@ void stitchContigs(Bank_t & master_contig,
     }
   }
 
-
+  bool masterrc = false;
+  bool master2rc = false;
 
   if (oldmasterlen != newmasterlen || master2iid)
   {
@@ -831,19 +848,14 @@ void stitchContigs(Bank_t & master_contig,
 
       if (ci->range.isReverse())
       {
-        if (master2iid)
-        {
-          cerr << "reversed master contigs are unsupported for gap closure" << endl;
-          exit(EXIT_FAILURE);
-        }
-
+        masterrc = true;
         ci->range.setBegin(ci->range.getBegin() + offsetadjust);
       }
       else
       {
+        masterrc = false;
         ci->range.setEnd(ci->range.getEnd() + offsetadjust);
       }
-
 
       ci->source = master.getIID();
       int newmasterright = ci->getRightOffset();
@@ -876,6 +888,7 @@ void stitchContigs(Bank_t & master_contig,
           {
             offsetadjust = newmasterright - ci->getRightOffset();
             copycontigs = true;
+            master2rc = ci->range.isReverse();
           }
 
           ci++;
@@ -925,7 +938,9 @@ void stitchContigs(Bank_t & master_contig,
                        patch_feat,
                        stitchRegion,
                        masteriid,
+                       masterrc,
                        master2iid,
+                       master2rc,
                        master.getIID(),
                        patchiid,
                        leftstitchread,
