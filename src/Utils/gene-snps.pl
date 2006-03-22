@@ -209,11 +209,15 @@ while (<TABFILE>)
   my $start  = $val[2];
   my $end    = $val[3];
   my $label  = $val[5];
+  my $len = $end - $start + 1;
+
+
+
 
   my $exon;
   $exon->{start}    = $start;
   $exon->{end}      = $end;
-  $exon->{len}      = $end - $start + 1;
+  $exon->{len}      = $len;
   $exon->{label}    = $label;
   $exon->{rc}       = ($strand eq "reverse") ? 1 : 0;
   $exon->{snpcount} = 0;
@@ -224,9 +228,11 @@ while (<TABFILE>)
   $exon->{codonposition}->{1} = 0;
   $exon->{codonposition}->{2} = 0;
   $exon->{codonposition}->{3} = 0;
+  $exon->{qstart} = $start;
+  $exon->{qend}   = $end;
 
   $genestats{$label}->{label} = $label;
-  $genestats{$label}->{len} += $end - $start + 1;
+  $genestats{$label}->{len} += $len;
   $genestats{$label}->{snpcount} = 0;
   $genestats{$label}->{synonymous} = 0;
   $genestats{$label}->{nonsynonymous} = 0;
@@ -267,12 +273,30 @@ while (<SNPS>)
   ++$snpcount;
 
   my @vals = split /\s+/, $_;
+  my $chain = $vals[4];
+  die "Invalid chain: $chain\n" if ($chain != 0);
+
+
   my $rpos = $vals[10];
   my $qpos = $vals[11];
   my $type = $vals[14];
   my $rseq = $vals[15];
   my $qseq = $vals[16];
   my $len  = length($rseq);
+
+  foreach my $exon (@genes)
+  {
+    ## rpos and qpos are aligned
+    if ($exon->{start} >= $rpos)
+    {
+      $exon->{qstart} = $qpos + $exon->{start} - $rpos;
+    }
+
+    if ($exon->{end} >= $rpos)
+    {
+      $exon->{qend} = $qpos + $exon->{end} - $rpos;
+    }
+  }
 
   my $f = "";
 
@@ -297,13 +321,16 @@ while (<SNPS>)
       my $l = $g->{label};
       my $rcc = $rc ? "-" : "+";
 
-      $g->{snpcount}++;
-      $genestats{$l}->{snpcount}++;
+ #     $g->{snpcount}++;
+ #     $genestats{$l}->{snpcount}++;
 
       print "\t|\t$g->{label} ($s, $e) $rcc";
 
       if ($rseq =~ /\./)
       {
+        $g->{snpcount}++;
+        $genestats{$l}->{snpcount}++;
+
         $g->{insertion}++;
         $genestats{$l}->{insertion}++;
         last;
@@ -311,6 +338,9 @@ while (<SNPS>)
 
       if ($qseq =~ /\./)
       {
+        $g->{snpcount}++;
+        $genestats{$l}->{snpcount}++;
+
         $g->{deletion}++;
         $genestats{$l}->{deletion}++;
         last;
@@ -404,17 +434,17 @@ while (<SNPS>)
       my $cpos = $codonposition+1;
       print "\t| $cpos";
 
-      $g->{codonposition}->{$cpos}++;
-      $genestats{$l}->{codonposition}->{$cpos}++;
-
       foreach $qseq (@ambiguities)
       {
         if (uc($qseq) eq uc($rseq))
         {
-          # print "| skip $qseq -> $rseq";
+          # print " | skip $qseq -> $rseq";
           next;
         }
         $ambsnpcount++;
+
+        $g->{snpcount}++;
+        $genestats{$l}->{snpcount}++;
 
         my $newdna = "";
 
@@ -435,6 +465,9 @@ while (<SNPS>)
         my $syn = ($origaa eq $newaa) ? 1 : 0;
         print " | $origaa ($origdna) -> $newaa ($newdna) $syn";
 
+        $g->{codonposition}->{$cpos}++;
+        $genestats{$l}->{codonposition}->{$cpos}++;
+
         $g->{synonymous}     += $syn;
         $g->{nonsynonymous} += 1-$syn;
         $genestats{$l}->{synonymous} += $syn;
@@ -451,6 +484,23 @@ while (<SNPS>)
   }
 
   print "\n";
+}
+
+foreach my $exon (@genes)
+{
+  my $covbases;
+  my $covlen = 0;
+  for (my $i = $exon->{qstart}; $i <= $exon->{qend}; $i++)
+  {
+    $covlen++;
+    $covbases += $qdepth{$i};
+  }
+
+  my $cov = $covbases / $covlen;
+  $exon->{coverage} = $cov;
+
+  $genestats{$exon->{label}}->{covbases} += $covbases;
+  $genestats{$exon->{label}}->{covlen}   += $covlen;
 }
 
 print "\n\n";
@@ -479,12 +529,17 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
   my $non = $g->{nonsynonymous};
   my $del = $g->{deletion};
   my $ins = $g->{insertion};
-  print " S:$syn N:$non D:$del I:$ins\n";
+  print " S:$syn N:$non D:$del I:$ins |";
 
   if ($sc != ($syn + $non + $del + $ins))
   {
     die "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non) + del ($del) + ins ($ins)\n";
   }
+
+  my $covbases = $g->{covbases};
+  my $covlen   = $g->{covlen};
+  my $cov = sprintf("%0.02f", $covbases / $covlen);
+  print " cov: $cov\n";
 
   my $geneseq;
   if ($g->{rc})
@@ -575,6 +630,7 @@ foreach my $g (sort {$a->{label} cmp $b->{label}} @genes)
  
   printSNPDistance("\"$g->{label}\" start:$g->{start} end:$g->{end}", $gl, $sc);
 
+
   print " |";
 
   for (my $i = 1; $i <= 3; $i++)
@@ -589,7 +645,7 @@ foreach my $g (sort {$a->{label} cmp $b->{label}} @genes)
   my $non = $g->{nonsynonymous};
   my $del = $g->{deletion};
   my $ins = $g->{insertion};
-  print " S:$syn N:$non D:$del I:$ins\n";
+  print " S:$syn N:$non D:$del I:$ins | ";
 
   $synonymous += $syn;
   $nonsynonymous += $non;
@@ -600,6 +656,9 @@ foreach my $g (sort {$a->{label} cmp $b->{label}} @genes)
   {
     die "ERROR in $g->{label}: sc($sc) != syn ($syn) + non ($non) + del ($del) + ins ($ins)\n";
   }
+
+  my $cov = sprintf("%0.02f", $g->{coverage});
+  print "cov: $cov\n";
 }
 
 print "\n";

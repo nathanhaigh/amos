@@ -14,10 +14,17 @@ QUERY="443"
 
 
 ## Aligning seqs
-10: nucmer $(REFERENCE).fasta $(QUERY).fasta
+10: 
+nucmer $(REFERENCE).fasta $(QUERY).fasta -b 5000
+delta-filter -r out.delta > out.delta.r
+.
 
 ## Dumping alignment
-20: show-aligns out.delta $(REFERENCE) $(QUERY) > $(REFERENCE)-$(QUERY).align
+20: 
+show-aligns out.delta.r $(REFERENCE) $(QUERY) > $(REFERENCE)-$(QUERY).align
+mummerplot out.delta.r -S --png
+mv out.png $(REFERENCE)-$(QUERY).align.png
+.
 
 ## Listing Snps
 30: findSNPs  $(REFERENCE)-$(QUERY).align | tr -d ',' > $(REFERENCE)-$(QUERY).snps
