@@ -361,7 +361,7 @@ void updateStitchFeatures(BankStream_t & master_feat,
 
         //cout << "master: " << feat.getRange().getLo() << "," << feat.getRange().getHi() << endl;
 
-        if (masterrc)
+        if (masterrc && master2iid)
         {
           cerr << "unsupported rc master feature" << endl;
         }
