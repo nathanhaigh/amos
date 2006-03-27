@@ -63,6 +63,7 @@ if (defined $clrfile){
     while (<CLR>){
 	chomp;
 	my ($id, $l, $r) = split(' ', $_);
+	$id =~ s/\.ab1$//;
 	$clears{$id} = "$l,$r";
     }
     close(CLR);
@@ -80,11 +81,12 @@ opendir(PHD, $phddir) || die ("Cannot open $phddir: $!\n");
 while (my $file = readdir(PHD)){
     if ($file =~ /^\./){next;} # skip hidden files
     if ($file !~ /\.phd\.\d/) {next;} # skip non-phd files
-    $file =~ /^(.*)\.ab1\.phd\.(\d)/;
+    $file =~ /^(.*)(\.ab1)?\.phd\.(\d)/;
     my $seqname = $1;
     my $rev = $2;
 
     if (defined $clrfile && ! exists $clears{$seqname}){
+	print "No clear range for $seqname\n";
 	next;
     } # skip reads with no clear range
 
@@ -103,7 +105,7 @@ closedir(PHD);
 
 if (defined $matefile){
     open(MATE, $matefile) || die ("Cannot open $matefile: $!\n");
-    print STDERR "Parsing $matefile\n";
+#    print STDERR "Parsing $matefile\n";
     parseMatesFile(\*MATE);
     close(MATE);
 }
