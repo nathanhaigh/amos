@@ -1,15 +1,44 @@
 #!/usr/bin/perl
 
-if ($#ARGV == -1 || $#ARGV == 0 && $ARGV[0] eq "-h"){
-    print "Usage: phd2afg phd_dir out.afg [matesfile]\n";
-    exit(0);
+use AMOS::AmosFoundation;
+
+my $base = new AMOS::AmosFoundation;
+
+if (! defined $base) {
+    die ("Foundation cannot be created. FATAL!\n");
 }
 
-my $phddir = $ARGV[0];
-my $outfile = $ARGV[1];
+my $HELPTEXT = q~
+    phd2afg -d phd_dir -o file.afg [-c file.clr] [-m file.mates]
+
+  Options:
+    -d phd_dir  - directory where phd files are located
+    -o file.afg - name of the output file
+    -c file.clr - optional: file containing clipping coordinates
+    -m file.mates - optional: file containing mate-pair info in Bambus .mates format
+    ~;
+
+$base->setHelpText($HELPTEXT);
+
+
+my $phddir = undef;
+my $outfile = undef;
 my $matefile = undef;
-if ($#ARGV >= 2) {
-    $matefile = $ARGV[2];
+my $clrfile = undef;
+
+my $err = $base->getOptions(
+			    "d=s" => \$phddir,
+			    "o=s" => \$outfile,
+			    "m=s" => \$matefile,
+			    "c=s" => \$clrfile
+			    );
+
+if (! $err){
+    $base->bail("Error processing options !");
+}
+
+if (! defined $phddir || ! defined $outfile){
+    $base->bail("Both options -d and -o must be specified (see -h)\n");
 }
 
 open(OUT, ">$outfile") || die ("Cannot open $outfile:$!\n");
@@ -25,8 +54,19 @@ my %insid;     # mapping from insert name to id
 my %forw;      # forward read in each insert
 my %rev;       # reverse read in each insert
 my %seqinsert; # insert for each sequence
+my %clears;    # clear ranges for the reads
 
 $minSeqID = 1;
+
+if (defined $clrfile){
+    open(CLR, $clrfile) || die ("Cannot open $clrfile: $!\n");
+    while (<CLR>){
+	chomp;
+	my ($id, $l, $r) = split(' ', $_);
+	$clears{$id} = "$l,$r";
+    }
+    close(CLR);
+}
 
 opendir(PHD, $phddir) || die ("Cannot open $phddir: $!\n");
 
@@ -43,6 +83,10 @@ while (my $file = readdir(PHD)){
     $file =~ /^(.*)\.ab1\.phd\.(\d)/;
     my $seqname = $1;
     my $rev = $2;
+
+    if (defined $clrfile && ! exists $clears{$seqname}){
+	next;
+    } # skip reads with no clear range
 
     if (! exists $seqfile{$seqname} ||
 	$seqrev{$seqname} < $rev){
@@ -148,6 +192,13 @@ while (my ($sid, $sname) = each %seqnames){
     open(SEQ, $seqfile{$sname}) || die ("Cannot open $seqfile{$sname}: $!\n");
     parsePHDFile(\*SEQ, \$seq, \$qual, \$pos, \$cll, \$clr);
     close(SEQ);
+
+    if (defined $clrfile){
+	if (! exists $clears{$sname}){
+	    die ("Bizarre.... should have clear range for $sname\n");
+	}
+	($cll, $clr) = split(',', $clears{$sname});
+    }
 
     if ($cll < 0 || $clr < 0){next;} # skip bad sequences
 
