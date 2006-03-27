@@ -302,13 +302,18 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		    print SEQOUT sprintf("QA %d %d %d %d\n", 
 					 $end5, $end3, $end5, $end3);
 		    my $chrmfile = $chromodir . "$seqName";
-		    my $phdfile = $phddir . "$seqName.phd.1";
+		    my $phdfile = "";
+		    if ($phddir eq ""){
+			$phdfile = "phd_dir/$seqName.phd.1";
+		    } else {
+			$phdfile = $phddir . "$seqName.phd.1";
+		    }
 		    my $time;
 		    
 		    if (-r $phdfile){
 			$time = `$GREP TIME $phdfile`;
 			$time =~ s/TIME: //;
-		    }
+		    } 
 		    
 		    if (! defined $time){
 			if (-e $phddir) {
@@ -319,7 +324,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		    
 		    my $dir = ($ori eq "C") ? "rev" : "forw";
 		    
-		    print SEQOUT "DS CHROMAT_FILE: $chrmfile PHD_FILE: $phdfile TIME: $time\n"; # CHEM: unknown DYE: big TEMPLATE: $seqName DIRECTION: $dir\n";
+		    print SEQOUT "DS CHROMAT_FILE: $chrmfile PHD_FILE: $seqName.phd.1 TIME: $time\n"; # CHEM: unknown DYE: big TEMPLATE: $seqName DIRECTION: $dir\n";
 		} # if TILE
 	    } # for each tile
 	    close(SEQOUT);
