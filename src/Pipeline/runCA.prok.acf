@@ -87,4 +87,4 @@ cat $(PREF).cgw $(PREF).cgw_contigs $(PREF).cgw_scaffolds > $(PREF).cgw_total
 140: $(CAPATH)/terminator -P -g $(PREF).gkpStore -f $(PREF).frgStore -i $(PREF).cns -o $(PREF).asm -m $(PREF).map
 
 ## Obtain assembly statistics
-150: $(BIN)/castats.pl $(PREF).asm
+150: $(BIN)/castats.pl $(PREF).asm > $(PREF).qc

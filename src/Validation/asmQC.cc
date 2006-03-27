@@ -21,6 +21,10 @@ using namespace HASHMAP;
 
 #define endl "\n"
 
+#define MIN_CE_OBS 3    // minimum number of clones required to report anomalous CE numbers
+#define MAX_DEVIATION 5 // clones longer/shorter than this many standard deviations from mean are ignored in CE computation
+
+
 enum MateStatus {MP_GOOD, MP_SHORT, MP_LONG, MP_NORMAL, MP_OUTIE, MP_SINGMATE, 
 		 MP_LINKING, MP_SPANNING};
 
@@ -34,6 +38,7 @@ public:
   AnnotatedFragment() : Fragment_t() {
     status = MP_GOOD;
     size = 0;
+    contig1 = 0; contig2 = 0; scaff1 = 0; scaff2 = 0;
   }
 };
 
@@ -55,11 +60,14 @@ void printHelpText()
     "-feat         write contig features into the bank\n"
     "-recompute    recompute library sizes\n"
     "-update       update bank with recomputed library sizes\n"
+    "-perinsert <file> output per-insert information in <file>\n"
     "-minobs <n>   minimum number of good mate-pairs required to recompute\n"
     "              library sizes\n"
     "-numsd <n>    mate-pairs within <n> standard deviations of the mean\n"
     "              library size are considered good. <n> can be fractional\n"
     "-goodcvg <n>  report regions with good mate coverage less than <n>\n"
+    "-cestat       report regions with unusual C/E stat (more than <numsd> standard errors from mean)\n"
+    "              cestat implies -recompute and invalidates -shortcvg and -longcvg\n"
     "-shortcvg <n> report regions with short mate coverage greater than <n>\n"
     "-longcvg <n>  report regions with long mate coverage greater than <n>\n"
     "-samecvg <n>  report regions with coverage by mates with same orientation\n"
@@ -67,9 +75,9 @@ void printHelpText()
     "-outiecvg <n> report regions with outie coverage greater than <n>\n"
     "-linking <n>  report regions with linking read coverage greater than <n>\n"
     "-singlemate <n> report regions with singleton mate coverage > than <n>\n"
-    "-perinsert <file> output per-insert information in <file>\n"
     "-meachange <n> libraries whose mean changed by less than <n> will be considered unchanged\n"
     "-sdchange <n> libraries whose stdev. changed by less than <n> will be considered unchanged\n"
+    "-ceplot <file> file to output C/E statistic plot to\n"
     "-debug        output status for each mate-pair to STDERR\n"
     "\n.DESCRIPTION.\n"
     "\n.KEYWORDS.\n"
@@ -85,23 +93,25 @@ bool GetOptions(int argc, char ** argv)
     {"h",         0, 0, 'h'},
     {"b",         1, 0, 'b'},
     {"bank",      1, 0, 'b'},
+    {"scaff",     0, 0, 'B'},
     {"minobs",    1, 0, 'm'},
-    {"numsd",     1, 0, 'S'},
+    {"singlemate", 1, 0, 'M'},
     {"goodcvg",   1, 0, 'g'},
+    {"cestat",    0, 0, 'G'},
     {"shortcvg",  1, 0, 's'},
+    {"numsd",     1, 0, 'S'},
     {"longcvg",   1, 0, 'l'},
+    {"linking",   1, 0, 'L'},
     {"samecvg",   1, 0, 'n'},
     {"outiecvg",  1, 0, 'o'},
-    {"linking",   1, 0, 'L'},
-    {"singlemate", 1, 0, 'M'},
     {"recompute", 0, 0, 'r'},
     {"update",    0, 0, 'u'},
     {"feat",      0, 0, 'f'},
     {"debug",     0, 0, 'd'},
     {"perinsert", 1, 0, 'p'},
+    {"ceplot"   , 1, 0, 'P'},
     {"meachange", 1, 0, 'c'},
     {"sdchange",  1, 0, 'C'},
-    {"scaff", 0, 0, 'B'},
     {0, 0, 0, 0}
   };
   
@@ -133,6 +143,9 @@ bool GetOptions(int argc, char ** argv)
     case 'g':
       globals["goodcvg"] = string(optarg);
       break;
+    case 'G':
+      globals["cestat"] = string("true");
+      break;
     case 'l':
       globals["longcvg"] = string(optarg);
       break;
@@ -159,6 +172,9 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'p':
       globals["perinsert"] = string(optarg);
+      break;
+    case 'P':
+      globals["ceplot"] = string(optarg);
       break;
     case 'c':
       globals["meachange"] = string(optarg);
@@ -262,7 +278,7 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
 
   mean = 0;
   for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
-    if (abs(*li - origm) < 5 * origs)
+    if (abs(*li - origm) < MAX_DEVIATION * origs)
       mean += *li;
     else 
       numObs--;
@@ -275,7 +291,7 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
  
   stdev = 0;
   for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
-    if (abs(*li - origm) < 5 * origs)
+    if (abs(*li - origm) < MAX_DEVIATION * origs)
       stdev += (*li - mean) * (*li - mean);
   }
 
@@ -415,7 +431,204 @@ void getCvg(list<list<AnnotatedFragment>::iterator>::iterator begin,
   return;
 } // getCvg
 
-//----------------------------------------------
+
+// computes mean and standard deviation of array of tiles
+void getMeanSD(vector<pair<Pos_t, Pos_t> >::iterator beg, vector<pair<Pos_t, Pos_t> >::iterator end, 
+	       Size_t &mea, SD_t &sd)
+{
+  int n = 0;
+  Size_t sum = 0;
+  SD_t var = 0;
+
+  for (vector<pair<Pos_t, Pos_t> >::iterator vi = beg; vi != end; vi++){
+    n++;
+    //    cout << "Adding " << vi->second - vi->first << " " << vi->first << ", " << vi->second << endl;
+    sum += vi->second - vi->first;
+  }
+  if (n == 0) { return;}
+  mea = sum / n;
+  //  cout << "N " << n << endl;
+  //  cout << "Mean " << mea << endl;
+  for (vector<pair<Pos_t, Pos_t> >::iterator vi = beg; vi != end; vi++)
+    var += (vi->second - vi->first - mea) * (vi->second - vi->first - mea);
+  
+  //  cout << "Var " << var << endl;
+  if (n > 1) { 
+    sd = var / (n - 1);
+    sd = (SD_t) sqrt((double)sd);
+  } else {
+    sd = 0;
+  }
+  //  cout << "SD " << sd << endl;
+}
+
+// compares two pairs by first item (less than)
+struct LessByFirst : public binary_function<pair<Pos_t, Pos_t>, pair<Pos_t, Pos_t>, bool> {
+  bool operator () (pair<Pos_t, Pos_t> x, pair<Pos_t, Pos_t> y)
+  {
+    return (x.first < y.first);
+  }
+};
+
+// compares two pairs by second item (greater than)
+struct GtBySecond : public binary_function<pair<Pos_t, Pos_t>, pair<Pos_t, Pos_t>, bool> {
+  bool operator () (pair<Pos_t, Pos_t> x, pair<Pos_t, Pos_t> y)
+  {
+    return (x.second > y.second);
+  }
+};
+
+// computes regions with anomalous C/E stat
+void getCEstat(list<list<AnnotatedFragment>::iterator>::iterator begin,
+	       list<list<AnnotatedFragment>::iterator>::iterator end,
+	       hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > & posmap,
+	       ID_t libid, pair<Size_t, SD_t> & libifo, float num_sd, 
+	       list<pair<Pos_t, Pos_t> > & interest, 
+	       list<bool> & stretch,
+	       ofstream & ceplotFile)
+{
+  vector<pair<Pos_t, Pos_t> > starts, ends;
+  Pos_t pos, st;
+  Size_t mea;         // sum of sizes of inserts
+  SD_t sderr;         // standard error for inserts
+  Size_t mean;        // global mean size of library
+  SD_t stdev;         // global standard deviation
+  bool over = false;  // is error on the longer or shorter side
+  bool inbad = false; // are we in a bad regions
+
+  interest.clear();
+  stretch.clear();
+
+  //  cout << "in CESTAT libid=" << libid << endl;
+
+  // get parameters for global distribution
+  mean = libifo.first;
+  stdev = libifo.second;
+  
+  for (list<list<AnnotatedFragment>::iterator>::iterator mi = begin; mi != end; mi++){
+      Pos_t left, right;
+      
+      if ((*mi)->getLibrary() != libid) // only do the selected library
+	continue;
+  
+      if ((*mi)->status == MP_GOOD || (*mi)->status == MP_LONG || (*mi)->status == MP_SHORT){
+	if (abs (mean - (*mi)->size) > MAX_DEVIATION * stdev) // skip inserts that are too long or too short
+	  continue;
+
+	left = posmap[((*mi)->getMatePair()).first].getBegin(); // use end of reads
+	right = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	if (left < right)
+	  starts.push_back(pair<Pos_t, Pos_t>(left, right));
+	else 
+	  starts.push_back(pair<Pos_t, Pos_t>(right, left));
+      } 
+  }// for each mate
+
+  if (starts.size() < 3){
+    return;
+  }
+
+  //  cout << "got " << starts.size() << " elements\n";
+
+  //  int inends = 0;
+  sort(starts.begin(), starts.end(), LessByFirst());
+  for (vector<pair<Pos_t, Pos_t> >::iterator si = starts.begin(); si != starts.end(); si++){
+    if (ends.size() == 0 || si->first <= ends[0].second) { // reached beginning of range
+      //     cout << "got begin " << ++inends << endl;
+      //    cout << si->first << ", " << si->second << endl;
+      ends.push_back(*si);
+      push_heap(ends.begin(), ends.end(), GtBySecond());
+      pos = si->first;
+    } else { // reached end of range
+      //   cout << "got end " << --inends << endl;
+      pos = ends[0].second;
+      pop_heap(ends.begin(), ends.end(), GtBySecond());
+      ends.pop_back();
+    }
+    getMeanSD(ends.begin(), ends.end(), mea, sderr);
+
+    if (globals.find("ceplot") != globals.end()){
+      ceplotFile << pos << "\t" << ((sderr != 0) ? (mea - mean) * sqrt((double)ends.size()) / sderr : 0 ) << "\t" << ends.size() << endl;
+    }
+
+    if (ends.size() > MIN_CE_OBS && abs(mea - mean) > num_sd * sderr / sqrt((double)ends.size())){ // too far off
+      //      cerr << "CE " << libid << " pos= " << pos << " skew= " << (mea - mean) * sqrt((double)ends.size()) / sderr << " nobs= " << ends.size() << endl;
+      if (mea > mean) {
+	if (inbad && over == false){ // switched type of bad region
+	  interest.push_back(pair<Pos_t, Pos_t> (st, pos));
+	  stretch.push_back(over);
+	  st = pos;
+	}
+	over = true;
+      } else {
+	if (inbad && over == true){ // switched type of bad region
+	  interest.push_back(pair<Pos_t, Pos_t> (st, pos));
+	  stretch.push_back(over);
+	  st = pos;
+	}
+	over = false;
+      }
+      if (! inbad){      // if not already in a bad region, we are now
+	inbad = true;
+	st = pos;        // start of bad region is current position
+      }
+    } else if (inbad) { // bad region ended
+      inbad = false;
+      interest.push_back(pair<Pos_t, Pos_t> (st, pos));
+      stretch.push_back(over);
+    }
+  } // for each start
+
+  cout << "Done with starts" << endl;
+  while (ends.size() > 0){
+    pos = ends[0].second;
+    pop_heap(ends.begin(), ends.end(), GtBySecond());
+    ends.pop_back();
+    if (ends.size()== 0){
+      cout << "Done with ends\n";
+      break;
+    }
+
+    getMeanSD(ends.begin(), ends.end(), mea, sderr);
+
+    if (globals.find("ceplot") != globals.end()){
+      ceplotFile << pos << "\t" << ((sderr != 0) ? (mea - mean) * sqrt((double)ends.size()) / sderr : 0 ) << "\t" << ends.size() << endl;
+    }
+
+    if (ends.size() > MIN_CE_OBS && abs(mea - mean) > num_sd * sderr / sqrt((double)ends.size())){ // too far off
+      cerr << "CE " << libid << " pos= " << pos << " skew= " << (mea - mean) * sqrt((double)ends.size()) / sderr << " nobs= " << ends.size() << endl;
+      if (mea > mean) {
+	if (inbad && over == false){ // switched type of bad region
+	  interest.push_back(pair<Pos_t, Pos_t> (st, pos));
+	  stretch.push_back(over);
+	  st = pos;
+	}
+	over = true;
+      } else {
+	if (inbad && over == true){ // switched type of bad region
+	  interest.push_back(pair<Pos_t, Pos_t> (st, pos));
+	  stretch.push_back(over);
+	  st = pos;
+	}
+	over = false;
+      }
+      if (! inbad){      // if not already in a bad region, we are now
+	inbad = true;
+	st = pos;        // start of bad region is current position
+      }
+    } else if (inbad) { // bad region ended
+      inbad = false;
+      interest.push_back(pair<Pos_t, Pos_t> (st, pos));
+      stretch.push_back(over);
+    }
+  } // for each end
+} // getCEstat
+
+
+
+//********************************************
+//**** MAIN **********************************
+//********************************************
 int main(int argc, char **argv)
 {
   if (! GetOptions(argc, argv)){
@@ -425,24 +638,31 @@ int main(int argc, char **argv)
   }
 
   // set up some global variables
-  int MIN_OBS = 100;   // min. num. of observations required to change lib size
-  float NUM_SD = 3.00; // num. of standard deviations within which mate is good
-  int MIN_GOOD_CVG = 0; // good mate coverages below this will be reported
-  int MAX_SHORT_CVG = 2; // short mate coverages over this will be reported
-  int MAX_LONG_CVG = 2; // long mate coverages over this will be reported
-  int MAX_NORMAL_CVG = 3; // normal orientation read coverages > will be reptd.
-  int MAX_OUTIE_CVG = 3; // outie orientation read coverages > will be reptd.
-  int MAX_LINKING_CVG = 3; // linking mate coverage > will be reported
+  int MIN_OBS = 100;          // min. num. of observations required to change lib size
+  float NUM_SD = 3.00;        // num. of standard deviations within which mate is good
+  int MIN_GOOD_CVG = 0;       // good mate coverages below this will be reported
+  int MAX_SHORT_CVG = 2;      // short mate coverages over this will be reported
+  int MAX_LONG_CVG = 2;       // long mate coverages over this will be reported
+  int MAX_NORMAL_CVG = 3;     // normal orientation read coverages > will be reptd.
+  int MAX_OUTIE_CVG = 3;      // outie orientation read coverages > will be reptd.
+  int MAX_LINKING_CVG = 3;    // linking mate coverage > will be reported
   int MAX_SINGLEMATE_CVG = 3; // single mate coverage > will be reported
-  int MEA_CHANGE = 50;// libraries that change by less are considered unchanged
-  int SD_CHANGE = 10;// libraries that change by less are considered unchanged
+  int MEA_CHANGE = 50;        // libraries that change by less are considered unchanged
+  int SD_CHANGE = 10;         // libraries that change by less are considered unchanged
 
-  bool recompute = false; // recompute library sizes
-  bool update = false;    // update library sizes in bank
-  bool feats = false;     // add features to bank
-  bool debug = false;     // write debugging info to STDERR
-  bool perinsert = false; // do per-insert output
-  bool byscaff = false;   // results reported by scaffold
+  bool recompute = false;     // recompute library sizes
+  bool update = false;        // update library sizes in bank
+  bool feats = false;         // add features to bank
+  bool debug = false;         // write debugging info to STDERR
+  bool perinsert = false;     // do per-insert output
+  bool byscaff = false;       // results reported by scaffold
+  bool cestat = false;        // do C/E statistics
+
+  cout << "Invocation: ";
+  for (int i = 0; i < argc; i++){
+    cout << argv[i] << " ";
+  }
+  cout << endl << endl;
 
   if (globals.find("debug") != globals.end()){
     debug = true;
@@ -455,14 +675,6 @@ int main(int argc, char **argv)
   if (globals.find("sdchange") != globals.end())
       SD_CHANGE = strtol(globals["sdchange"].c_str(), NULL, 10);
 
-  if (globals.find("recompute") != globals.end()){
-    recompute = true;
-    cout << "Will recompute library sizes" << endl;
-    cout << "Libraries whose mean changes by less than " << MEA_CHANGE
-	 << "\nand whose std. dev. changes by less than " << SD_CHANGE 
-	 << " are considered to not have changed" << endl;
-  } else
-    cout << "Will not recompute library sizes" << endl;
 
   if (globals.find("update") != globals.end()){
     update = true;
@@ -492,6 +704,24 @@ int main(int argc, char **argv)
     MIN_GOOD_CVG = strtol(globals["goodcvg"].c_str(), NULL, 10);
   cout << "Reporting regions with less than " << MIN_GOOD_CVG
        << " good mate coverage" << endl;
+
+  if (globals.find("cestat") != globals.end()){
+    cout << "Reporting regions with anomalous C/E stat: over " << NUM_SD 
+	 << " standard errors from mean" << endl;
+    globals["recompute"] = string("true");
+    globals.erase("shortcvg");
+    globals.erase("longcvg");
+    cestat = true;
+  }
+
+  if (globals.find("recompute") != globals.end()){
+    recompute = true;
+    cout << "Will recompute library sizes" << endl;
+    cout << "Libraries whose mean changes by less than " << MEA_CHANGE
+	 << "\nand whose std. dev. changes by less than " << SD_CHANGE 
+	 << " are considered to not have changed" << endl;
+  } else
+    cout << "Will not recompute library sizes" << endl;
 
   if (globals.find("shortcvg") != globals.end())
     MAX_SHORT_CVG = strtol(globals["shortcvg"].c_str(), NULL, 10);
@@ -654,6 +884,16 @@ int main(int argc, char **argv)
     }
   }
 
+  // C/E statistic plot to be written to this file
+  ofstream ceplotFile;
+  if (globals.find("ceplot") != globals.end()){
+    ceplotFile.open(globals["ceplot"].c_str(), ofstream::out);
+    if (! ceplotFile.is_open()){
+      cerr << "Failed to open ceplot file " << globals["ceplot"] << endl;
+      exit(1);
+    }
+  }
+
   //**********************************************
   // LOAD SCAFFOLD INFO
   // ctg2scaff <- scaffold IID for each contig
@@ -664,6 +904,7 @@ int main(int argc, char **argv)
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > ctg2scaff;   // map from contig to scaffold
   hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > ctg2posn; // position in scaffold
   hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > scaffspan; // span of scaffold
+  hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > scaffname;   // name of scaffold
 
   set<ID_t> scfIDs;
 
@@ -671,6 +912,7 @@ int main(int argc, char **argv)
     while (scaff_stream >> scaff){
       scaffspan[scaff.getIID()] = scaff.getSpan();
       scfIDs.insert(scaff.getIID());
+      scaffname[scaff.getIID()] = scaff.getEID();
       //     cerr << "Span of " << scaff.getIID() << " is " << scaff.getSpan() << endl;
       for (vector<Tile_t>::iterator ti = scaff.getContigTiling().begin();
 	   ti != scaff.getContigTiling().end(); ti++){
@@ -756,7 +998,6 @@ int main(int argc, char **argv)
   //*********************************************
   // LOAD FRAGMENT AND READ INFORMATION
   // rd2name <- EID of read
-  // rd2lib <- library read belongs to
   // mtl <- list of all mate pairs
   // lib2frag <- list of fragments in library
   // ctg2frag <- list of fragments in contig
@@ -766,7 +1007,6 @@ int main(int argc, char **argv)
   list<AnnotatedFragment> mtl;
   Read_t rd1, rd2;
   set<ID_t> libIDs;
-  hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2lib;
   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > rd2frg;
   hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > lib2frag;
   hash_map<ID_t, list<list<AnnotatedFragment>::iterator>, hash<ID_t>, equal_to<ID_t> > ctg2frag;
@@ -788,7 +1028,7 @@ int main(int argc, char **argv)
 	insertFile << "UNMATED: "
 		   << ((mtp.first != 0) ? mtp.first : mtp.second)
 		   << "(" << ((mtp.first != 0) ? rd1.getEID() : rd2.getEID())
-		   << ") " << endl;
+		   << ")" << endl;
       continue;
     }
     
@@ -806,8 +1046,6 @@ int main(int argc, char **argv)
     
     rd2name[mtp.first] = rd1.getEID();
     rd2name[mtp.second] = rd2.getEID();
-    rd2lib[mtp.first] = frag.getLibrary();
-    rd2lib[mtp.second] = frag.getLibrary();
     libIDs.insert(frag.getLibrary());
 
 
@@ -894,7 +1132,7 @@ int main(int argc, char **argv)
 	}
       }
     }
-  }
+  } // for each fragment
   
   //**********************************************************
   // GET LIBRARY INFO
@@ -1009,7 +1247,7 @@ int main(int argc, char **argv)
 	continue;  // only in scaffolds do we measure spanning clones
 
       Pos_t sz;
-      if ((*mi)->status == MP_SPANNING) { // byscaff && ctg2scaff[rd2ctg[(*mi)->getMatePair().first]] != 0) // make sure scaffold exists, otherwise go with size within contig
+      if ((*mi)->status == MP_SPANNING) { 
 	(*mi)->status = MP_GOOD;  // in scaffolds spanning is good
 	sz = mateLen(**mi, rd2scaff[(*mi)->getMatePair().first],
 		     rd2scaff[(*mi)->getMatePair().second],
@@ -1099,6 +1337,9 @@ int main(int argc, char **argv)
     cout << ">Contig_" << *ctg << " " << ctgname[*ctg] << " " 
 	 << ctglen[*ctg] << " bases" << endl;
 
+    cerr << ">Contig_" << *ctg << " " << ctgname[*ctg] << " " 
+	 << ctglen[*ctg] << " bases" << endl;
+
     getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_GOOD, *ctg, interest, ctglen[*ctg], MIN_GOOD_CVG, false); 
 
     // report interesting ranges
@@ -1123,56 +1364,106 @@ int main(int argc, char **argv)
       cout << endl;
     }
 
-    // find coverage by short mates
 
-    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_SHORT, *ctg, interest, ctglen[*ctg], MAX_SHORT_CVG, true); 
+    if (cestat) {
+      // calculate C/E statistics
+      for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
+	pair<Pos_t, SD_t> libsize = NewLib2size[*li];
+	list<bool> stretch;
+	
+	if (globals.find("ceplot") != globals.end())
+	  ceplotFile << ">c" << *ctg << " " << ctgname[*ctg] << " l" << *li << " " << lib2name[*li] << endl;
 
-    // report interesting ranges
+	getCEstat(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, *li, libsize, NUM_SD, interest, stretch, ceplotFile);
+	
+	// report interesting ranges
+	if (interest.size() > 0){
+	  cout << "In library " << *li << endl;
+	    
+	  list<bool>::iterator si = stretch.begin();
+	  for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	       ii != interest.end(); ii++, si++){
+	    cout << ii->first << "\t" << ii->second;
+	    if (*si) 
+	      cout << " STRETCH in lib " << *li << "(" << lib2name[*li] << ")" << endl;
+	    else 
+	      cout << " COMPRESS in lib " << *li << "(" << lib2name[*li] << ")" << endl;
+	    if (feats){
+	      Feature_t f;
+	      ostringstream comment;
+	      
+	      if (*si)
+	        comment << "CE_STRETCH LIB=" << *li << "(" << lib2name[*li] << ")";
+	      else
+	        comment << "CE_COMPRESS LIB=" << *li << "(" << lib2name[*li] << ")";
 
-    if (interest.size() > 0){
-      cout << "Regions of " << MAX_SHORT_CVG << "X or more short mate coverage"
-	   <<endl;
-      
-      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++){
-	cout << ii->first << "\t" << ii->second << endl;
-	if (feats){
-	  Feature_t f;
-	  f.setComment("HIGH_SHORT_CVG");
-	  f.setRange(Range_t(ii->first, ii->second));
-          f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
-          feat_stream << f;
+	      f.setComment(comment.str());
+	      f.setRange(Range_t(ii->first, ii->second));
+	      f.setSource(make_pair(*ctg, Contig_t::NCODE));
+	      f.setType(Feature_t::COVERAGE);
+	      feat_stream << f;
+	    }
+	  }
+	  cout << endl;
 	}
+      } // for each lib
+    } // if cestat
+
+    if (! cestat){
+      // find coverage by short mates
+
+      getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_SHORT, *ctg, interest, ctglen[*ctg], MAX_SHORT_CVG, true); 
+      
+      // report interesting ranges
+      
+      if (interest.size() > 0){
+	cout << "Regions of " << MAX_SHORT_CVG << "X or more short mate coverage"
+	     <<endl;
+	
+	for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	     ii != interest.end(); ii++){
+	  cout << ii->first << "\t" << ii->second << endl;
+	  if (feats){
+	    Feature_t f;
+	    f.setComment("HIGH_SHORT_CVG");
+	    f.setRange(Range_t(ii->first, ii->second));
+	    f.setSource(make_pair(*ctg, Contig_t::NCODE));
+	    f.setType(Feature_t::COVERAGE);
+	    feat_stream << f;
+	  }
+	}
+	cout << endl;
       }
-      cout << endl;
     }
 
-    // find coverage by long mates
 
-    getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_LONG, *ctg, interest, ctglen[*ctg], MAX_LONG_CVG, true); 
+    if (! cestat) {
+      // find coverage by long mates
 
-    // report interesting ranges
+      getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_LONG, *ctg, interest, ctglen[*ctg], MAX_LONG_CVG, true); 
 
-    if (interest.size() > 0){
-      cout << "Regions of " << MAX_LONG_CVG << "X or more long mate coverage" 
-	   <<endl;
+      // report interesting ranges
       
-      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++){
-	cout << ii->first << "\t" << ii->second << endl;
-	if (feats){
-	  Feature_t f;
-	  f.setComment("HIGH_LONG_CVG");
-	  f.setRange(Range_t(ii->first, ii->second));
-          f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
-          feat_stream << f;
+      if (interest.size() > 0){
+	cout << "Regions of " << MAX_LONG_CVG << "X or more long mate coverage" 
+	     <<endl;
+	
+	for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	     ii != interest.end(); ii++){
+	  cout << ii->first << "\t" << ii->second << endl;
+	  if (feats){
+	    Feature_t f;
+	    f.setComment("HIGH_LONG_CVG");
+	    f.setRange(Range_t(ii->first, ii->second));
+	    f.setSource(make_pair(*ctg, Contig_t::NCODE));
+	    f.setType(Feature_t::COVERAGE);
+	    feat_stream << f;
+	  }
 	}
+	cout << endl;
       }
-      cout << endl;
     }
-    
+
     // find coverage by normal reads
 
     getCvg(ctg2frag[*ctg].begin(), ctg2frag[*ctg].end(), rd2posn, MP_NORMAL, *ctg, interest, ctglen[*ctg], MAX_NORMAL_CVG, true); 
@@ -1302,6 +1593,7 @@ int main(int argc, char **argv)
     list<pair<Pos_t, Pos_t> > interest;
 
     cout << ">Scaffold_" << *scf << " " << scaffspan[*scf] << " bases" << endl;
+    cerr << ">Scaffold_" << *scf << " " << scaffspan[*scf] << " bases" << endl;
 
     getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_GOOD, *scf, interest, scaffspan[*scf], MIN_GOOD_CVG, false); 
 
@@ -1327,54 +1619,104 @@ int main(int argc, char **argv)
       cout << endl;
     }
 
-    // find coverage by short mates
+    if (cestat) {
+      // calculate C/E statistics
+      for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
+	pair<Pos_t, SD_t> libsize = NewLib2size[*li];
+	list<bool> stretch;
 
-    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_SHORT, *scf, interest, scaffspan[*scf], MAX_SHORT_CVG, true); 
+	if (globals.find("ceplot") != globals.end())
+	  ceplotFile << ">s" << *scf << " " << scaffname[*scf] << " l" << *li << " " << lib2name[*li] << endl;
 
-    // report interesting ranges
+	getCEstat(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, *li, libsize, NUM_SD, interest, stretch, ceplotFile);
+	
+	// report interesting ranges
+	if (interest.size() > 0){
+	  cout << "In library " << *li << endl;
+	    
+	  list<bool>::iterator si = stretch.begin();
+	  for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	       ii != interest.end(); ii++, si++){
+	    cout << ii->first << "\t" << ii->second;
+	    if (*si) 
+	      cout << " STRETCH in lib " << *li << "(" << lib2name[*li] << ")" << endl;
+	    else 
+	      cout << " COMPRESS in lib " << *li << "(" << lib2name[*li] << ")" << endl;
+	    if (feats){
+	      Feature_t f;
+	      ostringstream comment;
+	      
+	      if (*si)
+	        comment << "CE_STRETCH LIB=" << *li << "(" << lib2name[*li] << ")";
+	      else
+	        comment << "CE_COMPRESS LIB=" << *li << "(" << lib2name[*li] << ")";
 
-    if (interest.size() > 0){
-      cout << "Regions of " << MAX_SHORT_CVG << "X or more short mate coverage"
-	   <<endl;
-      
-      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++){
-	cout << ii->first << "\t" << ii->second << endl;
-	if (feats){
-	  Feature_t f;
-	  f.setComment("HIGH_SHORT_CVG");
-	  f.setRange(Range_t(ii->first, ii->second));
-          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
-          feat_stream << f;
+	      f.setComment(comment.str());
+	      f.setRange(Range_t(ii->first, ii->second));
+	      f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	      f.setType(Feature_t::COVERAGE);
+	      feat_stream << f;
+	    }
+	  }
+	  cout << endl;
 	}
+      } // for each lib
+    } // if cestat
+
+
+    if (! cestat){
+      // find coverage by short mates
+      
+      getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_SHORT, *scf, interest, scaffspan[*scf], MAX_SHORT_CVG, true); 
+      
+      // report interesting ranges
+      
+      if (interest.size() > 0){
+	cout << "Regions of " << MAX_SHORT_CVG << "X or more short mate coverage"
+	     <<endl;
+	
+	for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	     ii != interest.end(); ii++){
+	  cout << ii->first << "\t" << ii->second << endl;
+	  if (feats){
+	    Feature_t f;
+	    f.setComment("HIGH_SHORT_CVG");
+	    f.setRange(Range_t(ii->first, ii->second));
+	    f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	    f.setType(Feature_t::COVERAGE);
+	    feat_stream << f;
+	  }
+	}
+	cout << endl;
       }
-      cout << endl;
     }
 
-    // find coverage by long mates
-
-    getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_LONG, *scf, interest, scaffspan[*scf], MAX_LONG_CVG, true); 
-
-    // report interesting ranges
-
-    if (interest.size() > 0){
-      cout << "Regions of " << MAX_LONG_CVG << "X or more long mate coverage" 
-	   <<endl;
+    
+    if (! cestat){
+      // find coverage by long mates
       
-      for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
-	   ii != interest.end(); ii++){
-	cout << ii->first << "\t" << ii->second << endl;
-	if (feats){
-	  Feature_t f;
-	  f.setComment("HIGH_LONG_CVG");
-	  f.setRange(Range_t(ii->first, ii->second));
-          f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
-          feat_stream << f;
+      getCvg(scf2frag[*scf].begin(), scf2frag[*scf].end(), rd2scaff, MP_LONG, *scf, interest, scaffspan[*scf], MAX_LONG_CVG, true); 
+      
+      // report interesting ranges
+      
+      if (interest.size() > 0){
+	cout << "Regions of " << MAX_LONG_CVG << "X or more long mate coverage" 
+	     <<endl;
+	
+	for (list<pair<Pos_t, Pos_t> >::iterator ii = interest.begin(); 
+	     ii != interest.end(); ii++){
+	  cout << ii->first << "\t" << ii->second << endl;
+	  if (feats){
+	    Feature_t f;
+	    f.setComment("HIGH_LONG_CVG");
+	    f.setRange(Range_t(ii->first, ii->second));
+	    f.setSource(make_pair(*scf, Scaffold_t::NCODE));
+	    f.setType(Feature_t::COVERAGE);
+	    feat_stream << f;
+	  }
 	}
+	cout << endl;
       }
-      cout << endl;
     }
     
     // find coverage by normal reads
@@ -1482,6 +1824,8 @@ int main(int argc, char **argv)
   feat_stream.close();
   if (perinsert)
     insertFile.close();
+  if (globals.find("ceplot") != globals.end())
+    ceplotFile.close();
 
   return(0);
 } // main
