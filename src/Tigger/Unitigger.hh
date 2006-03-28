@@ -40,35 +40,35 @@ public:
   //  HASHMAP::hash_map< int, IEdge* > 
   bool VERBOSE;
 
-  void Unitigger::error(const char* m, const char* c = "");
+  void error(const char* m, const char* c = "");
 
-  void Unitigger::add_read(Read* p_read);
-  void Unitigger::add_read(AMOS::Read_t p_read);
+  void add_read(Read* p_read);
+  void add_read(AMOS::Read_t p_read);
 
-  void Unitigger::add_overlap(Overlap* p_olap);
-  void Unitigger::add_overlap(AMOS::Overlap_t p_olap);
+  void add_overlap(Overlap* p_olap);
+  void add_overlap(AMOS::Overlap_t p_olap);
 
-  void Unitigger::layout_contig(Contig* contig);
-  void Unitigger::layout_read(IEdge* p_edge, INode* p_node);
+  void layout_contig(Contig* contig);
+  void layout_read(IEdge* p_edge, INode* p_node);
 
-  void Unitigger::output_umd_contigs(IGraph* g, INode* p_node);
-  void Unitigger::output_amos_contigs(const std::string p_bankdir);
+  void output_umd_contigs(IGraph* g, INode* p_node);
+  void output_amos_contigs(const std::string p_bankdir);
 
-  void Unitigger::hide_transitive_overlaps(IGraph *g);
+  void hide_transitive_overlaps(IGraph *g);
 
-  void Unitigger::hide_containment(IGraph* g);
-  void Unitigger::add_containment();
+  void hide_containment(IGraph* g);
+  void add_containment();
 
-  void Unitigger::calc_contigs();
+  void calc_contigs();
 
-  void Unitigger::find_chunks();
+  void find_chunks();
 
-  void Unitigger::output_contig_graphs();
+  void output_contig_graphs();
 
-  Contig* Unitigger::walk(INode* p_node);
-  IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg);
+  Contig* walk(INode* p_node);
+  IEdge* walk_edge(IEdge* e, INode* n, Contig* ctg);
 
-  bool Unitigger::isSuffix(Read* read, Overlap* ovl);
+  bool isSuffix(Read* read, Overlap* ovl);
 
 
   Unitigger();

@@ -11,11 +11,11 @@ typedef std::vector<ContigSequence> ContigSequenceSlice;
 class ContigFattener
 {
 public:
-  ContigFattener::ContigFattener(AMOS::Contig_t & contig, 
-                                 AMOS::Bank_t & read_bank, 
-                                 bool verbose);
+  ContigFattener(AMOS::Contig_t & contig, 
+                 AMOS::Bank_t & read_bank, 
+                 bool verbose);
 
-  ContigFattener::~ContigFattener();
+  ~ContigFattener();
 
   void extend3Read(const std::string & seqname, int distance);
   void growContigLeft(bool requireConfirmation);

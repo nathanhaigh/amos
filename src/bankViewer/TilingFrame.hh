@@ -20,11 +20,11 @@ class TilingFrame: public QFrame
   Q_OBJECT
 
 public:
-  TilingFrame::TilingFrame(DataStore * datastore,
-                           AlignmentInfo * ai,
-                           QWidget * parent = 0,
-                           const char * name = 0,  
-                           WFlags f = 0);
+  TilingFrame(DataStore * datastore,
+              AlignmentInfo * ai,
+              QWidget * parent = 0,
+              const char * name = 0,  
+              WFlags f = 0);
 public slots:
     void setGindex(int gindex);
     void setContigId(int contigId);

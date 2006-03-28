@@ -481,6 +481,11 @@ class  Gapped_Multi_Alignment_t
    void  unsetPrintFlag
        (unsigned int  f)
      { print_flags &= (~ f); }
+
+   void  TA_Print
+       (FILE * fp, const vector <char *> & s,
+        const vector <AMOS :: Range_t> & clr_list,
+        int width, const vector <char *> * tag, const string & id);
    
 
    void  Add_Aligned_Seqs
@@ -572,10 +577,7 @@ class  Gapped_Multi_Alignment_t
    void  Sort
        (vector <char *> & s, vector <int> * ref = NULL,
         vector <char *> * tag_list = NULL);
-   void  Gapped_Multi_Alignment_t :: TA_Print
-       (FILE * fp, const vector <char *> & s,
-        const vector <AMOS :: Range_t> & clr_list,
-        int width, const vector <char *> * tag, const string & id);
+
    int  Ungapped_Consensus_Len
        (void)  const;
    void Make_AMOS_Contig(const vector <AMOS :: Range_t> & clr_list,
