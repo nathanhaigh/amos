@@ -6,29 +6,29 @@
 
 use lib "/usr/local/lib";
 use AMOS::AmosLib;
-use AMOS::Foundation;
+use AMOS::AmosFoundation;
 
 my $END = 10; # end wobble allowed
 
-my $base = new TIGR::Foundation;
+my $base = new AMOS::AmosFoundation;
 if (! defined $base){
     die ("Foundation cannot be created.  Walk, do not run, to the nearest exit!\n");
 }
 
 my $VERSION = '$Revision$ ';
-$base->setVersionInfo($VERSION);
+$base->setVersion($VERSION);
 
 my $HELPTEXT = q~
 Usage: preassembleFrgs.pl [-poly] <bank>
     ~;
 
-$base->setHelpInfo($HELPTEXT);
+$base->setHelpText($HELPTEXT);
 
 my $dopoly = undef;
 
-my $err = $base->TIGR_GetOptions(
-				 "poly=s" => \$dopoly
-				 );
+my $err = $base->GetOptions(
+			    "poly=s" => \$dopoly
+			    );
 
 if (! $err){
     $base->bail("Error processing command line!");
