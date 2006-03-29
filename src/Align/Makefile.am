@@ -13,6 +13,7 @@ bin_PROGRAMS = \
 	kmer-cov \
 	kmer-cov-plot \
 	make-consensus \
+	make-consensus_poly \
 	merge-contigs \
 	missing-reads \
 	ovl-degr-dist \
@@ -26,7 +27,8 @@ bin_PROGRAMS = \
 	simple-overlap
 
 amoslib_LIBRARIES = \
-	libAlign.a
+	libAlign.a \
+	libAlign_poly.a
 
 amosinclude_HEADERS = \
 	align.hh \
@@ -119,6 +121,16 @@ make_consensus_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 make_consensus_SOURCES = \
 	make-consensus.cc
+
+##-- make-consensus_poly
+make_consensus_poly_LDADD = \
+	$(top_builddir)/src/Align/libAlign_poly.a \
+	$(top_builddir)/src/CelMsg/libCelMsg.a \
+	$(top_builddir)/src/Slice/libSlice.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+make_consensus_poly_SOURCES = \
+	make-consensus_poly.cc
 
 ##-- maligntest
 maligntest_LDADD = \
@@ -214,5 +226,8 @@ test_align_SOURCES = \
 libAlign_a_SOURCES = \
 	align.cc
 
+##-- libAlign_poly.a
+libAlign_poly_a_SOURCES = \
+	align_poly.cc
 
 ##-- END OF MAKEFILE --##
