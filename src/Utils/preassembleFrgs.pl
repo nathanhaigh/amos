@@ -19,22 +19,23 @@ my $VERSION = '$Revision$ ';
 $base->setVersion($VERSION);
 
 my $HELPTEXT = q~
-Usage: preassembleFrgs.pl [-poly] <bank>
+Usage: preassembleFrgs.pl [-poly] -b <bank>
     ~;
 
 $base->setHelpText($HELPTEXT);
 
 my $dopoly = undef;
+my $bank = undef;
 
 my $err = $base->GetOptions(
-			    "poly=s" => \$dopoly
+			    "poly" => \$dopoly,
+			    "b=s" => \$bank
 			    );
 
 if (! $err){
     $base->bail("Error processing command line!");
 }
 
-my $bank = $ARGV[0];
 my $temp = "TEMP";
 
 my $amospath = $ENV{AMOSBIN};
@@ -83,5 +84,7 @@ while (my ($frg, $seqs) = each %frgrds){
 
 } # for each fragment
 
+print STDERR "Running $tigger -b $bank\n";
 system("$tigger -b $bank");
+print STDERR "Running $consensus -B -b $bank\n";
 system("$consensus -B -b $bank");
