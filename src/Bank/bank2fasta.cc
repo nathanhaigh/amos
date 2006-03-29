@@ -16,6 +16,8 @@
 #include <math.h>
 #include <functional>
 #include "foundation_AMOS.hh"
+#include <fstream>
+#include <ctype.h>
 
 using namespace std;
 using namespace AMOS;
@@ -31,7 +33,7 @@ void printHelpText()
   cerr << 
     "\n"
     ".NAME.\n"
-    "bank2fasta - generates a .fasta file from a bank\n"
+    "bank2fasta - generates a .fasta (and .qual) file from the contigs in a bank\n"
     "\n.USAGE.\n"
     "bank2fasta -b[ank] <bank_name>\n"
     "\n.OPTIONS.\n"
@@ -41,6 +43,7 @@ void printHelpText()
     "-iid          report iids (default)\n"
     "-E file       Dump just the contig eids listed in file\n"
     "-I file       Dump just the contig iids listed in file\n"
+    "-q file       Report qualities in file\n"
     "\n.DESCRIPTION.\n"
     "\n.KEYWORDS.\n"
     "AMOS bank, Converters\n"
@@ -59,6 +62,7 @@ bool GetOptions(int argc, char ** argv)
     {"iid",       0, 0, 'i'},
     {"E",         1, 0, 'E'},
     {"I",         1, 0, 'I'},
+    {"q",         1, 0, 'q'},
     {0, 0, 0, 0}
   };
   
@@ -86,6 +90,9 @@ bool GetOptions(int argc, char ** argv)
     case 'I':
       globals["iidfile"] = string(optarg);
       break;
+    case 'q':
+      globals["qualfile"] = string(optarg);
+      break;
     case '?':
       return false;
     }
@@ -94,27 +101,46 @@ bool GetOptions(int argc, char ** argv)
   return true;
 } // GetOptions
 
-void printFasta(const Contig_t & ctg)
+void printFasta(const Contig_t & ctg, ofstream & qual)
 {
   string seq = ctg.getSeqString();
-  if (globals["eid"] == "true") { cout << ">" << ctg.getEID(); }
-  else                          { cout << ">" << ctg.getIID(); }
+  string quals = ctg.getQualString();
+
+  if (globals["eid"] == "true") { 
+    cout << ">" << ctg.getEID(); 
+    if (globals.find("qualfile") != globals.end())
+      qual << ">" << ctg.getEID();
+  } else { 
+    cout << ">" << ctg.getIID(); 
+    if (globals.find("qualfile") != globals.end())
+      qual << ">" << ctg.getIID();
+  }
 
   int nout = 0;
   for (int i = 0; i < seq.length(); i++)
   {
     if (seq[i] == '-') { continue; }
-    if (nout % 60 == 0) { cout << endl; }
+    if (nout % 60 == 0) 
+      cout << endl; 
 
+    if (nout % 20 == 0 && globals.find("qualfile") != globals.end())
+      qual << endl;
+    
     nout++;
     cout << seq[i];
+    if (globals.find("qualfile") != globals.end())
+      qual << (int) (toascii(quals[i]) - toascii('0')) << " ";
   }
   cout << endl;
-}
+  if (globals.find("qualfile") != globals.end())
+    qual << endl;
+  
+} // printFasta
 
 //----------------------------------------------
 int main(int argc, char **argv)
 {
+  ofstream outqual;
   globals["iid"] = "true";
   globals["eid"] = "false";
 
@@ -122,6 +148,14 @@ int main(int argc, char **argv)
     cerr << "Command line parsing failed" << endl;
     printHelpText();
     exit(1);
+  }
+  
+  if (globals.find("qualfile") != globals.end()){ // have qual file will travel
+    outqual.open(globals["qualfile"].c_str(), ofstream::out | ofstream::trunc);
+    if (! outqual.is_open()){
+      cerr << "Could not open " << globals["qualfile"] << endl;
+      exit(1);
+    }
   }
 
   // open necessary files
@@ -148,7 +182,7 @@ int main(int argc, char **argv)
          << ": " << endl << e << endl;
     exit(1);
   }
-
+  
 
   try
   {
@@ -169,7 +203,7 @@ int main(int argc, char **argv)
       {
         contig_stream.seekg(contig_stream.getIDMap().lookupBID(id));
         contig_stream >> ctg;
-        printFasta(ctg);
+        printFasta(ctg, outqual);
       }
     }
     else if (!globals["iidfile"].empty())
@@ -185,18 +219,20 @@ int main(int argc, char **argv)
       {
         contig_stream.seekg(contig_stream.getIDMap().lookupBID(atoi(id.c_str())));
         contig_stream >> ctg;
-        printFasta(ctg);
+        printFasta(ctg, outqual);
       }
     }
     else
     {
       while (contig_stream >> ctg) 
       {
-        printFasta(ctg);
+        printFasta(ctg, outqual);
       }
     }
 
     contig_stream.close();
+    if (globals.find("qualfile") != globals.end())
+      outqual.close();
   }
   catch (Exception_t & e)
   {
