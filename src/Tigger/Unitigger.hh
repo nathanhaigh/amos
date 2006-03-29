@@ -39,6 +39,7 @@ public:
   std::queue< IEdge* > containment;
   //  HASHMAP::hash_map< int, IEdge* > 
   bool VERBOSE;
+  bool SINGLE;
 
   void error(const char* m, const char* c = "");
 
