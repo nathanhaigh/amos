@@ -179,29 +179,30 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
 
       if(read_tile->start < read_tile->end) {
 
-	tile.offset = read_tile->start;
-	tile.range = read_tile->range;
+		tile.offset = read_tile->start;
+		tile.range = read_tile->range;
 
       } else {
 
-	tile.range = read_tile->range;
-	tile.range.swap();
-	tile.offset = read_tile->end;
-
+		tile.range = read_tile->range;
+		tile.range.swap();
+		tile.offset = read_tile->end;
+		
       }
       
       if(VERBOSE) {
-	cout << " -> " << read_tile->id << " len " << read_tile->len;
-	cout << " (" << read_tile->start << "," << read_tile->end << ") ";
+		cout << " -> " << read_tile->id << " len " << read_tile->len;
+		cout << " (" << read_tile->start << "," << read_tile->end << ") ";
       }
 
       tiles.push_back(tile);
     }
 
-    layout.setTiling(tiles);
-    cout << endl;
+	if(tiles.size() > 1) {
+	  layout.setTiling(tiles);
   
-    bank << layout;
+	  bank << layout;
+	}
   }
   
   bank.close();
@@ -668,11 +669,11 @@ void Unitigger::layout_contig(Contig* ctg) {
     if(ovl->type != 'C') {
       count++;
       if(isSuffix(read, ovl)) {
-	read->start = 0;
-	read->end = (read->len);
+		read->start = 0;
+		read->end = (read->len);
       } else {
-	read->start = (read->len);
-	read->end = 0;
+		read->start = (read->len);
+		read->end = 0;
       }
     }
 
@@ -700,9 +701,9 @@ void Unitigger::layout_contig(Contig* ctg) {
       cur_edge = (*iter);
       INode* child = cur_edge->opposite(cur_node);
       if(child->getFlags() == 0) { // hasn't  been visited
-	child->setFlags(1); // gray
-	q.push(child);
-	layout_read(cur_edge, child);
+		child->setFlags(1); // gray
+		q.push(child);
+		layout_read(cur_edge, child);
       }
     }
   }

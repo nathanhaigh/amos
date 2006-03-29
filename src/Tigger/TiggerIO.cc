@@ -22,6 +22,7 @@ static string overlap_file;
 static string contig_file;
 
 static bool VERBOSE = false;
+static bool SINGLE = false;
 
 Unitigger tigger;
 
@@ -133,8 +134,12 @@ static void parse_command_line(int argc, char* argv[]) {
 
   optarg = NULL;
 
-  while (!errflg && ((ch = getopt(argc, argv, "r:l:b:hgv")) != EOF)) {
+  while (!errflg && ((ch = getopt(argc, argv, "r:l:b:hgvs")) != EOF)) {
     switch  (ch) {
+	case 's' :
+	  SINGLE = true;
+	  break;
+
     case 'b' :
       AMOS_mode = true;
       bankdir = optarg;
@@ -200,6 +205,7 @@ int main(int argc, char** argv) {
   parse_command_line(argc, argv);
 
   tigger.VERBOSE = VERBOSE;
+  tigger.SINGLE = SINGLE;
 
   if(AMOS_mode) {
 
