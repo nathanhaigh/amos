@@ -6,12 +6,32 @@
 
 use lib "/usr/local/lib";
 use AMOS::AmosLib;
+use AMOS::Foundation;
 
 my $END = 10; # end wobble allowed
 
-if ($#ARGV < 0 || $#ARGV == 0 && $ARGV[0] eq "-h"){
-    print "Usage: preassembleFrgs.pl <bank>\n";
-    exit(0);
+my $base = new TIGR::Foundation;
+if (! defined $base){
+    die ("Foundation cannot be created.  Walk, do not run, to the nearest exit!\n");
+}
+
+my $VERSION = '$Revision$ ';
+$base->setVersionInfo($VERSION);
+
+my $HELPTEXT = q~
+Usage: preassembleFrgs.pl [-poly] <bank>
+    ~;
+
+$base->setHelpInfo($HELPTEXT);
+
+my $dopoly = undef;
+
+my $err = $base->TIGR_GetOptions(
+				 "poly=s" => \$dopoly
+				 );
+
+if (! $err){
+    $base->bail("Error processing command line!");
 }
 
 my $bank = $ARGV[0];
@@ -22,7 +42,12 @@ my $amospath = $ENV{AMOSBIN};
 my $report = (defined $amospath) ? "$amospath/bank-report" : "bank-report";
 my $overlap = (defined $amospath) ? "$amospath/hash-overlap" : "hash-overlap";
 my $tigger = (defined $amospath) ? "$amospath/tigger" : "tigger";
-my $consensus = (defined $amospath) ? "$amospath/make-consensus" : "make-consensus";
+my $consensus;
+if (defined $dopoly) {
+    $consensus = (defined $amospath) ? "$amospath/make-consensus_poly" : "make-consensus_poly";
+} else {
+    $consensus = (defined $amospath) ? "$amospath/make-consensus" : "make-consensus";
+}
 
 my %frgrds;
 my %rdidx;
