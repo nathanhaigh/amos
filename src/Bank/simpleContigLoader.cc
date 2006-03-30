@@ -41,6 +41,16 @@ void PrintUsage (const char * s);
 
 
 
+void loadContig(Contig_t & contig, Bank_t & bank)
+{
+  bank.append(contig);
+  cout << "Loaded contig " << contig.getEID() << ": "
+       << contig.getLength() << "bp " 
+       << contig.getReadTiling().size() << "reads" << endl;
+}
+
+
+
 //========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
@@ -57,9 +67,94 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
-    read_bank.open (OPT_BankName, B_READ|B_SPY);
-    contig_bank.open(OPT_BankName, B_READ|B_WRITE);
+    ifstream cfile;
+    cfile.open(OPT_ContigFile.c_str());
 
+    if (!cfile)
+    {
+      AMOS_THROW_IO("Can't open " + OPT_ContigFile);
+    }
+
+    read_bank.open (OPT_BankName, B_READ|B_SPY);
+
+    if (contig_bank.exists(OPT_BankName))
+    {
+      contig_bank.open(OPT_BankName, B_READ|B_WRITE);
+      contig_bank.clear();
+    }
+    else
+    {
+      contig_bank.create(OPT_BankName, B_READ|B_WRITE);
+    }
+
+    Contig_t ctg;
+    bool first = true;
+    string id;
+    cfile >> id;
+
+    while (cfile)
+    {
+      if (id[0] == '>')
+      {
+        if (!first)
+        {
+          loadContig(ctg, contig_bank);
+          ctg.clear();
+        }
+
+        first = false;
+        ctg.setEID(id.substr(1,id.length()));
+        ctg.setIID(contig_bank.getMaxIID()+1);
+
+        string cons;
+        cfile >> cons;
+
+        string cqual;
+        cqual.append(cons.length(), 'X');
+
+        ctg.setSequence(cons,cqual);
+
+        cerr << "Saw contig header: " << id << endl;
+      }
+      else if (id[0] == '#')
+      {
+        ID_t readiid;
+        int offset;
+        char dir;
+
+        readiid = atoi(id.c_str()+1);
+        cfile >> offset;
+        cfile >> dir;
+
+        Read_t read;
+        read_bank.fetch(readiid, read);
+
+        Range_t clr = read.getClearRange();
+
+             if (dir == 'F') { } 
+        else if (dir == 'R') { clr.swap(); }
+        else 
+        {
+          AMOS_THROW_IO((string)"Invalid Direction Specified " + dir + " for read " + id);
+        }
+
+        Tile_t tle;
+        tle.source = readiid;
+        tle.offset = offset;
+        tle.range = clr;
+
+        ctg.getReadTiling().push_back(tle);
+        cerr << "Added read: " << id << " " << offset << " " << dir << endl;
+      }
+      else
+      {
+        AMOS_THROW_IO("Invalid field: " + id);
+      }
+
+      cfile >> id;
+    }
+
+    loadContig(ctg, contig_bank);
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
@@ -98,7 +193,7 @@ void ParseArgs (int argc, char ** argv)
         errflg ++;
       }
 
-  if ( errflg > 0 || optind != argc - 1 )
+  if ( errflg > 0 || optind != argc - 2 )
     {
       PrintUsage (argv[0]);
       cerr << "Try '" << argv[0] << " -h' for more information.\n";
@@ -106,6 +201,7 @@ void ParseArgs (int argc, char ** argv)
     }
 
   OPT_BankName = argv [optind ++];
+  OPT_ContigFile = argv[optind++];
 }
 
 
@@ -116,14 +212,18 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-e            Report objects by EID instead of IID\n"
     << "-h            Display help information\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << endl;
   cerr
-    << "Takes an AMOS bank directory and dumps a bambus .mates files to\n"
-    << "stdout\n\n";
+    << "Loads contigs from file into a bank\n"
+    << "Format of contig file is:\n\n"
+    << ">contig1 consensus\n"
+    << "#readiid1 offset dir\n"
+    << "#readiid2 offset dir\n"
+    << "#readiid3 offset dir\n"
+    << ">contig2 consensus\n"
+    << "#readiid4 offset dir\n";
   return;
 }
 
@@ -134,6 +234,6 @@ void PrintHelp (const char * s)
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+    << "\nUSAGE: " << s << "  <bank path> <contig file>\n\n";
   return;
 }
