@@ -29,6 +29,7 @@ bin_PROGRAMS = \
     revScaffold \
 	select-reads \
     simplifyLibraries \
+	simpleContigLoader \
 	updateBankPositions \
 	updateClrRanges \
 	updateLibSizes \
@@ -126,6 +127,13 @@ updateBankPositions_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 updateBankPositions_SOURCES = \
 	updateBankPositions.cc
+
+##-- simpleContigLoader
+simpleContigLoader_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+simpleContigLoader_SOURCES = \
+	simpleContigLoader.cc
 
 ##-- updateClrRanges
 updateClrRanges_LDADD = \
