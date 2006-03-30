@@ -504,14 +504,14 @@ sub EndTag
 	    }
 	}
 	
-	if ($end eq "R"){
+	if ($end =~ /^R/i){
 	    if (! exists $end3{$template} ||
 		$seqId gt $end3{$template}){
 		$end3{$template} = $seqId;
 	    }
 	}
 
-	if ($end eq "F"){
+	if ($end =~ /^F/i){
 	    if (! exists $end5{$template} ||
 		$seqId gt $end5{$template}){
 		$end5{$template} = $seqId;
