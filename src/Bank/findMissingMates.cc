@@ -297,7 +297,7 @@ int main (int argc, char ** argv)
     {
       bool hasovl = false;
       if (hasOverlap(rangeStart, rangeEnd, 
-                     ri->offset, ri->range.getLength() + ri->gaps.size(),
+                     ri->offset, ri->getGappedLength(),
                      10000000))
       {
         hasovl = true;
@@ -309,13 +309,13 @@ int main (int argc, char ** argv)
         cout << "read: " << ri->source 
              << "\t" << red_bank.lookupEID(ri->source) 
              << "\t" << ri->offset 
-             << "\t" << ri->offset+ri->gaps.size()+ri->range.getLength()-1 
+             << "\t" << ri->getRightOffset()
              << "\t" << (ri->range.isReverse() ? "R" : "F") 
              << endl;
       }
       else if (hasovl)
       {
-        if (!OPT_MissingOnly) { cout << red_bank.lookupEID(ri->source) << endl; }
+        if (!OPT_MissingOnly) { cout << "t\t" << red_bank.lookupEID(ri->source) << "\t" << ri->offset << "\t" << ri->getRightOffset() << endl; }
       }
       
       if (OPT_USEMATES)
@@ -376,7 +376,7 @@ int main (int argc, char ** argv)
 
                 if (!OPT_MissingOnly || tli == tilelookup.end())
                 {
-                  cout <<  red_bank.lookupEID(mi->second) << endl;
+                  cout << "p\t" << red_bank.lookupEID(mi->second) << "\t" << projectedStart << "\t" << projectedEnd << endl;
                 }
               }
             }
