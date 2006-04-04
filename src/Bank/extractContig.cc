@@ -37,15 +37,15 @@ int main(int argc, char ** argv)
 
   try
   {
-    contig_bank.open(bank_name);
-    read_bank.open(bank_name);
-    fragment_bank.open(bank_name);
-    library_bank.open(bank_name);
+    contig_bank.open(bank_name,   B_READ);
+    read_bank.open(bank_name,     B_READ);
+    fragment_bank.open(bank_name, B_READ);
+    library_bank.open(bank_name,  B_READ);
 
-    if(!newcontig_bank.exists(new_name)){newcontig_bank.create(new_name);}
-    if(!newread_bank.exists(new_name)){newread_bank.create(new_name);}
+    if(!newcontig_bank.exists(new_name))  {newcontig_bank.create(new_name);  }
+    if(!newread_bank.exists(new_name))    {newread_bank.create(new_name);    }
     if(!newfragment_bank.exists(new_name)){newfragment_bank.create(new_name);}
-    if(!newlibrary_bank.exists(new_name)){newlibrary_bank.create(new_name);}
+    if(!newlibrary_bank.exists(new_name)) {newlibrary_bank.create(new_name); }
 
     newcontig_bank.open(new_name);
     newread_bank.open(new_name);
