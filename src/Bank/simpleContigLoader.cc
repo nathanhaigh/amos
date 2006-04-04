@@ -9,6 +9,7 @@ using namespace AMOS;
 //=============================================================== Globals ====//
 string OPT_BankName; 
 string OPT_ContigFile;
+bool VERBOSE = 0;
 
 
 
@@ -44,9 +45,9 @@ void PrintUsage (const char * s);
 void loadContig(Contig_t & contig, Bank_t & bank)
 {
   bank.append(contig);
-  cout << "Loaded contig " << contig.getEID() << ": "
-       << contig.getLength() << "bp " 
-       << contig.getReadTiling().size() << "reads" << endl;
+  cerr << "Loaded contig: " << contig.getEID() << " "
+       << contig.getLength() << " bp, " 
+       << contig.getReadTiling().size() << " reads" << endl;
 }
 
 
@@ -79,6 +80,7 @@ int main (int argc, char ** argv)
 
     if (contig_bank.exists(OPT_BankName))
     {
+      cerr << "WARNING: Removing old contigs" << endl;
       contig_bank.open(OPT_BankName, B_READ|B_WRITE);
       contig_bank.clear();
     }
@@ -114,7 +116,10 @@ int main (int argc, char ** argv)
 
         ctg.setSequence(cons,cqual);
 
-        cerr << "Saw contig header: " << id << endl;
+        if (VERBOSE)
+        {
+          cout << "Saw contig header: " << id << ", " << cons.length() << "bp." << endl;
+        }
       }
       else if (id[0] == '#')
       {
@@ -144,7 +149,16 @@ int main (int argc, char ** argv)
         tle.range = clr;
 
         ctg.getReadTiling().push_back(tle);
-        cerr << "Added read: " << id << " " << offset << " " << dir << endl;
+
+        if (tle.offset + clr.getLength() > ctg.getLength())
+        {
+          cerr << "WARNING: Read " << readiid << " extends beyond consensus" << endl;
+        }
+
+        if (VERBOSE)
+        {
+          cout << "Added read: " << id << " " << offset << " " << dir << endl;
+        }
       }
       else
       {
@@ -185,8 +199,7 @@ void ParseArgs (int argc, char ** argv)
         break;
 
       case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
+      VERBOSE = true;
 	break;
 
       default:
@@ -213,7 +226,7 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-h            Display help information\n"
-    << "-v            Display the compatible bank version\n"
+    << "-v            Be Verbose\n"
     << endl;
   cerr
     << "Loads contigs from file into a bank\n"
@@ -223,7 +236,8 @@ void PrintHelp (const char * s)
     << "#readiid2 offset dir\n"
     << "#readiid3 offset dir\n"
     << ">contig2 consensus\n"
-    << "#readiid4 offset dir\n";
+    << "#readiid4 offset dir\n\n"
+    << "WARNING: All previously loaded contigs are removed\n";
   return;
 }
 
