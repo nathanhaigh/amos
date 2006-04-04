@@ -32,6 +32,7 @@ amoslib_LIBRARIES = \
 
 amosinclude_HEADERS = \
 	align.hh \
+	align_poly.hh \
 	matrix.hh
 
 
