@@ -176,7 +176,7 @@ clr:$$fields{clr}
 
 foreach my $rd1 ( keys %mates ) {
    my $rd2 = $mates{$rd1};
-   if ($rd2lib{$rd1} != $rd2lib{$rd1}){
+   if ($rd2lib{$rd1} != $rd2lib{$rd2}){
        $base->bail("Reads $rd1 and $rd2 don't appear to map to the same library ($rd2lib{$rd1} != $rd2lib{$rd2})");
    }
 
