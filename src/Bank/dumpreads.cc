@@ -20,6 +20,7 @@ bool   OPT_BankSpy = false;          // read or read-only spy
 bool   OPT_UseEIDs = false;          // print EIDs instead of IIDs
 bool   OPT_UseRaw  = false;          // pull entire seqlen
 bool   OPT_DumpQual = false;         // dump qualities
+bool   OPT_ShowClear = false;       // show clear range info
 
 string OPT_IIDFile;  // Filename of IIDs to dump
 string OPT_EIDFile;  // Filename of EIDs to dump
@@ -94,10 +95,15 @@ void dumpRead(Read_t & red)
       return;
     }
 
-  if ( OPT_UseEIDs )
-    cout << ">" << red . getEID( ) << endl;
-  else
-    cout << ">" << red . getIID( ) << endl;
+  if ( OPT_UseEIDs ) { cout << ">" << red.getEID(); }
+  else               { cout << ">" << red.getIID(); }
+
+  if (OPT_ShowClear)
+  {
+    cout << " 0 0 0 " << red.getClearRange().getLo() + 1 << " " << red.getClearRange().getHi();
+  }
+
+  cout << endl;
 
   if (OPT_DumpQual)
   {
@@ -204,50 +210,28 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "ehrsvqE:I:L:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "cehrsvqE:I:L:")) != EOF) )
     switch (ch)
       {
-      case 'e':
-	OPT_UseEIDs = true;
-	break;
+        case 'c': OPT_ShowClear = true; break;
+        case 'e': OPT_UseEIDs = true;   break;
+        case 's': OPT_BankSpy = true; break;
 
-      case 'E':
-      OPT_EIDFile = optarg;
-      break;
+        case 'E': OPT_EIDFile = optarg; break;
+        case 'I': OPT_IIDFile = optarg; break;
+        case 'r': OPT_UseRaw = true; break;
+        case 'q': OPT_DumpQual = true; OPT_basesperline = 17; break;
+        case 'L': OPT_basesperline = atoi(optarg); break;
 
-      case 'I':
-      OPT_IIDFile = optarg;
-      break;
+        case 'h':
+          PrintHelp (argv[0]);
+          exit (EXIT_SUCCESS);
+          break;
 
-      case 'h':
-        PrintHelp (argv[0]);
-        exit (EXIT_SUCCESS);
-        break;
+        case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
 
-      case 'r':
-        OPT_UseRaw = true;
-        break;
-
-      case 'q':
-        OPT_DumpQual = true;
-        OPT_basesperline = 17;
-        break;
-
-      case 'L':
-        OPT_basesperline = atoi(optarg);
-        break;
-
-      case 's':
-	OPT_BankSpy = true;
-	break;
-
-      case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
-
-      default:
-        errflg ++;
+        default:
+          errflg ++;
       }
 
   if ( errflg > 0 || optind != argc - 1 )
@@ -272,6 +256,7 @@ void PrintHelp (const char * s)
     << "-h            Display help information\n"
     << "-r            Ignore clear range and dump entire sequence\n"
     << "-q            Dump qualities in fasta format instead of sequence\n"
+    << "-c            Display clear range information on FASTA header for TIGR Assembler\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << "-E file       Dump just the eids listed in file\n"
@@ -280,8 +265,7 @@ void PrintHelp (const char * s)
     << endl;
   
   cerr
-    << "Takes an AMOS bank directory and dumps all contained reads listed by\n"
-    << "IID to stdout (clear range sequence only)\n\n";
+    << "Takes an AMOS bank directory and dumps selected reads to stdout in FASTA format\n\n";
   return;
 }
 
