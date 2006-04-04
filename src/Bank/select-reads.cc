@@ -117,6 +117,7 @@ int main (int argc, char ** argv)
     }
 
     int extra = 0;   
+    int nullified = 0;
 
     //-- Iterate through each object in the mate bank
     while ( frg_bank >> frg )
@@ -127,23 +128,33 @@ int main (int argc, char ** argv)
 
       if (r1 != iidsToPrint.end() || r2 != iidsToPrint.end())
       {
+        bool brokenmate = false;
+
         // Always print r1
         if (r1 == iidsToPrint.end())
         {
           swap (mtp.first,mtp.second);
           swap (r1, r2);
 
-          if (OPT_NullMates)
-          {
-            frg.setReads(make_pair(NULL_ID, NULL_ID));
-          }
+          brokenmate = true;
+        }
+        else if (r2 == iidsToPrint.end())
+        {
+          brokenmate = true;
+        }
+
+        if (brokenmate && OPT_NullMates)
+        {
+          nullified++;
+          frg.setReads(make_pair(NULL_ID, NULL_ID));
+        }
+        else
+        {
+          frg.writeMessage(msg);
+          msg.write(cout);
         }
 
         red_bank.fetch(mtp.first, red1);
-
-        frg.writeMessage(msg);
-        msg.write(cout);
-
         iidsToPrint[red1.getIID()] = 1;
         red1.writeMessage(msg);
         msg.write(cout);
@@ -168,6 +179,11 @@ int main (int argc, char ** argv)
     if (OPT_AutoIncludeMates)
     {
       cerr << "Included " << extra << " extra mates" << endl;
+    }
+
+    if (OPT_NullMates)
+    {
+      cerr << "Nullified " << nullified << " half mates" << endl;
     }
 
     {
