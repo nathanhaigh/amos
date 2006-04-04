@@ -82,6 +82,7 @@ public:
         return true;
       }
 
+      // stl requires a strict weak ordering. Return false if tie.
       return false;
     }
   };

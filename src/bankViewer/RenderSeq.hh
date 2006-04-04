@@ -68,29 +68,6 @@ public:
                          AMOS::Pos_t seqLen,     // count of bases of seq (seqend+1)
                          AMOS::Pos_t contigLen);  // count of bases in contig (contigend+1)
 
-  struct TilingOrderCmp
-  {
-    bool operator() (const AMOS::Tile_t & a, const AMOS::Tile_t & b)
-    {
-      int offdiff = b.offset - a.offset;
-
-      if (offdiff)
-      {
-        if (offdiff < 0) { return false; }
-        return true;
-      }
-
-      int lendiff = (b.getGappedLength()) - (a.getGappedLength());
-
-      if (lendiff)
-      {
-        if (lendiff < 0) { return false; }
-        return true;
-      }
-
-      return (a.source < b.source);
-    }
-  };
 };
 
 #endif

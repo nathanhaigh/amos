@@ -229,7 +229,7 @@ void TilingFrame::setContigId(int contigId)
       m_consqual.append (m_alignment->m_endshift, '*');
       //m_ugpos.append    (m_alignment->m_endshift, -1); // TODO
 
-      sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
+      sort(m_tiling.begin(), m_tiling.end(), TileOrderCmp());
 
       m_loadedStart = m_loadedEnd = -1;
 

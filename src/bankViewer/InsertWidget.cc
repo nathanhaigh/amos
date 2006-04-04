@@ -371,7 +371,7 @@ void InsertWidget::initializeTiling()
     }
 
     m_ctiling = scaffold.getContigTiling();
-    sort(m_ctiling.begin(), m_ctiling.end(), RenderSeq_t::TilingOrderCmp());
+    sort(m_ctiling.begin(), m_ctiling.end(), TileOrderCmp());
 
     if (m_kmercoverageplot && !m_datastore->mer_table.empty())
     {
@@ -550,7 +550,7 @@ void InsertWidget::initializeTiling()
     }
   }
 
-  sort(m_tiling.begin(), m_tiling.end(), RenderSeq_t::TilingOrderCmp());
+  sort(m_tiling.begin(), m_tiling.end(), TileOrderCmp());
   sort(m_features.begin(), m_features.end(), FeatOrderCmp());
 
   computeInsertHappiness();
