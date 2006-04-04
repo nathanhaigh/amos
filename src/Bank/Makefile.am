@@ -21,6 +21,7 @@ bin_PROGRAMS = \
 	findMissingMates \
 	grow-readbank \
     listReadPlacedStatus \
+    listGCContent \
 	load-overlaps \
     loadFeatures \
     normalizeScaffold \
@@ -170,6 +171,14 @@ findMissingMates_LDADD = \
 findMissingMates_SOURCES = \
 	findMissingMates.cc
 
+##-- listGCContent
+listGCContent_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+listGCContent_SOURCES = \
+	listGCContent.cc
+
+    
 ##-- listReadPlacedStatus
 listReadPlacedStatus_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
