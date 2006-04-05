@@ -934,7 +934,8 @@ void InsertWidget::paintCanvas()
 
       if (m_showscaffold)
       {
-        QCanvasRectangle * rect = new QCanvasRectangle(contig->x()+(contig->boundingRect().width())/2-3, voffset-lineheight, 
+        QCanvasRectangle * rect = new QCanvasRectangle((int)(contig->x()+(contig->boundingRect().width())/2-3),
+                                                       (int)(voffset-lineheight), 
                                                        6, vpos-voffset+lineheight+m_seqheight, m_icanvas);
         rect->setPen(contig->pen());
         rect->setBrush(contig->brush());
