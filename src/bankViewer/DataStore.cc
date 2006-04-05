@@ -33,6 +33,8 @@ DataStore::DataStore()
   m_tracepaths.push_back("/local/chromo3/Chromatograms/%TRACEDB%/ABISSed/%EID3%/%EID4%/%EID5%/");
 
   m_tracepaths.push_back("/fs/szasmg/Chromatograms/%TRACEDB%/");
+  m_tracepaths.push_back("chromat_dir");
+  m_tracepaths.push_back("../chromat_dir");
 
   m_tracecache        = ".tracecache";
   m_tracecachecreated = 0;
