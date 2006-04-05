@@ -9,9 +9,7 @@
 
 #include "foundation_AMOS.hh"
 
-#if HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef HAVE_QT_333
 #include <qsplashscreen.h>

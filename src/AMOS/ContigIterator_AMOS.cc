@@ -50,7 +50,7 @@ TiledRead_t::TiledRead_t(Tile_t tile, Read_t red, int readidx)
   }
 }
 
-int ContigIterator_t::s_tilingreadsoffset(0);
+int32_t ContigIterator_t::s_tilingreadsoffset(0);
 
 ContigIterator_t::ContigIterator_t(Contig_t & ctg, Bank_t * rdbank)
  : m_tilingreadsoffset(s_tilingreadsoffset)
@@ -71,7 +71,7 @@ ContigIterator_t::ContigIterator_t(Contig_t & ctg, Bank_t * rdbank)
   s_tilingreadsoffset += m_numreads;
 }
 
-int ContigIterator_t::uindex() const
+Pos_t ContigIterator_t::uindex() const
 {
   if (m_consensus[m_gindex] == '-' && m_uindex > 1)
   {

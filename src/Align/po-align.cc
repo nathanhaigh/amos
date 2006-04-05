@@ -254,9 +254,9 @@ public:
     return aligned;
   }
 
-  vector<int> getGaps(int readcount)
+  vector<Pos_t> getGaps(int readcount)
   {
-    vector<int> retval;
+    vector<Pos_t> retval;
     string aligned = getAlignedString(readcount);
 
     for (int i = 0; i < aligned.length(); i++)

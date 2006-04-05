@@ -237,7 +237,7 @@ void AssemblyStats::loadTable()
 
     // Contigs
     addRow("[Contigs]", "");
-    addRow("TotalContigs", m_datastore->contig_bank.getSize());
+    addRow("TotalContigs",  (int)m_datastore->contig_bank.getSize());
     addRow("TotalBasesInContigs", totalsize);
     addRow("MeanContigSize", DIV(totalsize, sizes.size()));
     addRow("MinContigSize", sizes[0]);
@@ -269,11 +269,11 @@ void AssemblyStats::loadTable()
 
     // Reads
     addRow("[Reads]", "");
-    addRow("TotalReads", m_datastore->read_bank.getSize());
+    addRow("TotalReads", (int)m_datastore->read_bank.getSize());
     addRow("ReadsInContigs", totalreads);
     addRow("BigContigReads", largereads);
     addRow("SmallContigReads", smallreads);
-    addRow("SingletonReads", m_datastore->read_bank.getSize() - totalreads);
+    addRow("SingletonReads", (int) m_datastore->read_bank.getSize() - totalreads);
   }
 
   m_table->adjustColumn(0);
