@@ -881,6 +881,13 @@ void InsertWidget::paintCanvas()
                                                         size+1, cestatsheight, m_icanvas);
         covbg->setBrush(QColor(60,60,60));
         covbg->setPen(QColor(60,60,60));
+        covbg->setZ(-4);
+        covbg->show();
+
+        covbg = new QCanvasRectangle(i, cestatsoffset + cestatsheight/2 - 3*8 , 
+                                     size+1, 6*8, m_icanvas);
+        covbg->setBrush(QColor(75,75,75));
+        covbg->setPen(QColor(75,75,75));
         covbg->setZ(-3);
         covbg->show();
       }
