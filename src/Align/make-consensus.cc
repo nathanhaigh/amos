@@ -18,6 +18,7 @@
 #include  <vector>
 #include  <string>
 #include  <algorithm>
+#include  <fstream>
 
 
 using namespace std;
@@ -61,6 +62,14 @@ static Output_Format_t  Output_Format = CELERA_MSG_OUTPUT;
   // Type of output to produce
 static string  Tig_File_Name;
   // Name of file containing input contig/unitig messages
+static bool byIID = false;
+  // Layouts to be processed listed by IID
+static ifstream IID_fp; 
+  // Pointer to file of IIDs
+static bool byEID = false;
+  // Layouts to be processed listed by EID
+static ifstream EID_fp;
+  // Pointer to file of EIDs
 
 
 static bool  By_Lo_Position
@@ -91,6 +100,8 @@ static void  Sort_By_Low_Pos
      vector <Ordered_Range_t> & seg);
 static void  Usage
     (const char * command);
+static void readIIDFile(ifstream & f, list <ID_t> & l);
+static void readEIDFile(ifstream & f, list <string> &l);
 
 
 
@@ -100,7 +111,8 @@ int  main
   {
    Bank_t  read_bank (Read_t::NCODE);
    BankStream_t contig_bank (Contig_t::NCODE);
-   BankStream_t layout_bank (Layout_t::NCODE);
+   BankStream_t layout_bank_stream (Layout_t::NCODE);
+   Bank_t layout_bank (Layout_t::NCODE);
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * input_fp;
@@ -116,6 +128,8 @@ int  main
    time_t  now;
    iostream::fmtflags status;
    int  contig_ct, unitig_ct;
+   list <string> eid_list;     // if layouts selected by eid
+   list <ID_t> iid_list;       // if layouts selected by iid
 
    try
      {
@@ -139,6 +153,19 @@ int  main
 	  contig_bank . create (Bank_Name);
 	else
 	  contig_bank . open (Bank_Name);
+      }
+
+      if (byIID) {
+	cerr << "Will only process IIDs in file specified by option -i\n";
+	
+	readIIDFile (IID_fp, iid_list);
+	IID_fp.close();
+      }
+
+      if (byEID) {
+	cerr << "Will only process EIDs in file specified by option -n\n";
+	readEIDFile (EID_fp, eid_list);
+	EID_fp.close();
       }
 
       gma . setPrintFlag (PRINT_WITH_DIFFS);
@@ -210,18 +237,47 @@ int  main
 	   Layout_t layout; 
            vector <Ordered_Range_t>  pos_list;
            vector <int>  frg_id_list;
+	   list <string>::iterator eidi = eid_list.begin();
+	   list <ID_t>::iterator iidi = iid_list.begin();
 
 	   cerr << "Input is being read from the bank " << endl;
 
            read_bank . open (Bank_Name, B_READ);
-	   layout_bank . open (Bank_Name);
+
+	   if (byIID || byEID)
+	     layout_bank . open (Bank_Name);
+	   else
+	     layout_bank_stream . open (Bank_Name);
 
            msg . setType (IUM_MSG);
            msg . setStatus (UNASSIGNED_UNITIG);
 
-           while  (layout_bank >> layout)
+           while  (true)
              {
 	       char sid[256]; 
+
+	       if (byIID) {
+		 if (iidi == iid_list.end()) break;
+		 if (! layout_bank . existsIID(*iidi)){
+		   cerr << "IID " << *iidi << " does not exist!\n";
+		   exit(1);
+		 }
+		 layout_bank . fetch(*iidi, layout);
+		 iidi++;
+	       } else if (byEID) {
+		 if (eidi == eid_list.end()) break;
+		 if (! layout_bank . existsEID(*eidi)){
+		   cerr << "EID " << *eidi << " does not exist!\n";
+		   exit(1);
+		 }
+		 layout_bank . fetch(*eidi, layout);
+		 eidi++;
+	       } else {
+		 layout_bank_stream >> layout;
+		 if (layout_bank_stream.eof())
+		   break;
+	       }
+
 	       sprintf(sid, "%ld", ++layout_id);
 	       cid = string(sid);
 	       ID_t lid = layout.getIID();
@@ -954,7 +1010,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "aAbBcCe:E:fho:PsSTuv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "aAbBcCe:E:fhi:n:o:PsSTuv:")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -997,6 +1053,24 @@ static void  Parse_Command_Line
         case  'h' :
           errflg = true;
           break;
+
+        case 'i':
+	  byIID = true;
+	  IID_fp.open(optarg, ifstream::in);
+	  if (! IID_fp.is_open()){
+	    cerr << "Couldn't open " << optarg << endl;
+	    exit(1);
+	  }
+	  break;
+
+        case 'n':
+	  byEID = true;
+	  EID_fp.open(optarg, ifstream::in);
+	  if (! EID_fp.is_open()){
+	    cerr << "Couldn't open " << optarg << endl;
+	    exit(1);
+	  }
+	  break;
 
         case  'o' :
           Min_Overlap = strtol (optarg, NULL, 10);
@@ -1148,6 +1222,8 @@ static void  Usage
            "  -E <fn>  Get extra sequences to align from fasta file <fn>\n"
            "  -f       Output consensus only in FASTA format\n"
            "  -h       Print this usage message\n"
+	   "  -i <fn>  File containing list of IIDs to be processed\n"
+	   "  -n <fn>  File containing list of EIDs (names) to be processed\n"
            "  -o <n>   Set minimum overlap bases to <n>\n"
            "  -P       Input is simple contig format, i.e., UMD format\n"
            "              using partial reads\n"
@@ -1162,5 +1238,22 @@ static void  Usage
    return;
   }
 
+static void readIIDFile(ifstream & f, list <ID_t> & l)
+  // Reads IIDs from a file
+{
+  ID_t iid;
+
+  while (f >> iid)
+    l.push_back(iid);
+}
+
+static void readEIDFile(ifstream & f, list <string> &l)
+  // Reads EIDs from a file
+{
+  string eid;
+
+  while (f >> eid)
+    l.push_back(eid);
+}
 
 
