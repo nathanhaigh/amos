@@ -47,7 +47,7 @@ ConsensusField::ConsensusField(const string & cons,
   m_rangestart = -1;
   m_rangeend = -1;
   m_displayQV = false;
-  m_showUngapped = true;
+  m_showUngapped = false;
 }
 
 void ConsensusField::setFontSize(int fontsize)
@@ -202,9 +202,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
 
     int n = shifted%10;
-
     if (m_showUngapped) { n = m_ugpos[shifted] % 10; }
-
 
     int scaledfont = (int)max((int)(m_fontsize*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
@@ -227,7 +225,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       }
       else
       {
-        s = QString::number(m_alignment->getContigPos(gindex));
+        s = QString::number(shifted);
       }
 
       p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
