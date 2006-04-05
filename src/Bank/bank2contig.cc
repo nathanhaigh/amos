@@ -9,6 +9,7 @@ bool OPT_LayoutOnly = 0;
 bool OPT_SimpleLayout = false;
 bool OPT_UseEIDs = 0;
 bool OPT_UseIIDs = 0;
+bool OPT_Trapper = 0;
 string OPT_BankName;
 
 string OPT_EIDFile;
@@ -31,6 +32,7 @@ void PrintHelp (const char * s)
        << "-I file       Dump just the contig iids listed in file\n"
        << "-L            Just create a layout file (no sequence)\n"
        << "-S            Simple Layout style\n"
+       << "-T            XML Format suitable for DNPTrapper\n"
        << endl;
   
   cerr << "Takes an AMOS bank directory and dumps the contigs to stdout\n\n";
@@ -41,7 +43,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiLSE:I:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiTLSE:I:")) != EOF) )
   {
     switch (ch)
     {
@@ -55,12 +57,13 @@ void ParseArgs (int argc, char ** argv)
         exit (EXIT_SUCCESS);
       break;
 
-      case 'e': OPT_UseEIDs = true;   break;
-      case 'i': OPT_UseIIDs = true;   break;
-      case 'L': OPT_LayoutOnly = true;    break;
-      case 'E': OPT_EIDFile = optarg; break;
-      case 'I': OPT_IIDFile = optarg; break;
+      case 'e': OPT_UseEIDs = true;      break;
+      case 'i': OPT_UseIIDs = true;      break;
+      case 'L': OPT_LayoutOnly = true;   break;
+      case 'E': OPT_EIDFile = optarg;    break;
+      case 'I': OPT_IIDFile = optarg;    break;
       case 'S': OPT_SimpleLayout = true; break;
+      case 'T': OPT_Trapper = true;      break;
 
       default: errflg ++;
       }
@@ -78,6 +81,8 @@ void ParseArgs (int argc, char ** argv)
   if (!OPT_UseEIDs && !OPT_UseIIDs) { OPT_UseEIDs = true; }
 }
 
+bool firstContig = true;
+
 
 void printContig(Contig_t & contig, Bank_t & read_bank)
 {
@@ -86,7 +91,78 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
   std::vector<Tile_t> & tiling = contig.getReadTiling();
   sort(tiling.begin(), tiling.end(), TileOrderCmp());
 
-  if (OPT_SimpleLayout)
+  if (OPT_Trapper)
+  {
+    if (firstContig) { cout << "<TRAPPER>" << endl; firstContig = false;}
+
+    printf("<contig name=\"%s\">\n", contig.getEID().c_str());
+
+    int row = 0;
+
+    vector<Tile_t>::const_iterator ti;
+    for (ti = tiling.begin(); ti != tiling.end(); ti++)
+    {
+      row++;
+      bool rc = 0;
+      Range_t range = ti->range;
+      Range_t clr = range;
+      Pos_t gappedLen = ti->getGappedLength();
+
+      if (ti->range.begin > ti->range.end) { rc = 1; } 
+
+      Read_t read;
+      read_bank.fetch(ti->source, read);
+      string sequence = read.getSeqString();
+      string qual     = read.getQualString();
+
+      if (rc) { range.swap(), Reverse_Complement(sequence);  reverse(qual.begin(), qual.end()); }
+
+      Pos_t gapcount = 0;
+
+      int origlen = sequence.length();
+
+      vector<Pos_t>::const_iterator g;
+      for (g  = ti->gaps.begin();
+           g != ti->gaps.end();
+           g++)
+      {
+        sequence.insert(clr.getLo()+*g+gapcount, "*", 1);
+        qual.insert(clr.getLo()+*g+gapcount, "0", 1);
+        gapcount++;
+      }
+
+      int seqlen = qual.length();
+      int lefttrim = clr.getLo();
+      int righttrim = origlen - clr.getHi();
+
+      if (rc)
+      {
+        int t = lefttrim;
+        lefttrim = righttrim;
+        righttrim = t;
+      }
+
+      printf("<ReadData row=\"%d\" name=\"%s\" startPos=\"%d\" endPos=\"%d\" strand=\"%c\" beginGood=\"%d\" endGood=\"%d\">\n",
+             row, read_bank.lookupEID(ti->source).c_str(), ti->offset-lefttrim, ti->getRightOffset()+righttrim, (rc ? 'C' : 'U'), lefttrim, lefttrim+ti->getGappedLength()-1);
+
+      printf("<DnaStrData startPos=\"%d\" endPos=\"%d\" trappervector=\"%s\"/>\n",
+             0, seqlen, sequence.c_str());
+
+      printf("<QualityData startPos=\"%d\" endPos=\"%d\" trappervector=\"", 
+             0, seqlen);
+ 
+      for (int i = 0; i < seqlen; i++)
+      {
+        printf(" %d", qual[i]-'0');
+      }
+      printf("\"/>\n");
+
+      printf("</ReadData>\n");
+    }
+
+    printf("</contig>\n");
+  }
+  else if (OPT_SimpleLayout)
   {
     string contigeid = contig.getEID();
 
@@ -248,6 +324,11 @@ int main (int argc, char ** argv)
 
     read_bank.close();
     contig_bank.close();
+
+    if (OPT_Trapper && !firstContig)
+    {
+      printf("</TRAPPER>\n");
+    }
   }
   catch (Exception_t & e)
   {
