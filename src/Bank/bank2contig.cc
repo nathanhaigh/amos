@@ -121,16 +121,6 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
 
       int origlen = sequence.length();
 
-      vector<Pos_t>::const_iterator g;
-      for (g  = ti->gaps.begin();
-           g != ti->gaps.end();
-           g++)
-      {
-        sequence.insert(clr.getLo()+*g+gapcount, "*", 1);
-        qual.insert(clr.getLo()+*g+gapcount, "0", 1);
-        gapcount++;
-      }
-
       int seqlen = qual.length();
       int lefttrim = clr.getLo();
       int righttrim = origlen - clr.getHi();
@@ -140,6 +130,16 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
         int t = lefttrim;
         lefttrim = righttrim;
         righttrim = t;
+      }
+
+      vector<Pos_t>::const_iterator g;
+      for (g  = ti->gaps.begin();
+           g != ti->gaps.end();
+           g++)
+      {
+        sequence.insert(lefttrim+*g+gapcount, "*", 1);
+        qual.insert(lefttrim+*g+gapcount, "0", 1);
+        gapcount++;
       }
 
       printf("<ReadData row=\"%d\" name=\"%s\" startPos=\"%d\" endPos=\"%d\" strand=\"%c\" beginGood=\"%d\" endGood=\"%d\">\n",
@@ -156,6 +156,9 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
         printf(" %d", qual[i]-'0');
       }
       printf("\"/>\n");
+
+      printf("<ChromatData startPos=\"%d\" endPos=\"%d\"/>\n",  
+             0, seqlen);
 
       printf("</ReadData>\n");
     }
