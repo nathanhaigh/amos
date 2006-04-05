@@ -721,7 +721,7 @@ void InsertWidget::paintCanvas()
     cerr << " coverage";
 
     // coverage will change at each endpoint of each insert
-    CoverageStats insertCL(m_inserts.size()*4, 0, Distribution_t());
+    CoverageStats insertCL(m_inserts.size()*4+8, 0, Distribution_t());
     insertCL.addEndpoints(leftmost, leftmost);
 
     typedef map<ID_t, CoverageStats> LibStats;
@@ -790,18 +790,18 @@ void InsertWidget::paintCanvas()
     int inswidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
     int redwidth = (int)((readCL.m_coverage[readCL.m_curpos-1].x() + m_hoffset) * m_hscale);
 
-    int covwidth = (inswidth > redwidth) ? inswidth : redwidth;
+    int covwidth = max(inswidth, redwidth);
 
     double meaninsertcoverage = ((double)totalinsertlen) / (insertCL.m_coverage[insertCL.m_curpos-1].x() - insertCL.m_coverage[0].x());
     double meanreadcoverage = ((double)totalbases) / readspan;
 
     int cestatsheight = 100;
-    int covheight = (insertCL.m_maxdepth > readCL.m_maxdepth) ? insertCL.m_maxdepth : readCL.m_maxdepth;
+    int covheight = max(insertCL.m_maxdepth, readCL.m_maxdepth);
     int cestatsoffset = voffset;
 
     if (m_kmerstats && m_kmerstats->m_maxdepth > covheight)
     {
-      covheight = m_kmerstats->m_maxdepth;
+      covheight = max(covheight, m_kmerstats->m_maxdepth);
     }
 
     if (m_coveragePlot)
