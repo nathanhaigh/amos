@@ -99,7 +99,28 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
 
     int row = 0;
 
+    // do a quick first pass to figure out how much the reads need to be shifted to ensure no one goes negative
+    int leftmost = 0;
     vector<Tile_t>::const_iterator ti;
+    for (ti = tiling.begin(); ti != tiling.end(); ti++)
+    {
+      Range_t clr = ti->range;
+      int lefttrim = clr.getLo();
+
+      if (clr.isReverse())
+      {
+        Read_t read;
+        read_bank.fetch(ti->source, read);
+
+        lefttrim = read.getLength() - clr.getHi();
+      }
+
+      if (ti->offset-lefttrim < leftmost)
+      {
+        leftmost = ti->offset - lefttrim;
+      }
+    }
+
     for (ti = tiling.begin(); ti != tiling.end(); ti++)
     {
       row++;
@@ -121,7 +142,6 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
 
       int origlen = sequence.length();
 
-      int seqlen = qual.length();
       int lefttrim = clr.getLo();
       int righttrim = origlen - clr.getHi();
 
@@ -132,6 +152,10 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
         righttrim = t;
       }
 
+      int beginGood = lefttrim;
+      int endGood = lefttrim + ti->getGappedLength()-1;
+      int gappedseqlen = qual.length();
+
       vector<Pos_t>::const_iterator g;
       for (g  = ti->gaps.begin();
            g != ti->gaps.end();
@@ -140,25 +164,33 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
         sequence.insert(lefttrim+*g+gapcount, "*", 1);
         qual.insert(lefttrim+*g+gapcount, "0", 1);
         gapcount++;
+        gappedseqlen++;
+      }
+
+      int OPT_TrapperFull = 0;
+      if (OPT_TrapperFull)
+      {
+        if (rc) { beginGood = 0; }
+        else    { endGood = gappedseqlen; }
       }
 
       printf("<ReadData row=\"%d\" name=\"%s\" startPos=\"%d\" endPos=\"%d\" strand=\"%c\" beginGood=\"%d\" endGood=\"%d\">\n",
-             row, read_bank.lookupEID(ti->source).c_str(), ti->offset-lefttrim, ti->getRightOffset()+righttrim, (rc ? 'C' : 'U'), lefttrim, lefttrim+ti->getGappedLength()-1);
+             row, read_bank.lookupEID(ti->source).c_str(), ti->offset-lefttrim-leftmost, ti->getRightOffset()+righttrim-leftmost, (rc ? 'C' : 'U'), beginGood, endGood);
 
       printf("<DnaStrData startPos=\"%d\" endPos=\"%d\" trappervector=\"%s\"/>\n",
-             0, seqlen, sequence.c_str());
+             0, gappedseqlen, sequence.c_str());
 
       printf("<QualityData startPos=\"%d\" endPos=\"%d\" trappervector=\"", 
-             0, seqlen);
+             0, gappedseqlen);
  
-      for (int i = 0; i < seqlen; i++)
+      for (int i = 0; i < gappedseqlen; i++)
       {
         printf(" %d", qual[i]-'0');
       }
       printf("\"/>\n");
 
       printf("<ChromatData startPos=\"%d\" endPos=\"%d\"/>\n",  
-             0, seqlen);
+             0, gappedseqlen);
 
       printf("</ReadData>\n");
     }
