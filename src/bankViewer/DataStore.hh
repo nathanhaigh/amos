@@ -13,6 +13,17 @@ using std::vector;
 
 class Insert;
 
+namespace __gnu_cxx
+{
+  template<> struct hash< long long unsigned >
+  {
+    size_t operator() (const long long unsigned x) const
+    {
+      return (x ^ ( x >> 32));
+    }
+  };
+}
+
 
 
 
@@ -94,7 +105,7 @@ public:
 
 
   typedef  long long unsigned  Mer_t;
-  typedef map<Mer_t, unsigned short> MerTable_t;
+  typedef HASHMAP::hash_map<Mer_t, unsigned short> MerTable_t;
 
   MerTable_t mer_table;
   int        Kmer_Len;
