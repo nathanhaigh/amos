@@ -567,10 +567,10 @@ int main(int argc, char ** argv)
   }
 
   if (variables.find("PREFIX") != variables.end()){
-    logFile.open((variables["PREFIX"] + ".runAmos.log").c_str(), ios::out);
+    logFile.open((variables["PREFIX"] + ".runAmos.log").c_str(), ios::out | ios::app);
     logFileName = variables["PREFIX"] + ".runAmos.log";
   } else {
-    logFile.open("runAmos.log", ios::out);
+    logFile.open("runAmos.log", ios::out | ios::app);
     logFileName = "runAmos.log";
   }
 
