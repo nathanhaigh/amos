@@ -23,6 +23,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
+#define endl "\n"  // die endl die
 
 using namespace std;
 
@@ -459,19 +460,23 @@ int main(int argc, char ** argv)
   in.seekg(0, ifstream::beg); // re-process input file
 
   // if we do layouts, do them here
-  ifstream laystream;
+  ofstream laystream;
   if (globals.find("layoutfile") != globals.end()){
-    laystream.open(globals["layoutfile"].c_str(), ifstream::in);  
+    laystream.open(globals["layoutfile"].c_str(), ofstream::out|ofstream::trunc);  
     if (! laystream.is_open()){
       cerr << "Could not open " << globals["layoutfile"] << endl;
       exit(1);
     }
   }
-  
+
   int seq = 0;
   string sequence;
   int numseq = 0;
   while ((sequence = parseFasta(in)) != ""){
+    if (globals.find("layoutfile") != globals.end()){ // start a layout
+      laystream << "{LAY\n";
+      laystream << "iid:" << seq + 1 << endl;
+    }
     for (int f = 0; f < fragments[seq].size(); f++){
       int frgid = 0;
       //     cerr << fragments[seq][f].left << " " << fragments[seq][f].right << endl;
@@ -480,6 +485,7 @@ int main(int argc, char ** argv)
 
       int doRead = 0;  // do both
       double mates = gsl_rng_uniform(rng);
+
       if (fragments[seq][f].revlen == 0 || 
 	  libraries[fragments[seq][f].libid].permates == 1 ||
 	  mates < libraries[fragments[seq][f].libid].permates)
@@ -502,14 +508,32 @@ int main(int argc, char ** argv)
         if ( doRead == 0 )
           cout << "rds:" << numseq + 1 << ',' << numseq + 2 << '\n';
 	cout << "}\n";
-	if (doRead <= 0)
+	if (doRead <= 0) {
 	  printRED(rev, ++numseq, frgid);
+	  if (globals.find("layoutfile") != globals.end()){ // add read to the layout
+	    laystream << "{TLE\n";
+	    laystream << "src:" << numseq << endl;
+	    laystream << "off:" << fragments[seq][f].right - fragments[seq][f].revlen << endl;
+	    laystream << "clr:" << rev.length() << ",0\n";
+	    laystream << "}\n";
+	  }
+	}
       }
-      if (doRead >= 0)
+      if (doRead >= 0) {
 	printRED(forw, ++numseq, frgid);
+	if (globals.find("layoutfile") != globals.end()){ // add read to the layout
+	  laystream << "{TLE\n";
+	  laystream << "src:" << numseq << endl;
+	  laystream << "off:" << fragments[seq][f].left << endl;
+	  laystream << "clr:0," << forw.length() << "\n";
+	  laystream << "}\n";
+	}
+      }
     } // for each fragment in this sequence
     
     seq++;
+    if (globals.find("layoutfile") != globals.end())
+      laystream << "}\n";
   }
 
   if (globals.find("layoutfile") != globals.end())
