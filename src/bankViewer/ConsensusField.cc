@@ -17,6 +17,8 @@ static int max (int a, int b)
   return a > b ? a : b;
 }
 
+static int m_minheight = 8;
+
 ConsensusField::ConsensusField(const string & cons,
                                const string & cstatus,
                                const string & consqual,
@@ -53,12 +55,16 @@ ConsensusField::ConsensusField(const string & cons,
 void ConsensusField::setFontSize(int fontsize)
 {
   m_fontsize=fontsize;
-  int gutter         = m_fontsize;
+
+  int theight = max(m_fontsize, m_minheight);
+
+
+  int gutter         = theight;
   int framegutter    = 2;
 
-  m_lineheight     = m_fontsize + gutter;
+  m_lineheight     = theight + gutter;
 
-  m_tilehoffset    = m_fontsize*12 + framegutter;
+  m_tilehoffset    = theight*12 + framegutter;
   m_seqnamehoffset = gutter + framegutter;
   m_basewidth      = m_fontsize + m_basespace;
 
@@ -84,10 +90,12 @@ void ConsensusField::toggleShowNumbers(bool doShow)
 
 void ConsensusField::paintEvent(QPaintEvent * event)
 {
+  int theight = max(m_fontsize, m_minheight);
+
   if (m_consensus.empty()) 
   { 
     QPainter p (this);
-    p.drawText(20, m_fontsize+m_fontsize/2, "No Contig Loaded");
+    p.drawText(20, theight+theight/2, "No Contig Loaded");
     return;
   }
 
@@ -98,7 +106,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   QPen pen;
   pen.setColor(black);
   p.setPen(pen);
-  p.setFont(QFont("Helvetica", m_fontsize));
+  p.setFont(QFont("Helvetica", theight));
 
   int width = this->width();
   int displaywidth = (width-m_tilehoffset)/m_basewidth;
@@ -132,7 +140,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
 
   int fudge = 0;
-  if (m_displayQV) { fudge = m_fontsize*.25; }
+  if (m_displayQV) { fudge = theight*.25; }
 
   for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
   {
@@ -145,7 +153,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     char b = m_consensus[gindex];
     s = b;
 
-    p.setFont(QFont("Helvetica", m_fontsize));
+    p.setFont(QFont("Helvetica", theight));
     if (m_basecolors)
     {
       UIElements::setBasePen(pen, b);
@@ -154,108 +162,150 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
     int xcoord = m_tilehoffset + (gindex-grangeStart)*m_basewidth;
 
-    p.drawText(xcoord, m_consoffset, 
-               m_fontsize, m_lineheight, 
-               Qt::AlignHCenter | Qt::AlignBottom, s);
-
-
-    if (m_displayQV)
+    if (m_fontsize < m_minheight)
     {
-      p.setPen(Qt::black);
-      p.setFont(QFont("Helvetica", m_fontsize*.6));
-
-      b = m_consqual[gindex];
-      s = QString::number(b-AMOS::MIN_QUALITY);
-
-      p.drawText(xcoord, m_consoffset-m_fontsize-5,
-                 m_fontsize, m_lineheight,
-                 Qt::AlignHCenter | Qt::AlignBottom, s);
-    }
-
-    if (m_cstatus[gindex] == 'X' || m_cstatus[gindex] == '*')
-    {
-      p.setBrush(Qt::SolidPattern);
-      if (m_cstatus[gindex] == '*')
+      if (m_cstatus[gindex] == 'X')
       {
-        p.setPen(Qt::red);
-        p.setBrush(Qt::red);
+        p.setBrush(UIElements::getBaseColor(b));
+        p.drawRect(xcoord, m_consoffset, m_basewidth, m_lineheight-1);
       }
-      else
+    }
+    else
+    {
+      p.drawText(xcoord, m_consoffset, 
+                 theight, m_lineheight, 
+                 Qt::AlignHCenter | Qt::AlignBottom, s);
+
+      if (m_displayQV)
       {
         p.setPen(Qt::black);
-        p.setBrush(Qt::black);
+        p.setFont(QFont("Helvetica", theight*.6));
+
+        b = m_consqual[gindex];
+        s = QString::number(b-AMOS::MIN_QUALITY);
+
+        p.drawText(xcoord, m_consoffset-theight-5,
+                   theight, m_lineheight,
+                   Qt::AlignHCenter | Qt::AlignBottom, s);
       }
 
-
-      p.drawEllipse(xcoord+m_fontsize/2-m_diam/2-1, m_discoffset-fudge,
-                    m_diam, m_diam);
-                    
-      if (m_highlightdiscrepancy)
+      if (m_cstatus[gindex] == 'X' || m_cstatus[gindex] == '*')
       {
-        p.setBrush(Qt::NoBrush);
-        p.setPen(UIElements::color_discrepancy);
-        p.drawRect(xcoord, m_consoffset, m_fontsize, m_lineheight-1);
+        p.setBrush(Qt::SolidPattern);
+        if (m_cstatus[gindex] == '*')
+        {
+          p.setPen(Qt::red);
+          p.setBrush(Qt::red);
+        }
+        else
+        {
+          p.setPen(Qt::black);
+          p.setBrush(Qt::black);
+        }
+
+
+        p.drawEllipse(xcoord+theight/2-m_diam/2-1, m_discoffset-fudge,
+                      m_diam, m_diam);
+                      
+        if (m_highlightdiscrepancy)
+        {
+          p.setBrush(Qt::NoBrush);
+          p.setPen(UIElements::color_discrepancy);
+          p.drawRect(xcoord, m_consoffset, theight, m_lineheight-1);
+        }
       }
     }
 
     p.setPen(Qt::black);
-
-
-    int n = shifted%10;
-    if (m_showUngapped) { n = m_ugpos[shifted] % 10; }
-
-    int scaledfont = (int)max((int)(m_fontsize*.6), 6);
+    int scaledfont = (int)max((int)(theight*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
 
-    if (m_shownumbers)
+    if (m_fontsize < m_minheight)
     {
-      // Numbers
-      s = QString::number(n);
-      p.drawText(xcoord, m_posoffset, 
-                 m_fontsize, 2*m_fontsize,
-                 Qt::AlignHCenter | Qt::AlignCenter, s);
-    }
+      int n = shifted%100;
+      int j = shifted%25;
+      if (m_showUngapped) { n = m_ugpos[shifted] % 100; j = m_ugpos[shifted] % 25; }
 
-    // ticks and labels
-    if (n==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
-    {
-      if (m_showUngapped)
+      if (n==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
       {
-        s = QString::number(m_ugpos[gindex]);
+        if (m_showUngapped)
+        {
+          s = QString::number(m_ugpos[gindex]);
+        }
+        else
+        {
+          s = QString::number(m_alignment->getContigPos(gindex));
+        }
+
+        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
+                   xcoord+m_fontsize/2, m_lineoffset+2);
+
+        p.drawText(xcoord+m_fontsize/2-50, 2,
+                   100, theight*2, 
+                   Qt::AlignHCenter | Qt::AlignCenter, s);
       }
-      else
+      else if (j==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
       {
-        s = QString::number(shifted);
+        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
+                   xcoord+m_fontsize/2, m_lineoffset+2);
+      }
+    }
+    else
+    {
+      int n = shifted%10;
+      if (m_showUngapped) { n = m_ugpos[shifted] % 10; }
+
+
+      if (m_shownumbers)
+      {
+        // Numbers
+        s = QString::number(n);
+        p.drawText(xcoord, m_posoffset, 
+                   theight, 2*theight,
+                   Qt::AlignHCenter | Qt::AlignCenter, s);
       }
 
-      p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
-                 xcoord+m_fontsize/2, m_lineoffset+2);
+      // ticks and labels
+      if (n==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
+      {
+        if (m_showUngapped)
+        {
+          s = QString::number(m_ugpos[gindex]);
+        }
+        else
+        {
+          s = QString::number(m_alignment->getContigPos(gindex));
+        }
 
-      p.drawText(xcoord+m_fontsize/2-50, 2,
-                 100, m_fontsize*2, 
-                 Qt::AlignHCenter | Qt::AlignCenter, s);
+        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
+                   xcoord+m_fontsize/2, m_lineoffset+2);
+
+        p.drawText(xcoord+m_fontsize/2-50, 2,
+                   100, theight*2, 
+                   Qt::AlignHCenter | Qt::AlignCenter, s);
+      }
+      else if (n==5 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
+      {
+        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
+                   xcoord+m_fontsize/2, m_lineoffset+2);
+      }
     }
-    else if (n==5 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
+
+    if (m_showIndicator && m_fontsize >= m_minheight)
     {
-      p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
-                 xcoord+m_fontsize/2, m_lineoffset+2);
+      QPointArray indicator (3);
+
+      int hbase = (int)(m_tilehoffset + 10*m_basewidth + .25*m_fontsize);
+      int hstep = (int)(.25*m_fontsize);
+
+      indicator[0] = QPoint(hbase, 1);
+      indicator[1] = QPoint(hbase + 2*hstep+1, 1);
+      indicator[2] = QPoint(hbase + hstep, 5);
+
+      p.setPen(Qt::black);
+      p.setBrush(Qt::black);
+      p.drawPolygon(indicator);
     }
-  }
-
-  if (m_showIndicator)
-  {
-    QPointArray indicator (3);
-
-    int hbase = (int)(m_tilehoffset + 10*m_basewidth + .25*m_fontsize);
-    int hstep = (int)(.25*m_fontsize);
-
-    indicator[0] = QPoint(hbase, 1);
-    indicator[1] = QPoint(hbase + 2*hstep+1, 1);
-    indicator[2] = QPoint(hbase + hstep, 5);
-
-    p.setPen(Qt::black);
-    p.setBrush(Qt::black);
-    p.drawPolygon(indicator);
   }
 
   p.end();

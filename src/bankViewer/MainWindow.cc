@@ -775,7 +775,7 @@ void MainWindow::fontIncrease()
 
 void MainWindow::fontDecrease()
 {
-  if (m_fontsize <= 6) { return; }
+  if (m_fontsize <= -4) { return; }
   m_fontsize--;
   emit setFontSize(m_fontsize);
 }

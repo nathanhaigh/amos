@@ -27,7 +27,7 @@ extern "C"
 #include <Read.h>
 }
 
-
+static int m_minheight = 8;
 
 TilingField::TilingField(DataStore * datastore,
                          vector<RenderSeq_t> & renderedSeqs,
@@ -171,12 +171,14 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 {
   if (m_renderedSeqs.empty()) { resize(m_width, m_height); return; }
 
+  int theight         = max(m_fontsize, m_minheight);
+
   int basespace      = 5;
-  int gutter         = m_fontsize;
-  int lineheight     = m_fontsize+gutter;
-  int tilehoffset    = m_fontsize*12;
+  int gutter         = theight;
+  int lineheight     = theight+gutter;
+  int tilehoffset    = theight*12;
   int seqnamehoffset = gutter;
-  int rchoffset      = m_fontsize*11;
+  int rchoffset      = theight*11;
   int basewidth      = m_fontsize+basespace;
 
   double tracevscale = 1500.0 / m_traceheight;
@@ -253,12 +255,12 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   QPen pen;
   pen.setColor(black);
   p.setPen(pen);
-  p.setFont(QFont("Helvetica", m_fontsize));
+  p.setFont(QFont("Helvetica", theight));
   p.setBrush(Qt::SolidPattern);
 
   QPointArray rcflag(3);
-  int tridim = m_fontsize/2;
-  int trioffset = m_fontsize/2;
+  int tridim = theight/2;
+  int trioffset = theight/2;
 
 
   #if 0
@@ -325,7 +327,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
       // black pen
       p.setPen(black);
       p.setBrush(black);
-      p.setFont(QFont("Helvetica", m_fontsize));
+      p.setFont(QFont("Helvetica", theight));
 
       // RC Flag
       if (ri->m_rc)
@@ -379,6 +381,20 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
           }
         }
 
+        if (m_fontsize < m_minheight)
+        {
+          p.setPen(Qt::black);
+          p.setBrush(QColor(200,200,200));
+
+          int left = max(srangeStart, ri->m_loffset);
+          int right = min(srangeEnd,  ri->m_roffset);
+
+          int start = (left - srangeStart) * basewidth;
+
+          p.drawRect(tilehoffset + start, ldcov + 2, 
+                    (right - left + 1 ) * basewidth, readheight - 4);
+
+        }
 
         for (int gindex = grangeStart, alignedPos = 0;
              gindex <= grangeEnd; 
@@ -401,31 +417,34 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
           s = b;
 
-          bool bad = m_highlightdiscrepancy && (toupper(b) != toupper(m_consensus[gindex]));
-
-          if ((bad || m_qvcoloring) && b != ' ')
+          if (m_fontsize >= m_minheight)
           {
-            QColor bg;
+            bool bad = m_highlightdiscrepancy && (toupper(b) != toupper(m_consensus[gindex]));
 
-            if (bad && !m_qvcoloring)
+            if ((bad || m_qvcoloring) && b != ' ')
             {
-              bg = UIElements::color_discrepancy;
-            }
-            else
-            {
-              int h = 0, s = 0, v = 60 + qv*3;
+              QColor bg;
 
-              if (bad && m_qvcoloring)
+              if (bad && !m_qvcoloring)
               {
-                h = 300; s = 220 ; v = (int)(160 + 1.5*qv);
+                bg = UIElements::color_discrepancy;
+              }
+              else
+              {
+                int h = 0, s = 0, v = 60 + qv*3;
+
+                if (bad && m_qvcoloring)
+                {
+                  h = 300; s = 220 ; v = (int)(160 + 1.5*qv);
+                }
+
+                bg.setHsv(h,s,v);
               }
 
-              bg.setHsv(h,s,v);
+              p.setBrush(bg);
+              p.setPen(bg);
+              p.drawRect(hoffset-basespace/2, ldcov, m_fontsize+basespace, lineheight);
             }
-
-            p.setBrush(bg);
-            p.setPen(bg);
-            p.drawRect(hoffset-basespace/2, ldcov, m_fontsize+basespace, lineheight);
           }
 
           // Bases
@@ -437,12 +456,23 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
             s = '.';
           }
 
-          p.drawText(hoffset, ldcov, 
-                     m_fontsize, lineheight,
-                     Qt::AlignHCenter | Qt::AlignBottom, s);
+          if (m_fontsize < m_minheight)
+          {
+            if (!((b == ' ') || (toupper(b) == toupper(m_consensus[gindex]))))
+            {
+              p.setBrush((m_basecolors) ? UIElements::getBaseColor(b) : black);
+              p.drawRect(hoffset-basespace/2, ldcov+3, m_fontsize+basespace, lineheight-6);
+            }
+          }
+          else
+          {
+            p.drawText(hoffset, ldcov, 
+                       m_fontsize, lineheight,
+                       Qt::AlignHCenter | Qt::AlignBottom, s);
+          }
 
           // QV
-          if (m_displayqv && b != ' ')
+          if (m_displayqv && b != ' ' && m_fontsize >= m_minheight)
           {
             if (qv != -1)
             {
