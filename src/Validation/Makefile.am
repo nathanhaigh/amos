@@ -15,6 +15,7 @@ dist_bin_SCRIPTS = \
 	postCAqc.pl \
 	tiling2cam.pl \
     cavalidate.acf \
+    amosvalidate.acf \
     findTcovSnp.pl \
     clusterSnps.pl \
     listSurrogates.pl \
