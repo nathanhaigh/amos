@@ -9,6 +9,7 @@ InsertPosition::InsertPosition(DataStore * datastore, QWidget * parent, const ch
  : QWidget(parent, name), m_datastore(datastore)
 {
   setMinimumHeight(60);
+  setWFlags(Qt::WRepaintNoErase);
 
   m_start = 0;
   m_scale = 1;
