@@ -36,9 +36,6 @@ void InsertCanvasItem::drawShape (QPainter & p)
     drawTile(m_insert->m_btile, p, 'B');
   }
 
-  //p.setPen(QColor(255,255,0));
-
-
   if (m_highlight)
   {
     p.setPen(QColor(255,255,255));
@@ -51,8 +48,8 @@ void InsertCanvasItem::drawShape (QPainter & p)
 void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p, char type)
 {
   if (!tile) { return; }
-  float hscale = .06250;
 
+  float hscale = .06250;
   int hoffset = (int)((1/hscale)*x() - m_insert->m_loffset);
 
   int readLength = tile->getGappedLength();
@@ -74,7 +71,7 @@ void InsertCanvasItem::drawTile(AMOS::Tile_t * tile, QPainter & p, char type)
   }
 
   p.drawRect((int)(hscale*(tile->offset+hoffset)), (int) y(), 
-             (int)(hscale*readLength), (int)height());
+             (int)(hscale*(tile->offset+hoffset+readLength-1))-(int)(hscale*(tile->offset+hoffset)), (int)height());
 
   if (m_contigcolor)
   {
