@@ -182,6 +182,8 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   new QLabel("Search", searchbar, "findlbl");
   m_searchedit = new QLineEdit(searchbar, "searchbox");
+  m_searchedit->setMinimumHeight(25);
+  m_searchedit->setMinimumWidth(25);
   connect(m_searchedit, SIGNAL(returnPressed()), this, SLOT(findNext()));
 
   QToolButton * bFindPrev = new QToolButton(Qt::LeftArrow, searchbar, "rsearch");
@@ -190,7 +192,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   bFindPrev->setAccel(SHIFT + CTRL + Key_F);
   bFindPrev->setMinimumWidth(15);
   bFindPrev->setMaximumWidth(15);
-  bFindPrev->setMaximumHeight(21);
+  bFindPrev->setMaximumHeight(25);
 
   QToolButton * bFindNext = new QToolButton(Qt::RightArrow, searchbar, "fsearch");
   connect(bFindNext, SIGNAL(clicked()), this, SLOT(findNext()));
@@ -198,7 +200,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   bFindNext->setAccel(CTRL + Key_F);
   bFindNext->setMinimumWidth(15);
   bFindNext->setMaximumWidth(15);
-  bFindNext->setMaximumHeight(21);
+  bFindNext->setMaximumHeight(25);
 
 
   // gindex
