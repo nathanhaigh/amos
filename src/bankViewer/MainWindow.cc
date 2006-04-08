@@ -112,21 +112,29 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   // Status Tool Bar
   QToolBar * status = new QToolBar(this, "Status");
-  status->setLabel("Status");
+  status->setLabel("Navigation");
 
-  m_offsetlabel = new QLabel("Offset", status, "gindexlbl");
+  new QLabel("Contig ID", status, "contiglbl");
+  m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
+
+  m_offsetlabel = new QLabel("  Offset", status, "gindexlbl");
   m_gspin     = new QSpinBox(0,100, 1, status, "gindexspin");
   m_gspin->setMinimumWidth(100);
+
 
   QToolButton * bPrevDisc = new QToolButton(Qt::LeftArrow, status, "prev");
   bPrevDisc->setTextLabel("Previous Discrepancy");
   bPrevDisc->setAccel(CTRL + Key_Space + SHIFT);
-  bPrevDisc->setMinimumWidth(20);
+  bPrevDisc->setMinimumWidth(15);
+  bPrevDisc->setMaximumWidth(15);
+  bPrevDisc->setMaximumHeight(25);
 
   QToolButton * bNextDisc = new QToolButton(Qt::RightArrow, status, "next");
   bNextDisc->setTextLabel("Next Discrepancy");
   bNextDisc->setAccel(CTRL + Key_Space);
-  bNextDisc->setMinimumWidth(20);
+  bNextDisc->setMinimumWidth(15);
+  bNextDisc->setMaximumWidth(15);
+  bNextDisc->setMaximumHeight(25);
 
   connect(bNextDisc, SIGNAL(clicked()),
           this,      SIGNAL(advanceNextDiscrepancy()));
@@ -144,15 +152,13 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   a->connectItem(a->insertItem(CTRL + Key_PageUp),   bNextDisc, SLOT(animateClick()));
   a->connectItem(a->insertItem(CTRL + Key_PageDown), bPrevDisc, SLOT(animateClick()));
 
-  new QLabel("   Contig ID", status, "contiglbl");
-  m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
+ // new QLabel("   Chromo DB", status, "dblbl");
+ // QLineEdit *  dbpick  = new QLineEdit(status, "dbpick");
 
-  new QLabel("   Chromo DB", status, "dblbl");
-  QLineEdit *  dbpick  = new QLineEdit(status, "dbpick");
 
   QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 
                                                this, SLOT(showInserts()), status );
-  bShowInserts->setText("Inserts");
+  bShowInserts->setText(" Inserts ");
   bShowInserts->setAccel(CTRL+Key_I);
 
   QToolButton * bShowCGraph = new QToolButton(QPixmap(), "Show CGraph", "Show CGraph", 
@@ -162,16 +168,19 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QIconSet icon_fontminus(QPixmap((const char ** )fontdecrease_xpm));
   QIconSet icon_fontplus(QPixmap((const char **)fontincrease_xpm));
 
-  new QToolButton(icon_fontplus, "Font Increase", "Font Increase",
-                  this, SLOT(fontIncrease()), status);
+  QToolButton * b = new QToolButton(icon_fontplus, "Font Increase", "Font Increase",
+                                    this, SLOT(fontIncrease()), status);
+  b->setMaximumWidth(25);
 
-  new QToolButton(icon_fontminus, "Font Decrease", "Font Decrease",
-                  this, SLOT(fontDecrease()), status);
+  b = new QToolButton(icon_fontminus, "Font Decrease", "Font Decrease",
+                      this, SLOT(fontDecrease()), status);
+  b->setMaximumWidth(25);
 
   QToolBar * searchbar = new QToolBar(this, "SearchBar");
+  status->setLabel("Search");
 
 
-  new QLabel("Find", searchbar, "findlbl");
+  new QLabel("Search", searchbar, "findlbl");
   m_searchedit = new QLineEdit(searchbar, "searchbox");
   connect(m_searchedit, SIGNAL(returnPressed()), this, SLOT(findNext()));
 
@@ -179,13 +188,17 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(bFindPrev, SIGNAL(clicked()), this, SLOT(findPrev()));
   bFindPrev->setTextLabel("Find Previous");
   bFindPrev->setAccel(SHIFT + CTRL + Key_F);
-  bFindPrev->setMinimumWidth(20);
+  bFindPrev->setMinimumWidth(15);
+  bFindPrev->setMaximumWidth(15);
+  bFindPrev->setMaximumHeight(21);
 
   QToolButton * bFindNext = new QToolButton(Qt::RightArrow, searchbar, "fsearch");
   connect(bFindNext, SIGNAL(clicked()), this, SLOT(findNext()));
   bFindNext->setTextLabel("Find Next");
   bFindNext->setAccel(CTRL + Key_F);
-  bFindNext->setMinimumWidth(20);
+  bFindNext->setMinimumWidth(15);
+  bFindNext->setMaximumWidth(15);
+  bFindNext->setMaximumHeight(21);
 
 
   // gindex
@@ -214,17 +227,14 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
 
   // dbpick <-> tiling
-  connect(dbpick, SIGNAL(textChanged(const QString &)),
-          this,   SLOT(setChromoDB(const QString &)));
-
-  connect(this, SIGNAL(chromoDBSet(const QString &)),
-          dbpick, SLOT(setText(const QString &)));
+  // connect(dbpick, SIGNAL(textChanged(const QString &)), this, SLOT(setChromoDB(const QString &)));
+  // connect(this, SIGNAL(chromoDBSet(const QString &)), dbpick, SLOT(setText(const QString &)));
+  // dbpick->setText("GB6");
 
 
   // Set defaults
   m_gspin->setValue(0);
   m_slider->setFocus();
-  dbpick->setText("GB6");
 
   // If not mpop, enable
   //if (strcmp(getenv("USER"), "mpop") && strcmp(getenv("USER"), "mschatz"))
