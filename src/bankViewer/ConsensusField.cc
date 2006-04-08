@@ -68,6 +68,11 @@ void ConsensusField::setFontSize(int fontsize)
   m_seqnamehoffset = gutter + framegutter;
   m_basewidth      = m_fontsize + m_basespace;
 
+  if (m_basewidth <= 0)
+  {
+    m_basewidth = 1/(-m_basewidth+2);
+  }
+
   m_lineoffset = m_lineheight;
   m_posoffset  = m_lineheight + gutter; // hidden by default
   m_discoffset = m_lineheight + m_diam + m_diam;
@@ -109,7 +114,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   p.setFont(QFont("Helvetica", theight));
 
   int width = this->width();
-  int displaywidth = (width-m_tilehoffset)/m_basewidth;
+  int displaywidth = (int)((width-m_tilehoffset)/m_basewidth);
 
   p.drawText(m_seqnamehoffset, m_consoffset,
              m_tilehoffset - m_seqnamehoffset, m_lineheight,
@@ -120,7 +125,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
   //x-axis
   p.drawLine(m_tilehoffset, m_lineoffset, 
-             m_tilehoffset+(grangeEnd-grangeStart+1)*m_basewidth, m_lineoffset);
+             (int)(m_tilehoffset+(grangeEnd-grangeStart+1)*m_basewidth), m_lineoffset);
+
   QString s;
 
   if (!(m_rangeend < grangeStart || m_rangestart > grangeEnd))
@@ -130,9 +136,9 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
     p.setPen(Qt::red);
 
-    p.drawRect(m_tilehoffset + (drawStart - grangeStart)*m_basewidth - 1, 
+    p.drawRect(m_tilehoffset + (int)((drawStart - grangeStart)*m_basewidth - 1), 
                m_consoffset,
-               (drawEnd - drawStart + 1) * m_basewidth - m_basespace + 3,
+               (int)((drawEnd - drawStart + 1) * m_basewidth - m_basespace + 3),
                m_lineheight);
 
     p.setPen(Qt::black);
@@ -160,14 +166,15 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       p.setPen(pen);
     }
 
-    int xcoord = m_tilehoffset + (gindex-grangeStart)*m_basewidth;
+    int xcoord = (int)(m_tilehoffset + (gindex-grangeStart)*m_basewidth);
+    int bwidth = max(m_basewidth, 1);
 
     if (m_fontsize < m_minheight)
     {
       if (m_cstatus[gindex] == 'X')
       {
         p.setBrush(UIElements::getBaseColor(b));
-        p.drawRect(xcoord, m_consoffset, m_basewidth, m_lineheight-1);
+        p.drawRect(xcoord, m_consoffset, bwidth, m_lineheight-1);
       }
     }
     else
@@ -220,76 +227,60 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     int scaledfont = (int)max((int)(theight*.6), 6);
     p.setFont(QFont("Helvetica", scaledfont));
 
-    if (m_fontsize < m_minheight)
+    int nbreak = 10;
+    int jbreak = 5;
+
+    if (m_fontsize < 1)
     {
-      int n = shifted%100;
-      int j = shifted%25;
-      if (m_showUngapped) { n = m_ugpos[shifted] % 100; j = m_ugpos[shifted] % 25; }
+      nbreak = 100;
+      jbreak = 25;
 
-      if (n==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
-      {
-        if (m_showUngapped)
-        {
-          s = QString::number(m_ugpos[gindex]);
-        }
-        else
-        {
-          s = QString::number(m_alignment->getContigPos(gindex));
-        }
-
-        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
-                   xcoord+m_fontsize/2, m_lineoffset+2);
-
-        p.drawText(xcoord+m_fontsize/2-50, 2,
-                   100, theight*2, 
-                   Qt::AlignHCenter | Qt::AlignCenter, s);
-      }
-      else if (j==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
-      {
-        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
-                   xcoord+m_fontsize/2, m_lineoffset+2);
-      }
+      if (m_fontsize < -5) { nbreak = 500; jbreak = 100; }
     }
-    else
+
+    int n = shifted%nbreak;
+    int j = shifted%jbreak;
+    if (m_showUngapped) { n = m_ugpos[shifted] % nbreak; j = m_ugpos[shifted] % jbreak; }
+
+    if (m_shownumbers && m_fontsize >= m_minheight)
     {
-      int n = shifted%10;
-      if (m_showUngapped) { n = m_ugpos[shifted] % 10; }
-
-
-      if (m_shownumbers)
-      {
-        // Numbers
-        s = QString::number(n);
-        p.drawText(xcoord, m_posoffset, 
-                   theight, 2*theight,
-                   Qt::AlignHCenter | Qt::AlignCenter, s);
-      }
-
-      // ticks and labels
-      if (n==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
-      {
-        if (m_showUngapped)
-        {
-          s = QString::number(m_ugpos[gindex]);
-        }
-        else
-        {
-          s = QString::number(m_alignment->getContigPos(gindex));
-        }
-
-        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
-                   xcoord+m_fontsize/2, m_lineoffset+2);
-
-        p.drawText(xcoord+m_fontsize/2-50, 2,
-                   100, theight*2, 
-                   Qt::AlignHCenter | Qt::AlignCenter, s);
-      }
-      else if (n==5 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
-      {
-        p.drawLine(xcoord+m_fontsize/2, m_lineoffset-2, 
-                   xcoord+m_fontsize/2, m_lineoffset+2);
-      }
+      // Numbers
+      s = QString::number(n);
+      p.drawText(xcoord, m_posoffset, 
+                 theight, 2*theight,
+                 Qt::AlignHCenter | Qt::AlignCenter, s);
     }
+
+    if (n==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
+    {
+      if (m_showUngapped)
+      {
+        s = QString::number(m_ugpos[gindex]);
+      }
+      else
+      {
+        s = QString::number(m_alignment->getContigPos(gindex));
+      }
+
+      int xpos = xcoord + m_fontsize/2;
+      if (m_fontsize <= 0) { xpos = xcoord; }
+
+      p.drawLine(xpos, m_lineoffset-2, 
+                 xpos, m_lineoffset+2);
+
+      p.drawText(xpos-50, 2,
+                 100, theight*2, 
+                 Qt::AlignHCenter | Qt::AlignCenter, s);
+    }
+    else if (j==0 && m_consensus[gindex] != '*' && (!m_showUngapped || m_consensus[gindex] != '-'))
+    {
+      int xpos = xcoord + m_fontsize/2;
+      if (m_fontsize <= 0) { xpos = xcoord; }
+
+      p.drawLine(xpos, m_lineoffset-1, 
+                 xpos, m_lineoffset+1);
+    }
+
 
     if (m_showIndicator && m_fontsize >= m_minheight)
     {
@@ -345,7 +336,7 @@ void ConsensusField::toggleShowUngapped(bool use)
 
 void ConsensusField::mouseReleaseEvent( QMouseEvent * e)
 {
-  int gindex = m_gindex + (e->x() - m_tilehoffset)/m_basewidth;
+  int gindex = (int)(m_gindex + (e->x() - m_tilehoffset)/m_basewidth);
   emit sortColumns(gindex);
 }
 

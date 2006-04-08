@@ -258,8 +258,22 @@ void TilingFrame::loadContigRange(int gindex)
   if (m_tiling.empty()) { return; }
 
   int basespace = 5;
-  int basewidth = m_fontsize + basespace;
+  double basewidth = m_fontsize + basespace;
   int tilehoffset = m_fontsize*10;
+
+  if (basewidth <= 0)
+  {
+    basewidth = 1/((-basewidth+2));
+  }
+
+  int minheight = 8;
+
+  if (m_fontsize < minheight)
+  {
+    tilehoffset = minheight * 10;
+  }
+
+
   m_displaywidth = (width()-tilehoffset)/basewidth;
 
   gindex = min(gindex, m_consensus.size()-m_displaywidth+1);
@@ -267,7 +281,7 @@ void TilingFrame::loadContigRange(int gindex)
   m_gindex = gindex;
 
   int grangeStart = m_alignment->getContigPos(m_gindex);
-  int grangeEnd   = m_alignment->getContigPos(min(m_gindex + m_displaywidth+200, (int)m_consensus.length()));
+  int grangeEnd   = m_alignment->getContigPos(min(m_gindex + m_displaywidth+1000, (int)m_consensus.length()));
 
   if (grangeStart < m_loadedStart || grangeEnd > m_loadedEnd)
   {

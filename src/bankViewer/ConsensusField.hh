@@ -57,7 +57,7 @@ private:
     int m_lineheight;
     int m_tilehoffset;
     int m_seqnamehoffset;
-    int m_basewidth;
+    double m_basewidth;
     int m_basespace;
     int m_diam;
     int m_lineoffset;

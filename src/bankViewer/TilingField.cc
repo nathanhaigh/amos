@@ -179,10 +179,17 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   int tilehoffset    = theight*12;
   int seqnamehoffset = gutter;
   int rchoffset      = theight*11;
-  int basewidth      = m_fontsize+basespace;
+  double basewidth   = m_fontsize+basespace;
+
+  if (basewidth <= 0)
+  {
+    basewidth = 1/((-basewidth+2));
+  }
+
+  int bwidth = max(basewidth, 1);
 
   double tracevscale = 1500.0 / m_traceheight;
-  int displaywidth = (m_width-tilehoffset)/basewidth;
+  int displaywidth = (int) ((m_width-tilehoffset)/basewidth);
 
   Pos_t grangeStart = m_gindex;
   Pos_t grangeEnd = min(m_gindex + displaywidth, m_consensus.size()-1);
@@ -363,10 +370,10 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
             int left  = max(srangeStart, ri->m_lfoffset);
             int right = min(ri->m_loffset-1, srangeEnd);
 
-            int start = (left - srangeStart) * basewidth;
+            int start = (int) ((left - srangeStart) * basewidth);
 
             p.drawRect(tilehoffset + start, ldcov + 2, 
-                       (right - left + 1) * basewidth, readheight - 4);
+                       (int)((right - left + 1) * basewidth), readheight - 4);
           }
 
           if (srangeEnd > ri->m_roffset)
@@ -374,10 +381,10 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
             int left = max(srangeStart, ri->m_roffset+1);
             int right = min(ri->m_rfoffset, srangeEnd);
 
-            int start = (left - srangeStart) * basewidth;
+            int start = (int)((left - srangeStart) * basewidth);
 
             p.drawRect(tilehoffset + start, ldcov + 2, 
-                       (right - left + 1 ) * basewidth, readheight - 4);
+                       (int)((right - left + 1 ) * basewidth), readheight - 4);
           }
         }
 
@@ -389,10 +396,10 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
           int left = max(srangeStart, ri->m_loffset);
           int right = min(srangeEnd,  ri->m_roffset);
 
-          int start = (left - srangeStart) * basewidth;
+          int start = (int)((left - srangeStart) * basewidth);
 
-          p.drawRect(tilehoffset + start, ldcov + 2, 
-                    (right - left + 1 ) * basewidth, readheight - 4);
+          p.drawRect(tilehoffset + start-1, ldcov + 2, 
+                    (int)((right - left + 1 ) * basewidth+2), readheight - 4);
 
         }
 
@@ -400,7 +407,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
              gindex <= grangeEnd; 
              gindex++, alignedPos++)
         {
-          int hoffset = tilehoffset + (gindex-grangeStart)*basewidth;
+          int hoffset = (int)(tilehoffset + (gindex-grangeStart)*basewidth);
 
           int shifted = m_alignment->getContigPos(gindex);
 
@@ -417,7 +424,6 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
           s = b;
 
-          if (m_fontsize >= m_minheight)
           {
             bool bad = m_highlightdiscrepancy && (toupper(b) != toupper(m_consensus[gindex]));
 
@@ -443,7 +449,16 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
               p.setBrush(bg);
               p.setPen(bg);
-              p.drawRect(hoffset-basespace/2, ldcov, m_fontsize+basespace, lineheight);
+              if (m_fontsize >= m_minheight)
+              {
+                p.drawRect(hoffset-basespace/2, ldcov+3, bwidth, lineheight-6);
+              }
+              else
+              {
+                int baseheight = lineheight - 6;
+                if (m_displayqv) { baseheight = lineheight-3; }
+                p.drawRect(hoffset, ldcov+3, bwidth, baseheight);
+              }
             }
           }
 
@@ -451,30 +466,43 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
           p.setPen((m_basecolors) ? UIElements::getBaseColor(b) : black);
           p.setFont(QFont("Helvetica", m_fontsize));
 
-          if (m_polymorphismView && toupper(b) == toupper(m_consensus[gindex]))
-          {
-            s = '.';
-          }
-
           if (m_fontsize < m_minheight)
           {
-            if (!((b == ' ') || (toupper(b) == toupper(m_consensus[gindex]))))
+            if ((b != ' ') && ((m_polymorphismView) || (toupper(b) != toupper(m_consensus[gindex]))))
             {
+              int baseheight = lineheight-6;
+              if (m_displayqv) { baseheight = lineheight-3; }
+
               p.setBrush((m_basecolors) ? UIElements::getBaseColor(b) : black);
-              p.drawRect(hoffset-basespace/2, ldcov+3, m_fontsize+basespace, lineheight-6);
+              p.drawRect(hoffset, ldcov+3, bwidth, baseheight);
             }
           }
           else
           {
+            if (m_polymorphismView && toupper(b) == toupper(m_consensus[gindex]))
+            {
+              s = '.';
+            }
+
             p.drawText(hoffset, ldcov, 
                        m_fontsize, lineheight,
                        Qt::AlignHCenter | Qt::AlignBottom, s);
           }
 
           // QV
-          if (m_displayqv && b != ' ' && m_fontsize >= m_minheight)
+          if (m_displayqv && b != ' ' && qv != -1)
           {
-            if (qv != -1)
+            if (m_fontsize < m_minheight)
+            {
+              QColor qvcolor;
+              int h = 0, s = 0, v = 60 + qv*3;
+              qvcolor.setHsv(h,s,v);
+              p.setBrush(qvcolor);
+              p.setPen(qvcolor);
+
+              p.drawRect(hoffset, ldcov+lineheight, bwidth, lineheight-3);
+            }
+            else
             {
               s = QString::number(qv);
 
@@ -548,7 +576,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
                   continue;
                 }
 
-                int hoffset = tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2;
+                int hoffset = (int)(tilehoffset + (gindex-grangeStart)*basewidth+m_fontsize/2);
                 int shifted = m_alignment->getContigPos(gindex);
 
                 int peakposition     = ri->pos(shifted, m_fullseq, m_consensus.length());
@@ -603,7 +631,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
           }
 
           p.setPen(black);
-          p.drawLine(tilehoffset-basewidth, baseline, m_width, baseline);
+          p.drawLine((int)(tilehoffset-basewidth), baseline, m_width, baseline);
         }
       }
     }
