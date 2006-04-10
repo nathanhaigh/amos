@@ -103,6 +103,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_persistant = false;
   m_error = 0;
   m_viewsize = 0;
+  m_scaffoldtop = 0;
+  m_scaffoldbottom = 1;
 
 
   m_currentScaffold = AMOS::NULL_ID;
@@ -136,6 +138,16 @@ InsertWidget::InsertWidget(DataStore * datastore,
   QBoxLayout * vbox = new QVBoxLayout(this);
   vbox->addWidget(m_iposition);
   vbox->addWidget(m_ifield, 10);
+
+
+  m_overview = new QCanvasView(m_icanvas, this, "overview");
+  m_overview->setMaximumHeight(100);
+  m_overview->setMinimumHeight(100);
+  m_overview->setVScrollBarMode(QScrollView::AlwaysOff);
+  m_overview->setHScrollBarMode(QScrollView::AlwaysOff);
+  vbox->addWidget(m_overview);
+
+
   hrange = new krangeslider(Qt::Horizontal, this, "horz");
   vbox->addWidget(hrange);
 
@@ -319,7 +331,7 @@ void InsertWidget::setVisibleHRange(int left, int right)
   right = max(right, left+1000);
 
   int diff = abs(right-left-m_viewsize);
- // cerr << diff << endl;
+  cerr << left << " " << " " << right << " " << diff << endl;
 
   if (abs(right - left - m_viewsize) > 2)
   {
@@ -966,6 +978,8 @@ void InsertWidget::paintCanvas()
     cerr << " contigs";
     layout.clear();
 
+    m_scaffoldtop = voffset - lineheight;
+
     if (m_showscaffold) { voffset += lineheight; }
     int rightmost = 0;
 
@@ -1027,6 +1041,8 @@ void InsertWidget::paintCanvas()
     }
 
     voffset += (layout.size() + 1) * lineheight;
+
+    m_scaffoldbottom = voffset;
   }
 
   if (m_showFeatures && !m_features.empty())
@@ -1259,6 +1275,23 @@ void InsertWidget::paintCanvas()
   QApplication::restoreOverrideCursor();
 
   setInsertCanvasSize(leftmost, rightmost);
+  resizeOverview();
+}
+
+void InsertWidget::resizeEvent(QResizeEvent *e )
+{
+  resizeOverview();
+}
+
+void InsertWidget::resizeOverview()
+{
+  double xf = (double)(m_overview->viewport()->width()) / m_icanvas->width();
+  QWMatrix matrix(xf, 0, 0, 1, 0, 0);
+  m_overview->setWorldMatrix(matrix);
+  m_overview->setContentsPos(0, m_scaffoldtop);
+  m_overview->update();
+  m_overview->setMaximumHeight(m_scaffoldbottom-m_scaffoldtop);
+  m_overview->setMinimumHeight(m_scaffoldbottom-m_scaffoldtop);
 }
 
 void InsertWidget::setInsertCanvasSize(int left, int right)

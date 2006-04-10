@@ -39,6 +39,8 @@ public:
   ~InsertWidget();
 
 public slots:
+  void resizeEvent(QResizeEvent * e);
+  void resizeOverview();
   void initializeTiling();
 
   void refreshWidget();
@@ -164,6 +166,9 @@ private:
   CoverageStats * m_kmerstats;
 
   krangeslider * hrange;
+  QCanvasView * m_overview;
+
+  int m_scaffoldtop, m_scaffoldbottom;
 };
 
 #endif
