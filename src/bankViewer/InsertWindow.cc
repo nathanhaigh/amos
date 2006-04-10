@@ -30,15 +30,16 @@ InsertWindow::InsertWindow(DataStore * datastore,
   resize(800,600);
   setCaption("AI - Inserts");
 
-  statusBar()->message("Ready", 2000);
-  statusBar()->setSizeGripEnabled(false);
+  //statusBar()->message("Ready", 2000);
+  //statusBar()->setSizeGripEnabled(false);
 
   // Toolbar
   QToolBar * options = new QToolBar(this, "options");
   options->setLabel("Options");
 
-  new QLabel("Zoom", options, "zoomlbl");
-  QSlider * zoom = new QSlider(1, 80, 4, 16, Qt::Horizontal, options, "zoom");
+ // new QLabel("Zoom", options, "zoomlbl");
+ // QSlider * zoom = new QSlider(1, 80, 4, 16, Qt::Horizontal, options, "zoom");
+  //zoom->setValue(32);
 
   new QLabel(" VZoom", options, "vzoomlbl");
   QSlider * vzoom = new QSlider(1, 40, 4, 16, Qt::Horizontal, options, "vzoom");
@@ -144,8 +145,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(m_typesmenu, SIGNAL(activated(int)),
           this,        SLOT(toggleItem(int)));
 
-  connect(iw,          SIGNAL(setStatus(const QString &)),
-          statusBar(), SLOT(message(const QString &)));
+ // connect(iw,          SIGNAL(setStatus(const QString &)),
+ //         statusBar(), SLOT(message(const QString &)));
 
   connect(iw,   SIGNAL(setGindex(int)),
           this, SIGNAL(setGindex(int)));
@@ -156,11 +157,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(setTilingVisibleRange(int, int, int)),
           iw,   SLOT(setTilingVisibleRange(int, int, int)));
 
-  connect(zoom, SIGNAL(valueChanged(int)),
-          iw,   SLOT(setZoom(int)));
-
-  connect(vzoom, SIGNAL(valueChanged(int)),
-          iw,   SLOT(setVZoom(int)));
+ // connect(zoom, SIGNAL(valueChanged(int)), iw,   SLOT(setZoom(int)));
+  connect(vzoom, SIGNAL(valueChanged(int)), iw,   SLOT(setVZoom(int)));
 
   connect(this, SIGNAL(paintCanvas()),
           iw,   SLOT(paintCanvas()));
@@ -229,7 +227,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
           parent, SLOT(jumpToRead(int)));
 
 
-  zoom->setValue(32);
 
   if (s_persistant)
   {

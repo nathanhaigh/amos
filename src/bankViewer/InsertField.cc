@@ -26,6 +26,8 @@ InsertField::InsertField(DataStore * datastore,
   m.translate(20, 0);
   m.scale( 0.05, 1.0 );
   setWorldMatrix( m );
+
+  setHScrollBarMode(QScrollView::AlwaysOff);
 }
 
 void InsertField::highlightInsert(InsertCanvasItem * iitem, 

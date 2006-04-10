@@ -46,7 +46,9 @@ bankViewer_MOCSOURCES = \
         SplashScreen.cc        \
         TilingField.cc         \
         TilingFrame.cc         \
-        UIElements.cc          
+        UIElements.cc          \
+        krangeslider.cc        \
+        birangecontrol.cc       
 
 nodist_bankViewer_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 

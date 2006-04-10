@@ -9,6 +9,7 @@
 #include <qaccel.h>
 #include "RenderSeq.hh"
 #include <qapplication.h>
+#include <qtextedit.h>
 #include "InsertCanvasItem.hh"
 #include "CoverageCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
@@ -18,6 +19,9 @@
 #include "InsertField.hh"
 #include "InsertPosition.hh"
 #include "DataStore.hh"
+
+
+#include "krangeslider.hh"
 
 
 
@@ -65,13 +69,13 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_datastore = datastore;
   m_tilingVisible = NULL;
 
-  QBoxLayout * vbox = new QVBoxLayout(this);
 
   m_hscale = .06250;
 
   m_iposition = new InsertPosition(m_datastore, this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
   m_icanvas->setBackgroundColor(Qt::black);
+  m_icanvas->retune(128);
 
   m_paddle = NULL;
   m_ball = NULL;
@@ -98,6 +102,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_persistant = false;
   m_error = 0;
+  m_viewsize = 0;
 
 
   m_currentScaffold = AMOS::NULL_ID;
@@ -128,9 +133,28 @@ InsertWidget::InsertWidget(DataStore * datastore,
   connect(m_ifield, SIGNAL(jumpToRead(int)),
           this,     SIGNAL(jumpToRead(int)));
 
+  QBoxLayout * vbox = new QVBoxLayout(this);
   vbox->addWidget(m_iposition);
   vbox->addWidget(m_ifield, 10);
+  hrange = new krangeslider(Qt::Horizontal, this, "horz");
+  vbox->addWidget(hrange);
+
+  QTextEdit * log = new QTextEdit( this );
+  log->setTextFormat( Qt::LogText );
+  log->setMaximumHeight(20);
+  log->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
+  log->setVScrollBarMode(QScrollView::AlwaysOff);
+  log->setHScrollBarMode(QScrollView::AlwaysOff);
+  vbox->addWidget(log);
+
   vbox->activate();
+
+
+  hrange->initRange(0,100);
+
+
+  connect(hrange, SIGNAL(rangeChanged(int, int)),
+          this,   SLOT(setVisibleHRange(int, int)));
 
   connect(m_ifield, SIGNAL(visibleRange(int, double)),
           m_iposition, SLOT(setVisibleRange(int,double)));
@@ -140,6 +164,9 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   connect(m_ifield, SIGNAL(setStatus(const QString &)),
           this,     SIGNAL(setStatus(const QString &)));
+
+  connect(m_ifield, SIGNAL(setStatus(const QString &)),
+          log,     SLOT(append(const QString &)));
 
   connect(m_ifield, SIGNAL(setGindex(int)),
           this,     SLOT(computePos(int)));
@@ -268,6 +295,8 @@ void InsertWidget::setZoom(int zoom)
     xfactor = pow(xfactor, zoom/16);
   }
 
+  cerr << "xfactor: " << xfactor << endl;
+
   QWMatrix matrix = m_ifield->worldMatrix();
   QWMatrix imatrix = m_ifield->inverseWorldMatrix();
 
@@ -280,6 +309,36 @@ void InsertWidget::setZoom(int zoom)
   m_ifield->setWorldMatrix(newzoom);
 
   setTilingVisibleRange(m_contigid, m_gstart, m_gend);
+}
+
+void InsertWidget::setVisibleHRange(int left, int right)
+{
+  left -= m_hoffset;
+  right -= m_hoffset;
+
+  right = max(right, left+1000);
+
+  int diff = abs(right-left-m_viewsize);
+ // cerr << diff << endl;
+
+  if (abs(right - left - m_viewsize) > 2)
+  {
+    m_viewsize = right - left;
+    double xfactor = ((double)width()) / ((right - left + 1) * m_hscale);
+
+    cerr << "setVisibleHRange: " << left << " " << right 
+         << " " << xfactor << endl;
+
+    QWMatrix matrix = m_ifield->worldMatrix();
+
+    // set zoom
+    QWMatrix newzoom(xfactor, matrix.m12(), matrix.m21(), matrix.m22(),
+                     matrix.dx(), matrix.dy());
+    m_ifield->setWorldMatrix(newzoom);
+  }
+
+  int xpos = (int)((left + m_hoffset) * m_hscale);
+  m_ifield->setContentsPos((int)(xpos*m_ifield->worldMatrix().m11()), 0);
 }
 
 void InsertWidget::setVZoom(int vzoom)
@@ -1188,7 +1247,7 @@ void InsertWidget::paintCanvas()
   cerr << endl 
        << "width: " << rightmost-leftmost
        << " swidth: " << (int)((rightmost-leftmost) * m_hscale)
-       << " voffset: " << voffset;
+       << " height: " << voffset;
 
   m_icanvas->resize((int)(m_hscale*(rightmost - leftmost)) + 500, voffset);
   cerr << ".";
@@ -1198,7 +1257,16 @@ void InsertWidget::paintCanvas()
   setTilingVisibleRange(m_contigid, m_gstart, m_gend);
 
   QApplication::restoreOverrideCursor();
+
+  setInsertCanvasSize(leftmost, rightmost);
 }
+
+void InsertWidget::setInsertCanvasSize(int left, int right)
+{
+  cerr << "setInsertCanvasSize: " << left << " " << right << endl;
+  hrange->initRange(0, (int)(right + -left + (500/m_hscale)));
+}
+
 
 void InsertWidget::setHappyDistance(float distance)
 {
