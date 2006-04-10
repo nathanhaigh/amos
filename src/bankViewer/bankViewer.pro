@@ -27,6 +27,9 @@ InsertWindow.cc\
 LibraryPicker.cc\
 MainWindow.cc\
 NetworkCom.cc\
+OverviewField.cc\
+OverviewWidget.cc\
+OverviewWindow.cc\
 ReadInfo.cc\
 ReadPicker.cc\
 RenderSeq.cc\
@@ -67,6 +70,9 @@ InsertWindow.hh\
 LibraryPicker.hh\
 MainWindow.hh\
 NetworkCom.hh\
+OverviewField.hh\
+OverviewWidget.hh\
+OverviewWindow.hh\
 ReadInfo.hh\
 ReadPicker.hh\
 RenderSeq.hh\

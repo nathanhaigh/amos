@@ -24,6 +24,7 @@ class LibraryPicker;
 class ChromoPicker;
 class InsertWindow;
 class CGraphWindow;
+class OverviewWindow;
 class QLabel;
 
 
@@ -76,6 +77,7 @@ public slots:
 
   void showInserts();
   void showCGraph();
+  void showOverview();
 
   void toggleShowPositions();
   void toggleShowIndicator();
@@ -151,6 +153,7 @@ private:
   InsertWindow * m_insertWindow;
   TilingFrame * m_tiling;
   CGraphWindow * m_cgraphWindow;
+  OverviewWindow * m_overviewWindow;
 
   QPopupMenu * m_options;
   QLineEdit * m_searchedit;

@@ -36,6 +36,9 @@ bankViewer_MOCSOURCES = \
         LibraryPicker.cc       \
         MainWindow.cc          \
         NetworkCom.cc          \
+	OverviewField.cc       \
+	OverviewWidget.cc      \
+	OverviewWindow.cc      \
         ReadInfo.cc            \
         ReadPicker.cc          \
         RenderSeq.cc           \
