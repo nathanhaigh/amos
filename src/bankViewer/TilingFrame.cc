@@ -249,6 +249,8 @@ void TilingFrame::setFontSize(int fontsize )
   if (fontsize == m_fontsize) { return; }
   m_fontsize = fontsize;
 
+  loadContigRange(m_gindex);
+
   emit fontSizeChanged(m_fontsize);
   update();
 }
