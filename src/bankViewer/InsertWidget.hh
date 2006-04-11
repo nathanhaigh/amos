@@ -14,6 +14,7 @@
 #include "foundation_AMOS.hh"
 #include "Insert.hh"
 #include "krangeslider.hh"
+#include "RangeScrollBar.hh"
 
 #include <map>
 
@@ -63,7 +64,12 @@ public slots:
   void computePos(int);
   void setHappyDistance(float);
   void setShowScaffold(bool);
+
   void setVisibleHRange(int, int);
+  void setHPos(int);
+
+  void setVisibleVRange(int, int);
+  void setVPos(int);
 
   void setPersistant(bool);
   void setErrorRate(int);
@@ -149,7 +155,6 @@ private:
 
   int m_seqheight;
   int m_hoffset;
-  int m_viewsize;
 
   int m_contigid;
   int m_gstart;
@@ -165,7 +170,8 @@ private:
   std::map<char, std::pair<int, bool> > & m_types;
   CoverageStats * m_kmerstats;
 
-  krangeslider * hrange;
+  RangeScrollBar_t * hrange;
+  RangeScrollBar_t * vrange;
   QCanvasView * m_overview;
 
   int m_scaffoldtop, m_scaffoldbottom;

@@ -20,8 +20,10 @@
 #include "InsertPosition.hh"
 #include "DataStore.hh"
 
+#include "RangeScrollBar.hh"
+#include <qhbox.h>
 
-#include "krangeslider.hh"
+
 
 
 
@@ -74,7 +76,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_iposition = new InsertPosition(m_datastore, this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
-  m_icanvas->setBackgroundColor(Qt::black);
+  m_icanvas->setBackgroundColor(Qt::black); //QColor(50,50,50));
   m_icanvas->retune(128);
 
   m_paddle = NULL;
@@ -102,7 +104,6 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_persistant = false;
   m_error = 0;
-  m_viewsize = 0;
   m_scaffoldtop = 0;
   m_scaffoldbottom = 1;
 
@@ -112,7 +113,36 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_seqheight = 4;
   m_tilingwidth = 0;
 
-  m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, this, "qcv");
+  QHBox * hbox = new QHBox(this);
+  m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, hbox, "qcv");
+  vrange = new RangeScrollBar_t(Qt::Vertical, hbox);
+  vrange->setMaxRange(0,100);
+
+
+  m_overview = new QCanvasView(m_icanvas, this, "overview");
+  m_overview->setMaximumHeight(100);
+  m_overview->setMinimumHeight(100);
+  m_overview->setVScrollBarMode(QScrollView::AlwaysOff);
+  m_overview->setHScrollBarMode(QScrollView::AlwaysOff);
+
+  hrange = new RangeScrollBar_t(Qt::Horizontal, this);
+  hrange->setMaxRange(0,100);
+
+  QTextEdit * log = new QTextEdit( this );
+  log->setTextFormat( Qt::LogText );
+  log->setMaximumHeight(20);
+  log->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
+  log->setVScrollBarMode(QScrollView::AlwaysOff);
+  log->setHScrollBarMode(QScrollView::AlwaysOff);
+
+  QBoxLayout * vbox = new QVBoxLayout(this);
+  vbox->addWidget(m_iposition);
+  vbox->addWidget(hbox, 10);
+  vbox->addWidget(m_overview);
+  vbox->addWidget(hrange);
+  vbox->addWidget(log);
+  vbox->activate();
+
 
   connect(this,     SIGNAL(highlightIID(const QString &)),
           m_ifield,   SLOT(highlightIID(const QString &)));
@@ -135,38 +165,18 @@ InsertWidget::InsertWidget(DataStore * datastore,
   connect(m_ifield, SIGNAL(jumpToRead(int)),
           this,     SIGNAL(jumpToRead(int)));
 
-  QBoxLayout * vbox = new QVBoxLayout(this);
-  vbox->addWidget(m_iposition);
-  vbox->addWidget(m_ifield, 10);
-
-
-  m_overview = new QCanvasView(m_icanvas, this, "overview");
-  m_overview->setMaximumHeight(100);
-  m_overview->setMinimumHeight(100);
-  m_overview->setVScrollBarMode(QScrollView::AlwaysOff);
-  m_overview->setHScrollBarMode(QScrollView::AlwaysOff);
-  vbox->addWidget(m_overview);
-
-
-  hrange = new krangeslider(Qt::Horizontal, this, "horz");
-  vbox->addWidget(hrange);
-
-  QTextEdit * log = new QTextEdit( this );
-  log->setTextFormat( Qt::LogText );
-  log->setMaximumHeight(20);
-  log->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
-  log->setVScrollBarMode(QScrollView::AlwaysOff);
-  log->setHScrollBarMode(QScrollView::AlwaysOff);
-  vbox->addWidget(log);
-
-  vbox->activate();
-
-
-  hrange->initRange(0,100);
-
 
   connect(hrange, SIGNAL(rangeChanged(int, int)),
           this,   SLOT(setVisibleHRange(int, int)));
+
+  connect(hrange, SIGNAL(valueChanged(int)),
+          this,   SLOT(setHPos(int)));
+
+  connect(vrange, SIGNAL(rangeChanged(int, int)),
+          this,   SLOT(setVisibleVRange(int, int)));
+
+  connect(vrange, SIGNAL(valueChanged(int)),
+          this,   SLOT(setVPos(int)));
 
   connect(m_ifield, SIGNAL(visibleRange(int, double)),
           m_iposition, SLOT(setVisibleRange(int,double)));
@@ -298,6 +308,43 @@ void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
   emit currentScaffoldCoordinate(gstart);
 }
 
+
+void InsertWidget::setHPos(int xpos)
+{
+  m_ifield->setContentsPos((int)(xpos*m_hscale*m_ifield->worldMatrix().m11()), m_ifield->contentsY());
+}
+
+void InsertWidget::setVisibleHRange(int left, int right)
+{
+  right = max(right, left+1000);
+
+  double xf = ((double)m_ifield->width()-2*(hrange->controlPix_m+hrange->gripPix_m)) / ((right - left + 1) * m_hscale);
+
+  QWMatrix m = m_ifield->worldMatrix();
+  QWMatrix newzoom(xf, m.m12(), m.m21(), m.m22(), m.dx(), m.dy());
+  m_ifield->setWorldMatrix(newzoom);
+
+  setHPos(left);
+}
+
+void InsertWidget::setVPos(int vpos)
+{
+  cerr << "vpos: " << vpos << endl;
+  m_ifield->setContentsPos(m_ifield->contentsX(), (int)(vpos*m_ifield->worldMatrix().m22()));
+}
+
+void InsertWidget::setVisibleVRange(int top, int bottom)
+{
+  cerr << "vrange: " << top << " " << bottom << endl;
+  double yf = ((double)height()-2*(vrange->controlPix_m+vrange->gripPix_m)) / (bottom - top + 1);
+  QWMatrix m(m_ifield->worldMatrix());
+  QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yf, m.dx(), m.dy());
+  m_ifield->setWorldMatrix(newzoom);
+
+  setVPos(top);
+}
+
+
 void InsertWidget::setZoom(int zoom)
 {
   double xfactor = 16.00/(zoom);
@@ -309,63 +356,19 @@ void InsertWidget::setZoom(int zoom)
 
   cerr << "xfactor: " << xfactor << endl;
 
-  QWMatrix matrix = m_ifield->worldMatrix();
-  QWMatrix imatrix = m_ifield->inverseWorldMatrix();
-
-  // reset to identity
-  m_ifield->setWorldMatrix(imatrix);
-
-  // set zoom
-  QWMatrix newzoom(xfactor, matrix.m12(), matrix.m21(), matrix.m22(),
-                   matrix.dx(), matrix.dy());
+  QWMatrix m = m_ifield->worldMatrix();
+  QWMatrix newzoom(xfactor, m.m12(), m.m21(), m.m22(), m.dx(), m.dy());
   m_ifield->setWorldMatrix(newzoom);
 
   setTilingVisibleRange(m_contigid, m_gstart, m_gend);
-}
-
-void InsertWidget::setVisibleHRange(int left, int right)
-{
-  left -= m_hoffset;
-  right -= m_hoffset;
-
-  right = max(right, left+1000);
-
-  int diff = abs(right-left-m_viewsize);
-  cerr << left << " " << " " << right << " " << diff << endl;
-
-  if (abs(right - left - m_viewsize) > 2)
-  {
-    m_viewsize = right - left;
-    double xfactor = ((double)width()) / ((right - left + 1) * m_hscale);
-
-    cerr << "setVisibleHRange: " << left << " " << right 
-         << " " << xfactor << endl;
-
-    QWMatrix matrix = m_ifield->worldMatrix();
-
-    // set zoom
-    QWMatrix newzoom(xfactor, matrix.m12(), matrix.m21(), matrix.m22(),
-                     matrix.dx(), matrix.dy());
-    m_ifield->setWorldMatrix(newzoom);
-  }
-
-  int xpos = (int)((left + m_hoffset) * m_hscale);
-  m_ifield->setContentsPos((int)(xpos*m_ifield->worldMatrix().m11()), 0);
 }
 
 void InsertWidget::setVZoom(int vzoom)
 {
   double yfactor = 16.0/vzoom;
 
-  QWMatrix matrix = m_ifield->worldMatrix();
-  QWMatrix imatrix = m_ifield->inverseWorldMatrix();
-
-  // reset to identity
-  m_ifield->setWorldMatrix(imatrix);
-
-  // set zoom
-  QWMatrix newzoom(matrix.m11(), matrix.m12(), matrix.m21(), yfactor,
-                   matrix.dx(), matrix.dy());
+  QWMatrix m = m_ifield->worldMatrix();
+  QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yfactor, m.dx(), m.dy());
   m_ifield->setWorldMatrix(newzoom);
 }
 
@@ -1274,7 +1277,7 @@ void InsertWidget::paintCanvas()
 
   QApplication::restoreOverrideCursor();
 
-  setInsertCanvasSize(leftmost, rightmost);
+  setInsertCanvasSize(rightmost - leftmost, voffset);
   resizeOverview();
 }
 
@@ -1285,8 +1288,8 @@ void InsertWidget::resizeEvent(QResizeEvent *e )
 
 void InsertWidget::resizeOverview()
 {
-  double xf = (double)(m_overview->viewport()->width()) / m_icanvas->width();
-  QWMatrix matrix(xf, 0, 0, 1, 0, 0);
+  double xf = (double)(m_overview->viewport()->width() - 2*(hrange->controlPix_m+hrange->gripPix_m) + 4) / m_icanvas->width();
+  QWMatrix matrix(xf, 0, 0, 1, (hrange->controlPix_m+hrange->gripPix_m), 0);
   m_overview->setWorldMatrix(matrix);
   m_overview->setContentsPos(0, m_scaffoldtop);
   m_overview->update();
@@ -1294,10 +1297,10 @@ void InsertWidget::resizeOverview()
   m_overview->setMinimumHeight(m_scaffoldbottom-m_scaffoldtop);
 }
 
-void InsertWidget::setInsertCanvasSize(int left, int right)
+void InsertWidget::setInsertCanvasSize(int width, int height)
 {
-  cerr << "setInsertCanvasSize: " << left << " " << right << endl;
-  hrange->initRange(0, (int)(right + -left + (500/m_hscale)));
+  hrange->setMaxRange(0, width);
+  vrange->setMaxRange(0, height);
 }
 
 

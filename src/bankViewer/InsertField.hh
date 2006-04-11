@@ -45,6 +45,7 @@ private:
   DataStore * m_datastore;
   int & m_hoffset;
 
+  QCanvasRectangle * m_visibleRect;
   QCanvasRectangle * m_featrect;
   QCanvasItem * m_feat;
 };

@@ -28,6 +28,13 @@ InsertField::InsertField(DataStore * datastore,
   setWorldMatrix( m );
 
   setHScrollBarMode(QScrollView::AlwaysOff);
+  setVScrollBarMode(QScrollView::AlwaysOff);
+
+  m_visibleRect = new QCanvasRectangle(0,0,100,100, canvas);
+  m_visibleRect->setPen(Qt::black);
+  m_visibleRect->setBrush(Qt::black);
+  m_visibleRect->setZ(-1000);
+  m_visibleRect->show();
 }
 
 void InsertField::highlightInsert(InsertCanvasItem * iitem, 
@@ -284,6 +291,22 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
   QRect rc = QRect(contentsX(),    contentsY(),
                    visibleWidth(), visibleHeight() );
   QRect real = inverseWorldMatrix().mapRect(rc);
+
+#if 0
+  if (m_visibleRect)
+  {
+    m_visibleRect->setPen(Qt::black);
+    m_visibleRect->setBrush(Qt::black);
+    m_visibleRect->setSize(real.width(), real.height());
+    m_visibleRect->move(real.x(), real.y());
+    canvas()->setChanged(m_visibleRect->boundingRect());
+    canvas()->update();
+  }
+  else
+  {
+    cerr << "WTF???" << endl;
+  }
+#endif
 
   QCanvasView::viewportPaintEvent(e);
 

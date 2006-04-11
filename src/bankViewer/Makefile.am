@@ -39,6 +39,7 @@ bankViewer_MOCSOURCES = \
 	OverviewField.cc       \
 	OverviewWidget.cc      \
 	OverviewWindow.cc      \
+    RangeScrollBar.cc      \
         ReadInfo.cc            \
         ReadPicker.cc          \
         RenderSeq.cc           \
@@ -66,7 +67,20 @@ EXTRA_DIST = \
        $(bankViewerHeaders) \
        icons/AAI.xpm \
        icons/fontdecrease.xpm \
-       icons/fontincrease.xpm
+       icons/fontincrease.xpm \
+       icons/rangearrow_down.png \
+       icons/rangearrow_left.png \
+       icons/rangearrow_right.png \
+       icons/rangearrow_up.png \
+       icons/rangebar_horiz.png \
+       icons/rangebar_vert.png \
+       icons/rangegrip_down.png \
+       icons/rangegrip_left.png \
+       icons/rangegrip_right.png \
+       icons/rangegrip_up.png \
+       icons/rangegroove_horiz.png \
+       icons/rangegroove_vert.png 
+
 
 bankViewer_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
                    $(top_builddir)/src/Common/libCommon.a   \
