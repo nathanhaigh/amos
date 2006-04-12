@@ -117,6 +117,13 @@ void CoverageStats::normalize(float hscale, int hoffset, int voffset)
 
 int CoverageStats::handlePoint(int pos, int eps, int sumdelta)
 {
+  if (m_curpos+1 >= m_coverage.size())
+  {
+    cerr << "WARNING: resizing coverage array" << endl;
+    m_coverage.resize(m_coverage.size()*2+2);
+    m_cestat.resize(m_cestat.size()*2+2);
+  }
+
   m_coverage[m_curpos] = QPoint(pos, eps); 
   m_cestat[m_curpos]   = eps ? m_sum/eps : 0; 
   m_curpos++; 

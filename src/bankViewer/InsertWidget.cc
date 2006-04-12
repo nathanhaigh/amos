@@ -795,7 +795,7 @@ void InsertWidget::paintCanvas()
     cerr << " coverage";
 
     // coverage will change at each endpoint of each insert
-    CoverageStats insertCL(m_inserts.size()*4+8, 0, Distribution_t());
+    CoverageStats insertCL((2+m_inserts.size())*4, 0, Distribution_t());
     insertCL.addEndpoints(leftmost, leftmost);
 
     typedef map<ID_t, CoverageStats> LibStats;
