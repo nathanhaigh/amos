@@ -15,21 +15,36 @@
 #include <qcursor.h>
 #include <iostream>
 
+#include "icons/rangebar_horiz.xpm"
+#include "icons/rangebar_vert.xpm"
+#include "icons/rangegroove_horiz.xpm"
+#include "icons/rangegroove_vert.xpm"
+#include "icons/rangearrow_left.xpm"
+#include "icons/rangearrow_right.xpm"
+#include "icons/rangearrow_up.xpm"
+#include "icons/rangearrow_down.xpm"
+#include "icons/rangegrip_left.xpm"
+#include "icons/rangegrip_right.xpm"
+#include "icons/rangegrip_up.xpm"
+#include "icons/rangegrip_down.xpm"
+
+
+
 
 //======================================================== RangeScrollBar_t ====
-//-- Load in the PNGs for the RangeScrollBar
-const QImage RangeScrollBar_t::hBarImage_m   ("icons/rangebar_horiz.png");
-const QImage RangeScrollBar_t::vBarImage_m   ("icons/rangebar_vert.png");
-const QImage RangeScrollBar_t::hGrooveImage_m("icons/rangegroove_horiz.png");
-const QImage RangeScrollBar_t::vGrooveImage_m("icons/rangegroove_vert.png");
-const QImage RangeScrollBar_t::lArrowImage_m ("icons/rangearrow_left.png");
-const QImage RangeScrollBar_t::rArrowImage_m ("icons/rangearrow_right.png");
-const QImage RangeScrollBar_t::uArrowImage_m ("icons/rangearrow_up.png");
-const QImage RangeScrollBar_t::dArrowImage_m ("icons/rangearrow_down.png");
-const QImage RangeScrollBar_t::lGripImage_m  ("icons/rangegrip_left.png");
-const QImage RangeScrollBar_t::rGripImage_m  ("icons/rangegrip_right.png");
-const QImage RangeScrollBar_t::uGripImage_m  ("icons/rangegrip_up.png");
-const QImage RangeScrollBar_t::dGripImage_m  ("icons/rangegrip_down.png");
+//-- Load in the xpms for the RangeScrollBar
+const QImage RangeScrollBar_t::hBarImage_m   (rangebar_horiz);
+const QImage RangeScrollBar_t::vBarImage_m   (rangebar_vert);
+const QImage RangeScrollBar_t::hGrooveImage_m(rangegroove_horiz);
+const QImage RangeScrollBar_t::vGrooveImage_m(rangegroove_vert);
+const QImage RangeScrollBar_t::lArrowImage_m (rangearrow_left);
+const QImage RangeScrollBar_t::rArrowImage_m (rangearrow_right);
+const QImage RangeScrollBar_t::uArrowImage_m (rangearrow_up);
+const QImage RangeScrollBar_t::dArrowImage_m (rangearrow_down);
+const QImage RangeScrollBar_t::lGripImage_m  (rangegrip_left);
+const QImage RangeScrollBar_t::rGripImage_m  (rangegrip_right);
+const QImage RangeScrollBar_t::uGripImage_m  (rangegrip_up);
+const QImage RangeScrollBar_t::dGripImage_m  (rangegrip_down);
 
 //-- Shorthand
 #define IS_HORIZ (orientation_m == Qt::Horizontal)
@@ -662,7 +677,7 @@ void RangeScrollBar_t::wheelEvent (QWheelEvent * e)
   offset += e->delta() * step / 120;
   offset = -offset;
 
-  if ( abs(offset) < 1 )
+  if ( offset > -1 && offset < 1 )
     return;
 
   setValue (low_m + (int)offset);
