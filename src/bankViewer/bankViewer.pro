@@ -1,3 +1,5 @@
+CONFIG += thread
+
 SOURCES	+= \
 AssemblyStats.cc\
 BufferedLineEdit.cc\
