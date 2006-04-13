@@ -93,6 +93,9 @@ SuSE linux where Qt3 is installed in /usr/lib/qt3 we type:
 The second option is necessary to identify the 64-bit library for
 compilation instead of the standard 32-bit library.
 
+Please see the INSTALL file for more information and Cygwin and OS X
+specific instructions.
+
 Dependencies
 ============
 

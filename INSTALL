@@ -1,8 +1,75 @@
+Table of Contents
+. Cygwin (Windows) Build Instructions
+. OS X Build Instructions
+. Basic installation Instructions
+
+
+CYGWIN Build Instructions
+=========================
+
+Make sure you have the following packages installed:
+
+Base:
+    ash
+    coreutils
+    gawk
+    gzip
+
+Devel:
+    gcc-g++
+    make
+
+X11:
+    qt3
+    qt3-bin
+    qt3-devel
+    xorig-x11-* (all x11 packages, including fonts)
+
+
+Run ./configure from the top level source directory. 
+Note the QT configure tests will fail.
+Run make to build AMOS except for the bankViewer directory
+
+Then run:
+cd src/bankViewer
+qmake-qt3
+make
+
+The bankViewer binary will then build in the bankViewer directory.
+You will have to manually copy it to your bin directory.
+    
+
+
+OS X Build Instructions
+=======================
+Download QT/Mac 3.3.x from Trolltech. 
+
+As of 4/12/06, the most recent version is available at:
+  ftp://ftp.trolltech.com/qt/source/qt-mac-free-3.3.6.tar.gz
+
+Follow the Trolltech instructions for building QT. Make sure to set QTDIR
+appropriately.
+
+Run ./configure to configure AMOS.
+Note the QT configure tests may fail
+Run make to build AMOS
+
+Next run:
+cd src/bankViewer
+$QTDIR/bin/qmake
+make
+
+The bankViewer binary will then build in the bankViewer directory.
+You will have to manually copy it to your bin directory.
+
+  
+
 Copyright (C) 1994, 1995, 1996, 1999, 2000, 2001, 2002 Free Software
 Foundation, Inc.
 
    This file is free documentation; the Free Software Foundation gives
 unlimited permission to copy, distribute and modify it.
+
 
 Basic Installation
 ==================
