@@ -9,7 +9,11 @@ dist_doc_DATA = \
 	libAMOS_quickref.rtf \
 	message_grammar.rtf \
 	message_types.rtf \
-	minimus.README
+	minimus.README \
+    Foundationspec.rtf \
+    helptextspec.rtf \
+    portability.README \
+    tarchive2amos.testplan 
 
 
 ##-- END OF MAKEFILE --##
