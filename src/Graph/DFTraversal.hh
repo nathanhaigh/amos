@@ -9,10 +9,6 @@
 /**
  * The <b>DFtraversal</b> class
  *
- *
- * <p>Copyright &copy; 2003, The Institute for Genomic Research (TIGR).
- * <br>All rights reserved.
- *
  * @author  Dan Sommer
  *
  * <pre>
@@ -22,7 +18,7 @@
  * $Author$
  * </pre>
  */
-class DFtraversal {
+class DFTraversal {
 
   IGraph* g;
   IGraph* subg;
@@ -32,7 +28,7 @@ public:
     
   }
 
-  void traverse(INode* n);
+  void traverse(INode* n) const;
 };
 
 
