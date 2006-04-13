@@ -8,6 +8,9 @@ amosinclude_HEADERS = \
 	ContigUtils.hh
 
 
+##-- TO BE INSTALLED
+dist_bin_SCRIPTS = \
+	zipalign.pl
 
 
 ##-- TO BE INSTALLED
