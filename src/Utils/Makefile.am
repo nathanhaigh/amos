@@ -15,6 +15,7 @@ dist_bin_SCRIPTS = \
 	benchmark_seq.pl \
 	ctgovl.pl \
     filter_contig.pl \
+    filterfrg.pl \
     listcontigreads.sh \
 	cvgChop.pl \
 	getN50.pl \
