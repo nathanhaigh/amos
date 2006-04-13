@@ -11,7 +11,8 @@ bin_PROGRAMS = \
     gap-closure-reads
 
 dist_bin_SCRIPTS = \
-    persistent-assembly.pl
+    persistent-assembly.pl \
+    persistent-fix.pl
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
