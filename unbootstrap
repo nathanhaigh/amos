@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Reverses the actions of bootstrap
 #
 
