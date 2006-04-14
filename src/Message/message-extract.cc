@@ -20,6 +20,7 @@ using namespace std;
 
 
 //=============================================================== Globals ====//
+bool OPT_Invert = false;          // invert match
 string OPT_MessageName;           // message name parameter
 set<NCode_t> OPT_ExtractCodes;    // extract message type set
 
@@ -81,7 +82,9 @@ int main (int argc, char ** argv)
   endcode = OPT_ExtractCodes . end( );
   while ( (msgcode = msg . skip (msgfile)) != NULL_NCODE )
     {
-      if ( OPT_ExtractCodes . find (msgcode) != endcode )
+      if ( (OPT_Invert ?
+            OPT_ExtractCodes . find (msgcode) == endcode :
+            OPT_ExtractCodes . find (msgcode) != endcode) )
 	{
 	  size = msgfile . tellg( ) - spos;
 	  if ( size > buff_size )
@@ -121,7 +124,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hm:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hm:v")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -131,6 +134,9 @@ void ParseArgs (int argc, char ** argv)
       case 'm':
 	OPT_MessageName = optarg;
 	break;
+      case 'v':
+        OPT_Invert = true;
+        break;
       default:
 	errflg ++;
       }
@@ -162,6 +168,7 @@ void PrintHelp (const char * s)
   cerr
     << "-h            Display help information\n"
     << "-m path       The file path of the input message\n"
+    << "-v            Invert match. Filter instead of extract given NCodes\n"
     << endl;
 
   cerr
