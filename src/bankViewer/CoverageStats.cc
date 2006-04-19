@@ -12,6 +12,7 @@ CoverageStats::CoverageStats(int numpoints, ID_t libid, Distribution_t dist) :
    m_curpos(0),
    m_sum(0)
 { 
+  //cerr << "Allocated to hold " << numpoints << " values" << endl;
   m_cestat.resize(numpoints);
 }
 

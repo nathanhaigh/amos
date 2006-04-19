@@ -794,7 +794,7 @@ void InsertWidget::paintCanvas()
   {
     cerr << " coverage";
 
-    // coverage will change at each endpoint of each insert
+    // coverage will change at each endpoint of each (reasonably connected) insert
     CoverageStats insertCL((2+m_inserts.size())*4, 0, Distribution_t());
     insertCL.addEndpoints(leftmost, leftmost);
 
@@ -839,6 +839,8 @@ void InsertWidget::paintCanvas()
 
     insertCL.finalize();
 
+    //cerr << "insertcl size: " << insertCL.m_curpos << endl << endl;
+
     CoverageStats readCL(m_tiling.size()*4, 0, Distribution_t());
 
     int totalbases = 0;
@@ -860,6 +862,7 @@ void InsertWidget::paintCanvas()
     }
 
     readCL.finalize();
+    //cerr << "readcl size: " << readCL.m_curpos << endl << endl;
 
     int inswidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
     int redwidth = (int)((readCL.m_coverage[readCL.m_curpos-1].x() + m_hoffset) * m_hscale);
