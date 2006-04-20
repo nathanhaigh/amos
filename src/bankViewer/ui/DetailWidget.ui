@@ -1,0 +1,70 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>DetailWidget_t</class>
+<widget class="QWidget">
+    <property name="name">
+        <cstring>DetailWidget_t</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>378</width>
+            <height>473</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Form2</string>
+    </property>
+    <vbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <property name="margin">
+            <number>0</number>
+        </property>
+        <property name="spacing">
+            <number>0</number>
+        </property>
+        <widget class="QGroupBox">
+            <property name="name">
+                <cstring>detailBox</cstring>
+            </property>
+            <property name="title">
+                <string>Selection Details</string>
+            </property>
+            <property name="flat">
+                <bool>true</bool>
+            </property>
+            <vbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <property name="margin">
+                    <number>0</number>
+                </property>
+                <property name="spacing">
+                    <number>0</number>
+                </property>
+                <widget class="QTextEdit">
+                    <property name="name">
+                        <cstring>detailText</cstring>
+                    </property>
+                    <property name="font">
+                        <font>
+                            <family>Courier</family>
+                            <pointsize>8</pointsize>
+                        </font>
+                    </property>
+                    <property name="cursor">
+                        <cursor>4</cursor>
+                    </property>
+                    <property name="wordWrap">
+                        <enum>NoWrap</enum>
+                    </property>
+                </widget>
+            </vbox>
+        </widget>
+    </vbox>
+</widget>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>
