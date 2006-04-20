@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'DetailWidget.ui'
 **
-** Created: Wed Apr 19 20:06:26 2006
+** Created: Wed Apr 19 22:13:30 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -18,33 +18,36 @@
 #include <qwhatsthis.h>
 
 /*
- *  Constructs a DetailWidget_t as a child of 'parent', with the
+ *  Constructs a DetailWidget as a child of 'parent', with the
  *  name 'name' and widget flags set to 'f'.
  */
-DetailWidget_t::DetailWidget_t( QWidget* parent, const char* name, WFlags fl )
+DetailWidget::DetailWidget( QWidget* parent, const char* name, WFlags fl )
     : QWidget( parent, name, fl )
 {
     if ( !name )
-	setName( "DetailWidget_t" );
-    DetailWidget_tLayout = new QVBoxLayout( this, 0, 0, "DetailWidget_tLayout"); 
+	setName( "DetailWidget" );
+    DetailWidgetLayout = new QVBoxLayout( this, 0, 0, "DetailWidgetLayout"); 
 
     detailBox = new QGroupBox( this, "detailBox" );
     detailBox->setFlat( TRUE );
     detailBox->setColumnLayout(0, Qt::Vertical );
-    detailBox->layout()->setSpacing( 0 );
-    detailBox->layout()->setMargin( 0 );
+    detailBox->layout()->setSpacing( 6 );
+    detailBox->layout()->setMargin( 11 );
     detailBoxLayout = new QVBoxLayout( detailBox->layout() );
     detailBoxLayout->setAlignment( Qt::AlignTop );
 
     detailText = new QTextEdit( detailBox, "detailText" );
+    detailText->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)7, 0, 0, detailText->sizePolicy().hasHeightForWidth() ) );
     QFont detailText_font(  detailText->font() );
     detailText_font.setFamily( "Courier" );
     detailText_font.setPointSize( 8 );
     detailText->setFont( detailText_font ); 
     detailText->setCursor( QCursor( 4 ) );
     detailText->setWordWrap( QTextEdit::NoWrap );
+    detailText->setReadOnly( TRUE );
+    detailText->setTabStopWidth( 20 );
     detailBoxLayout->addWidget( detailText );
-    DetailWidget_tLayout->addWidget( detailBox );
+    DetailWidgetLayout->addWidget( detailBox );
     languageChange();
     resize( QSize(378, 473).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
@@ -53,7 +56,7 @@ DetailWidget_t::DetailWidget_t( QWidget* parent, const char* name, WFlags fl )
 /*
  *  Destroys the object and frees any allocated resources
  */
-DetailWidget_t::~DetailWidget_t()
+DetailWidget::~DetailWidget()
 {
     // no need to delete child widgets, Qt does it all for us
 }
@@ -62,7 +65,7 @@ DetailWidget_t::~DetailWidget_t()
  *  Sets the strings of the subwidgets using the current
  *  language.
  */
-void DetailWidget_t::languageChange()
+void DetailWidget::languageChange()
 {
     setCaption( tr( "Form2" ) );
     detailBox->setTitle( tr( "Selection Details" ) );

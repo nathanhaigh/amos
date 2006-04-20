@@ -15,6 +15,7 @@ ContigPicker.cc\
 CoverageCanvasItem.cc\
 CoverageStats.cc\
 DataStore.cc\
+DetailWidget.cc\
 FeatureBrowser.cc\
 FeatureCanvasItem.cc\
 HistogramWidget.cc\
@@ -32,6 +33,7 @@ NetworkCom.cc\
 OverviewField.cc\
 OverviewWidget.cc\
 OverviewWindow.cc\
+QueryWidget.cc\
 ReadInfo.cc\
 ReadPicker.cc\
 RenderSeq.cc\
@@ -58,6 +60,7 @@ ContigPicker.hh\
 CoverageCanvasItem.hh\
 CoverageStats.hh\
 DataStore.hh\
+DetailWidget.hh\
 FeatureBrowser.hh\
 FeatureCanvasItem.hh\
 HistogramWidget.hh\
@@ -75,6 +78,7 @@ NetworkCom.hh\
 OverviewField.hh\
 OverviewWidget.hh\
 OverviewWindow.hh\
+QueryWidget.hh\
 ReadInfo.hh\
 ReadPicker.hh\
 RenderSeq.hh\

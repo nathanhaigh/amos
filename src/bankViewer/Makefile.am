@@ -22,6 +22,7 @@ bankViewer_MOCSOURCES = \
         CoverageCanvasItem.cc  \
         CoverageStats.cc       \
         DataStore.cc           \
+	DetailWidget.cc        \
         FeatureBrowser.cc      \
         FeatureCanvasItem.cc   \
         HistogramWidget.cc     \
@@ -39,7 +40,8 @@ bankViewer_MOCSOURCES = \
 	OverviewField.cc       \
 	OverviewWidget.cc      \
 	OverviewWindow.cc      \
-    RangeScrollBar.cc      \
+	QueryWidget.cc         \
+        RangeScrollBar.cc      \
         ReadInfo.cc            \
         ReadPicker.cc          \
         RenderSeq.cc           \

@@ -13,10 +13,13 @@
 #include <qpixmap.h>
 #include <qpainter.h>
 #include <qlineedit.h>
+#include <qdockarea.h>
 
 #include "DataStore.hh"
 #include "UIElements.hh"
 #include "BufferedLineEdit.hh"
+#include "QueryWidget.hh"
+#include "DetailWidget.hh"
 
 
 using namespace std;
@@ -49,6 +52,20 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   const char * states = Insert::allstates;
   unsigned int type = 0;
+
+  // Dock windows
+  QDockWindow * queryDock = new QDockWindow (QDockWindow::InDock, this);
+  QueryWidget * m_query = new QueryWidget (queryDock);
+  queryDock->boxLayout()->addWidget (m_query);
+  queryDock->setResizeEnabled (true);
+  addDockWindow (queryDock, Qt::DockRight);
+
+  QDockWindow * detailDock = new QDockWindow (QDockWindow::InDock, this);
+  DetailWidget * m_detail = new DetailWidget (detailDock);
+  detailDock->boxLayout()->addWidget (m_detail, true);
+  detailDock->setResizeEnabled (true);
+  addDockWindow (detailDock, Qt::DockRight);
+
 
   // Libraries
   m_libmenu = new QPopupMenu(this);

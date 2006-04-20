@@ -5,6 +5,8 @@
 #include <string>
 #include <qpopupmenu.h>
 #include <qlineedit.h>
+class QueryWidget;
+class DetailWidget;
 
 #include <map>
 
@@ -77,6 +79,9 @@ private:
   QLineEdit * m_happypick;
 
   DataStore * m_datastore;
+
+  QueryWidget * m_query;
+  DetailWidget * m_detail;
 
   int m_connectmatesid;
   int m_partitiontypesid;

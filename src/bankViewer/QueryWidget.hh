@@ -1,14 +1,14 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Wed Apr 19 20:08:11 2006
+** Created: Wed Apr 19 22:13:31 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
 ****************************************************************************/
 
-#ifndef QUERYWIDGET_T_H
-#define QUERYWIDGET_T_H
+#ifndef QUERYWIDGET_H
+#define QUERYWIDGET_H
 
 #include <qvariant.h>
 #include <qwidget.h>
@@ -18,34 +18,43 @@ class QHBoxLayout;
 class QGridLayout;
 class QSpacerItem;
 class QGroupBox;
-class QSlider;
 class QLabel;
+class QLineEdit;
+class QSlider;
+class QFrame;
 
-class QueryWidget_t : public QWidget
+class QueryWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    QueryWidget_t( QWidget* parent = 0, const char* name = 0, WFlags fl = 0 );
-    ~QueryWidget_t();
+    QueryWidget( QWidget* parent = 0, const char* name = 0, WFlags fl = 0 );
+    ~QueryWidget();
 
     QGroupBox* queryBox;
+    QLabel* searchLabel;
+    QLineEdit* searchEdit;
+    QLabel* ceLabel;
+    QLabel* covLabel;
+    QLabel* kmerLabel;
+    QSlider* ceSlider;
     QSlider* snpSlider;
     QLabel* snpLabel;
-    QSlider* kmerSlider;
-    QLabel* kmerLabel;
     QSlider* covSlider;
-    QLabel* covLabel;
-    QSlider* ceSlider;
-    QLabel* ceLabel;
+    QSlider* kmerSlider;
+    QFrame* line1;
+    QLabel* happyLabel;
+    QLineEdit* happyEdit;
 
 protected:
-    QVBoxLayout* QueryWidget_tLayout;
+    QVBoxLayout* QueryWidgetLayout;
     QGridLayout* queryBoxLayout;
+    QHBoxLayout* layout7;
+    QHBoxLayout* layout2;
 
 protected slots:
     virtual void languageChange();
 
 };
 
-#endif // QUERYWIDGET_T_H
+#endif // QUERYWIDGET_H

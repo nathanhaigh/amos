@@ -1,8 +1,8 @@
 <!DOCTYPE UI><UI version="3.3" stdsetdef="1">
-<class>DetailWidget_t</class>
+<class>DetailWidget</class>
 <widget class="QWidget">
     <property name="name">
-        <cstring>DetailWidget_t</cstring>
+        <cstring>DetailWidget</cstring>
     </property>
     <property name="geometry">
         <rect>
@@ -39,15 +39,17 @@
                 <property name="name">
                     <cstring>unnamed</cstring>
                 </property>
-                <property name="margin">
-                    <number>0</number>
-                </property>
-                <property name="spacing">
-                    <number>0</number>
-                </property>
                 <widget class="QTextEdit">
                     <property name="name">
                         <cstring>detailText</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>7</hsizetype>
+                            <vsizetype>7</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
                     </property>
                     <property name="font">
                         <font>
@@ -60,6 +62,12 @@
                     </property>
                     <property name="wordWrap">
                         <enum>NoWrap</enum>
+                    </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
+                    </property>
+                    <property name="tabStopWidth">
+                        <number>20</number>
                     </property>
                 </widget>
             </vbox>
