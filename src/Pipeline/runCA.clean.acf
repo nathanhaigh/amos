@@ -7,7 +7,7 @@ INPUTS = $(PREF).frg
 TEMPS = $(PREF).inp $(PREF).ovl $(PREF).erate $(PREF).ofg $(PREF).ofglist $(PREF).cgb $(PREF).cgw $(PREF).cgw_contigs $(PREF).cgw_scaffolds $(PREF).cgw_total $(PREF).cns $(PREF).map $(PREF).ign $(PREF).err $(PREF).range $(PREF).corr $(PREF).cgb_chimeras $(PREF).cgb_crappies $(PREF).cgi $(PREF).cgi.clg $(PREF).cns.clg $(PREF).cus.0 $(PREF).cam $(PREF).cam.0 $(PREF).cga.0 $(PREF).stderr $(PREF).timing $(PREF).fgv $(PREF).fge $(PREF).dregs.cam $(PREF).asm.cam
 
 ## Removing TEMPS
-10: rm $(TEMPS)
+10: rm -f $(TEMPS)
 
 ## Removing stores
 20: rm -rf *Store
@@ -16,13 +16,13 @@ TEMPS = $(PREF).inp $(PREF).ovl $(PREF).erate $(PREF).ofg $(PREF).ofglist $(PREF
 30: rm -rf stat
 
 ## Removing rocks files
-40: rm *.crocks.*
+40: rm -f *.crocks.*
 
 ## Removing stone files
-50: rm *.stone.*
+50: rm -f *.stone.*
 
 ## Removing cgw checkpoints
-60: rm *.ckp.*
+60: rm -f *.ckp.*
 
 ## rez files
-70: rm *.rez.*
+70: rm -f *.rez.*

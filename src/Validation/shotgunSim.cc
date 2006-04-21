@@ -514,7 +514,7 @@ int main(int argc, char ** argv)
 	    laystream << "{TLE\n";
 	    laystream << "src:" << numseq << endl;
 	    laystream << "off:" << fragments[seq][f].right - fragments[seq][f].revlen << endl;
-	    laystream << "clr:" << rev.length() << ",0\n";
+	    laystream << "clr:" << fragments[seq][f].revlen << ",0\n";
 	    laystream << "}\n";
 	  }
 	}

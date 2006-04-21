@@ -7,7 +7,8 @@ bin_PROGRAMS = \
 	trimByOvl \
 	runAmos \
 	analyzeSNPs \
-    recallConsensus
+    recallConsensus \
+	cvgStat
 
 
 dist_bin_SCRIPTS = \
@@ -72,6 +73,13 @@ trimByOvl_LDADD = \
 trimByOvl_SOURCES = \
 	trimByOvl.cc
 
+##-- cvgStat
+cvgStat_CPPFLAGS = \
+	-I$(top_srcdir)/src/AMOS
+cvgStat_LDADD = \
+        $(top_builddir)/src/AMOS/libAMOS.a
+cvgStat_SOURCES = \
+	cvgStat.cc
 
 ##-- runAmos
 ## note: this references top_builddir because getopt.h is built if needed

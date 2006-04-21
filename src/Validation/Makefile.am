@@ -6,8 +6,8 @@ bin_PROGRAMS = \
 	asmQC2 \
 	asmQC \
     analyze-read-depth \
-    find-duplicate-reads
-#	shotgunSim
+    find-duplicate-reads \
+	shotgunSim
 
 dist_bin_SCRIPTS = \
 	coords2cam.pl \
@@ -73,11 +73,11 @@ find_duplicate_reads_SOURCES = \
 
 
 ##-- shotgunSim
-#shotgunSim_LDADD = \
-#	-lgsl \
-#	-lgslcblas
-#
-#shotgunSim_SOURCES = \
-#	shotgunSim.cc
+shotgunSim_LDADD = \
+	-lgsl \
+	-lgslcblas
+
+shotgunSim_SOURCES = \
+	shotgunSim.cc
 
 ##-- END OF MAKEFILE --##
