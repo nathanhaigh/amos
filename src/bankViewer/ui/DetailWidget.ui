@@ -57,8 +57,8 @@
                             <pointsize>8</pointsize>
                         </font>
                     </property>
-                    <property name="cursor">
-                        <cursor>4</cursor>
+                    <property name="textFormat">
+                        <enum>RichText</enum>
                     </property>
                     <property name="wordWrap">
                         <enum>NoWrap</enum>

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'DetailWidget.ui'
 **
-** Created: Wed Apr 19 22:13:30 2006
+** Created: Fri Apr 21 17:07:15 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -42,7 +42,7 @@ DetailWidget::DetailWidget( QWidget* parent, const char* name, WFlags fl )
     detailText_font.setFamily( "Courier" );
     detailText_font.setPointSize( 8 );
     detailText->setFont( detailText_font ); 
-    detailText->setCursor( QCursor( 4 ) );
+    detailText->setTextFormat( QTextEdit::RichText );
     detailText->setWordWrap( QTextEdit::NoWrap );
     detailText->setReadOnly( TRUE );
     detailText->setTabStopWidth( 20 );

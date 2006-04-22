@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Wed Apr 19 22:13:31 2006
+** Created: Fri Apr 21 17:07:16 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!

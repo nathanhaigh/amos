@@ -83,7 +83,7 @@ public slots:
 
 
 signals:
-  void setStatus(const QString & message);
+  void setDetails(const QString & message);
   void setGindex(int gindex);
   void setContigId(int contigid);
 

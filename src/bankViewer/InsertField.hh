@@ -20,7 +20,7 @@ public:
 
 signals:
   void visibleRange(int, double);
-  void setStatus(const QString & message);
+  void setDetails(const QString & message);
   void setGindex(int gindex);
 
   void readIIDHighlighted(const QString &);

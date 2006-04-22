@@ -14,6 +14,7 @@
 #include <qpainter.h>
 #include <qlineedit.h>
 #include <qdockarea.h>
+#include <qtextedit.h>
 
 #include "DataStore.hh"
 #include "UIElements.hh"
@@ -155,8 +156,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(m_typesmenu, SIGNAL(activated(int)),
           this,        SLOT(toggleItem(int)));
 
- // connect(iw,          SIGNAL(setStatus(const QString &)),
- //         statusBar(), SLOT(message(const QString &)));
+  connect(iw,   SIGNAL(setDetails(const QString &)),
+          m_detail->detailText, SLOT(setText(const QString &)));
 
   connect(iw,   SIGNAL(setGindex(int)),
           this, SIGNAL(setGindex(int)));

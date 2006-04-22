@@ -5,6 +5,7 @@
 #include <string>
 #include <qpopupmenu.h>
 #include <qlineedit.h>
+#include <qstring.h>
 class QueryWidget;
 class DetailWidget;
 
@@ -25,8 +26,8 @@ public:
 public slots:
   void bankChanged();
   void contigChanged();
-  void toggleItem(int id);
 
+  void toggleItem(int id);
   void toggleConnectMates();
   void togglePartitionTypes();
   void toggleTintHappiness();

@@ -128,19 +128,11 @@ InsertWidget::InsertWidget(DataStore * datastore,
   hrange = new RangeScrollBar_t(Qt::Horizontal, this);
   hrange->setMaxRange(0,100);
 
-  QTextEdit * log = new QTextEdit( this );
-  log->setTextFormat( Qt::LogText );
-  log->setMaximumHeight(20);
-  log->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
-  log->setVScrollBarMode(QScrollView::AlwaysOff);
-  log->setHScrollBarMode(QScrollView::AlwaysOff);
-
   QBoxLayout * vbox = new QVBoxLayout(this);
   vbox->addWidget(m_iposition);
   vbox->addWidget(hbox, 10);
   vbox->addWidget(m_overview);
   vbox->addWidget(hrange);
-  vbox->addWidget(log);
   vbox->activate();
 
 
@@ -184,11 +176,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   connect(this,    SIGNAL(currentScaffoldCoordinate(int)),
           m_iposition, SLOT(setScaffoldCoordinate(int)));
 
-  connect(m_ifield, SIGNAL(setStatus(const QString &)),
-          this,     SIGNAL(setStatus(const QString &)));
-
-  connect(m_ifield, SIGNAL(setStatus(const QString &)),
-          log,     SLOT(append(const QString &)));
+  connect(m_ifield, SIGNAL(setDetails(const QString &)),
+          this,     SIGNAL(setDetails(const QString &)));
 
   connect(m_ifield, SIGNAL(setGindex(int)),
           this,     SLOT(computePos(int)));

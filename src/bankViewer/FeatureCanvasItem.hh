@@ -17,6 +17,7 @@ public:
   void drawShape(QPainter & p);
   AMOS::Feature_t & m_feat;
 
+  static const char * getFeatureTypeStr(AMOS::FeatureType_t type);
 
 private:
 };
