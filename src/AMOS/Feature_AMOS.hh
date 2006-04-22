@@ -53,14 +53,14 @@ public:
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
-  static const FeatureType_t NULL_FEATURE;
-  static const FeatureType_t REPEAT;
-  static const FeatureType_t UNITIG;
-  static const FeatureType_t JOIN;
-  static const FeatureType_t COVERAGE;
-  static const FeatureType_t ORF;
-  static const FeatureType_t POLYMORPHISM;
-  static const FeatureType_t BREAKPOINT;
+  static const FeatureType_t NULL_FEATURE = 0;
+  static const FeatureType_t REPEAT       = 'R';
+  static const FeatureType_t UNITIG       = 'U';
+  static const FeatureType_t JOIN         = 'J';
+  static const FeatureType_t COVERAGE     = 'C';
+  static const FeatureType_t ORF          = 'O';
+  static const FeatureType_t POLYMORPHISM = 'P';
+  static const FeatureType_t BREAKPOINT   = 'B';
 
 
   //--------------------------------------------------------- Feature_t --------

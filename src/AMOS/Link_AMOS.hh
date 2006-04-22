@@ -66,19 +66,19 @@ public:
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
-  static const LinkType_t NULL_LINK;
-  static const LinkType_t OTHER;
-  static const LinkType_t MATEPAIR;
-  static const LinkType_t OVERLAP;
-  static const LinkType_t PHYSICAL;
-  static const LinkType_t ALIGNMENT;
-  static const LinkType_t SYNTENY;
+  static const LinkType_t NULL_LINK = 0;
+  static const LinkType_t OTHER     = 'X';
+  static const LinkType_t MATEPAIR  = 'M';
+  static const LinkType_t OVERLAP   = 'O';
+  static const LinkType_t PHYSICAL  = 'P';
+  static const LinkType_t ALIGNMENT = 'A';
+  static const LinkType_t SYNTENY   = 'S';
 
-  static const LinkAdjacency_t NULL_ADJACENCY;
-  static const LinkAdjacency_t NORMAL;         //!< E,B
-  static const LinkAdjacency_t ANTINORMAL;     //!< B,E
-  static const LinkAdjacency_t INNIE;          //!< E,E
-  static const LinkAdjacency_t OUTIE;          //!< B,B
+  static const LinkAdjacency_t NULL_ADJACENCY = 0;
+  static const LinkAdjacency_t NORMAL         = 'N';  //!< E,B
+  static const LinkAdjacency_t ANTINORMAL     = 'A';  //!< B,E
+  static const LinkAdjacency_t INNIE          = 'I';  //!< E,E
+  static const LinkAdjacency_t OUTIE          = 'O';  //!< B,B
 
 
   //--------------------------------------------------------- Link_t -----------

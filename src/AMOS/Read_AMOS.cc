@@ -16,13 +16,6 @@ using namespace std;
 
 //================================================ Read_t ======================
 const NCode_t Read_t::NCODE = M_READ;
-const ReadType_t Read_t::NULL_READ  = 0;
-const ReadType_t Read_t::OTHER      = 'X';
-const ReadType_t Read_t::END        = 'E';
-const ReadType_t Read_t::CONTIG     = 'C';
-const ReadType_t Read_t::BAC        = 'B';
-const ReadType_t Read_t::WALK       = 'W';
-const ReadType_t Read_t::TRANSPOSON = 'T';
 
 
 //----------------------------------------------------- clear ------------------

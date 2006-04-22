@@ -16,11 +16,6 @@ using namespace std;
 
 //================================================ Overlap_t ===================
 const NCode_t Overlap_t::NCODE = M_OVERLAP;
-const OverlapAdjacency_t Overlap_t::NULL_ADJACENCY = 0;
-const OverlapAdjacency_t Overlap_t::NORMAL     = 'N';
-const OverlapAdjacency_t Overlap_t::ANTINORMAL = 'A';
-const OverlapAdjacency_t Overlap_t::INNIE      = 'I';
-const OverlapAdjacency_t Overlap_t::OUTIE      = 'O';
 
 
 //----------------------------------------------------- flip -------------------

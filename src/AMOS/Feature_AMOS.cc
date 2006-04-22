@@ -16,15 +16,6 @@ using namespace std;
 
 //====================================================== Feature_t =============
 const NCode_t Feature_t::NCODE = M_FEATURE;
-const FeatureType_t Feature_t::NULL_FEATURE = 0;
-const FeatureType_t Feature_t::REPEAT       = 'R';
-const FeatureType_t Feature_t::UNITIG       = 'U';
-const FeatureType_t Feature_t::JOIN         = 'J';
-const FeatureType_t Feature_t::COVERAGE     = 'C';
-const FeatureType_t Feature_t::ORF          = 'O';
-const FeatureType_t Feature_t::POLYMORPHISM = 'P';
-const FeatureType_t Feature_t::BREAKPOINT   = 'B';
-
 
 //----------------------------------------------------- readMessage ------------
 void Feature_t::readMessage (const Message_t & msg)

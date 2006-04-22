@@ -16,12 +16,6 @@ using namespace std;
 
 //================================================ Fragment_t ==================
 const NCode_t Fragment_t::NCODE = M_FRAGMENT;
-const FragmentType_t Fragment_t::NULL_FRAGMENT  = 0;
-const FragmentType_t Fragment_t::OTHER          = 'X';
-const FragmentType_t Fragment_t::BAC            = 'B';
-const FragmentType_t Fragment_t::INSERT         = 'I';
-const FragmentType_t Fragment_t::TRANSPOSON     = 'T';
-const FragmentType_t Fragment_t::WALK           = 'W';
 
 
 //----------------------------------------------------- clear ------------------

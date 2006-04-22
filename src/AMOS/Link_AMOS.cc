@@ -16,19 +16,7 @@ using namespace std;
 
 //====================================================== Link_t ================
 const NCode_t Link_t::NCODE = M_LINK;
-const LinkType_t Link_t::NULL_LINK  = 0;
-const LinkType_t Link_t::OTHER      = 'X';
-const LinkType_t Link_t::MATEPAIR   = 'M';
-const LinkType_t Link_t::OVERLAP    = 'O';
-const LinkType_t Link_t::PHYSICAL   = 'P';
-const LinkType_t Link_t::ALIGNMENT  = 'A';
-const LinkType_t Link_t::SYNTENY    = 'S';
-const LinkAdjacency_t Link_t::NULL_ADJACENCY = 0;
-const LinkAdjacency_t Link_t::NORMAL         = 'N';
-const LinkAdjacency_t Link_t::ANTINORMAL     = 'A';
-const LinkAdjacency_t Link_t::INNIE          = 'I';
-const LinkAdjacency_t Link_t::OUTIE          = 'O';
- 
+
 
 //----------------------------------------------------- clear ------------------
 void Link_t::clear ( )

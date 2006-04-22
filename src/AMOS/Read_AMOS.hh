@@ -57,13 +57,13 @@ public:
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
-  static const ReadType_t NULL_READ;
-  static const ReadType_t OTHER;
-  static const ReadType_t END;
-  static const ReadType_t CONTIG;
-  static const ReadType_t BAC;
-  static const ReadType_t WALK;
-  static const ReadType_t TRANSPOSON;
+  static const ReadType_t NULL_READ  = 0;
+  static const ReadType_t OTHER      = 'X';
+  static const ReadType_t END        = 'E';
+  static const ReadType_t CONTIG     = 'C';
+  static const ReadType_t BAC        = 'B';
+  static const ReadType_t WALK       = 'W';
+  static const ReadType_t TRANSPOSON = 'T';
 
 
   //--------------------------------------------------- Read_t -----------------

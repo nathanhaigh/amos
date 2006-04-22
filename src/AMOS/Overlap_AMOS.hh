@@ -65,11 +65,11 @@ public:
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
-  static const OverlapAdjacency_t NULL_ADJACENCY;
-  static const OverlapAdjacency_t NORMAL;         //!< E,B
-  static const OverlapAdjacency_t ANTINORMAL;     //!< B,E
-  static const OverlapAdjacency_t INNIE;          //!< E,E
-  static const OverlapAdjacency_t OUTIE;          //!< B,B
+  static const OverlapAdjacency_t NULL_ADJACENCY = 0;
+  static const OverlapAdjacency_t NORMAL         = 'N';  //!< E,B
+  static const OverlapAdjacency_t ANTINORMAL     = 'A';  //!< B,E
+  static const OverlapAdjacency_t INNIE          = 'I';  //!< E,E
+  static const OverlapAdjacency_t OUTIE          = 'O';  //!< B,B
 
 
   //--------------------------------------------------- Overlap_t --------------

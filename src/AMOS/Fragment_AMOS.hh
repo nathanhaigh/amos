@@ -54,12 +54,12 @@ public:
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
 
-  static const FragmentType_t NULL_FRAGMENT;
-  static const FragmentType_t OTHER;
-  static const FragmentType_t BAC;
-  static const FragmentType_t INSERT;
-  static const FragmentType_t TRANSPOSON;
-  static const FragmentType_t WALK;
+  static const FragmentType_t NULL_FRAGMENT = 0;
+  static const FragmentType_t OTHER         = 'X';
+  static const FragmentType_t BAC           = 'B';
+  static const FragmentType_t INSERT        = 'I';
+  static const FragmentType_t TRANSPOSON    = 'T';
+  static const FragmentType_t WALK          = 'W';
 
 
   //--------------------------------------------------- Fragment_t -------------
