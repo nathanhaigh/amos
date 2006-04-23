@@ -6,6 +6,7 @@
 #include "CoverageCanvasItem.hh"
 #include "DataStore.hh"
 #include "InsertCanvasItem.hh"
+#include <qregexp.h>
 
 
 #include <iostream>
@@ -20,7 +21,8 @@ InsertField::InsertField(DataStore * datastore,
    m_datastore(datastore),
    m_hoffset(hoffset),
    m_featrect(NULL),
-   m_feat(NULL)
+   m_feat(NULL),
+   m_lastsearch(NULL)
 {
   QWMatrix m = worldMatrix();
   m.translate(20, 0);
@@ -36,6 +38,42 @@ InsertField::InsertField(DataStore * datastore,
   m_visibleRect->setZ(-1000);
   m_visibleRect->show();
 }
+
+
+void InsertField::setFeatRect (QCanvasItem * item)
+{
+  int jump = 0;
+
+  if (!m_featrect)
+    {
+      m_featrect = new QCanvasRectangle (0,0,0,0,canvas());
+      m_featrect->setBrush(QColor(59,49,31));
+      m_featrect->setPen(QColor(139,119,111));
+      m_featrect->setZ(-2);
+    }
+
+  if ( item == NULL )
+    {
+      m_featrect->hide();
+    }
+  else
+    {
+      int width = item->boundingRect().width();
+      canvas()->setChanged(m_featrect->boundingRect());
+      m_featrect->setSize(width, canvas()->height());
+      m_featrect->move(item->x(), 0);
+      m_featrect->show();
+      jump = 16*((int)item->x() + width/2) - m_hoffset;
+    }
+  
+  m_feat = item;
+  canvas()->setChanged(m_featrect->boundingRect());
+  canvas()->update();
+
+  if ( jump )
+    emit setGindex(jump);
+}
+
 
 void InsertField::highlightInsert(InsertCanvasItem * iitem, 
                                   bool highlight,
@@ -120,7 +158,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
       if (!m_featrect)
       {
-        m_featrect = new QCanvasRectangle((*it)->x(), 0, 
+        m_featrect = new QCanvasRectangle((int)(*it)->x(), 0, 
                                           (*it)->boundingRect().width(), canvas()->height(), 
                                           canvas());
         m_featrect->setBrush(QColor(59,49,31));
@@ -375,4 +413,86 @@ void InsertField::canvasCleared()
 {
   m_featrect = NULL;
   m_feat = NULL;
+  m_lastsearch = NULL;
+}
+
+
+void InsertField::search(const QString & str)
+{
+  if ( str.isEmpty() )
+    {
+      setFeatRect (NULL);
+      m_lastsearch = NULL;
+      return;
+    }
+
+  AMOS::ID_t sid = str.toUInt();
+  QCanvasItemList all = canvas()->allItems();
+  QCanvasItemList::Iterator it;
+
+  // pick up the search where we left off
+  for ( it = all.begin(); it != all.end(); ++ it )
+    if ( *it == m_lastsearch )
+      {
+        ++ it;
+        break;
+      }
+
+  bool wrap = false;
+  for ( ; !wrap || it != all.end(); ++ it ) 
+    {
+      // wrap around
+      if ( it == all.end() )
+        { 
+          it = all.begin();
+          wrap = true;
+        }
+
+      if ( (*it)->rtti() == InsertCanvasItem::RTTI )
+        {
+          InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
+          Insert * ins = iitem->m_insert;
+
+          // search insert aiid, biid, aeid, beid
+          if ( (sid && (sid == ins->m_aid || sid == ins->m_bid))
+               || str == m_datastore->read_bank.lookupEID(ins->m_aid)
+               || str == m_datastore->read_bank.lookupEID(ins->m_bid) )
+            break;
+        }
+      else if ( (*it)->rtti() == ContigCanvasItem::RTTI )
+        {
+          ContigCanvasItem * citem = (ContigCanvasItem *) *it;
+          AMOS::Tile_t * tile = &(citem->m_tile);
+
+          // search contig bid, iid, eid
+          if ( (sid && (sid == m_datastore->contig_bank.
+                        getIDMap().lookupBID(tile->source)
+                        || sid == citem->m_tile.source))
+               || str == m_datastore->contig_bank.lookupEID(tile->source) )
+            break;
+        }
+      else if ( (*it)->rtti() == FeatureCanvasItem::RTTI )
+        {
+          FeatureCanvasItem * fitem = (FeatureCanvasItem *) *it;
+          QString comment (fitem->m_feat.getComment().c_str());
+          QRegExp regexp ("\\b" + QRegExp::escape(str) + "\\b");
+
+          // search feature iid, eid, and comment words
+          if ( (sid && (sid == fitem->m_feat.getIID()))
+               || str == fitem->m_feat.getEID().c_str()
+               || comment.find(regexp) != -1 )
+            break;
+        }
+    }
+
+  if ( it != all.end() )
+    {
+      setFeatRect (*it);
+      m_lastsearch = *it;
+    }
+  else
+    {
+      setFeatRect (NULL);
+      m_lastsearch = NULL;
+    }
 }

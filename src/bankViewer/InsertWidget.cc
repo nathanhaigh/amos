@@ -135,6 +135,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   vbox->addWidget(hrange);
   vbox->activate();
 
+  connect(this,     SIGNAL(search(const QString &)),
+          m_ifield,   SLOT(search(const QString &)));
 
   connect(this,     SIGNAL(highlightIID(const QString &)),
           m_ifield,   SLOT(highlightIID(const QString &)));

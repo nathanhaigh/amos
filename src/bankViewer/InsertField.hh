@@ -29,17 +29,21 @@ signals:
 
 
 public slots:
+
   void highlightRead(int iid);
   void highlightIID(const QString & qeid);
   void highlightEID(const QString & qeid);
 
   void canvasCleared();
 
+  void search(const QString & str);
+
 protected:
   void contentsMousePressEvent(QMouseEvent* e);
   void viewportPaintEvent(QPaintEvent * e);
 
 private:
+  void setFeatRect (QCanvasItem * item);
   void highlightInsert(InsertCanvasItem * iitem, bool highlight, bool highlightBuddy);
   void getInsertString(QString & s, int which, Insert * ins, int isSecond, InsertCanvasItem * iitem);
   DataStore * m_datastore;
@@ -48,6 +52,7 @@ private:
   QCanvasRectangle * m_visibleRect;
   QCanvasRectangle * m_featrect;
   QCanvasItem * m_feat;
+  QCanvasItem * m_lastsearch;
 };
 
 #endif

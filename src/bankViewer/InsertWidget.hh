@@ -62,8 +62,9 @@ public slots:
   void setTintFeatures(bool);
   void contigChanged();
   void computePos(int);
-  void setHappyDistance(float);
   void setShowScaffold(bool);
+
+  void setHappyDistance(float);
 
   void setVisibleHRange(int, int);
   void setHPos(int);
@@ -90,6 +91,8 @@ signals:
   void canvasCleared();
 
   void jumpToRead(int iid);
+
+  void search(const QString & str);
 
   void highlightRead(int iid);
   void highlightIID(const QString & qiid);

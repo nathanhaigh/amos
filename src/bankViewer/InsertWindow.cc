@@ -6,6 +6,7 @@
 #include <qslider.h>
 #include <qpopupmenu.h>
 #include <qtoolbutton.h>
+#include <qpushbutton.h>
 #include <qcheckbox.h>
 #include <qspinbox.h>
 #include <qaccel.h>
@@ -34,36 +35,20 @@ InsertWindow::InsertWindow(DataStore * datastore,
   resize(800,600);
   setCaption("AI - Inserts");
 
-  //statusBar()->message("Ready", 2000);
-  //statusBar()->setSizeGripEnabled(false);
-
-  // Toolbar
-  QToolBar * options = new QToolBar(this, "options");
-  options->setLabel("Options");
-
-  new QLabel(" Happy Distance:", options, "happylbl");
-  m_happypick = new QLineEdit(options, "happypick");
-  m_happypick->setText(QString::number(Insert::MAXSTDEV));
-
-  new QLabel(" IID:", options, "iidlbl");
-  BufferedLineEdit * iidpick = new BufferedLineEdit(options, "iidpick");
-
-  new QLabel(" EID:", options, "eidlbl");
-  BufferedLineEdit * eidpick = new BufferedLineEdit(options, "eidpick");
-
   const char * states = Insert::allstates;
   unsigned int type = 0;
 
   // Dock windows
   QDockWindow * queryDock = new QDockWindow (QDockWindow::InDock, this);
-  QueryWidget * m_query = new QueryWidget (queryDock);
-  queryDock->boxLayout()->addWidget (m_query);
+  m_query = new QueryWidget (queryDock, "queries");
+  m_query->happyEdit->setText (QString::number(Insert::MAXSTDEV));
+  queryDock->setWidget (m_query);
   queryDock->setResizeEnabled (true);
   addDockWindow (queryDock, Qt::DockRight);
 
   QDockWindow * detailDock = new QDockWindow (QDockWindow::InDock, this);
-  DetailWidget * m_detail = new DetailWidget (detailDock);
-  detailDock->boxLayout()->addWidget (m_detail, true);
+  m_detail = new DetailWidget (detailDock, "details");
+  detailDock->setWidget (m_detail);
   detailDock->setResizeEnabled (true);
   addDockWindow (detailDock, Qt::DockRight);
 
@@ -150,7 +135,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_optionsmenu->setItemChecked(m_matecolorid, false);
 
   // Main Widget
-  InsertWidget * iw = new InsertWidget(datastore, m_types, this, "iw");
+  m_inserts = new InsertWidget(datastore, m_types, this, "iw");
+  InsertWidget * iw = m_inserts;
   setCentralWidget(iw);
 
   connect(m_typesmenu, SIGNAL(activated(int)),
@@ -171,20 +157,20 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(paintCanvas()),
           iw,   SLOT(paintCanvas()));
 
-  connect(iidpick, SIGNAL(newValue(const QString &)),
-          iw,      SIGNAL(highlightIID(const QString &)));
+  connect(m_query->searchButton, SIGNAL(clicked()),
+          this,                  SLOT(loadSearch()));
 
-  connect(eidpick, SIGNAL(newValue(const QString &)),
-          iw,      SIGNAL(highlightEID(const QString &)));
+  connect(this, SIGNAL(search(const QString &)),
+          iw,   SIGNAL(search(const QString &)));
 
-  connect(m_happypick, SIGNAL(returnPressed()),
-          this,        SLOT(loadHappyDistance()));
+  connect(m_query->happyButton, SIGNAL(clicked()),
+          this,                 SLOT(loadHappyDistance()));
 
-  connect(this,        SIGNAL(setShowScaffold(bool)),
-          iw,          SLOT(setShowScaffold(bool)));
+  connect(this, SIGNAL(setHappyDistance(float)),
+          iw,   SLOT(setHappyDistance(float)));
 
-  connect(this,        SIGNAL(setHappyDistance(float)),
-          iw,          SLOT(setHappyDistance(float)));
+  connect(this, SIGNAL(setShowScaffold(bool)),
+          iw,   SLOT(setShowScaffold(bool)));
 
   connect(this, SIGNAL(setConnectMates(bool)),
           iw,   SLOT(setConnectMates(bool)));
@@ -224,12 +210,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(parent, SIGNAL(bankSelected()),
           iw,   SLOT(refreshWidget()));
-
-  connect(iw, SIGNAL(readIIDHighlighted(const QString &)),
-          iidpick, SLOT(setText(const QString &)));
-
-  connect(iw, SIGNAL(readEIDHighlighted(const QString &)),
-          eidpick, SLOT(setText(const QString &)));
 
   connect(iw, SIGNAL(jumpToRead(int)),
           parent, SLOT(jumpToRead(int)));
@@ -291,7 +271,12 @@ void InsertWindow::buildLibraryMenu()
 
 void InsertWindow::loadHappyDistance()
 {
-  emit setHappyDistance(atof(m_happypick->text().ascii()));
+  emit setHappyDistance(m_query->happyEdit->text().toFloat());
+}
+
+void InsertWindow::loadSearch()
+{
+  emit search(m_query->searchEdit->text());
 }
 
 void InsertWindow::contigChanged()

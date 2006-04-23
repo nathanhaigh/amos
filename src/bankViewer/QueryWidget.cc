@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Fri Apr 21 17:07:16 2006
+** Created: Sat Apr 22 16:17:54 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -13,9 +13,9 @@
 #include <qpushbutton.h>
 #include <qgroupbox.h>
 #include <qlabel.h>
-#include <qlineedit.h>
 #include <qslider.h>
 #include <qframe.h>
+#include <qlineedit.h>
 #include <qlayout.h>
 #include <qtooltip.h>
 #include <qwhatsthis.h>
@@ -38,23 +38,6 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     queryBox->layout()->setMargin( 11 );
     queryBoxLayout = new QGridLayout( queryBox->layout() );
     queryBoxLayout->setAlignment( Qt::AlignTop );
-
-    layout7 = new QHBoxLayout( 0, 0, 6, "layout7"); 
-
-    searchLabel = new QLabel( queryBox, "searchLabel" );
-    searchLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)7, 0, 0, searchLabel->sizePolicy().hasHeightForWidth() ) );
-    QFont searchLabel_font(  searchLabel->font() );
-    searchLabel_font.setPointSize( 9 );
-    searchLabel->setFont( searchLabel_font ); 
-    searchLabel->setAlignment( int( QLabel::AlignVCenter | QLabel::AlignRight ) );
-    layout7->addWidget( searchLabel );
-
-    searchEdit = new QLineEdit( queryBox, "searchEdit" );
-    searchEdit->setCursor( QCursor( 4 ) );
-    searchEdit->setAlignment( int( QLineEdit::AlignLeft ) );
-    layout7->addWidget( searchEdit );
-
-    queryBoxLayout->addMultiCellLayout( layout7, 0, 0, 0, 1 );
 
     ceLabel = new QLabel( queryBox, "ceLabel" );
     ceLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)7, 0, 0, ceLabel->sizePolicy().hasHeightForWidth() ) );
@@ -143,26 +126,45 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
 
     queryBoxLayout->addMultiCellWidget( line1, 2, 2, 0, 1 );
 
-    layout2 = new QHBoxLayout( 0, 0, 6, "layout2"); 
-
-    happyLabel = new QLabel( queryBox, "happyLabel" );
-    happyLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)7, 0, 0, happyLabel->sizePolicy().hasHeightForWidth() ) );
-    QFont happyLabel_font(  happyLabel->font() );
-    happyLabel_font.setPointSize( 9 );
-    happyLabel->setFont( happyLabel_font ); 
-    happyLabel->setAlignment( int( QLabel::AlignVCenter | QLabel::AlignRight ) );
-    layout2->addWidget( happyLabel );
+    layout8 = new QHBoxLayout( 0, 0, 6, "layout8"); 
 
     happyEdit = new QLineEdit( queryBox, "happyEdit" );
     happyEdit->setCursor( QCursor( 4 ) );
-    happyEdit->setAlignment( int( QLineEdit::AlignLeft ) );
-    layout2->addWidget( happyEdit );
+    happyEdit->setAlignment( int( QLineEdit::AlignRight ) );
+    layout8->addWidget( happyEdit );
 
-    queryBoxLayout->addMultiCellLayout( layout2, 1, 1, 0, 1 );
+    happyButton = new QPushButton( queryBox, "happyButton" );
+    happyButton->setMaximumSize( QSize( 130, 21 ) );
+    QFont happyButton_font(  happyButton->font() );
+    happyButton_font.setPointSize( 9 );
+    happyButton->setFont( happyButton_font ); 
+    layout8->addWidget( happyButton );
+
+    queryBoxLayout->addMultiCellLayout( layout8, 1, 1, 0, 1 );
+
+    layout9 = new QHBoxLayout( 0, 0, 6, "layout9"); 
+
+    searchEdit = new QLineEdit( queryBox, "searchEdit" );
+    searchEdit->setCursor( QCursor( 4 ) );
+    searchEdit->setAlignment( int( QLineEdit::AlignLeft ) );
+    layout9->addWidget( searchEdit );
+
+    searchButton = new QPushButton( queryBox, "searchButton" );
+    searchButton->setMaximumSize( QSize( 60, 21 ) );
+    QFont searchButton_font(  searchButton->font() );
+    searchButton_font.setPointSize( 9 );
+    searchButton->setFont( searchButton_font ); 
+    layout9->addWidget( searchButton );
+
+    queryBoxLayout->addMultiCellLayout( layout9, 0, 0, 0, 1 );
     QueryWidgetLayout->addWidget( queryBox );
     languageChange();
-    resize( QSize(173, 204).expandedTo(minimumSizeHint()) );
+    resize( QSize(181, 255).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
+
+    // signals and slots connections
+    connect( searchEdit, SIGNAL( returnPressed() ), searchButton, SLOT( animateClick() ) );
+    connect( happyEdit, SIGNAL( returnPressed() ), happyButton, SLOT( animateClick() ) );
 }
 
 /*
@@ -181,12 +183,12 @@ void QueryWidget::languageChange()
 {
     setCaption( tr( "Form2" ) );
     queryBox->setTitle( tr( "Queries" ) );
-    searchLabel->setText( tr( "Search" ) );
     ceLabel->setText( tr( "CE Stat" ) );
     covLabel->setText( tr( "Coverage" ) );
     kmerLabel->setText( tr( "Kmer Freq" ) );
     snpLabel->setText( tr( "SNPs" ) );
-    happyLabel->setText( tr( "Insert Happiness" ) );
     happyEdit->setText( tr( "2.0" ) );
+    happyButton->setText( tr( "Happy Distance" ) );
+    searchButton->setText( tr( "Search" ) );
 }
 

@@ -8,6 +8,7 @@
 #include <qstring.h>
 class QueryWidget;
 class DetailWidget;
+class InsertWidget;
 
 #include <map>
 
@@ -27,6 +28,9 @@ public slots:
   void bankChanged();
   void contigChanged();
 
+  void loadSearch();
+  void loadHappyDistance();
+
   void toggleItem(int id);
   void toggleConnectMates();
   void togglePartitionTypes();
@@ -40,8 +44,6 @@ public slots:
   void togglePaintScaffold();
   void toggleShowScaffold();
 
-  void loadHappyDistance();
-
 signals:
   void setGindex(int gindex);
   void setContigId(int contigid);
@@ -50,7 +52,9 @@ signals:
   void paintCanvas();
   void newContig();
   void refreshInserts();
+
   void setHappyDistance(float);
+  void search(const QString &);
 
   void setConnectMates(bool);
   void setPartitionTypes(bool);
@@ -77,10 +81,10 @@ private:
   QPopupMenu * m_libmenu;
   QPopupMenu * m_typesmenu;
   QPopupMenu * m_optionsmenu;
-  QLineEdit * m_happypick;
 
   DataStore * m_datastore;
 
+  InsertWidget * m_inserts;
   QueryWidget * m_query;
   DetailWidget * m_detail;
 

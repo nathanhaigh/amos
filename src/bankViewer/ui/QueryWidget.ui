@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>173</width>
-            <height>204</height>
+            <width>181</width>
+            <height>255</height>
         </rect>
     </property>
     <property name="caption">
@@ -39,51 +39,6 @@
                 <property name="name">
                     <cstring>unnamed</cstring>
                 </property>
-                <widget class="QLayoutWidget" row="0" column="0" rowspan="1" colspan="2">
-                    <property name="name">
-                        <cstring>layout7</cstring>
-                    </property>
-                    <hbox>
-                        <property name="name">
-                            <cstring>unnamed</cstring>
-                        </property>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>searchLabel</cstring>
-                            </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>5</hsizetype>
-                                    <vsizetype>7</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="font">
-                                <font>
-                                    <pointsize>9</pointsize>
-                                </font>
-                            </property>
-                            <property name="text">
-                                <string>Search</string>
-                            </property>
-                            <property name="alignment">
-                                <set>AlignVCenter|AlignRight</set>
-                            </property>
-                        </widget>
-                        <widget class="QLineEdit">
-                            <property name="name">
-                                <cstring>searchEdit</cstring>
-                            </property>
-                            <property name="cursor">
-                                <cursor>4</cursor>
-                            </property>
-                            <property name="alignment">
-                                <set>AlignLeft</set>
-                            </property>
-                        </widget>
-                    </hbox>
-                </widget>
                 <widget class="QLabel" row="4" column="0">
                     <property name="name">
                         <cstring>ceLabel</cstring>
@@ -320,36 +275,12 @@
                 </widget>
                 <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
                     <property name="name">
-                        <cstring>layout2</cstring>
+                        <cstring>layout8</cstring>
                     </property>
                     <hbox>
                         <property name="name">
                             <cstring>unnamed</cstring>
                         </property>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>happyLabel</cstring>
-                            </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>5</hsizetype>
-                                    <vsizetype>7</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="font">
-                                <font>
-                                    <pointsize>9</pointsize>
-                                </font>
-                            </property>
-                            <property name="text">
-                                <string>Insert Happiness</string>
-                            </property>
-                            <property name="alignment">
-                                <set>AlignVCenter|AlignRight</set>
-                            </property>
-                        </widget>
                         <widget class="QLineEdit">
                             <property name="name">
                                 <cstring>happyEdit</cstring>
@@ -361,7 +292,66 @@
                                 <string>2.0</string>
                             </property>
                             <property name="alignment">
+                                <set>AlignRight</set>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>happyButton</cstring>
+                            </property>
+                            <property name="maximumSize">
+                                <size>
+                                    <width>130</width>
+                                    <height>21</height>
+                                </size>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Happy Distance</string>
+                            </property>
+                        </widget>
+                    </hbox>
+                </widget>
+                <widget class="QLayoutWidget" row="0" column="0" rowspan="1" colspan="2">
+                    <property name="name">
+                        <cstring>layout9</cstring>
+                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLineEdit">
+                            <property name="name">
+                                <cstring>searchEdit</cstring>
+                            </property>
+                            <property name="cursor">
+                                <cursor>4</cursor>
+                            </property>
+                            <property name="alignment">
                                 <set>AlignLeft</set>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>searchButton</cstring>
+                            </property>
+                            <property name="maximumSize">
+                                <size>
+                                    <width>60</width>
+                                    <height>21</height>
+                                </size>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Search</string>
                             </property>
                         </widget>
                     </hbox>
@@ -370,5 +360,19 @@
         </widget>
     </vbox>
 </widget>
+<connections>
+    <connection>
+        <sender>searchEdit</sender>
+        <signal>returnPressed()</signal>
+        <receiver>searchButton</receiver>
+        <slot>animateClick()</slot>
+    </connection>
+    <connection>
+        <sender>happyEdit</sender>
+        <signal>returnPressed()</signal>
+        <receiver>happyButton</receiver>
+        <slot>animateClick()</slot>
+    </connection>
+</connections>
 <layoutdefaults spacing="6" margin="11"/>
 </UI>

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Fri Apr 21 17:07:16 2006
+** Created: Sat Apr 22 16:17:54 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -19,9 +19,10 @@ class QGridLayout;
 class QSpacerItem;
 class QGroupBox;
 class QLabel;
-class QLineEdit;
 class QSlider;
 class QFrame;
+class QLineEdit;
+class QPushButton;
 
 class QueryWidget : public QWidget
 {
@@ -32,8 +33,6 @@ public:
     ~QueryWidget();
 
     QGroupBox* queryBox;
-    QLabel* searchLabel;
-    QLineEdit* searchEdit;
     QLabel* ceLabel;
     QLabel* covLabel;
     QLabel* kmerLabel;
@@ -43,14 +42,16 @@ public:
     QSlider* covSlider;
     QSlider* kmerSlider;
     QFrame* line1;
-    QLabel* happyLabel;
     QLineEdit* happyEdit;
+    QPushButton* happyButton;
+    QLineEdit* searchEdit;
+    QPushButton* searchButton;
 
 protected:
     QVBoxLayout* QueryWidgetLayout;
     QGridLayout* queryBoxLayout;
-    QHBoxLayout* layout7;
-    QHBoxLayout* layout2;
+    QHBoxLayout* layout8;
+    QHBoxLayout* layout9;
 
 protected slots:
     virtual void languageChange();
