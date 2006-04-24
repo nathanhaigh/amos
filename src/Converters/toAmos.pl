@@ -1191,6 +1191,9 @@ sub parseACEFile {
 	    # @sdels contains the positions of gaps in the sequence
 	    my $ndel = 0;
 	    my @sdels = ();
+
+	    my $allseq = $seq; # all the sequence (will be chopped later)
+
 	    # gap positions are wrt to the clear range
 	    # in the aligned orientation
 	    $seq = substr($seq, $cll, $clr - $cll);
@@ -1203,6 +1206,7 @@ sub parseACEFile {
             }
 	    if ($rc{$seqName} eq "C"){
 		$seq = reverseComplement($seq);
+		$allseq = reverseComplement($allseq);
 	    }
 	    
 
@@ -1213,10 +1217,16 @@ sub parseACEFile {
 		$clr = $tmp;
 	    }
 
+	    my $pref = substr($allseq, 0, $cll); # prefix of sequence
+
 	    my $i = 0;
 	    my $asml = $offset;
 	    my $asmr = $asml + $clr - $cll;
 
+	    while ($pref =~ /-/g) { # make $cll  ungapped
+		$cll--;
+		$clr--;
+	    }
 	    while ($seq =~ /-/g){ #make $clr ungapped
 		$clr--;
 	    }
@@ -1244,10 +1254,10 @@ sub parseACEFile {
 	    $asm_range{$seqId} = "$asml $asmr";
 	    if ($readsDone == 0){ # no read info, must generate
 		my $qualdata = "";
-		$seq =~ s/-//g;
+		$allseq =~ s/-//g;
 		print TMPSEQ "#$seqId\n";
-		for (my $i = 0; $i <= length($seq); $i+= 60){
-		    print TMPSEQ substr($seq, $i, 60), "\n";
+		for (my $i = 0; $i <= length($allseq); $i+= 60){
+		    print TMPSEQ substr($allseq, $i, 60), "\n";
 		}
 		print TMPSEQ "#\n";
 		for (my $i = 0; $i < $cll; $i++){
@@ -1256,7 +1266,7 @@ sub parseACEFile {
 		for (my $i = $cll; $i < $clr; $i++){
 		    $qualdata .= chr(ord('0') + $GOODQUAL);
 		}
-		for (my $i = $clr; $i < length($seq); $i++){
+		for (my $i = $clr; $i < length($allseq); $i++){
 		    $qualdata .= chr(ord('0') + $BADQUAL);
 		}
 		for (my $i = 0; $i <= length($qualdata); $i+= 60){
