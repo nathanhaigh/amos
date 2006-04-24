@@ -979,6 +979,7 @@ void InsertWidget::paintCanvas()
 
     if (m_showscaffold) { voffset += lineheight; }
     int rightmost = 0;
+    int lastcontig = -1;
 
     for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
     {
@@ -989,11 +990,16 @@ void InsertWidget::paintCanvas()
            li != layout.end(); 
            li++, layoutpos++)
       {
+        // force adjacent contigs to different lines
+        if (layoutpos == lastcontig) { continue; } 
+
+        // Otherwise, put into first row that fits
         if (*li < offset) { break; }
       }
 
       if (li == layout.end()) { layout.push_back(0); }
       layout[layoutpos] = offset + ci->range.getLength() + layoutgutter;
+      lastcontig = layoutpos;
 
       if (offset+ci->range.getLength() > rightmost)
       {
