@@ -380,7 +380,7 @@ void InsertWidget::flushInserts()
 void InsertWidget::computeInsertHappiness()
 {
   flushInserts();
-  m_datastore->calculateInserts(m_tiling, m_inserts, m_connectMates, 1);
+  m_datastore->calculateInserts(m_tiling, m_inserts, 1, 1);
 }
 
 void InsertWidget::clearCanvas()
@@ -1112,6 +1112,35 @@ void InsertWidget::paintCanvas()
         types[j] = swap;
       }
     }
+  }
+
+  if (!m_connectMates)
+  {
+    int last = m_inserts.size();
+
+    for (int i = 0; i < last; i++)
+    {
+      Insert * ins = m_inserts[i];
+      if (ins->m_active == 2)
+      {
+        // disconnect the mates
+        Insert * j = new Insert(ins->m_aid, ins->m_acontig, ins->m_atile,
+                                ins->m_bid, ins->m_bcontig, ins->m_btile,
+                                ins->m_libid, ins->m_dist, ins->m_matetype);
+
+        j->setActive(1, ins, m_connectMates);
+        m_inserts.push_back(j);
+
+        ins->setActive(0, j, m_connectMates);
+      }
+      else
+      {
+        // disconnect the library
+        ins->setActive(ins->m_active, ins->m_other, m_connectMates);
+      }
+    }
+
+    sort(m_inserts.begin(), m_inserts.end(), Insert::TilingOrderCmp());
   }
 
 
