@@ -138,6 +138,229 @@ void InsertField::highlightRead(int iid)
   }
 }
 
+void InsertField::processItemSelection(QString & s,
+                                       QCanvasItemList::Iterator & it, 
+                                       int & jumptoread,
+                                       bool & jump,
+                                       bool rightButtonDown,
+                                       bool jumpToBuddy,
+                                       int clickpos)
+{
+  if (((*it)->rtti() == FeatureCanvasItem::RTTI) || 
+      ((*it)->rtti() == ContigCanvasItem::RTTI))
+  {
+
+    if (!m_featrect)
+    {
+      m_featrect = new QCanvasRectangle((int)(*it)->x(), 0, 
+                                        (*it)->boundingRect().width(), canvas()->height(), 
+                                        canvas());
+      m_featrect->setBrush(QColor(59,49,31));
+      m_featrect->setPen(QColor(139,119,111));
+      m_featrect->setZ(-2);
+      m_featrect->show();
+    }
+    else
+    {
+      if (m_feat == *it)
+      {
+        if (m_featrect->isVisible()) { m_featrect->hide(); }
+        else                         { m_featrect->show(); }
+      }
+      else
+      {
+        canvas()->setChanged(m_featrect->boundingRect());
+        m_featrect->setSize((*it)->boundingRect().width(), canvas()->height());
+        m_featrect->move((*it)->x(), 0);
+        m_featrect->show();
+      }
+    }
+
+    m_feat = *it;
+    canvas()->setChanged(m_featrect->boundingRect());
+    canvas()->update();
+
+  }
+
+  // insert selected
+  if ((*it)->rtti() == InsertCanvasItem::RTTI)
+  {
+    InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
+    bool highlight = !iitem->m_highlight;
+    bool highlightBuddy = rightButtonDown;
+
+    if (jumpToBuddy)
+    {
+      if (iitem->m_contigcolor)
+      {
+        jumptoread = iitem->m_alinkedread;
+      }
+      else
+      {
+        jumptoread = iitem->m_insert->m_bid;
+      }
+    }
+
+    highlightInsert(iitem, highlight, highlightBuddy);
+    jump = false;
+
+    // emit details
+    Insert * ins = iitem->m_insert;
+    AMOS::ID_t iida = ins->m_aid;
+    AMOS::ID_t iidb = ins->m_bid;
+    AMOS::ID_t ctga = ins->m_acontig;
+    AMOS::ID_t ctgb = ins->m_bcontig;
+    QString eida = m_datastore->read_bank.lookupEID(iida).c_str();
+    QString eidb = m_datastore->read_bank.lookupEID(iidb).c_str();
+    
+    s += "<b><em>Insert</em></b><br>";
+    s += "<table>";
+    s += "<tr><td><b>Status</b></td><td>"
+      + QString(Insert::getInsertTypeStr(ins->m_state)) + "</td></tr>";
+    s += "<tr><td><b>Size</b></td><td>"
+      + QString::number(ins->m_actual) + "</td></tr>";
+    s += "<tr><td><b>Expected</b></td><td>"
+      + QString::number(ins->m_dist.mean - Insert::MAXSTDEV*ins->m_dist.sd)
+      + "-"
+      + QString::number(ins->m_dist.mean + Insert::MAXSTDEV*ins->m_dist.sd)
+      + "</td></tr>";
+    s += "<tr><td><b>Range</b></td><td>"
+      + QString::number(ins->m_loffset) + ","
+      + QString::number(ins->m_roffset) + "</td></tr>";
+    s += "</table>";
+
+    s += "<hr>";
+
+    s += "<b><em>Reads</em></b><br>";
+    s += "<table>";
+    s += "<tr><td><b>EID</b></td><td>"
+      + eida + "</td><td>"
+      + eidb + "</td></tr>";
+    s += "<tr><td><b>IID</b></td><td>"
+      + QString::number(iida) + "</td><td>"
+      + QString::number(iidb) + "</td></tr>";
+    s += "<tr><td><b>Contig</b></td><td>"
+      + QString::number(ctga) + "</td><td>"
+      + QString::number(ctgb) + "</td></tr>";
+    s += "</table>";
+
+    s += "<hr>";
+  }
+  // feature selected
+  else if ((*it)->rtti() == FeatureCanvasItem::RTTI)
+  {
+    jump = false;
+
+    // emit details
+    FeatureCanvasItem * fitem = (FeatureCanvasItem *) * it;
+
+    s += "<b><em>Feature</em></b><br>";
+    s += "<table>";
+    s += "<tr><td><b>Type</b></td><td>"
+      + QString(FeatureCanvasItem::getFeatureTypeStr
+                (fitem->m_feat.getType())) + "</td></tr>";
+    s += "<tr><td><b>Size</b></td><td>"
+      + QString::number(fitem->m_feat.getRange().getLength()) + "</td></tr>";
+    s += "<tr><td><b>Range</b></td><td>"
+      + QString::number(fitem->m_feat.getRange().begin) + ","
+      + QString::number(fitem->m_feat.getRange().end) + "</td></tr>";
+    s += "<tr><td><b>Comment</b></td><td>"
+      + QString(fitem->m_feat.getComment().c_str()) + "</td></tr>";
+    s += "<tr><td><b>EID</b></td><td>"
+      + QString(fitem->m_feat.getEID().c_str()) + "</td></tr>";
+    s += "<tr><td><b>IID</b></td><td>"
+      + QString::number(fitem->m_feat.getIID()) + "</td></tr>";
+    s += "</table>";
+
+    s += "<hr>";
+  }
+  // contig selected
+  else if ((*it)->rtti() == ContigCanvasItem::RTTI)
+  {
+    // emit details
+    ContigCanvasItem * citem = (ContigCanvasItem *) * it;
+    long int len = citem->m_tile.range.getLength();
+
+    s += "<b><em>Contig</em></b><br>";
+    s += "<table>";
+    s += "<tr><td><b>ID</b></td><td>"
+      + QString::number(m_datastore->contig_bank.getIDMap().lookupBID
+                        (citem->m_tile.source)) + "</td></tr>";
+    s += "<tr><td><b>Size</b></td><td>"
+      + QString::number(len) + "</td></tr>";
+    s += "<tr><td><b>Range</b></td><td>"
+      + QString::number(citem->m_tile.offset) + ","
+      + QString::number(citem->m_tile.offset + len) + "</td></tr>";
+    s += "<tr><td><b>EID</b></td><td>"
+      + QString(m_datastore->contig_bank.lookupEID
+                (citem->m_tile.source).c_str()) + "</td></tr>";
+    s += "<tr><td><b>IID</b></td><td>"
+      + QString::number(citem->m_tile.source) + "</td></tr>";
+    s += "</table>";
+
+    s += "<hr>";
+  }
+  else if ((*it)->rtti() == CoverageCanvasItem::RTTI)
+  {
+    CoverageCanvasItem * citem = (CoverageCanvasItem *) * it;
+
+    int i = 1;
+
+    for (i = 1; i < citem->m_points.size(); i++)
+    {
+      int xval = citem->m_points[i].x();
+      if (xval > clickpos)
+      {
+        break;
+      }
+    }
+
+    i--;
+
+    if (0)
+    {
+      int xval = citem->m_points[i].x();
+      xval = 16*xval - m_hoffset;
+      cerr << "i: " << i << " xval: " << xval << endl;
+    }
+
+    if (citem->m_libid < 0)
+    {
+      s += "<b><em>";
+      
+      if (citem->m_libid == -1) { s += "Clone"; }
+      else if (citem->m_libid == -2) { s += "Read";  }
+      else if (citem->m_libid == -3) { s += "Kmer";  }
+      
+      s += " Coverage</em></b>";
+      s += "<table>";
+      s += "<tr><td><b>Value</b></td><td>"
+        + QString::number(citem->y() + citem->height() -
+                          citem->m_points[i].y()); + "</td></tr>";
+      s += "<tr><td><b>Average</b></td><td>"
+        + QString::number(citem->m_baseLevel, 'f', 2) + "</td></tr>";
+      s += "</table>";
+
+      s += "<hr>";
+    }
+    else
+    {
+      s += "<b><em>CE Stat</em></b>";
+      s += "<table>";
+      s += "<tr><td><b>Library</b></td><td>"
+        + QString::number(citem->m_libid) + "</td></tr>";
+      s += "<tr><td><b>Value</b></td><td>"
+        + QString::number(citem->m_raw[i], 'f', 3) + "</td></tr>";
+      s += "</table>";
+
+      s += "<hr>";
+    }
+
+    jump = true;
+  }
+}
+
+
 void InsertField::contentsMousePressEvent( QMouseEvent* e )
 {
   QPoint real = inverseWorldMatrix().map(e->pos());
@@ -152,219 +375,10 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
   for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
   {
-    if (((*it)->rtti() == FeatureCanvasItem::RTTI) || 
-        ((*it)->rtti() == ContigCanvasItem::RTTI))
-    {
-
-      if (!m_featrect)
-      {
-        m_featrect = new QCanvasRectangle((int)(*it)->x(), 0, 
-                                          (*it)->boundingRect().width(), canvas()->height(), 
-                                          canvas());
-        m_featrect->setBrush(QColor(59,49,31));
-        m_featrect->setPen(QColor(139,119,111));
-        m_featrect->setZ(-2);
-        m_featrect->show();
-      }
-      else
-      {
-        if (m_feat == *it)
-        {
-          if (m_featrect->isVisible()) { m_featrect->hide(); }
-          else                         { m_featrect->show(); }
-        }
-        else
-        {
-          canvas()->setChanged(m_featrect->boundingRect());
-          m_featrect->setSize((*it)->boundingRect().width(), canvas()->height());
-          m_featrect->move((*it)->x(), 0);
-          m_featrect->show();
-        }
-      }
-
-      m_feat = *it;
-      canvas()->setChanged(m_featrect->boundingRect());
-      canvas()->update();
-
-    }
-
-    // insert selected
-    if ((*it)->rtti() == InsertCanvasItem::RTTI)
-    {
-      InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
-      bool highlight = !iitem->m_highlight;
-      bool highlightBuddy = e->button() == RightButton;
-
-      if (e->state() == Qt::ControlButton)
-      {
-        if (iitem->m_contigcolor)
-        {
-          jumptoread = iitem->m_alinkedread;
-        }
-        else
-        {
-          jumptoread = iitem->m_insert->m_bid;
-        }
-      }
-
-      highlightInsert(iitem, highlight, highlightBuddy);
-      jump = false;
-
-      // emit details
-      Insert * ins = iitem->m_insert;
-      AMOS::ID_t iida = ins->m_aid;
-      AMOS::ID_t iidb = ins->m_bid;
-      AMOS::ID_t ctga = ins->m_acontig;
-      AMOS::ID_t ctgb = ins->m_bcontig;
-      QString eida = m_datastore->read_bank.lookupEID(iida).c_str();
-      QString eidb = m_datastore->read_bank.lookupEID(iidb).c_str();
-      
-      s += "<b><em>Insert</em></b><br>";
-      s += "<table>";
-      s += "<tr><td><b>Status</b></td><td>"
-        + QString(Insert::getInsertTypeStr(ins->m_state)) + "</td></tr>";
-      s += "<tr><td><b>Size</b></td><td>"
-        + QString::number(ins->m_actual) + "</td></tr>";
-      s += "<tr><td><b>Expected</b></td><td>"
-        + QString::number(ins->m_dist.mean - Insert::MAXSTDEV*ins->m_dist.sd)
-        + "-"
-        + QString::number(ins->m_dist.mean + Insert::MAXSTDEV*ins->m_dist.sd)
-        + "</td></tr>";
-      s += "<tr><td><b>Range</b></td><td>"
-        + QString::number(ins->m_loffset) + ","
-        + QString::number(ins->m_roffset) + "</td></tr>";
-      s += "</table>";
-
-      s += "<hr>";
-
-      s += "<b><em>Reads</em></b><br>";
-      s += "<table>";
-      s += "<tr><td><b>EID</b></td><td>"
-        + eida + "</td><td>"
-        + eidb + "</td></tr>";
-      s += "<tr><td><b>IID</b></td><td>"
-        + QString::number(iida) + "</td><td>"
-        + QString::number(iidb) + "</td></tr>";
-      s += "<tr><td><b>Contig</b></td><td>"
-        + QString::number(ctga) + "</td><td>"
-        + QString::number(ctgb) + "</td></tr>";
-      s += "</table>";
-
-      s += "<hr>";
-    }
-    // feature selected
-    else if ((*it)->rtti() == FeatureCanvasItem::RTTI)
-    {
-      jump = false;
-
-      // emit details
-      FeatureCanvasItem * fitem = (FeatureCanvasItem *) * it;
-
-      s += "<b><em>Feature</em></b><br>";
-      s += "<table>";
-      s += "<tr><td><b>Type</b></td><td>"
-        + QString(FeatureCanvasItem::getFeatureTypeStr
-                  (fitem->m_feat.getType())) + "</td></tr>";
-      s += "<tr><td><b>Size</b></td><td>"
-        + QString::number(fitem->m_feat.getRange().getLength()) + "</td></tr>";
-      s += "<tr><td><b>Range</b></td><td>"
-        + QString::number(fitem->m_feat.getRange().begin) + ","
-        + QString::number(fitem->m_feat.getRange().end) + "</td></tr>";
-      s += "<tr><td><b>Comment</b></td><td>"
-        + QString(fitem->m_feat.getComment().c_str()) + "</td></tr>";
-      s += "<tr><td><b>EID</b></td><td>"
-        + QString(fitem->m_feat.getEID().c_str()) + "</td></tr>";
-      s += "<tr><td><b>IID</b></td><td>"
-        + QString::number(fitem->m_feat.getIID()) + "</td></tr>";
-      s += "</table>";
-
-      s += "<hr>";
-    }
-    // contig selected
-    else if ((*it)->rtti() == ContigCanvasItem::RTTI)
-    {
-      // emit details
-      ContigCanvasItem * citem = (ContigCanvasItem *) * it;
-      long int len = citem->m_tile.range.getLength();
-
-      s += "<b><em>Contig</em></b><br>";
-      s += "<table>";
-      s += "<tr><td><b>ID</b></td><td>"
-        + QString::number(m_datastore->contig_bank.getIDMap().lookupBID
-                          (citem->m_tile.source)) + "</td></tr>";
-      s += "<tr><td><b>Size</b></td><td>"
-        + QString::number(len) + "</td></tr>";
-      s += "<tr><td><b>Range</b></td><td>"
-        + QString::number(citem->m_tile.offset) + ","
-        + QString::number(citem->m_tile.offset + len) + "</td></tr>";
-      s += "<tr><td><b>EID</b></td><td>"
-        + QString(m_datastore->contig_bank.lookupEID
-                  (citem->m_tile.source).c_str()) + "</td></tr>";
-      s += "<tr><td><b>IID</b></td><td>"
-        + QString::number(citem->m_tile.source) + "</td></tr>";
-      s += "</table>";
-
-      s += "<hr>";
-    }
-    else if ((*it)->rtti() == CoverageCanvasItem::RTTI)
-    {
-      CoverageCanvasItem * citem = (CoverageCanvasItem *) * it;
-
-      int i = 1;
-      int click = real.x();
-
-      for (i = 1; i < citem->m_points.size(); i++)
-      {
-        int xval = citem->m_points[i].x();
-        if (xval > click)
-        {
-          break;
-        }
-      }
-
-      i--;
-
-      if (0)
-      {
-        int xval = citem->m_points[i].x();
-        xval = 16*xval - m_hoffset;
-        cerr << "i: " << i << " xval: " << xval << endl;
-      }
-
-      if (citem->m_libid < 0)
-      {
-        s += "<b><em>";
-        
-        if (citem->m_libid == -1) { s += "Clone"; }
-        else if (citem->m_libid == -2) { s += "Read";  }
-        else if (citem->m_libid == -3) { s += "Kmer";  }
-        
-        s += " Coverage</em></b>";
-        s += "<table>";
-        s += "<tr><td><b>Value</b></td><td>"
-          + QString::number(citem->y() + citem->height() -
-                            citem->m_points[i].y()); + "</td></tr>";
-        s += "<tr><td><b>Average</b></td><td>"
-          + QString::number(citem->m_baseLevel, 'f', 2) + "</td></tr>";
-        s += "</table>";
-
-        s += "<hr>";
-      }
-      else
-      {
-        s += "<b><em>CE Stat</em></b>";
-        s += "<table>";
-        s += "<tr><td><b>Library</b></td><td>"
-          + QString::number(citem->m_libid) + "</td></tr>";
-        s += "<tr><td><b>Value</b></td><td>"
-          + QString::number(citem->m_raw[i], 'f', 3) + "</td></tr>";
-        s += "</table>";
-
-        s += "<hr>";
-      }
-
-      jump = true;
-    }
+    processItemSelection(s, it, jumptoread, jump,  
+                         e->button() == RightButton,
+                         e->state() == Qt::ControlButton,
+                         real.x());
   }
 
   s += "<b><em>Click</em></b><br>";
@@ -457,10 +471,7 @@ void InsertField::search(const QString & str)
           if ( (sid && (sid == ins->m_aid || sid == ins->m_bid))
                || str == m_datastore->read_bank.lookupEID(ins->m_aid)
                || str == m_datastore->read_bank.lookupEID(ins->m_bid) )
-          {
-            highlightInsert(iitem, true, false);
             break;
-          }
         }
       else if ( (*it)->rtti() == ContigCanvasItem::RTTI )
         {
@@ -490,6 +501,14 @@ void InsertField::search(const QString & str)
 
   if ( it != all.end() )
     {
+      QString s;
+      int jumptoread = 0;
+      bool jump = false;
+
+      processItemSelection(s, it, jumptoread, jump,  
+                           false, false, 0);
+      emit setDetails(s);
+
       setFeatRect (*it);
       m_lastsearch = *it;
     }

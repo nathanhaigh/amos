@@ -43,6 +43,14 @@ protected:
   void viewportPaintEvent(QPaintEvent * e);
 
 private:
+  void processItemSelection(QString & s,
+                            QCanvasItemList::Iterator & it, 
+                            int & jumptoread,
+                            bool & jump,
+                            bool rightButtonDown,
+                            bool jumpToBuddy,
+                            int clickpos);
+  
   void setFeatRect (QCanvasItem * item);
   void highlightInsert(InsertCanvasItem * iitem, bool highlight, bool highlightBuddy);
   void getInsertString(QString & s, int which, Insert * ins, int isSecond, InsertCanvasItem * iitem);
