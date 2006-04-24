@@ -457,7 +457,10 @@ void InsertField::search(const QString & str)
           if ( (sid && (sid == ins->m_aid || sid == ins->m_bid))
                || str == m_datastore->read_bank.lookupEID(ins->m_aid)
                || str == m_datastore->read_bank.lookupEID(ins->m_bid) )
+          {
+            highlightInsert(iitem, true, false);
             break;
+          }
         }
       else if ( (*it)->rtti() == ContigCanvasItem::RTTI )
         {
