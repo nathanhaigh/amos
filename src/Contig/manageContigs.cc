@@ -68,6 +68,7 @@ int main (int argc, char ** argv)
     Bank_t red_bank(Read_t::NCODE);
 
     ctg_bank.open(bankname, B_READ | B_WRITE);
+    red_bank.open(bankname, B_READ);
 
     if (!copyeid.empty())   { copyiid = ctg_bank.lookupIID(copyeid); }
     if (!deleteeid.empty()) { deleteiid = ctg_bank.lookupIID(deleteeid); }
@@ -144,7 +145,7 @@ int main (int argc, char ** argv)
           }
           else
           {
-            cerr << "ERROR: EID:" << eid << " not found in bank, skipping" << endl;
+            cerr << "ERROR: READ EID: \"" << eid << "\" not found in bank, skipping" << endl;
           }
         }
       }
@@ -200,7 +201,7 @@ int main (int argc, char ** argv)
 
         if (readsdeleted)
         {
-          cout << "Deleted " << readsdeleted << "from contig e" << contig.getEID() << endl;
+          cout << "Deleted " << readsdeleted << " reads from contig e" << contig.getEID() << endl;
           tiling.resize(tilewritepos);
           ctg_bank.replace(contig.getIID(), contig);
         }
