@@ -167,12 +167,14 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
                                                this, SLOT(showCGraph()), status );
   bShowCGraph->setText("Contig Graph");
 
+  /*
   QToolButton * bShowOverview = new QToolButton(QPixmap(),
                                                 "Show Overview",
                                                 "Show Overview",
                                                 this,
                                                 SLOT(showOverview()), status);
   bShowOverview->setText("Overview");
+  */
 
   QIconSet icon_fontminus(QPixmap((const char ** )fontdecrease_xpm));
   QIconSet icon_fontplus(QPixmap((const char **)fontincrease_xpm));
