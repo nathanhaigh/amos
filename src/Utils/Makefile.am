@@ -25,7 +25,8 @@ dist_bin_SCRIPTS = \
 	pullTArchive.pl \
 	runTA.pl \
 	preassembleFrgs.pl \
-	ktrimfrg.pl
+	ktrimfrg.pl \
+    translate-fasta.pl
 # runAmos.pl 
 
 ##-- GLOBAL INCLUDE
