@@ -5,6 +5,7 @@
 #include <qlabel.h>
 #include <qslider.h>
 #include <qpopupmenu.h>
+#include <qtoolbar.h>
 #include <qtoolbutton.h>
 #include <qpushbutton.h>
 #include <qcheckbox.h>
@@ -22,6 +23,10 @@
 #include "BufferedLineEdit.hh"
 #include "QueryWidget.hh"
 #include "DetailWidget.hh"
+
+#include "icons/zoom_in.xpm"
+#include "icons/zoom_out.xpm"
+#include "icons/pointer_tool.xpm"
 
 
 using namespace std;
@@ -138,6 +143,30 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_inserts = new InsertWidget(datastore, m_types, this, "iw");
   InsertWidget * iw = m_inserts;
   setCentralWidget(iw);
+
+  QToolBar * tools = new QToolBar(this, "tools");
+  QIconSet icon_pointer(QPixmap((const char ** )pointer_tool));
+  QIconSet icon_zoomin(QPixmap((const char ** )zoom_in));
+  QIconSet icon_zoomout(QPixmap((const char **)zoom_out));
+
+  QToolButton * b = new QToolButton(tools, "select");
+  b->setIconSet(icon_pointer);
+  b->setTextLabel("select tool");
+  b->setMaximumWidth(25);
+  connect(b, SIGNAL(clicked()), iw, SIGNAL(setSelectTool()));
+
+  b = new QToolButton(tools, "zoomin");
+  b->setIconSet(icon_zoomin);
+  b->setTextLabel("zoom in");
+  b->setMaximumWidth(25);
+  connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomInTool()));
+
+  b = new QToolButton(tools, "zoomout");
+  b->setIconSet(icon_zoomout);
+  b->setTextLabel("zoom out");
+  b->setMaximumWidth(25);
+  connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
+
 
   connect(m_typesmenu, SIGNAL(activated(int)),
           this,        SLOT(toggleItem(int)));

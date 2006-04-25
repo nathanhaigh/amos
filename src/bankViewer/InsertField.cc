@@ -1,5 +1,6 @@
 #include "InsertField.hh"
 #include <qwmatrix.h>
+#include <qcursor.h>
 #include "InsertCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
 #include "ContigCanvasItem.hh"
@@ -7,6 +8,9 @@
 #include "DataStore.hh"
 #include "InsertCanvasItem.hh"
 #include <qregexp.h>
+
+#include "icons/zoom_in.xpm"
+#include "icons/zoom_out.xpm"
 
 
 #include <iostream>
@@ -32,11 +36,29 @@ InsertField::InsertField(DataStore * datastore,
   setHScrollBarMode(QScrollView::AlwaysOff);
   setVScrollBarMode(QScrollView::AlwaysOff);
 
-  m_visibleRect = new QCanvasRectangle(0,0,100,100, canvas);
-  m_visibleRect->setPen(Qt::black);
-  m_visibleRect->setBrush(Qt::black);
-  m_visibleRect->setZ(-1000);
-  m_visibleRect->show();
+  m_visibleRect = NULL;
+  m_toolstate = 0;
+  setCursor(Qt::ArrowCursor);
+}
+
+
+
+void InsertField::setSelectTool()
+{
+  m_toolstate = 0;
+  setCursor(Qt::ArrowCursor);
+}
+
+void InsertField::setZoomInTool()
+{
+  m_toolstate = 1;
+  setCursor(QCursor(QPixmap((const char ** )zoom_in)));
+}
+
+void InsertField::setZoomOutTool()
+{
+  m_toolstate = 2;
+  setCursor(QCursor(QPixmap((const char ** )zoom_out)));
 }
 
 
@@ -371,29 +393,57 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
   bool jump = true;
 
-  QString s;
+  int xpos = real.x();
+  int ypos = real.y();
 
-  for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
+  if (m_toolstate == 1)
   {
-    processItemSelection(s, it, jumptoread, jump,  
-                         e->button() == RightButton,
-                         e->state() == Qt::ControlButton,
-                         real.x());
+    QWMatrix m = worldMatrix();
+    QWMatrix newzoom(m.m11()*2, m.m12(), m.m21(), m.m22()*1.25, m.dx(), m.dy());
+    setWorldMatrix(newzoom);
+
+    setContentsPos(xpos*newzoom.m11() - visibleWidth()/2, 
+                   ypos*newzoom.m22() - visibleWidth()/2);
+
+    emit updateVisibleRange();
   }
+  else if (m_toolstate == 2)
+  {
+    QWMatrix m = worldMatrix();
+    QWMatrix newzoom(m.m11()/2, m.m12(), m.m21(), m.m22()/1.25, m.dx(), m.dy());
+    setWorldMatrix(newzoom);
 
-  s += "<b><em>Click</em></b><br>";
-  s += "<table>";
-  s += "<tr><td><b>Position</b></td><td>"
-    + QString::number(gindex) + "</td></tr>";
-  s += "</table>";
+    setContentsPos(xpos*newzoom.m11() - visibleWidth()/2, 
+                   ypos*newzoom.m22() - visibleWidth()/2);
 
-  emit setDetails(s);
+    emit updateVisibleRange();
+  }
+  else
+  {
+    QString s;
 
-  if (jump)
-    emit setGindex(gindex);
-  
-  if (jumptoread)
-    emit jumpToRead(jumptoread);
+    for (QCanvasItemList::Iterator it=l.begin(); it!=l.end(); ++it) 
+    {
+      processItemSelection(s, it, jumptoread, jump,  
+                           e->button() == RightButton,
+                           e->state() == Qt::ControlButton,
+                           real.x());
+    }
+
+    s += "<b><em>Click</em></b><br>";
+    s += "<table>";
+    s += "<tr><td><b>Position</b></td><td>"
+      + QString::number(gindex) + "</td></tr>";
+    s += "</table>";
+
+    emit setDetails(s);
+
+    if (jump)
+      emit setGindex(gindex);
+    
+    if (jumptoread)
+      emit jumpToRead(jumptoread);
+  }
 }
 
 void InsertField::viewportPaintEvent(QPaintEvent * e)
@@ -402,21 +452,21 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
                    visibleWidth(), visibleHeight() );
   QRect real = inverseWorldMatrix().mapRect(rc);
 
-#if 0
-  if (m_visibleRect)
+  if (!m_visibleRect)
   {
+    m_visibleRect = new QCanvasRectangle(0,0,100,100, canvas());
     m_visibleRect->setPen(Qt::black);
     m_visibleRect->setBrush(Qt::black);
-    m_visibleRect->setSize(real.width(), real.height());
-    m_visibleRect->move(real.x(), real.y());
-    canvas()->setChanged(m_visibleRect->boundingRect());
-    canvas()->update();
+    m_visibleRect->setZ(-1000);
+    m_visibleRect->show();
   }
-  else
-  {
-    cerr << "WTF???" << endl;
-  }
-#endif
+
+  m_visibleRect->setPen(Qt::black);
+  m_visibleRect->setBrush(Qt::black);
+  m_visibleRect->setSize(real.width(), real.height());
+  m_visibleRect->move(real.x(), real.y());
+  canvas()->setChanged(m_visibleRect->boundingRect());
+  canvas()->update();
 
   QCanvasView::viewportPaintEvent(e);
 
@@ -428,6 +478,7 @@ void InsertField::canvasCleared()
   m_featrect = NULL;
   m_feat = NULL;
   m_lastsearch = NULL;
+  m_visibleRect = NULL;
 }
 
 

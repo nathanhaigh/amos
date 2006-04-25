@@ -26,9 +26,16 @@ signals:
   void readIIDHighlighted(const QString &);
   void readEIDHighlighted(const QString &);
   void jumpToRead(int iid);
+  void updateVisibleRange();
+
 
 
 public slots:
+
+  void setZoomInTool();
+  void setZoomOutTool();
+  void setSelectTool();
+
 
   void highlightRead(int iid);
   void highlightIID(const QString & qeid);
@@ -61,6 +68,8 @@ private:
   QCanvasRectangle * m_featrect;
   QCanvasItem * m_feat;
   QCanvasItem * m_lastsearch;
+
+  int m_toolstate;
 };
 
 #endif

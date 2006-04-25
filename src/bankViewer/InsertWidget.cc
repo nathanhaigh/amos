@@ -77,7 +77,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_iposition = new InsertPosition(m_datastore, this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
-  m_icanvas->setBackgroundColor(Qt::black); //QColor(50,50,50));
+  m_icanvas->setBackgroundColor(QColor(50,50,50));
   m_icanvas->retune(128);
 
   m_paddle = NULL;
@@ -135,6 +135,17 @@ InsertWidget::InsertWidget(DataStore * datastore,
   vbox->addWidget(m_overview);
   vbox->addWidget(hrange);
   vbox->activate();
+
+  connect(this,     SIGNAL(setZoomInTool()),
+          m_ifield, SLOT(setZoomInTool()));
+  connect(this,     SIGNAL(setZoomOutTool()),
+          m_ifield, SLOT(setZoomOutTool()));
+  connect(this,     SIGNAL(setSelectTool()),
+          m_ifield, SLOT(setSelectTool()));
+
+  connect(m_ifield, SIGNAL(updateVisibleRange()),
+          this,     SLOT(updateVisibleRange()));
+
 
   connect(this,     SIGNAL(search(const QString &)),
           m_ifield,   SLOT(search(const QString &)));
@@ -320,16 +331,25 @@ void InsertWidget::setVisibleHRange(int left, int right)
   setHPos(left);
 }
 
+
+void InsertWidget::updateVisibleRange()
+{
+  QRect rc = QRect(m_ifield->contentsX(),    m_ifield->contentsY(),
+                   m_ifield->visibleWidth(), m_ifield->visibleHeight() );
+  QRect real = m_ifield->inverseWorldMatrix().mapRect(rc);
+
+  hrange->setRange(real.x()/m_hscale, (real.x()+real.width())/m_hscale);
+  vrange->setRange(real.y(), real.y()+real.height());
+}
+
 void InsertWidget::setVPos(int vpos)
 {
-  cerr << "vpos: " << vpos << endl;
   m_ifield->setContentsPos(m_ifield->contentsX(), (int)(vpos*m_ifield->worldMatrix().m22()));
 }
 
 void InsertWidget::setVisibleVRange(int top, int bottom)
 {
-  cerr << "vrange: " << top << " " << bottom << endl;
-  double yf = ((double)height()-2*(vrange->controlPix_m+vrange->gripPix_m)) / (bottom - top + 1);
+  double yf = ((double)(m_ifield->height()-4)) / (bottom - top + 1);
   QWMatrix m(m_ifield->worldMatrix());
   QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yf, m.dx(), m.dy());
   m_ifield->setWorldMatrix(newzoom);
@@ -735,7 +755,6 @@ void InsertWidget::paintCanvas()
     leftmost = (*m_inserts.begin())->m_loffset;
     if (leftmost > 0) { leftmost = 0; }
   }
-
 
   m_hoffset = -leftmost;
 
@@ -1345,12 +1364,14 @@ void InsertWidget::paintCanvas()
     }
   }
 
+  int scaledwidth = (int)((rightmost-leftmost+1) * m_hscale);
+
   cerr << endl 
        << "width: " << rightmost-leftmost
-       << " swidth: " << (int)((rightmost-leftmost) * m_hscale)
+       << " swidth: " << scaledwidth
        << " height: " << voffset;
 
-  m_icanvas->resize((int)(m_hscale*(rightmost - leftmost)) + 500, voffset);
+  m_icanvas->resize(scaledwidth, voffset);
   cerr << ".";
   m_icanvas->update();
   cerr << "." << endl;
@@ -1366,11 +1387,16 @@ void InsertWidget::paintCanvas()
 void InsertWidget::resizeEvent(QResizeEvent *e )
 {
   resizeOverview();
+  setVisibleVRange(vrange->rangeLow(), vrange->rangeHigh());
+  setVisibleHRange(hrange->rangeLow(), hrange->rangeHigh());
 }
 
 void InsertWidget::resizeOverview()
 {
-  double xf = (double)(m_overview->viewport()->width() - 2*(hrange->controlPix_m+hrange->gripPix_m) + 4) / m_icanvas->width();
+  cerr << "overviewwidth: " << m_overview->width()
+       << " canvaswidth: " << m_icanvas->width() << endl;
+
+  double xf = (double)(m_overview->width() - 2*(hrange->controlPix_m+hrange->gripPix_m) + 4) / m_icanvas->width();
   QWMatrix matrix(xf, 0, 0, 1, (hrange->controlPix_m+hrange->gripPix_m), 0);
   m_overview->setWorldMatrix(matrix);
   m_overview->setContentsPos(0, m_scaffoldtop);

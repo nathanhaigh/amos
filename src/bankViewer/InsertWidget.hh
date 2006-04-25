@@ -43,6 +43,7 @@ public slots:
   void resizeEvent(QResizeEvent * e);
   void resizeOverview();
   void initializeTiling();
+  void updateVisibleRange();
 
   void refreshWidget();
 
@@ -106,6 +107,11 @@ signals:
 
   void currentScaffoldCoordinate(int);
   void newCovTols(int,int);
+
+  void setZoomInTool();
+  void setZoomOutTool();
+  void setSelectTool();
+
 
 private:
   void flushInserts();
