@@ -494,10 +494,8 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
     m_visibleRect->show();
   }
 
-  m_visibleRect->setPen(Qt::black);
-  m_visibleRect->setBrush(Qt::black);
-  m_visibleRect->setSize(real.width(), real.height());
-  m_visibleRect->move(real.x(), real.y());
+  m_visibleRect->setSize(real.width(), canvas()->height());
+  m_visibleRect->move(real.x(), 0);
   canvas()->setChanged(m_visibleRect->boundingRect());
   canvas()->update();
 
