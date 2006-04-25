@@ -36,8 +36,15 @@ int main (int argc, char ** argv)
     BankStream_t feat_bank(Feature_t::NCODE);
 
     contig_bank.open(bank_name, B_READ|B_WRITE);
-    scaffold_bank.open(bank_name, B_READ|B_WRITE);
-    feat_bank.open(bank_name, B_READ|B_WRITE);
+    if (scaffold_bank.exists(bank_name))
+    {
+      scaffold_bank.open(bank_name, B_READ|B_WRITE);
+    }
+
+    if (feat_bank.exists(bank_name))
+    {
+      feat_bank.open(bank_name, B_READ|B_WRITE);
+    }
 
     ID_t contigiid = lookupIID(contig_bank, contigid);
 
