@@ -185,6 +185,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   connect(m_ifield, SIGNAL(setGindex(int)),
           this,     SLOT(computePos(int)));
 
+
   QAccel *a = new QAccel( this );
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_S), this, SLOT(start()) );
   a->connectItem(a->insertItem(Key_Left),         this, SLOT(left()) );
@@ -1003,12 +1004,23 @@ void InsertWidget::paintCanvas()
                   -1, meaninsertcoverage, 
                   UIElements::color_insertcoverage, true);
     voffset += ccheight;
+
     readCCL.normalize(m_hscale, m_hoffset, 0);
     paintCoverage(readCCL.m_coverage, readCCL.m_cestat, false,
                   readCCL.m_curpos,
                   voffset, ccheight,
                   -2, meanreadcoverage,
                   UIElements::color_readcoverage, true);
+
+    cerr << "emit\n";
+    emit newCovTols((int)(insertCCL.m_maxdepth - meaninsertcoverage >
+                          meaninsertcoverage ?
+                          insertCCL.m_maxdepth - meaninsertcoverage :
+                          meaninsertcoverage),
+                    (int)(readCCL.m_maxdepth - meanreadcoverage >
+                          meanreadcoverage ?
+                          readCCL.m_maxdepth - meanreadcoverage :
+                          meanreadcoverage));
     voffset += ccheight;
     voffset += 2*gutter;
   }

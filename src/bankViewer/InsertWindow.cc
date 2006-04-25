@@ -172,6 +172,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(m_query->readSlider, SIGNAL(valueChanged(int)),
           iw,                  SLOT(setReadCovTol(int)));
 
+  connect(iw, SIGNAL(newCovTols(int,int)),
+          this, SLOT(setCovTols(int,int)));
+
   connect(this, SIGNAL(setHappyDistance(float)),
           iw,   SLOT(setHappyDistance(float)));
 
@@ -239,6 +242,16 @@ InsertWindow::InsertWindow(DataStore * datastore,
     connect(spin,    SIGNAL(valueChanged(int)),
             iw,      SLOT(setErrorRate(int)));
   }
+
+  iw->paintCanvas();
+}
+
+void InsertWindow::setCovTols(int insert, int read)
+{
+  m_query->insertSlider->setRange(0,insert);
+  m_query->readSlider->setRange(0,read);
+  m_inserts->setInsertCovTol(m_query->insertSlider->value());
+  m_inserts->setReadCovTol(m_query->readSlider->value());
 }
 
 int InsertWindow::s_persistant(0);

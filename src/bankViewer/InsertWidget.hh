@@ -105,6 +105,7 @@ signals:
   void readEIDHighlighted(const QString & qeid);
 
   void currentScaffoldCoordinate(int);
+  void newCovTols(int,int);
 
 private:
   void flushInserts();

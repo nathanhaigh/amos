@@ -31,6 +31,7 @@ public slots:
   void loadSearch();
   void loadHappyDistance();
 
+  void setCovTols(int insert, int read);
   void toggleItem(int id);
   void toggleConnectMates();
   void togglePartitionTypes();
