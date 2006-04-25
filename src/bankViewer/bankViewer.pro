@@ -13,6 +13,7 @@ ConsensusField.cc\
 ContigCanvasItem.cc\
 ContigPicker.cc\
 CoverageCanvasItem.cc\
+CoverageRectCanvasItem.cc
 CoverageStats.cc\
 DataStore.cc\
 DetailWidget.cc\
@@ -58,6 +59,7 @@ ConsensusField.hh\
 ContigCanvasItem.hh\
 ContigPicker.hh\
 CoverageCanvasItem.hh\
+CoverageRectCanvasItem.hh\
 CoverageStats.hh\
 DataStore.hh\
 DetailWidget.hh\

@@ -20,6 +20,7 @@ bankViewer_MOCSOURCES = \
         ContigCanvasItem.cc    \
         ContigPicker.cc        \
         CoverageCanvasItem.cc  \
+	CoverageRectCanvasItem.cc \
         CoverageStats.cc       \
         DataStore.cc           \
 	DetailWidget.cc        \

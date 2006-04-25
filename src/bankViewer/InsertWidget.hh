@@ -72,6 +72,9 @@ public slots:
   void setVisibleVRange(int, int);
   void setVPos(int);
 
+  void setInsertCovTol(int);
+  void setReadCovTol(int);
+
   void setPersistant(bool);
   void setErrorRate(int);
 
@@ -115,7 +118,8 @@ private:
                      int arrLen, 
                      int voffset, int vheight, 
                      int libid, double baseLine,
-                     QColor color);
+                     QColor color,
+                     bool compressed = false);
 
   DataStore      * m_datastore;
   InsertField    * m_ifield;

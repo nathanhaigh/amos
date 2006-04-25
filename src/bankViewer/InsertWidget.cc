@@ -19,6 +19,7 @@
 #include "InsertField.hh"
 #include "InsertPosition.hh"
 #include "DataStore.hh"
+#include "CoverageRectCanvasItem.hh"
 
 #include "RangeScrollBar.hh"
 #include <qhbox.h>
@@ -658,7 +659,8 @@ void InsertWidget::paintCoverage(QPointArray & arr,
                                  int voffset, int vheight,
                                  int libid,
                                  double baseLevel,
-                                 QColor color)
+                                 QColor color,
+                                 bool compressed)
 {
   if (arr.isEmpty()) { return; }
 
@@ -679,11 +681,19 @@ void InsertWidget::paintCoverage(QPointArray & arr,
     }
 
     int width = window[size-1].x()-window[0].x()+1;
-    new CoverageCanvasItem(window[0].x(), voffset,
-                           width, vheight, 
-                           libid, baseLevel,
-                           window, windowraw, copyRaw,
-                           m_icanvas, color);
+
+    if ( compressed )
+      new CoverageRectCanvasItem(window[0].x(), voffset,
+                                 width, vheight, 
+                                 libid, baseLevel,
+                                 window, windowraw, copyRaw,
+                                 m_icanvas, color);
+    else
+      new CoverageCanvasItem(window[0].x(), voffset,
+                             width, vheight, 
+                             libid, baseLevel,
+                             window, windowraw, copyRaw,
+                             m_icanvas, color);
 
     i+= size;
 
@@ -781,13 +791,17 @@ void InsertWidget::paintCanvas()
     }
   }
   
-  if (m_coveragePlot || m_cestats)
+  if (1)
   {
     cerr << " coverage";
 
     // coverage will change at each endpoint of each (reasonably connected) insert
     CoverageStats insertCL((2+m_inserts.size())*4, 0, Distribution_t());
+    CoverageStats insertCCL((2+m_inserts.size())*4, 0, Distribution_t());
+
     insertCL.addEndpoints(leftmost, leftmost);
+    insertCCL.addEndpoints(leftmost, leftmost);
+
 
     typedef map<ID_t, CoverageStats> LibStats;
     LibStats libStats;
@@ -810,6 +824,8 @@ void InsertWidget::paintCanvas()
         totalinsertlen += (curroffset - curloffset + 1);
 
         insertCL.addEndpoints(curloffset, curroffset);
+        insertCCL.addEndpoints(curloffset, curroffset);
+
 
         if (m_cestats && (*ii)->ceConnected())
         {
@@ -826,13 +842,16 @@ void InsertWidget::paintCanvas()
     }
 
     insertCL.addEndpoints(rightmost,rightmost);
+    insertCCL.addEndpoints(rightmost,rightmost);
 
 
     insertCL.finalize();
+    insertCCL.finalize();
 
     //cerr << "insertcl size: " << insertCL.m_curpos << endl << endl;
 
     CoverageStats readCL(m_tiling.size()*4, 0, Distribution_t());
+    CoverageStats readCCL(m_tiling.size()*4, 0, Distribution_t());
 
     int totalbases = 0;
     int readspan = 0;
@@ -850,9 +869,13 @@ void InsertWidget::paintCanvas()
       totalbases += len;
 
       readCL.addEndpoints(curloffset, curroffset);
+      readCCL.addEndpoints(curloffset, curroffset);
+
     }
 
     readCL.finalize();
+    readCCL.finalize();
+
     //cerr << "readcl size: " << readCL.m_curpos << endl << endl;
 
     int inswidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
@@ -968,14 +991,32 @@ void InsertWidget::paintCanvas()
 
     if (m_coveragePlot) { voffset += covheight     + 2*gutter; }
     if (m_cestats)      { voffset += cestatsheight + 2*gutter; }
+
+    m_scaffoldtop = voffset - lineheight;
+
+    // compressed coverage
+    int ccheight = 8;
+    insertCCL.normalize(m_hscale, m_hoffset, 0);
+    paintCoverage(insertCCL.m_coverage, insertCCL.m_cestat, false,
+                  insertCCL.m_curpos,
+                  voffset, ccheight,
+                  -1, meaninsertcoverage, 
+                  UIElements::color_insertcoverage, true);
+    voffset += ccheight;
+    readCCL.normalize(m_hscale, m_hoffset, 0);
+    paintCoverage(readCCL.m_coverage, readCCL.m_cestat, false,
+                  readCCL.m_curpos,
+                  voffset, ccheight,
+                  -2, meanreadcoverage,
+                  UIElements::color_readcoverage, true);
+    voffset += ccheight;
+    voffset += 2*gutter;
   }
 
   if (1)
   {
     cerr << " contigs";
     layout.clear();
-
-    m_scaffoldtop = voffset - lineheight;
 
     if (m_showscaffold) { voffset += lineheight; }
     int rightmost = 0;
@@ -1416,6 +1457,36 @@ void InsertWidget::setShowScaffold(bool b)
 {
   m_showscaffold = b;
   paintCanvas();
+}
+
+void InsertWidget::setInsertCovTol(int tol)
+{
+  QCanvasItemList all = m_icanvas->allItems();
+  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+    if ( (*i)->rtti() == CoverageRectCanvasItem::RTTI &&
+         ((CoverageRectCanvasItem *)*i)->m_libid == -1 )
+      {
+        CoverageRectCanvasItem * ci = (CoverageRectCanvasItem *) *i;
+        ci->m_low = (int)(ci->m_baseLevel - tol);
+        ci->m_high = (int)(ci->m_baseLevel + tol);
+        m_icanvas->setChanged(ci->boundingRect());
+      }
+  m_icanvas->update();
+}
+
+void InsertWidget::setReadCovTol(int tol)
+{
+  QCanvasItemList all = m_icanvas->allItems();
+  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+    if ( (*i)->rtti() == CoverageRectCanvasItem::RTTI &&
+         ((CoverageRectCanvasItem *)*i)->m_libid == -2 )
+      {
+        CoverageRectCanvasItem * ci = (CoverageRectCanvasItem *) *i;
+        ci->m_low = (int)(ci->m_baseLevel - tol);
+        ci->m_high = (int)(ci->m_baseLevel + tol);
+        m_icanvas->setChanged(ci->boundingRect());
+      }
+  m_icanvas->update();
 }
 
 class Paddle : public QCanvasRectangle

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'DetailWidget.ui'
 **
-** Created: Sat Apr 22 16:17:54 2006
+** Created: Mon Apr 24 17:22:52 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -17,8 +17,8 @@
 #include <qtooltip.h>
 #include <qwhatsthis.h>
 
-/*
- *  Constructs a DetailWidget as a child of 'parent', with the
+/* 
+ *  Constructs a DetailWidget as a child of 'parent', with the 
  *  name 'name' and widget flags set to 'f'.
  */
 DetailWidget::DetailWidget( QWidget* parent, const char* name, WFlags fl )

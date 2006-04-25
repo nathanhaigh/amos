@@ -166,6 +166,12 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(m_query->happyButton, SIGNAL(clicked()),
           this,                 SLOT(loadHappyDistance()));
 
+  connect(m_query->insertSlider, SIGNAL(valueChanged(int)),
+          iw,                    SLOT(setInsertCovTol(int)));
+
+  connect(m_query->readSlider, SIGNAL(valueChanged(int)),
+          iw,                  SLOT(setReadCovTol(int)));
+
   connect(this, SIGNAL(setHappyDistance(float)),
           iw,   SLOT(setHappyDistance(float)));
 
