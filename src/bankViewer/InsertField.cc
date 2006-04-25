@@ -1,6 +1,7 @@
 #include "InsertField.hh"
 #include <qwmatrix.h>
 #include <qcursor.h>
+#include <qapplication.h>
 #include "InsertCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
 #include "ContigCanvasItem.hh"
@@ -8,6 +9,7 @@
 #include "DataStore.hh"
 #include "InsertCanvasItem.hh"
 #include <qregexp.h>
+#include "RangeScrollBar.hh"
 
 #include "icons/zoom_in.xpm"
 #include "icons/zoom_out.xpm"
@@ -15,6 +17,7 @@
 
 #include <iostream>
 using namespace std;
+
 
 InsertField::InsertField(DataStore * datastore,
                          int & hoffset,
@@ -26,7 +29,9 @@ InsertField::InsertField(DataStore * datastore,
    m_hoffset(hoffset),
    m_featrect(NULL),
    m_feat(NULL),
-   m_lastsearch(NULL)
+   m_lastsearch(NULL),
+   m_hrange(NULL),
+   m_vrange(NULL)
 {
   QWMatrix m = worldMatrix();
   m.translate(20, 0);
@@ -39,6 +44,13 @@ InsertField::InsertField(DataStore * datastore,
   m_visibleRect = NULL;
   m_toolstate = 0;
   setCursor(Qt::ArrowCursor);
+}
+
+void InsertField::setScrollBars(RangeScrollBar_t * hrange,
+                                RangeScrollBar_t * vrange)
+{
+  m_hrange = hrange;
+  m_vrange = vrange;
 }
 
 
@@ -382,6 +394,14 @@ void InsertField::processItemSelection(QString & s,
   }
 }
 
+void InsertField::wheelEvent(QWheelEvent * e)
+{
+  if (m_vrange)
+  {
+    QApplication::sendEvent(m_vrange, e);
+  }
+}
+
 
 void InsertField::contentsMousePressEvent( QMouseEvent* e )
 {
@@ -402,8 +422,8 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     QWMatrix newzoom(m.m11()*2, m.m12(), m.m21(), m.m22()*1.25, m.dx(), m.dy());
     setWorldMatrix(newzoom);
 
-    setContentsPos(xpos*newzoom.m11() - visibleWidth()/2, 
-                   ypos*newzoom.m22() - visibleWidth()/2);
+    setContentsPos((int)(xpos*newzoom.m11() - visibleWidth()/2), 
+                   (int)(ypos*newzoom.m22() - visibleWidth()/2));
 
     emit updateVisibleRange();
   }
@@ -413,8 +433,8 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     QWMatrix newzoom(m.m11()/2, m.m12(), m.m21(), m.m22()/1.25, m.dx(), m.dy());
     setWorldMatrix(newzoom);
 
-    setContentsPos(xpos*newzoom.m11() - visibleWidth()/2, 
-                   ypos*newzoom.m22() - visibleWidth()/2);
+    setContentsPos((int)(xpos*newzoom.m11() - visibleWidth()/2), 
+                   (int)(ypos*newzoom.m22() - visibleWidth()/2));
 
     emit updateVisibleRange();
   }

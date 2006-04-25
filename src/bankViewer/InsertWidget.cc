@@ -116,9 +116,9 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   QHBox * hbox = new QHBox(this);
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, hbox, "qcv");
+
   vrange = new RangeScrollBar_t(Qt::Vertical, hbox);
   vrange->setMaxRange(0,100);
-
 
   m_overview = new QCanvasView(m_icanvas, this, "overview");
   m_overview->setMaximumHeight(100);
@@ -128,6 +128,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   hrange = new RangeScrollBar_t(Qt::Horizontal, this);
   hrange->setMaxRange(0,100);
+
+  m_ifield->setScrollBars(hrange, vrange);
 
   QBoxLayout * vbox = new QVBoxLayout(this);
   vbox->addWidget(m_iposition);
@@ -338,8 +340,8 @@ void InsertWidget::updateVisibleRange()
                    m_ifield->visibleWidth(), m_ifield->visibleHeight() );
   QRect real = m_ifield->inverseWorldMatrix().mapRect(rc);
 
-  hrange->setRange(real.x()/m_hscale, (real.x()+real.width())/m_hscale);
-  vrange->setRange(real.y(), real.y()+real.height());
+  hrange->setRange((int)(real.x()/m_hscale), (int)((real.x()+real.width())/m_hscale));
+  vrange->setRange((int)(real.y()),          (int)(real.y()+real.height()));
 }
 
 void InsertWidget::setVPos(int vpos)
@@ -1274,6 +1276,8 @@ void InsertWidget::paintCanvas()
 
         QColor insertcolor(UIElements::getInsertColor((*ii)->m_state));
 
+        int m_colorByDistance = 0;
+
         if (m_persistant)
         {
           iitem->m_contigcolor = true;
@@ -1303,6 +1307,37 @@ void InsertWidget::paintCanvas()
         else if (m_colorByMate && ((*ii)->m_state == Insert::MissingMate))
         {
           insertcolor = getContigColor(contigColorMap, (*ii)->m_bcontig);
+        }
+        else if (m_colorByDistance && 
+                  (((*ii)->m_state == Insert::Happy) ||
+                   ((*ii)->m_state == Insert::CompressedMate) ||
+                   ((*ii)->m_state == Insert::StretchedMate)))
+        {
+          double disttomean = (*ii)->m_actual - (*ii)->m_dist.mean;
+
+          if (disttomean < 0)
+          {
+            insertcolor = UIElements::color_CompressedMate;
+            disttomean = -disttomean;
+          }
+          else
+          {
+            insertcolor = UIElements::color_StretchedMate;
+          }
+
+          disttomean /= (*ii)->m_dist.sd;
+
+          disttomean += 1.5;
+
+          disttomean *= disttomean;
+          disttomean *= disttomean;
+
+          if (disttomean > 255) { disttomean = 255; cerr << "*";}
+
+          int h, s, v;
+
+          insertcolor.hsv(&h,&s,&v);
+          insertcolor.setHsv(h,(int)disttomean,v);
         }
 
         iitem->setPen(insertcolor);

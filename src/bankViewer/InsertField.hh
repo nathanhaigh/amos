@@ -6,6 +6,7 @@
 class DataStore;
 class Insert;
 class InsertCanvasItem;
+class RangeScrollBar_t;
 
 class InsertField : public QCanvasView
 {
@@ -17,6 +18,8 @@ public:
               QCanvas * canvas, 
               QWidget * parent = 0, 
               const char * name = 0);
+
+  void setScrollBars(RangeScrollBar_t * hrange, RangeScrollBar_t * vrange);
 
 signals:
   void visibleRange(int, double);
@@ -45,9 +48,12 @@ public slots:
 
   void search(const QString & str);
 
+
+
 protected:
   void contentsMousePressEvent(QMouseEvent* e);
   void viewportPaintEvent(QPaintEvent * e);
+  void wheelEvent(QWheelEvent *e);
 
 private:
   void processItemSelection(QString & s,
@@ -68,6 +74,9 @@ private:
   QCanvasRectangle * m_featrect;
   QCanvasItem * m_feat;
   QCanvasItem * m_lastsearch;
+
+  RangeScrollBar_t * m_hrange;
+  RangeScrollBar_t * m_vrange;
 
   int m_toolstate;
 };
