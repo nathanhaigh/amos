@@ -813,17 +813,20 @@ void InsertWidget::paintCanvas()
     }
   }
   
+  double meaninsertcoverage;
+  double meanreadcoverage;
+  CoverageStats insertCCL((2+m_inserts.size())*4, 0, Distribution_t());
+  CoverageStats readCCL(m_tiling.size()*4, 0, Distribution_t());
+
   if (1)
   {
     cerr << " coverage";
 
     // coverage will change at each endpoint of each (reasonably connected) insert
     CoverageStats insertCL((2+m_inserts.size())*4, 0, Distribution_t());
-    CoverageStats insertCCL((2+m_inserts.size())*4, 0, Distribution_t());
 
     insertCL.addEndpoints(leftmost, leftmost);
     insertCCL.addEndpoints(leftmost, leftmost);
-
 
     typedef map<ID_t, CoverageStats> LibStats;
     LibStats libStats;
@@ -873,7 +876,6 @@ void InsertWidget::paintCanvas()
     //cerr << "insertcl size: " << insertCL.m_curpos << endl << endl;
 
     CoverageStats readCL(m_tiling.size()*4, 0, Distribution_t());
-    CoverageStats readCCL(m_tiling.size()*4, 0, Distribution_t());
 
     int totalbases = 0;
     int readspan = 0;
@@ -905,8 +907,8 @@ void InsertWidget::paintCanvas()
 
     int covwidth = max(inswidth, redwidth);
 
-    double meaninsertcoverage = ((double)totalinsertlen) / (insertCL.m_coverage[insertCL.m_curpos-1].x() - insertCL.m_coverage[0].x());
-    double meanreadcoverage = ((double)totalbases) / readspan;
+    meaninsertcoverage = ((double)totalinsertlen) / (insertCL.m_coverage[insertCL.m_curpos-1].x() - insertCL.m_coverage[0].x());
+    meanreadcoverage = ((double)totalbases) / readspan;
 
     int cestatsheight = 100;
     int covheight = max(insertCL.m_maxdepth, readCL.m_maxdepth);
@@ -1013,38 +1015,9 @@ void InsertWidget::paintCanvas()
 
     if (m_coveragePlot) { voffset += covheight     + 2*gutter; }
     if (m_cestats)      { voffset += cestatsheight + 2*gutter; }
-
-    m_scaffoldtop = voffset - lineheight;
-
-    // compressed coverage
-    int ccheight = 8;
-    insertCCL.normalize(m_hscale, m_hoffset, 0);
-    paintCoverage(insertCCL.m_coverage, insertCCL.m_cestat, false,
-                  insertCCL.m_curpos,
-                  voffset, ccheight,
-                  -1, meaninsertcoverage, 
-                  UIElements::color_insertcoverage, true);
-    voffset += ccheight;
-
-    readCCL.normalize(m_hscale, m_hoffset, 0);
-    paintCoverage(readCCL.m_coverage, readCCL.m_cestat, false,
-                  readCCL.m_curpos,
-                  voffset, ccheight,
-                  -2, meanreadcoverage,
-                  UIElements::color_readcoverage, true);
-
-    cerr << "emit\n";
-    emit newCovTols((int)(insertCCL.m_maxdepth - meaninsertcoverage >
-                          meaninsertcoverage ?
-                          insertCCL.m_maxdepth - meaninsertcoverage :
-                          meaninsertcoverage),
-                    (int)(readCCL.m_maxdepth - meanreadcoverage >
-                          meanreadcoverage ?
-                          readCCL.m_maxdepth - meanreadcoverage :
-                          meanreadcoverage));
-    voffset += ccheight;
-    voffset += 2*gutter;
   }
+
+  m_scaffoldtop = voffset - lineheight;
 
   if (1)
   {
@@ -1118,9 +1091,36 @@ void InsertWidget::paintCanvas()
     }
 
     voffset += (layout.size() + 1) * lineheight;
-
-    m_scaffoldbottom = voffset;
   }
+
+  if ( 1 )
+    {
+      // compressed coverage
+      insertCCL.normalize(m_hscale, m_hoffset, 0);
+      paintCoverage(insertCCL.m_coverage, insertCCL.m_cestat, false,
+                    insertCCL.m_curpos,
+                    voffset, m_seqheight,
+                    -1, meaninsertcoverage, 
+                    UIElements::color_insertcoverage, true);
+      voffset += lineheight;;
+
+      readCCL.normalize(m_hscale, m_hoffset, 0);
+      paintCoverage(readCCL.m_coverage, readCCL.m_cestat, false,
+                    readCCL.m_curpos,
+                    voffset, m_seqheight,
+                    -2, meanreadcoverage,
+                    UIElements::color_readcoverage, true);
+      voffset += lineheight;
+
+      emit newCovTols((int)(insertCCL.m_maxdepth - meaninsertcoverage >
+                            meaninsertcoverage ?
+                            insertCCL.m_maxdepth - meaninsertcoverage :
+                            meaninsertcoverage),
+                      (int)(readCCL.m_maxdepth - meanreadcoverage >
+                            meanreadcoverage ?
+                            readCCL.m_maxdepth - meanreadcoverage :
+                            meanreadcoverage));
+    }
 
   if (m_showFeatures && !m_features.empty())
   {
@@ -1163,6 +1163,8 @@ void InsertWidget::paintCanvas()
       voffset += (layout.size() + 1) * lineheight;
     }
   }
+
+  m_scaffoldbottom = voffset;
 
   // bubblesort the types by the order they appear in the popup menu
   vector<char> types;

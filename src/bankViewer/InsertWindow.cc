@@ -17,6 +17,8 @@
 #include <qlineedit.h>
 #include <qdockarea.h>
 #include <qtextedit.h>
+#include <qscrollview.h>
+#include <qvbox.h>
 
 #include "DataStore.hh"
 #include "UIElements.hh"
@@ -45,9 +47,11 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   // Dock windows
   QDockWindow * queryDock = new QDockWindow (QDockWindow::InDock, this);
-  m_query = new QueryWidget (queryDock, "queries");
-  m_query->happyEdit->setText (QString::number(Insert::MAXSTDEV));
-  queryDock->setWidget (m_query);
+  QScrollView * queryView = new QScrollView (queryDock, "queryview");
+  queryView->setResizePolicy (QScrollView::AutoOneFit);
+  m_query = new QueryWidget (queryView, "queries");
+  queryView->addChild (m_query);
+  queryDock->setWidget (queryView);
   queryDock->setResizeEnabled (true);
   addDockWindow (queryDock, Qt::DockRight);
 
@@ -167,6 +171,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   b->setMaximumWidth(25);
   connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
 
+  m_query->happyEdit->setText (QString::number(Insert::MAXSTDEV));
 
   connect(m_typesmenu, SIGNAL(activated(int)),
           this,        SLOT(toggleItem(int)));
@@ -277,8 +282,20 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 void InsertWindow::setCovTols(int insert, int read)
 {
-  m_query->insertSlider->setRange(0,insert);
-  m_query->readSlider->setRange(0,read);
+  bool insmax = false;
+  if ( m_query->insertSlider->value() == m_query->insertSlider->maxValue() )
+    insmax = true;
+
+  bool readmax = false;
+  if ( m_query->readSlider->value() == m_query->readSlider->maxValue() )
+    readmax = true;
+
+  m_query->insertSlider->setRange(0, insert);
+  m_query->readSlider->setRange(0, read);
+
+  if ( insmax ) m_query->insertSlider->setValue(insert);
+  if ( readmax ) m_query->readSlider->setValue(read);
+
   m_inserts->setInsertCovTol(m_query->insertSlider->value());
   m_inserts->setReadCovTol(m_query->readSlider->value());
 }

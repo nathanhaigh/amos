@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Mon Apr 24 17:22:52 2006
+** Created: Tue Apr 25 14:06:26 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -17,11 +17,13 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QGridLayout;
 class QGroupBox;
-class QFrame;
 class QLineEdit;
 class QPushButton;
-class QSlider;
 class QLabel;
+class QSlider;
+class QCheckBox;
+class QButtonGroup;
+class QRadioButton;
 
 class QueryWidget : public QWidget
 {
@@ -32,21 +34,52 @@ public:
     ~QueryWidget();
 
     QGroupBox* queryBox;
-    QFrame* line1;
-    QLineEdit* happyEdit;
-    QPushButton* happyButton;
     QLineEdit* searchEdit;
     QPushButton* searchButton;
+    QLineEdit* happyEdit;
+    QPushButton* happyButton;
+    QGroupBox* featureBox;
+    QLabel* noneLabel;
+    QLabel* allLabel;
     QSlider* insertSlider;
     QSlider* readSlider;
-    QLabel* insertLabel;
-    QLabel* readLabel;
+    QSlider* snpSlider;
+    QSlider* surrogateSlider;
+    QCheckBox* surrogateCheck;
+    QCheckBox* snpCheck;
+    QCheckBox* readCheck;
+    QCheckBox* insertCheck;
+    QCheckBox* qcCheck;
+    QSlider* qcSlider;
+    QSlider* breakSlider;
+    QCheckBox* breakCheck;
+    QCheckBox* otherCheck;
+    QButtonGroup* mateColorBox;
+    QRadioButton* categoricalButton;
+    QRadioButton* stretchButton;
+    QRadioButton* linkingButton;
+    QRadioButton* libraryButton;
+    QGroupBox* mateTypeBox;
+    QCheckBox* happyCheck;
+    QCheckBox* stretchedCheck;
+    QCheckBox* compressedCheck;
+    QCheckBox* orientationCheck;
+    QCheckBox* linkingCheck;
+    QCheckBox* singletonCheck;
+    QCheckBox* unmatedCheck;
+    QGroupBox* displayBox;
+    QCheckBox* coverageCheck;
+    QCheckBox* ceCheck;
+    QCheckBox* mateCheck;
+    QCheckBox* partitionCheck;
 
 protected:
     QVBoxLayout* QueryWidgetLayout;
     QGridLayout* queryBoxLayout;
-    QHBoxLayout* layout8;
     QHBoxLayout* layout9;
+    QHBoxLayout* layout8;
+    QGridLayout* featureBoxLayout;
+    QVBoxLayout* mateTypeBoxLayout;
 
 protected slots:
     virtual void languageChange();
