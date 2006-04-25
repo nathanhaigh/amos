@@ -48,8 +48,6 @@ public slots:
   void refreshWidget();
 
   void setTilingVisibleRange(int, int, int);
-  void setZoom(int);
-  void setVZoom(int);
   void paintCanvas();
   void setConnectMates(bool);
   void setPartitionTypes(bool);
@@ -60,10 +58,10 @@ public slots:
   void setColorByLibrary(bool);
   void setColorByMate(bool);
   void setTintHappiness(bool);
-  void setTintFeatures(bool);
   void contigChanged();
   void computePos(int);
   void setShowScaffold(bool);
+  void setSyncWithTiling(bool);
 
   void setHappyDistance(float);
 
@@ -151,9 +149,9 @@ private:
   bool m_colorByMate;
   bool m_paintScaffold;
   bool m_tintHappiness;
-  bool m_tintFeatures;
   bool m_showscaffold;
   bool m_kmercoverageplot;
+  bool m_syncWithTiling;
 
   bool m_persistant;
   int m_error;
@@ -189,6 +187,7 @@ private:
   QCanvasView * m_overview;
 
   int m_scaffoldtop, m_scaffoldbottom;
+  bool m_updatingScrollBars;
 };
 
 #endif

@@ -227,9 +227,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(setTintHappiness(bool)),
           iw,   SLOT(setTintHappiness(bool)));
 
-  connect(this, SIGNAL(setTintFeatures(bool)),
-          iw,   SLOT(setTintFeatures(bool)));
-
   connect(this, SIGNAL(setCEStatistic(bool)),
           iw,   SLOT(setCEStatistic(bool)));
 
@@ -420,14 +417,6 @@ void InsertWindow::toggleTintHappiness()
   m_optionsmenu->setItemChecked(m_tintid, b);
 
   emit setTintHappiness(b);
-}
-
-void InsertWindow::toggleTintFeatures()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_tintfeatid);
-  m_optionsmenu->setItemChecked(m_tintfeatid, b);
-
-  emit setTintFeatures(b);
 }
 
 void InsertWindow::toggleColorByLibrary()

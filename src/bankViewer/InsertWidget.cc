@@ -26,8 +26,6 @@
 
 
 
-
-
 using namespace AMOS;
 using namespace std;
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
@@ -97,9 +95,10 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_colorByLibrary = 0;
   m_colorByMate    = 0;
   m_tintHappiness  = 0;
-  m_tintFeatures   = 0;
   m_showscaffold   = 1;
   m_kmercoverageplot = 1;
+
+  m_syncWithTiling = 1;
 
   m_kmerstats = NULL;
 
@@ -107,6 +106,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_error = 0;
   m_scaffoldtop = 0;
   m_scaffoldbottom = 1;
+
+  m_updatingScrollBars = false;
 
 
   m_currentScaffold = AMOS::NULL_ID;
@@ -138,12 +139,9 @@ InsertWidget::InsertWidget(DataStore * datastore,
   vbox->addWidget(hrange);
   vbox->activate();
 
-  connect(this,     SIGNAL(setZoomInTool()),
-          m_ifield, SLOT(setZoomInTool()));
-  connect(this,     SIGNAL(setZoomOutTool()),
-          m_ifield, SLOT(setZoomOutTool()));
-  connect(this,     SIGNAL(setSelectTool()),
-          m_ifield, SLOT(setSelectTool()));
+  connect(this, SIGNAL(setZoomInTool()),  m_ifield, SLOT(setZoomInTool()));
+  connect(this, SIGNAL(setZoomOutTool()), m_ifield, SLOT(setZoomOutTool()));
+  connect(this, SIGNAL(setSelectTool()),  m_ifield, SLOT(setSelectTool()));
 
   connect(m_ifield, SIGNAL(updateVisibleRange()),
           this,     SLOT(updateVisibleRange()));
@@ -294,54 +292,34 @@ void InsertWidget::setTilingVisibleRange(int contigid, int gstart, int gend)
 
 
   // resize and place rectangle
-  QRect rc = QRect(m_ifield->contentsX(), m_ifield->contentsY(),
-                   m_ifield->visibleWidth(), m_ifield->visibleHeight());
-  QRect canvasRect = m_ifield->inverseWorldMatrix().mapRect(rc);
-
   m_tilingVisible->setSize((int)(m_hscale*(gend - gstart)) +1, m_icanvas->height());
   m_tilingVisible->move((int)(m_hscale*(gstart+m_hoffset)), 0);
   m_tilingVisible->show();
 
-  // ensure visible
-  int mapx, mapy;
-  m_ifield->worldMatrix().map((int)(m_hscale*((gstart + gend)/2+m_hoffset)), 
-                              (int)(canvasRect.y() + canvasRect.height()/2),
-                              &mapx, &mapy);
-  m_ifield->ensureVisible(mapx, mapy);
-
+  m_icanvas->setChanged(m_tilingVisible->boundingRect());
   m_icanvas->update();
 
+  if (m_syncWithTiling)
+  {
+    double xpos = m_hscale*((gstart + gend)/2+m_hoffset);
+    xpos *= m_ifield->worldMatrix().m11();
+    xpos -= (m_ifield->visibleWidth())/2;
+    m_ifield->setContentsPos((int) xpos, m_ifield->contentsY());
+    updateVisibleRange();
+  }
+
   emit currentScaffoldCoordinate(gstart);
+}
+
+void InsertWidget::setSyncWithTiling(bool sync)
+{
+  m_syncWithTiling = sync;
 }
 
 
 void InsertWidget::setHPos(int xpos)
 {
-  m_ifield->setContentsPos((int)(xpos*m_hscale*m_ifield->worldMatrix().m11()), m_ifield->contentsY());
-}
-
-void InsertWidget::setVisibleHRange(int left, int right)
-{
-  right = max(right, left+1000);
-
-  double xf = ((double)m_ifield->width()-2*(hrange->controlPix_m+hrange->gripPix_m)) / ((right - left + 1) * m_hscale);
-
-  QWMatrix m = m_ifield->worldMatrix();
-  QWMatrix newzoom(xf, m.m12(), m.m21(), m.m22(), m.dx(), m.dy());
-  m_ifield->setWorldMatrix(newzoom);
-
-  setHPos(left);
-}
-
-
-void InsertWidget::updateVisibleRange()
-{
-  QRect rc = QRect(m_ifield->contentsX(),    m_ifield->contentsY(),
-                   m_ifield->visibleWidth(), m_ifield->visibleHeight() );
-  QRect real = m_ifield->inverseWorldMatrix().mapRect(rc);
-
-  hrange->setRange((int)(real.x()/m_hscale), (int)((real.x()+real.width())/m_hscale));
-  vrange->setRange((int)(real.y()),          (int)(real.y()+real.height()));
+  m_ifield->setContentsPos((int)(xpos*m_ifield->worldMatrix().m11()), m_ifield->contentsY());
 }
 
 void InsertWidget::setVPos(int vpos)
@@ -349,43 +327,46 @@ void InsertWidget::setVPos(int vpos)
   m_ifield->setContentsPos(m_ifield->contentsX(), (int)(vpos*m_ifield->worldMatrix().m22()));
 }
 
+void InsertWidget::setVisibleHRange(int left, int right)
+{
+  if (!m_updatingScrollBars)
+  {
+    double xf = ((double)m_ifield->width()-4) / ((right - left + 1));
+
+    QWMatrix m = m_ifield->worldMatrix();
+    QWMatrix newzoom(xf, m.m12(), m.m21(), m.m22(), m.dx(), m.dy());
+    m_ifield->setWorldMatrix(newzoom); // visiblehrange
+
+    setHPos(left);
+  }
+}
+
 void InsertWidget::setVisibleVRange(int top, int bottom)
 {
-  double yf = ((double)(m_ifield->height()-4)) / (bottom - top + 1);
-  QWMatrix m(m_ifield->worldMatrix());
-  QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yf, m.dx(), m.dy());
-  m_ifield->setWorldMatrix(newzoom);
-
-  setVPos(top);
-}
-
-
-void InsertWidget::setZoom(int zoom)
-{
-  double xfactor = 16.00/(zoom);
-
-  if (zoom > 16)
+  if (!m_updatingScrollBars)
   {
-    xfactor = pow(xfactor, zoom/16);
+    double yf = ((double)(m_ifield->height()-4)) / (bottom - top + 1);
+
+    QWMatrix m(m_ifield->worldMatrix());
+    QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yf, m.dx(), m.dy());
+    m_ifield->setWorldMatrix(newzoom); //visiblevrange
+
+    setVPos(top);
   }
-
-  cerr << "xfactor: " << xfactor << endl;
-
-  QWMatrix m = m_ifield->worldMatrix();
-  QWMatrix newzoom(xfactor, m.m12(), m.m21(), m.m22(), m.dx(), m.dy());
-  m_ifield->setWorldMatrix(newzoom);
-
-  setTilingVisibleRange(m_contigid, m_gstart, m_gend);
 }
 
-void InsertWidget::setVZoom(int vzoom)
+void InsertWidget::updateVisibleRange()
 {
-  double yfactor = 16.0/vzoom;
+  m_updatingScrollBars = true;
+  QRect rc = QRect(m_ifield->contentsX(),    m_ifield->contentsY(),
+                   m_ifield->visibleWidth(), m_ifield->visibleHeight() );
+  QRect real = m_ifield->inverseWorldMatrix().mapRect(rc);
 
-  QWMatrix m = m_ifield->worldMatrix();
-  QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yfactor, m.dx(), m.dy());
-  m_ifield->setWorldMatrix(newzoom);
+  hrange->setRange((int)(real.x()), (int)(real.x()+real.width()));
+  vrange->setRange((int)(real.y()), (int)(real.y()+real.height()));
+  m_updatingScrollBars = false;
 }
+
 
 void InsertWidget::flushInserts()
 {
@@ -1385,22 +1366,6 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  if (m_showFeatures && m_tintFeatures)
-  {
-    vector<AMOS::Feature_t>::iterator fi;
-    for (fi = m_features.begin(); fi != m_features.end(); fi++)
-    {
-      int offset = fi->getRange().getLo();
-      QCanvasRectangle * rect = new QCanvasRectangle((int)((m_hoffset+offset) * m_hscale), 0, 
-                                                     (int)(fi->getRange().getLength() * m_hscale), voffset, 
-                                                     m_icanvas);
-      rect->setBrush(QColor(59,49,31));
-      rect->setPen(QColor(139,119,111));
-      rect->setZ(-2);
-      rect->show();
-    }
-  }
-
   int scaledwidth = (int)((rightmost-leftmost+1) * m_hscale);
 
   cerr << endl 
@@ -1417,8 +1382,9 @@ void InsertWidget::paintCanvas()
 
   QApplication::restoreOverrideCursor();
 
-  setInsertCanvasSize(rightmost - leftmost, voffset);
+  setInsertCanvasSize(scaledwidth, voffset);
   resizeOverview();
+  updateVisibleRange();
 }
 
 void InsertWidget::resizeEvent(QResizeEvent *e )
@@ -1430,12 +1396,9 @@ void InsertWidget::resizeEvent(QResizeEvent *e )
 
 void InsertWidget::resizeOverview()
 {
-  cerr << "overviewwidth: " << m_overview->width()
-       << " canvaswidth: " << m_icanvas->width() << endl;
-
-  double xf = (double)(m_overview->width() - 2*(hrange->controlPix_m+hrange->gripPix_m) + 4) / m_icanvas->width();
-  QWMatrix matrix(xf, 0, 0, 1, (hrange->controlPix_m+hrange->gripPix_m), 0);
-  m_overview->setWorldMatrix(matrix);
+  double xf = (double)(m_overview->width() - 2*(hrange->controlPix_m + hrange->gripPix_m)) / m_icanvas->width();
+  QWMatrix matrix(xf, 0, 0, 1, hrange->controlPix_m+hrange->gripPix_m-2, 0);
+  m_overview->setWorldMatrix(matrix); // resizeoverview
   m_overview->setContentsPos(0, m_scaffoldtop);
   m_overview->update();
   m_overview->setMaximumHeight(m_scaffoldbottom-m_scaffoldtop);
@@ -1495,12 +1458,6 @@ void InsertWidget::setPaintScaffold(bool b)
 void InsertWidget::setFeatures(bool b)
 {
   m_showFeatures = b;
-  paintCanvas();
-}
-
-void InsertWidget::setTintFeatures(bool b)
-{
-  m_tintFeatures = b;
   paintCanvas();
 }
 

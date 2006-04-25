@@ -36,7 +36,6 @@ public slots:
   void toggleConnectMates();
   void togglePartitionTypes();
   void toggleTintHappiness();
-  void toggleTintFeatures();
   void toggleCoveragePlot();
   void toggleCEStatistic();
   void toggleFeatures();
@@ -65,7 +64,6 @@ signals:
   void setColorByLibrary(bool);
   void setColorByMate(bool);
   void setPaintScaffold(bool);
-  void setTintFeatures(bool);
   void setTintHappiness(bool);
   void setShowScaffold(bool);
 
