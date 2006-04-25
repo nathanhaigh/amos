@@ -504,6 +504,53 @@ foreach my $exon (@genes)
 }
 
 print "\n\n";
+my %nonamb = ("A" => 1, "C" => 1, "G" => 1, "T" => 1);
+
+if (1)
+{
+  my @bases = split //, $consensus;
+  my $l = scalar @bases;
+
+  my $codegc;
+  my $codeall;
+
+  my $ncodegc;
+  my $ncodeall;
+
+  for (my $i = 0; $i < $l; $i++)
+  {
+    my $incode = 0;
+    foreach my $exon (@genes)
+    {
+      if (($i+1 >= $exon->{qstart}) && ($i+1 <= $exon->{qend}))
+      {
+        $incode = 1; last;
+      }
+    }
+
+    my $b = uc($bases[$i]);
+
+
+    if (exists $nonamb{$b})
+    {
+      if ($incode) { $codeall++; }
+      else         { $ncodeall++; }
+
+      if ($b eq "C" || $b eq "G")
+      {
+        if ($incode) { $codegc++; }
+        else         { $ncodegc++; }
+      }
+    }
+  }
+
+  my $perccodegc = sprintf("%.02f", ($codegc*100) / $codeall);
+  my $percncodegc = sprintf("%.02f", ($ncodegc*100) / $ncodeall);
+
+  print "coding gc content: $perccodegc\n";
+  print "noncoding gc content: $percncodegc\n\n"
+}
+
 
 print "gene stats:\n";
 
@@ -606,6 +653,20 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
   $dn          = sprintf("%.07f", $dn);
 
   print "S: $possiblesyn N: $possiblenon Sd: $syn Ns: $non pS: $ps pN: $pn dS: $ds dN: $dn dS/dN: $dsdn\n";
+
+  my $all; my $gc;
+  for (my $i = 0; $i < length($geneseq); $i++)
+  {
+    my $b = uc(substr($geneseq, $i, 1));
+
+    if (exists $nonamb{$b})
+    {
+      $all++;
+      $gc++ if ($b eq "C" || $b eq "G");
+    }
+  }
+  my $perccodegc = sprintf("%.02f", ($gc*100) / $all);
+  print "gc content: $perccodegc\n";
 
   print "\n";
 }
