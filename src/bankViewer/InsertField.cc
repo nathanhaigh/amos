@@ -34,9 +34,9 @@ InsertField::InsertField(DataStore * datastore,
    m_vrange(NULL)
 {
   QWMatrix m = worldMatrix();
-  m.translate(20, 0);
+  m.translate(0, 0);
   m.scale( 0.05, 1.0 );
-  setWorldMatrix( m );
+  setWorldMatrix( m ); // init
 
   setHScrollBarMode(QScrollView::AlwaysOff);
   setVScrollBarMode(QScrollView::AlwaysOff);
@@ -420,7 +420,7 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   {
     QWMatrix m = worldMatrix();
     QWMatrix newzoom(m.m11()*2, m.m12(), m.m21(), m.m22()*1.25, m.dx(), m.dy());
-    setWorldMatrix(newzoom);
+    setWorldMatrix(newzoom); //zoomin
 
     setContentsPos((int)(xpos*newzoom.m11() - visibleWidth()/2), 
                    (int)(ypos*newzoom.m22() - visibleWidth()/2));
@@ -431,7 +431,20 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   {
     QWMatrix m = worldMatrix();
     QWMatrix newzoom(m.m11()/2, m.m12(), m.m21(), m.m22()/1.25, m.dx(), m.dy());
-    setWorldMatrix(newzoom);
+
+    if (canvas()->width() * newzoom.m11() < width())
+    {
+      double xf = ((double) width()) / canvas()->width();
+      newzoom.setMatrix(xf, newzoom.m12(), newzoom.m21(), newzoom.m22(), newzoom.dx(), newzoom.dy());
+    }
+
+    if (canvas()->height() * newzoom.m22() < height())
+    {
+      double yf = (double) height() / canvas()->height();
+      newzoom.setMatrix(newzoom.m11(), newzoom.m12(), newzoom.m21(), yf, newzoom.dx(), newzoom.dy());
+    }
+
+    setWorldMatrix(newzoom); //zoomout
 
     setContentsPos((int)(xpos*newzoom.m11() - visibleWidth()/2), 
                    (int)(ypos*newzoom.m22() - visibleWidth()/2));
