@@ -369,7 +369,7 @@ while (my ($lib, $mean) = each %means){
 
     my $dstId = getId();
 
-    print DST "$dstId\t$lib\n";
+    print DST "$dstId\t$lib\t$means{$lib} +/- $stdevs{$lib}\n";
 
     if ($stdevs{$lib} > $means{$lib} / 3){
 	$stdevs{$lib} = int($means{$lib} / 3);
