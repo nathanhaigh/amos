@@ -212,6 +212,7 @@ void RangeScrollBar_t::init()
   repeatAction_m = SliderNoAction;
 
   setMinimumSize (sizeHint());
+  setMouseTracking(true);
 
   if ( IS_HORIZ )
     setSizePolicy (QSizePolicy::Minimum, QSizePolicy::Fixed);
@@ -270,6 +271,8 @@ void RangeScrollBar_t::keyPressEvent (QKeyEvent * e)
 //---------------------------------------------------------- mouseMoveEvent ----
 void RangeScrollBar_t::mouseMoveEvent (QMouseEvent * e)
 {
+  updateHover (e->pos());
+
   if ( !pressedControl_m)
     return;
 
@@ -331,9 +334,9 @@ void RangeScrollBar_t::mousePressEvent (QMouseEvent * e)
 //------------------------------------------------------- mouseReleaseEvent ----
 void RangeScrollBar_t::mouseReleaseEvent (QMouseEvent * e)
 {
-  if ( !pressedControl_m
-       || e->button() && (~e->button()) )
-    return;
+//  if ( !pressedControl_m
+//       || e->button() && (~e->button()) )
+//    return;
 
   setRepeatAction (SliderNoAction);
   pressedControl_m = SC_None;
@@ -558,7 +561,7 @@ void RangeScrollBar_t::updateHover (const QPoint & pos)
   else
     unsetCursor();
 
-  update (old | highlightRect (hoveredControl_m));
+  //update (old | highlightRect (hoveredControl_m));
 }
 
 
