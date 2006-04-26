@@ -35,6 +35,7 @@ bankViewer_MOCSOURCES = \
         InsertStats.cc         \
         InsertWidget.cc        \
         InsertWindow.cc        \
+	LaunchPad.cc           \
         LibraryPicker.cc       \
         MainWindow.cc          \
         NetworkCom.cc          \

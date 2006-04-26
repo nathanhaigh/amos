@@ -28,12 +28,11 @@ InsertPosition.cc\
 InsertStats.cc\
 InsertWidget.cc\
 InsertWindow.cc\
+LaunchPad.cc\
 LibraryPicker.cc\
 MainWindow.cc\
 NetworkCom.cc\
 OverviewField.cc\
-OverviewWidget.cc\
-OverviewWindow.cc\
 QueryWidget.cc\
 ReadInfo.cc\
 ReadPicker.cc\
@@ -74,12 +73,11 @@ InsertPosition.hh\
 InsertStats.hh\
 InsertWidget.hh\
 InsertWindow.hh\
+LaunchPad.hh\
 LibraryPicker.hh\
 MainWindow.hh\
 NetworkCom.hh\
 OverviewField.hh\
-OverviewWidget.hh\
-OverviewWindow.hh\
 QueryWidget.hh\
 ReadInfo.hh\
 ReadPicker.hh\
