@@ -56,7 +56,6 @@ public slots:
   void setCoveragePlot(bool);
   void setCEStatistic(bool);
   void setPaintScaffold(bool);
-  void setFeatures(bool);
   void setColorByLibrary(bool);
   void setColorByMate(bool);
   void setColorByStretchiness(bool);
@@ -76,6 +75,19 @@ public slots:
 
   void setInsertCovTol(int);
   void setReadCovTol(int);
+  void setSNPTol(int);
+  void setUnitigTol(int);
+  void setQCTol(int);
+  void setBreakTol(int);
+
+  void setInsertCovFeatures(bool);
+  void setReadCovFeatures(bool);
+  void setSNPFeatures(bool);
+  void setUnitigFeatures(bool);
+  void setQCFeatures(bool);
+  void setBreakFeatures(bool);
+  void setOtherFeatures(bool);
+
 
   void setPersistant(bool);
   void setErrorRate(int);
@@ -107,7 +119,13 @@ signals:
   void readEIDHighlighted(const QString & qeid);
 
   void currentScaffoldCoordinate(int);
-  void newCovTols(int,int);
+
+  void newMaxInsertCovTol(int);
+  void newMaxReadCovTol(int);
+  void newMaxSNPTol(int);
+  void newMaxUnitigTol(int);
+  void newMaxQCTol(int);
+  void newMaxBreakTol(int);
 
   void setZoomInTool();
   void setZoomOutTool();
@@ -147,7 +165,6 @@ private:
   bool m_partitionTypes;
   bool m_coveragePlot;
   bool m_cestats;
-  bool m_showFeatures;
   bool m_colorByLibrary;
   bool m_colorByMate;
   bool m_colorByStretchiness;
@@ -156,6 +173,14 @@ private:
   bool m_showscaffold;
   bool m_kmercoverageplot;
   bool m_syncWithTiling;
+
+  bool m_insertCovFeatures;
+  bool m_readCovFeatures;
+  bool m_snpFeatures;
+  bool m_unitigFeatures;
+  bool m_qcFeatures;
+  bool m_breakFeatures;
+  bool m_otherFeatures;
 
   bool m_persistant;
   int m_error;

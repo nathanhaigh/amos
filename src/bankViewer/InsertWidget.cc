@@ -11,6 +11,7 @@
 #include <qapplication.h>
 #include <qtextedit.h>
 #include <qhbox.h>
+#include <qregexp.h>
 
 #include "RenderSeq.hh"
 #include "InsertCanvasItem.hh"
@@ -32,6 +33,32 @@
 using namespace AMOS;
 using namespace std;
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
+
+
+int extractSNPScore (const AMOS::Feature_t & fea)
+{
+  QString com (fea.getComment().c_str());
+  com.replace ("HIGH_SNP ", "");
+  com.replace (QRegExp (" .+"), "");
+  return com.toInt();
+}
+
+int extractUnitigScore (const AMOS::Feature_t & fea)
+{
+  return fea.getRange().getLength();
+}
+
+int extractQCScore (const AMOS::Feature_t & fea)
+{
+  return fea.getRange().getLength();
+}
+
+int extractBreakScore (const AMOS::Feature_t & fea)
+{
+  QString com (fea.getComment().c_str());
+  com.replace (QRegExp (" .+"), "");
+  return com.toInt();
+}
 
 
 struct FeatOrderCmp
@@ -93,7 +120,6 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_partitionTypes = 1;
   m_coveragePlot   = 1;
   m_cestats        = 0;
-  m_showFeatures   = 1;
   m_paintScaffold  = 1;
   m_colorByLibrary = 0;
   m_colorByMate    = 0;
@@ -783,8 +809,8 @@ void InsertWidget::paintCanvas()
   
   double meaninsertcoverage;
   double meanreadcoverage;
-  CoverageStats insertCCL((2+m_inserts.size())*4, 0, Distribution_t());
-  CoverageStats readCCL(m_tiling.size()*4, 0, Distribution_t());
+  CoverageStats insertCCL;
+  CoverageStats readCCL;
 
   if (1)
   {
@@ -792,9 +818,7 @@ void InsertWidget::paintCanvas()
 
     // coverage will change at each endpoint of each (reasonably connected) insert
     CoverageStats insertCL((2+m_inserts.size())*4, 0, Distribution_t());
-
     insertCL.addEndpoints(leftmost, leftmost);
-    insertCCL.addEndpoints(leftmost, leftmost);
 
     typedef map<ID_t, CoverageStats> LibStats;
     LibStats libStats;
@@ -817,8 +841,6 @@ void InsertWidget::paintCanvas()
         totalinsertlen += (curroffset - curloffset + 1);
 
         insertCL.addEndpoints(curloffset, curroffset);
-        insertCCL.addEndpoints(curloffset, curroffset);
-
 
         if (m_cestats && (*ii)->ceConnected())
         {
@@ -835,11 +857,7 @@ void InsertWidget::paintCanvas()
     }
 
     insertCL.addEndpoints(rightmost,rightmost);
-    insertCCL.addEndpoints(rightmost,rightmost);
-
-
     insertCL.finalize();
-    insertCCL.finalize();
 
     //cerr << "insertcl size: " << insertCL.m_curpos << endl << endl;
 
@@ -861,12 +879,13 @@ void InsertWidget::paintCanvas()
       totalbases += len;
 
       readCL.addEndpoints(curloffset, curroffset);
-      readCCL.addEndpoints(curloffset, curroffset);
-
     }
 
     readCL.finalize();
-    readCCL.finalize();
+
+    // copy for coverage features
+    insertCCL = insertCL;
+    readCCL = readCL;
 
     //cerr << "readcl size: " << readCL.m_curpos << endl << endl;
 
@@ -1061,17 +1080,22 @@ void InsertWidget::paintCanvas()
     voffset += (layout.size() + 1) * lineheight;
   }
 
-  if ( 1 )
+  if ( m_insertCovFeatures )
     {
-      // compressed coverage
       insertCCL.normalize(m_hscale, m_hoffset, 0);
       paintCoverage(insertCCL.m_coverage, insertCCL.m_cestat, false,
                     insertCCL.m_curpos,
                     voffset, m_seqheight,
                     -1, meaninsertcoverage, 
                     UIElements::color_insertcoverage, true);
-      voffset += lineheight;;
-
+      voffset += lineheight;
+      emit newMaxInsertCovTol((int)(insertCCL.m_maxdepth - meaninsertcoverage >
+                                    meaninsertcoverage ?
+                                    insertCCL.m_maxdepth - meaninsertcoverage :
+                                    meaninsertcoverage));
+    }
+  if ( m_readCovFeatures )
+    {
       readCCL.normalize(m_hscale, m_hoffset, 0);
       paintCoverage(readCCL.m_coverage, readCCL.m_cestat, false,
                     readCCL.m_curpos,
@@ -1079,25 +1103,52 @@ void InsertWidget::paintCanvas()
                     -2, meanreadcoverage,
                     UIElements::color_readcoverage, true);
       voffset += lineheight;
-
-      emit newCovTols((int)(insertCCL.m_maxdepth - meaninsertcoverage >
-                            meaninsertcoverage ?
-                            insertCCL.m_maxdepth - meaninsertcoverage :
-                            meaninsertcoverage),
-                      (int)(readCCL.m_maxdepth - meanreadcoverage >
-                            meanreadcoverage ?
-                            readCCL.m_maxdepth - meanreadcoverage :
-                            meanreadcoverage));
+      emit newMaxReadCovTol((int)(readCCL.m_maxdepth - meanreadcoverage >
+                                  meanreadcoverage ?
+                                  readCCL.m_maxdepth - meanreadcoverage :
+                                  meanreadcoverage));
     }
 
-  if (m_showFeatures && !m_features.empty())
+  if (1)//!m_features.empty())
   {
     cerr << " features";
     layout.clear();
 
+    int score;
+    int maxSNPTol = 0;
+    int maxUnitigTol = 0;
+    int maxQCTol = 0;
+    int maxBreakTol = 0;
     vector<AMOS::Feature_t>::iterator fi;
     for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
+      switch ( fi->getType() )
+        {
+        case AMOS::Feature_t::POLYMORPHISM:
+          score = extractSNPScore (*fi);
+          if ( score > maxSNPTol ) maxSNPTol = score;
+          if ( !m_snpFeatures ) continue;
+          break;
+        case AMOS::Feature_t::UNITIG:
+          score = extractUnitigScore (*fi);
+          if ( score > maxUnitigTol ) maxUnitigTol = score;
+          if ( !m_unitigFeatures ) continue;
+          break;
+        case AMOS::Feature_t::COVERAGE:
+          score = extractQCScore (*fi);
+          if ( score > maxQCTol ) maxQCTol = score;
+          if ( !m_qcFeatures ) continue;
+          break;
+        case AMOS::Feature_t::BREAKPOINT:
+          score = extractBreakScore (*fi);
+          if ( score > maxBreakTol ) maxBreakTol = score;
+          if ( !m_breakFeatures ) continue;
+          break;
+        default:
+          if ( !m_otherFeatures ) continue;
+          break;
+        }
+
       int offset = fi->getRange().getLo();
       int length = fi->getRange().getLength();
 
@@ -1120,9 +1171,10 @@ void InsertWidget::paintCanvas()
 
       int vpos = voffset + layoutpos * lineheight;
 
-      FeatureCanvasItem * fitem = new FeatureCanvasItem((int)(m_hscale * (offset+m_hoffset)), vpos,
-                                                        (int)(m_hscale*length), m_seqheight,
-                                                        *fi, m_icanvas);
+      FeatureCanvasItem * fitem =
+        new FeatureCanvasItem((int)(m_hscale * (offset+m_hoffset)), vpos,
+                              (int)(m_hscale*length), m_seqheight,
+                              *fi, m_icanvas);
       fitem->show();
     }
 
@@ -1130,6 +1182,11 @@ void InsertWidget::paintCanvas()
     {
       voffset += (layout.size() + 1) * lineheight;
     }
+
+    emit newMaxSNPTol(maxSNPTol);
+    emit newMaxUnitigTol(maxUnitigTol);
+    emit newMaxQCTol(maxQCTol);
+    emit newMaxBreakTol(maxBreakTol);
   }
 
   m_scaffoldbottom = voffset;
@@ -1448,12 +1505,6 @@ void InsertWidget::setPaintScaffold(bool b)
   initializeTiling();
 }
 
-void InsertWidget::setFeatures(bool b)
-{
-  m_showFeatures = b;
-  paintCanvas();
-}
-
 void InsertWidget::setColorByLibrary(bool b)
 {
   m_colorByLibrary = b;
@@ -1490,6 +1541,56 @@ void InsertWidget::setShowScaffold(bool b)
   paintCanvas();
 }
 
+void InsertWidget::setInsertCovFeatures(bool b)
+{
+  if ( m_insertCovFeatures == b ) return;
+  m_insertCovFeatures = b;
+  paintCanvas();
+}
+
+void InsertWidget::setReadCovFeatures(bool b)
+{
+  if ( m_readCovFeatures == b ) return;
+  m_readCovFeatures = b;
+  paintCanvas();
+}
+
+void InsertWidget::setSNPFeatures(bool b)
+{
+  if (m_snpFeatures == b ) return;
+  m_snpFeatures = b;
+  paintCanvas();
+}
+
+void InsertWidget::setUnitigFeatures(bool b)
+{
+  if ( m_unitigFeatures == b ) return;
+  m_unitigFeatures = b;
+  paintCanvas();
+}
+
+void InsertWidget::setQCFeatures(bool b)
+{
+  if ( m_qcFeatures == b ) return;
+  m_qcFeatures = b;
+  paintCanvas();
+}
+
+void InsertWidget::setBreakFeatures(bool b)
+{
+  if ( m_breakFeatures == b ) return;
+  m_breakFeatures = b;
+  paintCanvas();
+}
+
+void InsertWidget::setOtherFeatures(bool b)
+{
+  if ( m_otherFeatures == b ) return;
+  m_otherFeatures = b;
+  paintCanvas();
+}
+
+
 void InsertWidget::setInsertCovTol(int tol)
 {
   QCanvasItemList all = m_icanvas->allItems();
@@ -1519,6 +1620,79 @@ void InsertWidget::setReadCovTol(int tol)
       }
   m_icanvas->update();
 }
+
+void InsertWidget::setSNPTol(int tol)
+{
+  QCanvasItemList all = m_icanvas->allItems();
+  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+         AMOS::Feature_t::POLYMORPHISM )
+      {
+        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+        if ( extractSNPScore (fi->m_feat) >= tol )
+          fi->show();
+        else
+          fi->hide();
+        m_icanvas->setChanged(fi->boundingRect());
+      }
+  m_icanvas->update();
+}
+
+void InsertWidget::setUnitigTol(int tol)
+{
+  QCanvasItemList all = m_icanvas->allItems();
+  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+         AMOS::Feature_t::UNITIG )
+      {
+        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+        if ( extractUnitigScore (fi->m_feat) >= tol )
+          fi->show();
+        else
+          fi->hide();
+        m_icanvas->setChanged(fi->boundingRect());
+      }
+  m_icanvas->update();
+}
+
+void InsertWidget::setQCTol(int tol)
+{
+  QCanvasItemList all = m_icanvas->allItems();
+  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+         AMOS::Feature_t::COVERAGE )
+      {
+        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+        if ( extractQCScore (fi->m_feat) >= tol )
+          fi->show();
+        else
+          fi->hide();
+        m_icanvas->setChanged(fi->boundingRect());
+      }
+  m_icanvas->update();
+}
+
+void InsertWidget::setBreakTol(int tol)
+{
+  QCanvasItemList all = m_icanvas->allItems();
+  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+         AMOS::Feature_t::BREAKPOINT )
+      {
+        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+        if ( extractBreakScore (fi->m_feat) >= tol )
+          fi->show();
+        else
+          fi->hide();
+        m_icanvas->setChanged(fi->boundingRect());
+      }
+  m_icanvas->update();
+}
+
 
 class Paddle : public QCanvasRectangle
 {

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'DetailWidget.ui'
 **
-** Created: Tue Apr 25 22:47:28 2006
+** Created: Wed Apr 26 11:41:41 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!

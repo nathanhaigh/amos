@@ -9,7 +9,10 @@
 class CoverageStats
 {
 public:
+  CoverageStats();
   CoverageStats(int numpoints, AMOS::ID_t libid, AMOS::Distribution_t dist);
+  CoverageStats(const CoverageStats &);
+  CoverageStats & operator=(const CoverageStats &);
 
   typedef std::multimap<int, int> EndPoints;
 

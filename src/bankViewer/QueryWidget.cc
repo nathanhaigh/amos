@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Tue Apr 25 22:47:28 2006
+** Created: Wed Apr 26 11:41:41 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -201,7 +201,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     insertSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, insertSlider->sizePolicy().hasHeightForWidth() ) );
     insertSlider->setMinValue( 0 );
     insertSlider->setMaxValue( 10 );
-    insertSlider->setValue( 10 );
+    insertSlider->setValue( 0 );
     insertSlider->setOrientation( QSlider::Horizontal );
     insertSlider->setTickmarks( QSlider::NoMarks );
     insertSlider->setTickInterval( 1 );
@@ -212,7 +212,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     readSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, readSlider->sizePolicy().hasHeightForWidth() ) );
     readSlider->setMinValue( 0 );
     readSlider->setMaxValue( 10 );
-    readSlider->setValue( 10 );
+    readSlider->setValue( 0 );
     readSlider->setOrientation( QSlider::Horizontal );
     readSlider->setTickmarks( QSlider::NoMarks );
     readSlider->setTickInterval( 1 );
@@ -223,31 +223,31 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     snpSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, snpSlider->sizePolicy().hasHeightForWidth() ) );
     snpSlider->setMinValue( 0 );
     snpSlider->setMaxValue( 10 );
-    snpSlider->setValue( 10 );
+    snpSlider->setValue( 0 );
     snpSlider->setOrientation( QSlider::Horizontal );
     snpSlider->setTickmarks( QSlider::NoMarks );
     snpSlider->setTickInterval( 1 );
 
     featureBoxLayout->addMultiCellWidget( snpSlider, 3, 3, 1, 2 );
 
-    surrogateSlider = new QSlider( featureBox, "surrogateSlider" );
-    surrogateSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, surrogateSlider->sizePolicy().hasHeightForWidth() ) );
-    surrogateSlider->setMinValue( 0 );
-    surrogateSlider->setMaxValue( 10 );
-    surrogateSlider->setValue( 10 );
-    surrogateSlider->setOrientation( QSlider::Horizontal );
-    surrogateSlider->setTickmarks( QSlider::NoMarks );
-    surrogateSlider->setTickInterval( 1 );
+    unitigSlider = new QSlider( featureBox, "unitigSlider" );
+    unitigSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, unitigSlider->sizePolicy().hasHeightForWidth() ) );
+    unitigSlider->setMinValue( 0 );
+    unitigSlider->setMaxValue( 10 );
+    unitigSlider->setValue( 0 );
+    unitigSlider->setOrientation( QSlider::Horizontal );
+    unitigSlider->setTickmarks( QSlider::NoMarks );
+    unitigSlider->setTickInterval( 1 );
 
-    featureBoxLayout->addMultiCellWidget( surrogateSlider, 4, 4, 1, 2 );
+    featureBoxLayout->addMultiCellWidget( unitigSlider, 4, 4, 1, 2 );
 
-    surrogateCheck = new QCheckBox( featureBox, "surrogateCheck" );
-    QFont surrogateCheck_font(  surrogateCheck->font() );
-    surrogateCheck_font.setPointSize( 9 );
-    surrogateCheck->setFont( surrogateCheck_font ); 
-    surrogateCheck->setChecked( TRUE );
+    unitigCheck = new QCheckBox( featureBox, "unitigCheck" );
+    QFont unitigCheck_font(  unitigCheck->font() );
+    unitigCheck_font.setPointSize( 9 );
+    unitigCheck->setFont( unitigCheck_font ); 
+    unitigCheck->setChecked( TRUE );
 
-    featureBoxLayout->addWidget( surrogateCheck, 4, 0 );
+    featureBoxLayout->addWidget( unitigCheck, 4, 0 );
 
     snpCheck = new QCheckBox( featureBox, "snpCheck" );
     QFont snpCheck_font(  snpCheck->font() );
@@ -285,7 +285,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     qcSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, qcSlider->sizePolicy().hasHeightForWidth() ) );
     qcSlider->setMinValue( 0 );
     qcSlider->setMaxValue( 10 );
-    qcSlider->setValue( 10 );
+    qcSlider->setValue( 0 );
     qcSlider->setOrientation( QSlider::Horizontal );
     qcSlider->setTickmarks( QSlider::NoMarks );
     qcSlider->setTickInterval( 1 );
@@ -296,7 +296,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     breakSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, breakSlider->sizePolicy().hasHeightForWidth() ) );
     breakSlider->setMinValue( 0 );
     breakSlider->setMaxValue( 10 );
-    breakSlider->setValue( 10 );
+    breakSlider->setValue( 0 );
     breakSlider->setOrientation( QSlider::Horizontal );
     breakSlider->setTickmarks( QSlider::NoMarks );
     breakSlider->setTickInterval( 1 );
@@ -315,7 +315,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     QFont otherCheck_font(  otherCheck->font() );
     otherCheck_font.setPointSize( 9 );
     otherCheck->setFont( otherCheck_font ); 
-    otherCheck->setChecked( FALSE );
+    otherCheck->setChecked( TRUE );
 
     featureBoxLayout->addWidget( otherCheck, 7, 0 );
 
@@ -406,12 +406,18 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     queryBoxLayout->addWidget( mateColorBox, 4, 1 );
     QueryWidgetLayout->addWidget( queryBox );
     languageChange();
-    resize( QSize(273, 682).expandedTo(minimumSizeHint()) );
+    resize( QSize(273, 693).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections
     connect( searchEdit, SIGNAL( returnPressed() ), searchButton, SLOT( animateClick() ) );
     connect( happyEdit, SIGNAL( returnPressed() ), happyButton, SLOT( animateClick() ) );
+    connect( insertCheck, SIGNAL( toggled(bool) ), insertSlider, SLOT( setEnabled(bool) ) );
+    connect( readCheck, SIGNAL( toggled(bool) ), readSlider, SLOT( setEnabled(bool) ) );
+    connect( snpCheck, SIGNAL( toggled(bool) ), snpSlider, SLOT( setEnabled(bool) ) );
+    connect( unitigCheck, SIGNAL( toggled(bool) ), unitigSlider, SLOT( setEnabled(bool) ) );
+    connect( qcCheck, SIGNAL( toggled(bool) ), qcSlider, SLOT( setEnabled(bool) ) );
+    connect( breakCheck, SIGNAL( toggled(bool) ), breakSlider, SLOT( setEnabled(bool) ) );
 }
 
 /*
@@ -449,9 +455,9 @@ void QueryWidget::languageChange()
     singletonLabel->setText( tr( "pixmap" ) );
     unmatedLabel->setText( tr( "pixmap" ) );
     featureBox->setTitle( tr( "Features" ) );
-    noneLabel->setText( tr( "NONE" ) );
-    allLabel->setText( tr( "ALL" ) );
-    surrogateCheck->setText( tr( "Surrogate" ) );
+    noneLabel->setText( tr( "ALL" ) );
+    allLabel->setText( tr( "NONE" ) );
+    unitigCheck->setText( tr( "Unitigs" ) );
     snpCheck->setText( tr( "SNPs" ) );
     readCheck->setText( tr( "Read Cov" ) );
     insertCheck->setText( tr( "Insert Cov" ) );

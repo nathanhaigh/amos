@@ -32,9 +32,14 @@ public slots:
   void loadSearch();
   void loadHappyDistance();
 
-  void setCovTols(int insert, int read);
   void toggleItem();
 
+  void setMaxInsertCovTol(int);
+  void setMaxReadCovTol(int);
+  void setMaxSNPTol(int);
+  void setMaxUnitigTol(int);
+  void setMaxQCTol(int);
+  void setMaxBreakTol(int);
 
 signals:
   void setGindex(int gindex);
@@ -52,7 +57,7 @@ signals:
 
 private:
 
-  QPixmap mateIcon (const QColor & color);
+  QPixmap mateIcon (const QColor & color, int mode);
   void buildLibraryMenu();
 
   typedef std::map<char, std::pair<int, bool> > typemap;

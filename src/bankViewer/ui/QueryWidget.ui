@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>273</width>
-            <height>682</height>
+            <height>693</height>
         </rect>
     </property>
     <property name="caption">
@@ -387,7 +387,7 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>NONE</string>
+                                <string>ALL</string>
                             </property>
                             <property name="alignment">
                                 <set>AlignBottom|AlignLeft</set>
@@ -403,7 +403,7 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>ALL</string>
+                                <string>NONE</string>
                             </property>
                             <property name="alignment">
                                 <set>AlignBottom|AlignRight</set>
@@ -428,7 +428,7 @@
                                 <number>10</number>
                             </property>
                             <property name="value">
-                                <number>10</number>
+                                <number>0</number>
                             </property>
                             <property name="orientation">
                                 <enum>Horizontal</enum>
@@ -459,7 +459,7 @@
                                 <number>10</number>
                             </property>
                             <property name="value">
-                                <number>10</number>
+                                <number>0</number>
                             </property>
                             <property name="orientation">
                                 <enum>Horizontal</enum>
@@ -490,7 +490,7 @@
                                 <number>10</number>
                             </property>
                             <property name="value">
-                                <number>10</number>
+                                <number>0</number>
                             </property>
                             <property name="orientation">
                                 <enum>Horizontal</enum>
@@ -504,7 +504,7 @@
                         </widget>
                         <widget class="QSlider" row="4" column="1" rowspan="1" colspan="2">
                             <property name="name">
-                                <cstring>surrogateSlider</cstring>
+                                <cstring>unitigSlider</cstring>
                             </property>
                             <property name="sizePolicy">
                                 <sizepolicy>
@@ -521,7 +521,7 @@
                                 <number>10</number>
                             </property>
                             <property name="value">
-                                <number>10</number>
+                                <number>0</number>
                             </property>
                             <property name="orientation">
                                 <enum>Horizontal</enum>
@@ -535,7 +535,7 @@
                         </widget>
                         <widget class="QCheckBox" row="4" column="0">
                             <property name="name">
-                                <cstring>surrogateCheck</cstring>
+                                <cstring>unitigCheck</cstring>
                             </property>
                             <property name="font">
                                 <font>
@@ -543,7 +543,7 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>Surrogate</string>
+                                <string>Unitigs</string>
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
@@ -632,7 +632,7 @@
                                 <number>10</number>
                             </property>
                             <property name="value">
-                                <number>10</number>
+                                <number>0</number>
                             </property>
                             <property name="orientation">
                                 <enum>Horizontal</enum>
@@ -663,7 +663,7 @@
                                 <number>10</number>
                             </property>
                             <property name="value">
-                                <number>10</number>
+                                <number>0</number>
                             </property>
                             <property name="orientation">
                                 <enum>Horizontal</enum>
@@ -704,7 +704,7 @@
                                 <string>Other</string>
                             </property>
                             <property name="checked">
-                                <bool>false</bool>
+                                <bool>true</bool>
                             </property>
                         </widget>
                     </grid>
@@ -924,6 +924,42 @@
         <signal>returnPressed()</signal>
         <receiver>happyButton</receiver>
         <slot>animateClick()</slot>
+    </connection>
+    <connection>
+        <sender>insertCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>insertSlider</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>readCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>readSlider</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>snpCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>snpSlider</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>unitigCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>unitigSlider</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>qcCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>qcSlider</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>breakCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>breakSlider</receiver>
+        <slot>setEnabled(bool)</slot>
     </connection>
 </connections>
 <layoutdefaults spacing="6" margin="11"/>

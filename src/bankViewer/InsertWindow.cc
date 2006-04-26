@@ -118,43 +118,43 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   // Mate Types
   m_query->happyLabel->setPixmap
-    (mateIcon(UIElements::color_Happy));
+    (mateIcon(UIElements::color_Happy, 0));
   m_types[Insert::Happy].first = 7;
   m_types[Insert::Happy].second =
     m_query->happyCheck->isChecked();
 
   m_query->stretchedLabel->setPixmap
-    (mateIcon(UIElements::color_StretchedMate));
+    (mateIcon(UIElements::color_StretchedMate,0));
   m_types[Insert::StretchedMate].first = 6;
   m_types[Insert::StretchedMate].second =
     m_query->stretchedCheck->isChecked();
 
   m_query->compressedLabel->setPixmap
-    (mateIcon(UIElements::color_CompressedMate));
+    (mateIcon(UIElements::color_CompressedMate,0));
   m_types[Insert::CompressedMate].first = 5;
   m_types[Insert::CompressedMate].second =
     m_query->compressedCheck->isChecked();
 
   m_query->orientationLabel->setPixmap
-    (mateIcon(UIElements::color_OrientationViolation));
+    (mateIcon(UIElements::color_OrientationViolation,1));
   m_types[Insert::OrientationViolation].first = 4;
   m_types[Insert::OrientationViolation].second =
     m_query->orientationCheck->isChecked();
 
   m_query->linkingLabel->setPixmap
-    (mateIcon(UIElements::color_MissingMate));
+    (mateIcon(UIElements::color_MissingMate,1));
   m_types[Insert::MissingMate].first = 3;
   m_types[Insert::MissingMate].second =
     m_query->linkingCheck->isChecked();
 
   m_query->singletonLabel->setPixmap
-    (mateIcon(UIElements::color_SingletonMate));
+    (mateIcon(UIElements::color_SingletonMate,1));
   m_types[Insert::SingletonMate].first = 2;
   m_types[Insert::SingletonMate].second =
     m_query->singletonCheck->isChecked();
 
   m_query->unmatedLabel->setPixmap
-    (mateIcon(UIElements::color_NoMate));
+    (mateIcon(UIElements::color_NoMate,2));
   m_types[Insert::NoMate].first = 1;
   m_types[Insert::NoMate].second =
     m_query->unmatedCheck->isChecked();
@@ -186,24 +186,72 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(m_query->searchButton, SIGNAL(clicked()),
           this,                  SLOT(loadSearch()));
 
-  connect(this, SIGNAL(search(const QString &)),
-          iw,   SIGNAL(search(const QString &)));
+  connect(this,                  SIGNAL(search(const QString &)),
+          iw,                    SIGNAL(search(const QString &)));
 
-  connect(m_query->happyButton, SIGNAL(clicked()),
-          this,                 SLOT(loadHappyDistance()));
+  connect(m_query->happyButton,  SIGNAL(clicked()),
+          this,                  SLOT(loadHappyDistance()));
 
-  connect(this, SIGNAL(setHappyDistance(float)),
-          iw,   SLOT(setHappyDistance(float)));
+  connect(this,                  SIGNAL(setHappyDistance(float)),
+          iw,                    SLOT(setHappyDistance(float)));
 
   // feature filters
+  connect(iw,                    SIGNAL(newMaxInsertCovTol(int)),
+          this,                  SLOT(setMaxInsertCovTol(int)));
+
+  connect(m_query->insertCheck,  SIGNAL(toggled(bool)),
+          iw,                    SLOT(setInsertCovFeatures(bool)));
+
   connect(m_query->insertSlider, SIGNAL(valueChanged(int)),
           iw,                    SLOT(setInsertCovTol(int)));
+
+  connect(iw,                    SIGNAL(newMaxReadCovTol(int)),
+          this,                  SLOT(setMaxReadCovTol(int)));
 
   connect(m_query->readSlider,   SIGNAL(valueChanged(int)),
           iw,                    SLOT(setReadCovTol(int)));
 
-  connect(iw,   SIGNAL(newCovTols(int,int)),
-          this, SLOT(setCovTols(int,int)));
+  connect(m_query->readCheck,    SIGNAL(toggled(bool)),
+          iw,                    SLOT(setReadCovFeatures(bool)));
+
+  connect(iw,                    SIGNAL(newMaxSNPTol(int)),
+          this,                  SLOT(setMaxSNPTol(int)));
+
+  connect(m_query->snpSlider,    SIGNAL(valueChanged(int)),
+          iw,                    SLOT(setSNPTol(int)));
+
+  connect(m_query->snpCheck,     SIGNAL(toggled(bool)),
+          iw,                    SLOT(setSNPFeatures(bool)));
+
+  connect(iw,                    SIGNAL(newMaxUnitigTol(int)),
+          this,                  SLOT(setMaxUnitigTol(int)));
+
+  connect(m_query->unitigSlider, SIGNAL(valueChanged(int)),
+          iw,                    SLOT(setUnitigTol(int)));
+
+  connect(m_query->unitigCheck,  SIGNAL(toggled(bool)),
+          iw,                    SLOT(setUnitigFeatures(bool)));
+
+  connect(iw,                    SIGNAL(newMaxQCTol(int)),
+          this,                  SLOT(setMaxQCTol(int)));
+
+  connect(m_query->qcSlider,     SIGNAL(valueChanged(int)),
+          iw,                    SLOT(setQCTol(int)));
+
+  connect(m_query->qcCheck,      SIGNAL(toggled(bool)),
+          iw,                    SLOT(setQCFeatures(bool)));
+
+  connect(iw,                    SIGNAL(newMaxBreakTol(int)),
+          this,                  SLOT(setMaxBreakTol(int)));
+
+  connect(m_query->breakSlider,  SIGNAL(valueChanged(int)),
+          iw,                    SLOT(setBreakTol(int)));
+
+  connect(m_query->breakCheck,   SIGNAL(toggled(bool)),
+          iw,                    SLOT(setBreakFeatures(bool)));
+
+  connect(m_query->otherCheck,   SIGNAL(toggled(bool)),
+          iw,                    SLOT(setOtherFeatures(bool)));
 
   // mate type toggles
   connect(m_query->happyCheck,       SIGNAL(toggled(bool)),
@@ -304,26 +352,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   iw->paintCanvas(); // TODO: Is this necessary?
 }
 
-void InsertWindow::setCovTols(int insert, int read)
-{
-  bool insmax = false;
-  if ( m_query->insertSlider->value() == m_query->insertSlider->maxValue() )
-    insmax = true;
-
-  bool readmax = false;
-  if ( m_query->readSlider->value() == m_query->readSlider->maxValue() )
-    readmax = true;
-
-  m_query->insertSlider->setRange(0, insert);
-  m_query->readSlider->setRange(0, read);
-
-  if ( insmax ) m_query->insertSlider->setValue(insert);
-  if ( readmax ) m_query->readSlider->setValue(read);
-
-  m_inserts->setInsertCovTol(m_query->insertSlider->value());
-  m_inserts->setReadCovTol(m_query->readSlider->value());
-}
-
 int InsertWindow::s_persistant(0);
 
 void InsertWindow::buildLibraryMenu()
@@ -398,15 +426,57 @@ void InsertWindow::bankChanged()
   buildLibraryMenu();
 }
 
-QPixmap InsertWindow::mateIcon(const QColor & color)
+QPixmap InsertWindow::mateIcon(const QColor & color,int mode)
 {
-  static QPixmap mate (90,4);
-  static const QRect cutout (30,0,30,3);
+  static const int height = 4;
+  static const int readwidth = 30;
+  static QPixmap mate (readwidth * 3, height);
+  static const QRect cutout (readwidth,0,readwidth,height-1);
+  static const QRect nomate (readwidth,0,readwidth*2,height-1);
+  static const QRect nolink (readwidth,0,readwidth*2,height);
 
   QPainter p(&mate);
   p.fillRect(mate.rect(), color);
-  p.fillRect(cutout, paletteBackgroundColor());
+  if ( mode == 0 ) p.fillRect(cutout, paletteBackgroundColor());
+  if ( mode == 1 ) p.fillRect(nomate, paletteBackgroundColor());
+  if ( mode == 2 ) p.fillRect(nolink, paletteBackgroundColor());
   p.end();
 
   return mate;
+}
+
+void InsertWindow::setMaxInsertCovTol(int maxtol)
+{
+  m_query->insertSlider->setRange(0, maxtol);
+  m_inserts->setInsertCovTol(m_query->insertSlider->value());
+}
+
+void InsertWindow::setMaxReadCovTol(int maxtol)
+{
+  m_query->readSlider->setRange(0, maxtol);
+  m_inserts->setReadCovTol(m_query->readSlider->value());
+}
+
+void InsertWindow::setMaxSNPTol(int maxtol)
+{
+  m_query->snpSlider->setRange(0, maxtol);
+  m_inserts->setSNPTol(m_query->snpSlider->value());
+}
+
+void InsertWindow::setMaxUnitigTol(int maxtol)
+{
+  m_query->unitigSlider->setRange(0, maxtol);
+  m_inserts->setUnitigTol(m_query->unitigSlider->value());
+}
+
+void InsertWindow::setMaxQCTol(int maxtol)
+{
+  m_query->qcSlider->setRange(0, maxtol);
+  m_inserts->setQCTol(m_query->qcSlider->value());
+}
+
+void InsertWindow::setMaxBreakTol(int maxtol)
+{
+  m_query->breakSlider->setRange(0, maxtol);
+  m_inserts->setBreakTol(m_query->breakSlider->value());
 }

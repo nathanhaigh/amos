@@ -4,6 +4,14 @@
 using namespace AMOS;
 using namespace std;
 
+CoverageStats::CoverageStats() :
+  m_coverage(0),
+  m_libid(0),
+  m_maxdepth(0),
+  m_curpos(0),
+  m_sum(0)
+{}
+
 CoverageStats::CoverageStats(int numpoints, ID_t libid, Distribution_t dist) :
    m_coverage(numpoints),
    m_libid(libid),
@@ -16,6 +24,27 @@ CoverageStats::CoverageStats(int numpoints, ID_t libid, Distribution_t dist) :
   m_cestat.resize(numpoints);
 }
 
+CoverageStats::CoverageStats(const CoverageStats & other)
+{
+  *this = other;
+}
+
+CoverageStats & CoverageStats::operator=(const CoverageStats & other)
+{
+  if ( this != &other )
+    {
+      m_coverage = other.m_coverage.copy();
+      m_cestat = other.m_cestat;
+      m_libid = other.m_libid;
+      m_dist = other.m_dist;
+      m_maxdepth = other.m_maxdepth;
+      m_curpos = other.m_curpos;
+      m_sum = other.m_sum;
+      m_endpoints = other.m_endpoints;
+    }
+
+  return *this;
+}
 
 void CoverageStats::addEndpoints(int curloffset, int curroffset)
 {
