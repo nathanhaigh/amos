@@ -121,22 +121,29 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   p.setColor (QColorGroup::Button, UIElements::color_featinsertcov);
   m_query->insertSlider->setPalette(p);
+  iw->setInsertCovFeatures (m_query->insertCheck->isChecked());
 
   p.setColor (QColorGroup::Button, UIElements::color_featreadcov);
   m_query->readSlider->setPalette(p);
+  iw->setReadCovFeatures (m_query->readCheck->isChecked());
 
   p.setColor (QColorGroup::Button, UIElements::color_featsnp);
   m_query->snpSlider->setPalette(p);
+  iw->setSNPFeatures (m_query->snpCheck->isChecked());
 
   p.setColor (QColorGroup::Button, UIElements::color_featunitig);
   m_query->unitigSlider->setPalette(p);
+  iw->setUnitigFeatures (m_query->unitigCheck->isChecked());
 
   p.setColor (QColorGroup::Button, UIElements::color_featcoverage);
   m_query->qcSlider->setPalette(p);
+  iw->setQCFeatures (m_query->qcCheck->isChecked());
 
   p.setColor (QColorGroup::Button, UIElements::color_featbreak);
   m_query->breakSlider->setPalette(p);
+  iw->setBreakFeatures (m_query->breakCheck->isChecked());
 
+  iw->setOtherFeatures (m_query->otherCheck->isChecked());
 
   // Mate types
   m_query->happyLabel->setPixmap
