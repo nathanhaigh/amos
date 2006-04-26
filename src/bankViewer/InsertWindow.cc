@@ -169,6 +169,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 
   // Mate Colors
+  iw->setColorByStretchiness(m_query->continuousButton->isChecked());
   iw->setColorByMate(m_query->linkingButton->isChecked());
   iw->setColorByLibrary(m_query->libraryButton->isChecked());
 
@@ -243,6 +244,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
           iw,                        SLOT(setTintHappiness(bool)));
 
   // mate coloring
+  connect(m_query->continuousButton, SIGNAL(toggled(bool)),
+          iw,                        SLOT(setColorByStretchiness(bool)));
+
   connect(m_query->linkingButton,    SIGNAL(toggled(bool)),
           iw,                        SLOT(setColorByMate(bool)));
 
