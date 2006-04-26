@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>273</width>
-            <height>693</height>
+            <width>268</width>
+            <height>705</height>
         </rect>
     </property>
     <property name="caption">
@@ -30,7 +30,7 @@
                 <cstring>queryBox</cstring>
             </property>
             <property name="title">
-                <string>Queries</string>
+                <string> Queries</string>
             </property>
             <property name="flat">
                 <bool>true</bool>
@@ -914,16 +914,16 @@
 </widget>
 <connections>
     <connection>
-        <sender>searchEdit</sender>
-        <signal>returnPressed()</signal>
-        <receiver>searchButton</receiver>
-        <slot>animateClick()</slot>
+        <sender>breakCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>breakSlider</receiver>
+        <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>happyEdit</sender>
-        <signal>returnPressed()</signal>
-        <receiver>happyButton</receiver>
-        <slot>animateClick()</slot>
+        <sender>qcCheck</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>qcSlider</receiver>
+        <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
         <sender>insertCheck</sender>
@@ -950,16 +950,16 @@
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>qcCheck</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>qcSlider</receiver>
-        <slot>setEnabled(bool)</slot>
+        <sender>searchEdit</sender>
+        <signal>returnPressed()</signal>
+        <receiver>searchButton</receiver>
+        <slot>animateClick()</slot>
     </connection>
     <connection>
-        <sender>breakCheck</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>breakSlider</receiver>
-        <slot>setEnabled(bool)</slot>
+        <sender>happyEdit</sender>
+        <signal>returnPressed()</signal>
+        <receiver>happyButton</receiver>
+        <slot>animateClick()</slot>
     </connection>
 </connections>
 <layoutdefaults spacing="6" margin="11"/>

@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>DetailWidget</class>
 <widget class="QWidget">
     <property name="name">
@@ -8,14 +8,14 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>378</width>
-            <height>473</height>
+            <width>553</width>
+            <height>537</height>
         </rect>
     </property>
     <property name="caption">
         <string>Form2</string>
     </property>
-    <vbox>
+    <grid>
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
@@ -25,12 +25,12 @@
         <property name="spacing">
             <number>0</number>
         </property>
-        <widget class="QGroupBox">
+        <widget class="QGroupBox" row="0" column="0">
             <property name="name">
                 <cstring>detailBox</cstring>
             </property>
             <property name="title">
-                <string>Selection Details</string>
+                <string> Selection Details</string>
             </property>
             <property name="flat">
                 <bool>true</bool>
@@ -38,6 +38,12 @@
             <vbox>
                 <property name="name">
                     <cstring>unnamed</cstring>
+                </property>
+                <property name="margin">
+                    <number>0</number>
+                </property>
+                <property name="spacing">
+                    <number>0</number>
                 </property>
                 <widget class="QTextEdit">
                     <property name="name">
@@ -66,13 +72,10 @@
                     <property name="readOnly">
                         <bool>true</bool>
                     </property>
-                    <property name="tabStopWidth">
-                        <number>20</number>
-                    </property>
                 </widget>
             </vbox>
         </widget>
-    </vbox>
+    </grid>
 </widget>
 <layoutdefaults spacing="6" margin="11"/>
 </UI>
