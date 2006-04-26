@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Tue Apr 25 14:06:26 2006
+** Created: Tue Apr 25 22:47:28 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -13,17 +13,17 @@
 #include <qpushbutton.h>
 #include <qgroupbox.h>
 #include <qlineedit.h>
+#include <qcheckbox.h>
 #include <qlabel.h>
 #include <qslider.h>
-#include <qcheckbox.h>
 #include <qbuttongroup.h>
 #include <qradiobutton.h>
 #include <qlayout.h>
 #include <qtooltip.h>
 #include <qwhatsthis.h>
 
-/* 
- *  Constructs a QueryWidget as a child of 'parent', with the 
+/*
+ *  Constructs a QueryWidget as a child of 'parent', with the
  *  name 'name' and widget flags set to 'f'.
  */
 QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
@@ -72,6 +72,107 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     layout8->addWidget( happyButton );
 
     queryBoxLayout->addMultiCellLayout( layout8, 1, 1, 0, 1 );
+
+    mateTypeBox = new QGroupBox( queryBox, "mateTypeBox" );
+    mateTypeBox->setColumnLayout(0, Qt::Vertical );
+    mateTypeBox->layout()->setSpacing( 6 );
+    mateTypeBox->layout()->setMargin( 11 );
+    mateTypeBoxLayout = new QGridLayout( mateTypeBox->layout() );
+    mateTypeBoxLayout->setAlignment( Qt::AlignTop );
+
+    singletonCheck = new QCheckBox( mateTypeBox, "singletonCheck" );
+    QFont singletonCheck_font(  singletonCheck->font() );
+    singletonCheck_font.setPointSize( 9 );
+    singletonCheck->setFont( singletonCheck_font ); 
+    singletonCheck->setChecked( TRUE );
+
+    mateTypeBoxLayout->addWidget( singletonCheck, 5, 0 );
+
+    unmatedCheck = new QCheckBox( mateTypeBox, "unmatedCheck" );
+    QFont unmatedCheck_font(  unmatedCheck->font() );
+    unmatedCheck_font.setPointSize( 9 );
+    unmatedCheck->setFont( unmatedCheck_font ); 
+    unmatedCheck->setChecked( TRUE );
+
+    mateTypeBoxLayout->addWidget( unmatedCheck, 6, 0 );
+
+    stretchedCheck = new QCheckBox( mateTypeBox, "stretchedCheck" );
+    QFont stretchedCheck_font(  stretchedCheck->font() );
+    stretchedCheck_font.setPointSize( 9 );
+    stretchedCheck->setFont( stretchedCheck_font ); 
+    stretchedCheck->setChecked( TRUE );
+
+    mateTypeBoxLayout->addWidget( stretchedCheck, 1, 0 );
+
+    linkingCheck = new QCheckBox( mateTypeBox, "linkingCheck" );
+    QFont linkingCheck_font(  linkingCheck->font() );
+    linkingCheck_font.setPointSize( 9 );
+    linkingCheck->setFont( linkingCheck_font ); 
+    linkingCheck->setChecked( TRUE );
+
+    mateTypeBoxLayout->addWidget( linkingCheck, 4, 0 );
+
+    compressedCheck = new QCheckBox( mateTypeBox, "compressedCheck" );
+    QFont compressedCheck_font(  compressedCheck->font() );
+    compressedCheck_font.setPointSize( 9 );
+    compressedCheck->setFont( compressedCheck_font ); 
+    compressedCheck->setChecked( TRUE );
+
+    mateTypeBoxLayout->addWidget( compressedCheck, 2, 0 );
+
+    happyCheck = new QCheckBox( mateTypeBox, "happyCheck" );
+    happyCheck->setPaletteForegroundColor( QColor( 0, 0, 0 ) );
+    QFont happyCheck_font(  happyCheck->font() );
+    happyCheck_font.setPointSize( 9 );
+    happyCheck->setFont( happyCheck_font ); 
+    happyCheck->setChecked( TRUE );
+
+    mateTypeBoxLayout->addWidget( happyCheck, 0, 0 );
+
+    orientationCheck = new QCheckBox( mateTypeBox, "orientationCheck" );
+    QFont orientationCheck_font(  orientationCheck->font() );
+    orientationCheck_font.setPointSize( 9 );
+    orientationCheck->setFont( orientationCheck_font ); 
+    orientationCheck->setChecked( TRUE );
+
+    mateTypeBoxLayout->addWidget( orientationCheck, 3, 0 );
+
+    happyLabel = new QLabel( mateTypeBox, "happyLabel" );
+    happyLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)0, 0, 0, happyLabel->sizePolicy().hasHeightForWidth() ) );
+
+    mateTypeBoxLayout->addWidget( happyLabel, 0, 1 );
+
+    stretchedLabel = new QLabel( mateTypeBox, "stretchedLabel" );
+    stretchedLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)0, 0, 0, stretchedLabel->sizePolicy().hasHeightForWidth() ) );
+
+    mateTypeBoxLayout->addWidget( stretchedLabel, 1, 1 );
+
+    compressedLabel = new QLabel( mateTypeBox, "compressedLabel" );
+    compressedLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)0, 0, 0, compressedLabel->sizePolicy().hasHeightForWidth() ) );
+
+    mateTypeBoxLayout->addWidget( compressedLabel, 2, 1 );
+
+    linkingLabel = new QLabel( mateTypeBox, "linkingLabel" );
+    linkingLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)0, 0, 0, linkingLabel->sizePolicy().hasHeightForWidth() ) );
+
+    mateTypeBoxLayout->addWidget( linkingLabel, 4, 1 );
+
+    orientationLabel = new QLabel( mateTypeBox, "orientationLabel" );
+    orientationLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)0, 0, 0, orientationLabel->sizePolicy().hasHeightForWidth() ) );
+
+    mateTypeBoxLayout->addWidget( orientationLabel, 3, 1 );
+
+    singletonLabel = new QLabel( mateTypeBox, "singletonLabel" );
+    singletonLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)0, 0, 0, singletonLabel->sizePolicy().hasHeightForWidth() ) );
+
+    mateTypeBoxLayout->addWidget( singletonLabel, 5, 1 );
+
+    unmatedLabel = new QLabel( mateTypeBox, "unmatedLabel" );
+    unmatedLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)0, 0, 0, unmatedLabel->sizePolicy().hasHeightForWidth() ) );
+
+    mateTypeBoxLayout->addWidget( unmatedLabel, 6, 1 );
+
+    queryBoxLayout->addMultiCellWidget( mateTypeBox, 3, 3, 0, 1 );
 
     featureBox = new QGroupBox( queryBox, "featureBox" );
     featureBox->setColumnLayout(0, Qt::Vertical );
@@ -220,133 +321,92 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
 
     queryBoxLayout->addMultiCellWidget( featureBox, 2, 2, 0, 1 );
 
-    mateColorBox = new QButtonGroup( queryBox, "mateColorBox" );
-
-    categoricalButton = new QRadioButton( mateColorBox, "categoricalButton" );
-    categoricalButton->setGeometry( QRect( 10, 30, 83, 20 ) );
-    QFont categoricalButton_font(  categoricalButton->font() );
-    categoricalButton_font.setPointSize( 9 );
-    categoricalButton->setFont( categoricalButton_font ); 
-    categoricalButton->setChecked( TRUE );
-
-    stretchButton = new QRadioButton( mateColorBox, "stretchButton" );
-    stretchButton->setGeometry( QRect( 10, 60, 83, 20 ) );
-    QFont stretchButton_font(  stretchButton->font() );
-    stretchButton_font.setPointSize( 9 );
-    stretchButton->setFont( stretchButton_font ); 
-    stretchButton->setChecked( FALSE );
-
-    linkingButton = new QRadioButton( mateColorBox, "linkingButton" );
-    linkingButton->setGeometry( QRect( 10, 90, 83, 20 ) );
-    QFont linkingButton_font(  linkingButton->font() );
-    linkingButton_font.setPointSize( 9 );
-    linkingButton->setFont( linkingButton_font ); 
-
-    libraryButton = new QRadioButton( mateColorBox, "libraryButton" );
-    libraryButton->setGeometry( QRect( 10, 120, 83, 20 ) );
-    QFont libraryButton_font(  libraryButton->font() );
-    libraryButton_font.setPointSize( 9 );
-    libraryButton->setFont( libraryButton_font ); 
-
-    queryBoxLayout->addWidget( mateColorBox, 3, 1 );
-
-    mateTypeBox = new QGroupBox( queryBox, "mateTypeBox" );
-    mateTypeBox->setColumnLayout(0, Qt::Vertical );
-    mateTypeBox->layout()->setSpacing( 6 );
-    mateTypeBox->layout()->setMargin( 11 );
-    mateTypeBoxLayout = new QVBoxLayout( mateTypeBox->layout() );
-    mateTypeBoxLayout->setAlignment( Qt::AlignTop );
-
-    happyCheck = new QCheckBox( mateTypeBox, "happyCheck" );
-    happyCheck->setPaletteForegroundColor( QColor( 0, 0, 0 ) );
-    QFont happyCheck_font(  happyCheck->font() );
-    happyCheck_font.setPointSize( 9 );
-    happyCheck->setFont( happyCheck_font ); 
-    happyCheck->setChecked( TRUE );
-    mateTypeBoxLayout->addWidget( happyCheck );
-
-    stretchedCheck = new QCheckBox( mateTypeBox, "stretchedCheck" );
-    QFont stretchedCheck_font(  stretchedCheck->font() );
-    stretchedCheck_font.setPointSize( 9 );
-    stretchedCheck->setFont( stretchedCheck_font ); 
-    stretchedCheck->setChecked( TRUE );
-    mateTypeBoxLayout->addWidget( stretchedCheck );
-
-    compressedCheck = new QCheckBox( mateTypeBox, "compressedCheck" );
-    QFont compressedCheck_font(  compressedCheck->font() );
-    compressedCheck_font.setPointSize( 9 );
-    compressedCheck->setFont( compressedCheck_font ); 
-    compressedCheck->setChecked( TRUE );
-    mateTypeBoxLayout->addWidget( compressedCheck );
-
-    orientationCheck = new QCheckBox( mateTypeBox, "orientationCheck" );
-    QFont orientationCheck_font(  orientationCheck->font() );
-    orientationCheck_font.setPointSize( 9 );
-    orientationCheck->setFont( orientationCheck_font ); 
-    orientationCheck->setChecked( TRUE );
-    mateTypeBoxLayout->addWidget( orientationCheck );
-
-    linkingCheck = new QCheckBox( mateTypeBox, "linkingCheck" );
-    QFont linkingCheck_font(  linkingCheck->font() );
-    linkingCheck_font.setPointSize( 9 );
-    linkingCheck->setFont( linkingCheck_font ); 
-    linkingCheck->setChecked( TRUE );
-    mateTypeBoxLayout->addWidget( linkingCheck );
-
-    singletonCheck = new QCheckBox( mateTypeBox, "singletonCheck" );
-    QFont singletonCheck_font(  singletonCheck->font() );
-    singletonCheck_font.setPointSize( 9 );
-    singletonCheck->setFont( singletonCheck_font ); 
-    singletonCheck->setChecked( TRUE );
-    mateTypeBoxLayout->addWidget( singletonCheck );
-
-    unmatedCheck = new QCheckBox( mateTypeBox, "unmatedCheck" );
-    QFont unmatedCheck_font(  unmatedCheck->font() );
-    unmatedCheck_font.setPointSize( 9 );
-    unmatedCheck->setFont( unmatedCheck_font ); 
-    unmatedCheck->setChecked( TRUE );
-    mateTypeBoxLayout->addWidget( unmatedCheck );
-
-    queryBoxLayout->addWidget( mateTypeBox, 3, 0 );
-
     displayBox = new QGroupBox( queryBox, "displayBox" );
+    displayBox->setColumnLayout(0, Qt::Vertical );
+    displayBox->layout()->setSpacing( 6 );
+    displayBox->layout()->setMargin( 11 );
+    displayBoxLayout = new QVBoxLayout( displayBox->layout() );
+    displayBoxLayout->setAlignment( Qt::AlignTop );
 
     coverageCheck = new QCheckBox( displayBox, "coverageCheck" );
-    coverageCheck->setGeometry( QRect( 10, 20, 120, 20 ) );
     coverageCheck->setPaletteForegroundColor( QColor( 0, 0, 0 ) );
     QFont coverageCheck_font(  coverageCheck->font() );
     coverageCheck_font.setPointSize( 9 );
     coverageCheck->setFont( coverageCheck_font ); 
     coverageCheck->setChecked( TRUE );
+    displayBoxLayout->addWidget( coverageCheck );
 
     ceCheck = new QCheckBox( displayBox, "ceCheck" );
-    ceCheck->setGeometry( QRect( 10, 50, 120, 20 ) );
     ceCheck->setPaletteForegroundColor( QColor( 0, 0, 0 ) );
     QFont ceCheck_font(  ceCheck->font() );
     ceCheck_font.setPointSize( 9 );
     ceCheck->setFont( ceCheck_font ); 
     ceCheck->setChecked( FALSE );
+    displayBoxLayout->addWidget( ceCheck );
 
     mateCheck = new QCheckBox( displayBox, "mateCheck" );
-    mateCheck->setGeometry( QRect( 10, 80, 120, 20 ) );
     mateCheck->setPaletteForegroundColor( QColor( 0, 0, 0 ) );
     QFont mateCheck_font(  mateCheck->font() );
     mateCheck_font.setPointSize( 9 );
     mateCheck->setFont( mateCheck_font ); 
     mateCheck->setChecked( TRUE );
+    displayBoxLayout->addWidget( mateCheck );
 
     partitionCheck = new QCheckBox( displayBox, "partitionCheck" );
-    partitionCheck->setGeometry( QRect( 10, 110, 120, 20 ) );
     partitionCheck->setPaletteForegroundColor( QColor( 0, 0, 0 ) );
     QFont partitionCheck_font(  partitionCheck->font() );
     partitionCheck_font.setPointSize( 9 );
     partitionCheck->setFont( partitionCheck_font ); 
     partitionCheck->setChecked( TRUE );
+    displayBoxLayout->addWidget( partitionCheck );
 
-    queryBoxLayout->addMultiCellWidget( displayBox, 4, 4, 0, 1 );
+    tintCheck = new QCheckBox( displayBox, "tintCheck" );
+    tintCheck->setPaletteForegroundColor( QColor( 0, 0, 0 ) );
+    QFont tintCheck_font(  tintCheck->font() );
+    tintCheck_font.setPointSize( 9 );
+    tintCheck->setFont( tintCheck_font ); 
+    tintCheck->setChecked( FALSE );
+    displayBoxLayout->addWidget( tintCheck );
+
+    queryBoxLayout->addWidget( displayBox, 4, 0 );
+
+    mateColorBox = new QButtonGroup( queryBox, "mateColorBox" );
+    mateColorBox->setColumnLayout(0, Qt::Vertical );
+    mateColorBox->layout()->setSpacing( 6 );
+    mateColorBox->layout()->setMargin( 11 );
+    mateColorBoxLayout = new QVBoxLayout( mateColorBox->layout() );
+    mateColorBoxLayout->setAlignment( Qt::AlignTop );
+
+    categoricalButton = new QRadioButton( mateColorBox, "categoricalButton" );
+    QFont categoricalButton_font(  categoricalButton->font() );
+    categoricalButton_font.setPointSize( 9 );
+    categoricalButton->setFont( categoricalButton_font ); 
+    categoricalButton->setChecked( TRUE );
+    mateColorBoxLayout->addWidget( categoricalButton );
+
+    continuousButton = new QRadioButton( mateColorBox, "continuousButton" );
+    QFont continuousButton_font(  continuousButton->font() );
+    continuousButton_font.setPointSize( 9 );
+    continuousButton->setFont( continuousButton_font ); 
+    continuousButton->setChecked( FALSE );
+    mateColorBoxLayout->addWidget( continuousButton );
+
+    linkingButton = new QRadioButton( mateColorBox, "linkingButton" );
+    QFont linkingButton_font(  linkingButton->font() );
+    linkingButton_font.setPointSize( 9 );
+    linkingButton->setFont( linkingButton_font ); 
+    mateColorBoxLayout->addWidget( linkingButton );
+
+    libraryButton = new QRadioButton( mateColorBox, "libraryButton" );
+    QFont libraryButton_font(  libraryButton->font() );
+    libraryButton_font.setPointSize( 9 );
+    libraryButton->setFont( libraryButton_font ); 
+    mateColorBoxLayout->addWidget( libraryButton );
+
+    queryBoxLayout->addWidget( mateColorBox, 4, 1 );
     QueryWidgetLayout->addWidget( queryBox );
     languageChange();
-    resize( QSize(266, 714).expandedTo(minimumSizeHint()) );
+    resize( QSize(273, 682).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections
@@ -373,6 +433,21 @@ void QueryWidget::languageChange()
     searchButton->setText( tr( "Search" ) );
     happyEdit->setText( tr( "2.0" ) );
     happyButton->setText( tr( "Happy Distance" ) );
+    mateTypeBox->setTitle( tr( "Mate Types" ) );
+    singletonCheck->setText( tr( "Singleton" ) );
+    unmatedCheck->setText( tr( "Unmated" ) );
+    stretchedCheck->setText( tr( "Stretched" ) );
+    linkingCheck->setText( tr( "Linking" ) );
+    compressedCheck->setText( tr( "Compressed" ) );
+    happyCheck->setText( tr( "Happy" ) );
+    orientationCheck->setText( tr( "Orientation" ) );
+    happyLabel->setText( tr( "pixmap" ) );
+    stretchedLabel->setText( tr( "pixmap" ) );
+    compressedLabel->setText( tr( "pixmap" ) );
+    linkingLabel->setText( tr( "pixmap" ) );
+    orientationLabel->setText( tr( "pixmap" ) );
+    singletonLabel->setText( tr( "pixmap" ) );
+    unmatedLabel->setText( tr( "pixmap" ) );
     featureBox->setTitle( tr( "Features" ) );
     noneLabel->setText( tr( "NONE" ) );
     allLabel->setText( tr( "ALL" ) );
@@ -383,23 +458,16 @@ void QueryWidget::languageChange()
     qcCheck->setText( tr( "AsmQC" ) );
     breakCheck->setText( tr( "Breaks" ) );
     otherCheck->setText( tr( "Other" ) );
+    displayBox->setTitle( tr( "Display" ) );
+    coverageCheck->setText( tr( "Coverage Stat" ) );
+    ceCheck->setText( tr( "CE Statistic" ) );
+    mateCheck->setText( tr( "Connect Mates" ) );
+    partitionCheck->setText( tr( "Partition Types" ) );
+    tintCheck->setText( tr( "Tint Partitions" ) );
     mateColorBox->setTitle( tr( "Mate Colors" ) );
     categoricalButton->setText( tr( "Categorical" ) );
-    stretchButton->setText( tr( "Stretch" ) );
+    continuousButton->setText( tr( "Continuous" ) );
     linkingButton->setText( tr( "Linking" ) );
     libraryButton->setText( tr( "Library" ) );
-    mateTypeBox->setTitle( tr( "Mate Types" ) );
-    happyCheck->setText( tr( "Happy" ) );
-    stretchedCheck->setText( tr( "Stretched" ) );
-    compressedCheck->setText( tr( "Compressed" ) );
-    orientationCheck->setText( tr( "Orientation" ) );
-    linkingCheck->setText( tr( "Linking" ) );
-    singletonCheck->setText( tr( "Singleton" ) );
-    unmatedCheck->setText( tr( "Unmated" ) );
-    displayBox->setTitle( tr( "Display" ) );
-    coverageCheck->setText( tr( "Coverage Statistic" ) );
-    ceCheck->setText( tr( "CE Statistic" ) );
-    mateCheck->setText( tr( "Connected Mates" ) );
-    partitionCheck->setText( tr( "Partition Types" ) );
 }
 

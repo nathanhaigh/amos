@@ -19,6 +19,7 @@
 #include <qtextedit.h>
 #include <qscrollview.h>
 #include <qvbox.h>
+#include <qradiobutton.h>
 
 #include "DataStore.hh"
 #include "UIElements.hh"
@@ -45,23 +46,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   const char * states = Insert::allstates;
   unsigned int type = 0;
 
-  // Dock windows
-  QDockWindow * queryDock = new QDockWindow (QDockWindow::InDock, this);
-  QScrollView * queryView = new QScrollView (queryDock, "queryview");
-  queryView->setResizePolicy (QScrollView::AutoOneFit);
-  m_query = new QueryWidget (queryView, "queries");
-  queryView->addChild (m_query);
-  queryDock->setWidget (queryView);
-  queryDock->setResizeEnabled (true);
-  addDockWindow (queryDock, Qt::DockRight);
-
-  QDockWindow * detailDock = new QDockWindow (QDockWindow::InDock, this);
-  m_detail = new DetailWidget (detailDock, "details");
-  detailDock->setWidget (m_detail);
-  detailDock->setResizeEnabled (true);
-  addDockWindow (detailDock, Qt::DockRight);
-
-
   // Libraries
   m_libmenu = new QPopupMenu(this);
   menuBar()->insertItem("&Libraries", m_libmenu);
@@ -86,67 +70,12 @@ InsertWindow::InsertWindow(DataStore * datastore,
     m_featmenu->insertItem(QIconSet(rect), name);
   }
 
-  // Display Types
-  m_typesmenu = new QPopupMenu(this);
-  menuBar()->insertItem("&Mate Types", m_typesmenu);
-
-  for (unsigned int i = 0; i < strlen(states); i++)
-  {
-    char state = states[i];
-    QPixmap rect(10,10);
-
-    QPainter p(&rect);
-    p.fillRect(rect.rect(), UIElements::getInsertColor((Insert::MateState)state));
-    p.end();
-
-    QString name = (QString)"[" + state + "] ";
-    name += Insert::getInsertTypeStr((Insert::MateState)state);
-
-    m_types[state].first = m_typesmenu->insertItem(QIconSet(rect), name);
-    m_types[state].second = true;
-    m_typesmenu->setItemChecked(m_types[state].first, m_types[state].second);
-  }
-
-  // Options
-  m_optionsmenu = new QPopupMenu(this);
-  menuBar()->insertItem("&Options", m_optionsmenu);
-  m_scaffid = m_optionsmenu->insertItem("&Scaffold Plot", this, SLOT(togglePaintScaffold()));
-  m_optionsmenu->setItemChecked(m_scaffid, true);
-
-  m_showscaffid = m_optionsmenu->insertItem("Show Scaffol&d", this, SLOT(toggleShowScaffold()));
-  m_optionsmenu->setItemChecked(m_showscaffid, true);
-
-  m_optionsmenu->insertSeparator();
-
-  m_coverageid = m_optionsmenu->insertItem("Coverage Plo&t", this, SLOT(toggleCoveragePlot()));
-  m_optionsmenu->setItemChecked(m_coverageid, true);
-
-  m_ceid = m_optionsmenu->insertItem("C&E Statisitic", this, SLOT(toggleCEStatistic()));
-  m_optionsmenu->setItemChecked(m_ceid, false);
-
-  m_featid = m_optionsmenu->insertItem("Show &Features", this, SLOT(toggleFeatures()));
-  m_optionsmenu->setItemChecked(m_featid, true);
-
-  m_optionsmenu->insertSeparator();
-
-  m_connectmatesid = m_optionsmenu->insertItem("&Connect Mates", this, SLOT(toggleConnectMates()));
-  m_optionsmenu->setItemChecked(m_connectmatesid, true);
-
-  m_partitiontypesid = m_optionsmenu->insertItem("&Partition Types", this, SLOT(togglePartitionTypes()));
-  m_optionsmenu->setItemChecked(m_partitiontypesid, true);
-
-  m_optionsmenu->insertSeparator();
-
-  m_libcolorid = m_optionsmenu->insertItem("Color By &Library", this, SLOT(toggleColorByLibrary()));
-  m_optionsmenu->setItemChecked(m_libcolorid, false);
-
-  m_matecolorid = m_optionsmenu->insertItem("Color By Lin&ked Contig", this, SLOT(toggleColorByMate()));
-  m_optionsmenu->setItemChecked(m_matecolorid, false);
-
   // Main Widget
   m_inserts = new InsertWidget(datastore, m_types, this, "iw");
   InsertWidget * iw = m_inserts;
   setCentralWidget(iw);
+
+
 
   QToolBar * tools = new QToolBar(this, "tools");
   QIconSet icon_pointer(QPixmap((const char ** )pointer_tool));
@@ -171,14 +100,160 @@ InsertWindow::InsertWindow(DataStore * datastore,
   b->setMaximumWidth(25);
   connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
 
+
+  // Query Dock
+  QDockWindow * queryDock = new QDockWindow (QDockWindow::InDock, this);
+  QScrollView * queryView = new QScrollView (queryDock, "queryview");
+  queryView->setResizePolicy (QScrollView::AutoOneFit);
+  m_query = new QueryWidget (queryView, "queries");
+  queryView->addChild (m_query);
+  queryDock->setWidget (queryView);
+  queryDock->setResizeEnabled (true);
+  addDockWindow (queryDock, Qt::DockRight);
+
+
+  // Happy distance
   m_query->happyEdit->setText (QString::number(Insert::MAXSTDEV));
 
-  connect(m_typesmenu, SIGNAL(activated(int)),
-          this,        SLOT(toggleItem(int)));
 
+  // Mate Types
+  m_query->happyLabel->setPixmap
+    (mateIcon(UIElements::color_Happy));
+  m_types[Insert::Happy].first = 7;
+  m_types[Insert::Happy].second =
+    m_query->happyCheck->isChecked();
+
+  m_query->stretchedLabel->setPixmap
+    (mateIcon(UIElements::color_StretchedMate));
+  m_types[Insert::StretchedMate].first = 6;
+  m_types[Insert::StretchedMate].second =
+    m_query->stretchedCheck->isChecked();
+
+  m_query->compressedLabel->setPixmap
+    (mateIcon(UIElements::color_CompressedMate));
+  m_types[Insert::CompressedMate].first = 5;
+  m_types[Insert::CompressedMate].second =
+    m_query->compressedCheck->isChecked();
+
+  m_query->orientationLabel->setPixmap
+    (mateIcon(UIElements::color_OrientationViolation));
+  m_types[Insert::OrientationViolation].first = 4;
+  m_types[Insert::OrientationViolation].second =
+    m_query->orientationCheck->isChecked();
+
+  m_query->linkingLabel->setPixmap
+    (mateIcon(UIElements::color_MissingMate));
+  m_types[Insert::MissingMate].first = 3;
+  m_types[Insert::MissingMate].second =
+    m_query->linkingCheck->isChecked();
+
+  m_query->singletonLabel->setPixmap
+    (mateIcon(UIElements::color_SingletonMate));
+  m_types[Insert::SingletonMate].first = 2;
+  m_types[Insert::SingletonMate].second =
+    m_query->singletonCheck->isChecked();
+
+  m_query->unmatedLabel->setPixmap
+    (mateIcon(UIElements::color_NoMate));
+  m_types[Insert::NoMate].first = 1;
+  m_types[Insert::NoMate].second =
+    m_query->unmatedCheck->isChecked();
+
+
+  // Display
+  iw->setCoveragePlot(m_query->coverageCheck->isChecked());
+  iw->setCEStatistic(m_query->ceCheck->isChecked());
+  iw->setConnectMates(m_query->mateCheck->isChecked());
+  iw->setPartitionTypes(m_query->partitionCheck->isChecked());
+  iw->setTintHappiness(m_query->tintCheck->isChecked());
+
+
+  // Mate Colors
+  iw->setColorByMate(m_query->linkingButton->isChecked());
+  iw->setColorByLibrary(m_query->libraryButton->isChecked());
+
+
+  // Detail Dock
+  QDockWindow * detailDock = new QDockWindow (QDockWindow::InDock, this);
+  m_detail = new DetailWidget (detailDock, "details");
+  detailDock->setWidget (m_detail);
+  detailDock->setResizeEnabled (true);
+  addDockWindow (detailDock, Qt::DockRight);
+
+
+  // searching and happy distance
+  connect(m_query->searchButton, SIGNAL(clicked()),
+          this,                  SLOT(loadSearch()));
+
+  connect(this, SIGNAL(search(const QString &)),
+          iw,   SIGNAL(search(const QString &)));
+
+  connect(m_query->happyButton, SIGNAL(clicked()),
+          this,                 SLOT(loadHappyDistance()));
+
+  connect(this, SIGNAL(setHappyDistance(float)),
+          iw,   SLOT(setHappyDistance(float)));
+
+  // feature filters
+  connect(m_query->insertSlider, SIGNAL(valueChanged(int)),
+          iw,                    SLOT(setInsertCovTol(int)));
+
+  connect(m_query->readSlider,   SIGNAL(valueChanged(int)),
+          iw,                    SLOT(setReadCovTol(int)));
+
+  connect(iw,   SIGNAL(newCovTols(int,int)),
+          this, SLOT(setCovTols(int,int)));
+
+  // mate type toggles
+  connect(m_query->happyCheck,       SIGNAL(toggled(bool)),
+          this,                      SLOT(toggleItem()));
+
+  connect(m_query->stretchedCheck,   SIGNAL(toggled(bool)),
+          this,                      SLOT(toggleItem()));
+
+  connect(m_query->compressedCheck,  SIGNAL(toggled(bool)),
+          this,                      SLOT(toggleItem()));
+
+  connect(m_query->linkingCheck,     SIGNAL(toggled(bool)),
+          this,                      SLOT(toggleItem()));
+
+  connect(m_query->orientationCheck, SIGNAL(toggled(bool)),
+          this,                      SLOT(toggleItem()));
+
+  connect(m_query->singletonCheck,   SIGNAL(toggled(bool)),
+          this,                      SLOT(toggleItem()));
+
+  connect(m_query->unmatedCheck,     SIGNAL(toggled(bool)),
+          this,                      SLOT(toggleItem()));
+
+  // display toggles
+  connect(m_query->coverageCheck,    SIGNAL(toggled(bool)),
+          iw,                        SLOT(setCoveragePlot(bool)));
+
+  connect(m_query->ceCheck,          SIGNAL(toggled(bool)),
+          iw,                        SLOT(setCEStatistic(bool)));
+
+  connect(m_query->mateCheck,        SIGNAL(toggled(bool)),
+          iw,                        SLOT(setConnectMates(bool)));
+
+  connect(m_query->partitionCheck,   SIGNAL(toggled(bool)),
+          iw,                        SLOT(setPartitionTypes(bool)));
+
+  connect(m_query->tintCheck,        SIGNAL(toggled(bool)),
+          iw,                        SLOT(setTintHappiness(bool)));
+
+  // mate coloring
+  connect(m_query->linkingButton,    SIGNAL(toggled(bool)),
+          iw,                        SLOT(setColorByMate(bool)));
+
+  connect(m_query->libraryButton,    SIGNAL(toggled(bool)),
+          iw,                        SLOT(setColorByLibrary(bool)));
+
+  // detail text
   connect(iw,   SIGNAL(setDetails(const QString &)),
           m_detail->detailText, SLOT(setText(const QString &)));
 
+  // canvas operations
   connect(iw,   SIGNAL(setGindex(int)),
           this, SIGNAL(setGindex(int)));
 
@@ -191,57 +266,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(this, SIGNAL(paintCanvas()),
           iw,   SLOT(paintCanvas()));
 
-  connect(m_query->searchButton, SIGNAL(clicked()),
-          this,                  SLOT(loadSearch()));
-
-  connect(this, SIGNAL(search(const QString &)),
-          iw,   SIGNAL(search(const QString &)));
-
-  connect(m_query->happyButton, SIGNAL(clicked()),
-          this,                 SLOT(loadHappyDistance()));
-
-  connect(m_query->insertSlider, SIGNAL(valueChanged(int)),
-          iw,                    SLOT(setInsertCovTol(int)));
-
-  connect(m_query->readSlider, SIGNAL(valueChanged(int)),
-          iw,                  SLOT(setReadCovTol(int)));
-
-  connect(iw, SIGNAL(newCovTols(int,int)),
-          this, SLOT(setCovTols(int,int)));
-
-  connect(this, SIGNAL(setHappyDistance(float)),
-          iw,   SLOT(setHappyDistance(float)));
-
-  connect(this, SIGNAL(setShowScaffold(bool)),
-          iw,   SLOT(setShowScaffold(bool)));
-
-  connect(this, SIGNAL(setConnectMates(bool)),
-          iw,   SLOT(setConnectMates(bool)));
-
-  connect(this, SIGNAL(setPartitionTypes(bool)),
-          iw,   SLOT(setPartitionTypes(bool)));
-
-  connect(this, SIGNAL(setCoveragePlot(bool)),
-          iw,   SLOT(setCoveragePlot(bool)));
-
-  connect(this, SIGNAL(setTintHappiness(bool)),
-          iw,   SLOT(setTintHappiness(bool)));
-
-  connect(this, SIGNAL(setCEStatistic(bool)),
-          iw,   SLOT(setCEStatistic(bool)));
-
-  connect(this, SIGNAL(setPaintScaffold(bool)),
-          iw,   SLOT(setPaintScaffold(bool)));
-
-  connect(this, SIGNAL(setFeatures(bool)),
-          iw,   SLOT(setFeatures(bool)));
-
-  connect(this, SIGNAL(setColorByLibrary(bool)),
-          iw,   SLOT(setColorByLibrary(bool)));
-
-  connect(this, SIGNAL(setColorByMate(bool)),
-          iw,   SLOT(setColorByMate(bool)));
-
   connect(this, SIGNAL(newContig()),
           iw,   SLOT(contigChanged()));
 
@@ -253,7 +277,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(iw, SIGNAL(jumpToRead(int)),
           parent, SLOT(jumpToRead(int)));
-
 
 
   if (s_persistant)
@@ -346,104 +369,40 @@ void InsertWindow::contigChanged()
   emit newContig();
 }
 
-void InsertWindow::toggleItem(int id)
+void InsertWindow::toggleItem()
 {
-  typemap::iterator mi;
+  m_types[Insert::Happy].second =
+    m_query->happyCheck->isChecked();
+  m_types[Insert::StretchedMate].second =
+    m_query->stretchedCheck->isChecked();
+  m_types[Insert::CompressedMate].second =
+    m_query->compressedCheck->isChecked();
+  m_types[Insert::MissingMate].second =
+    m_query->linkingCheck->isChecked();
+  m_types[Insert::OrientationViolation].second =
+    m_query->orientationCheck->isChecked();
+  m_types[Insert::SingletonMate].second =
+    m_query->singletonCheck->isChecked();
+  m_types[Insert::NoMate].second =
+    m_query->unmatedCheck->isChecked();
 
-  for (mi = m_types.begin(); mi != m_types.end(); mi++)
-  {
-    if (mi->second.first == id)
-    {
-      mi->second.second = !m_typesmenu->isItemChecked(mi->second.first);
-      m_typesmenu->setItemChecked(mi->second.first, mi->second.second);
-
-      emit paintCanvas();
-      break;
-    }
-  }
-}
-
-void InsertWindow::toggleConnectMates()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_connectmatesid);
-  m_optionsmenu->setItemChecked(m_connectmatesid, b);
-
-  emit setConnectMates(b);
-}
-
-void InsertWindow::togglePartitionTypes()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_partitiontypesid);
-  m_optionsmenu->setItemChecked(m_partitiontypesid, b);
-
-  emit setPartitionTypes(b);
-}
-
-void InsertWindow::toggleCoveragePlot()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_coverageid);
-  m_optionsmenu->setItemChecked(m_coverageid, b);
-
-  emit setCoveragePlot(b);
-}
-
-void InsertWindow::toggleCEStatistic()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_ceid);
-  m_optionsmenu->setItemChecked(m_ceid, b);
-
-  emit setCEStatistic(b);
-}
-
-void InsertWindow::togglePaintScaffold()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_scaffid);
-  m_optionsmenu->setItemChecked(m_scaffid, b);
-
-  emit setPaintScaffold(b);
-}
-
-void InsertWindow::toggleFeatures()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_featid);
-  m_optionsmenu->setItemChecked(m_featid, b);
-
-  emit setFeatures(b);
-}
-
-void InsertWindow::toggleTintHappiness()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_tintid);
-  m_optionsmenu->setItemChecked(m_tintid, b);
-
-  emit setTintHappiness(b);
-}
-
-void InsertWindow::toggleColorByLibrary()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_libcolorid);
-  m_optionsmenu->setItemChecked(m_libcolorid, b);
-
-  emit setColorByLibrary(b);
-}
-
-void InsertWindow::toggleColorByMate()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_matecolorid);
-  m_optionsmenu->setItemChecked(m_matecolorid, b);
-
-  emit setColorByMate(b);
-}
-
-void InsertWindow::toggleShowScaffold()
-{
-  bool b = !m_optionsmenu->isItemChecked(m_showscaffid);
-  m_optionsmenu->setItemChecked(m_showscaffid, b);
-
-  emit setShowScaffold(b);
+  emit paintCanvas();
 }
 
 void InsertWindow::bankChanged()
 {
   buildLibraryMenu();
+}
+
+QPixmap InsertWindow::mateIcon(const QColor & color)
+{
+  static QPixmap mate (90,4);
+  static const QRect cutout (30,0,30,3);
+
+  QPainter p(&mate);
+  p.fillRect(mate.rect(), color);
+  p.fillRect(cutout, paletteBackgroundColor());
+  p.end();
+
+  return mate;
 }

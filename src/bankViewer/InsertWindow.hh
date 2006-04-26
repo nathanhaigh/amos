@@ -6,6 +6,7 @@
 #include <qpopupmenu.h>
 #include <qlineedit.h>
 #include <qstring.h>
+#include <qpixmap.h>
 class QueryWidget;
 class DetailWidget;
 class InsertWidget;
@@ -32,17 +33,8 @@ public slots:
   void loadHappyDistance();
 
   void setCovTols(int insert, int read);
-  void toggleItem(int id);
-  void toggleConnectMates();
-  void togglePartitionTypes();
-  void toggleTintHappiness();
-  void toggleCoveragePlot();
-  void toggleCEStatistic();
-  void toggleFeatures();
-  void toggleColorByLibrary();
-  void toggleColorByMate();
-  void togglePaintScaffold();
-  void toggleShowScaffold();
+  void toggleItem();
+
 
 signals:
   void setGindex(int gindex);
@@ -56,21 +48,11 @@ signals:
   void setHappyDistance(float);
   void search(const QString &);
 
-  void setConnectMates(bool);
-  void setPartitionTypes(bool);
-  void setCoveragePlot(bool);
-  void setCEStatistic(bool);
-  void setFeatures(bool);
-  void setColorByLibrary(bool);
-  void setColorByMate(bool);
-  void setPaintScaffold(bool);
-  void setTintHappiness(bool);
-  void setShowScaffold(bool);
-
   void highlightRead(int);
 
 private:
 
+  QPixmap mateIcon (const QColor & color);
   void buildLibraryMenu();
 
   typedef std::map<char, std::pair<int, bool> > typemap;

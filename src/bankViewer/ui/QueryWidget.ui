@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>QueryWidget</class>
 <widget class="QWidget">
     <property name="name">
@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>266</width>
-            <height>714</height>
+            <width>273</width>
+            <height>682</height>
         </rect>
     </property>
     <property name="caption">
@@ -121,6 +121,250 @@
                             </property>
                         </widget>
                     </hbox>
+                </widget>
+                <widget class="QGroupBox" row="3" column="0" rowspan="1" colspan="2">
+                    <property name="name">
+                        <cstring>mateTypeBox</cstring>
+                    </property>
+                    <property name="title">
+                        <string>Mate Types</string>
+                    </property>
+                    <grid>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QCheckBox" row="5" column="0">
+                            <property name="name">
+                                <cstring>singletonCheck</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Singleton</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QCheckBox" row="6" column="0">
+                            <property name="name">
+                                <cstring>unmatedCheck</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Unmated</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QCheckBox" row="1" column="0">
+                            <property name="name">
+                                <cstring>stretchedCheck</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Stretched</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QCheckBox" row="4" column="0">
+                            <property name="name">
+                                <cstring>linkingCheck</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Linking</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QCheckBox" row="2" column="0">
+                            <property name="name">
+                                <cstring>compressedCheck</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Compressed</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QCheckBox" row="0" column="0">
+                            <property name="name">
+                                <cstring>happyCheck</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Happy</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QCheckBox" row="3" column="0">
+                            <property name="name">
+                                <cstring>orientationCheck</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Orientation</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QLabel" row="0" column="1">
+                            <property name="name">
+                                <cstring>happyLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>1</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="text">
+                                <string>pixmap</string>
+                            </property>
+                        </widget>
+                        <widget class="QLabel" row="1" column="1">
+                            <property name="name">
+                                <cstring>stretchedLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>1</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="text">
+                                <string>pixmap</string>
+                            </property>
+                        </widget>
+                        <widget class="QLabel" row="2" column="1">
+                            <property name="name">
+                                <cstring>compressedLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>1</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="text">
+                                <string>pixmap</string>
+                            </property>
+                        </widget>
+                        <widget class="QLabel" row="4" column="1">
+                            <property name="name">
+                                <cstring>linkingLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>1</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="text">
+                                <string>pixmap</string>
+                            </property>
+                        </widget>
+                        <widget class="QLabel" row="3" column="1">
+                            <property name="name">
+                                <cstring>orientationLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>1</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="text">
+                                <string>pixmap</string>
+                            </property>
+                        </widget>
+                        <widget class="QLabel" row="5" column="1">
+                            <property name="name">
+                                <cstring>singletonLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>1</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="text">
+                                <string>pixmap</string>
+                            </property>
+                        </widget>
+                        <widget class="QLabel" row="6" column="1">
+                            <property name="name">
+                                <cstring>unmatedLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>1</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="text">
+                                <string>pixmap</string>
+                            </property>
+                        </widget>
+                    </grid>
                 </widget>
                 <widget class="QGroupBox" row="2" column="0" rowspan="1" colspan="2">
                     <property name="name">
@@ -465,110 +709,12 @@
                         </widget>
                     </grid>
                 </widget>
-                <widget class="QButtonGroup" row="3" column="1">
+                <widget class="QGroupBox" row="4" column="0">
                     <property name="name">
-                        <cstring>mateColorBox</cstring>
+                        <cstring>displayBox</cstring>
                     </property>
                     <property name="title">
-                        <string>Mate Colors</string>
-                    </property>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>categoricalButton</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>30</y>
-                                <width>83</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>Categorical</string>
-                        </property>
-                        <property name="checked">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>stretchButton</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>60</y>
-                                <width>83</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>Stretch</string>
-                        </property>
-                        <property name="checked">
-                            <bool>false</bool>
-                        </property>
-                    </widget>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>linkingButton</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>90</y>
-                                <width>83</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>Linking</string>
-                        </property>
-                    </widget>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>libraryButton</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>120</y>
-                                <width>83</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>Library</string>
-                        </property>
-                    </widget>
-                </widget>
-                <widget class="QGroupBox" row="3" column="0">
-                    <property name="name">
-                        <cstring>mateTypeBox</cstring>
-                    </property>
-                    <property name="title">
-                        <string>Mate Types</string>
+                        <string>Display</string>
                     </property>
                     <vbox>
                         <property name="name">
@@ -576,7 +722,7 @@
                         </property>
                         <widget class="QCheckBox">
                             <property name="name">
-                                <cstring>happyCheck</cstring>
+                                <cstring>coverageCheck</cstring>
                             </property>
                             <property name="paletteForegroundColor">
                                 <color>
@@ -591,7 +737,7 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>Happy</string>
+                                <string>Coverage Stat</string>
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
@@ -599,7 +745,14 @@
                         </widget>
                         <widget class="QCheckBox">
                             <property name="name">
-                                <cstring>stretchedCheck</cstring>
+                                <cstring>ceCheck</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
                             </property>
                             <property name="font">
                                 <font>
@@ -607,15 +760,22 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>Stretched</string>
+                                <string>CE Statistic</string>
                             </property>
                             <property name="checked">
-                                <bool>true</bool>
+                                <bool>false</bool>
                             </property>
                         </widget>
                         <widget class="QCheckBox">
                             <property name="name">
-                                <cstring>compressedCheck</cstring>
+                                <cstring>mateCheck</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
                             </property>
                             <property name="font">
                                 <font>
@@ -623,7 +783,7 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>Compressed</string>
+                                <string>Connect Mates</string>
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
@@ -631,7 +791,14 @@
                         </widget>
                         <widget class="QCheckBox">
                             <property name="name">
-                                <cstring>orientationCheck</cstring>
+                                <cstring>partitionCheck</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
                             </property>
                             <property name="font">
                                 <font>
@@ -639,7 +806,7 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>Orientation</string>
+                                <string>Partition Types</string>
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
@@ -647,7 +814,75 @@
                         </widget>
                         <widget class="QCheckBox">
                             <property name="name">
-                                <cstring>linkingCheck</cstring>
+                                <cstring>tintCheck</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Tint Partitions</string>
+                            </property>
+                            <property name="checked">
+                                <bool>false</bool>
+                            </property>
+                        </widget>
+                    </vbox>
+                </widget>
+                <widget class="QButtonGroup" row="4" column="1">
+                    <property name="name">
+                        <cstring>mateColorBox</cstring>
+                    </property>
+                    <property name="title">
+                        <string>Mate Colors</string>
+                    </property>
+                    <vbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QRadioButton">
+                            <property name="name">
+                                <cstring>categoricalButton</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Categorical</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QRadioButton">
+                            <property name="name">
+                                <cstring>continuousButton</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Continuous</string>
+                            </property>
+                            <property name="checked">
+                                <bool>false</bool>
+                            </property>
+                        </widget>
+                        <widget class="QRadioButton">
+                            <property name="name">
+                                <cstring>linkingButton</cstring>
                             </property>
                             <property name="font">
                                 <font>
@@ -657,13 +892,10 @@
                             <property name="text">
                                 <string>Linking</string>
                             </property>
-                            <property name="checked">
-                                <bool>true</bool>
-                            </property>
                         </widget>
-                        <widget class="QCheckBox">
+                        <widget class="QRadioButton">
                             <property name="name">
-                                <cstring>singletonCheck</cstring>
+                                <cstring>libraryButton</cstring>
                             </property>
                             <property name="font">
                                 <font>
@@ -671,161 +903,10 @@
                                 </font>
                             </property>
                             <property name="text">
-                                <string>Singleton</string>
-                            </property>
-                            <property name="checked">
-                                <bool>true</bool>
-                            </property>
-                        </widget>
-                        <widget class="QCheckBox">
-                            <property name="name">
-                                <cstring>unmatedCheck</cstring>
-                            </property>
-                            <property name="font">
-                                <font>
-                                    <pointsize>9</pointsize>
-                                </font>
-                            </property>
-                            <property name="text">
-                                <string>Unmated</string>
-                            </property>
-                            <property name="checked">
-                                <bool>true</bool>
+                                <string>Library</string>
                             </property>
                         </widget>
                     </vbox>
-                </widget>
-                <widget class="QGroupBox" row="4" column="0" rowspan="1" colspan="2">
-                    <property name="name">
-                        <cstring>displayBox</cstring>
-                    </property>
-                    <property name="title">
-                        <string>Display</string>
-                    </property>
-                    <widget class="QCheckBox">
-                        <property name="name">
-                            <cstring>coverageCheck</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>20</y>
-                                <width>120</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="paletteForegroundColor">
-                            <color>
-                                <red>0</red>
-                                <green>0</green>
-                                <blue>0</blue>
-                            </color>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>Coverage Statistic</string>
-                        </property>
-                        <property name="checked">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                    <widget class="QCheckBox">
-                        <property name="name">
-                            <cstring>ceCheck</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>50</y>
-                                <width>120</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="paletteForegroundColor">
-                            <color>
-                                <red>0</red>
-                                <green>0</green>
-                                <blue>0</blue>
-                            </color>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>CE Statistic</string>
-                        </property>
-                        <property name="checked">
-                            <bool>false</bool>
-                        </property>
-                    </widget>
-                    <widget class="QCheckBox">
-                        <property name="name">
-                            <cstring>mateCheck</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>80</y>
-                                <width>120</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="paletteForegroundColor">
-                            <color>
-                                <red>0</red>
-                                <green>0</green>
-                                <blue>0</blue>
-                            </color>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>Connected Mates</string>
-                        </property>
-                        <property name="checked">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                    <widget class="QCheckBox">
-                        <property name="name">
-                            <cstring>partitionCheck</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>110</y>
-                                <width>120</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="paletteForegroundColor">
-                            <color>
-                                <red>0</red>
-                                <green>0</green>
-                                <blue>0</blue>
-                            </color>
-                        </property>
-                        <property name="font">
-                            <font>
-                                <pointsize>9</pointsize>
-                            </font>
-                        </property>
-                        <property name="text">
-                            <string>Partition Types</string>
-                        </property>
-                        <property name="checked">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
                 </widget>
             </grid>
         </widget>

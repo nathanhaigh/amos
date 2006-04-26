@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Tue Apr 25 14:06:26 2006
+** Created: Tue Apr 25 22:47:28 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -16,12 +16,13 @@
 class QVBoxLayout;
 class QHBoxLayout;
 class QGridLayout;
+class QSpacerItem;
 class QGroupBox;
 class QLineEdit;
 class QPushButton;
+class QCheckBox;
 class QLabel;
 class QSlider;
-class QCheckBox;
 class QButtonGroup;
 class QRadioButton;
 
@@ -38,6 +39,21 @@ public:
     QPushButton* searchButton;
     QLineEdit* happyEdit;
     QPushButton* happyButton;
+    QGroupBox* mateTypeBox;
+    QCheckBox* singletonCheck;
+    QCheckBox* unmatedCheck;
+    QCheckBox* stretchedCheck;
+    QCheckBox* linkingCheck;
+    QCheckBox* compressedCheck;
+    QCheckBox* happyCheck;
+    QCheckBox* orientationCheck;
+    QLabel* happyLabel;
+    QLabel* stretchedLabel;
+    QLabel* compressedLabel;
+    QLabel* linkingLabel;
+    QLabel* orientationLabel;
+    QLabel* singletonLabel;
+    QLabel* unmatedLabel;
     QGroupBox* featureBox;
     QLabel* noneLabel;
     QLabel* allLabel;
@@ -54,32 +70,27 @@ public:
     QSlider* breakSlider;
     QCheckBox* breakCheck;
     QCheckBox* otherCheck;
-    QButtonGroup* mateColorBox;
-    QRadioButton* categoricalButton;
-    QRadioButton* stretchButton;
-    QRadioButton* linkingButton;
-    QRadioButton* libraryButton;
-    QGroupBox* mateTypeBox;
-    QCheckBox* happyCheck;
-    QCheckBox* stretchedCheck;
-    QCheckBox* compressedCheck;
-    QCheckBox* orientationCheck;
-    QCheckBox* linkingCheck;
-    QCheckBox* singletonCheck;
-    QCheckBox* unmatedCheck;
     QGroupBox* displayBox;
     QCheckBox* coverageCheck;
     QCheckBox* ceCheck;
     QCheckBox* mateCheck;
     QCheckBox* partitionCheck;
+    QCheckBox* tintCheck;
+    QButtonGroup* mateColorBox;
+    QRadioButton* categoricalButton;
+    QRadioButton* continuousButton;
+    QRadioButton* linkingButton;
+    QRadioButton* libraryButton;
 
 protected:
     QVBoxLayout* QueryWidgetLayout;
     QGridLayout* queryBoxLayout;
     QHBoxLayout* layout9;
     QHBoxLayout* layout8;
+    QGridLayout* mateTypeBoxLayout;
     QGridLayout* featureBoxLayout;
-    QVBoxLayout* mateTypeBoxLayout;
+    QVBoxLayout* displayBoxLayout;
+    QVBoxLayout* mateColorBoxLayout;
 
 protected slots:
     virtual void languageChange();
