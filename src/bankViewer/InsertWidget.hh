@@ -57,6 +57,7 @@ public slots:
   void setFeatures(bool);
   void setColorByLibrary(bool);
   void setColorByMate(bool);
+  void setColorByStretchiness(bool);
   void setTintHappiness(bool);
   void contigChanged();
   void computePos(int);
@@ -147,6 +148,7 @@ private:
   bool m_showFeatures;
   bool m_colorByLibrary;
   bool m_colorByMate;
+  bool m_colorByStretchiness;
   bool m_paintScaffold;
   bool m_tintHappiness;
   bool m_showscaffold;

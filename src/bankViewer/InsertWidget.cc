@@ -97,6 +97,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_tintHappiness  = 0;
   m_showscaffold   = 1;
   m_kmercoverageplot = 1;
+  m_colorByStretchiness = 0;
 
   m_syncWithTiling = 1;
 
@@ -331,13 +332,14 @@ void InsertWidget::setVisibleHRange(int left, int right)
 {
   if (!m_updatingScrollBars)
   {
+    setHPos(left);
+
     double xf = ((double)m_ifield->width()-4) / ((right - left + 1));
 
     QWMatrix m = m_ifield->worldMatrix();
     QWMatrix newzoom(xf, m.m12(), m.m21(), m.m22(), m.dx(), m.dy());
     m_ifield->setWorldMatrix(newzoom); // visiblehrange
 
-    setHPos(left);
   }
 }
 
@@ -1259,7 +1261,6 @@ void InsertWidget::paintCanvas()
 
         QColor insertcolor(UIElements::getInsertColor((*ii)->m_state));
 
-        int m_colorByDistance = 0;
 
         if (m_persistant)
         {
@@ -1291,7 +1292,7 @@ void InsertWidget::paintCanvas()
         {
           insertcolor = getContigColor(contigColorMap, (*ii)->m_bcontig);
         }
-        else if (m_colorByDistance && 
+        else if (m_colorByStretchiness && 
                   (((*ii)->m_state == Insert::Happy) ||
                    ((*ii)->m_state == Insert::CompressedMate) ||
                    ((*ii)->m_state == Insert::StretchedMate)))
@@ -1470,6 +1471,12 @@ void InsertWidget::setColorByLibrary(bool b)
 void InsertWidget::setColorByMate(bool b)
 {
   m_colorByMate = b;
+  paintCanvas();
+}
+
+void InsertWidget::setColorByStretchiness(bool b)
+{
+  m_colorByStretchiness = b;
   paintCanvas();
 }
 
