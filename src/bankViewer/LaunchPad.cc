@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'LaunchPad.ui'
 **
-** Created: Wed Apr 26 14:59:48 2006
+** Created: Wed Apr 26 15:05:00 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -53,11 +53,11 @@ static const unsigned char image0_data[] = {
 
 
 /*
- *  Constructs a Form3 as a child of 'parent', with the
+ *  Constructs a LaunchPad as a child of 'parent', with the
  *  name 'name' and widget flags set to 'f'.
  *
  */
-Form3::Form3( QWidget* parent, const char* name, WFlags fl )
+LaunchPad::LaunchPad( QWidget* parent, const char* name, WFlags fl )
     : QMainWindow( parent, name, fl )
 {
     (void)statusBar();
@@ -65,9 +65,9 @@ Form3::Form3( QWidget* parent, const char* name, WFlags fl )
     img.loadFromData( image0_data, sizeof( image0_data ), "PNG" );
     image0 = img;
     if ( !name )
-	setName( "Form3" );
+	setName( "LaunchPad" );
     setCentralWidget( new QWidget( this, "qt_central_widget" ) );
-    Form3Layout = new QHBoxLayout( centralWidget(), 11, 6, "Form3Layout"); 
+    LaunchPadLayout = new QHBoxLayout( centralWidget(), 11, 6, "LaunchPadLayout"); 
 
     tabWidget = new QTabWidget( centralWidget(), "tabWidget" );
 
@@ -288,7 +288,7 @@ Form3::Form3( QWidget* parent, const char* name, WFlags fl )
 
     contigsTabLayout->addWidget( contigEIDEdit, 2, 1 );
     tabWidget->insertTab( contigsTab, QString::fromLatin1("") );
-    Form3Layout->addWidget( tabWidget );
+    LaunchPadLayout->addWidget( tabWidget );
 
     // actions
     fileOpenAction = new QAction( this, "fileOpenAction" );
@@ -324,7 +324,7 @@ Form3::Form3( QWidget* parent, const char* name, WFlags fl )
 /*
  *  Destroys the object and frees any allocated resources
  */
-Form3::~Form3()
+LaunchPad::~LaunchPad()
 {
     // no need to delete child widgets, Qt does it all for us
 }
@@ -333,9 +333,9 @@ Form3::~Form3()
  *  Sets the strings of the subwidgets using the current
  *  language.
  */
-void Form3::languageChange()
+void LaunchPad::languageChange()
 {
-    setCaption( tr( "Form3" ) );
+    setCaption( tr( "Assembly Investigator" ) );
     tabWidget->changeTab( statsTab, tr( "Statistics" ) );
     groupGroup->setTitle( tr( "Group by" ) );
     featureGroupTypeButton->setText( tr( "Type" ) );
@@ -379,33 +379,33 @@ void Form3::languageChange()
         MenuBar->findItem(1)->setText( tr( "&File" ) );
 }
 
-void Form3::fileNew()
+void LaunchPad::fileNew()
 {
-    qWarning( "Form3::fileNew(): Not implemented yet" );
+    qWarning( "LaunchPad::fileNew(): Not implemented yet" );
 }
 
-void Form3::fileOpen()
+void LaunchPad::fileOpen()
 {
-    qWarning( "Form3::fileOpen(): Not implemented yet" );
+    qWarning( "LaunchPad::fileOpen(): Not implemented yet" );
 }
 
-void Form3::fileSave()
+void LaunchPad::fileSave()
 {
-    qWarning( "Form3::fileSave(): Not implemented yet" );
+    qWarning( "LaunchPad::fileSave(): Not implemented yet" );
 }
 
-void Form3::fileSaveAs()
+void LaunchPad::fileSaveAs()
 {
-    qWarning( "Form3::fileSaveAs(): Not implemented yet" );
+    qWarning( "LaunchPad::fileSaveAs(): Not implemented yet" );
 }
 
-void Form3::filePrint()
+void LaunchPad::filePrint()
 {
-    qWarning( "Form3::filePrint(): Not implemented yet" );
+    qWarning( "LaunchPad::filePrint(): Not implemented yet" );
 }
 
-void Form3::fileExit()
+void LaunchPad::fileExit()
 {
-    qWarning( "Form3::fileExit(): Not implemented yet" );
+    qWarning( "LaunchPad::fileExit(): Not implemented yet" );
 }
 

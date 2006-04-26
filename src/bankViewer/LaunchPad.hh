@@ -1,14 +1,14 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'LaunchPad.ui'
 **
-** Created: Wed Apr 26 14:59:48 2006
+** Created: Wed Apr 26 15:05:00 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
 ****************************************************************************/
 
-#ifndef FORM3_H
-#define FORM3_H
+#ifndef LAUNCHPAD_H
+#define LAUNCHPAD_H
 
 #include <qvariant.h>
 #include <qpixmap.h>
@@ -33,13 +33,13 @@ class QPushButton;
 class QLabel;
 class QLineEdit;
 
-class Form3 : public QMainWindow
+class LaunchPad : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    Form3( QWidget* parent = 0, const char* name = 0, WFlags fl = WType_TopLevel );
-    ~Form3();
+    LaunchPad( QWidget* parent = 0, const char* name = 0, WFlags fl = WType_TopLevel );
+    ~LaunchPad();
 
     QTabWidget* tabWidget;
     QWidget* statsTab;
@@ -96,7 +96,7 @@ public slots:
     virtual void fileExit();
 
 protected:
-    QHBoxLayout* Form3Layout;
+    QHBoxLayout* LaunchPadLayout;
     QGridLayout* statsTabLayout;
     QGridLayout* featuresTabLayout;
     QSpacerItem* spacer1;
@@ -119,4 +119,4 @@ private:
 
 };
 
-#endif // FORM3_H
+#endif // LAUNCHPAD_H

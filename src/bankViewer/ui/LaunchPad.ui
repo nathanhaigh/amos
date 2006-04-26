@@ -1,8 +1,8 @@
 <!DOCTYPE UI><UI version="3.3" stdsetdef="1">
-<class>Form3</class>
+<class>LaunchPad</class>
 <widget class="QMainWindow">
     <property name="name">
-        <cstring>Form3</cstring>
+        <cstring>LaunchPad</cstring>
     </property>
     <property name="geometry">
         <rect>
@@ -13,7 +13,7 @@
         </rect>
     </property>
     <property name="caption">
-        <string>Form3</string>
+        <string>Assembly Investigator</string>
     </property>
     <hbox>
         <property name="name">
@@ -675,13 +675,13 @@
     <connection>
         <sender>fileOpenAction</sender>
         <signal>activated()</signal>
-        <receiver>Form3</receiver>
+        <receiver>LaunchPad</receiver>
         <slot>fileOpen()</slot>
     </connection>
     <connection>
         <sender>fileExitAction</sender>
         <signal>activated()</signal>
-        <receiver>Form3</receiver>
+        <receiver>LaunchPad</receiver>
         <slot>fileExit()</slot>
     </connection>
 </connections>
