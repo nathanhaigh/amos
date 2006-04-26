@@ -301,7 +301,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
             iw,      SLOT(setErrorRate(int)));
   }
 
-  iw->paintCanvas();
+  iw->paintCanvas(); // TODO: Is this necessary?
 }
 
 void InsertWindow::setCovTols(int insert, int read)

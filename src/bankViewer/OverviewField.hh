@@ -3,22 +3,25 @@
 
 #include <qcanvas.h>
 
-class DataStore;
-
 class OverviewField : public QCanvasView
 {
   Q_OBJECT
 
 public:
 
-  OverviewField(DataStore * datastore,
-                QCanvas * canvas,
+  OverviewField(QCanvas * canvas,
                 QWidget * parent = 0,
                 const char * name = 0);
 
+signals:
+  void centerView(int);
+
+protected:
+  void wheelEvent(QWheelEvent *e);
+  void contentsMousePressEvent( QMouseEvent* e );
+
 private:
 
-  DataStore * m_datastore;
 };
 
 

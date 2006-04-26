@@ -1,15 +1,18 @@
 #include "InsertWidget.hh"
 
 #include <set>
+
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qwmatrix.h>
 #include <qmessagebox.h>
 #include <qcursor.h>
 #include <qaccel.h>
-#include "RenderSeq.hh"
 #include <qapplication.h>
 #include <qtextedit.h>
+#include <qhbox.h>
+
+#include "RenderSeq.hh"
 #include "InsertCanvasItem.hh"
 #include "CoverageCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
@@ -20,9 +23,9 @@
 #include "InsertPosition.hh"
 #include "DataStore.hh"
 #include "CoverageRectCanvasItem.hh"
+#include "OverviewField.hh"
 
 #include "RangeScrollBar.hh"
-#include <qhbox.h>
 
 
 
@@ -75,7 +78,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_iposition = new InsertPosition(m_datastore, this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
-  m_icanvas->setBackgroundColor(QColor(50,50,50));
+  m_icanvas->setBackgroundColor(QColor(70,70,70));
   m_icanvas->retune(128);
 
   m_paddle = NULL;
@@ -122,11 +125,12 @@ InsertWidget::InsertWidget(DataStore * datastore,
   vrange = new RangeScrollBar_t(Qt::Vertical, hbox);
   vrange->setMaxRange(0,100);
 
-  m_overview = new QCanvasView(m_icanvas, this, "overview");
+  m_overview = new OverviewField(m_icanvas, this, "overview");
   m_overview->setMaximumHeight(100);
   m_overview->setMinimumHeight(100);
   m_overview->setVScrollBarMode(QScrollView::AlwaysOff);
   m_overview->setHScrollBarMode(QScrollView::AlwaysOff);
+  connect(m_overview, SIGNAL(centerView(int)), this, SLOT(centerView(int)));
 
   hrange = new RangeScrollBar_t(Qt::Horizontal, this);
   hrange->setMaxRange(0,100);
@@ -207,6 +211,13 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   initializeTiling();
   m_ifield->show();
+}
+
+void InsertWidget::centerView(int xpos)
+{
+  xpos = (int)(xpos*m_ifield->worldMatrix().m11());
+  m_ifield->center(xpos, m_ifield->contentsY());
+  updateVisibleRange();
 }
 
 void InsertWidget::computePos(int gindex)
@@ -332,14 +343,13 @@ void InsertWidget::setVisibleHRange(int left, int right)
 {
   if (!m_updatingScrollBars)
   {
-    setHPos(left);
-
     double xf = ((double)m_ifield->width()-4) / ((right - left + 1));
 
     QWMatrix m = m_ifield->worldMatrix();
     QWMatrix newzoom(xf, m.m12(), m.m21(), m.m22(), m.dx(), m.dy());
     m_ifield->setWorldMatrix(newzoom); // visiblehrange
 
+    setHPos(left);
   }
 }
 
@@ -347,11 +357,15 @@ void InsertWidget::setVisibleVRange(int top, int bottom)
 {
   if (!m_updatingScrollBars)
   {
+    //cerr << "setVisibleVRange:" << top << "," << bottom << endl;
+
     double yf = ((double)(m_ifield->height()-4)) / (bottom - top + 1);
 
     QWMatrix m(m_ifield->worldMatrix());
     QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yf, m.dx(), m.dy());
     m_ifield->setWorldMatrix(newzoom); //visiblevrange
+
+    //cerr << "svr yf: " << m_ifield->worldMatrix().m22() << endl;
 
     setVPos(top);
   }
@@ -744,35 +758,6 @@ void InsertWidget::paintCanvas()
   m_hoffset = -leftmost;
 
   cerr << "Paint:";
-
-  if (0)
-  {
-    cerr << " Ticks";
-
-    // Draw the scaffold/contig line
-    QCanvasLine * line = new QCanvasLine(m_icanvas);
-    line->setPoints((int)(m_hoffset * m_hscale), posoffset, 
-                    (int)((m_tilingwidth + m_hoffset) * m_hscale), posoffset);
-    line->setPen(QPen(Qt::white, 2));
-    line->show();
-
-    // Draw ticks
-    for (int i = 0; i < m_tilingwidth; i+=1000)
-    {
-      line = new QCanvasLine(m_icanvas);
-
-      line->setPoints((int)(m_hscale * (m_hoffset+i)), posoffset-2,
-                      (int)(m_hscale * (m_hoffset+i)), posoffset+2);
-      line->setPen(Qt::white);
-      line->show();
-
-      if ((m_tilingwidth - i < 1000) && (i != m_tilingwidth-1))
-      {
-        // draw a tick at the end of the contig in the next round
-        i = m_tilingwidth - 1 - 1000;
-      }
-    }
-  }
 
   ColorMap libColorMap;
   ColorMap contigColorMap;
@@ -1386,13 +1371,20 @@ void InsertWidget::paintCanvas()
   setInsertCanvasSize(scaledwidth, voffset);
   resizeOverview();
   updateVisibleRange();
+  m_ifield->updateVisibleRect();
 }
 
 void InsertWidget::resizeEvent(QResizeEvent *e )
 {
+  cerr << "resize newsize: " << e->size().width() << "," << e->size().height();
+  cerr << " old range:" << vrange->rangeLow() << "," << vrange->rangeHigh() << endl;
+
   resizeOverview();
   setVisibleVRange(vrange->rangeLow(), vrange->rangeHigh());
   setVisibleHRange(hrange->rangeLow(), hrange->rangeHigh());
+
+  cerr << " new range:" << vrange->rangeLow() << "," << vrange->rangeHigh();
+  cerr << " yf: " << m_ifield->worldMatrix().m22() << endl << endl;
 }
 
 void InsertWidget::resizeOverview()

@@ -47,6 +47,7 @@ public slots:
   void canvasCleared();
 
   void search(const QString & str);
+  void updateVisibleRect();
 
 
 

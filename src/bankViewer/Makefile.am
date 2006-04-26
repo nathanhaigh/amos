@@ -39,8 +39,6 @@ bankViewer_MOCSOURCES = \
         MainWindow.cc          \
         NetworkCom.cc          \
 	OverviewField.cc       \
-	OverviewWidget.cc      \
-	OverviewWindow.cc      \
 	QueryWidget.cc         \
         RangeScrollBar.cc      \
         ReadInfo.cc            \

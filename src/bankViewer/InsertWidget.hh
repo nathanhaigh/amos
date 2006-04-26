@@ -26,6 +26,7 @@ class DataStore;
 class InsertField;
 class InsertPosition;
 class CoverageStats;
+class OverviewField;
 
 
 class InsertWidget : public QWidget
@@ -44,6 +45,7 @@ public slots:
   void resizeOverview();
   void initializeTiling();
   void updateVisibleRange();
+  void centerView(int);
 
   void refreshWidget();
 
@@ -186,7 +188,7 @@ private:
 
   RangeScrollBar_t * hrange;
   RangeScrollBar_t * vrange;
-  QCanvasView * m_overview;
+  OverviewField * m_overview;
 
   int m_scaffoldtop, m_scaffoldbottom;
   bool m_updatingScrollBars;

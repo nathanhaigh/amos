@@ -46,7 +46,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_fontsize = 10;
   m_insertWindow = NULL;
   m_cgraphWindow = NULL;
-  m_overviewWindow = NULL;
 
   m_outervbox = new QVBox(this, "mainvbox");
   setCentralWidget( m_outervbox);
@@ -502,16 +501,6 @@ void MainWindow::showCGraph()
   m_cgraphWindow->show();
 }
 
-void MainWindow::showOverview()
-{
-  if (!m_overviewWindow)
-    {
-      m_overviewWindow = new OverviewWindow (&m_datastore,
-                                             this,
-                                             "OverviewWindow");
-    }
-  m_overviewWindow->show();
-}
 
 void MainWindow::chooseContig()
 {

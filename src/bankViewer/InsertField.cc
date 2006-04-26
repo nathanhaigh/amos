@@ -2,13 +2,15 @@
 #include <qwmatrix.h>
 #include <qcursor.h>
 #include <qapplication.h>
+#include <qpainter.h>
+#include <qregexp.h>
+
 #include "InsertCanvasItem.hh"
 #include "FeatureCanvasItem.hh"
 #include "ContigCanvasItem.hh"
 #include "CoverageCanvasItem.hh"
 #include "DataStore.hh"
 #include "InsertCanvasItem.hh"
-#include <qregexp.h>
 #include "RangeScrollBar.hh"
 
 #include "icons/zoom_in.xpm"
@@ -35,8 +37,8 @@ InsertField::InsertField(DataStore * datastore,
 {
   QWMatrix m = worldMatrix();
   m.translate(0, 0);
-  m.scale( 0.05, 1.0 );
-  setWorldMatrix( m ); // init
+  m.scale(0.05, 1.0);
+  setWorldMatrix(m); // init
 
   setHScrollBarMode(QScrollView::AlwaysOff);
   setVScrollBarMode(QScrollView::AlwaysOff);
@@ -485,6 +487,16 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
                    visibleWidth(), visibleHeight() );
   QRect real = inverseWorldMatrix().mapRect(rc);
 
+  updateVisibleRect();
+
+  emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);
+}
+
+void InsertField::updateVisibleRect()
+{
+  QRect rc = QRect(contentsX(), contentsY(), visibleWidth(), visibleHeight() );
+  QRect real = inverseWorldMatrix().mapRect(rc);
+
   if (!m_visibleRect)
   {
     m_visibleRect = new QCanvasRectangle(0,0,100,100, canvas());
@@ -498,10 +510,6 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
   m_visibleRect->move(real.x(), 0);
   canvas()->setChanged(m_visibleRect->boundingRect());
   canvas()->update();
-
-  QCanvasView::viewportPaintEvent(e);
-
-  emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);
 }
 
 void InsertField::canvasCleared()
