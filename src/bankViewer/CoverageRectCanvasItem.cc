@@ -31,10 +31,14 @@ CoverageRectCanvasItem::CoverageRectCanvasItem(int x, int y,
 
 void CoverageRectCanvasItem::drawShape (QPainter & p)
 {
-  QBrush lowBrush  (UIElements::color_StretchedMate);
-  QBrush highBrush (UIElements::color_CompressedMate);
-  QPen lowPen  (UIElements::color_StretchedMate);
-  QPen highPen (UIElements::color_CompressedMate);
+  QColor color (m_libid == -1 ?
+                UIElements::color_featinsertcov :
+                UIElements::color_featreadcov);
+  
+  QBrush lowBrush  (color);
+  QBrush highBrush (color);
+  QPen lowPen  (color);
+  QPen highPen (color);
 
   int px = (int)x();
   int py = 0;

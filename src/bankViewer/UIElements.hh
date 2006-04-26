@@ -38,6 +38,8 @@ public:
   static QColor color_MissingMate;
   static QColor color_NoMate;
 
+  static QColor color_featinsertcov;
+  static QColor color_featreadcov;
   static QColor color_featrepeat;
   static QColor color_featunitig;
   static QColor color_featjoin;

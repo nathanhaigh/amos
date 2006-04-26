@@ -116,7 +116,29 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_query->happyEdit->setText (QString::number(Insert::MAXSTDEV));
 
 
-  // Mate Types
+  // Feature filters
+  QPalette p (m_query->palette());
+
+  p.setColor (QColorGroup::Button, UIElements::color_featinsertcov);
+  m_query->insertSlider->setPalette(p);
+
+  p.setColor (QColorGroup::Button, UIElements::color_featreadcov);
+  m_query->readSlider->setPalette(p);
+
+  p.setColor (QColorGroup::Button, UIElements::color_featsnp);
+  m_query->snpSlider->setPalette(p);
+
+  p.setColor (QColorGroup::Button, UIElements::color_featunitig);
+  m_query->unitigSlider->setPalette(p);
+
+  p.setColor (QColorGroup::Button, UIElements::color_featcoverage);
+  m_query->qcSlider->setPalette(p);
+
+  p.setColor (QColorGroup::Button, UIElements::color_featbreak);
+  m_query->breakSlider->setPalette(p);
+
+
+  // Mate types
   m_query->happyLabel->setPixmap
     (mateIcon(UIElements::color_Happy, 0));
   m_types[Insert::Happy].first = 7;

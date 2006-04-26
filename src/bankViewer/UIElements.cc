@@ -22,6 +22,9 @@ QColor UIElements::color_tilingtrim(204, 153, 153);
 
 QColor UIElements::color_snpgap(Qt::cyan);
 
+QColor UIElements::color_featinsertcov(Qt::magenta);
+QColor UIElements::color_featreadcov(Qt::green);
+
 QColor UIElements::color_featrepeat(Qt::white);
 QColor UIElements::color_featjoin(Qt::white);
 QColor UIElements::color_featorf(Qt::white);
