@@ -127,6 +127,13 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_showscaffold   = 1;
   m_kmercoverageplot = 1;
   m_colorByStretchiness = 0;
+  m_insertCovFeatures = 1;
+  m_readCovFeatures = 1;
+  m_snpFeatures = 1;
+  m_unitigFeatures = 1;
+  m_qcFeatures = 1;
+  m_breakFeatures = 1;
+  m_otherFeatures = 1;
 
   m_syncWithTiling = 1;
 
@@ -1464,6 +1471,7 @@ void InsertWidget::setInsertCanvasSize(int width, int height)
 
 void InsertWidget::setHappyDistance(float distance)
 {
+  if ( Insert::MAXSTDEV == distance ) return;
   Insert::MAXSTDEV=distance;
   computeInsertHappiness();
   paintCanvas();
@@ -1471,72 +1479,84 @@ void InsertWidget::setHappyDistance(float distance)
 
 void InsertWidget::setConnectMates(bool b)
 {
+  if ( m_connectMates == b ) return;
   m_connectMates = b;
   initializeTiling();
 }
 
 void InsertWidget::setPartitionTypes(bool b)
 {
+  if ( m_partitionTypes == b ) return;
   m_partitionTypes = b;
   paintCanvas();
 }
 
 void InsertWidget::setCoveragePlot(bool b)
 {
+  if ( m_coveragePlot == b ) return;
   m_coveragePlot = b;
   paintCanvas();
 } 
 
 void InsertWidget::setCEStatistic(bool b)
 {
+  if ( m_cestats == b ) return;
   m_cestats = b;
   paintCanvas();
 }
 
 void InsertWidget::setTintHappiness(bool b)
 {
+  if ( m_tintHappiness == b ) return;
   m_tintHappiness = b;
   paintCanvas();
 }
 
 void InsertWidget::setPaintScaffold(bool b)
 {
+  if ( m_paintScaffold == b ) return;
   m_paintScaffold = b;
   initializeTiling();
 }
 
 void InsertWidget::setColorByLibrary(bool b)
 {
+  if ( m_colorByLibrary == b ) return;
   m_colorByLibrary = b;
   paintCanvas();
 }
 
 void InsertWidget::setColorByMate(bool b)
 {
+  if ( m_colorByMate == b ) return;
   m_colorByMate = b;
   paintCanvas();
 }
 
 void InsertWidget::setColorByStretchiness(bool b)
 {
+  if ( m_colorByStretchiness == b ) return;
   m_colorByStretchiness = b;
   paintCanvas();
 }
 
 void InsertWidget::setPersistant(bool b)
 {
+  if ( m_persistant == b ) return;
   m_persistant = b;
   paintCanvas();
 }
 
 void InsertWidget::setErrorRate(int error)
 {
+  if ( m_error == error ) return;
   m_error = error;
   paintCanvas();
 }
 
 void InsertWidget::setShowScaffold(bool b)
 {
+  if ( m_showscaffold == b ) return;
   m_showscaffold = b;
   paintCanvas();
 }
