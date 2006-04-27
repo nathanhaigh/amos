@@ -6,6 +6,7 @@
 #include <qtoolbar.h>
 #include <qlineedit.h>
 #include <qmenubar.h>
+#include <qcheckbox.h>
 #include "DataStore.hh"
 
 #include "InsertStats.hh"
@@ -108,8 +109,8 @@ void LaunchPad::initContigs()
   connect(contigGCButton,     SIGNAL(clicked()),
           this,               SLOT(contigGCHistogram()));
 
-  connect(contigViewButton,   SIGNAL(clicked()),
-          this,               SLOT(contigViewSelected()));
+  connect(readsCheck,         SIGNAL(clicked()),
+          this,               SLOT(loadContigs()));
 
   contigList->addColumn("Id");
   contigList->addColumn("IID");
@@ -120,6 +121,7 @@ void LaunchPad::initContigs()
   contigList->addColumn("Reads");
   contigList->addColumn("GC Content");
 }
+
 
 void LaunchPad::loadContigs()
 {

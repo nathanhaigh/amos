@@ -33,6 +33,7 @@ public slots:
   void setBankname(std::string bankname);
   void loadBank();
 
+  void showAll();
   void showInserts();
   void showTiling();
 

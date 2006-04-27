@@ -35,6 +35,7 @@ LaunchPad::LaunchPad(QWidget* parent, const char* name, WFlags fl)
   initContigs();
   initReads();
 
+  connect(viewButton,   SIGNAL(clicked()), this, SLOT(showAll()));
   connect(tilingButton, SIGNAL(clicked()), this, SLOT(showTiling()));
   connect(insertButton, SIGNAL(clicked()), this, SLOT(showInserts()));
   connect(contigIDSpin, SIGNAL(valueChanged(int)), this, SLOT(setContigId(int)));
@@ -108,6 +109,12 @@ void LaunchPad::loadBank()
   loadScaffolds();
   loadContigs();
   loadReads();
+}
+
+void LaunchPad::showAll()
+{
+  showInserts();
+  showTiling();
 }
 
 
@@ -201,7 +208,6 @@ void LaunchPad::setContigId(int contigId)
     emit contigIdSelected(m_datastore->m_contigId);
     emit gindexSelected(0);
     statusBar()->message(s);
-    statsText->setContentsPos(0,0);
   }
 }
 

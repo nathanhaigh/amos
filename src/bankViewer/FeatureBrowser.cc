@@ -75,13 +75,8 @@ void LaunchPad::initFeatures()
   connect(featureList, SIGNAL(returnPressed(QListViewItem *)),
           this,  SLOT(featureSelected(QListViewItem *)));
 
-  connect(featureViewButton, SIGNAL(clicked()),
-          this,  SLOT(featureViewButtonSelected()));
-
   connect(groupGroup, SIGNAL(clicked(int)),
           this,  SLOT(featureGroupChanged(int)));
-
-
 }
 
 void LaunchPad::featureGroupChanged(int id)

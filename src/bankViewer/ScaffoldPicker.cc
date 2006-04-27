@@ -78,9 +78,6 @@ void LaunchPad::initScaffolds()
   connect(scaffoldEIDEdit, SIGNAL(returnPressed()),
           this,            SLOT(scaffoldViewSelected()));
 
-  connect(scaffoldViewButton, SIGNAL(clicked()),
-          this,               SLOT(scaffoldViewSelected()));
-
   connect(scaffoldSpanButton, SIGNAL(clicked()),
           this,               SLOT(scaffoldSpanHistogram()));
   
