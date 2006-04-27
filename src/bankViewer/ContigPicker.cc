@@ -167,20 +167,23 @@ void LaunchPad::loadContigs()
 
       contigid++;
 
-      vector<AMOS::Tile_t>::iterator ti; 	 
-      for (ti =  contig.getReadTiling().begin(); 	 
-           ti != contig.getReadTiling().end(); 	 
-           ti++) 	 
-      { 	 
-        new ContigListItem(contigitem, 	 
-                           QString("Read"),
-                           QString::number(ti->source), 	 
-                           QString(m_datastore->read_bank.lookupEID(ti->source).c_str()),
-                           QString(""),
-                           QString::number(ti->offset), 	 
-                           QString::number(ti->range.getLength() + ti->gaps.size()),
-                           QString(""),
-                           QString("")); 	 
+      if (readsCheck->isChecked())
+      {
+        vector<AMOS::Tile_t>::iterator ti; 	 
+        for (ti =  contig.getReadTiling().begin(); 	 
+             ti != contig.getReadTiling().end(); 	 
+             ti++) 	 
+        { 	 
+          new ContigListItem(contigitem, 	 
+                             QString("Read"),
+                             QString::number(ti->source), 	 
+                             QString(m_datastore->read_bank.lookupEID(ti->source).c_str()),
+                             QString(""),
+                             QString::number(ti->offset), 	 
+                             QString::number(ti->range.getLength() + ti->gaps.size()),
+                             QString(""),
+                             QString("")); 	 
+        }
       }
     }
   }
