@@ -1,4 +1,4 @@
-#include "ContigPicker.hh"
+#include "LaunchPad.hh"
 #include <qcursor.h>
 #include <qstatusbar.h>
 
@@ -22,8 +22,6 @@ int FIELD_OFFSET=4;
 class ContigListItem : public QListViewItem
 {
 public:
-  static bool showreads;
-
   ContigListItem(QListView * parent, 
                  QString id,
                  QString iid,
@@ -67,7 +65,7 @@ public:
       return key(col,ascending).compare(i->key(col,ascending));
     }
 
-    if ((showreads && col == 7) || (!showreads && col == 6))
+    if ((col == 7))
     {
       double diff = atof(key(col,ascending)) - atof(i->key(col,ascending));
       if      (diff < 0) { return -1; }
@@ -79,106 +77,58 @@ public:
   }
 };
 
-bool ContigListItem::showreads(false);
-
-#include "BufferedLineEdit.hh"
 
 
-ContigPicker::ContigPicker(DataStore * datastore,
-                           QWidget * parent, 
-                           const char * name)
-  :QMainWindow(parent, name)
+void LaunchPad::initContigs()
 {
-  m_showReads = false;
-  m_datastore = datastore;
+  connect(contigList,    SIGNAL(doubleClicked(QListViewItem *)),
+          this,          SLOT(contigSelected(QListViewItem *)));
 
-  m_table = new QListView(this, "contigpickertbl");
-  setCentralWidget(m_table);
-  setCaption("Contig Chooser");
-  resize(500,500);
-  show();
+  connect(contigList,    SIGNAL(returnPressed(QListViewItem *)),
+          this,          SLOT(contigSelected(QListViewItem *)));
 
+  connect(contigIIDEdit, SIGNAL(textChanged(const QString &)),
+          this,          SLOT(contigSelectIID(const QString &)));
 
-  QPopupMenu * menu = new QPopupMenu(this);
-  menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Contig Length Histogram...", this, SLOT(contigSizeHistogram()));
-  menu->insertItem("Contig &Read Count Histogram...", this, SLOT(contigReadHistogram()));
-  menu->insertItem("Contig &GC Content Histogram...", this, SLOT(contigGCHistogram()));
+  connect(contigEIDEdit, SIGNAL(textChanged(const QString &)),
+          this,          SLOT(contigSelectEID(const QString &)));
 
+  connect(contigEIDEdit, SIGNAL(returnPressed()),
+          this,          SLOT(contigViewSelected()));
 
-  m_options = new QPopupMenu(this);
-  menuBar()->insertItem("&Options", m_options);
-  m_showreadsid  = m_options->insertItem("Show &Reads", this, SLOT(toggleShowReads()));
+  connect(contigIIDEdit, SIGNAL(returnPressed()),
+          this,          SLOT(contigViewSelected()));
 
-  QToolBar * tool = new QToolBar(this, "tools");
-  new QLabel("IID:", tool, "iidlbl");
-  BufferedLineEdit * iidpick = new BufferedLineEdit(tool, "iidpick");
+  connect(contigLengthButton, SIGNAL(clicked()),
+          this,               SLOT(contigLengthHistogram()));
 
-  new QLabel("EID:", tool, "eidlbl");
-  BufferedLineEdit * eidpick = new BufferedLineEdit(tool, "eidpick");
+  connect(contigReadsButton,  SIGNAL(clicked()),
+          this,               SLOT(contigReadCountHistogram()));
 
-  connect(m_table, SIGNAL(doubleClicked(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
+  connect(contigGCButton,     SIGNAL(clicked()),
+          this,               SLOT(contigGCHistogram()));
 
-  connect(m_table, SIGNAL(returnPressed(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
+  connect(contigViewButton,   SIGNAL(clicked()),
+          this,               SLOT(contigViewSelected()));
 
-  connect(iidpick, SIGNAL(textChanged(const QString &)),
-          this,    SLOT(selectiid(const QString &)));
-
-  connect(eidpick, SIGNAL(textChanged(const QString &)),
-          this,    SLOT(selecteid(const QString &)));
-
-  connect(eidpick, SIGNAL(returnPressed()),
-          this,    SLOT(acceptSelected()));
-
-  connect(iidpick, SIGNAL(returnPressed()),
-          this,    SLOT(acceptSelected()));
-
-
-  m_table->setShowSortIndicator(true);
-  m_table->setRootIsDecorated(true);
-  m_table->setAllColumnsShowFocus(true);
-
-
-  loadTable(true);
+  contigList->addColumn("Id");
+  contigList->addColumn("IID");
+  contigList->addColumn("EID");
+  contigList->addColumn("Status");
+  contigList->addColumn("Offset");
+  contigList->addColumn("Length");
+  contigList->addColumn("Reads");
+  contigList->addColumn("GC Content");
 }
 
-void ContigPicker::loadTable(bool jumpToCurrent)
+void LaunchPad::loadContigs()
 {
-  m_table->clear();
-  int c = m_table->columns();
-  for (int i = 0; i < c; i++)
-  {
-    m_table->removeColumn(0);
-  }
+  contigList->clear();
 
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
 
   ContigListItem * curItem = NULL;
-
-  if (m_showReads)
-  {
-    m_table->addColumn("Id");
-    m_table->addColumn("IID");
-    m_table->addColumn("EID");
-    m_table->addColumn("Status");
-    m_table->addColumn("Offset");
-    m_table->addColumn("Length");
-    m_table->addColumn("Reads");
-    m_table->addColumn("GC Content");
-  }
-  else
-  {
-    m_table->addColumn("Id");
-    m_table->addColumn("IID");
-    m_table->addColumn("EID");
-    m_table->addColumn("Status");
-    m_table->addColumn("Length");
-    m_table->addColumn("Reads");
-    m_table->addColumn("GC Content");
-  }
 
   try
   {
@@ -198,29 +148,15 @@ void ContigPicker::loadTable(bool jumpToCurrent)
 
       ContigListItem * contigitem;
 
-      if (m_showReads)
-      {
-        contigitem = new ContigListItem(m_table,  
-                                        QString::number(contigid), 
-                                        QString::number(contig.getIID()),
-                                        QString(contig.getEID().c_str()), 
-                                        QString(QChar(contig.getStatus())),
-                                        QString(""),
-                                        QString::number(contiglen), 
-                                        QString::number(numreads),
-                                        QString::number(gccontent, 'f', 4));
-      }
-      else
-      {
-        contigitem = new ContigListItem(m_table,  
-                                        QString::number(contigid), 
-                                        QString::number(contig.getIID()),
-                                        QString(contig.getEID().c_str()), 
-                                        QString(QChar(contig.getStatus())),
-                                        QString::number(contiglen), 
-                                        QString::number(numreads),
-                                        QString::number(gccontent, 'f', 4));
-      }
+      contigitem = new ContigListItem(contigList,  
+                                      QString::number(contigid), 
+                                      QString::number(contig.getIID()),
+                                      QString(contig.getEID().c_str()), 
+                                      QString(QChar(contig.getStatus())),
+                                      QString(""),
+                                      QString::number(contiglen), 
+                                      QString::number(numreads),
+                                      QString::number(gccontent, 'f', 4));
 
       if (contigid == m_datastore->m_contigId)
       {
@@ -229,23 +165,20 @@ void ContigPicker::loadTable(bool jumpToCurrent)
 
       contigid++;
 
-      if (m_showReads)
-      {
-        vector<AMOS::Tile_t>::iterator ti; 	 
-        for (ti =  contig.getReadTiling().begin(); 	 
-             ti != contig.getReadTiling().end(); 	 
-             ti++) 	 
-        { 	 
-          new ContigListItem(contigitem, 	 
-                             QString("Read"),
-                             QString::number(ti->source), 	 
-                             QString(m_datastore->read_bank.lookupEID(ti->source).c_str()),
-                             QString(""),
-                             QString::number(ti->offset), 	 
-                             QString::number(ti->range.getLength() + ti->gaps.size()),
-                             QString(""),
-                             QString("")); 	 
-        }
+      vector<AMOS::Tile_t>::iterator ti; 	 
+      for (ti =  contig.getReadTiling().begin(); 	 
+           ti != contig.getReadTiling().end(); 	 
+           ti++) 	 
+      { 	 
+        new ContigListItem(contigitem, 	 
+                           QString("Read"),
+                           QString::number(ti->source), 	 
+                           QString(m_datastore->read_bank.lookupEID(ti->source).c_str()),
+                           QString(""),
+                           QString::number(ti->offset), 	 
+                           QString::number(ti->range.getLength() + ti->gaps.size()),
+                           QString(""),
+                           QString("")); 	 
       }
     }
   }
@@ -254,16 +187,10 @@ void ContigPicker::loadTable(bool jumpToCurrent)
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
 
-  if (jumpToCurrent && curItem)
-  {
-    m_table->setSelected(curItem, true);
-    m_table->ensureItemVisible(curItem);
-  }
-
   setCursor(orig);
 }
 
-void ContigPicker::itemSelected(QListViewItem * item)
+void LaunchPad::contigSelected(QListViewItem * item)
 {
   int offset = 0;
   if (item->parent())
@@ -272,59 +199,42 @@ void ContigPicker::itemSelected(QListViewItem * item)
     item = item->parent();
   }
 
-  emit contigSelected(atoi(item->text(0)));
-  emit setGindex(offset);
+  setContigId(atoi(item->text(0)));
+  setGindex(offset);
 }
 
-void ContigPicker::selectiid(const QString & iid)
+void LaunchPad::contigSelectIID(const QString & iid)
 {
-  QListViewItem * item = m_table->findItem(iid, 1);
+  QListViewItem * item = contigList->findItem(iid, 1);
   if (item)
   {
-    m_table->setSelected(item, true);
-    m_table->ensureItemVisible(item);
+    contigList->setSelected(item, true);
+    contigList->ensureItemVisible(item);
   }
 }
 
-void ContigPicker::selecteid(const QString & eid)
+void LaunchPad::contigSelectEID(const QString & eid)
 {
-  QListViewItem * item = m_table->findItem(eid, 2);
+  QListViewItem * item = contigList->findItem(eid, 2);
   if (item)
   {
-    m_table->setSelected(item, true);
-    m_table->ensureItemVisible(item);
+    contigList->setSelected(item, true);
+    contigList->ensureItemVisible(item);
   }
 }
 
-void ContigPicker::acceptSelected()
+void LaunchPad::contigViewSelected()
 {
-  QListViewItem * item = m_table->selectedItem();
+  QListViewItem * item = contigList->selectedItem();
   if (item)
   {
-    itemSelected(item);
+    contigSelected(item);
   }
 }
 
-void ContigPicker::toggleShowReads()
+void LaunchPad::contigLengthHistogram()
 {
-  bool b = !m_options->isItemChecked(m_showreadsid);
-  m_options->setItemChecked(m_showreadsid, b);
-
-  m_showReads = b;
-  ContigListItem::showreads = b;
-
-  loadTable(false);
-}
-
-
-void ContigPicker::refreshTable()
-{
-  loadTable(false);
-}
-
-void ContigPicker::contigSizeHistogram()
-{
-  InsertStats * stats = new InsertStats((string)"Contig Size Histogram");
+  InsertStats * stats = new InsertStats((string)"Contig Length Histogram");
 
   AMOS::Contig_t contig;
   m_datastore->contig_bank.seekg(1);
@@ -336,7 +246,7 @@ void ContigPicker::contigSizeHistogram()
   new HistogramWindow(stats, this, "hist");
 }
 
-void ContigPicker::contigReadHistogram()
+void LaunchPad::contigReadCountHistogram()
 {
   InsertStats * stats = new InsertStats((string)"Contig Read Count Histogram");
 
@@ -350,7 +260,7 @@ void ContigPicker::contigReadHistogram()
   new HistogramWindow(stats, this, "hist");
 }
 
-void ContigPicker::contigGCHistogram()
+void LaunchPad::contigGCHistogram()
 {
   InsertStats * stats = new InsertStats((string)"Contig GC Content Histogram");
 

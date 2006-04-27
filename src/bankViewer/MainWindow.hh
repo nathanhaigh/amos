@@ -3,82 +3,33 @@
 
 #include <qmainwindow.h>
 #include <qspinbox.h>
-#include <qslider.h>
 #include <qscrollbar.h>
 #include <qpopupmenu.h>
 #include <qlineedit.h>
-#include <qsplitter.h>
 #include <qlayout.h>
 #include <string>
 #include <map>
 
-#include "NetworkCom.hh"
 #include "DataStore.hh"
 
 class TilingFrame;
-class ContigPicker;
-class ScaffoldPicker;
-class ReadPicker;
-class FeatureBrowser;
-class LibraryPicker;
-class ChromoPicker;
-class InsertWindow;
-class CGraphWindow;
 class QLabel;
+class QVBox;
 
-
-
-class ReferenceAlignment
-{
-public:
-  ReferenceAlignment() {}
-  ~ReferenceAlignment() {}
-
-  std::string m_reference;
-  std::string m_query;
-
-  int m_rstart;
-  int m_rend;
-
-  int m_qstart;
-  int m_qend;
-
-  int m_chain;
-
-  float m_percentid;
-};
 
 class MainWindow: public QMainWindow
 {
   Q_OBJECT
 
 public:
-  MainWindow(QWidget *parent=0, const char *name=0 );
+  MainWindow(DataStore * datastore, QWidget *parent=0, const char *name=0 );
 
-  void setBankname(std::string bankname);
-  void loadKmers(std::string file);
 
 public slots:
-  void chooseBank();
-  void chooseContig();
-  void newConnect(ClientSocket * s);
-  void setContigLocation(QString, int);
-  void jumpToRead(int iid);
-  void initializeSimpleServer(int port);
-  void enableTraceFetch(bool dofetch);
-
-  void addChromoPath(const QString &);
-  void addChromoDB(const QString &);
-  void setChromoDB(const QString &);
   void setGindexRange(int, int);
-  void setContigId(int contigID);
   void setGindex(int gindex);
+  void setContigId(int);
 
-  void showInserts();
-  void showCGraph();
-
-  void toggleShowPositions();
-  void toggleShowIndicator();
   void toggleHighlightDiscrepancy();
   void toggleSNPColoring();
   void toggleDisplayAllChromo();
@@ -91,15 +42,10 @@ public slots:
   void togglePolymorphismView();
   void toggleUngapped();
 
+  void bankChanged();
+
   void fontIncrease();
   void fontDecrease();
-
-  void showAssemblyStats();
-  void showReadPicker();
-  void showLibPicker();
-  void showChromoPicker();
-  void showFeatureBrowser();
-  void showScaffoldPicker();
   
   void jumpFGindex();
   void jumpPGindex();
@@ -112,16 +58,14 @@ public slots:
 
 
 signals:
-  void bankSelected();
-  void contigIdSelected(int contigId);
+  void contigIdSelected(int);
   void gindexChanged(int gindex);
   void highlightRead(int iid);
-  void chromoDBSet(const QString & db);
   void searchString(const QString & str, bool forward);
+  void setTilingVisibleRange(int, int, int);
 
   void toggleShowFullRange(bool);
   void toggleShowNumbers(bool);
-  void toggleShowIndicator(bool);
   void toggleDisplayQV(bool);
   void toggleLowQualityLowerCase(bool);
   void toggleShowConsQV(bool);
@@ -134,32 +78,25 @@ signals:
   void toggleShowUngapped(bool);
   void setFontSize(int);
 
+
   void advanceNextDiscrepancy();
   void advancePrevDiscrepancy();
 
 private:
   void initializeTiling(TilingFrame * tiling, bool isReference);
 
-  QSpinBox * m_contigid;
+  QSpinBox * m_contigspin;
   QSpinBox * m_gspin;
   QScrollBar * m_slider;
-  QMainWindow * m_contigPicker;
-  QMainWindow * m_readPicker;
-  QMainWindow * m_libPicker;
-  QMainWindow * m_chromoPicker;
-  QMainWindow * m_featPicker;
-  InsertWindow * m_insertWindow;
+  
   TilingFrame * m_tiling;
-  CGraphWindow * m_cgraphWindow;
 
   QPopupMenu * m_options;
   QLineEdit * m_searchedit;
   QLabel * m_offsetlabel;
 
-  int m_posid;
   int m_qvid;
   int m_cqvid;
-  int m_indicatorid;
   int m_highid;
   int m_prefetch;
   int m_fontsize;
@@ -170,17 +107,13 @@ private:
   int m_polyid;
   int m_qvcolorid;
   int m_ungappedid;
+  int m_contigid;
 
   int m_gindex;
-  DataStore m_datastore;
+  DataStore * m_datastore;
 
   QVBox * m_outervbox;
   QWidget * m_multiTilingWidget;
-
-  typedef std::multimap<std::string, ReferenceAlignment> ReferenceAlignments;
-
-  ReferenceAlignments m_referenceAlignments;
-  DataStore m_querystore;
 };
 
 #endif

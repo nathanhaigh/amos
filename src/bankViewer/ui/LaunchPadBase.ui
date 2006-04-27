@@ -1,15 +1,15 @@
 <!DOCTYPE UI><UI version="3.3" stdsetdef="1">
-<class>LaunchPad</class>
+<class>LaunchPadBase</class>
 <widget class="QMainWindow">
     <property name="name">
-        <cstring>LaunchPad</cstring>
+        <cstring>LaunchPadBase</cstring>
     </property>
     <property name="geometry">
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>626</width>
-            <height>598</height>
+            <width>666</width>
+            <height>789</height>
         </rect>
     </property>
     <property name="caption">
@@ -22,6 +22,14 @@
         <widget class="QTabWidget">
             <property name="name">
                 <cstring>tabWidget</cstring>
+            </property>
+            <property name="sizePolicy">
+                <sizepolicy>
+                    <hsizetype>5</hsizetype>
+                    <vsizetype>7</vsizetype>
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                </sizepolicy>
             </property>
             <widget class="QWidget">
                 <property name="name">
@@ -440,42 +448,6 @@
                     <property name="name">
                         <cstring>unnamed</cstring>
                     </property>
-                    <widget class="QLabel" row="2" column="0">
-                        <property name="name">
-                            <cstring>textLabel1_2_2</cstring>
-                        </property>
-                        <property name="text">
-                            <string>EID:</string>
-                        </property>
-                        <property name="alignment">
-                            <set>AlignVCenter|AlignRight</set>
-                        </property>
-                    </widget>
-                    <widget class="QLabel" row="1" column="0">
-                        <property name="name">
-                            <cstring>textLabel1_3</cstring>
-                        </property>
-                        <property name="text">
-                            <string>IID:</string>
-                        </property>
-                        <property name="alignment">
-                            <set>AlignVCenter|AlignRight</set>
-                        </property>
-                    </widget>
-                    <widget class="QListView" row="0" column="0" rowspan="1" colspan="4">
-                        <property name="name">
-                            <cstring>contigList</cstring>
-                        </property>
-                        <property name="allColumnsShowFocus">
-                            <bool>true</bool>
-                        </property>
-                        <property name="showSortIndicator">
-                            <bool>true</bool>
-                        </property>
-                        <property name="rootIsDecorated">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
                     <widget class="QButtonGroup" row="1" column="3" rowspan="2" colspan="1">
                         <property name="name">
                             <cstring>buttonGroup7_2</cstring>
@@ -504,6 +476,41 @@
                                 </property>
                             </widget>
                         </hbox>
+                    </widget>
+                    <widget class="QLineEdit" row="2" column="1">
+                        <property name="name">
+                            <cstring>contigEIDEdit</cstring>
+                        </property>
+                        <property name="sizePolicy">
+                            <sizepolicy>
+                                <hsizetype>7</hsizetype>
+                                <vsizetype>0</vsizetype>
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                            </sizepolicy>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="2" column="0">
+                        <property name="name">
+                            <cstring>textLabel1_2_2</cstring>
+                        </property>
+                        <property name="text">
+                            <string>EID:</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="1" column="0">
+                        <property name="name">
+                            <cstring>textLabel1_3</cstring>
+                        </property>
+                        <property name="text">
+                            <string>IID:</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
                     </widget>
                     <widget class="QButtonGroup" row="1" column="2" rowspan="2" colspan="1">
                         <property name="name">
@@ -587,9 +594,47 @@
                             </sizepolicy>
                         </property>
                     </widget>
+                    <widget class="QListView" row="0" column="0" rowspan="1" colspan="4">
+                        <property name="name">
+                            <cstring>contigList</cstring>
+                        </property>
+                        <property name="allColumnsShowFocus">
+                            <bool>true</bool>
+                        </property>
+                        <property name="showSortIndicator">
+                            <bool>true</bool>
+                        </property>
+                        <property name="rootIsDecorated">
+                            <bool>true</bool>
+                        </property>
+                    </widget>
+                </grid>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>TabPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Reads</string>
+                </attribute>
+                <grid>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLabel" row="1" column="0">
+                        <property name="name">
+                            <cstring>textLabel1_3_2</cstring>
+                        </property>
+                        <property name="text">
+                            <string>IID:</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
                     <widget class="QLineEdit" row="2" column="1">
                         <property name="name">
-                            <cstring>contigEIDEdit</cstring>
+                            <cstring>readEIDEdit</cstring>
                         </property>
                         <property name="sizePolicy">
                             <sizepolicy>
@@ -598,6 +643,126 @@
                                 <horstretch>0</horstretch>
                                 <verstretch>0</verstretch>
                             </sizepolicy>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="2" column="0">
+                        <property name="name">
+                            <cstring>textLabel1_2_2_2</cstring>
+                        </property>
+                        <property name="text">
+                            <string>EID:</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="1" column="1">
+                        <property name="name">
+                            <cstring>readIIDEdit</cstring>
+                        </property>
+                        <property name="sizePolicy">
+                            <sizepolicy>
+                                <hsizetype>7</hsizetype>
+                                <vsizetype>0</vsizetype>
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                            </sizepolicy>
+                        </property>
+                    </widget>
+                    <widget class="QButtonGroup" row="1" column="2" rowspan="2" colspan="1">
+                        <property name="name">
+                            <cstring>scaffoldHistogramGroup_2_2</cstring>
+                        </property>
+                        <property name="sizePolicy">
+                            <sizepolicy>
+                                <hsizetype>5</hsizetype>
+                                <vsizetype>5</vsizetype>
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                            </sizepolicy>
+                        </property>
+                        <property name="title">
+                            <string>Histograms</string>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QPushButton" row="0" column="0">
+                                <property name="name">
+                                    <cstring>readLengthButton</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>5</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="text">
+                                    <string>Length</string>
+                                </property>
+                            </widget>
+                            <widget class="QPushButton" row="0" column="1">
+                                <property name="name">
+                                    <cstring>readGCButton</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>5</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="text">
+                                    <string>GC Content</string>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <widget class="QButtonGroup" row="1" column="3" rowspan="2" colspan="1">
+                        <property name="name">
+                            <cstring>buttonGroup7_2_2</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Selection</string>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QPushButton">
+                                <property name="name">
+                                    <cstring>readViewButton</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>0</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="text">
+                                    <string>View</string>
+                                </property>
+                            </widget>
+                        </hbox>
+                    </widget>
+                    <widget class="QListView" row="0" column="0" rowspan="1" colspan="4">
+                        <property name="name">
+                            <cstring>readList</cstring>
+                        </property>
+                        <property name="allColumnsShowFocus">
+                            <bool>true</bool>
+                        </property>
+                        <property name="showSortIndicator">
+                            <bool>true</bool>
+                        </property>
+                        <property name="rootIsDecorated">
+                            <bool>true</bool>
                         </property>
                     </widget>
                 </grid>
@@ -613,11 +778,67 @@
         <action name="fileOpenAction"/>
         <action name="fileChromatogramPathsAction"/>
         <separator/>
-        <separator/>
-        <action name="fileExitAction"/>
+        <action name="fileQuitAction"/>
     </item>
 </menubar>
 <toolbars>
+    <toolbar dock="2">
+        <property name="name">
+            <cstring>Toolbar</cstring>
+        </property>
+        <property name="label">
+            <string>Toolbar</string>
+        </property>
+        <widget class="QLabel">
+            <property name="name">
+                <cstring>contigIDLabel</cstring>
+            </property>
+            <property name="text">
+                <string>Contig ID</string>
+            </property>
+        </widget>
+        <widget class="QSpinBox">
+            <property name="name">
+                <cstring>contigIDSpin</cstring>
+            </property>
+        </widget>
+        <separator/>
+        <widget class="QPushButton">
+            <property name="name">
+                <cstring>insertButton</cstring>
+            </property>
+            <property name="minimumSize">
+                <size>
+                    <width>0</width>
+                    <height>25</height>
+                </size>
+            </property>
+            <property name="maximumSize">
+                <size>
+                    <width>32767</width>
+                    <height>20</height>
+                </size>
+            </property>
+            <property name="text">
+                <string>Inserts</string>
+            </property>
+        </widget>
+        <separator/>
+        <widget class="QPushButton">
+            <property name="name">
+                <cstring>tilingButton</cstring>
+            </property>
+            <property name="minimumSize">
+                <size>
+                    <width>0</width>
+                    <height>25</height>
+                </size>
+            </property>
+            <property name="text">
+                <string>Tiling</string>
+            </property>
+        </widget>
+    </toolbar>
 </toolbars>
 <actions>
     <action>
@@ -639,13 +860,13 @@
     </action>
     <action>
         <property name="name">
-            <cstring>fileExitAction</cstring>
+            <cstring>fileQuitAction</cstring>
         </property>
         <property name="text">
-            <string>Exit</string>
+            <string>Quit</string>
         </property>
         <property name="menuText">
-            <string>E&amp;xit</string>
+            <string>&amp;Quit</string>
         </property>
         <property name="accel">
             <string>Ctrl+Q</string>
@@ -659,7 +880,7 @@
             <string>Chromatogram Paths</string>
         </property>
         <property name="menuText">
-            <string>Chromatogram Paths</string>
+            <string>Chromatogram &amp;Paths...</string>
         </property>
         <property name="accel">
             <string>Ctrl+P</string>
@@ -668,21 +889,27 @@
 </actions>
 <images>
     <image name="image0">
-        <data format="PNG" length="210">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b0000009949444154789ced94410e85200c445f89c7367f61bc775d2848a42860ffced9548bbe8e13043e1d928177f481a123dc2b34f6f47a3de2b865a8843f4001982a0b3d5f62c58300aa1ad70550449ab9d507a773a8a4ba4f92a2df333c64c63bebbd82e5b8addecbcc7820eb4266c639745dfa80f36faf66c66fa19c3f882fb470ec05cdc0bed07893f68e171492635f686c3eeff6ba3c8fdd366dc4c0452cf153a9590000000049454e44ae426082</data>
+        <data format="PNG" length="231">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b000000ae49444154388db594510ec3200c436db45371b6691fd3cee66bb18f5135a219235af04f442b5e2c03a124ec50d942dd09be4537d45a9b5d4be2f85f1243e06393d748126d53661d9e854a624ac6633c40cff8576e51280010406b0d00dab104b9c69d19e887774201f64ebc7c8f342fc678b0ce553cc76b752e37e368d69edc8c2df4f58c01ef8f4f7533fe176a1e482ef4e2380b6ac0b9d0d36a57161430833e130aacdef62f9acd8ab4793cea0d051970cdbc4f01b20000000049454e44ae426082</data>
     </image>
 </images>
 <connections>
     <connection>
         <sender>fileOpenAction</sender>
         <signal>activated()</signal>
-        <receiver>LaunchPad</receiver>
+        <receiver>LaunchPadBase</receiver>
         <slot>fileOpen()</slot>
     </connection>
     <connection>
-        <sender>fileExitAction</sender>
+        <sender>fileQuitAction</sender>
         <signal>activated()</signal>
-        <receiver>LaunchPad</receiver>
+        <receiver>LaunchPadBase</receiver>
         <slot>fileExit()</slot>
+    </connection>
+    <connection>
+        <sender>fileChromatogramPathsAction</sender>
+        <signal>activated()</signal>
+        <receiver>LaunchPadBase</receiver>
+        <slot>fileChromoPaths()</slot>
     </connection>
 </connections>
 <slots>
@@ -692,6 +919,7 @@
     <slot>fileSaveAs()</slot>
     <slot>filePrint()</slot>
     <slot>fileExit()</slot>
+    <slot>fileChromoPaths()</slot>
 </slots>
 <layoutdefaults spacing="6" margin="11"/>
 </UI>

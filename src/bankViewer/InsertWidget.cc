@@ -1433,15 +1433,13 @@ void InsertWidget::paintCanvas()
 
 void InsertWidget::resizeEvent(QResizeEvent *e )
 {
-  cerr << "resize newsize: " << e->size().width() << "," << e->size().height();
-  cerr << " old range:" << vrange->rangeLow() << "," << vrange->rangeHigh() << endl;
+  cerr << "resize newsize: " << e->size().width() << "," << e->size().height() << " old range:" << vrange->rangeLow() << "," << vrange->rangeHigh() << endl;
 
   resizeOverview();
   setVisibleVRange(vrange->rangeLow(), vrange->rangeHigh());
   setVisibleHRange(hrange->rangeLow(), hrange->rangeHigh());
 
-  cerr << " new range:" << vrange->rangeLow() << "," << vrange->rangeHigh();
-  cerr << " yf: " << m_ifield->worldMatrix().m22() << endl << endl;
+  cerr << " new range:" << vrange->rangeLow() << "," << vrange->rangeHigh() << " yf: " << m_ifield->worldMatrix().m22() << endl << endl;
 }
 
 void InsertWidget::resizeOverview()
@@ -1459,6 +1457,8 @@ void InsertWidget::setInsertCanvasSize(int width, int height)
 {
   hrange->setMaxRange(0, width);
   vrange->setMaxRange(0, height);
+
+  setVisibleVRange(0, height);
 }
 
 

@@ -78,6 +78,7 @@ private:
     int m_loadedEnd;
     int m_loadedWidth;
     int m_nextDiscrepancyBuffer;
+    int m_contigId;
 
     QScrollView * m_sv;
 

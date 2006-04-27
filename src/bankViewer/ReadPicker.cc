@@ -1,4 +1,4 @@
-#include "ReadPicker.hh"
+#include "LaunchPad.hh"
 #include <qcursor.h>
 #include <qstatusbar.h>
 #include <qmenubar.h>
@@ -62,71 +62,51 @@ public:
 };
 
 
-ReadPicker::ReadPicker(DataStore * datastore,
-                       QWidget * parent, 
-                       const char * name)
-  :QMainWindow(parent, name), m_datastore(datastore)
+void LaunchPad::initReads()
 {
-  m_table = new QListView(this, "readpickertbl");
-  setCentralWidget(m_table);
-  setCaption("Read Chooser");
-  resize(800,500);
-  show();
+  connect(readList, SIGNAL(doubleClicked(QListViewItem *)),
+          this,  SLOT(readSelected(QListViewItem *)));
 
-  QPopupMenu * menu = new QPopupMenu(this);
-  menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Read Length Histogram...",     this, SLOT(readSizeHistogram()));
-  menu->insertItem("&Read GC Content Histogram...", this, SLOT(readGCHistogram()));
+  connect(readList, SIGNAL(returnPressed(QListViewItem *)),
+          this,  SLOT(readSelected(QListViewItem *)));
+
+  connect(readIIDEdit, SIGNAL(textChanged(const QString &)),
+          this,        SLOT(readSelectIID(const QString &)));
+
+  connect(readEIDEdit, SIGNAL(textChanged(const QString &)),
+          this,        SLOT(readSelectEID(const QString &)));
+
+  connect(readEIDEdit, SIGNAL(returnPressed()),
+          this,        SLOT(readViewSelected()));
+
+  connect(readIIDEdit, SIGNAL(returnPressed()),
+          this,        SLOT(readViewSelected()));
+
+  connect(readLengthButton, SIGNAL(clicked()),
+          this,             SLOT(readLengthHistogram()));
+
+  connect(readGCButton,     SIGNAL(clicked()),
+          this,             SLOT(readGCHistogram()));
 
 
-  QToolBar * tool = new QToolBar(this, "tools");
-  new QLabel("IID:", tool, "iidlbl");
-  QLineEdit * iidpick = new QLineEdit(tool, "iidpick");
 
-  new QLabel("EID:", tool, "eidlbl");
-  QLineEdit * eidpick = new QLineEdit(tool, "eidpick");
-
-  connect(m_table, SIGNAL(doubleClicked(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
-
-  connect(m_table, SIGNAL(returnPressed(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
-
-  connect(iidpick, SIGNAL(textChanged(const QString &)),
-          this,    SLOT(selectiid(const QString &)));
-
-  connect(eidpick, SIGNAL(textChanged(const QString &)),
-          this,    SLOT(selecteid(const QString &)));
-
-  connect(eidpick, SIGNAL(returnPressed()),
-          this,    SLOT(acceptSelected()));
-
-  connect(iidpick, SIGNAL(returnPressed()),
-          this,    SLOT(acceptSelected()));
-
-  m_table->addColumn("IID");
-  m_table->addColumn("EID");
-  m_table->addColumn("Type");
-  m_table->addColumn("MateType");
-  m_table->addColumn("Offset");
-  m_table->addColumn("End Offset");
-  m_table->addColumn("Length");
-  m_table->addColumn("Dir");
-  m_table->addColumn("CLR Begin");
-  m_table->addColumn("CLR End");
-  m_table->addColumn("Lib ID");
-  m_table->addColumn("GC Content");
-
-  m_table->setShowSortIndicator(true);
-  m_table->setRootIsDecorated(true);
-  m_table->setAllColumnsShowFocus(true);
-
-  loadTable();
+  readList->addColumn("IID");
+  readList->addColumn("EID");
+  readList->addColumn("Type");
+  readList->addColumn("MateType");
+  readList->addColumn("Offset");
+  readList->addColumn("End Offset");
+  readList->addColumn("Length");
+  readList->addColumn("Dir");
+  readList->addColumn("CLR Begin");
+  readList->addColumn("CLR End");
+  readList->addColumn("Lib ID");
+  readList->addColumn("GC Content");
 }
 
-void ReadPicker::loadTable()
+void LaunchPad::loadReads()
 {
-  m_table->clear();
+  readList->clear();
 
   try
   {
@@ -165,7 +145,7 @@ void ReadPicker::loadTable()
 
 
       int len = ti->range.getLength() + ti->gaps.size();
-      new ReadListItem(m_table,
+      new ReadListItem(readList,
                        QString::number(ti->source),
                        red.getEID().c_str(),
                        QString(QChar(type)),
@@ -188,47 +168,43 @@ void ReadPicker::loadTable()
   }
 }
 
-void ReadPicker::itemSelected(QListViewItem * item)
+void LaunchPad::readSelected(QListViewItem * item)
 {
   emit highlightRead(atoi(item->text(0)));
+  setGindex(atoi(item->text(4)));
 }
 
-void ReadPicker::selectiid(const QString & iid)
+void LaunchPad::readSelectIID(const QString & iid)
 {
-  QListViewItem * item = m_table->findItem(iid, 0);
+  QListViewItem * item = readList->findItem(iid, 0);
   if (item)
   {
-    m_table->setSelected(item, true);
-    m_table->ensureItemVisible(item);
+    readList->setSelected(item, true);
+    readList->ensureItemVisible(item);
   }
 }
 
-void ReadPicker::selecteid(const QString & eid)
+void LaunchPad::readSelectEID(const QString & eid)
 {
-  QListViewItem * item = m_table->findItem(eid, 1);
+  QListViewItem * item = readList->findItem(eid, 1);
   if (item)
   {
-    m_table->setSelected(item, true);
-    m_table->ensureItemVisible(item);
+    readList->setSelected(item, true);
+    readList->ensureItemVisible(item);
   }
 }
 
-void ReadPicker::acceptSelected()
+void LaunchPad::readViewSelected()
 {
-  QListViewItem * item = m_table->selectedItem();
+  QListViewItem * item = readList->selectedItem();
   if (item)
   {
-    itemSelected(item);
+    readSelected(item);
   }
 }
 
-void ReadPicker::contigIdSelected(int contigid)
-{
-  loadTable();
-}
 
-
-void ReadPicker::readSizeHistogram()
+void LaunchPad::readLengthHistogram()
 {
   char buffer[16];
   sprintf(buffer, "%d", m_datastore->m_contigId);
@@ -246,7 +222,7 @@ void ReadPicker::readSizeHistogram()
   new HistogramWindow(stats, this, "hist");
 }
 
-void ReadPicker::readGCHistogram()
+void LaunchPad::readGCHistogram()
 {
   char buffer[16];
   sprintf(buffer, "%d", m_datastore->m_contigId);

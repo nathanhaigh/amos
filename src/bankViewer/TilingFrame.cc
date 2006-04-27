@@ -79,6 +79,7 @@ TilingFrame::TilingFrame(DataStore * datastore,
                                    m_ugpos,
                                    m_alignment,
                                    m_gindex, 
+                                   m_contigId,
                                    this, 
                                    "cons");
 
@@ -181,6 +182,7 @@ void TilingFrame::setContigId(int contigId)
   {
     try
     {
+      m_contigId = contigId;
       m_tiling = m_datastore->m_contig.getReadTiling();
       m_consensus = m_datastore->m_contig.getSeqString();
       m_consqual = m_datastore->m_contig.getQualString();

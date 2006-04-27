@@ -24,34 +24,26 @@ using namespace std;
 class ScaffoldListItem : public QListViewItem
 {
 public:
-  ScaffoldListItem(QListView * parent, 
-                   QString id,
-                   QString iid,
-                   QString eid,
-                   QString length,
-                   QString contigs)
-               
-    : QListViewItem(parent, id, iid, eid, length, contigs) {}
 
   ScaffoldListItem(QListView * parent, 
                    QString id,
                    QString iid,
                    QString eid,
-                   QString offset,
                    QString length,
-                   QString contigs)
+                   QString contigs,
+                   QString offset)
                
-    : QListViewItem(parent, id, iid, eid, offset, length, contigs) {}
+    : QListViewItem(parent, id, iid, eid, length, contigs, offset) {}
 
   ScaffoldListItem(ScaffoldListItem * parent, 
                    QString id,
                    QString iid,
                    QString eid,
-                   QString offset,
                    QString length,
-                   QString contigs)
+                   QString contigs,
+                   QString offset)
                
-    : QListViewItem(parent, id, iid, eid, offset, length, contigs) {}
+    : QListViewItem(parent, id, iid, eid, length, contigs, offset) {}
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
@@ -66,91 +58,51 @@ public:
 };
 
 
-ScaffoldPicker::ScaffoldPicker(DataStore * datastore,
-                               QWidget * parent, 
-                               const char * name)
-  :QMainWindow(parent, name)
+void LaunchPad::initScaffolds()
 {
-  m_showContigs = true;
-  m_datastore = datastore;
+  connect(scaffoldList,    SIGNAL(doubleClicked(QListViewItem *)),
+          this,            SLOT(scaffoldSelected(QListViewItem *)));
 
-  m_table = new QListView(this, "scaffpickertbl");
-  setCentralWidget(m_table);
-  setCaption("Scaffold Information");
-  resize(500,500);
-  show();
+  connect(scaffoldList,    SIGNAL(returnPressed(QListViewItem *)),
+          this,            SLOT(scaffoldSelected(QListViewItem *)));
 
+  connect(scaffoldIIDEdit, SIGNAL(textChanged(const QString &)),
+          this,            SLOT(scaffoldSelectIID(const QString &)));
 
-  QPopupMenu * menu = new QPopupMenu(this);
-  menuBar()->insertItem("&Display", menu);
-  menu->insertItem("&Scaffold Span Histogram...", this, SLOT(scaffoldSizeHistogram()));
-  menu->insertItem("&Scaffold Contig Count Histogram...", this, SLOT(scaffoldContigHistogram()));
+  connect(scaffoldEIDEdit, SIGNAL(textChanged(const QString &)),
+          this,            SLOT(scaffoldSelectEID(const QString &)));
 
-  m_options = new QPopupMenu(this);
-  menuBar()->insertItem("&Options", m_options);
-  m_showcontigsid  = m_options->insertItem("Show &Contigs", this, SLOT(toggleShowContigs()));
-  m_options->setItemChecked(m_showcontigsid, true);
+  connect(scaffoldIIDEdit, SIGNAL(returnPressed()),
+          this,            SLOT(scaffoldViewSelected()));
 
-  QToolBar * tool = new QToolBar(this, "tools");
-  new QLabel("IID:", tool, "iidlbl");
-  QLineEdit * iidpick = new QLineEdit(tool, "iidpick");
+  connect(scaffoldEIDEdit, SIGNAL(returnPressed()),
+          this,            SLOT(scaffoldViewSelected()));
 
-  new QLabel("EID:", tool, "eidlbl");
-  QLineEdit * eidpick = new QLineEdit(tool, "eidpick");
+  connect(scaffoldViewButton, SIGNAL(clicked()),
+          this,               SLOT(scaffoldViewSelected()));
 
-  connect(m_table, SIGNAL(doubleClicked(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
-
-  connect(m_table, SIGNAL(returnPressed(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
-
-  connect(iidpick, SIGNAL(textChanged(const QString &)),
-          this,    SLOT(selectiid(const QString &)));
-
-  connect(eidpick, SIGNAL(textChanged(const QString &)),
-          this,    SLOT(selecteid(const QString &)));
-
-  connect(eidpick, SIGNAL(returnPressed()),
-          this,    SLOT(acceptSelected()));
-
-  connect(iidpick, SIGNAL(returnPressed()),
-          this,    SLOT(acceptSelected()));
-
-
-  m_table->setShowSortIndicator(true);
-  m_table->setRootIsDecorated(true);
-  m_table->setAllColumnsShowFocus(true);
-
-
-  loadTable(true);
+  connect(scaffoldSpanButton, SIGNAL(clicked()),
+          this,               SLOT(scaffoldSpanHistogram()));
+  
+  connect(scaffoldContigsButton, SIGNAL(clicked()),
+          this,                  SLOT(scaffoldContigHistogram()));
 }
 
-void ScaffoldPicker::loadTable(bool jumpToCurrent)
+void LaunchPad::loadScaffolds()
 {
-  m_table->clear();
-  int c = m_table->columns();
+  scaffoldList->clear();
+  int c = scaffoldList->columns();
   for (int i = 0; i < c; i++)
   {
-    m_table->removeColumn(0);
+    scaffoldList->removeColumn(0);
   }
 
-  if (m_showContigs)
-  {
-    m_table->addColumn("Id");
-    m_table->addColumn("IID");
-    m_table->addColumn("EID");
-    m_table->addColumn("Offset");
-    m_table->addColumn("Span");
-    m_table->addColumn("Contigs");
-  }
-  else
-  {
-    m_table->addColumn("Id");
-    m_table->addColumn("IID");
-    m_table->addColumn("EID");
-    m_table->addColumn("Span");
-    m_table->addColumn("Contigs");
-  }
+  scaffoldList->addColumn("Id");
+  scaffoldList->addColumn("IID");
+  scaffoldList->addColumn("EID");
+  scaffoldList->addColumn("Span");
+  scaffoldList->addColumn("Contigs");
+  scaffoldList->addColumn("Offset");
 
   if (!m_datastore->scaffold_bank.isOpen())
   {
@@ -181,46 +133,31 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
 
       ScaffoldListItem * scaffolditem;
 
-      if (m_showContigs)
-      {
-        scaffolditem = new ScaffoldListItem(m_table,  
-                                        QString::number(scaffid), 
-                                        QString::number(scaffold.getIID()),
-                                        QString(scaffold.getEID().c_str()), 
-                                        "",
-                                        QString::number(span), 
-                                        QString::number(numcontigs));
-      }
-      else
-      {
-        scaffolditem = new ScaffoldListItem(m_table,  
-                                        QString::number(scaffid), 
-                                        QString::number(scaffold.getIID()),
-                                        QString(scaffold.getEID().c_str()), 
-                                        QString::number(span), 
-                                        QString::number(numcontigs));
-      }
+      scaffolditem = new ScaffoldListItem(scaffoldList,  
+                                          QString::number(scaffid), 
+                                          QString::number(scaffold.getIID()),
+                                          QString(scaffold.getEID().c_str()), 
+                                          QString::number(span), 
+                                          QString::number(numcontigs),
+                                          "");
 
       scaffid++;
 
-      if (m_showContigs)
-      {
-        vector<AMOS::Tile_t> & ctiling = scaffold.getContigTiling();
+      vector<AMOS::Tile_t> & ctiling = scaffold.getContigTiling();
 
-        vector<AMOS::Tile_t>::iterator ti; 	 
-        for (ti =  ctiling.begin();
-             ti != ctiling.end();
-             ti++) 	 
-        { 	 
-          QString oo = ti->range.isReverse() ? "EB" : "BE";
-          new ScaffoldListItem(scaffolditem, 	 
+      vector<AMOS::Tile_t>::iterator ti; 	 
+      for (ti =  ctiling.begin();
+           ti != ctiling.end();
+           ti++) 	 
+      { 	 
+        QString oo = ti->range.isReverse() ? "EB" : "BE";
+        new ScaffoldListItem(scaffolditem, 	 
                              QString::number(m_datastore->contig_bank.getIDMap().lookupBID(ti->source)),
                              QString::number(ti->source), 	 
                              QString(m_datastore->contig_bank.lookupEID(ti->source).c_str()),
-                             QString::number(ti->offset), 	 
                              QString::number(ti->range.getLength() + ti->gaps.size()),
-                             oo);
-        }
+                             oo,
+                             QString::number(ti->offset));
       }
     }
   }
@@ -232,14 +169,14 @@ void ScaffoldPicker::loadTable(bool jumpToCurrent)
   setCursor(orig);
 }
 
-void ScaffoldPicker::itemSelected(QListViewItem * item)
+void LaunchPad::scaffoldSelected(QListViewItem * item)
 {
   int offset = 0;
   if (item->parent())
   {
     offset = 0;
-    emit contigSelected(atoi(item->text(0)));
-    emit setGindex(offset);
+    setContigId(atoi(item->text(0)));
+    setGindex(offset);
   }
   else
   {
@@ -249,56 +186,42 @@ void ScaffoldPicker::itemSelected(QListViewItem * item)
     AMOS::ID_t contigiid = scaffold.getContigTiling().begin()->source;
     AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(contigiid);
 
-    emit contigSelected(bid);
-    emit setGindex(offset);
+    setContigId(bid);
+    setGindex(offset);
   }
 }
 
-void ScaffoldPicker::selectiid(const QString & iid)
+void LaunchPad::scaffoldSelectIID(const QString & iid)
 {
-  QListViewItem * item = m_table->findItem(iid, 1);
+  QListViewItem * item = scaffoldList->findItem(iid, 1);
   if (item)
   {
-    m_table->setSelected(item, true);
-    m_table->ensureItemVisible(item);
+    scaffoldList->setSelected(item, true);
+    scaffoldList->ensureItemVisible(item);
   }
 }
 
-void ScaffoldPicker::selecteid(const QString & eid)
+void LaunchPad::scaffoldSelectEID(const QString & eid)
 {
-  QListViewItem * item = m_table->findItem(eid, 2);
+  QListViewItem * item = scaffoldList->findItem(eid, 2);
   if (item)
   {
-    m_table->setSelected(item, true);
-    m_table->ensureItemVisible(item);
+    scaffoldList->setSelected(item, true);
+    scaffoldList->ensureItemVisible(item);
   }
 }
 
-void ScaffoldPicker::acceptSelected()
+void LaunchPad::scaffoldViewSelected()
 {
-  QListViewItem * item = m_table->selectedItem();
+  QListViewItem * item = scaffoldList->selectedItem();
   if (item)
   {
-    itemSelected(item);
+    scaffoldSelected(item);
   }
 }
 
-void ScaffoldPicker::toggleShowContigs()
-{
-  bool b = !m_options->isItemChecked(m_showcontigsid);
-  m_options->setItemChecked(m_showcontigsid, b);
 
-  m_showContigs = b;
-
-  loadTable(false);
-}
-
-void ScaffoldPicker::refreshTable()
-{
-  loadTable(false);
-}
-
-void ScaffoldPicker::scaffoldSizeHistogram()
+void LaunchPad::scaffoldSpanHistogram()
 {
   InsertStats * stats = new InsertStats((string)"Scaffold Span Histogram");
 
@@ -312,7 +235,7 @@ void ScaffoldPicker::scaffoldSizeHistogram()
   new HistogramWindow(stats, this, "hist");
 }
 
-void ScaffoldPicker::scaffoldContigHistogram()
+void LaunchPad::scaffoldContigHistogram()
 {
   InsertStats * stats = new InsertStats((string)"Scaffold Contig Count Histogram");
 

@@ -2,7 +2,7 @@
 #include <qapplication.h>
 #include <qpainter.h>
 
-#include "MainWindow.hh"
+#include "LaunchPad.hh"
 #include "InsertWindow.hh"
 #include "icons/AAI.xpm"
 #include <qcursor.h>
@@ -30,7 +30,6 @@ int main( int argc, char **argv )
         cerr << "Usage: bankViewer [options] [bankname [contigid [position]]]" << endl;
         cerr << "Options:"  << endl
              << "  -c <path>   Add a chromatogram path"        << endl
-             << "  -d <dbpath> Add a chromatogram db path"     << endl
              << "  -D <DB>     Set the chromatogram DB"        << endl
              << "  -T          Enable Trace Fetch cmd"         << endl
              << "  -p <port>   Initialize Server on this port" << endl
@@ -68,8 +67,7 @@ int main( int argc, char **argv )
 
     splash->setCursor(Qt::waitCursor);
 
-    MainWindow w(NULL, "mainwindow");
-    w.setGeometry( 100, 100, 700, 355 );
+    LaunchPad w(NULL, "launchpad");
     a.setMainWidget( &w );
 
 
@@ -83,11 +81,6 @@ int main( int argc, char **argv )
       {
         i++; v = a.argv()[i];
         w.addChromoPath(QString(v.c_str()));
-      }
-      else if (v == "-d" && i+1 < a.argc())
-      {
-        i++; v = a.argv()[i];
-        w.addChromoDB(QString(v.c_str()));
       }
       else if (v == "-p" && i+1 < a.argc())
       {

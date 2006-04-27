@@ -25,6 +25,7 @@ ConsensusField::ConsensusField(const string & cons,
                                const vector<int> & ugpos,
                                AlignmentInfo * ai,
                                int & gindex,
+                               int & contigid,
                                QWidget * parent,
                                const char * name)
    :QFrame(parent, name),
@@ -33,7 +34,8 @@ ConsensusField::ConsensusField(const string & cons,
     m_consqual(consqual),
     m_ugpos(ugpos),
     m_alignment(ai),
-    m_gindex(gindex)
+    m_gindex(gindex),
+    m_contigId(contigid)
 {
   m_shownumbers = 0;
   m_highlightdiscrepancy = 0;
@@ -73,9 +75,9 @@ void ConsensusField::setFontSize(int fontsize)
     m_basewidth = 1/(-m_basewidth+2);
   }
 
-  m_lineoffset = m_lineheight;
-  m_posoffset  = m_lineheight + gutter; // hidden by default
-  m_discoffset = m_lineheight + m_diam + m_diam;
+  m_lineoffset = m_lineheight*2;
+  m_posoffset  = m_lineheight*2 + gutter; // hidden by default
+  m_discoffset = m_lineheight*2 + m_diam + m_diam;
   m_consoffset = m_discoffset + m_diam;
 
   if (m_shownumbers) 
@@ -104,7 +106,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     return;
   }
 
-  QPixmap pix(width(), height());
+  int width = this->width();
+  QPixmap pix(width, height());
   pix.fill(this, 0,0);
 
   QPainter p( &pix );
@@ -113,8 +116,8 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   p.setPen(pen);
   p.setFont(QFont("Helvetica", theight));
 
-  int width = this->width();
   int displaywidth = (int)((width-m_tilehoffset)/m_basewidth);
+
 
   p.drawText(m_seqnamehoffset, m_consoffset,
              m_tilehoffset - m_seqnamehoffset, m_lineheight,
@@ -123,11 +126,22 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   int grangeStart = m_gindex;
   int grangeEnd = min(m_gindex + displaywidth, m_consensus.size()-1);
 
+  QString s = "Viewing Contig " + QString::number(m_contigId) + " from ";
+
+  if (m_showUngapped)
+  {
+    s += QString::number(m_ugpos[grangeStart]) + " to " + QString::number(m_ugpos[grangeEnd]);
+  }
+  else
+  {
+    s += QString::number(grangeStart) + " to " + QString::number(grangeEnd);
+  }
+
+  p.drawText(width/2 - 400, 2, 800, m_lineheight, Qt::AlignHCenter | Qt::AlignBottom, s);
+
   //x-axis
   p.drawLine(m_tilehoffset, m_lineoffset, 
              (int)(m_tilehoffset+(grangeEnd-grangeStart+1)*m_basewidth), m_lineoffset);
-
-  QString s;
 
   if (!(m_rangeend < grangeStart || m_rangestart > grangeEnd))
   {
@@ -146,7 +160,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
 
 
   int fudge = 0;
-  if (m_displayQV) { fudge = theight*.25; }
+  if (m_displayQV) { fudge = (int) (theight*.25); }
 
   for (int gindex = grangeStart; gindex <= grangeEnd; gindex++)
   {
@@ -167,7 +181,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
     }
 
     int xcoord = (int)(m_tilehoffset + (gindex-grangeStart)*m_basewidth);
-    int bwidth = max(m_basewidth, 1);
+    int bwidth = max((int) m_basewidth, 1);
 
     if (m_fontsize < m_minheight)
     {
@@ -186,7 +200,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       if (m_displayQV)
       {
         p.setPen(Qt::black);
-        p.setFont(QFont("Helvetica", theight*.6));
+        p.setFont(QFont("Helvetica", (int)(theight*.6)));
 
         b = m_consqual[gindex];
         s = QString::number(b-AMOS::MIN_QUALITY);
@@ -268,7 +282,7 @@ void ConsensusField::paintEvent(QPaintEvent * event)
       p.drawLine(xpos, m_lineoffset-2, 
                  xpos, m_lineoffset+2);
 
-      p.drawText(xpos-50, 2,
+      p.drawText(xpos-50, m_lineheight,
                  100, theight*2, 
                  Qt::AlignHCenter | Qt::AlignCenter, s);
     }

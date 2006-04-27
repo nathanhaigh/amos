@@ -1,6 +1,7 @@
 #include "FeatureBrowser.hh"
 #include <qcursor.h>
 #include <qstatusbar.h>
+#include <qlistview.h>
 
 #include <qlabel.h>
 #include <qlineedit.h>
@@ -18,9 +19,11 @@ using namespace AMOS;
 class FeatureListItem : public QListViewItem
 {
 public:
+
   FeatureListItem(QListView * parent, 
                   QString ncode,
                   QString siid,
+                  QString count,
                   QString type,
                   QString dir,
                   QString start,
@@ -28,13 +31,15 @@ public:
                   QString length,
                   QString comment)
                
-    : QListViewItem(parent, ncode, siid, type, dir, start, end, length, comment)
+    : QListViewItem(parent, ncode, siid, count, type, dir, start, end, length)
     {
+      setText(8, comment);
     }
 
   FeatureListItem(FeatureListItem * parent, 
                   QString ncode,
                   QString siid,
+                  QString count,
                   QString type,
                   QString dir,
                   QString start,
@@ -42,78 +47,86 @@ public:
                   QString length,
                   QString comment)
                
-    : QListViewItem(parent, ncode, siid, type, dir, start, end, length, comment)
+    : QListViewItem(parent, ncode, siid, count, type, dir, start, end, length)
     {
+      setText(8, comment);
     }
 
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
   {
-    if (col == 2 || col == 3 || col == 5 || col == 6 || col == 7)
-    {
-      return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
-    }
-    else
+    if (col == 8)
     {
       return key(col,ascending).compare(i->key(col,ascending));
     }
+
+    return atoi(key(col,ascending)) - atoi(i->key(col,ascending));
   }
 };
 
 
-FeatureBrowser::FeatureBrowser(DataStore * datastore,
-                       QWidget * parent, 
-                       const char * name)
-  :QMainWindow(parent, name)
+
+void LaunchPad::initFeatures()
 {
-  m_table = new QListView(this, "FeatureBrowsertbl");
-  setCentralWidget(m_table);
-  setCaption("Feature Browser");
-  resize(800,500);
-  show();
+  connect(featureList, SIGNAL(doubleClicked(QListViewItem *)),
+          this,  SLOT(featureSelected(QListViewItem *)));
+
+  connect(featureList, SIGNAL(returnPressed(QListViewItem *)),
+          this,  SLOT(featureSelected(QListViewItem *)));
+
+  connect(featureViewButton, SIGNAL(clicked()),
+          this,  SLOT(featureViewButtonSelected()));
+
+  connect(groupGroup, SIGNAL(clicked(int)),
+          this,  SLOT(featureGroupChanged(int)));
 
 
-
-  connect(m_table, SIGNAL(doubleClicked(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
-
-  connect(m_table, SIGNAL(returnPressed(QListViewItem *)),
-          this,  SLOT(itemSelected(QListViewItem *)));
-
-#if 0
-  QToolBar * tool = new QToolBar(this, "tools");
-  new QLabel("EID:", tool, "eidlbl");
-  QLineEdit * eidpick = new QLineEdit(tool, "eidpick");
-  connect(eidpick, SIGNAL(textChanged(const QString &)),
-          this,    SLOT(selecteid(const QString &)));
-
-  connect(eidpick, SIGNAL(returnPressed()),
-          this,    SLOT(acceptSelected()));
-#endif
-
-  m_table->addColumn("Source Type");
-  m_table->addColumn("Source IID");
-  m_table->addColumn("Type");
-  m_table->addColumn("Dir");
-  m_table->addColumn("Start");
-  m_table->addColumn("End");
-  m_table->addColumn("Length");
-  m_table->addColumn("Comment");
-
-  m_datastore = datastore;
-
-  m_table->setShowSortIndicator(true);
-  m_table->setRootIsDecorated(true);
-  m_table->setAllColumnsShowFocus(true);
-
-  loadTable();
 }
 
-void FeatureBrowser::loadTable()
+void LaunchPad::featureGroupChanged(int id)
+{
+  loadFeatures();
+}
+
+void LaunchPad::loadFeatures()
 {
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
+
+  featureList->clear();
+
+  int c = featureList->columns();
+  for (int i = 0; i < c; i++)
+  {
+    featureList->removeColumn(0);
+  }
+
+  if (featureGroupContigButton->isChecked())
+  {
+    featureList->addColumn("Source Type");
+    featureList->addColumn("Source IID");
+    featureList->addColumn("Count");
+    featureList->addColumn("Type");
+    featureList->addColumn("Dir");
+    featureList->addColumn("Start");
+    featureList->addColumn("End");
+    featureList->addColumn("Length");
+    featureList->addColumn("Comment");
+  }
+  else
+  {
+    featureList->addColumn("Type");
+    featureList->addColumn("Count");
+    featureList->addColumn("Source Type");
+    featureList->addColumn("Source IID");
+    featureList->addColumn("Dir");
+    featureList->addColumn("Start");
+    featureList->addColumn("End");
+    featureList->addColumn("Length");
+    featureList->addColumn("Comment");
+  }
+
 
   try
   {
@@ -131,24 +144,51 @@ void FeatureBrowser::loadTable()
 
     while (m_datastore->feat_bank >> feat)
     {
-      sprintf(buffer, "%c:%d", (char)feat.getSource().second, feat.getSource().first);
+      AMOS::Range_t range = feat.getRange();
+
       string s;
-      s += buffer;
+
+      if (featureGroupContigButton->isChecked())
+      {
+        sprintf(buffer, "%c:%d", (char)feat.getSource().second, feat.getSource().first);
+        s += buffer;
+      }
+      else
+      {
+        s += feat.getType();
+      }
 
       ofmi = objectFeatureMap.find(s);
       FeatureListItem * base;
 
       if (ofmi == objectFeatureMap.end())
       {
-        base = new FeatureListItem(m_table,
-                                   QString((QChar)(char)feat.getSource().second),
-                                   QString::number(feat.getSource().first),
-                                   QString(""),
-                                   QString(""),
-                                   QString(""),
-                                   QString(""),
-                                   QString(""),
-                                   QString(""));
+        if (featureGroupContigButton->isChecked())
+        {
+          base = new FeatureListItem(featureList,
+                                     QString((QChar)(char)feat.getSource().second),
+                                     QString::number(feat.getSource().first),
+                                     QString("1"),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""));
+        }
+        else
+        {
+          base = new FeatureListItem(featureList,
+                                     QString((QChar)(char)feat.getType()),
+                                     QString("1"),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""),
+                                     QString(""));
+        }
 
         ofmi = objectFeatureMap.insert(make_pair(s, base)).first;
       }
@@ -157,21 +197,38 @@ void FeatureBrowser::loadTable()
         base = ofmi->second;
       }
 
-      AMOS::Range_t range = feat.getRange();
+      
+      if (featureGroupContigButton->isChecked())
+      {
+        new FeatureListItem(base,
+                            QString((QChar)(char)feat.getSource().second),
+                            QString::number(feat.getSource().first),
+                            QString::number(1),
+                            QString((QChar)(char)feat.getType()),
+                            QString((QChar)(range.isReverse()?'R':'F')),
+                            QString::number(range.getLo()),
+                            QString::number(range.getHi()),
+                            QString::number(range.getLength()),
+                            QString(feat.getComment().c_str()));
 
-      new FeatureListItem(base,
-                          QString((QChar)(char)feat.getSource().second),
-                          QString::number(feat.getSource().first),
-                          QString((QChar)(char)feat.getType()),
-                          QString((QChar)(range.isReverse()?'R':'F')),
-                          QString::number(range.getLo()),
-                          QString::number(range.getHi()),
-                          QString::number(range.getLength()),
-                          QString(feat.getComment().c_str()));
+        base->setText(2, QString::number(base->childCount()));
+      }
+      else
+      {
+        new FeatureListItem(base,
+                            QString((QChar)(char)feat.getType()),
+                            QString::number(1),
+                            QString((QChar)(char)feat.getSource().second),
+                            QString::number(feat.getSource().first),
+                            QString((QChar)(range.isReverse()?'R':'F')),
+                            QString::number(range.getLo()),
+                            QString::number(range.getHi()),
+                            QString::number(range.getLength()),
+                            QString(feat.getComment().c_str()));
 
-      base->setText(2, QString::number(base->childCount()));
+        base->setText(1, QString::number(base->childCount()));
+      }
     }
-
   }
   catch (AMOS::Exception_t & e)
   {
@@ -181,23 +238,34 @@ void FeatureBrowser::loadTable()
   setCursor(orig);
 }
 
-void FeatureBrowser::itemSelected(QListViewItem * item)
+void LaunchPad::featureViewButtonSelected()
 {
-  int offset = atoi(item->text(4));
-  ID_t iid = atoi(item->text(1));
+  QListViewItem * item = featureList->selectedItem();
+  if (item)
+  {
+    featureSelected(item);
+  }
+}
 
-  if (item->text(0)[0] == Contig_t::NCODE)
+void LaunchPad::featureSelected(QListViewItem * item)
+{
+  int offset = atoi(item->text(5));
+  ID_t iid   = atoi(item->text(3));
+  char ncode = item->text(2).ascii()[0];
+
+  if (featureGroupContigButton->isChecked())
+  {
+    iid   = atoi(item->text(1));
+    ncode = item->text(0).ascii()[0];
+  }
+
+  if (ncode == (char)Contig_t::NCODE)
   {
     ID_t bid = m_datastore->contig_bank.lookupBID(iid);
-
-    if (bid != m_datastore->m_contigId)
-    {
-      emit setContigId(bid);
-    }
-
-    emit setGindex(offset);
+    setContigId(bid);
+    setGindex(offset);
   }
-  else if (item->text(0)[0] == Scaffold_t::NCODE)
+  else if (ncode == Scaffold_t::NCODE)
   {
     AMOS::Scaffold_t scaffold;
 
@@ -227,32 +295,8 @@ void FeatureBrowser::itemSelected(QListViewItem * item)
 
     if (bid)
     {
-      emit setContigId(bid);
-      emit setGindex(offset);
+      setContigId(bid);
+      setGindex(offset);
     }
   }
-}
-
-void FeatureBrowser::selecteid(const QString & eid)
-{
-  QListViewItem * item = m_table->findItem(eid, 1);
-  if (item)
-  {
-    m_table->setSelected(item, true);
-    m_table->ensureItemVisible(item);
-  }
-}
-
-void FeatureBrowser::acceptSelected()
-{
-  QListViewItem * item = m_table->selectedItem();
-  if (item)
-  {
-    itemSelected(item);
-  }
-}
-
-void FeatureBrowser::refreshTable()
-{
-  loadTable();
 }

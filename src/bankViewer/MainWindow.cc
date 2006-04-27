@@ -1,10 +1,8 @@
 #include "MainWindow.hh"
 
-#include <qapplication.h>
 #include <qmenubar.h>
 #include <qtoolbar.h>
 #include <qtoolbutton.h>
-#include <qfiledialog.h>
 #include <qaccel.h>
 #include <qstatusbar.h>
 #include <qlabel.h>
@@ -12,39 +10,21 @@
 #include <qvbox.h>
 #include <qsplitter.h>
 
-#include "InsertWindow.hh"
-#include "AssemblyStats.hh"
 #include "TilingFrame.hh"
-#include "ContigPicker.hh"
-#include "ScaffoldPicker.hh"
-#include "ReadPicker.hh"
-#include "FeatureBrowser.hh"
-#include "LibraryPicker.hh"
-#include "ChromoPicker.hh"
-#include "InsertWindow.hh"
-#include "CGraphWindow.hh"
 #include "AlignmentInfo.hh"
-
 
 #include "icons/fontdecrease.xpm"
 #include "icons/fontincrease.xpm"
 
 using namespace std;
 
-MainWindow::MainWindow( QWidget *parent, const char *name )
-           : QMainWindow( parent, name )
+MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name )
+           : QMainWindow( parent, name ),
+             m_datastore(datastore)
 {
-  setCaption("Assembly Investigator");
+  setCaption("Assembly Investigator : Tiling");
   m_gindex = 0;
-
-  m_contigPicker = NULL;
-  m_readPicker = NULL;
-  m_libPicker = NULL;
-  m_chromoPicker = NULL;
-  m_featPicker = NULL;
   m_fontsize = 10;
-  m_insertWindow = NULL;
-  m_cgraphWindow = NULL;
 
   m_outervbox = new QVBox(this, "mainvbox");
   setCentralWidget( m_outervbox);
@@ -55,7 +35,7 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QVBoxLayout * multiTilingLayout = new QVBoxLayout(m_multiTilingWidget, 0, -1, "mtl");
 
   AlignmentInfo * ai = new AlignmentInfo();
-  m_tiling  = new TilingFrame(&m_datastore, ai, m_multiTilingWidget, "origtilingframe");
+  m_tiling  = new TilingFrame(m_datastore, ai, m_multiTilingWidget, "origtilingframe");
   initializeTiling(m_tiling, true);
   m_tiling->show();
 
@@ -65,28 +45,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   m_slider = new QScrollBar(Horizontal, m_outervbox, "slider");
   m_slider->setTracking(1);
   m_slider->setPageStep(20);
-
-
-  // Menubar
-  QPopupMenu* file = new QPopupMenu(this);
-  menuBar()->insertItem("&File", file);
-  file->insertItem("&Open Bank...",            this,  SLOT(chooseBank()));
-  file->insertItem("Chromatogram P&aths...",   this,  SLOT(showChromoPicker()));
-  file->insertSeparator();
-  file->insertItem("&Assembly Statistics...",  this,  SLOT(showAssemblyStats()));
-  file->insertItem("&Library Information...",  this,  SLOT(showLibPicker()));
-  file->insertItem("&Scaffold Information...", this,  SLOT(showScaffoldPicker()));
-  file->insertItem("&Contig Information...",   this,  SLOT(chooseContig()));
-  file->insertItem("&Read Information...",     this,  SLOT(showReadPicker()));
-  file->insertSeparator();
-  file->insertItem("&Feature Browser...",   this,  SLOT(showFeatureBrowser()));
-  file->insertSeparator();
-  file->insertItem("&Quit", qApp,  SLOT(quit()), CTRL+Key_Q );
-
-  //m_indicatorid    = m_options->insertItem("Show &Indicator",          this, SLOT(toggleShowIndicator()));
-  //m_posid          = m_options->insertItem("&Show Positions",          this, SLOT(toggleShowPositions()));
-  m_indicatorid = -1;
-  m_posid = -1;
 
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
@@ -114,10 +72,13 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   QToolBar * status = new QToolBar(this, "Status");
   status->setLabel("Navigation");
 
-  new QLabel("Contig ID", status, "contiglbl");
-  m_contigid  = new QSpinBox(1, 1, 1, status, "contigid");
+  new QLabel("Contig", status, "contiglbl");
+  m_contigspin = new QSpinBox(1,100,1,status, "contigspin");
+  m_contigspin->setMinimumWidth(100);
 
-  m_offsetlabel = new QLabel("  Offset", status, "gindexlbl");
+  status->addSeparator();
+
+  m_offsetlabel = new QLabel("Offset", status, "gindexlbl");
   m_gspin     = new QSpinBox(0,100, 1, status, "gindexspin");
   m_gspin->setMinimumWidth(100);
 
@@ -151,19 +112,6 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
 
   a->connectItem(a->insertItem(CTRL + Key_PageUp),   bNextDisc, SLOT(animateClick()));
   a->connectItem(a->insertItem(CTRL + Key_PageDown), bPrevDisc, SLOT(animateClick()));
-
- // new QLabel("   Chromo DB", status, "dblbl");
- // QLineEdit *  dbpick  = new QLineEdit(status, "dbpick");
-
-
-  QToolButton * bShowInserts = new QToolButton(QPixmap(), "Show Inserts", "Show Inserts", 
-                                               this, SLOT(showInserts()), status );
-  bShowInserts->setText(" Inserts ");
-  bShowInserts->setAccel(CTRL+Key_I);
-
-  QToolButton * bShowCGraph = new QToolButton(QPixmap(), "Show CGraph", "Show CGraph", 
-                                               this, SLOT(showCGraph()), status );
-  bShowCGraph->setText("Contig Graph");
 
   QIconSet icon_fontminus(QPixmap((const char ** )fontdecrease_xpm));
   QIconSet icon_fontplus(QPixmap((const char **)fontincrease_xpm));
@@ -218,20 +166,9 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
   connect(m_gspin,  SIGNAL(valueChanged(int)),
           this,     SLOT(loadGSpin(int)));
 
+  connect(m_contigspin, SIGNAL(valueChanged(int)),
+          parent,   SLOT(setContigId(int)));
 
-
-  // contigid
-  connect(m_contigid, SIGNAL(valueChanged(int)),
-          this,       SLOT(setContigId(int)));
-
-  connect(this,       SIGNAL(contigIdSelected(int)),
-          m_contigid, SLOT(setValue(int)));
-
-
-  // dbpick <-> tiling
-  // connect(dbpick, SIGNAL(textChanged(const QString &)), this, SLOT(setChromoDB(const QString &)));
-  // connect(this, SIGNAL(chromoDBSet(const QString &)), dbpick, SLOT(setText(const QString &)));
-  // dbpick->setText("GB6");
 
 
   // Set defaults
@@ -245,58 +182,14 @@ MainWindow::MainWindow( QWidget *parent, const char *name )
     toggleBaseColors();
   }
 
-  toggleShowIndicator();
   toggleHighlightDiscrepancy();
-
-#if 0
-  ReferenceAlignment ra0;
-  ra0.m_reference = "1047283846736";
-  ra0.m_query = "1";
-  ra0.m_rstart = 1;
-  ra0.m_rend = 1834;
-  ra0.m_qstart = 1;
-  ra0.m_qend = 1834;
-  ra0.m_percentid = 100.0;
-  ra0.m_chain = 0;
-  m_referenceAlignments.insert(make_pair(ra0.m_reference, ra0));
-
-  ReferenceAlignment ra1;
-  ra1.m_reference = "1047283846736";
-  ra1.m_query = "2";
-  ra1.m_rstart = 2338;
-  ra1.m_rend = 14443;
-  ra1.m_qstart = 1;
-  ra1.m_qend = 12106;
-  ra1.m_percentid = 100.0;
-  ra0.m_chain = 1;
-  m_referenceAlignments.insert(make_pair(ra1.m_reference, ra1));
-
-  ReferenceAlignment ra2;
-  ra2.m_reference = "1047283846736";
-  ra2.m_query = "3";
-  ra2.m_rstart = 15340;
-  ra2.m_rend = 22333;
-  ra2.m_qstart = 1;
-  ra2.m_qend = 6994;
-  ra2.m_percentid = 100.0;
-  ra0.m_chain = 2;
-  m_referenceAlignments.insert(make_pair(ra2.m_reference, ra2));
-
-  ReferenceAlignment ra3;
-  ra3.m_reference = "1047283846736";
-  ra3.m_query = "4";
-  ra3.m_rstart = 22609;
-  ra3.m_rend = 540338;
-  ra3.m_qstart = 1;
-  ra3.m_qend = 517730;
-  ra3.m_percentid = 100.0;
-  ra0.m_chain = 3;
-  m_referenceAlignments.insert(make_pair(ra3.m_reference, ra3));
-#endif
 }
 
 void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 {
+  connect(tiling,    SIGNAL(setTilingVisibleRange(int, int, int)),
+          this,      SIGNAL(setTilingVisibleRange(int, int, int)));
+
   connect(this,      SIGNAL(gindexChanged(int)),
           tiling,      SLOT(setGindex(int)));
 
@@ -336,9 +229,6 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
   connect(this,      SIGNAL(toggleBaseColors(bool)),
           tiling,    SIGNAL(toggleBaseColors(bool)));
 
-  connect(this,      SIGNAL(toggleShowIndicator(bool)),
-          tiling,    SIGNAL(toggleShowIndicator(bool)));
-
   connect(this,      SIGNAL(toggleSNPColoring(bool)),
           tiling,    SIGNAL(toggleSNPColoring(bool)));
 
@@ -367,257 +257,6 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
   }
 }
 
-void MainWindow::initializeSimpleServer(int port)
-{
-  SimpleServer * server = new SimpleServer(this, port);
-  connect(server, SIGNAL(newConnect(ClientSocket*)),
-          SLOT(newConnect(ClientSocket*)));
-}
-
-void MainWindow::newConnect(ClientSocket * s)
-{
-  statusBar()->message("New Connection");
-
-  connect(s,           SIGNAL(logText(const QString &)),
-          statusBar(), SLOT(message(const QString &)));
-
-  connect(s,           SIGNAL(setContigLocation(QString, int)),
-          this,        SLOT(setContigLocation(QString, int)));
-}
-
-void MainWindow::setContigLocation(const QString contigid, int pos)
-{
-  int bid;
-  cerr << "set contig location " << contigid << ":" << pos << endl;
-
-  if (contigid[0] == 'E')
-  {
-    cerr << "Lookup: " << contigid.ascii()+1 << endl;
-    bid = m_datastore.contig_bank.getIDMap().lookupBID(contigid.ascii()+1);
-  }
-  else if (contigid[0] == 'I')
-  {
-    int iid = atoi(contigid.ascii()+1);
-
-    cerr << "Lookup " << iid << endl;
-    bid = m_datastore.contig_bank.getIDMap().lookupBID(iid);
-  }
-  else
-  {
-    bid = atoi(contigid.ascii());
-  }
-
-  setContigId(bid);
-  setGindex(pos);
-}
-
-void MainWindow::jumpToRead(int iid)
-{
-  DataStore::IdLookup_t::iterator rcl = m_datastore.m_readcontiglookup.find(iid);
-  if (rcl != m_datastore.m_readcontiglookup.end())
-  {
-    setContigId(rcl->second);
-    vector<AMOS::Tile_t>::iterator ti;
-    for (ti = m_datastore.m_contig.getReadTiling().begin();
-         ti != m_datastore.m_contig.getReadTiling().end();
-         ti++)
-    {
-      if (ti->source == iid)
-      {
-        emit setGindex(ti->offset);
-        emit highlightRead(ti->source);
-        break;
-      }
-    }
-  }
-}
-
-
-
-void MainWindow::chooseBank()
-{
-  QString s = QFileDialog::getExistingDirectory("", this,
-                                                "Open a Bank",
-                                                "Open a Bank",
-                                                TRUE );
-  if (!s.isEmpty())
-  {
-    setBankname(s.ascii());
-  }
-}
-
-void MainWindow::showInserts()
-{
-  if (!m_insertWindow)
-  {
-    m_insertWindow = new InsertWindow(&m_datastore, this, "insertWindow");
-
-    connect(m_insertWindow, SIGNAL(setGindex(int)),
-            this,           SLOT(setGindex(int)));
-
-    connect(m_insertWindow, SIGNAL(setContigId(int)),
-            this,           SLOT(setContigId(int)));
-
-    connect(m_tiling,       SIGNAL(setTilingVisibleRange(int, int, int)),
-            m_insertWindow, SIGNAL(setTilingVisibleRange(int, int, int)));
-
-    connect(this,           SIGNAL(contigIdSelected(int)),
-            m_insertWindow, SLOT(contigChanged()));
-
-    connect(this,           SIGNAL(bankSelected()),
-            m_insertWindow, SLOT(bankChanged()));
-
-    connect(this,           SIGNAL(highlightRead(int)),
-            m_insertWindow, SIGNAL(highlightRead(int)));
-  }
-
-  m_insertWindow->show();
-  m_tiling->update();
-}
-
-void MainWindow::showCGraph()
-{
-  if (!m_cgraphWindow)
-  {
-    m_cgraphWindow = new CGraphWindow(&m_datastore, this, "CGraphWindow");
-
-    connect(this, SIGNAL(contigIdSelected(int)),
-            m_cgraphWindow, SLOT(contigChanged()));
-
-    connect(m_cgraphWindow, SIGNAL(setContigId(int)),
-            this,           SLOT(setContigId(int)));
-  }
-
-  m_cgraphWindow->show();
-}
-
-
-void MainWindow::chooseContig()
-{
-  if (m_contigPicker) { m_contigPicker->close(); }
-
-  m_contigPicker = new ContigPicker(&m_datastore, this, "contigpicker");
-  connect(m_contigPicker, SIGNAL(contigSelected(int)),
-          this,           SLOT(setContigId(int)));
-  connect(m_contigPicker, SIGNAL(setGindex(int)),
-          this,           SLOT(setGindex(int)));
-
-  connect(this,           SIGNAL(bankSelected()),
-          m_contigPicker, SLOT(refreshTable()));
-}
-
-
-void MainWindow::showScaffoldPicker()
-{
-  ScaffoldPicker * scaffoldPicker = new ScaffoldPicker(&m_datastore, this, "scaffoldpicker");
-
-  connect(scaffoldPicker, SIGNAL(contigSelected(int)),
-          this,           SLOT(setContigId(int)));
-  connect(scaffoldPicker, SIGNAL(setGindex(int)),
-          this,           SLOT(setGindex(int)));
-
-  connect(this,           SIGNAL(bankSelected()),
-          scaffoldPicker, SLOT(refreshTable()));
-}
-
-void MainWindow::setContigId(int contigId)
-{
-  if ((contigId != 0) &&
-      ((AMOS::ID_t)contigId != m_datastore.m_contigId) &&
-      !m_datastore.setContigId(contigId))
-  {
-    QString s = "Viewing ";
-    s += m_datastore.m_bankname.c_str();
-    s += " with ";
-    s += QString::number(m_datastore.contig_bank.getSize());
-    s += " contigs";
-
-    s += " Contig Id:";
-    s += QString::number(contigId);
-    s += " Size: ";
-    s += QString::number(m_datastore.m_contig.getLength());
-    s += " Reads: ";
-    s += QString::number(m_datastore.m_contig.getReadTiling().size());
-
-
-
-    int m_showalignments = 0;
-    if (m_showalignments)
-    {
-      vector<ReferenceAlignment> alignments;
-      ReferenceAlignments::iterator ri = m_referenceAlignments.find(m_datastore.m_contig.getEID());
-
-      while (ri != m_referenceAlignments.end() && ri->first == m_datastore.m_contig.getEID())
-      {
-        cerr << "Found alignment r:" << ri->second.m_reference << " q:" << ri->second.m_query << endl;
-        alignments.push_back(ri->second);
-        ri++;
-      }
-
-      delete m_multiTilingWidget->layout();
-      QVBoxLayout * multiTilingLayout = new QVBoxLayout(m_multiTilingWidget, 0, -1,  "mtl2");
-      QSplitter * splitter = new QSplitter(Qt::Vertical, m_multiTilingWidget, "splitter");
-      splitter->show();
-      multiTilingLayout->addWidget(splitter);
-
-      vector<ReferenceAlignment>::iterator ai;
-      cerr << "r";
-      AlignmentInfo * rai = new AlignmentInfo();
-
-      if (!alignments.empty())
-      {
-        rai->m_gaps.push_back(143);
-        rai->m_gaps.push_back(3790);
-      }
-      
-      m_tiling  = new TilingFrame(&m_datastore, rai, splitter, "reftiling");
-      initializeTiling(m_tiling, true);
-      m_tiling->show();
-
-      for (ai =  alignments.begin();
-           ai != alignments.end();
-           ai++)
-      {
-        cerr << "q";
-        DataStore * qs = new DataStore;
-        qs->openBank("amoscmp.bnk");
-        qs->setContigId(qs->contig_bank.getIDMap().lookupBID(ai->m_query.c_str()));
-
-        AlignmentInfo * qai = new AlignmentInfo();
-
-        int count = 0;
-        for (int i = 0; i < rai->m_gaps.size(); i++)
-        {
-          if (rai->m_gaps[i] < ai->m_rstart) { count++; }
-        }
-
-        qai->m_startshift = ai->m_rstart - ai->m_qstart + count;
-        qai->m_endshift = m_datastore.m_contig.getLength() - ai->m_rend;
-
-        TilingFrame * tiling = new TilingFrame(qs, qai, splitter, "querytiling");
-        tiling->setContigId(qs->m_contigId);
-        initializeTiling(tiling, false);
-        tiling->show();
-      }
-    }
-
-    emit contigIdSelected(m_datastore.m_contigId);
-    statusBar()->message(s);
-  }
-}
-
-void MainWindow::setBankname(std::string bankname)
-{
-  if (bankname != "")
-  {
-    if (!m_datastore.openBank(bankname))
-    {
-      m_contigid->setRange(1, m_datastore.contig_bank.getSize());
-      setContigId(1);
-      emit bankSelected();
-    }
-  }
-}
 
 void MainWindow::setGindex(int gindex)
 {
@@ -643,21 +282,6 @@ void MainWindow::toggleShowFullRange()
 }
 
 
-void MainWindow::toggleShowPositions()
-{
-  bool b = !m_options->isItemChecked(m_posid);
-  m_options->setItemChecked(m_posid, b);
-
-  emit toggleShowNumbers(b);
-}
-
-void MainWindow::toggleShowIndicator()
-{
-  bool b = !m_options->isItemChecked(m_indicatorid);
-  m_options->setItemChecked(m_indicatorid, b);
-
-  emit toggleShowIndicator(b);
-}
 
 void MainWindow::toggleDisplayQV()
 {
@@ -741,13 +365,13 @@ void MainWindow::toggleUngapped()
   if (ungapped) 
   { 
     m_offsetlabel->setText("Offset"); 
-    m_gspin->setRange(0, m_datastore.m_contig.getLength());
-    pos = m_datastore.m_contig.ungap2gap(pos);
+    m_gspin->setRange(0, m_datastore->m_contig.getLength());
+    pos = m_datastore->m_contig.ungap2gap(pos);
   }
   else
   {
     m_offsetlabel->setText("Position"); 
-    m_gspin->setRange(1, m_datastore.m_contig.gap2ungap(m_datastore.m_contig.getLength()));
+    m_gspin->setRange(1, m_datastore->m_contig.gap2ungap(m_datastore->m_contig.getLength()));
   }
 
   emit toggleShowUngapped(!ungapped);
@@ -758,7 +382,7 @@ void MainWindow::updateGSpin(int gindex)
 {
   if (m_options->isItemChecked(m_ungappedid))
   {
-    m_gspin->setValue(m_datastore.m_contig.gap2ungap(gindex));
+    m_gspin->setValue(m_datastore->m_contig.gap2ungap(gindex));
   }
   else
   {
@@ -770,7 +394,7 @@ void MainWindow::loadGSpin(int pos)
 {
   if (m_options->isItemChecked(m_ungappedid))
   {
-    setGindex(m_datastore.m_contig.ungap2gap(pos));
+    setGindex(m_datastore->m_contig.ungap2gap(pos));
   }
   else
   {
@@ -793,75 +417,7 @@ void MainWindow::fontDecrease()
   emit setFontSize(m_fontsize);
 }
 
-void MainWindow::setChromoDB(const QString & db)
-{
-  if (m_datastore.m_tracedb != db.ascii())
-  {
-    m_datastore.m_tracedb = db.ascii();
-    emit chromoDBSet(db);
-  }
-}
 
-void MainWindow::showReadPicker()
-{
-  if (m_readPicker) { m_readPicker->close(); }
-
-  m_readPicker = new ReadPicker(&m_datastore, this, "readPicker");
-  connect(m_readPicker, SIGNAL(highlightRead(int)),
-          this,         SIGNAL(highlightRead(int)));
-
-  connect(this,         SIGNAL(contigIdSelected(int)),
-          m_readPicker,   SLOT(contigIdSelected(int)));
-}
-
-void MainWindow::showLibPicker()
-{
-  if (m_libPicker) { m_libPicker->close(); }
-
-  m_libPicker = new LibraryPicker(&m_datastore, this, "libPicker");
-  connect(this, SIGNAL(bankSelected()),
-          m_libPicker, SLOT(refreshTable()));
-
-}
-
-void MainWindow::showAssemblyStats()
-{
-  AssemblyStats * asmStats = new AssemblyStats(&m_datastore, this, "libPicker");
-  connect(this, SIGNAL(bankSelected()),
-          asmStats, SLOT(refreshTable()));
-
-}
-
-void MainWindow::showChromoPicker()
-{
-  if (m_chromoPicker) { m_chromoPicker->close(); }
-
-  m_chromoPicker = new ChromoPicker(&m_datastore, this, "chromoPicker");
-}
-
-void MainWindow::showFeatureBrowser()
-{
-  if (m_featPicker) { m_featPicker->close(); }
-
-  m_featPicker = new FeatureBrowser(&m_datastore, this, "featPicker");
-  connect(m_featPicker,   SIGNAL(setGindex(int)),
-          this,           SLOT(setGindex(int)));
-
-  connect(m_featPicker,   SIGNAL(setContigId(int)),
-          this,           SLOT(setContigId(int)));
-
-  connect(this,           SIGNAL(bankSelected()),
-          m_featPicker,   SLOT(refreshTable()));
-}
-
-void MainWindow::addChromoPath(const QString & path)
-{
-  m_datastore.m_tracepaths.push_back(path.ascii());
-}
-
-void MainWindow::addChromoDB(const QString & db)
-{
-}
 
 void MainWindow::jumpFGindex()
 {
@@ -885,14 +441,15 @@ void MainWindow::findPrev()
   emit searchString(str, false);
 }
 
-
-void MainWindow::enableTraceFetch(bool dofetch)
+void MainWindow::setContigId(int id)
 {
-  m_datastore.m_tracecmdenabled = dofetch;
+  statusBar()->message(QString("Viewing Contig ") + QString::number(id));
+  m_contigid = id;
+  emit contigIdSelected(id);
+  m_contigspin->setValue(id);
 }
 
-void MainWindow::loadKmers(std::string file)
+void MainWindow::bankChanged()
 {
-  m_datastore.Read_Mers(file.c_str());
+  m_contigspin->setMaxValue(m_datastore->contig_bank.getSize());
 }
-

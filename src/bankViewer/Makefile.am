@@ -20,10 +20,10 @@ bankViewer_MOCSOURCES = \
         ContigCanvasItem.cc    \
         ContigPicker.cc        \
         CoverageCanvasItem.cc  \
-	CoverageRectCanvasItem.cc \
+    	CoverageRectCanvasItem.cc \
         CoverageStats.cc       \
         DataStore.cc           \
-	DetailWidget.cc        \
+	    DetailWidget.cc        \
         FeatureBrowser.cc      \
         FeatureCanvasItem.cc   \
         HistogramWidget.cc     \
@@ -35,12 +35,13 @@ bankViewer_MOCSOURCES = \
         InsertStats.cc         \
         InsertWidget.cc        \
         InsertWindow.cc        \
-	LaunchPad.cc           \
+	    LaunchPad.cc           \
+    	LaunchPadBase.cc           \
         LibraryPicker.cc       \
         MainWindow.cc          \
         NetworkCom.cc          \
-	OverviewField.cc       \
-	QueryWidget.cc         \
+	    OverviewField.cc       \
+    	QueryWidget.cc         \
         RangeScrollBar.cc      \
         ReadInfo.cc            \
         ReadPicker.cc          \
@@ -81,7 +82,8 @@ EXTRA_DIST = \
        icons/rangegrip_right.png \
        icons/rangegrip_up.png \
        icons/rangegroove_horiz.png \
-       icons/rangegroove_vert.png 
+       icons/rangegroove_vert.png  \
+       ADDICONS
 
 
 bankViewer_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \

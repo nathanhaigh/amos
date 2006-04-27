@@ -1,12 +1,7 @@
-#include "AssemblyStats.hh"
-#include <qcursor.h>
-#include <qstatusbar.h>
-
-#include <qlabel.h>
-#include <qlineedit.h>
-
 #include "foundation_AMOS.hh"
 #include "DataStore.hh"
+#include "LaunchPad.hh"
+#include <qtextedit.h>
 
 
 #include <vector>
@@ -17,50 +12,37 @@ using namespace AMOS;
 
 #define DIV(a,b) (b?(double(a)/b):0.0)
 
-AssemblyStats::AssemblyStats(DataStore * datastore,
-                       QWidget * parent, 
-                       const char * name)
-  :QMainWindow(parent, name)
+QString tableString;
+
+static void statsAddRow(QString tag, QString value)
 {
-  m_table = new QTable(100, 2, this);
-  setCentralWidget(m_table);
-  setCaption("Assembly Statistics");
-  resize(550,500);
-  show();
-
-  m_table->setLeftMargin(0);
-  m_table->horizontalHeader()->setLabel(0, "Field");
-  m_table->horizontalHeader()->setLabel(1, "Value");
-
-  m_datastore = datastore;
-
-  loadTable();
+  tableString += "<tr><td>" + tag + "</td><td>" + value + "</td></tr>";
 }
 
-void AssemblyStats::addRow(QString tag, QString value)
+static void statsAddHeader(QString header)
 {
-  //cerr << "Adding " << m_currow << ":" << tag << " " << value << endl;
-  m_table->setItem(m_currow, 0, new QTableItem(m_table, QTableItem::Never, tag));
-  m_table->setItem(m_currow, 1, new QTableItem(m_table, QTableItem::Never, value));
-
-  m_currow++;
-}
-
-void AssemblyStats::addRow(QString tag, int value)
-{
-  addRow(tag, QString::number(value, 'g', 12));
-}
-
-void AssemblyStats::addRow(QString tag, double value)
-{
-  addRow(tag, QString::number(value, 'f', 2));
+  QString s = "<b>" + header + "</b>";
+  statsAddRow(s, " ");
 }
 
 
-void AssemblyStats::loadTable()
+static void statsAddRow(QString tag, int value)
+{
+  statsAddRow(tag, QString::number(value, 'g', 12));
+}
+
+static void statsAddRow(QString tag, double value)
+{
+  statsAddRow(tag, QString::number(value, 'f', 2));
+}
+
+
+void LaunchPad::loadAssemblyStatistics()
 {
   QCursor orig = cursor();
-  m_currow = 0;
+
+  statsText->clear();
+  tableString = "<table>";
 
   if (m_datastore->scaffold_bank.isOpen())
   {
@@ -128,36 +110,31 @@ void AssemblyStats::loadTable()
     }
 
 
+    statsAddHeader("[Scaffolds]");
+    statsAddRow("TotalScaffolds", numscaffolds);
+    statsAddRow("TotalContigsInScaffolds", totalcontigs);
+    statsAddRow("MeanContigsPerScaffold", DIV(totalcontigs, numscaffolds));
+    statsAddRow("MinContigsPerScaffold", contigs[0]);
+    statsAddRow("MaxContigsPerScaffold", contigs[contigs.size()-1]);
+    statsAddRow(" ", " ");
+
+    statsAddRow("TotalBasesInScaffolds", totalbases);
+    statsAddRow("MeanBasesInScaffolds", DIV(totalbases, numscaffolds));
+    statsAddRow("MaxBasesInScaffolds", bases[numscaffolds-1]);
+    statsAddRow("N50ScaffoldBases", bases[n50bases]);
+    statsAddRow(" ", " ");
 
 
-
-
-    addRow("[Scaffolds]", "");
-    addRow("TotalScaffolds", numscaffolds);
-    addRow("TotalContigsInScaffolds", totalcontigs);
-    addRow("MeanContigsPerScaffold", DIV(totalcontigs, numscaffolds));
-    addRow("MinContigsPerScaffold", contigs[0]);
-    addRow("MaxContigsPerScaffold", contigs[contigs.size()-1]);
-    addRow("", "");
-
-    addRow("TotalBasesInScaffolds", totalbases);
-    addRow("MeanBasesInScaffolds", DIV(totalbases, numscaffolds));
-    addRow("MaxBasesInScaffolds", bases[numscaffolds-1]);
-    addRow("N50ScaffoldBases", bases[n50bases]);
-    addRow("", "");
-
-
-    addRow("TotalSpanOfScaffolds", totalspan);
-    addRow("MeanSpanOfScaffolds", DIV(totalspan, numscaffolds));
-    addRow("MinScaffoldSpan", spans[0]);
-    addRow("MaxScaffoldSpan", spans[numscaffolds-1]);
-    addRow("IntraScaffoldGaps", totalcontigs - numscaffolds);
-    addRow("2KbScaffolds", largescaffolds);
-    addRow("2KbScaffoldSpan", largescaffoldspan);
-    addRow("2KbScaffoldPercent", DIV(largescaffoldspan, totalspan) * 100.0);
-    addRow("MeanSequenceGapSize", DIV(totalspan-totalbases, totalcontigs-numscaffolds));
-
-    addRow("", "");
+    statsAddRow("TotalSpanOfScaffolds", totalspan);
+    statsAddRow("MeanSpanOfScaffolds", DIV(totalspan, numscaffolds));
+    statsAddRow("MinScaffoldSpan", spans[0]);
+    statsAddRow("MaxScaffoldSpan", spans[numscaffolds-1]);
+    statsAddRow("IntraScaffoldGaps", totalcontigs - numscaffolds);
+    statsAddRow("2KbScaffolds", largescaffolds);
+    statsAddRow("2KbScaffoldSpan", largescaffoldspan);
+    statsAddRow("2KbScaffoldPercent", DIV(largescaffoldspan, totalspan) * 100.0);
+    statsAddRow("MeanSequenceGapSize", DIV(totalspan-totalbases, totalcontigs-numscaffolds));
+    statsAddRow(" ", " ");
   }
 
   int LARGETHRESHOLD = 10000;
@@ -236,51 +213,47 @@ void AssemblyStats::loadTable()
 
 
     // Contigs
-    addRow("[Contigs]", "");
-    addRow("TotalContigs",  (int)m_datastore->contig_bank.getSize());
-    addRow("TotalBasesInContigs", totalsize);
-    addRow("MeanContigSize", DIV(totalsize, sizes.size()));
-    addRow("MinContigSize", sizes[0]);
-    addRow("MaxContigSize", sizes[sizes.size()-1]);
-    addRow("N50ContigBases", sizes[n50]);
-    addRow("", "");
+
+    statsAddHeader("[Contigs]");
+    statsAddRow("TotalContigs",  (int)m_datastore->contig_bank.getSize());
+    statsAddRow("TotalBasesInContigs", totalsize);
+    statsAddRow("MeanContigSize", DIV(totalsize, sizes.size()));
+    statsAddRow("MinContigSize", sizes[0]);
+    statsAddRow("MaxContigSize", sizes[sizes.size()-1]);
+    statsAddRow("N50ContigBases", sizes[n50]);
+    statsAddRow(" ", " ");
 
     // Big Contigs
-    addRow(QString("[BigContigs_greater_") + QString::number(LARGETHRESHOLD) + "]", "");
-    addRow("TotalBigContigs", largecount);
-    addRow("BigContigLength", largesize);
-    addRow("MeanBigContigSize", DIV(largesize,largecount));
-    addRow("MinBigContig", minlarge);
-    addRow("MaxBigContig", maxlarge);
-    addRow("BigContigsPercentBases", DIV(largesize,totalsize)*100.0);
-    addRow("", "");
+    statsAddHeader(QString("[BigContigs_greater_") + QString::number(LARGETHRESHOLD) + "]");
+    statsAddRow("TotalBigContigs", largecount);
+    statsAddRow("BigContigLength", largesize);
+    statsAddRow("MeanBigContigSize", DIV(largesize,largecount));
+    statsAddRow("MinBigContig", minlarge);
+    statsAddRow("MaxBigContig", maxlarge);
+    statsAddRow("BigContigsPercentBases", DIV(largesize,totalsize)*100.0);
+    statsAddRow(" ", " ");
 
     // Small Contigs
-    addRow("[SmallContigs]", "");
-    addRow("TotalSmallContigs", smallcount);
-    addRow("SmallContigLength", smallsize);
-    addRow("MeanSmallContigSize", DIV(smallsize, smallcount));
-    addRow("MinSmallContig", minsmall);
-    addRow("MaxSmallContig", maxsmall);
-    addRow("SmallContigsPercentBases", DIV(smallsize,totalsize)*100.0);
-    addRow("", "");
-
+    statsAddHeader("[SmallContigs]");
+    statsAddRow("TotalSmallContigs", smallcount);
+    statsAddRow("SmallContigLength", smallsize);
+    statsAddRow("MeanSmallContigSize", DIV(smallsize, smallcount));
+    statsAddRow("MinSmallContig", minsmall);
+    statsAddRow("MaxSmallContig", maxsmall);
+    statsAddRow("SmallContigsPercentBases", DIV(smallsize,totalsize)*100.0);
+    statsAddRow(" ", " ");
 
 
     // Reads
-    addRow("[Reads]", "");
-    addRow("TotalReads", (int)m_datastore->read_bank.getSize());
-    addRow("ReadsInContigs", totalreads);
-    addRow("BigContigReads", largereads);
-    addRow("SmallContigReads", smallreads);
-    addRow("SingletonReads", (int) m_datastore->read_bank.getSize() - totalreads);
+    statsAddHeader("[Reads]");
+    statsAddRow("TotalReads", (int)m_datastore->read_bank.getSize());
+    statsAddRow("ReadsInContigs", totalreads);
+    statsAddRow("BigContigReads", largereads);
+    statsAddRow("SmallContigReads", smallreads);
+    statsAddRow("SingletonReads", (int) m_datastore->read_bank.getSize() - totalreads);
   }
 
-  m_table->adjustColumn(0);
-  m_table->setColumnWidth(1, 250);
-}
+  tableString += "</table>";
 
-void AssemblyStats::refreshTable()
-{
-  loadTable();
+  statsText->setText(tableString);
 }

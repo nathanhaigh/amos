@@ -1,122 +1,128 @@
-/****************************************************************************
-** Form interface generated from reading ui file 'LaunchPad.ui'
-**
-** Created: Wed Apr 26 16:49:26 2006
-**      by: The User Interface Compiler ($Id$)
-**
-** WARNING! All changes made in this file will be lost!
-****************************************************************************/
-
 #ifndef LAUNCHPAD_H
 #define LAUNCHPAD_H
 
-#include <qvariant.h>
-#include <qpixmap.h>
-#include <qmainwindow.h>
+#include <string>
 
-class QVBoxLayout;
-class QHBoxLayout;
-class QGridLayout;
-class QSpacerItem;
-class QAction;
-class QActionGroup;
-class QToolBar;
-class QPopupMenu;
-class QTabWidget;
-class QWidget;
-class QTextEdit;
-class QListView;
-class QListViewItem;
-class QButtonGroup;
-class QRadioButton;
-class QPushButton;
-class QLabel;
-class QLineEdit;
+#include <qcursor.h>
+#include <qpushbutton.h>
+#include <qbuttongroup.h>
+#include <qradiobutton.h>
+#include <qlistview.h>
 
-class LaunchPad : public QMainWindow
+#include "LaunchPadBase.hh"
+#include "NetworkCom.hh"
+#include "DataStore.hh"
+
+class InsertWindow;
+class MainWindow;
+
+class LaunchPad : public LaunchPadBase
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    LaunchPad( QWidget* parent = 0, const char* name = 0, WFlags fl = WType_TopLevel );
-    ~LaunchPad();
+  LaunchPad(QWidget* parent = 0, const char* name = 0, WFlags fl = WType_TopLevel);
+  ~LaunchPad();
 
-    QTabWidget* tabWidget;
-    QWidget* statsTab;
-    QTextEdit* statsText;
-    QWidget* featuresTab;
-    QListView* featureList;
-    QButtonGroup* groupGroup;
-    QRadioButton* featureGroupTypeButton;
-    QRadioButton* featureGroupContigButton;
-    QButtonGroup* buttonGroup6;
-    QPushButton* featureViewButton;
-    QWidget* librariesTab;
-    QListView* libraryList;
-    QButtonGroup* histogramGroup;
-    QPushButton* libraryInsertButton;
-    QPushButton* libraryClearLengthButton;
-    QPushButton* libraryReadLengthButton;
-    QPushButton* libraryGCButton;
-    QWidget* scaffoldsTab;
-    QListView* scaffoldList;
-    QLabel* textLabel1;
-    QLabel* textLabel1_2;
-    QLineEdit* scaffoldIIDEdit;
-    QLineEdit* scaffoldEIDEdit;
-    QButtonGroup* scaffoldHistogramGroup;
-    QPushButton* scaffoldSpanButton;
-    QPushButton* scaffoldContigsButton;
-    QButtonGroup* buttonGroup7;
-    QPushButton* scaffoldViewButton;
-    QWidget* contigsTab;
-    QLabel* textLabel1_2_2;
-    QLabel* textLabel1_3;
-    QListView* contigList;
-    QButtonGroup* buttonGroup7_2;
-    QPushButton* contigViewButton;
-    QButtonGroup* scaffoldHistogramGroup_2;
-    QPushButton* contigLengthButton;
-    QPushButton* contigReadsButton;
-    QPushButton* contigGCButton;
-    QLineEdit* contigIIDEdit;
-    QLineEdit* contigEIDEdit;
-    QMenuBar *MenuBar;
-    QPopupMenu *fileMenu;
-    QAction* fileOpenAction;
-    QAction* fileExitAction;
-    QAction* fileChromatogramPathsAction;
+public slots: 
 
-public slots:
-    virtual void fileNew();
-    virtual void fileOpen();
-    virtual void fileSave();
-    virtual void fileSaveAs();
-    virtual void filePrint();
-    virtual void fileExit();
+  // global
+  void fileOpen();
+  void fileExit();
 
-protected:
-    QHBoxLayout* LaunchPadLayout;
-    QGridLayout* statsTabLayout;
-    QGridLayout* featuresTabLayout;
-    QSpacerItem* spacer1;
-    QHBoxLayout* groupGroupLayout;
-    QHBoxLayout* buttonGroup6Layout;
-    QGridLayout* librariesTabLayout;
-    QHBoxLayout* histogramGroupLayout;
-    QGridLayout* scaffoldsTabLayout;
-    QHBoxLayout* scaffoldHistogramGroupLayout;
-    QHBoxLayout* buttonGroup7Layout;
-    QGridLayout* contigsTabLayout;
-    QHBoxLayout* buttonGroup7_2Layout;
-    QHBoxLayout* scaffoldHistogramGroup_2Layout;
+  void setBankname(std::string bankname);
+  void loadBank();
 
-protected slots:
-    virtual void languageChange();
+  void showInserts();
+  void showTiling();
+
+  void fileChromoPaths();
+  void addChromoPath(const QString & path);
+  void setChromoDB(const QString & db);
+
+  void loadKmers(std::string file);
+
+  void newConnect(ClientSocket * s);
+  void setContigLocation(QString, int);
+  void jumpToRead(int iid);
+  void initializeSimpleServer(int port);
+  void enableTraceFetch(bool dofetch);
+
+  void setContigId(int);
+  void setGindex(int);
+
+
+  // stats tab
+  void loadAssemblyStatistics();
+
+  // features tab
+  void initFeatures();
+  void loadFeatures();
+  void featureSelected(QListViewItem *);
+  void featureViewButtonSelected();
+  void featureGroupChanged(int);
+
+  // libraries tab
+  void initLibraries();
+  void loadLibraries();
+  void librarySelected(QListViewItem *);
+  void libraryViewSelected();
+  void libraryClearLengthSelected();
+  void libraryReadLengthSelected();
+  void libraryGCSelected();
+
+  // scaffolds tab
+  void initScaffolds();
+  void loadScaffolds();
+  void scaffoldSelected(QListViewItem *);
+  void scaffoldSelectIID(const QString &);
+  void scaffoldSelectEID(const QString &);
+  void scaffoldViewSelected();
+  void scaffoldSpanHistogram();
+  void scaffoldContigHistogram();
+
+  // contigs tab
+  void initContigs();
+  void loadContigs();
+  void contigSelected(QListViewItem *);
+  void contigSelectIID(const QString &);
+  void contigSelectEID(const QString &);
+  void contigViewSelected();
+  void contigLengthHistogram();
+  void contigReadCountHistogram();
+  void contigGCHistogram();
+
+
+  // reads tab
+  void initReads();
+  void loadReads();
+  void readSelected(QListViewItem *);
+  void readSelectIID(const QString &);
+  void readSelectEID(const QString &);
+  void readViewSelected();
+  void readLengthHistogram();
+  void readGCHistogram();
+
+
+signals:
+  void setTilingVisibleRange(int,int,int);
+  void bankSelected();
+  void highlightRead(int);
+
+  void contigIdSelected(int);
+  void gindexSelected(int);
+
 
 private:
-    QPixmap image0;
+
+  DataStore * m_datastore;
+
+  InsertWindow * m_insertWindow;
+  MainWindow * m_tilingWindow;
+  QMainWindow * m_chromoPicker;
+
+  int m_gindex;
 
 };
 
-#endif // LAUNCHPAD_H
+#endif

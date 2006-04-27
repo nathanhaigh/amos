@@ -18,6 +18,7 @@ public:
                    const std::vector<int> & ugappos,
                    AlignmentInfo * ai,
                    int & gindex,
+                   int & contigid,
                    QWidget *parent=0,
                    const char *name=0);
     void setWidth(int width) { resize(width, height()); }
@@ -46,6 +47,8 @@ private:
     const std::vector<int> & m_ugpos;
     AlignmentInfo * m_alignment;
     int & m_gindex;
+    int & m_contigId;
+
     int m_fontsize;
     bool m_shownumbers;
     bool m_highlightdiscrepancy;
