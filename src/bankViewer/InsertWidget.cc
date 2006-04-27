@@ -102,6 +102,9 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
 
   m_hscale = .06250;
+  m_contigid = 0;
+  m_gstart = 0;
+  m_gend = 0;
 
   m_iposition = new InsertPosition(m_datastore, this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
@@ -234,6 +237,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   connect(m_ifield, SIGNAL(setGindex(int)),
           this,     SLOT(computePos(int)));
 
+  connect(m_ifield,   SIGNAL(fieldResized()),    this, SLOT(resizeField()));
+  connect(m_overview, SIGNAL(overviewResized()), this, SLOT(resizeOverview()));
 
   QAccel *a = new QAccel( this );
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_S), this, SLOT(start()) );
@@ -242,7 +247,6 @@ InsertWidget::InsertWidget(DataStore * datastore,
   a->connectItem(a->insertItem(Key_Escape),       this, SLOT(stopbreak()));
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_A), this, SLOT(autoplay()) );
 
-  initializeTiling();
   m_ifield->show();
 }
 
@@ -376,6 +380,7 @@ void InsertWidget::setVisibleHRange(int left, int right)
 {
   if (!m_updatingScrollBars)
   {
+    right = max(left+2, right);
     double xf = ((double)m_ifield->width()-4) / ((right - left + 1));
 
     QWMatrix m = m_ifield->worldMatrix();
@@ -390,7 +395,9 @@ void InsertWidget::setVisibleVRange(int top, int bottom)
 {
   if (!m_updatingScrollBars)
   {
-    //cerr << "setVisibleVRange:" << top << "," << bottom << endl;
+    cerr << "setVisibleVRange:" << top << "," << bottom << " height: " << m_ifield->height() << endl;
+
+    bottom = max(top+2, bottom);
 
     double yf = ((double)(m_ifield->height()-4)) / (bottom - top + 1);
 
@@ -1428,25 +1435,18 @@ void InsertWidget::paintCanvas()
   m_icanvas->update();
   cerr << "." << endl;
 
+  setInsertCanvasSize(scaledwidth, voffset);
   setTilingVisibleRange(m_contigid, m_gstart, m_gend);
+  m_ifield->updateVisibleRect();
 
   QApplication::restoreOverrideCursor();
-
-  setInsertCanvasSize(scaledwidth, voffset);
-  resizeOverview();
-  updateVisibleRange();
-  m_ifield->updateVisibleRect();
 }
 
-void InsertWidget::resizeEvent(QResizeEvent *e )
-{
-  cerr << "resize newsize: " << e->size().width() << "," << e->size().height() << " old range:" << vrange->rangeLow() << "," << vrange->rangeHigh() << endl;
 
-  resizeOverview();
+void InsertWidget::resizeField()
+{
   setVisibleVRange(vrange->rangeLow(), vrange->rangeHigh());
   setVisibleHRange(hrange->rangeLow(), hrange->rangeHigh());
-
-  cerr << " new range:" << vrange->rangeLow() << "," << vrange->rangeHigh() << " yf: " << m_ifield->worldMatrix().m22() << endl << endl;
 }
 
 void InsertWidget::resizeOverview()
@@ -1462,10 +1462,16 @@ void InsertWidget::resizeOverview()
 
 void InsertWidget::setInsertCanvasSize(int width, int height)
 {
+  m_updatingScrollBars = true;
   hrange->setMaxRange(0, width);
   vrange->setMaxRange(0, height);
 
-  setVisibleVRange(0, height);
+  width = min(width, 2000);
+
+  hrange->setRange(0, width);
+  vrange->setRange(0, height);
+
+  m_updatingScrollBars = false;
 }
 
 

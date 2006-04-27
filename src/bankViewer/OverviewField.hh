@@ -13,8 +13,12 @@ public:
                 QWidget * parent = 0,
                 const char * name = 0);
 
+public slots:
+  void resizeEvent(QResizeEvent * e);
+
 signals:
   void centerView(int);
+  void overviewResized();
 
 protected:
   void wheelEvent(QWheelEvent *e);

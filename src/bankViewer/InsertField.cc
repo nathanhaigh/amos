@@ -608,3 +608,8 @@ void InsertField::search(const QString & str)
       m_lastsearch = NULL;
     }
 }
+
+void InsertField::resizeEvent(QResizeEvent * e)
+{
+  emit fieldResized();
+}

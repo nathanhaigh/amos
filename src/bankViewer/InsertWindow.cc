@@ -378,7 +378,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
             iw,      SLOT(setErrorRate(int)));
   }
 
-  iw->paintCanvas(); // TODO: Is this necessary?
+  iw->initializeTiling(); // iw constructor doesn't compute anything
 }
 
 int InsertWindow::s_persistant(0);

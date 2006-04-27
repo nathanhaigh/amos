@@ -29,3 +29,8 @@ void OverviewField::contentsMousePressEvent( QMouseEvent* e )
 
   emit centerView(real.x());
 }
+
+void OverviewField::resizeEvent(QResizeEvent * e)
+{
+  emit overviewResized();
+}

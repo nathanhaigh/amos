@@ -26,6 +26,8 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
   m_gindex = 0;
   m_fontsize = 10;
 
+  setGeometry(500,0,800,400);
+
   m_outervbox = new QVBox(this, "mainvbox");
   setCentralWidget( m_outervbox);
 

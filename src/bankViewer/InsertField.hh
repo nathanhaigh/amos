@@ -31,9 +31,12 @@ signals:
   void jumpToRead(int iid);
   void updateVisibleRange();
 
+  void fieldResized();
+
 
 
 public slots:
+  void resizeEvent(QResizeEvent * e);
 
   void setZoomInTool();
   void setZoomOutTool();

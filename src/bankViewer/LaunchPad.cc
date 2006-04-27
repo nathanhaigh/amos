@@ -144,6 +144,7 @@ void LaunchPad::showInserts()
   }
 
   m_insertWindow->show();
+  emit setTilingVisibleRange(m_datastore->m_contigId, m_gindex, m_gindex+100);
 
   if (m_tilingWindow) { m_tilingWindow->update(); }
 }
@@ -290,6 +291,7 @@ void LaunchPad::jumpToRead(int iid)
 void LaunchPad::setGindex(int gpos)
 {
   m_gindex = gpos;
+  emit setTilingVisibleRange(m_datastore->m_contigId, gpos, gpos+100);
   emit gindexSelected(gpos);
 }
 

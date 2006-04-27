@@ -41,8 +41,9 @@ public:
   ~InsertWidget();
 
 public slots:
-  void resizeEvent(QResizeEvent * e);
   void resizeOverview();
+  void resizeField();
+
   void initializeTiling();
   void updateVisibleRange();
   void centerView(int);
