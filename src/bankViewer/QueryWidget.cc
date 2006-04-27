@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Wed Apr 26 23:57:38 2006
+** Created: Thu Apr 27 11:53:06 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -406,18 +406,18 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     queryBoxLayout->addWidget( mateColorBox, 4, 1 );
     QueryWidgetLayout->addWidget( queryBox );
     languageChange();
-    resize( QSize(273, 693).expandedTo(minimumSizeHint()) );
+    resize( QSize(268, 705).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections
-    connect( searchEdit, SIGNAL( returnPressed() ), searchButton, SLOT( animateClick() ) );
-    connect( happyEdit, SIGNAL( returnPressed() ), happyButton, SLOT( animateClick() ) );
+    connect( breakCheck, SIGNAL( toggled(bool) ), breakSlider, SLOT( setEnabled(bool) ) );
+    connect( qcCheck, SIGNAL( toggled(bool) ), qcSlider, SLOT( setEnabled(bool) ) );
     connect( insertCheck, SIGNAL( toggled(bool) ), insertSlider, SLOT( setEnabled(bool) ) );
     connect( readCheck, SIGNAL( toggled(bool) ), readSlider, SLOT( setEnabled(bool) ) );
     connect( snpCheck, SIGNAL( toggled(bool) ), snpSlider, SLOT( setEnabled(bool) ) );
     connect( unitigCheck, SIGNAL( toggled(bool) ), unitigSlider, SLOT( setEnabled(bool) ) );
-    connect( qcCheck, SIGNAL( toggled(bool) ), qcSlider, SLOT( setEnabled(bool) ) );
-    connect( breakCheck, SIGNAL( toggled(bool) ), breakSlider, SLOT( setEnabled(bool) ) );
+    connect( searchEdit, SIGNAL( returnPressed() ), searchButton, SLOT( animateClick() ) );
+    connect( happyEdit, SIGNAL( returnPressed() ), happyButton, SLOT( animateClick() ) );
 }
 
 /*
@@ -435,7 +435,7 @@ QueryWidget::~QueryWidget()
 void QueryWidget::languageChange()
 {
     setCaption( tr( "Form2" ) );
-    queryBox->setTitle( tr( "Queries" ) );
+    queryBox->setTitle( tr( " Queries" ) );
     searchButton->setText( tr( "Search" ) );
     happyEdit->setText( tr( "2.0" ) );
     happyButton->setText( tr( "Happy Distance" ) );

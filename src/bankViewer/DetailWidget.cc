@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'DetailWidget.ui'
 **
-** Created: Wed Apr 26 23:57:37 2006
+** Created: Thu Apr 27 11:53:05 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -10,7 +10,6 @@
 #include "DetailWidget.hh"
 
 #include <qvariant.h>
-#include <qpushbutton.h>
 #include <qgroupbox.h>
 #include <qtextedit.h>
 #include <qlayout.h>
@@ -26,13 +25,13 @@ DetailWidget::DetailWidget( QWidget* parent, const char* name, WFlags fl )
 {
     if ( !name )
 	setName( "DetailWidget" );
-    DetailWidgetLayout = new QVBoxLayout( this, 0, 0, "DetailWidgetLayout"); 
+    DetailWidgetLayout = new QGridLayout( this, 1, 1, 0, 0, "DetailWidgetLayout"); 
 
     detailBox = new QGroupBox( this, "detailBox" );
     detailBox->setFlat( TRUE );
     detailBox->setColumnLayout(0, Qt::Vertical );
-    detailBox->layout()->setSpacing( 6 );
-    detailBox->layout()->setMargin( 11 );
+    detailBox->layout()->setSpacing( 0 );
+    detailBox->layout()->setMargin( 0 );
     detailBoxLayout = new QVBoxLayout( detailBox->layout() );
     detailBoxLayout->setAlignment( Qt::AlignTop );
 
@@ -45,11 +44,11 @@ DetailWidget::DetailWidget( QWidget* parent, const char* name, WFlags fl )
     detailText->setTextFormat( QTextEdit::RichText );
     detailText->setWordWrap( QTextEdit::NoWrap );
     detailText->setReadOnly( TRUE );
-    detailText->setTabStopWidth( 20 );
     detailBoxLayout->addWidget( detailText );
-    DetailWidgetLayout->addWidget( detailBox );
+
+    DetailWidgetLayout->addWidget( detailBox, 0, 0 );
     languageChange();
-    resize( QSize(378, 473).expandedTo(minimumSizeHint()) );
+    resize( QSize(553, 537).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 }
 
@@ -68,6 +67,6 @@ DetailWidget::~DetailWidget()
 void DetailWidget::languageChange()
 {
     setCaption( tr( "Form2" ) );
-    detailBox->setTitle( tr( "Selection Details" ) );
+    detailBox->setTitle( tr( " Selection Details" ) );
 }
 

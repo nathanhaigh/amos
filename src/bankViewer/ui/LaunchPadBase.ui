@@ -101,10 +101,10 @@
                             </property>
                             <widget class="QRadioButton">
                                 <property name="name">
-                                    <cstring>featureGroupTypeButton</cstring>
+                                    <cstring>featureGroupContigButton</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Type</string>
+                                    <string>Contig</string>
                                 </property>
                                 <property name="checked">
                                     <bool>true</bool>
@@ -112,47 +112,13 @@
                             </widget>
                             <widget class="QRadioButton">
                                 <property name="name">
-                                    <cstring>featureGroupContigButton</cstring>
+                                    <cstring>featureGroupTypeButton</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Contig</string>
+                                    <string>Type</string>
                                 </property>
-                            </widget>
-                        </hbox>
-                    </widget>
-                    <widget class="QButtonGroup" row="1" column="2">
-                        <property name="name">
-                            <cstring>buttonGroup6</cstring>
-                        </property>
-                        <property name="sizePolicy">
-                            <sizepolicy>
-                                <hsizetype>5</hsizetype>
-                                <vsizetype>5</vsizetype>
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                            </sizepolicy>
-                        </property>
-                        <property name="title">
-                            <string>Selection</string>
-                        </property>
-                        <hbox>
-                            <property name="name">
-                                <cstring>unnamed</cstring>
-                            </property>
-                            <widget class="QPushButton">
-                                <property name="name">
-                                    <cstring>featureViewButton</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>0</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="text">
-                                    <string>View</string>
+                                <property name="checked">
+                                    <bool>false</bool>
                                 </property>
                             </widget>
                         </hbox>
@@ -187,7 +153,7 @@
                     <property name="name">
                         <cstring>unnamed</cstring>
                     </property>
-                    <widget class="QListView" row="0" column="0">
+                    <widget class="QListView" row="0" column="0" rowspan="1" colspan="2">
                         <property name="name">
                             <cstring>libraryList</cstring>
                         </property>
@@ -201,7 +167,7 @@
                             <bool>true</bool>
                         </property>
                     </widget>
-                    <widget class="QButtonGroup" row="1" column="0">
+                    <widget class="QButtonGroup" row="1" column="1">
                         <property name="name">
                             <cstring>histogramGroup</cstring>
                         </property>
@@ -218,7 +184,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -234,7 +200,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -250,7 +216,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -266,7 +232,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -278,6 +244,23 @@
                             </widget>
                         </hbox>
                     </widget>
+                    <spacer row="1" column="0">
+                        <property name="name">
+                            <cstring>spacer2</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>161</width>
+                                <height>21</height>
+                            </size>
+                        </property>
+                    </spacer>
                 </grid>
             </widget>
             <widget class="QWidget">
@@ -378,7 +361,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -394,35 +377,6 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="text">
-                                    <string>Contig Count</string>
-                                </property>
-                            </widget>
-                        </hbox>
-                    </widget>
-                    <widget class="QButtonGroup" row="1" column="3" rowspan="2" colspan="1">
-                        <property name="name">
-                            <cstring>buttonGroup7</cstring>
-                        </property>
-                        <property name="title">
-                            <string>Selection</string>
-                        </property>
-                        <hbox>
-                            <property name="name">
-                                <cstring>unnamed</cstring>
-                            </property>
-                            <widget class="QPushButton">
-                                <property name="name">
-                                    <cstring>scaffoldViewButton</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
                                         <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
@@ -430,7 +384,7 @@
                                     </sizepolicy>
                                 </property>
                                 <property name="text">
-                                    <string>View</string>
+                                    <string>Contig Count</string>
                                 </property>
                             </widget>
                         </hbox>
@@ -448,48 +402,6 @@
                     <property name="name">
                         <cstring>unnamed</cstring>
                     </property>
-                    <widget class="QButtonGroup" row="1" column="3" rowspan="2" colspan="1">
-                        <property name="name">
-                            <cstring>buttonGroup7_2</cstring>
-                        </property>
-                        <property name="title">
-                            <string>Selection</string>
-                        </property>
-                        <hbox>
-                            <property name="name">
-                                <cstring>unnamed</cstring>
-                            </property>
-                            <widget class="QPushButton">
-                                <property name="name">
-                                    <cstring>contigViewButton</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>0</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="text">
-                                    <string>View</string>
-                                </property>
-                            </widget>
-                        </hbox>
-                    </widget>
-                    <widget class="QLineEdit" row="2" column="1">
-                        <property name="name">
-                            <cstring>contigEIDEdit</cstring>
-                        </property>
-                        <property name="sizePolicy">
-                            <sizepolicy>
-                                <hsizetype>7</hsizetype>
-                                <vsizetype>0</vsizetype>
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                            </sizepolicy>
-                        </property>
-                    </widget>
                     <widget class="QLabel" row="2" column="0">
                         <property name="name">
                             <cstring>textLabel1_2_2</cstring>
@@ -512,7 +424,7 @@
                             <set>AlignVCenter|AlignRight</set>
                         </property>
                     </widget>
-                    <widget class="QButtonGroup" row="1" column="2" rowspan="2" colspan="1">
+                    <widget class="QButtonGroup" row="1" column="3" rowspan="2" colspan="1">
                         <property name="name">
                             <cstring>scaffoldHistogramGroup_2</cstring>
                         </property>
@@ -537,7 +449,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -553,7 +465,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -569,7 +481,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -580,19 +492,6 @@
                                 </property>
                             </widget>
                         </hbox>
-                    </widget>
-                    <widget class="QLineEdit" row="1" column="1">
-                        <property name="name">
-                            <cstring>contigIIDEdit</cstring>
-                        </property>
-                        <property name="sizePolicy">
-                            <sizepolicy>
-                                <hsizetype>7</hsizetype>
-                                <vsizetype>0</vsizetype>
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                            </sizepolicy>
-                        </property>
                     </widget>
                     <widget class="QListView" row="0" column="0" rowspan="1" colspan="4">
                         <property name="name">
@@ -607,6 +506,53 @@
                         <property name="rootIsDecorated">
                             <bool>true</bool>
                         </property>
+                    </widget>
+                    <widget class="QLineEdit" row="2" column="1">
+                        <property name="name">
+                            <cstring>contigEIDEdit</cstring>
+                        </property>
+                        <property name="sizePolicy">
+                            <sizepolicy>
+                                <hsizetype>7</hsizetype>
+                                <vsizetype>0</vsizetype>
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                            </sizepolicy>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="1" column="1">
+                        <property name="name">
+                            <cstring>contigIIDEdit</cstring>
+                        </property>
+                        <property name="sizePolicy">
+                            <sizepolicy>
+                                <hsizetype>7</hsizetype>
+                                <vsizetype>0</vsizetype>
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                            </sizepolicy>
+                        </property>
+                    </widget>
+                    <widget class="QButtonGroup" row="1" column="2" rowspan="2" colspan="1">
+                        <property name="name">
+                            <cstring>buttonGroup7</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Display</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>readsCheck</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Reads</string>
+                                </property>
+                            </widget>
+                        </vbox>
                     </widget>
                 </grid>
             </widget>
@@ -694,7 +640,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -710,7 +656,7 @@
                                 </property>
                                 <property name="sizePolicy">
                                     <sizepolicy>
-                                        <hsizetype>5</hsizetype>
+                                        <hsizetype>0</hsizetype>
                                         <vsizetype>0</vsizetype>
                                         <horstretch>0</horstretch>
                                         <verstretch>0</verstretch>
@@ -721,35 +667,6 @@
                                 </property>
                             </widget>
                         </grid>
-                    </widget>
-                    <widget class="QButtonGroup" row="1" column="3" rowspan="2" colspan="1">
-                        <property name="name">
-                            <cstring>buttonGroup7_2_2</cstring>
-                        </property>
-                        <property name="title">
-                            <string>Selection</string>
-                        </property>
-                        <hbox>
-                            <property name="name">
-                                <cstring>unnamed</cstring>
-                            </property>
-                            <widget class="QPushButton">
-                                <property name="name">
-                                    <cstring>readViewButton</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>0</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="text">
-                                    <string>View</string>
-                                </property>
-                            </widget>
-                        </hbox>
                     </widget>
                     <widget class="QListView" row="0" column="0" rowspan="1" colspan="4">
                         <property name="name">
@@ -805,6 +722,21 @@
         <separator/>
         <widget class="QPushButton">
             <property name="name">
+                <cstring>viewButton</cstring>
+            </property>
+            <property name="minimumSize">
+                <size>
+                    <width>0</width>
+                    <height>25</height>
+                </size>
+            </property>
+            <property name="text">
+                <string>All Views</string>
+            </property>
+        </widget>
+        <separator/>
+        <widget class="QPushButton">
+            <property name="name">
                 <cstring>insertButton</cstring>
             </property>
             <property name="minimumSize">
@@ -820,7 +752,7 @@
                 </size>
             </property>
             <property name="text">
-                <string>Inserts</string>
+                <string>Insert View</string>
             </property>
         </widget>
         <separator/>
@@ -835,7 +767,7 @@
                 </size>
             </property>
             <property name="text">
-                <string>Tiling</string>
+                <string>Tiling View</string>
             </property>
         </widget>
     </toolbar>
@@ -889,7 +821,7 @@
 </actions>
 <images>
     <image name="image0">
-        <data format="PNG" length="231">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b000000ae49444154388db594510ec3200c436db45371b6691fd3cee66bb18f5135a219235af04f442b5e2c03a124ec50d942dd09be4537d45a9b5d4be2f85f1243e06393d748126d53661d9e854a624ac6633c40cff8576e51280010406b0d00dab104b9c69d19e887774201f64ebc7c8f342fc678b0ce553cc76b752e37e368d69edc8c2df4f58c01ef8f4f7533fe176a1e482ef4e2380b6ac0b9d0d36a57161430833e130aacdef62f9acd8ab4793cea0d051970cdbc4f01b20000000049454e44ae426082</data>
+        <data format="PNG" length="231">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b000000ae49444154789cb594510ec3200c436db45371b6691fd3cee66bb18f5135a219235af04f442b5e2c03a124ec50d942dd09be4537d45a9b5d4be2f85f1243e06393d748126d53661d9e854a624ac6633c40cff8576e51280010406b0d00dab104b9c69d19e887774201f64ebc7c8f342fc678b0ce553cc76b752e37e368d69edc8c2df4f58c01ef8f4f7533fe176a1e482ef4e2380b6ac0b9d0d36a57161430833e130aacdef62f9acd8ab4793cea0d051970cd5b32cc0a0000000049454e44ae426082</data>
     </image>
 </images>
 <connections>

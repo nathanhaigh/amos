@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'LaunchPadBase.ui'
 **
-** Created: Wed Apr 26 23:57:37 2006
+** Created: Thu Apr 27 11:53:06 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -32,6 +32,7 @@ class QRadioButton;
 class QPushButton;
 class QLabel;
 class QLineEdit;
+class QCheckBox;
 class QSpinBox;
 
 class LaunchPadBase : public QMainWindow
@@ -48,10 +49,8 @@ public:
     QWidget* featuresTab;
     QListView* featureList;
     QButtonGroup* groupGroup;
-    QRadioButton* featureGroupTypeButton;
     QRadioButton* featureGroupContigButton;
-    QButtonGroup* buttonGroup6;
-    QPushButton* featureViewButton;
+    QRadioButton* featureGroupTypeButton;
     QWidget* librariesTab;
     QListView* libraryList;
     QButtonGroup* histogramGroup;
@@ -68,20 +67,18 @@ public:
     QButtonGroup* scaffoldHistogramGroup;
     QPushButton* scaffoldSpanButton;
     QPushButton* scaffoldContigsButton;
-    QButtonGroup* buttonGroup7;
-    QPushButton* scaffoldViewButton;
     QWidget* contigsTab;
-    QButtonGroup* buttonGroup7_2;
-    QPushButton* contigViewButton;
-    QLineEdit* contigEIDEdit;
     QLabel* textLabel1_2_2;
     QLabel* textLabel1_3;
     QButtonGroup* scaffoldHistogramGroup_2;
     QPushButton* contigLengthButton;
     QPushButton* contigReadsButton;
     QPushButton* contigGCButton;
-    QLineEdit* contigIIDEdit;
     QListView* contigList;
+    QLineEdit* contigEIDEdit;
+    QLineEdit* contigIIDEdit;
+    QButtonGroup* buttonGroup7;
+    QCheckBox* readsCheck;
     QWidget* TabPage;
     QLabel* textLabel1_3_2;
     QLineEdit* readEIDEdit;
@@ -90,11 +87,10 @@ public:
     QButtonGroup* scaffoldHistogramGroup_2_2;
     QPushButton* readLengthButton;
     QPushButton* readGCButton;
-    QButtonGroup* buttonGroup7_2_2;
-    QPushButton* readViewButton;
     QListView* readList;
     QLabel* contigIDLabel;
     QSpinBox* contigIDSpin;
+    QPushButton* viewButton;
     QPushButton* insertButton;
     QPushButton* tilingButton;
     QMenuBar *MenuBar;
@@ -119,18 +115,16 @@ protected:
     QGridLayout* featuresTabLayout;
     QSpacerItem* spacer1;
     QHBoxLayout* groupGroupLayout;
-    QHBoxLayout* buttonGroup6Layout;
     QGridLayout* librariesTabLayout;
+    QSpacerItem* spacer2;
     QHBoxLayout* histogramGroupLayout;
     QGridLayout* scaffoldsTabLayout;
     QHBoxLayout* scaffoldHistogramGroupLayout;
-    QHBoxLayout* buttonGroup7Layout;
     QGridLayout* contigsTabLayout;
-    QHBoxLayout* buttonGroup7_2Layout;
     QHBoxLayout* scaffoldHistogramGroup_2Layout;
+    QVBoxLayout* buttonGroup7Layout;
     QGridLayout* TabPageLayout;
     QGridLayout* scaffoldHistogramGroup_2_2Layout;
-    QHBoxLayout* buttonGroup7_2_2Layout;
 
 protected slots:
     virtual void languageChange();

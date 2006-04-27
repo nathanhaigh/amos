@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'LaunchPadBase.ui'
 **
-** Created: Wed Apr 26 23:57:37 2006
+** Created: Thu Apr 27 11:53:06 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -20,6 +20,7 @@
 #include <qradiobutton.h>
 #include <qlabel.h>
 #include <qlineedit.h>
+#include <qcheckbox.h>
 #include <qspinbox.h>
 #include <qlayout.h>
 #include <qtooltip.h>
@@ -35,7 +36,7 @@ static const unsigned char image0_data[] = {
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x16,
     0x08, 0x06, 0x00, 0x00, 0x00, 0xc4, 0xb4, 0x6c, 0x3b, 0x00, 0x00, 0x00,
-    0xae, 0x49, 0x44, 0x41, 0x54, 0x38, 0x8d, 0xb5, 0x94, 0x51, 0x0e, 0xc3,
+    0xae, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0xb5, 0x94, 0x51, 0x0e, 0xc3,
     0x20, 0x0c, 0x43, 0x6d, 0xb4, 0x53, 0x71, 0xb6, 0x69, 0x1f, 0xd3, 0xce,
     0xe6, 0x6b, 0xb1, 0x8f, 0x51, 0x35, 0xa2, 0x19, 0x23, 0x5a, 0xf0, 0x4f,
     0x44, 0x2b, 0x5e, 0x2c, 0x03, 0xa1, 0x24, 0xec, 0x50, 0xd9, 0x42, 0xdd,
@@ -49,8 +50,8 @@ static const unsigned char image0_data[] = {
     0x8c, 0x01, 0xef, 0x8f, 0x4f, 0x75, 0x33, 0xfe, 0x17, 0x6a, 0x1e, 0x48,
     0x2e, 0xf4, 0xe2, 0x38, 0x0b, 0x6a, 0xc0, 0xb9, 0xd0, 0xd3, 0x6a, 0x57,
     0x16, 0x14, 0x30, 0x83, 0x3e, 0x13, 0x0a, 0xac, 0xde, 0xf6, 0x2f, 0x9a,
-    0xcd, 0x8a, 0xb4, 0x79, 0x3c, 0xea, 0x0d, 0x05, 0x19, 0x70, 0xcd, 0xbc,
-    0x4f, 0x01, 0xb2, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+    0xcd, 0x8a, 0xb4, 0x79, 0x3c, 0xea, 0x0d, 0x05, 0x19, 0x70, 0xcd, 0x5b,
+    0x32, 0xcc, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
     0x42, 0x60, 0x82
 };
 
@@ -103,28 +104,15 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     groupGroupLayout = new QHBoxLayout( groupGroup->layout() );
     groupGroupLayout->setAlignment( Qt::AlignTop );
 
-    featureGroupTypeButton = new QRadioButton( groupGroup, "featureGroupTypeButton" );
-    featureGroupTypeButton->setChecked( TRUE );
-    groupGroupLayout->addWidget( featureGroupTypeButton );
-
     featureGroupContigButton = new QRadioButton( groupGroup, "featureGroupContigButton" );
+    featureGroupContigButton->setChecked( TRUE );
     groupGroupLayout->addWidget( featureGroupContigButton );
 
+    featureGroupTypeButton = new QRadioButton( groupGroup, "featureGroupTypeButton" );
+    featureGroupTypeButton->setChecked( FALSE );
+    groupGroupLayout->addWidget( featureGroupTypeButton );
+
     featuresTabLayout->addWidget( groupGroup, 1, 0 );
-
-    buttonGroup6 = new QButtonGroup( featuresTab, "buttonGroup6" );
-    buttonGroup6->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)5, 0, 0, buttonGroup6->sizePolicy().hasHeightForWidth() ) );
-    buttonGroup6->setColumnLayout(0, Qt::Vertical );
-    buttonGroup6->layout()->setSpacing( 6 );
-    buttonGroup6->layout()->setMargin( 11 );
-    buttonGroup6Layout = new QHBoxLayout( buttonGroup6->layout() );
-    buttonGroup6Layout->setAlignment( Qt::AlignTop );
-
-    featureViewButton = new QPushButton( buttonGroup6, "featureViewButton" );
-    featureViewButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, featureViewButton->sizePolicy().hasHeightForWidth() ) );
-    buttonGroup6Layout->addWidget( featureViewButton );
-
-    featuresTabLayout->addWidget( buttonGroup6, 1, 2 );
     spacer1 = new QSpacerItem( 190, 21, QSizePolicy::Expanding, QSizePolicy::Minimum );
     featuresTabLayout->addItem( spacer1, 1, 1 );
     tabWidget->insertTab( featuresTab, QString::fromLatin1("") );
@@ -137,7 +125,7 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     libraryList->setShowSortIndicator( TRUE );
     libraryList->setRootIsDecorated( TRUE );
 
-    librariesTabLayout->addWidget( libraryList, 0, 0 );
+    librariesTabLayout->addMultiCellWidget( libraryList, 0, 0, 0, 1 );
 
     histogramGroup = new QButtonGroup( librariesTab, "histogramGroup" );
     histogramGroup->setColumnLayout(0, Qt::Vertical );
@@ -147,22 +135,24 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     histogramGroupLayout->setAlignment( Qt::AlignTop );
 
     libraryInsertButton = new QPushButton( histogramGroup, "libraryInsertButton" );
-    libraryInsertButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, libraryInsertButton->sizePolicy().hasHeightForWidth() ) );
+    libraryInsertButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryInsertButton->sizePolicy().hasHeightForWidth() ) );
     histogramGroupLayout->addWidget( libraryInsertButton );
 
     libraryClearLengthButton = new QPushButton( histogramGroup, "libraryClearLengthButton" );
-    libraryClearLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, libraryClearLengthButton->sizePolicy().hasHeightForWidth() ) );
+    libraryClearLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryClearLengthButton->sizePolicy().hasHeightForWidth() ) );
     histogramGroupLayout->addWidget( libraryClearLengthButton );
 
     libraryReadLengthButton = new QPushButton( histogramGroup, "libraryReadLengthButton" );
-    libraryReadLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, libraryReadLengthButton->sizePolicy().hasHeightForWidth() ) );
+    libraryReadLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryReadLengthButton->sizePolicy().hasHeightForWidth() ) );
     histogramGroupLayout->addWidget( libraryReadLengthButton );
 
     libraryGCButton = new QPushButton( histogramGroup, "libraryGCButton" );
-    libraryGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, libraryGCButton->sizePolicy().hasHeightForWidth() ) );
+    libraryGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryGCButton->sizePolicy().hasHeightForWidth() ) );
     histogramGroupLayout->addWidget( libraryGCButton );
 
-    librariesTabLayout->addWidget( histogramGroup, 1, 0 );
+    librariesTabLayout->addWidget( histogramGroup, 1, 1 );
+    spacer2 = new QSpacerItem( 161, 21, QSizePolicy::Expanding, QSizePolicy::Minimum );
+    librariesTabLayout->addItem( spacer2, 1, 0 );
     tabWidget->insertTab( librariesTab, QString::fromLatin1("") );
 
     scaffoldsTab = new QWidget( tabWidget, "scaffoldsTab" );
@@ -204,49 +194,18 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     scaffoldHistogramGroupLayout->setAlignment( Qt::AlignTop );
 
     scaffoldSpanButton = new QPushButton( scaffoldHistogramGroup, "scaffoldSpanButton" );
-    scaffoldSpanButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, scaffoldSpanButton->sizePolicy().hasHeightForWidth() ) );
+    scaffoldSpanButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, scaffoldSpanButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroupLayout->addWidget( scaffoldSpanButton );
 
     scaffoldContigsButton = new QPushButton( scaffoldHistogramGroup, "scaffoldContigsButton" );
-    scaffoldContigsButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, scaffoldContigsButton->sizePolicy().hasHeightForWidth() ) );
+    scaffoldContigsButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, scaffoldContigsButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroupLayout->addWidget( scaffoldContigsButton );
 
     scaffoldsTabLayout->addMultiCellWidget( scaffoldHistogramGroup, 1, 2, 2, 2 );
-
-    buttonGroup7 = new QButtonGroup( scaffoldsTab, "buttonGroup7" );
-    buttonGroup7->setColumnLayout(0, Qt::Vertical );
-    buttonGroup7->layout()->setSpacing( 6 );
-    buttonGroup7->layout()->setMargin( 11 );
-    buttonGroup7Layout = new QHBoxLayout( buttonGroup7->layout() );
-    buttonGroup7Layout->setAlignment( Qt::AlignTop );
-
-    scaffoldViewButton = new QPushButton( buttonGroup7, "scaffoldViewButton" );
-    scaffoldViewButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, scaffoldViewButton->sizePolicy().hasHeightForWidth() ) );
-    buttonGroup7Layout->addWidget( scaffoldViewButton );
-
-    scaffoldsTabLayout->addMultiCellWidget( buttonGroup7, 1, 2, 3, 3 );
     tabWidget->insertTab( scaffoldsTab, QString::fromLatin1("") );
 
     contigsTab = new QWidget( tabWidget, "contigsTab" );
     contigsTabLayout = new QGridLayout( contigsTab, 1, 1, 11, 6, "contigsTabLayout"); 
-
-    buttonGroup7_2 = new QButtonGroup( contigsTab, "buttonGroup7_2" );
-    buttonGroup7_2->setColumnLayout(0, Qt::Vertical );
-    buttonGroup7_2->layout()->setSpacing( 6 );
-    buttonGroup7_2->layout()->setMargin( 11 );
-    buttonGroup7_2Layout = new QHBoxLayout( buttonGroup7_2->layout() );
-    buttonGroup7_2Layout->setAlignment( Qt::AlignTop );
-
-    contigViewButton = new QPushButton( buttonGroup7_2, "contigViewButton" );
-    contigViewButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigViewButton->sizePolicy().hasHeightForWidth() ) );
-    buttonGroup7_2Layout->addWidget( contigViewButton );
-
-    contigsTabLayout->addMultiCellWidget( buttonGroup7_2, 1, 2, 3, 3 );
-
-    contigEIDEdit = new QLineEdit( contigsTab, "contigEIDEdit" );
-    contigEIDEdit->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, contigEIDEdit->sizePolicy().hasHeightForWidth() ) );
-
-    contigsTabLayout->addWidget( contigEIDEdit, 2, 1 );
 
     textLabel1_2_2 = new QLabel( contigsTab, "textLabel1_2_2" );
     textLabel1_2_2->setAlignment( int( QLabel::AlignVCenter | QLabel::AlignRight ) );
@@ -267,23 +226,18 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     scaffoldHistogramGroup_2Layout->setAlignment( Qt::AlignTop );
 
     contigLengthButton = new QPushButton( scaffoldHistogramGroup_2, "contigLengthButton" );
-    contigLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, contigLengthButton->sizePolicy().hasHeightForWidth() ) );
+    contigLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigLengthButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroup_2Layout->addWidget( contigLengthButton );
 
     contigReadsButton = new QPushButton( scaffoldHistogramGroup_2, "contigReadsButton" );
-    contigReadsButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, contigReadsButton->sizePolicy().hasHeightForWidth() ) );
+    contigReadsButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigReadsButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroup_2Layout->addWidget( contigReadsButton );
 
     contigGCButton = new QPushButton( scaffoldHistogramGroup_2, "contigGCButton" );
-    contigGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, contigGCButton->sizePolicy().hasHeightForWidth() ) );
+    contigGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigGCButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroup_2Layout->addWidget( contigGCButton );
 
-    contigsTabLayout->addMultiCellWidget( scaffoldHistogramGroup_2, 1, 2, 2, 2 );
-
-    contigIIDEdit = new QLineEdit( contigsTab, "contigIIDEdit" );
-    contigIIDEdit->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, contigIIDEdit->sizePolicy().hasHeightForWidth() ) );
-
-    contigsTabLayout->addWidget( contigIIDEdit, 1, 1 );
+    contigsTabLayout->addMultiCellWidget( scaffoldHistogramGroup_2, 1, 2, 3, 3 );
 
     contigList = new QListView( contigsTab, "contigList" );
     contigList->setAllColumnsShowFocus( TRUE );
@@ -291,6 +245,28 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     contigList->setRootIsDecorated( TRUE );
 
     contigsTabLayout->addMultiCellWidget( contigList, 0, 0, 0, 3 );
+
+    contigEIDEdit = new QLineEdit( contigsTab, "contigEIDEdit" );
+    contigEIDEdit->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, contigEIDEdit->sizePolicy().hasHeightForWidth() ) );
+
+    contigsTabLayout->addWidget( contigEIDEdit, 2, 1 );
+
+    contigIIDEdit = new QLineEdit( contigsTab, "contigIIDEdit" );
+    contigIIDEdit->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, contigIIDEdit->sizePolicy().hasHeightForWidth() ) );
+
+    contigsTabLayout->addWidget( contigIIDEdit, 1, 1 );
+
+    buttonGroup7 = new QButtonGroup( contigsTab, "buttonGroup7" );
+    buttonGroup7->setColumnLayout(0, Qt::Vertical );
+    buttonGroup7->layout()->setSpacing( 6 );
+    buttonGroup7->layout()->setMargin( 11 );
+    buttonGroup7Layout = new QVBoxLayout( buttonGroup7->layout() );
+    buttonGroup7Layout->setAlignment( Qt::AlignTop );
+
+    readsCheck = new QCheckBox( buttonGroup7, "readsCheck" );
+    buttonGroup7Layout->addWidget( readsCheck );
+
+    contigsTabLayout->addMultiCellWidget( buttonGroup7, 1, 2, 2, 2 );
     tabWidget->insertTab( contigsTab, QString::fromLatin1("") );
 
     TabPage = new QWidget( tabWidget, "TabPage" );
@@ -325,29 +301,16 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     scaffoldHistogramGroup_2_2Layout->setAlignment( Qt::AlignTop );
 
     readLengthButton = new QPushButton( scaffoldHistogramGroup_2_2, "readLengthButton" );
-    readLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, readLengthButton->sizePolicy().hasHeightForWidth() ) );
+    readLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, readLengthButton->sizePolicy().hasHeightForWidth() ) );
 
     scaffoldHistogramGroup_2_2Layout->addWidget( readLengthButton, 0, 0 );
 
     readGCButton = new QPushButton( scaffoldHistogramGroup_2_2, "readGCButton" );
-    readGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, readGCButton->sizePolicy().hasHeightForWidth() ) );
+    readGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, readGCButton->sizePolicy().hasHeightForWidth() ) );
 
     scaffoldHistogramGroup_2_2Layout->addWidget( readGCButton, 0, 1 );
 
     TabPageLayout->addMultiCellWidget( scaffoldHistogramGroup_2_2, 1, 2, 2, 2 );
-
-    buttonGroup7_2_2 = new QButtonGroup( TabPage, "buttonGroup7_2_2" );
-    buttonGroup7_2_2->setColumnLayout(0, Qt::Vertical );
-    buttonGroup7_2_2->layout()->setSpacing( 6 );
-    buttonGroup7_2_2->layout()->setMargin( 11 );
-    buttonGroup7_2_2Layout = new QHBoxLayout( buttonGroup7_2_2->layout() );
-    buttonGroup7_2_2Layout->setAlignment( Qt::AlignTop );
-
-    readViewButton = new QPushButton( buttonGroup7_2_2, "readViewButton" );
-    readViewButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, readViewButton->sizePolicy().hasHeightForWidth() ) );
-    buttonGroup7_2_2Layout->addWidget( readViewButton );
-
-    TabPageLayout->addMultiCellWidget( buttonGroup7_2_2, 1, 2, 3, 3 );
 
     readList = new QListView( TabPage, "readList" );
     readList->setAllColumnsShowFocus( TRUE );
@@ -372,6 +335,10 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     contigIDLabel = new QLabel( Toolbar, "contigIDLabel" );
 
     contigIDSpin = new QSpinBox( Toolbar, "contigIDSpin" );
+    Toolbar->addSeparator();
+
+    viewButton = new QPushButton( Toolbar, "viewButton" );
+    viewButton->setMinimumSize( QSize( 0, 25 ) );
     Toolbar->addSeparator();
 
     insertButton = new QPushButton( Toolbar, "insertButton" );
@@ -421,10 +388,8 @@ void LaunchPadBase::languageChange()
     setCaption( tr( "Assembly Investigator" ) );
     tabWidget->changeTab( statsTab, tr( "Statistics" ) );
     groupGroup->setTitle( tr( "Group by" ) );
-    featureGroupTypeButton->setText( tr( "Type" ) );
     featureGroupContigButton->setText( tr( "Contig" ) );
-    buttonGroup6->setTitle( tr( "Selection" ) );
-    featureViewButton->setText( tr( "View" ) );
+    featureGroupTypeButton->setText( tr( "Type" ) );
     tabWidget->changeTab( featuresTab, tr( "Features" ) );
     histogramGroup->setTitle( tr( "Histograms" ) );
     libraryInsertButton->setText( tr( "Insert Size" ) );
@@ -437,25 +402,21 @@ void LaunchPadBase::languageChange()
     scaffoldHistogramGroup->setTitle( tr( "Histograms" ) );
     scaffoldSpanButton->setText( tr( "Span" ) );
     scaffoldContigsButton->setText( tr( "Contig Count" ) );
-    buttonGroup7->setTitle( tr( "Selection" ) );
-    scaffoldViewButton->setText( tr( "View" ) );
     tabWidget->changeTab( scaffoldsTab, tr( "Scaffolds" ) );
-    buttonGroup7_2->setTitle( tr( "Selection" ) );
-    contigViewButton->setText( tr( "View" ) );
     textLabel1_2_2->setText( tr( "EID:" ) );
     textLabel1_3->setText( tr( "IID:" ) );
     scaffoldHistogramGroup_2->setTitle( tr( "Histograms" ) );
     contigLengthButton->setText( tr( "Length" ) );
     contigReadsButton->setText( tr( "Read Count" ) );
     contigGCButton->setText( tr( "GC Content" ) );
+    buttonGroup7->setTitle( tr( "Display" ) );
+    readsCheck->setText( tr( "Reads" ) );
     tabWidget->changeTab( contigsTab, tr( "Contigs" ) );
     textLabel1_3_2->setText( tr( "IID:" ) );
     textLabel1_2_2_2->setText( tr( "EID:" ) );
     scaffoldHistogramGroup_2_2->setTitle( tr( "Histograms" ) );
     readLengthButton->setText( tr( "Length" ) );
     readGCButton->setText( tr( "GC Content" ) );
-    buttonGroup7_2_2->setTitle( tr( "Selection" ) );
-    readViewButton->setText( tr( "View" ) );
     tabWidget->changeTab( TabPage, tr( "Reads" ) );
     fileOpenAction->setText( tr( "Open" ) );
     fileOpenAction->setMenuText( tr( "&Open..." ) );
@@ -468,8 +429,9 @@ void LaunchPadBase::languageChange()
     fileChromatogramPathsAction->setAccel( tr( "Ctrl+P" ) );
     Toolbar->setLabel( tr( "Toolbar" ) );
     contigIDLabel->setText( tr( "Contig ID" ) );
-    insertButton->setText( tr( "Inserts" ) );
-    tilingButton->setText( tr( "Tiling" ) );
+    viewButton->setText( tr( "All Views" ) );
+    insertButton->setText( tr( "Insert View" ) );
+    tilingButton->setText( tr( "Tiling View" ) );
     if (MenuBar->findItem(1))
         MenuBar->findItem(1)->setText( tr( "&File" ) );
 }
