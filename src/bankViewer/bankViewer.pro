@@ -29,6 +29,7 @@ InsertStats.cc\
 InsertWidget.cc\
 InsertWindow.cc\
 LaunchPad.cc\
+LaunchPadBase.cc\
 LibraryPicker.cc\
 MainWindow.cc\
 NetworkCom.cc\
@@ -74,6 +75,7 @@ InsertStats.hh\
 InsertWidget.hh\
 InsertWindow.hh\
 LaunchPad.hh\
+LaunchPadBase.hh\
 LibraryPicker.hh\
 MainWindow.hh\
 NetworkCom.hh\
