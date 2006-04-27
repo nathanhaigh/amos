@@ -230,6 +230,15 @@ void LaunchPad::loadFeatures()
     statusBar()->message("Features not available");
   }
 
+  if (featureGroupContigButton->isChecked())
+  {
+    featureList->setSorting(2,false);
+  }
+  else
+  {
+    featureList->setSorting(1,false);
+  }
+
   setCursor(orig);
 }
 

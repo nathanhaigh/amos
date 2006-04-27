@@ -163,6 +163,8 @@ void LaunchPad::loadScaffolds()
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
 
+  scaffoldList->setSorting(3, false);
+
   setCursor(orig);
 }
 

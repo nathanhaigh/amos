@@ -106,13 +106,13 @@ void LaunchPad::initReads()
 
 void LaunchPad::loadReads()
 {
+  QCursor orig = cursor();
+  setCursor(Qt::waitCursor);
+
   readList->clear();
 
   try
   {
-    QCursor orig = cursor();
-    setCursor(Qt::waitCursor);
-
     QString status = "Select from " ;
     status += QString::number(m_datastore->m_contig.getReadTiling().size()) 
            + " reads";
@@ -159,13 +159,15 @@ void LaunchPad::loadReads()
                        QString::number(libid),
                        QString::number(gccontent, 'f', 4));
     }
-
-    setCursor(orig);
   }
   catch (AMOS::Exception_t & e)
   {
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
+
+  readList->setSorting(4, true);
+
+  setCursor(orig);
 }
 
 void LaunchPad::readSelected(QListViewItem * item)

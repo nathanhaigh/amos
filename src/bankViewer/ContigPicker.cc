@@ -186,6 +186,8 @@ void LaunchPad::loadContigs()
         }
       }
     }
+
+    contigList->setSorting(5, false);
   }
   catch (AMOS::Exception_t & e)
   {
