@@ -22,7 +22,7 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
            : QMainWindow( parent, name ),
              m_datastore(datastore)
 {
-  setCaption("Assembly Investigator : Tiling");
+  setCaption("Assembly Investigator : Contig View");
   m_gindex = 0;
   m_fontsize = 10;
 
@@ -48,6 +48,13 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
   m_slider->setTracking(1);
   m_slider->setPageStep(20);
 
+  // Status Bar
+  statusBar()->message("No Bank Loaded");
+
+  // Status Tool Bar
+  QToolBar * status = new QToolBar(this, "Status");
+  status->setLabel("Navigation");
+
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
@@ -67,12 +74,6 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
 
   m_options->setItemChecked(m_snpcoloringid, true);
 
-  // Status Bar
-  statusBar()->message("No Bank Loaded");
-
-  // Status Tool Bar
-  QToolBar * status = new QToolBar(this, "Status");
-  status->setLabel("Navigation");
 
   new QLabel("Contig", status, "contiglbl");
   m_contigspin = new QSpinBox(1,100,1,status, "contigspin");

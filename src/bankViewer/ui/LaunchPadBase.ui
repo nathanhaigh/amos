@@ -752,7 +752,7 @@
                 </size>
             </property>
             <property name="text">
-                <string>Insert View</string>
+                <string>Scaffold View</string>
             </property>
         </widget>
         <separator/>
@@ -767,7 +767,7 @@
                 </size>
             </property>
             <property name="text">
-                <string>Tiling View</string>
+                <string>Contig View</string>
             </property>
         </widget>
     </toolbar>
@@ -821,7 +821,7 @@
 </actions>
 <images>
     <image name="image0">
-        <data format="PNG" length="231">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b000000ae49444154789cb594510ec3200c436db45371b6691fd3cee66bb18f5135a219235af04f442b5e2c03a124ec50d942dd09be4537d45a9b5d4be2f85f1243e06393d748126d53661d9e854a624ac6633c40cff8576e51280010406b0d00dab104b9c69d19e887774201f64ebc7c8f342fc678b0ce553cc76b752e37e368d69edc8c2df4f58c01ef8f4f7533fe176a1e482ef4e2380b6ac0b9d0d36a57161430833e130aacdef62f9acd8ab4793cea0d051970cd5b32cc0a0000000049454e44ae426082</data>
+        <data format="PNG" length="231">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b000000ae49444154388db594510ec3200c436db45371b6691fd3cee66bb18f5135a219235af04f442b5e2c03a124ec50d942dd09be4537d45a9b5d4be2f85f1243e06393d748126d53661d9e854a624ac6633c40cff8576e51280010406b0d00dab104b9c69d19e887774201f64ebc7c8f342fc678b0ce553cc76b752e37e368d69edc8c2df4f58c01ef8f4f7533fe176a1e482ef4e2380b6ac0b9d0d36a57161430833e130aacdef62f9acd8ab4793cea0d051970cdbc4f01b20000000049454e44ae426082</data>
     </image>
 </images>
 <connections>

@@ -44,7 +44,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
     m_datastore(datastore)
 {
   resize(800,600);
-  setCaption("AI - Inserts");
+  setCaption("Assembly Investigator : Scaffold View");
 
   const char * states = Insert::allstates;
   unsigned int type = 0;

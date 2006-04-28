@@ -1439,6 +1439,8 @@ void InsertWidget::paintCanvas()
   setTilingVisibleRange(m_contigid, m_gstart, m_gend);
   m_ifield->updateVisibleRect();
 
+  resizeOverview();
+
   QApplication::restoreOverrideCursor();
 }
 

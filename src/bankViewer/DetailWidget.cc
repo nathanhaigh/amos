@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'DetailWidget.ui'
 **
-** Created: Thu Apr 27 23:37:25 2006
+** Created: Fri Apr 28 00:57:20 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
