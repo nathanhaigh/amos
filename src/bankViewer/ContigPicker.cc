@@ -11,6 +11,7 @@
 
 #include "InsertStats.hh"
 #include "HistogramWindow.hh"
+#include "NChartWindow.hh"
 
 #include "foundation_AMOS.hh"
 
@@ -194,6 +195,8 @@ void LaunchPad::loadContigs()
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
   }
 
+  contigList->setColumnWidth(2, (int)(contigList->columnWidth(2)*1.2));
+
   setCursor(orig);
 }
 
@@ -241,7 +244,7 @@ void LaunchPad::contigViewSelected()
 
 void LaunchPad::contigLengthHistogram()
 {
-  InsertStats * stats = new InsertStats((string)"Contig Length Histogram");
+  InsertStats * stats = new InsertStats((string)"Contig Length Distribution");
 
   AMOS::Contig_t contig;
   m_datastore->contig_bank.seekg(1);
@@ -250,7 +253,7 @@ void LaunchPad::contigLengthHistogram()
     stats->addSize(contig.getLength());
   }
 
-  new HistogramWindow(stats, this, "hist");
+  new NChartWindow(stats, this, "hist");
 }
 
 void LaunchPad::contigReadCountHistogram()

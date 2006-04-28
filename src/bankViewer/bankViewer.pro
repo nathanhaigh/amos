@@ -32,6 +32,8 @@ LaunchPad.cc\
 LaunchPadBase.cc\
 LibraryPicker.cc\
 MainWindow.cc\
+NChartWidget.cc\
+NChartWindow.cc\
 NetworkCom.cc\
 OverviewField.cc\
 QueryWidget.cc\
@@ -78,6 +80,8 @@ LaunchPad.hh\
 LaunchPadBase.hh\
 LibraryPicker.hh\
 MainWindow.hh\
+NChartWidget.hh\
+NChartWindow.hh\
 NetworkCom.hh\
 OverviewField.hh\
 QueryWidget.hh\

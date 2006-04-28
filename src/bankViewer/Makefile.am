@@ -39,6 +39,8 @@ bankViewer_MOCSOURCES = \
     	LaunchPadBase.cc           \
         LibraryPicker.cc       \
         MainWindow.cc          \
+        NChartWindow.cc        \
+        NChartWidget.cc        \
         NetworkCom.cc          \
 	    OverviewField.cc       \
     	QueryWidget.cc         \

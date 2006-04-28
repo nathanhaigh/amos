@@ -13,6 +13,8 @@
 #include "ChromoPicker.hh"
 #include "NetworkCom.hh"
 #include "MainWindow.hh"
+#include "InsertStats.hh"
+#include "NChartWidget.hh"
 
 
 using namespace AMOS;
@@ -109,6 +111,35 @@ void LaunchPad::loadBank()
   loadScaffolds();
   loadContigs();
   loadReads();
+
+
+  InsertStats * scaffstats = new InsertStats((string)"Scaffold Span Distribution");
+
+  AMOS::Scaffold_t scaffold;
+  m_datastore->scaffold_bank.seekg(1);
+  while (m_datastore->scaffold_bank >> scaffold)
+  {
+    scaffstats->addSize(scaffold.getSpan());
+  }
+  scaffoldSizes->setStats(scaffstats);
+
+
+
+  InsertStats * contigstats = new InsertStats((string)"Contig Length Distribution");
+
+  AMOS::Contig_t contig;
+  m_datastore->contig_bank.seekg(1);
+  while (m_datastore->contig_bank >> contig)
+  {
+    contigstats->addSize(contig.getLength());
+  }
+  contigSizes->setStats(contigstats);
+
+}
+
+void LaunchPad::initDisplay()
+{
+  statsText->verticalScrollBar()->setValue(0);
 }
 
 void LaunchPad::showAll()

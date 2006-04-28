@@ -136,7 +136,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
     // histogram
     pen.setStyle(Qt::SolidLine);
     p.setPen(pen);
-    p.setBrush(Qt::white);
+    p.setBrush(QColor(100,160,255));
 
     for (int i = 0; i < buckets; i++)
     {
@@ -148,7 +148,7 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
 
       p.drawRect((int)(histleft+i*xscale), 
                  (int)(histbottom - yheight),
-                 (int)(xwidth), 
+                 (int)(xwidth)+1, 
                  (int)(yheight));
     }
 

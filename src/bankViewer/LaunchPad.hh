@@ -29,6 +29,7 @@ public slots:
   // global
   void fileOpen();
   void fileExit();
+  void initDisplay();
 
   void setBankname(std::string bankname);
   void loadBank();

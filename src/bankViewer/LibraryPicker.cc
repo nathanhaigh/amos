@@ -85,11 +85,10 @@ void LaunchPad::loadLibraries()
 {
   libraryList->clear();
   QCursor orig = cursor();
+  setCursor(Qt::waitCursor);
 
   if (!m_datastore->m_libdistributionlookup.empty())
   {
-    setCursor(Qt::waitCursor);
-
     try
     {
       m_datastore->lib_bank.seekg(1);
@@ -131,13 +130,15 @@ void LaunchPad::loadLibraries()
     {
       cerr << "Library Information not available " << e;
     }
-
-    setCursor(orig);
   }
   else
   {
     statusBar()->message("Library Information not available");
   }
+
+  libraryList->setColumnWidth(1, (int)(libraryList->columnWidth(1)*1.2));
+
+  setCursor(orig);
 }
 
 void LaunchPad::librarySelected(QListViewItem * item)

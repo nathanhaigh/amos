@@ -2,17 +2,19 @@
 #include <cmath>
 #include <algorithm>
 #include <functional>
+#include <iostream>
 
 using namespace std;
 
 
 InsertStats::InsertStats(const string & label)
- : m_label(label)
+ : m_label(label), m_maxsize(0)
 {
 }
 
 void InsertStats::addSize(double size)
 {
+  if (size > m_maxsize) { m_maxsize = size; }
   m_sizes.push_back(size); 
 }
 
@@ -117,4 +119,44 @@ int InsertStats::withinSD(double numsd) const
   }
 
   return count;
+}
+
+
+void InsertStats::nchart()
+{
+  int l = m_sizes.size();
+  m_bucketlow.resize(l);
+
+  sort(m_sizes.begin(), m_sizes.end(), greater<double>() );
+
+  double sum;
+  
+  for (int i = 0; i < l; i++)
+  {
+    sum += m_sizes[i];
+  }
+
+  double cur = sum;
+
+  for (int i = 0; i < l; i++)
+  {
+    m_bucketlow[i] = cur*100/sum;
+    cur -= m_sizes[i];
+  }
+}
+
+double InsertStats::nvalue(double perc)
+{
+  int l = m_sizes.size();
+
+  for (int i = 0; i < l; i++)
+  {
+    if (m_bucketlow[i] < perc)
+    {
+      if (i > 0) { return m_sizes[i-1]; }
+      return m_sizes[i];
+    }
+  }
+
+  return 0;
 }

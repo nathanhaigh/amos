@@ -13,6 +13,7 @@
 
 #include "InsertStats.hh"
 #include "HistogramWindow.hh"
+#include "NChartWindow.hh"
 
 
 #include <vector>
@@ -165,6 +166,8 @@ void LaunchPad::loadScaffolds()
 
   scaffoldList->setSorting(3, false);
 
+  scaffoldList->setColumnWidth(2, (int)(scaffoldList->columnWidth(2)*1.2));
+
   setCursor(orig);
 }
 
@@ -222,7 +225,7 @@ void LaunchPad::scaffoldViewSelected()
 
 void LaunchPad::scaffoldSpanHistogram()
 {
-  InsertStats * stats = new InsertStats((string)"Scaffold Span Histogram");
+  InsertStats * stats = new InsertStats((string)"Scaffold Span Distribution");
 
   AMOS::Scaffold_t scaffold;
   m_datastore->scaffold_bank.seekg(1);
@@ -231,7 +234,7 @@ void LaunchPad::scaffoldSpanHistogram()
     stats->addSize(scaffold.getSpan());
   }
 
-  new HistogramWindow(stats, this, "hist");
+  new NChartWindow(stats, this, "hist");
 }
 
 void LaunchPad::scaffoldContigHistogram()
@@ -242,7 +245,6 @@ void LaunchPad::scaffoldContigHistogram()
   m_datastore->scaffold_bank.seekg(1);
   while (m_datastore->scaffold_bank >> scaffold)
   {
-    int span = scaffold.getSpan();
     stats->addSize(scaffold.getContigTiling().size());
   }
 

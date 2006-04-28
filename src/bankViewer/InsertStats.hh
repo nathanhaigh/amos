@@ -11,6 +11,9 @@ public:
   std::string m_label;
 
   void   addSize(double size);
+  void   histogram(int buckets, bool fitzero=true);
+  void   nchart();
+  double nvalue(double perc);
 
   int    count() const;
   double mean()  const;
@@ -19,13 +22,13 @@ public:
 
   std::vector<double> m_sizes;
 
-  void   histogram(int buckets, bool fitzero=true);
   std::vector<int>    m_buckets;
   std::vector<double> m_bucketlow;
   double m_bucketsize;
   double m_low;
   double m_high;
   int m_maxcount;
+  double m_maxsize;
 };
 
 

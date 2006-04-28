@@ -127,6 +127,7 @@ int main( int argc, char **argv )
     splash->finish(&w);
     delete splash;
     w.show();
+    w.initDisplay();
 
     return a.exec();
   }

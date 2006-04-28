@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'LaunchPadBase.ui'
 **
-** Created: Fri Apr 28 00:57:20 2006
+** Created: Fri Apr 28 17:58:10 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -22,6 +22,7 @@ class QAction;
 class QActionGroup;
 class QToolBar;
 class QPopupMenu;
+class NChartWidget;
 class QTabWidget;
 class QWidget;
 class QTextEdit;
@@ -46,6 +47,8 @@ public:
     QTabWidget* tabWidget;
     QWidget* statsTab;
     QTextEdit* statsText;
+    NChartWidget* scaffoldSizes;
+    NChartWidget* contigSizes;
     QWidget* featuresTab;
     QListView* featureList;
     QButtonGroup* groupGroup;
@@ -54,8 +57,8 @@ public:
     QWidget* librariesTab;
     QListView* libraryList;
     QButtonGroup* histogramGroup;
-    QPushButton* libraryInsertButton;
     QPushButton* libraryClearLengthButton;
+    QPushButton* libraryInsertButton;
     QPushButton* libraryReadLengthButton;
     QPushButton* libraryGCButton;
     QWidget* scaffoldsTab;
@@ -110,14 +113,13 @@ public slots:
     virtual void fileChromoPaths();
 
 protected:
-    QHBoxLayout* LaunchPadBaseLayout;
+    QGridLayout* LaunchPadBaseLayout;
     QGridLayout* statsTabLayout;
     QGridLayout* featuresTabLayout;
     QSpacerItem* spacer1;
     QHBoxLayout* groupGroupLayout;
     QGridLayout* librariesTabLayout;
-    QSpacerItem* spacer2;
-    QHBoxLayout* histogramGroupLayout;
+    QGridLayout* histogramGroupLayout;
     QGridLayout* scaffoldsTabLayout;
     QHBoxLayout* scaffoldHistogramGroupLayout;
     QGridLayout* contigsTabLayout;
@@ -131,6 +133,7 @@ protected slots:
 
 private:
     QPixmap image0;
+    QPixmap image1;
 
 };
 

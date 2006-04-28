@@ -6,6 +6,7 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include "DataStore.hh"
+#include "UIElements.hh"
 
 #include "foundation_AMOS.hh"
 
@@ -161,7 +162,7 @@ void LaunchPad::loadFeatures()
         if (featureGroupContigButton->isChecked())
         {
           base = new FeatureListItem(featureList,
-                                     QString((QChar)(char)feat.getSource().second),
+                                     QString(Decode(feat.getSource().second)),
                                      QString::number(feat.getSource().first),
                                      QString("1"),
                                      QString(""),
@@ -174,7 +175,7 @@ void LaunchPad::loadFeatures()
         else
         {
           base = new FeatureListItem(featureList,
-                                     QString((QChar)(char)feat.getType()),
+                                     QString(UIElements::getFeatureStr((char)feat.getType())),
                                      QString("1"),
                                      QString(""),
                                      QString(""),
@@ -196,10 +197,10 @@ void LaunchPad::loadFeatures()
       if (featureGroupContigButton->isChecked())
       {
         new FeatureListItem(base,
-                            QString((QChar)(char)feat.getSource().second),
+                            QString(Decode(feat.getSource().second)),
                             QString::number(feat.getSource().first),
                             QString::number(1),
-                            QString((QChar)(char)feat.getType()),
+                            QString(UIElements::getFeatureStr((char)feat.getType())),
                             QString((QChar)(range.isReverse()?'R':'F')),
                             QString::number(range.getLo()),
                             QString::number(range.getHi()),
@@ -211,9 +212,9 @@ void LaunchPad::loadFeatures()
       else
       {
         new FeatureListItem(base,
-                            QString((QChar)(char)feat.getType()),
+                            QString(UIElements::getFeatureStr((char)feat.getType())),
                             QString::number(1),
-                            QString((QChar)(char)feat.getSource().second),
+                            QString(Decode(feat.getSource().second)),
                             QString::number(feat.getSource().first),
                             QString((QChar)(range.isReverse()?'R':'F')),
                             QString::number(range.getLo()),

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'LaunchPadBase.ui'
 **
-** Created: Fri Apr 28 00:57:20 2006
+** Created: Fri Apr 28 17:58:10 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -32,11 +32,12 @@
 #include <qimage.h>
 #include <qpixmap.h>
 
-static const unsigned char image0_data[] = { 
+#include "NChartWidget.hh"
+static const unsigned char image1_data[] = { 
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x16,
     0x08, 0x06, 0x00, 0x00, 0x00, 0xc4, 0xb4, 0x6c, 0x3b, 0x00, 0x00, 0x00,
-    0xae, 0x49, 0x44, 0x41, 0x54, 0x38, 0x8d, 0xb5, 0x94, 0x51, 0x0e, 0xc3,
+    0xae, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0xb5, 0x94, 0x51, 0x0e, 0xc3,
     0x20, 0x0c, 0x43, 0x6d, 0xb4, 0x53, 0x71, 0xb6, 0x69, 0x1f, 0xd3, 0xce,
     0xe6, 0x6b, 0xb1, 0x8f, 0x51, 0x35, 0xa2, 0x19, 0x23, 0x5a, 0xf0, 0x4f,
     0x44, 0x2b, 0x5e, 0x2c, 0x03, 0xa1, 0x24, 0xec, 0x50, 0xd9, 0x42, 0xdd,
@@ -50,8 +51,8 @@ static const unsigned char image0_data[] = {
     0x8c, 0x01, 0xef, 0x8f, 0x4f, 0x75, 0x33, 0xfe, 0x17, 0x6a, 0x1e, 0x48,
     0x2e, 0xf4, 0xe2, 0x38, 0x0b, 0x6a, 0xc0, 0xb9, 0xd0, 0xd3, 0x6a, 0x57,
     0x16, 0x14, 0x30, 0x83, 0x3e, 0x13, 0x0a, 0xac, 0xde, 0xf6, 0x2f, 0x9a,
-    0xcd, 0x8a, 0xb4, 0x79, 0x3c, 0xea, 0x0d, 0x05, 0x19, 0x70, 0xcd, 0xbc,
-    0x4f, 0x01, 0xb2, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+    0xcd, 0x8a, 0xb4, 0x79, 0x3c, 0xea, 0x0d, 0x05, 0x19, 0x70, 0xcd, 0x5b,
+    0x32, 0xcc, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
     0x42, 0x60, 0x82
 };
 
@@ -66,12 +67,12 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
 {
     (void)statusBar();
     QImage img;
-    img.loadFromData( image0_data, sizeof( image0_data ), "PNG" );
-    image0 = img;
+    img.loadFromData( image1_data, sizeof( image1_data ), "PNG" );
+    image1 = img;
     if ( !name )
 	setName( "LaunchPadBase" );
     setCentralWidget( new QWidget( this, "qt_central_widget" ) );
-    LaunchPadBaseLayout = new QHBoxLayout( centralWidget(), 11, 6, "LaunchPadBaseLayout"); 
+    LaunchPadBaseLayout = new QGridLayout( centralWidget(), 1, 1, 11, 6, "LaunchPadBaseLayout"); 
 
     tabWidget = new QTabWidget( centralWidget(), "tabWidget" );
     tabWidget->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)7, 0, 0, tabWidget->sizePolicy().hasHeightForWidth() ) );
@@ -80,10 +81,20 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     statsTabLayout = new QGridLayout( statsTab, 1, 1, 11, 6, "statsTabLayout"); 
 
     statsText = new QTextEdit( statsTab, "statsText" );
+    statsText->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)7, 0, 0, statsText->sizePolicy().hasHeightForWidth() ) );
+    statsText->setMinimumSize( QSize( 300, 0 ) );
     statsText->setTextFormat( QTextEdit::RichText );
     statsText->setReadOnly( TRUE );
 
-    statsTabLayout->addWidget( statsText, 0, 0 );
+    statsTabLayout->addMultiCellWidget( statsText, 0, 1, 0, 0 );
+
+    scaffoldSizes = new NChartWidget( statsTab, "scaffoldSizes" );
+
+    statsTabLayout->addWidget( scaffoldSizes, 0, 1 );
+
+    contigSizes = new NChartWidget( statsTab, "contigSizes" );
+
+    statsTabLayout->addWidget( contigSizes, 1, 1 );
     tabWidget->insertTab( statsTab, QString::fromLatin1("") );
 
     featuresTab = new QWidget( tabWidget, "featuresTab" );
@@ -125,34 +136,36 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     libraryList->setShowSortIndicator( TRUE );
     libraryList->setRootIsDecorated( TRUE );
 
-    librariesTabLayout->addMultiCellWidget( libraryList, 0, 0, 0, 1 );
+    librariesTabLayout->addWidget( libraryList, 0, 0 );
 
     histogramGroup = new QButtonGroup( librariesTab, "histogramGroup" );
     histogramGroup->setColumnLayout(0, Qt::Vertical );
     histogramGroup->layout()->setSpacing( 6 );
     histogramGroup->layout()->setMargin( 11 );
-    histogramGroupLayout = new QHBoxLayout( histogramGroup->layout() );
+    histogramGroupLayout = new QGridLayout( histogramGroup->layout() );
     histogramGroupLayout->setAlignment( Qt::AlignTop );
 
-    libraryInsertButton = new QPushButton( histogramGroup, "libraryInsertButton" );
-    libraryInsertButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryInsertButton->sizePolicy().hasHeightForWidth() ) );
-    histogramGroupLayout->addWidget( libraryInsertButton );
-
     libraryClearLengthButton = new QPushButton( histogramGroup, "libraryClearLengthButton" );
-    libraryClearLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryClearLengthButton->sizePolicy().hasHeightForWidth() ) );
-    histogramGroupLayout->addWidget( libraryClearLengthButton );
+    libraryClearLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, libraryClearLengthButton->sizePolicy().hasHeightForWidth() ) );
+
+    histogramGroupLayout->addWidget( libraryClearLengthButton, 0, 1 );
+
+    libraryInsertButton = new QPushButton( histogramGroup, "libraryInsertButton" );
+    libraryInsertButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, libraryInsertButton->sizePolicy().hasHeightForWidth() ) );
+
+    histogramGroupLayout->addWidget( libraryInsertButton, 0, 0 );
 
     libraryReadLengthButton = new QPushButton( histogramGroup, "libraryReadLengthButton" );
-    libraryReadLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryReadLengthButton->sizePolicy().hasHeightForWidth() ) );
-    histogramGroupLayout->addWidget( libraryReadLengthButton );
+    libraryReadLengthButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, libraryReadLengthButton->sizePolicy().hasHeightForWidth() ) );
+
+    histogramGroupLayout->addWidget( libraryReadLengthButton, 0, 2 );
 
     libraryGCButton = new QPushButton( histogramGroup, "libraryGCButton" );
-    libraryGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, libraryGCButton->sizePolicy().hasHeightForWidth() ) );
-    histogramGroupLayout->addWidget( libraryGCButton );
+    libraryGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)7, (QSizePolicy::SizeType)0, 0, 0, libraryGCButton->sizePolicy().hasHeightForWidth() ) );
 
-    librariesTabLayout->addWidget( histogramGroup, 1, 1 );
-    spacer2 = new QSpacerItem( 161, 21, QSizePolicy::Expanding, QSizePolicy::Minimum );
-    librariesTabLayout->addItem( spacer2, 1, 0 );
+    histogramGroupLayout->addWidget( libraryGCButton, 0, 3 );
+
+    librariesTabLayout->addWidget( histogramGroup, 1, 0 );
     tabWidget->insertTab( librariesTab, QString::fromLatin1("") );
 
     scaffoldsTab = new QWidget( tabWidget, "scaffoldsTab" );
@@ -319,11 +332,12 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
 
     TabPageLayout->addMultiCellWidget( readList, 0, 0, 0, 3 );
     tabWidget->insertTab( TabPage, QString::fromLatin1("") );
-    LaunchPadBaseLayout->addWidget( tabWidget );
+
+    LaunchPadBaseLayout->addWidget( tabWidget, 0, 0 );
 
     // actions
     fileOpenAction = new QAction( this, "fileOpenAction" );
-    fileOpenAction->setIconSet( QIconSet( image0 ) );
+    fileOpenAction->setIconSet( QIconSet( image1 ) );
     fileQuitAction = new QAction( this, "fileQuitAction" );
     fileChromatogramPathsAction = new QAction( this, "fileChromatogramPathsAction" );
 
@@ -362,7 +376,7 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     MenuBar->insertItem( QString(""), fileMenu, 1 );
 
     languageChange();
-    resize( QSize(666, 789).expandedTo(minimumSizeHint()) );
+    resize( QSize(674, 824).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections
@@ -391,21 +405,21 @@ void LaunchPadBase::languageChange()
     featureGroupContigButton->setText( tr( "Contig" ) );
     featureGroupTypeButton->setText( tr( "Type" ) );
     tabWidget->changeTab( featuresTab, tr( "Features" ) );
-    histogramGroup->setTitle( tr( "Histograms" ) );
-    libraryInsertButton->setText( tr( "Insert Size" ) );
+    histogramGroup->setTitle( tr( "Distributions" ) );
     libraryClearLengthButton->setText( tr( "Read Clear Range" ) );
+    libraryInsertButton->setText( tr( "Insert Size" ) );
     libraryReadLengthButton->setText( tr( "Read Length" ) );
     libraryGCButton->setText( tr( "GC Content" ) );
     tabWidget->changeTab( librariesTab, tr( "Libraries" ) );
     textLabel1->setText( tr( "IID:" ) );
     textLabel1_2->setText( tr( "EID:" ) );
-    scaffoldHistogramGroup->setTitle( tr( "Histograms" ) );
+    scaffoldHistogramGroup->setTitle( tr( "Distributions" ) );
     scaffoldSpanButton->setText( tr( "Span" ) );
     scaffoldContigsButton->setText( tr( "Contig Count" ) );
     tabWidget->changeTab( scaffoldsTab, tr( "Scaffolds" ) );
     textLabel1_2_2->setText( tr( "EID:" ) );
     textLabel1_3->setText( tr( "IID:" ) );
-    scaffoldHistogramGroup_2->setTitle( tr( "Histograms" ) );
+    scaffoldHistogramGroup_2->setTitle( tr( "Distributions" ) );
     contigLengthButton->setText( tr( "Length" ) );
     contigReadsButton->setText( tr( "Read Count" ) );
     contigGCButton->setText( tr( "GC Content" ) );
@@ -414,7 +428,7 @@ void LaunchPadBase::languageChange()
     tabWidget->changeTab( contigsTab, tr( "Contigs" ) );
     textLabel1_3_2->setText( tr( "IID:" ) );
     textLabel1_2_2_2->setText( tr( "EID:" ) );
-    scaffoldHistogramGroup_2_2->setTitle( tr( "Histograms" ) );
+    scaffoldHistogramGroup_2_2->setTitle( tr( "Distributions" ) );
     readLengthButton->setText( tr( "Length" ) );
     readGCButton->setText( tr( "GC Content" ) );
     tabWidget->changeTab( TabPage, tr( "Reads" ) );
