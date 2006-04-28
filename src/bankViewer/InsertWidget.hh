@@ -13,7 +13,6 @@
 #include <string>
 #include "foundation_AMOS.hh"
 #include "Insert.hh"
-#include "krangeslider.hh"
 #include "RangeScrollBar.hh"
 
 #include <map>
