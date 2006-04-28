@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Thu Apr 27 11:53:06 2006
+** Created: Thu Apr 27 23:37:26 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -70,17 +70,18 @@ public:
     QSlider* breakSlider;
     QCheckBox* breakCheck;
     QCheckBox* otherCheck;
+    QButtonGroup* mateColorBox;
+    QRadioButton* categoricalButton;
+    QRadioButton* continuousButton;
+    QRadioButton* linkingButton;
+    QRadioButton* libraryButton;
     QGroupBox* displayBox;
     QCheckBox* coverageCheck;
     QCheckBox* ceCheck;
     QCheckBox* mateCheck;
     QCheckBox* partitionCheck;
     QCheckBox* tintCheck;
-    QButtonGroup* mateColorBox;
-    QRadioButton* categoricalButton;
-    QRadioButton* continuousButton;
-    QRadioButton* linkingButton;
-    QRadioButton* libraryButton;
+    QGroupBox* libraryBox;
 
 protected:
     QVBoxLayout* QueryWidgetLayout;
@@ -89,8 +90,8 @@ protected:
     QHBoxLayout* layout8;
     QGridLayout* mateTypeBoxLayout;
     QGridLayout* featureBoxLayout;
-    QVBoxLayout* displayBoxLayout;
     QVBoxLayout* mateColorBoxLayout;
+    QVBoxLayout* displayBoxLayout;
 
 protected slots:
     virtual void languageChange();

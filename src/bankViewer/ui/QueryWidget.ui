@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>268</width>
-            <height>705</height>
+            <width>273</width>
+            <height>746</height>
         </rect>
     </property>
     <property name="caption">
@@ -709,6 +709,77 @@
                         </widget>
                     </grid>
                 </widget>
+                <widget class="QButtonGroup" row="4" column="1">
+                    <property name="name">
+                        <cstring>mateColorBox</cstring>
+                    </property>
+                    <property name="title">
+                        <string>Mate Colors</string>
+                    </property>
+                    <vbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QRadioButton">
+                            <property name="name">
+                                <cstring>categoricalButton</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Categorical</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QRadioButton">
+                            <property name="name">
+                                <cstring>continuousButton</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Continuous</string>
+                            </property>
+                            <property name="checked">
+                                <bool>false</bool>
+                            </property>
+                        </widget>
+                        <widget class="QRadioButton">
+                            <property name="name">
+                                <cstring>linkingButton</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Linking</string>
+                            </property>
+                        </widget>
+                        <widget class="QRadioButton">
+                            <property name="name">
+                                <cstring>libraryButton</cstring>
+                            </property>
+                            <property name="font">
+                                <font>
+                                    <pointsize>9</pointsize>
+                                </font>
+                            </property>
+                            <property name="text">
+                                <string>Library</string>
+                            </property>
+                        </widget>
+                    </vbox>
+                </widget>
                 <widget class="QGroupBox" row="4" column="0">
                     <property name="name">
                         <cstring>displayBox</cstring>
@@ -837,76 +908,13 @@
                         </widget>
                     </vbox>
                 </widget>
-                <widget class="QButtonGroup" row="4" column="1">
+                <widget class="QGroupBox" row="5" column="0" rowspan="1" colspan="2">
                     <property name="name">
-                        <cstring>mateColorBox</cstring>
+                        <cstring>libraryBox</cstring>
                     </property>
                     <property name="title">
-                        <string>Mate Colors</string>
+                        <string>Libraries</string>
                     </property>
-                    <vbox>
-                        <property name="name">
-                            <cstring>unnamed</cstring>
-                        </property>
-                        <widget class="QRadioButton">
-                            <property name="name">
-                                <cstring>categoricalButton</cstring>
-                            </property>
-                            <property name="font">
-                                <font>
-                                    <pointsize>9</pointsize>
-                                </font>
-                            </property>
-                            <property name="text">
-                                <string>Categorical</string>
-                            </property>
-                            <property name="checked">
-                                <bool>true</bool>
-                            </property>
-                        </widget>
-                        <widget class="QRadioButton">
-                            <property name="name">
-                                <cstring>continuousButton</cstring>
-                            </property>
-                            <property name="font">
-                                <font>
-                                    <pointsize>9</pointsize>
-                                </font>
-                            </property>
-                            <property name="text">
-                                <string>Continuous</string>
-                            </property>
-                            <property name="checked">
-                                <bool>false</bool>
-                            </property>
-                        </widget>
-                        <widget class="QRadioButton">
-                            <property name="name">
-                                <cstring>linkingButton</cstring>
-                            </property>
-                            <property name="font">
-                                <font>
-                                    <pointsize>9</pointsize>
-                                </font>
-                            </property>
-                            <property name="text">
-                                <string>Linking</string>
-                            </property>
-                        </widget>
-                        <widget class="QRadioButton">
-                            <property name="name">
-                                <cstring>libraryButton</cstring>
-                            </property>
-                            <property name="font">
-                                <font>
-                                    <pointsize>9</pointsize>
-                                </font>
-                            </property>
-                            <property name="text">
-                                <string>Library</string>
-                            </property>
-                        </widget>
-                    </vbox>
                 </widget>
             </grid>
         </widget>

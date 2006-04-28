@@ -20,6 +20,9 @@
 #include <qscrollview.h>
 #include <qvbox.h>
 #include <qradiobutton.h>
+#include <qgroupbox.h>
+#include <qlayout.h>
+#include <qobjectlist.h>
 
 #include "DataStore.hh"
 #include "UIElements.hh"
@@ -46,29 +49,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   const char * states = Insert::allstates;
   unsigned int type = 0;
 
-  // Libraries
-  m_libmenu = new QPopupMenu(this);
-  menuBar()->insertItem("&Libraries", m_libmenu);
-  buildLibraryMenu();
-
-
-  QPopupMenu * m_featmenu = new QPopupMenu(this);
-  menuBar()->insertItem("&Features", m_featmenu);
-
-  for (type = 0; type < strlen(UIElements::allFeatureTypes); type++)
-  {
-    char feat = UIElements::allFeatureTypes[type];
-    QPixmap rect(10,10);
-
-    QPainter p(&rect);
-    p.fillRect(rect.rect(), UIElements::getFeatureColor((AMOS::FeatureType_t)feat));
-    p.end();
-
-    QString name = (QString)"[" + feat + "] ";
-    name += UIElements::getFeatureStr((AMOS::FeatureType_t)feat);
-
-    m_featmenu->insertItem(QIconSet(rect), name);
-  }
 
   // Main Widget
   m_inserts = new InsertWidget(datastore, m_types, this, "iw");
@@ -76,29 +56,50 @@ InsertWindow::InsertWindow(DataStore * datastore,
   setCentralWidget(iw);
 
 
-
-  QToolBar * tools = new QToolBar(this, "tools");
+  // Tools
   QIconSet icon_pointer(QPixmap((const char ** )pointer_tool));
   QIconSet icon_zoomin(QPixmap((const char ** )zoom_in));
   QIconSet icon_zoomout(QPixmap((const char **)zoom_out));
 
-  QToolButton * b = new QToolButton(tools, "select");
+  QDockWindow * toolDock = new QDockWindow (QDockWindow::InDock, this);
+  QToolButton * b = new QToolButton(toolDock, "select");
+  QHBoxLayout * hbox = new QHBoxLayout (toolDock);
+
+  toolDock->setResizeEnabled(true);
+  toolDock->boxLayout()->addLayout (hbox);
+  addDockWindow (toolDock, Qt::DockRight);
+
+  hbox->addItem
+    (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum));
+
   b->setIconSet(icon_pointer);
   b->setTextLabel("select tool");
-  b->setMaximumWidth(25);
+  b->setMaximumSize(25,25);
   connect(b, SIGNAL(clicked()), iw, SIGNAL(setSelectTool()));
+  hbox->addWidget(b);
 
-  b = new QToolButton(tools, "zoomin");
+  hbox->addItem
+    (new QSpacerItem(10,0,QSizePolicy::Preferred,QSizePolicy::Minimum));
+
+  b = new QToolButton(toolDock, "zoomin");
   b->setIconSet(icon_zoomin);
   b->setTextLabel("zoom in");
-  b->setMaximumWidth(25);
+  b->setMaximumSize(25,25);
   connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomInTool()));
+  hbox->addWidget(b);
 
-  b = new QToolButton(tools, "zoomout");
+  hbox->addItem
+    (new QSpacerItem(10,0,QSizePolicy::Preferred,QSizePolicy::Minimum));
+
+  b = new QToolButton(toolDock, "zoomout");
   b->setIconSet(icon_zoomout);
   b->setTextLabel("zoom out");
-  b->setMaximumWidth(25);
+  b->setMaximumSize(25,25);
   connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
+  hbox->addWidget(b);
+
+  hbox->addItem
+    (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum));
 
 
   // Query Dock
@@ -201,6 +202,12 @@ InsertWindow::InsertWindow(DataStore * datastore,
   iw->setColorByStretchiness(m_query->continuousButton->isChecked());
   iw->setColorByMate(m_query->linkingButton->isChecked());
   iw->setColorByLibrary(m_query->libraryButton->isChecked());
+
+
+  // Libraries
+  m_query->libraryBox->setColumnLayout(1,Qt::Vertical);
+  m_libLegend = NULL;
+  buildLibraryBox();
 
 
   // Detail Dock
@@ -383,33 +390,43 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
 int InsertWindow::s_persistant(0);
 
-void InsertWindow::buildLibraryMenu()
+void InsertWindow::buildLibraryBox()
 {
-  m_libmenu->clear();
+  if ( m_libLegend != NULL )
+    delete m_libLegend;
+
+  QWidget * m_libLegend = new QWidget (m_query->libraryBox);
+  QFont font (m_libLegend->font());
+  font.setPointSize(9);
+  m_libLegend->setFont(font);
+  QGridLayout * grid = new QGridLayout
+    (m_libLegend, m_datastore->m_libdistributionlookup.size(), 2);
 
   unsigned int type = 0;
   const char * states = Insert::allstates;
 
+  int row = 0;
   DataStore::LibLookup_t::iterator li;
   for (li =  m_datastore->m_libdistributionlookup.begin();
        li != m_datastore->m_libdistributionlookup.end();
        li++)
   {
-    char state = states[type];
-    QPixmap rect(10,10);
+    QString str = QString::number(li->first); 
+    str += " [" + QString::number(li->second.mean); 
+    str += " +/- " + QString::number(li->second.sd);
+    str += "]";
 
-    QPainter p(&rect);
-    p.fillRect(rect.rect(), UIElements::getInsertColor((Insert::MateState)state));
-    p.end();
+    QLabel * name = new QLabel (m_libLegend);
+    name->setText(str);
+    grid->addWidget(name, row, 0);
 
-    QString name = QString::number(li->first); 
-    name += " [" + QString::number(li->second.mean); 
-    name += " +/- " + QString::number(li->second.sd);
-    name += "]";
-
-    m_libmenu->insertItem(QIconSet(rect), name);
+    QLabel * icon = new QLabel (m_libLegend);
+    icon->setPixmap
+      (mateIcon(UIElements::getInsertColor((Insert::MateState)states[type]),0));
+    grid->addWidget(icon, row, 1);
 
     type++;
+    row++;
     if (type >= strlen(Insert::allstates)) { type = 0; }
   }
 }
@@ -452,26 +469,7 @@ void InsertWindow::toggleItem()
 
 void InsertWindow::bankChanged()
 {
-  buildLibraryMenu();
-}
-
-QPixmap InsertWindow::mateIcon(const QColor & color,int mode)
-{
-  static const int height = 4;
-  static const int readwidth = 30;
-  static QPixmap mate (readwidth * 3, height);
-  static const QRect cutout (readwidth,0,readwidth,height-1);
-  static const QRect nomate (readwidth,0,readwidth*2,height-1);
-  static const QRect nolink (readwidth,0,readwidth*2,height);
-
-  QPainter p(&mate);
-  p.fillRect(mate.rect(), color);
-  if ( mode == 0 ) p.fillRect(cutout, paletteBackgroundColor());
-  if ( mode == 1 ) p.fillRect(nomate, paletteBackgroundColor());
-  if ( mode == 2 ) p.fillRect(nolink, paletteBackgroundColor());
-  p.end();
-
-  return mate;
+  buildLibraryBox();
 }
 
 void InsertWindow::setMaxInsertCovTol(int maxtol)
@@ -508,4 +506,23 @@ void InsertWindow::setMaxBreakTol(int maxtol)
 {
   m_query->breakSlider->setRange(0, maxtol);
   m_inserts->setBreakTol(m_query->breakSlider->value());
+}
+
+QPixmap InsertWindow::mateIcon(const QColor & color,int mode)
+{
+  static const int height = 4;
+  static const int readwidth = 30;
+  static QPixmap mate (readwidth * 3, height);
+  static const QRect cutout (readwidth,0,readwidth,height-1);
+  static const QRect nomate (readwidth,0,readwidth*2,height-1);
+  static const QRect nolink (readwidth,0,readwidth*2,height);
+
+  QPainter p(&mate);
+  p.fillRect(mate.rect(), color);
+  if ( mode == 0 ) p.fillRect(cutout, paletteBackgroundColor());
+  if ( mode == 1 ) p.fillRect(nomate, paletteBackgroundColor());
+  if ( mode == 2 ) p.fillRect(nolink, paletteBackgroundColor());
+  p.end();
+
+  return mate;
 }

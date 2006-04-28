@@ -58,7 +58,7 @@ signals:
 private:
 
   QPixmap mateIcon (const QColor & color, int mode);
-  void buildLibraryMenu();
+  void buildLibraryBox();
 
   typedef std::map<char, std::pair<int, bool> > typemap;
 
@@ -77,7 +77,6 @@ private:
   int m_connectmatesid;
   int m_partitiontypesid;
   int m_coverageid;
-  int m_featid;
   int m_libcolorid;
   int m_scaffid;
   int m_ceid;
@@ -85,6 +84,7 @@ private:
   int m_tintfeatid;
   int m_matecolorid;
   int m_showscaffid;
+  QWidget * m_libLegend;
 };
 
 #endif

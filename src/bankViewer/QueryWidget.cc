@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'QueryWidget.ui'
 **
-** Created: Thu Apr 27 11:53:06 2006
+** Created: Thu Apr 27 23:37:26 2006
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -321,6 +321,41 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
 
     queryBoxLayout->addMultiCellWidget( featureBox, 2, 2, 0, 1 );
 
+    mateColorBox = new QButtonGroup( queryBox, "mateColorBox" );
+    mateColorBox->setColumnLayout(0, Qt::Vertical );
+    mateColorBox->layout()->setSpacing( 6 );
+    mateColorBox->layout()->setMargin( 11 );
+    mateColorBoxLayout = new QVBoxLayout( mateColorBox->layout() );
+    mateColorBoxLayout->setAlignment( Qt::AlignTop );
+
+    categoricalButton = new QRadioButton( mateColorBox, "categoricalButton" );
+    QFont categoricalButton_font(  categoricalButton->font() );
+    categoricalButton_font.setPointSize( 9 );
+    categoricalButton->setFont( categoricalButton_font ); 
+    categoricalButton->setChecked( TRUE );
+    mateColorBoxLayout->addWidget( categoricalButton );
+
+    continuousButton = new QRadioButton( mateColorBox, "continuousButton" );
+    QFont continuousButton_font(  continuousButton->font() );
+    continuousButton_font.setPointSize( 9 );
+    continuousButton->setFont( continuousButton_font ); 
+    continuousButton->setChecked( FALSE );
+    mateColorBoxLayout->addWidget( continuousButton );
+
+    linkingButton = new QRadioButton( mateColorBox, "linkingButton" );
+    QFont linkingButton_font(  linkingButton->font() );
+    linkingButton_font.setPointSize( 9 );
+    linkingButton->setFont( linkingButton_font ); 
+    mateColorBoxLayout->addWidget( linkingButton );
+
+    libraryButton = new QRadioButton( mateColorBox, "libraryButton" );
+    QFont libraryButton_font(  libraryButton->font() );
+    libraryButton_font.setPointSize( 9 );
+    libraryButton->setFont( libraryButton_font ); 
+    mateColorBoxLayout->addWidget( libraryButton );
+
+    queryBoxLayout->addWidget( mateColorBox, 4, 1 );
+
     displayBox = new QGroupBox( queryBox, "displayBox" );
     displayBox->setColumnLayout(0, Qt::Vertical );
     displayBox->layout()->setSpacing( 6 );
@@ -370,43 +405,12 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
 
     queryBoxLayout->addWidget( displayBox, 4, 0 );
 
-    mateColorBox = new QButtonGroup( queryBox, "mateColorBox" );
-    mateColorBox->setColumnLayout(0, Qt::Vertical );
-    mateColorBox->layout()->setSpacing( 6 );
-    mateColorBox->layout()->setMargin( 11 );
-    mateColorBoxLayout = new QVBoxLayout( mateColorBox->layout() );
-    mateColorBoxLayout->setAlignment( Qt::AlignTop );
+    libraryBox = new QGroupBox( queryBox, "libraryBox" );
 
-    categoricalButton = new QRadioButton( mateColorBox, "categoricalButton" );
-    QFont categoricalButton_font(  categoricalButton->font() );
-    categoricalButton_font.setPointSize( 9 );
-    categoricalButton->setFont( categoricalButton_font ); 
-    categoricalButton->setChecked( TRUE );
-    mateColorBoxLayout->addWidget( categoricalButton );
-
-    continuousButton = new QRadioButton( mateColorBox, "continuousButton" );
-    QFont continuousButton_font(  continuousButton->font() );
-    continuousButton_font.setPointSize( 9 );
-    continuousButton->setFont( continuousButton_font ); 
-    continuousButton->setChecked( FALSE );
-    mateColorBoxLayout->addWidget( continuousButton );
-
-    linkingButton = new QRadioButton( mateColorBox, "linkingButton" );
-    QFont linkingButton_font(  linkingButton->font() );
-    linkingButton_font.setPointSize( 9 );
-    linkingButton->setFont( linkingButton_font ); 
-    mateColorBoxLayout->addWidget( linkingButton );
-
-    libraryButton = new QRadioButton( mateColorBox, "libraryButton" );
-    QFont libraryButton_font(  libraryButton->font() );
-    libraryButton_font.setPointSize( 9 );
-    libraryButton->setFont( libraryButton_font ); 
-    mateColorBoxLayout->addWidget( libraryButton );
-
-    queryBoxLayout->addWidget( mateColorBox, 4, 1 );
+    queryBoxLayout->addMultiCellWidget( libraryBox, 5, 5, 0, 1 );
     QueryWidgetLayout->addWidget( queryBox );
     languageChange();
-    resize( QSize(268, 705).expandedTo(minimumSizeHint()) );
+    resize( QSize(273, 746).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections
@@ -464,16 +468,17 @@ void QueryWidget::languageChange()
     qcCheck->setText( tr( "AsmQC" ) );
     breakCheck->setText( tr( "Breaks" ) );
     otherCheck->setText( tr( "Other" ) );
+    mateColorBox->setTitle( tr( "Mate Colors" ) );
+    categoricalButton->setText( tr( "Categorical" ) );
+    continuousButton->setText( tr( "Continuous" ) );
+    linkingButton->setText( tr( "Linking" ) );
+    libraryButton->setText( tr( "Library" ) );
     displayBox->setTitle( tr( "Display" ) );
     coverageCheck->setText( tr( "Coverage Stat" ) );
     ceCheck->setText( tr( "CE Statistic" ) );
     mateCheck->setText( tr( "Connect Mates" ) );
     partitionCheck->setText( tr( "Partition Types" ) );
     tintCheck->setText( tr( "Tint Partitions" ) );
-    mateColorBox->setTitle( tr( "Mate Colors" ) );
-    categoricalButton->setText( tr( "Categorical" ) );
-    continuousButton->setText( tr( "Continuous" ) );
-    linkingButton->setText( tr( "Linking" ) );
-    libraryButton->setText( tr( "Library" ) );
+    libraryBox->setTitle( tr( "Libraries" ) );
 }
 
