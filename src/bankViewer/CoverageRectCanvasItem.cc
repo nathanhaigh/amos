@@ -2,6 +2,7 @@
 #include "UIElements.hh"
 #include <qpainter.h>
 #include <limits.h>
+#include <math.h>
 
 const int CoverageRectCanvasItem::RTTI = 123456;
 
@@ -31,31 +32,18 @@ CoverageRectCanvasItem::CoverageRectCanvasItem(int x, int y,
 
 void CoverageRectCanvasItem::drawShape (QPainter & p)
 {
-  QColor color (m_libid == -1 ?
-                UIElements::color_featinsertcov :
-                UIElements::color_featreadcov);
-  
-  QBrush lowBrush  (color);
-  QBrush highBrush (color);
-  QPen lowPen  (color);
-  QPen highPen (color);
-
-  int px = (int)x();
-  int py = 0;
+  int px = int(x());
+  int py = int(m_baseLevel);
   for ( QPointArray::Iterator i = m_points.begin(); i != m_points.end(); ++ i )
     {
       if ( abs(i->y()) != py )
         {
-          if ( py < m_low )
+          if ( py < m_low || py > m_high )
             {
-              p.setBrush (lowBrush);
-              p.setPen (lowPen);
-              p.drawRect (px, (int)y(), (int)i->x() - px + 1, height());
-            }
-          else if ( py > m_high )
-            {
-              p.setBrush (highBrush);
-              p.setPen (highPen);
+              double df = fabs(m_baseLevel - py) / m_baseLevel * 100.0;
+              QColor shade = m_color.light(int(df));
+              p.setBrush (shade);
+              p.setPen (shade);
               p.drawRect (px, (int)y(), (int)i->x() - px + 1, height());
             }
 
@@ -64,16 +52,12 @@ void CoverageRectCanvasItem::drawShape (QPainter & p)
         }
     }
 
-  if ( py < m_low )
+  if ( py < m_low || py > m_high )
     {
-      p.setBrush (lowBrush);
-      p.setPen (lowPen);
-      p.drawRect (px, (int)y(), (int)(x()+width()) - px + 1, height());
-    }
-  else if ( py > m_high )
-    {
-      p.setBrush (highBrush);
-      p.setPen (highPen);
+      double df = fabs(m_baseLevel - py) / m_baseLevel * 100.0;
+      QColor shade = m_color.light(int(df));
+      p.setBrush (shade);
+      p.setPen (shade);
       p.drawRect (px, (int)y(), (int)(x()+width()) - px + 1, height());
     }
 }
