@@ -1,11 +1,3 @@
-/****************************************************************************
-** Form interface generated from reading ui file 'LaunchPadBase.ui'
-**
-** Created: Fri Apr 28 17:58:10 2006
-**      by: The User Interface Compiler ($Id$)
-**
-** WARNING! All changes made in this file will be lost!
-****************************************************************************/
 
 #ifndef LAUNCHPADBASE_H
 #define LAUNCHPADBASE_H

@@ -1,11 +1,3 @@
-/****************************************************************************
-** Form interface generated from reading ui file 'QueryWidget.ui'
-**
-** Created: Fri Apr 28 17:58:11 2006
-**      by: The User Interface Compiler ($Id$)
-**
-** WARNING! All changes made in this file will be lost!
-****************************************************************************/
 
 #ifndef QUERYWIDGET_H
 #define QUERYWIDGET_H

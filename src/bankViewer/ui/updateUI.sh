@@ -10,9 +10,9 @@ echo Running `which $UIC`
 for ui in `ls *.ui`; do
     base=${ui%.ui}
     echo + Writing ../$base.hh
-    $UIC $ui > $base.hh || exit 1;
+    $UIC $ui | grep -v '\*\*' > $base.hh || exit 1;
     mv $base.hh ..
     echo + Writing ../$base.cc
-    $UIC -impl $base.hh $ui > $base.cc || exit 1;
+    $UIC -impl $base.hh $ui | grep -v '\*\*' > $base.cc || exit 1;
     mv $base.cc ..
 done
