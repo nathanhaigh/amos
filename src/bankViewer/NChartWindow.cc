@@ -1,15 +1,15 @@
 #include "NChartWindow.hh"
 #include "NChartWidget.hh"
-#include "InsertStats.hh"
 
 #include <qspinbox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
 #include <qlineedit.h>
 
-NChartWindow::NChartWindow(InsertStats * stats, QWidget * parent, const char * name)
- : QMainWindow(parent, name),
-   m_stats(stats)
+#include "NChartStats.hh"
+
+NChartWindow::NChartWindow(NChartStats * stats, QWidget * parent, const char * name)
+ : QMainWindow(parent, name)
 {
   setWFlags(Qt::WDestructiveClose);
 

@@ -13,7 +13,7 @@
 #include "ChromoPicker.hh"
 #include "NetworkCom.hh"
 #include "MainWindow.hh"
-#include "InsertStats.hh"
+#include "NChartStats.hh"
 #include "NChartWidget.hh"
 
 
@@ -37,13 +37,13 @@ LaunchPad::LaunchPad(QWidget* parent, const char* name, WFlags fl)
   initContigs();
   initReads();
 
-  connect(viewButton,   SIGNAL(clicked()), this, SLOT(showAll()));
-  connect(tilingButton, SIGNAL(clicked()), this, SLOT(showTiling()));
-  connect(insertButton, SIGNAL(clicked()), this, SLOT(showInserts()));
-  connect(contigIDSpin, SIGNAL(valueChanged(int)), this, SLOT(setContigId(int)));
+  connect(viewButton,    SIGNAL(clicked()), this, SLOT(showAll()));
+  connect(tilingButton,  SIGNAL(clicked()), this, SLOT(showTiling()));
+  connect(insertButton,  SIGNAL(clicked()), this, SLOT(showInserts()));
+  connect(contigIDSpin,  SIGNAL(valueChanged(int)), this, SLOT(setContigId(int)));
+  connect(contigSizes,   SIGNAL(idSelected(int)),   this, SLOT(setContigId(int)));
+  connect(scaffoldSizes, SIGNAL(idSelected(int)),   this, SLOT(setScaffoldId(int)));
 
-
-  // Status Bar
   statusBar()->message("No Bank Loaded");
 }
 
@@ -113,7 +113,7 @@ void LaunchPad::loadBank()
   loadReads();
 
 
-  InsertStats * scaffstats = new InsertStats((string)"Scaffold Span Distribution");
+  NChartStats * scaffstats = new NChartStats((string)"Scaffold Span Distribution");
 
   if (m_datastore->scaffold_bank.isOpen())
   {
@@ -121,14 +121,14 @@ void LaunchPad::loadBank()
     m_datastore->scaffold_bank.seekg(1);
     while (m_datastore->scaffold_bank >> scaffold)
     {
-      scaffstats->addSize(scaffold.getSpan());
+      int bid = m_datastore->scaffold_bank.tellg() - 1;
+      scaffstats->addSize(bid, scaffold.getSpan());
     }
   }
-  scaffoldSizes->setStats(scaffstats);
 
 
 
-  InsertStats * contigstats = new InsertStats((string)"Contig Length Distribution");
+  NChartStats * contigstats = new NChartStats((string)"Contig Length Distribution");
 
   if (m_datastore->contig_bank.isOpen())
   {
@@ -136,9 +136,58 @@ void LaunchPad::loadBank()
     m_datastore->contig_bank.seekg(1);
     while (m_datastore->contig_bank >> contig)
     {
-      contigstats->addSize(contig.getLength());
+      int bid = m_datastore->contig_bank.tellg() - 1;
+      contigstats->addSize(bid, contig.getLength());
     }
   }
+
+
+  if (m_datastore->feat_bank.isOpen())
+  {
+    try
+    {
+      Feature_t feat;
+      m_datastore->feat_bank.seekg(1);
+
+      while (m_datastore->feat_bank >> feat)
+      {
+        ID_t iid = feat.getSource().first;
+        NCode_t nc = feat.getSource().second;
+
+        if (nc == Contig_t::NCODE)
+        {
+          try
+          {
+            contigstats->addFeat(m_datastore->contig_bank.lookupBID(iid));
+
+            int scaffid = m_datastore->lookupScaffoldId(iid);
+            if (scaffid) { scaffstats->addFeat(scaffid); }
+          }
+          catch (AMOS::Exception_t & e)
+          {
+            cerr << "error: " << e << endl;
+          }
+        }
+        else if (nc == Scaffold_t::NCODE)
+        {
+          try
+          {
+            scaffstats->addFeat(m_datastore->scaffold_bank.lookupBID(iid));
+          }
+          catch (AMOS::Exception_t & e)
+          {
+            cerr << "error: " << e << endl;
+          }
+        }
+      }
+    }
+    catch (AMOS::Exception_t & e)
+    {
+      cerr << "error: " << e << endl;
+    }
+  }
+
+  scaffoldSizes->setStats(scaffstats);
   contigSizes->setStats(contigstats);
 }
 
@@ -245,6 +294,22 @@ void LaunchPad::setContigId(int contigId)
     emit contigIdSelected(m_datastore->m_contigId);
     emit gindexSelected(0);
     statusBar()->message(s);
+  }
+}
+
+void LaunchPad::setScaffoldId(int scaffId)
+{
+  if ((scaffId != 0) &&
+      (scaffId != m_datastore->m_scaffoldId) &&
+      (m_datastore->scaffold_bank.isOpen()))
+  {
+    AMOS::Scaffold_t scaffold;
+    m_datastore->fetchScaffold(scaffId, scaffold);
+
+    AMOS::ID_t contigiid = scaffold.getContigTiling().begin()->source;
+    AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(contigiid);
+
+    setContigId(bid);
   }
 }
 

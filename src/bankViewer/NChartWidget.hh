@@ -3,7 +3,7 @@
 
 #include <qwidget.h>
 
-class InsertStats;
+class NChartStats;
 
 class NChartWidget : public QWidget
 {
@@ -14,14 +14,30 @@ public:
   ~NChartWidget();
 
 public slots:
-  void setStats(InsertStats * stats);
+  void setStats(NChartStats * stats);
+  void mouseDoubleClickEvent(QMouseEvent * e);
+  void mouseMoveEvent(QMouseEvent * e);
+
+signals:
+  void idSelected(int id);
 
 protected:
   void paintEvent(QPaintEvent *);
 
 private:
-  InsertStats * m_stats;
+  NChartStats * m_stats;
   bool m_grid;
+
+  int m_histleft;
+  int m_histwidth;
+  int m_histtop;
+  int m_histheight;
+  int m_histbottom;
+
+  double m_xscale;
+  double m_yscale;
+  
+  double m_highlightsize;
 };
 
 

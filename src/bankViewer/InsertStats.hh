@@ -12,8 +12,6 @@ public:
 
   void   addSize(double size);
   void   histogram(int buckets, bool fitzero=true);
-  void   nchart();
-  double nvalue(double perc);
 
   int    count() const;
   double mean()  const;
@@ -28,7 +26,6 @@ public:
   double m_low;
   double m_high;
   int m_maxcount;
-  double m_maxsize;
 };
 
 

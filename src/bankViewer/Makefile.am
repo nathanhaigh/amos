@@ -32,7 +32,6 @@ bankViewer_MOCSOURCES = \
         Insert.cc              \
         InsertField.cc         \
         InsertPosition.cc      \
-        InsertStats.cc         \
         InsertWidget.cc        \
         InsertWindow.cc        \
 	LaunchPad.cc           \
@@ -62,7 +61,9 @@ CLEANFILES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 
 bankViewer_SOURCES =           \
         main.cc                \
-	UIElements.cc          \
+	    UIElements.cc          \
+        NChartStats.cc         \
+        InsertStats.cc         \
         $(bankViewer_MOCSOURCES)
 
 EXTRA_DIST = \

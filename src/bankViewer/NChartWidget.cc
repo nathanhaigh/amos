@@ -1,9 +1,10 @@
 #include "NChartWidget.hh"
-#include "InsertStats.hh"
+#include "NChartStats.hh"
 
 #include <qstring.h>
 #include <qpixmap.h>
 #include <qpainter.h>
+#include <cmath>
 
 #include <iostream>
 
@@ -53,6 +54,9 @@ NChartWidget::NChartWidget(QWidget * parent, const char * name)
 {
   setMinimumSize(250, 250);
   setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose);
+
+  m_highlightsize = -1;
+  setMouseTracking(true);
 }
 
 NChartWidget::~NChartWidget()
@@ -61,7 +65,7 @@ NChartWidget::~NChartWidget()
   m_stats = NULL;
 }
 
-void NChartWidget::setStats(InsertStats * stats)
+void NChartWidget::setStats(NChartStats * stats)
 {
   if (m_stats) { delete m_stats; }
   m_stats = stats;
@@ -89,66 +93,70 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
   QString label = m_stats->m_label;
 
-  p.drawText(0,10,width,30, Qt::AlignCenter,label);
+  p.drawText(0,5,width,25, Qt::AlignCenter | Qt::AlignVCenter,label);
 
   int gutter     = 20;
-  int histtop    = 50;
-  int bottomtext = 60;
-  int histheight = height - histtop - bottomtext;
-  int histbottom = histtop + histheight;
+  int bottomtext = 80;
+  m_histtop    = 40;
+  m_histleft   = 40;
+  m_histheight = height - m_histtop - bottomtext;
+  m_histbottom = m_histtop + m_histheight;
+  m_histwidth  = width-m_histleft-gutter;
 
-  int histleft   = 40;
-  int histwidth  = width-histleft-gutter;
+
+  int textline1 = m_histbottom + 25;
+  int textline2 = textline1 + 20;
+
 
   p.setBrush(QColor(240,240,240));
-  p.drawRect(histleft, histtop, histwidth, histheight);
+  p.drawRect(m_histleft, m_histtop, m_histwidth, m_histheight);
 
   if (m_stats->count() == 0)
   {
     label = "Insufficient Count";
-    p.drawText(center-400, histtop + histheight/2 - 10,
+    p.drawText(center-400, m_histtop + m_histheight/2 - 10,
                800, 30, Qt::AlignCenter, label);
   }
   else
   {
-    double xscale = (double)(histwidth)/ 100;
-    double yscale = (double)(histheight-gutter) / m_stats->m_maxsize;
+    m_xscale = (double)(m_histwidth)/ 100;
+    m_yscale = (double)(m_histheight-gutter) / m_stats->m_maxsize;
 
     // Xlabels
     pen.setStyle(Qt::DotLine);
     p.setPen(pen);
 
     int labelwidth = 100;
-    int numbuckets = (int)(labelwidth / xscale);
+    int numbuckets = (int)(labelwidth / m_xscale);
     if (numbuckets == 0) { numbuckets = 1; }
 
     int prec = 0;
 
     for (double i = 12.5; i < 100; i+=12.5)
     {
-      int xcoord = (int)(histleft+i*xscale);
-      p.drawLine(xcoord, histtop, xcoord, histbottom+5);
+      int xcoord = (int)(m_histleft+i*m_xscale);
+      p.drawLine(xcoord, m_histtop, xcoord, m_histbottom+5);
 
       if (i == 25.0 || i == 50.0 || i == 75.0)
       {
         label = "  ";
         label += QString::number(i, 'f', prec);
         label += "%";
-        p.drawText(xcoord-labelwidth, histbottom,
+        p.drawText(xcoord-labelwidth, m_histbottom,
                    labelwidth*2, 30, Qt::AlignCenter, label);
       }
     }
 
-    int yjump = (int)(100/yscale);
+    int yjump = (int)(100/m_yscale);
     yjump = (int)NiceNumber(yjump, true);
     if (yjump == 0) { yjump = 1; }
 
     for (int j = (int)NiceNumber(m_stats->m_maxsize, true); j > 0; j -= yjump)
     {
       if (j > m_stats->m_maxsize) { continue; }
-      int ycoord = (int)(histbottom - j * yscale);
+      int ycoord = (int)(m_histbottom - j * m_yscale);
 
-      if (m_grid) { p.drawLine(histleft-5, ycoord, histleft+histwidth, ycoord); }
+      if (m_grid) { p.drawLine(m_histleft-5, ycoord, m_histleft+m_histwidth, ycoord); }
 
       if (j >= 1000000)
       {
@@ -180,7 +188,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
       p.save();
       p.rotate(-90);
       int mapx, mapy;
-      p.worldMatrix().invert().map(histleft-20, ycoord, &mapx, &mapy);
+      p.worldMatrix().invert().map(m_histleft-20, ycoord, &mapx, &mapy);
       p.drawPixmap(mapx-40, mapy-10, buffer);
       p.restore();
     }
@@ -189,40 +197,76 @@ void NChartWidget::paintEvent(QPaintEvent * event)
     // NChart
     pen.setStyle(Qt::SolidLine);
     p.setPen(pen);
-    p.setBrush(QColor(100,160,255));
 
     int l = m_stats->m_sizes.size();
 
     for (int i = 0; i+1 < l; i++)
     {
-      int ystart = (int) (m_stats->m_sizes[i]   * yscale);
-      int yend   = (int) (m_stats->m_sizes[i+1] * yscale);
+      QColor rectcolor(100,160,255);
+      
+      if (m_stats->m_maxfeat)
+      {
+        int h,s,v;
+        rectcolor.hsv(&h,&s,&v);
 
-      int xstart = (int) ((100-m_stats->m_bucketlow[i]) * xscale);
-      int xend   = (int) ((100-m_stats->m_bucketlow[i+1]) * xscale);
+        double badness = ((double)m_stats->m_sizes[i].m_feat) / m_stats->m_maxfeat;
+        h += badness * (360-h);
+        h %= 360;
+
+        rectcolor.setHsv(h,s,v);
+      }
+
+      p.setBrush(rectcolor);
+
+      int ystart = (int) (m_stats->m_sizes[i].m_size * m_yscale);
+      int yend   = (int) (m_stats->m_sizes[i+1].m_size * m_yscale);
+
+
+      double left = 100-m_stats->m_sizes[i].m_perc;
+      double right = 100-m_stats->m_sizes[i+1].m_perc;
+
+      int xstart = (int) (left * m_xscale);
+      int xend   = (int) (right * m_xscale);
+
+      if (left <= m_highlightsize && m_highlightsize <= right)
+      {
+        p.setPen(Qt::white);
+        p.setBrush(Qt::red);
+
+        QString info = "Selected: " + QString::number(m_stats->m_sizes[i].m_id, 'f', 0) +
+                       "  Size: " + QString::number(m_stats->m_sizes[i].m_size, 'f', 0) +
+                       "  (" + QString::number(100-m_stats->m_sizes[i+1].m_perc, 'f', 2) +
+                       "%) " + QString::number(m_stats->m_sizes[i].m_feat) +
+                       " Features";
+
+        p.setPen(Qt::black);
+        p.drawText(0, textline2,
+                   width, 30, Qt::AlignHCenter | Qt::AlignVCenter, info);
+      }
 
       if (ystart > 1)
       {
-        p.drawRect(histleft+xstart, histbottom-ystart,
+        p.drawRect(m_histleft+xstart, m_histbottom-ystart,
                    xend-xstart+1,     ystart);
       }
       else
       {
-        p.drawRect(histleft+xstart,    histbottom-2,
-                   histwidth-xstart, 2);
+        p.drawRect(m_histleft+xstart,    m_histbottom-2,
+                   m_histwidth-xstart, 2);
         break;
       }
     }
 
     // text
-    int textline1 = histbottom + 30;
 
     label = "Count: " + QString::number(m_stats->m_sizes.size(), 'f', prec);
-    label += "   Max: " + QString::number(m_stats->m_sizes[0], 'f', prec) +
-             "   N50: " + QString::number(m_stats->nvalue(50), 'f', prec);
+    label += "   Max: " + QString::number(m_stats->m_sizes[0].m_size, 'f', prec);
+    label += "   N50: " + QString::number(m_stats->nvalue(50).m_size, 'f', prec);
+    label += "   Total: " + QString::number(m_stats->m_sum, 'f', prec);
 
     p.drawText(0, textline1,
                width, 30, Qt::AlignHCenter | Qt::AlignVCenter, label);
+
   }
 
   p.end();
@@ -233,4 +277,37 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 }
 
 
+void NChartWidget::mouseMoveEvent(QMouseEvent * e)
+{
+  if (e->y() >= m_histtop && e->y() <= m_histbottom)
+  {
+    double xpos = (e->x() - m_histleft) / m_xscale;
+    m_highlightsize = xpos;
+  }
+  else
+  {
+    m_highlightsize = -1;
+  }
 
+  update();
+}
+
+void NChartWidget::mouseDoubleClickEvent(QMouseEvent * e)
+{
+  mouseMoveEvent(e);
+
+  int l = m_stats->m_sizes.size();
+  for (int i = 0; i+1 < l; i++)
+  {
+    double left = 100-m_stats->m_sizes[i].m_perc;
+    double right = 100-m_stats->m_sizes[i+1].m_perc;
+
+    if (left <= m_highlightsize && m_highlightsize <= right)
+    {
+      cerr << "Click: " << m_stats->m_sizes[i].m_perc
+           << " " << m_stats->m_sizes[i].m_id << endl;
+
+      emit idSelected(m_stats->m_sizes[i].m_id);
+    }
+  }
+}

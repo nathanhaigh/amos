@@ -12,6 +12,7 @@
 #include "DataStore.hh"
 
 #include "InsertStats.hh"
+#include "NChartStats.hh"
 #include "HistogramWindow.hh"
 #include "NChartWindow.hh"
 
@@ -173,23 +174,13 @@ void LaunchPad::loadScaffolds()
 
 void LaunchPad::scaffoldSelected(QListViewItem * item)
 {
-  int offset = 0;
   if (item->parent())
   {
-    offset = 0;
     setContigId(atoi(item->text(0)));
-    setGindex(offset);
   }
   else
   {
-    AMOS::Scaffold_t scaffold;
-    m_datastore->fetchScaffold(atoi(item->text(0)), scaffold);
-
-    AMOS::ID_t contigiid = scaffold.getContigTiling().begin()->source;
-    AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(contigiid);
-
-    setContigId(bid);
-    setGindex(offset);
+    setScaffoldId(atoi(item->text(0)));
   }
 }
 
@@ -225,13 +216,14 @@ void LaunchPad::scaffoldViewSelected()
 
 void LaunchPad::scaffoldSpanHistogram()
 {
-  InsertStats * stats = new InsertStats((string)"Scaffold Span Distribution");
+  NChartStats * stats = new NChartStats((string)"Scaffold Span Distribution");
 
   AMOS::Scaffold_t scaffold;
   m_datastore->scaffold_bank.seekg(1);
   while (m_datastore->scaffold_bank >> scaffold)
   {
-    stats->addSize(scaffold.getSpan());
+    int bid = m_datastore->scaffold_bank.tellg() - 1;
+    stats->addSize(bid, scaffold.getSpan());
   }
 
   new NChartWindow(stats, this, "hist");

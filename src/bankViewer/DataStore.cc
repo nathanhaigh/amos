@@ -230,12 +230,14 @@ void DataStore::indexScaffolds()
   m_contigscafflookup.clear();
   m_contigscafflookup.resize(contig_bank.getSize());
 
+  int visit = 0;
   scaffold_bank.seekg(1);
-  int scaffid = 1;
-
   Scaffold_t scaffold;
   while (scaffold_bank >> scaffold)
   {
+    int scaffid = scaffold_bank.tellg() - 1;
+    visit++;
+
     vector<Tile_t> & tiling = scaffold.getContigTiling();
     vector<Tile_t>::const_iterator ti;
 
@@ -245,11 +247,9 @@ void DataStore::indexScaffolds()
     {
       m_contigscafflookup.insert(make_pair(ti->source, scaffid));
     }
-
-    scaffid = scaffold_bank.tellg();
   }
 
-  cerr <<  m_contigscafflookup.size() << " contigs in " << scaffid-1 << " scaffolds" << endl;
+  cerr <<  m_contigscafflookup.size() << " contigs in " << visit << " scaffolds" << endl;
 }
 
 int DataStore::setContigId(int id)

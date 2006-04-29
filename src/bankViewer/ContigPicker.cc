@@ -9,7 +9,7 @@
 #include <qcheckbox.h>
 #include "DataStore.hh"
 
-#include "InsertStats.hh"
+#include "NChartStats.hh"
 #include "HistogramWindow.hh"
 #include "NChartWindow.hh"
 
@@ -244,13 +244,14 @@ void LaunchPad::contigViewSelected()
 
 void LaunchPad::contigLengthHistogram()
 {
-  InsertStats * stats = new InsertStats((string)"Contig Length Distribution");
+  NChartStats * stats = new NChartStats((string)"Contig Length Distribution");
 
   AMOS::Contig_t contig;
   m_datastore->contig_bank.seekg(1);
   while (m_datastore->contig_bank >> contig)
   {
-    stats->addSize(contig.getLength());
+    int bid = m_datastore->contig_bank.tellg() - 1;
+    stats->addSize(contig.getIID(), contig.getLength());
   }
 
   new NChartWindow(stats, this, "hist");

@@ -50,6 +50,7 @@ public slots:
   void initializeSimpleServer(int port);
   void enableTraceFetch(bool dofetch);
 
+  void setScaffoldId(int);
   void setContigId(int);
   void setGindex(int);
 
