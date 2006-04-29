@@ -395,8 +395,6 @@ void InsertWidget::setVisibleVRange(int top, int bottom)
 {
   if (!m_updatingScrollBars)
   {
-    cerr << "setVisibleVRange:" << top << "," << bottom << " height: " << m_ifield->height() << endl;
-
     bottom = max(top+2, bottom);
 
     double yf = ((double)(m_ifield->height()-4)) / (bottom - top + 1);
@@ -404,8 +402,6 @@ void InsertWidget::setVisibleVRange(int top, int bottom)
     QWMatrix m(m_ifield->worldMatrix());
     QWMatrix newzoom(m.m11(), m.m12(), m.m21(), yf, m.dx(), m.dy());
     m_ifield->setWorldMatrix(newzoom); //visiblevrange
-
-    //cerr << "svr yf: " << m_ifield->worldMatrix().m22() << endl;
 
     setVPos(top);
   }
@@ -696,8 +692,6 @@ QColor getContigColor(ColorMap & contigColorMap, ID_t iid)
     int i = s % strlen(Insert::allstates);
     int j = (s / strlen(Insert::allstates)) % 2;
 
-    //cerr << "new color: " << iid << " s: " << s << "i: " << i << " j: " << j << endl;
-
     QColor color = UIElements::getInsertColor((Insert::MateState)Insert::allstates[i]);
     if (j == 1) { color = color.dark(200);  }
 
@@ -873,8 +867,6 @@ void InsertWidget::paintCanvas()
     insertCL.addEndpoints(rightmost,rightmost);
     insertCL.finalize();
 
-    //cerr << "insertcl size: " << insertCL.m_curpos << endl << endl;
-
     CoverageStats readCL(m_tiling.size()*4, 0, Distribution_t());
 
     int totalbases = 0;
@@ -900,8 +892,6 @@ void InsertWidget::paintCanvas()
     // copy for coverage features
     insertCCL = insertCL;
     readCCL = readCL;
-
-    //cerr << "readcl size: " << readCL.m_curpos << endl << endl;
 
     int inswidth = (int)((insertCL.m_coverage[insertCL.m_curpos-1].x() + m_hoffset) * m_hscale);
     int redwidth = (int)((readCL.m_coverage[readCL.m_curpos-1].x() + m_hoffset) * m_hscale);
@@ -1083,8 +1073,8 @@ void InsertWidget::paintCanvas()
         QCanvasRectangle * scaff = new QCanvasRectangle((int)(m_hscale*(m_hoffset+i)), voffset-lineheight,
                                                         (int)(len * m_hscale),
                                                          1, m_icanvas);
-        scaff->setPen(Qt::blue);
-        scaff->setBrush(Qt::blue);
+        scaff->setPen(UIElements::color_Scaffold);
+        scaff->setBrush(UIElements::color_Scaffold);
         scaff->show();
 
         i += len;
@@ -1099,10 +1089,10 @@ void InsertWidget::paintCanvas()
       insertCCL.normalize(m_hscale, m_hoffset, 0);
       paintCoverage(insertCCL.m_coverage, insertCCL.m_cestat, false,
                     insertCCL.m_curpos,
-                    voffset, m_seqheight,
+                    voffset, m_seqheight*2,
                     -1, meaninsertcoverage, 
                     UIElements::color_insertcoverage, true);
-      voffset += lineheight;
+      voffset += m_seqheight*2+gutter;
       emit newMaxInsertCovTol((int)(insertCCL.m_maxdepth - meaninsertcoverage >
                                     meaninsertcoverage ?
                                     insertCCL.m_maxdepth - meaninsertcoverage :
@@ -1113,10 +1103,10 @@ void InsertWidget::paintCanvas()
       readCCL.normalize(m_hscale, m_hoffset, 0);
       paintCoverage(readCCL.m_coverage, readCCL.m_cestat, false,
                     readCCL.m_curpos,
-                    voffset, m_seqheight,
+                    voffset, m_seqheight*2,
                     -2, meanreadcoverage,
                     UIElements::color_readcoverage, true);
-      voffset += lineheight;
+      voffset += m_seqheight*2+gutter;
       emit newMaxReadCovTol((int)(readCCL.m_maxdepth - meanreadcoverage >
                                   meanreadcoverage ?
                                   readCCL.m_maxdepth - meanreadcoverage :
@@ -1372,12 +1362,14 @@ void InsertWidget::paintCanvas()
           disttomean *= disttomean;
           disttomean *= disttomean;
 
-          if (disttomean > 255) { disttomean = 255; cerr << "*";}
+          if ( disttomean > 255 ) disttomean = 255;
+          if ( disttomean < 80 ) disttomean = 80;
+          int ns = (int)disttomean;
+          int nv = (int)disttomean;
 
           int h, s, v;
-
           insertcolor.hsv(&h,&s,&v);
-          insertcolor.setHsv(h,(int)disttomean,v);
+          insertcolor.setHsv(h,ns,nv);
         }
 
         iitem->setPen(insertcolor);
@@ -1627,8 +1619,8 @@ void InsertWidget::setInsertCovTol(int tol)
          ((CoverageRectCanvasItem *)*i)->m_libid == -1 )
       {
         CoverageRectCanvasItem * ci = (CoverageRectCanvasItem *) *i;
-        ci->m_low = (int)(ci->m_baseLevel - tol);
-        ci->m_high = (int)(ci->m_baseLevel + tol);
+        ci->m_low = ci->m_baseLevel - (double)tol;
+        ci->m_high = ci->m_baseLevel + (double)tol;
         m_icanvas->setChanged(ci->boundingRect());
       }
   m_icanvas->update();
@@ -1642,8 +1634,8 @@ void InsertWidget::setReadCovTol(int tol)
          ((CoverageRectCanvasItem *)*i)->m_libid == -2 )
       {
         CoverageRectCanvasItem * ci = (CoverageRectCanvasItem *) *i;
-        ci->m_low = (int)(ci->m_baseLevel - tol);
-        ci->m_high = (int)(ci->m_baseLevel + tol);
+        ci->m_low = ci->m_baseLevel - (double)tol;
+        ci->m_high = ci->m_baseLevel + (double)tol;
         m_icanvas->setChanged(ci->boundingRect());
       }
   m_icanvas->update();

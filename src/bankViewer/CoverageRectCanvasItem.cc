@@ -26,38 +26,32 @@ CoverageRectCanvasItem::CoverageRectCanvasItem(int x, int y,
     m_copyraw(copyRaw)
 {
   show();
-  m_low = (int)m_baseLevel;
-  m_high = (int)m_baseLevel;
+  m_low = m_baseLevel;
+  m_high = m_baseLevel;
 }
 
 void CoverageRectCanvasItem::drawShape (QPainter & p)
 {
-  int px = int(x());
-  int py = int(m_baseLevel);
+  QColor shade;
+  double px = x();
+  double py = m_baseLevel;
   for ( QPointArray::Iterator i = m_points.begin(); i != m_points.end(); ++ i )
     {
-      if ( abs(i->y()) != py )
+      int cy = abs(i->y());
+      if ( cy != py )
         {
           if ( py < m_low || py > m_high )
             {
               double df = fabs(m_baseLevel - py) / m_baseLevel * 100.0;
-              QColor shade = m_color.light(int(df));
+              if ( df < 1 ) df = 1;
+              shade = m_color.light(int(df));
               p.setBrush (shade);
               p.setPen (shade);
-              p.drawRect (px, (int)y(), (int)i->x() - px + 1, height());
+              p.drawRect (int(px), int(y()), int(i->x()-px+1), height());
             }
-
+              
           px = i->x();
-          py = abs(i->y());
+          py = cy;
         }
-    }
-
-  if ( py < m_low || py > m_high )
-    {
-      double df = fabs(m_baseLevel - py) / m_baseLevel * 100.0;
-      QColor shade = m_color.light(int(df));
-      p.setBrush (shade);
-      p.setPen (shade);
-      p.drawRect (px, (int)y(), (int)(x()+width()) - px + 1, height());
     }
 }

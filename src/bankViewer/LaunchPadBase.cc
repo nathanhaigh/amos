@@ -368,7 +368,7 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     MenuBar->insertItem( QString(""), fileMenu, 1 );
 
     languageChange();
-    resize( QSize(674, 824).expandedTo(minimumSizeHint()) );
+    resize( QSize(916, 721).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections

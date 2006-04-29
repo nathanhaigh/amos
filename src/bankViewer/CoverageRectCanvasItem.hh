@@ -27,8 +27,8 @@ public:
   QColor              m_color;
   bool                m_copyraw;
 
-  int m_low;
-  int m_high;
+  double m_low;
+  double m_high;
 
 protected:
   void drawShape (QPainter & p);

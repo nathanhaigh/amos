@@ -11,12 +11,12 @@ ContigCanvasItem::ContigCanvasItem(int x, int y, int width, int height,
 {
   if (tile.range.isReverse())
   {
-    setPen(Qt::yellow);
-    setBrush(Qt::yellow);
+    setPen(UIElements::color_RContig);
+    setBrush(UIElements::color_RContig);
   }
   else
   {
-    setPen(Qt::blue);
-    setBrush(Qt::blue);
+    setPen(UIElements::color_FContig);
+    setBrush(UIElements::color_FContig);
   }
 }

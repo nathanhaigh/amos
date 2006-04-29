@@ -63,7 +63,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   QDockWindow * toolDock = new QDockWindow (QDockWindow::InDock, this);
   QToolButton * b = new QToolButton(toolDock, "select");
-  QHBoxLayout * hbox = new QHBoxLayout (toolDock);
+  QHBoxLayout * hbox = new QHBoxLayout();
 
   toolDock->setResizeEnabled(true);
   toolDock->boxLayout()->addLayout (hbox);
@@ -106,6 +106,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   QDockWindow * queryDock = new QDockWindow (QDockWindow::InDock, this);
   QScrollView * queryView = new QScrollView (queryDock, "queryview");
   queryView->setResizePolicy (QScrollView::AutoOneFit);
+  queryView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_query = new QueryWidget (queryView, "queries");
   queryView->addChild (m_query);
   queryDock->setWidget (queryView);
@@ -120,11 +121,11 @@ InsertWindow::InsertWindow(DataStore * datastore,
   // Feature filters
   QPalette p (m_query->palette());
 
-  p.setColor (QColorGroup::Button, UIElements::color_featinsertcov);
+  p.setColor (QColorGroup::Button, UIElements::color_insertcoverage);
   m_query->insertSlider->setPalette(p);
   iw->setInsertCovFeatures (m_query->insertCheck->isChecked());
 
-  p.setColor (QColorGroup::Button, UIElements::color_featreadcov);
+  p.setColor (QColorGroup::Button, UIElements::color_readcoverage);
   m_query->readSlider->setPalette(p);
   iw->setReadCovFeatures (m_query->readCheck->isChecked());
 

@@ -29,6 +29,10 @@ public:
   static QColor color_discrepancy;
   static QColor color_snpgap;
 
+  static QColor color_FContig;
+  static QColor color_RContig;
+  static QColor color_Scaffold;
+
   static QColor color_Happy;
   static QColor color_Unknown;
   static QColor color_StretchedMate;
@@ -38,8 +42,6 @@ public:
   static QColor color_MissingMate;
   static QColor color_NoMate;
 
-  static QColor color_featinsertcov;
-  static QColor color_featreadcov;
   static QColor color_featrepeat;
   static QColor color_featunitig;
   static QColor color_featjoin;

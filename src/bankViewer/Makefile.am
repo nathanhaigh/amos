@@ -20,10 +20,10 @@ bankViewer_MOCSOURCES = \
         ContigCanvasItem.cc    \
         ContigPicker.cc        \
         CoverageCanvasItem.cc  \
-    	CoverageRectCanvasItem.cc \
+	CoverageRectCanvasItem.cc \
         CoverageStats.cc       \
         DataStore.cc           \
-	    DetailWidget.cc        \
+	DetailWidget.cc        \
         FeatureBrowser.cc      \
         FeatureCanvasItem.cc   \
         HistogramWidget.cc     \
@@ -35,15 +35,15 @@ bankViewer_MOCSOURCES = \
         InsertStats.cc         \
         InsertWidget.cc        \
         InsertWindow.cc        \
-	    LaunchPad.cc           \
-    	LaunchPadBase.cc           \
+	LaunchPad.cc           \
+	LaunchPadBase.cc       \
         LibraryPicker.cc       \
         MainWindow.cc          \
         NChartWindow.cc        \
         NChartWidget.cc        \
         NetworkCom.cc          \
-	    OverviewField.cc       \
-    	QueryWidget.cc         \
+	OverviewField.cc       \
+	QueryWidget.cc         \
         RangeScrollBar.cc      \
         ReadInfo.cc            \
         ReadPicker.cc          \
@@ -51,8 +51,7 @@ bankViewer_MOCSOURCES = \
         ScaffoldPicker.cc      \
         SplashScreen.cc        \
         TilingField.cc         \
-        TilingFrame.cc         \
-        UIElements.cc          
+        TilingFrame.cc
 
 nodist_bankViewer_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 
@@ -61,8 +60,9 @@ bankViewerHeaders = $(bankViewer_MOCSOURCES:.cc=.hh) AlignmentInfo.hh
 BUILT_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 CLEANFILES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 
-bankViewer_SOURCES =             \
-        main.cc                  \
+bankViewer_SOURCES =           \
+        main.cc                \
+	UIElements.cc          \
         $(bankViewer_MOCSOURCES)
 
 EXTRA_DIST = \
