@@ -101,15 +101,93 @@ void NChartWidget::paintEvent(QPaintEvent * event)
   m_histleft   = 40;
   m_histheight = height - m_histtop - bottomtext;
   m_histbottom = m_histtop + m_histheight;
+
   m_histwidth  = width-m_histleft-gutter;
 
+  if (m_stats->m_maxfeat)
+  {
+    m_histwidth -= 30;
+  }
 
   int textline1 = m_histbottom + 25;
   int textline2 = textline1 + 20;
 
+  QColor baserectcolor(100,160,255);
+
 
   p.setBrush(QColor(240,240,240));
   p.drawRect(m_histleft, m_histtop, m_histwidth, m_histheight);
+
+  if (m_stats->m_maxfeat)
+  {
+    int thermoleft = m_histleft+m_histwidth+10;
+
+    int h,s,v;
+    baserectcolor.hsv(&h,&s,&v);
+
+    QColor tcolor(baserectcolor);
+
+    for (int i = h; i < 360; i+=5)
+    {
+      if (i+5 > 360) { i = 360-5; }
+
+      tcolor.setHsv(i,s,v);
+      p.setPen(tcolor);
+      p.setBrush(tcolor);
+
+      double top = m_histheight * (i+5-h) / (360-h);
+      double theight = m_histheight * 6 / (360-h);
+
+      p.drawRect(thermoleft+1, m_histbottom-1-top, 8, theight);
+    }
+
+    p.setPen(Qt::black);
+    p.setBrush(Qt::NoBrush);
+    p.drawRect(thermoleft, m_histtop, 10, m_histheight);
+    p.setBrush(Qt::SolidPattern);
+
+    QPixmap buffer0(80,15);
+    buffer0.fill();
+    QPainter lp0(&buffer0);
+    lp0.setPen(Qt::black);
+    lp0.setPen(Qt::black);
+    lp0.setFont(QFont("Helvetica", 12));
+    lp0.drawText(0,0,80,15, Qt::AlignHCenter|Qt::AlignVCenter, "0");
+    lp0.end();
+
+    QPixmap buffermax(80,15);
+    buffermax.fill();
+    QPainter lp1(&buffermax);
+    lp1.setPen(Qt::black);
+    lp1.setPen(Qt::black);
+    lp1.setFont(QFont("Helvetica", 12));
+    lp1.drawText(0,0,80,15, Qt::AlignHCenter|Qt::AlignVCenter, QString::number(m_stats->m_maxfeat));
+    lp1.end();
+
+    QPixmap bufferfeat(80,15);
+    bufferfeat.fill();
+    QPainter lp2(&bufferfeat);
+    lp2.setPen(Qt::black);
+    lp2.setPen(Qt::black);
+    lp2.setFont(QFont("Helvetica", 12));
+    lp2.drawText(0,0,80,15, Qt::AlignHCenter|Qt::AlignVCenter, "Features");
+    lp2.end();
+
+    p.save();
+    p.rotate(-90);
+    int mapx, mapy;
+    p.worldMatrix().invert().map(thermoleft+25, m_histbottom, &mapx, &mapy);
+    p.drawPixmap(mapx-40, mapy-10, buffer0);
+
+    p.worldMatrix().invert().map(thermoleft+25, m_histtop + m_histheight/2, &mapx, &mapy);
+    p.drawPixmap(mapx-40, mapy-10, bufferfeat);
+
+    p.worldMatrix().invert().map(thermoleft+25, m_histtop, &mapx, &mapy);
+    p.drawPixmap(mapx-40, mapy-10, buffermax);
+
+    p.restore();
+  } 
+    
 
   if (m_stats->count() == 0)
   {
@@ -202,7 +280,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
     for (int i = 0; i+1 < l; i++)
     {
-      QColor rectcolor(100,160,255);
+      QColor rectcolor(baserectcolor);
       
       if (m_stats->m_maxfeat)
       {
