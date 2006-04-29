@@ -115,11 +115,14 @@ void LaunchPad::loadBank()
 
   InsertStats * scaffstats = new InsertStats((string)"Scaffold Span Distribution");
 
-  AMOS::Scaffold_t scaffold;
-  m_datastore->scaffold_bank.seekg(1);
-  while (m_datastore->scaffold_bank >> scaffold)
+  if (m_datastore->scaffold_bank.isOpen())
   {
-    scaffstats->addSize(scaffold.getSpan());
+    AMOS::Scaffold_t scaffold;
+    m_datastore->scaffold_bank.seekg(1);
+    while (m_datastore->scaffold_bank >> scaffold)
+    {
+      scaffstats->addSize(scaffold.getSpan());
+    }
   }
   scaffoldSizes->setStats(scaffstats);
 
@@ -127,14 +130,16 @@ void LaunchPad::loadBank()
 
   InsertStats * contigstats = new InsertStats((string)"Contig Length Distribution");
 
-  AMOS::Contig_t contig;
-  m_datastore->contig_bank.seekg(1);
-  while (m_datastore->contig_bank >> contig)
+  if (m_datastore->contig_bank.isOpen())
   {
-    contigstats->addSize(contig.getLength());
+    AMOS::Contig_t contig;
+    m_datastore->contig_bank.seekg(1);
+    while (m_datastore->contig_bank >> contig)
+    {
+      contigstats->addSize(contig.getLength());
+    }
   }
   contigSizes->setStats(contigstats);
-
 }
 
 void LaunchPad::initDisplay()

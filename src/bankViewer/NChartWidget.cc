@@ -70,6 +70,8 @@ void NChartWidget::setStats(InsertStats * stats)
 
 void NChartWidget::paintEvent(QPaintEvent * event)
 {
+  if (!m_stats) { return; }
+
   int width = this->width();
   int height = this->height();
 

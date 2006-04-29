@@ -56,7 +56,7 @@ DataStore::~DataStore()
 
 int DataStore::openBank(const string & bankname)
 {
-  int retval = 0;
+  int retval = 1;
 
   try
   {
@@ -76,11 +76,11 @@ int DataStore::openBank(const string & bankname)
     m_libdistributionlookup.clear();
 
     indexContigs();
+    retval = 0;
   }
   catch (Exception_t & e)
   {
     cerr << "ERROR in openBank():\n" << e;
-    retval = 1;
   }
 
   if (!retval)
