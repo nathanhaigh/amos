@@ -1363,9 +1363,8 @@ void InsertWidget::paintCanvas()
           disttomean *= disttomean;
 
           if ( disttomean > 255 ) disttomean = 255;
-          if ( disttomean < 80 ) disttomean = 80;
-          int ns = (int)disttomean;
-          int nv = (int)disttomean;
+          int ns = disttomean < 60 ? 60 : (int)disttomean;
+          int nv = disttomean < 60 ? 60 : (int)disttomean;
 
           int h, s, v;
           insertcolor.hsv(&h,&s,&v);
