@@ -55,6 +55,9 @@ NChartWidget::NChartWidget(QWidget * parent, const char * name)
   setMinimumSize(250, 250);
   setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose);
 
+  m_normalization = 0;
+  m_ordering = 0;
+
   m_highlightsize = -1;
   setMouseTracking(true);
 }
@@ -69,7 +72,20 @@ void NChartWidget::setStats(NChartStats * stats)
 {
   if (m_stats) { delete m_stats; }
   m_stats = stats;
-  m_stats->nchart();
+  m_stats->nchart(m_ordering);
+}
+
+void NChartWidget::setOrdering(int ordering)
+{
+  m_ordering = ordering;
+  m_stats->nchart(m_ordering);
+  update();
+}
+
+void NChartWidget::setNormalization(int normalization)
+{
+  m_normalization = normalization;
+  update();
 }
 
 void NChartWidget::paintEvent(QPaintEvent * event)

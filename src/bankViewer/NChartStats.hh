@@ -25,7 +25,7 @@ public:
   void      addFeat(int id);
 
   StatValue nvalue(double perc);
-  void      nchart();
+  void      nchart(int ordering);
 
   std::vector<StatValue> m_sizes;
   double m_maxsize;

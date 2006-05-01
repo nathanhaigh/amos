@@ -17,6 +17,8 @@ public slots:
   void setStats(NChartStats * stats);
   void mouseDoubleClickEvent(QMouseEvent * e);
   void mouseMoveEvent(QMouseEvent * e);
+  void setOrdering(int ordering);
+  void setNormalization(int normalization);
 
 signals:
   void idSelected(int id);
@@ -33,6 +35,9 @@ private:
   int m_histtop;
   int m_histheight;
   int m_histbottom;
+
+  int m_normalization;
+  int m_ordering;
 
   double m_xscale;
   double m_yscale;

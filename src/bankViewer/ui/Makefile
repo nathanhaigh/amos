@@ -26,4 +26,4 @@ endif
 
 ../%.cc: ../%.hh %.ui
 	@ echo "+ Writing $@"
-	 ${UIC} -impl `echo $^ | sed s^\.\./^^`  | grep -v '\*\*' > $@
+	@ ${UIC} -impl `echo $^ | sed s^\.\./^^`  | grep -v '\*\*' > $@

@@ -1,12 +1,12 @@
 #ifndef NCHART_WINDOW_HH__
 #define NCHART_WINDOW_HH__ 1
 
-#include <qmainwindow.h>
 
+#include "NChartWindowBase.hh"
 
 class NChartStats;
 
-class NChartWindow : public QMainWindow
+class NChartWindow : public NChartWindowBase
 {
   Q_OBJECT
 

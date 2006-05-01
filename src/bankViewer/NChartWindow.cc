@@ -5,19 +5,21 @@
 #include <qcheckbox.h>
 #include <qlabel.h>
 #include <qlineedit.h>
+#include <qbuttongroup.h>
 
 #include "NChartStats.hh"
 
 NChartWindow::NChartWindow(NChartStats * stats, QWidget * parent, const char * name)
- : QMainWindow(parent, name)
+ : NChartWindowBase(parent, name)
 {
   setWFlags(Qt::WDestructiveClose);
 
-  NChartWidget * widget = new NChartWidget(this, "HistoWidget");
-  widget->setStats(stats);
+  nChartWidget->setStats(stats);
 
-  setCentralWidget(widget);
+  connect(normalizationGroup, SIGNAL(clicked(int)), nChartWidget, SLOT(setNormalization(int)));
+  connect(orderingGroup,      SIGNAL(clicked(int)), nChartWidget, SLOT(setOrdering(int)));
+
   setCaption(stats->m_label);
-  resize(550,500);
+  resize(800,500);
   show();
 }

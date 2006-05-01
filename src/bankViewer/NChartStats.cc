@@ -19,7 +19,7 @@ void NChartStats::addSize(int id, double size)
   m_sizes.push_back(StatValue(id, size)); 
 }
 
-struct StatValueCmp
+struct StatLengthCmp
 {
   bool operator () (const StatValue & a, const StatValue & b)
   {
@@ -27,12 +27,28 @@ struct StatValueCmp
   }
 };
 
+struct StatFeatCmp
+{
+  bool operator () (const StatValue & a, const StatValue & b)
+  {
+    return a.m_feat > b.m_feat;
+  }
+};
 
-void NChartStats::nchart()
+
+void NChartStats::nchart(int sorttype)
 {
   int l = m_sizes.size();
 
-  sort(m_sizes.begin(), m_sizes.end(), StatValueCmp());
+  if (sorttype == 0)
+  {
+    sort(m_sizes.begin(), m_sizes.end(), StatLengthCmp());
+  }
+  else if (sorttype == 1)
+  {
+    sort(m_sizes.begin(), m_sizes.end(), StatFeatCmp());
+  }
+
 
   double cur = m_sum;
 

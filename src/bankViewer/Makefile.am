@@ -39,6 +39,7 @@ bankViewer_MOCSOURCES = \
         LibraryPicker.cc       \
         MainWindow.cc          \
         NChartWindow.cc        \
+        NChartWindowBase.cc        \
         NChartWidget.cc        \
         NetworkCom.cc          \
 	OverviewField.cc       \
