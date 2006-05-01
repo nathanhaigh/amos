@@ -309,7 +309,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
       if (left <= m_highlightsize && m_highlightsize <= right)
       {
         p.setPen(Qt::white);
-        p.setBrush(Qt::red);
+        p.setBrush(Qt::yellow);
 
         QString info = "Selected: " + QString::number(m_stats->m_sizes[i].m_id, 'f', 0) +
                        "  Size: " + QString::number(m_stats->m_sizes[i].m_size, 'f', 0) +
