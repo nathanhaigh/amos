@@ -41,8 +41,11 @@ LaunchPad::LaunchPad(QWidget* parent, const char* name, WFlags fl)
   connect(tilingButton,  SIGNAL(clicked()), this, SLOT(showTiling()));
   connect(insertButton,  SIGNAL(clicked()), this, SLOT(showInserts()));
   connect(contigIDSpin,  SIGNAL(valueChanged(int)), this, SLOT(setContigId(int)));
+
   connect(contigSizes,   SIGNAL(idSelected(int)),   this, SLOT(setContigId(int)));
   connect(scaffoldSizes, SIGNAL(idSelected(int)),   this, SLOT(setScaffoldId(int)));
+  connect(contigSizes,   SIGNAL(idSelected(int)),   this, SLOT(showAll()));
+  connect(scaffoldSizes, SIGNAL(idSelected(int)),   this, SLOT(showAll()));
 
   statusBar()->message("No Bank Loaded");
 }
