@@ -271,7 +271,7 @@ void LaunchPad::contigLengthHistogram()
         {
           try
           {
-            stats->addFeat(m_datastore->contig_bank.lookupBID(iid));
+            stats->addScore(m_datastore->contig_bank.lookupBID(iid), 1.0);
           }
           catch (AMOS::Exception_t & e)
           {

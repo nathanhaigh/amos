@@ -7,9 +7,9 @@
 class StatValue
 {
 public:
-  StatValue(int id, double size) : m_id(id), m_size(size), m_perc(0), m_feat(0) {}
+  StatValue(int id, double size) : m_id(id), m_size(size), m_perc(0), m_score(0) {}
   int m_id;
-  int m_feat;
+  double m_score;
   double m_size;
   double m_perc;
 };
@@ -22,15 +22,15 @@ public:
 
   int       count() const;
   void      addSize(int id, double size);
-  void      addFeat(int id);
+  void      addScore(int id, double val);
 
   StatValue nvalue(double perc);
-  void      nchart(int ordering);
+  void      nchart(bool sortByScore);
 
   std::vector<StatValue> m_sizes;
   double m_maxsize;
   double m_sum;
-  int m_maxfeat;
+  double m_maxscore;
 };
 
 

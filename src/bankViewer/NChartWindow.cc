@@ -16,8 +16,8 @@ NChartWindow::NChartWindow(NChartStats * stats, QWidget * parent, const char * n
 
   nChartWidget->setStats(stats);
 
-  connect(normalizationGroup, SIGNAL(clicked(int)), nChartWidget, SLOT(setNormalization(int)));
   connect(orderingGroup,      SIGNAL(clicked(int)), nChartWidget, SLOT(setOrdering(int)));
+  connect(colorGroup,         SIGNAL(clicked(int)), nChartWidget, SLOT(setColorStyle(int)));
 
   setCaption(stats->m_label);
   resize(800,500);

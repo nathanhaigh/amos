@@ -8,7 +8,7 @@ using namespace std;
 
 
 NChartStats::NChartStats(const string & label)
- : m_label(label), m_maxsize(0), m_sum(0), m_maxfeat(0)
+ : m_label(label), m_maxsize(0), m_sum(0), m_maxscore(0)
 {
 }
 
@@ -27,26 +27,26 @@ struct StatLengthCmp
   }
 };
 
-struct StatFeatCmp
+struct StatScoreCmp
 {
   bool operator () (const StatValue & a, const StatValue & b)
   {
-    return a.m_feat > b.m_feat;
+    return a.m_score > b.m_score;
   }
 };
 
 
-void NChartStats::nchart(int sorttype)
+void NChartStats::nchart(bool sortByScore)
 {
   int l = m_sizes.size();
 
-  if (sorttype == 0)
+  if (sortByScore)
+  {
+    sort(m_sizes.begin(), m_sizes.end(), StatScoreCmp());
+  }
+  else
   {
     sort(m_sizes.begin(), m_sizes.end(), StatLengthCmp());
-  }
-  else if (sorttype == 1)
-  {
-    sort(m_sizes.begin(), m_sizes.end(), StatFeatCmp());
   }
 
 
@@ -80,7 +80,7 @@ int NChartStats::count() const
   return m_sizes.size();
 }
 
-void NChartStats::addFeat(int id)
+void NChartStats::addScore(int id, double val)
 {
   int l = m_sizes.size();
 
@@ -88,8 +88,8 @@ void NChartStats::addFeat(int id)
   {
     if (m_sizes[i].m_id == id)
     {
-      m_sizes[i].m_feat++;
-      if (m_sizes[i].m_feat > m_maxfeat) { m_maxfeat = m_sizes[i].m_feat; }
+      m_sizes[i].m_score+=val;
+      if (m_sizes[i].m_score > m_maxscore) { m_maxscore = m_sizes[i].m_score; }
 
       break;
     }

@@ -58,6 +58,41 @@
                 <property name="name">
                     <cstring>unnamed</cstring>
                 </property>
+                <widget class="QButtonGroup" row="2" column="0">
+                    <property name="name">
+                        <cstring>colorGroup</cstring>
+                    </property>
+                    <property name="title">
+                        <string>Coloring</string>
+                    </property>
+                    <grid>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QRadioButton" row="0" column="0">
+                            <property name="name">
+                                <cstring>greenRedColor</cstring>
+                            </property>
+                            <property name="text">
+                                <string>Green - Red</string>
+                            </property>
+                            <property name="checked">
+                                <bool>true</bool>
+                            </property>
+                            <property name="buttonGroupId">
+                                <number>0</number>
+                            </property>
+                        </widget>
+                        <widget class="QRadioButton" row="1" column="0">
+                            <property name="name">
+                                <cstring>redTintColor</cstring>
+                            </property>
+                            <property name="text">
+                                <string>White - Red</string>
+                            </property>
+                        </widget>
+                    </grid>
+                </widget>
                 <widget class="QButtonGroup" row="1" column="0">
                     <property name="name">
                         <cstring>orderingGroup</cstring>
@@ -117,47 +152,9 @@
                         </property>
                     </widget>
                 </widget>
-                <widget class="QButtonGroup" row="0" column="0">
+                <spacer row="3" column="0">
                     <property name="name">
-                        <cstring>normalizationGroup</cstring>
-                    </property>
-                    <property name="title">
-                        <string>Feature Normalization</string>
-                    </property>
-                    <grid>
-                        <property name="name">
-                            <cstring>unnamed</cstring>
-                        </property>
-                        <widget class="QRadioButton" row="0" column="0">
-                            <property name="name">
-                                <cstring>countNormalization</cstring>
-                            </property>
-                            <property name="text">
-                                <string>Raw Count</string>
-                            </property>
-                            <property name="checked">
-                                <bool>true</bool>
-                            </property>
-                            <property name="buttonGroupId">
-                                <number>0</number>
-                            </property>
-                        </widget>
-                        <widget class="QRadioButton" row="1" column="0">
-                            <property name="name">
-                                <cstring>lengthNormalization</cstring>
-                            </property>
-                            <property name="text">
-                                <string>Length Normalized</string>
-                            </property>
-                            <property name="buttonGroupId">
-                                <number>1</number>
-                            </property>
-                        </widget>
-                    </grid>
-                </widget>
-                <spacer row="2" column="0">
-                    <property name="name">
-                        <cstring>spacer1</cstring>
+                        <cstring>spacer3</cstring>
                     </property>
                     <property name="orientation">
                         <enum>Vertical</enum>
@@ -167,8 +164,8 @@
                     </property>
                     <property name="sizeHint">
                         <size>
-                            <width>61</width>
-                            <height>207</height>
+                            <width>41</width>
+                            <height>81</height>
                         </size>
                     </property>
                 </spacer>

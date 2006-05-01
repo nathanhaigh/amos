@@ -244,7 +244,7 @@ void LaunchPad::scaffoldSpanHistogram()
           try
           {
             int scaffid = m_datastore->lookupScaffoldId(iid);
-            if (scaffid) { scaffstats->addFeat(scaffid); }
+            if (scaffid) { scaffstats->addScore(scaffid, 1.0); }
           }
           catch (AMOS::Exception_t & e)
           {
@@ -255,7 +255,7 @@ void LaunchPad::scaffoldSpanHistogram()
         {
           try
           {
-            scaffstats->addFeat(m_datastore->scaffold_bank.lookupBID(iid));
+            scaffstats->addScore(m_datastore->scaffold_bank.lookupBID(iid), 1.0);
           }
           catch (AMOS::Exception_t & e)
           {

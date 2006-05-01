@@ -55,8 +55,8 @@ NChartWidget::NChartWidget(QWidget * parent, const char * name)
   setMinimumSize(250, 250);
   setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose);
 
-  m_normalization = 0;
   m_ordering = 0;
+  m_colorstyle = 0;
 
   m_highlightsize = -1;
   setMouseTracking(true);
@@ -82,9 +82,9 @@ void NChartWidget::setOrdering(int ordering)
   update();
 }
 
-void NChartWidget::setNormalization(int normalization)
+void NChartWidget::setColorStyle(int colorstyle)
 {
-  m_normalization = normalization;
+  m_colorstyle = colorstyle;
   update();
 }
 
@@ -120,7 +120,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
   m_histwidth  = width-m_histleft-gutter;
 
-  if (m_stats->m_maxfeat)
+  if (m_stats->m_maxscore)
   {
     m_histwidth -= 30;
   }
@@ -130,11 +130,19 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
   QColor baserectcolor(100,160,255);
 
+  if (m_colorstyle == 1)
+  {
+    baserectcolor.setHsv(0,1,255);
+  }
+  else if (m_colorstyle == 0)
+  {
+    baserectcolor.setHsv(105,160,255);
+  }
 
   p.setBrush(QColor(240,240,240));
   p.drawRect(m_histleft, m_histtop, m_histwidth, m_histheight);
 
-  if (m_stats->m_maxfeat)
+  if (m_stats->m_maxscore)
   {
     int thermoleft = m_histleft+m_histwidth+10;
 
@@ -143,18 +151,37 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
     QColor tcolor(baserectcolor);
 
-    for (int i = h; i < 360; i+=5)
+    if (m_colorstyle == 1) 
+    { 
+      for (int i = 0; i < 255; i+=5)
+      {
+        if (i+5 > 255) { i = 255-5; }
+
+        tcolor.setHsv(h,i,v);
+        p.setPen(tcolor);
+        p.setBrush(tcolor);
+
+        double top = m_histheight * (i+5) / (255);
+        double theight = m_histheight * 7.0 / (255.0);
+
+        p.drawRect(thermoleft+1, m_histbottom-1-top, 8, theight);
+      }
+    }
+    else if (m_colorstyle == 0)
     {
-      if (i+5 > 360) { i = 360-5; }
+      double yscale = (double)(m_histheight) / (h+5);
 
-      tcolor.setHsv(i,s,v);
-      p.setPen(tcolor);
-      p.setBrush(tcolor);
+      for (int i = h; i >= 0; i-=5)
+      {
+        tcolor.setHsv(i,s,v);
+        p.setPen(tcolor);
+        p.setBrush(tcolor);
 
-      double top = m_histheight * (i+5-h) / (360-h);
-      double theight = m_histheight * 6 / (360-h);
+        double top = yscale * (h-i+5);
+        double theight = yscale * 6;
 
-      p.drawRect(thermoleft+1, m_histbottom-1-top, 8, theight);
+        p.drawRect(thermoleft+1, m_histbottom-1-top, 8, theight);
+      }
     }
 
     p.setPen(Qt::black);
@@ -177,7 +204,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
     lp1.setPen(Qt::black);
     lp1.setPen(Qt::black);
     lp1.setFont(QFont("Helvetica", 12));
-    lp1.drawText(0,0,80,15, Qt::AlignHCenter|Qt::AlignVCenter, QString::number(m_stats->m_maxfeat));
+    lp1.drawText(0,0,80,15, Qt::AlignHCenter|Qt::AlignVCenter, QString::number(m_stats->m_maxscore));
     lp1.end();
 
     QPixmap bufferfeat(80,15);
@@ -298,14 +325,22 @@ void NChartWidget::paintEvent(QPaintEvent * event)
     {
       QColor rectcolor(baserectcolor);
       
-      if (m_stats->m_maxfeat)
+      if (m_stats->m_maxscore)
       {
         int h,s,v;
         rectcolor.hsv(&h,&s,&v);
 
-        double badness = ((double)m_stats->m_sizes[i].m_feat) / m_stats->m_maxfeat;
-        h += badness * (360-h);
-        h %= 360;
+        double badness = ((double)m_stats->m_sizes[i].m_score) / m_stats->m_maxscore;
+
+        if (m_colorstyle == 1)
+        {
+          s = (int)(badness * 255);
+        }
+        else if (m_colorstyle == 0)
+        {
+          h -= badness * (h);
+          h %= 360;
+        }
 
         rectcolor.setHsv(h,s,v);
       }
@@ -325,12 +360,12 @@ void NChartWidget::paintEvent(QPaintEvent * event)
       if (left <= m_highlightsize && m_highlightsize <= right)
       {
         p.setPen(Qt::white);
-        p.setBrush(Qt::yellow);
+        p.setBrush(Qt::blue);
 
         QString info = "Selected: " + QString::number(m_stats->m_sizes[i].m_id, 'f', 0) +
                        "  Size: " + QString::number(m_stats->m_sizes[i].m_size, 'f', 0) +
                        "  (" + QString::number(100-m_stats->m_sizes[i+1].m_perc, 'f', 2) +
-                       "%) " + QString::number(m_stats->m_sizes[i].m_feat) +
+                       "%) " + QString::number(m_stats->m_sizes[i].m_score) +
                        " Features";
 
         p.setPen(Qt::black);
