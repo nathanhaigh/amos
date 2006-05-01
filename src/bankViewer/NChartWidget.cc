@@ -331,7 +331,6 @@ void NChartWidget::paintEvent(QPaintEvent * event)
       {
         p.drawRect(m_histleft+xstart,    m_histbottom-2,
                    m_histwidth-xstart, 2);
-        break;
       }
     }
 
