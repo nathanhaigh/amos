@@ -1266,7 +1266,22 @@ void InsertWidget::paintCanvas()
       {
         if (m_partitionTypes)
         {
-          if (((char)(*ii)->m_state) != types[type]) { continue; }
+          char istate = (char)(*ii)->m_state;
+
+          if (m_colorByStretchiness)
+          {
+            if (types[type] == 'H')
+            {
+              if (istate == 'H' || istate == 'C' || istate == 'S') { }
+              else { continue; }
+            }
+            else if (istate == 'C' || istate == 'S') { continue; }
+            else if (istate != types[type]) { continue; }
+          }
+          else
+          {
+            if (istate != types[type]) { continue; }
+          }
         }
         else
         {
