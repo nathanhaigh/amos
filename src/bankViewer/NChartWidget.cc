@@ -53,7 +53,7 @@ NChartWidget::NChartWidget(QWidget * parent, const char * name)
    m_stats(NULL), m_grid(true)
 {
   setMinimumSize(250, 250);
-  setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose);
+  setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose | Qt::WResizeNoErase);
 
   m_ordering = 0;
   m_colorstyle = 0;

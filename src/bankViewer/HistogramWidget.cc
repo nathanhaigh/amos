@@ -14,7 +14,7 @@ HistogramWidget::HistogramWidget(InsertStats * stats, QWidget * parent, const ch
    m_stats(stats), m_fitzero(true), m_grid(true), m_shademean(true), m_shadesd(2.0)
 {
   setMinimumSize(550, 500);
-  setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose);
+  setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose | Qt::WResizeNoErase);
   m_stats->histogram(200, m_fitzero);
 }
 

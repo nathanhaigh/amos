@@ -43,6 +43,9 @@ InsertField::InsertField(DataStore * datastore,
   setHScrollBarMode(QScrollView::AlwaysOff);
   setVScrollBarMode(QScrollView::AlwaysOff);
 
+  setWFlags(Qt::WRepaintNoErase | Qt::WResizeNoErase);
+
+
   m_visibleRect = NULL;
   m_toolstate = 0;
   setCursor(Qt::ArrowCursor);
