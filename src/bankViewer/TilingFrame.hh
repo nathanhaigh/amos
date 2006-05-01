@@ -31,7 +31,6 @@ public slots:
     void setFontSize(int);
     void advanceNextDiscrepancy();
     void advancePrevDiscrepancy();
-    void highlightRead(int);
     void sortColumns(int);
     void toggleDisplayAllChromo(bool);
     void searchString(const QString &, bool forward);
@@ -44,6 +43,7 @@ signals:
     void fontSizeChanged(int);
     void setShowNumbers(bool);
     void setTilingVisibleRange(int, int, int);
+    void highlightRead(int);
 
     void toggleShowFullRange(bool);
     void toggleShowNumbers(bool);

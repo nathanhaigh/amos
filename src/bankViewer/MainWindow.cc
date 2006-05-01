@@ -173,7 +173,6 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
           parent,   SLOT(setContigId(int)));
 
 
-
   // Set defaults
   m_gspin->setValue(0);
   m_slider->setFocus();
@@ -195,9 +194,6 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 
   connect(this,      SIGNAL(gindexChanged(int)),
           tiling,      SLOT(setGindex(int)));
-
-  connect(this,      SIGNAL(highlightRead(int)),
-          tiling,      SLOT(highlightRead(int)));
 
   connect(this,      SIGNAL(toggleDisplayAllChromo(bool)),
           tiling,      SLOT(toggleDisplayAllChromo(bool)));
@@ -257,6 +253,10 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
 
     connect(this,    SIGNAL(advancePrevDiscrepancy()),
             tiling,    SLOT(advancePrevDiscrepancy()));
+
+    connect(tiling,         SIGNAL(highlightRead(int)),
+            parentWidget(), SIGNAL(highlightRead(int)));
+            
   }
 }
 

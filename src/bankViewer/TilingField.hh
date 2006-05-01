@@ -41,6 +41,7 @@ public slots:
 
 signals:
     void setTilingVisibleRange(int, int, int);
+    void highlightRead(int);
 
 protected:
     void paintEvent( QPaintEvent * );

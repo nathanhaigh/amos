@@ -88,6 +88,10 @@ TilingFrame::TilingFrame(DataStore * datastore,
   layout->addWidget(m_sv, 10);
 
 
+  connect(m_tilingfield, SIGNAL(highlightRead(int)),
+          this,          SIGNAL(highlightRead(int)));
+
+
   connect(this,        SIGNAL(fontSizeChanged(int)),
           m_consfield, SLOT(setFontSize(int)));
 
@@ -474,21 +478,6 @@ void TilingFrame::advancePrevDiscrepancy()
   setGindex(gindex);
 }
 
-
-void TilingFrame::highlightRead(int iid)
-{
-  if ((ID_t)iid != NULL_ID)
-  {
-    vector<Tile_t>::iterator vi;
-    for (vi =  m_tiling.begin(); vi != m_tiling.end(); vi++)
-    {
-      if (vi->source == (ID_t)iid)
-      {
-        setGindex(vi->offset);
-      }
-    }
-  }
-}
 
 
 void TilingFrame::searchString(const QString & str, bool forward)

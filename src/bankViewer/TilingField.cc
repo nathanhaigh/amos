@@ -127,7 +127,15 @@ void TilingField::mouseReleaseEvent( QMouseEvent * e)
   cerr << "mouserelease state:" << m_clickstate << endl;
   #endif
 
-  if (m_doubleclick)
+  int theight         = max(m_fontsize, m_minheight);
+  int tilehoffset    = theight*12;
+
+  if (e->x() < tilehoffset)
+  {
+    int dcov = getReadCov(e->y());
+    emit highlightRead(m_renderedSeqs[dcov].m_read.getIID());
+  }
+  else if (m_doubleclick)
   {
     // Eat the release from the doubleclick
     m_doubleclick = false;
