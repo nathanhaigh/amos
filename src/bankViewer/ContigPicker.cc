@@ -18,6 +18,7 @@
 #include <vector>
 
 using namespace std;
+using namespace AMOS;
 
 int FIELD_OFFSET=4;
 
@@ -252,6 +253,37 @@ void LaunchPad::contigLengthHistogram()
   {
     int bid = m_datastore->contig_bank.tellg() - 1;
     stats->addSize(contig.getIID(), contig.getLength());
+  }
+
+  if (m_datastore->feat_bank.isOpen())
+  {
+    try
+    {
+      Feature_t feat;
+      m_datastore->feat_bank.seekg(1);
+
+      while (m_datastore->feat_bank >> feat)
+      {
+        ID_t iid = feat.getSource().first;
+        NCode_t nc = feat.getSource().second;
+
+        if (nc == Contig_t::NCODE)
+        {
+          try
+          {
+            stats->addFeat(m_datastore->contig_bank.lookupBID(iid));
+          }
+          catch (AMOS::Exception_t & e)
+          {
+            cerr << "error: " << e << endl;
+          }
+        }
+      }
+    }
+    catch (AMOS::Exception_t & e)
+    {
+      cerr << "error: " << e << endl;
+    }
   }
 
   new NChartWindow(stats, this, "hist");

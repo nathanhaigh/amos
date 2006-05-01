@@ -20,6 +20,7 @@
 #include <vector>
 
 using namespace std;
+using namespace AMOS;
 
 
 
@@ -216,17 +217,60 @@ void LaunchPad::scaffoldViewSelected()
 
 void LaunchPad::scaffoldSpanHistogram()
 {
-  NChartStats * stats = new NChartStats((string)"Scaffold Span Distribution");
+  NChartStats * scaffstats = new NChartStats((string)"Scaffold Span Distribution");
 
   AMOS::Scaffold_t scaffold;
   m_datastore->scaffold_bank.seekg(1);
   while (m_datastore->scaffold_bank >> scaffold)
   {
     int bid = m_datastore->scaffold_bank.tellg() - 1;
-    stats->addSize(bid, scaffold.getSpan());
+    scaffstats->addSize(bid, scaffold.getSpan());
   }
 
-  new NChartWindow(stats, this, "hist");
+  if (m_datastore->feat_bank.isOpen())
+  {
+    try
+    {
+      Feature_t feat;
+      m_datastore->feat_bank.seekg(1);
+
+      while (m_datastore->feat_bank >> feat)
+      {
+        ID_t iid = feat.getSource().first;
+        NCode_t nc = feat.getSource().second;
+
+        if (nc == Contig_t::NCODE)
+        {
+          try
+          {
+            int scaffid = m_datastore->lookupScaffoldId(iid);
+            if (scaffid) { scaffstats->addFeat(scaffid); }
+          }
+          catch (AMOS::Exception_t & e)
+          {
+            cerr << "error: " << e << endl;
+          }
+        }
+        else if (nc == Scaffold_t::NCODE)
+        {
+          try
+          {
+            scaffstats->addFeat(m_datastore->scaffold_bank.lookupBID(iid));
+          }
+          catch (AMOS::Exception_t & e)
+          {
+            cerr << "error: " << e << endl;
+          }
+        }
+      }
+    }
+    catch (AMOS::Exception_t & e)
+    {
+      cerr << "error: " << e << endl;
+    }
+  }
+
+  new NChartWindow(scaffstats, this, "hist");
 }
 
 void LaunchPad::scaffoldContigHistogram()
