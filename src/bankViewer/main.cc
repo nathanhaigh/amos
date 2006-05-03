@@ -128,8 +128,8 @@ int main( int argc, char **argv )
       }
     }
 
-    //splash->finish(&w);
-    //delete splash;
+    splash->finish(&w);
+    delete splash;
     w.show();
     w.initDisplay();
 
