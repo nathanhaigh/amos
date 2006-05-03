@@ -1,9 +1,11 @@
 #include "TilingField.hh"
 #include <qpainter.h>
 #include <qpixmap.h>
-#include "ReadInfo.hh"
-#include <qstring.h>
 #include <qpointarray.h>
+#include <qstring.h>
+#include <qapplication.h>
+
+#include "ReadInfo.hh"
 #include "UIElements.hh"
 #include "DataStore.hh"
 #include "AlignmentInfo.hh"
@@ -70,7 +72,7 @@ TilingField::TilingField(DataStore * datastore,
 
   setMinimumSize(m_width, m_height);
 
-  m_width=1000;
+  m_width=QApplication::desktop()->width();
   resize(m_width, 100);
   setPalette(QPalette(UIElements::color_tiling));
   setWFlags(Qt::WRepaintNoErase);

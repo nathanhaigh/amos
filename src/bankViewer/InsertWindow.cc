@@ -23,6 +23,7 @@
 #include <qgroupbox.h>
 #include <qlayout.h>
 #include <qobjectlist.h>
+#include <qapplication.h>
 
 #include "DataStore.hh"
 #include "UIElements.hh"
@@ -43,8 +44,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   : QMainWindow(parent, name),
     m_datastore(datastore)
 {
-  resize(800,600);
-  setCaption("Assembly Investigator : Scaffold View");
+  setCaption("Hawkeye : Scaffold View");
+  setGeometry(150,50, QApplication::desktop()->width()-200, 600);
 
   const char * states = Insert::allstates;
   unsigned int type = 0;

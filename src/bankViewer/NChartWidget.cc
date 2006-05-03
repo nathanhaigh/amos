@@ -360,7 +360,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
       if (left <= m_highlightsize && m_highlightsize <= right)
       {
         p.setPen(Qt::white);
-        p.setBrush(Qt::blue);
+        p.setBrush(QColor(99,175,252));
 
         QString info = "Selected: " + QString::number(m_stats->m_sizes[i].m_id, 'f', 0) +
                        "  Size: " + QString::number(m_stats->m_sizes[i].m_size, 'f', 0) +
@@ -432,8 +432,7 @@ void NChartWidget::mouseDoubleClickEvent(QMouseEvent * e)
 
     if (left <= m_highlightsize && m_highlightsize <= right)
     {
-      cerr << "Click: " << m_stats->m_sizes[i].m_perc
-           << " " << m_stats->m_sizes[i].m_id << endl;
+ //     cerr << "Click: " << m_stats->m_sizes[i].m_perc << " " << m_stats->m_sizes[i].m_id << endl;
 
       emit idSelected(m_stats->m_sizes[i].m_id);
     }

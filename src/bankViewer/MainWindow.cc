@@ -9,6 +9,8 @@
 #include <qlineedit.h>
 #include <qvbox.h>
 #include <qsplitter.h>
+#include <qapplication.h>
+
 
 #include "TilingFrame.hh"
 #include "AlignmentInfo.hh"
@@ -22,11 +24,11 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
            : QMainWindow( parent, name ),
              m_datastore(datastore)
 {
-  setCaption("Assembly Investigator : Contig View");
+  setCaption("Hawkeye : Contig View");
   m_gindex = 0;
   m_fontsize = 10;
 
-  setGeometry(500,0,800,400);
+  setGeometry(150,700,QApplication::desktop()->width()-200,400);
 
   m_outervbox = new QVBox(this, "mainvbox");
   setCentralWidget( m_outervbox);

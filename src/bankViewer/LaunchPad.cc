@@ -6,6 +6,7 @@
 #include <qfiledialog.h>
 #include <qspinbox.h>
 #include <qstatusbar.h>
+#include <qaccel.h>
 
 
 #include "InsertWindow.hh"

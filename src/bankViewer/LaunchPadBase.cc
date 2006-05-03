@@ -29,7 +29,7 @@ static const unsigned char image1_data[] = {
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x16,
     0x08, 0x06, 0x00, 0x00, 0x00, 0xc4, 0xb4, 0x6c, 0x3b, 0x00, 0x00, 0x00,
-    0xae, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0xb5, 0x94, 0x51, 0x0e, 0xc3,
+    0xae, 0x49, 0x44, 0x41, 0x54, 0x38, 0x8d, 0xb5, 0x94, 0x51, 0x0e, 0xc3,
     0x20, 0x0c, 0x43, 0x6d, 0xb4, 0x53, 0x71, 0xb6, 0x69, 0x1f, 0xd3, 0xce,
     0xe6, 0x6b, 0xb1, 0x8f, 0x51, 0x35, 0xa2, 0x19, 0x23, 0x5a, 0xf0, 0x4f,
     0x44, 0x2b, 0x5e, 0x2c, 0x03, 0xa1, 0x24, 0xec, 0x50, 0xd9, 0x42, 0xdd,
@@ -43,8 +43,8 @@ static const unsigned char image1_data[] = {
     0x8c, 0x01, 0xef, 0x8f, 0x4f, 0x75, 0x33, 0xfe, 0x17, 0x6a, 0x1e, 0x48,
     0x2e, 0xf4, 0xe2, 0x38, 0x0b, 0x6a, 0xc0, 0xb9, 0xd0, 0xd3, 0x6a, 0x57,
     0x16, 0x14, 0x30, 0x83, 0x3e, 0x13, 0x0a, 0xac, 0xde, 0xf6, 0x2f, 0x9a,
-    0xcd, 0x8a, 0xb4, 0x79, 0x3c, 0xea, 0x0d, 0x05, 0x19, 0x70, 0xcd, 0x5b,
-    0x32, 0xcc, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+    0xcd, 0x8a, 0xb4, 0x79, 0x3c, 0xea, 0x0d, 0x05, 0x19, 0x70, 0xcd, 0xbc,
+    0x4f, 0x01, 0xb2, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
     0x42, 0x60, 0x82
 };
 
@@ -391,7 +391,7 @@ LaunchPadBase::~LaunchPadBase()
  */
 void LaunchPadBase::languageChange()
 {
-    setCaption( tr( "Assembly Investigator" ) );
+    setCaption( tr( "Hawkeye" ) );
     tabWidget->changeTab( statsTab, tr( "Statistics" ) );
     groupGroup->setTitle( tr( "Group by" ) );
     featureGroupContigButton->setText( tr( "Contig" ) );
@@ -399,30 +399,48 @@ void LaunchPadBase::languageChange()
     tabWidget->changeTab( featuresTab, tr( "Features" ) );
     histogramGroup->setTitle( tr( "Distributions" ) );
     libraryClearLengthButton->setText( tr( "Read Clear Range" ) );
+    QToolTip::add( libraryClearLengthButton, tr( "Display histogram of the clear range length for all reads in the selected library" ) );
     libraryInsertButton->setText( tr( "Insert Size" ) );
+    QToolTip::add( libraryInsertButton, tr( "Display histogram of inserts for selected library" ) );
     libraryReadLengthButton->setText( tr( "Read Length" ) );
+    QToolTip::add( libraryReadLengthButton, tr( "Display a histogram of the full read length for all reads in the library" ) );
     libraryGCButton->setText( tr( "GC Content" ) );
+    QToolTip::add( libraryGCButton, tr( "Display a histogram of the GC content for all the reads in the library" ) );
     tabWidget->changeTab( librariesTab, tr( "Libraries" ) );
     textLabel1->setText( tr( "IID:" ) );
     textLabel1_2->setText( tr( "EID:" ) );
+    QToolTip::add( scaffoldIIDEdit, tr( "Search for a scaffold or contig by IID" ) );
+    QToolTip::add( scaffoldEIDEdit, tr( "Search for a scaffold or contig by EID" ) );
     scaffoldHistogramGroup->setTitle( tr( "Distributions" ) );
     scaffoldSpanButton->setText( tr( "Span" ) );
+    QToolTip::add( scaffoldSpanButton, tr( "Display the distribution of scaffold sizes" ) );
     scaffoldContigsButton->setText( tr( "Contig Count" ) );
+    QToolTip::add( scaffoldContigsButton, tr( "Display a histogram of the number of contigs in each scaffold" ) );
     tabWidget->changeTab( scaffoldsTab, tr( "Scaffolds" ) );
     textLabel1_2_2->setText( tr( "EID:" ) );
     textLabel1_3->setText( tr( "IID:" ) );
     scaffoldHistogramGroup_2->setTitle( tr( "Distributions" ) );
     contigLengthButton->setText( tr( "Length" ) );
+    QToolTip::add( contigLengthButton, tr( "Display the distribution of the length of all contigs" ) );
     contigReadsButton->setText( tr( "Read Count" ) );
+    QToolTip::add( contigReadsButton, tr( "Display a histogram of the number of reads in each contig" ) );
     contigGCButton->setText( tr( "GC Content" ) );
+    QToolTip::add( contigGCButton, tr( "Dispaly a histogram of the GC content of each contig" ) );
+    QToolTip::add( contigEIDEdit, tr( "Search for a contig (or read) by EID" ) );
+    QToolTip::add( contigIIDEdit, tr( "Search for a contig (or read) by IID" ) );
     buttonGroup7->setTitle( tr( "Display" ) );
     readsCheck->setText( tr( "Reads" ) );
+    QToolTip::add( readsCheck, tr( "Include the reads in the table (May take a long time to load)" ) );
     tabWidget->changeTab( contigsTab, tr( "Contigs" ) );
     textLabel1_3_2->setText( tr( "IID:" ) );
+    QToolTip::add( readEIDEdit, tr( "Search for a read by EID" ) );
     textLabel1_2_2_2->setText( tr( "EID:" ) );
+    QToolTip::add( readIIDEdit, tr( "Search for a read by IID" ) );
     scaffoldHistogramGroup_2_2->setTitle( tr( "Distributions" ) );
     readLengthButton->setText( tr( "Length" ) );
+    QToolTip::add( readLengthButton, tr( "Display a histogram of the full read length" ) );
     readGCButton->setText( tr( "GC Content" ) );
+    QToolTip::add( readGCButton, tr( "Display a histogram of the GC content of these reads" ) );
     tabWidget->changeTab( TabPage, tr( "Reads" ) );
     fileOpenAction->setText( tr( "Open" ) );
     fileOpenAction->setMenuText( tr( "&Open..." ) );
@@ -436,8 +454,11 @@ void LaunchPadBase::languageChange()
     Toolbar->setLabel( tr( "Toolbar" ) );
     contigIDLabel->setText( tr( "Contig ID" ) );
     viewButton->setText( tr( "All Views" ) );
+    QToolTip::add( viewButton, tr( "Display All Views" ) );
     insertButton->setText( tr( "Scaffold View" ) );
+    QToolTip::add( insertButton, tr( "Display scaffold of current contig" ) );
     tilingButton->setText( tr( "Contig View" ) );
+    QToolTip::add( tilingButton, tr( "Display read tiling of current contig" ) );
     if (MenuBar->findItem(1))
         MenuBar->findItem(1)->setText( tr( "&File" ) );
 }
