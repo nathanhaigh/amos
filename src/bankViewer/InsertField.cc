@@ -533,7 +533,7 @@ void InsertField::search(const QString & str)
       return;
     }
 
-  AMOS::ID_t sid = str.toUInt();
+  QRegExp exp (str);
   QCanvasItemList all = canvas()->allItems();
   QCanvasItemList::Iterator it;
 
@@ -559,35 +559,38 @@ void InsertField::search(const QString & str)
         {
           InsertCanvasItem * iitem = (InsertCanvasItem *) *it;
           Insert * ins = iitem->m_insert;
+          QString aiid (QString::number(ins->m_aid));
+          QString biid (QString::number(ins->m_bid));
+          QString aeid (m_datastore->read_bank.lookupEID(ins->m_aid));
+          QString beid (m_datastore->read_bank.lookupEID(ins->m_bid));
 
           // search insert aiid, biid, aeid, beid
-          if ( (sid && (sid == ins->m_aid || sid == ins->m_bid))
-               || str == m_datastore->read_bank.lookupEID(ins->m_aid)
-               || str == m_datastore->read_bank.lookupEID(ins->m_bid) )
+          if ( aiid.contains(exp) || biid.contains(exp) ||
+               aeid.contains(exp) || beid.contains(exp) )
             break;
         }
       else if ( (*it)->rtti() == ContigCanvasItem::RTTI )
         {
           ContigCanvasItem * citem = (ContigCanvasItem *) *it;
           AMOS::Tile_t * tile = &(citem->m_tile);
+          QString bid (QString::number(m_datastore->contig_bank.
+                                       getIDMap().lookupBID(tile->source)));
+          QString iid (QString::number(citem->m_tile.source));
+          QString eid (m_datastore->contig_bank.lookupEID(tile->source));
 
           // search contig bid, iid, eid
-          if ( (sid && (sid == m_datastore->contig_bank.
-                        getIDMap().lookupBID(tile->source)
-                        || sid == citem->m_tile.source))
-               || str == m_datastore->contig_bank.lookupEID(tile->source) )
+          if ( bid.contains(exp) || iid.contains(exp) || eid.contains(exp) )
             break;
         }
       else if ( (*it)->rtti() == FeatureCanvasItem::RTTI )
         {
           FeatureCanvasItem * fitem = (FeatureCanvasItem *) *it;
-          QString comment (fitem->m_feat.getComment().c_str());
-          QRegExp regexp ("\\b" + QRegExp::escape(str) + "\\b");
+          QString iid (QString::number(fitem->m_feat.getIID()));
+          QString eid (fitem->m_feat.getEID().c_str());
+          QString com (fitem->m_feat.getComment().c_str());
 
           // search feature iid, eid, and comment words
-          if ( (sid && (sid == fitem->m_feat.getIID()))
-               || str == fitem->m_feat.getEID().c_str()
-               || comment.find(regexp) != -1 )
+          if ( iid.contains(exp) || eid.contains(exp) || com.contains(exp) )
             break;
         }
     }
