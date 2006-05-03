@@ -5,6 +5,7 @@
 #include "LaunchPad.hh"
 #include "InsertWindow.hh"
 #include "icons/AAI.xpm"
+#include "icons/Hawkeye.xpm"
 #include <qcursor.h>
 
 #include "foundation_AMOS.hh"
@@ -43,16 +44,19 @@ int main( int argc, char **argv )
     QApplication a( argc, argv );
 
 
-    QPixmap pixmap((const char **)AAI_xpm);
+    QPixmap pixmap((const char **)Hawkeye_xpm);
+
+    int texttop =210;
+    int textleft = 160;
     QPainter p (&pixmap);
     
-    p.drawText(120, 180, 200, 48, 
+    p.drawText(textleft, texttop, 200, 48, 
                Qt::AlignLeft | Qt::AlignBottom, 
                PACKAGE_STRING);
 
     if (a.argc() > 1)
     {
-      p.drawText(120, 200, 200, 48, 
+      p.drawText(textleft, texttop+20, 200, 48, 
                  Qt::AlignLeft | Qt::AlignBottom, 
                  "Loading assembly...");
     }
@@ -124,8 +128,8 @@ int main( int argc, char **argv )
       }
     }
 
-    splash->finish(&w);
-    delete splash;
+    //splash->finish(&w);
+    //delete splash;
     w.show();
     w.initDisplay();
 
