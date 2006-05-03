@@ -396,8 +396,8 @@ void InsertWindow::buildLibraryBox()
 {
   if ( m_libLegend != NULL )
     delete m_libLegend;
-
-  QWidget * m_libLegend = new QWidget (m_query->libraryBox);
+  
+  m_libLegend = new QWidget (m_query->libraryBox);
   QFont font (m_libLegend->font());
   font.setPointSize(9);
   m_libLegend->setFont(font);
@@ -413,10 +413,10 @@ void InsertWindow::buildLibraryBox()
        li != m_datastore->m_libdistributionlookup.end();
        li++)
   {
-    QString str = QString::number(li->first); 
+    QString str = QString::number(li->first);
     str += " [" + QString::number(li->second.mean); 
     str += " +/- " + QString::number(li->second.sd);
-    str += "]";
+    str += "] ";
 
     QLabel * name = new QLabel (m_libLegend);
     name->setText(str);
@@ -431,6 +431,8 @@ void InsertWindow::buildLibraryBox()
     row++;
     if (type >= strlen(Insert::allstates)) { type = 0; }
   }
+
+  m_libLegend->show();
 }
 
 
