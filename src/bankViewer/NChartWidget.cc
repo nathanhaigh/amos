@@ -321,7 +321,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
     int l = m_stats->m_sizes.size();
 
-    for (int i = 0; i+1 < l; i++)
+    for (int i = 0; i < l; i++)
     {
       QColor rectcolor(baserectcolor);
       
@@ -347,12 +347,12 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
       p.setBrush(rectcolor);
 
-      int ystart = (int) (m_stats->m_sizes[i].m_size * m_yscale);
-      int yend   = (int) (m_stats->m_sizes[i+1].m_size * m_yscale);
-
+      int ylevel = (int) (m_stats->m_sizes[i].m_size * m_yscale);
 
       double left = 100-m_stats->m_sizes[i].m_perc;
-      double right = 100-m_stats->m_sizes[i+1].m_perc;
+
+      double right = 100;
+      if (i < l) { right = 100-m_stats->m_sizes[i+1].m_perc; }
 
       int xstart = (int) (left * m_xscale);
       int xend   = (int) (right * m_xscale);
@@ -362,9 +362,12 @@ void NChartWidget::paintEvent(QPaintEvent * event)
         p.setPen(Qt::white);
         p.setBrush(QColor(99,175,252));
 
+        double perc = 100.0;
+        if (i+1 < l) { perc = 100-m_stats->m_sizes[i+1].m_perc; }
+
         QString info = "Selected: " + QString::number(m_stats->m_sizes[i].m_id, 'f', 0) +
                        "  Size: " + QString::number(m_stats->m_sizes[i].m_size, 'f', 0) +
-                       "  (" + QString::number(100-m_stats->m_sizes[i+1].m_perc, 'f', 2) +
+                       "  (" + QString::number(perc, 'f', 2) +
                        "%) " + QString::number(m_stats->m_sizes[i].m_score) +
                        " Features";
 
@@ -373,10 +376,10 @@ void NChartWidget::paintEvent(QPaintEvent * event)
                    width, 30, Qt::AlignHCenter | Qt::AlignVCenter, info);
       }
 
-      if (ystart > 1)
+      if (ylevel > 1)
       {
-        p.drawRect(m_histleft+xstart, m_histbottom-ystart,
-                   xend-xstart+1,     ystart);
+        p.drawRect(m_histleft+xstart, m_histbottom-ylevel,
+                   xend-xstart+1,     ylevel);
       }
       else
       {
@@ -388,7 +391,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
     // text
 
     label = "Count: " + QString::number(m_stats->m_sizes.size(), 'f', prec);
-    label += "   Max: " + QString::number(m_stats->m_sizes[0].m_size, 'f', prec);
+    label += "   Max: " + QString::number(m_stats->m_maxsize, 'f', prec);
     label += "   N50: " + QString::number(m_stats->nvalue(50).m_size, 'f', prec);
     label += "   Total: " + QString::number(m_stats->m_sum, 'f', prec);
 
