@@ -945,8 +945,4 @@
     <slot>fileChromoPaths()</slot>
 </slots>
 <layoutdefaults spacing="6" margin="11"/>
-<includehints>
-    <includehint>nchartwidget.h</includehint>
-    <includehint>nchartwidget.h</includehint>
-</includehints>
 </UI>

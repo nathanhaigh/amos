@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>273</width>
-            <height>746</height>
+            <height>816</height>
         </rect>
     </property>
     <property name="caption">
@@ -76,6 +76,9 @@
                             <property name="text">
                                 <string>Search</string>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Regexp search for a contig, feature or insert</string>
+                            </property>
                         </widget>
                     </hbox>
                 </widget>
@@ -119,6 +122,9 @@
                             <property name="text">
                                 <string>Happy Distance</string>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Allowed number of std. deviations from the mean</string>
+                            </property>
                         </widget>
                     </hbox>
                 </widget>
@@ -148,6 +154,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mated read is unassembled</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="6" column="0">
                             <property name="name">
@@ -163,6 +172,9 @@
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mate does not exist</string>
                             </property>
                         </widget>
                         <widget class="QCheckBox" row="1" column="0">
@@ -180,6 +192,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Larger than expected</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="4" column="0">
                             <property name="name">
@@ -196,6 +211,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mates are in different scaffolds</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="2" column="0">
                             <property name="name">
@@ -211,6 +229,9 @@
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Smaller than expected</string>
                             </property>
                         </widget>
                         <widget class="QCheckBox" row="0" column="0">
@@ -235,6 +256,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Correctly oriented and sized</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="3" column="0">
                             <property name="name">
@@ -250,6 +274,9 @@
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mates do not point towards one another</string>
                             </property>
                         </widget>
                         <widget class="QLabel" row="0" column="1">
@@ -267,6 +294,9 @@
                             <property name="text">
                                 <string>pixmap</string>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Correctly oriented and sized</string>
+                            </property>
                         </widget>
                         <widget class="QLabel" row="1" column="1">
                             <property name="name">
@@ -282,6 +312,9 @@
                             </property>
                             <property name="text">
                                 <string>pixmap</string>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Larger than expected</string>
                             </property>
                         </widget>
                         <widget class="QLabel" row="2" column="1">
@@ -299,6 +332,9 @@
                             <property name="text">
                                 <string>pixmap</string>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Smaller than expected</string>
+                            </property>
                         </widget>
                         <widget class="QLabel" row="4" column="1">
                             <property name="name">
@@ -314,6 +350,9 @@
                             </property>
                             <property name="text">
                                 <string>pixmap</string>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mates are in different scaffolds</string>
                             </property>
                         </widget>
                         <widget class="QLabel" row="3" column="1">
@@ -331,6 +370,9 @@
                             <property name="text">
                                 <string>pixmap</string>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mates do not point towards one another</string>
+                            </property>
                         </widget>
                         <widget class="QLabel" row="5" column="1">
                             <property name="name">
@@ -347,6 +389,9 @@
                             <property name="text">
                                 <string>pixmap</string>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mated read is unassembled</string>
+                            </property>
                         </widget>
                         <widget class="QLabel" row="6" column="1">
                             <property name="name">
@@ -362,6 +407,9 @@
                             </property>
                             <property name="text">
                                 <string>pixmap</string>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Mate does not exist</string>
                             </property>
                         </widget>
                     </grid>
@@ -439,6 +487,9 @@
                             <property name="tickInterval">
                                 <number>1</number>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Insert coverage tolerance</string>
+                            </property>
                         </widget>
                         <widget class="QSlider" row="2" column="1" rowspan="1" colspan="2">
                             <property name="name">
@@ -469,6 +520,9 @@
                             </property>
                             <property name="tickInterval">
                                 <number>1</number>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Read coverage tolerance</string>
                             </property>
                         </widget>
                         <widget class="QSlider" row="3" column="1" rowspan="1" colspan="2">
@@ -501,6 +555,9 @@
                             <property name="tickInterval">
                                 <number>1</number>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>SNP count tolerance</string>
+                            </property>
                         </widget>
                         <widget class="QSlider" row="4" column="1" rowspan="1" colspan="2">
                             <property name="name">
@@ -532,6 +589,9 @@
                             <property name="tickInterval">
                                 <number>1</number>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Unitig length tolerance</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="4" column="0">
                             <property name="name">
@@ -547,6 +607,9 @@
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Celera Assembler unitig features</string>
                             </property>
                         </widget>
                         <widget class="QCheckBox" row="3" column="0">
@@ -564,6 +627,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Multi-alignment SNP features</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="2" column="0">
                             <property name="name">
@@ -579,6 +645,9 @@
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Read coverage heat map features</string>
                             </property>
                         </widget>
                         <widget class="QCheckBox" row="1" column="0">
@@ -596,6 +665,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Insert coverage heat map features</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="5" column="0">
                             <property name="name">
@@ -611,6 +683,9 @@
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>AMOS AsmQC features</string>
                             </property>
                         </widget>
                         <widget class="QSlider" row="5" column="1" rowspan="1" colspan="2">
@@ -643,6 +718,9 @@
                             <property name="tickInterval">
                                 <number>1</number>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>AsmQC length tolerance</string>
+                            </property>
                         </widget>
                         <widget class="QSlider" row="6" column="1" rowspan="1" colspan="2">
                             <property name="name">
@@ -674,6 +752,9 @@
                             <property name="tickInterval">
                                 <number>1</number>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Alignment break count tolerance</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="6" column="0">
                             <property name="name">
@@ -690,6 +771,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Read alignment breakpoint features</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox" row="7" column="0">
                             <property name="name">
@@ -705,6 +789,9 @@
                             </property>
                             <property name="checked">
                                 <bool>true</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Generalized features</string>
                             </property>
                         </widget>
                     </grid>
@@ -735,6 +822,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Color mates by category</string>
+                            </property>
                         </widget>
                         <widget class="QRadioButton">
                             <property name="name">
@@ -751,6 +841,9 @@
                             <property name="checked">
                                 <bool>false</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Color mates by degree of compression or expansion</string>
+                            </property>
                         </widget>
                         <widget class="QRadioButton">
                             <property name="name">
@@ -764,6 +857,9 @@
                             <property name="text">
                                 <string>Linking</string>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Color mates by linked contig</string>
+                            </property>
                         </widget>
                         <widget class="QRadioButton">
                             <property name="name">
@@ -776,6 +872,9 @@
                             </property>
                             <property name="text">
                                 <string>Library</string>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Color mates by library</string>
                             </property>
                         </widget>
                     </vbox>
@@ -813,6 +912,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Read and insert coverage statistic plot</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox">
                             <property name="name">
@@ -835,6 +937,9 @@
                             </property>
                             <property name="checked">
                                 <bool>false</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Compression-expansion statistic plot</string>
                             </property>
                         </widget>
                         <widget class="QCheckBox">
@@ -859,6 +964,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Connect mated reads</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox">
                             <property name="name">
@@ -882,6 +990,9 @@
                             <property name="checked">
                                 <bool>true</bool>
                             </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Partition mate types into separate tracks</string>
+                            </property>
                         </widget>
                         <widget class="QCheckBox">
                             <property name="name">
@@ -904,6 +1015,9 @@
                             </property>
                             <property name="checked">
                                 <bool>false</bool>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Tint mate partition backgrounds by color</string>
                             </property>
                         </widget>
                     </vbox>
