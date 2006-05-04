@@ -87,13 +87,24 @@ void NChartWidget::setColorStyle(int colorstyle)
   update();
 }
 
-static void layoutTreemap(NChartStats * stats, int start, int end, QRect space)
+class DRect
+{
+public:
+  DRect(double _x, double _y, double _w, double _h) : x(_x), y(_y), w(_w), h(_h) { }
+
+  double x,y,w,h;
+};
+
+static int pivotlevel = 1;
+
+
+static void layoutTreemap(NChartStats * stats, int start, int end, DRect space)
 {
   if (start > end) { return; }
 
   if (start == end)
   {
-    stats->m_sizes[start].m_rect = space;
+    stats->m_sizes[start].m_rect = QRect(floor(space.x-.5), floor(space.y-.5), floor(space.w+.5)+2, floor(space.h+.5)+2);
     return;
   }
 
@@ -106,6 +117,9 @@ static void layoutTreemap(NChartStats * stats, int start, int end, QRect space)
   int r1pivot = (int)((start+end) / 2);
   double rpsize = stats->m_sizes[r1pivot].m_size;
 
+  stats->m_sizes[r1pivot].m_pivotlevel = pivotlevel;
+  pivotlevel++;
+
   double r1size = 0; double r3size = 0; double allsize = 0;
   for (int i = start; i <= end;    i++) { allsize += stats->m_sizes[i].m_size; }
   for (int i = start; i < r1pivot; i++) { r1size  += stats->m_sizes[i].m_size; }
@@ -115,14 +129,14 @@ static void layoutTreemap(NChartStats * stats, int start, int end, QRect space)
   double cumsize = 0;
   double r2size = 0;
 
-  if (space.height() < space.width())
+  if (space.h < space.w)
   {
+    //layout regions into vertical stripes
     for (int r2 = r1pivot; r2 <= end; r2++)
     {
       cumsize += stats->m_sizes[r2].m_size;
-      double r2perc = cumsize / allsize;
-      double r2width = r2perc * space.width();
-      double rpheight = space.height() * rpsize / cumsize;
+      double r2width  = space.w * cumsize / allsize;
+      double rpheight = space.h * rpsize / cumsize;
 
       double rpratio = (rpheight > r2width) ? rpheight / r2width : r2width / rpheight;
 
@@ -134,29 +148,25 @@ static void layoutTreemap(NChartStats * stats, int start, int end, QRect space)
 
     for (int i = r2pivot+1; i <= end; i++) { r3size += stats->m_sizes[i].m_size; }
 
-    double r1perc = r1size / allsize;
-    double r2perc = r2size / allsize;
-    double r3perc = r3size / allsize;
+    double r1width = space.w * r1size / allsize;
+    double r2width = space.w * r2size / allsize;
+    double r3width = space.w * r3size / allsize;
 
-    int r1width = r1perc * space.width()+1;
-    int r2width = r2perc * space.width()+1;
-    int r3width = r3perc * space.width()+1;
+    double rpheight = space.h * rpsize / r2size;
 
-    int rpheight = ((double) space.height()) * rpsize / r2size;
-
-    layoutTreemap(stats, start, r1pivot-1,   QRect(space.x(), space.y(), r1width, space.height())); // r1
-    layoutTreemap(stats, r1pivot, r1pivot,   QRect(space.x()+r1width, space.y(), r2width, rpheight)); // rp
-    layoutTreemap(stats, r1pivot+1, r2pivot, QRect(space.x()+r1width, space.y()+rpheight, r2width, space.height()-rpheight)); // r2
-    layoutTreemap(stats, r2pivot+1, end,     QRect(space.x()+r1width+r2width, space.y(), r3width, space.height())); // r3
+    layoutTreemap(stats, start,     r1pivot-1, DRect(space.x,                 space.y,          r1width, space.h));          // r1
+    layoutTreemap(stats, r1pivot,   r1pivot,   DRect(space.x+r1width,         space.y,          r2width, rpheight));         // rp
+    layoutTreemap(stats, r1pivot+1, r2pivot,   DRect(space.x+r1width,         space.y+rpheight, r2width, space.h-rpheight)); // r2
+    layoutTreemap(stats, r2pivot+1, end,       DRect(space.x+r1width+r2width, space.y,          r3width, space.h));          // r3
   }
   else
   {
+    //layout regions into horizontal stripes
     for (int r2 = r1pivot; r2 <= end; r2++)
     {
       cumsize += stats->m_sizes[r2].m_size;
-      double r2perc = cumsize / allsize;
-      double r2height = r2perc * space.height();
-      double rpwidth = space.width() * rpsize / cumsize;
+      double r2height = space.h * cumsize / allsize;
+      double rpwidth  = space.w * rpsize / cumsize;
 
       double rpratio = (r2height > rpwidth) ? r2height / rpwidth : rpwidth / r2height;
 
@@ -168,20 +178,16 @@ static void layoutTreemap(NChartStats * stats, int start, int end, QRect space)
 
     for (int i = r2pivot+1; i <= end; i++) { r3size += stats->m_sizes[i].m_size; }
 
-    double r1perc = r1size / allsize;
-    double r2perc = r2size / allsize;
-    double r3perc = r3size / allsize;
+    double r1height = space.h * r1size / allsize;
+    double r2height = space.h * r2size / allsize;
+    double r3height = space.h * r3size / allsize;
 
-    int r1height = r1perc * space.height()+1;
-    int r2height = r2perc * space.height()+1;
-    int r3height = r3perc * space.height()+1;
+    double rpwidth = space.w * rpsize / r2size;
 
-    int rpwidth = 1+((double) space.width()) * rpsize / r2size;
-
-    layoutTreemap(stats, start, r1pivot-1,   QRect(space.x(), space.y(), space.width(), r1height)); //r1
-    layoutTreemap(stats, r1pivot, r1pivot,   QRect(space.x(), space.y()+r1height, rpwidth+1, r2height)); // rp
-    layoutTreemap(stats, r1pivot+1, r2pivot, QRect(space.x()+rpwidth, space.y()+r1height, space.width()-rpwidth, r2height)); // r2
-    layoutTreemap(stats, r2pivot+1, end,     QRect(space.x(), space.y()+r1height+r2height, space.width(), r3height)); // r3
+    layoutTreemap(stats, start,     r1pivot-1,   DRect(space.x,         space.y,                   space.w,         r1height)); // r1
+    layoutTreemap(stats, r1pivot,   r1pivot,     DRect(space.x,         space.y+r1height,          rpwidth,         r2height)); // rp
+    layoutTreemap(stats, r1pivot+1, r2pivot,     DRect(space.x+rpwidth, space.y+r1height,          space.w-rpwidth, r2height)); // r2
+    layoutTreemap(stats, r2pivot+1, end,         DRect(space.x,         space.y+r1height+r2height, space.w,         r3height)); // r3
 
   }
 }
@@ -467,7 +473,8 @@ void NChartWidget::paintEvent(QPaintEvent * event)
     }
     else if (m_ordering == 2)
     {
-      layoutTreemap(m_stats, 0, l-1, QRect(0,0,m_histwidth,m_histheight));
+      pivotlevel = 1;
+      layoutTreemap(m_stats, 0, l-1, DRect(0,0,m_histwidth,m_histheight));
 
       for (int i = 0; i < l; i++)
       {
@@ -501,6 +508,17 @@ void NChartWidget::paintEvent(QPaintEvent * event)
       }
 
       p.drawRect(m_stats->m_sizes[i].m_rect);
+
+      /*
+      if (m_ordering == 2 && m_stats->m_sizes[i].m_pivotlevel)
+      {
+        p.setFont(QFont("Helvetica", 8));
+        p.drawText(m_stats->m_sizes[i].m_rect, 
+                   Qt::AlignHCenter | Qt::AlignVCenter, 
+                   QString::number(m_stats->m_sizes[i].m_pivotlevel));
+        p.setFont(QFont("Helvetica", 12));
+      }
+      */
     }
 
 

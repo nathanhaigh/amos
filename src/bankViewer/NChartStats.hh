@@ -8,8 +8,9 @@
 class StatValue
 {
 public:
-  StatValue(int id, double size) : m_id(id), m_size(size), m_score(0) {}
+  StatValue(int id, double size) : m_id(id), m_size(size), m_score(0), m_pivotlevel(0) {}
   int m_id;
+  int m_pivotlevel;
   double m_score;
   double m_size;
 

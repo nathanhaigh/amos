@@ -31,7 +31,11 @@ struct StatScoreCmp
 {
   bool operator () (const StatValue & a, const StatValue & b)
   {
-    return a.m_score > b.m_score;
+    if (a.m_score == b.m_score) 
+    {
+      return a.m_size > b.m_size;
+    }
+    return (a.m_score > b.m_score);
   }
 };
 
@@ -58,7 +62,7 @@ void NChartStats::nchart(int sortMethod)
   }
   else if (sortMethod == 2)
   {
-    sort(m_sizes.begin(), m_sizes.end(), StatIdCmp());
+    sort(m_sizes.begin(), m_sizes.end(), StatScoreCmp());
   }
 }
 
