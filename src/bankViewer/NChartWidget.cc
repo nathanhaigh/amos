@@ -50,7 +50,7 @@ double NiceNumber (double x, bool round)
 
 NChartWidget::NChartWidget(QWidget * parent, const char * name)
  : QWidget(parent, name),
-   m_stats(NULL), m_grid(true)
+   m_stats(NULL), m_grid(true), m_clickpoint(-1,-1)
 {
   setMinimumSize(250, 250);
   setWFlags(Qt::WRepaintNoErase | Qt::WDestructiveClose | Qt::WResizeNoErase);
@@ -58,7 +58,6 @@ NChartWidget::NChartWidget(QWidget * parent, const char * name)
   m_ordering = 0;
   m_colorstyle = 0;
 
-  m_highlightsize = -1;
   setMouseTracking(true);
 }
 
@@ -86,6 +85,130 @@ void NChartWidget::setColorStyle(int colorstyle)
 {
   m_colorstyle = colorstyle;
   update();
+}
+
+static void layoutTreemap(NChartStats * stats, int start, int end, QRect space)
+{
+  if (start > end) { return; }
+
+  if (start == end)
+  {
+    stats->m_sizes[start].m_rect = space;
+    return;
+  }
+
+  // start ... r1pivot .. r2pivot ... end
+  // r1: [start, r1pivot)   r1size
+  // rp: [r1pivot, r1pivot] rpsize
+  // r2: (r1pivot, r2pivot] r2size - rpsize
+  // r3: (r2pivot, end]     r3size
+
+  int r1pivot = (int)((start+end) / 2);
+  double rpsize = stats->m_sizes[r1pivot].m_size;
+
+  double r1size = 0; double r3size = 0; double allsize = 0;
+  for (int i = start; i <= end;    i++) { allsize += stats->m_sizes[i].m_size; }
+  for (int i = start; i < r1pivot; i++) { r1size  += stats->m_sizes[i].m_size; }
+
+  int    r2pivot = r1pivot;
+  double bestratio = -1;
+  double cumsize = 0;
+  double r2size = 0;
+
+  if (space.height() < space.width())
+  {
+    for (int r2 = r1pivot; r2 <= end; r2++)
+    {
+      cumsize += stats->m_sizes[r2].m_size;
+      double r2perc = cumsize / allsize;
+      double r2width = r2perc * space.width();
+      double rpheight = space.height() * rpsize / cumsize;
+
+      double rpratio = (rpheight > r2width) ? rpheight / r2width : r2width / rpheight;
+
+      if (bestratio == -1 || rpratio < bestratio)
+      {
+        r2pivot = r2; r2size = cumsize; bestratio = rpratio;
+      }
+    }
+
+    for (int i = r2pivot+1; i <= end; i++) { r3size += stats->m_sizes[i].m_size; }
+
+    double r1perc = r1size / allsize;
+    double r2perc = r2size / allsize;
+    double r3perc = r3size / allsize;
+
+    int r1width = r1perc * space.width()+1;
+    int r2width = r2perc * space.width()+1;
+    int r3width = r3perc * space.width()+1;
+
+    int rpheight = ((double) space.height()) * rpsize / r2size;
+
+    layoutTreemap(stats, start, r1pivot-1,   QRect(space.x(), space.y(), r1width, space.height())); // r1
+    layoutTreemap(stats, r1pivot, r1pivot,   QRect(space.x()+r1width, space.y(), r2width, rpheight)); // rp
+    layoutTreemap(stats, r1pivot+1, r2pivot, QRect(space.x()+r1width, space.y()+rpheight, r2width, space.height()-rpheight)); // r2
+    layoutTreemap(stats, r2pivot+1, end,     QRect(space.x()+r1width+r2width, space.y(), r3width, space.height())); // r3
+  }
+  else
+  {
+    for (int r2 = r1pivot; r2 <= end; r2++)
+    {
+      cumsize += stats->m_sizes[r2].m_size;
+      double r2perc = cumsize / allsize;
+      double r2height = r2perc * space.height();
+      double rpwidth = space.width() * rpsize / cumsize;
+
+      double rpratio = (r2height > rpwidth) ? r2height / rpwidth : rpwidth / r2height;
+
+      if (bestratio == -1 || rpratio < bestratio)
+      {
+        r2pivot = r2; r2size = cumsize; bestratio = rpratio;
+      }
+    }
+
+    for (int i = r2pivot+1; i <= end; i++) { r3size += stats->m_sizes[i].m_size; }
+
+    double r1perc = r1size / allsize;
+    double r2perc = r2size / allsize;
+    double r3perc = r3size / allsize;
+
+    int r1height = r1perc * space.height()+1;
+    int r2height = r2perc * space.height()+1;
+    int r3height = r3perc * space.height()+1;
+
+    int rpwidth = 1+((double) space.width()) * rpsize / r2size;
+
+    layoutTreemap(stats, start, r1pivot-1,   QRect(space.x(), space.y(), space.width(), r1height)); //r1
+    layoutTreemap(stats, r1pivot, r1pivot,   QRect(space.x(), space.y()+r1height, rpwidth+1, r2height)); // rp
+    layoutTreemap(stats, r1pivot+1, r2pivot, QRect(space.x()+rpwidth, space.y()+r1height, space.width()-rpwidth, r2height)); // r2
+    layoutTreemap(stats, r2pivot+1, end,     QRect(space.x(), space.y()+r1height+r2height, space.width(), r3height)); // r3
+
+  }
+}
+
+
+
+static void setFeatRectColor(NChartStats * stats, int i, QColor & rectcolor, int colorstyle)
+{
+  if (stats->m_maxscore)
+  {
+    int h,s,v;
+    rectcolor.hsv(&h,&s,&v);
+
+    double badness = ((double)stats->m_sizes[i].m_score) / stats->m_maxscore;
+
+    if (colorstyle == 1)
+    {
+      s = (int)(badness * 255);
+    }
+    else if (colorstyle == 0)
+    {
+      h -= badness * (h);
+      h %= 360;
+    }
+
+    rectcolor.setHsv(h,s,v);
+  }
 }
 
 void NChartWidget::paintEvent(QPaintEvent * event)
@@ -144,6 +267,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
   if (m_stats->m_maxscore)
   {
+    // feature color gradient
     int thermoleft = m_histleft+m_histwidth+10;
 
     int h,s,v;
@@ -164,7 +288,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
         double top = m_histheight * (i+5) / (255);
         double theight = m_histheight * 7.0 / (255.0);
 
-        p.drawRect(thermoleft+1, m_histbottom-1-top, 8, theight);
+        p.drawRect((int)(thermoleft+1), (int)(m_histbottom-1-top), (int)8, (int)theight);
       }
     }
     else if (m_colorstyle == 0)
@@ -180,7 +304,7 @@ void NChartWidget::paintEvent(QPaintEvent * event)
         double top = yscale * (h-i+5);
         double theight = yscale * 6;
 
-        p.drawRect(thermoleft+1, m_histbottom-1-top, 8, theight);
+        p.drawRect(thermoleft+1, (int)(m_histbottom-1-top), 8, (int)(theight));
       }
     }
 
@@ -243,75 +367,77 @@ void NChartWidget::paintEvent(QPaintEvent * event)
     m_xscale = (double)(m_histwidth)/ 100;
     m_yscale = (double)(m_histheight-gutter) / m_stats->m_maxsize;
 
-    // Xlabels
-    pen.setStyle(Qt::DotLine);
-    p.setPen(pen);
-
-    int labelwidth = 100;
-    int numbuckets = (int)(labelwidth / m_xscale);
-    if (numbuckets == 0) { numbuckets = 1; }
-
-    int prec = 0;
-
-    for (double i = 12.5; i < 100; i+=12.5)
+    if (m_ordering < 2)
     {
-      int xcoord = (int)(m_histleft+i*m_xscale);
-      p.drawLine(xcoord, m_histtop, xcoord, m_histbottom+5);
+      // Xlabels
+      pen.setStyle(Qt::DotLine);
+      p.setPen(pen);
 
-      if (i == 25.0 || i == 50.0 || i == 75.0)
+      int labelwidth = 100;
+      int numbuckets = (int)(labelwidth / m_xscale);
+      if (numbuckets == 0) { numbuckets = 1; }
+
+      for (double i = 12.5; i < 100; i+=12.5)
       {
-        label = "  ";
-        label += QString::number(i, 'f', prec);
-        label += "%";
-        p.drawText(xcoord-labelwidth, m_histbottom,
-                   labelwidth*2, 30, Qt::AlignCenter, label);
-      }
-    }
+        int xcoord = (int)(m_histleft+i*m_xscale);
+        p.drawLine(xcoord, m_histtop, xcoord, m_histbottom+5);
 
-    int yjump = (int)(100/m_yscale);
-    yjump = (int)NiceNumber(yjump, true);
-    if (yjump == 0) { yjump = 1; }
-
-    for (int j = (int)NiceNumber(m_stats->m_maxsize, true); j > 0; j -= yjump)
-    {
-      if (j > m_stats->m_maxsize) { continue; }
-      int ycoord = (int)(m_histbottom - j * m_yscale);
-
-      if (m_grid) { p.drawLine(m_histleft-5, ycoord, m_histleft+m_histwidth, ycoord); }
-
-      if (j >= 1000000)
-      {
-        double q = j /1000000.0;
-        
-        label = QString::number(q, 'f', 1);
-        label += "M";
-      }
-      else if (j >= 1000)
-      {
-        double q = j /1000.0;
-
-        label = QString::number(q, 'f', 1);
-        label += "K";
-      }
-      else
-      {
-        label = QString::number(j);
+        if (i == 25.0 || i == 50.0 || i == 75.0)
+        {
+          label = "  ";
+          label += QString::number(i, 'f', 0);
+          label += "%";
+          p.drawText(xcoord-labelwidth, m_histbottom,
+                     labelwidth*2, 30, Qt::AlignCenter, label);
+        }
       }
 
-      QPixmap buffer(80,15);
-      buffer.fill();
-      QPainter lp(&buffer);
-      lp.setPen(Qt::black);
-      lp.setFont(QFont("Helvetica", 12));
-      lp.drawText(0,0,80,15, Qt::AlignHCenter|Qt::AlignVCenter, label);
-      lp.end();
+      // Y-labels
+      int yjump = (int)(100/m_yscale);
+      yjump = (int)NiceNumber(yjump, true);
+      if (yjump == 0) { yjump = 1; }
 
-      p.save();
-      p.rotate(-90);
-      int mapx, mapy;
-      p.worldMatrix().invert().map(m_histleft-20, ycoord, &mapx, &mapy);
-      p.drawPixmap(mapx-40, mapy-10, buffer);
-      p.restore();
+      for (int j = (int)NiceNumber(m_stats->m_maxsize, true); j > 0; j -= yjump)
+      {
+        if (j > m_stats->m_maxsize) { continue; }
+        int ycoord = (int)(m_histbottom - j * m_yscale);
+
+        if (m_grid) { p.drawLine(m_histleft-5, ycoord, m_histleft+m_histwidth, ycoord); }
+
+        if (j >= 1000000)
+        {
+          double q = j /1000000.0;
+          
+          label = QString::number(q, 'f', 1);
+          label += "M";
+        }
+        else if (j >= 1000)
+        {
+          double q = j /1000.0;
+
+          label = QString::number(q, 'f', 1);
+          label += "K";
+        }
+        else
+        {
+          label = QString::number(j);
+        }
+
+        QPixmap buffer(80,15);
+        buffer.fill();
+        QPainter lp(&buffer);
+        lp.setPen(Qt::black);
+        lp.setFont(QFont("Helvetica", 12));
+        lp.drawText(0,0,80,15, Qt::AlignHCenter|Qt::AlignVCenter, label);
+        lp.end();
+
+        p.save();
+        p.rotate(-90);
+        int mapx, mapy;
+        p.worldMatrix().invert().map(m_histleft-20, ycoord, &mapx, &mapy);
+        p.drawPixmap(mapx-40, mapy-10, buffer);
+        p.restore();
+      }
     }
 
 
@@ -321,49 +447,48 @@ void NChartWidget::paintEvent(QPaintEvent * event)
 
     int l = m_stats->m_sizes.size();
 
+    //layout the rectangles
+
+    if (m_ordering == 0 || m_ordering == 1)
+    {
+      // layout by size, feature density
+      double xsizescale = ((double) m_histwidth) / m_stats->m_sum;
+      double cumsize = 0;
+
+      for (int i = 0; i < l; i++)
+      {
+        int xcoord = (int) (cumsize * xsizescale);
+        int width  = (int) (m_stats->m_sizes[i].m_size * xsizescale) + 1;
+        int height = (int) (m_stats->m_sizes[i].m_size * m_yscale)+1;
+
+        m_stats->m_sizes[i].m_rect.setRect(m_histleft+xcoord, m_histbottom-height, width, height);
+        cumsize += m_stats->m_sizes[i].m_size;
+      }
+    }
+    else if (m_ordering == 2)
+    {
+      layoutTreemap(m_stats, 0, l-1, QRect(0,0,m_histwidth,m_histheight));
+
+      for (int i = 0; i < l; i++)
+      {
+        m_stats->m_sizes[i].m_rect.moveBy(m_histleft, m_histtop);
+      }
+    }
+
+    // draw the rectangles
+    bool first = true;
     for (int i = 0; i < l; i++)
     {
       QColor rectcolor(baserectcolor);
-      
-      if (m_stats->m_maxscore)
-      {
-        int h,s,v;
-        rectcolor.hsv(&h,&s,&v);
-
-        double badness = ((double)m_stats->m_sizes[i].m_score) / m_stats->m_maxscore;
-
-        if (m_colorstyle == 1)
-        {
-          s = (int)(badness * 255);
-        }
-        else if (m_colorstyle == 0)
-        {
-          h -= badness * (h);
-          h %= 360;
-        }
-
-        rectcolor.setHsv(h,s,v);
-      }
-
+      setFeatRectColor(m_stats, i, rectcolor, m_colorstyle);
       p.setBrush(rectcolor);
 
-      int ylevel = (int) (m_stats->m_sizes[i].m_size * m_yscale);
-
-      double left = 100-m_stats->m_sizes[i].m_perc;
-
-      double right = 100;
-      if (i < l) { right = 100-m_stats->m_sizes[i+1].m_perc; }
-
-      int xstart = (int) (left * m_xscale);
-      int xend   = (int) (right * m_xscale);
-
-      if (left <= m_highlightsize && m_highlightsize <= right)
+      if (first && m_stats->m_sizes[i].m_rect.contains(m_clickpoint))
       {
-        p.setPen(Qt::white);
+        first = false;
         p.setBrush(QColor(99,175,252));
 
-        double perc = 100.0;
-        if (i+1 < l) { perc = 100-m_stats->m_sizes[i+1].m_perc; }
+        double perc = ((double)m_stats->m_sizes[i].m_size*100) / m_stats->m_sum;
 
         QString info = "Selected: " + QString::number(m_stats->m_sizes[i].m_id, 'f', 0) +
                        "  Size: " + QString::number(m_stats->m_sizes[i].m_size, 'f', 0) +
@@ -371,29 +496,20 @@ void NChartWidget::paintEvent(QPaintEvent * event)
                        "%) " + QString::number(m_stats->m_sizes[i].m_score) +
                        " Features";
 
-        p.setPen(Qt::black);
         p.drawText(0, textline2,
                    width, 30, Qt::AlignHCenter | Qt::AlignVCenter, info);
       }
 
-      if (ylevel > 1)
-      {
-        p.drawRect(m_histleft+xstart, m_histbottom-ylevel,
-                   xend-xstart+1,     ylevel);
-      }
-      else
-      {
-        p.drawRect(m_histleft+xstart,    m_histbottom-2,
-                   m_histwidth-xstart, 2);
-      }
+      p.drawRect(m_stats->m_sizes[i].m_rect);
     }
+
 
     // text
 
-    label = "Count: " + QString::number(m_stats->m_sizes.size(), 'f', prec);
-    label += "   Max: " + QString::number(m_stats->m_maxsize, 'f', prec);
-    label += "   N50: " + QString::number(m_stats->nvalue(50).m_size, 'f', prec);
-    label += "   Total: " + QString::number(m_stats->m_sum, 'f', prec);
+    label = "Count: " + QString::number(m_stats->m_sizes.size(), 'f', 0);
+    label += "   Max: " + QString::number(m_stats->m_maxsize, 'f', 0);
+    label += "   N50: " + QString::number(m_stats->nvalue(50).m_size, 'f', 0);
+    label += "   Total: " + QString::number(m_stats->m_sum, 'f', 0);
 
     p.drawText(0, textline1,
                width, 30, Qt::AlignHCenter | Qt::AlignVCenter, label);
@@ -407,19 +523,15 @@ void NChartWidget::paintEvent(QPaintEvent * event)
   p.end();
 }
 
+void NChartWidget::resizeEvent()
+{
+  m_clickpoint = QPoint(-1,-1);
+}
+
 
 void NChartWidget::mouseMoveEvent(QMouseEvent * e)
 {
-  if (e->y() >= m_histtop && e->y() <= m_histbottom)
-  {
-    double xpos = (e->x() - m_histleft) / m_xscale;
-    m_highlightsize = xpos;
-  }
-  else
-  {
-    m_highlightsize = -1;
-  }
-
+  m_clickpoint = e->pos();
   update();
 }
 
@@ -428,16 +540,12 @@ void NChartWidget::mouseDoubleClickEvent(QMouseEvent * e)
   mouseMoveEvent(e);
 
   int l = m_stats->m_sizes.size();
-  for (int i = 0; i+1 < l; i++)
+  for (int i = 0; i < l; i++)
   {
-    double left = 100-m_stats->m_sizes[i].m_perc;
-    double right = 100-m_stats->m_sizes[i+1].m_perc;
-
-    if (left <= m_highlightsize && m_highlightsize <= right)
+    if (m_stats->m_sizes[i].m_rect.contains(m_clickpoint))
     {
- //     cerr << "Click: " << m_stats->m_sizes[i].m_perc << " " << m_stats->m_sizes[i].m_id << endl;
-
       emit idSelected(m_stats->m_sizes[i].m_id);
+      break;
     }
   }
 }

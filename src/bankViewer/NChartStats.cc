@@ -8,7 +8,7 @@ using namespace std;
 
 
 NChartStats::NChartStats(const string & label)
- : m_label(label), m_maxsize(0), m_sum(0), m_maxscore(0)
+ : m_label(label), m_sum(0), m_maxsize(0), m_maxscore(0)
 {
 }
 
@@ -35,27 +35,30 @@ struct StatScoreCmp
   }
 };
 
+struct StatIdCmp
+{
+  bool operator () (const StatValue & a, const StatValue & b)
+  {
+    return a.m_id > b.m_id;
+  }
+};
 
-void NChartStats::nchart(bool sortByScore)
+
+void NChartStats::nchart(int sortMethod)
 {
   int l = m_sizes.size();
 
-  if (sortByScore)
-  {
-    sort(m_sizes.begin(), m_sizes.end(), StatScoreCmp());
-  }
-  else
+  if (sortMethod == 0)
   {
     sort(m_sizes.begin(), m_sizes.end(), StatLengthCmp());
   }
-
-
-  double cur = m_sum;
-
-  for (int i = 0; i < l; i++)
+  else if (sortMethod == 1)
   {
-    m_sizes[i].m_perc = cur*100/m_sum;
-    cur -= m_sizes[i].m_size;
+    sort(m_sizes.begin(), m_sizes.end(), StatScoreCmp());
+  }
+  else if (sortMethod == 2)
+  {
+    sort(m_sizes.begin(), m_sizes.end(), StatIdCmp());
   }
 }
 
@@ -63,11 +66,13 @@ StatValue NChartStats::nvalue(double perc)
 {
   int l = m_sizes.size();
 
+  double cursize = 0;
+
   for (int i = 0; i < l; i++)
   {
-    if (m_sizes[i].m_perc < perc)
+    cursize += m_sizes[i].m_size;
+    if ((((double)cursize*100.0) / m_sum) >= perc)
     {
-      if (i > 0) { return m_sizes[i-1]; }
       return m_sizes[i];
     }
   }

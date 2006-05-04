@@ -2,6 +2,7 @@
 #define NCHARTWIDGET_HH__ 1
 
 #include <qwidget.h>
+#include <qpoint.h>
 
 class NChartStats;
 
@@ -25,6 +26,7 @@ signals:
 
 protected:
   void paintEvent(QPaintEvent *);
+  void resizeEvent();
 
 private:
   NChartStats * m_stats;
@@ -41,8 +43,8 @@ private:
 
   double m_xscale;
   double m_yscale;
-  
-  double m_highlightsize;
+
+  QPoint m_clickpoint;
 };
 
 

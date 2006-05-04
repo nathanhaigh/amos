@@ -3,15 +3,17 @@
 
 #include <vector>
 #include <string>
+#include <qrect.h>
 
 class StatValue
 {
 public:
-  StatValue(int id, double size) : m_id(id), m_size(size), m_perc(0), m_score(0) {}
+  StatValue(int id, double size) : m_id(id), m_size(size), m_score(0) {}
   int m_id;
   double m_score;
   double m_size;
-  double m_perc;
+
+  QRect m_rect;
 };
 
 class NChartStats
@@ -25,12 +27,12 @@ public:
   void      addScore(int id, double val);
 
   StatValue nvalue(double perc);
-  void      nchart(bool sortByScore);
+  void      nchart(int sortMethod);
 
   std::vector<StatValue> m_sizes;
-  double m_maxsize;
   double m_sum;
   double m_maxscore;
+  double m_maxsize;
 };
 
 
