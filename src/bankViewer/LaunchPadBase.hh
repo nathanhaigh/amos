@@ -18,10 +18,10 @@ class NChartWidget;
 class QTabWidget;
 class QWidget;
 class QTextEdit;
-class QListView;
-class QListViewItem;
 class QButtonGroup;
 class QRadioButton;
+class QListView;
+class QListViewItem;
 class QPushButton;
 class QLabel;
 class QLineEdit;
@@ -41,6 +41,13 @@ public:
     QTextEdit* statsText;
     NChartWidget* scaffoldSizes;
     NChartWidget* contigSizes;
+    QButtonGroup* orderRadioGroup;
+    QRadioButton* radioButton8;
+    QRadioButton* radioButton9;
+    QRadioButton* radioButton10;
+    QButtonGroup* colorRadioGroup;
+    QRadioButton* radioButton11;
+    QRadioButton* radioButton12;
     QWidget* featuresTab;
     QListView* featureList;
     QButtonGroup* groupGroup;
@@ -107,6 +114,9 @@ public slots:
 protected:
     QGridLayout* LaunchPadBaseLayout;
     QGridLayout* statsTabLayout;
+    QSpacerItem* spacer7;
+    QGridLayout* orderRadioGroupLayout;
+    QGridLayout* colorRadioGroupLayout;
     QGridLayout* featuresTabLayout;
     QSpacerItem* spacer1;
     QHBoxLayout* groupGroupLayout;

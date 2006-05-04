@@ -6,10 +6,10 @@
 #include <qtabwidget.h>
 #include <qwidget.h>
 #include <qtextedit.h>
-#include <qheader.h>
-#include <qlistview.h>
 #include <qbuttongroup.h>
 #include <qradiobutton.h>
+#include <qheader.h>
+#include <qlistview.h>
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qcheckbox.h>
@@ -78,15 +78,59 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     statsText->setTextFormat( QTextEdit::RichText );
     statsText->setReadOnly( TRUE );
 
-    statsTabLayout->addMultiCellWidget( statsText, 0, 1, 0, 0 );
+    statsTabLayout->addMultiCellWidget( statsText, 0, 2, 0, 0 );
 
     scaffoldSizes = new NChartWidget( statsTab, "scaffoldSizes" );
 
-    statsTabLayout->addWidget( scaffoldSizes, 0, 1 );
+    statsTabLayout->addMultiCellWidget( scaffoldSizes, 0, 0, 1, 3 );
 
     contigSizes = new NChartWidget( statsTab, "contigSizes" );
 
-    statsTabLayout->addWidget( contigSizes, 1, 1 );
+    statsTabLayout->addMultiCellWidget( contigSizes, 1, 1, 1, 3 );
+
+    orderRadioGroup = new QButtonGroup( statsTab, "orderRadioGroup" );
+    orderRadioGroup->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, orderRadioGroup->sizePolicy().hasHeightForWidth() ) );
+    orderRadioGroup->setColumnLayout(0, Qt::Vertical );
+    orderRadioGroup->layout()->setSpacing( 6 );
+    orderRadioGroup->layout()->setMargin( 11 );
+    orderRadioGroupLayout = new QGridLayout( orderRadioGroup->layout() );
+    orderRadioGroupLayout->setAlignment( Qt::AlignTop );
+
+    radioButton8 = new QRadioButton( orderRadioGroup, "radioButton8" );
+    radioButton8->setChecked( TRUE );
+
+    orderRadioGroupLayout->addWidget( radioButton8, 0, 0 );
+
+    radioButton9 = new QRadioButton( orderRadioGroup, "radioButton9" );
+
+    orderRadioGroupLayout->addWidget( radioButton9, 0, 1 );
+
+    radioButton10 = new QRadioButton( orderRadioGroup, "radioButton10" );
+
+    orderRadioGroupLayout->addWidget( radioButton10, 0, 2 );
+
+    statsTabLayout->addWidget( orderRadioGroup, 2, 1 );
+
+    colorRadioGroup = new QButtonGroup( statsTab, "colorRadioGroup" );
+    colorRadioGroup->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, colorRadioGroup->sizePolicy().hasHeightForWidth() ) );
+    colorRadioGroup->setColumnLayout(0, Qt::Vertical );
+    colorRadioGroup->layout()->setSpacing( 6 );
+    colorRadioGroup->layout()->setMargin( 11 );
+    colorRadioGroupLayout = new QGridLayout( colorRadioGroup->layout() );
+    colorRadioGroupLayout->setAlignment( Qt::AlignTop );
+
+    radioButton11 = new QRadioButton( colorRadioGroup, "radioButton11" );
+    radioButton11->setChecked( TRUE );
+
+    colorRadioGroupLayout->addWidget( radioButton11, 0, 0 );
+
+    radioButton12 = new QRadioButton( colorRadioGroup, "radioButton12" );
+
+    colorRadioGroupLayout->addWidget( radioButton12, 0, 1 );
+
+    statsTabLayout->addWidget( colorRadioGroup, 2, 2 );
+    spacer7 = new QSpacerItem( 81, 41, QSizePolicy::Expanding, QSizePolicy::Minimum );
+    statsTabLayout->addItem( spacer7, 2, 3 );
     tabWidget->insertTab( statsTab, QString::fromLatin1("") );
 
     featuresTab = new QWidget( tabWidget, "featuresTab" );
@@ -368,7 +412,7 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     MenuBar->insertItem( QString(""), fileMenu, 1 );
 
     languageChange();
-    resize( QSize(916, 721).expandedTo(minimumSizeHint()) );
+    resize( QSize(937, 738).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections
@@ -392,6 +436,18 @@ LaunchPadBase::~LaunchPadBase()
 void LaunchPadBase::languageChange()
 {
     setCaption( tr( "Hawkeye" ) );
+    orderRadioGroup->setTitle( tr( "Ordering" ) );
+    radioButton8->setText( tr( "Size" ) );
+    QToolTip::add( radioButton8, tr( "Sort Objects by Size" ) );
+    radioButton9->setText( tr( "Feature Density" ) );
+    QToolTip::add( radioButton9, tr( "Sort Objects By Feature Density" ) );
+    radioButton10->setText( tr( "Treemap" ) );
+    QToolTip::add( radioButton10, tr( "Display Objects in a Treemap" ) );
+    colorRadioGroup->setTitle( tr( "Coloring" ) );
+    radioButton11->setText( tr( "Green - Red" ) );
+    QToolTip::add( radioButton11, tr( "Color objects with a green to red gradient" ) );
+    radioButton12->setText( tr( "White - Red" ) );
+    QToolTip::add( radioButton12, tr( "Color objects with a white to red gradient" ) );
     tabWidget->changeTab( statsTab, tr( "Statistics" ) );
     groupGroup->setTitle( tr( "Group by" ) );
     featureGroupContigButton->setText( tr( "Contig" ) );

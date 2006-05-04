@@ -48,6 +48,11 @@ LaunchPad::LaunchPad(QWidget* parent, const char* name, WFlags fl)
   connect(contigSizes,   SIGNAL(idSelected(int)),   this, SLOT(showAll()));
   connect(scaffoldSizes, SIGNAL(idSelected(int)),   this, SLOT(showAll()));
 
+  connect(orderRadioGroup, SIGNAL(clicked(int)), scaffoldSizes, SLOT(setOrdering(int)));
+  connect(orderRadioGroup, SIGNAL(clicked(int)), contigSizes,   SLOT(setOrdering(int)));
+  connect(colorRadioGroup, SIGNAL(clicked(int)), scaffoldSizes, SLOT(setColorStyle(int)));
+  connect(colorRadioGroup, SIGNAL(clicked(int)), contigSizes,   SLOT(setColorStyle(int)));
+
   statusBar()->message("No Bank Loaded");
 }
 
