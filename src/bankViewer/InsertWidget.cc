@@ -1482,6 +1482,13 @@ void InsertWidget::setInsertCanvasSize(int width, int height)
   m_updatingScrollBars = false;
 }
 
+void InsertWidget::showAll()
+{
+  hrange->setRange(hrange->minimum(), hrange->maximum());
+  vrange->setRange(vrange->minimum(), vrange->maximum());
+  resizeField();
+}
+
 
 void InsertWidget::setHappyDistance(float distance)
 {

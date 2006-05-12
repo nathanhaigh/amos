@@ -49,6 +49,7 @@ public slots:
 
   void refreshWidget();
 
+  void showAll();
   void setTilingVisibleRange(int, int, int);
   void paintCanvas();
   void setConnectMates(bool);

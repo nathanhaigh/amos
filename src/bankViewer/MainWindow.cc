@@ -28,7 +28,7 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
   m_gindex = 0;
   m_fontsize = 10;
 
-  setGeometry(150,700,QApplication::desktop()->width()-200,400);
+  setGeometry(150,QApplication::desktop()->height()-450-parent->pos().y(),QApplication::desktop()->width()-200,400);
 
   m_outervbox = new QVBox(this, "mainvbox");
   setCentralWidget( m_outervbox);
@@ -187,6 +187,8 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
   }
 
   toggleHighlightDiscrepancy();
+
+  emit setFontSize(m_fontsize);
 }
 
 void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)

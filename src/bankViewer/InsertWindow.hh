@@ -54,6 +54,7 @@ signals:
   void search(const QString &);
 
   void highlightRead(int);
+  void showAll();
 
 private:
 
