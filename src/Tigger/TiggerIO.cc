@@ -106,6 +106,7 @@ void get_umd_overlaps(const char* p_file) {
   while(olaps >> olap->ridA >> olap->ridB >> olap->ori >> olap->ahang \
 	>> olap->bhang >> alen >> blen >> alin_score >> errors >> percent) {
     tigger.add_overlap(olap);
+    olap = new Overlap();
   }
 
 }
