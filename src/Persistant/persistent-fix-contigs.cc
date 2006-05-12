@@ -29,6 +29,16 @@ public:
 typedef map<ID_t, ReadPosInfo > ReadPosLookup;
 ReadPosLookup read2contigpos;
 
+int get5Offset(Tile_t * tile)
+{
+  if (tile->range.isReverse())
+  {
+    return tile->getRightOffset();
+  }
+
+  return tile->offset;
+}
+
 
 int main (int argc, char ** argv)
 {
@@ -107,14 +117,12 @@ int main (int argc, char ** argv)
       patch_contig.fetch(c->iid, contig);
 
       vector<Tile_t> & tiling = contig.getReadTiling();
-      vector<Tile_t>::const_iterator ti;
+      vector<Tile_t>::iterator ti;
       for (ti = tiling.begin(); ti != tiling.end(); ti++)
       {
         int gappedlen = ti->getGappedLength();
 
-        int pos = ti->offset;
-        if (ti->range.isReverse()) { pos = ti->getRightOffset(); }
-
+        int pos = get5Offset(&(*ti));
         read2contigpos.insert(make_pair(ti->source, ReadPosInfo(c->iid, 
                                                                 pos, 
                                                                 ti->offset, 
@@ -138,15 +146,15 @@ int main (int argc, char ** argv)
         string mcons = contig.getSeqString();
         vector<Tile_t> & tiling = contig.getReadTiling();
 
-        vector<Tile_t>::const_iterator m1;
-        vector<Tile_t>::const_iterator m2;
+        vector<Tile_t>::iterator m1;
+        vector<Tile_t>::iterator m2;
 
-        vector<Tile_t>::const_iterator master1;
-        vector<Tile_t>::const_iterator master2;
+        vector<Tile_t>::iterator master1;
+        vector<Tile_t>::iterator master2;
 
 
-        ReadPosLookup::const_iterator patch1;
-        ReadPosLookup::const_iterator patch2;
+        ReadPosLookup::iterator patch1;
+        ReadPosLookup::iterator patch2;
 
         int maxdist = 0;
 
@@ -154,162 +162,191 @@ int main (int argc, char ** argv)
         sort(tiling.begin(), tiling.end(), TileOrderCmp());
         int tilingsize = tiling.size();
 
-        for (m1 = tiling.begin(); m1 != tiling.end(); m1++)
+        bool bigjump = false;
+        for (int i = 0; i+1 < tilingsize; i++)
         {
-          int m1pos = m1->offset;
-          if (m1->range.isReverse()) { m1pos = m1->getRightOffset(); }
+          int m1pos = get5Offset(&tiling[i]);
+          int m2pos = get5Offset(&tiling[i+1]);
 
-          for (m2 = m1+1; m2 != tiling.end(); m2++)
+          int dist = abs(m2pos - m1pos);
+
+          ReadPosLookup::iterator p1 = read2contigpos.find(tiling[i].source);
+          ReadPosLookup::iterator p2 = read2contigpos.find(tiling[i+1].source);
+
+          if (p1 != read2contigpos.end() &&
+              p2 != read2contigpos.end() &&
+              p1->second.m_contigiid == p2->second.m_contigiid)
           {
-            int m2pos = m2->offset;
-            if (m2->range.isReverse()) { m2pos = m2->getRightOffset(); }
+            int olddist = abs(p1->second.m_5pos - p2->second.m_5pos);
+            int delta = olddist - dist;
 
-            int dist = abs(m2pos - m1pos);
-
-            ReadPosLookup::const_iterator p1 = read2contigpos.find(m1->source);
-            ReadPosLookup::const_iterator p2 = read2contigpos.find(m2->source);
-
-            if (p1 != read2contigpos.end() &&
-                p2 != read2contigpos.end() &&
-                p1->second.m_contigiid == p2->second.m_contigiid)
+            if (delta >= MINDELTA)
             {
-              int olddist = abs(p1->second.m_5pos - p2->second.m_5pos);
-              int delta = olddist - dist;
-
-              if (delta > maxdist && delta >= MINDELTA)
-              {
-                if (PERFECT_OVL)
-                {
-                  Contig_t pcontig;
-                  patch_contig.fetch(p1->second.m_contigiid, pcontig);
-                  string pcons = pcontig.getSeqString();
-
-                  string mc1 = mcons.substr(m1->offset, m1->getGappedLength());
-                  string pc1 = pcons.substr(p1->second.m_offset, p1->second.m_gappedlen);
-
-                  if (m1->range.isReverse()) { Reverse_String(mc1); }
-                  if (p1->second.m_rc)       { Reverse_String(pc1); }
-
-                  string mc2 = mcons.substr(m2->offset, m2->getGappedLength());
-                  string pc2 = pcons.substr(p2->second.m_offset, p2->second.m_gappedlen);
-
-                  if (m2->range.isReverse()) { Reverse_String(mc2); }
-                  if (p2->second.m_rc)       { Reverse_String(pc2); }
-
-                  if (mc1 != pc1 || mc2 != pc2)
-                  {
-                    cerr << "Contig " << contig.getIID() << " within dist (" << delta 
-                         << "), but consensus mismatch!!!" << endl;
-
-                    cerr << "mc1: " << mc1 << endl;
-                    cerr << "pc1: " << pc1 << endl;
-
-                    cerr << endl;
-                    cerr << "mc2: " << mc2 << endl;
-                    cerr << "pc2: " << pc2 << endl;
-                    cerr << endl;
-                    cerr << endl;
-                    continue;
-                  }
-                }
-
-                maxdist = delta;
-
-                if (m1->offset < m2->offset)
-                {
-                  master1 = m1; master2 = m2;
-                  patch1  = p1; patch2  = p2;
-                }
-                else
-                {
-                  master1 = m2; master2 = m1;
-                  patch1  = p2; patch2  = p1;
-                }
-              }
+              bigjump = true;
+              break;
             }
           }
         }
 
-        if (maxdist >= MINDELTA)
+        int SCANALL = 1;
+
+        if (bigjump || SCANALL)
         {
-          bool dostitch = true;
-
-          int rc = (patch1->second.m_offset > patch2->second.m_offset) ? 1 : 0;
-
-          if (rc)
+          for (m1 = tiling.begin(); m1 != tiling.end(); m1++)
           {
-             vector<Tile_t>::const_iterator t = master1;
-             master1 = master2; master2 = t;
+            int m1pos = get5Offset(&(*m1));
 
-             ReadPosLookup::const_iterator p = patch1;
-             patch1 = patch2; patch2 = p;
+            for (m2 = m1+1; m2 != tiling.end(); m2++)
+            {
+              int m2pos = get5Offset(&(*m2));
+
+              int dist = abs(m2pos - m1pos);
+
+              ReadPosLookup::iterator p1 = read2contigpos.find(m1->source);
+              ReadPosLookup::iterator p2 = read2contigpos.find(m2->source);
+
+              if (p1 != read2contigpos.end() &&
+                  p2 != read2contigpos.end() &&
+                  p1->second.m_contigiid == p2->second.m_contigiid)
+              {
+                int olddist = abs(p1->second.m_5pos - p2->second.m_5pos);
+                int delta = olddist - dist;
+
+                if (delta > maxdist && delta >= MINDELTA)
+                {
+                  if (PERFECT_OVL)
+                  {
+                    Contig_t pcontig;
+                    patch_contig.fetch(p1->second.m_contigiid, pcontig);
+                    string pcons = pcontig.getSeqString();
+
+                    string mc1 = mcons.substr(m1->offset, m1->getGappedLength());
+                    string pc1 = pcons.substr(p1->second.m_offset, p1->second.m_gappedlen);
+
+                    if (m1->range.isReverse()) { Reverse_String(mc1); }
+                    if (p1->second.m_rc)       { Reverse_String(pc1); }
+
+                    string mc2 = mcons.substr(m2->offset, m2->getGappedLength());
+                    string pc2 = pcons.substr(p2->second.m_offset, p2->second.m_gappedlen);
+
+                    if (m2->range.isReverse()) { Reverse_String(mc2); }
+                    if (p2->second.m_rc)       { Reverse_String(pc2); }
+
+                    if (mc1 != pc1 || mc2 != pc2)
+                    {
+                      cerr << "Contig " << contig.getIID() << " within dist (" << delta 
+                           << "), but consensus mismatch!!!" << endl;
+
+                      cerr << "mc1: " << mc1 << endl;
+                      cerr << "pc1: " << pc1 << endl;
+
+                      cerr << endl;
+                      cerr << "mc2: " << mc2 << endl;
+                      cerr << "pc2: " << pc2 << endl;
+                      cerr << endl;
+                      cerr << endl;
+                      continue;
+                    }
+                  }
+
+                  maxdist = delta;
+
+                  if (m1->offset < m2->offset)
+                  {
+                    master1 = m1; master2 = m2;
+                    patch1  = p1; patch2  = p2;
+                  }
+                  else
+                  {
+                    master1 = m2; master2 = m1;
+                    patch1  = p2; patch2  = p1;
+                  }
+                }
+              }
+            }
           }
 
-
-
-          string leftstitchread  = master_reads.lookupEID(master1->source);
-          string rightstitchread = master_reads.lookupEID(master2->source);
-
-
-          cout << ">Stitch mcontig: " << contig.getIID() << " pcontig: " << patch1->second.m_contigiid 
-               << " delta: " << maxdist << " left: " << leftstitchread << " right: " << rightstitchread 
-               << " " << rc << " " << endl;
-
-          if ((patch1->second.m_offset + patch1->second.m_gappedlen) > 
-              (patch2->second.m_offset))
+          if (maxdist >= MINDELTA)
           {
-            cerr << "patch1 contains patch2!!!" << endl;
-            dostitch = false;
+            bool dostitch = true;
+
+            int rc = (patch1->second.m_offset > patch2->second.m_offset) ? 1 : 0;
+
+            if (rc)
+            {
+               vector<Tile_t>::iterator t = master1;
+               master1 = master2; master2 = t;
+
+               ReadPosLookup::iterator p = patch1;
+               patch1 = patch2; patch2 = p;
+            }
+
+
+
+            string leftstitchread  = master_reads.lookupEID(master1->source);
+            string rightstitchread = master_reads.lookupEID(master2->source);
+
+
+            cout << ">Stitch mcontig: " << contig.getIID() << " pcontig: " << patch1->second.m_contigiid 
+                 << " delta: " << maxdist << " left: " << leftstitchread << " right: " << rightstitchread 
+                 << " " << rc << " " << endl;
+
+            if ((patch1->second.m_offset + patch1->second.m_gappedlen) > 
+                (patch2->second.m_offset))
+            {
+              cerr << "patch1 contains patch2!!!" << endl;
+              dostitch = false;
+            }
+
+            if ((patch2->second.m_offset + patch2->second.m_gappedlen) > 
+                (patch1->second.m_offset))
+            {
+              cerr << "patch2 contains patch1!!!" << endl;
+              dostitch = false;
+            }
+
+            if (rc)
+            {
+               if ((patch1->second.m_rc == master1->range.isReverse()) ||
+                   (patch2->second.m_rc == master2->range.isReverse()))
+               {
+                 cerr << "Impossible orientations rc1!!!";
+                 dostitch = false;
+               }
+            }
+            else
+            {
+               if ((patch1->second.m_rc != master1->range.isReverse()) ||
+                   (patch2->second.m_rc != master2->range.isReverse()))
+               {
+                 cerr << "Impossible orientations rc0!!!" << endl;
+                 cerr << "patch1: " << patch1->second.m_rc << " " << patch1->second.m_offset << endl;
+                 cerr << "master1: " << (master1->range.isReverse() ? 1 : 0) << " " << master1->offset << endl;
+
+                 cerr << "patch2: " << patch2->second.m_rc << " " << patch2->second.m_offset << endl;
+                 cerr << "master2: " << (master2->range.isReverse() ? 1 : 0) << " " << master2->offset << endl;
+
+                 dostitch = false;
+               }
+            }
+
+            if (dostitch && DOSTITCH)
+            {
+              if (rc) { reverseContig(master_contig, master_scaff, master_feat, contig.getIID()); }
+
+              set<ID_t> masterreads, patchreads;
+              Range_t stitchRegion;
+
+              stitchContigs(master_contig, master_reads, master_scaff, master_feat,
+                            patch_contig,  patch_reads,  patch_feat,
+                            leftstitchread, rightstitchread, 
+                            masterreads, patchreads, stitchRegion,
+                            contig.getIID(), 0, patch1->second.m_contigiid,
+                            false, PERFECT_OVL);
+            }
+
+            cout << endl << endl;
           }
-
-          if ((patch2->second.m_offset + patch2->second.m_gappedlen) > 
-              (patch1->second.m_offset))
-          {
-            cerr << "patch2 contains patch1!!!" << endl;
-            dostitch = false;
-          }
-
-          if (rc)
-          {
-             if ((patch1->second.m_rc == master1->range.isReverse()) ||
-                 (patch2->second.m_rc == master2->range.isReverse()))
-             {
-               cerr << "Impossible orientations rc1!!!";
-               dostitch = false;
-             }
-          }
-          else
-          {
-             if ((patch1->second.m_rc != master1->range.isReverse()) ||
-                 (patch2->second.m_rc != master2->range.isReverse()))
-             {
-               cerr << "Impossible orientations rc0!!!" << endl;
-               cerr << "patch1: " << patch1->second.m_rc << " " << patch1->second.m_offset << endl;
-               cerr << "master1: " << (master1->range.isReverse() ? 1 : 0) << " " << master1->offset << endl;
-
-               cerr << "patch2: " << patch2->second.m_rc << " " << patch2->second.m_offset << endl;
-               cerr << "master2: " << (master2->range.isReverse() ? 1 : 0) << " " << master2->offset << endl;
-
-               dostitch = false;
-             }
-          }
-
-          if (dostitch && DOSTITCH)
-          {
-            if (rc) { reverseContig(master_contig, master_scaff, master_feat, contig.getIID()); }
-
-            set<ID_t> masterreads, patchreads;
-            Range_t stitchRegion;
-
-            stitchContigs(master_contig, master_reads, master_scaff, master_feat,
-                          patch_contig,  patch_reads,  patch_feat,
-                          leftstitchread, rightstitchread, 
-                          masterreads, patchreads, stitchRegion,
-                          contig.getIID(), 0, patch1->second.m_contigiid,
-                          false, PERFECT_OVL);
-          }
-
-          cout << endl << endl;
         }
       }
     }
