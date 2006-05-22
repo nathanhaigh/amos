@@ -26,7 +26,7 @@ InsertField::InsertField(DataStore * datastore,
                          QCanvas * canvas, 
                          QWidget * parent, 
                          const char * name)
- : QCanvasView(canvas, parent, name),
+ : QCanvasView(canvas, parent, name, Qt::WRepaintNoErase),
    m_datastore(datastore),
    m_hoffset(hoffset),
    m_featrect(NULL),
@@ -42,9 +42,6 @@ InsertField::InsertField(DataStore * datastore,
 
   setHScrollBarMode(QScrollView::AlwaysOff);
   setVScrollBarMode(QScrollView::AlwaysOff);
-
-  setWFlags(Qt::WRepaintNoErase | Qt::WResizeNoErase);
-
 
   m_visibleRect = NULL;
   m_toolstate = 0;

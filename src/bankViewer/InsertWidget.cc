@@ -100,6 +100,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_datastore = datastore;
   m_tilingVisible = NULL;
 
+  setWFlags(Qt::WRepaintNoErase | Qt::WResizeNoErase);
 
   m_hscale = .06250;
   m_contigid = 0;
@@ -151,6 +152,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
 
   m_currentScaffold = AMOS::NULL_ID;
+  m_currentContig   = AMOS::NULL_ID;
 
   m_seqheight = 4;
   m_tilingwidth = 0;
@@ -246,6 +248,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   a->connectItem(a->insertItem(Key_Right),        this, SLOT(right()) );
   a->connectItem(a->insertItem(Key_Escape),       this, SLOT(stopbreak()));
   a->connectItem(a->insertItem(CTRL+SHIFT+Key_A), this, SLOT(autoplay()) );
+
+  a->connectItem(a->insertItem(CTRL+Key_Q),       qApp, SLOT(quit()));
 
   m_ifield->show();
 }
@@ -467,7 +471,13 @@ void InsertWidget::initializeTiling()
 
   m_features.clear();
   m_ctiling.clear();
+
+  bool newScaffold = 
+          (m_currentScaffold == AMOS::NULL_ID && (m_currentContig   != m_datastore->m_contigId)) ||
+          (m_currentScaffold != AMOS::NULL_ID && (m_currentScaffold != m_datastore->m_scaffoldId));
+
   m_currentScaffold = m_datastore->m_scaffoldId;
+  m_currentContig   = m_datastore->m_contigId;
   m_tiling.clear();
 
   if (m_paintScaffold && m_currentScaffold != AMOS::NULL_ID)
@@ -677,6 +687,8 @@ void InsertWidget::initializeTiling()
 
   computeInsertHappiness();
   paintCanvas();
+
+  if (newScaffold) { showAll(); }
 
   QApplication::restoreOverrideCursor();
 }

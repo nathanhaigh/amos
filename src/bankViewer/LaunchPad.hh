@@ -114,7 +114,6 @@ signals:
 
   void contigIdSelected(int);
   void gindexSelected(int);
-  void showAllScaffold();
 
 
 private:

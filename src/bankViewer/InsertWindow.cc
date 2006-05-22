@@ -368,10 +368,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(iw, SIGNAL(jumpToRead(int)),
           parent, SLOT(jumpToRead(int)));
 
-  connect(parent, SIGNAL(showAllScaffold()),
-          iw,     SLOT(showAll()));
-
-
   if (s_persistant)
   {
     // Persistant Toolbar

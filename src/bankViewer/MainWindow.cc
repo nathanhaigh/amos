@@ -118,6 +118,8 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
   a->connectItem(a->insertItem(CTRL + Key_PageUp),   bNextDisc, SLOT(animateClick()));
   a->connectItem(a->insertItem(CTRL + Key_PageDown), bPrevDisc, SLOT(animateClick()));
 
+  a->connectItem(a->insertItem(CTRL+Key_Q),       qApp, SLOT(quit()));
+
   QIconSet icon_fontminus(QPixmap((const char ** )fontdecrease_xpm));
   QIconSet icon_fontplus(QPixmap((const char **)fontincrease_xpm));
 
