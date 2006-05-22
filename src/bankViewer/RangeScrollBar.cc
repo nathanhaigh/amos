@@ -74,6 +74,7 @@ RangeScrollBar_t::RangeScrollBar_t
 (Qt::Orientation orientation, QWidget * parent)
   : QWidget (parent)
 {
+  setWFlags(Qt::WRepaintNoErase | Qt::WResizeNoErase);
   orientation_m = orientation;
   init();
 }
@@ -291,6 +292,8 @@ void RangeScrollBar_t::mouseMoveEvent (QMouseEvent * e)
       setRangeHigh (pix2val (pos - clickOffset_m));
       break;
     }
+
+  repaint(); // can't call update, or the repaint events will just queue up 
 }
 
 
