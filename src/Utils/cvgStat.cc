@@ -289,15 +289,15 @@ int main(int argc, char ** argv)
 
       layout_stream >> lay;
 
+      if (layout_stream.eof()) // emptied bank
+	break;
+
       if (lay.getEID() != "" && globals.find("byiid") == globals.end()){
 	cout << ">" << lay.getEID() << " LAY iid:" << lay.getIID() << endl;
       } else if (lay.getIID() != 0 && globals.find("byeid") == globals.end()){
 	cout << ">" << lay.getIID() << " LAY eid:" << lay.getEID() << endl;
       } else 
 	continue;              // no id, no output
-      
-      if (layout_stream.eof()) // emptied bank
-	continue;
 
       tv = lay.getTiling();
     }
@@ -307,15 +307,15 @@ int main(int argc, char ** argv)
 
       contig_stream >> ctg;
 
+      if (contig_stream.eof()) // emptied bank
+	break;
+
       if (ctg.getEID() != "" && globals.find("byiid") == globals.end()){
 	cout << ">" << ctg.getEID() << " CTG iid:" << ctg.getIID() << endl;
       } else if (ctg.getIID() != 0 && globals.find("byeid") == globals.end()){
 	cout << ">" << ctg.getIID() << " CTG eid:" << ctg.getEID() << endl;
       } else 
 	continue;              // no id, no output
-
-      if (contig_stream.eof()) // emptied bank
-	continue;
 
       tv = ctg.getReadTiling();
       len = ctg.getLength();
@@ -325,6 +325,10 @@ int main(int argc, char ** argv)
       Scaffold_t scf;
 
       scaffold_stream >> scf;
+
+      if (scaffold_stream.eof()) // emptied bank
+	break;
+
       len = scf.getSpan();
       
       if (scf.getEID() != "" && globals.find("byiid") == globals.end()){
