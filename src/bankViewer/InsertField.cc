@@ -418,18 +418,18 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   int xpos = real.x();
   int ypos = real.y();
 
-  if (m_toolstate == 1)
+  if (m_toolstate == 1) // zoomin
   {
     QWMatrix m = worldMatrix();
     QWMatrix newzoom(m.m11()*2, m.m12(), m.m21(), m.m22()*1.25, m.dx(), m.dy());
-    setWorldMatrix(newzoom); //zoomin
+    setWorldMatrix(newzoom); 
 
     setContentsPos((int)(xpos*newzoom.m11() - visibleWidth()/2), 
-                   (int)(ypos*newzoom.m22() - visibleWidth()/2));
+                   (int)(ypos*newzoom.m22() - visibleHeight()/2));
 
     emit updateVisibleRange();
   }
-  else if (m_toolstate == 2)
+  else if (m_toolstate == 2) // zoomout
   {
     QWMatrix m = worldMatrix();
     QWMatrix newzoom(m.m11()/2, m.m12(), m.m21(), m.m22()/1.25, m.dx(), m.dy());
@@ -446,14 +446,14 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
       newzoom.setMatrix(newzoom.m11(), newzoom.m12(), newzoom.m21(), yf, newzoom.dx(), newzoom.dy());
     }
 
-    setWorldMatrix(newzoom); //zoomout
+    setWorldMatrix(newzoom);
 
     setContentsPos((int)(xpos*newzoom.m11() - visibleWidth()/2), 
-                   (int)(ypos*newzoom.m22() - visibleWidth()/2));
+                   (int)(ypos*newzoom.m22() - visibleHeight()/2));
 
     emit updateVisibleRange();
   }
-  else
+  else // center
   {
     QString s;
 

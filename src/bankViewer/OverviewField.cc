@@ -12,7 +12,7 @@ using namespace std;
 OverviewField::OverviewField(QCanvas * canvas,
                              QWidget * parent, 
                              const char * name)
-  :QCanvasView(canvas, parent, name)
+  :QCanvasView(canvas, parent, name, Qt::WRepaintNoErase)
 {
   setCursor(Qt::CrossCursor);
 }

@@ -1454,7 +1454,12 @@ void InsertWidget::paintCanvas()
   cerr << "." << endl;
 
   setInsertCanvasSize(scaledwidth, voffset);
+
+  bool old = m_syncWithTiling;
+  m_syncWithTiling = false;
   setTilingVisibleRange(m_contigid, m_gstart, m_gend);
+  m_syncWithTiling = old;
+
   m_ifield->updateVisibleRect();
 
   resizeOverview();
@@ -1465,6 +1470,8 @@ void InsertWidget::paintCanvas()
 
 void InsertWidget::resizeField()
 {
+  setInsertCanvasSize(m_icanvas->width(), m_icanvas->height());
+
   setVisibleVRange(vrange->rangeLow(), vrange->rangeHigh());
   setVisibleHRange(hrange->rangeLow(), hrange->rangeHigh());
 }
@@ -1480,17 +1487,14 @@ void InsertWidget::resizeOverview()
   m_overview->setMinimumHeight(m_scaffoldbottom-m_scaffoldtop);
 }
 
-void InsertWidget::setInsertCanvasSize(int width, int height)
+void InsertWidget::setInsertCanvasSize(int cwidth, int cheight)
 {
+  cheight = max(cheight, height());
+  cwidth  = max(cwidth,  width());
+
   m_updatingScrollBars = true;
-  hrange->setMaxRange(0, width);
-  vrange->setMaxRange(0, height);
-
-  width = min(width, 2000);
-
-  hrange->setRange(0, width);
-  vrange->setRange(0, height);
-
+  hrange->setMaxRange(0, cwidth);
+  vrange->setMaxRange(0, cheight);
   m_updatingScrollBars = false;
 }
 
