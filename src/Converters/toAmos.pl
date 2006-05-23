@@ -864,110 +864,150 @@ sub parseMatesFile {
 # Celera .asm
 # populates %contigs, %asm_range, %seqcontig, %contigcons
 # expects %seq_range to be populated
-sub parseAsmFile {
-    my $IN = shift;
+sub parseAsmFile 
+{
+  my $IN = shift;
 
-    while (my $record = getRecord($IN)){
-	my ($type, $fields, $recs) = parseRecord($record);
-	if (($type eq "CCO") || 
+  while (my $record = getRecord($IN))
+  {
+    my ($type, $fields, $recs) = parseRecord($record);
+
+    if (($type eq "CCO") || 
         ($INCLUDE_SURROGATE && ($type eq "UTG") && ($$fields{sta} eq "S")) ||
-        ($UTG_MESSAGES && ($type eq "UTG"))
-        ){
+        ($UTG_MESSAGES && ($type eq "UTG")))
+    {
+      my $sts = "C";
+      $sts = $$fields{sta} if $type eq "UTG";
+      $sts = $$fields{pla} if $type eq "CCO";
 
-        my $sts = "C";
-        $sts = $$fields{sta} if $type eq "UTG";
-        $sts = $$fields{pla} if $type eq "CCO";
+      my $id = getCAId($$fields{acc});
+      my $iid = $minCtgId++;
+      my $contiglen = $$fields{len};
 
-	    my $id = getCAId($$fields{acc});
-	    my $iid = $minCtgId++;
-	    my $contiglen = $$fields{len};
+      $ctgnames{$iid} = $id;
+      $ctgids{$id} = $iid;
 
-	    $ctgnames{$iid} = $id;
-	    $ctgids{$id} = $iid;
+      my $coord;
 
-	    my $coord;
+      my $consensus = $$fields{cns};
+      my @consensus = split('\n', $consensus);
+      $consensus = join('', @consensus);
 
-	    my $consensus = $$fields{cns};
-	    my @consensus = split('\n', $consensus);
-	    $consensus = join('', @consensus);
+      print TMPCTG "#$iid $sts\n";
+      print TMPCTG $$fields{cns};
+      print TMPCTG "#\n";
+      print TMPCTG $$fields{qlt};
+      
+      $contigs{$iid} = $contiglen;
 
-	    print TMPCTG "#$iid $sts\n";
-	    print TMPCTG $$fields{cns};
-	    print TMPCTG "#\n";
-	    print TMPCTG $$fields{qlt};
-	    
-	    $contigs{$iid} = $contiglen;
+      for (my $i = 0; $i <= $#$recs; $i++)
+      {
+        my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
+        if ($sid eq "MPS")
+        {
+            if (! exists $seqids{getCAId($$sfs{mid})}){
+                die ("Have not seen sequence with id " . getCAId($$sfs{mid}));
+            }
 
-	    for (my $i = 0; $i <= $#$recs; $i++){
-		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
-		if ($sid eq "MPS"){
-		    if (! exists $seqids{getCAId($$sfs{mid})}){
-			die ("Have not seen sequence with id " . getCAId($$sfs{mid}));
-		    }
-		    my $fid = $seqids{getCAId($$sfs{mid})};
-		    print TMPCTG "#$fid\n";
-		    print TMPCTG $$sfs{del};
-		    $seqcontig{$fid} = $id;
-		    $contigseq{$id} .= "$fid ";
-		    
-		    my ($asml, $asmr) = split(',', $$sfs{pos});
-		    $asm_range{$fid} = "$asml $asmr";
-		}
-	    }
-	    print TMPCTG "#\n";
-	} # if type eq CCO
-	if ($type eq "SCF"){
-	    my $off = 0;
-	    print TMPSCF "{SCF\n";
-	    my $id = getCAId($$fields{acc});
-	    my $iid = $minCtgId++;
-	    $ctgids{$id} = $iid;
-	    $ctgnames{$iid} = $id;
-	    print TMPSCF "iid:$iid\n";
-	    print TMPSCF "eid:$id\n";
-	    for (my $i = 0; $i <= $#$recs; $i++){
-		my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
-		if ($sid eq "CTP"){
-		    print TMPSCF "{TLE\n";
-		    print TMPSCF "src:$ctgids{$$sfs{ct1}}\n";
-		    print TMPSCF "off:$off\n";
-		    if ($$sfs{ori} eq "N" ||
-			$$sfs{ori} eq "I"){
-			print TMPSCF "clr:0,$contigs{$ctgids{$$sfs{ct1}}}\n";
-		    } else {
-			print TMPSCF "clr:$contigs{$ctgids{$$sfs{ct1}}},0\n";
-		    }
-		    print TMPSCF "}\n";
-		    $off += $contigs{$ctgids{$$sfs{ct1}}};
-		    $off += int($$sfs{mea});
+            my $fid = $seqids{getCAId($$sfs{mid})};
+            print TMPCTG "#$fid\n";
+            print TMPCTG $$sfs{del};
+            $seqcontig{$fid} = $id;
+            $contigseq{$id} .= "$fid ";
+            
+            my ($asml, $asmr) = split(',', $$sfs{pos});
+            $asm_range{$fid} = "$asml $asmr";
+        }
+      }
+      print TMPCTG "#\n";
+    } 
+    elsif ($type eq "SCF")
+    {
+      my $off = 0;
+      print TMPSCF "{SCF\n";
+      my $id = getCAId($$fields{acc});
+      my $iid = $minCtgId++;
+      $ctgids{$id} = $iid;
+      $ctgnames{$iid} = $id;
+      print TMPSCF "iid:$iid\n";
+      print TMPSCF "eid:$id\n";
+      for (my $i = 0; $i <= $#$recs; $i++)
+      {
+        my ($sid, $sfs, $srecs) = parseRecord($$recs[$i]);
+        if ($sid eq "CTP")
+        {
+          print TMPSCF "{TLE\n";
+          print TMPSCF "src:$ctgids{$$sfs{ct1}}\n";
+          print TMPSCF "off:$off\n";
 
-		    if ($i == $#$recs &&
-			$$sfs{ct1} != $$sfs{ct2}){
-			print TMPSCF "{TLE\n";
-			print TMPSCF "src:$ctgids{$$sfs{ct2}}\n";
-			print TMPSCF "off:$off\n";
-			if ($$sfs{ori} eq "N" ||
-			    $$sfs{ori} eq "O"){
-			    print TMPSCF "clr:0,$contigs{$ctgids{$$sfs{ct2}}}\n";
-			} else {
-			    print TMPSCF "clr:$contigs{$ctgids{$$sfs{ct2}}},0\n";
-			}
-			print TMPSCF "}\n";
-		    }
-		}
-	    }
-	    print TMPSCF "}\n";
-	} # if type eq SCF
-	if ($type eq "CLK"){
-	    print TMPSCF "{CTE\n";
-            print TMPSCF "nds:$ctgids{$$fields{co1}},$ctgids{$$fields{co2}}\n";
-	    print TMPSCF "adj:$$fields{ori}\n";
-	    print TMPSCF "sze:$$fields{mea}\n";
-	    print TMPSCF "std:$$fields{std}\n";
-	    print TMPSCF "typ:M\n";
-	    print TMPSCF "}\n";
-	}
+          if ($$sfs{ori} eq "N" ||
+              $$sfs{ori} eq "I")
+          {
+            print TMPSCF "clr:0,$contigs{$ctgids{$$sfs{ct1}}}\n";
+          } 
+          else 
+          {
+            print TMPSCF "clr:$contigs{$ctgids{$$sfs{ct1}}},0\n";
+          }
+
+          print TMPSCF "}\n";
+          $off += $contigs{$ctgids{$$sfs{ct1}}};
+          $off += int($$sfs{mea});
+
+          if ($i == $#$recs && $$sfs{ct1} != $$sfs{ct2})
+          {
+            print TMPSCF "{TLE\n";
+            print TMPSCF "src:$ctgids{$$sfs{ct2}}\n";
+            print TMPSCF "off:$off\n";
+
+            if ($$sfs{ori} eq "N" ||
+                $$sfs{ori} eq "O")
+            {
+              print TMPSCF "clr:0,$contigs{$ctgids{$$sfs{ct2}}}\n";
+            } 
+            else 
+            {
+              print TMPSCF "clr:$contigs{$ctgids{$$sfs{ct2}}},0\n";
+            }
+
+            print TMPSCF "}\n";
+          }
+        }
+      }
+      print TMPSCF "}\n";
+    } 
+    elsif ($type eq "CLK")
+    {
+      print TMPSCF "{CTE\n";
+      print TMPSCF "nds:$ctgids{$$fields{co1}},$ctgids{$$fields{co2}}\n";
+      print TMPSCF "adj:$$fields{ori}\n";
+      print TMPSCF "sze:$$fields{mea}\n";
+      print TMPSCF "std:$$fields{std}\n";
+      print TMPSCF "typ:M\n";
+      print TMPSCF "}\n";
     }
+    elsif ($type eq "AFG")
+    {
+      ## Grab the clear range from the AFG records if present
+
+      if (exists $$fields{clr})
+      {
+        my $acc = getCAId($$fields{acc});
+        my $iid = $seqids{$acc};
+
+        my ($seql, $seqr) = split(/,/, $$fields{clr});
+        my $clrstr = "$seql $seqr";
+
+        # if (!defined $seq_range{$iid} || $seq_range{$iid} ne $clrstr)
+        # {
+        #   my $origclr = $seq_range{$iid};
+        #   print STDERR "Updating $acc clr range from $origclr to $clrstr\n";
+        # }
+
+        $seq_range{$iid} = $clrstr;
+      }
+    }
+  }
 } # parseAsmFile
 
 # TIGR .asm
