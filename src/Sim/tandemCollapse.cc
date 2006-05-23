@@ -126,10 +126,21 @@ struct cmpTile : public binary_function<Tile_t, Tile_t, bool> {
 
 // useful for sorting pair arrays
 template <class A, class B>
-struct cmpByFirst : public binary_function<pair<A, B>, pair<A, B>, bool> {
+struct ltByFirst : public binary_function<pair<A, B>, pair<A, B>, bool> {
   bool operator () (pair<A, B> x, pair<A, B> y)
   {
-    if (x . first < y . second)
+    if (x . first < y . first)
+      return true;
+    return false;
+  }
+};
+
+// useful for sorting pair arrays
+template <class A, class B>
+struct gtByFirst : public binary_function<pair<A, B>, pair<A, B>, bool> {
+  bool operator () (pair<A, B> x, pair<A, B> y)
+  {
+    if (x . first > y . first)
       return true;
     return false;
   }
@@ -205,14 +216,21 @@ int main (int argc, char ** argv)
     int ncopy;
 
     conf_stream >> tmp >> start >> len >> ncopy;
+
+    if (conf_stream.eof())
+      break;
+
+    cerr << "Repeat " << start << " " << len << " " << ncopy << " implies breakpoints:" << endl;
     if (tmp != "R"){
       cerr << "Don't understand " << tmp << " in configuration file.  Repeat line expected" << endl;
       exit(1);
     }
 
     start += len;
-    for (int i = 1; i < ncopy; i++, start += len)
+    for (int i = 1; i < ncopy; i++, start += len) {
       brkpoints.push_back(pair<Pos_t, Pos_t> (start, len));
+      cerr << start << "\t" << len << endl;
+    }
   }
   conf_stream.close();
 
@@ -319,9 +337,9 @@ int main (int argc, char ** argv)
 
   // sort tile vector by tile offset & breakpoints by coord
   sort(tv.begin(), tv.end(), cmpTile());
-  sort(brkpoints.begin(), brkpoints.end(), cmpByFirst<Pos_t, Pos_t> ());
+  sort(brkpoints.begin(), brkpoints.end(), ltByFirst<Pos_t, Pos_t> ());
 
-  priority_queue <pair<Pos_t, int>, vector<pair<Pos_t, int> >, cmpByFirst<Pos_t, int> > pq; // "active" tiles
+  priority_queue <pair<Pos_t, int>, vector<pair<Pos_t, int> >, gtByFirst<Pos_t, int> > pq; // "active" tiles
   int nextBrk = 0;  // next breakpoint to be processed
   Pos_t adjust = 0; // shift tiles by this much
   vector<Tile_t> new_tv; // output tiles
@@ -334,7 +352,7 @@ int main (int argc, char ** argv)
 	! pq.empty() && brkpoints[nextBrk].first < pq.top().first) {
       // pq had better not be empty at this point
       // clean up pq and move on
-      cerr << "found breakpoint\n";
+      cerr << "found breakpoint @" << brkpoints[nextBrk].first << endl;;
       while (! pq.empty())
 	pq.pop();
 
@@ -343,13 +361,16 @@ int main (int argc, char ** argv)
       continue;
     }
     if (pq.empty() || tv[ti].offset <= pq.top().first) { // add to pq
+      cerr << "Adding to pq @" << tv[ti].offset << " " << tv[ti].source << endl;
       pq.push(pair<Pos_t, int> (tv[ti].offset + tv[ti].getGappedLength(), ti));
       ti++;
       continue;
     } 
     if (! pq.empty() && pq.top().first < tv[ti].offset) { // remove from pq
       Tile_t nt = tv[pq.top().second];
-      
+
+      cerr << "Removing from pq @" << pq.top().first << " " << nt.source << endl;
+
       nt.offset -= adjust;  // shift by current adjustment
       new_tv.push_back(nt); // add to output
       pq.pop();             // remove from queue
