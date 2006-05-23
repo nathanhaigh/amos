@@ -32,6 +32,8 @@ string logFileName;
 string confFile;
 time_t allstart; // when program started
 
+bool ECHOMODE = 0;
+
 
 string elapsed(time_t time) 
 {
@@ -257,6 +259,7 @@ void printHelpText()
     "if the config file is not specified we use environment variable AMOSCONF\n"
     "if a start step is specified (-s) starts with that command\n"
     "if an end step is specified (-e) ends with the command prior to the number\n"
+    "if -E is specified, echo the commands to run, but don't actually run\n"
     "if -clean is specified, all files listed in the TEMPS var get removed\n"
     "if -ocd is specified checks that all files in the INPUTS variable exist\n"
     "-D option allows variables to be defined outside of the conf file.\n"
@@ -297,6 +300,7 @@ bool GetOptions(int argc, char ** argv)
     {"clean", 0, 0, 'x'},
     {"ocd",   0, 0, 'o'},
     {"D",     1, 0, 'D'},
+    {"E",     0, 0, 'E'},
     {0, 0, 0, 0}
   };
 
@@ -327,6 +331,9 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'D':
       processDefn(string(optarg));
+      break;
+    case 'E':
+      ECHOMODE = 1;
       break;
     case '?':
       return false;
@@ -454,6 +461,8 @@ void doCommand(string command)
   command = substVars(command);
 
   logFile << timeStr() << "Running: " << command << endl;
+
+  if (ECHOMODE) { return; }
 
   int fd[2];
   
