@@ -618,7 +618,8 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
   {
     cerr << endl;
 
-    cerr << "mated: "   << mated 
+    cerr << "inserts: " << inserts.size()
+         << " mated: "   << mated 
          << " matelisted: " << matelisted
          << " unmated: " << unmated
          << " happy: " << happycount

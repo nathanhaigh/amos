@@ -136,11 +136,13 @@ signals:
 private:
   void flushInserts();
   void computeInsertHappiness();
+  void computeCoverage();
+  void disconnectMates();
   void clearCanvas();
   void setInsertCanvasSize(int left, int right);
   void initializeVisibleRectangle();
-  void paintCoverage(QPointArray & arr, 
-                     std::vector<double> & rawvalues,
+  void paintCoverage(const QPointArray & arr, 
+                     const std::vector<double> & rawvalues,
                      bool copyraw,
                      int arrLen, 
                      int voffset, int vheight, 
@@ -211,12 +213,23 @@ private:
 
   std::map<char, std::pair<int, bool> > & m_types;
   CoverageStats * m_kmerstats;
+  CoverageStats * m_insertCL;
+  CoverageStats * m_readCL;
+
+  int m_width;
+
+  double m_meaninsertcoverage;
+  double m_meanreadcoverage;
+
+  typedef map<AMOS::ID_t, CoverageStats> LibStats;
+  LibStats m_libStats;
+
 
   RangeScrollBar_t * hrange;
   RangeScrollBar_t * vrange;
   OverviewField * m_overview;
 
-  int m_scaffoldtop, m_scaffoldbottom;
+  int m_overviewtop, m_overviewbottom;
   bool m_updatingScrollBars;
 };
 

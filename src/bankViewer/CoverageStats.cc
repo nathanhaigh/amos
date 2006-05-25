@@ -126,6 +126,10 @@ void CoverageStats::finalizeCE(int vheight)
 
     plotval += half;
 
+    // make sure plotval is within the vertical range
+    plotval = max(0,plotval);
+    plotval = min(vheight, plotval);
+
     // coverage gets the value to plot
     m_coverage[i].setY(plotval);
 
