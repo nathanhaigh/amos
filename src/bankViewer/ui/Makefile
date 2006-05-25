@@ -5,7 +5,9 @@ all: ../DetailWidget.cc \
      ../NChartWindowBase.cc \
      ../NChartWindowBase.hh \
      ../QueryWidget.cc \
-     ../QueryWidget.hh
+     ../QueryWidget.hh \
+     ../SelectionWidget.cc \
+     ../SelectionWidget.hh
 
 
 UIC=uic

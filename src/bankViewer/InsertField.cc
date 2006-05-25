@@ -335,6 +335,8 @@ void InsertField::processItemSelection(QString & s,
     s += "</table>";
 
     s += "<hr>";
+
+    jump = false;
   }
   else if ((*it)->rtti() == CoverageCanvasItem::RTTI)
   {

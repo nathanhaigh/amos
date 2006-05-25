@@ -30,6 +30,7 @@
 #include "BufferedLineEdit.hh"
 #include "QueryWidget.hh"
 #include "DetailWidget.hh"
+#include "SelectionWidget.hh"
 
 #include "icons/zoom_in.xpm"
 #include "icons/zoom_out.xpm"
@@ -56,63 +57,49 @@ InsertWindow::InsertWindow(DataStore * datastore,
   InsertWidget * iw = m_inserts;
   setCentralWidget(iw);
 
+  QDockWindow * sidedock = new QDockWindow(QDockWindow::InDock, this);
+  addDockWindow (sidedock, Qt::DockRight);
+
+  sidedock->setVerticallyStretchable(true);
+
 
   // Tools
+  m_select = new SelectionWidget(sidedock);
+  sidedock->boxLayout()->addWidget(m_select, 0);
+
+  // Query Dock
+  QScrollView * queryView = new QScrollView (sidedock, "queryview");
+  queryView->setResizePolicy (QScrollView::AutoOneFit);
+  queryView->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+  queryView->setHScrollBarMode(QScrollView::AlwaysOff);
+  m_query = new QueryWidget (queryView, "queries");
+  queryView->addChild (m_query);
+  sidedock->boxLayout()->addWidget(queryView, 10);
+
+  // Detail Dock
+  m_detail = new DetailWidget (sidedock, "details");
+  m_detail->setMinimumHeight(250);
+  m_detail->setMaximumHeight(250);
+  m_detail->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  sidedock->boxLayout()->addWidget(m_detail, 0);
+
+
+
+  // pointer button bar
   QIconSet icon_pointer(QPixmap((const char ** )pointer_tool));
   QIconSet icon_zoomin(QPixmap((const char ** )zoom_in));
   QIconSet icon_zoomout(QPixmap((const char **)zoom_out));
 
-  QDockWindow * toolDock = new QDockWindow (QDockWindow::InDock, this);
-  QToolButton * b = new QToolButton(toolDock, "select");
-  QHBoxLayout * hbox = new QHBoxLayout();
-
-  toolDock->setResizeEnabled(true);
-  toolDock->boxLayout()->addLayout (hbox);
-  addDockWindow (toolDock, Qt::DockRight);
-
-  hbox->addItem
-    (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum));
-
-  b->setIconSet(icon_pointer);
-  b->setTextLabel("select tool");
-  b->setMaximumSize(25,25);
-  connect(b, SIGNAL(clicked()), iw, SIGNAL(setSelectTool()));
-  hbox->addWidget(b);
-
-  hbox->addItem
-    (new QSpacerItem(10,0,QSizePolicy::Preferred,QSizePolicy::Minimum));
-
-  b = new QToolButton(toolDock, "zoomin");
-  b->setIconSet(icon_zoomin);
-  b->setTextLabel("zoom in");
-  b->setMaximumSize(25,25);
-  connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomInTool()));
-  hbox->addWidget(b);
-
-  hbox->addItem
-    (new QSpacerItem(10,0,QSizePolicy::Preferred,QSizePolicy::Minimum));
-
-  b = new QToolButton(toolDock, "zoomout");
-  b->setIconSet(icon_zoomout);
-  b->setTextLabel("zoom out");
-  b->setMaximumSize(25,25);
-  connect(b, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
-  hbox->addWidget(b);
-
-  hbox->addItem
-    (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum));
+  m_select->selectButton->setIconSet(icon_pointer);
+  m_select->zoomInButton->setIconSet(icon_zoomin);
+  m_select->zoomOutButton->setIconSet(icon_zoomout);
+  connect(m_select->selectButton,  SIGNAL(clicked()), iw, SIGNAL(setSelectTool()));
+  connect(m_select->zoomInButton,  SIGNAL(clicked()), iw, SIGNAL(setZoomInTool()));
+  connect(m_select->zoomOutButton, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
+  connect(m_select->syncWithTilingButton, SIGNAL(clicked()), this, SLOT(toggleSyncWithTiling()));
 
 
-  // Query Dock
-  QDockWindow * queryDock = new QDockWindow (QDockWindow::InDock, this);
-  QScrollView * queryView = new QScrollView (queryDock, "queryview");
-  queryView->setResizePolicy (QScrollView::AutoOneFit);
-  queryView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_query = new QueryWidget (queryView, "queries");
-  queryView->addChild (m_query);
-  queryDock->setWidget (queryView);
-  queryDock->setResizeEnabled (true);
-  addDockWindow (queryDock, Qt::DockRight);
+  // query widgets
 
 
   // Happy distance
@@ -211,13 +198,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_libLegend = NULL;
   buildLibraryBox();
 
-
-  // Detail Dock
-  QDockWindow * detailDock = new QDockWindow (QDockWindow::InDock, this);
-  m_detail = new DetailWidget (detailDock, "details");
-  detailDock->setWidget (m_detail);
-  detailDock->setResizeEnabled (true);
-  addDockWindow (detailDock, Qt::DockRight);
 
 
   // searching and happy distance
@@ -528,4 +508,10 @@ QPixmap InsertWindow::mateIcon(const QColor & color,int mode)
   p.end();
 
   return mate;
+}
+
+void InsertWindow::toggleSyncWithTiling()
+{
+  bool b = m_select->syncWithTilingButton->isChecked();
+  m_inserts->setSyncWithTiling(b);
 }

@@ -20,10 +20,10 @@ bankViewer_MOCSOURCES = \
         ContigCanvasItem.cc    \
         ContigPicker.cc        \
         CoverageCanvasItem.cc  \
-	CoverageRectCanvasItem.cc \
+        CoverageRectCanvasItem.cc \
         CoverageStats.cc       \
         DataStore.cc           \
-	DetailWidget.cc        \
+        DetailWidget.cc        \
         FeatureBrowser.cc      \
         FeatureCanvasItem.cc   \
         HistogramWidget.cc     \
@@ -34,21 +34,22 @@ bankViewer_MOCSOURCES = \
         InsertPosition.cc      \
         InsertWidget.cc        \
         InsertWindow.cc        \
-	LaunchPad.cc           \
-	LaunchPadBase.cc       \
+        LaunchPad.cc           \
+        LaunchPadBase.cc       \
         LibraryPicker.cc       \
         MainWindow.cc          \
         NChartWindow.cc        \
-        NChartWindowBase.cc        \
+        NChartWindowBase.cc    \
         NChartWidget.cc        \
         NetworkCom.cc          \
-	OverviewField.cc       \
-	QueryWidget.cc         \
+        OverviewField.cc       \
+        QueryWidget.cc         \
         RangeScrollBar.cc      \
         ReadInfo.cc            \
         ReadPicker.cc          \
         RenderSeq.cc           \
         ScaffoldPicker.cc      \
+        SelectionWidget.cc     \
         SplashScreen.cc        \
         TilingField.cc         \
         TilingFrame.cc

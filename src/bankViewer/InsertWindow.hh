@@ -10,6 +10,7 @@
 class QueryWidget;
 class DetailWidget;
 class InsertWidget;
+class SelectionWidget;
 
 #include <map>
 
@@ -40,6 +41,8 @@ public slots:
   void setMaxUnitigTol(int);
   void setMaxQCTol(int);
   void setMaxBreakTol(int);
+
+  void toggleSyncWithTiling();
 
 signals:
   void setGindex(int gindex);
@@ -74,6 +77,7 @@ private:
   InsertWidget * m_inserts;
   QueryWidget * m_query;
   DetailWidget * m_detail;
+  SelectionWidget * m_select;
 
   int m_connectmatesid;
   int m_partitiontypesid;
