@@ -74,7 +74,6 @@ RangeScrollBar_t::RangeScrollBar_t
 (Qt::Orientation orientation, QWidget * parent)
   : QWidget (parent)
 {
-  setWFlags(Qt::WRepaintNoErase | Qt::WResizeNoErase);
   orientation_m = orientation;
   init();
 }
@@ -195,6 +194,9 @@ QRect RangeScrollBar_t::highlightRect (int control)
 //-------------------------------------------------------------------- init ----
 void RangeScrollBar_t::init()
 {
+  setWFlags(Qt::WRepaintNoErase | Qt::WResizeNoErase);
+  setBackgroundMode(Qt::NoBackground); // for some reason this is necessary on qt 3.3.6
+
   //-- Default pixel size
   controlPix_m = 15;
   gripPix_m = 5;
@@ -346,11 +348,12 @@ void RangeScrollBar_t::mouseReleaseEvent (QMouseEvent * e)
   updateHover (e->pos());
 }
 
-
 //-------------------------------------------------------------- paintEvent ----
 void RangeScrollBar_t::paintEvent (QPaintEvent *)
 {
-  QPainter p (this);
+  QPixmap pix(width(), height());
+  pix.fill(this,0,0);
+  QPainter p (&pix);
 
   updateRects(); // update the control boundaries
 
@@ -382,6 +385,12 @@ void RangeScrollBar_t::paintEvent (QPaintEvent *)
       p.drawRect (highlightRect (hoveredControl_m));
     }
     */
+
+  p.end();
+
+  p.begin(this);
+  p.drawPixmap(0,0,pix);
+  p.end();
 }
 
 
