@@ -420,7 +420,8 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
   int xpos = real.x();
   int ypos = real.y();
 
-  if (m_toolstate == 1) // zoomin
+  if ((m_toolstate == 1 && e->button() == LeftButton) || 
+      (m_toolstate == 2 && e->button() == RightButton)) // zoomin
   {
     QWMatrix m = worldMatrix();
     QWMatrix newzoom(m.m11()*2, m.m12(), m.m21(), m.m22()*1.25, m.dx(), m.dy());
@@ -431,7 +432,8 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
     emit updateVisibleRange();
   }
-  else if (m_toolstate == 2) // zoomout
+  else if ((m_toolstate == 2 && e->button() == LeftButton) ||
+           (m_toolstate == 1 && e->button() == RightButton))// zoomout
   {
     QWMatrix m = worldMatrix();
     QWMatrix newzoom(m.m11()/2, m.m12(), m.m21(), m.m22()/1.25, m.dx(), m.dy());
