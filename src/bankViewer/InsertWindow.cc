@@ -9,6 +9,7 @@
 #include <qtoolbutton.h>
 #include <qpushbutton.h>
 #include <qcheckbox.h>
+#include <qbuttongroup.h>
 #include <qspinbox.h>
 #include <qaccel.h>
 #include <qmenubar.h>
@@ -187,12 +188,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
   iw->setTintHappiness(m_query->tintCheck->isChecked());
 
 
-  // Mate Colors
-  iw->setColorByStretchiness(m_query->continuousButton->isChecked());
-  iw->setColorByMate(m_query->linkingButton->isChecked());
-  iw->setColorByLibrary(m_query->libraryButton->isChecked());
-
-
   // Libraries
   m_query->libraryBox->setColumnLayout(1,Qt::Vertical);
   m_libLegend = NULL;
@@ -310,14 +305,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
           iw,                        SLOT(setTintHappiness(bool)));
 
   // mate coloring
-  connect(m_query->continuousButton, SIGNAL(toggled(bool)),
-          iw,                        SLOT(setColorByStretchiness(bool)));
-
-  connect(m_query->linkingButton,    SIGNAL(toggled(bool)),
-          iw,                        SLOT(setColorByMate(bool)));
-
-  connect(m_query->libraryButton,    SIGNAL(toggled(bool)),
-          iw,                        SLOT(setColorByLibrary(bool)));
+  connect(m_query->mateColorBox,     SIGNAL(clicked(int)),
+          iw,                        SLOT(setColorStyle(int)));
 
   // detail text
   connect(iw,   SIGNAL(setDetails(const QString &)),

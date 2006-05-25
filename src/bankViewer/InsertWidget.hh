@@ -57,14 +57,12 @@ public slots:
   void setCoveragePlot(bool);
   void setCEStatistic(bool);
   void setPaintScaffold(bool);
-  void setColorByLibrary(bool);
-  void setColorByMate(bool);
-  void setColorByStretchiness(bool);
   void setTintHappiness(bool);
   void contigChanged();
   void computePos(int);
   void setShowScaffold(bool);
   void setSyncWithTiling(bool);
+  void setColorStyle(int);
 
   void setHappyDistance(float);
 

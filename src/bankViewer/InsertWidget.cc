@@ -129,10 +129,11 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_paintScaffold  = 1;
   m_colorByLibrary = 0;
   m_colorByMate    = 0;
+  m_colorByStretchiness = 0;
+
   m_tintHappiness  = 0;
   m_showscaffold   = 1;
   m_kmercoverageplot = 1;
-  m_colorByStretchiness = 0;
   m_insertCovFeatures = 1;
   m_readCovFeatures = 1;
   m_snpFeatures = 1;
@@ -1546,27 +1547,6 @@ void InsertWidget::setPaintScaffold(bool b)
   initializeTiling();
 }
 
-void InsertWidget::setColorByLibrary(bool b)
-{
-  if ( m_colorByLibrary == b ) return;
-  m_colorByLibrary = b;
-  paintCanvas();
-}
-
-void InsertWidget::setColorByMate(bool b)
-{
-  if ( m_colorByMate == b ) return;
-  m_colorByMate = b;
-  paintCanvas();
-}
-
-void InsertWidget::setColorByStretchiness(bool b)
-{
-  if ( m_colorByStretchiness == b ) return;
-  m_colorByStretchiness = b;
-  paintCanvas();
-}
-
 void InsertWidget::setPersistant(bool b)
 {
   if ( m_persistant == b ) return;
@@ -1908,4 +1888,20 @@ void InsertWidget::contigChanged()
 void InsertWidget::refreshWidget()
 {
   initializeTiling();
+}
+
+void InsertWidget::setColorStyle(int style)
+{
+  m_colorByLibrary = 0; 
+  m_colorByMate = 0;
+  m_colorByStretchiness = 0; 
+
+  switch (style)
+  {
+    case 1: m_colorByStretchiness = 1; break;
+    case 2: m_colorByMate = 1;         break;
+    case 3: m_colorByLibrary = 1;      break;
+  };
+
+  paintCanvas();
 }
