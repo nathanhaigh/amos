@@ -753,29 +753,29 @@ void InsertWidget::computeCoverage()
 
   for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
   {
-    if ((*ii)->m_roffset > rightmost) { rightmost = (*ii)->m_roffset; }
+    curloffset = (*ii)->m_loffset;
+    curroffset = (*ii)->m_roffset;
+
+    if (curroffset > rightmost) { rightmost = curroffset; }
 
     // Only count happy mates towards insert coverage
     if ((*ii)->m_state == Insert::Happy)
     {
-      curloffset = (*ii)->m_loffset;
-      curroffset = (*ii)->m_roffset;
-
       totalinsertlen += (curroffset - curloffset + 1);
-
       m_insertCL->addEndpoints(curloffset, curroffset);
+    }
 
-      if ((*ii)->ceConnected())
+    // CE connected inserts count towards ce val
+    if ((*ii)->ceConnected())
+    {
+      li = m_libStats.find((*ii)->m_libid);
+
+      if (li == m_libStats.end())
       {
-        li = m_libStats.find((*ii)->m_libid);
-
-        if (li == m_libStats.end())
-        {
-          li = m_libStats.insert(make_pair((*ii)->m_libid, CoverageStats(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
-        }
-
-        li->second.addEndpoints(curloffset, curroffset);
+        li = m_libStats.insert(make_pair((*ii)->m_libid, CoverageStats(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
       }
+
+      li->second.addEndpoints(curloffset, curroffset);
     }
   }
 
