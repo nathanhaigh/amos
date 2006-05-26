@@ -81,6 +81,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_detail = new DetailWidget (sidedock, "details");
   m_detail->setMinimumHeight(250);
   m_detail->setMaximumHeight(250);
+  m_detail->detailText->setVScrollBarMode(QScrollView::AlwaysOff);
   m_detail->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   sidedock->boxLayout()->addWidget(m_detail, 0);
 

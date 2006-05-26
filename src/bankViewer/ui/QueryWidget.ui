@@ -936,7 +936,7 @@
                                 <string>CE Statistic</string>
                             </property>
                             <property name="checked">
-                                <bool>false</bool>
+                                <bool>true</bool>
                             </property>
                             <property name="toolTip" stdset="0">
                                 <string>Compression-expansion statistic plot</string>

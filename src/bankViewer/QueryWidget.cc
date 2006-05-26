@@ -368,7 +368,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     QFont ceCheck_font(  ceCheck->font() );
     ceCheck_font.setPointSize( 9 );
     ceCheck->setFont( ceCheck_font ); 
-    ceCheck->setChecked( FALSE );
+    ceCheck->setChecked( TRUE );
     displayBoxLayout->addWidget( ceCheck );
 
     mateCheck = new QCheckBox( displayBox, "mateCheck" );

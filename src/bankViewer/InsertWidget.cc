@@ -125,7 +125,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_connectMates   = 1;
   m_partitionTypes = 1;
   m_coveragePlot   = 1;
-  m_cestats        = 0;
+  m_cestats        = 1;
   m_paintScaffold  = 1;
   m_colorByLibrary = 0;
   m_colorByMate    = 0;
@@ -406,7 +406,6 @@ void InsertWidget::setVisibleVRange(int top, int bottom)
   if (!m_updatingScrollBars)
   {
     bottom = max(top+2, bottom);
-
     double yf = ((double)(m_ifield->height()-4)) / (bottom - top + 1);
 
     QWMatrix m(m_ifield->worldMatrix());
@@ -1492,7 +1491,6 @@ void InsertWidget::showAll()
 {
   hrange->setRange(hrange->minimum(), hrange->maximum());
   vrange->setRange(vrange->minimum(), vrange->maximum());
-  resizeField();
 }
 
 
