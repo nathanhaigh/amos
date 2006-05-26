@@ -11,7 +11,10 @@ my $FLAGSAME = undef;
 my $DOAMOS = 0;
 
 my $HELPTEXT = qq~
-Find alignment breaks in query sequences
+Find alignment breaks in query sequences.
+
+Note: You should probably run 'delta-filter -q out.delta > out.delta.q'
+      and then check the out.delta.q file.
 
   find-query-breaks.pl [options] deltafile
 
@@ -133,6 +136,7 @@ foreach my $deltafile (@ARGV)
     elsif (($align->{qstart} - 1) > $TRIMWIGGLE)
     {
       my $dist = $align->{qstart} - 1;
+      my $len = $align->{qend} - $align->{qstart};
       $breakcount++;
 
       if ($DOAMOS)
@@ -140,12 +144,14 @@ foreach my $deltafile (@ARGV)
         my $s = $align->{qstart};
         my $e = $s+1;
         
-        print "$align->{qid}\tB\t$e\t$s\tSTART_BREAK: $dist\n";
+        print "$align->{qid}\tB\t$e\t$s\tSTART_BREAK: $dist ($len)\n";
       }
       else
       {
+
+        print "S-Break: $dist\tAlen: $len $flag\t";
         printAlignment($align);
-        print " Start Break: $dist $flag\n";
+        print "\n";
       }
     }
 
@@ -158,6 +164,7 @@ foreach my $deltafile (@ARGV)
     elsif (($align->{qlen} - $align->{qend}) > $TRIMWIGGLE)
     {
       my $dist = $align->{qlen} - $align->{qend};
+      my $len = $align->{qend} - $align->{qstart};
       $breakcount++;
 
       if ($DOAMOS)
@@ -165,12 +172,13 @@ foreach my $deltafile (@ARGV)
         my $s = $align->{qend};
         my $e = $s+1;
         
-        print "$align->{qid}\tB\t$s\t$e\tEND_BREAK: $dist\n";
+        print "$align->{qid}\tB\t$s\t$e\tEND_BREAK: $dist ($len)\n";
       }
       else
       {
+        print "E-Break: $dist\tAlen: $len $flag\t";
         printAlignment($align);
-        print " End Break: $dist $flag\n";
+        print "\n";
       }
     }
 
