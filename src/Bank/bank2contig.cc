@@ -370,6 +370,11 @@ int main (int argc, char ** argv)
     cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
     return EXIT_FAILURE;
   }
+  catch (...)
+  {
+    cerr << "Unexpected error: Possible data corruption or malformed data.\n";
+    return EXIT_FAILURE;
+  }
 
   cerr << "End: " << Date() << endl;
   return EXIT_SUCCESS;
