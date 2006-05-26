@@ -56,7 +56,8 @@ bankViewer_MOCSOURCES = \
 
 nodist_bankViewer_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 
-bankViewerHeaders = $(bankViewer_MOCSOURCES:.cc=.hh) AlignmentInfo.hh
+bankViewerHeaders = $(bankViewer_MOCSOURCES:.cc=.hh) \
+                    AlignmentInfo.hh 
 
 BUILT_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 CLEANFILES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
@@ -64,8 +65,11 @@ CLEANFILES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
 bankViewer_SOURCES =           \
         main.cc                \
 	    UIElements.cc          \
+	    UIElements.hh          \
         NChartStats.cc         \
+        NChartStats.hh         \
         InsertStats.cc         \
+        InsertStats.hh         \
         $(bankViewer_MOCSOURCES)
 
 EXTRA_DIST = \
