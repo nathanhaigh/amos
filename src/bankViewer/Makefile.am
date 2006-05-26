@@ -69,24 +69,40 @@ bankViewer_SOURCES =           \
         $(bankViewer_MOCSOURCES)
 
 EXTRA_DIST = \
-       bankViewer.pro \
-       $(bankViewerHeaders) \
-       icons/AAI.xpm \
-       icons/fontdecrease.xpm \
-       icons/fontincrease.xpm \
-       icons/rangearrow_down.png \
-       icons/rangearrow_left.png \
-       icons/rangearrow_right.png \
-       icons/rangearrow_up.png \
-       icons/rangebar_horiz.png \
-       icons/rangebar_vert.png \
-       icons/rangegrip_down.png \
-       icons/rangegrip_left.png \
-       icons/rangegrip_right.png \
-       icons/rangegrip_up.png \
-       icons/rangegroove_horiz.png \
-       icons/rangegroove_vert.png  \
-       ADDICONS
+        bankViewer.pro \
+        $(bankViewerHeaders) \
+        icons/AAI.xpm \
+        icons/fontdecrease.xpm \
+        icons/fontincrease.xpm \
+        icons/rangearrow_down.png \
+        icons/rangearrow_left.png \
+        icons/rangearrow_right.png \
+        icons/rangearrow_up.png \
+        icons/rangebar_horiz.png \
+        icons/rangebar_vert.png \
+        icons/rangegrip_down.png \
+        icons/rangegrip_left.png \
+        icons/rangegrip_right.png \
+        icons/rangegrip_up.png \
+        icons/rangegroove_horiz.png \
+        icons/rangegroove_vert.png \
+        icons/rangearrow_down.xpm \
+        icons/rangearrow_left.xpm \
+        icons/rangearrow_right.xpm \
+        icons/rangearrow_up.xpm \
+        icons/rangebar_horiz.xpm \
+        icons/rangebar_vert.xpm \
+        icons/rangegrip_down.xpm \
+        icons/rangegrip_left.xpm \
+        icons/rangegrip_right.xpm \
+        icons/rangegrip_up.xpm \
+        icons/rangegroove_horiz.xpm \
+        icons/rangegroove_vert.xpm \
+        icons/pointer_tool.xpm \
+        icons/zoom_in.xpm \
+        icons/zoom_out.xpm \
+        icons/Hawkeye.xpm \
+        icons/Hawkeye.jpg
 
 
 bankViewer_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
