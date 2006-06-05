@@ -39,8 +39,6 @@ NChartWindowBase.cc\
 NChartWindow.cc\
 NetworkCom.cc\
 OverviewField.cc\
-OverviewWidget.cc\
-OverviewWindow.cc\
 QueryWidget.cc\
 RangeScrollBar.cc\
 ReadInfo.cc\
@@ -93,8 +91,6 @@ NChartWindowBase.hh\
 NChartWindow.hh\
 NetworkCom.hh\
 OverviewField.hh\
-OverviewWidget.hh\
-OverviewWindow.hh\
 QueryWidget.hh\
 RangeScrollBar.hh\
 ReadInfo.hh\

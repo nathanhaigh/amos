@@ -1,4 +1,4 @@
-bin_PROGRAMS = bankViewer \
+bin_PROGRAMS = hawkeye \
                cestat-cov \
                insert-sizes \
                library-histogram \
@@ -7,7 +7,7 @@ bin_PROGRAMS = bankViewer \
 %.moc.cc: %.hh
 	$(QT_MOC) -o $@ $<
 
-bankViewer_MOCSOURCES = \
+hawkeye_MOCSOURCES = \
         AssemblyStats.cc       \
         BufferedLineEdit.cc    \
         CGraphContig.cc        \
@@ -54,15 +54,15 @@ bankViewer_MOCSOURCES = \
         TilingField.cc         \
         TilingFrame.cc
 
-nodist_bankViewer_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
+nodist_hawkeye_SOURCES = $(hawkeye_MOCSOURCES:.cc=.moc.cc)
 
-bankViewerHeaders = $(bankViewer_MOCSOURCES:.cc=.hh) \
+hawkeyeHeaders = $(hawkeye_MOCSOURCES:.cc=.hh) \
                     AlignmentInfo.hh 
 
-BUILT_SOURCES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
-CLEANFILES = $(bankViewer_MOCSOURCES:.cc=.moc.cc)
+BUILT_SOURCES = $(hawkeye_MOCSOURCES:.cc=.moc.cc)
+CLEANFILES = $(hawkeye_MOCSOURCES:.cc=.moc.cc)
 
-bankViewer_SOURCES =           \
+hawkeye_SOURCES =           \
         main.cc                \
 	    UIElements.cc          \
 	    UIElements.hh          \
@@ -70,11 +70,11 @@ bankViewer_SOURCES =           \
         NChartStats.hh         \
         InsertStats.cc         \
         InsertStats.hh         \
-        $(bankViewer_MOCSOURCES)
+        $(hawkeye_MOCSOURCES)
 
 EXTRA_DIST = \
-        bankViewer.pro \
-        $(bankViewerHeaders) \
+        hawkeye.pro \
+        $(hawkeyeHeaders) \
         icons/AAI.xpm \
         icons/fontdecrease.xpm \
         icons/fontincrease.xpm \
@@ -109,11 +109,11 @@ EXTRA_DIST = \
         icons/Hawkeye.jpg
 
 
-bankViewer_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
-                   $(top_builddir)/src/Common/libCommon.a   \
-                   $(top_builddir)/src/AMOS/libAMOS.a       \
-                   $(top_builddir)/src/Slice/libSlice.a     \
-                   $(top_builddir)/src/Staden/read/libread.a
+hawkeye_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+                $(top_builddir)/src/Common/libCommon.a   \
+                $(top_builddir)/src/AMOS/libAMOS.a       \
+                $(top_builddir)/src/Slice/libSlice.a     \
+                $(top_builddir)/src/Staden/read/libread.a
 
 AM_CPPFLAGS = \
     $(QT_CXXFLAGS)  \
