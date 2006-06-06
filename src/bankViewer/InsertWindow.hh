@@ -44,6 +44,10 @@ public slots:
 
   void toggleSyncWithTiling();
 
+  void clickSelectTool();
+  void clickZoomInTool();
+  void clickZoomOutTool();
+
 signals:
   void setGindex(int gindex);
   void setContigId(int contigid);
@@ -55,7 +59,6 @@ signals:
 
   void setHappyDistance(float);
   void search(const QString &);
-
   void highlightRead(int);
   void showAll();
 

@@ -77,6 +77,9 @@
                     <property name="text">
                         <string>Zoom In</string>
                     </property>
+                    <property name="toggleButton">
+                        <bool>true</bool>
+                    </property>
                     <property name="toolTip" stdset="0">
                         <string>Zoom In</string>
                     </property>
@@ -107,6 +110,9 @@
                     </property>
                     <property name="text">
                         <string>Zoom Out</string>
+                    </property>
+                    <property name="toggleButton">
+                        <bool>true</bool>
                     </property>
                     <property name="toolTip" stdset="0">
                         <string>Zoom Out</string>
@@ -169,6 +175,12 @@
                     </property>
                     <property name="text">
                         <string>Select</string>
+                    </property>
+                    <property name="toggleButton">
+                        <bool>true</bool>
+                    </property>
+                    <property name="on">
+                        <bool>true</bool>
                     </property>
                     <property name="toolTip" stdset="0">
                         <string>Select</string>

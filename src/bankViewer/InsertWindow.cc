@@ -95,14 +95,15 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_select->selectButton->setIconSet(icon_pointer);
   m_select->zoomInButton->setIconSet(icon_zoomin);
   m_select->zoomOutButton->setIconSet(icon_zoomout);
+  connect(m_select->selectButton,  SIGNAL(clicked()), this, SLOT(clickSelectTool()));
+  connect(m_select->zoomInButton,  SIGNAL(clicked()), this, SLOT(clickZoomInTool()));
+  connect(m_select->zoomOutButton, SIGNAL(clicked()), this, SLOT(clickZoomOutTool()));
   connect(m_select->selectButton,  SIGNAL(clicked()), iw, SIGNAL(setSelectTool()));
   connect(m_select->zoomInButton,  SIGNAL(clicked()), iw, SIGNAL(setZoomInTool()));
   connect(m_select->zoomOutButton, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
   connect(m_select->syncWithTilingButton, SIGNAL(clicked()), this, SLOT(toggleSyncWithTiling()));
 
-
   // query widgets
-
 
   // Happy distance
   m_query->happyEdit->setText (QString::number(Insert::MAXSTDEV));
@@ -505,3 +506,27 @@ void InsertWindow::toggleSyncWithTiling()
   bool b = m_select->syncWithTilingButton->isChecked();
   m_inserts->setSyncWithTiling(b);
 }
+
+void InsertWindow::clickSelectTool() 
+{
+  m_select->selectButton->setOn(true);
+  m_select->zoomInButton->setOn(false);
+  m_select->zoomOutButton->setOn(false);
+}
+
+
+void InsertWindow::clickZoomInTool() 
+{
+  m_select->selectButton->setOn(false);
+  m_select->zoomInButton->setOn(true);
+  m_select->zoomOutButton->setOn(false);
+}
+
+void InsertWindow::clickZoomOutTool() 
+{
+  m_select->selectButton->setOn(false);
+  m_select->zoomInButton->setOn(false);
+  m_select->zoomOutButton->setOn(true);
+}
+
+

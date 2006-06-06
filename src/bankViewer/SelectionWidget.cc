@@ -33,6 +33,7 @@ SelectionWidget::SelectionWidget( QWidget* parent, const char* name, WFlags fl )
     zoomInButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, zoomInButton->sizePolicy().hasHeightForWidth() ) );
     zoomInButton->setMinimumSize( QSize( 25, 25 ) );
     zoomInButton->setMaximumSize( QSize( 25, 25 ) );
+    zoomInButton->setToggleButton( TRUE );
 
     groupBox7Layout->addWidget( zoomInButton, 0, 2 );
 
@@ -40,6 +41,7 @@ SelectionWidget::SelectionWidget( QWidget* parent, const char* name, WFlags fl )
     zoomOutButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, zoomOutButton->sizePolicy().hasHeightForWidth() ) );
     zoomOutButton->setMinimumSize( QSize( 25, 25 ) );
     zoomOutButton->setMaximumSize( QSize( 25, 25 ) );
+    zoomOutButton->setToggleButton( TRUE );
 
     groupBox7Layout->addWidget( zoomOutButton, 0, 3 );
 
@@ -54,6 +56,8 @@ SelectionWidget::SelectionWidget( QWidget* parent, const char* name, WFlags fl )
     selectButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, selectButton->sizePolicy().hasHeightForWidth() ) );
     selectButton->setMinimumSize( QSize( 25, 25 ) );
     selectButton->setMaximumSize( QSize( 25, 25 ) );
+    selectButton->setToggleButton( TRUE );
+    selectButton->setOn( TRUE );
 
     groupBox7Layout->addWidget( selectButton, 0, 1 );
     spacer2 = new QSpacerItem( 16, 20, QSizePolicy::Fixed, QSizePolicy::Minimum );
