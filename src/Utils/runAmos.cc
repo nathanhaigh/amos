@@ -69,7 +69,7 @@ void finish(int status)
 
 string timeStr()
 {
-  char tm[MAX_STRING];
+  char tm[MAX_STRING+1];
   time_t t = time(NULL);
 
   strftime(tm, MAX_STRING, "%F %T  ", localtime(&t));
@@ -81,7 +81,7 @@ string timeStr()
 set<string> splitBlank(string s)
 {
   string tmp = s;
-  char elem[MAX_STRING];
+  char elem[MAX_STRING+1];
   int pos;
   set<string> out;
 
@@ -158,8 +158,8 @@ string substVars(string & in)
   string out = "";
   string var;
   int i = 0;
-  char vname[MAX_STRING];
-  char suff[MAX_STRING];
+  char vname[MAX_STRING+1];
+  char suff[MAX_STRING+1];
   int noscan;
 
   while (i < in.length()){
@@ -408,7 +408,7 @@ string doCommandStr(string command)
     finish(1);
   } else {
     close(fd[1]);
-    char buf[MAX_STRING];
+    char buf[MAX_STRING+1];
     int nread;
     while ((nread = read(fd[0], buf, MAX_STRING)) > 0){
       buf[nread] = 0;
@@ -499,7 +499,7 @@ void doCommand(string command)
     finish(1);
   } else {
     close(fd[1]);
-    char buf[MAX_STRING];
+    char buf[MAX_STRING+1];
     int nread;
     while ((nread = read(fd[0], buf, MAX_STRING)) > 0){
       buf[nread] = 0;
@@ -750,7 +750,7 @@ int main(int argc, char ** argv)
       continue;
     } // numbered commands 
     
-    char varname[MAX_STRING];
+    char varname[MAX_STRING+1];
     char c; 
     if (sscanf(line.c_str(), "%[a-zA-Z0-9_-] %c %n", varname, &c, &noscan) >= 2 && c == '='){
       //      cout << line << " is variable definition \n"; 
