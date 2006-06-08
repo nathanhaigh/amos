@@ -3,6 +3,8 @@
 #include "fasta.hh"
 #include "AMOS_Foundation.hh"
 
+#include "PersistentUtils.hh"
+
 using namespace AMOS;
 using namespace std;
 
@@ -13,7 +15,8 @@ int USEEID(0);
 int SHOWBEST(0);
 
 
-typedef map<ID_t, pair<ID_t,int> > ReadPosLookup;
+
+
 ReadPosLookup read2contigpos;
 
 IDMap_t lastcontigmap;
@@ -55,42 +58,22 @@ vector<Tile_t> getScaffoldReadTiling(Scaffold_t & scaffold,
   return scaffreads;
 }
 
-int computeDelta(Tile_t * cur1,
-                 Tile_t * cur2,
-                 ReadPosLookup::const_iterator  & other1,
-                 ReadPosLookup::const_iterator  & other2)
-{
-  int t1pos = cur1->offset;
-  if (cur1->range.isReverse()) { t1pos = cur1->getRightOffset(); }
-
-  int t2pos = cur2->offset;
-  if (cur2->range.isReverse()) { t2pos = cur2->getRightOffset(); }
-
-  int dist = abs(t2pos - t1pos);
-  int olddist = abs(other1->second.second - other2->second.second);
-  int delta = dist-olddist;
-  int absdelta = abs(delta);
-
-  return absdelta;
-}
 
 
 void printReadPair(Bank_t & read_bank,
                    ID_t curiid, 
                    Tile_t * cur1,
                    Tile_t * cur2,
-                   ReadPosLookup::const_iterator  & other1,
-                   ReadPosLookup::const_iterator  & other2)
+                   ReadPosInfo * other1,
+                   ReadPosInfo * other2)
 {
-  int t1pos = cur1->offset;
-  if (cur1->range.isReverse()) { t1pos = cur1->getRightOffset(); }
+  int delta, mdist, pdist;
+  int consistent;
 
-  int t2pos = cur2->offset;
-  if (cur2->range.isReverse()) { t2pos = cur2->getRightOffset(); }
+  computeDelta(cur1, other1, cur2, other2,
+               consistent, delta, mdist, pdist);
 
-  int dist = abs(t2pos - t1pos);
-  int olddist = abs(other1->second.second - other2->second.second);
-  int delta = dist-olddist;
+
   int absdelta = abs(delta);
 
   if (absdelta >= MINDELTA)
@@ -99,18 +82,19 @@ void printReadPair(Bank_t & read_bank,
 
     if (USEEID)
     {
-      cout << lastcontigmap.lookupEID(other1->second.first) << "\t";
+      cout << lastcontigmap.lookupEID(other1->contig()) << "\t";
     }
     else
     {
-      cout << other1->second.first << "\t";
+      cout << other1->contig() << "\t";
     }
 
     cout << read_bank.lookupEID(cur1->source) << "\t" 
          << read_bank.lookupEID(cur2->source) << "\t" 
-         << dist << "\t"
-         << olddist << "\t"
-         << delta << endl;
+         << mdist << "\t"
+         << pdist << "\t"
+         << delta << "\t"
+         << consistent << endl;
   }
 }
 
@@ -119,9 +103,9 @@ class Neighbor_t
 public:
   Neighbor_t(ID_t contigid) : m_contigid(contigid) {}
   ID_t m_contigid;
-  vector<ReadPosLookup::const_iterator> m_reads;
+  vector<ReadPosInfo *> m_reads;
 
-  void addRead(ReadPosLookup::const_iterator & r)
+  void addRead(ReadPosInfo * r)
   {
     m_reads.push_back(r);
   }
@@ -148,18 +132,18 @@ void printBestReadDistance(ID_t curiid,
   vector<Tile_t>::iterator t1;
   for (t1 = tiling.begin(); t1 != tiling.end(); t1++)
   {
-    ReadPosLookup::const_iterator r1 = read2contigpos.find(t1->source);
+    ReadPosLookup::iterator r1 = read2contigpos.find(t1->source);
 
     if (r1 != read2contigpos.end())
     {
-      ni = neighbormap.find(r1->second.first);
+      ni = neighbormap.find(r1->second.contig());
 
       if (ni == neighbormap.end())
       {
-        ni = neighbormap.insert(make_pair(r1->second.first, Neighbor_t(r1->second.first))).first;
+        ni = neighbormap.insert(make_pair(r1->second.contig(), Neighbor_t(r1->second.contig()))).first;
       }
 
-      ni->second.addRead(r1);
+      ni->second.addRead(&r1->second);
       tilelookup.insert(make_pair(t1->source, &(*t1)));
     }
   }
@@ -173,26 +157,33 @@ void printBestReadDistance(ID_t curiid,
 
     for (int i = 0; i < l; i++)
     {
-      Tile_t * ti = tilelookup[ni->second.m_reads[i]->first];
+      Tile_t * ti = tilelookup[ni->second.m_reads[i]->iid()];
 
       for (int j = i+1; j < l; j++)
       {
         neighborcount++;
 
-        int d = computeDelta(ti,
-                             tilelookup[ni->second.m_reads[j]->first],
-                             ni->second.m_reads[i],
-                             ni->second.m_reads[j]);
+        int delta, mdist, pdist;
+        int consistent;
 
-        if (d > max) { max = d; maxi = i; maxj = j; }
+        computeDelta(&(*ti), 
+                     ni->second.m_reads[i],
+                     tilelookup[ni->second.m_reads[j]->iid()],
+                     ni->second.m_reads[j],
+                     consistent, delta, mdist, pdist);
+
+        if (consistent && delta > max)
+        {
+          max = delta; maxi = i; maxj = j;
+        }
       }
     }
 
     if (max)
     {
       printReadPair(read_bank, curiid, 
-                    tilelookup[ni->second.m_reads[maxi]->first],
-                    tilelookup[ni->second.m_reads[maxj]->first],
+                    tilelookup[ni->second.m_reads[maxi]->iid()],
+                    tilelookup[ni->second.m_reads[maxj]->iid()],
                     ni->second.m_reads[maxi],
                     ni->second.m_reads[maxj]);
     }
@@ -211,28 +202,24 @@ void printAllReadDistance(ID_t curiid,
 
   for (t1 = tiling.begin(); t1 != tiling.end(); t1++)
   {
+    ReadPosLookup::iterator r1 = read2contigpos.find(t1->source);
+    if (r1 == read2contigpos.end()) { continue; }
+
     for (t2 = t1+1; t2 != tiling.end(); t2++)
     {
-      ReadPosLookup::const_iterator r1 = read2contigpos.find(t1->source);
-      ReadPosLookup::const_iterator r2 = read2contigpos.find(t2->source);
+      ReadPosLookup::iterator r2 = read2contigpos.find(t2->source);
+      if (r2 == read2contigpos.end()) { continue; }
 
       // Distance is only defined if the two reads existed in the same contig before
-      if (r1 != read2contigpos.end() &&
-          r2 != read2contigpos.end() &&
-          r1->second.first == r2->second.first)
+      if (r1->second.contig() == r2->second.contig())
       {
         contigcount++;
-        printReadPair(read_bank, curiid, &(*t1), &(*t2), r1, r2);
+        printReadPair(read_bank, curiid, &(*t1), &(*t2), &r1->second, &r2->second);
       }
       else if (PRINTDIFFERENT)
       {
-        int t1pos = t1->offset;
-        if (t1->range.isReverse()) { t1pos = t1->getRightOffset(); }
+        int dist = computeDistance(&*t1, &*t2);
 
-        int t2pos = t2->offset;
-        if (t2->range.isReverse()) { t2pos = t2->getRightOffset(); }
-
-        int dist = abs(t2pos - t1pos);
         cout << curiid << "\t" 
              << "*\t"
              << read_bank.lookupEID(t1->source) << "\t" 
@@ -244,19 +231,6 @@ void printAllReadDistance(ID_t curiid,
   }
 }
 
-
-
-void recordReadPosition(const vector<Tile_t> & tiling, ID_t iid)
-{
-  vector<Tile_t>::const_iterator ti;
-  for (ti = tiling.begin(); ti != tiling.end(); ti++)
-  {
-    int t1pos = ti->offset;
-    if (ti->range.isReverse()) { t1pos = t1pos + ti->getGappedLength() - 1; }
-
-    read2contigpos.insert(make_pair(ti->source, make_pair(iid, t1pos)));
-  }
-}
 
 int main (int argc, char ** argv)
 {
@@ -367,7 +341,7 @@ int main (int argc, char ** argv)
           Scaffold_t scaffold;
           scaffold_bank.fetch(c->iid, scaffold);
           vector <Tile_t> scaffreads = getScaffoldReadTiling(scaffold, contig_bank);
-          recordReadPosition(scaffreads, c->iid);
+          recordReadPositions(c->iid, scaffreads, read2contigpos);
         }
 
         lastcontigmap = scaffoldmap;
@@ -400,7 +374,7 @@ int main (int argc, char ** argv)
         {
           Contig_t contig;
           contig_bank.fetch(c->iid, contig);
-          recordReadPosition(contig.getReadTiling(), c->iid);
+          recordReadPositions(contig.getIID(), contig.getReadTiling(), read2contigpos);
         }
 
         lastcontigmap = contigmap;

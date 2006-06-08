@@ -51,7 +51,8 @@ persistent_fix_contigs_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 
 persistent_fix_contigs_SOURCES = \
-	persistent-fix-contigs.cc
+	persistent-fix-contigs.cc \
+    PersistentUtils.hh
 
 ##-- persistent_read_dist
 persistent_read_dist_LDADD = \
@@ -61,7 +62,8 @@ persistent_read_dist_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 
 persistent_read_dist_SOURCES = \
-	persistent-read-dist.cc
+	persistent-read-dist.cc \
+    PersistentUtils.hh
 
 ##-- read-evolution
 read_evolution_LDADD = \
@@ -71,7 +73,8 @@ read_evolution_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 
 read_evolution_SOURCES = \
-	read-evolution.cc
+	read-evolution.cc \
+    PersistentUtils.hh
 
 ##-- gap-closure-reads
 gap_closure_reads_LDADD = \

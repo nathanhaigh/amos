@@ -13,6 +13,13 @@ my $start = shift @ARGV;
 my $end   = shift @ARGV;
 my $flags = join " ", @ARGV;
 
+
+my $base = sprintf("%04d", $start);
+$base .= "/AMOS/$file.bnk";
+
+die "$base not accessible\n" if (! -x $base);
+
+
 $flags = "-G" if !defined $flags;
 
 my $inc = 1;
@@ -23,7 +30,7 @@ while ($start != $end)
   my $mlevel = sprintf("%04d", $start+$inc);
   my $plevel = sprintf("%04d", $start);
 
-  print "#### Fixing $mlevel with $plevel\n";
+  print STDERR "#### Fixing $mlevel with $plevel\n";
   my $cmd = "$FIX $flags $mlevel/AMOS/$file.bnk $plevel/AMOS/$file.bnk";
   print "cmd: $cmd\n";
 
@@ -38,3 +45,5 @@ while ($start != $end)
 
   print "\n\n";
 }
+
+print STDERR "Done.\n\n";

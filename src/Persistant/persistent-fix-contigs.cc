@@ -3,11 +3,11 @@
 #include "fasta.hh"
 #include "AMOS_Foundation.hh"
 #include "ContigUtils.hh"
+#include "PersistentUtils.hh"
 
 using namespace AMOS;
 using namespace std;
 
-int MINDELTA(1);
 int SAVERESULTS(0);
 int FIXCOLLAPSE(0);
 int CLOSEGAPS(0);
@@ -16,33 +16,17 @@ int SCANALL(0);
 int GAPSCLOSED(0);
 int COLLAPSEFIX(0);
 
-class ReadPosInfo
-{
-public:
-  ReadPosInfo(ID_t contigiid, int pos, int offset, int gappedlen, bool rc)
-    : m_contigiid(contigiid), m_5pos(pos), m_offset(offset), m_gappedlen(gappedlen), m_rc(rc) {}
+Bank_t master_contig(Contig_t::NCODE);
+Bank_t master_reads(Read_t::NCODE);
+Bank_t master_scaff(Scaffold_t::NCODE);
+BankStream_t master_feat(Feature_t::NCODE);
 
-  ID_t m_contigiid;
-  int m_5pos;
-  int m_offset;
-  int m_gappedlen;
-  bool m_rc;
-};
+Bank_t patch_contig(Contig_t::NCODE);
+Bank_t patch_reads(Read_t::NCODE);
+Bank_t patch_scaff(Scaffold_t::NCODE);
+BankStream_t patch_feat(Feature_t::NCODE);
 
-
-typedef map<ID_t, ReadPosInfo > ReadPosLookup;
 ReadPosLookup read2contigpos;
-
-int get5Offset(Tile_t * tile)
-{
-  if (tile->range.isReverse())
-  {
-    return tile->getRightOffset();
-  }
-
-  return tile->offset;
-}
-
 
 int main (int argc, char ** argv)
 {
@@ -51,15 +35,6 @@ int main (int argc, char ** argv)
 
   bool PERFECT_OVL = 0;
 
-  Bank_t master_contig(Contig_t::NCODE);
-  Bank_t master_reads(Read_t::NCODE);
-  Bank_t master_scaff(Scaffold_t::NCODE);
-  BankStream_t master_feat(Feature_t::NCODE);
-
-  Bank_t patch_contig(Contig_t::NCODE);
-  Bank_t patch_reads(Read_t::NCODE);
-  Bank_t patch_scaff(Scaffold_t::NCODE);
-  BankStream_t patch_feat(Feature_t::NCODE);
 
   try
   {
@@ -72,9 +47,8 @@ int main (int argc, char ** argv)
 "\n"
 "   Options\n"
 "   -------------------\n"
-"   -C        Fix collapsed repeats\n"
+"   -F <val>  Fix collapsed repeats if delta >= val\n"
 "   -G        Close gaps between contigs\n"
-"   -d <val>  Only fix collapsed repeats if delta >= val\n"
 "   -s        Save results to bank\n"
 "   -S        Do full scan, not just adjacent reads\n"
 "\n";
@@ -83,9 +57,8 @@ int main (int argc, char ** argv)
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
 
-    tf->getOptions()->addOptionResult("d=i", &MINDELTA,    "");
     tf->getOptions()->addOptionResult("s",   &SAVERESULTS,    "");
-    tf->getOptions()->addOptionResult("C",   &FIXCOLLAPSE, "");
+    tf->getOptions()->addOptionResult("F=i", &FIXCOLLAPSE, "");
     tf->getOptions()->addOptionResult("G",   &CLOSEGAPS,   "");
     tf->getOptions()->addOptionResult("S",   &SCANALL,     "");
     tf->handleStandardOptions();
@@ -95,6 +68,12 @@ int main (int argc, char ** argv)
     if (argvv.size() != 2)
     {
       cerr << "Usage: persistent-fix-contigs [options] master patch" << endl;
+      return EXIT_FAILURE;
+    }
+
+    if (!FIXCOLLAPSE && !CLOSEGAPS)
+    {
+      cerr << "Nothing to do, exiting." << endl;
       return EXIT_FAILURE;
     }
 
@@ -113,38 +92,26 @@ int main (int argc, char ** argv)
     patch_feat.open(patchbankname,   mode);
     patch_reads.open(patchbankname,  B_READ);
 
-
-    // Record the position of every read in the patch bank
-    IDMap_t::const_iterator c;
-    const IDMap_t & patchmap = patch_contig.getIDMap();
-    for (c = patchmap.begin(); c!= patchmap.end(); c++)
-    {
-      Contig_t contig;
-      patch_contig.fetch(c->iid, contig);
-
-      vector<Tile_t> & tiling = contig.getReadTiling();
-      vector<Tile_t>::iterator ti;
-      for (ti = tiling.begin(); ti != tiling.end(); ti++)
-      {
-        int gappedlen = ti->getGappedLength();
-
-        int pos = get5Offset(&(*ti));
-        read2contigpos.insert(make_pair(ti->source, ReadPosInfo(c->iid, 
-                                                                pos, 
-                                                                ti->offset, 
-                                                                gappedlen, 
-                                                                ti->range.isReverse())));
-      }
-    }
+    recordContigPositions(patch_contig, read2contigpos);
 
     if (FIXCOLLAPSE)
     {
       // Now check the master bank to see if there are contigs
       // with reads that were pulled apart in the patch bank
 
-      cerr << "Fixing collapsed repeats" << endl;
+      cout << "Fixing collapsed repeats (>=" << FIXCOLLAPSE << ") in " << masterbankname << " with " << patchbankname << endl;
 
+      // current
+      vector<Tile_t>::iterator m1, m2;
+
+      // best master, patch
+      vector<Tile_t>::iterator master1, master2;
+      ReadPosLookup::iterator patch1, patch2;
+      int masterdist, patchdist;
+
+      // Check every contig for potential collapse
       const IDMap_t & contigmap = master_contig.getIDMap();
+      IDMap_t::const_iterator c;
       for (c = contigmap.begin(); c!= contigmap.end(); c++)
       {
         Contig_t contig;
@@ -152,202 +119,189 @@ int main (int argc, char ** argv)
         string mcons = contig.getSeqString();
         vector<Tile_t> & tiling = contig.getReadTiling();
 
-        vector<Tile_t>::iterator m1;
-        vector<Tile_t>::iterator m2;
-
-        vector<Tile_t>::iterator master1;
-        vector<Tile_t>::iterator master2;
-
-
-        ReadPosLookup::iterator patch1;
-        ReadPosLookup::iterator patch2;
-
-        int maxdist = 0;
-
-
         sort(tiling.begin(), tiling.end(), TileOrderCmp());
         int tilingsize = tiling.size();
 
+        int VERBOSE = 0; //c->iid == 72;
+
+        // do a quick pass to see if there are any large collapses
         bool bigjump = false;
         for (int i = 0; i+1 < tilingsize; i++)
         {
           ReadPosLookup::iterator p1 = read2contigpos.find(tiling[i].source);
-          if (p1 == read2contigpos.end()) { continue; }
+          if (p1 == read2contigpos.end()) { continue; } // read[i] not in any patch contig
 
+          // find the first read from the same patch contig
+          int j;
           bool foundp2 = false;
-          int j = i+1;
           ReadPosLookup::iterator p2;
 
-          while (!foundp2 && j < tilingsize)
+          for (j = i+1; j < tilingsize; j++)
           {
             p2 = read2contigpos.find(tiling[j].source);
-            if (p2->second.m_contigiid == p1->second.m_contigiid)
-            {
-              foundp2 = true;
-              break;
-            }
+            if (p2 == read2contigpos.end()) { continue; }
 
-            j++;
+            foundp2 = (p2->second.m_contigiid == p1->second.m_contigiid);
+
+            if (VERBOSE) { cout << master_reads.lookupEID(tiling[i].source) << ","  
+                                << master_reads.lookupEID(tiling[j].source) << " "
+                                << foundp2 << endl; }
+
+            if (foundp2) { break; }
           }
 
           if (foundp2)
           {
-            int m1pos = get5Offset(&tiling[i]);
-            int m2pos = get5Offset(&tiling[j]);
-            int dist = abs(m2pos - m1pos);
+            int consistent;
+            int delta, mdist, pdist;
 
-            int olddist = abs(p1->second.m_5pos - p2->second.m_5pos);
+            computeDelta(&tiling[i], &p1->second, &tiling[j], &p2->second,
+                         consistent, delta, mdist, pdist);
 
-            int delta = olddist - dist;
-
-            if (delta >= MINDELTA)
+            if (!consistent)
             {
-              bigjump = true;
-              break;
+              cerr << "Reversal detected master: " << c->iid << " patch: " << p1->second.m_contigiid << endl;
+
+              if (VERBOSE) 
+              { 
+                bool m1rc = tiling[i].range.isReverse();
+                bool m2rc = tiling[j].range.isReverse();
+
+                bool masterinnie = m1rc ^ m2rc;
+                bool patchinnie = p1->second.rc() ^ p2->second.rc();
+
+                cout << "reversal detected "
+                     << " masterinnie:" << masterinnie << " m1rc: " << m1rc << " m2rc: " << m2rc
+                     << " patchinnie: " << patchinnie  << " p1rc: " << p1->second.m_rc << " p2rc: " << p2->second.m_rc << endl; 
+              } 
+            }
+            else
+            {
+              if (VERBOSE) { cout << tiling[i].source 
+                                  << " " << tiling[j].source 
+                                  << " mdist: " << mdist
+                                  << " pdist: " << pdist
+                                  << " delta: " << delta << endl; }
+
+              if (delta >= FIXCOLLAPSE)
+              {
+                bigjump = true;
+                break;
+              }
             }
           }
         }
 
-
         if (bigjump || SCANALL)
         {
+          int maxdelta = 0;
+
           for (m1 = tiling.begin(); m1 != tiling.end(); m1++)
           {
-            int m1pos = get5Offset(&(*m1));
+            ReadPosLookup::iterator p1 = read2contigpos.find(m1->source);
+            if (p1 == read2contigpos.end()) { continue; }
 
             for (m2 = m1+1; m2 != tiling.end(); m2++)
             {
-              int m2pos = get5Offset(&(*m2));
-
-              int dist = abs(m2pos - m1pos);
-
-              ReadPosLookup::iterator p1 = read2contigpos.find(m1->source);
               ReadPosLookup::iterator p2 = read2contigpos.find(m2->source);
+              if (p2 == read2contigpos.end()) { continue; }
 
-              if (p1 != read2contigpos.end() &&
-                  p2 != read2contigpos.end() &&
-                  p1->second.m_contigiid == p2->second.m_contigiid)
+              if (p1->second.contig() == p2->second.contig())
               {
-                int olddist = abs(p1->second.m_5pos - p2->second.m_5pos);
-                int delta = olddist - dist;
+                int delta, mdist, pdist;
+                int consistent;
 
-                if (delta > maxdist && delta >= MINDELTA)
+                computeDelta(&*m1, &p1->second, &*m2, &p2->second,
+                             consistent, delta, mdist, pdist);
+
+                if (!consistent)
                 {
-                  if (PERFECT_OVL)
+                  cerr << "Reversal detected master: " << c->iid << " patch: " << p1->second.m_contigiid << endl;
+                }
+                else
+                {
+                  if (delta >= FIXCOLLAPSE && delta > maxdelta)
                   {
-                    Contig_t pcontig;
-                    patch_contig.fetch(p1->second.m_contigiid, pcontig);
-                    string pcons = pcontig.getSeqString();
+                    bool savedelta = true;
 
-                    string mc1 = mcons.substr(m1->offset, m1->getGappedLength());
-                    string pc1 = pcons.substr(p1->second.m_offset, p1->second.m_gappedlen);
-
-                    if (m1->range.isReverse()) { Reverse_String(mc1); }
-                    if (p1->second.m_rc)       { Reverse_String(pc1); }
-
-                    string mc2 = mcons.substr(m2->offset, m2->getGappedLength());
-                    string pc2 = pcons.substr(p2->second.m_offset, p2->second.m_gappedlen);
-
-                    if (m2->range.isReverse()) { Reverse_String(mc2); }
-                    if (p2->second.m_rc)       { Reverse_String(pc2); }
-
-                    if (mc1 != pc1 || mc2 != pc2)
+                    if (PERFECT_OVL)
                     {
-                      cerr << "Contig " << contig.getIID() << " within dist (" << delta 
-                           << "), but consensus mismatch!!!" << endl;
+                      Contig_t pcontig;
+                      patch_contig.fetch(p1->second.m_contigiid, pcontig);
+                      string pcons = pcontig.getSeqString();
 
-                      cerr << "mc1: " << mc1 << endl;
-                      cerr << "pc1: " << pc1 << endl;
+                      string mc1 = mcons.substr(m1->offset, m1->getGappedLength());
+                      string pc1 = pcons.substr(p1->second.m_offset, p1->second.m_gappedlen);
 
-                      cerr << endl;
-                      cerr << "mc2: " << mc2 << endl;
-                      cerr << "pc2: " << pc2 << endl;
-                      cerr << endl;
-                      cerr << endl;
-                      continue;
+                      bool m1rc = m1->range.isReverse();
+                      bool m2rc = m2->range.isReverse();
+
+                      if (m1rc)            { Reverse_String(mc1); }
+                      if (p1->second.m_rc) { Reverse_String(pc1); }
+
+                      string mc2 = mcons.substr(m2->offset, m2->getGappedLength());
+                      string pc2 = pcons.substr(p2->second.m_offset, p2->second.m_gappedlen);
+
+                      if (m2rc)            { Reverse_String(mc2); }
+                      if (p2->second.m_rc) { Reverse_String(pc2); }
+
+                      if (mc1 != pc1 || mc2 != pc2)
+                      {
+                        cerr << "Contig " << contig.getIID() << " within dist (" << delta 
+                             << "), but consensus mismatch!!!" << endl;
+
+                        cerr << "mc1: " << mc1 << endl;
+                        cerr << "pc1: " << pc1 << endl;
+
+                        cerr << endl;
+                        cerr << "mc2: " << mc2 << endl;
+                        cerr << "pc2: " << pc2 << endl;
+                        cerr << endl;
+                        cerr << endl;
+                        savedelta = false;
+                      }
                     }
-                  }
 
-                  maxdist = delta;
+                    if (savedelta)
+                    {
+                      maxdelta = delta;
 
-                  if (m1->offset < m2->offset)
-                  {
-                    master1 = m1; master2 = m2;
-                    patch1  = p1; patch2  = p2;
-                  }
-                  else
-                  {
-                    master1 = m2; master2 = m1;
-                    patch1  = p2; patch2  = p1;
+                      master1 = m1; patch1 = p1;
+                      master2 = m2; patch2 = p2;
+
+                      masterdist = mdist;
+                      patchdist  = pdist;
+                    }
                   }
                 }
               }
             }
           }
 
-          if (maxdist >= MINDELTA)
+          if (maxdelta >= FIXCOLLAPSE)
           {
             bool dostitch = true;
 
-            int rc = (patch1->second.m_offset > patch2->second.m_offset) ? 1 : 0;
+            bool rc = 0; // (master1->range.isReverse() != patch1->second.m_rc);
 
-            if (rc)
-            {
-               vector<Tile_t>::iterator t = master1;
-               master1 = master2; master2 = t;
-
-               ReadPosLookup::iterator p = patch1;
-               patch1 = patch2; patch2 = p;
-            }
-
-
+            if (rc) { swap(master1, master2); swap(patch1, patch2); }
 
             string leftstitchread  = master_reads.lookupEID(master1->source);
             string rightstitchread = master_reads.lookupEID(master2->source);
 
-
             cout << ">Stitch mcontig: " << contig.getIID() << " pcontig: " << patch1->second.m_contigiid 
-                 << " delta: " << maxdist << " left: " << leftstitchread << " right: " << rightstitchread 
-                 << " " << rc << " " << endl;
+                 << " delta: " << maxdelta << " left: " << leftstitchread << " right: " << rightstitchread 
+                 << " " << rc << endl;
 
-            if ((patch1->second.m_offset + patch1->second.m_gappedlen) > 
-                (patch2->second.m_offset))
-            {
-              cerr << "patch1 contains patch2!!!" << endl;
-              //dostitch = false;
-            }
+            cout <<     "master1: " << master1->offset << "," << master1->getRightOffset() << (master1->range.isReverse() ? "-" : "+") 
+                 << "\t | patch1: " << patch1->second.m_offset << "," << patch1->second.getRightOffset() << (patch1->second.m_rc ? "-" : "+") << endl
 
-            if ((patch2->second.m_offset + patch2->second.m_gappedlen) > 
-                (patch1->second.m_offset))
-            {
-              cerr << "patch2 contains patch1!!!" << endl;
-              //dostitch = false;
-            }
+                 <<     "master2: " << master2->offset << "," << master2->getRightOffset() << (master2->range.isReverse() ? "-" : "+")
+                 << "\t | patch2: " << patch2->second.m_offset << "," << patch2->second.getRightOffset() << (patch2->second.m_rc ? "-" : "+") << endl
 
-            if (rc)
-            {
-               if ((patch1->second.m_rc == master1->range.isReverse()) ||
-                   (patch2->second.m_rc == master2->range.isReverse()))
-               {
-                 cerr << "Impossible orientations rc1!!!";
-                 //dostitch = false;
-               }
-            }
-            else
-            {
-               if ((patch1->second.m_rc != master1->range.isReverse()) ||
-                   (patch2->second.m_rc != master2->range.isReverse()))
-               {
-                 cerr << "Impossible orientations rc0!!!" << endl;
-                 cerr << "patch1: " << patch1->second.m_rc << " " << patch1->second.m_offset << endl;
-                 cerr << "master1: " << (master1->range.isReverse() ? 1 : 0) << " " << master1->offset << endl;
+                 << "masterdist: " << masterdist << "\t | patchdist: " << patchdist << endl;
 
-                 cerr << "patch2: " << patch2->second.m_rc << " " << patch2->second.m_offset << endl;
-                 cerr << "master2: " << (master2->range.isReverse() ? 1 : 0) << " " << master2->offset << endl;
-
-                 //dostitch = false;
-               }
-            }
+            //cout << "p2pos: "  << patch2->second.pos(master2->range.isReverse()) << " p1pos: " << patch1->second.pos(master1->range.isReverse()) << endl;
 
             if (dostitch)
             {
@@ -609,6 +563,5 @@ int main (int argc, char ** argv)
     retval = 105;
   }
 
-  cerr << "End: " << Date() << endl;
   return retval;
 }

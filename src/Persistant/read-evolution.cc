@@ -2,24 +2,12 @@
 #include "amp.hh"
 #include "fasta.hh"
 #include "AMOS_Foundation.hh"
+#include "PersistentUtils.hh"
 
 using namespace AMOS;
 using namespace std;
 
 
-class ReadPosInfo
-{
-public:
-  ReadPosInfo(ID_t contigiid, int offset, bool rc) 
-    : m_contigiid(contigiid), m_offset(offset), m_rc(rc)
-  {}
-
-  ID_t m_contigiid;
-  int  m_offset;
-  bool m_rc;
-};
-
-typedef map<ID_t, ReadPosInfo> ReadPosLookup;
 ReadPosLookup read2contigpos;
 
 
@@ -36,6 +24,9 @@ int main (int argc, char ** argv)
 
   int USETILENUM = 0;
   int PRINTIID = 0;
+  int PRINTLEN = 0;
+
+  int GNUPLOT = 0;
 
   try
   {
@@ -50,25 +41,33 @@ int main (int argc, char ** argv)
 "   -------------------\n"
 "   -c <iid>  Examine reads in current contig iid\n"
 "   -C <eid>  Examine reads in current contig eid\n"
+"\n"
 "   -x <val>  Examine starting at this position\n"
 "   -y <val>  Examine stopping at this position\n"
 "\n"
 "   -t        Use tiling index instead of offset\n"
 "   -i        Print contig IIDs instead of EIDs\n"
+"   -l        Print length as well\n"
+"\n"
+"   -G        Print in gnuplot format\n"
+"             Use: plot \"filename\" with lp\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
 
-    tf->getOptions()->addOptionResult("c=i", &curcontigiid, "Be verbose when reporting");
-    tf->getOptions()->addOptionResult("C=s", &curcontigeid, "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("c=i", &curcontigiid);
+    tf->getOptions()->addOptionResult("C=s", &curcontigeid);
 
-    tf->getOptions()->addOptionResult("x=i", &startpos, "Be verbose when reporting");
-    tf->getOptions()->addOptionResult("y=i", &endpos, "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("x=i", &startpos);
+    tf->getOptions()->addOptionResult("y=i", &endpos);
 
-    tf->getOptions()->addOptionResult("t",   &USETILENUM, "Be verbose when reporting");
-    tf->getOptions()->addOptionResult("i",   &PRINTIID, "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("t",   &USETILENUM);
+    tf->getOptions()->addOptionResult("i",   &PRINTIID);
+    tf->getOptions()->addOptionResult("l",   &PRINTLEN);
+
+    tf->getOptions()->addOptionResult("G",   &GNUPLOT);
 
     tf->handleStandardOptions();
 
@@ -116,23 +115,9 @@ int main (int argc, char ** argv)
     {
       Contig_t contig;
       ocontig_bank.fetch(c->iid, contig);
-
-      sort(contig.getReadTiling().begin(), contig.getReadTiling().end(), TileOrderCmp());
-
       oldcontigreadcount.insert(make_pair(contig.getIID(), contig.getReadTiling().size()));
 
-      int tilenum = 0;
-      vector<Tile_t>::iterator t;
-      for (t = contig.getReadTiling().begin(); t != contig.getReadTiling().end(); t++)
-      {
-        ID_t curiid = crm.lookupIID(orm.lookupEID(t->source));
-
-        int val = t->offset;
-        if (USETILENUM) { val = tilenum; }
-
-        read2contigpos.insert(make_pair(curiid, ReadPosInfo(c->iid, val, t->range.isReverse())));
-        tilenum++;
-      }
+      recordReadPositions(contig.getIID(), contig.getReadTiling(), read2contigpos);
     }
 
     const IDMap_t & ccm = ccontig_bank.getIDMap();
@@ -200,53 +185,47 @@ int main (int argc, char ** argv)
       oldcontigsandminoffset.erase(minoco);
     }
 
+    int oldcontigsize = oldcontigs.size();
 
 
 
-    // Print the header line of old contigs
-    if (PRINTIID)
+    int width = (PRINTLEN) ? 20 : 10;
+
+    if (!GNUPLOT)
     {
-      printf("%-15s% 10d ", "== CONTIGS == ", contig.getIID());
-    }
-    else
-    {
-      printf("%-15s% 10s ", "== CONTIGS == ", contig.getEID().c_str());
-    }
-
-    for (old =  oldcontigs.begin();
-         old != oldcontigs.end();
-         old++)
-    {
+      // Print the header line of old contigs
       if (PRINTIID)
       {
-        printf("% 10d ", *old);
+        printf("%-15s% *d ", "== CONTIGS == ", width, contig.getIID());
       }
       else
       {
-        printf("% 10s ", ocm.lookupEID(*old).c_str());
+        printf("%-15s% *s ", "== CONTIGS == ", width, contig.getEID().c_str());
       }
+
+      for (old = oldcontigs.begin(); old != oldcontigs.end(); old++)
+      {
+        if (PRINTIID) { printf("% *d ", width, *old); }
+        else          { printf("% *s ", width, ocm.lookupEID(*old).c_str()); }
+      }
+      cout << endl;
+
+      printf("%-15s% *d ", "== READS ==", width, contig.getReadTiling().size());
+      for (old = oldcontigs.begin(); old != oldcontigs.end(); old++)
+      {
+        printf("% *d ", width, oldcontigreadcount[*old]);
+      }
+      cout << endl;
     }
-    cout << endl;
-
-    printf("%-15s% 10d ", "== READS ==", contig.getReadTiling().size());
-    for (old =  oldcontigs.begin();
-         old != oldcontigs.end();
-         old++)
-    {
-      printf("% 10d ", oldcontigreadcount[*old]);
-    }
-    cout << endl;
 
 
-
-
-    // Print where the read was in the other contigs
+    // Print where the read are in the other assembly
     check = false;
     if (startpos == -1){check = true; }
 
     for (t = contig.getReadTiling().begin(); t != contig.getReadTiling().end(); t++)
     {
-      if (!check && t->offset > startpos)
+      if (!check && t->offset >= startpos)
       {
         check = true;
       }
@@ -258,31 +237,77 @@ int main (int argc, char ** argv)
 
       if (check)
       {
-        printf("%-15s%10d%c", 
-               crm.lookupEID(t->source).c_str(),
-               t->offset,
-               (t->range.isReverse() ? '-' : '+'));
+        int val = t->offset;
+
+        if (!GNUPLOT)
+        {
+          if (PRINTLEN)
+          {
+            char buffer[30];
+            sprintf(buffer, "%d,%d", val, t->getRightOffset());
+            printf("%-15s%20s%c", 
+                   crm.lookupEID(t->source).c_str(),
+                   buffer,
+                   (t->range.isReverse() ? '-' : '+'));
+          }
+          else
+          {
+            printf("%-15s%10d%c", 
+                   crm.lookupEID(t->source).c_str(),
+                   val,
+                   (t->range.isReverse() ? '-' : '+'));
+          }
+        }
 
         rpl = read2contigpos.find(t->source);
 
         if (rpl != read2contigpos.end())
         {
-          for (old =  oldcontigs.begin();
-               old != oldcontigs.end();
-               old++)
+          for (int o = 0; o < oldcontigsize; o++)
           {
-            if (*old == rpl->second.m_contigiid)
+            if (oldcontigs[o] == rpl->second.m_contigiid)
             {
-              printf("%10d%c", rpl->second.m_offset, (rpl->second.m_rc ? '-' : '+'));
+              int val = rpl->second.m_offset;
+
+              if (GNUPLOT)
+              {
+                cout << 0         << " " << t->offset << endl;
+                cout << (o+1)*100 << " " << rpl->second.pos(t->range.isReverse()) << endl;
+                cout << endl;
+                cout << endl;
+              }
+              else
+              {
+                if (USETILENUM) { val = rpl->second.m_tileid; }
+
+                if (PRINTLEN)
+                {
+                  char buffer[30];
+                  sprintf(buffer, "%d,%d", val, rpl->second.getRightOffset());
+                  printf("%20s%c", buffer, (rpl->second.m_rc ? '-' : '+'));
+                }
+                else
+                {
+                  printf("%10d%c", val, (rpl->second.m_rc ? '-' : '+'));
+                }
+              }
             }
             else
             {
-              printf("%10s ", " ");
+              if (!GNUPLOT) { printf("%*s ", width, " "); }
             }
           }
         }
-        cout << endl;
+
+        if (!GNUPLOT) { cout << endl; }
       }
+    }
+
+    if (GNUPLOT)
+    {
+      cout << (oldcontigsize*100)+10 << " " << 0 << endl
+           << (oldcontigsize*100)+10 << " " << 0 << endl;
+
     }
   }
   catch (Exception_t & e)
