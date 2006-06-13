@@ -259,7 +259,7 @@ InsertWidget::InsertWidget(DataStore * datastore,
 void InsertWidget::centerView(int xpos)
 {
   xpos = (int)(xpos*m_ifield->worldMatrix().m11());
-  m_ifield->center(xpos, m_ifield->contentsY());
+  m_ifield->center(xpos, (int)(m_ifield->contentsY() + m_ifield->visibleHeight()/2));
   updateVisibleRange();
 }
 
