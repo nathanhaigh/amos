@@ -1,4 +1,5 @@
 #include "Insert.hh"
+#include <algorithm>
 
 using namespace AMOS;
 using namespace std;
@@ -11,16 +12,6 @@ const int READLEN = 500;
 
 float Insert::MAXSTDEV = 2;
 const char * Insert::allstates = "HSCOMLNU";
-
-static int min (int a, int b)
-{
-  return (a < b) ? a : b;
-}
-
-static int max (int a, int b)
-{
-  return (a > b) ? a : b;
-}
 
 Insert::Insert(ID_t     aid,
                ID_t     acontig,
@@ -200,7 +191,7 @@ bool Insert::reasonablyConnected() const
 
 bool Insert::ceConnected() const
 {
-  if (m_acontig != m_bcontig) {return false;}
+ // if (m_acontig != m_bcontig) {return false;}
   if (m_matetype == Fragment_t::TRANSPOSON)
   {
     return false;
