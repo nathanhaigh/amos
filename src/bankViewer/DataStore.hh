@@ -100,6 +100,10 @@ public:
                         bool connectMates,
                         int verbose);
 
+  void mapReadsToScaffold(AMOS::Scaffold_t & scaff,
+                          vector<AMOS::Tile_t> & tiling,
+                          int verbose);
+
 
 
 

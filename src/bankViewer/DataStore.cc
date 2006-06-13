@@ -76,6 +76,7 @@ int DataStore::openBank(const string & bankname)
     m_libdistributionlookup.clear();
 
     indexContigs();
+    m_scaffoldId = AMOS::NULL_ID;
     retval = 0;
   }
   catch (Exception_t & e)
@@ -85,8 +86,6 @@ int DataStore::openBank(const string & bankname)
 
   if (!retval)
   {
-    m_scaffoldId = AMOS::NULL_ID;
-
     try
     {
       scaffold_bank.open(bankname, B_SPY);
@@ -202,15 +201,16 @@ void DataStore::indexContigs()
   m_readcontiglookup.clear();
   m_readcontiglookup.resize(read_bank.getSize());
 
-  int contigid = 1;
+  int visit = 0;
   contig_bank.seekg(1);
-
   Contig_t contig;
   while (contig_bank >> contig)
   {
+    int contigid = contig_bank.tellg() - 1;
+    visit++;
+
     vector<Tile_t> & tiling = contig.getReadTiling();
     vector<Tile_t>::const_iterator ti;
-
     for (ti =  tiling.begin();
          ti != tiling.end();
          ti++)
@@ -218,10 +218,9 @@ void DataStore::indexContigs()
       m_readcontiglookup.insert(make_pair(ti->source, contigid));
     }
 
-    contigid = contig_bank.tellg();
   }
 
-  cerr <<  m_readcontiglookup.size() << " reads in " << contigid-1 << " contigs" << endl;
+  cerr <<  m_readcontiglookup.size() << " reads in " << visit << " contigs" << endl;
 }
 
 void DataStore::indexScaffolds()
@@ -479,6 +478,48 @@ AMOS::ID_t DataStore::getPersistantRead(AMOS::ID_t readiid, int errorrate)
 
 
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
+
+
+void DataStore::mapReadsToScaffold(Scaffold_t & scaff, 
+                                   vector<Tile_t> & tiling,
+                                   int verbose)
+{
+  Contig_t contig;
+  vector<Tile_t> & ctiling = scaff.getContigTiling();
+  vector<Tile_t>::const_iterator ci;
+
+  if (verbose) { cerr << "Mapping reads to scaffold " << scaff.getEID() << "... "; }
+
+  for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
+  {
+    fetchContig(ci->source, contig);
+
+    int clen = contig.getLength();
+
+    vector<Tile_t> & crtiling = contig.getReadTiling();
+    vector<Tile_t>::const_iterator ri;
+    for (ri = crtiling.begin(); ri != crtiling.end(); ri++)
+    {
+      Tile_t mappedTile;
+      mappedTile.source = ri->source;
+      mappedTile.gaps   = ri->gaps;
+      mappedTile.range  = ri->range;
+
+      int offset = ri->offset;
+      if (ci->range.isReverse())
+      {
+        mappedTile.range.swap();
+        offset = clen - (offset + ri->range.getLength() + ri->gaps.size());
+      }
+
+      mappedTile.offset = ci->offset + offset;
+
+      tiling.push_back(mappedTile);
+    }
+  }
+
+  if (verbose) { cerr << tiling.size() << " reads mapped" << endl; }
+}
 
 
 void DataStore::calculateInserts(vector<Tile_t> & tiling,
@@ -791,10 +832,6 @@ unsigned int DataStore::getMerCoverage(Mer_t fwd_mer, Mer_t rev_mer)
 
 
 
-
-
-
-
 extern "C"
 {
   #include "Read.h"
@@ -862,5 +899,4 @@ char * DataStore::fetchTrace(const AMOS::Read_t & read,
 
   return (char *) trace;
 }
-
 

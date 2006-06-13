@@ -1,3 +1,14 @@
+amoslib_LIBRARIES = \
+     libDataStore.a
+
+amosinclude_HEADERS = \
+     DataStore.hh \
+     Insert.hh
+
+libDataStore_a_SOURCES = \
+     DataStore.cc \
+     Insert.cc
+
 bin_PROGRAMS = hawkeye \
                cestat-cov \
                insert-sizes \

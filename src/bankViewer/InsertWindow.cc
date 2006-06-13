@@ -95,9 +95,11 @@ InsertWindow::InsertWindow(DataStore * datastore,
   m_select->selectButton->setIconSet(icon_pointer);
   m_select->zoomInButton->setIconSet(icon_zoomin);
   m_select->zoomOutButton->setIconSet(icon_zoomout);
+
   connect(m_select->selectButton,  SIGNAL(clicked()), this, SLOT(clickSelectTool()));
   connect(m_select->zoomInButton,  SIGNAL(clicked()), this, SLOT(clickZoomInTool()));
   connect(m_select->zoomOutButton, SIGNAL(clicked()), this, SLOT(clickZoomOutTool()));
+
   connect(m_select->selectButton,  SIGNAL(clicked()), iw, SIGNAL(setSelectTool()));
   connect(m_select->zoomInButton,  SIGNAL(clicked()), iw, SIGNAL(setZoomInTool()));
   connect(m_select->zoomOutButton, SIGNAL(clicked()), iw, SIGNAL(setZoomOutTool()));
