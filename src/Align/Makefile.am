@@ -6,6 +6,7 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	arrive \
 	arrive2 \
+    count-kmers \
 	frg-umd-merge \
 	gap-links \
 	hash-overlap \
@@ -59,6 +60,12 @@ arrive2_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a
 arrive2_SOURCES = \
 	arrive2.cc
+
+##-- count-kmers
+count_kmers_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a
+count_kmers_SOURCES = \
+	count-kmers.cc
 
 ##-- frg-umd-merge
 frg_umd_merge_LDADD = \
