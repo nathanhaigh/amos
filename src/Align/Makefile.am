@@ -48,7 +48,9 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/CelMsg \
 	-I$(top_srcdir)/src/Slice \
 	-I$(top_srcdir)/src/Common \
-	-I$(top_srcdir)/src/AMOS
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_srcdir)/src/Foundation
+
 
 
 ##-- arrive
@@ -63,7 +65,9 @@ arrive2_SOURCES = \
 
 ##-- count-kmers
 count_kmers_LDADD = \
-	$(top_builddir)/src/Common/libCommon.a
+	$(top_builddir)/src/Common/libCommon.a \
+    $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 count_kmers_SOURCES = \
 	count-kmers.cc
 

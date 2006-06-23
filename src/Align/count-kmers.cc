@@ -1,93 +1,180 @@
 #include "foundation_AMOS.hh"
 #include  "delcher.hh"
 #include  "fasta.hh"
+#include "AMOS_Foundation.hh"
 
 #include  <string>
 #include  <vector>
 using namespace std;
 using namespace HASHMAP;
+using namespace AMOS;
+
+int COUNT = 0;
+int LEN = 0;
 
 
 #define  DEBUG  0
 
-const int  MAX_LINE = 1000;
-typedef  long long unsigned  Mer_t;
+typedef long long unsigned Mer_t;
+typedef hash_map<Mer_t, unsigned int, hash<unsigned long> > MerTable_t;
 
-typedef hash_map<Mer_t, unsigned short, hash<unsigned long> > MerTable_t;
+static Mer_t Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
+static Mer_t Extract_Mask = 0;
+static Mer_t Forward_Mask;
+static int   Kmer_Len = 22;
 
-
-static Mer_t  Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
-static Mer_t  Extract_Mask = 0;
-static Mer_t  Forward_Mask;
-static int  Kmer_Len = 0;
-
-static unsigned  Char_To_Binary (char ch);
-static void Fasta_To_Binary (const string & s, Mer_t & mer);
+static unsigned Char_To_Binary (char ch);
 static void Forward_Add_Ch (Mer_t & mer, char ch);
 static void Reverse_Add_Ch (Mer_t & mer, char ch);
-static void Parse_Command_Line (int argc, char * argv []);
-static void Print_Mer_Coverage (const string & s, double & percent_covered);
 static void Read_Mers (const char * fname, MerTable_t & mer_table);
-static void Usage (const char * command);
-static char BinaryToAscii(char b);
 static void MerToAscii(Mer_t mer, string & s);
 static void CountMers (const string & s, MerTable_t & mer_table);
-static void PrintMers(const MerTable_t & mer_table);
+static void PrintMers(const MerTable_t & mer_table, int min_count);
 
 
 
 
 int  main (int argc, char * argv [])
 {
+  int retval = 0;
+  AMOS_Foundation * tf = NULL;
 
-  Parse_Command_Line(argc, argv);
-  MerTable_t mer_table;
-
-  cerr << "Processing sequences... " << endl;
-
-  int count = 0;
-  string s, tag;
-
-  while  (Fasta_Read (stdin, s, tag))
+  try
   {
-    fprintf (stderr, ">%s\n", tag . c_str ());
-    CountMers(s, mer_table);
-    count++;
+    string version = "Version 1.0";
+    string helptext = 
+"Count kmers in a multifasta file or in read or contig banks.\n"
+"Output is to stdout in \"meryl-style\": >count\\nmer\\n\n"
+"\n"
+" Usage: count-kmers [-f fasta] [-r bnk] [-c bnk]\n"
+"\n"
+"   -f <fasta> multifasta file to count\n"
+"   -r <bnk>   Bank of reads to count\n"
+"   -c <bnk>   Bank of contigs to count\n"
+"   -k <len>   Length of kmer (default:22, must be <= 31) \n"
+"   -m <min>   Minimum count to report (default: 1)\n"
+"\n";
+
+    string fastafile;
+    string readbank;
+    string contigbank;
+
+    int min_count = 1;
+
+    tf = new AMOS_Foundation(version, helptext, "", argc, argv);
+    tf->disableOptionHelp();
+    tf->getOptions()->addOptionResult("f=s", &fastafile);
+    tf->getOptions()->addOptionResult("r=s", &readbank);
+    tf->getOptions()->addOptionResult("c=s", &contigbank);
+    tf->getOptions()->addOptionResult("k=i", &Kmer_Len);
+    tf->getOptions()->addOptionResult("m=i", &min_count);
+
+    tf->handleStandardOptions();
+
+
+    if (fastafile.empty() && readbank.empty() && contigbank.empty())
+    {
+      cerr << "You must specify an input source" << endl;
+      exit(1);
+    }
+
+    if (Kmer_Len > 31 || Kmer_Len < 1)
+    {
+      cerr << "Kmer length must be <= 31" << endl;
+      exit(1);
+    }
+
+    Forward_Mask = ((long long unsigned) 1 << (2 * Kmer_Len - 2)) - 1;
+
+    MerTable_t mer_table;
+
+    if (!fastafile.empty())
+    {
+      cerr << "Processing sequences in " << fastafile << "..." << endl;
+
+      FILE * fp = fopen(fastafile.c_str(), "r");
+
+      if (!fp)
+      {
+        cerr << "Couldn't open " << fastafile << endl;
+        exit(1);
+      }
+
+      string s, tag;
+
+      while  (Fasta_Read (fp, s, tag))
+      {
+        CountMers(s, mer_table);
+      }
+    }
+    else if (!readbank.empty())
+    {
+      cerr << "Processing reads in " << readbank << "..." << endl;
+      BankStream_t bank(Read_t::NCODE);
+      bank.open(readbank, B_READ);
+
+      Read_t red;
+      while (bank >> red)
+      {
+        CountMers(red.getSeqString(red.getClearRange()), mer_table);
+      }
+    }
+    else if (!contigbank.empty())
+    {
+      cerr << "Processing contigs in " << contigbank << "..." << endl;
+      BankStream_t bank(Contig_t::NCODE);
+      bank.open(contigbank, B_READ);
+
+      Contig_t contig;
+      while (bank >> contig)
+      {
+        CountMers(contig.getUngappedSeqString(), mer_table);
+      }
+    }
+
+    cerr << COUNT << " sequences processed, " << LEN << " bp scanned" << endl;
+
+    PrintMers(mer_table, min_count);
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
+    retval = 1;
+  }
+  catch (const ExitProgramNormally & e)
+  {
+    retval = 0;
+  }
+  catch (const amosException & e)
+  {
+    cerr << e << endl;
+    retval = 100;
   }
 
-  cerr << count << " sequences processed" << endl;
-
-  PrintMers(mer_table);
-
-  return  0;
-}
-
-static char BinaryToAscii(char b)
-{
-  switch(b)
+  try
   {
-    case 0: return 'A';
-    case 1: return 'C';
-    case 2: return 'G';
-    case 3: return 'T';
+    if (tf) delete tf;
+  }
+  catch (const amosException & e)
+  {
+    cerr << "amosException while deleting tf: " << e << endl;
+    retval = 105;
   }
 
-  return '*';
+  return retval;
 }
 
+const char * bintoascii = "ACGT";
 static void MerToAscii(Mer_t mer, string & s)
 {
   s.erase();
+  s.resize(Kmer_Len);
 
   for (int i = 0; i < Kmer_Len; i++)
   {
-    char a = BinaryToAscii(mer & 0x3);
+    s[Kmer_Len-i-1] = bintoascii[mer & 0x3];
     mer >>= 2;
-
-    s.append(1, a);
   }
-
-  reverse(s.begin(), s.end());
 }
 
 
@@ -115,27 +202,6 @@ static unsigned  Char_To_Binary
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
      }
    return  0;
-  }
-
-
-
-static void  Fasta_To_Binary
-    (const string & s, Mer_t & mer)
-
-//  Convert string  s  to its binary equivalent in  mer .
-
-  {
-   int  i, n;
-
-   n = s . length ();
-   mer = 0;
-   for  (i = 0;  i < n;  i ++)
-     {
-      mer <<= 2;
-      mer |= Char_To_Binary (s [i]);
-     }
-
-   return;
   }
 
 
@@ -168,57 +234,15 @@ static void  Reverse_Add_Ch
   }
 
 
-
-
-
-
-
-static void  Parse_Command_Line
-    (int argc, char * argv [])
-
-//  Get options and parameters from command line with  argc
-//  arguments in  argv [0 .. (argc - 1)] .
-
-  {
-   bool  errflg = false;
-   int  ch;
-
-   optarg = NULL;
-
-   while  (! errflg && ((ch = getopt (argc, argv, "h")) != EOF))
-     switch  (ch)
-       {
-        case  'h' :
-          errflg = true;
-          break;
-
-        case  '?' :
-          fprintf (stderr, "Unrecognized option -%c\n", optopt);
-
-        default :
-          errflg = true;
-       }
-
-   if  (errflg)
-       {
-        Usage (argv [0]);
-        exit (EXIT_FAILURE);
-       }
-
-   Kmer_Len = 22;
-   Forward_Mask = ((long long unsigned) 1 << (2 * Kmer_Len - 2)) - 1;
-
-   return;
-  }
-
-
-
 static void  CountMers (const string & s, MerTable_t & mer_table)
 {
    Mer_t  fwd_mer = 0, rev_mer = 0;
    int  i, j, n;
 
    n = s . length ();
+
+   COUNT++;
+   LEN+=n;
 
    if  (n < Kmer_Len) { return; }
 
@@ -255,45 +279,23 @@ static void  CountMers (const string & s, MerTable_t & mer_table)
 }
 
 
-void PrintMers(const MerTable_t & mer_table)
+void PrintMers(const MerTable_t & mer_table, int min_count)
 {
-  cerr << "Printing " << mer_table.size() << " mers" << endl;
+  cerr << mer_table.size() << " total distinct mers" << endl;
   string mer;
+  int printed = 0;
 
   MerTable_t::const_iterator fi;
   for (fi = mer_table.begin(); fi != mer_table.end(); fi++)
   {
-    MerToAscii(fi->first, mer);
-    printf(">%d\n%s\n", fi->second, mer.c_str());
+    if (fi->second >= min_count)
+    {
+      MerToAscii(fi->first, mer);
+      printf(">%d\n%s\n", fi->second, mer.c_str());
+      printed++;
+    }
   }
+
+  cerr << printed << " mers occur at least " << min_count << " times" << endl;
 }
-
-
-
-
-
-
-
-
-static void  Usage
-    (const char * command)
-
-//  Print to stderr description of options and command line for
-//  this program.   command  is the command that was used to
-//  invoke it.
-
-  {
-   fprintf (stderr,
-           "USAGE:  count-mers < fasta > mercounts\n"
-           "\n"
-           "Count 22-mers in a multifasta file\n"
-           "\n"
-           "Options:\n"
-           "  -h      Print this usage message\n"
-           "\n");
-
-   return;
-  }
-
-
 
