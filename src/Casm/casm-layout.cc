@@ -52,7 +52,7 @@ float   OPT_MinCoverage      = 25.0;    // min coverage to tile
 float   OPT_MinIdentity      = 70.0;    // min identity to tile
 float   OPT_MaxCoverageDiff  =  2.0;    // max %coverage diff between 'best'
 float   OPT_MaxIdentityDiff  =  2.0;    // max %identity diff between 'best'
-
+float   IdyTol = 0.01;
 
 //============================================================= Constants ====//
 const char FORWARD_CHAR  = '+';
@@ -1660,8 +1660,8 @@ void ParseMates (Mapping_t & mapping)
 	//-- Set the mate offsets
 	rmp -> mate . minoff = rmp -> mate . maxoff =
 	  lib . getDistribution( ) . mean;
-	rmp -> mate . minoff -= lib . getDistribution( ) . sd * 3;
-	rmp -> mate . maxoff += lib . getDistribution( ) . sd * 3;
+	rmp -> mate . minoff -= lib . getDistribution( ) . sd * 5;
+	rmp -> mate . maxoff += lib . getDistribution( ) . sd * 5;
 	rmp -> mate . read -> mate . minoff = rmp -> mate . minoff;
 	rmp -> mate . read -> mate . maxoff = rmp -> mate . maxoff;
       }
@@ -1683,7 +1683,6 @@ void PlaceHappyMates (Mapping_t & mapping)
 {
   ReadMap_t * rmp, * mrmp;
   ReadAlignChain_t * rcp, * mrcp;
-  int i;
   vector< pair<ReadAlignChain_t *, ReadAlignChain_t *> > places;
   vector<ReadMap_t *>::iterator rmpi;
   list<ReadAlignChain_t *>::iterator rcpi, mrcpi;
@@ -1724,6 +1723,7 @@ void PlaceHappyMates (Mapping_t & mapping)
 	      //-- Skip if constraints are not satisfied
 	      if ( rcp -> head -> ref != mrcp -> head -> ref )
 		continue;
+
 	      if ( mrcp -> head -> ori == FORWARD_CHAR )
 		{
 		  if (rcp -> head -> ori != REVERSE_CHAR
@@ -1749,16 +1749,33 @@ void PlaceHappyMates (Mapping_t & mapping)
 	    }
 	}
 
-      //-- If 1 happy link was found, place the matepair
-      //   or many happy links and OPT_Random, randomly place the matepair
-      if ( !places . empty( )
-	   &&
-	   (OPT_Random  ||  places . size( ) == 1) )
-	{
-	  i = (int)((double)places . size( ) * rand( ) / (RAND_MAX + 1.0));
-	  rmp  -> place = places [i] . first;
-	  mrmp -> place = places [i] . second;
-	}
+
+
+      //-- Pick the highest identity happy mate-pair or randomly
+      //   choose between many within IdyTol
+      if ( ! places.empty() )
+        {
+          float idy;
+          float bestidy = 0;
+          for ( int i = 0; i < places.size(); ++ i )
+            {
+              idy = places[i].first->idy * places[i].second->idy;
+              if ( idy > bestidy )
+                bestidy = idy;
+            }
+
+          vector< pair<ReadAlignChain_t *, ReadAlignChain_t *> > newplaces;
+          for ( int i = 0; i < places.size(); ++ i )
+            {
+              idy = places[i].first->idy * places[i].second->idy;
+              if ( bestidy - idy <= IdyTol )
+                newplaces.push_back (places[i]);
+            }
+
+          int i = (int)((double)newplaces.size( ) * rand( ) / (RAND_MAX + 1.0));
+          rmp  -> place = newplaces[i].first;
+          mrmp -> place = newplaces[i].second;
+        }
     }
 }
 
@@ -1784,11 +1801,19 @@ void PlaceRandom (Mapping_t & mapping)
 	continue;
 
       //-- Get all of the valid chains
+      float bestidy = 0;
+      for ( rcpi  = rmp -> best . begin( );
+	    rcpi != rmp -> best . end( ); ++ rcpi )
+	if ( IsValidChain (*rcpi, rmp) )
+          if ( (*rcpi)->idy > bestidy )
+            bestidy = (*rcpi)->idy;
+
       places . clear( );
       for ( rcpi  = rmp -> best . begin( );
 	    rcpi != rmp -> best . end( ); ++ rcpi )
 	if ( IsValidChain (*rcpi, rmp) )
-	  places . push_back (*rcpi);
+          if ( bestidy - (*rcpi)->idy <= IdyTol )
+            places . push_back (*rcpi);
 
       //-- Randomly pick a valid chain
       if ( !places . empty( ) )
