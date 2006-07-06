@@ -9,6 +9,23 @@ using namespace std;
 int s_verbose(0);
 int clusterdist(0);
 float thresholdx = 3.0;
+string CONTIGIIDS;
+
+void handlecontig(Contig_t & contig,
+                  int & contigs,
+                  int & conslen, 
+                  int & readlen)
+{
+  contigs++;
+  conslen += contig.getLength();
+
+  vector<Tile_t> & tiling = contig.getReadTiling();
+  vector<Tile_t>::const_iterator ti;
+  for (ti = tiling.begin(); ti != tiling.end(); ti++)
+  {
+    readlen += ti->getGappedLength();
+  }
+}
 
 
 int main (int argc, char ** argv)
@@ -36,15 +53,17 @@ int main (int argc, char ** argv)
 "   -v|--verbose Produce a verbose output\n"
 "   -x <val>     Flag regions val x times the global average depth\n"
 "   -c <dist>    Cluster regions within <dist> bp\n"
+"   -I <file>    Only use list of contigs iids in file for computing average\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
 
-    tf->getOptions()->addOptionResult("v|verbose", &s_verbose,   "Be verbose when reporting");
-    tf->getOptions()->addOptionResult("x=f",       &thresholdx,  "Be verbose when reporting");
-    tf->getOptions()->addOptionResult("c=i",       &clusterdist, "Be verbose when reporting");
+    tf->getOptions()->addOptionResult("v|verbose", &s_verbose);
+    tf->getOptions()->addOptionResult("x=f",       &thresholdx);
+    tf->getOptions()->addOptionResult("c=i",       &clusterdist);
+    tf->getOptions()->addOptionResult("I=s",       &CONTIGIIDS);
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -75,19 +94,26 @@ int main (int argc, char ** argv)
       int readlen=0;
       int contigs=0;
 
-      for (c = contigmap.begin(); c!= contigmap.end(); c++)
+      Contig_t contig;
+
+      if (!CONTIGIIDS.empty())
       {
-        Contig_t contig;
-        contig_bank.fetch(c->iid, contig);
+        int id;
+        ifstream file;
+        file.open(CONTIGIIDS.c_str());
 
-        contigs++;
-        conslen += contig.getLength();
-
-        vector<Tile_t> & tiling = contig.getReadTiling();
-        vector<Tile_t>::const_iterator ti;
-        for (ti = tiling.begin(); ti != tiling.end(); ti++)
+        while (file >> id)
         {
-          readlen += ti->getGappedLength();
+          contig_bank.fetch(id, contig);
+          handlecontig(contig, contigs, conslen, readlen);
+        }
+      }
+      else
+      {
+        for (c = contigmap.begin(); c!= contigmap.end(); c++)
+        {
+          contig_bank.fetch(c->iid, contig);
+          handlecontig(contig, contigs, conslen, readlen);
         }
       }
 
