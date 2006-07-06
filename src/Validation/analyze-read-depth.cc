@@ -14,7 +14,8 @@ string CONTIGIIDS;
 void handlecontig(Contig_t & contig,
                   int & contigs,
                   int & conslen, 
-                  int & readlen)
+                  int & readlen,
+                  int & readcount)
 {
   contigs++;
   conslen += contig.getLength();
@@ -24,6 +25,7 @@ void handlecontig(Contig_t & contig,
   for (ti = tiling.begin(); ti != tiling.end(); ti++)
   {
     readlen += ti->getGappedLength();
+    readcount++;
   }
 }
 
@@ -93,6 +95,7 @@ int main (int argc, char ** argv)
       int conslen=0;
       int readlen=0;
       int contigs=0;
+      int readcount=0;
 
       Contig_t contig;
 
@@ -105,7 +108,7 @@ int main (int argc, char ** argv)
         while (file >> id)
         {
           contig_bank.fetch(id, contig);
-          handlecontig(contig, contigs, conslen, readlen);
+          handlecontig(contig, contigs, conslen, readlen, readcount);
         }
       }
       else
@@ -113,13 +116,14 @@ int main (int argc, char ** argv)
         for (c = contigmap.begin(); c!= contigmap.end(); c++)
         {
           contig_bank.fetch(c->iid, contig);
-          handlecontig(contig, contigs, conslen, readlen);
+          handlecontig(contig, contigs, conslen, readlen, readcount);
         }
       }
 
       double avgdepth = ((double) readlen) / conslen;
       double threshdepth = avgdepth * thresholdx;
 
+      cerr << "Processed reads: " << readcount << " contigs: " << contigs << endl;
       cerr << "Global average contig depth: " << avgdepth << endl;
       cerr << "Flagging regions above: " << threshdepth << endl;
 
