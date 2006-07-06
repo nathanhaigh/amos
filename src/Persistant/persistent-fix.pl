@@ -2,7 +2,10 @@
 use strict;
 
 my $run = 1;
-my $FIX = "~/build/AMOS/src/Persistant/persistent-fix-contigs";
+my $FIX =  "~/build/AMOS/src/Persistant/persistent-fix-contigs";
+my $MATE = "~/build/AMOS/src/Persistant/mate-evolution";
+
+my $CMD = $MATE;
 
 my $USAGE = "persistent-fix.pl file start end [flags]\n";
 
@@ -31,7 +34,7 @@ while ($start != $end)
   my $plevel = sprintf("%04d", $start);
 
   print STDERR "#### Fixing $mlevel with $plevel\n";
-  my $cmd = "$FIX $flags $mlevel/AMOS/$file.bnk $plevel/AMOS/$file.bnk";
+  my $cmd = "$CMD $flags $mlevel/AMOS/$file.bnk $plevel/AMOS/$file.bnk";
   print "cmd: $cmd\n";
 
 

@@ -8,7 +8,8 @@ bin_PROGRAMS = \
     persistent-read-dist \
     persistent-fix-contigs \
     read-evolution \
-    gap-closure-reads
+    gap-closure-reads \
+    mate-evolution
 
 dist_bin_SCRIPTS = \
     persistent-assembly.pl \
@@ -20,7 +21,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_builddir)/src/GNU \
-    -I$(top_srcdir)/src/Foundation
+    -I$(top_srcdir)/src/Foundation \
+    -I$(top_srcdir)/src/bankViewer
 
 ##-- barcode-graph
 barcode_graph_LDADD = \
@@ -85,5 +87,20 @@ gap_closure_reads_LDADD = \
 
 gap_closure_reads_SOURCES = \
 	gap-closure-reads.cc
+
+
+##-- mate-evolution
+mate_evolution_LDADD = \
+	$(top_builddir)/src/GNU/libGNU.a \
+    $(top_builddir)/src/bankViewer/libDataStore.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+    $(top_builddir)/src/Staden/read/libread.a
+
+
+mate_evolution_SOURCES = \
+	mate-evolution.cc \
+    PersistentUtils.hh
 
 ##-- END OF MAKEFILE --##

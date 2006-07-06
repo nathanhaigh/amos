@@ -4,6 +4,7 @@
 #include "AMOS_Foundation.hh"
 #include "ContigUtils.hh"
 #include "PersistentUtils.hh"
+#include <sstream>
 
 using namespace AMOS;
 using namespace std;
@@ -15,6 +16,9 @@ int SCANALL(0);
 
 int GAPSCLOSED(0);
 int COLLAPSEFIX(0);
+int MARKLOCATIONS(0);
+
+int VERBOSE(0);
 
 Bank_t master_contig(Contig_t::NCODE);
 Bank_t master_reads(Read_t::NCODE);
@@ -51,16 +55,20 @@ int main (int argc, char ** argv)
 "   -G        Close gaps between contigs\n"
 "   -s        Save results to bank\n"
 "   -S        Do full scan, not just adjacent reads\n"
+"   -m        Just mark locations of potential events\n";
+"   -v        Be Verbose\n";
 "\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
 
-    tf->getOptions()->addOptionResult("s",   &SAVERESULTS,    "");
-    tf->getOptions()->addOptionResult("F=i", &FIXCOLLAPSE, "");
-    tf->getOptions()->addOptionResult("G",   &CLOSEGAPS,   "");
-    tf->getOptions()->addOptionResult("S",   &SCANALL,     "");
+    tf->getOptions()->addOptionResult("s",   &SAVERESULTS);
+    tf->getOptions()->addOptionResult("F=i", &FIXCOLLAPSE);
+    tf->getOptions()->addOptionResult("G",   &CLOSEGAPS);
+    tf->getOptions()->addOptionResult("S",   &SCANALL);
+    tf->getOptions()->addOptionResult("m",   &MARKLOCATIONS);
+    tf->getOptions()->addOptionResult("v",   &VERBOSE);
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -84,7 +92,7 @@ int main (int argc, char ** argv)
     if (SAVERESULTS) { mode = B_READ|B_WRITE; }
     master_contig.open(masterbankname, mode);
     master_scaff.open(masterbankname,  mode);
-    master_feat.open(masterbankname,   mode);
+    master_feat.open(masterbankname,   B_READ|B_WRITE);
     master_reads.open(masterbankname,  B_READ);
 
     patch_contig.open(patchbankname, mode);
@@ -122,8 +130,6 @@ int main (int argc, char ** argv)
         sort(tiling.begin(), tiling.end(), TileOrderCmp());
         int tilingsize = tiling.size();
 
-        int VERBOSE = 0; //c->iid == 72;
-
         // do a quick pass to see if there are any large collapses
         bool bigjump = false;
         for (int i = 0; i+1 < tilingsize; i++)
@@ -160,7 +166,7 @@ int main (int argc, char ** argv)
 
             if (!consistent)
             {
-              cerr << "Reversal detected master: " << c->iid << " patch: " << p1->second.m_contigiid << endl;
+              if (VERBOSE) { cerr << "Inconsistent orientations detected. master: " << c->iid << " patch: " << p1->second.m_contigiid << endl; }
 
               if (VERBOSE) 
               { 
@@ -170,7 +176,7 @@ int main (int argc, char ** argv)
                 bool masterinnie = m1rc ^ m2rc;
                 bool patchinnie = p1->second.rc() ^ p2->second.rc();
 
-                cout << "reversal detected "
+                cout << "Inconsistent orientations detected "
                      << " masterinnie:" << masterinnie << " m1rc: " << m1rc << " m2rc: " << m2rc
                      << " patchinnie: " << patchinnie  << " p1rc: " << p1->second.m_rc << " p2rc: " << p2->second.m_rc << endl; 
               } 
@@ -216,7 +222,7 @@ int main (int argc, char ** argv)
 
                 if (!consistent)
                 {
-                  cerr << "Reversal detected master: " << c->iid << " patch: " << p1->second.m_contigiid << endl;
+ //                 cerr << "Full Scan Inconsistent orientations detected. master: " << c->iid << " patch: " << p1->second.m_contigiid << endl;
                 }
                 else
                 {
@@ -289,7 +295,7 @@ int main (int argc, char ** argv)
             string leftstitchread  = master_reads.lookupEID(master1->source);
             string rightstitchread = master_reads.lookupEID(master2->source);
 
-            cout << ">Stitch mcontig: " << contig.getIID() << " pcontig: " << patch1->second.m_contigiid 
+            cout << ">Stitch mcontig: " << contig.getIID() << " (" << contig.getReadTiling().size() << ") pcontig: " << patch1->second.m_contigiid 
                  << " delta: " << maxdelta << " left: " << leftstitchread << " right: " << rightstitchread 
                  << " " << rc << endl;
 
@@ -320,6 +326,21 @@ int main (int argc, char ** argv)
                               masterreads, patchreads, stitchRegion,
                               contig.getIID(), 0, patch1->second.m_contigiid,
                               false, PERFECT_OVL);
+              }
+              else if (MARKLOCATIONS)
+              {
+                Feature_t feat;
+                feat.setRange(Range_t(master1->offset, master2->getRightOffset()));
+                feat.setSource(make_pair(contig.getIID(), Contig_t::NCODE));
+                feat.setType('F');
+
+                stringstream comment;
+                comment << "Potential Collapsed Repeat delta=" << maxdelta;
+                comment << " patch: " << patchbankname;
+
+                feat.setComment(comment.str());
+
+                master_feat << feat;
               }
             }
 
