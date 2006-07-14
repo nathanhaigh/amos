@@ -4,11 +4,11 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	casm-layout
+	casm-layout \
+	casm-breaks
 
 noinst_PROGRAMS = \
-	casm-libsize \
-	casm-breaks
+	casm-libsize
 
 
 ##-- GLOBAL INCLUDE
