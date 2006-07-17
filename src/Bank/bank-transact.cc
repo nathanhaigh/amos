@@ -31,8 +31,11 @@ using namespace HASHMAP;
 bool   OPT_Create      = false;      // create bank option
 bool   OPT_ForceCreate = false;      // forcibly create bank option
 bool   OPT_Compress    = false;      // SEQ and RED compression option
+bool   OPT_Reassign    = false;      // Reassign IIDs
 string OPT_BankName;                 // bank name parameter
 string OPT_MessageName;              // message name parameter
+
+
 
 
 
@@ -76,6 +79,74 @@ UniversalSet_t objs;                // all the objects
 
 BankStream_t * bp;                  // current bank
 Universal_t * op;                   // current object
+
+typedef HASHMAP::hash_map<ID_t, ID_t> ReassignMap;
+ReassignMap reassignLIB;
+ReassignMap reassignFRG;
+ReassignMap reassignRED;
+
+
+typedef HASHMAP::hash_map<NCode_t, ID_t> ReassignStart;
+ReassignStart ncodemaxiid;
+
+
+ID_t getNewIID(NCode_t ncode)
+{
+  ReassignStart::iterator ni = ncodemaxiid.find(ncode);
+
+  if (ni == ncodemaxiid.end())
+  {
+    BankStream_t * b = & (bnks[ncode]);
+
+    if (!b)
+    {
+      cerr << "No Bank!" << endl;
+      exit (1);
+    }
+
+    if (!b->isOpen())
+    {
+      if (!b->exists(OPT_BankName))
+      {
+        cerr << "Bank does not exist, starting at 0" << endl;
+        ni = ncodemaxiid.insert(make_pair(ncode, 0)).first;
+      }
+      else
+      {
+        b->open(OPT_BankName);
+        ni = ncodemaxiid.insert(make_pair(ncode, b->getMaxIID())).first;
+        cerr << "Bank exists but closed, starting at " << ni->second << endl;
+      }
+    }
+    else
+    {
+      ni = ncodemaxiid.insert(make_pair(ncode, b->getMaxIID())).first;
+      cerr << "Bank exists and open, starting at " << ni->second << endl;
+    }
+  }
+
+  ni->second++;
+  return ni->second;
+}
+
+ReassignMap::iterator findOrCreate(ReassignMap & map, NCode_t ncode, ID_t oldiid)
+{
+  ReassignMap::iterator retval = map.find(oldiid);
+
+  if (retval == map.end())
+  {
+    ID_t newiid = 0;
+    if (oldiid != 0) { newiid = getNewIID(ncode); }
+
+    cerr << "Map " << Decode(ncode) << " from " << oldiid << " to " << newiid << endl;
+    retval = reassignFRG.insert(make_pair(oldiid, newiid)).first;
+  }
+
+  return retval;
+}
+
+
+
 
 
 void HandleMessage(Message_t & msg)
@@ -138,6 +209,36 @@ void HandleMessage(Message_t & msg)
           switch (act)
             {
             case E_ADD:
+
+              if (OPT_Reassign)
+              {
+                if (ncode == Fragment_t::NCODE)
+                {
+                  Fragment_t * frg = (Fragment_t *) op;
+
+                  // Update the iid for the fragment
+                  ReassignMap::iterator fi = findOrCreate(reassignFRG, Fragment_t::NCODE, frg->getIID());
+                  frg->setIID(fi->second);
+
+                  // Now, update the iids for the matepairs
+                  ReassignMap::iterator r1 = findOrCreate(reassignRED, Read_t::NCODE, frg->getMatePair().first);
+                  ReassignMap::iterator r2 = findOrCreate(reassignRED, Read_t::NCODE, frg->getMatePair().second);
+                  frg->setReads(make_pair(r1->second, r2->second));
+                }
+                else if (ncode == Read_t::NCODE)
+                {
+                  Read_t * red = (Read_t *) op;
+
+                  // Update the iid of the read
+                  ReassignMap::iterator ri = findOrCreate(reassignRED, Read_t::NCODE, red->getIID());
+                  red->setIID(ri->second);
+
+                  // Now, update the fragment
+                  ReassignMap::iterator fi = findOrCreate(reassignFRG, Fragment_t::NCODE, red->getFragment());
+                  red->setFragment(fi->second);
+                }
+              }
+
               //-- Append a new object to the bank
               bp -> append (*op);
               cnta ++;
@@ -290,9 +391,13 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:cfhm:vz")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "Rb:cfhm:vz")) != EOF) )
     switch (ch)
       {
+      case 'R':
+        OPT_Reassign = true;
+        break;
+
       case 'b':
         OPT_BankName = optarg;
         break;
@@ -377,6 +482,7 @@ void PrintHelp (const char * s)
     << "-z            Compress sequence and quality values for SEQ and RED\n"
     << "              (only allows [ACGTN] sequence and [0,63] quality)\n"
     << "-v            Display the compatible bank version\n"
+ //   << "-R            Reassign IIDs of RED, FRG messages to unused values (untested)\n"
     << endl;
   cerr
     << "Takes an AMOS bank directory and message file as input. Alters the\n"
