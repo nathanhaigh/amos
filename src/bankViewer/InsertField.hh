@@ -33,6 +33,8 @@ signals:
 
   void fieldResized();
 
+  void showAlignments(int contig_iid);
+
 
 
 public slots:

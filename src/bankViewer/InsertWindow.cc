@@ -531,4 +531,10 @@ void InsertWindow::clickZoomOutTool()
   m_select->zoomOutButton->setOn(true);
 }
 
+void InsertWindow::showAlignments(int contigiid)
+{
+  cerr << "show alignments for " << contigiid << endl;
+
+}
+
 

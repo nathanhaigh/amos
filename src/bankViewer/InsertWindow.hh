@@ -29,6 +29,7 @@ public:
 public slots:
   void bankChanged();
   void contigChanged();
+  void showAlignments(int contigiid);
 
   void loadSearch();
   void loadHappyDistance();

@@ -337,6 +337,11 @@ void InsertField::processItemSelection(QString & s,
     s += "<hr>";
 
     jump = false;
+
+    if (rightButtonDown)
+    {
+      emit showAlignments(citem->m_tile.source);
+    }
   }
   else if ((*it)->rtti() == CoverageCanvasItem::RTTI)
   {
@@ -494,6 +499,13 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
   updateVisibleRect();
 
   emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);
+
+  /*
+  QPainter p(viewport());
+  p.setPen(Qt::red);
+  p.drawText(10,10,100,20,Qt::AlignHCenter, "Hello World");
+  p.end();
+  */
 }
 
 void InsertField::updateVisibleRect()

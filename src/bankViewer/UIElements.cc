@@ -88,6 +88,7 @@ static const char * orfstr = "ORF";
 static const char * snpstr = "SNP";
 static const char * otherstr = "Other";
 static const char * breakstr = "Breakpoint";
+static const char * fixstr = "Fix";
 
 const char * UIElements::allFeatureTypes = "UCPBX";
 
@@ -102,6 +103,7 @@ const char * UIElements::getFeatureStr(AMOS::FeatureType_t type)
     case 'C':  return coveragestr;
     case 'O':  return orfstr;
     case 'P':  return snpstr;
+    case 'F':  return fixstr;
     default:   return otherstr;
   };
 }
