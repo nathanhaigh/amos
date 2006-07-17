@@ -34,6 +34,8 @@ using namespace AMOS;
 using namespace std;
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
+int MAXMERCOUNT = 250;
+
 
 int extractSNPScore (const AMOS::Feature_t & fea)
 {
@@ -163,6 +165,9 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   QHBox * hbox = new QHBox(this);
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, hbox, "qcv");
+
+  connect(m_ifield, SIGNAL(showAlignments(int)),
+          parent,   SLOT(showAlignments(int)));
 
   vrange = new RangeScrollBar_t(Qt::Vertical, hbox);
 
@@ -562,12 +567,13 @@ void InsertWidget::initializeTiling()
       {
         string cons = contig.getSeqString();
 
+        // current mer between i..j
+        DataStore::Mer_t fwd_mer = 0, rev_mer = 0;
+        int merlen = 0;
+        int j = 0; // 1 past where the mer ends
+
         for (int i = 0; i < clen; i++)
         {
-          DataStore::Mer_t fwd_mer = 0, rev_mer = 0;
-          int merlen = 0;
-          int j = i;
-
           while(merlen < m_datastore->Kmer_Len && j < clen)
           {
             if (cons[j] != '-')
@@ -582,8 +588,10 @@ void InsertWidget::initializeTiling()
           if (j >= clen) { break; }
 
           int mc = m_datastore->getMerCoverage(fwd_mer, rev_mer);
-          if (mc > 200) { mc = 200; }
+          if (mc > MAXMERCOUNT) { mc = MAXMERCOUNT; }
           m_kmerstats->addPoint(i+ci->offset, mc);
+
+          if (cons[i] != '-') { merlen--; }
         }
       }
 
@@ -662,7 +670,7 @@ void InsertWidget::initializeTiling()
         if (j >= clen) { break; }
 
         int mc = m_datastore->getMerCoverage(fwd_mer, rev_mer);
-        if (mc > 200) { mc = 200; }
+        if (mc > MAXMERCOUNT) { mc = MAXMERCOUNT; }
         m_kmerstats->addPoint(i, mc);
       }
     }
@@ -956,8 +964,8 @@ void InsertWidget::paintCanvas()
   {
     cerr << " coverage";
 
-    int inswidth = (int)((m_insertCL->m_coverage[m_insertCL->m_curpos-1].x() + m_hoffset) * m_hscale);
-    int redwidth = (int)((m_readCL->m_coverage[m_readCL->m_curpos-1].x() + m_hoffset) * m_hscale);
+    int inswidth = (m_insertCL->m_curpos) ?  (int)((m_insertCL->m_coverage[m_insertCL->m_curpos-1].x() + m_hoffset) * m_hscale) : 0;
+    int redwidth = (m_readCL->m_curpos) ? (int)((m_readCL->m_coverage[m_readCL->m_curpos-1].x() + m_hoffset) * m_hscale) : 0;
 
     int covwidth = max(inswidth, redwidth);
 
