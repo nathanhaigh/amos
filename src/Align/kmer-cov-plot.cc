@@ -117,6 +117,7 @@ static unsigned  Char_To_Binary
      {
       case  'a' :
       case  'n' :
+      default:
         return  0;
       case  'c' :
         return  1;
@@ -124,10 +125,12 @@ static unsigned  Char_To_Binary
         return  2;
       case  't' :
         return  3;
+        /*
       default :
         sprintf (Clean_Exit_Msg_Line, "Bad char = %c (ASCII %u) in Char_To_Binary",
              ch, unsigned (ch));
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+        */
      }
    return  0;
   }
