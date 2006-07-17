@@ -6,9 +6,12 @@ use AMOS::AmosLib;
 ## if new clear range < MINFRGLEN, drop read and link
 ## if $PERMUTEN, change N's in clear range to random base
 
+my $PERMUTEN = 1;
+my $CHANGECLR = 1;
+
 my $MAXNS = 6;
 my $MINFRGLEN = 64;
-my $PERMUTEN = 1;
+
 my $VERBOSE = 0;
 
 my %shortfrgs;
@@ -34,7 +37,7 @@ while (my $rec = getRecord(\*STDIN))
     my $len = scalar @bases;
 
     
-    print STDERR "$acc\t$seqname\t$clrl\t$clrr\t$len\t" if $VERBOSE;
+    print STDERR "$acc\t$seqname\t$clrl\t$clrr\t$len |" if $VERBOSE;
 
     my $beststart = -1;
     my $bestlen = 0;
@@ -47,20 +50,29 @@ while (my $rec = getRecord(\*STDIN))
     my $ncount = 0;
 
     my $i;
-    for ($i = $clrl; $i < $clrr; $i++)
+    for ($i = 0; $i < $len; $i++)
     {
-      if ($bases[$i] eq "N")
+      my $origb = $bases[$i];
+      if ($origb eq "N")
+      {
+        $alln++;
+
+        if ($PERMUTEN) { $bases[$i] = $dnabases[rand(4)]; }
+      }
+
+      next if ($i < $clrl || $i >= $clrr);
+
+      if ($origb eq "N")
       {
         $ncount++;
-        $alln++;
         $curn++;
 
         print STDERR " $i" if $VERBOSE;
 
         if ($ncount == $MAXNS)
         {
-          my $curend = $i - $ncount;
-          my $curlen = $curend - $curstart + 1;
+          my $curend = $i - $ncount + 1;
+          my $curlen = $curend - $curstart;
           $curn -= $ncount;
 
           print STDERR "\t[$curstart $curend]" if $VERBOSE;
@@ -89,8 +101,8 @@ while (my $rec = getRecord(\*STDIN))
 
     if ($curstart != -1)
     {
-      my $curend = $i - $ncount - 1;
-      my $curlen = $curend - $curstart + 1;
+      my $curend = $clrr - $ncount;
+      my $curlen = $curend - $curstart;
       $curn -= $ncount;
 
       print STDERR "\t[$curstart $curend $ncount]" if $VERBOSE;
@@ -105,28 +117,25 @@ while (my $rec = getRecord(\*STDIN))
 
     my $bestend = $beststart+$bestlen;
 
-    my $diff = ($beststart != $clrl || $bestend != $clrr || ($PERMUTEN && $bestn)) ? 1 : 0;
-
-    if ($diff || $VERBOSE)
+    if (!$CHANGECLR)
     {
-      print STDERR "$acc\t$seqname\t$clrl\t$clrr\t$len\t" if !$VERBOSE;
-      print STDERR " ** " if $diff;
-      print STDERR "$beststart $bestend $bestn $alln\n";
+      $beststart = $clrl;
+      $bestend = $clrr;
+      $bestlen = $bestend - $beststart;
+    }
+
+    my $diff = ($beststart != $clrl || $bestend != $clrr) ? 1 : 0;
+
+    if ($diff || ($PERMUTEN && $alln) || $VERBOSE)
+    {
+      print STDERR "$acc\t$seqname\t$clrl\t$clrr\t$len |" if !$VERBOSE;
+      print STDERR "\t$beststart\t$bestend\t|\t$bestn\t$alln";
+      print STDERR " **" if $diff;
+      print STDERR "\n";
     }
  
     if ($bestlen >= $MINFRGLEN)
     {
-      if ($PERMUTEN && $bestn)
-      {
-        for (my $i = $beststart; $i < $bestend; $i++)
-        {
-          if ($bases[$i] eq "N")
-          {
-            $bases[$i] = $dnabases[rand(4)];
-          }
-        }
-      }
-
       my $skipline = 0;
 
       foreach (split /\n/, $rec)
