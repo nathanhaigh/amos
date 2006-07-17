@@ -35,7 +35,7 @@ cd src/bankViewer
 qmake-qt3
 make
 
-The bankViewer binary will then build in the bankViewer directory.
+The hawkeye binary will then build in the bankViewer directory.
 You will have to manually copy it to your bin directory.
     
 
@@ -59,7 +59,7 @@ cd src/bankViewer
 $QTDIR/bin/qmake
 make
 
-The bankViewer binary will then build in the bankViewer directory.
+The hawkeye binary will then build in the bankViewer directory.
 You will have to manually copy it to your bin directory.
 
   

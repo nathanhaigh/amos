@@ -116,15 +116,15 @@ your system PATH, all is well, if not you will need to instruct
 NUCMER to the full path of `nucmer' (see the Defining Variables
 section in the `INSTALL' file).
 
-   The AMOS Bank Viewer relies on X windows and the Qt3 toolkit. Note
-that the Qt toolkit is somewhat volatile, so it is important to
-install Qt3 and not a newer or older version. If Qt is not centrally
-installed on your system, you will need to do so to make use of this
-graphical viewer. The configure script should be able to identify most
-standard Qt installations, however you may need to set the
-`--with-Qt-dir' configure option to the location of your Qt
-package. If all else fails, you may have to build the bank viewer
-independently. If so, the source resides in AMOS/src/bankViewer.
+   The AMOS assembly viewer Hawkeye relies on X windows and the Qt3 
+toolkit. Note that the Qt toolkit is somewhat volatile, so it is 
+important to install Qt3 and not a newer or older version. If Qt is not 
+centrally installed on your system, you will need to do so to make 
+use of this graphical viewer. The configure script should be able 
+to identify most standard Qt installations, however you may need 
+to set the `--with-Qt-dir' configure option to the location of 
+your Qt package. If all else fails, you may have to build the
+viewer independently. If so, the source resides in AMOS/src/bankViewer.
 
 
 Documentation
