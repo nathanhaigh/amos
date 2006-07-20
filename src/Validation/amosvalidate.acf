@@ -6,9 +6,6 @@ BINDIR=/fs/sz-user-supported/Linux-x86_64/bin
 PREF = $(strip .frg PREFIX)
 
 
-## bank-transact
-10: $(BINDIR)/bank-transact -m $(PREF).afg -b $(PREF).bnk -c
-
 ## asmQC
 30: $(BINDIR)/asmQC -b $(PREF).bnk -feat -numsd 2
 
@@ -37,5 +34,3 @@ PREF = $(strip .frg PREFIX)
 ## Create Suspicious Regions
 1020: $(BINDIR)/suspiciousfeat2region $(PREF).suspicious.feat > $(PREF).suspicious.regions
 
-## Create Fasta
-1030: $(BINDIR)/bank2fasta -e -b $(PREF).bnk > $(PREF).fasta
