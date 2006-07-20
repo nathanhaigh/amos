@@ -9,7 +9,7 @@ BINDIR   = /usr/local/bin
 NUCMER   = /usr/local/bin
 
 SEQS     = $(PREFIX).seq
-BANK     = $(PREFIX).bank
+BANK     = $(PREFIX).bnk
 ALIGN    = $(PREFIX).delta
 LAYOUT   = $(PREFIX).layout
 CONFLICT = $(PREFIX).conflict
