@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Hawkeye Scaffold View: AMOS Assembly Visual Analytics Tool</title>
+</head>
+<body>
+
+<a name="top"></a>
+
+<table width="100%" border=0>
+<tr>
+<td valign=top>
+<a href="index.html"><img src="Hawkeye.jpg" width="250" height="160"/></a><br>
+
+<h3>Table of Contents</h3>
+<a href="index.html#build">Build &amp; Installation</a><br>
+<a href="index.html#launching">Launching Hawkeye</a><br>
+<a href="index.html#options">Command Line Options</a><br>
+<a href="index.html#sample">Sample Assembly</a><br>
+<a href="index.html#contactinformation">Contact Information</a><br>
+<a href="index.html#acknowledgements">Acknowledgements</a><br>
+
+<br>
+
+<h3>Displays</h3>
+<a href="launchpad.html">Launch Pad</a><br>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="launchpad.html#lp-statistics">Statistics</a></li>
+<li><a href="launchpad.html#lp-features">Features</a></li>
+<li><a href="launchpad.html#lp-libraries">Libraries</a></li>
+<li><a href="launchpad.html#lp-scaffolds">Scaffolds</a></li>
+<li><a href="launchpad.html#lp-contigs">Contigs</a></li>
+<li><a href="launchpad.html#lp-reads">Reads</a></li>
+</td></tr></table>
+
+<br>
+<a href="scaffold.html#scaffold">Scaffold View</a><br>
+<a href="contig.html#contig">Contig View</a><br>
+<a href="contig.html#chromatogram">Raw Chromatograms</a><br>
+
+
+<br><br>
+<br><br>
+
+<p align="left">
+<img src="http://sourceforge.net/sflogo.php?group_id=134326&type=5"> <br>
+</p>
+
+
+</td>
+
+<td width="1">&nbsp;</td>
+
+
+<td>
+<h1><a name="scaffold"></a>Hawkeye Scaffold View</h1>
+The scaffold view of the assembly shows how the contigs and
+inserts are placed on the scaffold. It uses the mate-pair relationship 
+and  library sizes to categories the "happiness" of each insert, meaning 
+it displays if the paired reads are correctly oriented and at the 
+expected distance apart.
+
+The threshold distance for a "happy" insert can be adjusted by 
+setting the maximum allowed number of standard deviations from the mean an 
+insert can be. Details on all objects displayed in the Insert view 
+can be found by clicking on any object. The mate for any
+unhappy read is highlighted be right clicking on the read.<br>
+<br>
+<img alt="scaffold" src="scaffold.jpg"
+ style="width: 583px; height: 480px;"><br>
+<br>
+<br>
+It also plots both the read and insert coverage at each position along
+the scaffold, highlighting positions of low coverage or low linking
+coverage. The viewer can also be used to highlight arbitrary features
+along the scaffold. This functionality is currently used to highlight
+regions of the genome where the assembly has a high occurence of
+unhappy insert coverage, or regions of high density correlated SNPs.
+Both such events are strong evidence for misassembly.<br>
+<br>
+<br>
+<br>
+<a href="compressed.png"><img alt="compressed mates"
+ src="compressed.png" style="width: 610px; height: 413px;"></a><br>
+
+
+<br><br>
+<a href="#top">Return to top</a><br><hr>
+
+</body>
+</html>
