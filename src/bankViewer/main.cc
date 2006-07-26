@@ -28,7 +28,7 @@ int main( int argc, char **argv )
     {
       if (!strcmp(argv[i], "-h"))
       {
-        cerr << "Usage: bankViewer [options] [bankname [contigid [position]]]" << endl;
+        cerr << "Usage: hawkeye [options] [bankname [contigid [position]]]" << endl;
         cerr << "Options:"  << endl
              << "  -c <path>   Add a chromatogram path"        << endl
              << "  -D <DB>     Set the chromatogram DB"        << endl
