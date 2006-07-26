@@ -19,7 +19,8 @@ using namespace AMOS;
 //=============================================================== Globals ====//
 string OPT_BankName;                 // bank name parameter
 bool   OPT_BankSpy = false;          // read or read-only spy
-string OPT_EIDList;
+string OPT_EIDFile;
+string OPT_IIDFile;
 bool   OPT_AutoIncludeMates = false;
 bool   OPT_NullMates = false;
 
@@ -83,29 +84,46 @@ int main (int argc, char ** argv)
 
     idmap iidsToPrint;
 
-    ifstream eidfile;
-    eidfile.open(OPT_EIDList.c_str());
-
-    if (!eidfile)
+    if (!OPT_EIDFile.empty())
     {
-      throw Exception_t("Couldn't open EID File",
-                        __LINE__, __FILE__);
+      ifstream eidfile;
+      eidfile.open(OPT_EIDFile.c_str());
+
+      if (!eidfile) { throw Exception_t("Couldn't open EID File", __LINE__, __FILE__); }
+
+      string eid;
+      while (eidfile >> eid)
+      {
+        ID_t iid = red_bank.lookupIID(eid.c_str());
+        if (iid != AMOS::NULL_ID)
+        {
+          iidsToPrint[iid] = 0;
+        }
+        else
+        {
+          cerr << "ERROR: EID:" << eid << " not found in bank, skipping" << endl;
+        }
+      }
+    }
+    
+    if (!OPT_IIDFile.empty())
+    {
+      ifstream iidfile;
+      iidfile.open(OPT_IIDFile.c_str());
+
+      if (!iidfile) { throw Exception_t("Couldn't open IID File", __LINE__, __FILE__); }
+
+      ID_t iid;
+      while (iidfile >> iid)
+      {
+        if (iid != AMOS::NULL_ID)
+        {
+          iidsToPrint[iid] = 0;
+        }
+      }
     }
 
-    string eid;
-    while (eidfile >> eid)
-    {
-      ID_t iid = red_bank.lookupIID(eid.c_str());
-      if (iid != AMOS::NULL_ID)
-      {
-        iidsToPrint[iid] = 0;
-      }
-      else
-      {
-        cerr << "ERROR: EID:" << eid << " not found in bank, skipping" << endl;
-      }
-    }
-    cerr << "Loaded " << iidsToPrint.size() << " reads to select from " << OPT_EIDList << endl;
+    cerr << "Loaded " << iidsToPrint.size() << " reads to select" << endl;
 
     Message_t msg;
 
@@ -242,39 +260,20 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvEMN")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvE:I:MN")) != EOF) )
   {
     switch (ch)
     {
-      case 'h':
-        PrintHelp (argv[0]);
-        exit (EXIT_SUCCESS);
-        break;
+      case 'h': PrintHelp (argv[0]);        exit (EXIT_SUCCESS); break;
+      case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
 
-      case 's':
-	    OPT_BankSpy = true;
-        break;
+      case 's': OPT_BankSpy = true;          break;
+      case 'E': OPT_EIDFile = optarg;        break;
+      case 'I': OPT_IIDFile = optarg;        break;
+      case 'M': OPT_AutoIncludeMates = true; break;
+      case 'N': OPT_NullMates = true;        break;
 
-      case 'v':
-       PrintBankVersion (argv[0]);
-	   exit (EXIT_SUCCESS);
-	   break;
-
-      case 'E':
-        OPT_EIDList = argv[optind++];
-        break;
-
-      case 'M':
-        OPT_AutoIncludeMates = true;
-        break;
-
-      case 'N':
-        OPT_NullMates = true;
-        break;
-
-      default:
-        errflg ++;
-      }
+      default: errflg ++; }
   }
 
   if ( errflg > 0 || optind != argc - 1 )
@@ -298,7 +297,8 @@ void PrintHelp (const char * s)
     << "-h            Display help information\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
-    << "-E EIDLIST    Specify file containing list of eid's to extract\n"
+    << "-E EIDFile    Specify file containing list of eid's to extract\n"
+    << "-I IIDFile    Specify file containing list of iid's to extract\n"
     << "-M            Dump mates of eids as well\n"
     << "-N            Nullify mates if not printing pair\n"
     << endl;
