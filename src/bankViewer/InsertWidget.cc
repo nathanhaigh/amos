@@ -820,7 +820,8 @@ void InsertWidget::computeCoverage()
 
   m_readCL->finalize();
 
-  m_meaninsertcoverage = ((double)totalinsertlen) / (m_insertCL->m_coverage[m_insertCL->m_curpos-1].x() - m_insertCL->m_coverage[0].x());
+  int insertspan = m_insertCL->m_coverage[m_insertCL->m_curpos-1].x() - m_insertCL->m_coverage[0].x();
+  m_meaninsertcoverage = (insertspan) ? ((double)totalinsertlen)/insertspan : 0;
   m_meanreadcoverage = ((double)totalbases) / readspan;
 }
 
@@ -1125,33 +1126,45 @@ void InsertWidget::paintCanvas()
       }
     }
 
+    if (rightmost > m_width) { m_width = rightmost; }
+
     voffset += (layout.size() + 1) * lineheight;
   }
 
   if ( m_insertCovFeatures )
   {
-    paintCoverage(m_insertCL->m_coverage, m_insertCL->m_cestat, false, m_insertCL->m_curpos,
-                  voffset, m_seqheight*2, -1, m_meaninsertcoverage, 
-                  UIElements::color_insertcoverage, true);
+    if (m_insertCL->m_curpos)
+    {
+      paintCoverage(m_insertCL->m_coverage, m_insertCL->m_cestat, false, m_insertCL->m_curpos,
+                    voffset, m_seqheight*2, -1, m_meaninsertcoverage, 
+                    UIElements::color_insertcoverage, true);
 
-    voffset += m_seqheight*2+gutter;
-    emit newMaxInsertCovTol((int)(m_insertCL->m_maxdepth - m_meaninsertcoverage >
-                                  m_meaninsertcoverage ?
-                                  m_insertCL->m_maxdepth - m_meaninsertcoverage :
-                                  m_meaninsertcoverage));
+      voffset += m_seqheight*2+gutter;
+
+      int diff = (int) (m_insertCL->m_maxdepth - m_meaninsertcoverage);
+
+      //cerr << "max: " << m_insertCL->m_maxdepth << endl;
+      //cerr << "mean: " << m_meaninsertcoverage << endl;
+      //cerr << "diff: " << diff << endl;
+
+      emit newMaxInsertCovTol(((int)((diff > m_meaninsertcoverage) ? diff : m_meaninsertcoverage)));
+    }
   }
 
   if ( m_readCovFeatures )
   {
-    paintCoverage(m_readCL->m_coverage, m_readCL->m_cestat, false, m_readCL->m_curpos,
-                  voffset, m_seqheight*2, -2, m_meanreadcoverage,
-                  UIElements::color_readcoverage, true);
+    if (m_readCL->m_curpos)
+    {
+      paintCoverage(m_readCL->m_coverage, m_readCL->m_cestat, false, m_readCL->m_curpos,
+                    voffset, m_seqheight*2, -2, m_meanreadcoverage,
+                    UIElements::color_readcoverage, true);
 
-    voffset += m_seqheight*2+gutter;
-    emit newMaxReadCovTol((int)(m_readCL->m_maxdepth - m_meanreadcoverage >
-                                m_meanreadcoverage ?
-                                m_readCL->m_maxdepth - m_meanreadcoverage :
-                                m_meanreadcoverage));
+      voffset += m_seqheight*2+gutter;
+      emit newMaxReadCovTol((int)(m_readCL->m_maxdepth - m_meanreadcoverage >
+                                  m_meanreadcoverage ?
+                                  m_readCL->m_maxdepth - m_meanreadcoverage :
+                                  m_meanreadcoverage));
+    }
   }
 
   if (1)//!m_features.empty())
