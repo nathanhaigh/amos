@@ -12,51 +12,115 @@
 #include <cassert>
 #include <unistd.h>
 #include <algorithm>
+
 using namespace std;
 using namespace AMOS;
 
+string OPT_BankName; 
+bool   OPT_BankSpy   = false;
 
-//=============================================================== Globals ====//
-string OPT_BankName;                 // bank name parameter
-bool   OPT_BankSpy = false;          // read or read-only spy
-string OPT_EIDFile;
-string OPT_IIDFile;
-bool   OPT_AutoIncludeMates = false;
 bool   OPT_NullMates = false;
+bool   OPT_AutoMate  = false;
+bool   OPT_ReadEID  = false;
+bool   OPT_ReadIID  = false;
 
+string OPT_EIDInclude;
+string OPT_IIDInclude;
+string OPT_EIDExclude;
+string OPT_IIDExclude;
 
+void ParseArgs(int argc, char ** argv);
+void PrintHelp(const char * s);
+void PrintUsage(const char * s);
 
-//========================================================== Fuction Decs ====//
-//----------------------------------------------------- ParseArgs --------------
-//! \brief Sets the global OPT_% values from the command line arguments
-//!
-//! \return void
-//!
-void ParseArgs (int argc, char ** argv);
-
-
-//----------------------------------------------------- PrintHelp --------------
-//! \brief Prints help information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintHelp (const char * s);
-
-
-//----------------------------------------------------- PrintUsage -------------
-//! \brief Prints usage information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
-void PrintUsage (const char * s);
+char EXCLUDE  = 0;
+char INCLUDE  = 1;
+char PRINTED  = 3;
+char UNKNOWN  = 4;
 
 typedef HASHMAP::hash_map<AMOS::ID_t, char> idmap;
+idmap iidStatus;
+
+int inexcount[4] = {0,0,0,0};
+
+void loadEIDs(Bank_t & red_bank, const string & eidfilename, int value)
+{
+  if (!eidfilename.empty())
+  {
+    ifstream eidfile;
+    eidfile.open(eidfilename.c_str());
+
+    if (!eidfile) { throw Exception_t("Couldn't open EID File", __LINE__, __FILE__); }
+
+    string eid;
+    while (eidfile >> eid)
+    {
+      ID_t iid = red_bank.lookupIID(eid.c_str());
+      if (iid != AMOS::NULL_ID)
+      {
+        iidStatus[iid] = value;
+        inexcount[value]++;
+      }
+      else
+      {
+        cerr << "ERROR: EID:" << eid << " not found in bank, skipping" << endl;
+      }
+    }
+  }
+}
+
+void loadIIDs(Bank_t & red_bank, const string & iidfilename, int value)
+{
+  if (!iidfilename.empty())
+  {
+    ifstream iidfile;
+    iidfile.open(iidfilename.c_str());
+
+    if (!iidfile) { throw Exception_t("Couldn't open IID File", __LINE__, __FILE__); }
+
+    ID_t iid;
+    while (iidfile >> iid)
+    {
+      if (iid != AMOS::NULL_ID)
+      {
+        iidStatus[iid] = value;
+        inexcount[value]++;
+      }
+      else
+      {
+        cerr << "ERROR: IID:" << iid << " not found in bank, skipping" << endl;
+      }
+    }
+  }
+}
+
+int printCount = 0;
+inline void printRead(Bank_t & red_bank, ID_t iid)
+{
+  if (iid)
+  {
+    if (OPT_ReadEID)
+    {
+      cout << red_bank.lookupEID(iid) << endl;
+    }
+    else if (OPT_ReadIID)
+    {
+      cout << iid << endl;
+    }
+    else
+    {
+      Read_t red;
+      Message_t msg;
+      red_bank.fetch(iid, red);
+      red.writeMessage(msg);
+      msg.write(cout);
+    }
+
+    printCount++;
+  }
+}
 
 
-
-//========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
   int exitcode = EXIT_SUCCESS;
@@ -69,169 +133,237 @@ int main (int argc, char ** argv)
   BankStream_t frg_bank (Fragment_t::NCODE);
   BankStream_t lib_bank (Library_t::NCODE);
 
-  long int cntw = 0;             // written object count
-
-  //-- Parse the command line arguments
   ParseArgs (argc, argv);
 
-  //-- BEGIN: MAIN EXCEPTION CATCH
-  try {
+  bool OPT_NAMEONLY = (OPT_ReadEID || OPT_ReadIID);
 
+  try 
+  {
     BankMode_t bm = OPT_BankSpy ? B_SPY : B_READ;
-    red_bank . open (OPT_BankName, bm);
-    frg_bank . open (OPT_BankName, bm);
-    lib_bank . open (OPT_BankName, bm);
+    red_bank.open(OPT_BankName, bm);
+    frg_bank.open(OPT_BankName, bm);
+    lib_bank.open(OPT_BankName, bm);
 
-    idmap iidsToPrint;
+    cerr << "Bank has " << red_bank.getSize() << " reads" << endl;
 
-    if (!OPT_EIDFile.empty())
+    loadEIDs(red_bank, OPT_EIDInclude, INCLUDE); 
+    loadIIDs(red_bank, OPT_IIDInclude, INCLUDE); 
+
+    cerr << "Loaded " << inexcount[INCLUDE] << " reads to include" << endl;
+
+    loadEIDs(red_bank, OPT_EIDExclude, EXCLUDE); 
+    loadIIDs(red_bank, OPT_IIDExclude, EXCLUDE); 
+
+    cerr << "Loaded " << inexcount[EXCLUDE] << " reads to exclude" << endl;
+
+    bool doInclude = inexcount[INCLUDE] > 0;
+    bool doExclude = inexcount[EXCLUDE] > 0;
+
+    // if  doInclude &&  doExclude  => Print {Included} - {Excluded}  ==> Default Exclude, clobbering
+    // if  doInclude && !doExclude  => Print {Included}               ==> Default Exclude
+    // if !doInclude &&  doExclude  => Print {Everyone} - {Excluded}  ==> Default Include
+    // if !doInclude && !doExclude  => Error
+
+    char DEFAULT = EXCLUDE;
+    if (doExclude && !doInclude) { DEFAULT = INCLUDE; }
+
+    if (iidStatus.empty())
     {
-      ifstream eidfile;
-      eidfile.open(OPT_EIDFile.c_str());
-
-      if (!eidfile) { throw Exception_t("Couldn't open EID File", __LINE__, __FILE__); }
-
-      string eid;
-      while (eidfile >> eid)
-      {
-        ID_t iid = red_bank.lookupIID(eid.c_str());
-        if (iid != AMOS::NULL_ID)
-        {
-          iidsToPrint[iid] = 0;
-        }
-        else
-        {
-          cerr << "ERROR: EID:" << eid << " not found in bank, skipping" << endl;
-        }
-      }
+      cerr << "No reads selected to include/exclude" << endl;
+      return 0;
     }
-    
-    if (!OPT_IIDFile.empty())
-    {
-      ifstream iidfile;
-      iidfile.open(OPT_IIDFile.c_str());
-
-      if (!iidfile) { throw Exception_t("Couldn't open IID File", __LINE__, __FILE__); }
-
-      ID_t iid;
-      while (iidfile >> iid)
-      {
-        if (iid != AMOS::NULL_ID)
-        {
-          iidsToPrint[iid] = 0;
-        }
-      }
-    }
-
-    cerr << "Loaded " << iidsToPrint.size() << " reads to select" << endl;
 
     Message_t msg;
 
-    //-- Iterate through each library in the bank
-    while ( lib_bank >> lib )
+    if (!OPT_NAMEONLY)
     {
-      lib.writeMessage(msg);
-      msg.write(cout);
+      //-- Iterate through each library in the bank
+      while ( lib_bank >> lib )
+      {
+        lib.writeMessage(msg);
+        msg.write(cout);
+      }
     }
 
-    int extra = 0;   
     int nullified = 0;
+    int halfmates = 0;
+    int mateinclude = 0;
+    int mateexclude = 0;
+    int clobbered = 0;
 
-    //-- Iterate through each object in the mate bank
-    while ( frg_bank >> frg )
+    while (frg_bank >> frg)
     {
-      mtp = frg . getMatePair( );
-      idmap::iterator r1 = iidsToPrint.find(mtp . first);
-      idmap::iterator r2 = iidsToPrint.find(mtp . second);
+      mtp = frg.getMatePair();
+      idmap::iterator r1 = iidStatus.find(mtp.first);
+      idmap::iterator r2 = iidStatus.find(mtp.second);
 
-      if (r1 != iidsToPrint.end() || r2 != iidsToPrint.end())
+      const char r1status = (r1 == iidStatus.end()) ? UNKNOWN : r1->second; // { UNKNOWN, INCLUDE, EXCLUDE }
+      const char r2status = (r2 == iidStatus.end()) ? UNKNOWN : r2->second; // { UNKNOWN, INCLUDE, EXCLUDE }
+
+      const char r1print = (r1status == UNKNOWN) ? DEFAULT : r1status;
+      const char r2print = (r2status == UNKNOWN) ? DEFAULT : r2status;
+
+      if (0)
       {
-        bool brokenmate = false;
-
-        // Always print r1
-        if (r1 == iidsToPrint.end())
+        if (r1 != iidStatus.end() || r2 != iidStatus.end())
         {
-          swap (mtp.first,mtp.second);
-          swap (r1, r2);
+          cerr << "r1: " << mtp.first << " r1status: " << (int) r1status << " r1print: "  << (int) r1print << endl;
+          cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " r2print: " << (int) r2print << endl;
+        }
+      }
 
-          brokenmate = true;
-        }
-        else if (r2 == iidsToPrint.end())
-        {
-          brokenmate = true;
+      if (((r1print == EXCLUDE) && (r2print == EXCLUDE)) ||
+          ((r1status == EXCLUDE) && OPT_AutoMate) || // override r2 include
+          ((r2status == EXCLUDE) && OPT_AutoMate))   // override r1 include
+      {
+        // skipping both reads and frg
+
+        // only mark reads excluded because of mate
+        if ((r2status == EXCLUDE) && (r1status != EXCLUDE)) 
+        { 
+          if (r1status == INCLUDE) { clobbered++; }
+          iidStatus[mtp.first] = EXCLUDE; mateexclude++; 
         }
 
-        if (brokenmate && OPT_NullMates)
-        {
-          nullified++;
-          frg.setReads(make_pair(NULL_ID, NULL_ID));
+        if ((r1status == EXCLUDE) && (r2status != EXCLUDE)) 
+        { 
+          if (r2status == INCLUDE) { clobbered++; }
+          iidStatus[mtp.second] = EXCLUDE; mateexclude++; 
         }
-        else
+      }
+      else
+      {
+        // printing at least 1
+
+        // status = {UNKNOWN, EXCLUDE, INCLUDE} 
+        // print = {INCLUDE, EXCLUDE}
+
+        bool printr1 = (r1print == INCLUDE);
+        bool printr2 = (r2print == INCLUDE);
+
+        if ((r1status == UNKNOWN) && printr2 && OPT_AutoMate) { printr1 = true; }
+        if ((r2status == UNKNOWN) && printr1 && OPT_AutoMate) { printr2 = true; }
+
+        if (!printr1 && !printr2)
+        {
+          cerr << "not printing either!!!" << endl;
+          cerr << "r1status: " << r1status << " DEFAULT: " << DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+          cerr << "r2status: " << r2status << " DEFAULT: " << DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+
+          return 1;
+        }
+        else if (printr1 && r1status == EXCLUDE)
+        {
+          cerr << "printr1 but r1status == EXCLUDE" << endl;
+          cerr << "r1status: " << r1status << " DEFAULT: " << DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+          cerr << "r2status: " << r2status << " DEFAULT: " << DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+
+          return 1;
+        }
+        else if (printr2 && r2status == EXCLUDE)
+        {
+          cerr << "printr2 but r2status == EXCLUDE" << endl;
+          cerr << "r1status: " << r1status << " DEFAULT: " << DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+          cerr << "r2status: " << r2status << " DEFAULT: " << DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+
+          return 1;
+        }
+
+        bool brokenmate = !(printr1 && printr2);
+
+        if (brokenmate)
+        {
+          if(OPT_NullMates)
+          {
+            nullified++;
+            frg.setReads(make_pair(NULL_ID, NULL_ID));
+          }
+          else 
+          {
+            halfmates++;
+          }
+        }
+
+        if (!OPT_NAMEONLY)
         {
           frg.writeMessage(msg);
           msg.write(cout);
         }
 
-        red_bank.fetch(mtp.first, red1);
-        iidsToPrint[red1.getIID()] = 1;
-        red1.writeMessage(msg);
-        msg.write(cout);
-        cntw++;
-
-        if (r2 != iidsToPrint.end() || OPT_AutoIncludeMates)
+        if (printr1)
         {
-          red_bank . fetch (mtp . second, red2);
-          iidsToPrint[red2.getIID()] = 1;
-          red2.writeMessage(msg);
-          msg.write(cout);
-          cntw++;
+          printRead(red_bank, mtp.first);
+          iidStatus[mtp.first] = PRINTED;
 
-          if (r2 == iidsToPrint.end())
+          if (r2status == INCLUDE && OPT_AutoMate && r1status == UNKNOWN)
           {
-            extra++;
+            mateinclude++;
+          }
+        }
+
+        if (printr2)
+        {
+          printRead(red_bank, mtp.second);
+          iidStatus[mtp.second] = PRINTED;
+
+          if (r1status == INCLUDE && OPT_AutoMate && r2status == UNKNOWN)
+          {
+            mateinclude++;
           }
         }
       }
     }
 
-    if (OPT_AutoIncludeMates)
-    {
-      cerr << "Included " << extra << " extra mates" << endl;
-    }
+    if (doInclude) { cerr << "Included " << mateinclude << " extra mates" << endl; }
+    if (doExclude) { cerr << "Excluded " << mateexclude << " extra mates" << endl; }
 
-    if (OPT_NullMates)
-    {
-      cerr << "Nullified " << nullified << " half mates" << endl;
-    }
+    if (doInclude && doExclude && OPT_AutoMate) 
+     { cerr << "Clobbered " << clobbered   << " mates" << endl; }
 
+    if (OPT_NullMates)          
+     { cerr << "Nullified " << nullified << " half mates" << endl; }
+
+    if (doInclude && !OPT_NullMates && !OPT_AutoMate && halfmates)          
+     { cerr << "WARNING: Printed " << halfmates << " half mates" << endl; }
+
+    // iidStatus == PRINTED => Printed
+    // iidStatus == EXCLUDE => Exclude listed or by mate
+    // iidStatus == INCLUDE => Should be printed, but not in a mate-pair
+    // iidStatus == UNKNOWN => Take default action
+
+    // Need to print unmated reads
+
+    int unmated = 0;
+
+    IDMap_t::const_iterator ri;
+    for (ri =  red_bank.getIDMap().begin();
+         ri != red_bank.getIDMap().end();
+         ri++)
     {
-      // Check that all reads (including unmated) have been printed
-      int unmated = 0;
-      idmap::iterator ii;
-      for (ii =  iidsToPrint.begin();
-           ii != iidsToPrint.end();
-           ii++)
+      idmap::iterator r1 = iidStatus.find(ri->iid);
+
+      if (((r1 == iidStatus.end()) && (DEFAULT == INCLUDE)) || 
+          ((r1 != iidStatus.end()) && (r1->second == INCLUDE)))
       {
-        if (ii->second == 0)
+        if (!OPT_NAMEONLY)
         {
-          red_bank.fetch(ii->first, red1);
+          red_bank.fetch(ri->iid, red1);
 
           frg_bank.seekg(frg_bank.lookupBID(red1.getFragment()));
           frg_bank >> frg;
 
           frg.writeMessage(msg);
           msg.write(cout);
-
-          red1.writeMessage(msg);
-          msg.write(cout);
-
-          unmated++;
-          cntw++;
         }
-      }
 
-      cerr << "Included " << unmated << " unmated reads" << endl;
+        printRead(red_bank, ri->iid);
+        unmated++;
+      }
     }
+
+    cerr << "Included " << unmated << " unmated reads" << endl;
+    cerr << endl;
+    cerr << "Printed " << printCount << " total reads" << endl;
 
     red_bank.close();
     frg_bank.close();
@@ -243,10 +375,6 @@ int main (int argc, char ** argv)
          << "  there has been a fatal error, abort" << endl;
     exitcode = EXIT_FAILURE;
   }
-  //-- END: MAIN EXCEPTION CATCH
-
-
-  cerr << "Total Reads written: " << cntw << endl;
 
   return exitcode;
 }
@@ -260,20 +388,28 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvE:I:MN")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hvsLlMNI:i:X:x:")) != EOF) )
   {
     switch (ch)
     {
       case 'h': PrintHelp (argv[0]);        exit (EXIT_SUCCESS); break;
       case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
-
       case 's': OPT_BankSpy = true;          break;
-      case 'E': OPT_EIDFile = optarg;        break;
-      case 'I': OPT_IIDFile = optarg;        break;
-      case 'M': OPT_AutoIncludeMates = true; break;
+
+      case 'M': OPT_AutoMate = true;         break;
       case 'N': OPT_NullMates = true;        break;
 
-      default: errflg ++; }
+      case 'I': OPT_EIDInclude = optarg;     break;
+      case 'i': OPT_IIDInclude = optarg;     break;
+
+      case 'X': OPT_EIDExclude = optarg;     break;
+      case 'x': OPT_IIDExclude = optarg;     break;
+
+      case 'L': OPT_ReadEID = true;          break;
+      case 'l': OPT_ReadIID = true;          break;
+
+      default: errflg ++; 
+    };
   }
 
   if ( errflg > 0 || optind != argc - 1 )
@@ -289,32 +425,51 @@ void ParseArgs (int argc, char ** argv)
 
 
 
-//------------------------------------------------------------- PrintHelp ----//
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
+    << "Print RED, FRG & LIB messages of selected reads from an AMOS Bank\n\n"
     << "-h            Display help information\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
-    << "-E EIDFile    Specify file containing list of eid's to extract\n"
-    << "-I IIDFile    Specify file containing list of iid's to extract\n"
-    << "-M            Dump mates of eids as well\n"
-    << "-N            Nullify mates if not printing pair\n"
-    << endl;
-  cerr
-    << "Takes an AMOS bank directory and dumps RED, FRG & LIB messages\n"
-    << "associated with list of reads to stdout" << endl;
+    << "-i IIDFile    Specify file containing list of iid's to print\n"
+    << "-I EIDFile    Specify file containing list of eid's to print\n"
+    << "-L            Just output read names that would be printed by eid\n"
+    << "-l            Just output read names that would be printed by iid\n"
+    << "-M            Automatically consider mates\n"
+    << "-N            Nullify mates in FRG if not printing both mate-pairs\n"
+    << "-x IIDFile    File of list reads iids to exclude\n"
+    << "-X EIDFile    File of list reads eids to exclude\n"
+    << "\n"
+    << "Notes:\n"
+    << "By default, reads are considered independently so you can\n"
+    << "print a read, but not its mate. The -N option removes references\n"
+    << "to unprinted mate-pairs in the FRG messages.\n"
+    << "\n"
+    << "In most cases, though, you should use -M to automatically select mates.\n"
+    << "\n"
+    << "You must specify included and/or excluded reads. Precedence is:\n"
+    << "1) If a read is excluded by -X or -x, it will not be printed\n"
+    << "  (-M) Mates of excluded reads will not be printed either\n"
+    << "\n"
+    << "2) If a read is included by -I or -i, it will be printed except if excluded\n"
+    << "  (-M) Mates of included reads will be printed, except if either is excluded\n"
+    << "       (Included Reads or mates may be clobbered by excluded reads or mates)\n"
+    << "\n"
+    << "3) If no reads are included, all reads except those excluded will be printed\n"
+    << "\n"
+    << "Exclusion takes precedence over inclusion!\n";
+
   return;
 }
 
 
 
 
-//------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
   cerr
-    << "\nUSAGE: " << s << " -E EIDLIST  [options]  <bank path>\n\n";
+    << "\nUSAGE: " << s << " [options] <bank path>\n\n";
   return;
 }
