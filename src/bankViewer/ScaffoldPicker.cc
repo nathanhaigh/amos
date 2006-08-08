@@ -32,21 +32,21 @@ public:
                    QString id,
                    QString iid,
                    QString eid,
-                   QString length,
-                   QString contigs,
+                   QString span,
+                   QString bases,
                    QString offset)
                
-    : QListViewItem(parent, id, iid, eid, length, contigs, offset) {}
+    : QListViewItem(parent, id, iid, eid, span, bases, offset) {}
 
   ScaffoldListItem(ScaffoldListItem * parent, 
                    QString id,
                    QString iid,
                    QString eid,
-                   QString length,
-                   QString contigs,
+                   QString span,
+                   QString bases,
                    QString offset)
                
-    : QListViewItem(parent, id, iid, eid, length, contigs, offset) {}
+    : QListViewItem(parent, id, iid, eid, span, bases, offset) {}
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
@@ -101,8 +101,8 @@ void LaunchPad::loadScaffolds()
   scaffoldList->addColumn("IID");
   scaffoldList->addColumn("EID");
   scaffoldList->addColumn("Span");
-  scaffoldList->addColumn("Contigs");
-  scaffoldList->addColumn("Offset");
+  scaffoldList->addColumn("Bases/Offset");
+  scaffoldList->addColumn("Contigs/Orientation");
 
   if (!m_datastore->scaffold_bank.isOpen())
   {
@@ -130,6 +130,17 @@ void LaunchPad::loadScaffolds()
     {
       int span = scaffold.getSpan();
       int numcontigs = scaffold.getContigTiling().size();
+      int bases = 0;
+
+      vector<AMOS::Tile_t> & ctiling = scaffold.getContigTiling();
+
+      vector<AMOS::Tile_t>::iterator ti; 	 
+      for (ti =  ctiling.begin();
+           ti != ctiling.end();
+           ti++) 	 
+      { 	 
+        bases += ti->range.getLength();
+      }
 
       ScaffoldListItem * scaffolditem;
 
@@ -138,14 +149,11 @@ void LaunchPad::loadScaffolds()
                                           QString::number(scaffold.getIID()),
                                           QString(scaffold.getEID().c_str()), 
                                           QString::number(span), 
-                                          QString::number(numcontigs),
-                                          "");
+                                          QString::number(bases), 
+                                          QString::number(numcontigs));
 
       scaffid++;
 
-      vector<AMOS::Tile_t> & ctiling = scaffold.getContigTiling();
-
-      vector<AMOS::Tile_t>::iterator ti; 	 
       for (ti =  ctiling.begin();
            ti != ctiling.end();
            ti++) 	 
@@ -155,9 +163,9 @@ void LaunchPad::loadScaffolds()
                              QString::number(m_datastore->contig_bank.getIDMap().lookupBID(ti->source)),
                              QString::number(ti->source), 	 
                              QString(m_datastore->contig_bank.lookupEID(ti->source).c_str()),
-                             QString::number(ti->range.getLength() + ti->gaps.size()),
-                             oo,
-                             QString::number(ti->offset));
+                             QString::number(ti->range.getLength()),
+                             QString::number(ti->offset),
+                             oo);
       }
     }
   }
