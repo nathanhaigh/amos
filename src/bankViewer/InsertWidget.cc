@@ -1756,6 +1756,8 @@ static int min(int a, int b)
 
 void InsertWidget::start()
 {
+  stopbreak();
+
   QRect rc = QRect(m_ifield->contentsX(),    m_ifield->contentsY(),
                    m_ifield->visibleWidth(), m_ifield->visibleHeight() );
   QRect rect = m_ifield->inverseWorldMatrix().mapRect(rc);
@@ -1764,12 +1766,12 @@ void InsertWidget::start()
 
   m_ball = new QCanvasEllipse(7, 5, m_icanvas);
   m_ball->setX(rect.x() + rect.width()/2);
-  m_ball->setY(basey - 15);
+  m_ball->setY(basey - 50);
   m_ball->setPen(Qt::white);
   m_ball->setBrush(Qt::white);
   m_ball->show();
 
-  m_paddle = new Paddle((int)(m_ball->x()-16), (int)(m_ball->y()+5), 
+  m_paddle = new Paddle((int)(m_ball->x()-25), (int)(m_ball->y()+25), 
                         50, 5, m_icanvas);
   m_paddle->setPen(Qt::white);
   m_paddle->setBrush(Qt::white);
@@ -1853,28 +1855,43 @@ void InsertWidget::timeout()
       }
       else
       {
-        QCanvasItemList l = m_ball->collisions(true);
+        QCanvasItemList l = m_icanvas->collisions(m_ball->boundingRect());// m_ball->collisions(true);
         bool hit = false;
+
+        int left   = (int)(m_ball->x());
+        int right  = (int)(m_ball->x() + m_ball->width());
+        int top    = (int)(m_ball->y());
+        int bottom = (int)(m_ball->y() + m_ball->height());
 
         for (QCanvasItemList::Iterator li=l.begin(); li != l.end(); li++)
         {
+          if ((right  < (*li)->x()) ||
+              (left   > ((*li)->x() + (*li)->boundingRect().width())) ||
+              (bottom < (*li)->y()) ||
+              (top    > ((*li)->y() + (*li)->boundingRect().height())))
+          {
+            continue;
+          }
+
           if ((*li)->rtti() == InsertCanvasItem::RTTI)
           {
+            //cerr << "i";
             (*li)->hide();
-            m_yvel = -m_yvel;
             hit = true;
           }
           else if ((*li)->rtti() == Paddle::RTTI)
           {
-            m_yvel = -m_yvel;
+            //cerr << "p";
             m_xvel += rand()%10-5;
             hit = true;
           }
-        }
 
-        if (hit)
-        {
-          m_ball->moveBy(0, 3*m_yvel);
+          if (hit)
+          {
+            m_yvel = -m_yvel;
+            m_ball->moveBy(0, 4*m_yvel);
+            break;
+          }
         }
       }
 
