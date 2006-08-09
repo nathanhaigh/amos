@@ -81,9 +81,9 @@ opendir(PHD, $phddir) || die ("Cannot open $phddir: $!\n");
 while (my $file = readdir(PHD)){
     if ($file =~ /^\./){next;} # skip hidden files
     if ($file !~ /\.phd\.\d/) {next;} # skip non-phd files
-    $file =~ /^(.*)(\.ab1)?\.phd\.(\d)/;
+    $file =~ /^([^.]*)(\.ab1)?\.phd\.(\d)/;
     my $seqname = $1;
-    my $rev = $2;
+    my $rev = $3;
 
     if (defined $clrfile && ! exists $clears{$seqname}){
 	print "No clear range for $seqname\n";

@@ -800,6 +800,9 @@ sub parseMatesFile {
     } # while each %seqids
     
     while (my ($ins, $nm) = each %forw) {
+	if (! exists $insid{$ins}){
+	    $insid{$ins} = $minSeqId++;
+	}
 	if (! exists $seenlib{$ins}){
 	    my $found = 0;
 	    
@@ -822,6 +825,9 @@ sub parseMatesFile {
 	}
     }
     while (my ($ins, $nm) = each %rev) {
+	if (! exists $insid{$ins}){
+	    $insid{$ins} = $minSeqId++;
+	}
 	if (! exists $seenlib{$ins}){
 	    my $found = 0;
 	    
