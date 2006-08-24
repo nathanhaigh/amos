@@ -10,10 +10,6 @@ INPUTS = $(PREF).bnk
 ## Creating FastA
 100: $(BINDIR)/bank2fasta -b $(PREF).bnk > $(PREF).fasta
 
-## Performing read mapping
-200: $(BINDIR)/dumpreads $(PREF).bnk > $(PREF).seq
-210: $(NUCMER) --maxmatch --prefix=$(PREF) $(PREF).fasta $(PREF).seq
-
 ## Analyzing mate-pairs
 300: $(BINDIR)/asmQC -b $(PREF).bnk -numsd 2 -recompute -update -scaff
 310: $(BINDIR)/asmQC -b $(PREF).bnk -numsd 2 -recompute -update -scaff
@@ -28,6 +24,11 @@ INPUTS = $(PREF).bnk
 500: $(BINDIR)/analyze-read-depth $(PREF).bnk -c 1000 -x 3 > $(PREF).depth.feat
 510: $(BINDIR)/loadFeatures $(PREF).bnk $(PREF).depth.feat
 
-## Analyzing alignment breakpoints
-600: $(BINDIR)/casm-breaks $(PREF).delta -b $(PREF).bnk -F $(PREF).break.fea
-610: $(BINDIR)/bank-transact -b $(PREF).bnk -m $(PREF).break.fea
+## Align singleton reads
+600: $(BINDIR)/listReadPlacedStatus $(PREF).bnk -S -E > $(PREF).singletons
+610: $(BINDIR)/dumpreads $(PREF).bnk -E $(PREF).singletons > $(PREF).singletons.seq
+620: $(NUCMER) --maxmatch --prefix=$(PREF) $(PREF).fasta $(PREF).singletons.seq
+
+## Analyzing singleton alignment breakpoints
+700: $(BINDIR)/casm-breaks $(PREF).delta -b $(PREF).bnk -F $(PREF).break.fea
+710: $(BINDIR)/bank-transact -b $(PREF).bnk -m $(PREF).break.fea
