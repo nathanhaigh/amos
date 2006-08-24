@@ -496,7 +496,7 @@ void InsertWidget::initializeTiling()
   m_currentContig   = m_datastore->m_contigId;
   m_tiling.clear();
 
-  if (m_paintScaffold && m_currentScaffold != AMOS::NULL_ID)
+  if (m_paintScaffold && (m_currentScaffold != AMOS::NULL_ID))
   {
     Scaffold_t scaffold;
     m_datastore->fetchScaffold(m_datastore->m_scaffoldId, scaffold);
@@ -740,6 +740,8 @@ void InsertWidget::computeCoverage()
     leftmost = min(0, (*m_inserts.begin())->m_loffset);
   }
   m_hoffset = -leftmost;
+
+  //cerr << "m_hoffset: " << m_hoffset << endl;
 
   if (m_insertCL)  { delete m_insertCL;  }
   if (m_readCL)    { delete m_readCL;  }
