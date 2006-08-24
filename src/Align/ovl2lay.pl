@@ -4,7 +4,7 @@ use strict;
 my $ERROR_THRESHOLD = 1.0;
 my $TRIMREADS = 1;
 
-my $USAGE = "multialignoverlaps.pl read.map idx.iid.eid.left.right < dump-olaps-store > lay.afg\n";
+my $USAGE = "ovl2lay.pl RED.map idx.iid.eid.left.right < dump-olaps-store > lay.afg\n";
 
 my $readmap = shift @ARGV or die $USAGE;
 my $readinfofile = shift @ARGV or die $USAGE;
@@ -52,6 +52,39 @@ while (<INFO>)
 
 print STDERR " $count loaded\n";
 
+sub printLay
+{
+  return if $TRIMREADS;
+
+  my $maxahang = undef;
+  foreach my $ovl (sort {$a->{ahang} <=> $b->{ahang}} @_)
+  {
+    if (!defined $maxahang) { $maxahang = $ovl->{ahang}; } 
+
+    my $bread = $ovl->{bread};
+    my $oo    = $ovl->{oo};
+
+    my $eid = $readinfo{$bread}->{eid};
+    my $iid = $eid2iid{$eid};
+    my $start = $readinfo{$bread}->{start};
+    my $end   = $readinfo{$bread}->{end};
+
+    if ($oo ne "N")
+    {
+      my $t = $start; $start = $end; $end = $t;
+    }
+
+    my $offset = $ovl->{ahang} - $maxahang;
+
+    print "{TLE\n";
+    print "clr:$start,$end\n";
+    print "off:$offset\n";
+    print "src:$iid\n";
+    print "}\n";
+  }
+}
+
+
 my @overlaps;
 
 my $num = 1;
@@ -70,11 +103,11 @@ while (<>)
   $ovl->{err}   = $vals[6];
   $ovl->{cor}   = $vals[7];
 
-  next if ($ovl->{cor} > $ERROR_THRESHOLD);
+  next if ($ovl->{err} > $ERROR_THRESHOLD);
 
   if (!defined $read || $aread ne $read)
   {
-    if (defined $read) { print "}\n"; }
+    if (defined $read) { printLay(@overlaps); @overlaps = (); print "}\n"; }
 
     $read = $aread;
 
@@ -150,4 +183,4 @@ while (<>)
   }
 }
 
-if (defined $read) { print "}\n"; }
+if (defined $read) { printLay(@overlaps); @overlaps = (); print "}\n"; }
