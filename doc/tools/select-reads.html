@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="GENERATOR"
+ content="Mozilla/4.77 [en] (X11; U; Linux 2.2.19-6.2.1smp i686) [Netscape]">
+  <title>select-reads</title>
+</head>
+<body>
+<table>
+  <tbody>
+    <tr>
+      <td width="26">&nbsp;</td>
+      <td align="left" valign="top" width="644"> <br>
+      <center>
+      <table border="0" cellpadding="5" cellspacing="5" width="80%">
+        <tbody>
+          <tr>
+            <td valign="middle"><img src="../../images/Amostop.gif"
+ align="middle" height="289" width="125"></td>
+            <td valign="middle">
+            <h3><b><font color="#cc0000">select-reads: a tool for
+selecting a subset of reads.<br>
+            </font></b></h3>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </center>
+      <h3><i><font color="#cc0000">Overview</font></i></h3>
+      <p>select-reads is a tool for selecting a subset of reads from a
+readbank, along with their fragments and library information. It can
+also automatically including the mates of reads as well. This tool is
+especially useful if you need to partition your reads such as when you
+partition reads according to which plasmid or chromosome they represent.</p>
+      <p>For example, if you have a list of reads you want to include
+(reads<br>
+that align to 1 plasmid) and you want just those reads and their mates<br>
+use:<br>
+select-reads -I plasmida.reads -M read.bnk &gt; plasmida.afg<br>
+      <br>
+Now, say you want to print all the reads except for those reads:<br>
+select-reads -X plasmida.reads -M read.bnk &gt; notplasmida.afg<br>
+      <br>
+Instead, now you have a list of reads that match plasmidb that you<br>
+want, but you don't want the reads that match plasmida:<br>
+select-reads -X plasmida.read -I plasmidb.reads -M read.bnk &gt;
+plasmidb.afg<br>
+      <br>
+      <br>
+      </p>
+      <h3><i><font color="#cc0000">Documentation</font></i></h3>
+      <p><b>Synopsis</b></p>
+USAGE: select-reads [options] &lt;bank path&gt;<br>
+&nbsp;<br>
+Print RED, FRG &amp; LIB messages of selected reads from an AMOS Bank<br>
+&nbsp;<br>
+-h&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Display help information<br>
+-s&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Disregard bank locks and write permissions (spy mode)<br>
+-v&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Display the compatible bank version<br>
+-i IIDFile&nbsp;&nbsp;&nbsp; Specify file containing list of iid's to
+print<br>
+-I EIDFile&nbsp;&nbsp;&nbsp; Specify file containing list of eid's to
+print<br>
+-L&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Just output read names that would be printed by eid<br>
+-l&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Just output read names that would be printed by iid<br>
+-M&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Automatically consider mates<br>
+-N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Nullify mates in FRG if not printing both mate-pairs<br>
+-x IIDFile&nbsp;&nbsp;&nbsp; File of list reads iids to exclude<br>
+-X EIDFile&nbsp;&nbsp;&nbsp; File of list reads eids to exclude<br>
+&nbsp;<br>
+Notes:<br>
+By default, reads are considered independently so you can<br>
+print a read, but not its mate. The -N option removes references<br>
+to unprinted mate-pairs in the FRG messages.<br>
+&nbsp;<br>
+In most cases, though, you should use -M to automatically select mates.<br>
+&nbsp;<br>
+You must specify included and/or excluded reads. Precedence is:<br>
+1) If a read is excluded by -X or -x, it will not be printed<br>
+&nbsp; (-M) Mates of excluded reads will not be printed either<br>
+&nbsp;<br>
+2) If a read is included by -I or -i, it will be printed except if
+excluded<br>
+&nbsp; (-M) Mates of included reads will be printed, except if either
+is excluded<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (Included Reads or mates may be
+clobbered by excluded reads or mates)<br>
+&nbsp;<br>
+3) If no reads are included, all reads except those excluded will be
+printed<br>
+&nbsp;<br>
+Exclusion takes precedence over inclusion!<br>
+      <br>
+      <br>
+      <h3><i><font color="#cc0000">Contact Information</font></i></h3>
+      <p>Please direct your questions and suggestions to:</p>
+      <p><a href="http://lists.sourceforge.net/lists/listinfo/amos-help"><img
+ src="../../images/amos-help.gif" border="0" height="24" width="261"></a></p>
+      <h3><b><i><font color="#cc0000">Acknowledgements</font></i></b></h3>
+      <h5> The development of amos2ace was supported by the <a
+ href="http://www.nsf.gov/">National Science Foundation</a> under grant
+KDI-9980088 and by the <a href="http://www.nih.gov">National
+Institutes of Health</a> under grant R01-LM06845.<br>
+      </h5>
+      </td>
+    </tr>
+    <tr>
+      <td width="26">&nbsp;</td>
+      <td align="left" valign="top" width="644">&nbsp;</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>
