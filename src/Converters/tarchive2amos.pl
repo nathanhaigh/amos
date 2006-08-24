@@ -58,16 +58,10 @@ $base->setVersion($VERSION);
 $base->setLogFile("tarchive2amos.log");
 
 my $HELPTEXT = qq~
-    tarchive2amos -o <prefix> [-c <clip>] [-m <mates>] [-l <lib>] [options] fasta1 ... fastan
+    tarchive2amos -o <prefix> [options] fasta1 ... fastan
 
-   <prefix>   - prefix for the output files
-   <clip>     - file containing clear ranges for the reads.  If this file
-           is provided, any sequence that does not appear in it is excluded
-           from the output.
-   <mates>    - file containing mate-pair information as specified in the BAMBUS
-           documentation.  This file replaces information provided in .xml files
-   <lib>      - file containing mean/stdev information for libraries. Overrides
-           .xml input.
+   <prefix> - prefix for the output files
+
    fasta1 ... fastan - list of files to be converted.
            The program assumes that for each file called <file>.seq there
            is a <file>.qual and a <file>.xml. (alternatively the files may
@@ -77,12 +71,28 @@ my $HELPTEXT = qq~
 
 Options
 
-    -i <id> - start numbering messages with id <id> (useful when appending
-to a bank)
-    -min <minlen> - reads shorter than <minlen> are rejected (default $MINSEQ)
-    -max <maxlen> - reads longer than <maxlen> are rejected (default no limit)
-    -qual <qval> - default quality value assigned when no quality file is 
-provided (default $DEFAULT_QUAL)
+  -assembly <assembly> - file containing assembly in assembly archive format
+                   http://www.ncbi.nlm.nih.gov/Traces/assembly/assmbrowser.cgi
+
+  -c <clip>      - file containing clear ranges for the reads.  If this file
+                   is provided, any sequence that does not appear in it is 
+                   excluded from the output.
+
+  -m <mates>     - file containing mate-pair information as specified in the
+                   BAMBUS documentation.  This file replaces information 
+                   provided in .xml files
+
+  -l <lib>       - file containing mean/stdev information for libraries. 
+                   Overrides .xml input.
+
+  -i <id>        - start numbering messages with id <id> 
+                   (useful when appending to a bank)
+
+  -min <minlen>  - reads shorter than <minlen> are rejected (default $MINSEQ)
+  -max <maxlen>  - reads longer than <maxlen> are rejected (default no limit)
+
+  -qual <qval>   - default quality value assigned when no quality file is 
+                   provided (default $DEFAULT_QUAL)
 ~;
 
 $base->setHelpText($HELPTEXT);
