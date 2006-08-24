@@ -168,7 +168,9 @@ pair<char,char> recallSlice(ContigIterator_t ci)
     delete slice.bc; slice.bc=NULL;
   }
 
+  cqv /= tiling.size();
   cqv += MIN_QUALITY;
+
   if (cqv > MAX_QUALITY) { cqv = MAX_QUALITY; }
 
   return make_pair(cons, cqv);
