@@ -1,62 +1,34 @@
-////////////////////////////////////////////////////////////////////////////////
-//! \file
-//! \author Adam M Phillippy
-//! \date 03/08/2004
-//!
-//! \brief Dumps a bambus .mates file from an AMOS bank
-//!
-////////////////////////////////////////////////////////////////////////////////
-
 #include "foundation_AMOS.hh"
 #include <iostream>
 #include <cassert>
 #include <unistd.h>
-#include <map>
 using namespace std;
 using namespace AMOS;
 
 
 //=============================================================== Globals ====//
-string OPT_BankName;                 // bank name parameter
-bool   OPT_BankSpy = false;          // read or read-only spy
-typedef map <ID_t, ID_t> IDMap;
+string OPT_BankName; 
+bool   OPT_BankSpy    = false;
+
+bool   OPT_Singletons = false;
+bool   OPT_Dups       = false;
+bool   OPT_Placed     = false;
+
+bool   OPT_JustEID    = false;
+bool   OPT_JustIID    = false;
 
 
-//========================================================== Fuction Decs ====//
-//----------------------------------------------------- ParseArgs --------------
-//! \brief Sets the global OPT_% values from the command line arguments
-//!
-//! \return void
-//!
 void ParseArgs (int argc, char ** argv);
-
-
-//----------------------------------------------------- PrintHelp --------------
-//! \brief Prints help information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
 void PrintHelp (const char * s);
-
-
-//----------------------------------------------------- PrintUsage -------------
-//! \brief Prints usage information to cerr
-//!
-//! \param s The program name, i.e. argv[0]
-//! \return void
-//!
 void PrintUsage (const char * s);
 
 
-
-//========================================================= Function Defs ====//
 int main (int argc, char ** argv)
 {
   int exitcode = EXIT_SUCCESS;
 
-  map<ID_t, vector<ID_t> > readdups;
-  map<ID_t, vector<ID_t> >::iterator rdi;
+  HASHMAP::hash_map<ID_t, vector<ID_t> > readdups;
+  HASHMAP::hash_map<ID_t, vector<ID_t> >::iterator rdi;
 
   Contig_t contig;
 
@@ -69,7 +41,6 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try 
   {
-
     BankMode_t bm = OPT_BankSpy ? B_SPY : B_READ;
     ctg_bank.open (OPT_BankName, bm);
     red_bank.open(OPT_BankName, bm);
@@ -92,31 +63,59 @@ int main (int argc, char ** argv)
       }
     }
 
-    AMOS::IDMap_t::const_iterator ci;
-    for (ci = red_bank.getIDMap().begin();
-         ci;
-         ci++)
+    AMOS::IDMap_t::const_iterator ri;
+    for (ri = red_bank.getIDMap().begin();
+         ri;
+         ri++)
     {
-      cout << ci->iid << "\t" << ci->eid << "\t";
-
-      rdi = readdups.find(ci->iid);
+      int numcontigs = 0;
+      char code = 'S';
+      rdi = readdups.find(ri->iid);
 
       if (rdi == readdups.end())
       {
-        cout << "S" << endl;
+        if (OPT_Singletons)
+        {
+          if      (OPT_JustEID) { cout << ri->eid << endl; }
+          else if (OPT_JustIID) { cout << ri->iid << endl; }
+          else
+          {
+            cout << ri->iid << "\t" 
+                 << ri->eid << "\t"
+                 << code << "\t"
+                 << numcontigs
+                 << endl;
+          }
+        }
       }
       else
       {
-        if (rdi->second.size() == 1) { cout << "P"; }
-        else                         { cout << "D"; }
+        numcontigs = rdi->second.size();
 
-        vector<ID_t>::iterator vi;
-        for (vi = rdi->second.begin(); vi != rdi->second.end(); vi++)
+        if (numcontigs == 1) { code =  'P'; }
+        else                 { code =  'D'; }
+
+        if ((OPT_Placed && numcontigs == 1) ||
+            (OPT_Dups   && numcontigs >  1))
         {
-          cout << "\t" << *vi;
-        }
+          if      (OPT_JustEID) { cout << ri->eid << endl; }
+          else if (OPT_JustIID) { cout << ri->iid << endl; }
+          else
+          {
+            cout << ri->iid << "\t" 
+                 << ri->eid << "\t"
+                 << code << "\t"
+                 << numcontigs;
 
-        cout << endl;
+            vector<ID_t>::iterator vi;
+            for (vi = rdi->second.begin(); vi != rdi->second.end(); vi++)
+            {
+              cout << "\t" << *vi;
+            }
+
+            cout << endl;
+          }
+        }
       }
     }
   }
@@ -134,28 +133,24 @@ int main (int argc, char ** argv)
 
 
 
-//------------------------------------------------------------- ParseArgs ----//
 void ParseArgs (int argc, char ** argv)
 {
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsvExy")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hsvSDPEI")) != EOF) )
     switch (ch)
       {
-      case 'h':
-        PrintHelp (argv[0]);
-        exit (EXIT_SUCCESS);
-        break;
+      case 'h': PrintHelp (argv[0]); exit (EXIT_SUCCESS); break;
+      case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
+      case 's': OPT_BankSpy = true; break;
 
-      case 's':
-	OPT_BankSpy = true;
-	break;
+      case 'S': OPT_Singletons = true; break;
+      case 'D': OPT_Dups       = true; break;
+      case 'P': OPT_Placed     = true; break;
 
-      case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
+      case 'E': OPT_JustEID    = true; break;
+      case 'I': OPT_JustIID    = true; break;
 
       default:
         errflg ++;
@@ -169,23 +164,39 @@ void ParseArgs (int argc, char ** argv)
   }
 
   OPT_BankName = argv [optind ++];
+
+  if (!OPT_Singletons && !OPT_Dups && !OPT_Placed)
+  {
+    OPT_Singletons = OPT_Dups = OPT_Placed = true;
+  }
 }
 
 
 
 
-//------------------------------------------------------------- PrintHelp ----//
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h            Display help information\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-v            Display the compatible bank version\n"
+    << "Options\n"
+    << "-------\n"
+    << "  -h  Display help information\n"
+    << "  -s  Disregard bank locks and write permissions (spy mode)\n"
+    << "  -v  Display the compatible bank version\n"
+    << "\n"
+    << "  -S  Just list singleton reads\n"
+    << "  -D  Just list duplicate reads\n"
+    << "  -P  Just list placed reads\n"
+    << "\n"
+    << "  -E  Just list read EIDs\n"
+    << "  -I  Just list read IIDs\n"
     << endl;
+
   cerr
-    << "Prints the status and containing contig(s) of each read in the read\n"
-    << "bank as follows:\n"
+    << "Prints the status and containing contig(s) of each read as:\n"
+    << "iid  eid  code  numcontigs  contig iid list\n"
+    << "\n"
+    << "Codes are:\n"
     << "S: Singleton read\n"
     << "P: Placed in a single contig\n"
     << "D: Placed in multiple contigs\n"
