@@ -58,7 +58,7 @@ $base->setVersion($VERSION);
 $base->setLogFile("tarchive2amos.log");
 
 my $HELPTEXT = qq~
-    tarchive2amos -o <prefix> [options] fasta1 ... fastan
+ tarchive2amos -o <prefix> [options] fasta1 ... fastan
 
    <prefix> - prefix for the output files
 
@@ -70,6 +70,7 @@ my $HELPTEXT = qq~
            RED (read) records.  
 
 Options
+-------
 
   -assembly <assembly> - file containing assembly in assembly archive format
                    http://www.ncbi.nlm.nih.gov/Traces/assembly/assmbrowser.cgi
