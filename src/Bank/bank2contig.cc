@@ -200,11 +200,20 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
   else if (OPT_SimpleLayout)
   {
     string contigeid = contig.getEID();
+    if (!OPT_UseEIDs)
+    {
+      char buffer[20];
+      sprintf(buffer, "%d", contig.getIID());
+      contigeid=buffer;
+    }
+
+    char status = contig.getStatus();
 
     vector<Tile_t>::const_iterator ti;
     for (ti = tiling.begin(); ti != tiling.end(); ti++)
     {
       cout << contigeid << "\t"
+           << status << "\t"
            << read_bank.lookupEID(ti->source) << "\t"
            << (ti->range.isReverse() ? 1 : 0) << "\t"
            << ti->offset
