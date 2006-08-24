@@ -72,6 +72,9 @@ static ifstream EID_fp;
   // Pointer to file of EIDs
 
 
+static bool USE_LayoutClear = false; // TODO: Fix AMOScmp, then this will be true
+
+
 static bool  By_Lo_Position
     (const Celera_IMP_Sub_Msg_t & a, const Celera_IMP_Sub_Msg_t & b);
 static void  Get_Strings_And_Offsets
@@ -890,7 +893,17 @@ static void  Get_Strings_And_Offsets
 	  tag_list . push_back (strdup (tag_buff));
 	}      
 
+    if (USE_LayoutClear)
+    {
+      clear = ti->range;
+      if (clear.isReverse()) { clear.swap();}
+    }
+    else
+    {
+      // Grab clear range from read bank
       clear = read . getClearRange ();
+    }
+
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
 
@@ -1010,7 +1023,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "aAbBcCe:E:fhi:n:o:PsSTuv:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "aAbBcCe:E:fhi:n:o:PsSTuv:L")) != EOF))
      switch  (ch)
        {
         case  'a' :
@@ -1062,6 +1075,10 @@ static void  Parse_Command_Line
 	    exit(1);
 	  }
 	  break;
+
+        case  'L' :
+          USE_LayoutClear = true;
+          break;
 
         case 'n':
 	  byEID = true;
@@ -1213,17 +1230,18 @@ static void  Usage
            "\n"
            "Options:\n"
            "  -a       Output alignments instead of consensus messages\n"
-	   "  -A       Output an AMOS message file\n"
-	   "  -b       Input from AMOS bank\n"
-	   "  -B       Output to an AMOS bank\n"
+	       "  -A       Output an AMOS message file\n"
+     	   "  -b       Input from AMOS bank\n"
+	       "  -B       Output to an AMOS bank\n"
            "  -c       Process contig messages\n"
            "  -C       Input is Celera msg format, i.e., a .cgb or .cgw file\n"
            "  -e <x>   Set alignment error rate to <x>, e.g.,  -e 0.05  for 5%% error\n"
            "  -E <fn>  Get extra sequences to align from fasta file <fn>\n"
            "  -f       Output consensus only in FASTA format\n"
            "  -h       Print this usage message\n"
-	   "  -i <fn>  File containing list of IIDs to be processed\n"
-	   "  -n <fn>  File containing list of EIDs (names) to be processed\n"
+	       "  -i <fn>  File containing list of IIDs to be processed\n"
+           "  -L       Use clear range in layout rather than readbank (-b only)\n"
+	       "  -n <fn>  File containing list of EIDs (names) to be processed\n"
            "  -o <n>   Set minimum overlap bases to <n>\n"
            "  -P       Input is simple contig format, i.e., UMD format\n"
            "              using partial reads\n"
