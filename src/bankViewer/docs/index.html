@@ -128,7 +128,7 @@ are available. You can download the AMOS source package from: <br>
 <a href="http://sourceforge.net/project/showfiles.php?group_id=134326">http://sourceforge.net/project/showfiles.php?group_id=134326</a>.
 <br>
 
-<h3>Update: Download the AMOS 1.5.0 beta with Hawkeye 1.0 from <a href="http://www.cbcb.umd.edu/software/amos/amos-1.5.0b.tar.gz">here</a>.</h3>
+<h3>Update: Download the AMOS 1.5.0 beta with Hawkeye 1.0 from <a href="http://www.cbcb.umd.edu/software/amos/amos-1.5.0b.tar.gz">here</a>. (Updated Aug 24, 2006)</h3>
 
 
 Hawkeye requires Qt 3.x is installed to run. The latest version of Qt
@@ -170,11 +170,13 @@ More information is available in the INSTALL file within the AMOS tarball.
 Hawkeye reads the assembly data from an AMOS bank. A bank is a special 
 directory of binary encoded files containing all information on an assembly.
 A bank is created by the AMOS assemblers directly, or by converting 
-the results of others assemblers into AMOS format. This is done with the tools
+the results of others assemblers into AMOS format. This is typically done 
+with the tools
 <a href="http://amos.sourceforge.net/docs/converters/toAmos.html">toAmos</a> 
 and <a href="">bank-transact</a>. toAmos reads the assembly files and converts 
 them to plaintext AMOS message formats, and bank-transact reads those messages
-and creates the binary encoded bank directory. 
+and creates the binary encoded bank directory. See the AMOS <a href="http://amos.sourceforge.net/docs/converters/index.html">Assembly Conversion Page</a> for
+more information.
 
 <br><br>
 For example:
@@ -192,6 +194,18 @@ Creates the bank human.bnk from an ace file, which is an output format
 for many assemblers including Phrap, Arachne, and Newbler. Check
 your assembler's documentation for more information on creating ACE files. 
 More information on converting to AMOS is available in the <a href="http://amos.sourceforge.net/docs/converters/toAmos.html">toAmos documentation</a>.
+
+
+<br><br>
+<pre>$ tarchive2amos -o human -assembly ASSEMBLY.xml TRACEINFO.seq;
+$ bank-transact -m human.afg -b human.bnk -c</pre>
+
+Creates the bank human.bnk from an assembly archive XML file called
+ASSEMBLY.xml. Note all of the read fasta files should be concatentated
+into a single TRACEINFO.seq file, and the read qualities files should
+be concatenated into a single TRACEINFO.qual file, and the TRACEINFO.xml
+file should be present as well. More information is available in the
+<a href="http://amos.sourceforge.net/docs/converters/tarchive2amos.html">tarchive2amos documentation</a>. 
 
 <br><br>
 
