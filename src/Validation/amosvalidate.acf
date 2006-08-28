@@ -27,7 +27,7 @@ INPUTS = $(PREF).bnk
 ## Align singleton reads
 600: $(BINDIR)/listReadPlacedStatus $(PREF).bnk -S -E > $(PREF).singletons
 610: $(BINDIR)/dumpreads $(PREF).bnk -E $(PREF).singletons > $(PREF).singletons.seq
-620: $(NUCMER) --maxmatch --prefix=$(PREF) $(PREF).fasta $(PREF).singletons.seq
+620: $(NUCMER) --maxmatch -l 30 -c 100 -g 30 -b 50 --prefix=$(PREF) $(PREF).fasta $(PREF).singletons.seq
 
 ## Analyzing singleton alignment breakpoints
 700: $(BINDIR)/casm-breaks $(PREF).delta -b $(PREF).bnk -F $(PREF).break.fea
