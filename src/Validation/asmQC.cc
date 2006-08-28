@@ -860,9 +860,9 @@ int main(int argc, char **argv)
   if (byscaff){
     try {
       if (! scaff_stream.exists(globals["bank"])){
-	cerr << "No scaffold accound found in bank " << globals["bank"] << endl;
-	cerr << "Try running code without -byscaff option" << endl;
-	exit(1);
+        cerr << "No scaffold account found in bank " << globals["bank"] << endl
+             << "ignoring -scaff option" << endl;
+        byscaff = false;
       } else {
 	scaff_stream.open(globals["bank"], B_READ);
       }
