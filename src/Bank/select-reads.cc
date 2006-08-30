@@ -171,8 +171,6 @@ int main (int argc, char ** argv)
   {
     BankMode_t bm = OPT_BankSpy ? B_SPY : B_READ;
     red_bank.open(OPT_BankName, bm);
-    frg_bank.open(OPT_BankName, bm);
-    lib_bank.open(OPT_BankName, bm);
 
     cerr << "Bank has " << red_bank.getSize() << " reads" << endl;
 
@@ -210,207 +208,235 @@ int main (int argc, char ** argv)
     int mateinclude = 0;
     int mateexclude = 0;
     int clobbered = 0;
-
-    // Visit each fragment once. Note: mate-pairs may be undefined
-    while (frg_bank >> frg)
-    {
-      mtp = frg.getMatePair();
-      idmap::iterator r1 = iidStatus.find(mtp.first);
-      idmap::iterator r2 = iidStatus.find(mtp.second);
-
-      const char r1status = (r1 == iidStatus.end()) ? UNKNOWN : r1->second; // { UNKNOWN, INCLUDE, EXCLUDE }
-      const char r2status = (r2 == iidStatus.end()) ? UNKNOWN : r2->second; // { UNKNOWN, INCLUDE, EXCLUDE }
-
-      const char r1print = (r1status == UNKNOWN) ? DEFAULT : r1status; // { INCLUDE, EXCLUDE }
-      const char r2print = (r2status == UNKNOWN) ? DEFAULT : r2status; // { INCLUDE, EXCLUDE }
-
-      if (0)
-      {
-        if (r1 != iidStatus.end() || r2 != iidStatus.end())
-        {
-          cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " r1print: " << (int) r1print << endl;
-          cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " r2print: " << (int) r2print << endl;
-        }
-      }
-
-      if (((mtp.first == AMOS::NULL_ID)  && (mtp.second == AMOS::NULL_ID)) ||
-          ((mtp.first == AMOS::NULL_ID)  && (r2print == EXCLUDE)) ||
-          ((mtp.second == AMOS::NULL_ID) && (r1print == EXCLUDE)))
-          
-      {
-        // Skip both because of 1 NULLID + Exclude or 2 NULLIDs
-        // Otherwise there is at least 1 to print
-        // don't mark NULL_ID as EXCLUDE, though, or AutoMate will screw up
-      }
-      else if (((r1print == EXCLUDE) && (r2print == EXCLUDE)) ||
-               ((r1status == EXCLUDE) && OPT_AutoMate) || // override r2 include
-               ((r2status == EXCLUDE) && OPT_AutoMate))   // override r1 include
-      {
-        // skipping both reads and frg because of exclusion
-
-        // only mark reads excluded because of mate
-        if ((r2status == EXCLUDE) && (r1status != EXCLUDE)) 
-        { 
-          if (r1status == INCLUDE) { clobbered++; }
-          iidStatus[mtp.first] = EXCLUDE; mateexclude++; 
-        }
-
-        if ((r1status == EXCLUDE) && (r2status != EXCLUDE)) 
-        { 
-          if (r2status == INCLUDE) { clobbered++; }
-          iidStatus[mtp.second] = EXCLUDE; mateexclude++; 
-        }
-      }
-      else
-      {
-        // printing at least 1 read
-
-        // status = {UNKNOWN, EXCLUDE, INCLUDE} 
-        // print = {INCLUDE, EXCLUDE}
-
-        printLibrary(lib_bank, frg.getLibrary());
-
-        bool printr1 = (r1print == INCLUDE);
-        bool printr2 = (r2print == INCLUDE);
-
-        if ((r1status == UNKNOWN) && printr2 && OPT_AutoMate) { printr1 = true; }
-        if ((r2status == UNKNOWN) && printr1 && OPT_AutoMate) { printr2 = true; }
-
-        if (!printr1 && !printr2)
-        {
-          cerr << "INTERNAL ERROR: not printing either!!!" << endl;
-          cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
-          cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
-
-          return 1;
-        }
-        else if (printr1 && r1status == EXCLUDE)
-        {
-          cerr << "INTERNAL ERROR: printr1 but r1status == EXCLUDE" << endl;
-          cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
-          cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
-
-          return 1;
-        }
-        else if (printr2 && r2status == EXCLUDE)
-        {
-          cerr << "INTERNAL ERROR: printr2 but r2status == EXCLUDE" << endl;
-          cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
-          cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
-
-          return 1;
-        }
-
-        bool brokenmate = !(printr1 && printr2);
-
-        if (brokenmate)
-        {
-          if(OPT_NullMates)
-          {
-            nullified++;
-            frg.setReads(make_pair(NULL_ID, NULL_ID));
-          }
-          else 
-          {
-            halfmates++;
-          }
-        }
-
-        if (!OPT_NAMEONLY)
-        {
-          frg.writeMessage(msg);
-          msg.write(cout);
-          fragments.insert(frg.getIID());
-        }
-
-        if (printr1)
-        {
-          printRead(red_bank, mtp.first);
-
-          if (r2status == INCLUDE && OPT_AutoMate && r1status == UNKNOWN)
-          {
-            mateinclude++;
-          }
-        }
-
-        if (printr2)
-        {
-          printRead(red_bank, mtp.second);
-
-          if (r1status == INCLUDE && OPT_AutoMate && r2status == UNKNOWN)
-          {
-            mateinclude++;
-          }
-        }
-      }
-    }
-
-    if (doInclude && OPT_AutoMate) { cerr << "Included " << mateinclude << " extra mates" << endl; }
-    if (doExclude && OPT_AutoMate) { cerr << "Excluded " << mateexclude << " extra mates" << endl; }
-
-    if (doInclude && doExclude && OPT_AutoMate) 
-     { cerr << "Clobbered " << clobbered   << " mates" << endl; }
-
-    if (OPT_NullMates)          
-     { cerr << "Nullified " << nullified << " half mates" << endl; }
-
-    if (!OPT_NullMates && !OPT_AutoMate && halfmates)          
-     { cerr << "WARNING: Printed " << halfmates << " half mates" << endl; }
-
-    // iidStatus == PRINTED => Printed
-    // iidStatus == EXCLUDE => Exclude listed or by mate
-    // iidStatus == INCLUDE => Should be printed, but not in a mate-pair
-    // iidStatus == UNKNOWN => Take default action
-
-    // Need to print unmated reads
-
     int unmated = 0;
 
-    IDMap_t::const_iterator ri;
-    for (ri =  red_bank.getIDMap().begin();
-         ri != red_bank.getIDMap().end();
-         ri++)
+    if (frg_bank.exists(OPT_BankName))
     {
-      idmap::iterator r1 = iidStatus.find(ri->iid);
+      cerr << "Processing FRG bank..." << endl;
 
-      if (((r1 == iidStatus.end()) && (DEFAULT == INCLUDE)) || 
-          ((r1 != iidStatus.end()) && (r1->second == INCLUDE)))
+      frg_bank.open(OPT_BankName, bm);
+      lib_bank.open(OPT_BankName, bm);
+
+      // Visit each fragment once. Note: mate-pairs may be undefined
+      while (frg_bank >> frg)
       {
-        if (!OPT_NAMEONLY)
-        {
-          red_bank.fetch(ri->iid, red1);
+        mtp = frg.getMatePair();
+        idmap::iterator r1 = iidStatus.find(mtp.first);
+        idmap::iterator r2 = iidStatus.find(mtp.second);
 
-          frg_bank.seekg(frg_bank.lookupBID(red1.getFragment()));
-          frg_bank >> frg;
+        const char r1status = (r1 == iidStatus.end()) ? UNKNOWN : r1->second; // { UNKNOWN, INCLUDE, EXCLUDE }
+        const char r2status = (r2 == iidStatus.end()) ? UNKNOWN : r2->second; // { UNKNOWN, INCLUDE, EXCLUDE }
+
+        const char r1print = (r1status == UNKNOWN) ? DEFAULT : r1status; // { INCLUDE, EXCLUDE }
+        const char r2print = (r2status == UNKNOWN) ? DEFAULT : r2status; // { INCLUDE, EXCLUDE }
+
+        if (0)
+        {
+          if (r1 != iidStatus.end() || r2 != iidStatus.end())
+          {
+            cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " r1print: " << (int) r1print << endl;
+            cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " r2print: " << (int) r2print << endl;
+          }
+        }
+
+        if (((mtp.first == AMOS::NULL_ID)  && (mtp.second == AMOS::NULL_ID)) ||
+            ((mtp.first == AMOS::NULL_ID)  && (r2print == EXCLUDE)) ||
+            ((mtp.second == AMOS::NULL_ID) && (r1print == EXCLUDE)))
+            
+        {
+          // Skip both because of 1 NULLID + Exclude or 2 NULLIDs
+          // Otherwise there is at least 1 to print
+          // don't mark NULL_ID as EXCLUDE, though, or AutoMate will screw up
+        }
+        else if (((r1print == EXCLUDE) && (r2print == EXCLUDE)) ||
+                 ((r1status == EXCLUDE) && OPT_AutoMate) || // override r2 include
+                 ((r2status == EXCLUDE) && OPT_AutoMate))   // override r1 include
+        {
+          // skipping both reads and frg because of exclusion
+
+          // only mark reads excluded because of mate
+          if ((r2status == EXCLUDE) && (r1status != EXCLUDE)) 
+          { 
+            if (r1status == INCLUDE) { clobbered++; }
+            iidStatus[mtp.first] = EXCLUDE; mateexclude++; 
+          }
+
+          if ((r1status == EXCLUDE) && (r2status != EXCLUDE)) 
+          { 
+            if (r2status == INCLUDE) { clobbered++; }
+            iidStatus[mtp.second] = EXCLUDE; mateexclude++; 
+          }
+        }
+        else
+        {
+          // printing at least 1 read
+
+          // status = {UNKNOWN, EXCLUDE, INCLUDE} 
+          // print = {INCLUDE, EXCLUDE}
 
           printLibrary(lib_bank, frg.getLibrary());
 
-          FrgSet::iterator fi;
+          bool printr1 = (r1print == INCLUDE);
+          bool printr2 = (r2print == INCLUDE);
 
-          fi = fragments.find(frg.getIID());
-          
-          if (fi == fragments.end())
+          if ((r1status == UNKNOWN) && printr2 && OPT_AutoMate) { printr1 = true; }
+          if ((r2status == UNKNOWN) && printr1 && OPT_AutoMate) { printr2 = true; }
+
+          if (!printr1 && !printr2)
+          {
+            cerr << "INTERNAL ERROR: not printing either!!!" << endl;
+            cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+            cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+
+            return 1;
+          }
+          else if (printr1 && r1status == EXCLUDE)
+          {
+            cerr << "INTERNAL ERROR: printr1 but r1status == EXCLUDE" << endl;
+            cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+            cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+
+            return 1;
+          }
+          else if (printr2 && r2status == EXCLUDE)
+          {
+            cerr << "INTERNAL ERROR: printr2 but r2status == EXCLUDE" << endl;
+            cerr << "r1: " << mtp.first  << " r1status: " << (int) r1status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+            cerr << "r2: " << mtp.second << " r2status: " << (int) r2status << " DEFAULT: " << (int) DEFAULT << " AutoMate: " << OPT_AutoMate << endl;
+
+            return 1;
+          }
+
+          bool brokenmate = !(printr1 && printr2);
+
+          if (brokenmate)
+          {
+            if(OPT_NullMates)
+            {
+              nullified++;
+              frg.setReads(make_pair(NULL_ID, NULL_ID));
+            }
+            else 
+            {
+              halfmates++;
+            }
+          }
+
+          if (!OPT_NAMEONLY)
           {
             frg.writeMessage(msg);
             msg.write(cout);
             fragments.insert(frg.getIID());
           }
-        }
 
-        printRead(red_bank, ri->iid);
-        unmated++;
+          if (printr1)
+          {
+            printRead(red_bank, mtp.first);
+
+            if (r2status == INCLUDE && OPT_AutoMate && r1status == UNKNOWN)
+            {
+              mateinclude++;
+            }
+          }
+
+          if (printr2)
+          {
+            printRead(red_bank, mtp.second);
+
+            if (r1status == INCLUDE && OPT_AutoMate && r2status == UNKNOWN)
+            {
+              mateinclude++;
+            }
+          }
+        }
+      }
+
+      if (doInclude && OPT_AutoMate) { cerr << "Included " << mateinclude << " extra mates" << endl; }
+      if (doExclude && OPT_AutoMate) { cerr << "Excluded " << mateexclude << " extra mates" << endl; }
+
+      if (doInclude && doExclude && OPT_AutoMate) 
+       { cerr << "Clobbered " << clobbered   << " mates" << endl; }
+
+      if (OPT_NullMates)          
+       { cerr << "Nullified " << nullified << " half mates" << endl; }
+
+      if (!OPT_NullMates && !OPT_AutoMate && halfmates)          
+       { cerr << "WARNING: Printed " << halfmates << " half mates" << endl; }
+
+      // iidStatus == PRINTED => Printed
+      // iidStatus == EXCLUDE => Exclude listed or by mate
+      // iidStatus == INCLUDE => Should be printed, but not in a mate-pair
+      // iidStatus == UNKNOWN => Take default action
+
+      cerr << "Printing unmated reads..." << endl;
+
+      IDMap_t::const_iterator ri;
+      for (ri =  red_bank.getIDMap().begin();
+           ri != red_bank.getIDMap().end();
+           ri++)
+      {
+        idmap::iterator r1 = iidStatus.find(ri->iid);
+
+        if (((r1 == iidStatus.end()) && (DEFAULT == INCLUDE)) || 
+            ((r1 != iidStatus.end()) && (r1->second == INCLUDE)))
+        {
+          if (!OPT_NAMEONLY)
+          {
+            red_bank.fetch(ri->iid, red1);
+            
+            frg_bank.seekg(frg_bank.lookupBID(red1.getFragment()));
+            frg_bank >> frg;
+
+            printLibrary(lib_bank, frg.getLibrary());
+
+            FrgSet::iterator fi;
+
+            fi = fragments.find(frg.getIID());
+            
+            if (fi == fragments.end())
+            {
+              frg.writeMessage(msg);
+              msg.write(cout);
+              fragments.insert(frg.getIID());
+            }
+          }
+
+          printRead(red_bank, ri->iid);
+          unmated++;
+        }
+      }
+
+      cerr << "Included " << unmated << " unmated reads" << endl;
+
+      frg_bank.close();
+      lib_bank.close();
+    }
+    else
+    {
+      cerr << "WARNING: No fragment bank, only printing reads" << endl;
+
+      IDMap_t::const_iterator ri;
+      for (ri =  red_bank.getIDMap().begin();
+           ri != red_bank.getIDMap().end();
+           ri++)
+      {
+        idmap::iterator r1 = iidStatus.find(ri->iid);
+
+        if (((r1 == iidStatus.end()) && (DEFAULT == INCLUDE)) || 
+            ((r1 != iidStatus.end()) && (r1->second == INCLUDE)))
+        {
+          printRead(red_bank, ri->iid);
+          unmated++;
+        }
       }
     }
 
-    cerr << "Included " << unmated << " unmated reads" << endl;
     cerr << endl;
     cerr << "Printed " << printCount << " reads, " 
          << fragments.size() << " fragments, "
          << libraries.size() << " libraries." << endl;
 
     red_bank.close();
-    frg_bank.close();
-    lib_bank.close();
   }
   catch (const Exception_t & e) 
   {
@@ -486,11 +512,13 @@ void PrintHelp (const char * s)
     << "-X EIDFile    File of list reads eids to exclude\n"
     << "\n"
     << "Notes:\n"
-    << "By default, reads are considered independently so you can\n"
-    << "print a read, but not its mate. The -N option removes references\n"
-    << "to unprinted mate-pairs in the FRG messages.\n"
+    << ". If there is no fragment bank, then it only prints read messages\n"
     << "\n"
-    << "In most cases, though, you should use -M to automatically select mates.\n"
+    << ". By default, reads are considered independently so you can\n"
+    << "  print a read, but not its mate. The -N option removes references\n"
+    << "  to unprinted mate-pairs in the FRG messages.\n"
+    << "\n"
+    << ". In most cases, you should use -M to automatically select mates.\n"
     << "\n"
     << "You must specify included and/or excluded reads. Precedence is:\n"
     << "1) If a read is excluded by -X or -x, it will not be printed\n"
