@@ -190,6 +190,7 @@ int main (int argc, char ** argv)
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
          << "  there has been a fatal error, abort" << endl;
+    cerr << "iid: " << red.getIID() << " eid: " << red.getEID() << endl;
     exitcode = EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
