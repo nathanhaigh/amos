@@ -46,11 +46,12 @@ int  main (int argc, char * argv [])
 "Count kmers in a multifasta file or in read or contig banks.\n"
 "Output is to stdout in \"meryl-style\": >count\\nmer\\n\n"
 "\n"
-" Usage: count-kmers [-f fasta] [-r bnk] [-c bnk]\n"
+" Usage: count-kmers [-f fasta] [-r bnk] [-c bnk] [-n bnk]\n"
 "\n"
 "   -f <fasta> multifasta file to count\n"
 "   -r <bnk>   Bank of reads to count\n"
 "   -c <bnk>   Bank of contigs to count\n"
+"   -n <bnk>   Report normalized counts (readmercount/contigmercount)\n"
 "   -k <len>   Length of kmer (default:22, must be <= 31) \n"
 "   -m <min>   Minimum count to report (default: 1)\n"
 "\n";
@@ -58,6 +59,7 @@ int  main (int argc, char * argv [])
     string fastafile;
     string readbank;
     string contigbank;
+    string normalizedbank;
 
     int min_count = 1;
 
@@ -66,15 +68,19 @@ int  main (int argc, char * argv [])
     tf->getOptions()->addOptionResult("f=s", &fastafile);
     tf->getOptions()->addOptionResult("r=s", &readbank);
     tf->getOptions()->addOptionResult("c=s", &contigbank);
+    tf->getOptions()->addOptionResult("n=s", &normalizedbank);
     tf->getOptions()->addOptionResult("k=i", &Kmer_Len);
     tf->getOptions()->addOptionResult("m=i", &min_count);
 
     tf->handleStandardOptions();
 
 
-    if (fastafile.empty() && readbank.empty() && contigbank.empty())
+    if ((fastafile.empty() +
+         readbank.empty() +
+         contigbank.empty() +
+         normalizedbank.empty()) != 3)
     {
-      cerr << "You must specify an input source" << endl;
+      cerr << "You must specify one input source" << endl;
       exit(1);
     }
 
@@ -129,6 +135,49 @@ int  main (int argc, char * argv [])
       while (bank >> contig)
       {
         CountMers(contig.getUngappedSeqString(), mer_table);
+      }
+    }
+    else if (!normalizedbank.empty())
+    {
+      BankStream_t rbank(Read_t::NCODE);
+      rbank.open(normalizedbank, B_READ);
+
+      BankStream_t cbank(Contig_t::NCODE);
+      cbank.open(normalizedbank, B_READ);
+
+      cerr << "Processing reads in " << normalizedbank << "..." << endl;
+      Read_t red;
+      while (rbank >> red)
+      {
+        CountMers(red.getSeqString(red.getClearRange()), mer_table);
+      }
+
+
+      cerr << "Processing contigs in " << normalizedbank << "..." << endl;
+      MerTable_t consmers;
+      Contig_t contig;
+      while (cbank >> contig)
+      {
+        CountMers(contig.getUngappedSeqString(), consmers);
+      }
+
+
+      cerr << "Normalizing counts" << endl;
+      MerTable_t::iterator ri;
+      MerTable_t::iterator ci;
+
+      for (ri = mer_table.begin(); ri != mer_table.end(); ri++)
+      {
+        ci = consmers.find(ri->first);
+
+        if (ci != consmers.end())
+        {
+          ri->second /= ci->second;
+        }
+        else
+        {
+          ri->second = 0;
+        }
       }
     }
 
@@ -287,6 +336,7 @@ void PrintMers(const MerTable_t & mer_table, int min_count)
   cerr << mer_table.size() << " total distinct mers" << endl;
   string mer;
   int printed = 0;
+  int skip = 0;
 
   MerTable_t::const_iterator fi;
   for (fi = mer_table.begin(); fi != mer_table.end(); fi++)
@@ -297,8 +347,13 @@ void PrintMers(const MerTable_t & mer_table, int min_count)
       printf(">%d\n%s\n", fi->second, mer.c_str());
       printed++;
     }
+    else
+    {
+      skip++;
+    }
   }
 
   cerr << printed << " mers occur at least " << min_count << " times" << endl;
+  cerr << "Skipped " << skip << endl;
 }
 

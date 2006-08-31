@@ -27,6 +27,9 @@ const double  DEFAULT_REPEAT_CUTOFF = 90.0;
 
 typedef  long long unsigned  Mer_t;
 
+bool OPT_Features = false;
+int MIN_LEN  = 0;
+
 
 static Mer_t  Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
 static Mer_t  Extract_Mask = 0;
@@ -67,7 +70,7 @@ static void  Hash_Insert
 static void  Parse_Command_Line
     (int argc, char * argv []);
 static void  Print_Mer_Coverage
-    (const string & s, double & percent_covered);
+    (const string & tag, const string & s, double & percent_covered);
 static void  Read_Mers
     (const char * fname, vector <Mer_t> & mer_list);
 static void  Usage
@@ -128,8 +131,8 @@ int  main
       FILE  * fp;
       double  percent_covered;
 
-      printf (">%s\n", tag . c_str ());
-      Print_Mer_Coverage (s, percent_covered);
+      if (!OPT_Features) { printf (">%s\n", tag . c_str ()); }
+      Print_Mer_Coverage (tag, s, percent_covered);
 
       if  (Make_Fasta)
           {
@@ -325,11 +328,15 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "fhr:u:")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "fhr:u:FL:")) != EOF))
      switch  (ch)
        {
         case  'f' :
           Make_Fasta = true;
+          break;
+
+        case 'F':
+          OPT_Features = true;
           break;
 
         case  'h' :
@@ -343,6 +350,10 @@ static void  Parse_Command_Line
         case  'u' :
           Unique_Cutoff = strtod (optarg, NULL);
           break;
+
+        case 'L':
+           MIN_LEN = atoi(optarg);
+           break;
 
         case  '?' :
           fprintf (stderr, "Unrecognized option -%c\n", optopt);
@@ -371,7 +382,7 @@ static void  Parse_Command_Line
 
 
 static void  Print_Mer_Coverage
-    (const string & s, double & percent_covered)
+    (const string & tag, const string & s, double & percent_covered)
 
 //  Print regions in string  s  that are covered
 //  by mers (or their reverse-complements) in
@@ -388,7 +399,10 @@ static void  Print_Mer_Coverage
    if  (n < Kmer_Len)
        {
         percent_covered = 0.0;
-        printf ("Total %d of %d (%.1f%%)\n", 0, n, Percent (0, n));
+        if (!OPT_Features)
+        {
+          printf ("Total %d of %d (%.1f%%)\n", 0, n, Percent (0, n));
+        }
         return;
        }
 
@@ -420,7 +434,17 @@ static void  Print_Mer_Coverage
                {
                 if  (hi > 0)
                     {
-                     printf ("%8d %8d %8d\n", lo, hi, hi - lo);
+                     if (OPT_Features)
+                     {
+                       if (hi-lo > MIN_LEN)
+                       {
+                         printf("%s K %d %d KMER_COV %d\n", tag.c_str(), lo, hi, hi-lo);
+                       }
+                     }
+                     else
+                     {
+                       printf ("%8d %8d %8d\n", lo, hi, hi - lo);
+                     }
                      total += hi - lo;
                     }
                 lo = j;
@@ -431,12 +455,25 @@ static void  Print_Mer_Coverage
 
    if  (hi > 0)
        {
-        total += hi - lo;
-        printf ("%8d %8d %8d\n", lo, hi, hi - lo);
+         total += hi - lo;
+         if (OPT_Features)
+         {
+           if (hi-lo > MIN_LEN)
+           {
+             printf("%s K %d %d KMER_COV %d\n", tag.c_str(), lo, hi, hi-lo);
+           }
+         }
+         else
+         {
+           printf ("%8d %8d %8d\n", lo, hi, hi - lo);
+         }
        }
 
    percent_covered = Percent (total, n);
-   printf ("Total %d of %d (%.1f%%)\n", total, n, percent_covered);
+   if (!OPT_Features)
+   {
+     printf ("Total %d of %d (%.1f%%)\n", total, n, percent_covered);
+   }
 
    return;
   }
@@ -510,6 +547,9 @@ static void  Usage
            "stdin are covered by them (or their reverse complement).\n"
            "\n"
            "Options:\n"
+           "  -F      Output regions as Features\n"
+           "  -L <len> Min Length to report as a feature\n"
+           "\n"
            "  -f      Output unique/repeat/unsure fasta sequences\n"
            "  -h      Print this usage message\n"
            "  -r <x>  Repeats are > <x>%% covered by kmers\n"

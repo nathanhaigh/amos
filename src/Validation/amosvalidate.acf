@@ -32,3 +32,10 @@ INPUTS = $(PREF).bnk
 ## Analyzing singleton alignment breakpoints
 700: $(BINDIR)/casm-breaks $(PREF).delta -b $(PREF).bnk -F $(PREF).break.fea
 710: $(BINDIR)/bank-transact -b $(PREF).bnk -m $(PREF).break.fea
+
+
+## Analyzing kmer-coverage
+800: $(BINDIR)/count-kmers -n $(PREF).bnk -m 22 > $(PREF).22.n22mers
+810: $(BINDIR)/kmer-cov $(PREF).22.n22mers -F -L 1000 < $(PREF).fasta > $(PREF).nkmer.feat
+820: $(BINDIR)/loadFeatures $(PREF).bnk $(PREF).nkmer.feat -u -i
+
