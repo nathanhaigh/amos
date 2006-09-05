@@ -45,8 +45,6 @@ public:
   int m_lfoffset;
   int m_rfoffset;
 
-  AMOS::Read_t read;
-  
   // full gapped sequence contig oriented
   std::string          m_bases;     
   std::string          m_quals;

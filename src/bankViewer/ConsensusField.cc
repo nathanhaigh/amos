@@ -350,8 +350,15 @@ void ConsensusField::toggleShowUngapped(bool use)
 
 void ConsensusField::mouseReleaseEvent( QMouseEvent * e)
 {
-  int gindex = (int)(m_gindex + (e->x() - m_tilehoffset)/m_basewidth);
-  emit sortColumns(gindex);
+  if (e->x() < (m_tilehoffset - m_basewidth))
+  {
+    emit sortColumns(-1);
+  }
+  else
+  {
+    int gindex = (int)(m_gindex + (e->x() - m_tilehoffset)/m_basewidth);
+    emit sortColumns(gindex);
+  }
 }
 
 void ConsensusField::setHighlightRange(int start, int end)

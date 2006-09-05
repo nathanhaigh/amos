@@ -21,6 +21,13 @@ int min (int a, int b)
   return a < b ? a : b;
 }
 
+struct SeqnameOrderCmp
+{
+  bool operator() (const RenderSeq_t & a, const RenderSeq_t & b)
+  {
+    return a.m_read.getEID() < b.m_read.getEID();
+  }
+};
 
 
 struct SNPTilingOrderCmp
@@ -438,16 +445,24 @@ void TilingFrame::advanceNextDiscrepancy()
 
 void TilingFrame::sortColumns(int gindex)
 {
-  SNPTilingOrderCmp::snpposition = gindex;
-  SNPTilingOrderCmp::contiglen = m_consensus.length();
-  stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SNPTilingOrderCmp());
-
   vector<RenderSeq_t>::iterator vi;
-  for (vi =  m_renderedSeqs.begin();
-       vi != m_renderedSeqs.end();
-       vi++)
+
+  if (gindex == -1)
   {
-    vi->bgcolor = vi->base(gindex, false, m_consensus.length());
+    stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SeqnameOrderCmp());
+  }
+  else
+  {
+    SNPTilingOrderCmp::snpposition = gindex;
+    SNPTilingOrderCmp::contiglen = m_consensus.length();
+    stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SNPTilingOrderCmp());
+
+    for (vi =  m_renderedSeqs.begin();
+         vi != m_renderedSeqs.end();
+         vi++)
+    {
+      vi->bgcolor = vi->base(gindex, false, m_consensus.length());
+    }
   }
   update();
 }
