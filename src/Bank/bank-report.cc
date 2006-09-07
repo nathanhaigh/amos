@@ -33,6 +33,7 @@ bool    OPT_IsBIDs = false;                  // include BIDs in the output
 bool    OPT_IsExtractCodes = false;          // extract only certain NCodes
 bool    OPT_IsExtractIDs = false;            // extract only certain IDs
 bool    OPT_BankSpy = false;                 // read or read-only spy
+bool    OPT_FixedOnly = false;               // Just print the fixed store
 set<NCode_t> OPT_ExtractCodes;               // NCodes to extract
 vector<ID_t> OPT_ExtractIIDs;                // IIDs to extract
 vector<string> OPT_ExtractEIDs;              // EIDs to extract
@@ -152,7 +153,15 @@ int main (int argc, char ** argv)
                       exitcode = EXIT_FAILURE;
                       continue;
                     }
-                  bank . fetch (*ii, *ui);
+                  if (OPT_FixedOnly)
+                  {
+                    bank . fetchFix(*ii, *ui);
+                  }
+                  else
+                  {
+                    bank . fetch (*ii, *ui);
+                  }
+
                   PrintObject (*ui, bid);
                   cntc ++;
                 }
@@ -170,7 +179,15 @@ int main (int argc, char ** argv)
                       exitcode = EXIT_FAILURE;
                       continue;
                     }
-                  bank . fetch (*ei, *ui);
+                  if (OPT_FixedOnly)
+                  {
+                    bank . fetchFix (*ei, *ui);
+                  }
+                  else
+                  {
+                    bank . fetch (*ei, *ui);
+                  }
+
                   PrintObject (*ui, bid);
                   cntc ++;
                 }
@@ -182,10 +199,12 @@ int main (int argc, char ** argv)
             {
               BankStream_t bankstream (ncode);
 
-	      if ( OPT_BankSpy )
-		bankstream . open (OPT_BankName, B_SPY);
-	      else
-		bankstream . open (OPT_BankName, B_READ);
+              if ( OPT_BankSpy )
+                 bankstream . open (OPT_BankName, B_SPY);
+              else
+                 bankstream . open (OPT_BankName, B_READ);
+
+              bankstream.setFixedStoreOnly(OPT_FixedOnly);
 
               long int cntd = 0;
               ProgressDots_t dots (bankstream . getSize( ), 50);
@@ -305,40 +324,26 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:BE:hI:sv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:BE:hI:svF")) != EOF) )
     switch (ch)
       {
-      case 'b':
-        OPT_BankName = optarg;
-        break;
-
-      case 'B':
-	OPT_IsBIDs = true;
-	break;
-
-      case 'E':
-	OPT_IsExtractIDs = true;
-	OPT_EIDExtractName = optarg;
-	break;
-
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
-        break;
-
-      case 'I':
-	OPT_IsExtractIDs = true;
-	OPT_IIDExtractName = optarg;
-	break;
-
-      case 's':
-	OPT_BankSpy = true;
-	break;
+      break;
 
       case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
+        PrintBankVersion (argv[0]);
+        exit (EXIT_SUCCESS);
+      break;
+
+      case 'b': OPT_BankName = optarg; break;
+      case 'B': OPT_IsBIDs = true; break;
+      case 'F': OPT_FixedOnly = true; break;
+      case 's': OPT_BankSpy = true; break;
+
+      case 'E': OPT_IsExtractIDs = true; OPT_EIDExtractName = optarg; break;
+      case 'I': OPT_IsExtractIDs = true; OPT_IIDExtractName = optarg; break;
 
       default:
         errflg ++;
@@ -390,6 +395,7 @@ void PrintHelp (const char * s)
     << "-h            Display help information\n"
     << "-I file       Report only objects matching IIDs in file\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
+    << "-F            Just dump the fixed store information\n"
     << "-v            Display the compatible bank version\n"
     << endl;
   cerr
