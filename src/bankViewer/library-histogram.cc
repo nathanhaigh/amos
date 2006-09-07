@@ -137,21 +137,25 @@ int main (int argc, char ** argv)
            << " buckets: "    << buckets 
            << " bucketsize: " << li->second->m_bucketsize << endl;
 
-      double starsize = li->second->m_maxcount / 25;
+      double starsize = li->second->m_maxcount / 40.0;
 
       for (int i = 0; i < buckets; i++)
       {
         printf("%10.02f %6d: ", li->second->m_bucketlow[i], li->second->m_buckets[i]);
 
-        for (int j = 0; j < li->second->m_buckets[i]/starsize; j++)
+        int numstars = floor(li->second->m_buckets[i] / starsize);
+
+        if (numstars > 40) { cerr << "ERROR: numstars: " << numstars; }
+        else
         {
-          cout << "*";
+          for (int j = 0; j < numstars; j++)
+          {
+            cout << "*";
+          }
         }
 
         cout << endl;
       }
-
-
     }
   }
   catch (const Exception_t & e) {
