@@ -10,19 +10,20 @@ using namespace std;
 
 int main(int argc, char ** argv)
 {
-  if (argc != 3)
+  if (argc < 3)
   {
-    cerr << "Usage: updateClrRanges bankname seqname.end5.end3.txt" << endl;
+    cerr << "Usage: updateClrRanges [-i] bankname seqname.end5.end3.txt" << endl;
     return EXIT_FAILURE;
   }
 
+  bool useIIDs = false;
+  int argn = 1;
+
   Bank_t read_bank(Read_t::NCODE);
-  string bank_name = argv[1];
-  string clr_name = argv[2];
+  string bank_name = argv[argn]; argn++;
 
-  int verbose = 0;
-
-  vector<string> badSeqs;
+  if (bank_name == "-i") { useIIDs = true; bank_name = argv[argn]; argn++; }
+  string clr_name = argv[argn];
 
   cerr << "Processing " << bank_name << " at " << Date() << endl;
 
@@ -46,23 +47,31 @@ int main(int argc, char ** argv)
 
     while(fscanf(fclr, "%s %d %d", seqname, &a, &b) > 0)
     {
-      cerr << seqname << endl;
-      if (read_bank.existsEID(seqname))
+      cerr << "Updating " << seqname << ": " << a << " " << b << endl;
+
+      if (useIIDs)
       {
-        if (verbose) {  cerr << "."; }
-        read_bank.fetch(seqname, read);
+        int iid = atoi(seqname);
+        read_bank.fetch(iid, read);
 
         Range_t range(a,b);
         if (range.isReverse()) { range.swap(); }
-
-        range.begin--;
 
         read.setClearRange(range);
         read_bank.replace(read.getIID(), read);
         count++;
       }
-      
-      if (verbose) { cerr << endl; }
+      else if (read_bank.existsEID(seqname))
+      {
+        read_bank.fetch(seqname, read);
+
+        Range_t range(a,b);
+        if (range.isReverse()) { range.swap(); }
+
+        read.setClearRange(range);
+        read_bank.replace(read.getIID(), read);
+        count++;
+      }
     }
 
     cerr << "Loaded " << count << " records." << endl;
