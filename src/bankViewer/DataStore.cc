@@ -1,6 +1,7 @@
 #include "DataStore.hh"
 #include "Insert.hh"
 #include <sys/types.h>
+#include <sys/time.h>
 #include <dirent.h>
 
 #include <sys/types.h>
@@ -54,15 +55,33 @@ DataStore::~DataStore()
   }
 }
 
+string difftime(struct timeval & start, struct timeval & end)
+{
+  double r = floor(((end.tv_sec - start.tv_sec)*1000000.0 + (end.tv_usec - start.tv_usec)) / 1e4) / 100.0;
+
+  char buffer[1024];
+  sprintf(buffer, "%0.02f", r);
+  return buffer;
+
+
+}
+
 int DataStore::openBank(const string & bankname)
 {
   int retval = 1;
 
   try
   {
-    cerr << "Opening " << bankname << endl;
+    cerr << "Opening " << bankname << "...";
+
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
     read_bank.open(bankname,   B_SPY);
     contig_bank.open(bankname, B_SPY);
+
+    gettimeofday(&end, NULL);
+    cerr << " [" << difftime(start,end) << "s]" << endl;
 
     m_bankname = bankname;
     m_contigId = AMOS::NULL_ID;
@@ -133,39 +152,63 @@ int DataStore::openBank(const string & bankname)
   return retval;
 }
 
+
 void DataStore::indexReads()
 {
+  cerr << "Indexing reads     ";
+  ProgressDots_t dots(read_bank.getSize(), 10);
+  int count = 0;
+
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
+
   m_readfraglookup.clear();
   m_readfraglookup.resize(read_bank.getSize());
 
-  cerr << "Indexing reads... ";
-
   Read_t red;
+
   read_bank.seekg(1);
+  read_bank.setFixedStoreOnly(true);
 
   while (read_bank >> red)
   {
+    count++;
+    dots.update(count);
+
     m_readfraglookup.insert(make_pair(red.getIID(), red.getFragment()));
   }
 
-  cerr << m_readfraglookup.size() << " reads" << endl;
+  read_bank.setFixedStoreOnly(false);
+
+  gettimeofday(&end, NULL);
+  cerr << " [" << difftime(start,end) << "s] "
+       << m_readfraglookup.size() << " reads" << endl;
 }
 
 void DataStore::indexFrags()
 {
+  cerr << "Indexing mates     ";
+  ProgressDots_t dots(frag_bank.getSize(), 10);
+
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
+
   m_fragliblookup.clear();
   m_fragliblookup.resize(frag_bank.getSize());
 
   m_readmatelookup.clear();
   m_readmatelookup.resize(frag_bank.getSize() * 2);
 
-  cerr << "Indexing frags... ";
 
   Fragment_t frg;
   frag_bank.seekg(1);
+  int count = 0;
 
   while (frag_bank >> frg)
   {
+    count++;
+    dots.update(count);
+
     m_fragliblookup.insert(make_pair(frg.getIID(), frg.getLibrary()));
 
     std::pair<ID_t, ID_t> mates = frg.getMatePair();
@@ -173,31 +216,48 @@ void DataStore::indexFrags()
     m_readmatelookup.insert(make_pair(mates.second, pair<AMOS::ID_t, AMOS::FragmentType_t> (mates.first,  frg.getType())));
   }
 
-  cerr << m_fragliblookup.size() << " fragments ["
-       << m_readmatelookup.size() << " mated reads]" << endl;
+  gettimeofday(&end, NULL);
+  cerr << " [" << difftime(start,end) << "s] "
+       << m_readmatelookup.size() << " mated reads" << endl;
 }
 
 void DataStore::indexLibraries()
 {
+  cerr << "Indexing libraries ";
+  ProgressDots_t dots(lib_bank.getSize(), 10);
+
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
+
   m_libdistributionlookup.clear();
   m_libdistributionlookup.resize(lib_bank.getSize());
-
-  cerr << "Indexing libraries... ";
 
   Library_t lib;
   lib_bank.seekg(1);
 
+  int count = 0;
   while (lib_bank >> lib)
   {
     m_libdistributionlookup.insert(make_pair(lib.getIID(), lib.getDistribution()));
+
+    count++;
+    dots.update(count);
   }
 
-  cerr << m_libdistributionlookup.size() << " libraries" << endl;
+
+  gettimeofday(&end, NULL);
+  cerr << " [" << difftime(start,end) << "s] "
+       << m_libdistributionlookup.size() << " libraries" << endl;
 }
 
 void DataStore::indexContigs()
 {
-  cerr << "Indexing contigs... ";
+  cerr << "Indexing contigs   ";
+  ProgressDots_t dots(contig_bank.getSize(), 10);
+
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
+
   m_readcontiglookup.clear();
   m_readcontiglookup.resize(read_bank.getSize());
 
@@ -208,6 +268,7 @@ void DataStore::indexContigs()
   {
     int contigid = contig_bank.tellg() - 1;
     visit++;
+    dots.update(visit);
 
     vector<Tile_t> & tiling = contig.getReadTiling();
     vector<Tile_t>::const_iterator ti;
@@ -220,12 +281,21 @@ void DataStore::indexContigs()
 
   }
 
-  cerr <<  m_readcontiglookup.size() << " reads in " << visit << " contigs" << endl;
+  gettimeofday(&end, NULL);
+  cerr << " [" << difftime(start,end) << "s] "
+       << m_readcontiglookup.size() << " reads in " 
+       << visit << " contigs" << endl;
 }
 
 void DataStore::indexScaffolds()
 {
-  cerr << "Indexing scaffolds... ";
+  cerr << "Indexing scaffolds ";
+
+  ProgressDots_t dots(scaffold_bank.getSize(), 10);
+
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
+
   m_contigscafflookup.clear();
   m_contigscafflookup.resize(contig_bank.getSize());
 
@@ -236,6 +306,7 @@ void DataStore::indexScaffolds()
   {
     int scaffid = scaffold_bank.tellg() - 1;
     visit++;
+    dots.update(visit);
 
     vector<Tile_t> & tiling = scaffold.getContigTiling();
     vector<Tile_t>::const_iterator ti;
@@ -248,7 +319,10 @@ void DataStore::indexScaffolds()
     }
   }
 
-  cerr <<  m_contigscafflookup.size() << " contigs in " << visit << " scaffolds" << endl;
+  gettimeofday(&end, NULL);
+  cerr << " [" << difftime(start,end) << "s] "
+       << m_contigscafflookup.size() << " contigs in " 
+       << visit << " scaffolds" << endl;
 }
 
 int DataStore::setContigId(int id)
