@@ -678,11 +678,12 @@ public:
   //! IDMap NCode and size listed on the first line separated by a single space,
   //! followed by one tab-delimited triple per line in the order: bid, iid, eid.
   //! One of the stream's error bits will be set on failure.
+  //! The EID strings cannot contain any whitespace
   //!
   //! \param in The stream to read the IDMap from
   //! \return void
   //!
-  void read (std::istream & in);
+  void read(const std::string & path);
 
 
   //--------------------------------------------------- setType ----------------

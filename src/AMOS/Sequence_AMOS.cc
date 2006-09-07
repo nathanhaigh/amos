@@ -36,6 +36,9 @@ void Sequence_t::clear ( )
 //----------------------------------------------------- compress ---------------
 void Sequence_t::compress ( )
 {
+  if (seq_m == NULL)
+    AMOS_THROW_ARGUMENT("No sequence data to compress");
+
   if ( isCompressed( ) )
     return;
 
@@ -140,6 +143,21 @@ void Sequence_t::readRecord (istream & fix, istream & var)
     }
 }
 
+//----------------------------------------------------- readRecordFix ----------
+void Sequence_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  readLE (fix, &length_m);
+
+  free(seq_m);
+  free(qual_m);
+
+  seq_m = qual_m = NULL;
+}
+
+
+
 
 //----------------------------------------------------- setSequence ------------
 void Sequence_t::setSequence (const char * seq, const char * qual)
@@ -212,6 +230,9 @@ void Sequence_t::setSequence (const string & seq, const string & qual)
 //----------------------------------------------------- uncompress -------------
 void Sequence_t::uncompress ( )
 {
+  if (seq_m == NULL)
+    AMOS_THROW_ARGUMENT("No sequence data to compress");
+
   if ( !isCompressed( ) )
     return;
 
@@ -239,7 +260,7 @@ void Sequence_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Sequence_t::NCODE);
 
-    if ( length_m != 0 )
+    if ( length_m != 0 && seq_m )
       {
 	pair<char, char> cp;
 	Pos_t i, j, last;

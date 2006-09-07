@@ -88,6 +88,24 @@ protected:
   virtual void readRecord (std::istream & fix, std::istream & var) = 0;
 
 
+  //--------------------------------------------------- readRecordFix ----------
+  //! \brief Read selected class members from a fixed store only 
+  //!
+  //! Reads the fixed stream and initializes the class members to the values 
+  //! stored within. Used to fetch the fixed portion of a biserial 
+  //! IBankable object, and needed to retrieve objects
+  //! from a bank.
+  //!
+  //! \note This method must be able to interpret the biserial record
+  //! produced by its related function writeRecord.
+  //!
+  //! \param fix The fixed length stream (stores all fixed length members)
+  //! \pre The get pointer of fix is at the beginning of the record
+  //! \return void
+  //!
+  virtual void readRecordFix(std::istream & fix) = 0;
+
+
   //--------------------------------------------------- writeRecord ------------
   //! \brief Write selected class members to a biserial record
   //!
@@ -393,6 +411,12 @@ protected:
   //! \brief Fetch an object by BID
   //!
   void fetchBID (ID_t bid, IBankable_t & obj);
+
+
+  //--------------------------------------------------- fetchBIDFix ------------
+  //! \brief Fetch the fixed record for an object by BID
+  //!
+  void fetchBIDFix(ID_t iid, IBankable_t & obj);
 
 
   //--------------------------------------------------- getPartition -----------
@@ -885,6 +909,28 @@ public:
   void fetch (const std::string & eid, IBankable_t & obj)
   {
     fetchBID (lookupBID (eid), obj);
+    obj . iid_m = idmap_m . lookupIID (eid);
+    obj . eid_m . assign (eid);
+  }
+
+
+  //--------------------------------------------------- fetchFix ------------------
+  //! \brief Fetches the fixed length part of a Bankable object by its IID
+  //!
+  void fetchFix(ID_t iid, IBankable_t & obj)
+  {
+    fetchBIDFix (lookupBID (iid), obj);
+    obj . iid_m = iid;
+    obj . eid_m . assign (idmap_m . lookupEID (iid));
+  }
+
+
+  //--------------------------------------------------- fetchFix ------------------
+  //! \brief Fetches the fixed length part of a Bankable object by its EID
+  //!
+  void fetchFix(const std::string & eid, IBankable_t & obj)
+  {
+    fetchBIDFix (lookupBID (eid), obj);
     obj . iid_m = idmap_m . lookupIID (eid);
     obj . eid_m . assign (eid);
   }

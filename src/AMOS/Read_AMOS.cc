@@ -145,6 +145,26 @@ void Read_t::readRecord (istream & fix, istream & var)
     readLE (var, &(bcp_m [i]));
 }
 
+//----------------------------------------------------- readRecordFix ----------
+void Read_t::readRecordFix (istream & fix)
+{
+  Size_t size;
+  Sequence_t::readRecordFix (fix);
+
+  readLE (fix, &(clear_m . begin));
+  readLE (fix, &(clear_m . end));
+  readLE (fix, &frag_m);
+  readLE (fix, &(qclear_m . begin));
+  readLE (fix, &(qclear_m . end));
+  type_m = fix . get( );
+  readLE (fix, &(vclear_m . begin));
+  readLE (fix, &(vclear_m . end));
+  readLE (fix, &pos_m);
+  readLE (fix, &size);
+
+  bcp_m.clear();
+}
+
 
 //----------------------------------------------------- setType ----------------
 void Read_t::setType (ReadType_t type)

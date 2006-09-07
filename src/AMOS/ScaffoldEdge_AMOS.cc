@@ -45,6 +45,16 @@ void ScaffoldEdge_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void ScaffoldEdge_t::readRecordFix (istream & fix)
+{
+  ScaffoldLink_t::readRecordFix (fix);
+  IEdge_t::readRecordFix (fix);
+
+  // put ScaffoldEdge_t specifics here
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void ScaffoldEdge_t::writeMessage (Message_t & msg) const
 {

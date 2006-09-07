@@ -250,6 +250,21 @@ void Index_t::readRecord (istream & fix, istream & var)
 }
 
 
+
+//----------------------------------------------------- readRecordFix ----------
+void Index_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  Size_t size;
+  readLE (fix, &size);
+  readLE (fix, &(type_m . first));
+  readLE (fix, &(type_m . second));
+
+  index_m . clear( );
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Index_t::writeMessage (Message_t & msg) const
 {

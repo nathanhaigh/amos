@@ -47,6 +47,8 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix, std::istream & var);
 
+  virtual void readRecordFix (std::istream & fix);
+
 
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix, std::ostream & var) const;

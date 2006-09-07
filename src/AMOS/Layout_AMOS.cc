@@ -88,6 +88,19 @@ void Layout_t::readRecord (istream & fix, istream & var)
 }
 
 
+
+//----------------------------------------------------- readRecordFix ----------
+void Layout_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  Size_t size;
+  readLE (fix, &size);
+
+  tiles_m . clear();
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Layout_t::writeMessage (Message_t & msg) const
 {

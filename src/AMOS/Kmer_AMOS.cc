@@ -118,6 +118,23 @@ void Kmer_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void Kmer_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  Size_t size;
+  readLE (fix, &count_m);
+  readLE (fix, &length_m);
+  readLE (fix, &size);
+
+  reads_m.clear();
+
+  free(seq_m);
+  seq_m = NULL;
+}
+
+
 //----------------------------------------------------- setSeqString -----------
 void Kmer_t::setSeqString (const string & seq)
 {

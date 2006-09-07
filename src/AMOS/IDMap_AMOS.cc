@@ -14,7 +14,7 @@
 using namespace AMOS;
 using namespace std;
 
-
+const int MAX_EID_LENGTH = 1024; //! Maximum length for an EID
 
 
 
@@ -491,7 +491,7 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & s)
 
 
 //----------------------------------------------------- read -------------------
-void IDMap_t::read (istream & in)
+void IDMap_t::read(const std::string & path)
 {
   Size_t size;
   string ncode;
@@ -500,21 +500,31 @@ void IDMap_t::read (istream & in)
 
   clear( );
 
-  in >> ncode >> size;
-  type_m = Encode (ncode);
+  FILE * fp = fopen(path.c_str(), "r");
+
+  if (!fp)
+  {
+    AMOS_THROW_IO ("Could not open bank partition, " + path);
+  }
+
+  char buffer [MAX_EID_LENGTH+1];
+
+  fscanf(fp, "%s %d", buffer, &size);  // NCODE is 3 characters
+  type_m = Encode (buffer);
   resize (size);
 
-  while ( in )
-    {
-      in >> bid >> iid;
-      in . ignore( );
-      getline (in, eid);
-      if ( ! in . fail( ) )
-        insert (iid, eid, bid);
-    }
+  while (fscanf(fp, "%d\t%d\t%s\n", &bid, &iid, buffer) != EOF)
+  {
+    eid = buffer;
+    insert (iid, eid, bid);
+  }
 
-  if ( size == size_m  &&  in . eof( ) )
-    in . clear( );
+  if (size_m != size)
+  {
+    AMOS_THROW_IO ("Bank Corrupted: Number of named elements doesn't match map header in " + path);
+  }
+
+  fclose(fp);
 }
 
 

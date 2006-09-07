@@ -49,6 +49,12 @@ protected:
     std::getline (var, comment_m, '\0');
   }
 
+  //--------------------------------------------------- readRecordFix ----------
+  virtual void readRecordFix (std::istream & fix)
+  {
+    fix . get (status_m);
+    comment_m.clear();
+  }
 
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix, std::ostream & var) const

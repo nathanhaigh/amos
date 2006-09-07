@@ -173,7 +173,6 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
       ++ curr_bid_m;
     }
 
-  partition->var.seekg (vpos);
 
   const IDMap_t::HashTriple_t * trip = triples_m [curr_bid_m - 1];
   if ( trip == NULL )
@@ -188,11 +187,24 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
     }
 
   obj.flags_m = flags;
-  obj.readRecord (partition->fix, partition->var);
+
+  if (fixed_store_only_m)
+  {
+    obj.readRecordFix (partition->fix);
+  }
+  else
+  {
+    partition->var.seekg (vpos);
+    obj.readRecord (partition->fix, partition->var);
+
+    if ( partition->var.fail() )
+      AMOS_THROW_IO ("Unknown file read error in variable stream fetch, bank corrupted");
+  }
+
   partition->fix.ignore (sizeof (Size_t));
 
-  if ( partition->fix.fail()  ||  partition->var.fail() )
-    AMOS_THROW_IO ("Unknown file read error in stream fetch, bank corrupted");
+  if ( partition->fix.fail() )
+    AMOS_THROW_IO ("Unknown file read error in fixed stream fetch, bank corrupted");
 
   return *this;
 }

@@ -111,6 +111,19 @@ void Scaffold_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void Scaffold_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  Size_t csize, esize;
+  readLE (fix, &csize);
+  readLE (fix, &esize);
+
+  contigs_m . clear();
+  edges_m . clear();
+}
+
 
 //----------------------------------------------------- writeMessage -----------
 void Scaffold_t::writeMessage (Message_t & msg) const

@@ -115,6 +115,8 @@ protected:
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix, std::istream & var);
 
+  //--------------------------------------------------- readRecordFix ----------
+  virtual void readRecordFix (std::istream & fix);
 
   //--------------------------------------------------- writeRecord ------------
   virtual void writeRecord (std::ostream & fix, std::ostream & var) const;
@@ -202,6 +204,9 @@ public:
   //!
   std::pair<char, char> getBase (Pos_t index) const
   {
+    if (seq_m == NULL)
+      AMOS_THROW_ARGUMENT("No sequence data");
+    
     if ( index < 0 || index >= length_m )
       AMOS_THROW_ARGUMENT ("Requested sequence index is out of range");
 
@@ -366,7 +371,10 @@ public:
   //! \return void
   //!
   void setBase (char seqchar, char qualchar, Pos_t index)
-  {
+  {  
+    if (seq_m == NULL)
+      AMOS_THROW_ARGUMENT("No sequence data");
+
     if ( index < 0 || index >= length_m )
       AMOS_THROW_ARGUMENT ("Requested sequence index is out of range");
 

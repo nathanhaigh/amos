@@ -162,6 +162,22 @@ void Link_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void Link_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  readLE (fix, &(nods_m . first));
+  readLE (fix, &(nods_m . second));
+  readLE (fix, &nodtype_m);
+  readLE (fix, &sd_m);
+  readLE (fix, &size_m);
+  readLE (fix, &(source_m . first));
+  readLE (fix, &(source_m . second));
+  fix . get (type_m);
+}
+
+
 //----------------------------------------------------- setAdjacency -----------
 void Link_t::setAdjacency (LinkAdjacency_t adj)
 {

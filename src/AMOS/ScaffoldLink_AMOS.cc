@@ -43,6 +43,15 @@ void ScaffoldLink_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void ScaffoldLink_t::readRecordFix (istream & fix)
+{
+  Link_t::readRecordFix (fix);
+
+  Link_t::setNodeType (NULL_NCODE);
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void ScaffoldLink_t::writeMessage (Message_t & msg) const
 {

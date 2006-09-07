@@ -48,6 +48,7 @@ protected:
   //!
   void init()
   {
+    fixed_store_only_m = false;
     eof_m = false;
     curr_bid_m = 1;
     ate_m = false;
@@ -62,6 +63,7 @@ protected:
   }
   
 
+  bool fixed_store_only_m;            //!< Just fetch from fixed store
   bool eof_m;                         //!< eof error flag
   ID_t curr_bid_m;                    //!< BID to be returned on next get
   bool ate_m;                         //!< put pointers at end of bank
@@ -210,6 +212,19 @@ public:
     Bank_t::fetch (eid, obj);
   }
 
+  //--------------------------------------------------- fetchFix ---------------
+  void fetchFix (ID_t iid, IBankable_t & obj)
+  {
+    Bank_t::fetchFix(iid, obj);
+  }
+
+  //--------------------------------------------------- fetchFix ---------------
+  void fetchFix (const std::string & eid, IBankable_t & obj)
+  {
+    Bank_t::fetchFix(eid, obj);
+  }
+
+
 
   //--------------------------------------------------- ignore -----------------
   //! \brief Ignores the next n stream objects
@@ -291,6 +306,21 @@ public:
 
   //--------------------------------------------------- replaceByBID -----------
   void replaceByBID(ID_t bid, IBankable_t & obj);
+
+
+
+  //--------------------------------------------------- setFixedStoreOnly ------
+  //! \brief Controls if operator>> should read the fixed store only or with variable store
+  //!
+  //! Controls if operator>> should read the fixed store only, or also read the
+  //! variable store information as well. By default read both stores.
+  //!
+  //! \param onlyFixed If only the fixed store should be read
+  //!
+  void setFixedStoreOnly(bool onlyFixed)
+  {
+    fixed_store_only_m = onlyFixed;
+  }
 
 
   //--------------------------------------------------- seekg ------------------
@@ -415,6 +445,11 @@ public:
   //! through all objects in the bank, 'while ( bankstream >> obj )' will
   //! suffice since the stream returned from the fetch will be cast to a bool
   //! reflecting the success/failure of the operation.
+  //! 
+  //! When called after setFixedStoreOnly(true), then only read the fixed
+  //! store information. For example, reads store clear ranges, lengths, and
+  //! other meta data in the fixed store, and sequences and quality values
+  //! in the variable store.
   //!
   //! \pre The bank is open for reading
   //! \pre obj is compatible with the banktype

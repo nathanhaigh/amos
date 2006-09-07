@@ -45,6 +45,16 @@ void ContigEdge_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void ContigEdge_t::readRecordFix (istream & fix)
+{
+  ContigLink_t::readRecordFix (fix);
+  IEdge_t::readRecordFix (fix);
+
+  // put ContigEdge_t specifics here
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void ContigEdge_t::writeMessage (Message_t & msg) const
 {

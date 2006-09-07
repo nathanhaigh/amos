@@ -61,6 +61,17 @@ void IEdge_t::readRecord (istream & fix, istream & var)
 }
 
 
+
+//----------------------------------------------------- readRecordFix ----------
+void IEdge_t::readRecordFix (istream & fix)
+{
+  Size_t size;
+  readLE (fix, &size);
+
+  links_m . clear();
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void IEdge_t::writeMessage (Message_t & msg) const
 {
@@ -118,6 +129,14 @@ void Edge_t::readRecord (istream & fix, istream & var)
 {
   Link_t::readRecord (fix, var);
   IEdge_t::readRecord (fix, var);
+}
+
+
+//----------------------------------------------------- readRecordFix ----------
+void Edge_t::readRecordFix (istream & fix)
+{
+  Link_t::readRecordFix (fix);
+  IEdge_t::readRecordFix (fix);
 }
 
 

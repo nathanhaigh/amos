@@ -293,6 +293,19 @@ void Contig_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void Contig_t::readRecordFix (istream & fix)
+{
+  gapsvalid_m = false;
+  Sequence_t::readRecordFix (fix);
+
+  Size_t sizet;
+  readLE (fix, &sizet); 
+
+  reads_m.clear();
+}
+
+
 //----------------------------------------------------- readUMD ----------------
 bool Contig_t::readUMD (istream & in)
 {

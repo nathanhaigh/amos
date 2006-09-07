@@ -44,6 +44,15 @@ void ContigLink_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void ContigLink_t::readRecordFix (istream & fix)
+{
+  Link_t::readRecordFix (fix);
+
+  Link_t::setNodeType (NULL_NCODE);
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void ContigLink_t::writeMessage (Message_t & msg) const
 {

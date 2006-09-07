@@ -51,6 +51,14 @@ void Library_t::readRecord (istream & fix, istream & var)
   dist_m . readRecord (var);
 }
 
+//----------------------------------------------------- readRecordFix ----------
+void Library_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  dist_m . clear();
+}
+
 
 //----------------------------------------------------- writeMessage -----------
 void Library_t::writeMessage (Message_t & msg) const

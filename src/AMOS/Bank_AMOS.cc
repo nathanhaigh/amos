@@ -521,6 +521,29 @@ void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
 }
 
 
+void Bank_t::fetchBIDFix(ID_t bid, IBankable_t & obj)
+{
+  if ( ! is_open_m  ||  ! (mode_m & B_READ) )
+    AMOS_THROW_IO ("Cannot fetch, bank not open for reading");
+  if (banktype_m != obj.getNCode())
+    AMOS_THROW_ARGUMENT ("Cannot fetch, incompatible object type");
+
+  //-- Seek to the record and read the data
+  BankPartition_t * partition = localizeBID (bid);
+
+  bankstreamoff vpos;
+  bankstreamoff off = bid * fix_size_m;
+  partition->fix.seekg (off);
+  readLE (partition->fix, &vpos);
+  readLE (partition->fix, &(obj.flags_m));
+  obj.readRecordFix (partition->fix);
+  partition->fix.ignore (sizeof (Size_t));
+
+  if ( partition->fix.fail())
+    AMOS_THROW_IO ("Unknown file read error in fetch, bank corrupted");
+}
+
+
 //----------------------------------------------------- getMaxIID --------------
 ID_t Bank_t::getMaxIID() const
 {
@@ -619,15 +642,8 @@ void Bank_t::open (const string & dir, BankMode_t mode)
 
     //-- Read the MAP partition
     string map_path (store_pfx_m + MAP_STORE_SUFFIX);
-    ifstream map_stream (map_path.c_str());
-    if ( ! map_stream.is_open() )
-      AMOS_THROW_IO ("Could not open bank partition, " + map_path);
-    
-    idmap_m.read (map_stream);
 
-    if ( map_stream.fail() )
-      AMOS_THROW_IO ("Unknown file read error in open, bank corrupted");
-    map_stream.close();
+    idmap_m.read(map_path);
 
     //-- Make sure nothing smells fishy
     if ( idmap_m.getType() != banktype_m  ||

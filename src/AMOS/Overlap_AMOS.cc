@@ -139,6 +139,19 @@ void Overlap_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void Overlap_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  readLE (fix, &aHang_m);
+  readLE (fix, &bHang_m);
+  readLE (fix, &(reads_m . first));
+  readLE (fix, &(reads_m . second));
+  readLE (fix, &score_m);
+}
+
+
 //----------------------------------------------------- setAdjacency -----------
 void Overlap_t::setAdjacency (OverlapAdjacency_t adj)
 {

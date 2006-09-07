@@ -78,6 +78,19 @@ void Feature_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void Feature_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  readLE (fix, &(range_m . begin));
+  readLE (fix, &(range_m . end));
+  readLE (fix, &(source_m . first));
+  readLE (fix, &(source_m . second));
+  fix . get (type_m);
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Feature_t::writeMessage (Message_t & msg) const
 {

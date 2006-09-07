@@ -80,6 +80,20 @@ void Group_t::readRecord (istream & fix, istream & var)
 }
 
 
+
+//----------------------------------------------------- readRecordFix ----------
+void Group_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  Size_t size;
+  readLE (fix, &size);
+  readLE (fix, &memtype_m);
+
+  mems_m . clear();
+}
+
+
 //----------------------------------------------------- writeMessage -----------
 void Group_t::writeMessage (Message_t & msg) const
 {

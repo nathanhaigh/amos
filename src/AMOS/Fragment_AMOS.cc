@@ -110,6 +110,21 @@ void Fragment_t::readRecord (istream & fix, istream & var)
 }
 
 
+//----------------------------------------------------- readRecordFix ----------
+void Fragment_t::readRecordFix (istream & fix)
+{
+  Universal_t::readRecordFix (fix);
+
+  readLE (fix, &library_m);
+  readLE (fix, &size_m);
+  readLE (fix, &(source_m . first));
+  readLE (fix, &(source_m . second));
+  readLE (fix, &(reads_m . first));
+  readLE (fix, &(reads_m . second));
+  type_m = fix . get( );
+}
+
+
 //----------------------------------------------------- setType ----------------
 void Fragment_t::setType (FragmentType_t type)
 {
