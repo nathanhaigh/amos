@@ -95,8 +95,7 @@ mate_evolution_LDADD = \
     $(top_builddir)/src/bankViewer/libDataStore.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
-    $(top_builddir)/src/Staden/read/libread.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 
 
 mate_evolution_SOURCES = \
