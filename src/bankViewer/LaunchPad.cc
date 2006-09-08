@@ -120,9 +120,12 @@ void LaunchPad::loadBank()
   loadScaffolds();
   loadContigs();
   loadReads();
+  loadNCharts();
+}
 
-
-  NChartStats * scaffstats = new NChartStats((string)"Scaffold Span Distribution");
+void LaunchPad::loadNCharts()
+{
+  m_scaffstats = new NChartStats((string)"Scaffold Span Distribution");
 
   if (m_datastore->scaffold_bank.isOpen())
   {
@@ -131,13 +134,11 @@ void LaunchPad::loadBank()
     while (m_datastore->scaffold_bank >> scaffold)
     {
       int bid = m_datastore->scaffold_bank.tellg() - 1;
-      scaffstats->addSize(bid, scaffold.getSpan());
+      m_scaffstats->addSize(bid, scaffold.getSpan());
     }
   }
 
-
-
-  NChartStats * contigstats = new NChartStats((string)"Contig Length Distribution");
+  m_contigstats = new NChartStats((string)"Contig Length Distribution");
 
   if (m_datastore->contig_bank.isOpen())
   {
@@ -146,7 +147,7 @@ void LaunchPad::loadBank()
     while (m_datastore->contig_bank >> contig)
     {
       int bid = m_datastore->contig_bank.tellg() - 1;
-      contigstats->addSize(bid, contig.getLength());
+      m_contigstats->addSize(bid, contig.getLength());
     }
   }
 
@@ -167,10 +168,10 @@ void LaunchPad::loadBank()
         {
           try
           {
-            contigstats->addScore(m_datastore->contig_bank.lookupBID(iid), 1.0);
+            m_contigstats->addScore(m_datastore->contig_bank.lookupBID(iid), 1.0);
 
             int scaffid = m_datastore->lookupScaffoldId(iid);
-            if (scaffid) { scaffstats->addScore(scaffid, 1.0); }
+            if (scaffid) { m_scaffstats->addScore(scaffid, 1.0); }
           }
           catch (AMOS::Exception_t & e)
           {
@@ -181,7 +182,7 @@ void LaunchPad::loadBank()
         {
           try
           {
-            scaffstats->addScore(m_datastore->scaffold_bank.lookupBID(iid), 1.0);
+            m_scaffstats->addScore(m_datastore->scaffold_bank.lookupBID(iid), 1.0);
           }
           catch (AMOS::Exception_t & e)
           {
@@ -196,8 +197,8 @@ void LaunchPad::loadBank()
     }
   }
 
-  scaffoldSizes->setStats(scaffstats);
-  contigSizes->setStats(contigstats);
+  scaffoldSizes->setStats(m_scaffstats);
+  contigSizes->setStats(m_contigstats);
 }
 
 void LaunchPad::initDisplay()

@@ -245,47 +245,7 @@ void LaunchPad::contigViewSelected()
 
 void LaunchPad::contigLengthHistogram()
 {
-  NChartStats * stats = new NChartStats((string)"Contig Length Distribution");
-
-  AMOS::Contig_t contig;
-  m_datastore->contig_bank.seekg(1);
-  while (m_datastore->contig_bank >> contig)
-  {
-    int bid = m_datastore->contig_bank.tellg() - 1;
-    stats->addSize(contig.getIID(), contig.getLength());
-  }
-
-  if (m_datastore->feat_bank.isOpen())
-  {
-    try
-    {
-      Feature_t feat;
-      m_datastore->feat_bank.seekg(1);
-
-      while (m_datastore->feat_bank >> feat)
-      {
-        ID_t iid = feat.getSource().first;
-        NCode_t nc = feat.getSource().second;
-
-        if (nc == Contig_t::NCODE)
-        {
-          try
-          {
-            stats->addScore(m_datastore->contig_bank.lookupBID(iid), 1.0);
-          }
-          catch (AMOS::Exception_t & e)
-          {
-            cerr << "error: " << e << endl;
-          }
-        }
-      }
-    }
-    catch (AMOS::Exception_t & e)
-    {
-      cerr << "error: " << e << endl;
-    }
-  }
-
+  NChartStats * stats = new NChartStats(*m_contigstats);
   new NChartWindow(stats, this, "hist");
 }
 

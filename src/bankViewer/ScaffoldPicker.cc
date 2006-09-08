@@ -225,60 +225,8 @@ void LaunchPad::scaffoldViewSelected()
 
 void LaunchPad::scaffoldSpanHistogram()
 {
-  NChartStats * scaffstats = new NChartStats((string)"Scaffold Span Distribution");
-
-  AMOS::Scaffold_t scaffold;
-  m_datastore->scaffold_bank.seekg(1);
-  while (m_datastore->scaffold_bank >> scaffold)
-  {
-    int bid = m_datastore->scaffold_bank.tellg() - 1;
-    scaffstats->addSize(bid, scaffold.getSpan());
-  }
-
-  if (m_datastore->feat_bank.isOpen())
-  {
-    try
-    {
-      Feature_t feat;
-      m_datastore->feat_bank.seekg(1);
-
-      while (m_datastore->feat_bank >> feat)
-      {
-        ID_t iid = feat.getSource().first;
-        NCode_t nc = feat.getSource().second;
-
-        if (nc == Contig_t::NCODE)
-        {
-          try
-          {
-            int scaffid = m_datastore->lookupScaffoldId(iid);
-            if (scaffid) { scaffstats->addScore(scaffid, 1.0); }
-          }
-          catch (AMOS::Exception_t & e)
-          {
-            cerr << "error: " << e << endl;
-          }
-        }
-        else if (nc == Scaffold_t::NCODE)
-        {
-          try
-          {
-            scaffstats->addScore(m_datastore->scaffold_bank.lookupBID(iid), 1.0);
-          }
-          catch (AMOS::Exception_t & e)
-          {
-            cerr << "error: " << e << endl;
-          }
-        }
-      }
-    }
-    catch (AMOS::Exception_t & e)
-    {
-      cerr << "error: " << e << endl;
-    }
-  }
-
-  new NChartWindow(scaffstats, this, "hist");
+  NChartStats * stats = new NChartStats(*m_scaffstats);
+  new NChartWindow(stats, this, "hist");
 }
 
 void LaunchPad::scaffoldContigHistogram()

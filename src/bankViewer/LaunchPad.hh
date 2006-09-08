@@ -15,6 +15,7 @@
 
 class InsertWindow;
 class MainWindow;
+class NChartStats;
 
 class LaunchPad : public LaunchPadBase
 {
@@ -57,6 +58,7 @@ public slots:
 
   // stats tab
   void loadAssemblyStatistics();
+  void loadNCharts();
 
   // features tab
   void initFeatures();
@@ -123,6 +125,8 @@ private:
   InsertWindow * m_insertWindow;
   MainWindow * m_tilingWindow;
   QMainWindow * m_chromoPicker;
+  NChartStats * m_scaffstats;
+  NChartStats * m_contigstats;
 
   int m_gindex;
 
