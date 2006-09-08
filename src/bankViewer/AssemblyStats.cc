@@ -2,6 +2,7 @@
 #include "DataStore.hh"
 #include "LaunchPad.hh"
 #include <qtextedit.h>
+#include "amp.hh"
 
 
 #include <vector>
@@ -39,7 +40,8 @@ static void statsAddRow(QString tag, double value)
 
 void LaunchPad::loadAssemblyStatistics()
 {
-  if (m_verbose) { cerr << "Loading AssemblyStats..." << endl; }
+  EventTime_t timer;
+  if (m_verbose) { cerr << "Loading AssemblyStats..."; }
   QCursor orig = cursor();
 
   statsText->clear();
@@ -159,6 +161,7 @@ void LaunchPad::loadAssemblyStatistics()
 
 
     m_datastore->contig_bank.seekg(1);
+    m_datastore->contig_bank.setFixedStoreOnly(true);
     while (m_datastore->contig_bank >> ctg)
     {
       int l = ctg.getLength();
@@ -181,6 +184,7 @@ void LaunchPad::loadAssemblyStatistics()
         smallreads += r;
       }
     }
+    m_datastore->contig_bank.setFixedStoreOnly(false);
 
     sort(sizes.begin( ), sizes.end( ), less<int>( ) );
 
@@ -257,4 +261,5 @@ void LaunchPad::loadAssemblyStatistics()
   tableString += "</table>";
 
   statsText->setText(tableString);
+  if (m_verbose) { cerr << timer.str() << endl; }
 }

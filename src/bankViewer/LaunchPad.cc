@@ -17,6 +17,7 @@
 #include "MainWindow.hh"
 #include "NChartStats.hh"
 #include "NChartWidget.hh"
+#include "amp.hh"
 
 
 using namespace AMOS;
@@ -105,18 +106,34 @@ void LaunchPad::setBankname(std::string bankname)
 {
   if (bankname != "")
   {
+    EventTime_t total;
     if (!m_datastore->openBank(bankname))
     {
+      EventTime_t timer;
+      ProgressDots_t dots(10,10);
+      cerr << "Initialize Display ";
+
+      dots.update(1);
       loadAssemblyStatistics();
+      dots.update(2);
       loadFeatures();
+      dots.update(3);
       loadLibraries();
+      dots.update(4);
       loadScaffolds();
+      dots.update(5);
       loadContigs();
+      dots.update(9);
       loadNCharts();
+      dots.update(10);
+
+      cerr << " " << timer.str() << endl;
 
       contigIDSpin->setRange(1, m_datastore->contig_bank.getSize());
       setContigId(1);
       emit bankSelected();
+
+      cerr << "Total Load Time: " << total.str() << endl;
     }
   }
 }
@@ -124,7 +141,8 @@ void LaunchPad::setBankname(std::string bankname)
 
 void LaunchPad::loadNCharts()
 {
-  if (m_verbose) { cerr << "Loading NCharts..." << endl; }
+  EventTime_t timer;
+  if (m_verbose) { cerr << "Loading NCharts..."; }
 
   m_scaffstats = new NChartStats((string)"Scaffold Span Distribution");
 
@@ -145,11 +163,13 @@ void LaunchPad::loadNCharts()
   {
     AMOS::Contig_t contig;
     m_datastore->contig_bank.seekg(1);
+    m_datastore->contig_bank.setFixedStoreOnly(true);
     while (m_datastore->contig_bank >> contig)
     {
       int bid = m_datastore->contig_bank.tellg() - 1;
       m_contigstats->addSize(bid, contig.getLength());
     }
+    m_datastore->contig_bank.setFixedStoreOnly(false);
   }
 
 
@@ -159,7 +179,7 @@ void LaunchPad::loadNCharts()
     {
       Feature_t feat;
       m_datastore->feat_bank.seekg(1);
-
+      m_datastore->feat_bank.setFixedStoreOnly(true);
       while (m_datastore->feat_bank >> feat)
       {
         ID_t iid = feat.getSource().first;
@@ -196,10 +216,14 @@ void LaunchPad::loadNCharts()
     {
       cerr << "error: " << e << endl;
     }
+
+    m_datastore->feat_bank.setFixedStoreOnly(false);
   }
 
   scaffoldSizes->setStats(m_scaffstats);
   contigSizes->setStats(m_contigstats);
+
+  if (m_verbose) { cerr << "       " << timer.str() << endl; }
 }
 
 void LaunchPad::initDisplay()

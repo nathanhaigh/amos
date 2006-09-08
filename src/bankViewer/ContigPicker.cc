@@ -16,6 +16,7 @@
 #include "foundation_AMOS.hh"
 
 #include <vector>
+#include "amp.hh"
 
 using namespace std;
 using namespace AMOS;
@@ -127,7 +128,8 @@ void LaunchPad::initContigs()
 
 void LaunchPad::loadContigs()
 {
-  if (m_verbose) { cerr << "Loading Contigs..." << endl; }
+  EventTime_t timer;
+  if (m_verbose) { cerr << "Loading Contigs..."; }
 
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
@@ -201,6 +203,7 @@ void LaunchPad::loadContigs()
   contigList->setColumnWidth(2, (int)(contigList->columnWidth(2)*1.2));
 
   setCursor(orig);
+  if (m_verbose) { cerr << "       " << timer.str() << endl; }
 }
 
 void LaunchPad::contigSelected(QListViewItem * item)

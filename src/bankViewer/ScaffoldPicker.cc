@@ -15,6 +15,7 @@
 #include "NChartStats.hh"
 #include "HistogramWindow.hh"
 #include "NChartWindow.hh"
+#include "amp.hh"
 
 
 #include <vector>
@@ -90,7 +91,8 @@ void LaunchPad::initScaffolds()
 
 void LaunchPad::loadScaffolds()
 {
-  if (m_verbose) { cerr << "Loading Scaffolds..." << endl; }
+  EventTime_t timer;
+  if (m_verbose) { cerr << "Loading Scaffolds..."; }
 
   scaffoldList->clear();
   int c = scaffoldList->columns();
@@ -181,6 +183,7 @@ void LaunchPad::loadScaffolds()
   scaffoldList->setColumnWidth(2, (int)(scaffoldList->columnWidth(2)*1.2));
 
   setCursor(orig);
+  if (m_verbose) { cerr << "     " << timer.str() << endl; }
 }
 
 void LaunchPad::scaffoldSelected(QListViewItem * item)

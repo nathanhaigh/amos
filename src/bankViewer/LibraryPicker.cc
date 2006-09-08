@@ -15,6 +15,7 @@
 #include "InsertStats.hh"
 #include "DataStore.hh"
 #include "HistogramWindow.hh"
+#include "amp.hh"
 
 
 using namespace std;
@@ -83,7 +84,8 @@ void LaunchPad::initLibraries()
 
 void LaunchPad::loadLibraries()
 {
-  if (m_verbose) { cerr << "Loading Libraries..." << endl; }
+  EventTime_t timer;
+  if (m_verbose) { cerr << "Loading Libraries..."; }
 
   libraryList->clear();
   QCursor orig = cursor();
@@ -141,6 +143,7 @@ void LaunchPad::loadLibraries()
   libraryList->setColumnWidth(1, (int)(libraryList->columnWidth(1)*1.2));
 
   setCursor(orig);
+  if (m_verbose) { cerr << "     " << timer.str() << endl; }
 }
 
 void LaunchPad::librarySelected(QListViewItem * item)

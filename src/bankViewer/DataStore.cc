@@ -37,33 +37,20 @@ DataStore::~DataStore()
 
 }
 
-string difftime(struct timeval & start, struct timeval & end)
-{
-  double r = floor(((end.tv_sec - start.tv_sec)*1000000.0 + (end.tv_usec - start.tv_usec)) / 1e4) / 100.0;
-
-  char buffer[1024];
-  sprintf(buffer, "%0.02f", r);
-  return buffer;
-
-
-}
-
 int DataStore::openBank(const string & bankname)
 {
   int retval = 1;
 
   try
   {
-    cerr << "Opening " << bankname << "...";
+    cerr << "Opening " << bankname << "... ";
 
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
+    EventTime_t timer;
 
     read_bank.open(bankname,   B_SPY);
     contig_bank.open(bankname, B_SPY);
 
-    gettimeofday(&end, NULL);
-    cerr << " [" << difftime(start,end) << "s]" << endl;
+    cerr << timer.str() << endl;
 
     m_bankname = bankname;
     m_contigId = AMOS::NULL_ID;
@@ -111,14 +98,17 @@ int DataStore::openBank(const string & bankname)
       cerr << "Mates not available\n";
     }
 
-    try
+    if (0)
     {
-      edge_bank.open(bankname, B_SPY);
-      link_bank.open(bankname, B_SPY);
-    }
-    catch (Exception_t & e)
-    {
-      cerr << "Contig Graph not available\n";
+      try
+      {
+        edge_bank.open(bankname, B_SPY);
+        link_bank.open(bankname, B_SPY);
+      }
+      catch (Exception_t & e)
+      {
+        cerr << "Contig Graph not available\n";
+      }
     }
 
     try
@@ -137,12 +127,11 @@ int DataStore::openBank(const string & bankname)
 
 void DataStore::indexReads()
 {
-  cerr << "Indexing reads     ";
+  cerr << "Indexing Reads     ";
   ProgressDots_t dots(read_bank.getSize(), 10);
   int count = 0;
 
-  struct timeval start, end;
-  gettimeofday(&start, NULL);
+  EventTime_t timer;
 
   m_readfraglookup.clear();
   m_readfraglookup.resize(read_bank.getSize());
@@ -162,18 +151,16 @@ void DataStore::indexReads()
 
   read_bank.setFixedStoreOnly(false);
 
-  gettimeofday(&end, NULL);
-  cerr << " [" << difftime(start,end) << "s] "
+  cerr << " " << timer.str() << " "
        << m_readfraglookup.size() << " reads" << endl;
 }
 
 void DataStore::indexFrags()
 {
-  cerr << "Indexing mates     ";
+  cerr << "Indexing Mates     ";
   ProgressDots_t dots(frag_bank.getSize(), 10);
 
-  struct timeval start, end;
-  gettimeofday(&start, NULL);
+  EventTime_t timer;
 
   m_fragliblookup.clear();
   m_fragliblookup.resize(frag_bank.getSize());
@@ -185,6 +172,8 @@ void DataStore::indexFrags()
   Fragment_t frg;
   frag_bank.seekg(1);
   int count = 0;
+
+  frag_bank.setFixedStoreOnly(true);
 
   while (frag_bank >> frg)
   {
@@ -198,18 +187,18 @@ void DataStore::indexFrags()
     m_readmatelookup.insert(make_pair(mates.second, pair<AMOS::ID_t, AMOS::FragmentType_t> (mates.first,  frg.getType())));
   }
 
-  gettimeofday(&end, NULL);
-  cerr << " [" << difftime(start,end) << "s] "
+  frag_bank.setFixedStoreOnly(false);
+
+  cerr << " " << timer.str() << " "
        << m_readmatelookup.size() << " mated reads" << endl;
 }
 
 void DataStore::indexLibraries()
 {
-  cerr << "Indexing libraries ";
+  cerr << "Indexing Libraries ";
   ProgressDots_t dots(lib_bank.getSize(), 10);
 
-  struct timeval start, end;
-  gettimeofday(&start, NULL);
+  EventTime_t timer;
 
   m_libdistributionlookup.clear();
   m_libdistributionlookup.resize(lib_bank.getSize());
@@ -226,19 +215,16 @@ void DataStore::indexLibraries()
     dots.update(count);
   }
 
-
-  gettimeofday(&end, NULL);
-  cerr << " [" << difftime(start,end) << "s] "
+  cerr << " " << timer.str() << " "
        << m_libdistributionlookup.size() << " libraries" << endl;
 }
 
 void DataStore::indexContigs()
 {
-  cerr << "Indexing contigs   ";
+  cerr << "Indexing Contigs   ";
   ProgressDots_t dots(contig_bank.getSize(), 10);
 
-  struct timeval start, end;
-  gettimeofday(&start, NULL);
+  EventTime_t timer;
 
   m_readcontiglookup.clear();
   m_readcontiglookup.resize(read_bank.getSize());
@@ -260,23 +246,20 @@ void DataStore::indexContigs()
     {
       m_readcontiglookup.insert(make_pair(ti->source, contigid));
     }
-
   }
 
-  gettimeofday(&end, NULL);
-  cerr << " [" << difftime(start,end) << "s] "
+  cerr << " " << timer.str() << " "
        << m_readcontiglookup.size() << " reads in " 
        << visit << " contigs" << endl;
 }
 
 void DataStore::indexScaffolds()
 {
-  cerr << "Indexing scaffolds ";
+  cerr << "Indexing Scaffolds ";
 
   ProgressDots_t dots(scaffold_bank.getSize(), 10);
 
-  struct timeval start, end;
-  gettimeofday(&start, NULL);
+  EventTime_t timer;
 
   m_contigscafflookup.clear();
   m_contigscafflookup.resize(contig_bank.getSize());
@@ -301,8 +284,7 @@ void DataStore::indexScaffolds()
     }
   }
 
-  gettimeofday(&end, NULL);
-  cerr << " [" << difftime(start,end) << "s] "
+  cerr << " " << timer.str() << " "
        << m_contigscafflookup.size() << " contigs in " 
        << visit << " scaffolds" << endl;
 }
@@ -314,14 +296,18 @@ int DataStore::setContigId(int id)
   try
   {
     ID_t bankid = id;
-    cerr << "Setting contig to bid " << bankid << endl;
 
     if (bankid != 0)
     {
+      EventTime_t timer;
+      cerr << "Loading Contig " << bankid << "...";
       fetchContig(bankid, m_contig);
       m_scaffoldId = lookupScaffoldId(id);
       m_contigId = id;
       m_loaded = true;
+
+      cerr << " " << timer.str() << " "
+           << m_contig.getReadTiling().size() << " reads" << endl;
     }
   }
   catch (Exception_t & e)
@@ -335,16 +321,13 @@ int DataStore::setContigId(int id)
 
 void DataStore::fetchRead(ID_t readid, Read_t & read)
 {
-  ID_t bid = 0;
   try
   {
-    bid = read_bank.getIDMap().lookupBID(readid);
-    read_bank.seekg(bid);
-    read_bank >> read;
+    read_bank.fetch(readid, read);
   }
   catch (Exception_t & e)
   {
-    cerr << "ERROR: Can't fetch read iid:" << readid << " bid: " << bid << "\n" << e;
+    cerr << "ERROR: Can't fetch read iid:" << readid << "\n" << e;
   }
 }
 
@@ -378,8 +361,7 @@ void DataStore::fetchFrag(ID_t fragid, Fragment_t & frag)
 {
   try
   {
-    frag_bank.seekg(frag_bank.getIDMap().lookupBID(fragid));
-    frag_bank >> frag;
+    frag_bank.fetch(fragid, frag);
   }
   catch (Exception_t & e)
   {
@@ -402,7 +384,7 @@ AMOS::ID_t DataStore::getLibrary(ID_t readid)
       else
       {
         Read_t read;
-        fetchRead(readid, read);
+        read_bank.fetchFix(readid, read);
         fragid = read.getFragment();
       }
 
@@ -413,7 +395,7 @@ AMOS::ID_t DataStore::getLibrary(ID_t readid)
       else
       {
         Fragment_t frag;
-        fetchFrag(fragid, frag);
+        frag_bank.fetchFix(fragid, frag);
         libid = frag.getLibrary();
       }
 

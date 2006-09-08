@@ -11,6 +11,7 @@
 #include "foundation_AMOS.hh"
 
 #include <vector>
+#include "amp.hh"
 
 using namespace std;
 using namespace AMOS;
@@ -87,7 +88,9 @@ void LaunchPad::featureGroupChanged(int id)
 
 void LaunchPad::loadFeatures()
 {
-  if (m_verbose) { cerr << "Loading Features..." << endl; }
+  EventTime_t timer;
+  if (m_verbose) { cerr << "Loading Features..."; }
+
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
 
@@ -242,6 +245,8 @@ void LaunchPad::loadFeatures()
   }
 
   setCursor(orig);
+
+  if (m_verbose) { cerr << "      " << timer.str() << endl; }
 }
 
 void LaunchPad::featureViewButtonSelected()

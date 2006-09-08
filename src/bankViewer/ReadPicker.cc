@@ -8,7 +8,7 @@
 
 #include "foundation_AMOS.hh"
 #include "HistogramWindow.hh"
-
+#include "amp.hh"
 
 #include <vector>
 
@@ -106,7 +106,8 @@ void LaunchPad::initReads()
 
 void LaunchPad::loadReads()
 {
-  if (m_verbose) { cerr << "Loading reads..." << endl; }
+  EventTime_t timer;
+  if (m_verbose) { cerr << "Loading reads..."; }
 
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
@@ -170,6 +171,8 @@ void LaunchPad::loadReads()
   readList->setSorting(4, true);
 
   setCursor(orig);
+
+  if (m_verbose) { cerr << "         " << timer.str() << endl; }
 }
 
 void LaunchPad::readSelected(QListViewItem * item)
