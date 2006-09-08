@@ -20,9 +20,6 @@
 using namespace std;
 using namespace AMOS;
 
-typedef HASHMAP::hash_map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::FragmentType_t> > MateLookupMap;
-MateLookupMap m_readmatelookup;
-
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
 DataStore * m_datastore;
@@ -153,7 +150,6 @@ int main (int argc, char ** argv)
     m_datastore = new DataStore();
     m_datastore->openBank(OPT_BankName);
 
-
     cerr << "Processing scaffolds... ";
     int scaffcount = 0;
     m_datastore->scaffold_bank.seekg(1);
@@ -161,47 +157,11 @@ int main (int argc, char ** argv)
     {
       scaffcount++;
       vector <Tile_t> rtiling;
-      SeqTileMap_t seqtileLookup;
 
-      vector<Tile_t> & ctiling = scaff.getContigTiling();
-      vector<Tile_t>::const_iterator ci;
-
-      cerr << "Mapping reads to scaffold " << scaff.getEID() << "... ";
-
-      for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
-      {
-        m_datastore->fetchContig(ci->source, contig);
-
-        int clen = contig.getLength();
-
-        vector<Tile_t> & crtiling = contig.getReadTiling();
-        vector<Tile_t>::const_iterator ri;
-        for (ri = crtiling.begin(); ri != crtiling.end(); ri++)
-        {
-          Tile_t mappedTile;
-          mappedTile.source = ri->source;
-          mappedTile.gaps   = ri->gaps;
-          mappedTile.range  = ri->range;
-
-          int offset = ri->offset;
-          if (ci->range.isReverse())
-          {
-            mappedTile.range.swap();
-            offset = clen - (offset + ri->range.getLength() + ri->gaps.size());
-          }
-
-          mappedTile.offset = ci->offset + offset;
-
-          rtiling.push_back(mappedTile);
-        }
-      }
-
-      cerr << rtiling.size() << " reads mapped" << endl;
-
+      m_datastore->mapReadsToScaffold(scaff, rtiling, 1);
       m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
 
       computeCEStats(scaff);
-
 
       vector<Insert *>::iterator i;
       
