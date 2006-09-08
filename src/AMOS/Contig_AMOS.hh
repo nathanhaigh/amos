@@ -141,6 +141,55 @@ public:
   Pos_t ungap2gap (Pos_t ungap);
 
 
+  //--------------------------------------------------- getGCContent --------------
+  //! \brief Get the gc content of the sequence
+  //!
+  //! \return The gc content for the specified range of the sequence
+  //!
+  virtual double getGCContent (const Range_t & rng) const
+  {
+    int gc = 0;
+    int all = 0;
+
+    int start = rng.getLo();
+    int stop = rng.getHi();
+
+    if (stop > length_m)
+      AMOS_THROW_ARGUMENT("Can't compute GC Content beyond sequence length");
+
+    // skip ambiguities, gaps
+
+    for (int i = start; i < stop; i++)
+    {
+      switch(seq_m[i])
+      {
+        case 'A':
+        case 'a': 
+        case 'T':
+        case 't': all++; break;
+
+        case 'C':
+        case 'c':
+        case 'G':
+        case 'g': all++; gc++; break;
+      };
+    }
+
+    return (all) ? ((double)gc)/all : 0.0;
+  }
+
+  //--------------------------------------------------- getGCContent --------------
+  //! \brief Get the gc content of the sequence
+  //!
+  //! \return The gc content of the full range of the sequence
+  //!
+  virtual double getGCContent ( ) const
+  {
+    return getGCContent(Range_t(0, length_m));
+  }
+
+
+
   //--------------------------------------------------- getNCode ---------------
   virtual NCode_t getNCode ( ) const
   {

@@ -303,6 +303,7 @@ void Contig_t::readRecordFix (istream & fix)
   readLE (fix, &sizet); 
 
   reads_m.clear();
+  reads_m . resize (sizet);
 }
 
 

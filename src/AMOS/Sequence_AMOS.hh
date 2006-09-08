@@ -223,7 +223,7 @@ public:
   //!
   //! \return The gc content for the specified range of the sequence
   //!
-  double getGCContent (const Range_t & rng) const
+  virtual double getGCContent (const Range_t & rng) const
   {
     int gc = 0;
     int all = 0;
@@ -257,7 +257,7 @@ public:
   //!
   //! \return The gc content of the full range of the sequence
   //!
-  double getGCContent ( ) const
+  virtual double getGCContent ( ) const
   {
     return getGCContent(Range_t(0, length_m));
   }

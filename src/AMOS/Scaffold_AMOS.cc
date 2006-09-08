@@ -122,6 +122,9 @@ void Scaffold_t::readRecordFix (istream & fix)
 
   contigs_m . clear();
   edges_m . clear();
+
+  contigs_m . resize (csize);
+  edges_m . resize (esize);
 }
 
 
