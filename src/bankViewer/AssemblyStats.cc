@@ -39,6 +39,7 @@ static void statsAddRow(QString tag, double value)
 
 void LaunchPad::loadAssemblyStatistics()
 {
+  if (m_verbose) { cerr << "Loading AssemblyStats..." << endl; }
   QCursor orig = cursor();
 
   statsText->clear();

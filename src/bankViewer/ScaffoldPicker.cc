@@ -90,6 +90,8 @@ void LaunchPad::initScaffolds()
 
 void LaunchPad::loadScaffolds()
 {
+  if (m_verbose) { cerr << "Loading Scaffolds..." << endl; }
+
   scaffoldList->clear();
   int c = scaffoldList->columns();
   for (int i = 0; i < c; i++)

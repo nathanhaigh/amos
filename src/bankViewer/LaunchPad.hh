@@ -33,7 +33,6 @@ public slots:
   void initDisplay();
 
   void setBankname(std::string bankname);
-  void loadBank();
 
   void showAll();
   void showInserts();
@@ -129,6 +128,7 @@ private:
   NChartStats * m_contigstats;
 
   int m_gindex;
+  int m_verbose;
 
 };
 

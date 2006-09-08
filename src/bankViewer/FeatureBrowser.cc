@@ -87,6 +87,7 @@ void LaunchPad::featureGroupChanged(int id)
 
 void LaunchPad::loadFeatures()
 {
+  if (m_verbose) { cerr << "Loading Features..." << endl; }
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
 

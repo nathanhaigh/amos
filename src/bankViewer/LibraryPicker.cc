@@ -83,6 +83,8 @@ void LaunchPad::initLibraries()
 
 void LaunchPad::loadLibraries()
 {
+  if (m_verbose) { cerr << "Loading Libraries..." << endl; }
+
   libraryList->clear();
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);

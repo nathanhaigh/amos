@@ -106,6 +106,8 @@ void LaunchPad::initReads()
 
 void LaunchPad::loadReads()
 {
+  if (m_verbose) { cerr << "Loading reads..." << endl; }
+
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
 

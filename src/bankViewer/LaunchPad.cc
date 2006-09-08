@@ -29,6 +29,7 @@ LaunchPad::LaunchPad(QWidget* parent, const char* name, WFlags fl)
   m_insertWindow = NULL;
   m_chromoPicker = NULL;
   m_gindex = 0;
+  m_verbose = 0;
 
   m_datastore = new DataStore();
 
@@ -103,7 +104,13 @@ void LaunchPad::setBankname(std::string bankname)
   {
     if (!m_datastore->openBank(bankname))
     {
-      loadBank();
+      loadAssemblyStatistics();
+      loadFeatures();
+      loadLibraries();
+      loadScaffolds();
+      loadContigs();
+      loadNCharts();
+
       contigIDSpin->setRange(1, m_datastore->contig_bank.getSize());
       setContigId(1);
       emit bankSelected();
@@ -112,19 +119,10 @@ void LaunchPad::setBankname(std::string bankname)
 }
 
 
-void LaunchPad::loadBank()
-{
-  loadAssemblyStatistics();
-  loadFeatures();
-  loadLibraries();
-  loadScaffolds();
-  loadContigs();
-  loadReads();
-  loadNCharts();
-}
-
 void LaunchPad::loadNCharts()
 {
+  if (m_verbose) { cerr << "Loading NCharts..." << endl; }
+
   m_scaffstats = new NChartStats((string)"Scaffold Span Distribution");
 
   if (m_datastore->scaffold_bank.isOpen())

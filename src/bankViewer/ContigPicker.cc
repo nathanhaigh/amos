@@ -127,10 +127,12 @@ void LaunchPad::initContigs()
 
 void LaunchPad::loadContigs()
 {
-  contigList->clear();
+  if (m_verbose) { cerr << "Loading Contigs..." << endl; }
 
   QCursor orig = cursor();
   setCursor(Qt::waitCursor);
+
+  contigList->clear();
 
   ContigListItem * curItem = NULL;
 
