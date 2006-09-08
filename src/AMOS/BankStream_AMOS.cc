@@ -80,6 +80,8 @@ void BankStream_t::concat (BankStream_t & s)
   for ( IDMap_t::const_iterator idmi = getIDMap().begin();
         idmi != getIDMap().end(); ++ idmi )
     triples_m [idmi->bid] = idmi;
+
+  oldPartition_m = NULL;
 }
 
 
@@ -111,6 +113,8 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
 	-- n;
       ++ curr_bid_m;
     }
+
+  oldPartition_m = NULL;
 
   eof_m = !inrange();
   return *this;
@@ -161,9 +165,13 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 
       lid = curr_bid_m;
       partition = localizeBID (lid);
-      off = lid * fix_size_m;
 
-      partition->fix.seekg (off);
+      if (partition != oldPartition_m)
+      {
+        off = lid * fix_size_m;
+        partition->fix.seekg (off);
+        oldPartition_m = partition;
+      }
 
       readLE (partition->fix, &vpos);
       readLE (partition->fix, &flags);
@@ -213,6 +221,8 @@ BankStream_t & BankStream_t::operator>> (IBankable_t & obj)
 //--------------------------------------------------- operator<< -------------
 BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
 {
+  oldPartition_m = NULL;
+
   if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
     AMOS_THROW_IO ("Cannot stream append: bank not open for writing");
   if ( banktype_m != obj.getNCode() )
@@ -280,6 +290,7 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
 void BankStream_t::replace (ID_t iid, IBankable_t & obj)
 {
   ate_m = false;
+  oldPartition_m = NULL;
 
   ID_t bid = lookupBID (iid);
   string peid (idmap_m.lookupEID (iid));
@@ -308,6 +319,7 @@ void BankStream_t::replace (ID_t iid, IBankable_t & obj)
 void BankStream_t::replace (const string & eid, IBankable_t & obj)
 {
   ate_m = false;
+  oldPartition_m = NULL;
 
   ID_t bid = lookupBID (eid);
   ID_t piid = idmap_m.lookupIID (eid);
@@ -339,6 +351,8 @@ void BankStream_t::replaceByBID(ID_t bid, IBankable_t & obj)
   {
     AMOS_THROW_IO ("Cannot replaceByBID: outside valid bid range");
   }
+
+  oldPartition_m = NULL;
 
   if (triples_m[bid])
   {

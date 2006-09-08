@@ -48,6 +48,7 @@ protected:
   //!
   void init()
   {
+    oldPartition_m = NULL;
     fixed_store_only_m = false;
     eof_m = false;
     curr_bid_m = 1;
@@ -68,6 +69,8 @@ protected:
   ID_t curr_bid_m;                    //!< BID to be returned on next get
   bool ate_m;                         //!< put pointers at end of bank
   std::vector<const IDMap_t::HashTriple_t *> triples_m;   //!< BID,EID,IID map
+
+  BankPartition_t * oldPartition_m;
 
 public:
 
@@ -204,24 +207,28 @@ public:
   void fetch (ID_t iid, IBankable_t & obj)
   {
     Bank_t::fetch (iid, obj);
+    oldPartition_m = NULL;
   }
 
   //--------------------------------------------------- fetch ------------------
   void fetch (const std::string & eid, IBankable_t & obj)
   {
     Bank_t::fetch (eid, obj);
+    oldPartition_m = NULL;
   }
 
   //--------------------------------------------------- fetchFix ---------------
   void fetchFix (ID_t iid, IBankable_t & obj)
   {
     Bank_t::fetchFix(iid, obj);
+    oldPartition_m = NULL;
   }
 
   //--------------------------------------------------- fetchFix ---------------
   void fetchFix (const std::string & eid, IBankable_t & obj)
   {
     Bank_t::fetchFix(eid, obj);
+    oldPartition_m = NULL;
   }
 
 
@@ -255,6 +262,8 @@ public:
     removeBID (bid);
     triples_m [bid] = NULL;
     idmap_m . remove (iid);
+
+    oldPartition_m = NULL;
   }
 
 
@@ -267,6 +276,8 @@ public:
     removeBID (bid);
     triples_m [bid] = NULL;
     idmap_m . remove (eid);
+
+    oldPartition_m = NULL;
   }
 
   //--------------------------------------------------- remove -----------------
@@ -293,6 +304,8 @@ public:
 
       triples_m[bid] = NULL;
     }
+
+    oldPartition_m = NULL;
   }
 
 
@@ -351,6 +364,7 @@ public:
       default:    AMOS_THROW ("Cannot seekg: bad bankseekdir value");
       }
     ignore (off);
+    oldPartition_m = NULL;
 
     return *this;
   }
@@ -378,6 +392,8 @@ public:
         curr_bid_m = pos;
         eof_m = !inrange();
       }
+
+    oldPartition_m = NULL;
 
     return *this;
   }
