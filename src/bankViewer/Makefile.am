@@ -120,6 +120,7 @@ EXTRA_DIST = \
 
 
 hawkeye_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+                $(top_builddir)/src/bankViewer/libDataStore.a \
                 $(top_builddir)/src/Common/libCommon.a   \
                 $(top_builddir)/src/AMOS/libAMOS.a       \
                 $(top_builddir)/src/Slice/libSlice.a     \
