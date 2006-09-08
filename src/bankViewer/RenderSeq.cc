@@ -1,6 +1,7 @@
 #include "RenderSeq.hh"
 
 #include "DataStore.hh"
+#include "ChromoStore.hh"
 
 using namespace std;
 using namespace AMOS;
@@ -259,16 +260,18 @@ bool RenderSeq_t::hasOverlap(Pos_t rangeStart, // 0-based exact offset of range
   return retval;
 }
 
-void RenderSeq_t::loadTrace(DataStore * datastore)
+void RenderSeq_t::loadTrace()
 {
   if (m_trace) { return; }
+
+  ChromoStore * chromostore = ChromoStore::Instance();
 
   m_pos = m_read.getBasePositions();
   cerr << "Load Positions [" << m_pos.size() << "] ";
   if (m_pos.empty()) { cerr << "(load from trace)"; }
   
   cerr << " load trace" << endl;
-  m_trace = datastore->fetchTrace(m_read, m_pos);
+  m_trace = chromostore->fetchTrace(m_read, m_pos);
   if (!m_trace) { cerr << "Trace Not Found" << endl; return; }
   if (m_pos.empty()) { cerr << "Trace Positions Not Available" << endl; return; }
 

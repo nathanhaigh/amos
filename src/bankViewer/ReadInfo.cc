@@ -9,7 +9,6 @@
 using namespace std;
 
 ReadInfo::ReadInfo(RenderSeq_t * read, 
-                   const string & db, 
                    const string & cons,
                    const string & cstatus,
                    QWidget*parent, 
@@ -35,8 +34,7 @@ ReadInfo::ReadInfo(RenderSeq_t * read,
   layout->addWidget(label);
   layout->addWidget(m_sv);
 
-  m_chromo = new ChromoField(&m_read, db, cons, cstatus, 
-                             m_sv->viewport(), "chromo");
+  m_chromo = new ChromoField(&m_read, cons, cstatus, m_sv->viewport(), "chromo");
   m_sv->addChild(m_chromo);
 }
 

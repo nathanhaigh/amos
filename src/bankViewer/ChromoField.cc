@@ -20,7 +20,6 @@ extern "C"
 }
 
 ChromoField::ChromoField(RenderSeq_t * read, 
-                         const string & db, 
                          const string & cons,
                          const string & cstatus,
                          QWidget *parent, 

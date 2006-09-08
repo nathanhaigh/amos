@@ -37,13 +37,6 @@ public:
   int openBank(const string & bank_name);
   int setContigId(int id);
 
-  string replaceTraceTokens(const string & str,
-                            const string & eid,
-                            const string & iid);
-
-
-  char * fetchTrace(const AMOS::Read_t & read, std::vector<int16_t> & positions);
-
   void fetchScaffold(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
   void fetchContig(AMOS::ID_t contigid, AMOS::Contig_t & contig);
   void fetchFrag(AMOS::ID_t fragid, AMOS::Fragment_t & frag);
@@ -65,14 +58,6 @@ public:
   AMOS::Bank_t       link_bank;
 
   std::string m_bankname;
-
-  std::vector <string> m_tracepaths;
-  std::string m_tracecache;
-  std::string m_tracecmd;
-  std::string m_tracecmdpath;
-  std::string m_tracedb;
-  bool m_tracecmdenabled;
-  
 
   AMOS::ID_t m_contigId;
   AMOS::ID_t m_scaffoldId;
@@ -125,16 +110,12 @@ public:
   Mer_t Forward_Mask;
 
 
-
 private:
-
   void indexFrags();
   void indexReads();
   void indexLibraries();
   void indexContigs();
   void indexScaffolds();
-
-  bool m_tracecachecreated;
 };
 
 

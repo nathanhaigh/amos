@@ -14,7 +14,6 @@ class ReadInfo: public QDialog
 
 public:
   ReadInfo(RenderSeq_t * read, 
-           const std::string & db, 
            const std::string & cons,
            const std::string & cstatus,
            QWidget * parent=0, 

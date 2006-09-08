@@ -10,6 +10,7 @@
 
 #include "foundation_AMOS.hh"
 #include "DataStore.hh"
+#include "ChromoStore.hh"
 
 
 #include <vector>
@@ -28,10 +29,8 @@ public:
 };
 
 
-ChromoPicker::ChromoPicker(DataStore * datastore,
-                       QWidget * parent, 
-                       const char * name)
-  :QMainWindow(parent, name), m_datastore(datastore)
+ChromoPicker::ChromoPicker(QWidget * parent, const char * name)
+  :QMainWindow(parent, name)
 {
   m_table = new QListView(this, "ChromoPickertbl");
   setCentralWidget(m_table);
@@ -39,29 +38,35 @@ ChromoPicker::ChromoPicker(DataStore * datastore,
   resize(550,500);
   show();
 
+  ChromoStore * chromostore = ChromoStore::Instance();
+
   QToolBar * fetchtool = new QToolBar(this, "cmdtools");
   new QLabel("Trace AutoFetch", fetchtool, "fetchlabel");
   m_enabled = new QCheckBox("Enable", fetchtool);
-  m_enabled->setChecked(m_datastore->m_tracecmdenabled);
+  m_enabled->setChecked(chromostore->m_tracecmdenabled);
+
+  connect(m_enabled, SIGNAL(toggled(bool)),
+          this, SLOT(setTraceCmdEnabled(bool)));
+          
 
   QToolBar * cmdtool = new QToolBar(this, "cmdtools");
   new QLabel("Command:", cmdtool, "fetchlabel");
   m_fetchpick = new QLineEdit(cmdtool, "fetchpick");
-  m_fetchpick->setText(m_datastore->m_tracecmd);
+  m_fetchpick->setText(chromostore->m_tracecmd);
   m_fetchpick->setMinimumWidth(800);
   m_fetchpick->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Expanding));
 
   QToolBar * restool = new QToolBar(this, "restools");
   new QLabel("Result:", restool, "fetchresultlabel");
   m_fetchresultpick = new QLineEdit(restool, "fetchresultpick");
-  m_fetchresultpick->setText(m_datastore->m_tracecmdpath);
+  m_fetchresultpick->setText(chromostore->m_tracecmdpath);
   m_fetchresultpick->setMinimumWidth(500);
 
 
   QToolBar * cachetool = new QToolBar(this, "cachetools");
   new QLabel("Cache:", cachetool, "fetchcachelbl");
   m_fetchcachepick = new QLineEdit(cachetool, "fetchresultpick");
-  m_fetchcachepick->setText(m_datastore->m_tracecache);
+  m_fetchcachepick->setText(chromostore->m_tracecache);
   m_fetchcachepick->setMinimumWidth(800);
 
 
@@ -86,8 +91,8 @@ ChromoPicker::ChromoPicker(DataStore * datastore,
 
   vector<string>::iterator vi;
 
-  for (vi = m_datastore->m_tracepaths.begin();
-       vi != m_datastore->m_tracepaths.end();
+  for (vi =  chromostore->m_tracepaths.begin();
+       vi != chromostore->m_tracepaths.end();
        vi++)
   {
     new ChromoListItem(m_table, QString(vi->c_str()));
@@ -136,8 +141,15 @@ void ChromoPicker::addNew()
 {
   if (m_pathpick->text() != "")
   {
-    m_datastore->m_tracepaths.push_back((std::string)m_pathpick->text().ascii());
+    ChromoStore * chromostore = ChromoStore::Instance();
+    chromostore->m_tracepaths.push_back((std::string)m_pathpick->text().ascii());
     new ChromoListItem(m_table, m_pathpick->text());
     m_pathpick->setText("");
   }
+}
+
+void ChromoPicker::setTraceCmdEnabled(bool enabled)
+{
+  m_enabled->setChecked(enabled);
+  ChromoStore::Instance()->m_tracecmdenabled = enabled;
 }

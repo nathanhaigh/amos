@@ -27,20 +27,19 @@ hawkeye_MOCSOURCES = \
         CGraphWindow.cc        \
         ChromoField.cc         \
         ChromoPicker.cc        \
+        ChromoStore.cc         \
         ConsensusField.cc      \
         ContigCanvasItem.cc    \
         ContigPicker.cc        \
         CoverageCanvasItem.cc  \
         CoverageRectCanvasItem.cc \
         CoverageStats.cc       \
-        DataStore.cc           \
         DetailWidget.cc        \
         FeatureBrowser.cc      \
         FeatureCanvasItem.cc   \
         HistogramWidget.cc     \
         HistogramWindow.cc     \
         InsertCanvasItem.cc    \
-        Insert.cc              \
         InsertField.cc         \
         InsertPosition.cc      \
         InsertWidget.cc        \
@@ -75,8 +74,8 @@ CLEANFILES = $(hawkeye_MOCSOURCES:.cc=.moc.cc)
 
 hawkeye_SOURCES =           \
         main.cc                \
-	    UIElements.cc          \
-	    UIElements.hh          \
+	UIElements.cc          \
+	UIElements.hh          \
         NChartStats.cc         \
         NChartStats.hh         \
         InsertStats.cc         \
@@ -135,43 +134,35 @@ AM_CPPFLAGS = \
 
 cestat_cov_SOURCES = \
   cestat-cov.cc \
-  Insert.cc \
-  DataStore.cc \
   CoverageStats.cc
 
 cestat_cov_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+                   $(top_builddir)/src/bankViewer/libDataStore.a \
                    $(top_builddir)/src/Common/libCommon.a   \
-                   $(top_builddir)/src/AMOS/libAMOS.a      \
-                   $(top_builddir)/src/Staden/read/libread.a
+                   $(top_builddir)/src/AMOS/libAMOS.a
 
 insert_sizes_SOURCES = \
   insert-sizes.cc \
-  Insert.cc \
-  DataStore.cc \
   InsertStats.cc 
 
-insert_sizes_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+insert_sizes_LDADD = \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
-                     $(top_builddir)/src/AMOS/libAMOS.a      \
-                     $(top_builddir)/src/Staden/read/libread.a
+                     $(top_builddir)/src/AMOS/libAMOS.a 
 
 library_histogram_SOURCES = \
   library-histogram.cc \
-  Insert.cc \
-  DataStore.cc \
   InsertStats.cc
 
-library_histogram_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+library_histogram_LDADD =  \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
-                     $(top_builddir)/src/AMOS/libAMOS.a      \
-                     $(top_builddir)/src/Staden/read/libread.a
+                     $(top_builddir)/src/AMOS/libAMOS.a 
 
 list_linked_contigs_SOURCES = \
-  list-linked-contigs.cc \
-  Insert.cc \
-  DataStore.cc
+  list-linked-contigs.cc
 
-list_linked_contigs_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+list_linked_contigs_LDADD =  \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
-                     $(top_builddir)/src/AMOS/libAMOS.a      \
-                     $(top_builddir)/src/Staden/read/libread.a
+                     $(top_builddir)/src/AMOS/libAMOS.a

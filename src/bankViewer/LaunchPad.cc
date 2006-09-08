@@ -11,6 +11,7 @@
 
 #include "InsertWindow.hh"
 #include "DataStore.hh"
+#include "ChromoStore.hh"
 #include "ChromoPicker.hh"
 #include "NetworkCom.hh"
 #include "MainWindow.hh"
@@ -67,19 +68,21 @@ void LaunchPad::fileChromoPaths()
 {
   if (m_chromoPicker) { m_chromoPicker->close(); }
 
-  m_chromoPicker = new ChromoPicker(m_datastore, this, "chromoPicker");
+  m_chromoPicker = new ChromoPicker(this, "chromoPicker");
 }
 
 void LaunchPad::addChromoPath(const QString & path)
 {
-  m_datastore->m_tracepaths.push_back(path.ascii());
+  ChromoStore * chromostore = ChromoStore::Instance();
+  chromostore->m_tracepaths.push_back(path.ascii());
 }
 
 void LaunchPad::setChromoDB(const QString & db)
 {
-  if (m_datastore->m_tracedb != db.ascii())
+  ChromoStore * chromostore = ChromoStore::Instance();
+  if (chromostore->m_tracedb != db.ascii())
   {
-    m_datastore->m_tracedb = db.ascii();
+    chromostore->m_tracedb = db.ascii();
   }
 }
 
@@ -367,7 +370,8 @@ void LaunchPad::setContigLocation(const QString contigid, int pos)
 
 void LaunchPad::enableTraceFetch(bool dofetch)
 {
-  m_datastore->m_tracecmdenabled = dofetch;
+  ChromoStore * chromostore = ChromoStore::Instance();
+  chromostore->m_tracecmdenabled = dofetch;
 }
 
 void LaunchPad::loadKmers(std::string file)

@@ -10,20 +10,20 @@
 
 using std::string;
 
-class DataStore;
-
 class ChromoPicker : public QMainWindow
 {
   Q_OBJECT
 
 public:
-  ChromoPicker(DataStore * datastore, QWidget * parent, const char * name);
+  ChromoPicker(QWidget * parent, const char * name);
 
 public slots:
   void itemSelected(QListViewItem * item);
   void selectiid(const QString & iid);
   void selecteid(const QString & eid);
   void acceptSelected();
+  void setTraceCmdEnabled(bool enabled);
+
 
   void addNew();
 
@@ -31,7 +31,6 @@ signals:
   void highlightRead(int);
 
 private:
-  DataStore * m_datastore;
   QListView * m_table;
 
   QLineEdit * m_pathpick;
