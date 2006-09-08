@@ -280,10 +280,9 @@ void LaunchPad::featureSelected(QListViewItem * item)
   {
     AMOS::Scaffold_t scaffold;
 
-    ID_t bid = m_datastore->scaffold_bank.lookupBID(iid);
-    m_datastore->fetchScaffold(bid, scaffold);
+    m_datastore->fetchScaffoldIID(iid, scaffold);
 
-    bid = 0;
+    ID_t contigbid = 0;
 
     vector<Tile_t>::iterator ti;
     for (ti = scaffold.getContigTiling().begin();
@@ -292,7 +291,7 @@ void LaunchPad::featureSelected(QListViewItem * item)
     {
       if ((ti->offset <= offset) && (offset <= ti->getRightOffset()))
       {
-        bid = m_datastore->contig_bank.getIDMap().lookupBID(ti->source);
+        contigbid = m_datastore->contig_bank.getIDMap().lookupBID(ti->source);
         offset -= ti->offset;
 
         if (ti->range.isReverse())
@@ -304,9 +303,9 @@ void LaunchPad::featureSelected(QListViewItem * item)
       }
     }
 
-    if (bid)
+    if (contigbid)
     {
-      setContigId(bid);
+      setContigId(contigbid);
       setGindex(offset);
     }
   }

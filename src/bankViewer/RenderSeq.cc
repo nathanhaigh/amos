@@ -177,7 +177,7 @@ Pos_t RenderSeq_t::getGindex(Pos_t gseqpos) const
 void RenderSeq_t::load(DataStore * datastore, Tile_t * tile)
 {
   m_tile = tile;
-  datastore->fetchRead(tile->source, m_read);
+  datastore->fetchReadIID(tile->source, m_read);
 
   m_loffset = tile->offset;
   m_roffset = tile->offset + tile->getGappedLength() - 1; 

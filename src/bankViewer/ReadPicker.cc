@@ -130,22 +130,20 @@ void LaunchPad::loadReads()
       AMOS::Distribution_t dist = m_datastore->getLibrarySize(libid);
 
       AMOS::Read_t red;
-      m_datastore->fetchRead(ti->source, red);
+      m_datastore->fetchReadIID(ti->source, red);
 
       double gccontent = red.getGCContent(red.getClearRange());
 
       char type = red.getType();
       if (type == 0) { type = '?'; }
 
-      DataStore::MateLookupMap::iterator mi = m_datastore->m_readmatelookup.find(ti->source);
+      DataStore::MateInfo_t mates = m_datastore->getMatePair(ti->source);
+
       char mateType = '?';
-
-      if (mi != m_datastore->m_readmatelookup.end())
+      if ((mates.first != 0) && (mates.second != 0))
       {
-        mateType = mi->second.second;
-        if (mateType == 0) { mateType = '?'; }
+        mateType = mates.second;
       }
-
 
       int len = ti->range.getLength() + ti->gaps.size();
       new ReadListItem(readList,
@@ -242,7 +240,7 @@ void LaunchPad::readGCHistogram()
        ti++)
   {
     AMOS::Read_t red;
-    m_datastore->fetchRead(ti->source, red);
+    m_datastore->fetchReadIID(ti->source, red);
 
     stats->addSize(red.getGCContent(red.getClearRange()));
   }

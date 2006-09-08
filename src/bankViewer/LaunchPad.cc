@@ -338,7 +338,7 @@ void LaunchPad::setScaffoldId(int scaffId)
       (m_datastore->scaffold_bank.isOpen()))
   {
     AMOS::Scaffold_t scaffold;
-    m_datastore->fetchScaffold(scaffId, scaffold);
+    m_datastore->fetchScaffoldBID(scaffId, scaffold);
 
     AMOS::ID_t contigiid = scaffold.getContigTiling().begin()->source;
     AMOS::ID_t bid = m_datastore->contig_bank.getIDMap().lookupBID(contigiid);

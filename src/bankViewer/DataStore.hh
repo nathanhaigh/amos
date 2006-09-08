@@ -27,6 +27,7 @@ namespace __gnu_cxx
 
 
 
+
 class DataStore
 {
 public:
@@ -37,15 +38,23 @@ public:
   int openBank(const string & bank_name);
   int setContigId(int id);
 
-  void fetchScaffold(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
-  void fetchContig(AMOS::ID_t contigid, AMOS::Contig_t & contig);
-  void fetchFrag(AMOS::ID_t fragid, AMOS::Fragment_t & frag);
-  void fetchRead(AMOS::ID_t readid, AMOS::Read_t & read);
+  void fetchScaffoldIID(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
+  void fetchScaffoldBID(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
+
+  void fetchContigIID(AMOS::ID_t contigid, AMOS::Contig_t & contig);
+  void fetchContigBID(AMOS::ID_t contigid, AMOS::Contig_t & contig);
+
+  void fetchFragIID(AMOS::ID_t fragid, AMOS::Fragment_t & frag);
+  void fetchReadIID(AMOS::ID_t readid, AMOS::Read_t & read);
 
   AMOS::Distribution_t getLibrarySize(AMOS::ID_t libid);
   AMOS::ID_t getLibrary(AMOS::ID_t readid);
   AMOS::ID_t lookupContigId(AMOS::ID_t readid);
   AMOS::ID_t lookupScaffoldId(AMOS::ID_t readid);
+
+  typedef pair<AMOS::ID_t, AMOS::FragmentType_t> MateInfo_t;
+
+  MateInfo_t getMatePair(AMOS::ID_t readid);
 
   AMOS::BankStream_t contig_bank;
   AMOS::BankStream_t read_bank;
@@ -65,7 +74,7 @@ public:
 
   AMOS::Contig_t m_contig;
 
-  typedef HASHMAP::hash_map<AMOS::ID_t, pair<AMOS::ID_t, AMOS::FragmentType_t> > MateLookupMap;
+  typedef HASHMAP::hash_map<AMOS::ID_t, MateInfo_t> MateLookupMap;
   MateLookupMap m_readmatelookup;
 
 

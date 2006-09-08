@@ -499,7 +499,7 @@ void InsertWidget::initializeTiling()
   if (m_paintScaffold && (m_currentScaffold != AMOS::NULL_ID))
   {
     Scaffold_t scaffold;
-    m_datastore->fetchScaffold(m_datastore->m_scaffoldId, scaffold);
+    m_datastore->fetchScaffoldBID(m_datastore->m_scaffoldId, scaffold);
 
     m_tilingwidth = scaffold.getSpan();
     
@@ -534,7 +534,7 @@ void InsertWidget::initializeTiling()
     for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
     {
       Contig_t contig;
-      m_datastore->fetchContig(ci->source, contig);
+      m_datastore->fetchContigIID(ci->source, contig);
 
       ci->offset += lendiff; // shift the start of the contig by the cummulative length difference
 

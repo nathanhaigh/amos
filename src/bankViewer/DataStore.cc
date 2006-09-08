@@ -183,14 +183,50 @@ void DataStore::indexFrags()
     m_fragliblookup.insert(make_pair(frg.getIID(), frg.getLibrary()));
 
     std::pair<ID_t, ID_t> mates = frg.getMatePair();
-    m_readmatelookup.insert(make_pair(mates.first,  pair<AMOS::ID_t, AMOS::FragmentType_t> (mates.second, frg.getType())));
-    m_readmatelookup.insert(make_pair(mates.second, pair<AMOS::ID_t, AMOS::FragmentType_t> (mates.first,  frg.getType())));
+    m_readmatelookup.insert(make_pair(mates.first,  make_pair(mates.second, frg.getType())));
+    m_readmatelookup.insert(make_pair(mates.second, make_pair(mates.first,  frg.getType())));
   }
 
   frag_bank.setFixedStoreOnly(false);
 
   cerr << " " << timer.str() << " "
        << m_readmatelookup.size() << " mated reads" << endl;
+}
+
+DataStore::MateInfo_t DataStore::getMatePair(ID_t readid)
+{
+  if (!m_readmatelookup.empty())
+  {
+    MateLookupMap::iterator mi;
+    mi = m_readmatelookup.find(readid);
+
+    if (mi != m_readmatelookup.end())
+    {
+      return mi->second;
+    }
+  }
+  else
+  {
+    Read_t read;
+    read_bank.fetchFix(readid, read);
+
+    if (read.getFragment() != 0);
+    {
+      Fragment_t frag;
+      frag_bank.fetchFix(read.getFragment(), frag);
+
+      if (frag.getMatePair().first == readid)
+      {
+        return make_pair(frag.getMatePair().second, frag.getType());
+      }
+      else if (frag.getMatePair().second == readid)
+      {
+        return make_pair(frag.getMatePair().first,  frag.getType());
+      }
+    }
+  }
+
+  return make_pair(0,0);
 }
 
 void DataStore::indexLibraries()
@@ -289,21 +325,20 @@ void DataStore::indexScaffolds()
        << visit << " scaffolds" << endl;
 }
 
-int DataStore::setContigId(int id)
+int DataStore::setContigId(int bid)
 {
   int retval = 0;
 
   try
   {
-    ID_t bankid = id;
-
-    if (bankid != 0)
+    if (bid != 0)
     {
       EventTime_t timer;
-      cerr << "Loading Contig " << bankid << "...";
-      fetchContig(bankid, m_contig);
-      m_scaffoldId = lookupScaffoldId(id);
-      m_contigId = id;
+      cerr << "Loading Contig " << bid << "...";
+
+      fetchContigBID(bid, m_contig);
+      m_scaffoldId = lookupScaffoldId(bid);
+      m_contigId = bid;
       m_loaded = true;
 
       cerr << " " << timer.str() << " "
@@ -319,7 +354,7 @@ int DataStore::setContigId(int id)
   return retval;
 }
 
-void DataStore::fetchRead(ID_t readid, Read_t & read)
+void DataStore::fetchReadIID(ID_t readid, Read_t & read)
 {
   try
   {
@@ -331,7 +366,7 @@ void DataStore::fetchRead(ID_t readid, Read_t & read)
   }
 }
 
-void DataStore::fetchContig(ID_t contigid, Contig_t & contig)
+void DataStore::fetchContigBID(ID_t contigid, Contig_t & contig)
 {
   try
   {
@@ -344,7 +379,19 @@ void DataStore::fetchContig(ID_t contigid, Contig_t & contig)
   }
 }
 
-void DataStore::fetchScaffold(ID_t scaffid, Scaffold_t & scaff)
+void DataStore::fetchContigIID(ID_t contigid, Contig_t & contig)
+{
+  try
+  {
+    contig_bank.fetch(contigid, contig);
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR in fetchContig()\n" << e;
+  }
+}
+
+void DataStore::fetchScaffoldBID(ID_t scaffid, Scaffold_t & scaff)
 {
   try
   {
@@ -357,7 +404,20 @@ void DataStore::fetchScaffold(ID_t scaffid, Scaffold_t & scaff)
   }
 }
 
-void DataStore::fetchFrag(ID_t fragid, Fragment_t & frag)
+
+void DataStore::fetchScaffoldIID(ID_t scaffid, Scaffold_t & scaff)
+{
+  try
+  {
+    scaffold_bank.fetch(scaffid, scaff);
+  }
+  catch (Exception_t & e)
+  {
+    cerr << "ERROR in fetchScaffold()\n" << e;
+  }
+}
+
+void DataStore::fetchFragIID(ID_t fragid, Fragment_t & frag)
 {
   try
   {
@@ -387,19 +447,22 @@ AMOS::ID_t DataStore::getLibrary(ID_t readid)
         read_bank.fetchFix(readid, read);
         fragid = read.getFragment();
       }
-
-      if (!m_fragliblookup.empty())
+      
+      if (fragid != AMOS::NULL_ID)
       {
-        libid = m_fragliblookup[fragid];
-      }
-      else
-      {
-        Fragment_t frag;
-        frag_bank.fetchFix(fragid, frag);
-        libid = frag.getLibrary();
-      }
+        if (!m_fragliblookup.empty())
+        {
+          libid = m_fragliblookup[fragid];
+        }
+        else
+        {
+          Fragment_t frag;
+          frag_bank.fetchFix(fragid, frag);
+          libid = frag.getLibrary();
+        }
 
-      return libid;
+        return libid;
+      }
     }
     catch (Exception_t & e)
     {
@@ -408,6 +471,7 @@ AMOS::ID_t DataStore::getLibrary(ID_t readid)
 
   return AMOS::NULL_ID;
 }
+
 
 Distribution_t DataStore::getLibrarySize(ID_t libid)
 {
@@ -477,7 +541,7 @@ void DataStore::mapReadsToScaffold(Scaffold_t & scaff,
 
   for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
   {
-    fetchContig(ci->source, contig);
+    contig_bank.fetch(ci->source, contig);
 
     int clen = contig.getLength();
 
@@ -535,7 +599,6 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
 
 
   Insert * insert;
-  MateLookupMap::iterator mi;
 
   ProgressDots_t dots(seqtileLookup.size(), 50);
   int count = 0;
@@ -562,10 +625,12 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
     AMOS::ID_t libid = getLibrary(aid);
     AMOS::Distribution_t dist = getLibrarySize(libid);
 
+    DataStore::MateInfo_t mates = getMatePair(aid);
+
     // Does it have a mate
-    mi = m_readmatelookup.find(aid);
-    if (mi == m_readmatelookup.end())
+    if (mates.first == 0)
     {
+      // no mate
       unmated++;
       insert = new Insert(aid, acontig, atile,
                           AMOS::NULL_ID, AMOS::NULL_ID, NULL,
@@ -576,7 +641,7 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
     {
       matelisted++;
 
-      ID_t bid = mi->second.first;
+      ID_t bid = mates.first;
       ID_t bcontig = AMOS::NULL_ID;
       Tile_t * btile = NULL;
       bcontig = lookupContigId(bid);
@@ -594,7 +659,7 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
       insert = new Insert(aid, acontig, atile, 
                           bid, bcontig, btile, 
                           libid, dist, 
-                          mi->second.second);
+                          mates.second);
 
       if (insert->m_state == 'H')
       {
@@ -619,7 +684,7 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
         Insert * j = new Insert(aid, acontig, atile,
                                 bid, bcontig, btile,
                                 libid, dist,
-                                mi->second.second);
+                                mates.second);
         j->setActive(1, insert, connectMates);
         inserts.push_back(j);
 
