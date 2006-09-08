@@ -1,6 +1,9 @@
 #ifndef __AMP_HH
 #define __AMP_HH
 
+#include <sys/time.h>
+#include <string>
+
 // Return a character string representing the current date
 const char * Date ( );
 
@@ -30,6 +33,23 @@ public:
   void update (long long progress);  // update job progress with respect to end
 
   void end ( );  // job complete, flush remaining dots and newline
+};
+
+
+
+// Record length of event in seconds
+class EventTime_t
+{
+public:
+  EventTime_t();
+  void   start();
+  void   end();
+  double length();
+  std::string str(bool format = true, int precision=2);
+
+private:
+  struct timeval m_start;
+  struct timeval m_end;
 };
 
 #endif // _AMP_HH
