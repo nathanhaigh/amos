@@ -10,12 +10,11 @@
 #include <string>
 #include <map>
 
-#include "DataStore.hh"
 
 class TilingFrame;
 class QLabel;
 class QVBox;
-
+class DataStore;
 
 class MainWindow: public QMainWindow
 {

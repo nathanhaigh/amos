@@ -90,12 +90,18 @@ int DataStore::openBank(const string & bankname)
       lib_bank.open(bankname,  B_SPY);
 
       indexLibraries();
-      indexFrags();
-      indexReads();
+
+      int BIGMEM = 1;
+
+      if (BIGMEM)
+      {
+        indexFrags();
+        indexReads();
+      }
     }
     catch (Exception_t & e)
     {
-      cerr << "Mates not available\n";
+      cerr << "Mates not available:" << e << endl;
     }
 
     if (0)
@@ -134,7 +140,7 @@ void DataStore::indexReads()
   EventTime_t timer;
 
   m_readfraglookup.clear();
-  m_readfraglookup.resize(read_bank.getSize());
+  m_readfraglookup.resize(read_bank.getIDMapSize());
 
   Read_t red;
 
@@ -146,7 +152,7 @@ void DataStore::indexReads()
     count++;
     dots.update(count);
 
-    m_readfraglookup.insert(make_pair(red.getIID(), red.getFragment()));
+    m_readfraglookup[read_bank.lookupBID(red.getIID())] = red.getFragment();
   }
 
   read_bank.setFixedStoreOnly(false);
@@ -163,47 +169,52 @@ void DataStore::indexFrags()
   EventTime_t timer;
 
   m_fragliblookup.clear();
-  m_fragliblookup.resize(frag_bank.getSize());
+  m_fragliblookup.resize(frag_bank.getIDMapSize());
 
   m_readmatelookup.clear();
-  m_readmatelookup.resize(frag_bank.getSize() * 2);
+  m_readmatelookup.resize(read_bank.getIDMapSize());
 
 
   Fragment_t frg;
   frag_bank.seekg(1);
-  int count = 0;
+  int fragments = 0;
+  int reads = 0;
 
   frag_bank.setFixedStoreOnly(true);
 
   while (frag_bank >> frg)
   {
-    count++;
-    dots.update(count);
+    fragments++;
+    dots.update(fragments);
 
-    m_fragliblookup.insert(make_pair(frg.getIID(), frg.getLibrary()));
+    m_fragliblookup[frag_bank.lookupBID(frg.getIID())] = frg.getLibrary();
 
     std::pair<ID_t, ID_t> mates = frg.getMatePair();
-    m_readmatelookup.insert(make_pair(mates.first,  make_pair(mates.second, frg.getType())));
-    m_readmatelookup.insert(make_pair(mates.second, make_pair(mates.first,  frg.getType())));
+    if (mates.first)
+    {
+      m_readmatelookup[read_bank.lookupBID(mates.first)]  = make_pair(mates.second, frg.getType());
+      reads++;
+    }
+
+    if (mates.second)
+    {
+      m_readmatelookup[read_bank.lookupBID(mates.second)] = make_pair(mates.first,  frg.getType());
+      reads++;
+    }
   }
 
   frag_bank.setFixedStoreOnly(false);
 
   cerr << " " << timer.str() << " "
-       << m_readmatelookup.size() << " mated reads" << endl;
+       << reads << " mated reads in "
+       << fragments << " fragments" << endl;
 }
 
 DataStore::MateInfo_t DataStore::getMatePair(ID_t readid)
 {
   if (!m_readmatelookup.empty())
   {
-    MateLookupMap::iterator mi;
-    mi = m_readmatelookup.find(readid);
-
-    if (mi != m_readmatelookup.end())
-    {
-      return mi->second;
-    }
+    return m_readmatelookup[read_bank.lookupBID(readid)];
   }
   else
   {
@@ -263,16 +274,17 @@ void DataStore::indexContigs()
   EventTime_t timer;
 
   m_readcontiglookup.clear();
-  m_readcontiglookup.resize(read_bank.getSize());
+  m_readcontiglookup.resize(read_bank.getIDMapSize(), 0);
 
-  int visit = 0;
+  int contigs = 0;
+  int reads = 0;
   contig_bank.seekg(1);
   Contig_t contig;
   while (contig_bank >> contig)
   {
     int contigid = contig_bank.tellg() - 1;
-    visit++;
-    dots.update(visit);
+    contigs++;
+    dots.update(contigs);
 
     vector<Tile_t> & tiling = contig.getReadTiling();
     vector<Tile_t>::const_iterator ti;
@@ -280,13 +292,14 @@ void DataStore::indexContigs()
          ti != tiling.end();
          ti++)
     {
-      m_readcontiglookup.insert(make_pair(ti->source, contigid));
+      m_readcontiglookup[read_bank.lookupBID(ti->source)] = contigid;
+      reads++;
     }
   }
 
-  cerr << " " << timer.str() << " "
-       << m_readcontiglookup.size() << " reads in " 
-       << visit << " contigs" << endl;
+  cerr << " " << timer.str() << " " 
+       << reads << " reads in " 
+       << contigs << " contigs" << endl;
 }
 
 void DataStore::indexScaffolds()
@@ -298,16 +311,18 @@ void DataStore::indexScaffolds()
   EventTime_t timer;
 
   m_contigscafflookup.clear();
-  m_contigscafflookup.resize(contig_bank.getSize());
+  m_contigscafflookup.resize(contig_bank.getIDMapSize());
 
-  int visit = 0;
+  int scaffolds = 0;
+  int contigs = 0;
+
   scaffold_bank.seekg(1);
   Scaffold_t scaffold;
   while (scaffold_bank >> scaffold)
   {
     int scaffid = scaffold_bank.tellg() - 1;
-    visit++;
-    dots.update(visit);
+    scaffolds++;
+    dots.update(scaffolds);
 
     vector<Tile_t> & tiling = scaffold.getContigTiling();
     vector<Tile_t>::const_iterator ti;
@@ -316,13 +331,14 @@ void DataStore::indexScaffolds()
          ti != tiling.end();
          ti++)
     {
-      m_contigscafflookup.insert(make_pair(ti->source, scaffid));
+      contigs++;
+      m_contigscafflookup[contig_bank.lookupBID(ti->source)] = scaffid;
     }
   }
 
   cerr << " " << timer.str() << " "
-       << m_contigscafflookup.size() << " contigs in " 
-       << visit << " scaffolds" << endl;
+       << contigs << " contigs in " 
+       << scaffolds << " scaffolds" << endl;
 }
 
 int DataStore::setContigId(int bid)
@@ -429,6 +445,20 @@ void DataStore::fetchFragIID(ID_t fragid, Fragment_t & frag)
   }
 }
 
+ID_t DataStore::lookupFragId(ID_t readid)
+{
+  if (!m_readfraglookup.empty())
+  {
+    return m_readfraglookup[read_bank.lookupBID(readid)];
+  }
+  else
+  {
+    Read_t read;
+    read_bank.fetchFix(readid, read);
+    return read.getFragment();
+  }
+}
+
 AMOS::ID_t DataStore::getLibrary(ID_t readid)
 {
   if (!m_libdistributionlookup.empty())
@@ -437,22 +467,12 @@ AMOS::ID_t DataStore::getLibrary(ID_t readid)
     {
       ID_t fragid, libid;
 
-      if (!m_readfraglookup.empty())
-      {
-        fragid = m_readfraglookup[readid];
-      }
-      else
-      {
-        Read_t read;
-        read_bank.fetchFix(readid, read);
-        fragid = read.getFragment();
-      }
-      
+      fragid = lookupFragId(readid);
       if (fragid != AMOS::NULL_ID)
       {
         if (!m_fragliblookup.empty())
         {
-          libid = m_fragliblookup[fragid];
+          libid = m_fragliblookup[frag_bank.lookupBID(fragid)];
         }
         else
         {
@@ -485,30 +505,12 @@ Distribution_t DataStore::getLibrarySize(ID_t libid)
 
 ID_t DataStore::lookupContigId(ID_t readid)
 {
-  IdLookup_t::iterator i = m_readcontiglookup.find(readid);
-
-  if (i == m_readcontiglookup.end())
-  {
-    return AMOS::NULL_ID;
-  }
-  else
-  {
-    return i->second;
-  }
+  return m_readcontiglookup[read_bank.lookupBID(readid)];
 }
 
 ID_t DataStore::lookupScaffoldId(ID_t contigid)
 {
-  IdLookup_t::iterator i = m_contigscafflookup.find(contigid);
-
-  if (i == m_contigscafflookup.end())
-  {
-    return AMOS::NULL_ID;
-  }
-  else
-  {
-    return i->second;
-  }
+  return m_contigscafflookup[contig_bank.lookupBID(contigid)];
 }
 
 

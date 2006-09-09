@@ -107,12 +107,9 @@ void LaunchPad::loadLibraries()
         ID_t libid = lib.getIID();
         int frag = 0;
 
-        DataStore::IdLookup_t::iterator li;
-        for (li = m_datastore->m_fragliblookup.begin();
-             li != m_datastore->m_fragliblookup.end();
-             li++)
+        for (int i = 0; i < m_datastore->m_fragliblookup.size(); i++)
         {
-          if (li->second == libid)
+          if (m_datastore->m_fragliblookup[i] == libid)
           {
             frag++;
           }

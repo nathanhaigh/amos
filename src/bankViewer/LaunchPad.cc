@@ -405,10 +405,11 @@ void LaunchPad::loadKmers(std::string file)
 
 void LaunchPad::jumpToRead(int iid)
 {
-  DataStore::IdLookup_t::iterator rcl = m_datastore->m_readcontiglookup.find(iid);
-  if (rcl != m_datastore->m_readcontiglookup.end())
+  ID_t contigid = m_datastore->lookupContigId(iid);
+
+  if (contigid != 0)
   {
-    setContigId(rcl->second);
+    setContigId(contigid);
     vector<AMOS::Tile_t>::iterator ti;
     for (ti = m_datastore->m_contig.getReadTiling().begin();
          ti != m_datastore->m_contig.getReadTiling().end();

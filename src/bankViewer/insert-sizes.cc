@@ -79,7 +79,7 @@ void processInserts()
       if (m_verbose)
       {
 
-        ID_t fragid = m_datastore->m_readfraglookup.find((*i)->m_aid)->second;
+        ID_t fragid = m_datastore->lookupFragId((*i)->m_aid);
 
         cout << (*i)->m_libid << "\t"
              << fragid << "\t"

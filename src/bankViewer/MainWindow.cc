@@ -10,6 +10,7 @@
 #include <qvbox.h>
 #include <qsplitter.h>
 #include <qapplication.h>
+#include "DataStore.hh"
 
 
 #include "TilingFrame.hh"

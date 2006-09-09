@@ -51,6 +51,7 @@ public:
   AMOS::ID_t getLibrary(AMOS::ID_t readid);
   AMOS::ID_t lookupContigId(AMOS::ID_t readid);
   AMOS::ID_t lookupScaffoldId(AMOS::ID_t readid);
+  AMOS::ID_t lookupFragId(AMOS::ID_t readid);
 
   typedef pair<AMOS::ID_t, AMOS::FragmentType_t> MateInfo_t;
 
@@ -74,15 +75,15 @@ public:
 
   AMOS::Contig_t m_contig;
 
-  typedef HASHMAP::hash_map<AMOS::ID_t, MateInfo_t> MateLookupMap;
+  typedef vector<MateInfo_t> MateLookupMap;
   MateLookupMap m_readmatelookup;
 
 
-  typedef HASHMAP::hash_map<AMOS::ID_t, AMOS::ID_t> IdLookup_t;
-  IdLookup_t m_readcontiglookup;
+  typedef vector<AMOS::ID_t> IdLookup_t;
   IdLookup_t m_fragliblookup;
-  IdLookup_t m_readfraglookup;      
   IdLookup_t m_contigscafflookup;
+  IdLookup_t m_readcontiglookup;
+  IdLookup_t m_readfraglookup;      
 
   typedef HASHMAP::hash_map<AMOS::ID_t, AMOS::Distribution_t> LibLookup_t;
   LibLookup_t m_libdistributionlookup;
