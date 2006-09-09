@@ -495,7 +495,6 @@ void IDMap_t::read(const std::string & path)
 {
   Size_t size;
   string ncode;
-  string eid;
   ID_t bid, iid;
 
   clear( );
@@ -515,8 +514,7 @@ void IDMap_t::read(const std::string & path)
 
   while (fscanf(fp, "%d\t%d\t%s\n", &bid, &iid, buffer) != EOF)
   {
-    eid = buffer;
-    insert (iid, eid, bid);
+    insert (iid, buffer, bid);
   }
 
   if (size_m != size)
