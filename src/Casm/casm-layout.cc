@@ -1239,7 +1239,7 @@ void OutputLayouts (const Assembly_t & assembly)
         cid = (*cpi)->tiles.front( )->read->place->head->ref->id;
 
         ostringstream ss;
-        ss << ctgs << ' '
+        ss << ctgs << '_'
            << *((*cpi)->tiles.front( )->read->place->head->ref->id);
         lay . setEID (ss . str( ));
 
