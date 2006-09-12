@@ -28,6 +28,7 @@ int SR_PRINTBASE = 1;
 int SR_PRINTREAD = 0;
 int SR_PRINTLIBS = 0;
 int SR_PRINTQUAL = 0;
+int SR_SKIPMAJOR = 0;
 
 int SR_MINAGREEINGCONFLICTS = 0;
 int SR_MINAGREEINGQV = 0;
@@ -64,13 +65,14 @@ void printHelpText()
     "-r            Print readnames\n"
     "-l            Print libid\n"
     "-q            Print qvs\n"
+    "-K            Don't print reads in majority\n"
     "-M, -minsnps  <val> Set Minimum number of consistent disagreeing reads to report\n"
     "-C, -cumqv    <val> Set Minimum conflicting cummulative qv to report\n"
     "-Q, -minqv    <val> Set Minimum conflicting qv to report\n\n"
 
     "General Options\n"
-    "-E, -eid      Display eids\n"
-    "-I, -iid      Display iids\n"
+    "-e, -eid      Display eids\n"
+    "-i, -iid      Display iids\n"
     "-1            Display 1-based gapped coordinates\n\n"
     "\n.DESCRIPTION.\n"
     "\n.KEYWORDS.\n"
@@ -98,6 +100,7 @@ bool GetOptions(int argc, char ** argv)
     {"r",         0, 0, 'r'},
     {"l",         0, 0, 'l'},
     {"q",         0, 0, 'q'},
+    {"K",         0, 0, 'K'},
     {"minsnps",   1, 0, 'M'},
     {"cumqv",     1, 0, 'C'},
     {"minqv",     1, 0, 'Q'},
@@ -127,6 +130,7 @@ bool GetOptions(int argc, char ** argv)
       case 'r': SR_PRINTREAD = 1;    break;
       case 'l': SR_PRINTLIBS = 1;    break;
       case 'q': SR_PRINTQUAL = 1;    break;
+      case 'K': SR_SKIPMAJOR = 1;    break;
 
       case 'M': SR_MINAGREEINGCONFLICTS = atoi(optarg); break;
       case 'C': SR_MINAGREEINGQV        = atoi(optarg); break;
@@ -265,7 +269,10 @@ int printSNPReport(ContigIterator_t ci)
          << dcov                    << "\t"
          << dcov - freq[0]->m_reads.size();
 
-    for (int i = 0; i < freq.size(); i++)
+    int i = 0;
+    if (SR_SKIPMAJOR) { i = 1; }
+
+    for (; i < freq.size(); i++)
     {
       char base = toupper(freq[i]->m_base);
 
