@@ -14,6 +14,7 @@
 #include "foundation_AMOS.hh"
 #include "Insert.hh"
 #include "RangeScrollBar.hh"
+#include "CoverageStats.hh"
 
 #include <map>
 
@@ -139,7 +140,7 @@ private:
   void clearCanvas();
   void setInsertCanvasSize(int left, int right);
   void initializeVisibleRectangle();
-  void paintCoverage(const QPointArray & arr, 
+  void paintCoverage(const PointArray_t & arr, 
                      const std::vector<double> & rawvalues,
                      bool copyraw,
                      int arrLen, 

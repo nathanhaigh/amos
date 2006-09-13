@@ -6,6 +6,23 @@
 #include <map>
 #include <vector>
 
+struct Point_t
+{
+  Point_t() : m_x(0.0), m_y(0.0) {}
+  Point_t(double x, double y) : m_x(x), m_y(y) {}
+
+  double m_x;
+  double m_y;
+
+  double x() const { return m_x; }
+  double y() const { return m_y; }
+
+  void setX(double x) { m_x = x; }
+  void setY(double y) { m_y = y; }
+};
+
+typedef std::vector<Point_t> PointArray_t;
+
 class CoverageStats
 {
 public:
@@ -16,7 +33,7 @@ public:
 
   typedef std::multimap<int, int> EndPoints;
 
-  QPointArray  m_coverage;
+  PointArray_t  m_coverage;
   std::vector<double> m_cestat;
 
   AMOS::ID_t m_libid;

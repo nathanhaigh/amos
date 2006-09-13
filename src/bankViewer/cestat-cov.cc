@@ -12,6 +12,7 @@
 #include <cassert>
 #include <unistd.h>
 #include <map>
+#include <iomanip>
 
 #include "DataStore.hh"
 #include "Insert.hh"
@@ -32,68 +33,25 @@ InsertList_t m_inserts;
 int m_coveragePlot = 0;
 int m_cestats = 1;
 
-void computeCEStats(Scaffold_t & scaff)
+void printCEStats(Scaffold_t & scaff)
 {
-  vector<Insert *>::iterator ii;
-  vector<Tile_t>::const_iterator ci;
-  int m_hoffset = 0;
-  int m_hscale = 1;
+  typedef map<ID_t, CoverageStats> LibStats;
+  LibStats::iterator li;
 
-  if (m_coveragePlot || m_cestats)
+  LibStats libStats = m_datastore->computeCEStats(m_inserts);
+
+
+  for (li = libStats.begin(); li != libStats.end(); li++)
   {
-    // coverage will change at each endpoint of each insert
-    CoverageStats insertCL(m_inserts.size()*4, 0, Distribution_t());
-
-    typedef map<ID_t, CoverageStats> LibStats;
-    LibStats libStats;
-    LibStats::iterator li;
-
-    int curloffset = 0, curroffset = 0;
-    int totalinsertlen = 0;
-
-    for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
+    cout << ">" << scaff.getEID() << " lib:" << li->first << endl;
+    // This are stored as oldvalue newvalue so skip every other one
+    for (int i = 1; i < li->second.m_curpos; i+=2)
     {
-      curloffset = (*ii)->m_loffset;
-      curroffset = (*ii)->m_roffset;
-
-      totalinsertlen += (curroffset - curloffset + 1);
-
-      insertCL.addEndpoints(curloffset, curroffset);
-
-      if (m_cestats && (*ii)->ceConnected())
-      {
-        li = libStats.find((*ii)->m_libid);
-
-        if (li == libStats.end())
-        {
-          li = libStats.insert(make_pair((*ii)->m_libid, CoverageStats(m_inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
-        }
-
-        li->second.addEndpoints(curloffset, curroffset);
-      }
-    }
-
-    insertCL.finalize();
-
-    int cestatsheight = 100;
-
-
-    for (li = libStats.begin(); li != libStats.end(); li++)
-    {
-      cout << ">" << scaff.getEID() << " lib:" << li->first << endl;
-      li->second.finalize();
-      li->second.finalizeCE(cestatsheight);
-
-      // This are stored as oldvalue newvalue so skip every other one
-      for (int i = 1; i < li->second.m_curpos; i+=2)
-      {
-        cout << li->second.m_coverage[i].x() << " " << li->second.m_cestat[i] << endl;
-      }
+      cout << setprecision(10) << li->second.m_coverage[i].x() << " "
+           << setprecision(6)  << li->second.m_cestat[i] << endl;
     }
   }
 }
-
-
 
 
 //=============================================================== Globals ====//
@@ -161,7 +119,7 @@ int main (int argc, char ** argv)
       m_datastore->mapReadsToScaffold(scaff, rtiling, 1);
       m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
 
-      computeCEStats(scaff);
+      printCEStats(scaff);
 
       vector<Insert *>::iterator i;
       

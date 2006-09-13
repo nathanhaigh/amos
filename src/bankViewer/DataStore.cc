@@ -721,6 +721,48 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
 }
 
 
+map<ID_t, CoverageStats> DataStore::computeCEStats(vector<Insert *> & inserts)
+{
+  typedef map<ID_t, CoverageStats> LibStats;
+  LibStats libStats;
+  LibStats::iterator li;
+
+  int curloffset = 0, curroffset = 0;
+  int totalinsertlen = 0;
+
+  vector<Insert *>::iterator ii;
+  for (ii = inserts.begin(); ii != inserts.end(); ii++)
+  {
+    curloffset = (*ii)->m_loffset;
+    curroffset = (*ii)->m_roffset;
+
+    totalinsertlen += (curroffset - curloffset + 1);
+
+    if ((*ii)->ceConnected())
+    {
+      li = libStats.find((*ii)->m_libid);
+
+      if (li == libStats.end())
+      {
+        li = libStats.insert(make_pair((*ii)->m_libid, CoverageStats(inserts.size()*4, (*ii)->m_libid, (*ii)->m_dist))).first;
+      }
+
+      li->second.addEndpoints(curloffset, curroffset);
+    }
+  }
+
+  int cestatsheight = 100;
+
+  for (li = libStats.begin(); li != libStats.end(); li++)
+  {
+    li->second.finalize();
+    li->second.finalizeCE(cestatsheight);
+  }
+
+  return libStats;
+}  
+
+
 static unsigned  Char_To_Binary (char ch)
 //  Return the binary equivalent of  ch .
   {

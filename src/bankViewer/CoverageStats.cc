@@ -33,7 +33,7 @@ CoverageStats & CoverageStats::operator=(const CoverageStats & other)
 {
   if ( this != &other )
     {
-      m_coverage = other.m_coverage.copy();
+      m_coverage = other.m_coverage;
       m_cestat = other.m_cestat;
       m_libid = other.m_libid;
       m_dist = other.m_dist;
@@ -158,7 +158,7 @@ int CoverageStats::handlePoint(int pos, int eps, int sumdelta)
     m_cestat.resize(m_cestat.size()*2+2);
   }
 
-  m_coverage[m_curpos] = QPoint(pos, eps); 
+  m_coverage[m_curpos] = Point_t(pos, eps); 
   m_cestat[m_curpos]   = eps ? m_sum/eps : 0; 
   m_curpos++; 
 
@@ -167,7 +167,7 @@ int CoverageStats::handlePoint(int pos, int eps, int sumdelta)
 
   m_sum += sumdelta;
 
-  m_coverage[m_curpos] = QPoint(pos, eps); 
+  m_coverage[m_curpos] = Point_t(pos, eps); 
   m_cestat[m_curpos]   = eps ? m_sum/eps : 0; 
   m_curpos++; 
 
@@ -177,7 +177,7 @@ int CoverageStats::handlePoint(int pos, int eps, int sumdelta)
 
 void CoverageStats::addPoint(int x, int y)
 {
-  m_coverage[m_curpos] = QPoint(x,y);
+  m_coverage[m_curpos] = Point_t(x,y);
   m_curpos++;
 
   if (y > m_maxdepth) { m_maxdepth = y; }

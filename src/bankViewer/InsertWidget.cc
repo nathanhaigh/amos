@@ -827,7 +827,7 @@ void InsertWidget::computeCoverage()
 
   m_readCL->finalize();
 
-  int insertspan = m_insertCL->m_coverage[m_insertCL->m_curpos-1].x() - m_insertCL->m_coverage[0].x();
+  int insertspan = (int)(m_insertCL->m_coverage[m_insertCL->m_curpos-1].x() - m_insertCL->m_coverage[0].x());
   m_meaninsertcoverage = (insertspan) ? ((double)totalinsertlen)/insertspan : 0;
   m_meanreadcoverage = ((double)totalbases) / readspan;
 }
@@ -867,7 +867,7 @@ void InsertWidget::disconnectMates()
 // of the silly 16 bit limitation in qpainter/x11, so break the coverage
 // into small pieces, and draw each separately.
     
-void InsertWidget::paintCoverage(const QPointArray & arr, 
+void InsertWidget::paintCoverage(const PointArray_t & arr, 
                                  const vector<double> & rawvalues,
                                  bool copyRaw,
                                  int arrLen, 
@@ -877,7 +877,7 @@ void InsertWidget::paintCoverage(const QPointArray & arr,
                                  QColor color,
                                  bool compressed)
 {
-  if (arr.isEmpty()) { return; }
+  if (arr.empty()) { return; }
 
   int i = 0;
   while (1)

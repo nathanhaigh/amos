@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "CoverageStats.hh"
 
 using std::string;
 using std::map;
@@ -98,6 +99,9 @@ public:
   void mapReadsToScaffold(AMOS::Scaffold_t & scaff,
                           vector<AMOS::Tile_t> & tiling,
                           int verbose);
+
+  std::map<AMOS::ID_t, CoverageStats> computeCEStats(std::vector<Insert *> & inserts);
+
 
 
 

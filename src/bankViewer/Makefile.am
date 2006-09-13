@@ -7,6 +7,7 @@ amosinclude_HEADERS = \
 
 libDataStore_a_SOURCES = \
      DataStore.cc \
+     CoverageStats.cc \
      Insert.cc
 
 bin_PROGRAMS = hawkeye \
@@ -33,7 +34,6 @@ hawkeye_MOCSOURCES = \
         ContigPicker.cc        \
         CoverageCanvasItem.cc  \
         CoverageRectCanvasItem.cc \
-        CoverageStats.cc       \
         DetailWidget.cc        \
         FeatureBrowser.cc      \
         FeatureCanvasItem.cc   \
@@ -134,8 +134,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Staden/read
 
 cestat_cov_SOURCES = \
-  cestat-cov.cc \
-  CoverageStats.cc
+  cestat-cov.cc
 
 cestat_cov_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
                    $(top_builddir)/src/bankViewer/libDataStore.a \
