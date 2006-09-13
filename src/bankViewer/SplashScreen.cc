@@ -4,7 +4,7 @@
 #include "SplashScreen.hh"
 
 SplashScreen::SplashScreen( const QPixmap &pixmap )
-    : QWidget( 0, 0, WStyle_Customize | WStyle_Splash ),
+    : QWidget( 0, 0, WStyle_Customize | WStyle_NoBorder | WStyle_Tool | WWinOwnDC  ),
       pix( pixmap )
 {
   setErasePixmap( pix );

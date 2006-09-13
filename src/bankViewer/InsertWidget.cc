@@ -503,21 +503,6 @@ void InsertWidget::initializeTiling()
 
     m_tilingwidth = scaffold.getSpan();
     
-    if (m_datastore->feat_bank.isOpen())
-    {
-      Feature_t feat;
-      m_datastore->feat_bank.seekg(1);
-
-      while (m_datastore->feat_bank >> feat)
-      {
-        if (feat.getSource().second == Scaffold_t::NCODE &&
-            feat.getSource().first == scaffold.getIID())
-        {
-          m_features.push_back(feat);
-        }
-      }
-    }
-
     m_ctiling = scaffold.getContigTiling();
     sort(m_ctiling.begin(), m_ctiling.end(), TileOrderCmp());
 
@@ -526,15 +511,21 @@ void InsertWidget::initializeTiling()
       m_kmerstats = new CoverageStats(scaffold.getSpan(), 0, Distribution_t());
     }
 
+    EventTime_t ctime;
     cerr << "Mapping read tiling for " << m_ctiling.size() << " contigs... ";
 
     int lendiff = 0;
+
+    typedef map<ID_t, vector<Tile_t>::iterator > ContigTileMap;
+    ContigTileMap contigTiles;
 
     vector<Tile_t>::iterator ci;
     for (ci = m_ctiling.begin(); ci != m_ctiling.end(); ci++)
     {
       Contig_t contig;
       m_datastore->fetchContigIID(ci->source, contig);
+
+      contigTiles.insert(make_pair(contig.getIID(), ci));
 
       ci->offset += lendiff; // shift the start of the contig by the cummulative length difference
 
@@ -608,37 +599,51 @@ void InsertWidget::initializeTiling()
 
         m_tiling.push_back(mappedTile);
       }
+    }
 
-      if (m_datastore->feat_bank.isOpen()) 
+    cerr << "done. " << ctime.str() << endl;
+
+    if (m_datastore->feat_bank.isOpen()) 
+    {
+      EventTime_t timer;
+      cerr << "Loading Features... ";
+
+      Feature_t feat;
+      m_datastore->feat_bank.seekg(1);
+
+      while (m_datastore->feat_bank >> feat)
       {
-        Feature_t feat;
-        m_datastore->feat_bank.seekg(1);
-
-        while (m_datastore->feat_bank >> feat)
+        if (feat.getSource().second == Scaffold_t::NCODE &&
+            feat.getSource().first == scaffold.getIID())
         {
-          if (feat.getSource().second == Contig_t::NCODE &&
-              feat.getSource().first == contig.getIID())
+          m_features.push_back(feat);
+        }
+        else if (feat.getSource().second == Contig_t::NCODE)
+        {
+          ContigTileMap::iterator ctm = contigTiles.find(feat.getSource().first);
+          
+          if (ctm != contigTiles.end())
           {
             Range_t rng = feat.getRange( );
 
-            if (ci->range.isReverse())
+            if (ctm->second->range.isReverse())
             {
               rng.swap();
-              rng.begin = (ci->range.getLength() - feat.getRange().begin);
-              rng.end = (ci->range.getLength() - feat.getRange().end);
+              rng.begin = (ctm->second->range.getLength() - feat.getRange().begin);
+              rng.end = (ctm->second->range.getLength() - feat.getRange().end);
             }
 
-            rng.begin += ci->offset;
-            rng.end   += ci->offset;
+            rng.begin += ctm->second->offset;
+            rng.end   += ctm->second->offset;
 
             feat.setRange(rng);
             m_features.push_back(feat);
           }
         }
       }
-    }
 
-    cerr << "done." << endl;
+      cerr << timer.str() << " " << m_features.size() << " features" << endl;
+    }
   }
   else
   {

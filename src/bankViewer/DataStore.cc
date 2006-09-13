@@ -578,7 +578,7 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
                                  bool connectMates,
                                  int verbose)
 {
-  if (verbose) { cerr << "Loading mates" << endl; }
+  if (verbose) { cerr << "Loading mates "; }
 
   SeqTileMap_t seqtileLookup;
 
