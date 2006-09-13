@@ -2,7 +2,6 @@
 #define COVERAGE_STATS_HH_ 1
 
 #include <foundation_AMOS.hh>
-#include <qpointarray.h>
 #include <map>
 #include <vector>
 
