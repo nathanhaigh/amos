@@ -5,6 +5,7 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
     barcode-graph \
     build-persistent-bank \
+    auto-fix-contigs \
     persistent-read-dist \
     persistent-fix-contigs \
     read-evolution \
@@ -43,6 +44,19 @@ build_persistent_bank_LDADD = \
 
 build_persistent_bank_SOURCES = \
 	build-persistent-bank.cc
+
+##-- auto-fix-contigs
+auto_fix_contigs_LDADD = \
+    $(top_builddir)/src/Contig/libContigUtils.a \
+    $(top_builddir)/src/bankViewer/libDataStore.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+
+auto_fix_contigs_SOURCES = \
+	auto-fix-contigs.cc \
+    PersistentUtils.hh
 
 ##-- persistent-fix-contigs
 persistent_fix_contigs_LDADD = \
