@@ -407,6 +407,11 @@ void DataStore::fetchContigIID(ID_t contigid, Contig_t & contig)
   }
 }
 
+void DataStore::fetchContigEID(const string & eid, Contig_t & contig)
+{
+  contig_bank.fetch(eid, contig);
+}
+
 void DataStore::fetchScaffoldBID(ID_t scaffid, Scaffold_t & scaff)
 {
   try

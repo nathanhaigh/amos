@@ -42,8 +42,9 @@ public:
   void fetchScaffoldIID(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
   void fetchScaffoldBID(AMOS::ID_t scaffid, AMOS::Scaffold_t & scaff);
 
-  void fetchContigIID(AMOS::ID_t contigid, AMOS::Contig_t & contig);
-  void fetchContigBID(AMOS::ID_t contigid, AMOS::Contig_t & contig);
+  void fetchContigIID(AMOS::ID_t contigid,     AMOS::Contig_t & contig);
+  void fetchContigEID(const std::string & eid, AMOS::Contig_t & contig);
+  void fetchContigBID(AMOS::ID_t contigid,     AMOS::Contig_t & contig);
 
   void fetchFragIID(AMOS::ID_t fragid, AMOS::Fragment_t & frag);
   void fetchReadIID(AMOS::ID_t readid, AMOS::Read_t & read);
