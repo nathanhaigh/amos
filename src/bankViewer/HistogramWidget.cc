@@ -6,6 +6,7 @@
 #include <qpainter.h>
 
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
@@ -22,6 +23,36 @@ HistogramWidget::~HistogramWidget()
 {
   delete m_stats;
   m_stats = NULL;
+}
+
+static void drawNormal(QPainter & p, 
+                int histleft, int histbottom,
+                int histwidth, int histheight,
+                double xvalscale,
+                double mean, double sd,
+                double low, double high)
+{
+  double cnst = 1/(sqrt(2*3.14159*sd*sd));
+  double expval = -(mean-mean)*(mean-mean)/(2*sd*sd);
+  double maxval = cnst * exp(expval);
+  int lastx = histleft;
+  int lasty = histbottom;
+
+  double yvalscale = (histheight) / maxval;
+
+  for (int i = low; i < high; i+=10)
+  {
+    expval = -(i-mean)*(i-mean)/(2*sd*sd);
+    double val = cnst * exp(expval);
+
+    int xval = histleft + i * xvalscale;
+    int yval = histbottom - val * yvalscale;
+
+    p.drawLine(lastx, lasty, xval, yval);
+
+    lastx = xval;
+    lasty = yval;
+  }
 }
 
 void HistogramWidget::paintEvent(QPaintEvent * event)
@@ -161,6 +192,28 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
                  (int)(histleft + mean*xscale), histbottom);
     }
 
+    int doDrawNormal = 1;
+    if (doDrawNormal)
+    {
+      double sd = m_stats->stdev();
+      double mean = m_stats->mean();
+
+      p.setPen(Qt::red);
+
+      drawNormal(p, histleft, histbottom, histwidth, histheight-gutter, 
+                 xscale/m_stats->m_bucketsize, mean, sd, 
+                 m_stats->m_low, m_stats->m_high);
+
+      p.setPen(Qt::green);
+
+      drawNormal(p, histleft, histbottom, histwidth, histheight-gutter, 
+                 xscale/m_stats->m_bucketsize, mean, sd/m_shadesd, 
+                 m_stats->m_low, m_stats->m_high);
+
+      drawNormal(p, histleft, histbottom, histwidth, histheight-gutter, 
+                 xscale/m_stats->m_bucketsize, mean, sd*m_shadesd, 
+                 m_stats->m_low, m_stats->m_high);
+    }
 
     // text
     int textline1 = histbottom + 30;
