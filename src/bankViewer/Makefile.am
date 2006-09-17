@@ -13,6 +13,7 @@ libDataStore_a_SOURCES = \
 bin_PROGRAMS = hawkeye \
                cestat-cov \
                insert-sizes \
+               listSingletonMates \
                library-histogram \
                list-linked-contigs
 
@@ -146,6 +147,15 @@ insert_sizes_SOURCES = \
   InsertStats.cc 
 
 insert_sizes_LDADD = \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a 
+
+listSingletonMates_SOURCES = \
+  listSingletonMates.cc \
+  InsertStats.cc 
+
+listSingletonMates_LDADD = \
                      $(top_builddir)/src/bankViewer/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a 
