@@ -47,24 +47,30 @@ int main(int argc, char ** argv)
 
     while(fscanf(fclr, "%s %d %d", seqname, &a, &b) > 0)
     {
-      cerr << "Updating " << seqname << ": " << a << " " << b << endl;
+    //  cerr << "Updating " << seqname << ": " << a << " " << b << endl;
+
+      bool skip = false;
 
       if (useIIDs)
       {
         int iid = atoi(seqname);
         read_bank.fetch(iid, read);
-
-        Range_t range(a,b);
-        if (range.isReverse()) { range.swap(); }
-
-        read.setClearRange(range);
-        read_bank.replace(read.getIID(), read);
-        count++;
       }
-      else if (read_bank.existsEID(seqname))
+      else
       {
-        read_bank.fetch(seqname, read);
+        if (read_bank.existsEID(seqname))
+        {
+          read_bank.fetch(seqname, read);
+        }
+        else
+        {
+          cerr << "Warning: " << seqname << " not found, skipping" << endl;
+          skip = true;
+        }
+      }
 
+      if (!skip)
+      {
         Range_t range(a,b);
         if (range.isReverse()) { range.swap(); }
 
