@@ -208,6 +208,7 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
     }
 
     char status = contig.getStatus();
+    if (status == 0) { status = '?'; }
 
     vector<Tile_t>::const_iterator ti;
     for (ti = tiling.begin(); ti != tiling.end(); ti++)
