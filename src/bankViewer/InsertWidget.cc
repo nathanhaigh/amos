@@ -1295,18 +1295,20 @@ void InsertWidget::paintCanvas()
       // For all inserts of this type (or if type enabled)
       for (ii = m_inserts.begin(); ii != m_inserts.end(); ii++)
       {
+        Insert::MateState istate = (*ii)->m_state;
+
         if (m_partitionTypes)
         {
-          char istate = (char)(*ii)->m_state;
-
           if (m_colorByStretchiness)
           {
-            if (types[type] == 'H')
+            if (types[type] == Insert::Happy)
             {
-              if (istate == 'H' || istate == 'C' || istate == 'S') { }
+              if ((istate == Insert::Happy) || 
+                  (istate == Insert::CompressedMate) || 
+                  (istate == Insert::ExpandedMate)) { }
               else { continue; }
             }
-            else if (istate == 'C' || istate == 'S') { continue; }
+            else if (istate == Insert::CompressedMate || istate == Insert::ExpandedMate) { continue; }
             else if (istate != types[type]) { continue; }
           }
           else
@@ -1316,7 +1318,7 @@ void InsertWidget::paintCanvas()
         }
         else
         {
-          if (!drawType[(*ii)->m_state]) { continue; }
+          if (!drawType[istate]) { continue; }
         }
 
         int offset = (*ii)->m_loffset;
@@ -1378,14 +1380,14 @@ void InsertWidget::paintCanvas()
             insertcolor = lci->second;
           }
         }
-        else if (m_colorByMate && ((*ii)->m_state == Insert::MissingMate))
+        else if (m_colorByMate && ((*ii)->m_state == Insert::LinkingMate))
         {
           insertcolor = getContigColor(contigColorMap, (*ii)->m_bcontig);
         }
         else if (m_colorByStretchiness && 
                   (((*ii)->m_state == Insert::Happy) ||
                    ((*ii)->m_state == Insert::CompressedMate) ||
-                   ((*ii)->m_state == Insert::StretchedMate)))
+                   ((*ii)->m_state == Insert::ExpandedMate)))
         {
           double disttomean = (*ii)->m_actual - (*ii)->m_dist.mean;
 
@@ -1396,7 +1398,7 @@ void InsertWidget::paintCanvas()
           }
           else
           {
-            insertcolor = UIElements::color_StretchedMate;
+            insertcolor = UIElements::color_ExpandedMate;
           }
 
           disttomean /= (*ii)->m_dist.sd;

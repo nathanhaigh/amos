@@ -62,11 +62,12 @@ void processInserts()
        i != m_inserts.end();
        i++)
   {
-    if ((*i)->m_state == Insert::SingletonMate)
+    if ((*i)->m_state == Insert::SingletonMate || (*i)->m_state == Insert::LinkingMate)
     {
       cout << (*i)->m_acontig << " "
            << m_datastore->read_bank.lookupEID((*i)->m_aid) << " "
-           << m_datastore->read_bank.lookupEID((*i)->m_bid) << endl;
+           << m_datastore->read_bank.lookupEID((*i)->m_bid) << " "
+           << (char)(*i)->m_state << endl;
     }
 
     delete (*i);
@@ -181,7 +182,7 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "Output:\n"
-    << "contigiid placedread missingmate\n"
+    << "contigiid placedread missingmate type\n"
     << "\n"
     << "Options:\n"
     << "-h            Display help information\n"

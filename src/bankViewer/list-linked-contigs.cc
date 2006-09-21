@@ -109,7 +109,7 @@ int main (int argc, char ** argv)
 
         for (vi = inserts.begin(); vi != inserts.end(); vi++)
         {
-          if ((*vi)->m_state == Insert::MissingMate)
+          if ((*vi)->m_state == Insert::LinkingMate)
           {
             li = linkedcontigs.find((*vi)->m_bcontig);
 

@@ -141,47 +141,33 @@ InsertWindow::InsertWindow(DataStore * datastore,
   iw->setOtherFeatures (m_query->otherCheck->isChecked());
 
   // Mate types
-  m_query->happyLabel->setPixmap
-    (mateIcon(UIElements::color_Happy, 0));
+  m_query->happyLabel->setPixmap (mateIcon(UIElements::color_Happy, 0));
   m_types[Insert::Happy].first = 7;
-  m_types[Insert::Happy].second =
-    m_query->happyCheck->isChecked();
+  m_types[Insert::Happy].second = m_query->happyCheck->isChecked();
 
-  m_query->stretchedLabel->setPixmap
-    (mateIcon(UIElements::color_StretchedMate,0));
-  m_types[Insert::StretchedMate].first = 6;
-  m_types[Insert::StretchedMate].second =
-    m_query->stretchedCheck->isChecked();
+  m_query->stretchedLabel->setPixmap (mateIcon(UIElements::color_ExpandedMate,0));
+  m_types[Insert::ExpandedMate].first = 6;
+  m_types[Insert::ExpandedMate].second = m_query->stretchedCheck->isChecked();
 
-  m_query->compressedLabel->setPixmap
-    (mateIcon(UIElements::color_CompressedMate,0));
+  m_query->compressedLabel->setPixmap (mateIcon(UIElements::color_CompressedMate,0));
   m_types[Insert::CompressedMate].first = 5;
-  m_types[Insert::CompressedMate].second =
-    m_query->compressedCheck->isChecked();
+  m_types[Insert::CompressedMate].second = m_query->compressedCheck->isChecked();
 
-  m_query->orientationLabel->setPixmap
-    (mateIcon(UIElements::color_OrientationViolation,1));
+  m_query->orientationLabel->setPixmap (mateIcon(UIElements::color_OrientationViolation,1));
   m_types[Insert::OrientationViolation].first = 4;
-  m_types[Insert::OrientationViolation].second =
-    m_query->orientationCheck->isChecked();
+  m_types[Insert::OrientationViolation].second = m_query->orientationCheck->isChecked();
 
-  m_query->linkingLabel->setPixmap
-    (mateIcon(UIElements::color_MissingMate,1));
-  m_types[Insert::MissingMate].first = 3;
-  m_types[Insert::MissingMate].second =
-    m_query->linkingCheck->isChecked();
+  m_query->linkingLabel->setPixmap (mateIcon(UIElements::color_LinkingMate,1));
+  m_types[Insert::LinkingMate].first = 3;
+  m_types[Insert::LinkingMate].second = m_query->linkingCheck->isChecked();
 
-  m_query->singletonLabel->setPixmap
-    (mateIcon(UIElements::color_SingletonMate,1));
+  m_query->singletonLabel->setPixmap (mateIcon(UIElements::color_SingletonMate,1));
   m_types[Insert::SingletonMate].first = 2;
-  m_types[Insert::SingletonMate].second =
-    m_query->singletonCheck->isChecked();
+  m_types[Insert::SingletonMate].second = m_query->singletonCheck->isChecked();
 
-  m_query->unmatedLabel->setPixmap
-    (mateIcon(UIElements::color_NoMate,2));
+  m_query->unmatedLabel->setPixmap (mateIcon(UIElements::color_NoMate,2));
   m_types[Insert::NoMate].first = 1;
-  m_types[Insert::NoMate].second =
-    m_query->unmatedCheck->isChecked();
+  m_types[Insert::NoMate].second = m_query->unmatedCheck->isChecked();
 
 
   // Display
@@ -425,20 +411,13 @@ void InsertWindow::contigChanged()
 
 void InsertWindow::toggleItem()
 {
-  m_types[Insert::Happy].second =
-    m_query->happyCheck->isChecked();
-  m_types[Insert::StretchedMate].second =
-    m_query->stretchedCheck->isChecked();
-  m_types[Insert::CompressedMate].second =
-    m_query->compressedCheck->isChecked();
-  m_types[Insert::MissingMate].second =
-    m_query->linkingCheck->isChecked();
-  m_types[Insert::OrientationViolation].second =
-    m_query->orientationCheck->isChecked();
-  m_types[Insert::SingletonMate].second =
-    m_query->singletonCheck->isChecked();
-  m_types[Insert::NoMate].second =
-    m_query->unmatedCheck->isChecked();
+  m_types[Insert::Happy].second                = m_query->happyCheck->isChecked();
+  m_types[Insert::ExpandedMate].second         = m_query->stretchedCheck->isChecked();
+  m_types[Insert::CompressedMate].second       = m_query->compressedCheck->isChecked();
+  m_types[Insert::LinkingMate].second          = m_query->linkingCheck->isChecked();
+  m_types[Insert::OrientationViolation].second = m_query->orientationCheck->isChecked();
+  m_types[Insert::SingletonMate].second        = m_query->singletonCheck->isChecked();
+  m_types[Insert::NoMate].second               = m_query->unmatedCheck->isChecked();
 
   emit paintCanvas();
 }

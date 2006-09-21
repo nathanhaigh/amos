@@ -11,7 +11,7 @@ const int CE_CONNECTED_SD = 8;
 const int READLEN = 500;
 
 float Insert::MAXSTDEV = 2;
-const char * Insert::allstates = "HSCOMLNU";
+const char * Insert::allstates = "HECOLSNU";
 
 Insert::Insert(ID_t     aid,
                ID_t     acontig,
@@ -78,7 +78,7 @@ Insert::Insert(ID_t     aid,
 
       if (m_actual > MAXTRANSPOSONDIST)
       {
-        m_state = StretchedMate;
+        m_state = ExpandedMate;
       }
 
       if ((m_arc + m_brc != 1) ||
@@ -94,7 +94,7 @@ Insert::Insert(ID_t     aid,
     {
       if ((unsigned int)m_length > (unsigned int)(dist.mean + MAXSTDEV*dist.sd))
       {
-        m_state = StretchedMate;
+        m_state = ExpandedMate;
       }
       else if ((int)(m_length + MAXSTDEV*dist.sd) < dist.mean)
       {
@@ -119,7 +119,7 @@ Insert::Insert(ID_t     aid,
   }
   else if (atile)
   {
-    m_state = MissingMate;
+    m_state = LinkingMate;
     m_loffset = arange.begin;
     m_roffset = arange.end;
 
@@ -181,7 +181,7 @@ bool Insert::reasonablyConnected() const
 
   return (m_state == Happy) ||
          (m_state == CompressedMate) ||
-         (m_state == StretchedMate && (m_actual <= m_dist.mean + REASONABLY_CONNECTED_SD * m_dist.sd));
+         (m_state == ExpandedMate && (m_actual <= m_dist.mean + REASONABLY_CONNECTED_SD * m_dist.sd));
 
 
   /*  //This would force reads that overlap to be disconnected 
@@ -197,7 +197,9 @@ bool Insert::ceConnected() const
     return false;
   }
 
-  return ((m_state == Happy) || (m_state == CompressedMate) || (m_state == StretchedMate)) && 
+  return ((m_state == Happy) || 
+          (m_state == CompressedMate) || 
+          (m_state == ExpandedMate)) && 
          (abs(m_actual - m_dist.mean) < (CE_CONNECTED_SD * m_dist.sd));
 }
 
@@ -252,10 +254,10 @@ void Insert::setActive(int i, Insert * other, bool includeLibrary)
 }
 
 static const char * happystr       = "Happy";
-static const char * stretchedstr   = "Stretched Mate";
 static const char * compressedstr  = "Compressed Mate";
+static const char * expandedstr    = "Stretched Mate";
 static const char * orientationstr = "Orientation Violation";
-static const char * missingstr     = "Linking Mate";
+static const char * linkingstr     = "Linking Mate";
 static const char * singletonstr   = "Singleton Mate";
 static const char * unmatedstr     = "Unmated";
 static const char * unknownstr     = "Unknown";
@@ -265,10 +267,10 @@ const char * Insert::getInsertTypeStr(MateState state)
   switch (state)
   {
     case Happy:                return happystr;
-    case StretchedMate:        return stretchedstr;
+    case ExpandedMate:         return expandedstr;
     case CompressedMate:       return compressedstr;
     case OrientationViolation: return orientationstr;
-    case MissingMate:          return missingstr;
+    case LinkingMate:          return linkingstr;
     case SingletonMate:        return singletonstr;
     case NoMate:               return unmatedstr;
     default:                   return unknownstr;

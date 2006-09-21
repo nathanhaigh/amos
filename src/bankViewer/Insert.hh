@@ -42,13 +42,13 @@ public:
   enum MateState
   {
     Happy = 'H',
-    Unknown = 'U',
-    StretchedMate = 'S',
+    ExpandedMate = 'E',
     CompressedMate = 'C',
     OrientationViolation = 'O',
-    MissingMate = 'M',
-    SingletonMate = 'L',
+    LinkingMate = 'L',
+    SingletonMate = 'S',
     NoMate = 'N',
+    Unknown = 'U',
   };
 
   MateState m_state;

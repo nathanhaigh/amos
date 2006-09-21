@@ -669,14 +669,8 @@ void DataStore::calculateInserts(vector<Tile_t> & tiling,
                           libid, dist, 
                           mates.second);
 
-      if (insert->m_state == 'H')
-      {
-        happycount++;
-      }
-      else
-      {
-        unhappycount++;
-      }
+      if (insert->m_state == Insert::Happy) { happycount++; }
+      else                                  { unhappycount++; }
 
 
       if (connectMates && insert->reasonablyConnected())

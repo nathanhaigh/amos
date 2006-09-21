@@ -12,10 +12,10 @@ QColor UIElements::color_RContig(QColor(100,100,255));
 QColor UIElements::color_Scaffold(UIElements::color_FContig);
 
 QColor UIElements::color_Happy(QColor(120,255,120));
-QColor UIElements::color_StretchedMate(QColor(30,170,255));
+QColor UIElements::color_ExpandedMate(QColor(30,170,255));
 QColor UIElements::color_CompressedMate(QColor(255,255,30));
 QColor UIElements::color_OrientationViolation(QColor(255,30,30));
-QColor UIElements::color_MissingMate(QColor(255,150,255));
+QColor UIElements::color_LinkingMate(QColor(255,150,255));
 QColor UIElements::color_SingletonMate(QColor(190,80,255));
 QColor UIElements::color_NoMate(QColor(200,200,200));
 QColor UIElements::color_Unknown(Qt::white);
@@ -140,11 +140,11 @@ QColor & UIElements::getInsertColor(Insert::MateState state)
   switch (state)
   {
     case Insert::Happy:                return color_Happy;
-    case Insert::StretchedMate:        return color_StretchedMate;
     case Insert::CompressedMate:       return color_CompressedMate;
+    case Insert::ExpandedMate:         return color_ExpandedMate;
     case Insert::SingletonMate:        return color_SingletonMate;
     case Insert::OrientationViolation: return color_OrientationViolation;
-    case Insert::MissingMate:          return color_MissingMate;
+    case Insert::LinkingMate:          return color_LinkingMate;
     case Insert::NoMate:               return color_NoMate;
 
     default: return color_Unknown;
