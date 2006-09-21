@@ -94,7 +94,7 @@ int main (int argc, char ** argv)
 "Fixes contigs in one assembly based on alignment to contigs in another.\n"
 "The correct contig is selected based on the ce-statistic\n"
 "\n"
-"   Usage: ce-fix-contigs [options] reference query\n"
+"   Usage: auto-fix-contigs [options] reference query\n"
 "\n"
 "   Options\n"
 "   -------------------\n"
@@ -116,7 +116,7 @@ int main (int argc, char ** argv)
 
     if (argvv.size() != 3)
     {
-      cerr << "Usage: ce-fix-contigs [options] reference query delta" << endl;
+      cerr << "Usage: auto-fix-contigs [options] reference query delta" << endl;
       return EXIT_FAILURE;
     }
 
@@ -129,6 +129,9 @@ int main (int argc, char ** argv)
 
     reference.openBank(referencebankname);
     query.openBank(querybankname);
+
+    reference.feat_bank.close();
+    reference.feat_bank.open(referencebankname, B_READ|B_WRITE);
 
     DeltaReader_t deltareader;
     deltareader.open(deltafile);
@@ -180,9 +183,9 @@ int main (int argc, char ** argv)
           cout << cur->sR << "\t" << cur->eR << " | " << cur->sQ << "\t" << cur->eQ << "\t"; 
 
           if      (cur->prefix && cur->suffix) { cout << "[FULL] "; }
-          else if (cur->prefix)               { cout << "[PREF] "; }
-          else if (cur->suffix)               { cout << "[SUFF] "; }
-          else                               { cout << "[INTL] "; }
+          else if (cur->prefix)                { cout << "[PREF] "; }
+          else if (cur->suffix)                { cout << "[SUFF] "; }
+          else                                { cout << "[INTL] "; }
 
           if (prev != aligns.end())
           {
@@ -204,6 +207,26 @@ int main (int argc, char ** argv)
             cout << refdst << " " << qrydst << " : " << delta;
             cout << " | " << refextreme.first << "," << refextreme.second 
                  << " | " << qryextreme.first << "," << qryextreme.second;
+
+            if (refextreme.first < qryextreme.first)
+            {
+              cout << " Confirmed collapse in reference!" << endl;
+
+              Feature_t feat;
+              feat.setRange(ref);
+              feat.setSource(make_pair(refctg.getIID(), Contig_t::NCODE));
+              feat.setType('F');
+
+              stringstream comment;
+              comment << "Potential Collapsed Repeat delta=" << delta;
+              comment << " patch: " << querybankname;
+              feat.setComment(comment.str());
+
+              reference.feat_bank << feat;
+
+              COLLAPSEFIX++;
+
+            }
           }
 
           cout << endl;
