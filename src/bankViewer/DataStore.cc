@@ -515,6 +515,7 @@ ID_t DataStore::lookupContigId(ID_t readid)
 
 ID_t DataStore::lookupScaffoldId(ID_t contigid)
 {
+  if (m_contigscafflookup.empty()){return 0;}
   return m_contigscafflookup[contig_bank.lookupBID(contigid)];
 }
 
