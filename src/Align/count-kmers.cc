@@ -11,6 +11,9 @@ using namespace AMOS;
 
 int COUNT = 0;
 int LEN = 0;
+int BAD_CHAR = 0;
+
+int PRINT_SIMPLE = 0;
 
 
 #define  DEBUG  0
@@ -54,6 +57,7 @@ int  main (int argc, char * argv [])
 "   -n <bnk>   Report normalized counts (readmercount/contigmercount)\n"
 "   -k <len>   Length of kmer (default:22, must be <= 31) \n"
 "   -m <min>   Minimum count to report (default: 1)\n"
+"   -S         Print using simple nmer count format\n"
 "\n";
 
     string fastafile;
@@ -71,6 +75,7 @@ int  main (int argc, char * argv [])
     tf->getOptions()->addOptionResult("n=s", &normalizedbank);
     tf->getOptions()->addOptionResult("k=i", &Kmer_Len);
     tf->getOptions()->addOptionResult("m=i", &min_count);
+    tf->getOptions()->addOptionResult("S",   &PRINT_SIMPLE);
 
     tf->handleStandardOptions();
 
@@ -183,6 +188,11 @@ int  main (int argc, char * argv [])
 
     cerr << COUNT << " sequences processed, " << LEN << " bp scanned" << endl;
 
+    if (BAD_CHAR)
+    {
+      cerr << "WARNING: Input had " << BAD_CHAR << " non-DNA (ACGT) characters" << endl;
+    }
+
     PrintMers(mer_table, min_count);
   }
   catch (Exception_t & e)
@@ -237,8 +247,6 @@ static unsigned  Char_To_Binary
    switch  (tolower (ch))
      {
       case  'a' :
-      case  'n' :
-      default:
         return  0;
       case  'c' :
         return  1;
@@ -246,6 +254,9 @@ static unsigned  Char_To_Binary
         return  2;
       case  't' :
         return  3;
+      default:
+        BAD_CHAR++;
+        return 0;
         /*
       default :
         sprintf (Clean_Exit_Msg_Line, "Bad char = %c (ASCII %u) in Char_To_Binary",
@@ -344,7 +355,14 @@ void PrintMers(const MerTable_t & mer_table, int min_count)
     if (fi->second >= min_count)
     {
       MerToAscii(fi->first, mer);
-      printf(">%d\n%s\n", fi->second, mer.c_str());
+      if (PRINT_SIMPLE)
+      {
+        printf("%s\t%d\n", mer.c_str(), fi->second);
+      }
+      else
+      {
+        printf(">%d\n%s\n", fi->second, mer.c_str());
+      }
       printed++;
     }
     else
