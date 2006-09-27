@@ -1,3 +1,3 @@
 #!/bin/sh
 
-rsync --rsh=ssh -a  mcschatz@shell.sourceforge.net:amos/htdocs/hawkeye/ .
+rsync --rsh=ssh -av  mcschatz@shell.sourceforge.net:amos/htdocs/hawkeye/ .
