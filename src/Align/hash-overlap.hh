@@ -29,6 +29,10 @@ const double  DEFAULT_ERROR_RATE = 0.06;
   // Default fraction of errors allowed in overlap alignment
 const int  DEFAULT_MIN_OVERLAP_LEN = 40;
   // Default minimum number of bases by which two sequences must overlap
+const int  ALIGNMENT_BAND_RADIUS = 5;
+  // Half the width of the alignment band
+const int  OFFSET_WIGGLE = 3;
+  // Number of bases difference in offsets to be considered the same
 const int  MAX_LINE = 1000;
 const int  NEW_SIZE = 1000;
 
@@ -138,6 +142,8 @@ static void  Get_Strings_From_Bank_ByEID
 static void  Map_Minimizers
     (const vector <char *> & string_list,
      hash_map <unsigned int, Hash_Entry_t> & ht);
+static void  Merge_Overlapping_Bands
+    (Offset_Entry_t & oe, int rad);
 static void  Output
     (ostream & os, BankStream_t & overlap_bank, const Simple_Overlap_t & olap);
 static void  Parse_Command_Line

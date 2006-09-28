@@ -209,6 +209,32 @@ static int  By_String_Num_Then_Pos
 
 
 
+static int  By_String_Then_Lo_Offset
+    (const void * a, const void * b)
+
+//  Return the order relationship between  a  and  b  regarded
+//  as  Offset_Range_t 's based first on the  string_num  field,
+//  and second on the  lo_offset  field.  Used by  qsort  function.
+
+  {
+   Offset_Range_t  * x, * y;
+
+   x = (Offset_Range_t *) a;
+   y = (Offset_Range_t *) b;
+
+   if  (x -> string_num < y -> string_num)
+       return  -1;
+   else if  (x -> string_num > y -> string_num)
+       return  1;
+   else if  (x -> lo_offset < y -> lo_offset)
+       return  -1;
+   else if  (x -> lo_offset > y -> lo_offset)
+       return  1;
+     else  return  0;
+  }
+
+
+
 static void  Check_IDs
     (void)
 
@@ -252,7 +278,8 @@ static void  Find_Fwd_Overlaps
   {
    vector <Offset_Entry_t>  offset_list;
    hash_map <unsigned int, Hash_Entry_t> :: iterator  iter;
-   Simple_Overlap_t  olap;
+   Simple_Overlap_t  prev_olap, olap;
+   bool  have_prev_olap;
    double  erate;
    int  i, j, n;
 
@@ -287,35 +314,70 @@ static void  Find_Fwd_Overlaps
      }
 
    for  (i = 0;  i < n;  i ++)
-     for  (j = 0;  j < offset_list [i] . ct;  j ++)
-       {
-        int  b = offset_list [i] . off [j] . string_num;
-        int  lo, hi;
+     {
+      // Since the same pair of strings may have multiple offset
+      // entries, sort them so that all entries are together and
+      // merge entries that are close enough to have overlapping
+      // bands for the alignment
+
+      if  (1 < offset_list [i] . ct)
+          {
+           qsort (offset_list [i] . off, offset_list [i] . ct,
+                sizeof (Offset_Range_t), By_String_Then_Lo_Offset);
+           Merge_Overlapping_Bands (offset_list [i], 5 * ALIGNMENT_BAND_RADIUS);
+          }
+
+      have_prev_olap = false;
+      for  (j = 0;  j < offset_list [i] . ct;  j ++)
+        {
+         int  b = offset_list [i] . off [j] . string_num;
+         int  lo, hi;
 
 #if  USE_SIMPLE_OVERLAP
-        Simple_Overlap (string_list [i], strlen (string_list [i]),
-             string_list [b], strlen (string_list [b]), olap);
+         Simple_Overlap (string_list [i], strlen (string_list [i]),
+              string_list [b], strlen (string_list [b]), olap);
 #else
-        lo = Max (offset_list [i] . off [j] . lo_offset - 5,
-                    - int (strlen (string_list [i])));
-        hi = Min (offset_list [i] . off [j] . hi_offset + 5,
-                    int (strlen (string_list [b])));
-        Banded_Overlap (string_list [i], strlen (string_list [i]),
-             string_list [b], strlen (string_list [b]), lo, hi, olap);
+         lo = Max (offset_list [i] . off [j] . lo_offset - ALIGNMENT_BAND_RADIUS,
+                     - int (strlen (string_list [i])));
+         hi = Min (offset_list [i] . off [j] . hi_offset + ALIGNMENT_BAND_RADIUS,
+                     int (strlen (string_list [b])));
+         Banded_Overlap (string_list [i], strlen (string_list [i]),
+              string_list [b], strlen (string_list [b]), lo, hi, olap);
 #endif
-        if  (olap . a_olap_len < Min_Overlap_Len
-                || olap . b_olap_len < Min_Overlap_Len)
-            continue;
-        erate = (2.0 * olap . errors)
-            / (olap . a_olap_len + olap . b_olap_len);
-        if  (erate <= Error_Rate)
-            {
-             olap . a_id = id_list [i];
-             olap . b_id = id_list [b];
-             olap . flipped = false;
-             Output (cout, overlap_bank, olap);
-            }
-       }
+         if  (olap . a_olap_len < Min_Overlap_Len
+                 || olap . b_olap_len < Min_Overlap_Len)
+             continue;
+         erate = (2.0 * olap . errors)
+             / (olap . a_olap_len + olap . b_olap_len);
+         if  (erate <= Error_Rate)
+             {
+              olap . a_id = id_list [i];
+              olap . b_id = id_list [b];
+              olap . flipped = false;
+              if  (have_prev_olap)
+                  {
+                   assert (prev_olap . a_id == olap . a_id);
+                   if  (prev_olap . b_id == olap . b_id)
+                       {
+                        if  (prev_olap . score < olap . score)
+                            prev_olap = olap;
+                       }
+                     else
+                       {
+                        Output (cout, overlap_bank, prev_olap);
+                        prev_olap = olap;
+                       }
+                  }
+                else
+                  {
+                   prev_olap = olap;
+                   have_prev_olap = true;
+                  }
+             }
+        }
+      if  (have_prev_olap)
+          Output (cout, overlap_bank, prev_olap);
+     }
 
    for  (i = 0;  i < n;  i ++)
      if  (offset_list [i] . ct > 0)
@@ -340,7 +402,8 @@ static void  Find_Rev_Overlaps
   {
    Minimizer_t  mini (Minimizer_Window_Len);
    Offset_Entry_t  offset;
-   Simple_Overlap_t  olap;
+   Simple_Overlap_t  prev_olap, olap;
+   bool  have_prev_olap;
    double  erate;
    int  i, j, n, p;
 
@@ -394,6 +457,19 @@ static void  Find_Rev_Overlaps
              }
         }
 
+      // Since the same pair of strings may have multiple offset
+      // entries, sort them so that all entries are together and
+      // merge entries that are close enough to have overlapping
+      // bands for the alignment
+
+      if  (1 < offset . ct)
+          {
+           qsort (offset . off, offset . ct,
+                sizeof (Offset_Range_t), By_String_Then_Lo_Offset);
+           Merge_Overlapping_Bands (offset, 5 * ALIGNMENT_BAND_RADIUS);
+          }
+
+      have_prev_olap = false;
       for  (j = 0;  j < offset . ct;  j ++)
         {
          int  b = offset . off [j] . string_num;
@@ -403,9 +479,9 @@ static void  Find_Rev_Overlaps
          Simple_Overlap (string_list [i], strlen (string_list [i]),
               string_list [b], strlen (string_list [b]), olap);
 #else
-         lo = Max (offset . off [j] . lo_offset - 5,
+         lo = Max (offset . off [j] . lo_offset - ALIGNMENT_BAND_RADIUS,
                      - int (strlen (string_list [i])));
-         hi = Min (offset . off [j] . hi_offset + 5,
+         hi = Min (offset . off [j] . hi_offset + ALIGNMENT_BAND_RADIUS,
                      int (strlen (string_list [b])));
          Banded_Overlap (string_list [i], strlen (string_list [i]),
               string_list [b], strlen (string_list [b]), lo, hi, olap);
@@ -426,9 +502,29 @@ static void  Find_Rev_Overlaps
               olap . a_id = id_list [i];
               olap . b_id = id_list [b];
               olap . flipped = true;
-              Output (cout, overlap_bank, olap);
+              if  (have_prev_olap)
+                  {
+                   assert (prev_olap . a_id == olap . a_id);
+                   if  (prev_olap . b_id == olap . b_id)
+                       {
+                        if  (prev_olap . score < olap . score)
+                            prev_olap = olap;
+                       }
+                     else
+                       {
+                        Output (cout, overlap_bank, prev_olap);
+                        prev_olap = olap;
+                       }
+                  }
+                else
+                  {
+                   prev_olap = olap;
+                   have_prev_olap = true;
+                  }
              }
         }
+      if  (have_prev_olap)
+          Output (cout, overlap_bank, prev_olap);
 
       if  (offset . ct > 0)
           {
@@ -795,6 +891,37 @@ static void  Map_Minimizers
 
 
 
+static void  Merge_Overlapping_Bands
+    (Offset_Entry_t & oe, int rad)
+
+//  Merge ranges in  oe  that overlap after being expanded by  rad
+//  in both directions.
+
+  {
+   int  i, p;
+
+   p = 0;
+   for  (i = 1;  i < oe . ct;  i ++)
+     if  (oe . off [p] . string_num == oe . off [i] . string_num
+           && oe . off [i] . lo_offset - rad <= oe . off [p] . hi_offset + rad)
+         {
+          // merge
+          oe . off [p] . hi_offset
+              = Max (oe . off [p] . hi_offset, oe . off [i] . hi_offset);
+         }
+       else
+         {
+          p ++;
+          if  (p < i)
+              oe . off [p] = oe . off [i];
+         }
+   oe . ct = p + 1;
+
+   return;
+  }
+
+
+
 static void  Output
      (ostream & os, BankStream_t & overlap_bank, const Simple_Overlap_t & olap)
 
@@ -1061,7 +1188,9 @@ void  Offset_Entry_t :: Add_Offset
        }
 
    for  (i = 0;  i < ct;  i ++)
-     if  (off [i] . string_num == s)
+     if  (off [i] . string_num == s
+           && off [i] . lo_offset - OFFSET_WIGGLE <= offset
+           && offset <= off [i] . hi_offset + OFFSET_WIGGLE)
          {
           if  (offset < off [i] . lo_offset)
               off [i] . lo_offset = offset;
