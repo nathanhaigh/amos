@@ -144,10 +144,9 @@ void Unitigger::output_umd_contigs(IGraph* g, INode* p_node) {
   }
 }
 
-
 void Unitigger::output_amos_contigs(const string p_bankdir) {
   Message_t msg;
-  BankStream_t bank(Layout_t::NCODE);
+  BankStream_t bank(Contig_t::NCODE);
 
   try {
     if(!bank.exists(p_bankdir)) {
@@ -161,13 +160,11 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     exit(127);
   }
 
-
-
   vector< Contig* >::iterator contig_iter = contigs.begin();
   for( ; contig_iter != contigs.end(); ++contig_iter) {
     Contig* ctg = (*contig_iter);
     Tile_t tile;
-    Layout_t layout;
+    Contig_t amos_ctg;
     vector<Tile_t> tiles;
 
     // loop over every node in subgraph
@@ -199,14 +196,76 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     }
 
 	if(tiles.size() > 1) {
-	  layout.setTiling(tiles);
+	  amos_ctg.setReadTiling(tiles);
   
-	  bank << layout;
+	  bank << amos_ctg;
 	}
   }
   
   bank.close();
 }
+
+
+// void Unitigger::output_amos_layout(const string p_bankdir) {
+//   Message_t msg;
+//   BankStream_t bank(Layout_t::NCODE);
+
+//   try {
+//     if(!bank.exists(p_bankdir)) {
+//       bank.create(p_bankdir);
+//     } else {
+//       bank.open(p_bankdir);
+//     }
+//     cout << " Writing layouts to bank " << p_bankdir << endl;
+//   } catch (Exception_t &e) {
+//     cerr << "Exception while writing layouts : " << e << endl;
+//     exit(127);
+//   }
+
+//   vector< Contig* >::iterator contig_iter = contigs.begin();
+//   for( ; contig_iter != contigs.end(); ++contig_iter) {
+//     Contig* ctg = (*contig_iter);
+//     Tile_t tile;
+//     Layout_t layout;
+//     vector<Tile_t> tiles;
+
+//     // loop over every node in subgraph
+//     for(INodeIterator nodeIter = ctg->sg->nodes_begin(); nodeIter != ctg->sg->nodes_end(); ++nodeIter) {
+//       INode* node = (*nodeIter).second;
+//       Read* read_tile = (Read*) node->getElement();
+      
+//       tile.source = read_tile->id;
+
+//       if(read_tile->start < read_tile->end) {
+
+// 		tile.offset = read_tile->start;
+// 		tile.range = read_tile->range;
+
+//       } else {
+
+// 		tile.range = read_tile->range;
+// 		tile.range.swap();
+// 		tile.offset = read_tile->end;
+		
+//       }
+      
+//       if(VERBOSE) {
+// 		cout << " -> " << read_tile->id << " len " << read_tile->len;
+// 		cout << " (" << read_tile->start << "," << read_tile->end << ") ";
+//       }
+
+//       tiles.push_back(tile);
+//     }
+
+// 	if(tiles.size() > 1) {
+// 	  layout.setTiling(tiles);
+  
+// 	  bank << layout;
+// 	}
+//   }
+  
+//   bank.close();
+// }
 
 
 void Unitigger::hide_containment(IGraph* g) {
@@ -261,10 +320,10 @@ void Unitigger::add_containment() {
       con_node = edge->getTarget();
       
       if(con_node->getKey() == ovl->ridA) {
-	node = con_node;
-	con_node = edge->getSource();
+		node = con_node;
+		con_node = edge->getSource();
       } else {
-	node = edge->getSource();
+		node = edge->getSource();
       }
       
       vector< Contig* >::iterator contig_iter = contigs.begin();
@@ -275,26 +334,26 @@ void Unitigger::add_containment() {
       // TODO : for a large number of contigs, 
       // finding the right contig can be very, very slow
       for( ; contig_iter != contigs.end(); ++contig_iter) {
-	Contig* c = (*contig_iter);
-	if(c->sg->contains(node)) {
-	  pass_count++;
-	  c->sg->add_edge(edge);
-	  con_node->setNodeHidden(false);
-	  edge->setHidden(false);
-	  edge->setColor("purple");
-	  con_node->setColor("purple");
-	  added = true;
-	  break;
-	}
+		Contig* c = (*contig_iter);
+		if(c->sg->contains(node)) {
+		  pass_count++;
+		  c->sg->add_edge(edge);
+		  con_node->setNodeHidden(false);
+		  edge->setHidden(false);
+		  edge->setColor("purple");
+		  con_node->setColor("purple");
+		  added = true;
+		  break;
+		}
       }
       
       // TODO: fix if read contains self
       if(!added) {
-	//cout << " not added  " << con_node->getKey() << " " << node->getKey() << endl;
-	containment.push(edge);
+		//cout << " not added  " << con_node->getKey() << " " << node->getKey() << endl;
+		containment.push(edge);
       }
     } // for containment size
-
+	
     cout << pass_count << " containment reads added back on this pass " << endl;
     count += pass_count;
     cout << " sub-total contained reads unhidden " << count << endl;
