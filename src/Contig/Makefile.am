@@ -10,7 +10,8 @@ amosinclude_HEADERS = \
 
 ##-- TO BE INSTALLED
 dist_bin_SCRIPTS = \
-	zipalign.pl
+	zipalign.pl \
+    autoJoiner.pl
 
 
 ##-- TO BE INSTALLED
