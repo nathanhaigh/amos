@@ -215,6 +215,8 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
                  m_stats->m_low, m_stats->m_high);
     }
 
+    p.setPen(Qt::black);
+
     // text
     int textline1 = histbottom + 30;
     int textline2 = textline1 + 20;
