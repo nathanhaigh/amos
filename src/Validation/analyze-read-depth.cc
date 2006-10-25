@@ -148,7 +148,7 @@ int main (int argc, char ** argv)
         for (ti = tiling.begin(); ti != tiling.end(); ti++)
         {
           int offset = ti->offset;
-          int roffset = offset + ti->getGappedLength() - 1;
+          int roffset = ti->getRightOffset();
 
           ep = endpoints.begin();
           while ((ep != endpoints.end()) && (*ep < offset))
