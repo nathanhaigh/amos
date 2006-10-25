@@ -94,7 +94,7 @@ int main (int argc, char ** argv)
 "Fixes contigs in one assembly based on alignment to contigs in another.\n"
 "The correct contig is selected based on the ce-statistic\n"
 "\n"
-"   Usage: auto-fix-contigs [options] reference query\n"
+"   Usage: auto-fix-contigs [options] reference query delta.rq\n"
 "\n"
 "   Options\n"
 "   -------------------\n"
@@ -185,7 +185,7 @@ int main (int argc, char ** argv)
           if      (cur->prefix && cur->suffix) { cout << "[FULL] "; }
           else if (cur->prefix)                { cout << "[PREF] "; }
           else if (cur->suffix)                { cout << "[SUFF] "; }
-          else                                { cout << "[INTL] "; }
+          else                                 { cout << "[INTL] "; }
 
           if (prev != aligns.end())
           {
