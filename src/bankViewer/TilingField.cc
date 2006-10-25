@@ -361,10 +361,21 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
       p.drawPolygon(rcflag);
 
       // Seqname
-      p.drawText(seqnamehoffset, ldcov,
-                 rchoffset-seqnamehoffset, lineheight,
-                 Qt::AlignLeft | Qt::AlignBottom, 
-                 QString(ri->m_read.getEID().c_str()));
+      int PrintIID = 0;
+      if (PrintIID)
+      {
+        p.drawText(seqnamehoffset, ldcov,
+                   rchoffset-seqnamehoffset, lineheight,
+                   Qt::AlignLeft | Qt::AlignBottom, 
+                   QString::number(ri->m_read.getIID()));
+      }
+      else
+      {
+        p.drawText(seqnamehoffset, ldcov,
+                   rchoffset-seqnamehoffset, lineheight,
+                   Qt::AlignLeft | Qt::AlignBottom, 
+                   QString(ri->m_read.getEID().c_str()));
+      }
 
       if (hasOverlap)
       {
