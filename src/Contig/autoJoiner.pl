@@ -25,10 +25,9 @@ my $CONTIG2FASTA        = "$commonbin/contig2fasta";
 my $SPLITFASTA          = "$commonbin/splitFasta";
 my $SIZEFASTA           = "$commonbin/sizeFasta";
 my $CUTFASTA            = "$commonbin/cutFasta";
-my $CA2SCAFF            = "$commonbin/ca2ajscaff";
+my $CA2AJSCAFF            = "$commonbin/ca2ajscaff";
 my $FILTERCONTIG        = "$commonbin/filter_contig";
 my $FILTERSEQ           = "$commonbin/filter_seq";
-my $FILTERPOS           = "$commonbin/filter_pos";
 my $EVALOVERLAP         = "$commonbin/aj_evaluateSequenceOverlaps";
 
 my $NUCMER              = "$platformbin/nucmer";
@@ -37,14 +36,12 @@ my $JOINCONTIGS         = "$platformbin/aj_joinContigs";
 my $LOWCOMPLEXITYFILTER = "$platformbin/aj_lowcomplexityfilter";
 
 my $SELF          = $0;
-my $USAGE         = "Usage: autoJoin <prefix> [OPTIONS]\n";
+my $USAGE         = "Usage: autoJoin <prefix.bnk> [OPTIONS]\n";
 
 my $tf            = new TIGR::Foundation;
-my $EUID;
 
 my $DOVERBOSE     = 1;
-my $DOJOIN        = 1;
-my $DOEUID        = 0;
+my $DOJOIN        = 0;
 my $DOAUTOEDITOR  = 0;
 my $DOVALIDATE    = 0;
 my $DOAEVALIDATE  = 0;
@@ -53,6 +50,7 @@ my $MATCHLEN      = 15;
 my $CLUSTERLEN    = 30;
 my $RANGEWINDOW   = 100;  ## FATTENRADIUS is already ~500
 my $FSEQOVERLAP   = 10000;
+my $DEFAULT_STDEV = 100;
 
 my $ALIGNTHRESHOLD = 94.0; ## Minimum alignment similiarity (%ID) for joining contigs
 
@@ -93,16 +91,15 @@ only contains the assembly comments, and a prefix.sq.contigs file which is
 an updated scaffold representation suitable for AutoCloser.
 
   $USAGE
-    prefix is the prefix to the seq, qual, pos, and contig files
+    prefix.bnk is the path to the AMOS bank.
 
   Options
   -------
   -dir <dir>   Output directory            [ Default: autoJoin ]
-  -asm <path>  Path to asm file            [ Default: ../prefix.asm ]
   -feat <path> Path to feat file           [ Default: prefix.feat ]
+  -asm <path>  Path to asm file            [ Default: none]
   -tasm <path> Path to tasm file           [ Default: prefix.tasm ]
-  -[no]euid    Toggle using EUIDs          [ Default: -euid ]
-  -user <name> Set output attribute        [ Default: process owner's name ]
+  -user <name> Set output attribute        [ Default: current user ]
 
   -alignment <threshold> Specify Minimum percent identity for an alignment 
                          to be used for joining contigs together.
@@ -127,12 +124,11 @@ been updated for the autoEditor results.
 my @DEPENDS = 
 (
   "TIGR::Foundation",
-  $CA2SCAFF,
+  $CA2AJSCAFF,
   $SPLITFASTA,
   $CONTIG2FASTA,
   $FILTERCONTIG,
   $FILTERSEQ,
-  $FILTERPOS,
   $NUCMER,
   $SHOWCOORDS,
   $SIZEFASTA,
@@ -182,15 +178,7 @@ sub tfchdir
   sub getJoinId
   {
     $joinid++;
-
-    if ($DOEUID)
-    {
-      return $EUID->getEUID();
-    }
-    else
-    {
-      return "aj_$joinid";
-    }
+    return "aj_$joinid";
   }
 }
 
@@ -251,8 +239,7 @@ sub tfsymlink
 sub prepareAssembly
 {
   my $prefix = shift;  ## dmg
-  my $datadir = shift; ## ..
-  my $asmpath = shift; ## ../../dmg.asm
+  my $bankdir = shift; ## path/to/dmg.bnk
 
   echo "prepare assembly...\n";
 
@@ -261,18 +248,28 @@ sub prepareAssembly
 
   tfmkdir($RESULTSDIR);
 
-  foreach my $suffix (qw/contig qual seq pos/)
+  my $BANK2CONTIG = "bank2contig";
+  my $DUMPREADS   = "dumpreads";
+  my $BANK2SCAFF  = "bank2scaff";
+
+  if (! -r "$prefix.contig")
   {
-    if (! -r "$prefix.$suffix")
-    {
-      tfsymlink("$datadir/$prefix.$suffix", "$prefix.$suffix");
-    }
+    runCmd("($BANK2CONTIG -e $bankdir > $prefix.contig) >& /dev/null", "bank2contig");
   }
 
-  if (! -r "$prefix.gaps")
+  if (! -r "$prefix.seq")
   {
-    runCmd("$CA2SCAFF $asmpath -o $prefix", 
-           "ca2scaff");
+    runCmd("($DUMPREADS -e -r -c $bankdir > $prefix.seq) >& /dev/null", "dumpreads seq");
+  }
+
+  if (! -r "$prefix.qual")
+  {
+    runCmd("($DUMPREADS -e -q -r $bankdir > $prefix.qual) >& /dev/null", "dumpreads qual");
+  }
+
+  if (! -r "$prefix.scaff")
+  {
+    runCmd("($BANK2SCAFF -e $bankdir > $prefix.scaff) >& /dev/null", "bank2scaff");
   }
 
   foreach my $suffix (qw/seq qual/)
@@ -303,29 +300,10 @@ sub prepareAssembly
 }
 
 {
+  my %contigstatus;
+  my %origcontiginfo;
+
   my %gapsizes;
-
-  sub loadGaps
-  {
-    my $gapfile = shift;
-
-    open GAPFILE, "< $gapfile"
-      or $tf->bail("Can't open $gapfile ($!)");
-
-    while (<GAPFILE>)
-    {
-      next if (/^\>/);
-      chomp;
-      my ($left, $right, $gapsize, $gapstdev) = split /\s+/;
-
-      $gapstdev = $MINGAPSTDEV if !defined $gapstdev;
-
-      $gapsizes{$left}->{size}  = $gapsize;
-      $gapsizes{$left}->{stdev} = $gapstdev;
-    }
-
-    close GAPFILE;
-  }
 
   sub getExpectedGapSize
   {
@@ -354,12 +332,6 @@ sub prepareAssembly
 
     return $retval;
   }
-}
-
-
-{
-  my %contigstatus;
-  my %origcontiginfo;
 
   sub loadLayout
   {
@@ -427,7 +399,12 @@ sub prepareAssembly
   {
     my $id = shift;
     my $oo = shift;
-    my $ajdir = shift;
+    my $contiglen = shift;
+    my $gapsize   = shift;
+    my $gapstdev = shift;
+
+    $gapsizes{$id}->{size} = $gapsize;
+    $gapsizes{$id}->{stdev} = $gapstdev;
 
     $contigstatus{$id}->{id} = $id;
     $contigstatus{$id}->{oo} = $oo;
@@ -1034,9 +1011,6 @@ sub validateJoin
             if (! -r "$joinid.$suffix");
         }
  
-        runCmd("$FILTERPOS $joinid.seq ../../../../$prefix.pos > $joinid.pos")
-          if (! -r "$joinid.pos");
-
         my $aeproject = $project;
         $aeproject = "crypt" if ($aeproject =~ /crypt/);
         runCmd("autoEditor $joinid -d $aeproject -o autoEditor", "autoEditor join");
@@ -1769,13 +1743,6 @@ sub finalizeAssembly
 
   tfchdir("$ajdir/$RESULTSDIR"); $ajdir = File::Spec->abs2rel($ajdir);
 
-  if (! -r "$prefix$JOINSUFFIX.pos" && -r "$prefix$JOINSUFFIX.seq")
-  {
-    my $cmd = "$FILTERPOS $prefix$JOINSUFFIX.seq $ajdir/$prefix.pos ".
-              "> $prefix$JOINSUFFIX.pos";
-    runCmd($cmd, "creating results pos file");
-  }
-
   my %origsequences;
   my $printid = 0;
 
@@ -1835,8 +1802,6 @@ sub finalizeAssembly
       if -r "$prefix$JOINSUFFIX.$suffix";
   }
 
-  tfsymlink("$ajdir/$prefix.pos", "$prefix$ALLSUFFIX.pos");
-
   printTasmComments("$prefix$ALLSUFFIX.tasm");
   printFeatures("$prefix$ALLSUFFIX.feat");
   printUnjoinedContigs("$prefix$ALLSUFFIX.degenerates");
@@ -1870,7 +1835,7 @@ sub finalizeAssembly
 MAIN:
 {
   my $db = undef;
-  my $asmpath = undef;
+  my $asmfile = undef;
   my $featpath = undef;
   my $tasmpath = undef;
   my $frglist = undef;
@@ -1888,12 +1853,11 @@ MAIN:
                (
                  'D=s',         \$db,
                  'o|dir=s',     \$ajdir,
-                 'asm=s',       \$asmpath,
+                 'asm=s',       \$asmfile,
                  'feat=s',      \$featpath,
                  'tasm=s',      \$tasmpath,
                  'user=s',      \$USERNAME,
                  'verbose!',    \$DOVERBOSE,
-                 'euid!',       \$DOEUID,
                  'edit!',       \$DOAUTOEDITOR,
                  'validate!',   \$DOVALIDATE,
                  'join!',       \$DOJOIN,
@@ -1909,59 +1873,41 @@ MAIN:
     $tf->bail("Alignment threshold must be between 85.0 and 100.0 percent");
   }
 
-  my $dataprefix = shift @ARGV;  ## path/to/dmg
-  die $USAGE if !defined $dataprefix;
+  my $bankpath = shift @ARGV;  ## path/to/dmg.bnk
+  die $USAGE if !defined $bankpath;
 
   my $debug = $tf->getDebugLevel();
   $tf->setDebugLevel(4) if (!$debug);
 
-  if ($DOEUID)
-  {
-    $tf->bail("Can't ping EUID Service")
-      if (!defined $EUID->ping());
-  }
+  my $prefix = basename($bankpath);  ## dmg.bnk
+  $prefix =~ s/\.bnk//;              ## dmg
 
-  my $prefix = basename($dataprefix);  ## dmg
-  my $datadir = File::Spec->rel2abs(dirname($dataprefix)); ## /abs/path/to/
+  $bankpath = File::Spec->rel2abs($bankpath);
 
-  $asmpath = "$datadir/../$prefix.asm"
-    if (!defined $asmpath);
-
-  $asmpath = File::Spec->rel2abs($asmpath); ## /abs/path/prefix.asm
-
-  $tf->logLocal("dataprefix: $dataprefix\n", 4);
   $tf->logLocal("prefix: $prefix\n", 4);
-  $tf->logLocal("datadir: $datadir\n", 4);
-  $tf->logLocal("asmpath: $asmpath\n", 4);
+  $tf->logLocal("bankpath: $bankpath\n", 4);
 
-  if (!defined $db && defined $frglist)
-  {
-    my @frgs = split /,/, $frglist;
-    my $projectfile = shift @frgs;
-    $projectfile =~ s/\.frg$/.project/;
-
-    $db = `$CAT $projectfile`;
-    $tf->logLocal("db: $db\n", 4);
-  }
-
-  $DOVALIDATE = 1 if $DOAEVALIDATE;
-
-
-  if    (defined $featpath)     { loadFeatures($featpath); }
-  elsif (-r "$dataprefix.feat") { loadFeatures("$dataprefix.feat"); }
-
-  if    (defined $tasmpath)     { loadTasmComments($tasmpath); }
-  elsif (-r "$dataprefix.tasm") { loadTasmComments("$dataprefix.tasm"); }
+  $asmfile = File::Spec->rel2abs($asmfile) if defined $asmfile;
 
   tfmkdir($ajdir); tfchdir($ajdir); $ajdir = cwd; 
 
-  prepareAssembly($prefix, $datadir, $asmpath);
-  loadGaps("$prefix.gaps");
+  if (defined $asmfile)
+  {
+    if (! -r "$prefix.scaff")
+    {
+      runCmd("($CA2AJSCAFF -s -i $asmfile -o $prefix) >& /dev/null", "ca2ajscaff");
+    }
+  }
 
-  my $oofile = "$prefix.oo";
+  prepareAssembly($prefix, $bankpath);
 
-  open OOFILE, "< $oofile"
-    or $tf->bail("Can't open oo file $oofile for reading ($!)");
+  #loadFeatures("$dataprefix.feat");
+  #loadTasmComments("$dataprefix.tasm");
+
+  my $scafffile = "$prefix.scaff";
+
+  open SCAFFFILE, "< $scafffile"
+    or $tf->bail("Can't open scaff file $scafffile for reading ($!)");
 
   tfmkdir($ALIGNMENTDIR); tfchdir($ALIGNMENTDIR);
 
@@ -1970,7 +1916,7 @@ MAIN:
   my $leftcontig = undef;
   my $issingleton = 0;
 
-  while (<OOFILE>)
+  while (<SCAFFFILE>)
   {
     if (/^\>(\S+)/) 
     { 
@@ -1992,8 +1938,18 @@ MAIN:
       chomp;
       ## Notice the gap between contigs
 
-      my ($contigid, $oo) = split /\s+/;
-      addOrigContig($contigid, $oo, $ajdir);
+      my @vals = split /\s+/, $_;
+
+      my $gapstdev  = $DEFAULT_STDEV;
+
+      my $contigid  = $vals[0];
+      my $oo        = $vals[1];
+      my $contiglen = $vals[2];
+      my $gapsize   = $vals[3];
+
+      $gapstdev = $vals[4] if defined $vals[4];
+
+      addOrigContig($contigid, $oo, $contiglen, $gapsize, $gapstdev);
 
       if (!defined $leftcontig) { $leftcontig = $contigid; }
       else
