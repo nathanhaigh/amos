@@ -9,6 +9,7 @@ my $MINLENGTH = 0;
 my $FLAGDIST = undef;
 my $FLAGSAME = undef;
 my $DOAMOS = 0;
+my $COLLAPSEONLY = 0;
 
 my $HELPTEXT = qq~
 Find alignment breaks in query sequences.
@@ -23,6 +24,7 @@ Note: You should probably run 'delta-filter -q out.delta > out.delta.q'
   -l <val> Minimum length of query sequence to report (Default: 0)
   -f <val> Flag broken alignments within this distance of reference
   -s       Flag adjacent broken alignments from same query
+  -C       Only show collapses
 
   -a       Display breaks as AMOS features
 ~;
@@ -44,6 +46,7 @@ my $err = $base->getOptions("b=i" => \$TRIMWIGGLE,
                             "l=i" => \$MINLENGTH,
                             "f=i" => \$FLAGDIST,
                             "s"   => \$FLAGSAME,
+                            "C"   => \$COLLAPSEONLY,
                             "a"   => \$DOAMOS);
 
 if (!$err) { $base->bail("Command line parsing failed. See -h option"); }
@@ -78,8 +81,8 @@ foreach my $deltafile (@ARGV)
     $align->{qstart} = $vals[4];
     $align->{qend}   = $vals[5];
 
-    $align->{ralen}   = $vals[7];
-    $align->{qalen}   = $vals[8];
+    $align->{ralen}  = $vals[7];
+    $align->{qalen}  = $vals[8];
 
     $align->{pid}    = $vals[10];
 
@@ -100,27 +103,63 @@ foreach my $deltafile (@ARGV)
 
     next if ($align->{qlen} < $MINLENGTH);
 
-    if (defined $lastalign)
-    {
-      my $dist = $align->{rstart} - $lastalign->{rend};
- #     print "lid: $lastalign->{rid} id: $align->{rid} dist: $dist\n"
-    }
 
-    my $flag = "";
+    my $flag = " ";
     if ((defined $FLAGDIST) &&
         (defined $lastalign) &&
         ($lastalign->{rid} eq $align->{rid}) &&
         ($align->{rstart} - $lastalign->{rend} < $FLAGDIST))
     {
-      $flag = "***";
+      $flag = "*";
     }
 
     if ((defined $lastalign) &&
-        (defined $FLAGSAME) &&
+        ((defined $FLAGSAME) || $COLLAPSEONLY) &&
         ($lastalign->{rid} eq $align->{rid}) &&
         ($lastalign->{qid} eq $align->{qid})) 
     {
-      $flag = "***";
+      $flag = "*";
+
+      if ($COLLAPSEONLY && 
+         ($align->{qrc} == $lastalign->{qrc}))
+      {
+        my $rdist = $align->{rstart} - $lastalign->{rend};
+
+
+        my $s;
+        my $e;
+
+        if ($align->{qrc})
+        {
+          $s = $align->{qend};
+          $e = $lastalign->{qstart};
+        }
+        else
+        {
+          $s = $lastalign->{qend};
+          $e = $align->{qstart};
+        }
+
+        my $qdist = $e - $s;
+        my $delta = $qdist - $rdist;
+
+        if ($DOAMOS)
+        {
+          print "$align->{qid}\tL\t$s\t$e\tCOLLAPSE $delta\n";
+        }
+        else
+        {
+          print ">$align->{rid}\t$align->{qid}\t";
+          print "[$lastalign->{rend},$align->{rstart}]\t$rdist\t";
+          print "[$s,$e]\t$qdist\t";
+          print "|\t$delta\n";
+
+          printAlignment($lastalign); print "\n";
+          printAlignment($align);     print "\n";
+
+          print "\n";
+        }
+      }
     }
         
 
@@ -139,19 +178,22 @@ foreach my $deltafile (@ARGV)
       my $len = $align->{qend} - $align->{qstart};
       $breakcount++;
 
-      if ($DOAMOS)
+      if (!$COLLAPSEONLY)
       {
-        my $s = $align->{qstart};
-        my $e = $s+1;
-        
-        print "$align->{qid}\tB\t$e\t$s\tSTART_BREAK: $dist ($len)\n";
-      }
-      else
-      {
+        if ($DOAMOS)
+        {
+          my $s = $align->{qstart};
+          my $e = $s+1;
+          
+          print "$align->{qid}\tB\t$e\t$s\tSTART_BREAK: $dist ($len)\n";
+        }
+        else
+        {
 
-        print "S-Break: $dist\tAlen: $len $flag\t";
-        printAlignment($align);
-        print "\n";
+          print "S-Break: $dist\tAlen: $len $flag\t";
+          printAlignment($align);
+          print "\n";
+        }
       }
     }
 
@@ -167,18 +209,21 @@ foreach my $deltafile (@ARGV)
       my $len = $align->{qend} - $align->{qstart};
       $breakcount++;
 
-      if ($DOAMOS)
+      if (!$COLLAPSEONLY)
       {
-        my $s = $align->{qend};
-        my $e = $s+1;
-        
-        print "$align->{qid}\tB\t$s\t$e\tEND_BREAK: $dist ($len)\n";
-      }
-      else
-      {
-        print "E-Break: $dist\tAlen: $len $flag\t";
-        printAlignment($align);
-        print "\n";
+        if ($DOAMOS)
+        {
+          my $s = $align->{qend};
+          my $e = $s+1;
+          
+          print "$align->{qid}\tB\t$s\t$e\tEND_BREAK: $dist ($len)\n";
+        }
+        else
+        {
+          print "E-Break: $dist\tAlen: $len $flag\t";
+          printAlignment($align);
+          print "\n";
+        }
       }
     }
 
