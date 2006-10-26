@@ -2,10 +2,18 @@
 include $(top_srcdir)/config/amos.mk
 
 amoslib_LIBRARIES = \
-	libContigUtils.a
+	libContigUtils.a \
+    libDataStore.a
+
 
 amosinclude_HEADERS = \
-	ContigUtils.hh
+	ContigUtils.hh \
+    DataStore.hh \
+    CoverageStats.hh \
+    Insert.hh  \
+    InsertStats.hh
+
+
 
 
 ##-- TO BE INSTALLED
@@ -36,6 +44,12 @@ AM_CPPFLAGS = \
 
 libContigUtils_a_SOURCES = \
     ContigUtils.cc
+
+libDataStore_a_SOURCES = \
+     DataStore.cc \
+     CoverageStats.cc \
+     Insert.cc        \
+     InsertStats.cc 
 
 ##-- fattenContig
 fattenContig_LDADD = \

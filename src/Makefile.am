@@ -19,18 +19,18 @@ SUBDIRS += \
 	Casm \
 	CtgTrim \
 	Sim \
+	Staden \
+    Contig \
 	Validation \
+    Persistant \
 	Converters \
 	Utils \
 	PerlModules \
 	Pipeline \
-	Staden \
-    Contig
 
 if BUILD_QT
-SUBDIRS += \
+SUBDIRS +=
 	bankViewer \
-    Persistant
 endif BUILD_QT
 endif BUILD_all
 

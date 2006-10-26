@@ -1,21 +1,15 @@
-amoslib_LIBRARIES = \
-     libDataStore.a
+##-- MAKE FRAGMENT FOR AMOS RULES
+include $(top_srcdir)/config/amos.mk
 
-amosinclude_HEADERS = \
-     DataStore.hh \
-     Insert.hh
+bin_PROGRAMS = hawkeye
 
-libDataStore_a_SOURCES = \
-     DataStore.cc \
-     CoverageStats.cc \
-     Insert.cc
-
-bin_PROGRAMS = hawkeye \
-               cestat-cov \
-               insert-sizes \
-               listSingletonMates \
-               library-histogram \
-               list-linked-contigs
+AM_CPPFLAGS = \
+    $(QT_CXXFLAGS)  \
+	-I$(top_srcdir)/src/Common \
+	-I$(top_srcdir)/src/Slice  \
+	-I$(top_srcdir)/src/AMOS   \
+	-I$(top_srcdir)/src/Staden/read \
+    -I$(top_srcdir)/src/Contig
 
 %.moc.cc: %.hh
 	$(QT_MOC) -o $@ $<
@@ -79,8 +73,6 @@ hawkeye_SOURCES =           \
 	UIElements.hh          \
         NChartStats.cc         \
         NChartStats.hh         \
-        InsertStats.cc         \
-        InsertStats.hh         \
         $(hawkeye_MOCSOURCES)
 
 EXTRA_DIST = \
@@ -127,52 +119,4 @@ hawkeye_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
                 $(top_builddir)/src/Slice/libSlice.a     \
                 $(top_builddir)/src/Staden/read/libread.a
 
-AM_CPPFLAGS = \
-    $(QT_CXXFLAGS)  \
-	-I$(top_srcdir)/src/Common \
-	-I$(top_srcdir)/src/Slice  \
-	-I$(top_srcdir)/src/AMOS   \
-	-I$(top_srcdir)/src/Staden/read
 
-cestat_cov_SOURCES = \
-  cestat-cov.cc
-
-cestat_cov_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
-                   $(top_builddir)/src/bankViewer/libDataStore.a \
-                   $(top_builddir)/src/Common/libCommon.a   \
-                   $(top_builddir)/src/AMOS/libAMOS.a
-
-insert_sizes_SOURCES = \
-  insert-sizes.cc \
-  InsertStats.cc 
-
-insert_sizes_LDADD = \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
-                     $(top_builddir)/src/Common/libCommon.a   \
-                     $(top_builddir)/src/AMOS/libAMOS.a 
-
-listSingletonMates_SOURCES = \
-  listSingletonMates.cc \
-  InsertStats.cc 
-
-listSingletonMates_LDADD = \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
-                     $(top_builddir)/src/Common/libCommon.a   \
-                     $(top_builddir)/src/AMOS/libAMOS.a 
-
-library_histogram_SOURCES = \
-  library-histogram.cc \
-  InsertStats.cc
-
-library_histogram_LDADD =  \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
-                     $(top_builddir)/src/Common/libCommon.a   \
-                     $(top_builddir)/src/AMOS/libAMOS.a 
-
-list_linked_contigs_SOURCES = \
-  list-linked-contigs.cc
-
-list_linked_contigs_LDADD =  \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
-                     $(top_builddir)/src/Common/libCommon.a   \
-                     $(top_builddir)/src/AMOS/libAMOS.a

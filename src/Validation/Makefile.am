@@ -6,7 +6,13 @@ bin_PROGRAMS = \
 	asmQC2 \
 	asmQC \
     analyze-read-depth \
-    find-duplicate-reads
+    find-duplicate-reads \
+    cestat-cov \
+    insert-sizes \
+    listSingletonMates \
+    library-histogram \
+    list-linked-contigs
+
 
 dist_bin_SCRIPTS = \
 	coords2cam.pl \
@@ -27,7 +33,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_builddir)/src/GNU \
-    -I$(top_srcdir)/src/Foundation
+    -I$(top_srcdir)/src/Foundation \
+    -I$(top_srcdir)/src/Contig
 
 ##-- analyze-read-depth
 analyze_read_depth_LDADD = \
@@ -79,4 +86,45 @@ find_duplicate_reads_SOURCES = \
 #shotgunSim_SOURCES = \
 #	shotgunSim.cc
 
-##-- END OF MAKEFILE --##
+
+cestat_cov_SOURCES = \
+  cestat-cov.cc
+
+cestat_cov_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
+                   $(top_builddir)/src/bankViewer/libDataStore.a \
+                   $(top_builddir)/src/Common/libCommon.a   \
+                   $(top_builddir)/src/AMOS/libAMOS.a
+
+insert_sizes_SOURCES = \
+  insert-sizes.cc
+
+insert_sizes_LDADD = \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a 
+
+listSingletonMates_SOURCES = \
+  listSingletonMates.cc
+
+listSingletonMates_LDADD = \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a 
+
+library_histogram_SOURCES = \
+  library-histogram.cc
+
+library_histogram_LDADD =  \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a 
+
+list_linked_contigs_SOURCES = \
+  list-linked-contigs.cc
+
+list_linked_contigs_LDADD =  \
+                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a
+
+
