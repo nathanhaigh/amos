@@ -26,11 +26,11 @@ SUBDIRS += \
 	Converters \
 	Utils \
 	PerlModules \
-	Pipeline \
+	Pipeline 
 
 if BUILD_QT
 SUBDIRS +=
-	bankViewer \
+	bankViewer
 endif BUILD_QT
 endif BUILD_all
 
