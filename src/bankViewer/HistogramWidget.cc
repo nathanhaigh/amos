@@ -203,16 +203,6 @@ void HistogramWidget::paintEvent(QPaintEvent * event)
       drawNormal(p, histleft, histbottom, histwidth, histheight-gutter, 
                  xscale/m_stats->m_bucketsize, mean, sd, 
                  m_stats->m_low, m_stats->m_high);
-
-      p.setPen(Qt::green);
-
-      drawNormal(p, histleft, histbottom, histwidth, histheight-gutter, 
-                 xscale/m_stats->m_bucketsize, mean, sd/m_shadesd, 
-                 m_stats->m_low, m_stats->m_high);
-
-      drawNormal(p, histleft, histbottom, histwidth, histheight-gutter, 
-                 xscale/m_stats->m_bucketsize, mean, sd*m_shadesd, 
-                 m_stats->m_low, m_stats->m_high);
     }
 
     p.setPen(Qt::black);
