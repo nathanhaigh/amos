@@ -36,10 +36,13 @@ void Sequence_t::clear ( )
 //----------------------------------------------------- compress ---------------
 void Sequence_t::compress ( )
 {
-  if (seq_m == NULL)
-    AMOS_THROW_ARGUMENT("No sequence data to compress");
-
   if ( isCompressed( ) )
+    return;
+
+  //-- store compression flag in bit COMPRESS_BIT
+  flags_m . nibble |= COMPRESS_BIT;
+
+  if (seq_m == NULL)
     return;
 
   //-- Store compressed data in seq_m
@@ -49,9 +52,6 @@ void Sequence_t::compress ( )
   //-- Free qual_m, it is no longer used
   free (qual_m);
   qual_m = NULL;
-
-  //-- store compression flag in bit COMPRESS_BIT
-  flags_m . nibble |= COMPRESS_BIT;
 }
 
 
@@ -230,10 +230,13 @@ void Sequence_t::setSequence (const string & seq, const string & qual)
 //----------------------------------------------------- uncompress -------------
 void Sequence_t::uncompress ( )
 {
-  if (seq_m == NULL)
-    AMOS_THROW_ARGUMENT("No sequence data to compress");
-
   if ( !isCompressed( ) )
+    return;
+
+  //-- store compression flag in bit COMPRESS_BIT
+  flags_m . nibble &= ~COMPRESS_BIT;
+
+  if (seq_m == NULL)
     return;
 
   //-- Uncompress, move quality scores back to qual_m
@@ -245,9 +248,6 @@ void Sequence_t::uncompress ( )
       seq_m  [i] = retval . first;
       qual_m [i] = retval . second;
     }
-
-  //-- store compression flag in bit COMPRESS_BIT
-  flags_m . nibble &= ~COMPRESS_BIT;
 }
 
 
