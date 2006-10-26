@@ -53,8 +53,9 @@ int main (int argc, char ** argv)
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
-    tf->getOptions()->addOptionResult("u", &CONVERTUNGAPPED,  "Left");
-    tf->getOptions()->addOptionResult("i", &USEIID,  "Left");
+    tf->getOptions()->addOptionResult("u", &CONVERTUNGAPPED);
+    tf->getOptions()->addOptionResult("i", &USEIID);
+    tf->getOptions()->addOptionResult("d", &DEBUG);
 
     tf->handleStandardOptions();
 
