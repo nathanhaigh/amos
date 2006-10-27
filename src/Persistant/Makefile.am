@@ -48,7 +48,7 @@ build_persistent_bank_SOURCES = \
 ##-- auto-fix-contigs
 auto_fix_contigs_LDADD = \
     $(top_builddir)/src/Contig/libContigUtils.a \
-    $(top_builddir)/src/bankViewer/libDataStore.a \
+    $(top_builddir)/src/Contig/libDataStore.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a \
@@ -106,7 +106,7 @@ gap_closure_reads_SOURCES = \
 ##-- mate-evolution
 mate_evolution_LDADD = \
 	$(top_builddir)/src/GNU/libGNU.a \
-    $(top_builddir)/src/bankViewer/libDataStore.a \
+    $(top_builddir)/src/Contig/libDataStore.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
