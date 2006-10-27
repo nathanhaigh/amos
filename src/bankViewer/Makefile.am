@@ -23,7 +23,6 @@ hawkeye_MOCSOURCES = \
         CGraphWindow.cc        \
         ChromoField.cc         \
         ChromoPicker.cc        \
-        ChromoStore.cc         \
         ConsensusField.cc      \
         ContigCanvasItem.cc    \
         ContigPicker.cc        \
@@ -69,6 +68,8 @@ CLEANFILES = $(hawkeye_MOCSOURCES:.cc=.moc.cc)
 
 hawkeye_SOURCES =           \
         main.cc                \
+        ChromoStore.cc \
+        ChromoStore.hh \
 	UIElements.cc          \
 	UIElements.hh          \
         NChartStats.cc         \
@@ -113,7 +114,7 @@ EXTRA_DIST = \
 
 
 hawkeye_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
-                $(top_builddir)/src/bankViewer/libDataStore.a \
+                $(top_builddir)/src/Contig/libDataStore.a \
                 $(top_builddir)/src/Common/libCommon.a   \
                 $(top_builddir)/src/AMOS/libAMOS.a       \
                 $(top_builddir)/src/Slice/libSlice.a     \

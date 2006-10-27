@@ -91,7 +91,7 @@ cestat_cov_SOURCES = \
   cestat-cov.cc
 
 cestat_cov_LDADD = $(QT_LIBS) $(EXTRA_LDADD) \
-                   $(top_builddir)/src/bankViewer/libDataStore.a \
+                   $(top_builddir)/src/Contig/libDataStore.a \
                    $(top_builddir)/src/Common/libCommon.a   \
                    $(top_builddir)/src/AMOS/libAMOS.a
 
@@ -99,7 +99,7 @@ insert_sizes_SOURCES = \
   insert-sizes.cc
 
 insert_sizes_LDADD = \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Contig/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a 
 
@@ -107,7 +107,7 @@ listSingletonMates_SOURCES = \
   listSingletonMates.cc
 
 listSingletonMates_LDADD = \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Contig/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a 
 
@@ -115,7 +115,7 @@ library_histogram_SOURCES = \
   library-histogram.cc
 
 library_histogram_LDADD =  \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Contig/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a 
 
@@ -123,7 +123,7 @@ list_linked_contigs_SOURCES = \
   list-linked-contigs.cc
 
 list_linked_contigs_LDADD =  \
-                     $(top_builddir)/src/bankViewer/libDataStore.a \
+                     $(top_builddir)/src/Contig/libDataStore.a \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a
 
