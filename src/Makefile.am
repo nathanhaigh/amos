@@ -29,7 +29,7 @@ SUBDIRS += \
 	Pipeline 
 
 if BUILD_QT
-SUBDIRS +=
+SUBDIRS += \
 	bankViewer
 endif BUILD_QT
 endif BUILD_all
