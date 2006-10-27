@@ -9,23 +9,20 @@ CGraphView.cc\
 CGraphWindow.cc\
 ChromoField.cc\
 ChromoPicker.cc\
+ChromoStore.cc\
 ConsensusField.cc\
 ContigCanvasItem.cc\
 ContigPicker.cc\
 CoverageCanvasItem.cc\
 CoverageRectCanvasItem.cc\
-CoverageStats.cc\
-DataStore.cc\
 DetailWidget.cc\
 FeatureBrowser.cc\
 FeatureCanvasItem.cc\
 HistogramWidget.cc\
 HistogramWindow.cc\
 InsertCanvasItem.cc\
-Insert.cc\
 InsertField.cc\
 InsertPosition.cc\
-InsertStats.cc\
 InsertWidget.cc\
 InsertWindow.cc\
 LaunchPadBase.cc\
@@ -62,13 +59,12 @@ CGraphView.hh\
 CGraphWindow.hh\
 ChromoField.hh\
 ChromoPicker.hh\
+ChromoStore.hh\
 ConsensusField.hh\
 ContigCanvasItem.hh\
 ContigPicker.hh\
 CoverageCanvasItem.hh\
 CoverageRectCanvasItem.hh\
-CoverageStats.hh\
-DataStore.hh\
 DetailWidget.hh\
 FeatureBrowser.hh\
 FeatureCanvasItem.hh\
@@ -76,9 +72,7 @@ HistogramWidget.hh\
 HistogramWindow.hh\
 InsertCanvasItem.hh\
 InsertField.hh\
-Insert.hh\
 InsertPosition.hh\
-InsertStats.hh\
 InsertWidget.hh\
 InsertWindow.hh\
 LaunchPadBase.hh\
@@ -104,6 +98,6 @@ TilingFrame.hh\
 UIElements.hh
 
 
-INCLUDEPATH	+= ../AMOS ../Common ../Slice ../Staden/read ../../
-LIBS	+=  -L../AMOS -L../Common -L../Staden/read -lAMOS -lCommon -lAMOS -lCommon -lread -lz
+INCLUDEPATH	+= ../AMOS ../Common ../Slice ../Staden/read ../../ ../Contig
+LIBS	+=  -L../AMOS -L../Common -L../Staden/read -lDataStore -lAMOS -lCommon -lAMOS -lCommon -lread -lz
 
