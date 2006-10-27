@@ -3,7 +3,7 @@
 # initialize
 AC_PREREQ(2.59)
 AC_INIT([AMOS Assembler],
-        [1.5.0b],
+        [2.0.0],
         [amos-help@lists.sourceforge.net],
         [amos])
 AC_PREFIX_DEFAULT([`pwd`])
