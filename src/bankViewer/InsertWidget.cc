@@ -1301,7 +1301,7 @@ void InsertWidget::paintCanvas()
         {
           if (m_colorByStretchiness)
           {
-            if (types[type] == Insert::Happy)
+            if (types[type] == (char)Insert::Happy)
             {
               if ((istate == Insert::Happy) || 
                   (istate == Insert::CompressedMate) || 
@@ -1309,11 +1309,11 @@ void InsertWidget::paintCanvas()
               else { continue; }
             }
             else if (istate == Insert::CompressedMate || istate == Insert::ExpandedMate) { continue; }
-            else if (istate != types[type]) { continue; }
+            else if ((char)istate != types[type]) { continue; }
           }
           else
           {
-            if (istate != types[type]) { continue; }
+            if ((char)istate != types[type]) { continue; }
           }
         }
         else
