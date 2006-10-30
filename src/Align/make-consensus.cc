@@ -114,8 +114,7 @@ int  main
   {
    Bank_t  read_bank (Read_t::NCODE);
    BankStream_t contig_bank (Contig_t::NCODE);
-   BankStream_t layout_bank_stream (Layout_t::NCODE);
-   Bank_t layout_bank (Layout_t::NCODE);
+   BankStream_t layout_bank (Layout_t::NCODE);
    Celera_Message_t  msg;
    Read_t  read;
    FILE  * input_fp;
@@ -247,10 +246,7 @@ int  main
 
            read_bank . open (Bank_Name, B_READ);
 
-	   if (byIID || byEID)
-	     layout_bank . open (Bank_Name);
-	   else
-	     layout_bank_stream . open (Bank_Name);
+	   layout_bank . open (Bank_Name);
 
            msg . setType (IUM_MSG);
            msg . setStatus (UNASSIGNED_UNITIG);
@@ -276,8 +272,8 @@ int  main
 		 layout_bank . fetch(*eidi, layout);
 		 eidi++;
 	       } else {
-		 layout_bank_stream >> layout;
-		 if (layout_bank_stream.eof())
+		 layout_bank >> layout;
+		 if (layout_bank.eof())
 		   break;
 	       }
 
