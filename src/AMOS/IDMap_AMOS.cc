@@ -199,6 +199,8 @@ const IDMap_t::HashTriple_t * IDMap_t::insert (ID_t iid,
 
   HashNode_t * curri, * curre;
 
+  //cerr << "insert bid: " << bid << "\tiid:" << iid << "\teid: \"" << eid << "\"" << endl;
+
   if ( lookupnode (iid, curri) )
     {
       ostringstream ss;
@@ -512,8 +514,27 @@ void IDMap_t::read(const std::string & path)
   type_m = Encode (buffer);
   resize (size);
 
-  while (fscanf(fp, "%d\t%d\t%s\n", &bid, &iid, buffer) != EOF)
+  while (fscanf(fp, "%d\t%d", &bid, &iid) != EOF)
   {
+    int i;
+
+    int c = getc(fp);
+
+    if (c != '\t')
+    {
+      AMOS_THROW_IO("Map file is corrupted for " + path);
+    }
+
+    for (i = 0; i < MAX_EID_LENGTH; i++)
+    {
+      c = getc(fp);
+
+      if (c == '\n' || c == EOF) { break; }
+      buffer[i] = c;
+    }
+
+    buffer[i] = '\0';
+
     insert (iid, buffer, bid);
   }
 
