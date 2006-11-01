@@ -146,7 +146,7 @@ void Unitigger::output_umd_contigs(IGraph* g, INode* p_node) {
 
 void Unitigger::output_amos_contigs(const string p_bankdir) {
   Message_t msg;
-  BankStream_t bank(Contig_t::NCODE);
+  BankStream_t bank(Layout_t::NCODE);
 
   try {
     if(!bank.exists(p_bankdir)) {
@@ -164,7 +164,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
   for( ; contig_iter != contigs.end(); ++contig_iter) {
     Contig* ctg = (*contig_iter);
     Tile_t tile;
-    Contig_t amos_ctg;
+    Layout_t amos_ctg;
     vector<Tile_t> tiles;
 
     // loop over every node in subgraph
@@ -196,7 +196,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     }
 
 	if(tiles.size() > 1) {
-	  amos_ctg.setReadTiling(tiles);
+	  amos_ctg.setTiling(tiles);
   
 	  bank << amos_ctg;
 	}
