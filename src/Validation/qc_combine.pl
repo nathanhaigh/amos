@@ -48,7 +48,7 @@ foreach my $filename (@ARGV)
 
     $_ =~ s/,avgContig,avgGap//;
 
-    if (/^\[(\S+)\]/)
+    if (/^\[(.+)\]$/)
     {
       $section=$1;
 
@@ -139,7 +139,7 @@ my $list = 0;
 foreach my $tag (@tagsequence)
 {
   ##print "TAG: \"$tag\"\n";
-  if ($tag =~ /^\[(\S+)\]/)
+  if ($tag =~ /^\[(.+)\]$/)
   {
     $section = $1;
     print $tag;
