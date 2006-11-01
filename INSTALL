@@ -23,7 +23,7 @@ X11:
     qt3
     qt3-bin
     qt3-devel
-    xorig-x11-* (all x11 packages, including fonts)
+    xorg-x11-* (all x11 packages, including fonts)
 
 
 Run ./configure from the top level source directory. 
