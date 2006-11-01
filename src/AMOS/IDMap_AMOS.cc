@@ -14,7 +14,7 @@
 using namespace AMOS;
 using namespace std;
 
-const int MAX_EID_LENGTH = 1024; //! Maximum length for an EID
+const int MAX_EID_LENGTH = 2048; //! Maximum length for an EID
 
 
 
@@ -496,44 +496,55 @@ IDMap_t & IDMap_t::operator= (const IDMap_t & s)
 void IDMap_t::read(const std::string & path)
 {
   Size_t size;
-  string ncode;
   ID_t bid, iid;
+  char buffer [MAX_EID_LENGTH+1];
 
   clear( );
 
   FILE * fp = fopen(path.c_str(), "r");
 
   if (!fp)
-  {
-    AMOS_THROW_IO ("Could not open bank partition, " + path);
-  }
+    { AMOS_THROW_IO("Could not open bank partition, " + path); } 
 
-  char buffer [MAX_EID_LENGTH+1];
+  if (fscanf(fp, "%s %d", buffer, &size) != 2)
+    { AMOS_THROW_IO("Invalid Header, Map file is corrupted for " + path); }
 
-  fscanf(fp, "%s %d", buffer, &size);  // NCODE is 3 characters
   type_m = Encode (buffer);
   resize (size);
 
-  while (fscanf(fp, "%d\t%d", &bid, &iid) != EOF)
+  while (fscanf(fp, "%d\t%d", &bid, &iid) == 2)
   {
-    int i;
-
     int c = getc(fp);
+    if (c != '\t') 
+      { AMOS_THROW_IO("Map file is corrupted for " + path); }
 
-    if (c != '\t')
-    {
-      AMOS_THROW_IO("Map file is corrupted for " + path);
-    }
-
-    for (i = 0; i < MAX_EID_LENGTH; i++)
+    // Go to <= MAX_EID_LENGTH so that we know when at least 1 char is chopped
+    int i;
+    bool done = false;
+    for (i = 0; i <= MAX_EID_LENGTH; i++)
     {
       c = getc(fp);
-
-      if (c == '\n' || c == EOF) { break; }
       buffer[i] = c;
+
+      if (c == '\n' || c == EOF) 
+      { 
+        buffer[i] = '\0';
+        done = true; break; 
+      }
     }
 
-    buffer[i] = '\0';
+    if (!done)
+    {
+      buffer[MAX_EID_LENGTH] = '\0';
+      int chop = 0; // This immediately goes to 1
+      while (!(c == '\n' || c == EOF))
+      {
+        chop++;
+        c = getc(fp);
+      }
+
+      cerr << "WARNING: Truncated EID for IID " << iid << " to " << MAX_EID_LENGTH << " characters (chopped last " << chop <<")" << endl;
+    }
 
     insert (iid, buffer, bid);
   }
