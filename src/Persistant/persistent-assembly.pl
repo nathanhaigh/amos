@@ -2,17 +2,9 @@
 use strict;
 
 my $USAGE = "persistant-assembly.pl prefix [start=0 [end=20 [inc=1]]]\n";
+my $RUNCA = "~mschatz/bin/runca.amos.opteron";
+my $EXEC = 1;
 
-sub runCmd
-{
-  my $cmd = shift;
-
-  my $echo = shift;
-  print "Running: $cmd\n" if defined $echo;
-
-  my $rc = system($cmd);
-  if ($rc) { die "$cmd failed!\n"; }
-}
 
 my $uname = `uname -p`;
 die "Must run on opteron" if (!($uname =~ /x86_64/));
@@ -28,14 +20,63 @@ $start = 0  if !defined $start;
 $end   = 20 if !defined $end;
 $inc   = 1  if !defined $inc;
 
+die "$prefix.frg is missing" if (! -r "$prefix.frg");
+
+my $BASEDIR    = "base";
+my $AMOSDIR    = "AMOS";
+my $PERSISTDIR = "persist";
+
+sub runCmd
+{
+  my $cmd = shift;
+
+  my $echo = shift;
+  print "Running: $cmd\n" if defined $echo;
+
+  if ($EXEC)
+  {
+    my $rc = system($cmd);
+    if ($rc) { die "$cmd failed!\n"; }
+  }
+}
+
+
+if (! -r "$BASEDIR/$AMOSDIR/$prefix.bnk")
+{
+  if (! -x $BASEDIR){ mkdir $BASEDIR; }
+  chdir $BASEDIR;
+
+  if (! -r "$prefix.asm")
+  {
+    print "Base Assembly\n";
+    runCmd("ln -s ../$prefix.frg .");
+    runCmd("$RUNCA $prefix", 1);
+  }
+
+  if (! -x $AMOSDIR) { mkdir $AMOSDIR; }
+  chdir $AMOSDIR;
+
+  if (! -r "$prefix.bnk")
+  {
+    runCmd("ln -s ../$prefix.frg");
+    runCmd("ln -s ../$prefix.asm");
+    runCmd("cavalidate $prefix", 1);
+  }
+
+  chdir "../..";
+}
+
+if (! -x $PERSISTDIR) { mkdir $PERSISTDIR; }
+chdir $PERSISTDIR;
+
+
 foreach my $file ("$prefix.frg", 
                   "$prefix.frgStore", 
                   "$prefix.gkpStore", 
                   "$prefix.ofg", 
-                  "$prefix.ovlStore", 
-                  "runca.amos.opteron")
+                  "$prefix.ovlStore")
 {
-  die "Required file $file is missing\n" if (! -r $file);
+  runCmd("ln -s ../$BASEDIR/$file $file") if (! -r $file);
 }
 
 
@@ -57,7 +98,7 @@ for (my $i=$start; $i <= $end; $i+=$inc)
     runCmd("ln -s ../$prefix.ofg .");
     runCmd("ln -s ../$prefix.ovlStore .");
 
-    runCmd("../runca.amos.opteron $prefix -D UNITIGERROR=$eval -s 80", 1);
+    runCmd("$RUNCA $prefix -D UNITIGERROR=$eval -s 80", 1);
   }
 
   mkdir "AMOS" if (! -x "AMOS");
@@ -68,6 +109,12 @@ for (my $i=$start; $i <= $end; $i+=$inc)
     runCmd("ln -s ../$prefix.frg");
     runCmd("ln -s ../$prefix.asm");
     runCmd("cavalidate $prefix", 1);
+  }
+
+  if (-r "../../../$prefix.1con" && ! -r "refalign.delta.q")
+  {
+    runCmd("nucmer ../../../$prefix.1con $prefix.fasta -p refalign", 1);
+    runCmd("delta-filter -q refalign.delta > refalign.delta.q", 1);
   }
 
   chdir "..";
