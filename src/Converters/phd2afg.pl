@@ -63,7 +63,7 @@ if (defined $clrfile){
     while (<CLR>){
 	chomp;
 	my ($id, $l, $r) = split(' ', $_);
-	$id =~ s/\.ab1$//;
+#	$id =~ s/\.ab1$//;
 	$clears{$id} = "$l,$r";
     }
     close(CLR);
@@ -81,7 +81,7 @@ opendir(PHD, $phddir) || die ("Cannot open $phddir: $!\n");
 while (my $file = readdir(PHD)){
     if ($file =~ /^\./){next;} # skip hidden files
     if ($file !~ /\.phd\.\d/) {next;} # skip non-phd files
-    $file =~ /^([^.]*)(\.ab1)?\.phd\.(\d)/;
+    $file =~ /^(.*)\.phd\.(\d)/;
     my $seqname = $1;
     my $rev = $3;
 

@@ -241,7 +241,6 @@ if (defined $mates) {
     while (<MATES>) {
 		chomp;
 		if (/^library/) {
-			my $libId = getId(); # get a new identifier
 			my @recs = split('\t', $_);
 
 			if ($#recs < 3 || $#recs > 4) {
@@ -256,6 +255,8 @@ if (defined $mates) {
 
 			my $mean = ($recs[2] + $recs[3]) / 2;
 			my $stdev = ($recs[3] - $recs[2]) / 6;
+
+			$libraries{$recs[1]} = $mean;
 
 			$means{$recs[1]} = $mean;
 			$stdevs{$recs[1]} = $stdev;
