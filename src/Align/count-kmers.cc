@@ -18,18 +18,23 @@ int PRINT_SIMPLE = 0;
 
 #define  DEBUG  0
 
+#define BIGMER 1
+
+#ifdef BIGMER
+typedef string Mer_t;
+typedef map<Mer_t, unsigned int> MerTable_t;
+#else
 typedef long long unsigned Mer_t;
 typedef hash_map<Mer_t, unsigned int, hash<unsigned long> > MerTable_t;
+#endif
 
-static Mer_t Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
-static Mer_t Extract_Mask = 0;
 static Mer_t Forward_Mask;
+static Mer_t MerMask;
 static int   Kmer_Len = 22;
 
 static unsigned Char_To_Binary (char ch);
 static void Forward_Add_Ch (Mer_t & mer, char ch);
 static void Reverse_Add_Ch (Mer_t & mer, char ch);
-static void Read_Mers (const char * fname, MerTable_t & mer_table);
 static void MerToAscii(Mer_t mer, string & s);
 static void CountMers (const string & s, MerTable_t & mer_table);
 static void PrintMers(const MerTable_t & mer_table, int min_count);
@@ -57,7 +62,7 @@ int  main (int argc, char * argv [])
 "   -n <bnk>   Report normalized counts (readmercount/contigmercount)\n"
 "   -k <len>   Length of kmer (default:22, must be <= 31) \n"
 "   -m <min>   Minimum count to report (default: 1)\n"
-"   -S         Print using simple nmer count format\n"
+"   -S         Print using simple nmer count format: mer count\n"
 "\n";
 
     string fastafile;
@@ -79,6 +84,12 @@ int  main (int argc, char * argv [])
 
     tf->handleStandardOptions();
 
+    #ifdef BIGMER
+    cerr << "Using BIGMER Mer_t" << endl;
+    #else
+    cerr << "Using regular Mer_t" << endl;
+    #endif
+
 
     if ((fastafile.empty() +
          readbank.empty() +
@@ -96,6 +107,7 @@ int  main (int argc, char * argv [])
     }
 
     Forward_Mask = ((long long unsigned) 1 << (2 * Kmer_Len - 2)) - 1;
+    MerMask = ((long long unsigned) 1 << (2 * Kmer_Len)) - 1;
 
     MerTable_t mer_table;
 
@@ -224,17 +236,7 @@ int  main (int argc, char * argv [])
 }
 
 const char * bintoascii = "ACGT";
-static void MerToAscii(Mer_t mer, string & s)
-{
-  s.erase();
-  s.resize(Kmer_Len);
 
-  for (int i = 0; i < Kmer_Len; i++)
-  {
-    s[Kmer_Len-i-1] = bintoascii[mer & 0x3];
-    mer >>= 2;
-  }
-}
 
 
 
@@ -268,39 +270,115 @@ static unsigned  Char_To_Binary
   }
 
 
+char RC(char ch)
+{
+  switch(toupper(ch))
+  {
+    case 'A': return 'T';
+    case 'T': return 'A';
+    case 'C': return 'G';
+    case 'G': return 'C';
 
-static void  Forward_Add_Ch
-    (Mer_t & mer, char ch)
+    default: return 'T';
+  };
+
+  return 0;
+}
+
+char NORM(char ch)
+{
+  switch(toupper(ch))
+  {
+    case 'A': return 'A';
+    case 'C': return 'C';
+    case 'G': return 'G';
+    case 'T': return 'T';
+    default: return 'A';
+  };
+
+  return 0;
+}
+
+
+#ifdef BIGMER
+
+void InitMer(Mer_t & mer)
+{
+  mer.erase();
+  mer.resize(Kmer_Len);
+}
+
+static void MerToAscii(Mer_t mer, string & s)
+{
+  s = mer;
+}
 
 //  Add  ch  to  mer  on the right, sliding one character
 //  off the left end of  mer .
+static void  Forward_Add_Ch(Mer_t & mer, char ch)
+{
+  mer += NORM(ch);
+  if (mer.length() > Kmer_Len) { mer.erase(0,1); }
+}
 
-  {
-   mer &= Forward_Mask;
-   mer <<= 2;
-   mer |= Char_To_Binary (ch);
-
-   return;
-  }
-
-static void  Reverse_Add_Ch
-    (Mer_t & mer, char ch)
 
 //  Add the Watson-Crick complement of  ch  to  mer  on the left,
 //  sliding one character off the right end of  mer .
+static void  Reverse_Add_Ch(Mer_t & mer, char ch)
+{
+  char rc = RC(ch);
+  mer.insert(0, 1, rc);
+  if (mer.length() > Kmer_Len) { mer.resize(Kmer_Len); }
+}
 
+
+#else
+
+void InitMer(Mer_t & mer)
+{
+  mer = 0;
+}
+
+static void MerToAscii(Mer_t mer, string & s)
+{
+  s.erase();
+  s.resize(Kmer_Len);
+
+  for (int i = 0; i < Kmer_Len; i++)
   {
-   mer >>= 2;
-   mer |= ((long long unsigned) (3 ^ Char_To_Binary (ch)) << (2 * Kmer_Len - 2));
-
-   return;
+    s[Kmer_Len-i-1] = bintoascii[mer & 0x3];
+    mer >>= 2;
   }
+}
+
+//  Add  ch  to  mer  on the right, sliding one character
+//  off the left end of  mer .
+static void  Forward_Add_Ch(Mer_t & mer, char ch)
+{
+  mer &= Forward_Mask;
+  mer <<= 2;
+  mer |= Char_To_Binary (ch);
+}
+
+//  Add the Watson-Crick complement of  ch  to  mer  on the left,
+//  sliding one character off the right end of  mer .
+static void  Reverse_Add_Ch(Mer_t & mer, char ch)
+{
+  mer >>= 2;
+  mer |= ((long long unsigned) (3 ^ Char_To_Binary (ch)) << (2 * Kmer_Len - 2));
+  mer &= MerMask;
+}
+
+#endif
 
 
 static void  CountMers (const string & s, MerTable_t & mer_table)
 {
-   Mer_t  fwd_mer = 0, rev_mer = 0;
+   Mer_t  fwd_mer, rev_mer;
    int  i, j, n;
+
+   InitMer(fwd_mer);
+   InitMer(rev_mer);
 
    n = s . length ();
 
