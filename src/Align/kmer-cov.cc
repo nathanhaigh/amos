@@ -28,6 +28,7 @@ const double  DEFAULT_REPEAT_CUTOFF = 90.0;
 typedef  long long unsigned  Mer_t;
 
 bool OPT_Features = false;
+bool OPT_AllowAmbiguity = false;
 int MIN_LEN  = 0;
 
 
@@ -194,15 +195,13 @@ static unsigned  Char_To_Binary
    switch  (tolower (ch))
      {
       case  'a' :
-      case  'n' :
-        return  0;
-      case  'c' :
-        return  1;
-      case  'g' :
-        return  2;
-      case  't' :
-        return  3;
+      case  'n' : return  0;
+      case  'c' : return  1;
+      case  'g' : return  2;
+      case  't' : return  3;
+
       default :
+      if (OPT_AllowAmbiguity) { return 0; }
         sprintf (Clean_Exit_Msg_Line, "Bad char = %c (ASCII %u) in Char_To_Binary",
              ch, unsigned (ch));
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
@@ -328,34 +327,17 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while  (! errflg && ((ch = getopt (argc, argv, "fhr:u:FL:")) != EOF))
+   while  (! errflg && ((ch = getopt (argc, argv, "Afhr:u:FL:")) != EOF))
      switch  (ch)
        {
-        case  'f' :
-          Make_Fasta = true;
-          break;
-
-        case 'F':
-          OPT_Features = true;
-          break;
-
-        case  'h' :
-          errflg = true;
-          break;
-
-        case  'r' :
-          Repeat_Cutoff = strtod (optarg, NULL);
-          break;
-
-        case  'u' :
-          Unique_Cutoff = strtod (optarg, NULL);
-          break;
-
-        case 'L':
-           MIN_LEN = atoi(optarg);
-           break;
-
-        case  '?' :
+        case 'A' : OPT_AllowAmbiguity = true; break;
+        case 'f' : Make_Fasta = true; break;
+        case 'F' : OPT_Features = true; break;
+        case 'h' : errflg = true; break;
+        case 'r' : Repeat_Cutoff = strtod (optarg, NULL); break;
+        case 'u' : Unique_Cutoff = strtod (optarg, NULL); break;
+        case 'L' : MIN_LEN = atoi(optarg); break;
+        case '?' :
           fprintf (stderr, "Unrecognized option -%c\n", optopt);
 
         default :
@@ -549,6 +531,7 @@ static void  Usage
            "Options:\n"
            "  -F      Output regions as Features\n"
            "  -L <len> Min Length to report as a feature\n"
+           "  -A     Allow Ambiguity Codes (treated as A's)\n"
            "\n"
            "  -f      Output unique/repeat/unsure fasta sequences\n"
            "  -h      Print this usage message\n"
