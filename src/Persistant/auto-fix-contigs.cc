@@ -62,7 +62,7 @@ pair<double, double> ceextreme(LibCE & ce, Range_t & rng, Contig_t ctg)
   {
     for (int i = 1; i < li->second.m_curpos; i+=2)
     {
-      int x = li->second.m_coverage[i].x();
+      int x = (int)li->second.m_coverage[i].x();
 
       if ((start <= x) && (x <= end))
       {
@@ -124,11 +124,19 @@ int main (int argc, char ** argv)
     string querybankname  = argvv.front(); argvv.pop_front();
     string deltafile      = argvv.front(); argvv.pop_front();
 
-    int mode = B_READ;
-    if (SAVERESULTS) { mode = B_READ|B_WRITE; }
-
     reference.openBank(referencebankname);
     query.openBank(querybankname);
+
+    int mode = B_READ;
+    if (SAVERESULTS) 
+    { 
+      mode = B_READ|B_WRITE; 
+      reference.contig_bank.close();
+      reference.contig_bank.open(referencebankname, mode);
+
+      reference.scaffold_bank.close();
+      reference.scaffold_bank.open(referencebankname, mode);
+    }
 
     reference.feat_bank.close();
     reference.feat_bank.open(referencebankname, B_READ|B_WRITE);
@@ -191,15 +199,16 @@ int main (int argc, char ** argv)
           {
             if (cur->qrc() != prev->qrc()) { cout << "Inconsistent qdir" << endl; continue; }
 
-            Range_t ref(prev->eR, cur->sR);
+            Range_t ref(min(prev->eR, cur->sR), max(prev->eR, cur->sR));
             Range_t qry(prev->eQ, cur->sQ);
 
-            if (cur->qrc()) { qry.swap(); }
+            bool qrc = false;
+
+            if (cur->qrc()) { qry.swap(); qrc = true; }
 
             int refdst   = ref.end - ref.begin;
             int qrydst   = qry.end - qry.begin;
             int delta = refdst - qrydst;
-
 
             pair<double,double> refextreme = ceextreme(refce, ref, refctg);
             pair<double,double> qryextreme = ceextreme(qryce, qry, qryctg);
@@ -210,22 +219,90 @@ int main (int argc, char ** argv)
 
             if (refextreme.first < qryextreme.first)
             {
-              cout << " Confirmed collapse in reference!" << endl;
+              cout << " Confirmed collapse in reference!: " << ref.begin << "," << ref.end << endl;
 
-              Feature_t feat;
-              feat.setRange(ref);
-              feat.setSource(make_pair(refctg.getIID(), Contig_t::NCODE));
-              feat.setType('F');
+              ReadPosLookup refpos, querypos;
+              recordReadPositions(refctg.getIID(), refctg.getReadTiling(), refpos);
+              recordReadPositions(qryctg.getIID(), qryctg.getReadTiling(), querypos);
 
-              stringstream comment;
-              comment << "Potential Collapsed Repeat delta=" << delta;
-              comment << " patch: " << querybankname;
-              feat.setComment(comment.str());
+              ReadPosLookup::iterator ri, rlow, rhigh, qi, qlow, qhigh;
+              rlow = refpos.end();
+              rhigh = refpos.end();
 
-              reference.feat_bank << feat;
+              for (ri = refpos.begin(); ri != refpos.end(); ri++)
+              {
+                if ((ri->second.getRightOffset() < ref.begin) &&
+                    ((rlow == refpos.end()) || (ri->second.getRightOffset() > rlow->second.getRightOffset())))
+                {
+                  qi = querypos.find(ri->first);
+                  if ((qi != querypos.end()) && (qi->second.getRightOffset() < qry.begin)) { rlow = ri; qlow=qi; }
+                }
+
+                if ((ri->second.m_offset > ref.end) &&
+                    ((rhigh == refpos.end()) || (ri->second.m_offset < rhigh->second.m_offset)))
+                {
+                  qi = querypos.find(ri->first);
+                  if ((qi != querypos.end()) && (qi->second.m_offset > qry.end)) { rhigh = ri; qhigh=qi; }
+                }
+              }
+
+              bool foundlow = false;
+              bool foundhi = false;
+              if (rlow != refpos.end())
+              {
+                foundlow = true;
+                cout << "Found rlow: " << rlow->first 
+                     << " [" << rlow->second.m_offset << ", " << rlow->second.getRightOffset() << "]" << endl;
+              }
+
+              if (rhigh != refpos.end())
+              {
+                foundhi = true;
+                cout << "Found rhigh: " << rhigh->first 
+                     << " [" << rhigh->second.m_offset << ", " << rhigh->second.getRightOffset() << "]" << endl;
+              }
+
+              if (foundlow && foundhi)
+              {
+                cout << "Found low and hi" << endl;
+              }
+              else
+              {
+                cout << "Didn't find both" << endl;
+              }
+
+              if (SAVERESULTS && foundlow && foundhi)
+              {
+                set<ID_t> masterreads, patchreads;
+                Range_t stitchRegion;
+
+                bool PERFECT_OVL = false;
+                bool SAVE_TO_NEW_REF_CONTIG = false;
+
+                stitchContigs(reference.contig_bank, reference.read_bank, reference.scaffold_bank, reference.feat_bank,
+                              query.contig_bank,     query.read_bank,     query.feat_bank,
+                              reference.read_bank.lookupEID(rlow->first), 
+                              reference.read_bank.lookupEID(rhigh->first),
+                              masterreads, patchreads, stitchRegion,
+                              refctg.getIID(), 0, qryctg.getIID(),
+                              SAVE_TO_NEW_REF_CONTIG, PERFECT_OVL);
+              }
+              else
+              {
+                Feature_t feat;
+                feat.setRange(ref);
+                feat.setSource(make_pair(refctg.getIID(), Contig_t::NCODE));
+                feat.setType('F');
+
+                stringstream comment;
+                comment << "Potential Collapsed Repeat delta=" << delta;
+                comment << " patch: " << querybankname;
+                feat.setComment(comment.str());
+
+                reference.feat_bank << feat;
+              }
 
               COLLAPSEFIX++;
-
             }
           }
 

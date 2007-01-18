@@ -1,9 +1,22 @@
 #!/usr/bin/perl -w
 use strict;
 
-my $USAGE = "plot-breaks.pl 1con listofdelta.q\n";
+my $USAGE = "plot-breaks.pl [-c] 1con listofdelta.q\n";
+
+my $CHECKFIX = 0;
+my $BREAKSCMD = "find-query-breaks.pl -B";
+my $tic = 10;
+
 
 my $onecon = shift @ARGV;
+
+if (defined $onecon && $onecon eq "-c") 
+{ 
+  $CHECKFIX = 1; 
+  $BREAKSCMD .= " -c"; 
+  $onecon = shift @ARGV; 
+}
+
 die $USAGE if !defined $onecon;
 
 open LENS, "getlengths $onecon |" 
@@ -19,13 +32,7 @@ while (<LENS>)
   $refcum += $len + 10000;
 }
 
-
-
-my $BREAKSCMD = "find-query-breaks.pl -B";
-
 my %breaks;
-
-my $tic = 10;
 
 foreach my $delta (@ARGV)
 {
@@ -38,6 +45,7 @@ foreach my $delta (@ARGV)
 
   my $ycoord = $num * 100;
 
+  ## Draw Horizontal Line representing genome
   foreach my $ref (keys %refinfo)
   {
     my $s = $refinfo{$ref}->{startx};
@@ -46,6 +54,7 @@ foreach my $delta (@ARGV)
     print "$s\t$ycoord\t$e\t$ycoord\t100.0\n";
   }
 
+  ## Draw a tic for every breakpoint
   while (<BREAKS>)
   {
     my @vals = split /\s+/, $_;
@@ -65,7 +74,8 @@ foreach my $delta (@ARGV)
 
     my $col = 0.0;
 
-    print "$x\t$t\t$x\t$b\t0.0\n";
+    if ($CHECKFIX) { $col = $vals[3] * 100.0; }
+    print "$x\t$t\t$x\t$b\t$col\n";
   }
 }
 
