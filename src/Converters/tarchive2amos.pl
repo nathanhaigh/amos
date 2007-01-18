@@ -726,6 +726,7 @@ sub Start_handler {
 
 my $contig_seq = "";
 my $contig_qual = "";
+my $ti_global = "";
 
 sub Char_handler {
 	my ($p, $data) = @_;
@@ -738,7 +739,7 @@ sub Char_handler {
 		chomp($data);
 		$data =~ s/^ //;
 		my @quals = split / +/, $data;
-		print " \nsize of quals is " . @quals . "\n";
+
 		for (my $q = 0; $q <= $#quals; $q++) {
 			my $qv = $quals[$q];
 			if ($qv > 60) {
@@ -754,8 +755,9 @@ sub Char_handler {
 	} elsif (($el eq "stop") && ($aavalid)) {
 		$clr2 = $data -1;
 	} elsif (($el eq "ti") && ($aaptag eq "trace")) {
-		my $tid = $seq2id{$data};
-		print FRAG "src:$tid\n";
+		$ti_global .= $data;
+
+
 	} elsif ($el eq "tracegaps") {
 		print FRAG "gap:\n";
 		chomp($data);
@@ -788,8 +790,6 @@ sub End_handler {
 	if (($el eq "contig") || ($el eq "trace")) {
 		print FRAG "}\n";
 	} elsif ($el eq "consensus") {
-		print " \nlength of concensus is ", length($contig_seq);
-		print " \nlength of gaps is " . @congaps;
 		my $ii= 0;
 		my $ss = "";
 
@@ -804,15 +804,12 @@ sub End_handler {
 		}
 		$ss .= substr($contig_seq, $ii);
 
-		print " \nlength of concensus is ", length($ss);
 		for (my $s = 0; $s < length($ss); $s += 60) {
 			print FRAG substr($ss, $s, 60), "\n";
 		}
 		print FRAG ".\n";
 		$contig_seq = $ss;
 	} elsif ($el eq "conqualities") {
-		print " \nlength of qual is ", length($contig_qual);
-		print " \nlength of gaps is " . @congaps;
 		my $ii= 0;
 		my $ss = "";
 		
@@ -830,13 +827,11 @@ sub End_handler {
 			}
 			$ss .= substr($contig_qual, $ii);
 		} else {
-			print " !!!qual already equals seq\n";
 			$ss = $contig_qual;
 		}
 
 		$ss = substr($ss, 0, length($contig_seq));
 
-		print " length of qual is ", length($ss);
 		for (my $s = 0; $s < length($ss); $s += 60) {
 			print FRAG substr($ss, $s, 60), "\n";
 		}
@@ -846,7 +841,19 @@ sub End_handler {
 		@congaps = ();
 	} elsif ($el eq "valid") {
 		$aavalid = 0;
+	} elsif ($el eq "ti") {
+		if ( defined $seq2id{$ti_global} ) {
+			my $tid = $seq2id{$ti_global};
+			print FRAG "src:$tid\n";
+		} else {
+			my $cl = $p->current_line;
+			print "ERROR no source found for ti - $ti_global\n";
+			print "   trace tag = $aaptag , ti tag $el \n";
+			print " current line in xml is $cl \n\n";
+		}
+		$ti_global = "";
 	}
+
 }
 
 if (defined($aaxmlname)) {

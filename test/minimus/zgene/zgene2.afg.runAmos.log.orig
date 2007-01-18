@@ -1,0 +1,66 @@
+!!! 2006-08-30 13:11:10  Started by dsommer@flicker03.umiacs.umd.edu on Wed Aug 30 13:11:10 2006
+
+!!! 2006-08-30 13:11:10  Doing step 10:  Building AMOS bank
+!!! 2006-08-30 13:11:10  Running: /fs/sz-user-supported/Linux-i686//bin/bank-transact -c -z -b zgene2.bank -m zgene2.afg
+START DATE: Wed Aug 30 13:11:10 2006
+Bank is: zgene2.bank
+    0%                                            100%
+AFG ..................................................
+Messages read: 154
+Objects added: 154
+Objects deleted: 0
+Objects replaced: 0
+END DATE:   Wed Aug 30 13:11:10 2006
+!!! 2006-08-30 13:11:10  Done! Elapsed time:0d 0h 0m 0s
+
+!!! 2006-08-30 13:11:10  Doing step 20:  Running overlap
+!!! 2006-08-30 13:11:10  Running: /fs/sz-user-supported/Linux-i686//bin/hash-overlap -B zgene2.bank
+Starting on Wed Aug 30 13:11:11 2006
+
+Read bank is zgene2.bank
+Alignment error rate is 0.06
+Minimum overlap bases is 40
+!!! 2006-08-30 13:11:13  Done! Elapsed time:0d 0h 0m 3s
+
+!!! 2006-08-30 13:11:13  Doing step 30:  Running contigger
+!!! 2006-08-30 13:11:13  Running: /fs/sz-user-supported/Linux-i686//bin/tigger -b zgene2.bank
+ Pulling reads from bank zgene2.bank
+Pulled 153 reads from bank 
+ Pulling overlaps from bank zgene2.bank
+Pulled 779 overlaps from bank 
+ total contained reads hidden 74
+ number of contigs 18
+this pass containment size is 74
+61 containment reads added back on this pass 
+ sub-total contained reads unhidden 61
+this pass containment size is 13
+13 containment reads added back on this pass 
+ sub-total contained reads unhidden 74
+ total contained reads unhidden 74
+ Writing layouts to bank zgene2.bank
+!!! 2006-08-30 13:11:13  Done! Elapsed time:0d 0h 0m 0s
+
+!!! 2006-08-30 13:11:13  Doing step 40:  Running consensus
+!!! 2006-08-30 13:11:13  Running: /fs/sz-user-supported/Linux-i686//bin/make-consensus -B -b zgene2.bank
+Starting on Wed Aug 30 13:11:13 2006
+
+Read bank is zgene2.bank
+Alignment error rate is 0.06
+Minimum overlap bases is 5
+Output will be written to the bank
+Input is being read from the bank 
+Processed 16 layouts
+!!! 2006-08-30 13:11:13  Done! Elapsed time:0d 0h 0m 0s
+
+!!! 2006-08-30 13:11:13  Doing step 50:  Outputting contigs
+!!! 2006-08-30 13:11:13  Running: /fs/sz-user-supported/Linux-i686//bin/bank2contig zgene2.bank > zgene2.contig
+Processing zgene2.bank at Wed Aug 30 13:11:13 2006
+End: Wed Aug 30 13:11:13 2006
+!!! 2006-08-30 13:11:13  Done! Elapsed time:0d 0h 0m 0s
+
+!!! 2006-08-30 13:11:13  Doing step 60:  Converting to FastA file
+!!! 2006-08-30 13:11:13  Running: /fs/sz-user-supported/Linux-i686//bin/bank2fasta -b zgene2.bank > zgene2.fasta
+!!! 2006-08-30 13:11:13  Done! Elapsed time:0d 0h 0m 0s
+
+!!! END - Elapsed time: 0d 0h 0m 3s
+
