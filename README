@@ -154,11 +154,12 @@ details.
    determine their layout position.
 
    - minimus -
-   Provides a lightweight overlap-layout-consensus pipeline for
-   assembly. This pipeline is only meant to handle inputs with read
-   counts in the 100's and is therefore named "mini". This pipeline is
-   perfect for assembling smaller data sets because it avoids the
-   large overhead imposed by whole genome (WGA) assemblers.
-
+  minimus is an assembly pipeline designed specifically for small
+  data-sets, such as the set of reads covering a specific gene. Note that
+  the code will work for larger assemblies (we have used it to assemble
+  bacterial genomes), however, due to its stringency, the resulting assembly
+  will be highly fragmented.  For large and/or complex assemblies the execution
+  of Minimus should be followed by additional processing steps, such as
+  scaffolding.
 
 June 2005
