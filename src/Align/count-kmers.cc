@@ -57,7 +57,7 @@ int  main (int argc, char * argv [])
 "   -r <bnk>   Bank of reads to count\n"
 "   -c <bnk>   Bank of contigs to count\n"
 "   -n <bnk>   Report normalized counts (readmercount/contigmercount)\n"
-"   -k <len>   Length of kmer (default:22, must be <= 31) \n"
+"   -k <len>   Length of kmer \n"
 "   -m <min>   Minimum count to report (default: 1)\n"
 "   -S         Print using simple nmer count format: mer count\n"
 "\n";
@@ -80,12 +80,6 @@ int  main (int argc, char * argv [])
     tf->getOptions()->addOptionResult("S",   &PRINT_SIMPLE);
 
     tf->handleStandardOptions();
-
-    #ifdef BIGMER
-    cerr << "Using BIGMER Mer_t" << endl;
-    #else
-    cerr << "Using regular Mer_t" << endl;
-    #endif
 
 
     if ((fastafile.empty() +
