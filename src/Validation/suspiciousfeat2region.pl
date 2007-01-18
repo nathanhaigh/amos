@@ -1,23 +1,27 @@
 #!/usr/local/bin/perl -w
 use strict;
 
+my $BUFFER = 1000;
+my $MIN_SIGNATURES = 2;
+
 my $contigid = -1;
+my $rstart;
 my $rend;
 my $laststart;
 my @reasons;
 
-my $buffer = 1000;
 
 sub printEnd
 {
-  if (scalar @reasons)
+  my $count = scalar @reasons;
+  if ($count >= $MIN_SIGNATURES)
   {
-    print "$rend\t|\t";
-    print join "\t", @reasons;
+    print "$contigid\t$rstart\t$rend\t$count\t|\t";
+    print join "\t|\t", @reasons;
     print "\n";
-
-    @reasons = ();
   }
+
+  @reasons = ();
 }
 
 
@@ -25,18 +29,20 @@ while (<>)
 {
   my @vals = split /\s+/, $_;
 
-  my $cid = shift @vals;
-  my $type = shift @vals;
+  my $cid    = shift @vals;
+  my $type   = shift @vals;
   my $cstart = shift @vals;
-  my $cend = shift @vals;
+  my $cend   = shift @vals;
 
   if ($cid != $contigid)
   {
     printEnd();
 
+    ## new contig
+    $contigid  = $cid;
     $laststart = -10000000;
+    $rstart    = -10000000;
     $rend      = -10000000;
-    $contigid = $cid;
   }
 
   if ($cstart < $laststart)
@@ -44,24 +50,22 @@ while (<>)
     die "Features are unsorted!";
   }
 
-  if ($cstart-$buffer > $rend)
+  if ($cstart > $rend + $BUFFER)
   {
     printEnd();
 
     ## new region 
-    my $rstart = $cstart-$buffer;
-    $rend = $cend+$buffer;
-
-    print "$contigid\t$rstart\t";
+    $rstart = $cstart;
+    $rend = $cend;
   }
-  elsif ($cend+$buffer > $rend)
+  elsif ($cend > $rend)
   {
-    $rend = $cend+$buffer;
+    $rend = $cend;
   }
 
   $laststart = $cstart;
 
-  push @reasons, "@vals\t$cstart\t$cend";
+  push @reasons, "$cstart\t$cend\t$type\t@vals";
 }
 
 printEnd();

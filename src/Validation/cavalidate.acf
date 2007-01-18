@@ -30,15 +30,9 @@ BINDIR=/fs/sz-user-supported/Linux-i686/bin
 ## Load Coverage Features
 120: $(BINDIR)/loadFeatures $(PREFIX).bnk $(PREFIX).depth.feat
 
-
-## Dump Features
-1000: $(BINDIR)/dumpFeatures $(PREFIX).bnk > $(PREFIX).all.feat
-
-## Get Suspicious Features
-1010: egrep "HIGH_SNP|HIGH_SHORT" $(PREFIX).all.feat | sort -k1 -nk3 > $(PREFIX).suspicious.feat
-
-## Create Suspicious Regions
-1020: $(BINDIR)/suspiciousfeat2region $(PREFIX).suspicious.feat > $(PREFIX).suspicious.regions
+## Combine Features
+1000: $(BINDIR)/dumpFeatures $(PREFIX).bnk | sort -k1 -nk3 > $(PREFIX).all.feat
+1010: $(BINDIR)/suspiciousfeat2region $(PREFIX).all.feat > $(PREFIX).suspicious.regions
 
 ## Create Fasta
-1030: $(BINDIR)/bank2fasta -e -b $(PREFIX).bnk > $(PREFIX).fasta
+1100: $(BINDIR)/bank2fasta -e -b $(PREFIX).bnk > $(PREFIX).fasta
