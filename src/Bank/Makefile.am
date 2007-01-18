@@ -194,6 +194,7 @@ dumpmates_SOURCES = \
 
 ##-- dumpFeatures
 dumpFeatures_LDADD = \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
 dumpFeatures_SOURCES = \
