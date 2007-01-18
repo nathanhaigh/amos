@@ -216,7 +216,7 @@ DataStore::MateInfo_t DataStore::getMatePair(ID_t readid)
   {
     return m_readmatelookup[read_bank.lookupBID(readid)];
   }
-  else
+  else if (frag_bank.isOpen())
   {
     Read_t read;
     read_bank.fetchFix(readid, read);
