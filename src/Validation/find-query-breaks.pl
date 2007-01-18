@@ -2,6 +2,7 @@
 use strict;
 
 use AMOS::AmosFoundation;
+use File::Basename;
 
 my $TRIMWIGGLE = 10;
 my $CIRCLEWIGGLE = 0;
@@ -9,7 +10,9 @@ my $MINLENGTH = 0;
 my $FLAGDIST = undef;
 my $FLAGSAME = undef;
 my $DOAMOS = 0;
+my $BREAKONLY = 0;
 my $COLLAPSEONLY = 0;
+my $CHECKFIX = 0;
 
 my $HELPTEXT = qq~
 Find alignment breaks in query sequences.
@@ -20,11 +23,14 @@ Note: You should probably run 'delta-filter -q out.delta > out.delta.q'
   find-query-breaks.pl [options] deltafile
 
   -b <val> Minimum length of alignment break to report (Default: 10)
-  -c <val> Minimum distance to edge of reference sequence to report (Default: 0)
+  -w <val> Minimum distance to edge of reference sequence to report (Default: 0)
   -l <val> Minimum length of query sequence to report (Default: 0)
   -f <val> Flag broken alignments within this distance of reference
   -s       Flag adjacent broken alignments from same query
   -C       Only show collapses
+
+  -B       Only show alignment breaks
+  -c       Load fix regions from all.feat and mark if fixed in -B breakreport
 
   -a       Display breaks as AMOS features
 ~;
@@ -37,17 +43,43 @@ sub printAlignment
   print "$align->{rid} {1 [$align->{rstart},$align->{rend}] $align->{rlen}} | $align->{qid} {1 [$align->{qstart},$align->{qend}] $align->{qlen}} $rc";
 }
 
+sub hasFix
+{
+  my $fixes = shift;
+  my $qid = shift;
+  my $pos = shift;
+
+  my $FIXWINDOW = 5000;
+
+  if (exists $fixes->{$qid})
+  {
+    foreach my $f (@{$fixes->{$qid}})
+    {
+      if (($f->{start} - $FIXWINDOW < $pos) &&
+          ($f->{end}   + $FIXWINDOW > $pos))
+      {
+        return 1;
+      }
+    }
+  }
+  
+  return 0;
+}
+
 my $base = new AMOS::AmosFoundation;
 $base->setHelpText($HELPTEXT);
 $base->setUsage("find-query-breaks.pl [options] deltafile");
 
+
 my $err = $base->getOptions("b=i" => \$TRIMWIGGLE,
-                            "c=i" => \$CIRCLEWIGGLE,
+                            "w=i" => \$CIRCLEWIGGLE,
                             "l=i" => \$MINLENGTH,
                             "f=i" => \$FLAGDIST,
                             "s"   => \$FLAGSAME,
                             "C"   => \$COLLAPSEONLY,
-                            "a"   => \$DOAMOS);
+                            "B"   => \$BREAKONLY,
+                            "a"   => \$DOAMOS,
+                            "c"   => \$CHECKFIX);
 
 if (!$err) { $base->bail("Command line parsing failed. See -h option"); }
 
@@ -62,6 +94,32 @@ my $multidelta = (scalar @ARGV) > 1;
 foreach my $deltafile (@ARGV)
 {
   print ">$deltafile\n" if $multidelta;
+
+  my %fixes;
+  if ($CHECKFIX)
+  {
+    my $fixname = dirname(File::Spec->rel2abs($deltafile)) . "/all.feat";
+
+    open FIXES, "< $fixname" or die "Can't open $fixname ($!)\n";
+    while (<FIXES>)
+    {
+      my @vals = split /\s+/, $_;
+      if ($vals[1] eq "F")
+      {
+        my $fix;
+        $fix->{start} = $vals[2];
+        $fix->{end}   = $vals[3];
+
+        if ($fix->{start} > $fix->{end})
+        {
+          $fix->{start} = $vals[3];
+          $fix->{end}   = $vals[2];
+        }
+
+        push @{$fixes{$vals[0]}}, $fix;
+      }
+    }
+  }
 
   my $cmd = "show-coords -Hcrl $deltafile";
   open COORDS, "$cmd |" or die "Can't run $cmd ($!)\n";
@@ -180,7 +238,12 @@ foreach my $deltafile (@ARGV)
 
       if (!$COLLAPSEONLY)
       {
-        if ($DOAMOS)
+        if ($BREAKONLY)
+        {
+          my $fixed = hasFix(\%fixes, $align->{qid}, $align->{qstart});
+          print "$align->{rid} start $align->{rstart} $fixed $align->{qid} $align->{qstart}\n";
+        }
+        elsif ($DOAMOS)
         {
           my $s = $align->{qstart};
           my $e = $s+1;
@@ -211,7 +274,12 @@ foreach my $deltafile (@ARGV)
 
       if (!$COLLAPSEONLY)
       {
-        if ($DOAMOS)
+        if ($BREAKONLY)
+        {
+          my $fixed = hasFix(\%fixes, $align->{qid}, $align->{qend});
+          print "$align->{rid} end $align->{rend} $fixed $align->{qid} $align->{qend}\n";
+        }
+        elsif ($DOAMOS)
         {
           my $s = $align->{qend};
           my $e = $s+1;
