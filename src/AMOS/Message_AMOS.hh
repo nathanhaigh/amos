@@ -16,72 +16,74 @@
 #include <vector>
 #include <iostream>
 
-
+// Use a macro because OS X doesn't like/allow static members initialized
+// with actual code.
+#define AMOS_ENCODE(a,b,c) ((((c << CHAR_BIT) | b) << CHAR_BIT) | a)
 
 namespace AMOS {
 
 const char      E_ADD          = 'A';
 const char      E_DELETE       = 'D';
 const char      E_REPLACE      = 'R';
-const NCode_t   F_NULL         = Encode ("nul");
-const NCode_t   F_AHANG        = Encode ("ahg");
-const NCode_t   F_ACTION       = Encode ("act");
-const NCode_t   F_ADJACENCY    = Encode ("adj");
-const NCode_t   F_BASEPOSITION = Encode ("bcp");
-const NCode_t   F_BHANG        = Encode ("bhg");
-const NCode_t   F_BID          = Encode ("bid");
-const NCode_t   F_CLEAR        = Encode ("clr");
-const NCode_t   F_COMMENT      = Encode ("com");
-const NCode_t   F_COUNT        = Encode ("cnt");
-const NCode_t   F_EID          = Encode ("eid");
-const NCode_t   F_EDGE         = Encode ("edg");
-const NCode_t   F_FLAG         = Encode ("flg");
-const NCode_t   F_FRAGMENT     = Encode ("frg");
-const NCode_t   F_GAPS         = Encode ("gap");
-const NCode_t   F_IID          = Encode ("iid");
-const NCode_t   F_LIBRARY      = Encode ("lib");
-const NCode_t   F_LINK         = Encode ("lnk");
-const NCode_t   F_MAP          = Encode ("map");
-const NCode_t   F_MEAN         = Encode ("mea");
-const NCode_t   F_MEMBER       = Encode ("mbr");
-const NCode_t   F_NODES        = Encode ("nds");
-const NCode_t   F_OBJECT       = Encode ("obj");
-const NCode_t   F_OFFSET       = Encode ("off");
-const NCode_t   F_POSITION     = Encode ("pos");
-const NCode_t   F_QUALITY      = Encode ("qlt");
-const NCode_t   F_QUALITYCLEAR = Encode ("qcr");
-const NCode_t   F_READS        = Encode ("rds");
-const NCode_t   F_SCORE        = Encode ("scr");
-const NCode_t   F_SEQUENCE     = Encode ("seq");
-const NCode_t   F_SD           = Encode ("std");
-const NCode_t   F_SIZE         = Encode ("sze");
-const NCode_t   F_SOURCE       = Encode ("src");
-const NCode_t   F_STATUS       = Encode ("sts");
-const NCode_t   F_TYPE         = Encode ("typ");
-const NCode_t   F_VECTORCLEAR  = Encode ("vcr");
-const NCode_t   M_NULL         = Encode ("NUL");
-const NCode_t   M_UNIVERSAL    = Encode ("UNV");
-const NCode_t   M_CONTIG       = Encode ("CTG");
-const NCode_t   M_CONTIGEDGE   = Encode ("CTE");
-const NCode_t   M_CONTIGLINK   = Encode ("CTL");
-const NCode_t   M_DISTRIBUTION = Encode ("DST");
-const NCode_t   M_EDGE         = Encode ("EDG");
-const NCode_t   M_FEATURE      = Encode ("FEA");
-const NCode_t   M_FRAGMENT     = Encode ("FRG");
-const NCode_t   M_GROUP        = Encode ("GRP");
-const NCode_t   M_KMER         = Encode ("KMR");
-const NCode_t   M_LAYOUT       = Encode ("LAY");
-const NCode_t   M_LIBRARY      = Encode ("LIB");
-const NCode_t   M_LINK         = Encode ("LNK");
-const NCode_t   M_IDMAP        = Encode ("MAP");
-const NCode_t   M_INDEX        = Encode ("IDX");
-const NCode_t   M_OVERLAP      = Encode ("OVL");
-const NCode_t   M_READ         = Encode ("RED");
-const NCode_t   M_SCAFFOLD     = Encode ("SCF");
-const NCode_t   M_SCAFFOLDEDGE = Encode ("SCE");
-const NCode_t   M_SCAFFOLDLINK = Encode ("SCL");
-const NCode_t   M_SEQUENCE     = Encode ("SEQ");
-const NCode_t   M_TILE         = Encode ("TLE");
+const NCode_t   F_NULL         = AMOS_ENCODE ('n','u','l');
+const NCode_t   F_AHANG        = AMOS_ENCODE ('a','h','g');
+const NCode_t   F_ACTION       = AMOS_ENCODE ('a','c','t');
+const NCode_t   F_ADJACENCY    = AMOS_ENCODE ('a','d','j');
+const NCode_t   F_BASEPOSITION = AMOS_ENCODE ('b','c','p');
+const NCode_t   F_BHANG        = AMOS_ENCODE ('b','h','g');
+const NCode_t   F_BID          = AMOS_ENCODE ('b','i','d');
+const NCode_t   F_CLEAR        = AMOS_ENCODE ('c','l','r');
+const NCode_t   F_COMMENT      = AMOS_ENCODE ('c','o','m');
+const NCode_t   F_COUNT        = AMOS_ENCODE ('c','n','t');
+const NCode_t   F_EID          = AMOS_ENCODE ('e','i','d');
+const NCode_t   F_EDGE         = AMOS_ENCODE ('e','d','g');
+const NCode_t   F_FLAG         = AMOS_ENCODE ('f','l','g');
+const NCode_t   F_FRAGMENT     = AMOS_ENCODE ('f','r','g');
+const NCode_t   F_GAPS         = AMOS_ENCODE ('g','a','p');
+const NCode_t   F_IID          = AMOS_ENCODE ('i','i','d');
+const NCode_t   F_LIBRARY      = AMOS_ENCODE ('l','i','b');
+const NCode_t   F_LINK         = AMOS_ENCODE ('l','n','k');
+const NCode_t   F_MAP          = AMOS_ENCODE ('m','a','p');
+const NCode_t   F_MEAN         = AMOS_ENCODE ('m','e','a');
+const NCode_t   F_MEMBER       = AMOS_ENCODE ('m','b','r');
+const NCode_t   F_NODES        = AMOS_ENCODE ('n','d','s');
+const NCode_t   F_OBJECT       = AMOS_ENCODE ('o','b','j');
+const NCode_t   F_OFFSET       = AMOS_ENCODE ('o','f','f');
+const NCode_t   F_POSITION     = AMOS_ENCODE ('p','o','s');
+const NCode_t   F_QUALITY      = AMOS_ENCODE ('q','l','t');
+const NCode_t   F_QUALITYCLEAR = AMOS_ENCODE ('q','c','r');
+const NCode_t   F_READS        = AMOS_ENCODE ('r','d','s');
+const NCode_t   F_SCORE        = AMOS_ENCODE ('s','c','r');
+const NCode_t   F_SEQUENCE     = AMOS_ENCODE ('s','e','q');
+const NCode_t   F_SD           = AMOS_ENCODE ('s','t','d');
+const NCode_t   F_SIZE         = AMOS_ENCODE ('s','z','e');
+const NCode_t   F_SOURCE       = AMOS_ENCODE ('s','r','c');
+const NCode_t   F_STATUS       = AMOS_ENCODE ('s','t','s');
+const NCode_t   F_TYPE         = AMOS_ENCODE ('t','y','p');
+const NCode_t   F_VECTORCLEAR  = AMOS_ENCODE ('v','c','r');
+const NCode_t   M_NULL         = AMOS_ENCODE ('N','U','L');
+const NCode_t   M_UNIVERSAL    = AMOS_ENCODE ('U','N','V');
+const NCode_t   M_CONTIG       = AMOS_ENCODE ('C','T','G');
+const NCode_t   M_CONTIGEDGE   = AMOS_ENCODE ('C','T','E');
+const NCode_t   M_CONTIGLINK   = AMOS_ENCODE ('C','T','L');
+const NCode_t   M_DISTRIBUTION = AMOS_ENCODE ('D','S','T');
+const NCode_t   M_EDGE         = AMOS_ENCODE ('E','D','G');
+const NCode_t   M_FEATURE      = AMOS_ENCODE ('F','E','A');
+const NCode_t   M_FRAGMENT     = AMOS_ENCODE ('F','R','G');
+const NCode_t   M_GROUP        = AMOS_ENCODE ('G','R','P');
+const NCode_t   M_KMER         = AMOS_ENCODE ('K','M','R');
+const NCode_t   M_LAYOUT       = AMOS_ENCODE ('L','A','Y');
+const NCode_t   M_LIBRARY      = AMOS_ENCODE ('L','I','B');
+const NCode_t   M_LINK         = AMOS_ENCODE ('L','N','K');
+const NCode_t   M_IDMAP        = AMOS_ENCODE ('M','A','P');
+const NCode_t   M_INDEX        = AMOS_ENCODE ('I','D','X');
+const NCode_t   M_OVERLAP      = AMOS_ENCODE ('O','V','L');
+const NCode_t   M_READ         = AMOS_ENCODE ('R','E','D');
+const NCode_t   M_SCAFFOLD     = AMOS_ENCODE ('S','C','F');
+const NCode_t   M_SCAFFOLDEDGE = AMOS_ENCODE ('S','C','E');
+const NCode_t   M_SCAFFOLDLINK = AMOS_ENCODE ('S','C','L');
+const NCode_t   M_SEQUENCE     = AMOS_ENCODE ('S','E','Q');
+const NCode_t   M_TILE         = AMOS_ENCODE ('T','L','E');
 
 
 //================================================ Message_t ===================
