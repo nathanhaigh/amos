@@ -8,6 +8,7 @@ using namespace std;
 
 int s_verbose(0);
 int clusterdist(0);
+int PRINTIID(0);
 float thresholdx = 3.0;
 string CONTIGIIDS;
 
@@ -56,6 +57,7 @@ int main (int argc, char ** argv)
 "   -x <val>     Flag regions val x times the global average depth\n"
 "   -c <dist>    Cluster regions within <dist> bp\n"
 "   -I <file>    Only use list of contigs iids in file for computing average\n"
+"   -i           Print contig IIDs instead of EIDs\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
@@ -66,6 +68,7 @@ int main (int argc, char ** argv)
     tf->getOptions()->addOptionResult("x=f",       &thresholdx);
     tf->getOptions()->addOptionResult("c=i",       &clusterdist);
     tf->getOptions()->addOptionResult("I=s",       &CONTIGIIDS);
+    tf->getOptions()->addOptionResult("i",         &PRINTIID);
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -177,7 +180,14 @@ int main (int argc, char ** argv)
           {
             if (cluster && (offset > end + clusterdist))
             {
-              cout << c->eid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+              if (PRINTIID)
+              {
+                cout << c->iid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+              }
+              else
+              {
+                cout << c->eid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+              }
               maxdepth = 0;
 
               cluster = false;
@@ -187,7 +197,14 @@ int main (int argc, char ** argv)
 
         if (cluster)
         {
-          cout << c->eid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+          if (PRINTIID)
+          {
+            cout << c->iid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+          }
+          else
+          {
+            cout << c->eid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+          }
         }
       }
     }

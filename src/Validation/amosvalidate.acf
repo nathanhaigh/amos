@@ -16,27 +16,27 @@ INPUTS = $(PREF).bnk
 320: $(BINDIR)/asmQC -b $(PREF).bnk -cestat -feat -numsd 3 -scaff
 
 ## Analyzing SNPs
-400: $(BINDIR)/analyzeSNPs -b $(PREF).bnk -S -cumqv 40 -minsnps 2 -r -e -H > $(PREF).snps
+400: $(BINDIR)/analyzeSNPs -i -b $(PREF).bnk -S -cumqv 40 -minsnps 2 -r -H > $(PREF).snps
 410: $(BINDIR)/clusterSnps $(PREF).snps > $(PREF).snp.feat
-420: $(BINDIR)/loadFeatures $(PREF).bnk $(PREF).snp.feat
+420: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).snp.feat
 
 ## Analyzing read coverage
-500: $(BINDIR)/analyze-read-depth $(PREF).bnk -c 1000 -x 3 > $(PREF).depth.feat
-510: $(BINDIR)/loadFeatures $(PREF).bnk $(PREF).depth.feat
+500: $(BINDIR)/analyze-read-depth -i $(PREF).bnk -c 1000 -x 3 > $(PREF).depth.feat
+510: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).depth.feat
 
 ## Align singleton reads
-600: $(BINDIR)/listReadPlacedStatus $(PREF).bnk -S -E > $(PREF).singletons
-610: $(BINDIR)/dumpreads $(PREF).bnk -E $(PREF).singletons > $(PREF).singletons.seq
+600: $(BINDIR)/listReadPlacedStatus -S -E $(PREF).bnk > $(PREF).singletons
+610: $(BINDIR)/dumpreads -E $(PREF).singletons $(PREF).bnk > $(PREF).singletons.seq
 620: $(NUCMER) --maxmatch -l 30 -c 100 -g 30 -b 50 --prefix=$(PREF) $(PREF).fasta $(PREF).singletons.seq
 
 ## Analyzing singleton alignment breakpoints
-700: $(BINDIR)/casm-breaks $(PREF).delta -b $(PREF).bnk -F $(PREF).break.fea
+700: $(BINDIR)/casm-breaks -b $(PREF).bnk -F $(PREF).break.fea $(PREF).delta 
 710: $(BINDIR)/bank-transact -b $(PREF).bnk -m $(PREF).break.fea
 
 ## Analyzing kmer-coverage
 800: $(BINDIR)/count-kmers -n $(PREF).bnk -m 22 > $(PREF).22.n22mers
-810: $(BINDIR)/kmer-cov $(PREF).22.n22mers -A -F -L 1000 < $(PREF).fasta > $(PREF).nkmer.feat
-820: $(BINDIR)/loadFeatures $(PREF).bnk $(PREF).nkmer.feat -u -i
+810: $(BINDIR)/kmer-cov -A -F -L 1000 $(PREF).22.n22mers < $(PREF).fasta > $(PREF).nkmer.feat
+820: $(BINDIR)/loadFeatures -u -i $(PREF).bnk $(PREF).nkmer.feat
 
 
 ## Combine features
