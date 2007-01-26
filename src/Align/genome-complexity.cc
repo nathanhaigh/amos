@@ -13,10 +13,13 @@ using namespace AMOS;
 
 using namespace std;
 
+// Store the (variable length) mer as a compressed bit vector
 typedef vector<bool> Mer_t;
 
+// Default length, can override at runtime
 int Kmer_Len = 30;
 
+// Convert from bits to ascii via an array lookup
 const char * bintoascii = "ACGT";
 
 //  Return the binary equivalent of  ch .
@@ -34,13 +37,15 @@ static unsigned  Char_To_Binary (char ch)
   return  0;
 }
 
+// Initialize an empty mer
 void InitMer(Mer_t & mer)
 {
   mer.clear();
   mer.resize(Kmer_Len*2);
 }
 
-static void MerToAscii(Mer_t mer, string & s)
+// Convert a Mer to a string
+void MerToAscii(Mer_t mer, string & s)
 {
   s.erase();
 
@@ -58,7 +63,8 @@ static void MerToAscii(Mer_t mer, string & s)
   }
 }
 
-static void  Forward_Add_Ch(Mer_t & mer, char ch)
+// Add a DNA character to a (fixed-length) mer: shift the bits to the left and append on the end
+void  Forward_Add_Ch(Mer_t & mer, char ch)
 {
   // delete the first character from kmer
   for (int i = 0; i < (Kmer_Len-1)*2; i++)
@@ -112,6 +118,7 @@ Mer_t suffix(const Mer_t & mer, int len)
   return retval;
 }
 
+// Extend mer with the 'extra' bases in extend
 void extendMer(Mer_t & mer, const Mer_t & extend)
 {
   int DEBUG = 0;
@@ -124,7 +131,7 @@ void extendMer(Mer_t & mer, const Mer_t & extend)
     cerr << "Extending " << u << " with " << v << endl;
   }
 
-  Mer_t suff (suffix(extend, extend.size()/2 - (Kmer_Len-2)));
+  Mer_t suff(suffix(extend, extend.size()/2 - (Kmer_Len-2)));
   mer.insert(mer.end(), suff.begin(), suff.end());
 
   if (DEBUG)
@@ -137,13 +144,12 @@ void extendMer(Mer_t & mer, const Mer_t & extend)
 }
 
 
-
-int NC=0;
-
+// Class for storing a mer and its neighbors
 class MerVertex_t
 {
+  static int NODECOUNT; // give all the nodes a unique id
 public:
-  MerVertex_t(Mer_t s) : mer_m(s), node_m(NC++), dead(false) {}
+  MerVertex_t(Mer_t s) : mer_m(s), node_m(NODECOUNT++), dead(false) {}
   Mer_t mer_m;
   int   node_m;
   bool  dead;
@@ -151,7 +157,8 @@ public:
   vector<MerVertex_t *> out_m;
   vector<MerVertex_t *> in_m;
 
-  bool compressable()
+  // Can this node be compressed with its immediate neighbor
+  bool isCompressable()
   {
     if (out_m.empty() || (out_m[0] == this))
     {
@@ -182,10 +189,10 @@ public:
       }
     }
 
-
     return true;
   }
 
+  // Actually collapse this node with its immediate neighbor
   void collapse()
   {
     MerVertex_t * buddy = out_m[0];
@@ -194,6 +201,7 @@ public:
     buddy->dead = true;
     extendMer(mer_m, buddy->mer_m);
 
+    // Update the links so that the buddy's neighbors now point at me
     for (int i = 0; i < out_m.size(); i++)
     {
       MerVertex_t * bo = out_m[i];
@@ -210,6 +218,7 @@ public:
 
   }
 
+  // Return the sequence stored in the node
   string str()
   {
     string r;
@@ -219,6 +228,9 @@ public:
   }
 };
 
+int MerVertex_t::NODECOUNT=0;
+
+// Ugliness for using hash_map
 namespace HASHMAP
 {
   template<> struct hash< Mer_t >
@@ -239,6 +251,7 @@ namespace HASHMAP
 
 typedef HASHMAP::hash_map<Mer_t, MerVertex_t *> MerTable_t;
 
+// Class for storing the entire graph: Nodes are stored in a giant MerTable_T
 class deBrujinGraph_t
 {
 public:
@@ -248,15 +261,9 @@ public:
   string tag_m;
   MerTable_t mers_m;
 
+  // Get (or create) a vertex
   MerVertex_t * getVertex(const Mer_t & mer)
   {
-    if (0)
-    {
-      string z;
-      MerToAscii(mer, z);
-      cerr << "getVertex " << z << endl;
-    }
-
     MerTable_t::iterator m = mers_m.find(mer);
     if (m == mers_m.end())
     {
@@ -266,6 +273,7 @@ public:
     return m->second;
   }
 
+  // Add a k-mer to the graph by adding the k-1 prefix and suffix strings
   void addMer(const Mer_t & mer)
   {
     if (0)
@@ -282,11 +290,13 @@ public:
     s->in_m.push_back(p);
   }
 
+  // Return number of nodes in the graph
   int nodeCount()
   {
     return mers_m.size();
   }
 
+  // Print graph in DOT format
   void print()
   {
     cout << "digraph G {" << endl
@@ -320,16 +330,19 @@ public:
     cout << "}" << endl;
   }
 
+  // Compress the graph
   void compressPaths()
   {
     int deletednodes = 0;
     vector<MerVertex_t*> changed;
 
+    // Foreach mer in graph
     MerTable_t::iterator mi = mers_m.begin();
     while (mi != mers_m.end())
     {
       if (mi->second->dead) 
       {
+        // Prune nodes that were collapsed away
         MerTable_t::iterator n = mi;
         mi++;
 
@@ -338,29 +351,19 @@ public:
       }
       else
       {
+        // Try to merge this node with its neighbors
         MerVertex_t * v = mi->second;
         bool change = false;
 
-        while(v->compressable())
+        while(v->isCompressable())
         {
-          if (v->out_m[0]->in_m[0] != v)
-          {
-            string vs(v->str());
-            string bs(v->out_m[0]->str());
-            string is(v->out_m[0]->in_m[0]->str());
-
-            cerr << "out[0] != in[0]" << endl;
-            cerr << "vs: " << vs << endl;
-            cerr << "bs: " << bs << endl;
-            cerr << "is: " << is << endl;
-            exit(1);
-          }
-
           v->collapse();
           deletednodes++;
           change = true;
         }
 
+        // If the current node was changed, store it separately so we don't try 
+        // to update it a second time
         if (change)
         {
           changed.push_back(v);
@@ -372,11 +375,13 @@ public:
         }
         else
         {
+          // Nothing to do
           mi++;
         }
       }
     }
 
+    // Prune out all of the dead nodes
     mi = mers_m.begin();
     while (mi != mers_m.end())
     {
@@ -394,6 +399,7 @@ public:
       }
     }
 
+    // Add back the nodes that changed (and weren't subsequently marked dead)
     for (int i = 0; i < changed.size(); i++)
     {
       if (!changed[i]->dead)
@@ -404,6 +410,7 @@ public:
   }
 };
 
+// For now, just create the deBrujin Graph, and print it out
 void ComputeComplexity(const string & tag, const string & seq)
 {
   Mer_t  fwd_mer;
@@ -421,20 +428,13 @@ void ComputeComplexity(const string & tag, const string & seq)
   // Initialize the first k-1 characters
   for  (i = 0;  i < Kmer_Len - 1;  i ++)
   {
-    //cerr << seq[i];
     Forward_Add_Ch (fwd_mer, seq [i]);
   }
 
   // Now handle all of the kmers in the genome
   for (;i < n; i++)
   {
-    //cerr << seq[i] << endl;
     Forward_Add_Ch (fwd_mer, seq [i]);
-
-    string s;
-    MerToAscii(fwd_mer, s);
-    //cerr << "m2a: " <<  s << endl;
-
     graph.addMer(fwd_mer);
   }
 
@@ -462,6 +462,7 @@ int main(int argc, char ** argv)
 
   try
   {
+    // Get standard options to work (--help, --version)
     string version = "Version 1.0";
     string helptext = 
 "Compute the complexity of a genome\n"
@@ -498,8 +499,10 @@ int main(int argc, char ** argv)
 
     string s, tag;
 
+    // Use Art's fasta reader
     while  (Fasta_Read (fp, s, tag))
     {
+      // Compute the complexity for each sequence in the fasta file
       ComputeComplexity(tag, s);
     }
   }
@@ -518,6 +521,7 @@ int main(int argc, char ** argv)
     retval = 100;
   }
 
+  // Standard stuff to try to exit gracefully
   try
   {
     if (tf) delete tf;
