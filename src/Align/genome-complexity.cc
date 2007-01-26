@@ -34,37 +34,6 @@ static unsigned  Char_To_Binary (char ch)
   return  0;
 }
 
-
-char RC(char ch)
-{
-  switch(toupper(ch))
-  {
-    case 'A': return 'T';
-    case 'T': return 'A';
-    case 'C': return 'G';
-    case 'G': return 'C';
-
-    default: return 'T';
-  };
-
-  return 0;
-}
-
-char NORM(char ch)
-{
-  switch(toupper(ch))
-  {
-    case 'A': return 'A';
-    case 'C': return 'C';
-    case 'G': return 'G';
-    case 'T': return 'T';
-    default: return 'A';
-  };
-
-  return 0;
-}
-
-
 void InitMer(Mer_t & mer)
 {
   mer.clear();
@@ -104,23 +73,6 @@ static void  Forward_Add_Ch(Mer_t & mer, char ch)
   mer[1] = ch & 2;
   mer[0] = ch & 1;
 }
-
-//  Add the Watson-Crick complement of  ch  to  mer  on the left,
-//  sliding one character off the right end of  mer .
-static void  Reverse_Add_Ch(Mer_t & mer, char ch)
-{
-  // shift right
-  for (int i = 0; i < Kmer_Len*2-2; i++)
-  {
-    mer[i] = mer[i+2];
-  }
-
-  // append to front
-  ch = 3^Char_To_Binary(ch);
-  mer[Kmer_Len*2-1] = ch&2;
-  mer[Kmer_Len*2-2] = ch&1;
-}
-
 
 
 // Return the first len characters of mer
