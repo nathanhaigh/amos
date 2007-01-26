@@ -6,6 +6,7 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	arrive \
 	arrive2 \
+    genome-complexity \
     count-kmers \
 	frg-umd-merge \
 	gap-links \
@@ -84,6 +85,14 @@ gap_links_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a
 gap_links_SOURCES = \
 	gap-links.cc
+
+##-- count-kmers
+genome_complexity_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+    $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+genome_complexity_SOURCES = \
+	genome-complexity.cc
 
 ##-- hash-overlap
 hash_overlap_LDADD = \
