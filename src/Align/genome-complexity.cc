@@ -165,7 +165,8 @@ Mer_t prefix(const Mer_t & mer, int len)
 
 void extendMer(Mer_t & mer, const Mer_t & extend)
 {
-  if (0)
+  int DEBUG = 0;
+  if (DEBUG)
   {
     string u,v;
     MerToAscii(mer, u);
@@ -177,7 +178,7 @@ void extendMer(Mer_t & mer, const Mer_t & extend)
   Mer_t suff (suffix(extend, extend.size()/2 - (Kmer_Len-2)));
   mer.insert(mer.begin(), suff.begin(), suff.end());
 
-  if (0)
+  if (DEBUG)
   {
     string z;
     MerToAscii(mer, z);
@@ -195,8 +196,8 @@ class MerVertex_t
 public:
   MerVertex_t(Mer_t s) : mer_m(s), node_m(NC++), dead(false) {}
   Mer_t mer_m;
-  int node_m;
-  bool dead;
+  int   node_m;
+  bool  dead;
 
   vector<MerVertex_t *> out_m;
   vector<MerVertex_t *> in_m;
@@ -218,6 +219,12 @@ public:
     }
 
     int il = out_m[0]->in_m.size();
+
+    if (ol != il)
+    {
+      return false;
+    }
+
     for (int i = 0; i < il; i++)
     {
       if (out_m[0]->in_m[i] != this)
@@ -226,12 +233,18 @@ public:
       }
     }
 
+    if (out_m[0] == this)
+    {
+      return false;
+    }
+
     return true;
   }
 
   void collapse()
   {
     MerVertex_t * buddy = out_m[0];
+    //cerr << "Collapse " << node_m << " and " << buddy->node_m << endl;
     out_m = buddy->out_m;
     buddy->dead = true;
     extendMer(mer_m, buddy->mer_m);
@@ -334,7 +347,7 @@ public:
         s = q;
       }
 
-      cout << "  " << mi->second->node_m << " [label=\"" << s << "\n" << slen << "\"]" << endl;
+      cout << "  " << mi->second->node_m << " [label=\"" << s << "\\n" << slen << "\"]" << endl;
 
       for (int i = 0; i < mi->second->out_m.size(); i++)
       {
@@ -402,11 +415,6 @@ public:
       }
     }
 
-    for (int i = 0; i < changed.size(); i++)
-    {
-      mers_m.insert(make_pair(changed[i]->mer_m, changed[i]));
-    }
-
     mi = mers_m.begin();
     while (mi != mers_m.end())
     {
@@ -422,6 +430,14 @@ public:
       else
       {
         mi++;
+      }
+    }
+
+    for (int i = 0; i < changed.size(); i++)
+    {
+      if (!changed[i]->dead)
+      {
+        mers_m.insert(make_pair(changed[i]->mer_m, changed[i]));
       }
     }
   }
@@ -461,7 +477,7 @@ void ComputeComplexity(const string & tag, const string & seq)
   graph.compressPaths();
   cerr << graph.nodeCount() << " nodes compressed.  " << timecompress.str(true, 8) << endl;
 
-  cerr << "Total " << timeall.str(true, 8) << endl;
+  cerr << "Total time" << timeall.str(true, 8) << endl;
 
   graph.print();
 
