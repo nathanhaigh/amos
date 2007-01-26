@@ -204,7 +204,7 @@ public:
 
   bool compressable()
   {
-    if (out_m.empty())
+    if (out_m.empty() || (out_m[0] == this))
     {
       return false;
     }
@@ -233,10 +233,6 @@ public:
       }
     }
 
-    if (out_m[0] == this)
-    {
-      return false;
-    }
 
     return true;
   }
@@ -274,7 +270,25 @@ public:
   }
 };
 
-typedef map<Mer_t, MerVertex_t *> MerTable_t;
+namespace HASHMAP
+{
+  template<> struct hash< Mer_t >
+  {
+    size_t operator()( const Mer_t& x ) const
+    {
+      size_t p = 0;
+      int l = x.size();
+      for (int i = 0; i < l; i++)
+      {
+        p += ((x[i]<<i));
+      }
+
+      return p;
+    }
+  };
+}
+
+typedef HASHMAP::hash_map<Mer_t, MerVertex_t *> MerTable_t;
 
 class deBrujinGraph_t
 {
@@ -331,13 +345,12 @@ public:
          << " label=\"deBrujin Graph of " << tag_m << " nc: " << nodeCount() << "\"" << endl;
 
 
-    string s;
     MerTable_t::iterator mi;
     for (mi = mers_m.begin(); mi != mers_m.end(); mi++)
     {
       assert (!mi->second->dead);
 
-      MerToAscii(mi->first, s);
+      string s(mi->second->str());
       int slen = s.length();
       if (slen > 8)
       {
@@ -369,11 +382,10 @@ public:
       if (mi->second->dead) 
       {
         MerTable_t::iterator n = mi;
-        n++;
+        mi++;
 
-        delete mi->second;
-        mers_m.erase(mi);
-        mi = n;
+        delete n->second;
+        mers_m.erase(n);
       }
       else
       {
@@ -403,10 +415,11 @@ public:
         if (change)
         {
           changed.push_back(v);
+
           MerTable_t::iterator n = mi;
-          n++;
-          mers_m.erase(mi);
-          mi = n;
+          mi++;
+
+          mers_m.erase(n);
         }
         else
         {
@@ -421,11 +434,10 @@ public:
       if (mi->second->dead) 
       {
         MerTable_t::iterator n = mi;
-        n++;
+        mi++;
 
-        delete mi->second;
-        mers_m.erase(mi);
-        mi = n;
+        delete n->second;
+        mers_m.erase(n);
       }
       else
       {
@@ -477,7 +489,7 @@ void ComputeComplexity(const string & tag, const string & seq)
   graph.compressPaths();
   cerr << graph.nodeCount() << " nodes compressed.  " << timecompress.str(true, 8) << endl;
 
-  cerr << "Total time" << timeall.str(true, 8) << endl;
+  cerr << "Total time: " << timeall.str(true, 8) << endl;
 
   graph.print();
 
