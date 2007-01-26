@@ -54,29 +54,26 @@ static void MerToAscii(Mer_t mer, string & s)
     m |= mer[i*2+1] << 1;
     m |= mer[i*2];
 
-    s[l-i-1] = bintoascii[m];
+    s[i] = bintoascii[m];
   }
 }
 
-//  Add  ch  to  mer  on the right, sliding one character
-//  off the left end of  mer .
 static void  Forward_Add_Ch(Mer_t & mer, char ch)
 {
-  // shift left
-  for (int i = Kmer_Len * 2-1; i > 1; i--)
+  // delete the first character from kmer
+  for (int i = 0; i < (Kmer_Len-1)*2; i++)
   {
-    mer[i] = mer[i-2];
+    mer[i] = mer[i+2];
   }
 
   // append to end
   ch = Char_To_Binary(ch);
-  mer[1] = ch & 2;
-  mer[0] = ch & 1;
+  mer[Kmer_Len*2-1] = ch & 2;
+  mer[Kmer_Len*2-2] = ch & 1;
 }
 
-
 // Return the first len characters of mer
-Mer_t suffix(const Mer_t & mer, int len)
+Mer_t prefix(const Mer_t & mer, int len)
 {
   Mer_t retval(mer);
   retval.resize(len*2);
@@ -86,14 +83,14 @@ Mer_t suffix(const Mer_t & mer, int len)
     string z,y;
     MerToAscii(mer, z);
     MerToAscii(retval, y);
-    cerr << "Suffix of " << z << " is " << y << endl;
+    cerr << "Prefix of " << z << " is " << y << endl;
   }
 
   return retval;
 }
 
 // Return the last len characters of mer
-Mer_t prefix(const Mer_t & mer, int len)
+Mer_t suffix(const Mer_t & mer, int len)
 {
   Mer_t retval;
   retval.resize(len*2);
@@ -109,7 +106,7 @@ Mer_t prefix(const Mer_t & mer, int len)
     string z,y;
     MerToAscii(mer, z);
     MerToAscii(retval, y);
-    cerr << "Prefix of " << z << " is " << y << endl;
+    cerr << "Suffix of " << z << " is " << y << endl;
   }
 
   return retval;
@@ -128,7 +125,7 @@ void extendMer(Mer_t & mer, const Mer_t & extend)
   }
 
   Mer_t suff (suffix(extend, extend.size()/2 - (Kmer_Len-2)));
-  mer.insert(mer.begin(), suff.begin(), suff.end());
+  mer.insert(mer.end(), suff.begin(), suff.end());
 
   if (DEBUG)
   {
@@ -424,13 +421,20 @@ void ComputeComplexity(const string & tag, const string & seq)
   // Initialize the first k-1 characters
   for  (i = 0;  i < Kmer_Len - 1;  i ++)
   {
+    //cerr << seq[i];
     Forward_Add_Ch (fwd_mer, seq [i]);
   }
 
   // Now handle all of the kmers in the genome
   for (;i < n; i++)
   {
+    //cerr << seq[i] << endl;
     Forward_Add_Ch (fwd_mer, seq [i]);
+
+    string s;
+    MerToAscii(fwd_mer, s);
+    //cerr << "m2a: " <<  s << endl;
+
     graph.addMer(fwd_mer);
   }
 
