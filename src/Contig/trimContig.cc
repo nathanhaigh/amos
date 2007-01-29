@@ -8,6 +8,50 @@
 using namespace AMOS;
 using namespace std;
 
+bool trimContig(int cleancontig, int lengthtrim, int lefttrim, int righttrim, Contig_t & contig)
+{
+  bool retval = false;
+
+  if (cleancontig)
+  {
+    vector<Tile_t> & tiling = contig.getReadTiling();
+
+    if (tiling.size() > 1)
+    {
+      int leftmost = contig.getLength(), secondleft = contig.getLength();
+      int rightmost = 0, secondright = 0;
+
+      vector<Tile_t>::iterator ti;
+      for (ti = tiling.begin(); ti != tiling.end(); ti++)
+      {
+        int loffset = ti->offset;
+        int roffset = ti->getRightOffset();
+
+        if (loffset < leftmost)         { secondleft = leftmost; leftmost = loffset; }
+        else if (loffset < secondleft)  { secondleft = loffset; }
+
+        if (roffset > rightmost)        { secondright = rightmost; rightmost = roffset; }
+        else if (roffset > secondright) { secondright = roffset; }
+      }
+
+      lefttrim = secondleft - leftmost;
+      righttrim = rightmost - secondright;
+    }
+  }
+
+  if (lengthtrim || righttrim || lefttrim)
+  {
+    // trim right first so we don't have to shift trim after left trim
+    if (lengthtrim) { lengthTrimContig(contig, lengthtrim); }
+    if (righttrim)  { rightTrimContig(contig, righttrim); }
+    if (lefttrim)   { leftTrimContig(contig, lefttrim); }
+
+    retval = true;
+  }
+
+  return retval;
+}
+
 
 int main (int argc, char ** argv)
 {
@@ -15,6 +59,8 @@ int main (int argc, char ** argv)
   int righttrim(0);
   int lengthtrim(0);
   int contigiid(0);
+  int cleancontig(0);
+  int cleanall(0);
   string contigeid;
 
   int retval = 0;
@@ -35,15 +81,19 @@ int main (int argc, char ** argv)
 "   -L <val> Trim val bases from left side\n"
 "   -R <val> Trim val bases from right side\n"
 "   -N <val> Right trim contig to new length\n"
+"   -c       Clean contigs by trimming 1x coverage at ends\n"
 "   -E id    EID of contig to trim\n"
-"   -I id    IID of contig to trim\n";
+"   -I id    IID of contig to trim\n"
+"   -C       Clean all contigs\n";
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
-    tf->getOptions()->addOptionResult("L=i", &lefttrim, "Left trim amount");
-    tf->getOptions()->addOptionResult("R=i", &righttrim, "Right trim amount");
-    tf->getOptions()->addOptionResult("N=i", &lengthtrim, "New Contig Length");
+    tf->getOptions()->addOptionResult("L=i", &lefttrim,    "Left trim amount");
+    tf->getOptions()->addOptionResult("R=i", &righttrim,   "Right trim amount");
+    tf->getOptions()->addOptionResult("N=i", &lengthtrim,  "New Contig Length");
+    tf->getOptions()->addOptionResult("c",   &cleancontig, "Clean Contig");
+    tf->getOptions()->addOptionResult("C",   &cleanall,    "Clean All");
 
     tf->getOptions()->addOptionResult("I=i", &contigiid, "Contig IID");
     tf->getOptions()->addOptionResult("E=s", &contigeid, "Contig EID");
@@ -65,15 +115,30 @@ int main (int argc, char ** argv)
     contig_bank.open(bankname, B_READ|B_WRITE);
     Contig_t contig;
 
-    if (!contigeid.empty()) { contig_bank.fetch(contigeid, contig); }
-    else                    { contig_bank.fetch(contigiid, contig); }
+    if (cleanall)
+    {
+      const IDMap_t & map = contig_bank.getIDMap();
+      IDMap_t::const_iterator ci;
+      for (ci = map.begin(); ci != map.end(); ci++)
+      {
+        contig_bank.fetch(ci->iid, contig);
+        if (trimContig(1,0,0,0,contig))
+        {
+          contig_bank.replace(ci->iid, contig);
+        }
+      }
+    }
+    else
+    {
+      if (!contigeid.empty()) { contig_bank.fetch(contigeid, contig); }
+      else                    { contig_bank.fetch(contigiid, contig); }
 
-    // trim right first so we don't have to shift trim after left trim
-    if (lengthtrim) { lengthTrimContig(contig, lengthtrim); }
-    if (righttrim)  { rightTrimContig(contig, righttrim); }
-    if (lefttrim)   { leftTrimContig(contig, lefttrim); }
+      if (trimContig(cleancontig, lengthtrim, lefttrim, righttrim, contig))
+      {
+        contig_bank.replace(contig.getIID(), contig);
+      }
+    }
 
-    contig_bank.replace(contig.getIID(), contig);
     contig_bank.close();
   }
   catch (Exception_t & e)
