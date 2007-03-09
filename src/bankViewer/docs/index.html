@@ -1,8 +1,19 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-  <title>Hawkeye: AMOS Assembly Visual Analytics Tool</title>
+  <title>Hawkeye: a visual analytics tool for genome assemblies</title>
 </head>
+
+<style type="text/css">
+  h4 {
+    background-color: rgb(210,210,240);
+    padding: 0px;
+    margin: 0px;
+  }
+</style>
+
+
+
 <body>
 
 <a name="top"></a>
@@ -12,19 +23,23 @@
 <td valign=top>
 <a href="index.html"><img src="Hawkeye.jpg" width="250" height="160"/></a><br>
 
-<h3>Table of Contents</h3>
-<a href="index.html">Abstract</a><br>
-<a href="index.html#build">Build &amp; Installation</a><br>
-<a href="index.html#launching">Launching Hawkeye</a><br>
-<a href="index.html#options">Command Line Options</a><br>
-<a href="index.html#sample">Sample Assembly</a><br>
-<a href="index.html#contactinformation">Contact Information</a><br>
-<a href="index.html#acknowledgements">Acknowledgements</a><br>
+<br>
+<h4>Introduction</h4>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="index.html">Abstract</a><br>
+<li><a href="index.html#build">Build &amp; Installation</a><br>
+<li><a href="index.html#launching">Launching Hawkeye</a><br>
+<li><a href="index.html#options">Command Line Options</a><br>
+<li><a href="index.html#sample">Sample Assembly</a><br>
+<li><a href="index.html#contactinformation">Contact Information</a><br>
+<li><a href="index.html#acknowledgements">Acknowledgements</a><br>
+</td></tr>
+</table>
 
 
-<h3>Displays</h3>
-
-<a href="launchpad.html">Launch Pad</a><br>
+<br>
+<h4><a href="launchpad.html">Launch Pad</a></h4>
 <table>
 <tr><td width="1">&nbsp;</td><td>
 <li><a href="launchpad.html#lp-statistics">Statistics</a></li>
@@ -37,7 +52,7 @@
 
 <br>
 
-<a href="scaffold.html">Scaffold View</a><br>
+<h4><a href="scaffold.html">Scaffold View</a></h4>
 <table>
 <tr><td width="1">&nbsp;</td><td>
 <li><a href="scaffold.html#sc-misassembly">Mis-assembly Detection</a></li>
@@ -48,7 +63,7 @@
 
 <br>
 
-<a href="contig.html">Contig View</a><br>
+<h4><a href="contig.html">Contig View</a></h4>
 <table>
 <tr><td width="1">&nbsp;</td><td>
 <li><a href="contig.html#barcode">SNP Barcode</a></li>
@@ -72,7 +87,7 @@
 
 <td>
 <h1 style="text-align: center;">Hawkeye</h1>
-<h3 style="text-align: center;">The AMOS Assembly Visual Analytics Tool <br><br>
+<h3 style="text-align: center;">A visual analytics tool for genome assemblies.<br><br>
 <a href="http://www.cbcb.umd.edu/~mschatz">Michael Schatz</a> - 
 <a href="http://www.cbcb.umd.edu/~amp">Adam Phillippy</a><br>
 <a href="http://www.cs.umd.edu/~ben">Ben Shneiderman</a> - 
@@ -81,8 +96,13 @@
 
 <p align=center>
 Version 1.0<br>
-July 26, 2006
+March 5, 2007
 </p>
+
+<p align=center>Publication: 
+<a href="http://genomebiology.com/2007/8/3/R34"><b>Schatz, M.C.</b>, Phillippy, A.M., Shneiderman, B., Salzberg, S.L.</a>&nbsp;(2007) Hawkeye: a visual analytics tool for genome assemblies. <i>Genome Biology</i> 8:R34.
+</p>
+
 
 <hr>
 
@@ -143,7 +163,7 @@ Hawkeye Contig</a>
 <br>
 
 <ul>
-<li>Click for a presentation on <a href="http://www.cbcb.umd.edu/~mschatz/AMOS_Validation_Visualization.pdf">AMOS Assembly Validation and Visualization</a>. [1.4MB]
+<li>Click for a presentation on <a href="http://www.cbcb.umd.edu/~mschatz/Presentations/AMOS_Validation_Visualization.pdf">AMOS Assembly Validation and Visualization</a>. [1.4MB]
 
 <li>Click for a <a href="http://www.cbcb.umd.edu/~mschatz/hawkeyedemo.wmv">recorded demonstration</a> of using Hawkeye to analyze a mis-assembly. [2.2MB]
 </ul>
@@ -156,10 +176,7 @@ You should build the entire AMOS distribution even if you only
 want to run Hawkeye so all of the necessary convertors and libraries 
 are available. You can download the AMOS source package from: <br>
 <a href="http://sourceforge.net/project/showfiles.php?group_id=134326">http://sourceforge.net/project/showfiles.php?group_id=134326</a>.
-<br>
-
-<h3>Update: Download the AMOS 1.5.0 beta with Hawkeye 1.0 from <a href="http://www.cbcb.umd.edu/software/amos/amos-1.5.0b.tar.gz">here</a>. (Updated Aug 24, 2006)</h3>
-
+<br><br>
 
 Hawkeye requires Qt 3.x is installed to run. The latest version of Qt
 is currently 3.3.6 and can be downloaded from the Trolltech website for Unix and Mac OS X:
@@ -349,9 +366,10 @@ Report bugs or ask questions by emailing &lt;amos-help [ at ] lists.sourceforge.
 
 <h2><a name="acknowledgements"></a>Acknowledgements</h2>
 <p>
-This work was supported in part by NIH award R01-LM06845 and HSARPA award W81XWH-05-2-0051 to SLS.
-</p>
-<a href="#top">Return to top</a><br><hr>
+This work was supported in part by NIH award R01-LM06845, the National
+Institute of Allergy and Infectious Disease under contract NIH-NIAID-DMID-
+04-34, HHSN266200400038C, and DHS/HSARPA award W81XWH-05-2-0051 to SLS.
+</p> <a href="#top">Return to top</a><br><hr>
 
 </td>
     </tr>
