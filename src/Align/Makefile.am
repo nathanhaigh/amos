@@ -26,7 +26,8 @@ bin_PROGRAMS = \
 	sim-cover-depth \
 	sim-cover2 \
 	sim-shotgun \
-	simple-overlap
+	simple-overlap \
+    verify-layout
 
 amoslib_LIBRARIES = \
 	libAlign.a \
@@ -242,6 +243,14 @@ test_align_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 test_align_SOURCES = \
 	test-align.cc
+
+##-- verify-layout
+verify_layout_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+    $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+verify_layout_SOURCES = \
+	verify-layout.cc
 
 ##-- libAlign.a
 libAlign_a_SOURCES = \
