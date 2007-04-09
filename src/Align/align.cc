@@ -2007,7 +2007,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       double  erate;
       int  error_limit, len, exp_olap_len;
       int  attempts, curr_offset, wiggle;
-      int  lo, hi;
+      int  lo, mid, hi;
 
       len = strlen (s [i]);
       attempts = 0;
@@ -2020,8 +2020,9 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
       do
         {
-         lo = Max (0, curr_offset - wiggle);
-         hi = Min (cons_len - min_overlap, curr_offset + wiggle);
+         mid = cons_len - min_overlap;
+         lo = Max (0, Min (curr_offset - wiggle, mid));
+         hi = Min (Max (lo, mid), curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
 
          error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
