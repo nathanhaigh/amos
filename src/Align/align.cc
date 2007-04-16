@@ -2005,7 +2005,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       bool  wrote_string_tag = false;
       bool  matched;
       double  erate;
-      int  error_limit, len, exp_olap_len;
+      int  error_limit, len, exp_olap_len, min_olap;
       int  attempts, curr_offset, wiggle;
       int  lo, mid, hi;
 
@@ -2018,11 +2018,15 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
         // where offset position hits the consensus, based on prior
         // string alignment(s)
 
+      min_olap = Min (min_overlap, Min (cons_len, len));
+        // reduce the minimum overlap length if the strings are too short
+        // to achieve it
+
       do
         {
-         mid = cons_len - min_overlap;
+         mid = cons_len - min_olap;
          lo = Max (0, Min (curr_offset - wiggle, mid));
-         hi = Min (Max (lo, mid), curr_offset + wiggle);
+         hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
 
          error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
@@ -5353,6 +5357,7 @@ void  Multi_Align
    Multi_Alignment_t  ma;
    vector <Vote_t>  vote;
    bool  changed;
+   const int  max_refinements = 3;
    int  ct, n;
 
    n = s . size ();
@@ -5389,7 +5394,7 @@ void  Multi_Align
      {
       ma . Reset_From_Votes (s, offset_delta, error_rate, vote, changed);
       ct ++;
-     }  while  (ct < 3 && changed);
+     }  while  (ct < max_refinements && changed);
 
    if  (Verbose > 3)
        ma . Print_Alignments_To_Consensus (stderr, s);
