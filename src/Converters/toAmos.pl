@@ -1179,6 +1179,9 @@ sub parseACEFile {
 	    # create quality values for consensus gaps
 	    for (my $c = 0; $c < length($seq); $c++){
 		if (substr($seq, $c, 1) eq "-"){
+		    if ($q >= length($tmpqual)){
+			$q = length($tmpqual) - 1;
+		    }
 		    $qual .= substr($tmpqual, $q, 1); # next seen quality
 		} else {
 		    $qual .= substr($tmpqual, $q++, 1);
