@@ -9,24 +9,36 @@ using namespace std;
 int s_verbose(0);
 int clusterdist(0);
 int PRINTIID(0);
+int DEPTHONLY(0);
+int MINCONTIGLEN(0);
 float thresholdx = 3.0;
 string CONTIGIIDS;
 
+double uconslen(0);
+double ureadlen(0);
+
 void handlecontig(Contig_t & contig,
                   int & contigs,
-                  int & conslen, 
-                  int & readlen,
+                  double & conslen, 
+                  double & readlen,
                   int & readcount)
 {
-  contigs++;
-  conslen += contig.getLength();
+  int clen = contig.getLength();
 
-  vector<Tile_t> & tiling = contig.getReadTiling();
-  vector<Tile_t>::const_iterator ti;
-  for (ti = tiling.begin(); ti != tiling.end(); ti++)
+  if (clen >= MINCONTIGLEN)
   {
-    readlen += ti->getGappedLength();
-    readcount++;
+    contigs++;
+    conslen += contig.getLength();
+    uconslen += contig.getUngappedLength();
+
+    vector<Tile_t> & tiling = contig.getReadTiling();
+    vector<Tile_t>::const_iterator ti;
+    for (ti = tiling.begin(); ti != tiling.end(); ti++)
+    {
+      readlen += ti->getGappedLength();
+      ureadlen += ti->range.getLength();
+      readcount++;
+    }
   }
 }
 
@@ -58,6 +70,8 @@ int main (int argc, char ** argv)
 "   -c <dist>    Cluster regions within <dist> bp\n"
 "   -I <file>    Only use list of contigs iids in file for computing average\n"
 "   -i           Print contig IIDs instead of EIDs\n"
+"   -d           Just compute the depth\n"
+"   -l <len>     Only use contigs >= len for computing average\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
@@ -69,6 +83,8 @@ int main (int argc, char ** argv)
     tf->getOptions()->addOptionResult("c=i",       &clusterdist);
     tf->getOptions()->addOptionResult("I=s",       &CONTIGIIDS);
     tf->getOptions()->addOptionResult("i",         &PRINTIID);
+    tf->getOptions()->addOptionResult("d",         &DEPTHONLY);
+    tf->getOptions()->addOptionResult("l=i",       &MINCONTIGLEN);
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -95,8 +111,8 @@ int main (int argc, char ** argv)
       IDMap_t::const_iterator c;
 
       // compute global average
-      int conslen=0;
-      int readlen=0;
+      double conslen=0;
+      double readlen=0;
       int contigs=0;
       int readcount=0;
 
@@ -123,87 +139,94 @@ int main (int argc, char ** argv)
         }
       }
 
-      double avgdepth = ((double) readlen) / conslen;
+      double avgdepth = readlen / conslen;
+      double uavgdepth = ureadlen / uconslen;
       double threshdepth = avgdepth * thresholdx;
 
+      cerr << "Processed contigs >= " << MINCONTIGLEN << "bp." << endl;
       cerr << "Processed reads: " << readcount << " contigs: " << contigs << endl;
-      cerr << "Global average contig depth: " << avgdepth << endl;
-      cerr << "Flagging regions above: " << threshdepth << endl;
+      cerr << "Global average contig depth: " << avgdepth << " [" << readlen << "/" << conslen << "]" << endl;
+      cerr << "Global ungapped average contig depth: " << uavgdepth << " [" << ureadlen << "/" << uconslen << "]" << endl;
 
-      for (c = contigmap.begin(); c!=contigmap.end(); c++)
+      if (!DEPTHONLY)
       {
-        Contig_t contig;
-        contig_bank.fetch(c->iid, contig);
+        cerr << "Flagging regions above: " << threshdepth << endl;
 
-        vector<Tile_t> & tiling = contig.getReadTiling();
-        vector<Tile_t>::const_iterator ti;
-        sort(tiling.begin(), tiling.end(), TileOrderCmp());
-
-        multiset<int> endpoints;
-        multiset<int>::iterator ep, ep2;
-
-        bool cluster = false;
-        int start;
-        int end = -clusterdist - 10;
-        int maxdepth = 0;
-        int conslen = contig.getLength();
-
-        for (ti = tiling.begin(); ti != tiling.end(); ti++)
+        for (c = contigmap.begin(); c!=contigmap.end(); c++)
         {
-          int offset = ti->offset;
-          int roffset = ti->getRightOffset();
+          Contig_t contig;
+          contig_bank.fetch(c->iid, contig);
 
-          ep = endpoints.begin();
-          while ((ep != endpoints.end()) && (*ep < offset))
+          vector<Tile_t> & tiling = contig.getReadTiling();
+          vector<Tile_t>::const_iterator ti;
+          sort(tiling.begin(), tiling.end(), TileOrderCmp());
+
+          multiset<int> endpoints;
+          multiset<int>::iterator ep, ep2;
+
+          bool cluster = false;
+          int start;
+          int end = -clusterdist - 10;
+          int maxdepth = 0;
+          int conslen = contig.getLength();
+
+          for (ti = tiling.begin(); ti != tiling.end(); ti++)
           {
-            ep2 = ep;
-            ep++;
-            endpoints.erase(ep2);
-          }
+            int offset = ti->offset;
+            int roffset = ti->getRightOffset();
 
-          endpoints.insert(roffset);
-          int dcov = endpoints.size();
-
-          if (dcov > threshdepth)
-          {
-            if (!cluster)
+            ep = endpoints.begin();
+            while ((ep != endpoints.end()) && (*ep < offset))
             {
-              start = offset;
-              cluster = true;
+              ep2 = ep;
+              ep++;
+              endpoints.erase(ep2);
             }
 
-            end = roffset;
+            endpoints.insert(roffset);
+            int dcov = endpoints.size();
 
-            if (dcov > maxdepth) { maxdepth = dcov; }
-          }
-          else
-          {
-            if (cluster && (offset > end + clusterdist))
+            if (dcov > threshdepth)
             {
-              if (PRINTIID)
+              if (!cluster)
               {
-                cout << c->iid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+                start = offset;
+                cluster = true;
               }
-              else
-              {
-                cout << c->eid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
-              }
-              maxdepth = 0;
 
-              cluster = false;
+              end = roffset;
+
+              if (dcov > maxdepth) { maxdepth = dcov; }
+            }
+            else
+            {
+              if (cluster && (offset > end + clusterdist))
+              {
+                if (PRINTIID)
+                {
+                  cout << c->iid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+                }
+                else
+                {
+                  cout << c->eid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+                }
+                maxdepth = 0;
+
+                cluster = false;
+              }
             }
           }
-        }
 
-        if (cluster)
-        {
-          if (PRINTIID)
+          if (cluster)
           {
-            cout << c->iid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
-          }
-          else
-          {
-            cout << c->eid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+            if (PRINTIID)
+            {
+              cout << c->iid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+            }
+            else
+            {
+              cout << c->eid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+            }
           }
         }
       }
