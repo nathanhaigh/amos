@@ -548,7 +548,7 @@ if (1)
   my $percncodegc = sprintf("%.02f", ($ncodegc*100) / $ncodeall);
 
   print "coding gc content: $perccodegc\n";
-  print "noncoding gc content: $percncodegc\n\n"
+  print "noncoding gc content: $percncodegc\n";
 }
 
 
@@ -589,10 +589,12 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
   print " cov: $cov\n";
 
   my $geneseq;
+  my $reportedlen = 0;
   if ($g->{rc})
   {
     foreach my $exon (sort {$b->{start} <=> $a->{start}} @{$genegroups{$genename}})
     {
+      $reportedlen += $exon->{len};
       my $raw = substr($consensus, $exon->{start}-1, $exon->{len});
       $geneseq .= reverseCompliment($raw);
     }
@@ -601,12 +603,13 @@ foreach my $genename (sort {$a cmp $b} keys %genestats)
   {
     foreach my $exon (sort {$a->{start} <=> $b->{start}} @{$genegroups{$genename}})
     {
+      $reportedlen += $exon->{len};
       $geneseq .= substr($consensus, $exon->{start}-1, $exon->{len});
     }
   }
 
   my $genelen = length($geneseq);
-  die "Invalid genelength" if ($genelen % 3);
+  die "Invalid genelength $genelen not a multiple of 3 for $genename" if ($genelen % 3);
 
   my @bases = qw/A C G T/;
 
