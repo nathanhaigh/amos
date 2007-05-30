@@ -25,7 +25,7 @@ my $CONTIG2FASTA        = "$commonbin/contig2fasta";
 my $SPLITFASTA          = "$commonbin/splitFasta";
 my $SIZEFASTA           = "$commonbin/sizeFasta";
 my $CUTFASTA            = "$commonbin/cutFasta";
-my $CA2AJSCAFF            = "$commonbin/ca2ajscaff";
+my $CA2AJSCAFF          = "$commonbin/ca2ajscaff";
 my $FILTERCONTIG        = "$commonbin/filter_contig";
 my $FILTERSEQ           = "$commonbin/filter_seq";
 my $EVALOVERLAP         = "$commonbin/aj_evaluateSequenceOverlaps";
@@ -34,6 +34,8 @@ my $NUCMER              = "$platformbin/nucmer";
 my $SHOWCOORDS          = "$platformbin/show-coords";
 my $JOINCONTIGS         = "$platformbin/aj_joinContigs";
 my $LOWCOMPLEXITYFILTER = "$platformbin/aj_lowcomplexityfilter";
+my $TOAMOS              = "$platformbin/toAmos";
+my $AJSCAFFTOAMOS       = "$platfrombin/aj_scaff2amos";
 
 my $SELF          = $0;
 my $USAGE         = "Usage: autoJoin <prefix.bnk> [OPTIONS]\n";
@@ -100,6 +102,7 @@ an updated scaffold representation suitable for AutoCloser.
   -asm <path>  Path to asm file            [ Default: none]
   -tasm <path> Path to tasm file           [ Default: prefix.tasm ]
   -user <name> Set output attribute        [ Default: current user ]
+  -join        Actually do the joins       [ Default: nojoins ]
 
   -alignment <threshold> Specify Minimum percent identity for an alignment 
                          to be used for joining contigs together.
@@ -1868,9 +1871,9 @@ MAIN:
 
   $tf->bail("Command line parsing failed") if (!$result);
 
-  if ($ALIGNTHRESHOLD < 85.00 || $ALIGNTHRESHOLD > 100.00)
+  if ($ALIGNTHRESHOLD < 75.00 || $ALIGNTHRESHOLD > 100.00)
   {
-    $tf->bail("Alignment threshold must be between 85.0 and 100.0 percent");
+    $tf->bail("Alignment threshold must be between 75.0 and 100.0 percent");
   }
 
   my $bankpath = shift @ARGV;  ## path/to/dmg.bnk
