@@ -35,7 +35,16 @@ my $SHOWCOORDS          = "$platformbin/show-coords";
 my $JOINCONTIGS         = "$platformbin/aj_joinContigs";
 my $LOWCOMPLEXITYFILTER = "$platformbin/aj_lowcomplexityfilter";
 my $TOAMOS              = "$platformbin/toAmos";
-my $AJSCAFFTOAMOS       = "$platfrombin/aj_scaff2amos";
+my $AJSCAFF2AMOS        = "$platformbin/aj_scaff2amos";
+my $BANKTRANSACT        = "$platformbin/bank-transact";
+
+my $BANK2CONTIG  = "bank2contig";
+my $DUMPREADS    = "dumpreads";
+my $BANK2SCAFF   = "bank2scaff";
+my $AMOS2MATES   = "amos2mates";
+my $BANKREPORT   = "bank-report";
+my $LOADFEATURES = "loadFeatures";
+
 
 my $SELF          = $0;
 my $USAGE         = "Usage: autoJoin <prefix.bnk> [OPTIONS]\n";
@@ -251,29 +260,20 @@ sub prepareAssembly
 
   tfmkdir($RESULTSDIR);
 
-  my $BANK2CONTIG = "bank2contig";
-  my $DUMPREADS   = "dumpreads";
-  my $BANK2SCAFF  = "bank2scaff";
+  runCmd("($DUMPREADS -e -r -c $bankdir > $prefix.seq) >& /dev/null", " dumpreads seq")
+    if (! -r "$prefix.seq");
 
-  if (! -r "$prefix.contig")
-  {
-    runCmd("($BANK2CONTIG -e $bankdir > $prefix.contig) >& /dev/null", "bank2contig");
-  }
+  runCmd("($DUMPREADS -e -q -r $bankdir > $prefix.qual) >& /dev/null", " dumpreads qual")
+    if (! -r "$prefix.qual");
 
-  if (! -r "$prefix.seq")
-  {
-    runCmd("($DUMPREADS -e -r -c $bankdir > $prefix.seq) >& /dev/null", "dumpreads seq");
-  }
+  runCmd("($BANK2CONTIG -e $bankdir > $prefix.contig) >& /dev/null", " bank2contig")
+    if (! -r "$prefix.contig");
 
-  if (! -r "$prefix.qual")
-  {
-    runCmd("($DUMPREADS -e -q -r $bankdir > $prefix.qual) >& /dev/null", "dumpreads qual");
-  }
+  runCmd("($BANK2SCAFF -e $bankdir > $prefix.scaff) >& /dev/null", " bank2scaff")
+    if (! -r "$prefix.scaff");
 
-  if (! -r "$prefix.scaff")
-  {
-    runCmd("($BANK2SCAFF -e $bankdir > $prefix.scaff) >& /dev/null", "bank2scaff");
-  }
+  runCmd("($BANKREPORT -b $bankdir | $AMOS2MATES > $prefix.mates) >& /dev/null", " bank2mates")
+    if (! -r "$prefix.mates");
 
   foreach my $suffix (qw/seq qual/)
   {
@@ -1187,29 +1187,21 @@ sub validateJoin
     open NEWFEAT, "> $filename"
       or $tf->bail("Can't read $filename ($!)\n");
 
-    print NEWFEAT qq~<?xml version="1.0" encoding="UTF-8"?>\n~;
-    print NEWFEAT qq~<!DOCTYPE FeatureSet SYSTEM "http://tools.tigr.org/aserver/feature.dtd">\n~;
-    print NEWFEAT qq~<FeatureSet>\n~;
-
     foreach my $contigid (sort keys %features)
     {
       next if !defined $features{$contigid};
       #next if !getContigInfo($contigid)->{isjoin};
 
-      print NEWFEAT "  <Contig Id=\"$contigid\">\n";
-
       foreach my $feature (@{$features{$contigid}})
       {
-        print NEWFEAT $feature->{feature};
-        print NEWFEAT "      <Location End5=\"$feature->{end5}\" End5_gapped=\"$feature->{end5g}\" End3=\"$feature->{end3}\" End3_gapped=\"$feature->{end3g}\"/>\n";
-        print NEWFEAT $feature->{comment};
-        print NEWFEAT "    </Feature>\n";
+        my $end5    = $feature->{end5};
+        my $end3    = $feature->{end3};
+        my $type    = $feature->{type};
+        my $comment = $feature->{comment};
+
+        print NEWFEAT "$contigid\t$type\t$end5\t$end3\t$comment\n";
       }
-
-      print NEWFEAT "  </Contig>\n";
     }
-
-    print NEWFEAT qq~</FeatureSet>\n~;
   }
 
   sub createJoinFeature
@@ -1227,8 +1219,9 @@ sub validateJoin
     my $joinfeature;
     $joinfeature->{isjoin} = 1;
 
-    $joinfeature->{feature} = qq~    <Feature Id="" Type="AUTOJOIN" Class="$joinid" Name="AJ$joinid" Method="AutoJoin" Assignby="$USERNAME">\n~;
-    $joinfeature->{comment} = qq~      <Comment>AutoJoin $left $right gapsize:$gapsize overlap:$olen @ $idscore%</Comment>\n~;
+    $joinfeature->{feature} = qq~<Feature Id="" Type="AUTOJOIN" Class="$joinid" Name="AJ$joinid" Method="AutoJoin" Assignby="$USERNAME">\n~;
+    $joinfeature->{type}    = "J";
+    $joinfeature->{comment} = qq~AutoJoin $left $right gapsize:$gapsize overlap:$olen bp @ $idscore%\n~;
 
     $joinfeature->{end5} = $gapinfo->{autojoin}->{begin};
     $joinfeature->{end3} = $gapinfo->{autojoin}->{end};
@@ -1812,6 +1805,11 @@ sub finalizeAssembly
   printJoinSummary("$prefix$ALLSUFFIX.joinsummary");
   printCasperScaffold("$prefix$ALLSUFFIX.sq.contigs");
 
+  ## Create AMOS Output
+  runCmd("(($TOAMOS -m ../$prefix.mates -c $prefix$ALLSUFFIX.contig -s $prefix$ALLSUFFIX.seq -q $prefix$ALLSUFFIX.qual -o - | $BANKTRANSACT -m - -b $prefix$ALLSUFFIX.bnk -c) > /dev/null) >& /dev/null", "creating bank");
+  runCmd("(($AJSCAFF2AMOS $prefix$ALLSUFFIX.scaff $prefix$ALLSUFFIX.bnk/CTG.map | $BANKTRANSACT -m - -b $prefix$ALLSUFFIX.bnk) > /dev/null) >& /dev/null", " loading scaffold");
+  runCmd("(($LOADFEATURES $prefix$ALLSUFFIX.bnk $prefix$ALLSUFFIX.feat) > /dev/null ) >& /dev/null", " load features");
+
   if (defined $db && $DOAUTOEDITOR)
   {
     if (! -r "autoEditor")
@@ -1878,6 +1876,7 @@ MAIN:
 
   my $bankpath = shift @ARGV;  ## path/to/dmg.bnk
   die $USAGE if !defined $bankpath;
+  $bankpath =~ s/\/$//;
 
   my $debug = $tf->getDebugLevel();
   $tf->setDebugLevel(4) if (!$debug);
