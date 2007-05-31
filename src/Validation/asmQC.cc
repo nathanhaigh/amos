@@ -312,6 +312,9 @@ void getCvg(list<list<AnnotatedFragment>::iterator>::iterator begin,
   vector<Pos_t> starts, ends;
   list<pair<Pos_t, Pos_t> > ranges;
   interest.clear();
+
+  if (coverage < 0)
+     return;
   
   for (list<list<AnnotatedFragment>::iterator>::iterator mi = begin; mi != end; mi++){
       if ((*mi)->status == status){
@@ -371,11 +374,13 @@ void getCvg(list<list<AnnotatedFragment>::iterator>::iterator begin,
   }
 
   if (ranges.size() == 0 && above) return;
-  if (ranges.size() == 0 && coverage >= 0) {
+// if (coverage < 0) return;
+  if (ranges.size() == 0) {
     // all contig is below needed coverage
     interest.push_back(pair<Pos_t, Pos_t>(0, ctglen));
     return;
-  }
+  } 
+	
 
   for (list<pair<Pos_t, Pos_t> >::iterator li = ranges.begin(); 
        li != ranges.end(); li++){
