@@ -2,10 +2,9 @@
 
 use strict;
 use TIGR::Foundation;
-use TIGR::SequenceTiling;
-use File::Basename;
 use File::Spec;
 use File::Copy;
+use File::Basename;
 use Cwd;
 
 $|++; # no buffering on STDOUT
@@ -44,6 +43,7 @@ my $BANK2SCAFF   = "bank2scaff";
 my $AMOS2MATES   = "amos2mates";
 my $BANKREPORT   = "bank-report";
 my $LOADFEATURES = "loadFeatures";
+my $DUMPFEATURES = "dumpFeatures";
 
 
 my $SELF          = $0;
@@ -53,7 +53,6 @@ my $tf            = new TIGR::Foundation;
 
 my $DOVERBOSE     = 1;
 my $DOJOIN        = 0;
-my $DOAUTOEDITOR  = 0;
 my $DOVALIDATE    = 0;
 my $DOAEVALIDATE  = 0;
 
@@ -69,49 +68,41 @@ my $MAXGAPSIZE    = 1000;    ## Max Gap size before giving up
 my $MINGAPSTDEV   = 100.00;  ## Hard floor on gap standard deviation
 my $GAPSTDTHRESH  = 4;       ## Max acceptable number of standard deviations
 
+my $JOINPREFIX    = "aj_";
 my $JOINSUFFIX    = "_joined";
-my $ALLSUFFIX     = "";
 my $ALIGNMENTDIR  = "alignment";
 my $RESULTSDIR    = "results";
 my $JOINDIR       = "joincontigs";
 my $OVERLAPREPORT = "overlap.report";
 
-my $JOINCOMMENT   = "comment\tCA_CONTIG ID:";
-my $USERNAME      = getpwuid($>);
-
 
 my $HELPTEXT = qq~
-AutoJoin contigs and close sequencing gaps in an assembly through contig 
-extension. The input files are the contig, qual, seq, and pos files 
-(with the same prefix), plus the CA asm file for the scaffold 
-information (-asm), the tasm file for contig comments (-tasm), and the feat 
-file (-feat). Within the autoJoin work directory (-dir), there will be an 
-alignment directory which contains all of the alignment information and
-intermediate files for the join process. Final results are stored in a results 
-directory.
+AutoJoin contigs and close sequencing gaps in an assembly through contig
+extension. The input is an AMOS bank (prefix.bnk) containing contigs and
+scaffold. Within the autoJoin work directory (-dir), there will be an alignment
+directory which contains all of the alignment information and intermediate
+files for the join process. Final results are stored in a results directory.
 
-The main files in the results directory are the prefix.{contig,qual,seq,pos}
-files which contain the entire assembly after autoJoiner. (prefix_joined 
-contains just those contigs that autoJoiner sucessful on.) A report on the
-results of autoJoiner are stored in prefix.joinreport.
+The main result is a prefix.bnk in the results directory containing a
+new AMOS bank with the AutoJoined assembly. In addition, in the results
+directory are the prefix.{contig,qual,seq,pos} files which contain the entire
+assembly after autoJoiner. (prefix_joined contains just those contigs that
+autoJoiner sucessful on.) A report on the results of autoJoiner are stored
+in prefix.joinreport.
 
-In addition, a prefix.degenerates file is created which lists every contig id 
-that autoJoiner did not perform any join actions on, prefix.feat which has all
-original features remapped plus new AUTOJOIN features, a prefix.tasm file which
-only contains the assembly comments, and a prefix.sq.contigs file which is
-an updated scaffold representation suitable for AutoCloser.
+In addition, a prefix.unjoined file is created which lists every contig id
+that autoJoiner did not perform any join actions on, prefix.feat which has
+all original features remapped plus new AUTOJOIN features, and a prefix.scaff
+file containing the updated scaffold.
 
   $USAGE
     prefix.bnk is the path to the AMOS bank.
 
   Options
   -------
-  -dir <dir>   Output directory            [ Default: autoJoin ]
-  -feat <path> Path to feat file           [ Default: prefix.feat ]
-  -asm <path>  Path to asm file            [ Default: none]
-  -tasm <path> Path to tasm file           [ Default: prefix.tasm ]
-  -user <name> Set output attribute        [ Default: current user ]
-  -join        Actually do the joins       [ Default: nojoins ]
+  -dir <dir>    Output directory                 [ Default: autoJoin ]
+  -prefix <pre> Prefix for joined contig names   [ Default: aj_ ]
+  -join         Actually do the joins            [ Default: nojoins ]
 
   -alignment <threshold> Specify Minimum percent identity for an alignment 
                          to be used for joining contigs together.
@@ -125,7 +116,6 @@ files necessary to load the AutoJoined+AutoEdited assembly into the database
 (via aloader). In addition the prefix.sq.contigs file is present which has
 been updated for the autoEditor results.
 
-  -F <frglist>
   -D <db>         Assembly project (for autoEditor & validation)
   -[no]join       Toggle between eval & eval+join    [ Default: -join ]
   -[no]validate   Validate the join against a 1con   [ Default: -novalidate ]
@@ -190,7 +180,7 @@ sub tfchdir
   sub getJoinId
   {
     $joinid++;
-    return "aj_$joinid";
+    return "$JOINPREFIX$joinid";
   }
 }
 
@@ -247,6 +237,205 @@ sub tfsymlink
     or $tf->bail("Can't symlink $_[0] to $_[1]");
 }
 
+{
+  my %features;
+
+  sub loadFeatures
+  {
+    my $featfile = shift;
+    echo " loading existing features from $featfile\n";
+
+    open FEAT, "< $featfile"
+      or $tf->bail("Can't read $featfile ($!)\n");
+
+    while (<FEAT>)
+    {
+      my $feature;
+
+      chomp;
+      my @fields = split /\s+/, $_;
+
+      my $contigid        = shift @fields;
+      $feature->{type}    = shift @fields;
+      $feature->{end5}    = shift @fields;
+      $feature->{end5g}   = $feature->{end5};
+      $feature->{end3}    = shift @fields;
+      $feature->{end3g}   = $feature->{end3};
+      $feature->{comment} = join(" ", @fields);
+
+      push @{$features{$contigid}}, $feature;
+    }
+    
+    close FEAT;
+  }
+
+  sub printFeatures
+  {
+    my $filename = shift;
+
+    open NEWFEAT, "> $filename"
+      or $tf->bail("Can't read $filename ($!)\n");
+
+    foreach my $contigid (sort keys %features)
+    {
+      next if !defined $features{$contigid};
+      #next if !getContigInfo($contigid)->{isjoin};
+
+      foreach my $feature (@{$features{$contigid}})
+      {
+        my $end5    = $feature->{end5};
+        my $end3    = $feature->{end3};
+        my $type    = $feature->{type};
+        my $comment = $feature->{comment};
+
+        print NEWFEAT "$contigid\t$type\t$end5\t$end3\t$comment\n";
+      }
+    }
+  }
+
+  sub createJoinFeature
+  {
+    my $gapinfo = shift;
+    my $joinid = $gapinfo->{autojoin}->{id};
+
+    my $left   = $gapinfo->{left}->{id};
+    my $right  = $gapinfo->{right}->{id};
+
+    my $gapsize = $gapinfo->{autojoin}->{gapsize};
+    my $idscore = $gapinfo->{autojoin}->{idscore};
+    my $olen    = $gapinfo->{autojoin}->{olen};
+
+    my $joinfeature;
+    $joinfeature->{isjoin} = 1;
+
+    $joinfeature->{type}    = "J";
+    $joinfeature->{comment} = qq~AutoJoin $left $right gapsize:$gapsize overlap:$olen bp @ $idscore%\n~;
+
+    ## TODO: These are ungapped coordinates
+    $joinfeature->{end5} = $gapinfo->{autojoin}->{begin};
+    $joinfeature->{end3} = $gapinfo->{autojoin}->{end};
+
+    return $joinfeature;
+  }
+
+  sub remapJoinedFeatures
+  {
+    my $gapinfo = shift;
+
+    my $left       = $gapinfo->{left}->{id};
+    my $leftsize   = $gapinfo->{left}->{size};
+    my $leftgsize  = $gapinfo->{left}->{gsize};
+
+    my $right      = $gapinfo->{right}->{id};
+    my $rightsize  = $gapinfo->{right}->{size};
+    my $rightgsize = $gapinfo->{right}->{gsize};
+
+    my $joinid     = $gapinfo->{autojoin}->{id};
+    my $joinsize   = $gapinfo->{autojoin}->{size};
+    my $joingsize  = $gapinfo->{autojoin}->{gsize};
+
+    if (defined $features{$left} || defined $features{$right})
+    {
+      my $jointype;
+
+      if ($gapinfo->{left}->{oo} eq "BE")
+      {
+        ## left features are the same
+        push @{$features{$joinid}}, @{$features{$left}}
+          if defined $features{$left};
+
+        if ($gapinfo->{right}->{oo} eq "BE")
+        {
+          $jointype = "I";
+
+          ## remap right features based on distance to rightmost edge
+          foreach my $f (@{$features{$right}})
+          {
+            $f->{end5} = $joinsize - ($rightsize - $f->{end5});
+            $f->{end3} = $joinsize - ($rightsize - $f->{end3});
+
+            $f->{end5g} = $joingsize - ($rightgsize - $f->{end5g});
+            $f->{end3g} = $joingsize - ($rightgsize - $f->{end3g});
+
+            push @{$features{$joinid}}, $f;
+          }
+        }
+        else
+        {
+          $jointype = "II";
+
+          ## remap right features based on distance to rightmost edge (reverse)
+
+          foreach my $f (@{$features{$right}})
+          {
+            my $swap = $f->{end5};
+
+            $f->{end5} = $joinsize - $f->{end3};
+            $f->{end3} = $joinsize - $swap;
+
+            $swap = $f->{end5g};
+
+            $f->{end5g} = $joinsize - $f->{end3g};
+            $f->{end3f} = $joinsize - $swap;
+
+            push @{$features{$joinid}}, $f;
+          }
+        }
+      }
+      else
+      {
+        ## remap left features based on distance to rightmost edge
+        foreach my $f (@{$features{$left}})
+        {
+          $f->{end5} = $joinsize - ($leftsize - $f->{end5});
+          $f->{end3} = $joinsize - ($leftsize - $f->{end3});
+
+          $f->{end5g} = $joingsize - ($leftgsize - $f->{end5g});
+          $f->{end3g} = $joingsize - ($leftgsize - $f->{end3g});
+
+          push @{$features{$joinid}}, $f;
+        }
+
+        if ($gapinfo->{right}->{oo} eq "EB")
+        {
+          $jointype = "III";
+
+          ## Right Features are the same (EB-EB)
+          push @{$features{$joinid}}, @{$features{$right}}
+            if defined $features{$right};
+        }
+        else
+        {
+          $jointype = "IV";
+
+          ##EB-BE
+          foreach my $f (@{$features{$right}})
+          {
+            my $swap = $f->{end5};
+            $f->{end5} = $rightsize - $f->{end3};
+            $f->{end3} = $rightsize - $swap;
+
+            $swap = $f->{end5g};
+            $f->{end5g} = $rightsize - $f->{end3g};
+            $f->{end3g} = $rightsize - $swap;
+
+            push @{$features{$joinid}}, $f;
+          }
+        }
+      }
+
+      delete $features{$left};
+      delete $features{$right};
+
+      echo "Remapping $left and $right features into $joinid (Type $jointype)\n";
+    }
+
+    my $joinfeature = createJoinFeature($gapinfo);
+    push @{$features{$joinid}}, $joinfeature;
+  }
+}
+
+
 
 sub prepareAssembly
 {
@@ -266,6 +455,15 @@ sub prepareAssembly
   runCmd("($DUMPREADS -e -q -r $bankdir > $prefix.qual) >& /dev/null", " dumpreads qual")
     if (! -r "$prefix.qual");
 
+  foreach my $suffix (qw/seq qual/)
+  {
+    if (! -r "$prefix.$suffix.idx")
+    {
+      runCmd("$FILTERSEQ -index $prefix.$suffix",
+             " Creating $suffix idx");
+    }
+  }
+
   runCmd("($BANK2CONTIG -e $bankdir > $prefix.contig) >& /dev/null", " bank2contig")
     if (! -r "$prefix.contig");
 
@@ -275,14 +473,10 @@ sub prepareAssembly
   runCmd("($BANKREPORT -b $bankdir | $AMOS2MATES > $prefix.mates) >& /dev/null", " bank2mates")
     if (! -r "$prefix.mates");
 
-  foreach my $suffix (qw/seq qual/)
-  {
-    if (! -r "$prefix.$suffix.idx")
-    {
-      runCmd("$FILTERSEQ -index $prefix.$suffix",
-             "Creating $suffix idx");
-    }
-  }
+  runCmd("($DUMPFEATURES $bankdir > $prefix.feat) >& /dev/null", " dumping original features")
+    if (! -r "$prefix.feat");
+
+  loadFeatures("$prefix.feat");
 
   loadLayout($prefix);
 
@@ -291,7 +485,7 @@ sub prepareAssembly
     tfmkdir("fasta");
     
     my $cmd = "$CONTIG2FASTA $prefix.contig > fasta/$prefix.fasta";
-    my $info = "contig2fasta $prefix";
+    my $info = " contig2fasta $prefix";
     runCmd($cmd, $info);
 
     tfchdir("fasta");
@@ -380,7 +574,7 @@ sub prepareAssembly
     my $file = shift;
     my $cmd = "$SIZEFASTA $file";
 
-    echo "loading original contig sizes\n";
+    echo " loading original contig sizes\n";
 
     $tf->logLocal("Running $cmd", 4);
     my @out = `$cmd`;
@@ -416,49 +610,6 @@ sub prepareAssembly
 
     $contigstatus{$id}->{comment} = "CA_CONTIG: $id"
       if (!exists $contigstatus{$id}->{comment});
-  }
-
-  sub loadTasmComments
-  {
-    my $filename = shift;
-    echo "loading existing tasm comments from $filename\n";
-
-    open TASM, "< $filename"
-      or $tf->bail("Can't open $filename ($!)");
-
-    my $id = undef;
-
-    while (<TASM>)
-    {
-      $id = $1 if (/^asmbl_id\s(\S+)/);
-      if (defined $id && /^comment/)
-      {
-        $contigstatus{$id}->{comment} = $_;
-
-        $id = undef;
-      }
-    }
-
-    close TASM;
-  }
-
-  sub printTasmComments
-  {
-    my $filename = shift;
-
-    open TASM, "> $filename"
-      or $tf->bail("Can't open $filename ($!)");
-
-    foreach my $id (keys %contigstatus)
-    {
-      if (!defined($contigstatus{$id}->{newid}))
-      {
-        print TASM "asmbl_id\t$id\n";
-        print TASM $contigstatus{$id}->{comment};
-      }
-    }
-
-    close TASM;
   }
 
   sub printUnjoinedContigs
@@ -513,8 +664,6 @@ sub prepareAssembly
     ## New contig has same orientation as left contig, right contig still has old oo
     $contigstatus{$joinid}->{oo}     = $gapinfo->{left}->{oo};
 
-    ## Remember the comment for this id
-    $contigstatus{$joinid}->{comment} = "$JOINCOMMENT $joinid\n";
     $contigstatus{$joinid}->{isjoin} = 1;
 
     my $leftid  = $gapinfo->{left}->{id};
@@ -1141,214 +1290,6 @@ sub validateJoin
 
 
 
-{
-  my %features;
-
-  sub loadFeatures
-  {
-    my $featfile = shift;
-    echo "loading existing features from $featfile\n";
-
-    my $contigid = undef;
-    my $feature = undef;
-
-    open FEAT, "< $featfile"
-      or $tf->bail("Can't read $featfile ($!)\n");
-
-    while (<FEAT>)
-    {
-      if    (/\<Contig /)   { $contigid = $1 if (/Id=\"(\S+)\"/); }
-      elsif (/\<Feature /)  { $feature->{feature} = $_; }
-      elsif (/\<Comment>/)  { $feature->{comment} = $_; }
-      elsif (/\<Location /)
-      {
-        $feature->{end5}  = $1 if (/End5=\"(\w*)\"/);
-        $feature->{end5g} = $1 if (/End5_gapped=\"(\w*)\"/);
-        $feature->{end3}  = $1 if (/End3=\"(\w*)\"/);
-        $feature->{end3g} = $1 if (/End3_gapped=\"(\w*)\"/);
-      }
-      elsif (/<\/Feature>/ && defined $feature)
-      {
-        push @{$features{$contigid}}, $feature;
-        $feature = undef;
-      }
-    }
-    
-    close FEAT;
-
-    $tf->bail("Invalid feat file!") 
-      if defined $feature;
-  }
-
-  sub printFeatures
-  {
-    my $filename = shift;
-
-    open NEWFEAT, "> $filename"
-      or $tf->bail("Can't read $filename ($!)\n");
-
-    foreach my $contigid (sort keys %features)
-    {
-      next if !defined $features{$contigid};
-      #next if !getContigInfo($contigid)->{isjoin};
-
-      foreach my $feature (@{$features{$contigid}})
-      {
-        my $end5    = $feature->{end5};
-        my $end3    = $feature->{end3};
-        my $type    = $feature->{type};
-        my $comment = $feature->{comment};
-
-        print NEWFEAT "$contigid\t$type\t$end5\t$end3\t$comment\n";
-      }
-    }
-  }
-
-  sub createJoinFeature
-  {
-    my $gapinfo = shift;
-    my $joinid = $gapinfo->{autojoin}->{id};
-
-    my $left   = $gapinfo->{left}->{id};
-    my $right  = $gapinfo->{right}->{id};
-
-    my $gapsize = $gapinfo->{autojoin}->{gapsize};
-    my $idscore = $gapinfo->{autojoin}->{idscore};
-    my $olen    = $gapinfo->{autojoin}->{olen};
-
-    my $joinfeature;
-    $joinfeature->{isjoin} = 1;
-
-    $joinfeature->{feature} = qq~<Feature Id="" Type="AUTOJOIN" Class="$joinid" Name="AJ$joinid" Method="AutoJoin" Assignby="$USERNAME">\n~;
-    $joinfeature->{type}    = "J";
-    $joinfeature->{comment} = qq~AutoJoin $left $right gapsize:$gapsize overlap:$olen bp @ $idscore%\n~;
-
-    $joinfeature->{end5} = $gapinfo->{autojoin}->{begin};
-    $joinfeature->{end3} = $gapinfo->{autojoin}->{end};
-
-    $joinfeature->{end5g} = $joinfeature->{end5}; ## dumped anyways
-    $joinfeature->{end3g} = $joinfeature->{end3}; ## dumped anyways
-
-    return $joinfeature;
-  }
-
-  sub remapJoinedFeatures
-  {
-    my $gapinfo = shift;
-
-    my $left       = $gapinfo->{left}->{id};
-    my $leftsize   = $gapinfo->{left}->{size};
-    my $leftgsize  = $gapinfo->{left}->{gsize};
-
-    my $right      = $gapinfo->{right}->{id};
-    my $rightsize  = $gapinfo->{right}->{size};
-    my $rightgsize = $gapinfo->{right}->{gsize};
-
-    my $joinid     = $gapinfo->{autojoin}->{id};
-    my $joinsize   = $gapinfo->{autojoin}->{size};
-    my $joingsize  = $gapinfo->{autojoin}->{gsize};
-
-    if (defined $features{$left} || defined $features{$right})
-    {
-      my $jointype;
-
-      if ($gapinfo->{left}->{oo} eq "BE")
-      {
-        ## left features are the same
-        push @{$features{$joinid}}, @{$features{$left}}
-          if defined $features{$left};
-
-        if ($gapinfo->{right}->{oo} eq "BE")
-        {
-          $jointype = "I";
-
-          ## remap right features based on distance to rightmost edge
-          foreach my $f (@{$features{$right}})
-          {
-            $f->{end5} = $joinsize - ($rightsize - $f->{end5});
-            $f->{end3} = $joinsize - ($rightsize - $f->{end3});
-
-            $f->{end5g} = $joingsize - ($rightgsize - $f->{end5g});
-            $f->{end3g} = $joingsize - ($rightgsize - $f->{end3g});
-
-            push @{$features{$joinid}}, $f;
-          }
-        }
-        else
-        {
-          $jointype = "II";
-
-          ## remap right features based on distance to rightmost edge (reverse)
-
-          foreach my $f (@{$features{$right}})
-          {
-            my $swap = $f->{end5};
-
-            $f->{end5} = $joinsize - $f->{end3};
-            $f->{end3} = $joinsize - $swap;
-
-            $swap = $f->{end5g};
-
-            $f->{end5g} = $joinsize - $f->{end3g};
-            $f->{end3f} = $joinsize - $swap;
-
-            push @{$features{$joinid}}, $f;
-          }
-        }
-      }
-      else
-      {
-        ## remap left features based on distance to rightmost edge
-        foreach my $f (@{$features{$left}})
-        {
-          $f->{end5} = $joinsize - ($leftsize - $f->{end5});
-          $f->{end3} = $joinsize - ($leftsize - $f->{end3});
-
-          $f->{end5g} = $joingsize - ($leftgsize - $f->{end5g});
-          $f->{end3g} = $joingsize - ($leftgsize - $f->{end3g});
-
-          push @{$features{$joinid}}, $f;
-        }
-
-        if ($gapinfo->{right}->{oo} eq "EB")
-        {
-          $jointype = "III";
-
-          ## Right Features are the same (EB-EB)
-          push @{$features{$joinid}}, @{$features{$right}}
-            if defined $features{$right};
-        }
-        else
-        {
-          $jointype = "IV";
-
-          ##EB-BE
-          foreach my $f (@{$features{$right}})
-          {
-            my $swap = $f->{end5};
-            $f->{end5} = $rightsize - $f->{end3};
-            $f->{end3} = $rightsize - $swap;
-
-            $swap = $f->{end5g};
-            $f->{end5g} = $rightsize - $f->{end3g};
-            $f->{end3g} = $rightsize - $swap;
-
-            push @{$features{$joinid}}, $f;
-          }
-        }
-      }
-
-      delete $features{$left};
-      delete $features{$right};
-
-      echo "Remapping $left and $right features into $joinid (Type $jointype)\n";
-    }
-
-    my $joinfeature = createJoinFeature($gapinfo);
-    push @{$features{$joinid}}, $joinfeature;
-  }
-}
-
 
 ## Scaffold Management
 {
@@ -1487,48 +1428,6 @@ sub validateJoin
     }
 
     close SCAFF;
-  }
-
-  sub printCasperScaffold
-  {
-    my $filename = shift;
-    my $newscaffold = new TIGR::SequenceTiling;
-
-    open CASPER, "> $filename"
-      or $tf->bail("Can't open $filename ($!)");
-
-    foreach my $scaffid (sort {$a <=> $b} keys %newscaffold)
-    {
-      my $scafflen = 0;
-
-      foreach my $contig (@{$newscaffold{$scaffid}})
-      {
-        $scafflen += ($contig->{size} + int($contig->{gap}));
-      }
-
-      $newscaffold->addSequence($scaffid, $scafflen, "SCAFFOLD");
-
-      my $offset = 0;
-
-      foreach my $contig (@{$newscaffold{$scaffid}})
-      {
-        my $strand = ($contig->{oo} eq "BE") ? 0 : 1;
-
-        $newscaffold->addTile($scaffid,
-                              $contig->{id},
-                              $contig->{size},
-                              $offset,
-                              $strand,
-                              "CONTIG",
-                              "");
-
-        $offset += ($contig->{size} + int($contig->{gap}));
-      }
-    }
-
-    $newscaffold->toStream(\*CASPER);
-
-    close CASPER;
   }
 }
 
@@ -1739,16 +1638,16 @@ sub finalizeAssembly
 
   tfchdir("$ajdir/$RESULTSDIR"); $ajdir = File::Spec->abs2rel($ajdir);
 
-  my %origsequences;
+  my %joinsequences;
   my $printid = 0;
 
   open ORIGCONTIG, "< $ajdir/$prefix.contig"
     or $tf->bail("Can't open orig contig ($ajdir/$prefix.contig) ($!)");
 
-  open ALLCONTIG, "> $prefix$ALLSUFFIX.contig"
-    or $tf->bail("Can't open $prefix$ALLSUFFIX.contig ($!)");
+  open ALLCONTIG, "> $prefix.contig"
+    or $tf->bail("Can't open $prefix.contig ($!)");
 
-  echo "creating results contig file... ";
+  echo " creating results contig file... ";
 
   while (<ORIGCONTIG>)
   {
@@ -1761,7 +1660,7 @@ sub finalizeAssembly
     }
     elsif (/^#(\S+)\(/)
     {
-      $origsequences{$1} = 1 if ($printid);
+      $joinsequences{$1} = 1 if (!$printid);
     }
 
     print ALLCONTIG $_ if $printid;
@@ -1772,7 +1671,7 @@ sub finalizeAssembly
 
   echo "ok.\n";
 
-  runCmd("$CAT $prefix$JOINSUFFIX.contig >> $prefix$ALLSUFFIX.contig", "concat contig")
+  runCmd("$CAT $prefix$JOINSUFFIX.contig >> $prefix.contig", " concat contig")
     if -r "$prefix$JOINSUFFIX.contig";
 
   foreach my $suffix (qw/qual seq/)
@@ -1780,48 +1679,36 @@ sub finalizeAssembly
     open FASTA, "< $ajdir/$prefix.$suffix"
       or $tf->bail("Can't open orig $suffix ($ajdir/$prefix.$suffix) ($!)");
 
-    open OUT, ">$prefix$ALLSUFFIX.$suffix"
-      or $tf->bail("Can't open $prefix$ALLSUFFIX.$suffix ($!)");
+    open OUT, ">$prefix.$suffix"
+      or $tf->bail("Can't open $prefix.$suffix ($!)");
 
     $printid = 0;
 
     while (<FASTA>)
     {
-      $printid = $origsequences{$1} if (/^>(\S+)/);
+      $printid = !exists $joinsequences{$1} if (/^>(\S+)/);
       print OUT $_ if $printid;
     }
 
     close FASTA;
     close OUT;
 
-    runCmd("$CAT $prefix$JOINSUFFIX.$suffix >> $prefix$ALLSUFFIX.$suffix", "concat $suffix")
+    runCmd("$CAT $prefix$JOINSUFFIX.$suffix >> $prefix.$suffix", " concat $suffix")
       if -r "$prefix$JOINSUFFIX.$suffix";
   }
 
-  printTasmComments("$prefix$ALLSUFFIX.tasm");
-  printFeatures("$prefix$ALLSUFFIX.feat");
-  printUnjoinedContigs("$prefix$ALLSUFFIX.degenerates");
-  printScaffold("$prefix$ALLSUFFIX.scaff");
-  printJoinSummary("$prefix$ALLSUFFIX.joinsummary");
-  printCasperScaffold("$prefix$ALLSUFFIX.sq.contigs");
+  printFeatures("$prefix.feat");
+  printUnjoinedContigs("$prefix.unjoined");
+  printScaffold("$prefix.scaff");
+  printJoinSummary("$prefix.joinsummary");
 
   ## Create AMOS Output
-  runCmd("(($TOAMOS -m ../$prefix.mates -c $prefix$ALLSUFFIX.contig -s $prefix$ALLSUFFIX.seq -q $prefix$ALLSUFFIX.qual -o - | $BANKTRANSACT -m - -b $prefix$ALLSUFFIX.bnk -c) > /dev/null) >& /dev/null", "creating bank");
-  runCmd("(($AJSCAFF2AMOS $prefix$ALLSUFFIX.scaff $prefix$ALLSUFFIX.bnk/CTG.map | $BANKTRANSACT -m - -b $prefix$ALLSUFFIX.bnk) > /dev/null) >& /dev/null", " loading scaffold");
-  runCmd("(($LOADFEATURES $prefix$ALLSUFFIX.bnk $prefix$ALLSUFFIX.feat) > /dev/null ) >& /dev/null", " load features");
+  runCmd("(($TOAMOS -m ../$prefix.mates -c $prefix.contig -s $prefix.seq -q $prefix.qual -o - | $BANKTRANSACT -m - -b $prefix.bnk -c) > /dev/null) >& /dev/null", " creating bank");
+  runCmd("(($AJSCAFF2AMOS $prefix.scaff $prefix.bnk/CTG.map | $BANKTRANSACT -m - -b $prefix.bnk) > /dev/null) >& /dev/null", "  loading updated scaffold");
+  runCmd("(($LOADFEATURES $prefix.bnk $prefix.feat) > /dev/null ) >& /dev/null", "  loading features");
 
-  if (defined $db && $DOAUTOEDITOR)
-  {
-    if (! -r "autoEditor")
-    {
-      $db = "crypt" if ($db =~ /crypt/ && $DOVALIDATE);
-      my $cmd = "$AEEXEC -D $db $prefix$ALLSUFFIX -scaff $prefix$ALLSUFFIX.sq.contigs";
-      runCmd($cmd, "autoEditor");
-    }
-  }
-
-  open REPORT, "> $prefix$ALLSUFFIX.joinreport"
-    or $tf->bail("Can't open $prefix$ALLSUFFIX.joinreport");
+  open REPORT, "> $prefix.joinreport"
+    or $tf->bail("Can't open $prefix.joinreport");
 
   select REPORT;
   printStats($prefix, $stats);
@@ -1829,6 +1716,7 @@ sub finalizeAssembly
   select STDOUT;
   close REPORT;
 
+  echo "\n";
   printStats($prefix, $stats);
 }
 
@@ -1836,10 +1724,6 @@ sub finalizeAssembly
 MAIN:
 {
   my $db = undef;
-  my $asmfile = undef;
-  my $featpath = undef;
-  my $tasmpath = undef;
-  my $frglist = undef;
 
   my $ajdir = "autoJoin";
   my $curajpath;
@@ -1853,17 +1737,12 @@ MAIN:
   my $result = $tf->TIGR_GetOptions
                (
                  'D=s',         \$db,
+                 "prefix=s",    \$JOINPREFIX,
                  'o|dir=s',     \$ajdir,
-                 'asm=s',       \$asmfile,
-                 'feat=s',      \$featpath,
-                 'tasm=s',      \$tasmpath,
-                 'user=s',      \$USERNAME,
                  'verbose!',    \$DOVERBOSE,
-                 'edit!',       \$DOAUTOEDITOR,
                  'validate!',   \$DOVALIDATE,
                  'join!',       \$DOJOIN,
                  'aevalidate!', \$DOAEVALIDATE,
-                 'F=s',         \$frglist,
                  'alignment=s', \$ALIGNTHRESHOLD,
                 );
 
@@ -1889,22 +1768,9 @@ MAIN:
   $tf->logLocal("prefix: $prefix\n", 4);
   $tf->logLocal("bankpath: $bankpath\n", 4);
 
-  $asmfile = File::Spec->rel2abs($asmfile) if defined $asmfile;
-
   tfmkdir($ajdir); tfchdir($ajdir); $ajdir = cwd; 
 
-  if (defined $asmfile)
-  {
-    if (! -r "$prefix.scaff")
-    {
-      runCmd("($CA2AJSCAFF -s -i $asmfile -o $prefix) >& /dev/null", "ca2ajscaff");
-    }
-  }
-
   prepareAssembly($prefix, $bankpath);
-
-  #loadFeatures("$dataprefix.feat");
-  #loadTasmComments("$dataprefix.tasm");
 
   my $scafffile = "$prefix.scaff";
 
