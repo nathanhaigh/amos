@@ -115,7 +115,10 @@ int main (int argc, char ** argv)
 	       << "\t" << "."             // score
 	       << "\t" << "+"             // strand
 	       << "\t" << "."             // frame
-	       << "\t" << "Note \""
+	       << "\t" 
+	       << "Experiment \""
+	       << feat.getType() << "\";" // feature type
+	       << "Note \""
 	       << feat.getComment() << "\"" << endl;  // comment
 	}
       }
