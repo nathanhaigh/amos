@@ -31,16 +31,19 @@ int main (int argc, char ** argv)
 "Options\n"
 "   -i report contig iids instead of eids\n"
 "   -u report ungapped coordinates instread of gapped coordinates\n"
+"   -g report features in .gff format\n"
 "\n";
 
     int USEIID = 0;
     int CONVERTUNGAPPED = 0;
+    int GFF = 0;
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
     tf->disableOptionHelp();
     tf->getOptions()->addOptionResult("u", &CONVERTUNGAPPED);
     tf->getOptions()->addOptionResult("i", &USEIID);
+    tf->getOptions()->addOptionResult("g", &GFF);
 
     tf->handleStandardOptions();
 
@@ -92,23 +95,29 @@ int main (int argc, char ** argv)
         }
 
         if (USEIID)
-        {
-          cout << iid               << " "
-               << feat.getType()    << " "
-               << b                 << " "
-               << e                 << " "
-               << feat.getComment()
-               << endl;
-        }
+	  cout << iid;
         else
+	  cout << contig_bank.lookupEID(iid);
+	
+	if (GFF == 0)
         {
-          cout << contig_bank.lookupEID(iid) << " "
+          cout << " "
                << feat.getType()             << " "
                << b                          << " "
                << e                          << " "
                << feat.getComment()
                << endl;
-        }
+        } else { // outputting GFF file
+	  cout << "\t" << "AMOS"          // program
+	       << "\t" << "misc_feature"  // feature type
+	       << "\t" << b               // beginning
+	       << "\t" << e               // end
+	       << "\t" << "."             // score
+	       << "\t" << "+"             // strand
+	       << "\t" << "."             // frame
+	       << "\t" << "Note \""
+	       << feat.getComment() << "\"" << endl;  // comment
+	}
       }
     }
 

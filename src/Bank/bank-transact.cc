@@ -297,6 +297,7 @@ int main (int argc, char ** argv)
 {
 
   Message_t msg;                      // current message
+  ifstream  msgfile;                   // the message file stream
 
   //-- Parse the command line arguments
   ParseArgs (argc, argv);
@@ -338,7 +339,6 @@ int main (int argc, char ** argv)
     else
     {
       //-- Open the message file
-      ifstream  msgfile;                   // the message file stream
       msgfile . open (OPT_MessageName . c_str( ));
       msgfile . seekg (0, ios::end);
       ProgressDots_t dots (msgfile.tellg(), 50);
@@ -366,6 +366,7 @@ int main (int argc, char ** argv)
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
+	 << "at offset: " << msgfile.tellg() << " in message file" << endl
          << "  there has been a fatal error, abort" << endl;
     exitcode = EXIT_FAILURE;
   }
