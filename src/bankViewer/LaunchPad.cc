@@ -88,7 +88,6 @@ void LaunchPad::setChromoDB(const QString & db)
 }
 
 
-
 void LaunchPad::fileOpen()
 {
   QString s = QFileDialog::getExistingDirectory("", this, "Open a Bank", "Open a Bank", TRUE );
@@ -101,6 +100,34 @@ void LaunchPad::fileExit()
   qApp->quit();
 }
 
+
+// dsommer : added importsd
+void LaunchPad::fileImport()
+{
+  QString s = QFileDialog::getOpenFileName("", "", this, "Import ace file", "Choose a file to import");
+
+  // build toAmos string
+  QString cmd("toAmos -ace ");
+  cmd.append(s);
+  cmd.append(" -o ");
+  cmd.append(s);
+  cmd.append(".afg");
+
+  // run toAMOS
+  cerr << " system " << cmd << endl;
+  int r = system(cmd);
+  cerr << " system return of " << r << endl;
+
+  // build bank-tranact string
+  QString cmd2("bank-transact -f -m ");
+  cmd2.append(s);
+  cmd2.append(".afg ");
+  cmd2.append(" -b ");
+  s.append(".bank");
+  cmd2.append(s);
+
+  if (!s.isEmpty()) { setBankname(s.ascii()); }
+}
 
 void LaunchPad::setBankname(std::string bankname)
 {

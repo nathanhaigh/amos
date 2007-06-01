@@ -101,6 +101,7 @@ public:
     QAction* fileOpenAction;
     QAction* fileQuitAction;
     QAction* fileChromatogramPathsAction;
+    QAction* fileImportAction;
 
 public slots:
     virtual void fileNew();
@@ -110,6 +111,7 @@ public slots:
     virtual void filePrint();
     virtual void fileExit();
     virtual void fileChromoPaths();
+    virtual void fileImport();
 
 protected:
     QGridLayout* LaunchPadBaseLayout;

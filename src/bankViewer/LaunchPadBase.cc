@@ -377,6 +377,8 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     fileQuitAction = new QAction( this, "fileQuitAction" );
     fileChromatogramPathsAction = new QAction( this, "fileChromatogramPathsAction" );
 
+    fileImportAction = new QAction( this, "fileImportAction" );
+
 
     // toolbars
     Toolbar = new QToolBar( QString(""), this, DockTop ); 
@@ -407,6 +409,10 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     fileMenu = new QPopupMenu( this );
     fileOpenAction->addTo( fileMenu );
     fileChromatogramPathsAction->addTo( fileMenu );
+    
+    // dsommer: added import
+    fileImportAction->addTo( fileMenu );
+
     fileMenu->insertSeparator();
     fileQuitAction->addTo( fileMenu );
     MenuBar->insertItem( QString(""), fileMenu, 1 );
@@ -419,6 +425,8 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     connect( fileOpenAction, SIGNAL( activated() ), this, SLOT( fileOpen() ) );
     connect( fileQuitAction, SIGNAL( activated() ), this, SLOT( fileExit() ) );
     connect( fileChromatogramPathsAction, SIGNAL( activated() ), this, SLOT( fileChromoPaths() ) );
+    // dsommer: added import 
+    connect( fileImportAction, SIGNAL( activated() ), this, SLOT( fileImport() ) );
 }
 
 /*
@@ -507,6 +515,12 @@ void LaunchPadBase::languageChange()
     fileChromatogramPathsAction->setText( tr( "Chromatogram Paths" ) );
     fileChromatogramPathsAction->setMenuText( tr( "Chromatogram &Paths..." ) );
     fileChromatogramPathsAction->setAccel( tr( "Ctrl+P" ) );
+
+    // dsommer: added import
+    fileImportAction->setText( tr( "Import ace " ) );
+    fileImportAction->setMenuText( tr( "&Import ace" ) );
+    fileImportAction->setAccel( tr( "Ctrl+I" ) );
+
     Toolbar->setLabel( tr( "Toolbar" ) );
     contigIDLabel->setText( tr( "Contig ID" ) );
     viewButton->setText( tr( "All Views" ) );
@@ -552,5 +566,11 @@ void LaunchPadBase::fileExit()
 void LaunchPadBase::fileChromoPaths()
 {
     qWarning( "LaunchPadBase::fileChromoPaths(): Not implemented yet" );
+}
+
+// dsommer: added import 
+void LaunchPadBase::fileImport()
+{
+    qWarning( "LaunchPadBase::fileImport(): Not implemented yet" );
 }
 

@@ -38,6 +38,9 @@ public slots:
   void showInserts();
   void showTiling();
 
+  // dsommer: added import
+  void fileImport();
+
   void fileChromoPaths();
   void addChromoPath(const QString & path);
   void setChromoDB(const QString & db);
