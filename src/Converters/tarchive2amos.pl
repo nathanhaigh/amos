@@ -316,6 +316,9 @@ while (my ($lib, $mean) = each %libraries) {
 		$stdevs{$lib} = 3333.3;
 		$base->log("No mean found for $lib, setting to 33333\n");
     }
+    if (! defined $stdevs{$lib}){
+	$stdevs{$lib} = $mean / 10;
+    }
     my $libid = getId();
     $lib2id{$lib} = $libid;
 

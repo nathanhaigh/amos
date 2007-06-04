@@ -1299,7 +1299,11 @@ sub parseACEFile {
 	    }
 	    $seqcontig{$seqId} = $iid;
 	    $contigseq{$iid} .= "$seqId ";
-	    $seq_range{$seqId} = "$cll $clr";
+	    if ($cll > $clr) {
+		$seq_range{$seqId} = "$clr $cll";
+	    } else {
+	        $seq_range{$seqId} = "$cll $clr";
+	    }
 	    $asm_range{$seqId} = "$asml $asmr";
 	    if ($readsDone == 0){ # no read info, must generate
 		my $qualdata = "";
