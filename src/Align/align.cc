@@ -1839,7 +1839,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
    max_b_hi = 0;
    for  (i = 0;  i < n;  i ++)
      {
-      bool  ok;
+      bool  ok, needs_shift;
       int  error_limit, len, off;
       int  lo, hi;
 
@@ -1864,6 +1864,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
 
       attempts = 0;
       wiggle = offset_delta;
+      needs_shift = false;
       do
         {
          Fix_Status_t  status;
@@ -1882,40 +1883,44 @@ void  Multi_Alignment_t :: Reset_From_Votes
            else
              {
               align [i] . Check_Fix_Start (s [i] , len, cons, cons_len, status);
-              if  (status == NEEDS_LEFT_SHIFT)
-                  ok = false;
+              if (status == NEEDS_LEFT_SHIFT)
+                needs_shift = true;
              }
 
         }  while  (! ok && ++ attempts < MAX_ALIGN_ATTEMPTS);
 
-      if  (! ok)
-          {
-           Fix_Status_t  fix_status;
-           iostream::fmtflags  ios_status;
+      if (! ok || needs_shift)
+        {
+         Fix_Status_t  fix_status;
 
 //##ALD  Replace this with a Substring_Align
-           Overlap_Align (s [i], len, cons, lo, hi, cons_len,
-                1, -3, -2, -2, align [i]);
-           align [i] . a_len = len;
-           align [i] . Check_Fix_Start (s [i] , len, cons, cons_len,
-                fix_status);
+         Overlap_Align (s [i], len, cons, lo, hi, cons_len,
+              1, -3, -2, -2, align [i]);
+         align [i] . a_len = len;
+         align [i] . Check_Fix_Start (s [i] , len, cons, cons_len,
+              fix_status);
+        }
 
-           cerr << "In  Reset_From_Votes  in contig " << id << endl
-                << "  Forced alignment of string subscript " << i
-                << " to consensus\n";
-           ios_status = cerr . setf (ios :: fixed);
-           cerr << "  with " << align [i] . errors << " errors ("
-                << setprecision (2) << 100.0 * align [i] . Error_Rate ()
-                << "% error)" << endl;
-           cerr . setf (ios_status);
+      if (! ok)
+        {
+         iostream::fmtflags  ios_status;
+
+         cerr << "In  Reset_From_Votes  in contig " << id << endl
+              << "  Forced alignment of string subscript " << i
+              << " to consensus\n";
+         ios_status = cerr . setf (ios :: fixed);
+         cerr << "  with " << align [i] . errors << " errors ("
+              << setprecision (2) << 100.0 * align [i] . Error_Rate ()
+              << "% error)" << endl;
+         cerr . setf (ios_status);
 
 #if  0
-	    sprintf (Clean_Exit_Msg_Line,
-		     "Failed on string %d in  Reset_From_Votes", i);
-	    throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
-					-1, i);
+          sprintf (Clean_Exit_Msg_Line,
+                   "Failed on string %d in  Reset_From_Votes", i);
+          throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
+                                      -1, i);
 #endif
-          }
+        }
 
       align [i] . Incr_Votes (vote, s [i]);
       if  (align [i] . b_lo < min_b_lo)
