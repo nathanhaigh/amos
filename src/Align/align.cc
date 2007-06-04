@@ -1721,7 +1721,7 @@ int  Multi_Alignment_t :: Estimate_Offset_Position
 //  Estimate the position at which  offset [i]  would be in the
 //  consensus of this multialignment using the previous alignments
 //  in  align [0 .. (i-1)] .  The values in  offset  represent the
-//  leftmost positino of each string relative to the preceding string.
+//  leftmost position of each string relative to the preceding string.
 
   {
    int  j, off;
@@ -5356,9 +5356,10 @@ void  Multi_Align
   {
    Multi_Alignment_t  ma;
    vector <Vote_t>  vote;
+   vector <int>  s_len;
    bool  changed;
    const int  max_refinements = 3;
-   int  ct, n;
+   int  i, n, ct;
 
    n = s . size ();
    if  (n == 0)
@@ -5383,7 +5384,10 @@ void  Multi_Align
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
 
-   Sort_Strings_And_Offsets (s, offset, ref, tag_list);
+   for (i = 0; i < n; i ++)
+     s_len . push_back (strlen (s [i]));
+
+   Sort_Strings_And_Offsets (s, s_len, offset, ref, tag_list);
 
    ma . setID (id);
    ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, min_overlap,
@@ -6201,56 +6205,64 @@ void  Simple_Overlap
 
 
 void  Sort_Strings_And_Offsets
-    (vector <char *> & s, vector <int> & offset, vector <int> * ref,
-     vector <char *> * tag_list)
+    (vector <char *> & s, vector <int> & s_len, vector <int> & offset,
+     vector <int> * ref, vector <char *> * tag_list)
 
-//  Sort the strings in  s  into order so that all their offsets
+//  Sort the strings in  s  (together with their lengths in  s_len )
+//  into order so that all their offsets
 //  are non-negative.  Adjust the values in  offset  accordingly.
+//  Use lengths to resolve tied offsets preferring to put
+//  longer strings first.
 //  Use insertion sort since most offsets should be positive.
 //  If  ref  isn't  NULL, then set it to the subscripts of the
 //  positions of the entries in  s  and  offset  before they were
 //  changed.  If  tag_list  isn't  NULL , then also sort its entries.
+//  Note:  These offsets are relative to the preceding string, so
+//  only non-positive values need to be moved.
 
   {
    int  i, j, n;
 
    n = offset . size ();
-   if  (n != int (s . size ()))
-       {
-        sprintf (Clean_Exit_Msg_Line,
-             "ERROR:  Sorting %d strings with %d offsets\n",
-             int (s . size ()), n);
-        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-       }
-   if  (ref != NULL)
-       {
-        ref -> resize (n);
-        for  (i = 0;  i < n;  i ++)
-          (* ref) [i] = i;
-       }
+   if (n != int (s . size ()))
+     {
+      sprintf (Clean_Exit_Msg_Line,
+           "ERROR:  Sorting %d strings with %d offsets\n",
+           int (s . size ()), n);
+      Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+     }
+   if (ref != NULL)
+     {
+      ref -> resize (n);
+      for  (i = 0;  i < n;  i ++)
+        (* ref) [i] = i;
+     }
 
    for  (i = 1;  i < n;  i ++)
      {
       char  * s_save, * t_save;
-      int  o_save, r_save;
+      int  o_save, r_save, l_save;
 
-      if  (0 <= offset [i])
-          continue;
+      if (0 < offset [i])
+        continue;
 
       s_save = s [i];
+      l_save = s_len [i];
       o_save = offset [i];
-      if  (tag_list != NULL)
-          t_save = (* tag_list) [i];
-      if  (ref != NULL)
-          r_save = (* ref) [i];
-      if  (i < n - 1)
-          offset [i + 1] += o_save;
+      if (tag_list != NULL)
+        t_save = (* tag_list) [i];
+      if (ref != NULL)
+        r_save = (* ref) [i];
+      if (i < n - 1)
+        offset [i + 1] += o_save;
 
-      for  (j = i;  j > 0 && o_save < 0;  j --)
+      for (j = i;  j > 0 && (o_save < 0 || (o_save == 0 && s_len [j - 1] < l_save));
+           j --)
         {
          o_save += offset [j - 1];
          offset [j] = offset [j - 1];
          s [j] = s [j - 1];
+         s_len [j] = s_len [j - 1];
          if  (tag_list != NULL)
              (* tag_list) [j] = (* tag_list) [j - 1];
          if  (ref != NULL)
@@ -6258,6 +6270,7 @@ void  Sort_Strings_And_Offsets
         }
 
       s [j] = s_save;
+      s_len [j] = l_save;
       offset [j] = o_save;
       offset [j + 1] -= o_save;
       if  (tag_list != NULL)

@@ -679,8 +679,8 @@ void  Simple_Overlap
      int indel_score = DEFAULT_INDEL_SCORE,
      int gap_score = DEFAULT_GAP_SCORE);
 void  Sort_Strings_And_Offsets
-    (vector <char *> & s, vector <int> & offset, vector <int> * ref = NULL,
-     vector <char *> * tag_list = NULL);
+    (vector <char *> & s, vector <int> & s_len, vector <int> & offset,
+     vector <int> * ref, vector <char *> * tag_list);
 bool  Substring_Match_VS
     (const char * s, int s_len, const char * t, int t_len,
      int lo, int hi, int max_errors, Alignment_t & align);
