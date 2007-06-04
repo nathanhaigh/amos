@@ -284,10 +284,8 @@ int  main
 		 lid = layout_id;
 	       }
 	       
-	       
-	       //   if (Verbose >= 1){
-	       //		 cerr << "Processing layout: " << cid << endl;
-		 // }
+	       if (Verbose >= 2)
+	         cerr << "Processing layout: " << cid << endl;
 
 	       Get_Strings_And_Offsets
 		 (string_list, qual_list, clr_list, tag_list, offset,
@@ -1226,9 +1224,9 @@ static void  Usage
            "\n"
            "Options:\n"
            "  -a       Output alignments instead of consensus messages\n"
-	       "  -A       Output an AMOS message file\n"
+           "  -A       Output an AMOS message file\n"
      	   "  -b       Input from AMOS bank\n"
-	       "  -B       Output to an AMOS bank\n"
+           "  -B       Output to an AMOS bank\n"
            "  -c       Process contig messages\n"
            "  -C       Input is Celera msg format, i.e., a .cgb or .cgw file\n"
            "  -e <x>   Set alignment error rate to <x>, e.g.,  -e 0.05  for 5%% error\n"
@@ -1237,7 +1235,7 @@ static void  Usage
            "  -h       Print this usage message\n"
 	       "  -i <fn>  File containing list of IIDs to be processed\n"
            "  -L       Use clear range in layout rather than readbank (-b only)\n"
-	       "  -n <fn>  File containing list of EIDs (names) to be processed\n"
+           "  -n <fn>  File containing list of EIDs (names) to be processed\n"
            "  -o <n>   Set minimum overlap bases to <n>\n"
            "  -P       Input is simple contig format, i.e., UMD format\n"
            "              using partial reads\n"
