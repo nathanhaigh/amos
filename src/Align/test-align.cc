@@ -41,10 +41,29 @@ int  main
 
    Verbose = 5;
 
-   a = "acgtagattacgt";
-   b = "acgtacattacgtacgtacgtacgt";
+   a = "aag";
+   b = "aagaaa";
    printf ("a=%s\n", a);
    printf ("b=%s\n", b);
+   a_len = strlen (a);
+   b_len = strlen (b);
+
+   while  (true)
+     {
+      Alignment_t  ali;
+      int  t_lo, t_hi;
+
+      cerr << "Enter t_lo and t_hi" << endl;
+      cin >> t_lo >> t_hi;
+
+      Overlap_Align_Full_Matrix
+        (a, a_len, b, t_lo, t_hi, b_len, 1, -3, -2, -2, ali);
+
+      ali . Dump (stdout);
+      ali . Print (stdout, a, b);
+     }
+   exit (-3);
+
 
    printf ("\nFull_Matrix:\n");
    Complete_Align_Full_Matrix (a, 0, strlen (a), b, 0, 1, strlen (b),
