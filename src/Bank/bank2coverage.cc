@@ -162,6 +162,7 @@ int main (int argc, char ** argv)
     while (contig_bank >> contig)
     {
       string eid = contig.getEID();
+      int iid    = contig.getIID();
       std::vector<Tile_t> & tiling = contig.getReadTiling();
       const string & consensus = contig.getSeqString();
       const Pos_t clen = consensus.size();
@@ -245,7 +246,7 @@ int main (int argc, char ** argv)
 
         // Print Slice
 
-        tstream << eid << " "
+        tstream << iid << " "
                 << gindex+1 << " "
                 << coordinate << " " 
                 << consensus[gindex] << " "
