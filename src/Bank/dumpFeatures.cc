@@ -6,6 +6,50 @@
 using namespace AMOS;
 using namespace std;
 
+int USEIID = 0;
+int GFF = 0;
+
+void printFeature(Bank_t & contig_bank, ID_t iid, char type, int b, int e, const string & comment)
+{
+  if (GFF)
+  {
+    if (USEIID) { cout << iid; }
+    else        { cout << contig_bank.lookupEID(iid); }
+
+    cout << "\t" << "AMOS"          // program
+         << "\t" << "misc_feature"  // feature type
+         << "\t" << b               // beginning
+         << "\t" << e               // end
+         << "\t" << "."             // score
+         << "\t" << "+"             // strand
+         << "\t" << "."             // frame
+         << "\t" 
+         << "Experiment \""
+         << feat.getType() << "\";" // feature type
+         << "Note \""
+         << feat.getComment() << "\"" << endl;  // comment
+  }
+  else
+  {
+    if (USEIID)
+    {
+      cout << iid  << " " 
+           << type << " " 
+           << b    << " " 
+           << e    << " " 
+           << comment << endl;
+    }
+    else
+    {
+      cout << contig_bank.lookupEID(iid) << " "
+           << type   << " "
+           << b      << " "
+           << e      << " "
+           << comment << endl;
+    }
+  }
+}
+
 int main (int argc, char ** argv)
 {
   AMOS_Foundation * tf = NULL;
@@ -16,7 +60,8 @@ int main (int argc, char ** argv)
     string version =  "Version 1.0";
     string dependencies = "";
     string helptext = 
-"Dump contig features from a bank as a tab deliminated list."
+"Dump contig features from a bank as a tab deliminated list. Scaffold\n"
+"features are converted to appropriate contig locatations\n"
 "\n"
 "   Usage: dumpFeatures [options] bankname\n"
 "\n"
@@ -34,9 +79,7 @@ int main (int argc, char ** argv)
 "   -g report features in .gff format\n"
 "\n";
 
-    int USEIID = 0;
     int CONVERTUNGAPPED = 0;
-    int GFF = 0;
 
     // Instantiate a new TIGR_Foundation object
     tf = new AMOS_Foundation (version, helptext, dependencies, argc, argv);
@@ -57,14 +100,17 @@ int main (int argc, char ** argv)
 
     BankStream_t feat_bank(Feature_t::NCODE);
     Bank_t contig_bank(Contig_t::NCODE);
+    Bank_t scaffold_bank(Scaffold_t::NCODE);
 
     Feature_t feat;
     Contig_t contig;
+    Scaffold_t scaffold;
 
     string bank_name = argvv.front(); argvv.pop_front();
 
     cerr << "Processing " << bank_name << " at " << Date() << endl;
 
+    scaffold_bank.open(bank_name, B_READ);
     contig_bank.open(bank_name, B_READ);
     feat_bank.open(bank_name, B_READ);
 
@@ -73,7 +119,36 @@ int main (int argc, char ** argv)
 
     while (feat_bank >> feat)
     {
-      if (feat.getSource().second == Contig_t::NCODE)
+      if (feat.getSource().second == Scaffold_t::NCODE)
+      {
+        int b = feat.getRange().begin;
+        int e = feat.getRange().end;
+
+        ID_t iid = feat.getSource().first;
+
+        scaffold_bank.fetch(iid, scaffold);
+
+        vector<Tile_t> & tiling = scaffold.getContigTiling();
+        vector<Tile_t>::iterator ti;
+
+        for (ti = tiling.begin(); ti != tiling.end(); ti++)
+        {
+          if ((ti->offset < e) && (ti->getRightOffset() > b))
+          {
+            // This contig overlaps the feature
+            int cb = b - ti->offset;
+            int ce = e - ti->offset;
+
+            if (CONVERTUNGAPPED)
+            {
+              cerr << "Converting to ungapped coordinates is unsupported for scaffold features" << endl;
+            }
+
+            printFeature(contig_bank, ti->source, feat.getType(), cb, ce, feat.getComment());
+          }
+        }
+      }
+      else if (feat.getSource().second == Contig_t::NCODE)
       {
         featcount++;
 
@@ -94,33 +169,7 @@ int main (int argc, char ** argv)
           e = contig.gap2ungap(b);
         }
 
-        if (USEIID)
-	  cout << iid;
-        else
-	  cout << contig_bank.lookupEID(iid);
-	
-	if (GFF == 0)
-        {
-          cout << " "
-               << feat.getType()             << " "
-               << b                          << " "
-               << e                          << " "
-               << feat.getComment()
-               << endl;
-        } else { // outputting GFF file
-	  cout << "\t" << "AMOS"          // program
-	       << "\t" << "misc_feature"  // feature type
-	       << "\t" << b               // beginning
-	       << "\t" << e               // end
-	       << "\t" << "."             // score
-	       << "\t" << "+"             // strand
-	       << "\t" << "."             // frame
-	       << "\t" 
-	       << "Experiment \""
-	       << feat.getType() << "\";" // feature type
-	       << "Note \""
-	       << feat.getComment() << "\"" << endl;  // comment
-	}
+        printFeature(contig_bank, iid, feat.getType(), b, e, feat.getComment());
       }
     }
 
