@@ -68,7 +68,8 @@ bank_mapping_SOURCES = \
 ##-- bank2contig
 bank2contig_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
+	$(top_builddir)/src/AMOS/libAMOS.a \
+    $(top_builddir)/src/Foundation/libAMOSFoundation.a
 bank2contig_SOURCES = \
 	bank2contig.cc
 
