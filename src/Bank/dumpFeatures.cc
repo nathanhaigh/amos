@@ -25,9 +25,9 @@ void printFeature(Bank_t & contig_bank, ID_t iid, char type, int b, int e, const
          << "\t" << "."             // frame
          << "\t" 
          << "Experiment \""
-         << feat.getType() << "\";" // feature type
+         << type << "\";" // feature type
          << "Note \""
-         << feat.getComment() << "\"" << endl;  // comment
+         << comment << "\"" << endl;  // comment
   }
   else
   {
