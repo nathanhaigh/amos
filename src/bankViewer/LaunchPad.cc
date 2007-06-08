@@ -114,9 +114,9 @@ void LaunchPad::fileImport()
   cmd.append(".afg");
 
   // run toAMOS
-  cerr << " system " << cmd << endl;
+  //  cerr << " system " << cmd << endl;
   int r = system(cmd);
-  cerr << " system return of " << r << endl;
+  //  cerr << " system return of " << r << endl;
 
   // build bank-tranact string
   QString cmd2("bank-transact -f -m ");
@@ -125,6 +125,11 @@ void LaunchPad::fileImport()
   cmd2.append(" -b ");
   s.append(".bank");
   cmd2.append(s);
+
+  // run toAMOS
+  //  cerr << " system " << cmd2 << endl;
+  r = system(cmd2);
+  //  cerr << " system return of " << r << endl;
 
   if (!s.isEmpty()) { setBankname(s.ascii()); }
 }

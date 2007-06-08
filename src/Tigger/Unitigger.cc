@@ -581,9 +581,7 @@ void Unitigger::find_chunks() {
   cout << " number of contigs " << contigs.size() << endl;
 }
 
-
-// ->O
-// three cases
+//
 // 1. add edge and node to subgraph if valid
 // 2. return null if no more edges
 //
@@ -643,7 +641,7 @@ Contig* Unitigger::walk(INode* p_node) {
   Read* read = (Read*) p_node->getElement();
   int smatch = 0;
   int pmatch = 0;
-
+  
 
   // loop through all edges, checking if we can walk
   // from this node
@@ -669,15 +667,15 @@ Contig* Unitigger::walk(INode* p_node) {
   if(pmatch == 1) { // we can walk off the prefix overlap
     node2 = p_node;
     edge = prefix;
-
+	
     while(edge != NULL) {
       node2 = edge->opposite(node2);
       if(node2 != p_node) {
-	//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
-	edge = walk_edge(edge, node2, ctg);
+		//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
+		edge = walk_edge(edge, node2, ctg);
       } else {
-	edge = NULL;
-	smatch = 0;
+		edge = NULL;
+		smatch = 0;
       }
     }
   }
@@ -686,14 +684,14 @@ Contig* Unitigger::walk(INode* p_node) {
   if(smatch == 1) { // we can walk off the suffix overlap
     node2 = p_node; // start node
     edge = suffix; // start at suffix edge
-
+	
     while(edge != NULL) {
       node2 = edge->opposite(node2);
       if(node2 != p_node) {
-	//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
-	edge = walk_edge(edge, node2, ctg);
+		//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
+		edge = walk_edge(edge, node2, ctg);
       } else {
-	edge = NULL;
+		edge = NULL;
       }
     }
   }

@@ -700,6 +700,8 @@ sub parseFastaFile
 sub parseMatesFile {
     my $IN = shift;
 
+	print "in mates";
+
     my @libregexp;
     my @libids;
     my @pairregexp;
