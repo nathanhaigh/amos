@@ -5,6 +5,7 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	asmQC2 \
 	asmQC \
+    astats \
     analyze-read-depth \
     find-duplicate-reads \
     cestat-cov \
@@ -63,6 +64,15 @@ asmQC2_LDADD = \
 
 asmQC2_SOURCES = \
 	asmQC2.cc
+
+
+astats_SOURCES = \
+  astats.cc
+
+astats_LDADD =  \
+  $(top_builddir)/src/Contig/libDataStore.a \
+  $(top_builddir)/src/Common/libCommon.a   \
+  $(top_builddir)/src/AMOS/libAMOS.a 
 
 
 ##-- find-duplicate-reads
