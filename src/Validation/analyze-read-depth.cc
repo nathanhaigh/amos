@@ -186,10 +186,8 @@ int main (int argc, char ** argv)
       
       if (DEPTHONLY)
       {
-        cout << ">" << MINCONTIGLEN << "\t" << contigs << "\t";
-
-        if (USEUNGAPPED) { cout << uavgdepth << endl; }
-        else             { cout << avgdepth << endl; }
+        if (USEUNGAPPED) { fprintf(stdout, ">%d\t% 6d% 10.0f% 8.1f\n", MINCONTIGLEN, contigs, uconslen, uavgdepth); }
+        else             { fprintf(stdout, ">%d\t% 6d% 10.0f% 8.1f\n", MINCONTIGLEN, contigs, conslen,  avgdepth); }
       }
       else
       {
