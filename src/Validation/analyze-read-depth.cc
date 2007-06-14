@@ -16,6 +16,8 @@ string CONTIGIIDS;
 
 double uconslen(0);
 double ureadlen(0);
+int PRINTRAW(0);
+int USEUNGAPPED(0);
 
 void handlecontig(Contig_t & contig,
                   int & contigs,
@@ -25,19 +27,46 @@ void handlecontig(Contig_t & contig,
 {
   int clen = contig.getLength();
 
+  if (USEUNGAPPED)
+  {
+    clen = contig.getUngappedLength();
+  }
+
   if (clen >= MINCONTIGLEN)
   {
     contigs++;
-    conslen += contig.getLength();
-    uconslen += contig.getUngappedLength();
+
+    int clen = contig.getLength();
+    int uclen = contig.getUngappedLength();
+
+    conslen += clen;
+    uconslen += uclen;
+
+    double rl = 0.0;
+    double url = 0.0;
+    int rc = 0;
 
     vector<Tile_t> & tiling = contig.getReadTiling();
     vector<Tile_t>::const_iterator ti;
     for (ti = tiling.begin(); ti != tiling.end(); ti++)
     {
-      readlen += ti->getGappedLength();
-      ureadlen += ti->range.getLength();
-      readcount++;
+      rl += ti->getGappedLength();
+      url += ti->range.getLength();
+      rc++;
+    }
+
+    readlen += rl;
+    ureadlen += url;
+    readcount += rc;
+
+    if (PRINTRAW)
+    {
+      cout << contig.getIID() << "\t" 
+           << rc << "\t"
+           << clen << "\t" 
+           << uclen << "\t"
+           << (rl/clen) << "\t"
+           << (url/uclen) << endl;
     }
   }
 }
@@ -61,6 +90,9 @@ int main (int argc, char ** argv)
 "Output is suitable for loadFeatures:\n"
 "contigeid D end5 end3 maxdepth\n"
 "\n"
+"In raw mode (-r) output is:\n"
+"contigiid numreads glen uglen gcov ugcov\n"
+"\n"
 "   Usage: analyze-read-depth [options] bank\n"
 "\n"
 "   Options\n"
@@ -72,6 +104,8 @@ int main (int argc, char ** argv)
 "   -i           Print contig IIDs instead of EIDs\n"
 "   -d           Just compute the depth\n"
 "   -l <len>     Only use contigs >= len for computing average\n"
+"   -r           Print the depth for each contig\n"
+"   -u           Use ungapped length for reports\n";
 "\n";
 
     // Instantiate a new TIGR_Foundation object
@@ -85,6 +119,8 @@ int main (int argc, char ** argv)
     tf->getOptions()->addOptionResult("i",         &PRINTIID);
     tf->getOptions()->addOptionResult("d",         &DEPTHONLY);
     tf->getOptions()->addOptionResult("l=i",       &MINCONTIGLEN);
+    tf->getOptions()->addOptionResult("r",         &PRINTRAW);
+    tf->getOptions()->addOptionResult("u",         &USEUNGAPPED);
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -147,8 +183,15 @@ int main (int argc, char ** argv)
       cerr << "Processed reads: " << readcount << " contigs: " << contigs << endl;
       cerr << "Global average contig depth: " << avgdepth << " [" << readlen << "/" << conslen << "]" << endl;
       cerr << "Global ungapped average contig depth: " << uavgdepth << " [" << ureadlen << "/" << uconslen << "]" << endl;
+      
+      if (DEPTHONLY)
+      {
+        cout << ">" << MINCONTIGLEN << "\t" << contigs << "\t";
 
-      if (!DEPTHONLY)
+        if (USEUNGAPPED) { cout << uavgdepth << endl; }
+        else             { cout << avgdepth << endl; }
+      }
+      else
       {
         cerr << "Flagging regions above: " << threshdepth << endl;
 
