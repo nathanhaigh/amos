@@ -38,6 +38,8 @@ by spaces.
 
     sub new();
     sub getRecord();
+    sub seek();
+    sub tell();
 
 =over
 
@@ -64,6 +66,7 @@ sub new()
     $self->{linesep} = ''; 
     $self->{linesep} = $linesep if defined $linesep;
     $self->{file} = $file;
+    $self->{tell} = tell($file);
 
     $self->{buf} = <$file>;
     if (! defined $self->{buf}){
@@ -93,20 +96,65 @@ sub getRecord()
     my $head;
     my $data;
     my $file = $self->{file};
+    my $tl;
     
     if (! defined $self->{buf} || $self->{buf} !~ /^$self->{headsep}/){ # record must start with a separator
 	return ();
     }
     $head = $self->{buf};
     $head =~ s/^$self->{headsep}//;
+    $tl = tell($file);
     $self->{buf} = <$file>;
     chomp $self->{buf};
     while (defined $self->{buf} && $self->{buf} !~ /^$self->{headsep}/){
 	$data .= $self->{buf} . $self->{linesep};
+	$tl = tell($file);
 	$self->{buf} = <$file>;
 	if (defined $self->{buf}){chomp $self->{buf}};
     }
+    $self->{tell} = $tl;
     return ($head, $data);
+}
+
+=item $parser->seek(posn);
+
+Resets the parser to a specific location (posn) in the file stream.
+
+=cut
+sub seek()
+{
+    my $self = shift;
+    my $pos = shift;
+    my $file = $self->{file};
+    my $headsep = $self->{headsep};
+
+    seek($file, $pos, 0);
+
+    $self->{tell} = tell($file);
+    $self->{buf} = <$file>;
+    if (! defined $self->{buf}){
+	print STDERR "File appears empty\n";
+	return undef;
+#	die("File appears empty\n");
+    }
+    if ($self->{buf} !~ /^$self->{headsep}/){
+	print STDERR "File doesn't start with a header: $headsep\n";
+	return undef;
+#	die ("File doesn't start with a header: $headsep\n");
+    }
+    chomp $self->{buf};
+} # seek
+
+=time $posn = $parser->tell();
+
+Reports offset of current record in the input file
+
+=cut
+sub tell() 
+{
+    my $self = shift;
+    
+    return $self->{tell};
 }
 
 }
