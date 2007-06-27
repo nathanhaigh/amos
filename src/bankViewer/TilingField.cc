@@ -49,6 +49,7 @@ TilingField::TilingField(DataStore * datastore,
 {
 
   m_datastore = datastore;
+  m_readnamewidth = 11;
   m_width=100;
   m_height=0;
   m_stabletiling = 0;
@@ -185,9 +186,9 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   int basespace      = 5;
   int gutter         = theight;
   int lineheight     = theight+gutter;
-  int tilehoffset    = theight*12;
+  int tilehoffset    = theight*(m_readnamewidth+1);
   int seqnamehoffset = gutter;
-  int rchoffset      = theight*11;
+  int rchoffset      = theight*m_readnamewidth;
   double basewidth   = m_fontsize+basespace;
 
   if (basewidth <= 0)
@@ -725,4 +726,15 @@ void TilingField::toggleQVColoring(bool doqvc)
 {
   m_qvcoloring = doqvc;
   update();
+}
+
+void TilingField::setReadnameWidth(int width)
+{
+  m_readnamewidth = width;
+  update();
+}
+
+int TilingField::getReadnameWidth()
+{
+  return m_readnamewidth;
 }

@@ -26,6 +26,7 @@ ConsensusField::ConsensusField(const string & cons,
                                AlignmentInfo * ai,
                                int & gindex,
                                int & contigid,
+                               QString & contigname,
                                QWidget * parent,
                                const char * name)
    :QFrame(parent, name),
@@ -35,7 +36,9 @@ ConsensusField::ConsensusField(const string & cons,
     m_ugpos(ugpos),
     m_alignment(ai),
     m_gindex(gindex),
-    m_contigId(contigid)
+    m_contigId(contigid),
+    m_contigName(contigname),
+    m_readnamewidth(11)
 {
   m_shownumbers = 0;
   m_highlightdiscrepancy = 0;
@@ -66,7 +69,7 @@ void ConsensusField::setFontSize(int fontsize)
 
   m_lineheight     = theight + gutter;
 
-  m_tilehoffset    = theight*12 + framegutter;
+  m_tilehoffset    = theight*(m_readnamewidth+1) + framegutter;
   m_seqnamehoffset = gutter + framegutter;
   m_basewidth      = m_fontsize + m_basespace;
 
@@ -126,7 +129,17 @@ void ConsensusField::paintEvent(QPaintEvent * event)
   int grangeStart = m_gindex;
   int grangeEnd = min(m_gindex + displaywidth, m_consensus.size()-1);
 
-  QString s = "Viewing Contig " + QString::number(m_contigId) + " from ";
+  QString s = "Viewing Contig ";
+  if (!m_contigName.isEmpty())
+  {
+    s += m_contigName + " [" + QString::number(m_contigId) + "]";
+  }
+  else
+  {
+    s += QString::number(m_contigId);
+  }
+    
+  s += " from ";
 
   if (m_showUngapped)
   {
@@ -365,6 +378,13 @@ void ConsensusField::setHighlightRange(int start, int end)
 {
   m_rangestart = start;
   m_rangeend = end;
+}
+
+void ConsensusField::setReadnameWidth(int width)
+{
+  m_readnamewidth = width;
+  setFontSize(m_fontsize);
+  update();
 }
 
 

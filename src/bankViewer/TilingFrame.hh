@@ -34,6 +34,8 @@ public slots:
     void sortColumns(int);
     void toggleDisplayAllChromo(bool);
     void searchString(const QString &, bool forward);
+    int  getReadnameWidth();
+    void setReadnameWidth(int);
 
 signals:
     void gindexChanged( int );
@@ -79,6 +81,7 @@ private:
     int m_loadedWidth;
     int m_nextDiscrepancyBuffer;
     int m_contigId;
+    QString m_contigName;
 
     QScrollView * m_sv;
 

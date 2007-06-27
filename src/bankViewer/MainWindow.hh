@@ -28,6 +28,7 @@ public slots:
   void setGindexRange(int, int);
   void setGindex(int gindex);
   void setContigId(int);
+  void setReadnameWidth();
 
   void toggleHighlightDiscrepancy();
   void toggleSNPColoring();
@@ -101,6 +102,7 @@ private:
   int m_fontsize;
   int m_lowquallowerid;
   int m_basecolorid;
+  int m_namewidthid;
   int m_showfullid;
   int m_snpcoloringid;
   int m_polyid;

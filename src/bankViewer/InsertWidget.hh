@@ -230,6 +230,9 @@ private:
 
   int m_overviewtop, m_overviewbottom;
   bool m_updatingScrollBars;
+
+  int m_scaffoldId;
+  QString m_scaffoldName;
 };
 
 #endif

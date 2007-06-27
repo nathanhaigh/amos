@@ -19,6 +19,7 @@ public:
                    AlignmentInfo * ai,
                    int & gindex,
                    int & contigid,
+                   QString & contigname,
                    QWidget *parent=0,
                    const char *name=0);
     void setWidth(int width) { resize(width, height()); }
@@ -33,6 +34,7 @@ public slots:
     void toggleShowIndicator(bool show);
     void setHighlightRange(int start, int end);
     void toggleShowUngapped(bool show);
+    void setReadnameWidth(int);
 
 signals:
     void sortColumns(int);
@@ -48,6 +50,7 @@ private:
     AlignmentInfo * m_alignment;
     int & m_gindex;
     int & m_contigId;
+    QString & m_contigName;
 
     int m_fontsize;
     bool m_shownumbers;
@@ -67,6 +70,7 @@ private:
     int m_posoffset;
     int m_discoffset;
     int m_consoffset;
+    int m_readnamewidth;
 
     int m_rangestart;
     int m_rangeend;

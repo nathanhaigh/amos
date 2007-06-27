@@ -38,6 +38,8 @@ public slots:
     void toggleSNPColoring(bool);
     void toggleQVColoring(bool);
     void singleClick();
+    void setReadnameWidth(int);
+    int  getReadnameWidth();
 
 signals:
     void setTilingVisibleRange(int, int, int);
@@ -67,6 +69,7 @@ private:
     int m_width;
     int m_traceheight;
     int m_tracespace;
+    int m_readnamewidth;
 
     bool m_displayqv;
     bool m_stabletiling;

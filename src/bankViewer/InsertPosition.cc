@@ -6,8 +6,10 @@
 
 using namespace std;
 
-InsertPosition::InsertPosition(DataStore * datastore, QWidget * parent, const char * name)
- : QWidget(parent, name), m_datastore(datastore)
+InsertPosition::InsertPosition(DataStore * datastore, int & scaffoldId,
+                               QString & scaffoldName, QWidget * parent, 
+                               const char * name)
+ : m_scaffoldId(scaffoldId), m_scaffoldName(scaffoldName), QWidget(parent, name), m_datastore(datastore)
 {
   setMinimumHeight(60);
   setWFlags(Qt::WRepaintNoErase);
@@ -46,8 +48,30 @@ void InsertPosition::paintEvent(QPaintEvent * e)
 
   int center = (int) width()/2;
 
-  QString label = "Scaffold: " + QString::number(m_datastore->m_scaffoldId);
-  label += "  Contig: " + QString::number(m_datastore->m_contigId);
+  QString label = "Scaffold: ";
+  
+  if (m_scaffoldName.isEmpty())
+  {
+    label += QString::number(m_scaffoldId);
+  }
+  else
+  {
+    label += m_scaffoldName + " [" + 
+             QString::number(m_scaffoldId) + "]";
+  }
+
+  label += "  Contig: ";
+  QString contigname = m_datastore->contig_bank.lookupEID(m_datastore->m_contigId);
+
+  if (contigname.isEmpty())
+  {
+    label += QString::number(m_datastore->m_contigId);
+  }
+  else
+  {
+    label += contigname + " [" + 
+             QString::number(m_datastore->m_contigId) + "]";
+  }
 
   label += "  Position: " + QString::number(m_pos);
 

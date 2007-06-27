@@ -10,7 +10,8 @@ class InsertPosition : public QWidget
   Q_OBJECT
 
 public:
-  InsertPosition(DataStore * datastore, QWidget * parent, const char * name);
+  InsertPosition(DataStore * datastore, int & scaffoldId, 
+                 QString & scaffoldName, QWidget * parent, const char * name);
 
   void paintEvent(QPaintEvent * e);
 
@@ -23,6 +24,9 @@ private:
   double m_scale;
   int m_start;
   int m_pos;
+
+  int & m_scaffoldId;
+  QString & m_scaffoldName;
 
 };
 

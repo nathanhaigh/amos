@@ -111,7 +111,10 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_width = 0;
 
-  m_iposition = new InsertPosition(m_datastore, this, "insertposition");
+  m_scaffoldId = 0;
+
+  m_iposition = new InsertPosition(m_datastore, m_scaffoldId, m_scaffoldName,
+                                   this, "insertposition");
   m_icanvas = new QCanvas(this, "icanvas");
   m_icanvas->setBackgroundColor(QColor(70,70,70));
   m_icanvas->retune(128);
@@ -500,6 +503,9 @@ void InsertWidget::initializeTiling()
   {
     Scaffold_t scaffold;
     m_datastore->fetchScaffoldBID(m_datastore->m_scaffoldId, scaffold);
+
+    m_scaffoldId = scaffold.getIID();
+    m_scaffoldName = scaffold.getEID();
 
     m_tilingwidth = scaffold.getSpan();
     

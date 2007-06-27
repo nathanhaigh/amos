@@ -87,6 +87,7 @@ TilingFrame::TilingFrame(DataStore * datastore,
                                    m_alignment,
                                    m_gindex, 
                                    m_contigId,
+                                   m_contigName,
                                    this, 
                                    "cons");
 
@@ -194,6 +195,7 @@ void TilingFrame::setContigId(int contigId)
     try
     {
       m_contigId = contigId;
+      m_contigName = m_datastore->contig_bank.lookupEID(contigId);
       m_tiling = m_datastore->m_contig.getReadTiling();
       m_consensus = m_datastore->m_contig.getSeqString();
       m_consqual = m_datastore->m_contig.getQualString();
@@ -522,4 +524,15 @@ void TilingFrame::searchString(const QString & str, bool forward)
       setGindex(pos-m_nextDiscrepancyBuffer);
     }
   }
+}
+
+void TilingFrame::setReadnameWidth(int width)
+{
+  m_tilingfield->setReadnameWidth(width);
+  m_consfield->setReadnameWidth(width);
+}
+
+int TilingFrame::getReadnameWidth()
+{
+  return m_tilingfield->getReadnameWidth();
 }

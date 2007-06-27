@@ -1,6 +1,7 @@
 #include "MainWindow.hh"
 
 #include <qmenubar.h>
+#include <qinputdialog.h>
 #include <qtoolbar.h>
 #include <qtoolbutton.h>
 #include <qaccel.h>
@@ -60,6 +61,7 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
 
   m_options = new QPopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
+  m_namewidthid    = m_options->insertItem("Set Readname &Width",      this, SLOT(setReadnameWidth()));
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors()));
   m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange()));
   m_ungappedid     = m_options->insertItem("Ungapped Coordinates",     this, SLOT(toggleUngapped()));
@@ -462,4 +464,17 @@ void MainWindow::setContigId(int id)
 void MainWindow::bankChanged()
 {
   m_contigspin->setMaxValue(m_datastore->contig_bank.getSize());
+}
+
+void MainWindow::setReadnameWidth()
+{
+  bool ok;
+  int res = QInputDialog::getInteger(
+            "Hawkeye", "Enter readname width:", 
+            m_tiling->getReadnameWidth(), 0, 1000, 2,
+            &ok, this );
+  if ( ok ) 
+  {
+    m_tiling->setReadnameWidth(res);
+  } 
 }
