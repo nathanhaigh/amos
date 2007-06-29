@@ -505,7 +505,7 @@ void InsertWidget::initializeTiling()
     m_datastore->fetchScaffoldBID(m_datastore->m_scaffoldId, scaffold);
 
     m_scaffoldId = scaffold.getIID();
-    m_scaffoldName = scaffold.getEID();
+    m_scaffoldName = scaffold.getEID().c_str();
 
     m_tilingwidth = scaffold.getSpan();
     

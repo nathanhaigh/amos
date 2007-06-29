@@ -195,7 +195,7 @@ void TilingFrame::setContigId(int contigId)
     try
     {
       m_contigId = contigId;
-      m_contigName = m_datastore->contig_bank.lookupEID(contigId);
+      m_contigName = m_datastore->contig_bank.lookupEID(contigId).c_str();
       m_tiling = m_datastore->m_contig.getReadTiling();
       m_consensus = m_datastore->m_contig.getSeqString();
       m_consqual = m_datastore->m_contig.getQualString();
