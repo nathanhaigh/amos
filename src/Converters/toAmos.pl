@@ -24,7 +24,7 @@ my $HELP = q~
            -o outfile 
            [-i insertfile | -map dstmap]
            [-gq goodqual] [-bq badqual]
-           [-pos posfile]
+           [-pos posfile] [-phd]
 
     toAmos is primarily designed for converting the output of an assembly
 program into the AMOS format so that it can be stored in an AMOS bank.
@@ -62,6 +62,7 @@ my $posfile;
 my $GOODQUAL = 30;
 my $BADQUAL = 10;
 my $byaccession = undef;
+my $phd_opt = undef;
 
 my $minSeqId = 1;  # where to start numbering reads
 my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
@@ -81,6 +82,7 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "pos=s" => \$posfile,
 				 "id=i"  => \$minSeqId,
 				 "acc"   => \$byaccession,
+				 "phd" => \$phd_opt,
                  "S"     => \$INCLUDE_SURROGATE,
                  "utg"   => \$UTG_MESSAGES);
 
@@ -189,12 +191,17 @@ if (defined $tasmfile) {
 }
 
 if (defined $acefile){
-#    die("This option is not yet fully functional\n");
-
     $outprefix = $acefile;
     open(IN, $acefile) || $base->bail("Cannot open $acefile: $!\n");
     parseACEFile(\*IN);
     close(IN);
+	if ($phd_opt) {
+		open(IN, $acefile) || $base->bail("Cannot open $acefile: $!\n");
+		parsePHDFiles(\*IN);
+		close(IN);
+	}
+
+
 }
 
 $outprefix =~ s/\.[^.]*$//;
@@ -359,7 +366,26 @@ while (<TMPSEQ>){
 	    }# else {
 #		print "What bcp: $rid $seqnames{$rid}\n";
 #	    }
+	} elsif (defined $phd_opt) {
+	    print " outputting phd pos \n";
+
+	    if (exists $posidx{$rid}){
+		my $pos = $posidx{$rid};
+
+		print OUT "bcp:\n";
+		my @posn = split(' ', $pos);
+		for (my $i = 0; $i <= $#posn; $i+=15){
+		    if ($i + 14 <= $#posn){
+			print OUT join(" ", @posn[$i .. $i+14]), "\n";
+		    } else {
+			print OUT join(" ", @posn[$i .. $#posn]), "\n";
+		    }
+		}
+		print OUT ".\n";
+	    }
 	}
+
+
 	if  (! exists $seqinsert{$rid}){
 	    die("Cannot find insert for $rid ($seqnames{$rid})\n");
 	}
@@ -1084,6 +1110,47 @@ sub parseTAsmFile {
 	}
     }
 } # parseTasmFile
+
+
+sub parsePHDFiles {
+    my $IN = shift;
+
+    while(<$IN>) {
+	if(m/^DS CHROMAT_FILE: (\S+) PHD_FILE: (\S+)/) {
+	    open(PHD_FILE, "<../phd_dir/$2") || die("missing phd file $2");
+	    
+	    my $seqname = $1;
+		my $pos_list;
+
+	    while(<PHD_FILE>) {
+		if(m/BEGIN_DNA/) {
+		    my $seq;
+
+		    
+		    while(<PHD_FILE>) {
+			if(m/END_DNA/) {
+			    last;
+			}
+			chomp();
+			my ($nuc, $qual, $p) =  split;
+			$seq .= $nuc;
+			$pos_list .= " " . $p;
+		    }
+		    
+		    last;
+		}
+	    }
+	    
+	    if (! exists $seqids{$seqname}){
+			print("Have not seen sequence $seqname before processing pos file");
+	    } else {
+			# put pos into posidx
+			$posidx{$seqids{$seqname}} = $pos_list;
+	    }
+	}
+	close(PHD_FILE);
+    }
+}
 
 
 # New .ACE format

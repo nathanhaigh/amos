@@ -104,7 +104,10 @@ void LaunchPad::fileExit()
 // dsommer : added importsd
 void LaunchPad::fileImport()
 {
-  QString s = QFileDialog::getOpenFileName("", "", this, "Import ace file", "Choose a file to import");
+  QString s = QFileDialog::getOpenFileName("", "", this, "Import ACE File", "Choose a file to import");
+
+  // if no file is selected just exit
+  if (s.isEmpty()) { return; }
 
   // build toAmos string
   QString cmd("toAmos -ace ");
@@ -121,7 +124,8 @@ void LaunchPad::fileImport()
   // build bank-tranact string
   QString cmd2("bank-transact -f -m ");
   cmd2.append(s);
-  cmd2.append(".afg ");
+  cmd2.append(".af
+g ");
   cmd2.append(" -b ");
   s.append(".bank");
   cmd2.append(s);
