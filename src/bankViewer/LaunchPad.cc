@@ -124,8 +124,7 @@ void LaunchPad::fileImport()
   // build bank-tranact string
   QString cmd2("bank-transact -f -m ");
   cmd2.append(s);
-  cmd2.append(".af
-g ");
+  cmd2.append(".afg ");
   cmd2.append(" -b ");
   s.append(".bank");
   cmd2.append(s);
