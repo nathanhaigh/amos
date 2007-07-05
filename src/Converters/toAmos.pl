@@ -367,7 +367,6 @@ while (<TMPSEQ>){
 #		print "What bcp: $rid $seqnames{$rid}\n";
 #	    }
 	} elsif (defined $phd_opt) {
-	    print " outputting phd pos \n";
 
 	    if (exists $posidx{$rid}){
 		my $pos = $posidx{$rid};

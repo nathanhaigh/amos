@@ -110,16 +110,14 @@ void LaunchPad::fileImport()
   if (s.isEmpty()) { return; }
 
   // build toAmos string
-  QString cmd("toAmos -ace ");
+  QString cmd("toAmos -phd -m toAmos.mates -ace ");
   cmd.append(s);
   cmd.append(" -o ");
   cmd.append(s);
   cmd.append(".afg");
 
   // run toAMOS
-  //  cerr << " system " << cmd << endl;
   int r = system(cmd);
-  //  cerr << " system return of " << r << endl;
 
   // build bank-tranact string
   QString cmd2("bank-transact -f -m ");
@@ -130,9 +128,7 @@ void LaunchPad::fileImport()
   cmd2.append(s);
 
   // run toAMOS
-  //  cerr << " system " << cmd2 << endl;
   r = system(cmd2);
-  //  cerr << " system return of " << r << endl;
 
   if (!s.isEmpty()) { setBankname(s.ascii()); }
 }
