@@ -10,6 +10,8 @@ using namespace AMOS;
 string OPT_BankName; 
 string OPT_ContigFile;
 bool VERBOSE = 0;
+bool OPT_APPEND = 0; 
+bool OPT_EID = 0;
 
 
 
@@ -80,9 +82,17 @@ int main (int argc, char ** argv)
 
     if (contig_bank.exists(OPT_BankName))
     {
-      cerr << "WARNING: Removing old contigs" << endl;
       contig_bank.open(OPT_BankName, B_READ|B_WRITE);
-      contig_bank.clear();
+
+      if (!OPT_APPEND)
+      {
+        cerr << "WARNING: Removing old contigs" << endl;
+        contig_bank.clear();
+      }
+      else
+      {
+        cerr << "Appending to bank" << endl;
+      }
     }
     else
     {
@@ -123,11 +133,24 @@ int main (int argc, char ** argv)
       }
       else if (id[0] == '#')
       {
-        ID_t readiid;
+        ID_t readiid = 0;
         int offset;
         char dir;
 
-        readiid = atoi(id.c_str()+1);
+        if (OPT_EID)
+        {
+          readiid = read_bank.lookupIID(id.c_str()+1);
+          if (readiid == 0)
+          {
+            cerr << "Unknown eid: " << id << endl;
+            exit(1);
+          }
+        }
+        else
+        {
+          readiid = atoi(id.c_str()+1);
+        }
+
         cfile >> offset;
         cfile >> dir;
 
@@ -189,7 +212,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hvae")) != EOF) )
     switch (ch)
       {
 
@@ -201,6 +224,14 @@ void ParseArgs (int argc, char ** argv)
       case 'v':
       VERBOSE = true;
 	break;
+      
+       case 'a':
+         OPT_APPEND = true;
+         break;
+
+        case 'e':
+          OPT_EID = true;
+          break;
 
       default:
         errflg ++;
@@ -227,6 +258,8 @@ void PrintHelp (const char * s)
   cerr
     << "-h            Display help information\n"
     << "-v            Be Verbose\n"
+    << "-a            Append contigs instead of overwriting them\n"
+    << "-e            Use read eids instead of iids\n"
     << endl;
   cerr
     << "Loads contigs from file into a bank\n"
