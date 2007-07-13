@@ -110,7 +110,11 @@ int main (int argc, char ** argv)
 
     cerr << "Processing " << bank_name << " at " << Date() << endl;
 
-    scaffold_bank.open(bank_name, B_READ);
+    if (scaffold_bank.exists(bank_name))
+    {
+      scaffold_bank.open(bank_name, B_READ);
+    }
+
     contig_bank.open(bank_name, B_READ);
     feat_bank.open(bank_name, B_READ);
 
@@ -119,7 +123,8 @@ int main (int argc, char ** argv)
 
     while (feat_bank >> feat)
     {
-      if (feat.getSource().second == Scaffold_t::NCODE)
+      if (scaffold_bank.isOpen() && 
+          feat.getSource().second == Scaffold_t::NCODE)
       {
         int b = feat.getRange().begin;
         int e = feat.getRange().end;
