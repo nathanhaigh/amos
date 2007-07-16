@@ -141,6 +141,14 @@ inline void printRead(Bank_t & red_bank, ID_t iid)
       Read_t red;
       Message_t msg;
       red_bank.fetch(iid, red);
+
+      if (red.getClearRange().isReverse())
+      {
+        Range_t rng = red.getClearRange();
+        rng.swap();
+        red.setClearRange(rng);
+      }
+
       red.writeMessage(msg);
       msg.write(cout);
     }
