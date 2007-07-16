@@ -110,13 +110,21 @@ int main (int argc, char ** argv)
 
     cerr << "Processing " << bank_name << " at " << Date() << endl;
 
+    if (!feat_bank.exists(bank_name))
+    {
+      cerr << "WARNING: No features in bank" << endl;
+      exit(0);
+    }
+
+    feat_bank.open(bank_name, B_READ);
+
     if (scaffold_bank.exists(bank_name))
     {
       scaffold_bank.open(bank_name, B_READ);
     }
 
     contig_bank.open(bank_name, B_READ);
-    feat_bank.open(bank_name, B_READ);
+
 
     ID_t contigloaded = 0;
     int featcount = 0;
