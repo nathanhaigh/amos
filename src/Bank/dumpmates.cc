@@ -81,10 +81,10 @@ int main (int argc, char ** argv)
     //-- Iterate through each library in the bank
     while ( lib_bank >> lib )
       {
-        if ( OPT_UseEIDs )
-          cout << "library\t" << lib . getEID( );
-        else
-          cout << "library\t" << lib . getIID( );
+        //        if ( OPT_UseEIDs )
+        //          cout << "library\t" << lib . getEID( );
+        //        else
+        cout << "library\t" << lib . getIID( );
 
         cout << '\t'
              << lib.getDistribution( ).mean - (lib.getDistribution( ).sd * 3)
