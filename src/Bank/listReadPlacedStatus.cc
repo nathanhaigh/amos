@@ -51,16 +51,18 @@ int main (int argc, char ** argv)
       vector<Tile_t> & rtiling = contig.getReadTiling();
       vector<Tile_t>::const_iterator ti;
 
-      for (ti = rtiling.begin(); ti != rtiling.end(); ti++)
-      {
-        rdi = readdups.find(ti->source);
-        if (rdi == readdups.end())
-        {
-          rdi = readdups.insert(make_pair(ti->source, vector<ID_t>())).first;
-        }
-
-        rdi->second.push_back(ciid);
-      }
+      if ( rtiling.size() > 1 ) // only count non-singleton contigs
+        for (ti = rtiling.begin(); ti != rtiling.end(); ti++)
+          {
+            rdi = readdups.find(ti->source);
+            if (rdi == readdups.end())
+              {
+                rdi = readdups.insert
+                  (make_pair(ti->source, vector<ID_t>())).first;
+              }
+            
+            rdi->second.push_back(ciid);
+          }
     }
 
     AMOS::IDMap_t::const_iterator ri;
