@@ -302,6 +302,7 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-h            Display help information\n"
+    << "-i            Dump scaffold/contig IIDs instead of EIDs\n"
     << "-f float      Only output CE features outside float deviations\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
