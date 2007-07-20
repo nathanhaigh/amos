@@ -11,9 +11,11 @@ INPUTS = $(PREF).bnk
 100: $(BINDIR)/bank2fasta -b $(PREF).bnk > $(PREF).fasta
 
 ## Analyzing mate-pairs
-300: $(BINDIR)/asmQC -b $(PREF).bnk -numsd 2 -recompute -update -scaff
-310: $(BINDIR)/asmQC -b $(PREF).bnk -numsd 2 -recompute -update -scaff
-320: $(BINDIR)/asmQC -b $(PREF).bnk -cestat -feat -numsd 3 -scaff
+300: $(BINDIR)/asmQC -b $(PREF).bnk -scaff -recompute -update -numsd 2
+310: $(BINDIR)/asmQC -b $(PREF).bnk -scaff -recompute -update -numsd 2
+320: $(BINDIR)/asmQC -b $(PREF).bnk -scaff -feat -numsd 3 -shortcvg -1 -longcvg -1
+330: $(BINDIR)/cestat-cov -i -f 4 $(PREF).bnk > $(PREF).ce.feat
+340: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).ce.feat
 
 ## Analyzing SNPs
 400: $(BINDIR)/analyzeSNPs -i -b $(PREF).bnk -S -cumqv 40 -minsnps 2 -r -H > $(PREF).snps
