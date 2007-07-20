@@ -10,6 +10,7 @@
 #include "foundation_AMOS.hh"
 #include <iostream>
 #include <cassert>
+#include <sstream>
 #include <unistd.h>
 #include <map>
 #include <iomanip>
@@ -23,40 +24,92 @@ using namespace AMOS;
 
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
+//=============================================================== Globals ====//
+string OPT_BankName;                 // bank name parameter
+bool   OPT_BankSpy = false;          // read or read-only spy
+double    OPT_Features = 0.0;
+bool OPT_IIDs = false;
+
+
 DataStore * m_datastore;
 int m_connectMates = 1;
 typedef std::vector<Insert *> InsertList_t;
 InsertList_t m_inserts;
 
 
-
 int m_coveragePlot = 0;
 int m_cestats = 1;
 
-void printCEStats(Scaffold_t & scaff)
+void printCEStats(const std::string &id)
 {
   typedef map<ID_t, CoverageStats> LibStats;
   LibStats::iterator li;
 
   LibStats libStats = m_datastore->computeCEStats(m_inserts);
 
-
-  for (li = libStats.begin(); li != libStats.end(); li++)
-  {
-    cout << ">" << scaff.getEID() << " lib:" << li->first << endl;
-    // This are stored as oldvalue newvalue so skip every other one
-    for (int i = 1; i < li->second.m_curpos; i+=2)
+  if ( OPT_Features ) 
     {
-      cout << setprecision(10) << li->second.m_coverage[i].x() << " "
-           << setprecision(6)  << li->second.m_cestat[i] << endl;
+      double b = 0;
+      double e = 0;
+      double sign;
+
+      for (li = libStats.begin(); li != libStats.end(); li++)
+        {
+          // This are stored as oldvalue newvalue so skip every other one
+          for (int i = 1; i < li->second.m_curpos; i+=2)
+            {
+              if ( b )
+                if ( li->second.m_cestat[i] * sign < 0 ||
+                     fabs(li->second.m_cestat[i]) < OPT_Features )
+                  {
+                    cout << id << " C " << b << " "
+                         << li->second.m_coverage[i].x() << " ";
+                    if  ( sign < 0 )
+                      cout << "CE_COMPRESS ";
+                    else
+                      cout << "CE_STRETCH ";
+                    cout << "LIB=" << li->first << endl;
+                    b = e = 0;
+                  }
+
+              if ( fabs(li->second.m_cestat[i]) >= OPT_Features )
+                {
+                  if ( b )
+                    e = li->second.m_coverage[i].x();
+                  else
+                    {
+                      b = e = li->second.m_coverage[i].x();
+                      sign = li->second.m_cestat[i];
+                    }
+                }
+            }
+
+          if ( b && e )
+            {
+              cout << id << " C " << b << " " << e << " ";
+              if  ( sign < 0 )
+                cout << "CE_COMPRESS ";
+              else
+                cout << "CE_STRETCH ";
+              cout << "LIB=" << li->first << endl;
+              b = e = 0;
+            }
+        }
     }
-  }
+  else
+    {
+      for (li = libStats.begin(); li != libStats.end(); li++)
+        {
+          cout << ">" << id  << " lib:" << li->first << endl;
+          // This are stored as oldvalue newvalue so skip every other one
+          for (int i = 1; i < li->second.m_curpos; i+=2)
+            {
+              cout << setprecision(10) << li->second.m_coverage[i].x() << " "
+                   << setprecision(6)  << li->second.m_cestat[i] << endl;
+            }
+        }
+    }
 }
-
-
-//=============================================================== Globals ====//
-string OPT_BankName;                 // bank name parameter
-bool   OPT_BankSpy = false;          // read or read-only spy
 
 
 //========================================================== Fuction Decs ====//
@@ -108,30 +161,75 @@ int main (int argc, char ** argv)
     m_datastore = new DataStore();
     m_datastore->openBank(OPT_BankName);
 
-    cerr << "Processing scaffolds... ";
-    int scaffcount = 0;
-    m_datastore->scaffold_bank.seekg(1);
-    while (m_datastore->scaffold_bank >> scaff)
-    {
-      scaffcount++;
-      vector <Tile_t> rtiling;
-
-      m_datastore->mapReadsToScaffold(scaff, rtiling, 1);
-      m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
-
-      printCEStats(scaff);
-
-      vector<Insert *>::iterator i;
-      
-      for (i =  m_inserts.begin();
-           i != m_inserts.end();
-           i++)
+    if ( m_datastore->scaffold_bank.isOpen() )
       {
-        delete (*i);
+        cerr << "Processing scaffolds... ";
+        int scaffcount = 0;
+        m_datastore->scaffold_bank.seekg(1);
+        while (m_datastore->scaffold_bank >> scaff)
+          {
+            scaffcount++;
+            vector <Tile_t> rtiling;
+            
+            m_datastore->mapReadsToScaffold(scaff, rtiling, 1);
+            m_datastore->calculateInserts
+              (rtiling, m_inserts, m_connectMates, 1);
+            
+            if ( OPT_IIDs )
+              {
+                stringstream oss;
+                oss << scaff.getIID();
+                printCEStats(oss.str());
+              }
+            else
+              printCEStats(scaff.getEID());
+            
+            vector<Insert *>::iterator i;
+            
+            for (i =  m_inserts.begin();
+                 i != m_inserts.end();
+                 i++)
+              {
+                delete (*i);
+              }
+            
+            m_inserts.clear();
+          }
       }
+    else if ( m_datastore->contig_bank.isOpen() )
+      {
+       cerr << "Processing contigs... ";
+        int contigcount = 0;
+        m_datastore->contig_bank.seekg(1);
+        while (m_datastore->contig_bank >> contig)
+          {
+            contigcount++;
 
-      m_inserts.clear();
-    }
+            m_datastore->calculateInserts
+              (contig.getReadTiling(), m_inserts, m_connectMates, 1);            
+
+
+            if ( OPT_IIDs )
+              {
+                stringstream oss;
+                oss << contig.getIID();
+                printCEStats(oss.str());
+              }
+            else
+              printCEStats(contig.getEID());
+            
+            vector<Insert *>::iterator i;
+            
+            for (i =  m_inserts.begin();
+                 i != m_inserts.end();
+                 i++)
+              {
+                delete (*i);
+              }
+            
+            m_inserts.clear();
+          }
+      }
 
   }
   catch (const Exception_t & e) {
@@ -154,12 +252,20 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hsv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hif:sv")) != EOF) )
     switch (ch)
       {
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
+        break;
+
+      case 'i':
+        OPT_IIDs = true;
+        break;
+
+      case 'f':
+        OPT_Features = atof(optarg);
         break;
 
       case 's':
@@ -196,12 +302,14 @@ void PrintHelp (const char * s)
   PrintUsage (s);
   cerr
     << "-h            Display help information\n"
+    << "-f float      Only output CE features outside float deviations\n"
     << "-s            Disregard bank locks and write permissions (spy mode)\n"
     << "-v            Display the compatible bank version\n"
     << endl;
   cerr
-    << "Print the CE-statistic value at the beginning and end of each"
-    << "insert across each scaffold separated by library\n\n";
+    << "Print the CE-statistic value at the beginning and end of each\n"
+    << "insert across each scaffold separated by library. If no\n"
+    << "scaffold data available, use contigs.\n\n";
   return;
 }
 
