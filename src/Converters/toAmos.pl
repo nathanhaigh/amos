@@ -21,6 +21,7 @@ my $VERSION = '$Revision$ ';
 my $HELP = q~
     toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)
            (-c contig|-a asm [-S]|-ta tasm|-ace ace|-s fasta|-q qual) 
+           (-arachne assembly.links|-scaff file.scaff)
            -o outfile 
            [-i insertfile | -map dstmap]
            [-gq goodqual] [-bq badqual]
@@ -63,6 +64,8 @@ my $GOODQUAL = 30;
 my $BADQUAL = 10;
 my $byaccession = undef;
 my $phd_opt = undef;
+my $arachne_scaff = undef;
+my $scaffile = undef;
 
 my $minSeqId = 1;  # where to start numbering reads
 my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
@@ -75,6 +78,8 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "o=s"   => \$outfile,
 				 "i=s"   => \$insertfile,
 				 "map=s" => \$libmap,
+				 "arachne=s" => \$arachne_scaff,
+				 "scaff=s"   => \$scaffile,
 				 "gq=i"  => \$GOODQUAL,
 				 "bq=i"  => \$BADQUAL,
 				 "q=s"   => \$qualfile,
@@ -82,10 +87,9 @@ my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
 				 "pos=s" => \$posfile,
 				 "id=i"  => \$minSeqId,
 				 "acc"   => \$byaccession,
-				 "phd" => \$phd_opt,
-                 "S"     => \$INCLUDE_SURROGATE,
-                 "utg"   => \$UTG_MESSAGES);
-
+				 "phd"   => \$phd_opt,
+				 "S"     => \$INCLUDE_SURROGATE,
+				 "utg"   => \$UTG_MESSAGES);
 
 my $matesDone = 0;
 my $readsDone = 0;
@@ -234,6 +238,19 @@ if (defined $libmap){
     parseLibMapFile(\*IN);
     close(IN);
 }
+
+if (defined $arachne_scaff){
+    open(IN, $arachne_scaff) || $base->bail("Cannot open $arachne_scaff: $!\n");
+    parseArachneScaff(\*IN);
+    close(IN);
+}
+
+if (defined $scaffile){
+    open(IN, $scaffile) || $base->bail("Cannot open $scaffile: $!\n");
+    parseScaff(\*IN);
+    close(IN);
+}
+
 
 close(TMPSEQ);
 close(TMPCTG);
@@ -1520,6 +1537,106 @@ sub parseContigFile {
 
 } # parseContigFile
 
+# Arachne .links scaffold file
+# assumptions: all contigs are forward
+# super ids are integers
+sub parseArachneScaff()
+{
+    my $IN = shift;
+
+   # Fields in TAB delimited file
+   # 0 - super_id       
+   # 1 - num_bases_in_super      
+   # 2 - num_contigs_in_super    
+   # 3 - ordinal_num_of_contig_in_super  
+   # 4 - contig_id       
+   # 5 - length_of_contig        
+   # 6 - estimated_gap_before_contig     
+   # 7 - estimated_gap_after_contig
+
+    my $lastsuper = undef;
+    my $offset = 0;
+    while (<$IN>) {
+	if (/^\#/) { next;}
+	my @fields = split('\t', $_);
+	if ($fields[0] != $lastsuper){
+	    if  (defined $lastsuper){
+		print TMPSCF "}\n"; # close scaffold
+	    }
+	    $lastsuper = $fields[0];
+	    $offset = 0;
+	    print TMPSCF "{SCF\n";
+	    print TMPSCF "iid:$lastsuper\n";
+	    print TMPSCF "eid:$lastsuper\n";
+	}
+	if (! exists $ctgids{$fields[4]}) {
+	    $base->logError("Cannot find id for contig $fields[4]\n");
+	    next;
+	}
+	
+	# print contig tile
+	print TMPSCF "{TLE\n";
+	print TMPSCF "src:$ctgids{$fields[4]}\n";
+	print TMPSCF "off:$offset\n";
+	print TMPSCF "clr:0,$contigs{$ctgids{$fields[4]}}\n";
+	print TMPSCF "}\n";
+
+	# update offset
+	$offset += $fields[5] + $fields[7];
+    }
+    print TMPSCF "}\n"; # done here
+} #  parseArachneScaff
+
+
+# Bambus/AMOS .scaff file
+sub parseScaff()
+{
+    my $IN = shift;
+
+    # format of scaff file
+    #>scaffid numcontigs scaffbases scaffspan
+    #contigid orientation contiglen gapsize
+
+    # note gapsize is gap after contig
+
+    my $ps = new AMOS::ParseFasta($IN, ">", "\n");
+    while (my ($head, $data) = $ps->getRecord()){
+	$head =~ /(\S+).*/;
+	my $scfnam = $1;
+	my $scfid = $minSeqId++;
+
+	print TMPSCF "{SCF\n";
+	print TMPSCF "iid:$scfid\n";
+	print TMPSCF "eid:$scfnam\n";
+
+	my $offset = 0;
+	
+	my @lines = split('\n', $data);
+	for (my $i = 0; $i <= $#lines; $i++){
+	    my @fields = split(/\s+/, $lines[$i]);
+	    
+	    if (! exists $ctgids{$fields[0]}) {
+		$base->logError("Cannot find id for contig $fields[0]\n");
+		next;
+	    }
+
+	    # print contig tile
+	    print TMPSCF "{TLE\n";
+	    print TMPSCF "src:$ctgids{$fields[0]}\n";
+	    print TMPSCF "off:$offset\n";
+	    if ($fields[1] eq "BE"){
+		print TMPSCF "clr:0,$contigs{$ctgids{$fields[0]}}\n";
+	    } else {
+		print TMPSCF "clr:$contigs{$ctgids{$fields[0]}},0\n";
+	    }
+	    print TMPSCF "}\n";
+	    $offset += $contigs{$ctgids{$fields[0]}} + $fields[3];
+	}
+
+	print TMPSCF "}\n";
+    }
+
+} # parseScaff
 
 ###############################################################
 # XML parser functions
