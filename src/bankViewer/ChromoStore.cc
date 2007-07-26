@@ -28,7 +28,7 @@ ChromoStore::ChromoStore()
 
   m_tracecache        = ".tracecache";
   m_tracecachecreated = 0;
-  m_tracecmd          = "curl \"http://www.ncbi.nlm.nih.gov/Traces/previous/trace.fcgi?cmd=java&j=scf&val=%EID%&ti=%EID%\" -s -o %TRACECACHE%/%EID%";
+  m_tracecmd          = "curl \"http://www.ncbi.nlm.nih.gov/Traces/trace.fcgi?cmd=java&val=%EID%\" -s -o %TRACECACHE%/%EID%";
   m_tracecmdpath      = "%TRACECACHE%/%EID%";
   m_tracecmdenabled   = 0;
 }
