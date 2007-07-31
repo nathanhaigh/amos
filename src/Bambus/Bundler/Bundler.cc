@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     for (map<LinkAdjacency_t, int>::iterator at = adjacencies.begin();
 	 at != adjacencies.end(); at++){
       if (at->second > 1){ // there are links we have to deal with
-	map<Size_t, LinkMap_t::iterator> begins, ends;
+	multimap<Size_t, LinkMap_t::iterator> begins, ends;
 	list<LinkMap_t::iterator> best;
 	list<LinkMap_t::iterator>::iterator bestEnd = best.end();
 	Size_t bestCoord;
@@ -196,8 +196,8 @@ int main(int argc, char *argv[])
 	} // for each link
 
 	// because of the way maps work, the elements come sorted by the key
-	map<Size_t, LinkMap_t::iterator>::iterator bgi = begins.begin();
-	map<Size_t, LinkMap_t::iterator>::iterator eni = ends.begin();
+	multimap<Size_t, LinkMap_t::iterator>::iterator bgi = begins.begin();
+	multimap<Size_t, LinkMap_t::iterator>::iterator eni = ends.begin();
 	
 	cerr << " Begins has " << begins.size() << " elements" << endl;
 	cerr << " Ends has " << ends.size() << " elements" << endl;
@@ -307,43 +307,50 @@ int main(int argc, char *argv[])
 	 << "\n";
 
 
-    ContigEdge_t cte;
+    for (map<LinkAdjacency_t, int>::iterator at = adjacencies.begin();
+	 at != adjacencies.end(); at++){
+      if (at->second > 1){ // there are links we have to deal with
+	ContigEdge_t cte;
+	bestAdj = at->first;
+	
+	// import adjacency info from first link
+	list<LinkMap_t::iterator>::iterator li = bestList[bestAdj].begin();
+	cte.setContigs((**li).second.getContigs());
+	cte.setAdjacency((**li).second.getAdjacency());
 
-    // import adjacency info from first link
-    list<LinkMap_t::iterator>::iterator li = bestList[bestAdj].begin();
-    cte.setContigs((**li).second.getContigs());
-    cte.setAdjacency((**li).second.getAdjacency());
-
-    vector<ID_t> linkIds;
-    linkIds.reserve(bestList[bestAdj].size());  // try to keep memory low - best to prealloc
-
+	vector<ID_t> linkIds;
+	linkIds.reserve(bestList[bestAdj].size());  // try to keep memory low - best to prealloc
+	
     // here we want to combine the gaussians described by the "good" links
     // use the idea of Huson et al. RECOMB 2001
-    float newMean, newSD, p = 0, q = 0;
-    for (list<LinkMap_t::iterator>::iterator ni = bestList[bestAdj].begin();
-	 ni != bestList[bestAdj].end(); ni++){
-      float tmp = (**ni).second.getSD();
-      tmp *= tmp;
-      
-      p += (**ni).second.getSize() / tmp;
-      q += 1 / tmp; 
-      linkIds.push_back((**ni).second.getIID());
-    }
-    
-    newMean = p / q;
-    newSD = 1 / sqrt(q);
-
-    // set size as aggregate of all links
-    cte.setSize((int)newMean);
-    cte.setSD((int)newSD);
-    
-    // set contig link IDs
-    cte.setContigLinks(linkIds);
-
-    // give the edge an identifier
-    cte.setIID(++EdgeId);
-    
-    edge_bank << cte;
+	float newMean, newSD, p = 0, q = 0;
+	for (list<LinkMap_t::iterator>::iterator ni = bestList[bestAdj].begin();
+	     ni != bestList[bestAdj].end(); ni++){
+	  float tmp = (**ni).second.getSD();
+	  if (tmp == 0) tmp = 1; // avoid overflow errors
+	  tmp *= tmp;
+	  
+	  p += (**ni).second.getSize() / tmp;
+	  q += 1 / tmp; 
+	  linkIds.push_back((**ni).second.getIID());
+	}
+	
+	newMean = p / q;
+	newSD = 1 / sqrt(q);
+	
+	// set size as aggregate of all links
+	cte.setSize((int)newMean);
+	cte.setSD((int)newSD);
+	
+	// set contig link IDs
+	cte.setContigLinks(linkIds);
+	
+	// give the edge an identifier
+	cte.setIID(++EdgeId);
+	
+	edge_bank << cte;
+      } // if enough links
+    } // for each adjacency type
   } // for each contig pair
 
   edge_bank.close();
