@@ -1559,7 +1559,8 @@ sub parseArachneScaff()
     while (<$IN>) {
 	if (/^\#/) { next;}
 	my @fields = split('\t', $_);
-	if ($fields[0] != $lastsuper){
+	#if ($fields[0] != $lastsuper){
+	if (!defined $lastsuper || $fields[0] != $lastsuper){
 	    if  (defined $lastsuper){
 		print TMPSCF "}\n"; # close scaffold
 	    }
@@ -1569,16 +1570,16 @@ sub parseArachneScaff()
 	    print TMPSCF "iid:$lastsuper\n";
 	    print TMPSCF "eid:$lastsuper\n";
 	}
-	if (! exists $ctgids{$fields[4]}) {
-	    $base->logError("Cannot find id for contig $fields[4]\n");
+	my $id = "contig_".$fields[4];
+	if (! exists $ctgids{$id}) {
+	    $base->logError("Cannot find id for contig $id\n");
 	    next;
 	}
-	
 	# print contig tile
 	print TMPSCF "{TLE\n";
-	print TMPSCF "src:$ctgids{$fields[4]}\n";
+	print TMPSCF "src:$ctgids{$id}\n";
 	print TMPSCF "off:$offset\n";
-	print TMPSCF "clr:0,$contigs{$ctgids{$fields[4]}}\n";
+	print TMPSCF "clr:0,$contigs{$ctgids{$id}}\n";
 	print TMPSCF "}\n";
 
 	# update offset
@@ -1766,3 +1767,4 @@ sub pi
 {
 
 }
+
