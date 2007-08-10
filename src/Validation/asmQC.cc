@@ -19,6 +19,8 @@ using namespace std;
 using namespace AMOS;
 using namespace HASHMAP;
 
+typedef double DoubleSD_t;
+
 #define endl "\n"
 
 #define MIN_CE_OBS 3    // minimum number of clones required to report anomalous CE numbers
@@ -253,10 +255,10 @@ int mateLen (AnnotatedFragment & m, Range_t & a, Range_t & b, int Len, int End)
 
 // computes mean and standard deviation for a set of observations
 // observations outside of 5 standard deviations are excluded
-pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
+pair<Pos_t, DoubleSD_t> getSz(list<Pos_t> & sizes)
 {
   int numObs = sizes.size();
-  if (numObs == 0) return pair<Pos_t, SD_t> (0, 0); 
+  if (numObs == 0) return pair<Pos_t, DoubleSD_t> (0, 0); 
   // this should probably be an assert...
 
   Pos_t mean = 0;
@@ -265,14 +267,14 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
   }
   mean = (Pos_t) rint (mean * 1.0 / numObs);
 
-  SD_t stdev = 0;
+  DoubleSD_t stdev = 0;
   for (list<Pos_t>::iterator li = sizes.begin();  li != sizes.end(); li++){
     stdev += (*li - mean) * (*li - mean);
   }
-  stdev = (SD_t) rint(sqrt(stdev * 1.0 / (numObs - 1)));
+  stdev = (DoubleSD_t) rint(sqrt(stdev * 1.0 / (numObs - 1)));
   
   Pos_t origm = mean;
-  SD_t origs = stdev;
+  DoubleSD_t origs = stdev;
 
   // recompute mean and stdev for just sizes within 5SD of mean
 
@@ -284,7 +286,7 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
       numObs--;
   }
 
-  if (numObs == 0) return pair<Pos_t, SD_t> (0, 0);
+  if (numObs == 0) return pair<Pos_t, DoubleSD_t> (0, 0);
   // this should also be an assert
 
   mean = (Pos_t) rint (mean * 1.0 / numObs);
@@ -295,9 +297,9 @@ pair<Pos_t, SD_t> getSz(list<Pos_t> & sizes)
       stdev += (*li - mean) * (*li - mean);
   }
 
-  stdev = (SD_t) rint(sqrt(stdev * 1.0 / (numObs - 1)));
+  stdev = (DoubleSD_t) rint(sqrt(stdev * 1.0 / (numObs - 1)));
 
-  return pair<Pos_t, SD_t>(mean, stdev);
+  return pair<Pos_t, DoubleSD_t>(mean, stdev);
 }
 
 // get regions that are below or above a specified coverage
@@ -439,11 +441,11 @@ void getCvg(list<list<AnnotatedFragment>::iterator>::iterator begin,
 
 // computes mean and standard deviation of array of tiles
 void getMeanSD(vector<pair<Pos_t, Pos_t> >::iterator beg, vector<pair<Pos_t, Pos_t> >::iterator end, 
-	       Size_t &mea, SD_t &sd)
+	       Size_t &mea, DoubleSD_t &sd)
 {
   int n = 0;
   Size_t sum = 0;
-  SD_t var = 0;
+  DoubleSD_t var = 0;
 
   for (vector<pair<Pos_t, Pos_t> >::iterator vi = beg; vi != end; vi++){
     n++;
@@ -460,7 +462,7 @@ void getMeanSD(vector<pair<Pos_t, Pos_t> >::iterator beg, vector<pair<Pos_t, Pos
   //  cout << "Var " << var << endl;
   if (n > 1) { 
     sd = var / (n - 1);
-    sd = (SD_t) sqrt((double)sd);
+    sd = (DoubleSD_t) sqrt((double)sd);
   } else {
     sd = 0;
   }
@@ -487,7 +489,7 @@ struct GtBySecond : public binary_function<pair<Pos_t, Pos_t>, pair<Pos_t, Pos_t
 void getCEstat(list<list<AnnotatedFragment>::iterator>::iterator begin,
 	       list<list<AnnotatedFragment>::iterator>::iterator end,
 	       hash_map<ID_t, Range_t, hash<ID_t>, equal_to<ID_t> > & posmap,
-	       ID_t libid, pair<Size_t, SD_t> & libifo, float num_sd, 
+	       ID_t libid, pair<Size_t, DoubleSD_t> & libifo, float num_sd, 
 	       list<pair<Pos_t, Pos_t> > & interest, 
 	       list<bool> & stretch,
 	       ofstream & ceplotFile)
@@ -495,9 +497,9 @@ void getCEstat(list<list<AnnotatedFragment>::iterator>::iterator begin,
   vector<pair<Pos_t, Pos_t> > starts, ends;
   Pos_t pos, st;
   Size_t mea;         // sum of sizes of inserts
-  SD_t sderr;         // standard error for inserts
+  DoubleSD_t sderr;         // standard error for inserts
   Size_t mean;        // global mean size of library
-  SD_t stdev;         // global standard deviation
+  DoubleSD_t stdev;         // global standard deviation
   bool over = false;  // is error on the longer or shorter side
   bool inbad = false; // are we in a bad regions
 
@@ -1144,23 +1146,23 @@ int main(int argc, char **argv)
   //
   // lib2name <- EID of library
   // lib2size <- mean, stdev pair
-  hash_map<ID_t, pair<Pos_t, SD_t>, hash<ID_t>, equal_to<ID_t> > lib2size;
+  hash_map<ID_t, pair<Pos_t, DoubleSD_t>, hash<ID_t>, equal_to<ID_t> > lib2size;
   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > lib2name;
   Library_t lib;
   for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
     library_bank.fetch(*li, lib);
     lib2name[*li] = lib.getEID();
-    lib2size[*li] = pair<Pos_t, SD_t> (lib.getDistribution().mean, 
+    lib2size[*li] = pair<Pos_t, DoubleSD_t> (lib.getDistribution().mean, 
 				       lib.getDistribution().sd);
   }
   
   // now we're ready to figure out new library sizes
-  hash_map<ID_t, pair<Pos_t, SD_t>, hash<ID_t>, equal_to<ID_t> > NewLib2size;
+  hash_map<ID_t, pair<Pos_t, DoubleSD_t>, hash<ID_t>, equal_to<ID_t> > NewLib2size;
   
   for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
     // for each library
     list<Pos_t> sizes;
-    pair<Pos_t, SD_t> libsize = lib2size[*li];
+    pair<Pos_t, DoubleSD_t> libsize = lib2size[*li];
     
     for (list<list<AnnotatedFragment>::iterator>::iterator 
 	   mi = lib2frag[*li].begin(); mi != lib2frag[*li].end(); mi++){
@@ -1188,7 +1190,7 @@ int main(int argc, char **argv)
     } 
 
     // compute new sizes
-    pair<Pos_t, SD_t> newSize;
+    pair<Pos_t, DoubleSD_t> newSize;
     if (! recompute || sizes.size() < MIN_OBS ){
       newSize = libsize;
     } else {
@@ -1373,7 +1375,7 @@ int main(int argc, char **argv)
     if (cestat) {
       // calculate C/E statistics
       for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
-	pair<Pos_t, SD_t> libsize = NewLib2size[*li];
+	pair<Pos_t, DoubleSD_t> libsize = NewLib2size[*li];
 	list<bool> stretch;
 	
 	if (globals.find("ceplot") != globals.end())
@@ -1627,7 +1629,7 @@ int main(int argc, char **argv)
     if (cestat) {
       // calculate C/E statistics
       for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
-	pair<Pos_t, SD_t> libsize = NewLib2size[*li];
+	pair<Pos_t, DoubleSD_t> libsize = NewLib2size[*li];
 	list<bool> stretch;
 
 	if (globals.find("ceplot") != globals.end())

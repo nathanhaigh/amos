@@ -1,20 +1,24 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl
+use lib "/fs/szdevel/amp/AMOS/Linux-x86_64/lib";
+
 use strict;
 
-my $BUFFER = 1000;
-my $MIN_SIGNATURES = 2;
+my $BUFFER = 2000;
+my $MIN_TYPES = 2;
 
 my $contigid = -1;
 my $rstart;
 my $rend;
 my $laststart;
 my @reasons;
+my %reasonshash;
 
 
 sub printEnd
 {
   my $count = scalar @reasons;
-  if ($count >= $MIN_SIGNATURES)
+
+  if ( scalar(keys %reasonshash) >= $MIN_TYPES )
   {
     print "$contigid\t$rstart\t$rend\t$count\t|\t";
     print join "\t|\t", @reasons;
@@ -22,6 +26,7 @@ sub printEnd
   }
 
   @reasons = ();
+  %reasonshash = ();
 }
 
 
@@ -33,6 +38,7 @@ while (<>)
   my $type   = shift @vals;
   my $cstart = shift @vals;
   my $cend   = shift @vals;
+  my $desc   = shift @vals;
 
   if ($cid != $contigid)
   {
@@ -50,7 +56,7 @@ while (<>)
     die "Features are unsorted!";
   }
 
-  if ($cstart > $rend + $BUFFER)
+  if ( $cstart > $rend + $BUFFER )
   {
     printEnd();
 
@@ -58,7 +64,7 @@ while (<>)
     $rstart = $cstart;
     $rend = $cend;
   }
-  elsif ($cend > $rend)
+  elsif ( $cend > $rend )
   {
     $rend = $cend;
   }
@@ -66,6 +72,7 @@ while (<>)
   $laststart = $cstart;
 
   push @reasons, "$cstart\t$cend\t$type\t@vals";
+  $reasonshash{$desc}++;
 }
 
 printEnd();
