@@ -1,3 +1,10 @@
+/****************************************************************************
+** Form interface generated from reading ui file 'QueryWidget.ui'
+**
+** Created by: The User Interface Compiler ($Id$)
+**
+** WARNING! All changes made in this file will be lost!
+****************************************************************************/
 
 #ifndef QUERYWIDGET_H
 #define QUERYWIDGET_H
@@ -47,20 +54,13 @@ public:
     QLabel* singletonLabel;
     QLabel* unmatedLabel;
     QGroupBox* featureBox;
-    QLabel* noneLabel;
     QLabel* allLabel;
+    QCheckBox* readCheck;
+    QLabel* noneLabel;
     QSlider* insertSlider;
     QSlider* readSlider;
-    QSlider* snpSlider;
-    QSlider* unitigSlider;
-    QCheckBox* unitigCheck;
-    QCheckBox* snpCheck;
-    QCheckBox* readCheck;
     QCheckBox* insertCheck;
-    QCheckBox* qcCheck;
-    QSlider* qcSlider;
-    QSlider* breakSlider;
-    QCheckBox* breakCheck;
+    QCheckBox* misasmCheck;
     QCheckBox* otherCheck;
     QButtonGroup* mateColorBox;
     QRadioButton* categoricalButton;
@@ -81,7 +81,8 @@ protected:
     QHBoxLayout* layout9;
     QHBoxLayout* layout8;
     QGridLayout* mateTypeBoxLayout;
-    QGridLayout* featureBoxLayout;
+    QVBoxLayout* featureBoxLayout;
+    QGridLayout* sliderLayout;
     QVBoxLayout* mateColorBoxLayout;
     QVBoxLayout* displayBoxLayout;
 

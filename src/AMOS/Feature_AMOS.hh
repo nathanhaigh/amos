@@ -62,6 +62,7 @@ public:
   static const FeatureType_t UNITIG       = 'U';
   static const FeatureType_t JOIN         = 'J';
   static const FeatureType_t ORF          = 'O';
+  static const FeatureType_t FIX          = 'F';
 
   // forensics features
   static const FeatureType_t COVERAGE     = 'C';

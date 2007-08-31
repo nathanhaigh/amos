@@ -1,3 +1,10 @@
+/****************************************************************************
+** Form implementation generated from reading ui file 'ui/QueryWidget.ui'
+**
+** Created by: The User Interface Compiler ($Id$)
+**
+** WARNING! All changes made in this file will be lost!
+****************************************************************************/
 
 #include "QueryWidget.hh"
 
@@ -170,16 +177,10 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     featureBox->setColumnLayout(0, Qt::Vertical );
     featureBox->layout()->setSpacing( 6 );
     featureBox->layout()->setMargin( 11 );
-    featureBoxLayout = new QGridLayout( featureBox->layout() );
+    featureBoxLayout = new QVBoxLayout( featureBox->layout() );
     featureBoxLayout->setAlignment( Qt::AlignTop );
 
-    noneLabel = new QLabel( featureBox, "noneLabel" );
-    QFont noneLabel_font(  noneLabel->font() );
-    noneLabel_font.setPointSize( 9 );
-    noneLabel->setFont( noneLabel_font ); 
-    noneLabel->setAlignment( int( QLabel::AlignBottom | QLabel::AlignLeft ) );
-
-    featureBoxLayout->addWidget( noneLabel, 0, 1 );
+    sliderLayout = new QGridLayout( 0, 1, 1, 0, 6, "sliderLayout"); 
 
     allLabel = new QLabel( featureBox, "allLabel" );
     QFont allLabel_font(  allLabel->font() );
@@ -187,7 +188,23 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     allLabel->setFont( allLabel_font ); 
     allLabel->setAlignment( int( QLabel::AlignBottom | QLabel::AlignRight ) );
 
-    featureBoxLayout->addWidget( allLabel, 0, 2 );
+    sliderLayout->addWidget( allLabel, 0, 2 );
+
+    readCheck = new QCheckBox( featureBox, "readCheck" );
+    QFont readCheck_font(  readCheck->font() );
+    readCheck_font.setPointSize( 9 );
+    readCheck->setFont( readCheck_font ); 
+    readCheck->setChecked( TRUE );
+
+    sliderLayout->addWidget( readCheck, 2, 0 );
+
+    noneLabel = new QLabel( featureBox, "noneLabel" );
+    QFont noneLabel_font(  noneLabel->font() );
+    noneLabel_font.setPointSize( 9 );
+    noneLabel->setFont( noneLabel_font ); 
+    noneLabel->setAlignment( int( QLabel::AlignBottom | QLabel::AlignLeft ) );
+
+    sliderLayout->addWidget( noneLabel, 0, 1 );
 
     insertSlider = new QSlider( featureBox, "insertSlider" );
     insertSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, insertSlider->sizePolicy().hasHeightForWidth() ) );
@@ -198,7 +215,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     insertSlider->setTickmarks( QSlider::NoMarks );
     insertSlider->setTickInterval( 1 );
 
-    featureBoxLayout->addMultiCellWidget( insertSlider, 1, 1, 1, 2 );
+    sliderLayout->addMultiCellWidget( insertSlider, 1, 1, 1, 2 );
 
     readSlider = new QSlider( featureBox, "readSlider" );
     readSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, readSlider->sizePolicy().hasHeightForWidth() ) );
@@ -209,53 +226,7 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     readSlider->setTickmarks( QSlider::NoMarks );
     readSlider->setTickInterval( 1 );
 
-    featureBoxLayout->addMultiCellWidget( readSlider, 2, 2, 1, 2 );
-
-    snpSlider = new QSlider( featureBox, "snpSlider" );
-    snpSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, snpSlider->sizePolicy().hasHeightForWidth() ) );
-    snpSlider->setMinValue( 0 );
-    snpSlider->setMaxValue( 10 );
-    snpSlider->setValue( 0 );
-    snpSlider->setOrientation( QSlider::Horizontal );
-    snpSlider->setTickmarks( QSlider::NoMarks );
-    snpSlider->setTickInterval( 1 );
-
-    featureBoxLayout->addMultiCellWidget( snpSlider, 3, 3, 1, 2 );
-
-    unitigSlider = new QSlider( featureBox, "unitigSlider" );
-    unitigSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, unitigSlider->sizePolicy().hasHeightForWidth() ) );
-    unitigSlider->setMinValue( 0 );
-    unitigSlider->setMaxValue( 10 );
-    unitigSlider->setValue( 0 );
-    unitigSlider->setOrientation( QSlider::Horizontal );
-    unitigSlider->setTickmarks( QSlider::NoMarks );
-    unitigSlider->setTickInterval( 1 );
-
-    featureBoxLayout->addMultiCellWidget( unitigSlider, 4, 4, 1, 2 );
-
-    unitigCheck = new QCheckBox( featureBox, "unitigCheck" );
-    QFont unitigCheck_font(  unitigCheck->font() );
-    unitigCheck_font.setPointSize( 9 );
-    unitigCheck->setFont( unitigCheck_font ); 
-    unitigCheck->setChecked( TRUE );
-
-    featureBoxLayout->addWidget( unitigCheck, 4, 0 );
-
-    snpCheck = new QCheckBox( featureBox, "snpCheck" );
-    QFont snpCheck_font(  snpCheck->font() );
-    snpCheck_font.setPointSize( 9 );
-    snpCheck->setFont( snpCheck_font ); 
-    snpCheck->setChecked( TRUE );
-
-    featureBoxLayout->addWidget( snpCheck, 3, 0 );
-
-    readCheck = new QCheckBox( featureBox, "readCheck" );
-    QFont readCheck_font(  readCheck->font() );
-    readCheck_font.setPointSize( 9 );
-    readCheck->setFont( readCheck_font ); 
-    readCheck->setChecked( TRUE );
-
-    featureBoxLayout->addWidget( readCheck, 2, 0 );
+    sliderLayout->addMultiCellWidget( readSlider, 2, 2, 1, 2 );
 
     insertCheck = new QCheckBox( featureBox, "insertCheck" );
     QFont insertCheck_font(  insertCheck->font() );
@@ -263,53 +234,22 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     insertCheck->setFont( insertCheck_font ); 
     insertCheck->setChecked( TRUE );
 
-    featureBoxLayout->addWidget( insertCheck, 1, 0 );
+    sliderLayout->addWidget( insertCheck, 1, 0 );
+    featureBoxLayout->addLayout( sliderLayout );
 
-    qcCheck = new QCheckBox( featureBox, "qcCheck" );
-    QFont qcCheck_font(  qcCheck->font() );
-    qcCheck_font.setPointSize( 9 );
-    qcCheck->setFont( qcCheck_font ); 
-    qcCheck->setChecked( TRUE );
-
-    featureBoxLayout->addWidget( qcCheck, 5, 0 );
-
-    qcSlider = new QSlider( featureBox, "qcSlider" );
-    qcSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, qcSlider->sizePolicy().hasHeightForWidth() ) );
-    qcSlider->setMinValue( 0 );
-    qcSlider->setMaxValue( 10 );
-    qcSlider->setValue( 0 );
-    qcSlider->setOrientation( QSlider::Horizontal );
-    qcSlider->setTickmarks( QSlider::NoMarks );
-    qcSlider->setTickInterval( 1 );
-
-    featureBoxLayout->addMultiCellWidget( qcSlider, 5, 5, 1, 2 );
-
-    breakSlider = new QSlider( featureBox, "breakSlider" );
-    breakSlider->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 0, 0, breakSlider->sizePolicy().hasHeightForWidth() ) );
-    breakSlider->setMinValue( 0 );
-    breakSlider->setMaxValue( 10 );
-    breakSlider->setValue( 0 );
-    breakSlider->setOrientation( QSlider::Horizontal );
-    breakSlider->setTickmarks( QSlider::NoMarks );
-    breakSlider->setTickInterval( 1 );
-
-    featureBoxLayout->addMultiCellWidget( breakSlider, 6, 6, 1, 2 );
-
-    breakCheck = new QCheckBox( featureBox, "breakCheck" );
-    QFont breakCheck_font(  breakCheck->font() );
-    breakCheck_font.setPointSize( 9 );
-    breakCheck->setFont( breakCheck_font ); 
-    breakCheck->setChecked( TRUE );
-
-    featureBoxLayout->addWidget( breakCheck, 6, 0 );
+    misasmCheck = new QCheckBox( featureBox, "misasmCheck" );
+    QFont misasmCheck_font(  misasmCheck->font() );
+    misasmCheck_font.setPointSize( 9 );
+    misasmCheck->setFont( misasmCheck_font ); 
+    misasmCheck->setChecked( TRUE );
+    featureBoxLayout->addWidget( misasmCheck );
 
     otherCheck = new QCheckBox( featureBox, "otherCheck" );
     QFont otherCheck_font(  otherCheck->font() );
     otherCheck_font.setPointSize( 9 );
     otherCheck->setFont( otherCheck_font ); 
     otherCheck->setChecked( TRUE );
-
-    featureBoxLayout->addWidget( otherCheck, 7, 0 );
+    featureBoxLayout->addWidget( otherCheck );
 
     queryBoxLayout->addMultiCellWidget( featureBox, 2, 2, 0, 1 );
 
@@ -402,16 +342,12 @@ QueryWidget::QueryWidget( QWidget* parent, const char* name, WFlags fl )
     queryBoxLayout->addMultiCellWidget( libraryBox, 5, 5, 0, 1 );
     QueryWidgetLayout->addWidget( queryBox );
     languageChange();
-    resize( QSize(273, 816).expandedTo(minimumSizeHint()) );
+    resize( QSize(295, 816).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
 
     // signals and slots connections
-    connect( breakCheck, SIGNAL( toggled(bool) ), breakSlider, SLOT( setEnabled(bool) ) );
-    connect( qcCheck, SIGNAL( toggled(bool) ), qcSlider, SLOT( setEnabled(bool) ) );
     connect( insertCheck, SIGNAL( toggled(bool) ), insertSlider, SLOT( setEnabled(bool) ) );
     connect( readCheck, SIGNAL( toggled(bool) ), readSlider, SLOT( setEnabled(bool) ) );
-    connect( snpCheck, SIGNAL( toggled(bool) ), snpSlider, SLOT( setEnabled(bool) ) );
-    connect( unitigCheck, SIGNAL( toggled(bool) ), unitigSlider, SLOT( setEnabled(bool) ) );
     connect( searchEdit, SIGNAL( returnPressed() ), searchButton, SLOT( animateClick() ) );
     connect( happyEdit, SIGNAL( returnPressed() ), happyButton, SLOT( animateClick() ) );
 }
@@ -467,27 +403,17 @@ void QueryWidget::languageChange()
     unmatedLabel->setText( tr( "pixmap" ) );
     QToolTip::add( unmatedLabel, tr( "Mate does not exist" ) );
     featureBox->setTitle( tr( "Features" ) );
-    noneLabel->setText( tr( "ALL" ) );
     allLabel->setText( tr( "NONE" ) );
-    QToolTip::add( insertSlider, tr( "Insert coverage tolerance" ) );
-    QToolTip::add( readSlider, tr( "Read coverage tolerance" ) );
-    QToolTip::add( snpSlider, tr( "SNP count tolerance" ) );
-    QToolTip::add( unitigSlider, tr( "Unitig length tolerance" ) );
-    unitigCheck->setText( tr( "Unitigs" ) );
-    QToolTip::add( unitigCheck, tr( "Celera Assembler unitig features" ) );
-    snpCheck->setText( tr( "SNPs" ) );
-    QToolTip::add( snpCheck, tr( "Multi-alignment SNP features" ) );
     readCheck->setText( tr( "Read Cov" ) );
     QToolTip::add( readCheck, tr( "Read coverage heat map features" ) );
+    noneLabel->setText( tr( "ALL" ) );
+    QToolTip::add( insertSlider, tr( "Insert coverage tolerance" ) );
+    QToolTip::add( readSlider, tr( "Read coverage tolerance" ) );
     insertCheck->setText( tr( "Insert Cov" ) );
     QToolTip::add( insertCheck, tr( "Insert coverage heat map features" ) );
-    qcCheck->setText( tr( "AsmQC" ) );
-    QToolTip::add( qcCheck, tr( "AMOS AsmQC features" ) );
-    QToolTip::add( qcSlider, tr( "AsmQC length tolerance" ) );
-    QToolTip::add( breakSlider, tr( "Alignment break count tolerance" ) );
-    breakCheck->setText( tr( "Breaks" ) );
-    QToolTip::add( breakCheck, tr( "Read alignment breakpoint features" ) );
-    otherCheck->setText( tr( "Other" ) );
+    misasmCheck->setText( tr( "Mis-assembly features" ) );
+    QToolTip::add( misasmCheck, tr( "Mis-assembly evidence features" ) );
+    otherCheck->setText( tr( "Generalized features" ) );
     QToolTip::add( otherCheck, tr( "Generalized features" ) );
     mateColorBox->setTitle( tr( "Mate Colors" ) );
     categoricalButton->setText( tr( "Categorical" ) );

@@ -1,4 +1,5 @@
 #include "InsertField.hh"
+#include "UIElements.hh"
 #include <qwmatrix.h>
 #include <qcursor.h>
 #include <qapplication.h>
@@ -293,7 +294,7 @@ void InsertField::processItemSelection(QString & s,
     s += "<b><em>Feature</em></b><br>";
     s += "<table>";
     s += "<tr><td><b>Type</b></td><td>"
-      + QString(FeatureCanvasItem::getFeatureTypeStr
+      + QString(UIElements::getFeatureStr
                 (fitem->m_feat.getType())) + "</td></tr>";
     s += "<tr><td><b>Size</b></td><td>"
       + QString::number(fitem->m_feat.getRange().getLength()) + "</td></tr>";

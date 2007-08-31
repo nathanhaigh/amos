@@ -141,10 +141,11 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_kmercoverageplot = 1;
   m_insertCovFeatures = 1;
   m_readCovFeatures = 1;
-  m_snpFeatures = 1;
-  m_unitigFeatures = 1;
-  m_qcFeatures = 1;
-  m_breakFeatures = 1;
+//   m_snpFeatures = 1;
+//   m_unitigFeatures = 1;
+//   m_qcFeatures = 1;
+//   m_breakFeatures = 1;
+  m_misasmFeatures = 1;
   m_otherFeatures = 1;
 
   m_syncWithTiling = 1;
@@ -1186,35 +1187,45 @@ void InsertWidget::paintCanvas()
     layout.clear();
 
     int score;
-    int maxSNPTol = 0;
-    int maxUnitigTol = 0;
-    int maxQCTol = 0;
-    int maxBreakTol = 0;
+//     int maxSNPTol = 0;
+//     int maxUnitigTol = 0;
+//     int maxQCTol = 0;
+//     int maxBreakTol = 0;
     vector<AMOS::Feature_t>::iterator fi;
     for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
       switch ( fi->getType() )
         {
-        case AMOS::Feature_t::POLYMORPHISM:
-          score = extractSNPScore (*fi);
-          if ( score > maxSNPTol ) maxSNPTol = score;
-          if ( !m_snpFeatures ) continue;
-          break;
-        case AMOS::Feature_t::UNITIG:
-          score = extractUnitigScore (*fi);
-          if ( score > maxUnitigTol ) maxUnitigTol = score;
-          if ( !m_unitigFeatures ) continue;
-          break;
+//         case AMOS::Feature_t::POLYMORPHISM:
+// //           score = extractSNPScore (*fi);
+// //           if ( score > maxSNPTol ) maxSNPTol = score;
+//           if ( !m_snpFeatures ) continue;
+//           break;
+//         case AMOS::Feature_t::UNITIG:
+// //           score = extractUnitigScore (*fi);
+// //           if ( score > maxUnitigTol ) maxUnitigTol = score;
+//           if ( !m_unitigFeatures ) continue;
+//           break;
+//         case AMOS::Feature_t::COVERAGE:
+// //           score = extractQCScore (*fi);
+// //           if ( score > maxQCTol ) maxQCTol = score;
+//           if ( !m_qcFeatures ) continue;
+//           break;
+//         case AMOS::Feature_t::BREAKPOINT:
+// //           score = extractBreakScore (*fi);
+// //           if ( score > maxBreakTol ) maxBreakTol = score;
+//           if ( !m_breakFeatures ) continue;
+//           break;
+
         case AMOS::Feature_t::COVERAGE:
-          score = extractQCScore (*fi);
-          if ( score > maxQCTol ) maxQCTol = score;
-          if ( !m_qcFeatures ) continue;
-          break;
+        case AMOS::Feature_t::POLYMORPHISM:
         case AMOS::Feature_t::BREAKPOINT:
-          score = extractBreakScore (*fi);
-          if ( score > maxBreakTol ) maxBreakTol = score;
-          if ( !m_breakFeatures ) continue;
+        case AMOS::Feature_t::KMER:
+        case AMOS::Feature_t::MATEPAIR:
+        case AMOS::Feature_t::MISASSEMBLY:
+          if ( !m_misasmFeatures ) continue;
           break;
+
         default:
           if ( !m_otherFeatures ) continue;
           break;
@@ -1254,10 +1265,10 @@ void InsertWidget::paintCanvas()
       voffset += (layout.size() + 1) * lineheight;
     }
 
-    emit newMaxSNPTol(maxSNPTol);
-    emit newMaxUnitigTol(maxUnitigTol);
-    emit newMaxQCTol(maxQCTol);
-    emit newMaxBreakTol(maxBreakTol);
+//     emit newMaxSNPTol(maxSNPTol);
+//     emit newMaxUnitigTol(maxUnitigTol);
+//     emit newMaxQCTol(maxQCTol);
+//     emit newMaxBreakTol(maxBreakTol);
   }
 
   m_overviewbottom = voffset;
@@ -1616,31 +1627,38 @@ void InsertWidget::setReadCovFeatures(bool b)
   paintCanvas();
 }
 
-void InsertWidget::setSNPFeatures(bool b)
-{
-  if (m_snpFeatures == b ) return;
-  m_snpFeatures = b;
-  paintCanvas();
-}
+// void InsertWidget::setSNPFeatures(bool b)
+// {
+//   if (m_snpFeatures == b ) return;
+//   m_snpFeatures = b;
+//   paintCanvas();
+// }
 
-void InsertWidget::setUnitigFeatures(bool b)
-{
-  if ( m_unitigFeatures == b ) return;
-  m_unitigFeatures = b;
-  paintCanvas();
-}
+// void InsertWidget::setUnitigFeatures(bool b)
+// {
+//   if ( m_unitigFeatures == b ) return;
+//   m_unitigFeatures = b;
+//   paintCanvas();
+// }
 
-void InsertWidget::setQCFeatures(bool b)
-{
-  if ( m_qcFeatures == b ) return;
-  m_qcFeatures = b;
-  paintCanvas();
-}
+// void InsertWidget::setQCFeatures(bool b)
+// {
+//   if ( m_qcFeatures == b ) return;
+//   m_qcFeatures = b;
+//   paintCanvas();
+// }
 
-void InsertWidget::setBreakFeatures(bool b)
+// void InsertWidget::setBreakFeatures(bool b)
+// {
+//   if ( m_breakFeatures == b ) return;
+//   m_breakFeatures = b;
+//   paintCanvas();
+// }
+
+void InsertWidget::setMisasmFeatures(bool b)
 {
-  if ( m_breakFeatures == b ) return;
-  m_breakFeatures = b;
+  if ( m_misasmFeatures == b ) return;
+  m_misasmFeatures = b;
   paintCanvas();
 }
 
@@ -1682,77 +1700,77 @@ void InsertWidget::setReadCovTol(int tol)
   m_icanvas->update();
 }
 
-void InsertWidget::setSNPTol(int tol)
-{
-  QCanvasItemList all = m_icanvas->allItems();
-  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
-    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
-         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
-         AMOS::Feature_t::POLYMORPHISM )
-      {
-        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
-        if ( extractSNPScore (fi->m_feat) >= tol )
-          fi->show();
-        else
-          fi->hide();
-        m_icanvas->setChanged(fi->boundingRect());
-      }
-  m_icanvas->update();
-}
+// void InsertWidget::setSNPTol(int tol)
+// {
+//   QCanvasItemList all = m_icanvas->allItems();
+//   for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+//     if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+//          ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+//          AMOS::Feature_t::POLYMORPHISM )
+//       {
+//         FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+//         if ( extractSNPScore (fi->m_feat) >= tol )
+//           fi->show();
+//         else
+//           fi->hide();
+//         m_icanvas->setChanged(fi->boundingRect());
+//       }
+//   m_icanvas->update();
+// }
 
-void InsertWidget::setUnitigTol(int tol)
-{
-  QCanvasItemList all = m_icanvas->allItems();
-  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
-    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
-         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
-         AMOS::Feature_t::UNITIG )
-      {
-        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
-        if ( extractUnitigScore (fi->m_feat) >= tol )
-          fi->show();
-        else
-          fi->hide();
-        m_icanvas->setChanged(fi->boundingRect());
-      }
-  m_icanvas->update();
-}
+// void InsertWidget::setUnitigTol(int tol)
+// {
+//   QCanvasItemList all = m_icanvas->allItems();
+//   for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+//     if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+//          ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+//          AMOS::Feature_t::UNITIG )
+//       {
+//         FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+//         if ( extractUnitigScore (fi->m_feat) >= tol )
+//           fi->show();
+//         else
+//           fi->hide();
+//         m_icanvas->setChanged(fi->boundingRect());
+//       }
+//   m_icanvas->update();
+// }
 
-void InsertWidget::setQCTol(int tol)
-{
-  QCanvasItemList all = m_icanvas->allItems();
-  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
-    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
-         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
-         AMOS::Feature_t::COVERAGE )
-      {
-        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
-        if ( extractQCScore (fi->m_feat) >= tol )
-          fi->show();
-        else
-          fi->hide();
-        m_icanvas->setChanged(fi->boundingRect());
-      }
-  m_icanvas->update();
-}
+// void InsertWidget::setQCTol(int tol)
+// {
+//   QCanvasItemList all = m_icanvas->allItems();
+//   for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+//     if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+//          ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+//          AMOS::Feature_t::COVERAGE )
+//       {
+//         FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+//         if ( extractQCScore (fi->m_feat) >= tol )
+//           fi->show();
+//         else
+//           fi->hide();
+//         m_icanvas->setChanged(fi->boundingRect());
+//       }
+//   m_icanvas->update();
+// }
 
-void InsertWidget::setBreakTol(int tol)
-{
-  QCanvasItemList all = m_icanvas->allItems();
-  for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
-    if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
-         ((FeatureCanvasItem *)*i)->m_feat.getType() ==
-         AMOS::Feature_t::BREAKPOINT )
-      {
-        FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
-        if ( extractBreakScore (fi->m_feat) >= tol )
-          fi->show();
-        else
-          fi->hide();
-        m_icanvas->setChanged(fi->boundingRect());
-      }
-  m_icanvas->update();
-}
+// void InsertWidget::setBreakTol(int tol)
+// {
+//   QCanvasItemList all = m_icanvas->allItems();
+//   for ( QCanvasItemList::Iterator i = all.begin(); i != all.end(); ++ i )
+//     if ( (*i)->rtti() == FeatureCanvasItem::RTTI &&
+//          ((FeatureCanvasItem *)*i)->m_feat.getType() ==
+//          AMOS::Feature_t::BREAKPOINT )
+//       {
+//         FeatureCanvasItem * fi = (FeatureCanvasItem *) *i;
+//         if ( extractBreakScore (fi->m_feat) >= tol )
+//           fi->show();
+//         else
+//           fi->hide();
+//         m_icanvas->setChanged(fi->boundingRect());
+//       }
+//   m_icanvas->update();
+// }
 
 
 class Paddle : public QCanvasRectangle

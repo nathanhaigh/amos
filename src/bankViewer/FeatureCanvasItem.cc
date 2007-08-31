@@ -37,29 +37,3 @@ void FeatureCanvasItem::drawShape(QPainter & p)
                (int) width(),  (int) height());
   }
 }
-
-
-static const char * repeatstr = "Repeat";
-static const char * unitigstr = "Unitig";
-static const char * joinstr = "Join";
-static const char * coveragestr = "Coverage";
-static const char * orfstr = "Orf";
-static const char * polymorphismstr = "Polymorphism";
-static const char * breakstr = "Breakpoint";
-static const char * unknownstr = "Unknown";
-
-const char * FeatureCanvasItem::getFeatureTypeStr (AMOS::FeatureType_t type)
-{
-  switch (type)
-    {
-    case AMOS::Feature_t::REPEAT:       return repeatstr;
-    case AMOS::Feature_t::UNITIG:       return unitigstr;
-    case AMOS::Feature_t::JOIN:         return joinstr;
-    case AMOS::Feature_t::COVERAGE:     return coveragestr;
-    case AMOS::Feature_t::ORF:          return orfstr;
-    case AMOS::Feature_t::POLYMORPHISM: return polymorphismstr;
-    case AMOS::Feature_t::BREAKPOINT:   return breakstr;
-    case AMOS::Feature_t::NULL_FEATURE:
-    default:                            return unknownstr;
-    }
-}

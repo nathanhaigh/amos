@@ -75,17 +75,18 @@ public slots:
 
   void setInsertCovTol(int);
   void setReadCovTol(int);
-  void setSNPTol(int);
-  void setUnitigTol(int);
-  void setQCTol(int);
-  void setBreakTol(int);
+//   void setSNPTol(int);
+//   void setUnitigTol(int);
+//   void setQCTol(int);
+//   void setBreakTol(int);
 
   void setInsertCovFeatures(bool);
   void setReadCovFeatures(bool);
-  void setSNPFeatures(bool);
-  void setUnitigFeatures(bool);
-  void setQCFeatures(bool);
-  void setBreakFeatures(bool);
+//   void setSNPFeatures(bool);
+//   void setUnitigFeatures(bool);
+//   void setQCFeatures(bool);
+//   void setBreakFeatures(bool);
+  void setMisasmFeatures(bool);
   void setOtherFeatures(bool);
 
 
@@ -122,10 +123,10 @@ signals:
 
   void newMaxInsertCovTol(int);
   void newMaxReadCovTol(int);
-  void newMaxSNPTol(int);
-  void newMaxUnitigTol(int);
-  void newMaxQCTol(int);
-  void newMaxBreakTol(int);
+//   void newMaxSNPTol(int);
+//   void newMaxUnitigTol(int);
+//   void newMaxQCTol(int);
+//   void newMaxBreakTol(int);
 
   void setZoomInTool();
   void setZoomOutTool();
@@ -178,10 +179,11 @@ private:
 
   bool m_insertCovFeatures;
   bool m_readCovFeatures;
-  bool m_snpFeatures;
-  bool m_unitigFeatures;
-  bool m_qcFeatures;
-  bool m_breakFeatures;
+//   bool m_snpFeatures;
+//   bool m_unitigFeatures;
+//   bool m_qcFeatures;
+//   bool m_breakFeatures;
+  bool m_misasmFeatures;
   bool m_otherFeatures;
 
   bool m_persistant;

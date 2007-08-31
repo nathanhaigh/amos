@@ -28,15 +28,20 @@ QColor UIElements::color_tilingtrim(204, 153, 153);
 QColor UIElements::color_snpgap(Qt::cyan);
 
 
-QColor UIElements::color_featdefault(Qt::white);
+QColor UIElements::color_featdefault(QColor(200,200,200));
 QColor UIElements::color_featrepeat(Qt::white);
+QColor UIElements::color_featunitig(Qt::white);
 QColor UIElements::color_featjoin(Qt::white);
+QColor UIElements::color_featfix(Qt::white);
 QColor UIElements::color_featorf(Qt::white);
 
+QColor UIElements::color_featcoverage(QColor(0,140,221));
 QColor UIElements::color_featsnp(QColor(255,30,30));
 QColor UIElements::color_featbreak(QColor(255,150,150));
-QColor UIElements::color_featunitig(QColor(125,200,255));
-QColor UIElements::color_featcoverage(QColor(0,140,221));
+QColor UIElements::color_featkmer(QColor(255,255,0));
+QColor UIElements::color_featmatepair(QColor(125,200,255));
+QColor UIElements::color_featmisassembly(QColor(255,150,0));
+
 QColor UIElements::color_insertcoverage(QColor(255,150,255));
 QColor UIElements::color_readcoverage(QColor(120,255,120));
 
@@ -69,42 +74,53 @@ QColor & UIElements::getFeatureColor(AMOS::FeatureType_t type)
 {
   switch (type)
   {
-    case 'R':  return color_featrepeat;
-    case 'U':  return color_featunitig;
-    case 'J':  return color_featjoin;
-    case 'C':  return color_featcoverage;
-    case 'O':  return color_featorf;
-    case 'P':  return color_featsnp;
-    case 'B':  return color_featbreak;
-    default: return color_featdefault;
+    case AMOS::Feature_t::REPEAT:       return color_featrepeat;
+    case AMOS::Feature_t::UNITIG:       return color_featunitig;
+    case AMOS::Feature_t::JOIN:         return color_featjoin;
+    case AMOS::Feature_t::FIX:          return color_featfix;
+    case AMOS::Feature_t::ORF:          return color_featorf;
+    case AMOS::Feature_t::COVERAGE:     return color_featcoverage;
+    case AMOS::Feature_t::POLYMORPHISM: return color_featsnp;
+    case AMOS::Feature_t::BREAKPOINT:   return color_featbreak;
+    case AMOS::Feature_t::KMER:         return color_featkmer;
+    case AMOS::Feature_t::MATEPAIR:     return color_featmatepair;
+    case AMOS::Feature_t::MISASSEMBLY:  return color_featmisassembly;
+  default: return color_featdefault;
   };
 }
 
 static const char * repeatstr = "Repeat";
 static const char * unitigstr = "Unitig";
 static const char * joinstr = "Join";
-static const char * coveragestr = "Coverage";
-static const char * orfstr = "ORF";
-static const char * snpstr = "SNP";
-static const char * otherstr = "Other";
-static const char * breakstr = "Breakpoint";
 static const char * fixstr = "Fix";
+static const char * orfstr = "Orf";
+static const char * coveragestr = "Coverage";
+static const char * polymorphismstr = "Polymorphism";
+static const char * breakstr = "Breakpoint";
+static const char * kmerstr = "Kmer";
+static const char * matepairstr = "Matepair";
+static const char * misassemblystr = "Misassembly";
+static const char * unknownstr = "Unknown";
 
-const char * UIElements::allFeatureTypes = "UCPBX";
+//const char * UIElements::allFeatureTypes = "UCPBX";
 
 const char * UIElements::getFeatureStr(AMOS::FeatureType_t type)
 {
   switch (type)
   {
-    case 'B':  return breakstr;
-    case 'R':  return repeatstr;
-    case 'U':  return unitigstr;
-    case 'J':  return joinstr;
-    case 'C':  return coveragestr;
-    case 'O':  return orfstr;
-    case 'P':  return snpstr;
-    case 'F':  return fixstr;
-    default:   return otherstr;
+    case AMOS::Feature_t::REPEAT:       return repeatstr;
+    case AMOS::Feature_t::UNITIG:       return unitigstr;
+    case AMOS::Feature_t::JOIN:         return joinstr;
+    case AMOS::Feature_t::FIX:          return fixstr;
+    case AMOS::Feature_t::ORF:          return orfstr;
+    case AMOS::Feature_t::COVERAGE:     return coveragestr;
+    case AMOS::Feature_t::POLYMORPHISM: return polymorphismstr;
+    case AMOS::Feature_t::BREAKPOINT:   return breakstr;
+    case AMOS::Feature_t::KMER:         return kmerstr;
+    case AMOS::Feature_t::MATEPAIR:     return matepairstr;
+    case AMOS::Feature_t::MISASSEMBLY:  return misassemblystr;
+    case AMOS::Feature_t::NULL_FEATURE:
+    default:                            return unknownstr;
   };
 }
 

@@ -38,10 +38,10 @@ public slots:
 
   void setMaxInsertCovTol(int);
   void setMaxReadCovTol(int);
-  void setMaxSNPTol(int);
-  void setMaxUnitigTol(int);
-  void setMaxQCTol(int);
-  void setMaxBreakTol(int);
+//   void setMaxSNPTol(int);
+//   void setMaxUnitigTol(int);
+//   void setMaxQCTol(int);
+//   void setMaxBreakTol(int);
 
   void toggleSyncWithTiling();
 
