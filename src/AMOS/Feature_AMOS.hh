@@ -61,10 +61,15 @@ public:
   static const FeatureType_t REPEAT       = 'R';
   static const FeatureType_t UNITIG       = 'U';
   static const FeatureType_t JOIN         = 'J';
-  static const FeatureType_t COVERAGE     = 'C';
   static const FeatureType_t ORF          = 'O';
+
+  // forensics features
+  static const FeatureType_t COVERAGE     = 'C';
   static const FeatureType_t POLYMORPHISM = 'P';
   static const FeatureType_t BREAKPOINT   = 'B';
+  static const FeatureType_t KMER         = 'K';
+  static const FeatureType_t MATEPAIR     = 'M';
+  static const FeatureType_t MISASSEMBLY  = 'A';
 
 
   //--------------------------------------------------------- Feature_t --------

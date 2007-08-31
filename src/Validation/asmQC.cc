@@ -1364,7 +1364,7 @@ int main(int argc, char **argv)
 	  f.setComment("LOW_GOOD_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1407,7 +1407,7 @@ int main(int argc, char **argv)
 	      f.setComment(comment.str());
 	      f.setRange(Range_t(ii->first, ii->second));
 	      f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	      f.setType(Feature_t::COVERAGE);
+	      f.setType(Feature_t::MATEPAIR);
 	      feat_stream << f;
 	    }
 	  }
@@ -1435,7 +1435,7 @@ int main(int argc, char **argv)
 	    f.setComment("HIGH_SHORT_CVG");
 	    f.setRange(Range_t(ii->first, ii->second));
 	    f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	    f.setType(Feature_t::COVERAGE);
+	    f.setType(Feature_t::MATEPAIR);
 	    feat_stream << f;
 	  }
 	}
@@ -1463,7 +1463,7 @@ int main(int argc, char **argv)
 	    f.setComment("HIGH_LONG_CVG");
 	    f.setRange(Range_t(ii->first, ii->second));
 	    f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	    f.setType(Feature_t::COVERAGE);
+	    f.setType(Feature_t::MATEPAIR);
 	    feat_stream << f;
 	  }
 	}
@@ -1489,7 +1489,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_NORMAL_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1512,7 +1512,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_OUTIE_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1536,7 +1536,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_LINKING_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1560,7 +1560,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_SPANNING_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1585,7 +1585,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_SINGLEMATE_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*ctg, Contig_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1619,7 +1619,7 @@ int main(int argc, char **argv)
 	  f.setComment("LOW_GOOD_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1661,7 +1661,7 @@ int main(int argc, char **argv)
 	      f.setComment(comment.str());
 	      f.setRange(Range_t(ii->first, ii->second));
 	      f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	      f.setType(Feature_t::COVERAGE);
+	      f.setType(Feature_t::MATEPAIR);
 	      feat_stream << f;
 	    }
 	  }
@@ -1690,7 +1690,7 @@ int main(int argc, char **argv)
 	    f.setComment("HIGH_SHORT_CVG");
 	    f.setRange(Range_t(ii->first, ii->second));
 	    f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	    f.setType(Feature_t::COVERAGE);
+	    f.setType(Feature_t::MATEPAIR);
 	    feat_stream << f;
 	  }
 	}
@@ -1718,7 +1718,7 @@ int main(int argc, char **argv)
 	    f.setComment("HIGH_LONG_CVG");
 	    f.setRange(Range_t(ii->first, ii->second));
 	    f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	    f.setType(Feature_t::COVERAGE);
+	    f.setType(Feature_t::MATEPAIR);
 	    feat_stream << f;
 	  }
 	}
@@ -1744,7 +1744,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_NORMAL_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1767,7 +1767,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_OUTIE_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1791,7 +1791,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_LINKING_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }
@@ -1815,7 +1815,7 @@ int main(int argc, char **argv)
 	  f.setComment("HIGH_SINGLEMATE_CVG");
 	  f.setRange(Range_t(ii->first, ii->second));
           f.setSource(make_pair(*scf, Scaffold_t::NCODE));
-	  f.setType(Feature_t::COVERAGE);
+	  f.setType(Feature_t::MATEPAIR);
           feat_stream << f;
 	}
       }

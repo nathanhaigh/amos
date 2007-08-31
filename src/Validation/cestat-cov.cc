@@ -8,12 +8,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "foundation_AMOS.hh"
+#include <cmath>
 #include <iostream>
 #include <cassert>
 #include <sstream>
 #include <unistd.h>
 #include <map>
 #include <iomanip>
+#include "Feature_AMOS.hh"
 
 #include "DataStore.hh"
 #include "Insert.hh"
@@ -62,7 +64,7 @@ void printCEStats(const std::string &id)
                 if ( li->second.m_cestat[i] * sign < 0 ||
                      fabs(li->second.m_cestat[i]) < OPT_Features )
                   {
-                    cout << id << " C " << b << " "
+                    cout << id << " " << Feature_t::MATEPAIR << " " << b << " "
                          << li->second.m_coverage[i].x() << " ";
                     if  ( sign < 0 )
                       cout << "CE_COMPRESS ";
@@ -86,7 +88,7 @@ void printCEStats(const std::string &id)
 
           if ( b && e )
             {
-              cout << id << " C " << b << " " << e << " ";
+              cout << id << " " << Feature_t::MATEPAIR << " " << b << " " << e << " ";
               if  ( sign < 0 )
                 cout << "CE_COMPRESS ";
               else

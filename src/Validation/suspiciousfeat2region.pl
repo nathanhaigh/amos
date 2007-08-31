@@ -16,13 +16,23 @@ my %reasonshash;
 
 sub printEnd
 {
-  my $count = scalar @reasons;
+  my $nfea = scalar @reasons;
+  my $ntyp = scalar(keys %reasonshash);
 
-  if ( scalar(keys %reasonshash) >= $MIN_TYPES )
+  if ( $ntyp >= $MIN_TYPES )
   {
-    print "$contigid\t$rstart\t$rend\t$count\t|\t";
+    print "$contigid A $rstart $rend MISASSEMBLY feats:$nfea types:$ntyp\t";
     print join "\t|\t", @reasons;
     print "\n";
+#      print
+#          "{FEA\n",
+#          "clr:$rstart,$rend\n",
+#          "typ:A\n",
+#          "src:$contigid,CTG\n",
+#          "com:\n",
+#          "MISASSEMBLY feats:$nfea types:$ntyp\n";
+#      foreach my $reason (@reasons) { print "$reason\n"; }
+#      print ".\n}\n";
   }
 
   @reasons = ();
@@ -71,7 +81,7 @@ while (<>)
 
   $laststart = $cstart;
 
-  push @reasons, "$cstart\t$cend\t$type\t@vals";
+  push @reasons, "$cstart\t$cend\t$type\t$desc @vals";
   $reasonshash{$desc}++;
 }
 

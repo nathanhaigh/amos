@@ -29,7 +29,7 @@ INPUTS = $(PREF).bnk
 ## Align singleton reads
 600: $(BINDIR)/listReadPlacedStatus -S -E $(PREF).bnk > $(PREF).singletons
 610: $(BINDIR)/dumpreads -E $(PREF).singletons $(PREF).bnk > $(PREF).singletons.seq
-620: $(NUCMER) --maxmatch --prefix=$(PREF) $(PREF).fasta $(PREF).singletons.seq
+620: $(NUCMER) --prefix=$(PREF) $(PREF).fasta $(PREF).singletons.seq
 
 ## Analyzing singleton alignment breakpoints
 700: $(BINDIR)/casm-breaks -b $(PREF).bnk -t 100 -c 2 -F $(PREF).break.fea $(PREF).delta 
@@ -42,5 +42,5 @@ INPUTS = $(PREF).bnk
 
 ## Combine features
 1000: $(BINDIR)/dumpFeatures -i $(PREF).bnk | sort -k1 -nk3 > $(PREF).all.feat
-1010: $(BINDIR)/suspiciousfeat2region $(PREF).all.feat > $(PREF).suspicious.regions
-
+1010: $(BINDIR)/suspiciousfeat2region $(PREF).all.feat > $(PREF).suspicious.feat
+1020: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).suspicious.feat

@@ -2,6 +2,7 @@
 #include "amp.hh"
 #include "fasta.hh"
 #include "AMOS_Foundation.hh"
+#include "Feature_AMOS.hh"
 
 using namespace AMOS;
 using namespace std;
@@ -245,11 +246,11 @@ int main (int argc, char ** argv)
               {
                 if (PRINTIID)
                 {
-                  cout << c->iid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+                  cout << c->iid << "\t" << Feature_t::COVERAGE << "\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
                 }
                 else
                 {
-                  cout << c->eid << "\tD\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+                  cout << c->eid << "\t" << Feature_t::COVERAGE << "\t" << start << "\t" << end << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
                 }
                 maxdepth = 0;
 
@@ -262,11 +263,11 @@ int main (int argc, char ** argv)
           {
             if (PRINTIID)
             {
-              cout << c->iid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+              cout << c->iid << "\t" << Feature_t::COVERAGE << "\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
             }
             else
             {
-              cout << c->eid << "\tD\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
+              cout << c->eid << "\t" << Feature_t::COVERAGE << "\t" << start << "\t" << conslen << "\tHIGH_READ_COVERAGE " << maxdepth << endl;
             }
           }
         }

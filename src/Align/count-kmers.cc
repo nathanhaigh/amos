@@ -16,7 +16,7 @@ int BAD_CHAR = 0;
 int PRINT_SIMPLE = 0;
 
 
-#define BIGMER 1
+#undef BIGMER
 
 #ifdef BIGMER
 typedef vector<bool> Mer_t;
@@ -215,6 +215,10 @@ int  main (int argc, char * argv [])
     cerr << e << endl;
     retval = 100;
   }
+  catch (...)
+    {
+      cerr << "uncaught exception\n"; 
+    }
 
   try
   {
