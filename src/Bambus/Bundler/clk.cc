@@ -287,7 +287,7 @@ int main(int argc, char **argv)
     ctl.setType(ContigLink_t::MATEPAIR);
     ctl.setIID(++LinkId);
     ctl.setContigs(pair<ID_t, ID_t>(ctgA, ctgB));
-    ctl.setSize(lib2size[libId].first - adjA - adjB);
+    ctl.setSize(lib2size[libId].first - adjA - adjB); // size is length of gap between contigs
     ctl.setSD(lib2size[libId].second);
     ctl.setSource(pair<ID_t, NCode_t>(rd2frg[rdA], Fragment_t::NCODE));
 
