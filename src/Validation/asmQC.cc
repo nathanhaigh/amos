@@ -23,8 +23,8 @@ typedef double DoubleSD_t;
 
 #define endl "\n"
 
-#define MIN_CE_OBS 3    // minimum number of clones required to report anomalous CE numbers
-#define MAX_DEVIATION 5 // clones longer/shorter than this many standard deviations from mean are ignored in CE computation
+#define MIN_CE_OBS 4    // minimum number of clones required to report anomalous CE numbers
+#define MAX_DEVIATION 8 // clones longer/shorter than this many standard deviations from mean are ignored in CE computation
 
 
 enum MateStatus {MP_GOOD, MP_SHORT, MP_LONG, MP_NORMAL, MP_OUTIE, MP_SINGMATE, 
@@ -506,24 +506,28 @@ void getCEstat(list<list<AnnotatedFragment>::iterator>::iterator begin,
   interest.clear();
   stretch.clear();
 
-  //  cout << "in CESTAT libid=" << libid << endl;
-
   // get parameters for global distribution
   mean = libifo.first;
   stdev = libifo.second;
+  cout << "in CESTAT libid=" << libid << " mea=" << mean << " stdev=" << stdev << endl;
   
   for (list<list<AnnotatedFragment>::iterator>::iterator mi = begin; mi != end; mi++){
       Pos_t left, right;
       
       if ((*mi)->getLibrary() != libid) // only do the selected library
 	continue;
-  
+
+
       if ((*mi)->status == MP_GOOD || (*mi)->status == MP_LONG || (*mi)->status == MP_SHORT){
-	if (abs (mean - (*mi)->size) > MAX_DEVIATION * stdev) // skip inserts that are too long or too short
-	  continue;
+	cout << "Got insert " << (((*mi)->getMatePair()).first) << endl; 
 
 	left = posmap[((*mi)->getMatePair()).first].getBegin(); // use end of reads
 	right = posmap[((*mi)->getMatePair()).second].getBegin(); 
+	cout << left << ", " << right << endl;
+	if (abs (mean - (*mi)->size) > MAX_DEVIATION * stdev){ // skip inserts that are too long or too short
+	  cout << "too far" << mean << " - " << (*mi)->size << " vs " << MAX_DEVIATION * stdev << endl;;
+	  continue;
+	}
 	if (left < right)
 	  starts.push_back(pair<Pos_t, Pos_t>(left, right));
 	else 
@@ -535,19 +539,19 @@ void getCEstat(list<list<AnnotatedFragment>::iterator>::iterator begin,
     return;
   }
 
-  //  cout << "got " << starts.size() << " elements\n";
+  cout << "got " << starts.size() << " elements\n";
 
-  //  int inends = 0;
+  int inends = 0;
   sort(starts.begin(), starts.end(), LessByFirst());
   for (vector<pair<Pos_t, Pos_t> >::iterator si = starts.begin(); si != starts.end(); si++){
     if (ends.size() == 0 || si->first <= ends[0].second) { // reached beginning of range
-      //     cout << "got begin " << ++inends << endl;
-      //    cout << si->first << ", " << si->second << endl;
+      cout << "got begin " << ++inends << endl;
+      cout << si->first << ", " << si->second << endl;
       ends.push_back(*si);
       push_heap(ends.begin(), ends.end(), GtBySecond());
       pos = si->first;
     } else { // reached end of range
-      //   cout << "got end " << --inends << endl;
+      cout << "got end " << --inends << endl;
       pos = ends[0].second;
       pop_heap(ends.begin(), ends.end(), GtBySecond());
       ends.pop_back();
@@ -555,10 +559,10 @@ void getCEstat(list<list<AnnotatedFragment>::iterator>::iterator begin,
     getMeanSD(ends.begin(), ends.end(), mea, sderr);
 
     if (globals.find("ceplot") != globals.end()){
-      ceplotFile << pos << "\t" << ((sderr != 0) ? (mea - mean) * sqrt((double)ends.size()) / sderr : 0 ) << "\t" << ends.size() << endl;
+      ceplotFile << pos << "\t" << ((stdev != 0) ? (mea - mean) * sqrt((double)ends.size()) / stdev : 0 ) << "\t" << ends.size() << endl;
     }
 
-    if (ends.size() > MIN_CE_OBS && abs(mea - mean) > num_sd * sderr / sqrt((double)ends.size())){ // too far off
+    if (ends.size() > MIN_CE_OBS && abs(mea - mean) > num_sd * stdev / sqrt((double)ends.size())){ // too far off
       //      cerr << "CE " << libid << " pos= " << pos << " skew= " << (mea - mean) * sqrt((double)ends.size()) / sderr << " nobs= " << ends.size() << endl;
       if (mea > mean) {
 	if (inbad && over == false){ // switched type of bad region
@@ -599,11 +603,11 @@ void getCEstat(list<list<AnnotatedFragment>::iterator>::iterator begin,
     getMeanSD(ends.begin(), ends.end(), mea, sderr);
 
     if (globals.find("ceplot") != globals.end()){
-      ceplotFile << pos << "\t" << ((sderr != 0) ? (mea - mean) * sqrt((double)ends.size()) / sderr : 0 ) << "\t" << ends.size() << endl;
+      ceplotFile << pos << "\t" << ((stdev != 0) ? (mea - mean) * sqrt((double)ends.size()) / stdev : 0 ) << "\t" << ends.size() << endl;
     }
 
-    if (ends.size() > MIN_CE_OBS && abs(mea - mean) > num_sd * sderr / sqrt((double)ends.size())){ // too far off
-      cerr << "CE " << libid << " pos= " << pos << " skew= " << (mea - mean) * sqrt((double)ends.size()) / sderr << " nobs= " << ends.size() << endl;
+    if (ends.size() > MIN_CE_OBS && abs(mea - mean) > num_sd * stdev / sqrt((double)ends.size())){ // too far off
+      cerr << "CE " << libid << " pos= " << pos << " skew= " << (mea - mean) * sqrt((double)ends.size()) / stdev << " nobs= " << ends.size() << endl;
       if (mea > mean) {
 	if (inbad && over == false){ // switched type of bad region
 	  interest.push_back(pair<Pos_t, Pos_t> (st, pos));
@@ -695,12 +699,6 @@ int main(int argc, char **argv)
   } else 
     cout << "Will not write features in bank" << endl;
 
-  if (recompute){
-    if (globals.find("minobs") != globals.end())
-      MIN_OBS = strtol(globals["minobs"].c_str(), NULL, 10);
-    cout << "Minimum number of observations required to change library size: " 
-	 << MIN_OBS << endl;
-  }
 
   if (globals.find("numsd") != globals.end())
     NUM_SD = (float)strtod(globals["numsd"].c_str(), NULL);
@@ -715,7 +713,7 @@ int main(int argc, char **argv)
   if (globals.find("cestat") != globals.end()){
     cout << "Reporting regions with anomalous C/E stat: over " << NUM_SD 
 	 << " standard errors from mean" << endl;
-    globals["recompute"] = string("true");
+    //    globals["recompute"] = string("true");
     globals.erase("shortcvg");
     globals.erase("longcvg");
     cestat = true;
@@ -729,6 +727,13 @@ int main(int argc, char **argv)
 	 << " are considered to not have changed" << endl;
   } else
     cout << "Will not recompute library sizes" << endl;
+
+  if (recompute){
+    if (globals.find("minobs") != globals.end())
+      MIN_OBS = strtol(globals["minobs"].c_str(), NULL, 10);
+    cout << "Minimum number of observations required to change library size: " 
+	 << MIN_OBS << endl;
+  }
 
   if (globals.find("shortcvg") != globals.end())
     MAX_SHORT_CVG = strtol(globals["shortcvg"].c_str(), NULL, 10);
