@@ -41,6 +41,7 @@ void printHelpText()
     ".OPTIONS." << endl <<
     "-b bank   - location of bank directory" << endl <<
     "-c config - config file that specifies locations of tandems" << endl <<
+    "-m misassemblies.list - output location of mis-assemblies in final layout" << endl <<
     endl <<
     ".DESCRIPTION." << endl <<
     "This program takes a configuration file specifying an input layout" << endl <<
@@ -76,6 +77,7 @@ bool GetOptions(int argc, char ** argv)
   static struct option long_options[] = {
     {"b",    1, 0, 'b'},
     {"c",    1, 0, 'c'},
+    {"m",    1, 0, 'm'},
     {"h",    0, 0, 'h'},
     {"help", 0, 0, 'h'},
     {0,0,0,0}
@@ -92,6 +94,9 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'c':
       globals["conffile"] = string(optarg);
+      break;
+    case 'm':
+      globals["misfile"] = string(optarg);
       break;
     case 'h':
       helpRequested = true;
@@ -167,6 +172,15 @@ int main (int argc, char ** argv)
   if (! conf_stream.is_open()){
     cerr << "Could not open config file " << globals["conffile"] << endl;
     exit (1);
+  }
+
+  ofstream mis;
+  if (globals.find("misfile") != globals.end()){
+    mis.open(globals["misfile"].c_str());
+    if (! mis.is_open()){
+      cerr << "Could not open misassembly file " << globals["misfile"] << endl;
+      exit(1);
+    }
   }
 
   bool byIID = true;
@@ -347,6 +361,7 @@ int main (int argc, char ** argv)
   new_tv.reserve(tv.size()); // need at most this many tiles
 
   int ti = 0;
+  int laststart = 0;
   while (ti < tv.size()) {
     if (nextBrk < brkpoints.size() && brkpoints[nextBrk].first < tv[ti].offset &&
 	! pq.empty() && brkpoints[nextBrk].first < pq.top().first) {
@@ -355,6 +370,14 @@ int main (int argc, char ** argv)
       cerr << "found breakpoint @" << brkpoints[nextBrk].first << endl;;
       while (! pq.empty())
 	pq.pop();
+
+      if (globals.find("misfile") != globals.end()){ // need to output breaks
+	if (laststart == 0 || brkpoints[nextBrk].first - brkpoints[nextBrk].second - adjust > laststart){
+	  laststart = brkpoints[nextBrk].first - brkpoints[nextBrk].second - adjust;
+	  mis << laststart << " " << brkpoints[nextBrk].first - adjust << endl;
+	}
+	// otherwise this was a > 2 copy repeat
+      }
 
       adjust += brkpoints[nextBrk].second;
       nextBrk++;
@@ -407,6 +430,8 @@ int main (int argc, char ** argv)
   }
   
   layout_bank.close();  
+  if (globals.find("misfile") != globals.end())
+    mis.close();
 
   cerr << "Done\n";
 

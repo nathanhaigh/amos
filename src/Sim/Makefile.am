@@ -11,14 +11,15 @@ dist_bin_SCRIPTS = \
 
 bin_PROGRAMS = \
 	pyrosim \
-	tandemCollapse
-
+	tandemCollapse \
+	shotgunSim
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
         -I$(top_srcdir)/src/Common \
         -I$(top_srcdir)/src/AMOS \
-	-I$(top_srcdir)/src/GNU
+	-I$(top_srcdir)/src/GNU \
+	-I/fs/sz-user-supported/Linux-i686/include 
 
 ##-- pyrosim
 pyrosim_LDADD = \
@@ -39,11 +40,13 @@ tandemCollapse_SOURCES = \
 	tandemCollapse.cc
 
 ###-- shotgunSim
-#shotgunSim_LDADD = \
-#	-lgsl \
-#	-lgslcblas
-#
-#shotgunSim_SOURCES = \
-#	shotgunSim.cc
+shotgunSim_LDADD = \
+	-L/fs/sz-user-supported/Linux-i686/lib
+	-lgsl \
+	-lgslcblas
+
+
+shotgunSim_SOURCES = \
+	shotgunSim.cc
 
 ##-- END OF MAKEFILE --##
