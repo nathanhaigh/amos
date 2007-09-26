@@ -12,7 +12,8 @@ bin_PROGRAMS = \
     insert-sizes \
     listSingletonMates \
     library-histogram \
-    list-linked-contigs
+    list-linked-contigs \
+    scaffoldRange2Ungapped
 
 
 dist_bin_SCRIPTS = \
@@ -137,4 +138,13 @@ list_linked_contigs_LDADD =  \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a
 
+
+# scaffoldRange2Ungapped 
+scaffoldRange2Ungapped_SOURCES = \
+  scaffoldRange2Ungapped.cc
+
+scaffoldRange2Ungapped_LDADD =  \
+                     $(top_builddir)/src/Contig/libDataStore.a \
+                     $(top_builddir)/src/Common/libCommon.a   \
+                     $(top_builddir)/src/AMOS/libAMOS.a
 

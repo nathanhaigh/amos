@@ -32,7 +32,7 @@ void printHelpText()
         "-h, -help	print out help mesesage\n"
 	"-b, -bank      bank where assembly is stored\n"
 	"-f  -file      file containing list of gapped coordinates in the following form, one per line:\n"
-                        "<scaffold_eid> <begin> <end>\n"
+                        "<scaffold_eid> <begin> <end>\n";
 }
 
 bool GetOptions(int argc, char ** argv)
