@@ -459,6 +459,7 @@ int main(int argc, char ** argv)
 {
   int retval = 0;
   AMOS_Foundation * tf = NULL;
+  int isCircular = false;
 
   try
   {
@@ -471,6 +472,7 @@ int main(int argc, char ** argv)
 "\n"
 "   -f <fasta> fasta file to evaluate\n"
 "   -k <len>   Length of mers to consider (default:30)\n"
+"   -C         Interpret genome as circular\n"
 "\n";
 
     string fastafile;
@@ -479,6 +481,7 @@ int main(int argc, char ** argv)
     tf->disableOptionHelp();
     tf->getOptions()->addOptionResult("f=s", &fastafile);
     tf->getOptions()->addOptionResult("k=i", &Kmer_Len);
+    tf->getOptions()->addOptionResult("C",   &isCircular);
     tf->handleStandardOptions();
 
     if (fastafile.empty())
@@ -502,6 +505,13 @@ int main(int argc, char ** argv)
     // Use Art's fasta reader
     while  (Fasta_Read (fp, s, tag))
     {
+      if (isCircular)
+      {
+        // Add the first kmer_len-1 characters to end to create circularity
+        s += s.substr(0, Kmer_Len-1);
+
+      }
+
       // Compute the complexity for each sequence in the fasta file
       ComputeComplexity(tag, s);
     }
