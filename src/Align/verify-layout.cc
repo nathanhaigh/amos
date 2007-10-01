@@ -21,6 +21,7 @@ int  main (int argc, char * argv [])
 "\n"
 "Options\n"
 " --verbose Show the coordinates and bases for each read in layout\n"
+"           readid rc offset roffset len bases\n"
 "\n";
 
     int verbose = 0;
