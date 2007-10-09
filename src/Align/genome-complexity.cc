@@ -22,6 +22,8 @@ int Kmer_Len = 30;
 // Convert from bits to ascii via an array lookup
 const char * bintoascii = "ACGT";
 
+int OPT_DisplaySeq = 0;
+
 //  Return the binary equivalent of  ch .
 static unsigned  Char_To_Binary (char ch)
 {
@@ -156,6 +158,11 @@ public:
 
   vector<MerVertex_t *> out_m;
   vector<MerVertex_t *> in_m;
+
+  int len() const
+  {
+    return mer_m.size()/2;
+  }
 
   // Can this node be compressed with its immediate neighbor
   bool isCompressable()
@@ -299,28 +306,40 @@ public:
   // Print graph in DOT format
   void print()
   {
-    cout << "digraph G {" << endl
-         << " center=true" << endl
-         << " label=\"deBrujin Graph of " << tag_m << " nc: " << nodeCount() << "\"" << endl;
+    cout << "digraph G {" << endl;
 
-
+    // Renumber nodes and print
+    int count = 1;
     MerTable_t::iterator mi;
     for (mi = mers_m.begin(); mi != mers_m.end(); mi++)
     {
       assert (!mi->second->dead);
+      mi->second->node_m = count;
+      count++;
 
-      string s(mi->second->str());
-      int slen = s.length();
-      if (slen > 8)
+      if (OPT_DisplaySeq)
       {
-        string q = s.substr(0,4);
-        q += "...";
-        q += s.substr(s.length()-4, 4);
-        s = q;
+        string s(mi->second->str());
+        int slen = s.length();
+        if (slen > 8)
+        {
+          string q = s.substr(0,4);
+          q += "...";
+          q += s.substr(s.length()-4, 4);
+          s = q;
+        }
+
+        cout << "  " << mi->second->node_m << " [label=\"" << s << "\\n" << slen << "\"]" << endl;
       }
+      else
+      {
+        cout << "  " << mi->second->node_m << " [label=\"" << mi->second->len() << "\"]" << endl;
+      }
+    }
 
-      cout << "  " << mi->second->node_m << " [label=\"" << s << "\\n" << slen << "\"]" << endl;
-
+    // Print Edges
+    for (mi = mers_m.begin(); mi != mers_m.end(); mi++)
+    {
       for (int i = 0; i < mi->second->out_m.size(); i++)
       {
         cout << "  " << mi->second->node_m << " -> " << mi->second->out_m[i]->node_m << endl;
@@ -473,6 +492,7 @@ int main(int argc, char ** argv)
 "   -f <fasta> fasta file to evaluate\n"
 "   -k <len>   Length of mers to consider (default:30)\n"
 "   -C         Interpret genome as circular\n"
+"   -d         Display the sequences for edge node\n"
 "\n";
 
     string fastafile;
@@ -482,6 +502,7 @@ int main(int argc, char ** argv)
     tf->getOptions()->addOptionResult("f=s", &fastafile);
     tf->getOptions()->addOptionResult("k=i", &Kmer_Len);
     tf->getOptions()->addOptionResult("C",   &isCircular);
+    tf->getOptions()->addOptionResult("d",   &OPT_DisplaySeq);
     tf->handleStandardOptions();
 
     if (fastafile.empty())
