@@ -14,10 +14,14 @@ using namespace AMOS;
 using namespace std;
 
 // Store the (variable length) mer as a compressed bit vector
-typedef vector<bool> Mer_t;
+typedef long long unsigned Mer_t;
+static Mer_t Forward_Mask;
+
+
 
 // Default length, can override at runtime
 int Kmer_Len = 30;
+int Seed_Len = 30;
 
 // Convert from bits to ascii via an array lookup
 const char * bintoascii = "ACGT";
@@ -43,107 +47,16 @@ static unsigned  Char_To_Binary (char ch)
 // Initialize an empty mer
 void InitMer(Mer_t & mer)
 {
-  mer.clear();
-  mer.resize(Kmer_Len*2);
+  mer = 0;
 }
 
-// Convert a Mer to a string
-void MerToAscii(Mer_t mer, string & s)
+//  Add  ch  to  mer  on the right, sliding one character
+//  off the left end of  mer .
+static void  Forward_Add_Ch(Mer_t & mer, char ch)
 {
-  s.erase();
-
-  int l = mer.size()/2;
-
-  s.resize(l);
-
-  for (int i = 0; i < l; i++)
-  {
-    char m = 0;
-    m |= mer[i*2+1] << 1;
-    m |= mer[i*2];
-
-    s[i] = bintoascii[m];
-  }
-}
-
-// Add a DNA character to a (fixed-length) mer: shift the bits to the left and append on the end
-void  Forward_Add_Ch(Mer_t & mer, char ch)
-{
-  // delete the first character from kmer
-  for (int i = 0; i < (Kmer_Len-1)*2; i++)
-  {
-    mer[i] = mer[i+2];
-  }
-
-  // append to end
-  ch = Char_To_Binary(ch);
-  mer[Kmer_Len*2-1] = ch & 2;
-  mer[Kmer_Len*2-2] = ch & 1;
-}
-
-// Return the first len characters of mer
-Mer_t prefix(const Mer_t & mer, int len)
-{
-  Mer_t retval(mer);
-  retval.resize(len*2);
-
-  if (0)
-  {
-    string z,y;
-    MerToAscii(mer, z);
-    MerToAscii(retval, y);
-    cerr << "Prefix of " << z << " is " << y << endl;
-  }
-
-  return retval;
-}
-
-// Return the last len characters of mer
-Mer_t suffix(const Mer_t & mer, int len)
-{
-  Mer_t retval;
-  retval.resize(len*2);
-
-  int ol = mer.size();
-  for (int i = 0; i < len*2; i++)
-  {
-    retval[i] = mer[ol-len*2+i];
-  }
-
-  if (0)
-  {
-    string z,y;
-    MerToAscii(mer, z);
-    MerToAscii(retval, y);
-    cerr << "Suffix of " << z << " is " << y << endl;
-  }
-
-  return retval;
-}
-
-// Extend mer with the 'extra' bases in extend
-void extendMer(Mer_t & mer, const Mer_t & extend)
-{
-  int DEBUG = 0;
-  if (DEBUG)
-  {
-    string u,v;
-    MerToAscii(mer, u);
-    MerToAscii(extend, v);
-
-    cerr << "Extending " << u << " with " << v << endl;
-  }
-
-  Mer_t suff(suffix(extend, extend.size()/2 - (Kmer_Len-2)));
-  mer.insert(mer.end(), suff.begin(), suff.end());
-
-  if (DEBUG)
-  {
-    string z;
-    MerToAscii(mer, z);
-
-    cerr << ": " << z << endl;
-  }
+  mer &= Forward_Mask;
+  mer <<= 2;
+  mer |= Char_To_Binary (ch);
 }
 
 
@@ -152,8 +65,10 @@ class MerVertex_t
 {
   static int NODECOUNT; // give all the nodes a unique id
 public:
-  MerVertex_t(Mer_t s) : mer_m(s), node_m(NODECOUNT++), dead(false) {}
-  Mer_t mer_m;
+  MerVertex_t(int startpos, int endpos) 
+  : startpos_m(startpos), endpos_m(endpos), node_m(NODECOUNT++), dead(false) {}
+  int startpos_m;
+  int endpos_m;
   int   node_m;
   bool  dead;
 
@@ -162,7 +77,7 @@ public:
 
   int len() const
   {
-    return mer_m.size()/2;
+    return endpos_m-startpos_m+1;
   }
 
   // Can this node be compressed with its immediate neighbor
@@ -207,7 +122,7 @@ public:
     //cerr << "Collapse " << node_m << " and " << buddy->node_m << endl;
     out_m = buddy->out_m;
     buddy->dead = true;
-    extendMer(mer_m, buddy->mer_m);
+    endpos_m += buddy->len() - (Kmer_Len-2);
 
     // Update the links so that the buddy's neighbors now point at me
     for (int i = 0; i < out_m.size(); i++)
@@ -227,80 +142,108 @@ public:
   }
 
   // Return the sequence stored in the node
-  string str()
+  string str(const string & seq)
   {
-    string r;
-    MerToAscii(mer_m, r);
-
+    string r = seq.substr(startpos_m, endpos_m-startpos_m+1);
     return r;
   }
 };
 
 int MerVertex_t::NODECOUNT=0;
 
-// Ugliness for using hash_map
-namespace HASHMAP
-{
-  template<> struct hash< Mer_t >
-  {
-    size_t operator()( const Mer_t& x ) const
-    {
-      size_t p = 0;
-      int l = x.size();
-      for (int i = 0; i < l; i++)
-      {
-        p += ((x[i]<<i));
-      }
-
-      return p;
-    }
-  };
-}
-
-typedef HASHMAP::hash_map<Mer_t, MerVertex_t *> MerTable_t;
+typedef HASHMAP::hash_multimap<Mer_t, MerVertex_t *, hash<unsigned long> > MerTable_t;
+typedef vector<MerVertex_t *> NodeTable_t;
 
 // Class for storing the entire graph: Nodes are stored in a giant MerTable_T
 class deBrujinGraph_t
 {
 public:
 
-  deBrujinGraph_t(const string & tag): tag_m(tag) {}
+  deBrujinGraph_t(const string & tag,
+                  const string & seq)
+    : tag_m(tag), seq_m(seq) {}
 
-  string tag_m;
+  const string & tag_m;
+  const string & seq_m;
+
   MerTable_t mers_m;
+  NodeTable_t nodes_m;
+
+  bool substrEqual(int s1, int e1, int s2, int e2)
+  {
+    if (e1-s1 != e2-s2) { return false; }
+
+    int l = e1-s1+1;
+    for (int i = Seed_Len; i < l; i++)
+    {
+      if (seq_m[s1+i] != seq_m[s2+i])
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   // Get (or create) a vertex
-  MerVertex_t * getVertex(const Mer_t & mer)
+  MerVertex_t * getVertex(const Mer_t & mer, int startpos, int endpos)
   {
     MerTable_t::iterator m = mers_m.find(mer);
-    if (m == mers_m.end())
+
+    while ((m != mers_m.end()) &&
+           (m->first == mer))
     {
-      m = mers_m.insert(make_pair(mer, new MerVertex_t(mer))).first;
+      if (substrEqual(startpos, endpos, 
+                      m->second->startpos_m, m->second->endpos_m))
+      {
+        return m->second;
+      }
+
+      m++;
     }
+
+    m = mers_m.insert(make_pair(mer, new MerVertex_t(startpos, endpos)));
 
     return m->second;
   }
 
-  // Add a k-mer to the graph by adding the k-1 prefix and suffix strings
-  void addMer(const Mer_t & mer)
+  void construct()
   {
-    if (0)
+    Mer_t seed;
+    InitMer(seed);
+
+    // Initialize the first s characters
+    for  (int i = 0;  i < Seed_Len;  i ++)
     {
-      string z;
-      MerToAscii(mer, z);
-      cerr << "Processing " << z << endl;
+      Forward_Add_Ch(seed, seq_m[i]);
     }
 
-    MerVertex_t * p = getVertex(prefix(mer, Kmer_Len-1));
-    MerVertex_t * s = getVertex(suffix(mer, Kmer_Len-1));
+    // prefix is the first (k-1) bp
+    MerVertex_t * p = getVertex(seed, 0, Kmer_Len-2);
+    int n = seq_m.length();
 
-    p->out_m.push_back(s);
-    s->in_m.push_back(p);
+    for (int i = 1; i+Kmer_Len-2 < n; i++)
+    {
+      Forward_Add_Ch(seed, seq_m[i+Seed_Len-1]);
+
+      // suffix is the next (k-1) bp
+      MerVertex_t * s = getVertex(seed, i, i+Kmer_Len-2);
+
+      p->out_m.push_back(s);
+      s->in_m.push_back(p);
+
+      p = s;
+    }
   }
 
   // Return number of nodes in the graph
   int nodeCount()
   {
+    if (nodes_m.size())
+    {
+      return nodes_m.size();
+    }
+
     return mers_m.size();
   }
 
@@ -311,18 +254,17 @@ public:
 
     // Renumber nodes and print
     int count = 1;
-    MerTable_t::iterator mi;
-    for (mi = mers_m.begin(); mi != mers_m.end(); mi++)
+
+    for (int i = 0; i < nodes_m.size(); i++)
     {
-      assert (!mi->second->dead);
-      mi->second->node_m = count;
+      assert(!nodes_m[i]->dead);
+      nodes_m[i]->node_m = count;
       count++;
 
       if (OPT_DisplaySeq)
       {
-        string s(mi->second->str());
+        string s(nodes_m[i]->str(seq_m));
         int slen = s.length();
-
         if (slen > OPT_SeqToDisplay)
         {
           string q = s.substr(0,4);
@@ -331,20 +273,20 @@ public:
           s = q;
         }
 
-        cout << "  " << mi->second->node_m << " [label=\"" << s << "\\n" << slen << "\"]" << endl;
+        cout << "  " << nodes_m[i]->node_m << " [label=\"" << s << "\\n" << slen << "\"]" << endl;
       }
       else
       {
-        cout << "  " << mi->second->node_m << " [label=\"" << mi->second->len() << "\"]" << endl;
+        cout << "  " << nodes_m[i]->node_m << " [label=\"" << nodes_m[i]->len() << "\"]" << endl;
       }
     }
 
     // Print Edges
-    for (mi = mers_m.begin(); mi != mers_m.end(); mi++)
+    for (int i = 0; i < nodes_m.size(); i++)
     {
-      for (int i = 0; i < mi->second->out_m.size(); i++)
+      for (int j = 0; j < nodes_m[i]->out_m.size(); j++)
       {
-        cout << "  " << mi->second->node_m << " -> " << mi->second->out_m[i]->node_m << endl;
+        cout << "  " << nodes_m[i]->node_m << " -> " << nodes_m[i]->out_m[j]->node_m << endl;
       }
     }
 
@@ -403,29 +345,26 @@ public:
     }
 
     // Prune out all of the dead nodes
-    mi = mers_m.begin();
-    while (mi != mers_m.end())
+    for (mi = mers_m.begin(); mi != mers_m.end(); mi++)
     {
       if (mi->second->dead) 
       {
-        MerTable_t::iterator n = mi;
-        mi++;
-
-        delete n->second;
-        mers_m.erase(n);
+        delete mi->second;
       }
       else
       {
-        mi++;
+        nodes_m.push_back(mi->second);
       }
     }
+
+    mers_m.clear();
 
     // Add back the nodes that changed (and weren't subsequently marked dead)
     for (int i = 0; i < changed.size(); i++)
     {
       if (!changed[i]->dead)
       {
-        mers_m.insert(make_pair(changed[i]->mer_m, changed[i]));
+        nodes_m.push_back(changed[i]);
       }
     }
   }
@@ -434,33 +373,17 @@ public:
 // For now, just create the deBrujin Graph, and print it out
 void ComputeComplexity(const string & tag, const string & seq)
 {
-  Mer_t  fwd_mer;
   int  i, j, n;
-
-  InitMer(fwd_mer);
 
   n = seq . length ();
   if  (n < Kmer_Len) { return; }
 
-  deBrujinGraph_t graph(tag);
+  deBrujinGraph_t graph(tag, seq);
   EventTime_t timeall;
   EventTime_t timegraph;
 
-  // Initialize the first k-1 characters
-  for  (i = 0;  i < Kmer_Len - 1;  i ++)
-  {
-    Forward_Add_Ch (fwd_mer, seq [i]);
-  }
-
-  // Now handle all of the kmers in the genome
-  for (;i < n; i++)
-  {
-    Forward_Add_Ch (fwd_mer, seq [i]);
-    graph.addMer(fwd_mer);
-  }
-
+  graph.construct();
   cerr << graph.nodeCount() << " nodes.  " << timegraph.str(true, 8) << endl;
-
 
   EventTime_t timecompress;
   graph.compressPaths();
@@ -514,6 +437,14 @@ int main(int argc, char ** argv)
       cerr << "You must specify a fasta file" << endl;
       exit(1);
     }
+
+    if (Seed_Len > Kmer_Len-1)
+    {
+      Seed_Len = Kmer_Len-1;
+    }
+
+    Forward_Mask = ((long long unsigned) 1 << (2 * Seed_Len - 2)) - 1;
+
 
     cerr << "Processing sequences in " << fastafile << "..." << endl;
 
