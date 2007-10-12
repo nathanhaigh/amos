@@ -13,7 +13,8 @@ bin_PROGRAMS = \
     listSingletonMates \
     library-histogram \
     list-linked-contigs \
-    scaffoldRange2Ungapped
+    scaffoldRange2Ungapped \
+    read-cov-plot
 
 
 dist_bin_SCRIPTS = \
@@ -47,6 +48,16 @@ analyze_read_depth_LDADD = \
 
 analyze_read_depth_SOURCES = \
 	analyze-read-depth.cc
+
+##-- read-cov-plot
+read_cov_plot_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+
+read_cov_plot_SOURCES = \
+	read-cov-plot.cc
 
 ##-- asmQC
 asmQC_LDADD = \
