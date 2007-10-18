@@ -8,14 +8,10 @@ using namespace AMOS;
 using namespace std;
 
 int OPT_Scaffold(0);
+int OPT_Stride(1);
 
-void processContig(int contigid, Bank_t & contig_bank, int base_offset)
+void processContig(Contig_t & contig, int base_offset)
 {
-  Contig_t contig;
-  contig_bank.fetch(contigid, contig);
-
-  cout << ">Contig " << contigid << endl;
-
   vector<Tile_t> & tiling = contig.getReadTiling();
   vector<Tile_t>::const_iterator ti;
   sort(tiling.begin(), tiling.end(), TileOrderCmp());
@@ -44,7 +40,12 @@ void processContig(int contigid, Bank_t & contig_bank, int base_offset)
       ti++;
     }
 
-    cout << offset+base_offset << " " << endpoints.size() << endl;
+    int gpos = offset+base_offset;
+
+    if (gpos % OPT_Stride == 0)
+    {
+      cout << gpos << " " << endpoints.size() << endl;
+    }
   }
 }
 
@@ -67,9 +68,10 @@ int main (int argc, char ** argv)
 "\n"
 "   Usage: read-cov-plot [options] bank\n"
 "\n"
-"   Options\n"
-"   -------------------\n"
-"   -S Print scafold coordinates instead of contig coordinates\n"
+"Options\n"
+"-------------------\n"
+"-S Print scafold coordinates instead of contig coordinates\n"
+"-n <val> Only print every n-th line\n"
 "\n";
 
     // Instantiate a new TIGR_Foundation object
@@ -77,6 +79,7 @@ int main (int argc, char ** argv)
     tf->disableOptionHelp();
 
     tf->getOptions()->addOptionResult("S", &OPT_Scaffold);
+    tf->getOptions()->addOptionResult("n=i", &OPT_Stride);
     tf->handleStandardOptions();
 
     list<string> argvv = tf->getOptions()->getAllOtherData();
@@ -91,7 +94,7 @@ int main (int argc, char ** argv)
     cerr << "Processing " << bankname << " at " << Date() << endl;
 
     Bank_t contig_bank(Contig_t::NCODE);
-    contig_bank.open(bankname, B_READ);
+    contig_bank.open(bankname, B_READ|B_SPY);
 
     const IDMap_t & contigmap = contig_bank.getIDMap();
     IDMap_t::const_iterator c;
@@ -99,7 +102,7 @@ int main (int argc, char ** argv)
     if (OPT_Scaffold)
     {
       Bank_t scaff_bank(Scaffold_t::NCODE);
-      scaff_bank.open(bankname, B_READ);
+      scaff_bank.open(bankname, B_READ|B_SPY);
 
       const IDMap_t & scaffmap = scaff_bank.getIDMap();
       IDMap_t::const_iterator s;
@@ -115,7 +118,17 @@ int main (int argc, char ** argv)
         vector<Tile_t>::const_iterator ci;
         for (ci = ctiling.begin(); ci != ctiling.end(); ci++)
         {
-          processContig(ci->source, contig_bank, ci->offset);
+          Contig_t contig;
+          contig_bank.fetch(ci->source, contig);
+
+          cout << ">Contig " << ci->source << endl;
+
+          if (ci->range.isReverse())
+          {
+            contig.reverseComplement();
+          }
+
+          processContig(contig, ci->offset);
         }
       }
     }
@@ -123,7 +136,10 @@ int main (int argc, char ** argv)
     {
       for (c = contigmap.begin(); c!=contigmap.end(); c++)
       {
-        processContig(c->iid, contig_bank, 0);
+        Contig_t contig;
+        contig_bank.fetch(c->iid, contig);
+        cout << ">Contig " << c->iid << endl;
+        processContig(contig, 0);
       }
     }
   }
