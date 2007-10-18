@@ -37,7 +37,6 @@ int SR_MINCONFLICTQV = 0;
 int ONE_BASED_GINDEX = 0;
 bool USEIID = 0;
 bool USEEID = 0;
-bool SPYMODE = false;
 
 map<ID_t, ID_t> frg2lib;
 
@@ -53,7 +52,6 @@ void printHelpText()
     "\n.OPTIONS.\n"
     "-h, -help     print out help message\n"
     "-b, -bank     bank where assembly is stored\n"
-    "-Y, -spy      Use Spy mode for readonly banks\n\n"
 
     "-T, -tcov     print snp positions in TCOV format (DEFAULT)\n"
     "-S, -report   print a report on the snps\n"
@@ -86,8 +84,6 @@ bool GetOptions(int argc, char ** argv)
   static struct option long_options[] = {
     {"help",      0, 0, 'h'},
     {"bank",      1, 0, 'b'},
-    {"spy",       0, 0, 'Y'},
-    {"Y",         0, 0, 'Y'},
 
     {"tcov",      0, 0, 'T'},
     {"T",         0, 0, 'T'},
@@ -102,8 +98,11 @@ bool GetOptions(int argc, char ** argv)
     {"q",         0, 0, 'q'},
     {"K",         0, 0, 'K'},
     {"minsnps",   1, 0, 'M'},
+    {"M",         1, 0, 'M'},
     {"cumqv",     1, 0, 'C'},
+    {"C",         1, 0, 'C'},
     {"minqv",     1, 0, 'Q'},
+    {"Q",         1, 0, 'Q'},
 
     {"eid",       0, 0, 'e'},
     {"iid",       0, 0, 'i'},
@@ -119,7 +118,6 @@ bool GetOptions(int argc, char ** argv)
     {
       case 'h': printHelpText(); exit(0); break;
       case 'b': BANKNAME = optarg;   break;
-      case 'Y': SPYMODE = true;      break;
 
       case 'T': TCOV = 1;            break;
       case 'S': SNPREPORT = 1;       break;
@@ -333,14 +331,7 @@ int main(int argc, char **argv)
 
   try 
   {
-    if (SPYMODE)
-    {
-      contig_stream.open(BANKNAME, B_READ|B_SPY);
-    }
-    else
-    {
-      contig_stream.open(BANKNAME, B_READ);
-    }
+    contig_stream.open(BANKNAME, B_READ|B_SPY);
   } 
   catch (Exception_t & e)
   {
@@ -352,14 +343,7 @@ int main(int argc, char **argv)
   
   try 
   {
-    if (SPYMODE)
-    {
-      read_bank.open(BANKNAME, B_READ|B_SPY);
-    }
-    else
-    {
-      read_bank.open(BANKNAME, B_READ);
-    }
+    read_bank.open(BANKNAME, B_READ|B_SPY);
   } 
   catch (Exception_t & e)
   {
