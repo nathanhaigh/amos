@@ -45,16 +45,27 @@ $base->setLogFile("tarchive2ca.log");
 $base->setMihaiMode();
 
 my $HELPTEXT = qq~
-    tarchive2ca -o <out_prefix> [-c <clear_ranges>] [-l <libinfo>] fasta1 ... fastan
-    
-    <out_prefix> - prefix for the output files
-    <clear_ranges> - file containing clear ranges for the reads.  If this file
-    is provided, any sequence that does not appear in it is excluded
-    from the output.
-    <libinfo> - tab-delimited file of lib_id, mean, stdev
-    fasta1 ... fastan - list of files to be converted.
-           The program assumes that for each program called <file>.seq there
-           is a <file>.qual and a <file>.xml.  
+.USAGE.
+  tarchive2ca -o <out_prefix> [-c <clear_ranges>] [-l <libinfo>] fasta1 ... fastan
+
+.DESCRIPTION.
+  This program takes files from the NCBI trace archive and produces an input file for 
+  the Celera Assembler, a .frg file.
+
+  fasta1 ... fastan - list of files to be converted.
+  The program assumes that for each program called <file>.seq there
+  is a <file>.qual and a <file>.xml.
+
+.OPTIONS.
+  -o <out_prefix>     prefix for the output files
+  -c <clear_ranges>   file containing clear ranges for the reads.  If this file
+                      is provided, any sequence that does not appear in it is excluded
+                      from the output.
+  -l <libinfo>        tab-delimited file of lib_id, mean, stdev
+
+.KEYWORDS.
+  converters, trace archive, Celera
+
     ~;
 $base->setHelpText($HELPTEXT);
 

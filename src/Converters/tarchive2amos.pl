@@ -58,20 +58,25 @@ $base->setVersion($VERSION);
 $base->setLogFile("tarchive2amos.log");
 
 my $HELPTEXT = qq~
+.USAGE.
  tarchive2amos -o <prefix> [options] fasta1 ... fastan
 
-   <prefix> - prefix for the output files
+.DESCRIPTION.
+  This program takes a files from the NCBI trace archive and produces 
+  an afg file for AMOS.  
 
-   fasta1 ... fastan - list of files to be converted.
-           The program assumes that for each file called <file>.seq there
-           is a <file>.qual and a <file>.xml. (alternatively the files may
-           be called fasta.<file>, qual.<file> and xml.<file>).
-           If no .xml file is present the program will only produce a set of 
-           RED (read) records.  
+  <prefix> - prefix for the output files
 
-Options
--------
+  fasta1 ... fastan - list of files to be converted.
+           
+  The program assumes that for each file called <file>.seq there
+  is a <file>.qual and a <file>.xml. (alternatively the files may
+  be called fasta.<file>, qual.<file> and xml.<file>).
+  If no .xml file is present the program will only produce a set of
+  RED (read) records.
 
+
+.OPTIONS.
   -assembly <assembly> - XML file containing assembly in assembly archive format
                    http://www.ncbi.nlm.nih.gov/Traces/assembly/assmbrowser.cgi
                    usually named ASSEMBLY.xml in the tar-ball downloaded from NCBI
@@ -84,24 +89,28 @@ Options
                    traces are being processed.
 
   -c <clip>      - file containing clear ranges for the reads.  If this file
-                   is provided, any sequence that does not appear in it is 
+                   is provided, any sequence that does not appear in it is
                    excluded from the output.
 
   -m <mates>     - file containing mate-pair information as specified in the
-                   BAMBUS documentation.  This file replaces information 
+                   BAMBUS documentation.  This file replaces information
                    provided in .xml files
 
-  -l <lib>       - file containing mean/stdev information for libraries. 
+  -l <lib>       - file containing mean/stdev information for libraries.
                    Overrides .xml input.
 
-  -i <id>        - start numbering messages with id <id> 
+  -i <id>        - start numbering messages with id <id>
                    (useful when appending to a bank)
 
   -min <minlen>  - reads shorter than <minlen> are rejected (default $MINSEQ)
   -max <maxlen>  - reads longer than <maxlen> are rejected (default no limit)
 
-  -qual <qval>   - default quality value assigned when no quality file is 
+  -qual <qval>   - default quality value assigned when no quality file is
                    provided (default $DEFAULT_QUAL)
+
+.KEYWORDS.
+  converters, trace archive, AMOS
+
 ~;
 
 $base->setHelpText($HELPTEXT);

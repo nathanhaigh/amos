@@ -7,16 +7,23 @@ use TIGR::Foundation;
 my $version = '$Revision$ ';
 
 my $helptext = qq~
-    ca2mates [-a asmfile] prefix
+.USAGE.
+  ca2mates [-a .asm file] prefix
 
-    Extracts BAMBUS .mates information from a .frg file.  If a .asm file
-    is provided as well, it uses the library sizes specified in this file.
+.DESCRIPTION.
+  Extracts BAMBUS .mates information from a .frg file.  If a .asm file
+  is provided as well, it uses the library sizes specified in this file.
 
-    if prefix ends in .frg program assumes that it represents the .frg file
-    otherwise the program attaches the .frg extension when looking for the 
-    input file.
+  if prefix ends in .frg program assumes that it represents the .frg file
+  otherwise the program attaches the .frg extension when looking for the
+  input file <prefix.frg>.
 
-    ~;
+.OPTIONS.
+  -a .asm file
+
+.KEYWORDS.
+  converter, celera assembler, mates
+ ~;
 
 my $base = new TIGR::Foundation;
 

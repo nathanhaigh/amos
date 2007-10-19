@@ -31,22 +31,29 @@ my %stdevdist;
 my $MINSEQSIZE = 64;
 my $version = "Version 1.2 (Build " . (qw/$Revision$/ )[1] . ")";
 my $HELPTEXT = qq~
-    frg2ta [options] PREFIX.frg
-    converts CA input PREFIX.frg into PREFIX.seq, PREFIX.qual similar to
-    inputs for TA
+.USAGE.
+  frg2ta [options] PREFIX.frg
 
-   OPTIONS
-     -check          Prints out those seqnames that are shorter than MINSEQ
-     -minseq         sets MINSEQ.  Default is 64
-     -o prefix       Output prefix
-     -filter         filters the .frg file for sequences shorter than MINSEQ
-     -noqual         doesnt create .qual file
-     -qualidx        creates an index for the qual file [needed by cutAsm]
-     -mates          creates a .mates file indicating which sequences are mates
-     -nonames        Uses Ids rather than trying to figure out seqnames
-     -h              Prints help
-     -V              Prints version information
-    ~;
+.DESCRIPTION.
+   Converts Celera Assembler input to TIGR Assembler input. Converts CA input 
+   PREFIX.frg into PREFIX.seq, PREFIX.qual similar to inputs for TA
+
+.OPTIONS.
+  -check          Prints out those seqnames that are shorter than MINSEQ
+  -minseq         sets MINSEQ.  Default is 64
+  -o prefix       Output prefix
+  -filter         filters the .frg file for sequences shorter than MINSEQ
+  -noqual         doesnt create .qual file
+  -qualidx        creates an index for the qual file [needed by cutAsm]
+  -mates          creates a .mates file indicating which sequences are mates
+  -nonames        Uses Ids rather than trying to figure out seqnames
+  -h              Prints help
+  -V              Prints version information
+
+.KEYWORDS.
+  converter, Celera, TIGR
+
+~;
 
 my $tf = new TIGR::Foundation;
 if (! defined $tf) {

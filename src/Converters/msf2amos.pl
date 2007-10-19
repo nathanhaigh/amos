@@ -14,33 +14,23 @@ my $VERSION = '$Revision$ ';
 $base->setVersionInfo($VERSION);
 
 my $HELPTEXT = qq~
-.NAME.
+.USAGE.
+msf2amos [-i <msffile> | <msffile>] [-o <dfile>]
 
-msf2graph
-
+.DESCRIPTION.
 Converts a multi-alignment .msf file into a DIMACS style graph file where
 each node is a read and an edge is created if the reads disagree in the
 multiple alignment.
 
-.USAGE.
-
-msf2amos [-i <msffile> | <msffile>] [-o <dfile>]
-
 .OPTIONS.
-
--i <msffile> - input file in MSF format.
--o <dfile> - output file in DIMACS graph format.  If not provided defaults to
-             STDOUT
-if <msffile> not provided input defaults to STDIN
-
-.DESCRIPTION.
-
-
+  -i <msffile>  input file in MSF format.
+  -o <dfile>    output file in DIMACS graph format.  If not provided defaults to
+                STDOUT
+  if <msffile> not provided, input defaults to STDIN
 
 .KEYWORDS.
-
-AMOS Converters Alignment
-    ~;
+  converter, multi-alignment 
+   ~;
 
 my $outfile;
 my $infile;

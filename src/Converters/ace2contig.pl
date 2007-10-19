@@ -21,8 +21,21 @@ my $acefile;
 my $contigfile;
 
 my $HELP_INFO = q~
-   ace2contig [-o <contigfile>] [-i] <acefile>
-    ~;
+.USAGE.
+  ace2contig [-o <output prefix>] [-i <acefile>]
+
+.DESCRIPTION.
+  This program extracts contig information from an Ace file and outputs
+  a .contig file.
+
+.OPTIONS.
+  -i Ace file
+  -o output prefix (output is <prefix>.contig)
+
+.KEYWORDS.
+  converter, ace, contig
+
+~;
 
 $base->setHelpInfo($HELP_INFO);
 

@@ -21,16 +21,22 @@ my $fastafname;
 
 my $version = " 1.01 (Build " . (qw/$Revision$/ )[1] . ")";
 my $helptext = qq~
-Produce a .scaffolds.fasta file of the bases of contigs in the
-order and orientation found in a Celera scaffold.
-
+.USAGE.
   scaff2fasta [-gaps] [-linker <linker>] [-contig <ctg>] <prefix>.asm
 
+.DESCRIPTION.
+  Produces a .scaffolds.fasta file of the bases of contigs in the
+  order and orientation found in a Celera scaffold.  <prefix>.asm 
+  file is required as input.
+
+.OPTIONS.
   if -gaps is provided outputs a number of Ns proportional to gap size (a minimum of 100 Ns)
   if -linker is provided uses the <linker> sequence as separator between contigs
   if neither -gaps nor -linker are given, the space between contigs is filled with 100 Ns
-
   if -contig is provided also generates a .contig-like file for the scaffold
+
+.KEYWORDS.
+  converters, scaffolds
     ~;
 
 my $base = new AMOS::AmosFoundation;

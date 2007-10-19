@@ -32,18 +32,23 @@ my @offsets;    # offset -> asm_lend, asm_rend correspondence
 
 my $version = '$Revision$ ';
 my $helptext = qq~
-    parsecasm [options] file.asm [file1.frg file2.frg ...]
+.USAGE.
+  parsecasm [options] file.asm [file1.frg file2.frg ...]
 
-    converts CA output file.asm into file.fasta, file.contig. A file
-    named file.frg must be present in the current directory,
-    alternatively, a list of .frg files must be provided on the
-    command line.
+.DESCRIPTION.
+  Converts CA output file.asm into file.fasta, file.contig. A file
+  named file.frg must be present in the current directory,
+  alternatively, a list of .frg files must be provided on the
+  command line.
 
-  OPTIONS
-    -nofasta        Do not create .fasta output
-    -justfasta      Only create .fasta output
-    -o prefix       Output prefix
-    -nonames        Uses Ids rather than trying to figure out seqnames
+.OPTIONS.
+  -nofasta        Do not create .fasta output
+  -justfasta      Only create .fasta output
+  -o prefix       Output prefix
+  -nonames        Uses Ids rather than trying to figure out seqnames
+
+.KEYWORDS.
+  converters, Celera
     ~;
 
 my $base = new AMOS::AmosFoundation;

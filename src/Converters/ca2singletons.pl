@@ -22,10 +22,23 @@ my $MY_VERSION = " Version 1.0 (Build " . (qw/$Revision$/ )[1] . ")";
 # Constants
 
 my $MY_HELPTEXT = qq~
-    ca2singletons -i file.asm -o file.fasta -f file.frg [-contig|-clear|-list]
-    -clear - outputs just the clear range of the singletons
-    -contig - outputs singletons in TIGR .contig format
-    -list - outputs a list of the singleton names
+.USAGE.
+  ca2singletons -i file.asm -o file.fasta -f file.frg [-contig|-clear|-list]
+
+.DESCRIPTION.
+  This program converts from a Celera .frg and .asm file to a list of singleton
+  read sequences in fasta format.
+
+.OPTIONS.
+  -i input  .asm file
+  -o output .fasta file name
+  -f input  .frg file 
+  -clear    outputs just the clear range of the singletons
+  -contig   outputs singletons in TIGR .contig format
+  -list     outputs a list of the singleton names
+
+.KEYWORDS.
+  converter, celera, singletons
 ~;
 
 my $base = new AMOS::AmosFoundation;

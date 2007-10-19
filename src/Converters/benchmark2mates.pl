@@ -17,11 +17,20 @@ my $VERSION = '1.0 ($Revision$)';
 $base->setVersionInfo($VERSION);
 
 my $HELP = q~
-    benchmark2mates -o <outprefix> [-C] fasta1 fasta2 ... fastan 
+.USAGE.
+  benchmark2mates [-C] [-o <outprefix>] fasta1 fasta2 ... fastan 
 
-<outprefix>  - prefix for the resulting .mates file.  Required.
--C           - generate Bambus <outprefix>.conf file
-    ~;
+.DESCRIPTION.
+  This program converts
+
+.OPTIONS.
+  -o  prefix for the resulting .mates file. (required)
+  -C  generate Bambus <outprefix>.conf file (optional)
+
+.KEYWORDS.
+  converter, mates,
+
+~;
 $base->setHelpInfo($HELP);
 
 my $outfname;

@@ -15,19 +15,23 @@ my $MINQUAL = 20;
 my $MINCONTIG = 10000;
 
 my $MY_HELPTEXT = qq~
-Generate quality statistics from the specified Celera assembly .asm file.  
-
+.USAGE.
   castats  <prefix>.asm  [options]
 
-    prefix.asm   The Celera .asm file
-    options:
-      -minqual   <n>   Minimum quality value threshhold to report as bad 
-                       quality (default $MINQUAL)
-      -mincontig <n>   Minimum contig size to report as a big contig
-                       (default $MINCONTIG) 
-      -g <n>           Genome size used in the calculation of N50 numbers
-                       (default: TotalBasesInContigs)
+.DESCRIPTION.
+  Generate quality statistics from the specified Celera assembly .asm file.
 
+.OPTIONS.
+  prefix.asm   The Celera .asm file
+  -minqual   <n>   Minimum quality value threshhold to report as bad
+                   quality (default $MINQUAL)
+  -mincontig <n>   Minimum contig size to report as a big contig
+                   (default $MINCONTIG)
+  -g <n>           Genome size used in the calculation of N50 numbers
+                   (default: TotalBasesInContigs)
+
+.KEYWORDS.
+  converter, Celera, statistics
 ~;
 
 my $base = new AMOS::AmosFoundation;

@@ -9,13 +9,21 @@ if (! defined $base) {
 }
 
 my $HELPTEXT = q~
-    phd2afg -d phd_dir -o file.afg [-c file.clr] [-m file.mates]
+.USAGE.
+ phd2afg -d phd_dir -o file.afg [-c file.clr] [-m file.mates]
 
-  Options:
-    -d phd_dir  - directory where phd files are located
-    -o file.afg - name of the output file
-    -c file.clr - optional: file containing clipping coordinates
-    -m file.mates - optional: file containing mate-pair info in Bambus .mates format
+.DESCRIPTION.
+  This program takes a directory of phd files and produces a .afg file
+  with options for clear ranges and mates.
+
+.OPTIONS.
+  -d phd_dir     directory where phd files are located
+  -o file.afg    name of the output file
+  -c file.clr    optional: file containing clipping coordinates
+  -m file.mates  optional: file containing mate-pair info in Bambus .mates format
+
+.KEYWORDS.
+ converters, phd, afg 
     ~;
 
 $base->setHelpText($HELPTEXT);

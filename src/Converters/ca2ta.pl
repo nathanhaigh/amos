@@ -33,35 +33,38 @@ my @offsets;    # offset -> asm_lend, asm_rend correspondence
 
 my $version = '$Revision$ ';
 my $helptext = qq~
-    ca2ta [options] file.asm
+.USAGE.
+  ca2ta [options] file.asm
 
-    converts CA output file.asm into file.fasta, file.contig, file.tasm similar
-    to the corresponding outputs of TA.  A file named file.frg must be present
-    in the current directory. 
+.DESCRIPTION.
+  Converts CA output file.asm into file.fasta, file.contig, file.tasm similar
+  to the corresponding outputs of TA.  A file named file.frg must be present
+  in the current directory. 
+  
+.OPTIONS.
+  -select fname   Only performs this operation for contigs and unitigs
+                  specified in fname
+  -contigs        Does not report unitigs in .tasm
+  -nofasta        Do not create .fasta output
+  -justfasta      Only create .fasta output
+  -o prefix       Output prefix
+  -nonames        Uses Ids rather than trying to figure out seqnames
 
-  OPTIONS
-    -select fname   Only performs this operation for contigs and unitigs
-                    specified in fname
-    -contigs        Does not report unitigs in .tasm
-    -nofasta        Do not create .fasta output
-    -justfasta      Only create .fasta output
-    -o prefix       Output prefix
-    
-    ca2ta [options] file.frg
-    converts CA input file.frg into file.seq, file.qual similar to 
-    inputs for TA
-    
-   OPTIONS
-     -check          Prints out those seqnames that are shorter than MINSEQ
-     -minseq         sets MINSEQ.  Default is 64
-     -o prefix       Output prefix
-     -filter         filters the .frg file for sequences shorter than MINSEQ
-     -noqual         doesnt create .qual file
-     -mates          creates a .mates file indicating which sequences are mates
 
-    GENERAL OPTIONS
-     -nonames        Uses Ids rather than trying to figure out seqnames
-    ~;
+  ca2ta [options] file.frg
+  converts CA input file.frg into file.seq, file.qual similar to
+  inputs for TA
+
+  -check          Prints out those seqnames that are shorter than MINSEQ
+  -minseq         sets MINSEQ.  Default is 64
+  -o prefix       Output prefix
+  -filter         filters the .frg file for sequences shorter than MINSEQ
+  -noqual         doesnt create .qual file
+  -mates          creates a .mates file indicating which sequences are mates
+
+.KEYWORDS.
+  converter, Celera, TIGR assembler
+~;
 
 my $base = new TIGR::Foundation;
 
