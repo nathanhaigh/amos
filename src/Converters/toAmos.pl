@@ -19,23 +19,47 @@ my $UTG_MESSAGES = 0;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)
-           (-c contig|-a asm [-S]|-ta tasm|-ace ace|-s fasta|-q qual) 
-           (-arachne assembly.links|-scaff file.scaff)
-           -o outfile 
-           [-i insertfile | -map dstmap]
-           [-gq goodqual] [-bq badqual]
-           [-pos posfile] [-phd]
+.USAGE.
+  toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)
+         (-c contig|-a asm [-S]|-ta tasm|-ace ace|-s fasta|-q qual) 
+         (-arachne assembly.links|-scaff file.scaff)
+         -o outfile 
+         [-i insertfile | -map dstmap]
+         [-gq goodqual] [-bq badqual]
+         [-pos posfile] [-phd]
 
-    toAmos is primarily designed for converting the output of an assembly
-program into the AMOS format so that it can be stored in an AMOS bank.
+.DESCRIPTION.
+  toAmos is primarily designed for converting the output of an assembly
+  program into the AMOS format so that it can be stored in an AMOS bank.  
 
-    If you simply need a program to generate assembly inputs for one the 
-AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos. 
+  If you simply need a program to generate assembly inputs for one the 
+  AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos. 
 
-ASM File Options:
- -S Include Surrogate Unitigs as AMOS Contigs
- -utg Include all UTG Unitig messages as AMOS Contigs
+  toAmos reads the inputs specified on the command line and converts the 
+  information into AMOS message format.  The following types of 
+  information can be provided to toAmos:
+    -> Sequence and quality data (options -f, -s,  -q, -gq, or -bq)
+    -> Library and mate-pair data (options -m, -x, -f, -i,  or  -map)
+    -> Contig  data (options -c, -a, -ta, or -ace)
+    -> Scaffold data (option -a)    
+
+.OPTIONS.
+  -o <outfile> - place output in <outfile>
+  -m <matefile> - library and mate-pair information in Bambus format
+  -x <trace.xml> - ancilliary data (library, mate-pair, clear range) 
+     in Trace Archive format
+  -f <frg file> - library, mate-pair, sequence, quality, and clear 
+     range data in Celera Assembler message format
+
+
+
+  ASM File Options:
+    -S Include Surrogate Unitigs as AMOS Contigs
+    -utg Include all UTG Unitig messages as AMOS Contigs
+
+.KEYWORDS.
+  converter, universal, amos format
+
 ~;
 
 my $base = new TIGR::Foundation();

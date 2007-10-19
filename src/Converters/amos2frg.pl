@@ -7,15 +7,25 @@ use strict;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    amos2frg [-i infile] [-o outfile] [-a accession]
+.USAGE.
+  amos2frg [-i infile] [-o outfile] [-a accession]
 
-    if -i and -o are not provided reads from STDIN and writes to STDOUT
-    if -i is provided but -o is not, outfile is same as infile except for the
+.DESCRIPTION.
+  This program converts from an AMOS message file to a frg file (Celera
+  Assembler message file).
+
+.OPTIONS.
+  if -i and -o are not provided reads from STDIN and writes to STDOUT
+  if -i is provided but -o is not, outfile is same as infile except for the
   extension
-    otherwise -i and -o are those specified in the command line
-    if -i is provided the filename must end in .afg
-    if -a is specified starts numbering output at specified accession, else
+  otherwise -i and -o are those specified in the command line
+  if -i is provided the filename must end in .afg
+  if -a is specified starts numbering output at specified accession, else
   the accessions from the input file are used in the output
+
+.KEYWORDS.
+  converter, amos, frg
+
 ~;
 
 my $base = new TIGR::Foundation();

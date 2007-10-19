@@ -7,11 +7,20 @@ use strict;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    amos2sq [-i] infile [-o outprefix]
+.USAGE.
+  amos2sq [-i] infile [-o outprefix]
 
-    infile must end in .afg
-    outputs will be placed in outprefix.seq and outprefix.qual
-    if -o is not specified, outprefix is infile stripped of .afg
+.DESCRIPTION.
+  Converters an AMOS message file to .seq/.qual files
+
+.OPTIONS.
+  infile must end in .afg
+  outputs will be placed in outprefix.seq and outprefix.qual
+  if -o is not specified, outprefix is infile stripped of .afg
+
+.KEYWORDS.
+  converter, amos, seq, qual
+
 ~;
 
 my $base = new TIGR::Foundation();

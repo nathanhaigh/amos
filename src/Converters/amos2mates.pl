@@ -7,13 +7,22 @@ use strict;
 
 my $VERSION = '$Revision$ ';
 my $HELP = q~
-    amos2mates [-i infile] [-o outfile] 
+.USAGE.
+  amos2mates [-i infile] [-o outfile] 
 
+.DESCRIPTION.
+  Converts an AMOS message file to Bambus .mates file.
+
+.OPTIONS.
     if -i and -o are not provided reads from STDIN and writes to STDOUT
     if -i is provided but -o is not, outfile is same as infile except for the
   extension
     otherwise -i and -o are those specified in the command line
     if -i is provided the filename must end in .afg
+
+.KEYWORDS.
+converter, amos, mates, bambus
+
 ~;
 
 my $base = new TIGR::Foundation();
