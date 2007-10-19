@@ -19,26 +19,31 @@ string OPT_IIDFile;
 
 void PrintUsage (const char * s)
 {
-  cerr << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  cerr << "\n.USAGE.\n" << "  " << s << "  [options]  <bank path>\n\n";
 }
 
 //------------------------------------------------------------- PrintHelp ----//
 void PrintHelp (const char * s)
 {
   PrintUsage(s);
-  cerr << "-h            Display help information\n"
-       << "-v            Display the compatible bank version\n"
-       << "-e            Use EIDs for names (DEFAULT)\n"
-       << "-i            Use IIDs for names\n"
-       << "-E file       Dump just the contig eids listed in file\n"
-       << "-I file       Dump just the contig iids listed in file\n"
-       << "-L            Just create a layout file (no sequence)\n"
-       << "-S            Simple Layout style\n"
-       << "-T            XML Format suitable for DNPTrapper\n"
-       << "-C file       Configuration file\n"
+          
+  cerr << ".DESCRIPTION.\n"
+       << "  This program takes an AMOS bank directory and dumps the contigs to stdout.\n\n"
+       << ".OPTIONS.\n"
+       << "  -h          Display help information\n"
+       << "  -v          Display the compatible bank version\n"
+       << "  -e          Use EIDs for names (DEFAULT)\n"
+       << "  -i          Use IIDs for names\n"
+       << "  -E file     Dump just the contig eids listed in file\n"
+       << "  -I file     Dump just the contig iids listed in file\n"
+       << "  -L          Just create a layout file (no sequence)\n"
+       << "  -S          Simple Layout style\n"
+       << "  -T          XML Format suitable for DNPTrapper\n"
+       << "  -C file     Configuration file\n\n"
+       << ".KEYWORDS.\n"
+       << "  converters, bank, contigs\n\n"
        << endl;
   
-  cerr << "Takes an AMOS bank directory and dumps the contigs to stdout\n\n";
 }
 
 void ParseArgs (int argc, char ** argv)

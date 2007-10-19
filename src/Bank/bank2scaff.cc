@@ -19,31 +19,34 @@ string OPT_IIDFile;
 
 void PrintUsage (const char * s)
 {
-  cerr << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  cerr << "\nUSAGE:\n" << "  " <<  s << "  [options]  <bank path>\n";
 }
 
 //------------------------------------------------------------- PrintHelp ----//
 void PrintHelp (const char * s)
 {
   PrintUsage(s);
-  cerr << "-h      Display help information\n"
-       << "-v      Display the compatible bank version\n"
-       << "-e      Use EIDs for names (DEFAULT)\n"
-       << "-i      Use IIDs for names\n"
-       << "-E file Dump just the contig eids listed in file\n"
-       << "-I file Dump just the contig iids listed in file\n\n"
+  cerr << "\n.DESCRIPTION.\n"
+       << "  Takes an AMOS bank directory and dumps the scaffolds to stdout.\n\n"
+       << "  Default format:\n"
+       << "  >scaffid numcontigs scaffbases scaffspan\n"
+       << "  contigid orientation contiglen gapsize\n"
+       << "\n.OPTIONS.\n"
+       << "  -h      Display help information\n"
+       << "  -v      Display the compatible bank version\n"
+       << "  -e      Use EIDs for names (DEFAULT)\n"
+       << "  -i      Use IIDs for names\n"
+       << "  -E file Dump just the contig eids listed in file\n"
+       << "  -I file Dump just the contig iids listed in file\n\n"
 
-       << "-f      Print the scaffold consensus sequences in multi-fasta format\n"
-       << "-g      Use the estimated gaps size to space contigs\n"
-       << "-G val  Gaps < val will have val N's between them (-g)\n"
-       << "-N val  Specify number of N's to place between contigs\n"
+       << "  -f      Print the scaffold consensus sequences in multi-fasta format\n"
+       << "  -g      Use the estimated gaps size to space contigs\n"
+       << "  -G val  Gaps < val will have val N's between them (-g)\n"
+       << "  -N val  Specify number of N's to place between contigs\n"
+       << "\n.KEYWORDS.\n"
+       << "  bank, converters, scaffolds"
        << endl;
   
-  cerr << "Takes an AMOS bank directory and dumps the scaffolds to stdout.\n\n"
-       << "Default format:\n"
-       << ">scaffid numcontigs scaffbases scaffspan\n"
-       << "contigid orientation contiglen gapsize\n"
-       << endl;
 }
 
 void ParseArgs (int argc, char ** argv)

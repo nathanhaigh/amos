@@ -30,23 +30,20 @@ map<string, string> globals; // global variables
 
 void printHelpText()
 {
-  cerr << 
-    "\n"
-    ".NAME.\n"
-    "bank2fasta - generates a .fasta (and .qual) file from the contigs in a bank\n"
-    "\n.USAGE.\n"
-    "bank2fasta -b[ank] <bank_name>\n"
-    "\n.OPTIONS.\n"
-    "-h, -help     print out help message\n"
-    "-b, -bank     bank where assembly is stored\n"
-    "-eid          report eids\n"
-    "-iid          report iids (default)\n"
-    "-E file       Dump just the contig eids listed in file\n"
-    "-I file       Dump just the contig iids listed in file\n"
-    "-q file       Report qualities in file\n"
-    "\n.DESCRIPTION.\n"
-    "\n.KEYWORDS.\n"
-    "AMOS bank, Converters\n"
+  cerr << "\n.USAGE.\n"
+       << "  bank2fasta -b <bank_name>\n"
+       << "\n.DESCRIPTION.\n"
+       << "  bank2fasta - generates a .fasta (and .qual) file from the contigs in a bank\n"
+       << "\n.OPTIONS.\n"
+       << "  -h, -help     print out help message\n"
+       << "  -b <bank_name>, -bank     bank where assembly is stored\n"
+       << "  -eid          report eids\n"
+       << "  -iid          report iids (default)\n"
+       << "  -E file       Dump just the contig eids listed in file\n"
+       << "  -I file       Dump just the contig iids listed in file\n"
+       << "  -q file       Report qualities in file\n"
+       << "\n.KEYWORDS.\n"
+       << "  AMOS bank, Converters\n"
        << endl;
 }
 
