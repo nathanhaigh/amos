@@ -206,17 +206,20 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-b path       The directory path of the bank to clean\n"
-    << "-h            Display help information\n"
-    << "-v            Display the compatible bank version\n"
+    << "\n.DESCRIPTION.\n"
+    << "  Takes an AMOS bank directory as input. If no NCodes are listed on the\n"
+    << "  command line, all bank types will be cleaned of deleted records.\n"
+    << "  Otherwise, only the listed bank types will be cleaned. Cleaning the\n"
+    << "  deleted records may dramatically reduce the size of the bank if\n"
+    << "  numerous remove or replace operations have been performed.\n"
+    << "\n.OPTIONS.\n"
+    << "  -b path       The directory path of the bank to clean\n"
+    << "  -h            Display help information\n"
+    << "  -v            Display the compatible bank version\n"
+    << "\n.KEYWORDS.\n"
+    << "  amos bank\n" 
     << endl;
-  cerr
-    << "Takes an AMOS bank directory as input. If no NCodes are listed on the\n"
-    << "command line, all bank types will be cleaned of deleted records.\n"
-    << "Otherwise, only the listed bank types will be cleaned. Cleaning the\n"
-    << "deleted records may dramatically reduce the size of the bank if\n"
-    << "numerous remove or replace operations have been performed.\n"
-    << endl;
+
   return;
 }
 
@@ -226,7 +229,6 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n\n";
+  cerr << "\nUSAGE:\n" << "  " <<  s << "  [options]  <bank path>  [NCodes]\n";
   return;
 }

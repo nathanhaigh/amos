@@ -388,26 +388,30 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "-b path       The directory path of the bank to report\n"
-    << "-B            Include BIDs in the output messages (for debugging)\n"
-    << "-E file       Report only objects matching EIDs in file\n"
-    << "-h            Display help information\n"
-    << "-I file       Report only objects matching IIDs in file\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-F            Just dump the fixed store information\n"
-    << "-v            Display the compatible bank version\n"
-    << endl;
-  cerr
-    << "Takes an AMOS bank directory as input. Will output the information\n"
-    << "contained in the bank in the form of an AMOS message to stdout. All\n"
-    << "link information references IIDs. If no NCodes are listed on the\n"
-    << "command line, all object types will be reported. The -E and -I files\n"
-    << "should contain a list of IDs, one per line. Only objects matching an\n"
-    << "entry in either file will be output when these options are used and\n"
-    << "objects are reported as many times as they are listed. This utility\n"
-    << "only outputs bank information. To alter the contents of a bank,\n"
-    << "please use the bank-transact utility.\n\n";
+
+  cerr << "\n.DESCRIPTION.\n"
+       << "  Takes an AMOS bank directory as input. Will output the information\n"
+       << "  contained in the bank in the form of an AMOS message to stdout. All\n"
+       << "  link information references IIDs. If no NCodes are listed on the\n"
+       << "  command line, all object types will be reported. The -E and -I files\n"
+       << "  should contain a list of IDs, one per line. Only objects matching an\n"
+       << "  entry in either file will be output when these options are used and\n"
+       << "  objects are reported as many times as they are listed. This utility\n"
+       << "  only outputs bank information. To alter the contents of a bank,\n"
+       << "  please use the bank-transact utility.\n"
+       << "\n.OPTIONS.\n"
+       << "  -b path      The directory path of the bank to report\n"
+       << "  -B           Include BIDs in the output messages (for debugging)\n"
+       << "  -E file      Report only objects matching EIDs in file\n"
+       << "  -h           Display help information\n"
+       << "  -I file      Report only objects matching IIDs in file\n"
+       << "  -s           Disregard bank locks and write permissions (spy mode)\n"
+       << "  -F           Just dump the fixed store information\n"
+       << "  -v           Display the compatible bank version\n"
+       << "\n.KEYWORDS.\n"
+       << "  amos bank, report\n"
+       << endl;
+
   return;
 }
 
@@ -417,7 +421,5 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n\n";
-  return;
+  cerr << "\nUSAGE:\n" << "  " <<  s << "  [options]  -b <bank path>  [NCodes]\n";
 }

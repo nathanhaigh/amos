@@ -217,20 +217,26 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "-b path       The directory path of the bank to report\n"
-    << "-h            Display help information\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-v            Display the compatible bank version\n"
-    << endl;
-  cerr
-    << "Takes an AMOS bank directory as input. Will output the ID map\n"
-    << "information contained in the bank in the form of an AMOS message\n"
-    << "to stdout. If no NCodes are listed on the command line, all known\n"
-    << "object types will be reported. Output columns in the map field are\n"
-    << "BID,IID,EID respectively, with 0 being NULL for BID,IID and newline\n"
-    << "being NULL for EID.\n"
-    << endl;
+
+   cerr << "\n.DESCRIPTION.\n"
+        << "Takes an AMOS bank directory as input. Will output the ID map\n"
+        << "information contained in the bank in the form of an AMOS message\n"
+        << "to stdout. If no NCodes are listed on the command line, all known\n"
+        << "object types will be reported. Output columns in the map field are\n"
+        << "BID,IID,EID respectively, with 0 being NULL for BID,IID and newline\n"
+        << "being NULL for EID.\n"
+        << "\n.OPTIONS.\n"
+        << "  -b path     The directory path of the bank to report\n"
+        << "  -h          Display help information\n"
+        << "  -s          Disregard bank locks and write permissions (spy mode)\n"
+        << "  -v          Display the compatible bank version\n"
+        << "\n.KEYWORDS.\n"
+        << "  amos bank"
+        << endl;
+
+
+
+
   return;
 }
 
@@ -240,8 +246,6 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  -b <bank path>  [NCodes]\n"
-    << endl;
+  cerr << "\nUSAGE:\n" << "  " <<  s << "  [options]  -b <bank path>  [NCodes]\n";
   return;
 }
