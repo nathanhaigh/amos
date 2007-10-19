@@ -20,16 +20,31 @@ my $VERSION = '$Revision$ ';
 $base->setVersionInfo($VERSION);
 
 my $HELPTEXT = q~
-   amos2ace [opts] [infile1] [infile2] ...
-       
-   Options:   
-        -o <outfile>    Output file, by default <infile1>.ace
-        -c <chromat_dir> Location of the chromatograms
-        -p <phd_dir>    Location of the PHD directory
+.USAGE.   
+  amos2ace [opts] [infile1] [infile2] ...
+ 
+.DESCRIPTION.
+  Amos2ace reads one or more AMOS message files specified on the command line and produces 
+  a .ACE file. The message files must be provided in a "reasonable" order: the file 
+  defining a specific object must occur before a file using it. The output file name is 
+  generated from the first file on the command line unless specifically set through option 
+  -o (see below).
 
-    The multiple input files must be presented in "proper" order - each message needs to
-be defined before being referenced.
-    ~;
+.OPTIONS.   
+  -o <outfile>    Output file, by default <infile1>.ace
+  -c <chromat_dir> Location of the chromatograms
+  -p <phd_dir>    Location of the PHD directory
+
+  The multiple input files must be presented in "proper" order - each message needs to
+  be defined before being referenced.  Note: the chromat_dir and phd_dir parameters are 
+  only used to provide consed with the necessary information used to display
+  chromatograms. These options are only relevant if the assembler inputs were generated 
+  using the phred pipeline.
+
+.KEYWORDS.
+  converter, amos, ace.
+
+~;
 
 $base->setHelpInfo($HELPTEXT);
 
