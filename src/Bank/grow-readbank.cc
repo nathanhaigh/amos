@@ -250,21 +250,25 @@ static void  Usage
 
   {
    fprintf (stderr,
-           "USAGE:  %s  <bank-name> <input-file[s]>\n"
+           ".USAGE.\n" 
+           "  %s  <bank-name> <input-file[s]>\n"
            "\n"
-           "Add reads from specified file(s) to the readbank\n"
-           "<bank-name>.  Default input format is fasta which\n"
-           "is two separate files (sequence and quality).\n"
-           "If Celera msg format is used, then only one file is\n"
-           "specified.\n"
+           ".DESCRIPTION.\n"
+           "  Add reads from specified file(s) to the readbank\n"
+           "  <bank-name>.  Default input format is fasta which\n"
+           "  is two separate files (sequence and quality).\n"
+           "  If Celera msg format is used, then only one file is\n"
+           "  specified.\n"
            "\n"
-           "Options:\n"
+           ".OPTIONS.\n"
            "  -c    Create a new read bank\n"
            "  -C    Input is Celera msg format, i.e., a .frg file\n"
            "  -f    Force new read bank by deleting existing one first\n"
            "  -s    Compress reads in the Bank, only allows chars ACGTN\n"
            "  -h    Print this usage message\n"
-           "\n",
+           "\n"
+           ".KEYWORDS.\n"
+           "  amos bank, reads\n",
            command);
 
    return;

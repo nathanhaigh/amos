@@ -474,21 +474,25 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "-h            Display help information\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-v            Display the compatible bank version\n"
-    << "-S            Looks for mates by virtue of the scaffold\n"
-    << "-M            Only display missing mates (not reads already present in range)\n"
-    << "-m            Don't use mate information, just read tiling\n"
-    << "-E contigeid  Contig eid of interest\n"
-    << "-I contigiid  Contig iid of interest\n"
-    << "-x start      Start of range\n"
-    << "-y end        End of range\n"
-    << endl;
-  cerr
-    << "Finds all reads that should overlap a given contig range. Includes reads that\n"
-    << "should be present by the virtue of their mate and the scaffold\n\n";
+
+   cerr << "\n.DESCRIPTION.\n"
+        << "  Finds all reads that should overlap a given contig range. Includes reads that\n"
+        << "  should be present by the virtue of their mate and the scaffold\n"
+        << "\n.OPTIONS.\n"
+        << "  -h            Display help information\n"
+        << "  -s            Disregard bank locks and write permissions (spy mode)\n"
+        << "  -v            Display the compatible bank version\n"
+        << "  -S            Looks for mates by virtue of the scaffold\n"
+        << "  -M            Only display missing mates (not reads already present in range)\n"
+        << "  -m            Don't use mate information, just read tiling\n"
+        << "  -E contigeid  Contig eid of interest\n"
+        << "  -I contigiid  Contig iid of interest\n"
+        << "  -x start      Start of range\n"
+        << "  -y end        End of range\n"
+        << "\n.KEYWORDS.\n"
+        << "  amos bank, mates"
+        << endl;
+
   return;
 }
 
@@ -498,7 +502,6 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  -b <bank path>\n";
   return;
 }

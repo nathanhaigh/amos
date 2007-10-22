@@ -60,24 +60,26 @@ int main (int argc, char ** argv)
     string version =  "Version 1.0";
     string dependencies = "";
     string helptext = 
-"Dump contig features from a bank as a tab deliminated list. Scaffold\n"
-"features are converted to appropriate contig locatations\n"
-"\n"
-"   Usage: dumpFeatures [options] bankname\n"
-"\n"
-"Format of output is:\n"
-"contigeid type end5 end3 [comment]\n"
-"\n"
-"contigeid is the contig which has the feature\n"
-"type is the single character feature type. \n"
-"end5 and end3 are the gapped coordinates of the feature\n"
-"[comment] is an optional comment string describing the feature\n"
-"\n"
-"Options\n"
-"   -i report contig iids instead of eids\n"
-"   -u report ungapped coordinates instread of gapped coordinates\n"
-"   -g report features in .gff format\n"
-"\n";
+"\n.USAGE.\n"
+"  dumpFeatures [options] bankname\n"
+"\n.DESCRIPTION.\n"
+"  Dump contig features from a bank as a tab deliminated list. Scaffold\n"
+"  features are converted to appropriate contig locatations.\n\n"
+"  Format of output is:\n"
+"  contigeid type end5 end3 [comment]\n"
+"  \n"
+"  contigeid is the contig which has the feature\n"
+"  type is the single character feature type. \n"
+"  end5 and end3 are the gapped coordinates of the feature\n"
+"  [comment] is an optional comment string describing the feature\n"
+"\n.OPTIONS.\n"
+"  -i   report contig iids instead of eids\n"
+"  -u   report ungapped coordinates instread of gapped coordinates\n"
+"  -g   report features in .gff format\n"
+"\n.KEYWORDS.\n"
+"  amos bank, converters\n";
+
+
 
     int CONVERTUNGAPPED = 0;
 

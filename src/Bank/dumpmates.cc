@@ -178,15 +178,21 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "-e            Report objects by EID instead of IID\n"
-    << "-h            Display help information\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-v            Display the compatible bank version\n"
-    << endl;
-  cerr
-    << "Takes an AMOS bank directory and dumps a bambus .mates files to\n"
-    << "stdout\n\n";
+
+   cerr << "\n.DESCRIPTION.\n"
+        << "  Takes an AMOS bank directory and dumps a bambus .mates files to\n"
+        << "  stdout\n\n"
+        << "\n.OPTIONS.\n"
+        << "  -e    Report objects by EID instead of IID\n"
+        << "  -h    Display help information\n"
+        << "  -s    Disregard bank locks and write permissions (spy mode)\n"
+        << "  -v    Display the compatible bank version\n"
+        << "\n.KEYWORDS.\n"
+        << "  amos bank, converters, mate pairs, Bambus\n"
+        << endl;
+
+
+
   return;
 }
 
@@ -196,7 +202,6 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  -b <bank path>\n";
   return;
 }

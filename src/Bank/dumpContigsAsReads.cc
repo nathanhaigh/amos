@@ -29,19 +29,17 @@ map<string, string> globals; // global variables
 void printHelpText()
 {
   cerr << 
-    "\n"
-    ".NAME.\n"
-    "dumpContigsAsReads - dumps the contigs in a bank as reads in a new .afg\n"
     "\n.USAGE.\n"
-    "bank2fasta -b[ank] <bank_name>\n"
-    "\n.OPTIONS.\n"
-    "-h, -help     print out help message\n"
-    "-b, -bank     bank where assembly is stored\n"
-    "-E file       Dump just the contig eids listed in file\n"
-    "-I file       Dump just the contig iids listed in file\n"
+    "  dumpContigsAsReads -b[ank] <bank_name>\n"
     "\n.DESCRIPTION.\n"
+    "  dumpContigsAsReads - dumps the contigs in a bank as reads in a new .afg\n"
+    "\n.OPTIONS.\n"
+    "  -h, -help     print out help message\n"
+    "  -b, -bank     bank where assembly is stored\n"
+    "  -E file       Dump just the contig eids listed in file\n"
+    "  -I file       Dump just the contig iids listed in file\n"
     "\n.KEYWORDS.\n"
-    "AMOS bank, Converters\n"
+    "  AMOS bank, Converters, contigs\n"
        << endl;
 }
 

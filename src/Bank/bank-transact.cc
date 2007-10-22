@@ -474,25 +474,27 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "-b path       The directory path of the banks to open or create\n"
-    << "-c            Create new bank directory if path does not exist\n"
-    << "-f            Forcibly create new bank by destroying existing\n"
-    << "-h            Display help information\n"
-    << "-m path       The file path of the input message\n"
-    << "-z            Compress sequence and quality values for SEQ and RED\n"
-    << "              (only allows [ACGTN] sequence and [0,63] quality)\n"
-    << "-v            Display the compatible bank version\n"
- //   << "-R            Reassign IIDs of RED, FRG messages to unused values (untested)\n"
-    << endl;
-  cerr
-    << "Takes an AMOS bank directory and message file as input. Alters the\n"
-    << "banks as directed by the message file. Messages without an act field\n"
-    << "will, by default, be added to the bank. All object links must\n"
-    << "reference IIDs. If an object has a non-unique ID, the user will be\n"
-    << "warned and the object will be ignored. To retrieve information from\n"
-    << "a bank in message format, please use the bank-report utility.\n"
-    << endl;
+
+   cerr << "\n.DESCRIPTION.\n"
+        << "  Takes an AMOS bank directory and message file as input. Alters the\n"
+        << "  banks as directed by the message file. Messages without an act field\n"
+        << "  will, by default, be added to the bank. All object links must\n"
+        << "  reference IIDs. If an object has a non-unique ID, the user will be\n"
+        << "  warned and the object will be ignored. To retrieve information from\n"
+        << "  a bank in message format, please use the bank-report utility.\n"
+        << "\n.OPTIONS.\n"
+        << "  -b path       The directory path of the banks to open or create\n"
+        << "  -c            Create new bank directory if path does not exist\n"
+        << "  -f            Forcibly create new bank by destroying existing\n"
+        << "  -h            Display help information\n"
+        << "  -m path       The file path of the input message\n"
+        << "  -z            Compress sequence and quality values for SEQ and RED\n"
+        << "                (only allows [ACGTN] sequence and [0,63] quality)\n"
+        << "  -v            Display the compatible bank version\n"
+        << "\n.KEYWORDS.\n"
+        << "  amos bank"
+        << endl;
+
   return;
 }
 
@@ -501,9 +503,7 @@ void PrintHelp (const char * s)
 
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
-{
-  cerr
-    << "\nUSAGE: " << s << "  [options]  -b <bank path>  -m <message path>\n"
-    << endl;
+{ 
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  -b <bank path> -m <message path>\n";
   return;
 }

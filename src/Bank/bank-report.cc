@@ -421,5 +421,5 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr << "\nUSAGE:\n" << "  " <<  s << "  [options]  -b <bank path>  [NCodes]\n";
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  -b <bank path>  [NCodes]\n";
 }

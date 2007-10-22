@@ -252,21 +252,26 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "-e            Use EIDs for FastA header instead of IIDs\n"
-    << "-h            Display help information\n"
-    << "-r            Ignore clear range and dump entire sequence\n"
-    << "-q            Dump qualities in fasta format instead of sequence\n"
-    << "-c            Display clear range information on FASTA header for TIGR Assembler\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-v            Display the compatible bank version\n"
-    << "-E file       Dump just the eids listed in file\n"
-    << "-I file       Dump just the iids listed in file\n"
-    << "-L num        Set the maximum number of bases per line (Default: 70)\n"
-    << endl;
-  
-  cerr
-    << "Takes an AMOS bank directory and dumps selected reads to stdout in FASTA format\n\n";
+
+    cerr << "\n.DESCRIPTION.\n"
+         << "  Takes an AMOS bank directory and dumps selected reads to\n"
+         << "  stdout in FASTA format.\n"
+         << "\n.OPTIONS.\n"
+         << "  -e            Use EIDs for FastA header instead of IIDs\n"
+         << "  -h            Display help information\n"
+         << "  -r            Ignore clear range and dump entire sequence\n"
+         << "  -q            Dump qualities in fasta format instead of sequence\n"
+         << "  -c            Display clear range information on FASTA header for TIGR Assembler\n"
+         << "  -s            Disregard bank locks and write permissions (spy mode)\n"
+         << "  -v            Display the compatible bank version\n"
+         << "  -E file       Dump just the eids listed in file\n"
+         << "  -I file       Dump just the iids listed in file\n"
+         << "  -L num        Set the maximum number of bases per line (Default: 70)\n"
+         << "\n.KEYWORDS.\n"
+         << "  amos bank, reads, converters"
+         << endl;
+
+
   return;
 }
 
@@ -276,7 +281,6 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  -b <bank path>\n";
   return;
 }

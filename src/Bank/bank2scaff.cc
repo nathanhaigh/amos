@@ -19,7 +19,7 @@ string OPT_IIDFile;
 
 void PrintUsage (const char * s)
 {
-  cerr << "\nUSAGE:\n" << "  " <<  s << "  [options]  <bank path>\n";
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  <bank path>\n";
 }
 
 //------------------------------------------------------------- PrintHelp ----//
