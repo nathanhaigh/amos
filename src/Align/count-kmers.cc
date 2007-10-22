@@ -48,19 +48,23 @@ int  main (int argc, char * argv [])
   {
     string version = "Version 1.0";
     string helptext = 
-"Count kmers in a multifasta file or in read or contig banks.\n"
-"Output is to stdout in \"meryl-style\": >count\\nmer\\n\n"
 "\n"
-" Usage: count-kmers [-f fasta] [-r bnk] [-c bnk] [-n bnk]\n"
+".USAGE.\n"
+"  count-kmers [-f fasta] [-r bnk] [-c bnk] [-n bnk]\n"
 "\n"
-"   -f <fasta> multifasta file to count\n"
-"   -r <bnk>   Bank of reads to count\n"
-"   -c <bnk>   Bank of contigs to count\n"
-"   -n <bnk>   Report normalized counts (readmercount/contigmercount)\n"
-"   -k <len>   Length of kmer \n"
-"   -m <min>   Minimum count to report (default: 1)\n"
-"   -S         Print using simple nmer count format: mer count\n"
-"\n";
+".DESCRIPTION.\n"
+"  Count kmers in a multifasta file or in read or contig banks.\n"
+"  Output is to stdout in \"meryl-style\": >count\\nmer\\n\n"
+"\n.OPTIONS.\n"
+"  -f <fasta> multifasta file to count\n"
+"  -r <bnk>   Bank of reads to count\n"
+"  -c <bnk>   Bank of contigs to count\n"
+"  -n <bnk>   Report normalized counts (readmercount/contigmercount)\n"
+"  -k <len>   Length of kmer \n"
+"  -m <min>   Minimum count to report (default: 1)\n"
+"  -S         Print using simple nmer count format: mer count\n"
+"\n.KEYWORDS.\n"
+"  kmers, fasta\n";
 
     string fastafile;
     string readbank;

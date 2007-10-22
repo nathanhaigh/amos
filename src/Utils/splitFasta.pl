@@ -15,43 +15,40 @@
 # written consent of TIGR.
 
 my $HELPTEXT = qq~
-
-NAME
-splitfasta - program that breaks a multi-FASTA file into separate single FASTA
-files which are named by their identifiers and have either the .seq or a user 
-defined suffix.
-
-SYNOPSIS
-splitfasta [options] input_file.
-   input_file
+.USAGE.
+  splitfasta [options] input_file.
+    input_file
       the FASTA file to be split.
+
+.DESCRIPTION.
+  splitfasta - program that breaks a multi-FASTA file into separate single FASTA
+  files which are named by their identifiers and have either the .seq or a user 
+  defined suffix.
+
+  Splitfasta takes in a multi-FASTA file as input and splits the FASTA file into
+  multiple files, each file containing one record. The files are named by their
+  identifiers followed by a suffix. If the suffix option is used, a user
+  defined suffix is used, else the .seq suffix is used. If the id option is
+  used, only the record which has the identifier specified in the id option is
+  put into a file. Else all the records are put into separate files. When the
+  verbose option is specified, the list of records which are put into files is
+  printed to stdout. The program always prints the total number of records split
+  to stdout.
+  The program fails if the FASTA file does not parse, the command line options
+  are incorrect or if the current directory is not writable.
+
+.OPTIONS.
+  -suffix<file_ext>
+    specify a user defined suffix for naming the FASTA files.
  
+  -id<identifier>
+    specify the identifier of the FASTA file to be split.
 
-OPTIONS
-   -suffix<file_ext>
-      specify a user defined suffix for naming the FASTA files.
+  -verbose
+    print the list of FASTA records being split.
 
-   -id<identifier>
-      specify the identifier of the FASTA file to be split.
-
-   -verbose
-      print the list of FASTA records being split.
-
-SUMMARY
-splitfasta takes in a multi-FASTA file as input and splits the FASTA file into
-multiple files, each file containing one record. The files are named by their
-identifiers followed by a suffix. If the suffix option is used, a user 
-defined suffix is used, else the .seq suffix is used. If the id option is 
-used, only the record which has the identifier specified in the id option is
-put into a file. Else all the records are put into separate files. When the 
-verbose option is specified, the list of records which are put into files is 
-printed to stdout. The program always prints the total number of records split
-to stdout.
-The program fails if the FASTA file does not parse, the command line options 
-are incorrect or if the current directory is not writable.
-
-SEE ALSO
-   alignFasta, cleanFasta, clrFasta, cmpFasta, splitfasta, cutFasta
+.KEYWORDS.
+  fasta, split, reads
 ~;
 
 

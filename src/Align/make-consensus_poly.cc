@@ -1203,13 +1203,15 @@ static void  Usage
 
   {
    fprintf (stderr,
-           "USAGE:  %s  <tig-file> <bank-name>\n"
+           "\n.USAGE.\n"
+           "  %s  <tig-file> <bank-name>\n"
            "\n"
-           "Read layout information from <tig-file> describing positions\n"
-           "of reads, and create multialignments and/or consensus sequences\n"
-           "for them.  Read sequences are obtained from <bank-name>\n"
+           ".DESCRIPTION.\n"
+           "  Read layout information from <tig-file> describing positions\n"
+           "  of reads, and create multialignments and/or consensus sequences\n"
+           "  for them.  Read sequences are obtained from <bank-name>\n"
            "\n"
-           "Options:\n"
+           ".OPTIONS.\n"
            "  -a       Output alignments instead of consensus messages\n"
 	   "  -A       Output an AMOS message file\n"
 	   "  -b       Input from AMOS bank\n"
@@ -1230,7 +1232,8 @@ static void  Usage
            "  -T       Output in TIGR Assembler contig format\n"
            "  -u       Process unitig messages\n"
            "  -v <n>   Set verbose level to <n>.  Higher produces more output.\n"
-           "\n",
+           "\n.KEYWORDS.\n"
+           "  reads, consensus\n\n",
            command);
 
    return;

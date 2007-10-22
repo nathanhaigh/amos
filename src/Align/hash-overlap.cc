@@ -1140,15 +1140,16 @@ static void  Usage
 
   {
    fprintf (stderr,
-           "USAGE:  %s  <input-name>\n"
+           ".USAGE.  \n"
+           "  %s  <input-name>\n"
+           "\n.DESCRIPTION.\n"
+           "  Compute pairwise overlaps among a set of sequences by\n"
+           "  brute-force all-pairs alignment.  Sequences are obtained\n"
+           "  from <input-name>, which by default is an AMOS read bank.\n"
+           "  Output links will reference IIDs for read bank input, and\n"
+	   "  sequence index for fasta file input.\n"
            "\n"
-           "Compute pairwise overlaps among a set of sequences by\n"
-           "brute-force all-pairs alignment.  Sequences are obtained\n"
-           "from <input-name>, which by default is an AMOS read bank.\n"
-           "Output links will reference IIDs for read bank input, and\n"
-	   "sequence index for fasta file input.\n"
-           "\n"
-           "Options:\n"
+           ".OPTIONS.\n"
            "  -A       Output AMOS-format messages instead of default\n"
            "  -B       Output to AMOS bank instead of default\n"
            "  -b <n>   Use <n> as lowest read index (0 based inclusive)\n"
@@ -1160,7 +1161,8 @@ static void  Usage
            "  -x <d>   Set maximum error rate to <d>.  E.g., 0.06 is 6%% error\n"
 	   "  -I <file> Build overlaps only for reads whose IIDs are in <file>\n"
 	   "  -E <file> Build overlaps only for reads whose EIDs are in <file>\n"
-           "\n",
+           "\n.KEYWORDS.\n"
+           "  overlaps, reads\n",
            command);
 
    return;

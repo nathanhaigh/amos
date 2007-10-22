@@ -16,24 +16,21 @@ our $REVISION = (qw$Revision$)[-1];
 our $VERSION_STRING = "$VERSION (Build $REVISION)";
 
 my $__HELP_INFO =
-q~NAME
-cutFasta - create subsequence fragments from multi FASTA input
+q~
+.USAGE.
+  cutFasta [ options ] -i instruction_file fasta_file
+  cutFasta [ options ] -f frag_id -x xcoord -y ycoord [ -s seq_id ] fasta_file
 
-SYNOPSIS
-cutFasta [ options ] -i instruction_file fasta_file
-cutFasta [ options ] -f frag_id -x xcoord -y ycoord [ -s seq_id ] fasta_file
-echo 'frag_id xcoord ycoord [seq_id]' | cutFasta [ options ] fasta_file
+.DESCRIPTION.
+  This program performs various excisions on FASTA records in fasta_file.  Each
+  cut instruction is accompanied by a frag_id.  The frag_id becomes the sequence
+  name for a new FASTA record consisting of the excised portion of the original
+  record.  The new FASTA record is written to STDOUT (default) or output_file.
+  A variety of cuts can be performed.  See later in this document for more
+  information on the instruction_file and the cut options.
 
-SUMMARY
-This program performs various excisions on FASTA records in fasta_file.  Each
-cut instruction is accompanied by a frag_id.  The frag_id becomes the sequence
-name for a new FASTA record consisting of the excised portion of the original
-record.  The new FASTA record is written to STDOUT (default) or output_file.
-A variety of cuts can be performed.  See later in this document for more
-information on the instruction_file and the cut options.
-
-PARAMETERS
-   <fasta_file>
+.OPTIONS.
+    <fasta_file>
       This is the FASTA input file.  This file may contain either one sequence
       or many sequences.
 
@@ -63,7 +60,6 @@ PARAMETERS
       Input a series of instructions (frag_id, xcoord, ycoord, seq_id sets)
       from a file.  This parameter cannot be used with -f, -x, -y, and -s.
 
-OPTIONS
    -0
       Indicates that all coordinates supplied, either by file or by argument
       or echoed in, are '0' based (starts at 0).  Default is '1' based 
@@ -76,64 +72,67 @@ OPTIONS
    The TIGR Foundation standard options (-h, -debug, -depend, etc.) are
    also supported.
 
-COORDINATE VALUES
-xcoord and ycoord can be specified in one of the following ways per record.
+   COORDINATE VALUES
+   xcoord and ycoord can be specified in one of the following ways per record.
 
-1. an end5 and end3; if end5 is greater than end3, the resulting sequence 
-is reverse complemented.  Note, end5 and/or end3 can be negative, indicating
-a distance from the end of the sequence.  Whenever negative coordinates
-are given, they are converted to their positive counterparts before determining
-if the read is reversed: -100 to -50 would not be reverse complemented, whereas
--50 to -100 would be reverse complemented.
+  1. an end5 and end3; if end5 is greater than end3, the resulting sequence 
+  is reverse complemented.  Note, end5 and/or end3 can be negative, indicating
+  a distance from the end of the sequence.  Whenever negative coordinates
+  are given, they are converted to their positive counterparts before determining
+  if the read is reversed: -100 to -50 would not be reverse complemented, whereas
+  -50 to -100 would be reverse complemented.
 
-Examples: 'test 1 20', 'frag end 23', 'frag2 2311 -3', 'frag3 -2 12'
+  Examples: 'test 1 20', 'frag end 23', 'frag2 2311 -3', 'frag3 -2 12'
 
-2. an end5 and a length; the length must be prefixed with a '+'.  In this
-case as well, the end5 coordinate can be negative.
-Example: 'test 345043 +2000'
+  2. an end5 and a length; the length must be prefixed with a '+'.  In this
+  case as well, the end5 coordinate can be negative.
+  Example: 'test 345043 +2000'
 
-INSTRUCTIONS FILE (and standard input)
+  INSTRUCTIONS FILE (and standard input)
 
-Input instructions must be supplied one record per line.  The instructions can
-be specified in the instruction file or echoed in (given on standard input).
-Please see earlier discussions for valid values for xcoord and ycoord.
+  Input instructions must be supplied one record per line.  The instructions can
+  be specified in the instruction file or echoed in (given on standard input).
+  Please see earlier discussions for valid values for xcoord and ycoord.
 
-<frag_id> <xcoord> <ycoord> <seq_id>
+  <frag_id> <xcoord> <ycoord> <seq_id>
 
-seq_id can be omitted if there is only one record in fasta_file.
-An example would be the following
+  seq_id can be omitted if there is only one record in fasta_file.
+  An example would be the following
 
-fragment1 1 10 12311
+  fragment1 1 10 12311
 
-.. extracts bases 1 through 10 of sequence named 12311 and outputs those
-10 bases to a FASTA record named fragment1.
+  .. extracts bases 1 through 10 of sequence named 12311 and outputs those
+  10 bases to a FASTA record named fragment1.
 
-CONSTRAINT
-To maintain compliance of cutFasta output with SOP I005, cutFasta does not
-allow the use of a fragment id (frag_id) more than once for an output.
-If a fragment id is encountered more than once in the input, a warning is
-issued each time and a new name is assigned.  The new name is reported in
-the warning, along with the number of the fragment instance.
+  CONSTRAINT
+  To maintain compliance of cutFasta output with SOP I005, cutFasta does not
+  allow the use of a fragment id (frag_id) more than once for an output.
+  If a fragment id is encountered more than once in the input, a warning is
+  issued each time and a new name is assigned.  The new name is reported in
+  the warning, along with the number of the fragment instance.
 
-The new fragment id will model <original_frag_id>__<xcoord>_<ycoord>_<seq_id> .
-If this new fragment id is not unique, an error is thrown and the fragment
-is skipped.
+  The new fragment id will model <original_frag_id>__<xcoord>_<ycoord>_<seq_id> .
+  If this new fragment id is not unique, an error is thrown and the fragment
+  is skipped.
 
-EXAMPLE
-The above instruction example as applied to command line arguments would be
-as follows.  Output goes to standard output.  We take 12311 from my.fasta.
+  EXAMPLE
+  The above instruction example as applied to command line arguments would be
+  as follows.  Output goes to standard output.  We take 12311 from my.fasta.
 
-cutFasta -f fragment1 -x 1 -y 10 -s 12311 my.fasta
+  cutFasta -f fragment1 -x 1 -y 10 -s 12311 my.fasta
 
-KNOWN ISSUES
-Large FASTA input files may fail on small memory machines.
+  KNOWN ISSUES
+  Large FASTA input files may fail on small memory machines.
 
-CONTACT
-Please forward all questions and comments to the Software Engineering team at
-bits.se@tigr.org.
+  CONTACT
+  Please forward all questions and comments to the Software Engineering team at
+  bits.se@tigr.org.
 
-Daniel Kosack
-10/13/2004
+  Daniel Kosack
+  10/13/2004
+
+.KEYWORDS.
+  fasta
 ~;
 
 my $__USAGE_INFO = 
