@@ -179,30 +179,29 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "Options\n"
-    << "-------\n"
-    << "  -h  Display help information\n"
-    << "  -s  Disregard bank locks and write permissions (spy mode)\n"
-    << "  -v  Display the compatible bank version\n"
-    << "\n"
-    << "  -S  Just list singleton reads\n"
-    << "  -D  Just list duplicate reads\n"
-    << "  -P  Just list placed reads\n"
-    << "\n"
-    << "  -E  Just list read EIDs\n"
-    << "  -I  Just list read IIDs\n"
-    << endl;
-
-  cerr
-    << "Prints the status and containing contig(s) of each read as:\n"
-    << "iid  eid  code  numcontigs  contig iid list\n"
-    << "\n"
-    << "Codes are:\n"
-    << "S: Singleton read\n"
-    << "P: Placed in a single contig\n"
-    << "D: Placed in multiple contigs\n"
-    << endl;
+   
+   cerr << "\n.DESCRIPTION.\n"
+        << "  Prints the status and containing contig(s) of each read as:\n"
+        << "  iid  eid  code  numcontigs  contig iid list\n"
+        << "\n"
+        << "  Codes are:\n"
+        << "  S: Singleton read\n"
+        << "  P: Placed in a single contig\n"
+        << "  D: Placed in multiple contigs\n"
+        << "\n.OPTIONS.\n"
+        << "  -h  Display help information\n"
+        << "  -s  Disregard bank locks and write permissions (spy mode)\n"
+        << "  -v  Display the compatible bank version\n"
+        << "\n"
+        << "  -S  Just list singleton reads\n"
+        << "  -D  Just list duplicate reads\n"
+        << "  -P  Just list placed reads\n"
+        << "\n"
+        << "  -E  Just list read EIDs\n"
+        << "  -I  Just list read IIDs\n"
+        << "\n.KEYWORDS.\n"
+        << "  amos bank, reads\n"
+        << endl;
 
   return;
 }
@@ -213,7 +212,6 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  -b <bank path>\n";
   return;
 }

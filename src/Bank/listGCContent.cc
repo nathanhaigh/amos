@@ -239,19 +239,22 @@ void ParseArgs (int argc, char ** argv)
 void PrintHelp (const char * s)
 {
   PrintUsage (s);
-  cerr
-    << "-h            Display help information\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-v            Display the compatible bank version\n"
-    << "-e            Use EIDs instead of IIDs for identifiers\n"
-    << "-r            Ignore clear range and dump entire sequence\n"
-    << "-C            Dump Contigs instead of reads\n"
-    << "-E file       Dump just the eids listed in file\n"
-    << "-I file       Dump just the iids listed in file\n"
-    << endl;
-  
-  cerr
-    << "Prints the GC Content of reads or contigs to stdout\n";
+
+   cerr << "\n.DESCRIPTION.\n"
+        << "  Prints the GC Content of reads or contigs to stdout\n"
+        << "\n.OPTIONS.\n"
+        << "  -h          Display help information\n"
+        << "  -s          Disregard bank locks and write permissions (spy mode)\n"
+        << "  -v          Display the compatible bank version\n"
+        << "  -e          Use EIDs instead of IIDs for identifiers\n"
+        << "  -r          Ignore clear range and dump entire sequence\n"
+        << "  -C          Dump Contigs instead of reads\n"
+        << "  -E file     Dump just the eids listed in file\n"
+        << "  -I file     Dump just the iids listed in file\n"
+        << "\n.KEYWORDS.\n"
+        << "  amos bank, GC content\n"
+        << endl;
+
   return;
 }
 
@@ -261,7 +264,6 @@ void PrintHelp (const char * s)
 //------------------------------------------------------------ PrintUsage ----//
 void PrintUsage (const char * s)
 {
-  cerr
-    << "\nUSAGE: " << s << "  [options]  <bank path>\n\n";
+  cerr << "\n.USAGE.\n" << "  " <<  s << "  [options]  -b <bank path>\n";
   return;
 }
