@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <math.h>
+#include <assert.h>
 
 // GSL includes
 #include <gsl/gsl_rng.h>

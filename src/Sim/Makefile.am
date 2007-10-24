@@ -41,7 +41,7 @@ tandemCollapse_SOURCES = \
 
 ###-- shotgunSim
 shotgunSim_LDADD = \
-	-L/fs/sz-user-supported/Linux-i686/lib
+	-L/fs/sz-user-supported/Linux-i686/lib \
 	-lgsl \
 	-lgslcblas
 
