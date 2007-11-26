@@ -625,8 +625,19 @@ sub parseTraceInfoFile {
 sub parseFrgFile {
     my $IN = shift;
 
+    my $FRG_VERSION = 1;
+
+    my %seqlibrary;
+    my %liborientation;
+
     while (my $record = getRecord($IN)){
 	my ($type, $fields, $recs) = parseRecord($record);
+
+        if ($type eq "VER") {
+          $FRG_VERSION  = $$fields{ver};
+          next;
+        }
+
 	if ($type eq "FRG") {
 	    my $id = getCAId($$fields{acc});
 	    my $iid = $minSeqId++;
@@ -647,27 +658,104 @@ sub parseFrgFile {
 	    print TMPSEQ "#\n";
 	    print TMPSEQ "$$fields{qlt}";
 	    print TMPSEQ "#\n";
+
+            if ($FRG_VERSION == 2)
+            {
+              my $lib = $$fields{lib};
+              $seqlibrary{$$fields{acc}} = $lib;
+
+              ## generate the unmated insert
+              if ($liborientation{$lib} eq "U")
+              {
+                my $id = $minSeqId++;
+                $seqinsert{$iid} = $id;
+                $insid{$id} = $id;
+                $seenlib{$id} = $lib;
+                $forw{$id} = $iid;
+              }
+            }
+
 	    next;
 	}
 	
-	if ($type eq "DST"){
+	if (($type eq "DST") || ($type eq "LIB")){
 	    my $id = getCAId($$fields{acc});
 	    $libraries{$id} = "$$fields{mea} $$fields{std}";
 #	    $libid{$id} = $minSeqId++;
+
+            if ($FRG_VERSION == 2)
+            {
+              $liborientation{$id} = $$fields{ori};
+            }
 	    next;
 	}
 	
 	if ($type eq "LKG"){
 	    my $id = $minSeqId++;
 #	    $insertlib{$$fields{dst}} .= "$id ";
-	    $seenlib{$id} = $$fields{dst};
-	    $seqinsert{$seqids{$$fields{fg1}}} = $id;
-	    $seqinsert{$seqids{$$fields{fg2}}} = $id;
-	    $forw{$id} = $seqids{$$fields{fg1}};
-	    $rev{$id} = $seqids{$$fields{fg2}};
-	    if ($$fields{ori} eq "O"){
-		$inserttype{$id} = "T";
-	    }
+
+            if ($FRG_VERSION == 2)
+            {
+              my $frgcount = 0;
+              my $lib1 = undef;
+              my $frg1 =  undef;
+
+              ## Version 2 has 2 fields named frg, so we can't use the parseRecord results
+              foreach (split /\n/, $record)
+              {
+                chomp;
+                my ($key, $acc) = split /:/;
+
+                if ($key eq "frg")
+                {
+                  die "LKG References unknown frg $acc\n"
+                    if (!exists $seqlibrary{$acc});
+
+                  die "Only 2 frgs per LKG is supported: frg:$acc!\n"
+                    if ($frgcount == 3);
+
+                  $frgcount++;
+
+                  my $lib = $seqlibrary{$acc};
+                  $seqinsert{$seqids{$acc}} = $id;
+
+                  if ($frgcount == 1) 
+                  { 
+                    $seenlib{$id} = $lib;
+                    $forw{$id} = $seqids{$acc}; 
+                    
+                    $lib1 = $lib; 
+                    $frg1 = $acc;
+
+                    if ($liborientation{$lib} eq "I") {} # standard, nothing to do
+                    elsif ($liborientation{$lib} eq "O") { $inserttype{$id} = "T" }
+                    else
+                    {
+                      die "ERROR: Library $lib has unsupported orienation $liborientation{$lib}\n";
+                    }
+                  }
+                  elsif ($frgcount == 2) 
+                  { 
+                    $rev{$id}  = $seqids{$acc}; 
+
+                    die "ERROR: Frgs come from different libraries $frg1 [$lib1] $acc [$lib]\n"
+                      if ($lib ne $lib1);
+                  }
+                }
+              }
+            }
+            else
+            {
+              $seenlib{$id} = $$fields{dst};
+              $seqinsert{$seqids{$$fields{fg1}}} = $id;
+              $seqinsert{$seqids{$$fields{fg2}}} = $id;
+              $forw{$id} = $seqids{$$fields{fg1}};
+              $rev{$id} = $seqids{$$fields{fg2}};
+              if ($$fields{ori} eq "O"){
+              $inserttype{$id} = "T";
+              }
+            }
+
 	    next;
 	}
     }
