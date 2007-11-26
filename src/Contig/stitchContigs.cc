@@ -101,7 +101,7 @@ int main (int argc, char ** argv)
     // Initialize
 
     master_reads.open(masterbank, B_READ|B_WRITE);
-    master_contig.open(masterbank, B_READ);
+    master_contig.open(masterbank, B_READ|B_WRITE);
     master_feat.open(masterbank, B_READ|B_WRITE);
     master_scaff.open(masterbank, B_READ|B_WRITE);
 
