@@ -1,11 +1,10 @@
 ##-- SUBDIRS TO RECURSE
 SUBDIRS = \
 	src \
-	doc
+	doc \
+    test
 
 EXTRA_DIST = test
 
 dist-hook:
-	rm -rf `find $(distdir)/test -name CVS`
-
-##-- END OF MAKEFILE --##
+	rm -rf `find $(distdir)/test -type d -name CVS`
