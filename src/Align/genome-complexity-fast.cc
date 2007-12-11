@@ -27,6 +27,7 @@ int Seed_Len = 30;
 const char * bintoascii = "ACGT";
 
 int OPT_DisplaySeq = 0;
+int OPT_DisplayStarts = 0;
 int OPT_SeqToDisplay = 8;
 
 //  Return the binary equivalent of  ch .
@@ -66,7 +67,8 @@ class MerVertex_t
   static int NODECOUNT; // give all the nodes a unique id
 public:
   MerVertex_t(int startpos, int endpos) 
-  : startpos_m(startpos), endpos_m(endpos), node_m(NODECOUNT++), dead(false) {}
+  : startpos_m(startpos), endpos_m(endpos), node_m(NODECOUNT++), dead(false) {
+    starts_m.push_back(startpos);}
   int startpos_m;
   int endpos_m;
   int   node_m;
@@ -74,6 +76,12 @@ public:
 
   vector<MerVertex_t *> out_m;
   vector<MerVertex_t *> in_m;
+  vector<int> starts_m;
+
+  void addStartPos(int pos)
+  {
+    starts_m.push_back(pos);
+  }
 
   int len() const
   {
@@ -196,6 +204,7 @@ public:
       if (substrEqual(startpos, endpos, 
                       m->second->startpos_m, m->second->endpos_m))
       {
+        m->second->addStartPos(startpos);
         return m->second;
       }
 
@@ -261,7 +270,22 @@ public:
       nodes_m[i]->node_m = count;
       count++;
 
-      if (OPT_DisplaySeq)
+      if (OPT_DisplayStarts)
+      {
+        cout << "  " << nodes_m[i]->node_m 
+             << " [label=\"";
+
+        sort(nodes_m[i]->starts_m.begin(), nodes_m[i]->starts_m.end());
+
+        for (int j = 0; j < nodes_m[i]->starts_m.size(); j++)
+        {
+          if (j > 0) { cout << ","; }
+          cout << nodes_m[i]->starts_m[j]+1; // use 1-based coordinates
+        }
+
+        cout << ":" << nodes_m[i]->len() << "\"]" << endl;
+      }
+      else if (OPT_DisplaySeq)
       {
         string s(nodes_m[i]->str(seq_m));
         int slen = s.length();
@@ -417,6 +441,7 @@ int main(int argc, char ** argv)
 "   -f <fasta> fasta file to evaluate\n"
 "   -k <len>   Length of mers to consider (default:30)\n"
 "   -C         Interpret genome as circular\n"
+"   -p         Display the start positions and length of each sequence\n"
 "   -d         Display the sequences for edge node\n"
 "   -D <len>   Only show first and last 4 bp for sequences longer than <len>\n"
 "\n";
@@ -429,6 +454,7 @@ int main(int argc, char ** argv)
     tf->getOptions()->addOptionResult("k=i", &Kmer_Len);
     tf->getOptions()->addOptionResult("C",   &isCircular);
     tf->getOptions()->addOptionResult("d",   &OPT_DisplaySeq);
+    tf->getOptions()->addOptionResult("p",   &OPT_DisplayStarts);
     tf->getOptions()->addOptionResult("D=i", &OPT_SeqToDisplay);
     tf->handleStandardOptions();
 
