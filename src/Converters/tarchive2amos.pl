@@ -296,12 +296,13 @@ if (defined $tracedir){
 	}
 
 	if (! -e $xmlname) {
-	    $base->bail("Cannot find the xml file corresponding to $seqname\n");
+	    $base->log("Cannot find the xml file corresponding to $seqname\n");
+	} else {
+	    push @xmlfiles, $xmlname;
 	}
 
 	push @seqfiles, $seqname;
 	push @qualfiles, $qualname;
-	push @xmlfiles, $xmlname;
     }
 
     if ($#xmlfiles <= $#ARGV) {		# fewer XML files than inputs
