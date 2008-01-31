@@ -109,6 +109,7 @@ AC_CANONICAL_HOST
 # set the automake build conditionals, e.g. BUILD_AMOScmp
 AMOS_BUILD_CONDITIONAL([AMOScmp], [no])
 AMOS_BUILD_CONDITIONAL([minimus], [no])
+AMOS_BUILD_CONDITIONAL([Simulator], [no])
 AMOS_BUILD_CONDITIONAL([all], [yes])
 
 AM_CONDITIONAL(BUILD_LIBZ, [test x"${have_libz}" = x"yes"])

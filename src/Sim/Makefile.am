@@ -11,8 +11,11 @@ dist_bin_SCRIPTS = \
 
 bin_PROGRAMS = \
 	pyrosim \
-	tandemCollapse \
-	shotgunSim
+	tandemCollapse
+
+if BUILD_Simulator
+  bin_PROGRAMS += shotgunSim
+endif
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -39,14 +42,15 @@ tandemCollapse_LDADD = \
 tandemCollapse_SOURCES = \
 	tandemCollapse.cc
 
-###-- shotgunSim
+####-- shotgunSim
+if BUILD_Simulator
 shotgunSim_LDADD = \
 	-L/fs/sz-user-supported/Linux-i686/lib \
 	-lgsl \
 	-lgslcblas
 
-
 shotgunSim_SOURCES = \
 	shotgunSim.cc
+endif
 
 ##-- END OF MAKEFILE --##
