@@ -11,6 +11,7 @@ bool OPT_FASTA = 0;
 int  OPT_Spacer = 100;
 int  OPT_MinGapSize = 100;
 bool OPT_UseExpected = 0;
+bool OPT_UseUngapped = 0;
 
 string OPT_BankName;
 
@@ -27,7 +28,7 @@ void PrintHelp (const char * s)
 {
   PrintUsage(s);
   cerr << "\n.DESCRIPTION.\n"
-       << "  Takes an AMOS bank directory and dumps the scaffolds to stdout.\n\n"
+       << "  Takes an AMOS bank directory and prints the scaffolds to stdout.\n\n"
        << "  Default format:\n"
        << "  >scaffid numcontigs scaffbases scaffspan\n"
        << "  contigid orientation contiglen gapsize\n"
@@ -36,9 +37,10 @@ void PrintHelp (const char * s)
        << "  -v      Display the compatible bank version\n"
        << "  -e      Use EIDs for names (DEFAULT)\n"
        << "  -i      Use IIDs for names\n"
-       << "  -E file Dump just the contig eids listed in file\n"
-       << "  -I file Dump just the contig iids listed in file\n\n"
-
+       << "  -E file Print just the contig eids listed in file\n"
+       << "  -I file Print just the contig iids listed in file\n"
+       << "  -u      Show the ungapped contig lengths in the scaff file\n"
+       << "\n"
        << "  -f      Print the scaffold consensus sequences in multi-fasta format\n"
        << "  -g      Use the estimated gaps size to space contigs\n"
        << "  -G val  Gaps < val will have val N's between them (-g)\n"
@@ -54,7 +56,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:gG:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:gG:u")) != EOF) )
   {
     switch (ch)
     {
@@ -77,6 +79,7 @@ void ParseArgs (int argc, char ** argv)
       case 'g': OPT_UseExpected = true;        break;
       case 'G': OPT_MinGapSize = atoi(optarg); break;
       case 'N': OPT_Spacer  = atoi(optarg);    break;
+      case 'u': OPT_UseUngapped = true; break;
 
       default: errflg ++;
       }
@@ -105,14 +108,8 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
   sort(contigs.begin(), contigs.end(), TileOrderCmp());
 
   cout << ">";
-  if (OPT_UseEIDs)
-  {
-    cout << scaff.getEID();
-  }
-  else
-  {
-    cout << scaff.getIID();
-  }
+  if (OPT_UseEIDs) { cout << scaff.getEID(); }
+  else             { cout << scaff.getIID(); }
 
   int bases = 0, span = 0;
 
@@ -186,7 +183,16 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
       if (ci->range.isReverse()) { cout << " EB "; }
       else                       { cout << " BE "; }
 
-      cout << ci->range.getLength();
+      if (OPT_UseUngapped)
+      {
+        contig_bank.fetch(ci->source, contig);
+        string s = contig.getUngappedSeqString();
+        cout << s.length();
+      }
+      else
+      {
+        cout << ci->range.getLength();
+      }
     }
   }
 
