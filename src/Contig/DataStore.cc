@@ -140,7 +140,7 @@ void DataStore::indexReads()
   EventTime_t timer;
 
   m_readfraglookup.clear();
-  m_readfraglookup.resize(read_bank.getIDMapSize()+1);
+  m_readfraglookup.resize(read_bank.getMaxBID()+1);
 
   Read_t red;
 
@@ -169,10 +169,10 @@ void DataStore::indexFrags()
   EventTime_t timer;
 
   m_fragliblookup.clear();
-  m_fragliblookup.resize(frag_bank.getIDMapSize()+1);
+  m_fragliblookup.resize(frag_bank.getMaxBID()+1);
 
   m_readmatelookup.clear();
-  m_readmatelookup.resize(read_bank.getIDMapSize()+1);
+  m_readmatelookup.resize(read_bank.getMaxBID()+1);
 
 
   Fragment_t frg;
@@ -274,7 +274,7 @@ void DataStore::indexContigs()
   EventTime_t timer;
 
   m_readcontiglookup.clear();
-  m_readcontiglookup.resize(read_bank.getIDMapSize()+1, 0);
+  m_readcontiglookup.resize(read_bank.getMaxBID()+1, 0);
 
   int contigs = 0;
   int reads = 0;
@@ -311,7 +311,7 @@ void DataStore::indexScaffolds()
   EventTime_t timer;
 
   m_contigscafflookup.clear();
-  m_contigscafflookup.resize(contig_bank.getIDMapSize()+1);
+  m_contigscafflookup.resize(contig_bank.getMaxBID()+1);
 
   int scaffolds = 0;
   int contigs = 0;
