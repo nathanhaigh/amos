@@ -998,6 +998,17 @@ public:
   //!
   ID_t getMaxIID ( ) const;
 
+  //--------------------------------------------------- getMaxBID --------------
+  //! \brief Searches through the bank for the largest BID
+  //!
+  //! \note O(n) time complexity
+  //!
+  //! \returns The maximum BID in the bank
+  //!
+  ID_t getMaxBID ( ) const;
+
+
+
 
   //--------------------------------------------------- getSize ----------------
   //! \brief Get the size of the bank, i.e. the number of stored records

@@ -556,6 +556,18 @@ ID_t Bank_t::getMaxIID() const
   return max;
 }
 
+//----------------------------------------------------- getMaxBID --------------
+ID_t Bank_t::getMaxBID() const
+{
+  ID_t max = NULL_ID;
+  IDMap_t::const_iterator i;
+
+  for ( i = idmap_m.begin(); i != idmap_m.end(); ++ i )
+    if ( i->bid > max ) max = i->bid;
+
+  return max;
+}
+
 
 //----------------------------------------------------- lookupBID --------------
 ID_t Bank_t::lookupBID (const string & eid) const
