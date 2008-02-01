@@ -35,10 +35,10 @@ OUTPUTS  = $(PREFIX).contig $(PREFIX).fasta
 30: $(BINDIR)/nucmer -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
 
 ## Get zero coverage regions
-31: $(BINDIR)/show-coords -c -l -o -r -H  $(PREFIX).delta | $(BINDIR)/getNucmerCoverage.pl -M 0  > $(PREFIX).0cvg
+31: $(BINDIR)/show-coords -c -l -o -r -H  $(PREFIX).delta | $(BINDIR)/getNucmerCoverage -M 0  > $(PREFIX).0cvg
 
 ## Get aligned read iid's and clrs
-32: $(BINDIR)/delta2clr.pl -zero_cvg $(PREFIX).0cvg -read_len $(READLEN) < $(PREFIX).delta > $(PREFIX).clr
+32: $(BINDIR)/delta2clr -zero_cvg $(PREFIX).0cvg -read_len $(READLEN) < $(PREFIX).delta > $(PREFIX).clr
 33: awk '{print $1}' $(PREFIX).clr > $(PREFIX).seqs
 34: $(BINDIR)/updateClrRanges -i $(PREFIX).bnk $(PREFIX).clr
 35: $(BINDIR)/dumpreads -I $(PREFIX).seqs $(BANK) > $(PREFIX).seq
