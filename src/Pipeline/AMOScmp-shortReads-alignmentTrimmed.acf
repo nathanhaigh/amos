@@ -45,7 +45,7 @@ OUTPUTS  = $(PREFIX).contig $(PREFIX).fasta
 34: $(BINDIR)/updateClrRanges -i $(PREFIX).bnk $(PREFIX).clr
 35: $(BINDIR)/dumpreads -I $(PREFIX).seqs $(BANK) > $(PREFIX).seq
 
-## Running nucmer on aligned(1) clrs
+## Running nucmer on aligned read clrs
 36: $(NUCMER) -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
 
 ## Running layout: (added -r, -S options)
