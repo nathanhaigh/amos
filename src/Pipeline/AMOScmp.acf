@@ -6,7 +6,7 @@ REF = $(PREFIX).1con
 #------------------------------------------------------------------------------#
 
 BINDIR   = /usr/local/bin
-NUCMER   = /usr/local/bin
+NUCMER   = /usr/local/bin/nucmer
 
 SEQS     = $(PREFIX).seq
 BANK     = $(PREFIX).bnk

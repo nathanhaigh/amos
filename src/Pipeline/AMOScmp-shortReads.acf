@@ -5,8 +5,8 @@ TGT = $(PREFIX).afg
 REF = $(PREFIX).1con
 #------------------------------------------------------------------------------#
 
-BINDIR=/fs/szdevel/dpuiu/SourceForge/AMOS/src/
-NUCMER=/fs/sz-user-supported/Linux-x86_64/bin/nucmer
+BINDIR=/usr/local/bin
+NUCMER=/usr/local/bin/nucmer
 
 SEQS     = $(PREFIX).seq
 BANK     = $(PREFIX).bnk
