@@ -2,7 +2,9 @@
 
 #--------------------------------------- USER DEFINED VALUES ------------------#
 
-BINDIR=/usr/local/bin
+BINDIR		= /usr/local/bin
+NUCMER		= /usr/local/bin/nucmer
+SHOW_COORDS	= /usr/local/bin/show-coords
 
 BANK     = $(PREFIX).bnk
 
@@ -32,10 +34,10 @@ OUTPUTS  = $(PREFIX).contig $(PREFIX).fasta
 20: $(BINDIR)/dumpreads $(BANK) > $(PREFIX).seq
 
 ## Running nucmer on all reads
-30: $(BINDIR)/nucmer -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
+30: $(NUCMER) -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
 
 ## Get zero coverage regions
-31: $(BINDIR)/show-coords -c -l -o -r -H  $(PREFIX).delta | $(BINDIR)/getNucmerCoverage -M 0  > $(PREFIX).0cvg
+31: $(SHOW_COORDS) -c -l -o -r -H  $(PREFIX).delta | $(BINDIR)/getNucmerCoverage -M 0  > $(PREFIX).0cvg
 
 ## Get aligned read iid's and clrs
 32: $(BINDIR)/delta2clr -zero_cvg $(PREFIX).0cvg -read_len $(READLEN) < $(PREFIX).delta > $(PREFIX).clr
@@ -44,14 +46,13 @@ OUTPUTS  = $(PREFIX).contig $(PREFIX).fasta
 35: $(BINDIR)/dumpreads -I $(PREFIX).seqs $(BANK) > $(PREFIX).seq
 
 ## Running nucmer on aligned(1) clrs
-36: $(BINDIR)/nucmer -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
+36: $(NUCMER) -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
 
 ## Running layout: (added -r, -S options)
 40: $(BINDIR)/casm-layout -r -g $(MAXGAPLEN) -i $(MINID) -I $(MAXREPEATID) -t $(MAXTRIM) -o $(MINOVL) -U $(PREFIX).layout -C $(PREFIX).conflict -b $(BANK) -m $(MAJORITY) -M $(PREFIX).map $(PREFIX).delta
 
 ## Running consensus
-50: /fs/szdevel/dpuiu/SourceForge/AMOS/src/Align/make-consensus -B -e $(CONSERR) -b $(BANK) -w $(ALIGNWIGGLE)
-#50: $(BINDIR)/make-consensus -B -e $(CONSERR) -b $(BANK)
+50: $(BINDIR)/make-consensus -B -e $(CONSERR) -b $(BANK) -w $(ALIGNWIGGLE)
 
 ## Outputting contigs 
 60: $(BINDIR)/bank2contig $(BANK) > $(PREFIX).contig
