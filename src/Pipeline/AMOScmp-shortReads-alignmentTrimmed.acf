@@ -1,0 +1,68 @@
+# `AMOScmp' - The AMOS Comparative Assembler Pipeline
+
+#--------------------------------------- USER DEFINED VALUES ------------------#
+
+BINDIR=/fs/sz-user-supported/Linux-x86_64/bin
+SCRIPTDIR=/nfshomes/dpuiu/bin
+
+BANK     = $(PREFIX).bnk
+
+MINCLUSTER  = 20 
+MINMATCH    = 20
+MINOVL      = 5
+MAXGAPLEN   = 10000
+MAXREPEATID = 2
+MAXTRIM     = 10
+MINID       = 70
+MAXGAP	    = 90 
+MAJORITY    = 50 
+BREAKLEN    = 200
+MAXGAP      = 90
+CONSERR	    = 0.06
+ALIGNWIGGLE = 2
+DIAGFACTOR  = 0.12
+READLEN     = 32
+
+INPUTS   = $(PREFIX).afg $(PREFIX).1con
+OUTPUTS  = $(PREFIX).contig $(PREFIX).fasta
+
+## Building AMOS bank
+10: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(PREFIX).afg
+
+## Collecting clear range sequences
+20: $(BINDIR)/dumpreads $(BANK) > $(PREFIX).seq
+
+## Running nucmer on all reads
+30: $(BINDIR)/nucmer -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
+
+## Get zero coverage regions
+31: $(BINDIR)/show-coords -c -l -o -r -H  $(PREFIX).delta | $(SCRIPTDIR)/getNucmerCoverage.pl -M 0  > $(PREFIX).0cvg
+
+## Get aligned read iid's and clrs
+32: $(SCRIPTDIR)/delta2clr.pl -zero_cvg $(PREFIX).0cvg -read_len $(READLEN) < $(PREFIX).delta > $(PREFIX).clr
+33: awk '{print $1}' $(PREFIX).clr > $(PREFIX).seqs
+34: $(BINDIR)/updateClrRanges -i $(PREFIX).bnk $(PREFIX).clr
+35: $(BINDIR)/dumpreads -I $(PREFIX).seqs $(BANK) > $(PREFIX).seq
+
+## Running nucmer on aligned(1) clrs
+36: $(BINDIR)/nucmer -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
+
+## Running layout: (added -r, -S options)
+40: $(BINDIR)/casm-layout -r -g $(MAXGAPLEN) -i $(MINID) -I $(MAXREPEATID) -t $(MAXTRIM) -o $(MINOVL) -U $(PREFIX).layout -C $(PREFIX).conflict -b $(BANK) -m $(MAJORITY) -M $(PREFIX).map $(PREFIX).delta
+
+## Running consensus
+50: /fs/szdevel/dpuiu/SourceForge/AMOS/src/Align/make-consensus -B -e $(CONSERR) -b $(BANK) -w $(ALIGNWIGGLE)
+#50: $(BINDIR)/make-consensus -B -e $(CONSERR) -b $(BANK)
+
+## Outputting contigs 
+60: $(BINDIR)/bank2contig $(BANK) > $(PREFIX).contig
+
+## Outputting contig fasta: -e added Dec17th 2007
+70: $(BINDIR)/bank2fasta -e -b $(BANK) > $(PREFIX).fasta
+
+## Outputting scaff
+80: $(BINDIR)/bank2scaff $(BANK) > $(PREFIX).scaff
+
+## Outputting scaff fasta
+90: $(BINDIR)/bank2scaff -g $(BANK) > $(PREFIX).scaffold.fasta
+
