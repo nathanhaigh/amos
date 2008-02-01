@@ -13,7 +13,7 @@ my @DEPENDS=("TIGR::Foundation");
 
 # help info
 my $HELPTEXT = qq~
-Program that computes the read coverage of a .contig file
+Program that computes alignment coverage from a coords file
 
 Usage: $PRG < coords_file [options]
 	

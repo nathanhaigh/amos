@@ -13,6 +13,7 @@ my @DEPENDS=("TIGR::Foundation");
 
 # help info
 my $HELPTEXT = qq~
+Program that computes read clear ranges based on alignment coordinates
 
 Usage: $PRG < delta_file [options]
 
