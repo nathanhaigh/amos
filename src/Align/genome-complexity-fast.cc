@@ -78,8 +78,8 @@ public:
   int   node_m;
   bool  dead;
 
-  vector<MerVertex_t *> out_m;
-  vector<MerVertex_t *> in_m;
+  vector<MerVertex_t *> successor_m;
+  vector<MerVertex_t *> predecessor_m;
   vector<int> starts_m;
 
   void addStartPos(int pos)
@@ -95,23 +95,23 @@ public:
   // Can this node be compressed with its immediate neighbor
   bool isCompressable()
   {
-    if (out_m.empty() || (out_m[0] == this))
+    if (successor_m.empty() || (successor_m[0] == this))
     {
       return false;
     }
 
     // Make sure all of the out-links point to the same node v
-    int ol = out_m.size();
+    int ol = successor_m.size();
     for (int i = 1; i < ol; i++)
     {
-      if (out_m[i] != out_m[0])
+      if (successor_m[i] != successor_m[0])
       {
         return false;
       }
     }
 
     // Make sure all of v's in-links are from me
-    int il = out_m[0]->in_m.size();
+    int il = successor_m[0]->predecessor_m.size();
 
     if (ol != il)
     {
@@ -120,7 +120,7 @@ public:
 
     for (int i = 0; i < il; i++)
     {
-      if (out_m[0]->in_m[i] != this)
+      if (successor_m[0]->predecessor_m[i] != this)
       {
         return false;
       }
@@ -132,22 +132,22 @@ public:
   // Actually collapse this node with its immediate neighbor
   void collapse()
   {
-    MerVertex_t * buddy = out_m[0];
+    MerVertex_t * buddy = successor_m[0];
     //cerr << "Collapse " << node_m << " and " << buddy->node_m << endl;
-    out_m = buddy->out_m;
+    successor_m = buddy->successor_m;
     buddy->dead = true;
     endpos_m += buddy->len() - (Kmer_Len-2);
 
     // Update the links so that the buddy's neighbors now point at me
-    for (int i = 0; i < out_m.size(); i++)
+    for (int i = 0; i < successor_m.size(); i++)
     {
-      MerVertex_t * bo = out_m[i];
+      MerVertex_t * bo = successor_m[i];
 
-      for (int j = 0; j < bo->in_m.size(); j++)
+      for (int j = 0; j < bo->predecessor_m.size(); j++)
       {
-        if (bo->in_m[j] == buddy)
+        if (bo->predecessor_m[j] == buddy)
         {
-          bo->in_m[j] = this;
+          bo->predecessor_m[j] = this;
           break;
         }
       }
@@ -157,43 +157,43 @@ public:
 
   bool isTreeLeaf()
   {
-    int il = in_m.size();
-    int ol = out_m.size();
+    int il = predecessor_m.size();
+    int ol = successor_m.size();
 
     if ((il != ol) || (il == 0)) { return false; }
 
     // see if all of my in links are from the same node
     for (int i = 1; i < il; i++)
     {
-      if (in_m[i] != in_m[0]) { return false; }
+      if (predecessor_m[i] != predecessor_m[0]) { return false; }
     }
 
     // see if all of my out links are to the same node
     for (int i = 0; i < ol; i++)
     {
-      if (out_m[i] != in_m[0]) { return false; }
+      if (successor_m[i] != predecessor_m[0]) { return false; }
     }
 
     // now see if parent has just 1 extra in- and out- link
-    MerVertex_t * parent = out_m[0];
+    MerVertex_t * parent = successor_m[0];
 
-    if (parent->in_m.size()  != ol+1) { return false; }
-    if (parent->out_m.size() != il+1) { return false; }
+    if (parent->predecessor_m.size()  != ol+1) { return false; }
+    if (parent->successor_m.size()    != il+1) { return false; }
 
     return true;
   }
 
   bool isSelfLeaf()
   {
-    int ol = out_m.size();
-    int il = out_m.size();
+    int ol = successor_m.size();
+    int il = predecessor_m.size();
 
     if (ol != il) { return false; }
 
     int self = 0;
     for (int i = 0; i < il; i++)
     {
-      if (out_m[i] == this) { self++; }
+      if (successor_m[i] == this) { self++; }
     }
 
     if ((self > 0) && (self == il-1))
@@ -206,49 +206,57 @@ public:
 
   void foldSelf()
   {
-    int numcycles = out_m.size()-1;
+    int numcycles = successor_m.size()-1;
 
     int mylen = len();
     endpos_m += numcycles * (mylen - (Kmer_Len-2));
 
     MerVertex_t * other = NULL;
-    int ol = out_m.size();
-    int il = in_m.size();
+    int ol = successor_m.size();
+    int il = predecessor_m.size();
 
+    // keep just the non-self successor
     for (int i = 0; i < ol; i++)
     {
-      if (out_m[i] != this) { other = out_m[i]; break; }
+      if (successor_m[i] != this) 
+      { other = successor_m[i]; break; }
     }
 
-    out_m.clear();
-    out_m.push_back(other);
+    assert(other != NULL);
 
+    successor_m.clear();
+    successor_m.push_back(other);
+
+    // keep just the non-self predecessor
     for (int i = 0; i < il; i++)
     {
-      if (in_m[i] != this) { other = in_m[i]; break; }
+      if (predecessor_m[i] != this)
+      { other = predecessor_m[i]; break; }
     }
 
-    in_m.clear();
-    in_m.push_back(other);
+    assert(other != NULL);
+
+    predecessor_m.clear();
+    predecessor_m.push_back(other);
   }
 
-  // backward: multiple predecessors (in_m), one successor(out_m)
+  // backward: multiple predecessors (predecessor_m), one successor(successor_m)
   bool isBackwardDecisionNode()
   {
-    int il = in_m.size();
-    int ol = out_m.size();
+    int il = predecessor_m.size();
+    int ol = successor_m.size();
     if ((ol != il) || (il < 2)) { return false; }
 
-    // check that all of the outlinks go to the same node (out_m[0])
+    // check that all of the outlinks go to the same node (successor_m[0])
     for (int i = 1; i < ol; i++)
     {
-      if (out_m[i] != out_m[0]) { return false; }
+      if (successor_m[i] != successor_m[0]) { return false; }
     }
 
     // now check that there are > 1 predecessors
     for (int i = 1; i < il; i++)
     {
-      if (in_m[i] != in_m[0])
+      if (predecessor_m[i] != predecessor_m[0])
       {
         return true;
       }
@@ -258,23 +266,23 @@ public:
     return false;
   }
 
-  // forward: one predecessor (in_m), multiple successors (out_m)
+  // forward: one predecessor (predecessor_m), multiple successors (successor_m)
   bool isForwardDecisionNode()
   {
-    int il = in_m.size();
-    int ol = out_m.size();
+    int il = predecessor_m.size();
+    int ol = successor_m.size();
     if ((ol != il) || (il < 2)) { return false; }
 
-    // check that all of the inlinks are from the same node (in_m[0])
+    // check that all of the inlinks are from the same node (predecessor_m[0])
     for (int i = 1; i < il; i++)
     {
-      if (in_m[i] != in_m[0]) { return false; }
+      if (predecessor_m[i] != predecessor_m[0]) { return false; }
     }
 
     // now check that there are > 1 successors
     for (int i = 1; i < ol; i++)
     {
-      if (out_m[i] != out_m[0])
+      if (successor_m[i] != successor_m[0])
       {
         return true;
       }
@@ -283,14 +291,14 @@ public:
     return false;
   }
 
-  // There are multiple predecessors (in_m), split this node for each
+  // There are multiple predecessors (predecessor_m), split this node for each
   NodeTable_t splitBackwards()
   {
     NodeTable_t retval;
 
     // count how many different predecessors I have
-    int il = in_m.size();
-    int numpre = 1; //in_m[0];
+    int il = predecessor_m.size();
+    int numpre = 1; //predecessor_m[0];
     int pre[il];
     pre[0] = 0;
 
@@ -299,7 +307,7 @@ public:
       bool seen = false;
       for (int j = 0; j < i; j++)
       {
-        if (in_m[i] == in_m[j])
+        if (predecessor_m[i] == predecessor_m[j])
         {
           seen = true;
           pre[i] = pre[j];
@@ -320,7 +328,7 @@ public:
       dead = true;
 
       // the sole successor node
-      MerVertex_t * successor = out_m[0];
+      MerVertex_t * successor = successor_m[0];
       int successorlinksfixed = 0;
 
       for (int p = 0; p < numpre; p++)
@@ -336,29 +344,36 @@ public:
               nn = new MerVertex_t(startpos_m, endpos_m);
               retval.push_back(nn);
 
-              // update the links inside in_m[i]
-              MerVertex_t * pred = in_m[i];
-              int bol = pred->out_m.size();
+              // update the links inside predecessor_m[i]
+              MerVertex_t * pred = predecessor_m[i];
+              int bol = pred->successor_m.size();
               for (int b = 0; b < bol; b++)
               {
-                if (pred->out_m[b] == this)
+                if (pred->successor_m[b] == this)
                 {
-                  pred->out_m[b] = nn;
+                  pred->successor_m[b] = nn;
                 }
               }
             }
 
-            nn->in_m.push_back(in_m[i]);
-            nn->out_m.push_back(successor);
+            nn->predecessor_m.push_back(predecessor_m[i]);
+            nn->successor_m.push_back(successor);
           }
         }
 
-        // update successor's in-links
-        int nl = nn->out_m.size();
+        // update successors's out-links
+        int nl = nn->successor_m.size();
+        int succpred = successor->predecessor_m.size();
         for (int k = 0; k < nl; k++)
         {
-          successor->in_m[successorlinksfixed] = nn;
-          successorlinksfixed++;
+          for (int j = 0; j < succpred; j++)
+          {
+            if (successor->predecessor_m[j] == this)
+            {
+              successor->predecessor_m[j] = nn;
+              break;
+            }
+          }
         }
       }
     }
@@ -366,14 +381,14 @@ public:
     return retval;
   }
 
-  // There are multiple successors (out_m), split this node for each
+  // There are multiple successors, split this node for each
   NodeTable_t splitForwards()
   {
     NodeTable_t retval;
 
     // count how many different successors I have
-    int ol = out_m.size();
-    int numsuc = 1; //out_m[0];
+    int ol = successor_m.size();
+    int numsuc = 1; //successor_m[0];
     int suc[ol];
     suc[0] = 0;
 
@@ -382,7 +397,7 @@ public:
       bool seen = false;
       for (int j = 0; j < i; j++)
       {
-        if (out_m[i] == out_m[j])
+        if (successor_m[i] == successor_m[j])
         {
           seen = true;
           suc[i] = suc[j];
@@ -403,8 +418,8 @@ public:
       dead = true;
 
       // the sole predecessor node
-      MerVertex_t * pred = in_m[0];
-      int predlinksfixed = 0;
+      MerVertex_t * pred = predecessor_m[0];
+      int predsucc = pred->successor_m.size();
 
       for (int s = 0; s < numsuc; s++)
       {
@@ -419,29 +434,35 @@ public:
               nn = new MerVertex_t(startpos_m, endpos_m);
               retval.push_back(nn);
 
-              // update the links inside out_m[i]
-              MerVertex_t * succ = out_m[i];
-              int bil = succ->in_m.size();
+              // update the links inside successor_m[i]
+              MerVertex_t * succ = successor_m[i];
+              int bil = succ->predecessor_m.size();
               for (int b = 0; b < bil; b++)
               {
-                if (succ->in_m[b] == this)
+                if (succ->predecessor_m[b] == this)
                 {
-                  succ->in_m[b] = nn;
+                  succ->predecessor_m[b] = nn;
                 }
               }
             }
 
-            nn->in_m.push_back(pred);
-            nn->out_m.push_back(out_m[i]);
+            nn->predecessor_m.push_back(pred);
+            nn->successor_m.push_back(successor_m[i]);
           }
         }
 
         // update pred's out-links
-        int nl = nn->in_m.size();
+        int nl = nn->predecessor_m.size();
         for (int k = 0; k < nl; k++)
         {
-          pred->out_m[predlinksfixed] = nn;
-          predlinksfixed++;
+          for (int j = 0; j < predsucc; j++)
+          {
+            if (pred->successor_m[j] == this)
+            {
+              pred->successor_m[j] = nn;
+              break;
+            }
+          }
         }
       }
     }
@@ -452,9 +473,9 @@ public:
 
   void foldIntoParent()
   {
-    MerVertex_t * parent = in_m[0];
+    MerVertex_t * parent = predecessor_m[0];
 
-    int numcycles = in_m.size();
+    int numcycles = predecessor_m.size();
 
     int mylen = len();
     int plen  = parent->len();
@@ -465,28 +486,34 @@ public:
 
     // Clear all of the parents out- and in- links to me (all but 1 each)
 
-    int pol = parent->out_m.size();
-    int pil = parent->in_m.size();
+    int pol = parent->successor_m.size();
+    int pil = parent->predecessor_m.size();
 
     MerVertex_t * pout = NULL;
 
     for (int i = 0; i < pol; i++)
     {
-      if (parent->out_m[i] != this) { pout = parent->out_m[i]; break; }
+      if (parent->successor_m[i] != this) 
+      { pout = parent->successor_m[i]; break; }
     }
 
-    parent->out_m.clear();
-    parent->out_m.push_back(pout);
+    assert(pout != NULL);
+
+    parent->successor_m.clear();
+    parent->successor_m.push_back(pout);
 
     MerVertex_t * pin = NULL;
 
     for (int i = 0; i < pil; i++)
     {
-      if (parent->in_m[i] != this) { pin = parent->in_m[i]; break; }
+      if (parent->predecessor_m[i] != this) 
+      { pin = parent->predecessor_m[i]; break; }
     }
 
-    parent->in_m.clear();
-    parent->in_m.push_back(pin);
+    assert(pin != NULL);
+
+    parent->predecessor_m.clear();
+    parent->predecessor_m.push_back(pin);
   }
 
   // Return the sequence stored in the node
@@ -498,20 +525,20 @@ public:
   
   bool isNonDecisionNode()
   {
-    int il = in_m.size();
-    int ol = out_m.size();
+    int il = predecessor_m.size();
+    int ol = successor_m.size();
     
     if (il != ol) { return false; }
 
     // check all in links are same
     for (int i = 1; i < il; i++)
     {
-      if (in_m[i] != in_m[0]) { return false; }
+      if (predecessor_m[i] != predecessor_m[0]) { return false; }
     }
 
     for (int i = 1; i < ol; i++)
     {
-      if (out_m[i] != out_m[0]) { return false; }
+      if (successor_m[i] != successor_m[0]) { return false; }
     }
 
     return true;
@@ -597,8 +624,8 @@ public:
       // suffix is the next (k-1) bp
       MerVertex_t * s = getVertex(seed, i, i+Kmer_Len-2);
 
-      p->out_m.push_back(s);
-      s->in_m.push_back(p);
+      p->successor_m.push_back(s);
+      s->predecessor_m.push_back(p);
 
       p = s;
     }
@@ -613,6 +640,22 @@ public:
     }
 
     return mers_m.size();
+  }
+
+  void printStats()
+  {
+    int numNodes = nodes_m.size();
+    int numEdges = 0;
+
+    for (NodeTable_t::iterator ni = nodes_m.begin();
+         ni != nodes_m.end();
+         ni++)
+    {
+      numEdges += (*ni)->successor_m.size();
+    }
+
+    cerr << "n=" << numNodes << " m=" << numEdges << endl;
+
   }
 
   // Print graph in DOT format
@@ -669,9 +712,9 @@ public:
     // Print Edges
     for (NodeTable_t::iterator ni = nodes_m.begin(); ni != nodes_m.end(); ni++)
     {
-      for (int j = 0; j < (*ni)->out_m.size(); j++)
+      for (int j = 0; j < (*ni)->successor_m.size(); j++)
       {
-        cout << "  " << (*ni)->node_m << " -> " << (*ni)->out_m[j]->node_m << endl;
+        cout << "  " << (*ni)->node_m << " -> " << (*ni)->successor_m[j]->node_m << endl;
       }
     }
 
@@ -755,23 +798,26 @@ public:
 
   void compressTrees()
   {
-    int foldcount = 1;
     int nodecount = nodes_m.size();
     int totalfolds = 0;
     int selffolds = 0;
 
-    while (foldcount)
+    bool madefold = true;
+
+    while (madefold)
     {
       cerr << ".";
-      foldcount = 0;
-      for (NodeTable_t::iterator ni = nodes_m.begin(); ni != nodes_m.end(); ni++)
+      madefold = false;
+      for (NodeTable_t::iterator ni = nodes_m.begin(); 
+           ni != nodes_m.end(); 
+           ni++)
       {
         if ((*ni)->dead) { continue; }
 
         if ((*ni)->isSelfLeaf())
         {
           (*ni)->foldSelf();
-          foldcount++;
+          madefold = true;
           totalfolds++;
           selffolds++;
         }
@@ -779,13 +825,13 @@ public:
         if ((*ni)->isTreeLeaf())
         {
           (*ni)->foldIntoParent();
-          foldcount++;
+          madefold=true;
           totalfolds++;
         }
       }
-    }
 
-    cleanNodeArray();
+      compressPaths();
+    }
 
     cerr << "Made " << totalfolds << " total folds, " << selffolds << " selffolds" << endl;
   }
@@ -825,7 +871,7 @@ public:
   void splitForwardDecisionNodes()
   {
     int numsplit = 0;
-    bool split = false;
+    bool split = true;
     while (split)
     {
       split = false;
@@ -854,7 +900,7 @@ public:
   }
 
   void convertNonDecisionToEdges()
-  {
+  { 
     int numnondecisionnodes = 0;
 
     for (NodeTable_t::iterator ni = nodes_m.begin();
@@ -867,7 +913,8 @@ public:
       }
     }
 
-    cerr << "NonDecisionNodes: " << numnondecisionnodes << endl;
+    int final = nodes_m.size() - numnondecisionnodes;
+    cerr << "--Final: n=" << final << endl;
   }
 };
 
@@ -887,18 +934,17 @@ void ComputeComplexity(const string & tag, const string & seq)
   cerr << graph.nodeCount() << " nodes.  " << timegraph.str(true, 8) << endl;
 
   graph.convertToNodes();
+  graph.printStats();
 
   EventTime_t timecompress;
   graph.compressPaths();
   cerr << graph.nodeCount() << " nodes compressed.  " << timecompress.str(true, 8) << endl;
+  graph.printStats();
 
   EventTime_t timetree;
   graph.compressTrees();
   cerr << graph.nodeCount() << " nodes treecompressed. " << timetree.str(true, 8) << endl;
-
-  EventTime_t timecompress2;
-  graph.compressPaths();
-  cerr << graph.nodeCount() << " nodes compressed2.  " << timecompress2.str(true, 8) << endl;
+  graph.printStats();
 
   EventTime_t timebackwards;
   graph.splitBackwardDecisionNodes();
@@ -912,11 +958,15 @@ void ComputeComplexity(const string & tag, const string & seq)
   graph.compressPaths();
   cerr << graph.nodeCount() << " nodes compressed3.  " << timecompress3.str(true, 8) << endl;
 
+
+  cerr << "--PostSplit:";
+  graph.printStats();
+
   EventTime_t timeconverttoedges;
   graph.convertNonDecisionToEdges();
-  cerr << graph.nodeCount() << " nodes converttoedges.  " << timeconverttoedges.str(true, 8) << endl;
 
   cerr << "Total time: " << timeall.str(true, 8) << endl;
+
 
   graph.print();
 
