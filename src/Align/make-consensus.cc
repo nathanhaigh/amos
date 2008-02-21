@@ -1012,7 +1012,7 @@ static void Output_Unit
     {
     case MULTI_ALIGN_OUTPUT:
       cout << endl << endl << label << " #" << msg.getAccession ()
-	<< "   " << num_reads - expel_ct << " reads" << endl;
+	<< "   " << num_reads << " reads" << endl;
       gma.Consensus_To_Lower ();
       gma.Print (stdout, string_list, 60, &tag_list);
       break;
