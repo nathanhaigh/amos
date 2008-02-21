@@ -71,7 +71,7 @@ const unsigned int  PRINT_CONSENSUS_GAP_COORDS = 1 << 2;
 
 //  Results for checking/fixing starts of alignments
 enum  Fix_Status_t
-  {NO_FIX_NEEDED, NEEDS_LEFT_SHIFT, SHIFTED_RIGHT};
+  {NO_FIX_NEEDED, NEEDS_LEFT_SHIFT, SHIFTED_RIGHT, SHIFTED_LEFT};
 
 
 //  Defaults values for alignment score parameters
@@ -270,6 +270,8 @@ class  Base_Alignment_t
        (void)  const;
    void  Flip_AB
        (void);
+   bool  Is_Empty
+     (void)  const;
   };
 
 
@@ -302,9 +304,6 @@ class  Alignment_t  :  public Base_Alignment_t
    void  Dump_Delta
        (FILE * fp)  const;
    void  Check_Fix_Start
-       (const char * s , int s_len, const char * t, int t_len,
-        Fix_Status_t & status);
-   void  Fix_Start
        (const char * s , int s_len, const char * t, int t_len,
         Fix_Status_t & status);
    void  Flip_AB
@@ -411,22 +410,29 @@ class  Multi_Alignment_t
        (const string & s)
      { id = s; }
 
+   bool  Check_Subsequent_Overlaps
+     (const char * cons, int cons_len, const vector <char *> & s, int i, 
+      const vector <int> & offset, int n, int curr_offset, int wiggle, int min_olap,
+      double error_rate);
    void  Clear
-       (void);
+     (void);
    int  Estimate_Offset_Position
-       (int i, const vector <int> & offset);
+     (int i, const vector <int> & offset);
+   int  Estimate_Offset_With_Expels
+     (int i, const vector <int> & offset, const vector <bool> & expel);
    void  Print_Alignments_To_Consensus
-       (FILE * fp, vector <char *> s);
+     (FILE * fp, vector <char *> s);
    void  Reset_From_Votes
-       (const vector <char *> & s,
-        int offset_delta, double error_rate,
-        vector <Vote_t> & vote, bool & changed);
+     (const vector <char *> & s,
+      int offset_delta, double error_rate,
+      vector <Vote_t> & vote, bool & changed);
    void  Set_Consensus
-       (char * s);
+     (char * s);
    void  Set_Initial_Consensus
-       (const vector <char *> & s, const vector <int> & offset,
-        int offset_delta, double error_rate, int min_overlap,
-        vector <Vote_t> & vote, vector <char *> * tag_list = NULL);
+     (const vector <char *> & s, const vector <int> & offset,
+      int offset_delta, double error_rate, int min_overlap,
+      vector <Vote_t> & vote, vector <char *> * tag_list = NULL,
+      bool allow_expels = FALSE);
   };
 
 
@@ -558,6 +564,8 @@ class  Gapped_Multi_Alignment_t
         vector <char *> * tag = NULL);
    void  Print_Consensus
        (char * buff, int b1, int b2);
+   int  Print_Empty_Aligns
+       (FILE * fp, const vector <char *> & tag, const char * contig_id);
    void  Print_Ungapped_Consensus
        (FILE * fp, char * hdr, int width = DEFAULT_FASTA_WIDTH);
    void  Reverse_Complement
@@ -646,7 +654,7 @@ void  Multi_Align
     (const string & id, vector <char *> & s, vector <int> & offset,
      int offset_delta, double error_rate, int min_overlap,
      Gapped_Multi_Alignment_t & ma, vector <int> * ref = NULL,
-     vector <char *> * tag_list = NULL);
+     vector <char *> * tag_list = NULL, bool allow_expels = FALSE);
 void  Overlap_Align
     (const char * s, int s_len, const char * t, int t_lo, int t_hi,
      int t_len, int match_score, int mismatch_score, int indel_score,

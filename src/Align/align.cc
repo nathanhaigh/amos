@@ -444,6 +444,17 @@ void  Base_Alignment_t :: Flip_AB
 
 
 
+bool  Base_Alignment_t :: Is_Empty
+  (void)  const
+
+  // Return  true  iff  a_lo/hi  and  b_lo/hi  are all 0
+
+{
+  return (a_lo == 0 && a_hi == 0 && b_lo == 0 && b_hi == 0);
+}
+
+
+
 
 // ###  Alignment_t  methods  ###
 
@@ -608,7 +619,7 @@ void  Alignment_t :: Check_Fix_Start
 //  The alignment aligns  s  as the a-string to  t  as the b-string.
 
   {
-   int  i, j, n, shift;
+   int  i, j, n, shift, indels, matches;
 
    n = delta . size ();
 
@@ -638,16 +649,45 @@ void  Alignment_t :: Check_Fix_Start
           delta [i] = delta [j];
         delta . resize (n - shift);
         b_lo += shift;
+        if (shift <= errors)
+          errors -= shift;   // errors is generally not used and set to zero
 
         status = SHIFTED_RIGHT;
         return;
        }
 
-   if  (delta [0] == -1)
-       {
-        status = NEEDS_LEFT_SHIFT;
-        return;
-       }
+   if (delta [0] == -1)
+     {  // first count how many -1's are at the start
+       for (j = 1; j < n && delta [j] == -1; j ++)
+         ;
+       if (j <= b_lo)
+         {  // count the number of matches
+           indels = j;
+           i = b_lo - indels;
+           matches = 0;
+           for (j = 0; j < indels; j ++)
+             if (s [a_lo + j] == t [i + j])
+               matches ++;
+
+           if (indels - 1 <= matches)
+             {  // all but one character matches so can just shift the start
+               shift = j = indels;
+               for (i = 0; j < n; i ++, j ++)
+                 delta [i] = delta [j];
+               delta . resize (n - shift);
+               b_lo -= shift;
+               if (indels - matches <= errors)
+                 errors -= indels - matches;
+               // errors is generally not used and set to zero
+
+               status = SHIFTED_LEFT;
+               return;
+             }
+         }
+       status = NEEDS_LEFT_SHIFT;
+       // needs a more complicated shift
+       return;
+     }
 
    return;
   }
@@ -1701,6 +1741,59 @@ void  Gapped_MA_Bead_t :: Advance
 // ###  Multi_Alignment_t  methods  ###
 
 
+bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
+  (const char * cons, int cons_len, const vector <char *> & s, int i, 
+   const vector <int> & offset, int n, int curr_offset, int wiggle, int min_overlap,
+   double erate)
+
+  // Check if one of the strings  s [i .. (n-1)]  might overlap
+  // string  cons  (whose lenth is  cons_len ) based on their
+  // relative offsets in  offset  w.r.t the current offset of string  i - 1
+  // in  cons  of  curr_offset  and actual alignments.  Offset positions
+  // are allowed  wiggle  characters in each direction and the minimum
+  // overlap is  min_overlap  characters.   erate  is the allowed
+  // error fraction in overlaps.
+
+{
+  Alignment_t  ali;
+  int  add_offset = 0, min_olap;
+  int  j;
+
+  min_olap = Min (cons_len, min_overlap);
+  // Adjust in case the consensus is too short.  Don't adjust if a
+  // subsequent string is too short, though.  It will be used if it
+  // overlaps well enough in the main routine, but it shouldn't justify
+  // getting rid of this string.
+
+  for (j = i; j < n; j ++)
+    {
+      bool  matched;
+      int  lo, mid, hi, exp_olap_len, error_limit, len;
+
+      len = strlen (s [j]);
+
+      add_offset += offset [j];
+      if (cons_len - add_offset + wiggle < min_olap)
+        return false;   // It's hopeless from here on since offsets only increase
+
+      mid = cons_len - min_olap;
+      lo = Max (0, Min (curr_offset - wiggle, mid));
+      hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
+      exp_olap_len = Min (cons_len - lo, len);
+
+      error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
+      matched = Overlap_Match_VS (s [j], len, cons, cons_len, lo, hi,
+                                  0, error_limit, ali);
+
+      if (matched && ali . Error_Rate () <= erate)
+        return true;
+    }
+
+  return false;
+}
+
+
+
 void  Multi_Alignment_t :: Clear
     (void)
 
@@ -1745,6 +1838,44 @@ int  Multi_Alignment_t :: Estimate_Offset_Position
 
    return  -1;
   }
+
+
+
+int  Multi_Alignment_t :: Estimate_Offset_With_Expels
+    (int i, const vector <int> & offset, const vector <bool> & expel)
+
+// Estimate the position at which  offset [i]  would be in the
+// consensus of this multialignment using the previous alignments
+// in  align [0 .. (i-1)] , but not any whose corresponding  expel  entry
+// is true.  The values in  offset  represent the
+// leftmost position of each string relative to the preceding string.
+
+{
+  int  j, off;
+
+  off = offset [i];
+  for (j = i - 1; j >= 0; j --)
+    {
+      if (! expel [j])
+        {
+          int  len;
+
+          len = align [j] . a_hi - align [j] . a_lo;
+
+          if  (off < len)
+            return  align [j] . B_Position (off);
+        }
+
+      off += offset [j];
+    }
+
+  sprintf (Clean_Exit_Msg_Line,
+           "ERROR:  Impossible  offset = %d  i = %d  in  Estimate_Offset_With_Expels\n",
+           offset [i], i);
+  Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+
+  return  -1;
+}
 
 
 
@@ -1843,6 +1974,13 @@ void  Multi_Alignment_t :: Reset_From_Votes
       int  error_limit, len, off;
       int  lo, hi;
 
+      if (align [i] . Is_Empty ())
+        {
+          if (Verbose > 1)
+            cerr << "In Reset_From_Votes skipping empty alignment " << i << endl;
+          continue;
+        }
+
       len = strlen (s [i]);
       error_limit = Binomial_Cutoff (len, error_rate, 1e-6);
 
@@ -1875,6 +2013,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
          ok = Substring_Match_VS
                    (s [i], len, cons, cons_len, lo, hi,
                     error_limit, align [i]);
+
          if  (! ok)
              {
               wiggle *= 2;
@@ -1963,22 +2102,25 @@ void  Multi_Alignment_t :: Set_Consensus
 void  Multi_Alignment_t :: Set_Initial_Consensus
     (const vector <char *> & s, const vector <int> & offset,
      int offset_delta, double error_rate, int min_overlap,
-     vector <Vote_t> & vote, vector <char *> * tag_list)
+     vector <Vote_t> & vote, vector <char *> * tag_list, bool allow_expels)
 
-//  Create an initial consensus string in this multialignment from the
-//  strings in  s  with nominal relative offsets in  offset .  Offsets
-//  are allowed to vary by +/-  offset_delta  and the allowed error rate
-//  in alignments is  error_rate .  Strings must overlap by
-//  at least  min_overlap  bases.  Set  vote  to the votes of the strings
-//  at each position of the consensus.  Create the consensus by greedily
-//  tiling the strings in order, appending the extension of any
-//  string that aligns past the end of the consensus.  Store the
-//  initial alignments in this consensus, too.  If  tag_list  isn't
-//   NULL , then use its values to identify strings.
+// Create an initial consensus string in this multialignment from the
+// strings in  s  with nominal relative offsets in  offset .  Offsets
+// are allowed to vary by +/-  offset_delta  and the allowed error rate
+// in alignments is  error_rate .  Strings must overlap by
+// at least  min_overlap  bases.  Set  vote  to the votes of the strings
+// at each position of the consensus.  Create the consensus by greedily
+// tiling the strings in order, appending the extension of any
+// string that aligns past the end of the consensus.  Store the
+// initial alignments in this consensus, too.  If  tag_list  isn't
+//  NULL , then use its values to identify strings.  If  allow_expels  is
+// true, then reads can be omitted from the multialignment if they would
+// have to be forced and they do not disconnect the alignment.
 
   {
    Vote_t  v;
    Alignment_t  ali;
+   vector <bool>  expel;
    char  * cons;
    bool  wrote_contig_id = false;
    int  cons_len;
@@ -2003,11 +2145,13 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
    num_strings = s . size ();
        // where the last string started in the consensus
-
+   for (i = 0; i < num_strings; i ++)
+     expel . push_back (false);
 
    for  (i = 1;  i < num_strings;  i ++)
      {
-      bool  wrote_string_tag = false;
+      Fix_Status_t  fix_status;
+      bool  wrote_string_tag = false, can_skip = false;
       bool  matched;
       double  erate;
       int  error_limit, len, exp_olap_len, min_olap;
@@ -2019,9 +2163,12 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       wiggle = offset_delta;
       erate = error_rate;
 
-      curr_offset = Min (cons_len, Estimate_Offset_Position (i, offset));
-        // where offset position hits the consensus, based on prior
-        // string alignment(s)
+      if (allow_expels)
+        curr_offset = Min (cons_len, Estimate_Offset_With_Expels (i, offset, expel));
+      else
+        curr_offset = Min (cons_len, Estimate_Offset_Position (i, offset));
+      // where offset position hits the consensus, based on prior
+      // string alignment(s)
 
       min_olap = Min (min_overlap, Min (cons_len, len));
         // reduce the minimum overlap length if the strings are too short
@@ -2068,75 +2215,102 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
              }
         }  while  (! matched && ++ attempts < MAX_ALIGN_ATTEMPTS);
 
-      if  (! matched)
-          {
-           iostream::fmtflags status;
-           int  a_width, b_width, max_width;
+      if (matched)
+        ali . Check_Fix_Start (s [i], len, cons, cons_len, fix_status);
+      else
+        {
+          if (allow_expels)
+            {
+              can_skip = Check_Subsequent_Overlaps
+                (cons, cons_len, s, i + 1, offset, num_strings, curr_offset,
+                 offset_delta, min_overlap, error_rate);
+                // Use the original min-overlap value since this string
+                // might be a short contained string.
+                // Also use the original wiggle (offset_delta) and erate values.
+                // Maybe this is too conservative??
+              if (! can_skip)
+                // try overlapping without most recent previous extension
+                // on consensus
+                ;
+            }
 
-           if  (Verbose > 0)
-               cerr << "No more Mr. Nice Guy--forcing alignment" << endl;
+          if (can_skip)
+            expel [i] = true;
+          else
+            {
+              iostream::fmtflags status;
+              int  a_width, b_width, max_width;
 
-           Overlap_Align (s [i], len, cons, lo, hi, cons_len,
-                1, -3, -2, -2, ali);
-           ali . a_len = len;
+              if  (Verbose > 0)
+                cerr << "No more Mr. Nice Guy--forcing alignment" << endl;
 
-           a_width = ali . a_hi - ali . a_lo;
-           b_width = ali . b_hi - ali . b_lo;
-           max_width = Max (a_width, b_width);
+              Overlap_Align (s [i], len, cons, lo, hi, cons_len,
+                             1, -3, -2, -2, ali);
+              ali . a_len = len;
 
-           cerr << "In contig " << id << " forced alignment of "
-                << a_width << " bases of string ";
-           if  (tag_list != NULL)
-               cerr << (* tag_list) [i] << " ";
-           cerr << "subscript " << i;
-           cerr << " to " << b_width << " bases of consensus\n";
-           status = cerr . setf (ios :: fixed);
-           cerr << "  with " << ali . errors << " errors ("
-                << setprecision (2) << Percent (ali . errors, max_width)
-                << "% error)" << endl;
-           cerr . setf (status);
+              a_width = ali . a_hi - ali . a_lo;
+              b_width = ali . b_hi - ali . b_lo;
+              max_width = Max (a_width, b_width);
+
+              cerr << "In contig " << id << " forced alignment of "
+                   << a_width << " bases of string ";
+              if  (tag_list != NULL)
+                cerr << (* tag_list) [i] << " ";
+              cerr << "subscript " << i;
+              cerr << " to " << b_width << " bases of consensus\n";
+              status = cerr . setf (ios :: fixed);
+              cerr << "  with " << ali . errors << " errors ("
+                   << setprecision (2) << Percent (ali . errors, max_width)
+                   << "% error)" << endl;
+              cerr . setf (status);
 
 #if  0
-           fprintf (stderr,
-                "\nERROR:  Failed to find overlap between this string:\n");
-           Fasta_Print (stderr, s [i]);
-           fprintf (stderr, "\nand this portion of prior consensus:\n");
-           Fasta_Print (stderr, cons + lo);
-           fprintf (stderr,
-                "\nstarting in the first %d bases with at most %d errors\n\n",
-                hi - lo, error_limit);
-           sprintf (Clean_Exit_Msg_Line,
-                "Failed on string %d in  Set_Initial_Consensus", i);
-           throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
-                -1, i);
+              fprintf (stderr,
+                       "\nERROR:  Failed to find overlap between this string:\n");
+              Fasta_Print (stderr, s [i]);
+              fprintf (stderr, "\nand this portion of prior consensus:\n");
+              Fasta_Print (stderr, cons + lo);
+              fprintf (stderr,
+                       "\nstarting in the first %d bases with at most %d errors\n\n",
+                       hi - lo, error_limit);
+              sprintf (Clean_Exit_Msg_Line,
+                       "Failed on string %d in  Set_Initial_Consensus", i);
+              throw AlignmentException_t (Clean_Exit_Msg_Line, __LINE__, __FILE__,
+                                          -1, i);
 #endif
-          }
+            }
+        }
 
-      ali . Incr_Votes (vote, s [i]);
+      if (expel [i])
+        ali . Clear ();
+      else
+        {
+          ali . Incr_Votes (vote, s [i]);
 
-      if  (ali . a_hi < len)
-          {  // s [i] extends past the end of the current consensus
-           int  extra;
+          if (ali . a_hi < len)
+            {  // s [i] extends past the end of the current consensus
+              int  extra;
 
-           extra = len - ali . a_hi;
-           cons = (char *) Safe_realloc (cons, cons_len + extra + 1,
-                                         __FILE__, __LINE__);
-           strcpy (cons + cons_len, s [i] + ali . a_hi);
-           cons_len += extra;
+              extra = len - ali . a_hi;
+              cons = (char *) Safe_realloc (cons, cons_len + extra + 1,
+                                            __FILE__, __LINE__);
+              strcpy (cons + cons_len, s [i] + ali . a_hi);
+              cons_len += extra;
 
-           for  (j = ali . a_hi;  j < len - 1;  j ++)
-             {
-              v . Set_To (s [i] [j], true);
+              for (j = ali . a_hi; j < len - 1; j ++)
+                {
+                  v . Set_To (s [i] [j], true);
+                  vote . push_back (v);
+                }
+              v . Set_To (s [i] [len - 1], false);
               vote . push_back (v);
-             }
-           v . Set_To (s [i] [len - 1], false);
-           vote . push_back (v);
 
-           ali . a_hi = len;
-           ali . b_hi = cons_len;
-          }
+              ali . a_hi = len;
+              ali . b_hi = cons_len;
+            }
 
-      ali . a_len = len;
+          ali . a_len = len;
+        }
       align . push_back (ali);
      }
 
@@ -3399,46 +3573,47 @@ void  Gapped_Multi_Alignment_t :: Print
            diff [hi - lo] = '\0';
           }
 
-      for  (i = 0;  i < n;  i ++)
-        if  (Range_Intersect (align [i] . b_lo, align [i] . b_hi, lo, hi))
-            {
-             char  tag_buff [100];
-             int  sub;
+      for (i = 0; i < n; i ++)
+        if (! align [i] . Is_Empty ()
+            && Range_Intersect (align [i] . b_lo, align [i] . b_hi, lo, hi))
+          {
+            char  tag_buff [100];
+            int  sub;
 
-             if  (use_string_sub)
-                 sub = align [i] . string_sub;
-               else
-                 sub = i;
-             align [i] . Print_Subalignment_Line
-                           (buff, lo, hi, s [sub], a_lo, a_hi);
+            if  (use_string_sub)
+              sub = align [i] . string_sub;
+            else
+              sub = i;
+            align [i] . Print_Subalignment_Line
+              (buff, lo, hi, s [sub], a_lo, a_hi);
              
-             if  (tag == NULL)
-                 sprintf (tag_buff, "%4d:", sub);
-               else
-                 sprintf (tag_buff, "%10.10s:", (* tag) [sub]);
-             if  (align [i] . flipped)
-                 {
-                  print_lo = align [i] . a_len - a_lo;
-                  print_hi = align [i] . a_len - a_hi;
-                 }
-               else
-                 {
-                  print_lo = a_lo;
-                  print_hi = a_hi;
-                 }
-             fprintf (fp, "%s  %s  (%d-%d)\n", tag_buff, buff, print_lo,
-                  print_hi);
+            if  (tag == NULL)
+              sprintf (tag_buff, "%4d:", sub);
+            else
+              sprintf (tag_buff, "%10.10s:", (* tag) [sub]);
+            if  (align [i] . flipped)
+              {
+                print_lo = align [i] . a_len - a_lo;
+                print_hi = align [i] . a_len - a_hi;
+              }
+            else
+              {
+                print_lo = a_lo;
+                print_hi = a_hi;
+              }
+            fprintf (fp, "%s  %s  (%d-%d)\n", tag_buff, buff, print_lo,
+                     print_hi);
 
-             if  (with_diffs)
-                 {
-                  int  j, k;
+            if  (with_diffs)
+              {
+                int  j, k;
 
-                  k = 0;
-                  for  (j = lo;  j < hi;  j ++, k ++)
-                    if  (buff [k] != ' ' && buff [k] != consensus [j])
-                        diff [k] = '^';
-                 }
-            }
+                k = 0;
+                for  (j = lo;  j < hi;  j ++, k ++)
+                  if  (buff [k] != ' ' && buff [k] != consensus [j])
+                    diff [k] = '^';
+              }
+          }
 
       Print_Consensus (buff, lo, hi);
 
@@ -3503,6 +3678,28 @@ void  Gapped_Multi_Alignment_t :: Print_Consensus
    buff [ct] = '\0';
 
    return;
+  }
+
+
+
+int  Gapped_Multi_Alignment_t :: Print_Empty_Aligns
+  (FILE * fp, const vector <char *> & tag, const char * contig_id)
+
+// Print to  fp  strings in  tag  corresponding to alignments in this
+// multialignment that are empty.  For each, also print  contig_id
+
+  {
+   int  i, n, ct = 0;
+
+   n = align . size ();
+   for (i = 0; i < n; i ++)
+     if (align [i] . Is_Empty ())
+       {
+         fprintf (fp, "%-10s  %s\n", tag [i], contig_id);
+         ct ++;
+       }
+
+   return ct;
   }
 
 
@@ -4082,20 +4279,26 @@ void Gapped_Multi_Alignment_t :: Make_AMOS_Contig
   int n = align . size ();
 
   vector <Tile_t> tiles;
-  for (int i = 0; i < n; i ++){
-    AMOS :: Tile_t tile;
-    tile . source = strtol(tag [i], NULL, 10);
-    if (tile.source == 0){
-      cerr << "Source of tag " << tag[i] << " is null\n";
-    }
-    tile . range = clr_list [i];
-    tile . offset = align [i] . b_lo;
+  for (int i = 0; i < n; i ++)
+    {
+      AMOS :: Tile_t tile;
+
+      if (align [i] . Is_Empty ())
+        continue;
+      // skip empty alignments which indicate expelled strings
+
+      tile . source = strtol(tag [i], NULL, 10);
+      if (tile.source == 0){
+        cerr << "Source of tag " << tag[i] << " is null\n";
+      }
+      tile . range = clr_list [i];
+      tile . offset = align [i] . b_lo;
     
-    int skip = align [i] . Get_Skip (0);
-    int s = 0;
-    while (skip != INT_MAX) {
-      tile . gaps . push_back (skip - tile . offset - s); // convert to CA standard
-      skip = align [i] . Get_Skip(++ s);
+      int skip = align [i] . Get_Skip (0);
+      int s = 0;
+      while (skip != INT_MAX) {
+        tile . gaps . push_back (skip - tile . offset - s); // convert to CA standard
+        skip = align [i] . Get_Skip(++ s);
     }
 
     tiles . push_back(tile);
@@ -5342,21 +5545,23 @@ void  Multi_Align
     (const string & id, vector <char *> & s, vector <int> & offset,
      int offset_delta, double error_rate, int min_overlap,
      Gapped_Multi_Alignment_t & gma, vector <int> * ref,
-     vector <char *> * tag_list)
+     vector <char *> * tag_list, bool allow_expels)
 
-//   id  is the id of the contig being multi-aligned.
-//  Create multialignment in  gma  of strings  s  each of which has
-//  a nominal offset from its predecessor of  offset .   offset_delta  is
-//  the number of positions by which the offset is allowed to vary in
-//  either direction.   error_rate  is the maximum expected error rate
-//  in alignments between strings.  It should be twice the expected error
-//  rate to the real reference string to allow for independent errors
-//  in separate strings.  Strings must overlap by at least  min_overlap
-//  bases (unless forced).  The value of  offset [0]  must be zero.
-//  If  ref  isn't  NULL  then make its values be the subscripts of
-//  the original locations of the entries in  s  in case they are
-//  shifted.   If  tag_list  isn't  NULL , then use its values to identify
-//  the strings in  s  and shift them along with the entries in  s .
+//  id  is the id of the contig being multi-aligned.
+// Create multialignment in  gma  of strings  s  each of which has
+// a nominal offset from its predecessor of  offset .   offset_delta  is
+// the number of positions by which the offset is allowed to vary in
+// either direction.   error_rate  is the maximum expected error rate
+// in alignments between strings.  It should be twice the expected error
+// rate to the real reference string to allow for independent errors
+// in separate strings.  Strings must overlap by at least  min_overlap
+// bases (unless forced).  The value of  offset [0]  must be zero.
+// If  ref  isn't  NULL  then make its values be the subscripts of
+// the original locations of the entries in  s  in case they are
+// shifted.   If  tag_list  isn't  NULL , then use its values to identify
+// the strings in  s  and shift them along with the entries in  s .
+// If  allow_expels  is true, then reads can be left out of the multialignment
+// if doing so does not separate the multialignment into disjoint segments
 
   {
    Multi_Alignment_t  ma;
@@ -5396,7 +5601,7 @@ void  Multi_Align
 
    ma . setID (id);
    ma . Set_Initial_Consensus (s, offset, offset_delta, error_rate, min_overlap,
-        vote, tag_list);
+        vote, tag_list, allow_expels);
 
    ct = 0;
    do

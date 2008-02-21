@@ -2,9 +2,10 @@
 //
 //  File:  make-consensus.cc
 //
-//  Last Modified:  3 January 2008
+//  Last Modified:  19 February 2008
 //
-//  -w <n> for align wiggle
+//  Read layout information for reads in unitigs/contigs and create
+//  multialignments and/or consensus sequences for them.
 
 
 #include  "foundation_AMOS.hh"
@@ -23,8 +24,7 @@
 using namespace std;
 using namespace AMOS;
 
-const int  ALIGN_WIGGLE = 15;
-
+const int  DEFAULT_ALIGN_WIGGLE = 15;
    // Number of positions left and right of specified location
    // to look for alignments.
 const double DEFAULT_ERROR_RATE = 0.06;
@@ -41,6 +41,13 @@ enum Output_Format_t
 };
 
 
+static int Align_Wiggle = DEFAULT_ALIGN_WIGGLE;
+  // Change made by Daniela Puiu 01/03/2008
+  //   new input parameter -w to specify the alignment wiggle
+  //   default value 15; use a smaller value for Solexa data
+static bool  Allow_Expels = false;
+  // If set true (by -x option) then allow reads with poor alignments to
+  // be expelled from multialignments
 static string Bank_Name;
   // Name of read bank from which reads are obtained
 static bool Use_SeqNames = false;
@@ -53,6 +60,8 @@ static bool Do_Unitig_Messages = false;
   // input will be processed
 static double Error_Rate = DEFAULT_ERROR_RATE;
   // Fraction of errors allowed in alignments
+static FILE  * Expel_fp = NULL;
+  // Pointer to file where expelled reads are output
 static FILE *Extra_fp = NULL;
   // Pointer to file of extra fasta sequences to align
 static Input_Format_t Input_Format = SIMPLE_CONTIG_INPUT;
@@ -72,11 +81,6 @@ static bool byEID = false;
 static ifstream EID_fp;
   // Pointer to file of EIDs
 
-// Change made by Daniela Puiu 01/03/2008
-//   new input parameter -w to specify the alignment wiggle
-//   default value 15; use a smaller value for Solexa data
-static int align_wiggle = ALIGN_WIGGLE;
-  // align wiggle default 15
 
 static bool USE_LayoutClear = false;	// TODO: Fix AMOScmp, then this will be true
 
@@ -207,8 +211,9 @@ int main (int argc, char *argv[])
 		try
 		{
 		  cid = msg.getAccession ();
-		  Multi_Align (cid, string_list, offset, align_wiggle,
-			       Error_Rate, Min_Overlap, gma, &ref, &tag_list);
+		  Multi_Align
+                    (cid, string_list, offset, Align_Wiggle, Error_Rate,
+                     Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
 		}
 		catch (AlignmentException_t)
 		{
@@ -223,6 +228,8 @@ int main (int argc, char *argv[])
 		gma.Get_Positions (pos);
 		gma.Extract_IMP_Dels (del_list);
 		msg.Update_IMPs (pos, ref, del_list);
+                if (Allow_Expels)
+                  msg . Remove_Empty_IMPs ();
 
 		Output_Unit (label, msg.getAccession (),
 			     msg.getNumFrags (), gma, msg, string_list,
@@ -317,8 +324,9 @@ int main (int argc, char *argv[])
 	    //              cerr << "got this far " << cid << endl;
 	    try
 	    {
-	      Multi_Align (cid, string_list, offset, align_wiggle,
-			   Error_Rate, Min_Overlap, gma, &ref, &tag_list);
+	      Multi_Align
+                (cid, string_list, offset, Align_Wiggle, Error_Rate,
+                 Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
 	    }
 	    catch (...)
 	    {
@@ -334,6 +342,8 @@ int main (int argc, char *argv[])
 	    gma.Get_Positions (pos);
 	    gma.Extract_IMP_Dels (del_list);
 	    msg.Update_IMPs (pos, ref, del_list);
+            if (Allow_Expels)
+              msg . Remove_Empty_IMPs ();
 
 	    gma.Set_Consensus_And_Qual (string_list, qual_list);
 	    msg.setSequence (gma.getConsensusString ());
@@ -404,9 +414,9 @@ int main (int argc, char *argv[])
 		    msg.setIMPs (frg_id_list, pos_list);
 		    try
 		    {
-		      Multi_Align (cid, string_list, offset, align_wiggle,
-				   Error_Rate, Min_Overlap, gma, &ref,
-				   &tag_list);
+		      Multi_Align
+                        (cid, string_list, offset, Align_Wiggle, Error_Rate,
+                         Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
 		    }
 		    catch (AlignmentException_t & e)
 		    {
@@ -425,6 +435,8 @@ int main (int argc, char *argv[])
 		    gma.Get_Positions (pos);
 		    gma.Extract_IMP_Dels (del_list);
 		    msg.Update_IMPs (pos, ref, del_list);
+                    if (Allow_Expels)
+                      msg . Remove_Empty_IMPs ();
 
 		    gma.Set_Consensus_And_Qual (string_list, qual_list);
 		    msg.setSequence (gma.getConsensusString ());
@@ -488,8 +500,9 @@ int main (int argc, char *argv[])
 	    msg.setIMPs (frg_id_list, pos_list);
 	    try
 	    {
-	      Multi_Align (cid, string_list, offset, align_wiggle,
-			   Error_Rate, Min_Overlap, gma, &ref, &tag_list);
+	      Multi_Align
+                (cid, string_list, offset, Align_Wiggle, Error_Rate, Min_Overlap,
+                 gma, &ref, &tag_list, Allow_Expels);
 	    }
 	    catch (AlignmentException_t & e)
 	    {
@@ -509,6 +522,8 @@ int main (int argc, char *argv[])
 	    gma.Get_Positions (pos);
 	    gma.Extract_IMP_Dels (del_list);
 	    msg.Update_IMPs (pos, ref, del_list);
+            if (Allow_Expels)
+              msg . Remove_Empty_IMPs ();
 
 	    gma.Set_Consensus_And_Qual (string_list, qual_list);
 	    msg.setSequence (gma.getConsensusString ());
@@ -527,6 +542,8 @@ int main (int argc, char *argv[])
 
     if (Input_Format != BANK_INPUT)
       fclose (input_fp);
+    if (Expel_fp != NULL)
+      fclose (Expel_fp);
 
     read_bank.close ();
   }
@@ -984,12 +1001,18 @@ static void Output_Unit
 {
   Contig_t act;
   Message_t amg;
+  int  expel_ct = 0;
+
+  if (Allow_Expels)
+    expel_ct = gma . Print_Empty_Aligns
+      (Expel_fp, tag_list, msg . getAccession () . c_str ());
+
   act.setEID (id);
   switch (Output_Format)
     {
     case MULTI_ALIGN_OUTPUT:
       cout << endl << endl << label << " #" << msg.getAccession ()
-	<< "   " << num_reads << " reads" << endl;
+	<< "   " << num_reads - expel_ct << " reads" << endl;
       gma.Consensus_To_Lower ();
       gma.Print (stdout, string_list, 60, &tag_list);
       break;
@@ -1039,7 +1062,7 @@ static void Parse_Command_Line (int argc, char *argv[])
   optarg = NULL;
 
   while (!errflg
-	 && ((ch = getopt (argc, argv, "aAbBcCe:E:fhi:n:o:PsSTuv:w:L")) != EOF))
+	 && ((ch = getopt (argc, argv, "aAbBcCe:E:fhi:Ln:o:PsSTuv:w:x:")) != EOF))
     switch (ch)
       {
       case 'a':
@@ -1137,7 +1160,14 @@ static void Parse_Command_Line (int argc, char *argv[])
 	break;
 
       case 'w':
-        align_wiggle = strtol (optarg, NULL, 15);
+        Align_Wiggle = strtol (optarg, NULL, 10);
+        break;
+
+      case 'x':
+        Allow_Expels = true;
+        Expel_fp = File_Open (optarg, "w", __FILE__, __LINE__);
+        fprintf (Expel_fp, "# expelled reads:  read-id  contig-id\n");
+        cerr << "Expelled reads listed in file " << optarg << endl;
         break;
 
       case '?':
@@ -1268,6 +1298,7 @@ static void Usage (const char *command)
 	   "  -u       Process unitig messages\n"
 	   "  -v <n>   Set verbose level to <n>.  Higher produces more output\n"
            "  -w <n>   Set alignment wiggle to <n>. Default is 15. Use a smaller value for Solexa reads (Example: -w 2)\n" 
+	   "  -x <fn>  Expel poor aligning reads from contigs and list them in file <fn>\n"
 	   "\n", command);
 
   return;
