@@ -192,6 +192,8 @@ class  Celera_IMP_Sub_Msg_t
    const char *  id_string
        (void)
      { return "IMP"; }
+   bool  Is_Empty
+     (void);
    bool  print
        (FILE * fp);
    bool  read_body
@@ -370,6 +372,8 @@ class  Celera_Msg_Body_t
        (FILE * fp) = 0;
    virtual  bool  read_body
        (FILE * fp) = 0;
+   virtual  void  Remove_Empty_IMPs
+     (void);
    virtual  void  Update_IMPs
        (const vector <AMOS::Range_t> & pos, const vector <int> & ref,
         const vector < vector <int> > & del_list);
@@ -689,6 +693,8 @@ class  Celera_IUM_Msg_Body_t  :  public Celera_Msg_Body_t
        (FILE * fp);
    bool  read_body
        (FILE * fp);
+   void  Remove_Empty_IMPs
+     (void);
    void  Update_IMPs
        (const vector <AMOS::Range_t> & pos, const vector <int> & ref,
         const vector < vector <int> > & del_list);
@@ -822,6 +828,8 @@ class  Celera_Message_t
        (FILE * fp, const char * seq = NULL, const char * qv = NULL);
    bool  read
        (FILE * fp);
+   void  Remove_Empty_IMPs
+     (void);
    void  Update_IMPs
        (const vector <AMOS::Range_t> & pos, const vector <int> & ref,
         const vector < vector <int> > & del_list);

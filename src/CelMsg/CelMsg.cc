@@ -110,6 +110,18 @@ void  Celera_IMP_Sub_Msg_t :: clear
   }
 
 
+
+bool  Celera_IMP_Sub_Msg_t :: Is_Empty
+  (void)
+
+// Return  true  iff both positions are zero
+
+{
+  return (position . getBegin () == 0 && position . getEnd () == 0);
+}
+
+
+
 bool  Celera_IMP_Sub_Msg_t :: print
     (FILE * fp)
 
@@ -689,6 +701,15 @@ void  Celera_Msg_Body_t :: setUniLen
             id_string ());
    throw IOException_t (Clean_Exit_Msg_Line);
   }
+
+
+void  Celera_Msg_Body_t :: Remove_Empty_IMPs
+  (void)
+{
+  sprintf (Clean_Exit_Msg_Line, "Remove_Empty_IMPs illegal for %s message",
+           id_string ());
+  throw IOException_t (Clean_Exit_Msg_Line);
+}
 
 
 void  Celera_Msg_Body_t :: Update_IMPs
@@ -1368,6 +1389,37 @@ bool  Celera_IUM_Msg_Body_t :: read_body
 
 
 
+void  Celera_IUM_Msg_Body_t :: Remove_Empty_IMPs
+  (void)
+
+// Remove all  IMP  submessages with positions that are both zero from
+// this message.
+
+{
+  vector <Celera_IMP_Sub_Msg_t>  new_list;
+  Celera_IMP_Sub_Msg_t  m;
+  int  remove_ct = 0;
+  int  i;
+
+  for (i = 0; i < num_frags; i ++)
+    if (imp_list [i] . Is_Empty ())
+      remove_ct ++;
+
+  if (remove_ct == 0)
+    return;   // nothing to remove
+
+  for (i = 0; i < num_frags; i ++)
+    if (! imp_list [i] . Is_Empty ())
+      new_list . push_back (imp_list [i]);
+  
+  imp_list = new_list;
+  num_frags -= remove_ct;
+
+  return;
+}
+
+
+
 void  Celera_IUM_Msg_Body_t :: setIMPs
     (const vector <int> & f, const vector <Ordered_Range_t> & p)
 
@@ -2011,6 +2063,28 @@ bool  Celera_Message_t :: read
        }
 
    return  body -> read_body (fp);
+  }
+
+
+
+void  Celera_Message_t :: Remove_Empty_IMPs
+  (void)
+
+//  Remove IMP entries with both values equal to zero in the body
+//  of this message.  Only applies to IUM and ICM messages.
+
+  {
+   switch  (msg_type)
+     {
+      case  IUM_MSG :
+      case  ICM_MSG :
+        body -> Remove_Empty_IMPs ();
+        return;
+      default :
+        sprintf (Clean_Exit_Msg_Line, "Attempt to Update_IMPs for %s message",
+             Convert_String (msg_type));
+        throw IOException_t (Clean_Exit_Msg_Line);
+     }
   }
 
 
