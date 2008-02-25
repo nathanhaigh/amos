@@ -242,9 +242,9 @@ bool  Distinguishing_Column_t :: Intersects
 
 
 void  Vote_t :: Incr_After
-    (char ch)
+    (char ch, int incr_val)
 
-//  Add 1 to the  after  count in this  Vote_t  for  ch .
+//  Add  incr_val  to the  after  count in this  Vote_t  for  ch .
 
   {
    char  * p;
@@ -257,7 +257,7 @@ void  Vote_t :: Incr_After
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
 
-   after [p - ALPHABET] ++;
+   after [p - ALPHABET] += incr_val;
 
    return;
   }
@@ -265,23 +265,23 @@ void  Vote_t :: Incr_After
 
 
 void  Vote_t :: Incr_Blank
-    (void)
+    (int incr_val)
 
-//  Add 1 to the blank entry in the  here  counts of this  Vote_t .
+//  Add  incr_val  to the blank entry in the  here  counts of this  Vote_t .
 
   {
-   here [ALPHABET_SIZE] ++;
+    here [ALPHABET_SIZE] += incr_val;
 
-   return;
+    return;
   }
 
 
 
 void  Vote_t :: Incr_By
-    (char ch, bool with_blank)
+    (char ch, bool with_blank, int incr_val)
 
-//  Add 1 to the  here  count in this  Vote_t  for  ch .
-//  If  with_blank  is true then also add 1 to the after
+//  Add  incr_val  to the  here  count in this  Vote_t  for  ch .
+//  If  with_blank  is true then also add  incr_val  to the after
 //  count for a blank.
 
   {
@@ -295,9 +295,9 @@ void  Vote_t :: Incr_By
         Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
        }
 
-   here [p - ALPHABET] ++;
-   if  (with_blank)
-       after [ALPHABET_SIZE] ++;
+   here [p - ALPHABET] += incr_val;
+   if (with_blank)
+     after [ALPHABET_SIZE] += incr_val;
 
    return;
   }
@@ -714,11 +714,12 @@ void  Alignment_t :: Flip_AB
 
 
 void  Alignment_t :: Incr_Votes
-    (vector <Vote_t> & vote, char * a)
+    (vector <Vote_t> & vote, char * a, int incr_val)
 
-//  Use the entries in the alignment to increment the entries in  vote
-//  that correspond to the  b  string in the alignment.
-//  Vote values are from the string  a .
+// Use the entries in the alignment to increment the entries in  vote
+// that correspond to the  b  string in the alignment.
+// Vote values are from the string  a .  Value to increment by
+// is  incr_val .
 
   {
    int  d, i, j, k, n;
@@ -740,7 +741,7 @@ void  Alignment_t :: Incr_Votes
 
       for  (k = 0;  k < extent;  k ++)
         {
-         vote [j] . Incr_By (a [i], (k < extent - 1));
+         vote [j] . Incr_By (a [i], (k < extent - 1), incr_val);
          i ++;
          j ++;
         }
@@ -748,12 +749,12 @@ void  Alignment_t :: Incr_Votes
       if  (delta [d] < 0)
           {
            if  (extent > 0)
-               vote [j - 1] . Incr_After (a [i]);
+               vote [j - 1] . Incr_After (a [i], incr_val);
            i ++;
           }
         else
           {
-           vote [j] . Incr_Blank ();
+           vote [j] . Incr_Blank (incr_val);
            j ++;
           }
      }
@@ -767,7 +768,7 @@ void  Alignment_t :: Incr_Votes
    // Now finish off what's left
    while  (i < a_hi && j < b_hi)
      {
-      vote [j] . Incr_By (a [i], (j < b_hi - 1));
+      vote [j] . Incr_By (a [i], (j < b_hi - 1), incr_val);
       i ++;
       j ++;
      }
@@ -2123,8 +2124,8 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    vector <bool>  expel;
    char  * cons;
    bool  wrote_contig_id = false;
-   int  cons_len;
-   int  num_strings;
+   int  cons_len, prev_cons_len = 0;
+   int  num_strings, prev_sub;
    int  i, j;
 
    Clear ();
@@ -2142,6 +2143,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
    ali . Set_To_Identity (cons_len);
    align . push_back (ali);
+   prev_sub = 0;
 
    num_strings = s . size ();
        // where the last string started in the consensus
@@ -2151,7 +2153,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    for  (i = 1;  i < num_strings;  i ++)
      {
       Fix_Status_t  fix_status;
-      bool  wrote_string_tag = false, can_skip = false;
+      bool  wrote_string_tag = false, can_skip = false, retry_worked = false;
       bool  matched;
       double  erate;
       int  error_limit, len, exp_olap_len, min_olap;
@@ -2173,10 +2175,10 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       min_olap = Min (min_overlap, Min (cons_len, len));
         // reduce the minimum overlap length if the strings are too short
         // to achieve it
+      mid = cons_len - min_olap;
 
       do
         {
-         mid = cons_len - min_olap;
          lo = Max (0, Min (curr_offset - wiggle, mid));
          hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
@@ -2228,15 +2230,30 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
                 // might be a short contained string.
                 // Also use the original wiggle (offset_delta) and erate values.
                 // Maybe this is too conservative??
-              if (! can_skip)
-                // try overlapping without most recent previous extension
-                // on consensus
-                ;
+              if (! can_skip && 0 < prev_sub && prev_cons_len < cons_len)
+                {
+                  // try overlapping without most recent prior consensus
+                  lo = Max (0, Min (curr_offset - offset_delta, mid));
+                  hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
+                  exp_olap_len = Min (prev_cons_len - lo, len);
+
+                  error_limit = Binomial_Cutoff (exp_olap_len, error_rate, 1e-6);
+                  retry_worked = Overlap_Match_VS
+                    (s [i], len, cons, prev_cons_len, lo, hi, 0, error_limit, ali);
+                  retry_worked = retry_worked && ali . Error_Rate () <= error_rate;
+                  if (retry_worked)
+                    { // Remove prev_sub and its votes
+                      align [prev_sub] . Incr_Votes (vote, s [prev_sub], -1);
+                      align [prev_sub]  . Clear ();
+                      vote . resize (prev_cons_len);
+                      cons_len = prev_cons_len;
+                    }
+                }
             }
 
           if (can_skip)
             expel [i] = true;
-          else
+          else if (! retry_worked)
             {
               iostream::fmtflags status;
               int  a_width, b_width, max_width;
@@ -2287,6 +2304,9 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
         {
           ali . Incr_Votes (vote, s [i]);
 
+          prev_sub = i;
+          prev_cons_len = cons_len;
+
           if (ali . a_hi < len)
             {  // s [i] extends past the end of the current consensus
               int  extra;
@@ -2314,21 +2334,21 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       align . push_back (ali);
      }
 
-   if  (Verbose > 1)
-       {
-        fprintf (stderr, "*** Votes ***\n");
-        fprintf (stderr, "%5s: %2s  ------ Here -------  ------ After ------\n",
-                 "Pos", "Ch");
-        for  (j = 0;  j < cons_len;  j ++)
-          fprintf (stderr, "%5d:  %c  %3d %3d %3d %3d %3d  %3d %3d %3d %3d %3d\n",
-                   j, cons [j],
-                   vote [j] . here [0], vote [j] . here [1], 
-                   vote [j] . here [2], vote [j] . here [3], 
-                   vote [j] . here [4],
-                   vote [j] . after [0], vote [j] . after [1], 
-                   vote [j] . after [2], vote [j] . after [3], 
-                   vote [j] . after [4]);
-       }
+   if (Verbose > 1)
+     {
+       fprintf (stderr, "*** Votes ***\n");
+       fprintf (stderr, "%5s: %2s  ------ Here -------  ------ After ------\n",
+                "Pos", "Ch");
+       for (j = 0; j < cons_len; j ++)
+         fprintf (stderr, "%5d:  %c  %3d %3d %3d %3d %3d  %3d %3d %3d %3d %3d\n",
+                  j, cons [j],
+                  vote [j] . here [0], vote [j] . here [1], 
+                  vote [j] . here [2], vote [j] . here [3], 
+                  vote [j] . here [4],
+                  vote [j] . after [0], vote [j] . after [1], 
+                  vote [j] . after [2], vote [j] . after [3], 
+                  vote [j] . after [4]);
+     }
 
    consensus . assign (cons);
    free (cons);

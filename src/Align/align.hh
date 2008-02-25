@@ -226,11 +226,11 @@ class  Vote_t
         // votes for insertion after this position; letters followed by blank
 
     void  Incr_After
-        (char ch);
+        (char ch, int incr_val = 1);
     void  Incr_Blank
-        (void);
+        (int incr_val = 1);
     void  Incr_By
-        (char ch, bool with_blank);
+        (char ch, bool with_blank, int incr_val = 1);
     char  Max_After_Char
         (void);
     char  Max_Here_Char
@@ -309,7 +309,7 @@ class  Alignment_t  :  public Base_Alignment_t
    void  Flip_AB
        (void);
    void  Incr_Votes
-       (vector <Vote_t> & vote, char * a);
+       (vector <Vote_t> & vote, char * a, int incr_val = 1);
    void  Offset_A
        (int n);
    void  Print
