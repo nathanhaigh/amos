@@ -1748,17 +1748,23 @@ bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
    double erate)
 
   // Check if one of the strings  s [i .. (n-1)]  might overlap
-  // string  cons  (whose lenth is  cons_len ) based on their
+  // string  cons  (whose length is  cons_len ) based on their
   // relative offsets in  offset  w.r.t the current offset of string  i - 1
   // in  cons  of  curr_offset  and actual alignments.  Offset positions
   // are allowed  wiggle  characters in each direction and the minimum
   // overlap is  min_overlap  characters.   erate  is the allowed
-  // error fraction in overlaps.
+  // error fraction in overlaps.  Overlap must extend  at
+  // least as fas as string  i - 1  would have.
 
 {
   Alignment_t  ali;
-  int  add_offset = 0, min_olap;
-  int  j;
+  int  add_offset, min_olap, needed_extension;
+  int  j, mid;
+
+  needed_extension = curr_offset + strlen (s [i - 1]);
+  // this may include an extension past the end of the consensus string
+  // subsequent overlap must get at least this far in order to
+  // safely expel string  i - 1
 
   min_olap = Min (cons_len, min_overlap);
   // Adjust in case the consensus is too short.  Don't adjust if a
@@ -1766,10 +1772,13 @@ bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
   // overlaps well enough in the main routine, but it shouldn't justify
   // getting rid of this string.
 
+  mid = cons_len - min_olap;
+  add_offset = curr_offset;
+
   for (j = i; j < n; j ++)
     {
       bool  matched;
-      int  lo, mid, hi, exp_olap_len, error_limit, len;
+      int  lo, hi, exp_olap_len, error_limit, len;
 
       len = strlen (s [j]);
 
@@ -1777,16 +1786,16 @@ bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
       if (cons_len - add_offset + wiggle < min_olap)
         return false;   // It's hopeless from here on since offsets only increase
 
-      mid = cons_len - min_olap;
-      lo = Max (0, Min (curr_offset - wiggle, mid));
-      hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
+      lo = Max (0, Min (add_offset - wiggle, mid));
+      hi = Min (Max (lo + 1, mid), add_offset + wiggle);
       exp_olap_len = Min (cons_len - lo, len);
 
       error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
       matched = Overlap_Match_VS (s [j], len, cons, cons_len, lo, hi,
                                   0, error_limit, ali);
 
-      if (matched && ali . Error_Rate () <= erate)
+      if (matched && ali . Error_Rate () <= erate
+          && needed_extension <= ali . b_hi + len - ali . a_hi)
         return true;
     }
 
@@ -2233,6 +2242,8 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
               if (! can_skip && 0 < prev_sub && prev_cons_len < cons_len)
                 {
                   // try overlapping without most recent prior consensus
+                  min_olap = Min (min_overlap, Min (prev_cons_len, len));
+                  mid = prev_cons_len - min_olap;
                   lo = Max (0, Min (curr_offset - offset_delta, mid));
                   hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
                   exp_olap_len = Min (prev_cons_len - lo, len);
