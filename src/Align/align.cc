@@ -1745,7 +1745,7 @@ void  Gapped_MA_Bead_t :: Advance
 bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
   (const char * cons, int cons_len, const vector <char *> & s, int i, 
    const vector <int> & offset, int n, int curr_offset, int wiggle, int min_overlap,
-   double erate)
+   double erate, int offset_sum, int virtual_cons_len)
 
   // Check if one of the strings  s [i .. (n-1)]  might overlap
   // string  cons  (whose length is  cons_len ) based on their
@@ -1754,7 +1754,10 @@ bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
   // are allowed  wiggle  characters in each direction and the minimum
   // overlap is  min_overlap  characters.   erate  is the allowed
   // error fraction in overlaps.  Overlap must extend  at
-  // least as fas as string  i - 1  would have.
+  // least as far as string  i - 1  would have.   offset_sum  is the
+  // sum of entries in  offset [0 .. (i - 1)]  and  virtual_cons_len  is
+  // the length of a perfect consensus using just the (non-expelled)
+  // values in  offset  and the lengths of the strings to be multi-aligned.
 
 {
   Alignment_t  ali;
@@ -1781,9 +1784,16 @@ bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
       int  lo, hi, exp_olap_len, error_limit, len;
 
       len = strlen (s [j]);
+      offset_sum += offset [i];
 
       add_offset += offset [j];
-      if (cons_len - add_offset + wiggle < min_olap)
+      if (cons_len - add_offset + wiggle < min_olap
+          || virtual_cons_len <= offset_sum)
+        // The first test is that string i might overlap the actual consensus.
+        // The second is that the implied position of string i could be found in
+        // the consensus in  Estimate_Offset  or  Estimate_Offset_With_Expels .
+        // The second test is necessary when the actual offsets vary significantly
+        // from the ones provided in  offset .
         return false;   // It's hopeless from here on since offsets only increase
 
       lo = Max (0, Min (add_offset - wiggle, mid));
@@ -1827,18 +1837,29 @@ int  Multi_Alignment_t :: Estimate_Offset_Position
 //  leftmost position of each string relative to the preceding string.
 
   {
-   int  j, off;
+   int  j, off, len;
 
    off = offset [i];
    for  (j = i - 1;  j >= 0;  j --)
      {
-      int  len;
-
       len = align [j] . a_hi - align [j] . a_lo;
       if  (off < len)
           return  align [j] . B_Position (off);
 
       off += offset [j];
+     }
+
+   if (Verbose > 0)
+     {
+       off = offset [i];
+       fprintf (stderr, "%5s %5s %5s  %5s %5s\n", "j", "off", "len", "a_lo", "a_hi");
+       for (j = i; j >= 0; j --)
+         {
+           len = align [j] . a_hi - align [j] . a_lo;
+           fprintf (stderr, "%5d %5d %5d  %5d %5d\n", j, off, len, align [j] . a_lo,
+                    align [j] . a_hi);
+           off += offset [j];
+         }
      }
 
    sprintf (Clean_Exit_Msg_Line,
@@ -1861,15 +1882,13 @@ int  Multi_Alignment_t :: Estimate_Offset_With_Expels
 // leftmost position of each string relative to the preceding string.
 
 {
-  int  j, off;
+  int  j, off, len;
 
   off = offset [i];
   for (j = i - 1; j >= 0; j --)
     {
       if (! expel [j])
         {
-          int  len;
-
           len = align [j] . a_hi - align [j] . a_lo;
 
           if  (off < len)
@@ -1878,6 +1897,21 @@ int  Multi_Alignment_t :: Estimate_Offset_With_Expels
 
       off += offset [j];
     }
+
+   if (Verbose > 0)
+     {
+       off = offset [i];
+       fprintf (stderr, "%5s %5s  %5s %5s  %5s %5s\n", "j", "expel", "off",
+                "len", "a_lo", "a_hi");
+       for (j = i; j >= 0; j --)
+         {
+           len = align [j] . a_hi - align [j] . a_lo;
+           fprintf (stderr, "%5d %5s  %5d %5d  %5d %5d\n", j,
+                    (expel [j] ? "yes" : "no"),
+                    off, len, align [j] . a_lo, align [j] . a_hi);
+           off += offset [j];
+         }
+     }
 
   sprintf (Clean_Exit_Msg_Line,
            "ERROR:  Impossible  offset = %d  i = %d  in  Estimate_Offset_With_Expels\n",
@@ -2134,6 +2168,8 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    char  * cons;
    bool  wrote_contig_id = false;
    int  cons_len, prev_cons_len = 0;
+   int  virtual_cons_len, prev_virtual_cons_len = 0;
+   int  offset_sum = 0;
    int  num_strings, prev_sub;
    int  i, j;
 
@@ -2141,7 +2177,9 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
    vote . clear ();
 
    cons = strdup (s [0]);
-   cons_len = strlen (cons);
+   virtual_cons_len = cons_len = strlen (cons);
+   // virtual_cons_len  is how long the consensus would be if all the
+   // offset values were correct and everything aligned perfectly
    for  (j = 0;  j < cons_len - 1;  j ++)
      {
       v . Set_To (s [0] [j], true);
@@ -2173,6 +2211,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
       attempts = 0;
       wiggle = offset_delta;
       erate = error_rate;
+      offset_sum += offset [i];
 
       if (allow_expels)
         curr_offset = Min (cons_len, Estimate_Offset_With_Expels (i, offset, expel));
@@ -2234,7 +2273,8 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
             {
               can_skip = Check_Subsequent_Overlaps
                 (cons, cons_len, s, i + 1, offset, num_strings, curr_offset,
-                 offset_delta, min_overlap, error_rate);
+                 offset_delta, min_overlap, error_rate, offset_sum,
+                 virtual_cons_len);
                 // Use the original min-overlap value since this string
                 // might be a short contained string.
                 // Also use the original wiggle (offset_delta) and erate values.
@@ -2258,6 +2298,8 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
                       align [prev_sub]  . Clear ();
                       vote . resize (prev_cons_len);
                       cons_len = prev_cons_len;
+                      virtual_cons_len = prev_virtual_cons_len;
+                      expel [prev_sub] = true;
                     }
                 }
             }
@@ -2317,6 +2359,10 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
 
           prev_sub = i;
           prev_cons_len = cons_len;
+          prev_virtual_cons_len = virtual_cons_len;
+
+          if (virtual_cons_len < offset_sum + len)
+            virtual_cons_len = offset_sum + len;
 
           if (ali . a_hi < len)
             {  // s [i] extends past the end of the current consensus

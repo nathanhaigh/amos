@@ -413,7 +413,7 @@ class  Multi_Alignment_t
    bool  Check_Subsequent_Overlaps
      (const char * cons, int cons_len, const vector <char *> & s, int i, 
       const vector <int> & offset, int n, int curr_offset, int wiggle, int min_olap,
-      double error_rate);
+      double error_rate, int offset_sum, int virtual_cons_len);
    void  Clear
      (void);
    int  Estimate_Offset_Position
