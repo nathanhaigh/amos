@@ -9,9 +9,10 @@ bool OPT_UseEIDs = 0;
 bool OPT_UseIIDs = 0;
 bool OPT_FASTA = 0;
 int  OPT_Spacer = 100;
-int  OPT_MinGapSize = 100;
+int  OPT_MinGapsize = 100;
 bool OPT_UseExpected = 0;
 bool OPT_UseUngapped = 0;
+bool OPT_CreateLinks = false;
 
 string OPT_BankName;
 
@@ -31,7 +32,7 @@ void PrintHelp (const char * s)
        << "  Takes an AMOS bank directory and prints the scaffolds to stdout.\n\n"
        << "  Default format:\n"
        << "  >scaffid numcontigs scaffbases scaffspan\n"
-       << "  contigid orientation contiglen gapsize\n"
+       << "  contigid orientation contiglen leftgapsize\n"
        << "\n.OPTIONS.\n"
        << "  -h      Display help information\n"
        << "  -v      Display the compatible bank version\n"
@@ -40,6 +41,7 @@ void PrintHelp (const char * s)
        << "  -E file Print just the contig eids listed in file\n"
        << "  -I file Print just the contig iids listed in file\n"
        << "  -u      Show the ungapped contig lengths in the scaff file\n"
+       << "  -l      Create a Arachne links file\n"
        << "\n"
        << "  -f      Print the scaffold consensus sequences in multi-fasta format\n"
        << "  -g      Use the estimated gaps size to space contigs\n"
@@ -56,7 +58,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:gG:u")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:gG:ul")) != EOF) )
   {
     switch (ch)
     {
@@ -77,9 +79,10 @@ void ParseArgs (int argc, char ** argv)
 
       case 'f': OPT_FASTA   = true;            break;
       case 'g': OPT_UseExpected = true;        break;
-      case 'G': OPT_MinGapSize = atoi(optarg); break;
+      case 'G': OPT_MinGapsize = atoi(optarg); break;
       case 'N': OPT_Spacer  = atoi(optarg);    break;
       case 'u': OPT_UseUngapped = true; break;
+      case 'l': OPT_CreateLinks = true; break;
 
       default: errflg ++;
       }
@@ -107,11 +110,14 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
 
   sort(contigs.begin(), contigs.end(), TileOrderCmp());
 
-  cout << ">";
-  if (OPT_UseEIDs) { cout << scaff.getEID(); }
-  else             { cout << scaff.getIID(); }
+  if (!OPT_CreateLinks)
+  {
+    cout << ">";
+    if (OPT_UseEIDs) { cout << scaff.getEID(); }
+    else             { cout << scaff.getIID(); }
+  }
 
-  int bases = 0, span = 0;
+  int bases = 0, span = 0, numcontigs = contigs.size();
 
   for (ci = contigs.begin(); ci != contigs.end(); ci++)
   {
@@ -121,24 +127,64 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
     if (right > span) { span = right; }
   }
 
-  cout << " " << contigs.size() << " " << bases << " " << span << endl;
+  if (!OPT_CreateLinks)
+  {
+    cout << " " << contigs.size() << " " << bases << " " << span << endl;
+  }
 
   string seq;
   Contig_t contig;
 
   int lastrightoffset;
-  int gapsize = 0;
+  int leftgapsize = 0;
+  int contignum = 0;
 
   for (ci = contigs.begin(); ci != contigs.end(); ci++)
   {
+    contignum++;
+
     if (ci != contigs.begin())
     {
-      gapsize = ci->offset - lastrightoffset;
+      leftgapsize = ci->offset - lastrightoffset;
     }
 
     lastrightoffset = ci->getRightOffset();
 
-    if (OPT_FASTA)
+    if (OPT_CreateLinks)
+    {
+      int rightgapsize = 0;
+      vector<Tile_t>::const_iterator ni = ci;
+      ni++;
+
+      if (ni != contigs.end())
+      {
+        rightgapsize = ni->offset - lastrightoffset;
+      }
+
+      if (OPT_UseEIDs)
+      {
+        cout << scaff.getEID() << "\t" 
+             << bases << "\t"
+             << numcontigs << "\t"
+             << contignum << "\t"
+             << contig_bank.getIDMap().lookupEID(ci->source) << "\t"
+             << ci->range.getLength() << "\t"
+             << leftgapsize << "\t"
+             << rightgapsize << "\t" << endl;
+      }
+      else
+      {
+        cout << scaff.getIID() << "\t" 
+             << bases << "\t"
+             << numcontigs << "\t"
+             << contignum << "\t"
+             << ci->source << "\t"
+             << ci->range.getLength() << "\t"
+             << leftgapsize << "\t"
+             << rightgapsize << "\t" << endl;
+      }
+    }
+    else if (OPT_FASTA)
     {
       if (ci != contigs.begin())
       {
@@ -146,11 +192,11 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
 
         if (OPT_UseExpected)
         {
-          spaces = gapsize;
+          spaces = leftgapsize;
 
-          if (gapsize < OPT_MinGapSize)
+          if (leftgapsize < OPT_MinGapsize)
           {
-            spaces = OPT_MinGapSize;
+            spaces = OPT_MinGapsize;
           }
         }
         seq.append(spaces, 'N');
@@ -168,7 +214,7 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
     {
       if (ci != contigs.begin())
       {
-        cout << " " <<  gapsize << endl;
+        cout << " " <<  leftgapsize << endl;
       }
 
       if (OPT_UseEIDs)
@@ -200,10 +246,10 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
   {
     Fasta_Print(stdout, seq.c_str(), NULL, 60);
   }
-  else
+  else if (!OPT_CreateLinks)
   {
-    gapsize = 0; // No gap after last contig
-    cout << " " <<  gapsize << endl;
+    leftgapsize = 0; // No gap after last contig
+    cout << " " <<  leftgapsize << endl;
   }
 }
 
@@ -218,6 +264,11 @@ int main (int argc, char ** argv)
   Bank_t contig_bank(Contig_t::NCODE);
 
   cerr << "Processing " << OPT_BankName << " at " << Date() << endl;
+
+  if (OPT_CreateLinks)
+  {
+    cout << "#super_id	num_bases_in_super	num_contigs_in_super	ordinal_num_of_contig_in_super	contig_id	length_of_contig	estimated_gap_before_contig estimated_gap_after_contig" << endl;
+  }
 
   try
   {
