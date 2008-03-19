@@ -1,8 +1,7 @@
 ##-- SUBDIRS TO RECURSE
 SUBDIRS = \
 	src \
-	doc \
-    test
+	doc
 
 EXTRA_DIST = test
 

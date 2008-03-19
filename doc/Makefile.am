@@ -6,14 +6,9 @@ include $(top_srcdir)/config/amos.mk
 dist_doc_DATA = \
 	AMOScmp.README \
 	runAmos.README \
-	libAMOS_quickref.rtf \
-	message_grammar.rtf \
-	message_types.rtf \
 	minimus.README \
-    Foundationspec.rtf \
-    helptextspec.rtf \
-    portability.README \
-    tarchive2amos.testplan 
-
+	portability.README \
+	hawkeye.README \
+	amosvalidate.README
 
 ##-- END OF MAKEFILE --##
