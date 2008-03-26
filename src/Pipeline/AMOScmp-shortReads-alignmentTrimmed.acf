@@ -1,68 +1,82 @@
 # `AMOScmp' - The AMOS Comparative Assembler Pipeline
 
+#--------------------------------------- SCRIPT PATHS -------------------------#
+
+BINDIR=/usr/local/bin
+NUCMER=/usr/local/bin/nucmer
+
 #--------------------------------------- USER DEFINED VALUES ------------------#
-
-BINDIR		= /usr/local/bin
-NUCMER		= /usr/local/bin/nucmer
-SHOW_COORDS	= /usr/local/bin/show-coords
-
-BANK     = $(PREFIX).bnk
 
 MINCLUSTER  = 20 
 MINMATCH    = 20
 MINOVL      = 5
-MAXGAPLEN   = 10000
-MAXREPEATID = 2
 MAXTRIM     = 10
-MINID       = 70
-MAXGAP	    = 90 
 MAJORITY    = 50 
-BREAKLEN    = 200
-MAXGAP      = 90
 CONSERR	    = 0.06
 ALIGNWIGGLE = 2
-DIAGFACTOR  = 0.12
-READLEN     = 32
 
-INPUTS   = $(PREFIX).afg $(PREFIX).1con
-OUTPUTS  = $(PREFIX).contig $(PREFIX).fasta
+#------------------------------------------------------------------------------#
+
+TGT     = $(PREFIX).afg
+REF     = $(PREFIX).1con
+SEQS     = $(PREFIX).seq
+CLR     = $(PREFIX).clr
+CVG     = $(PREFIX).0cvg
+BANK    = $(PREFIX).bnk
+ALIGN   = $(PREFIX).delta
+LAYOUT  = $(PREFIX).layout
+CONFLICT= $(PREFIX).conflict
+CONTIG  = $(PREFIX).contig
+FASTA   = $(PREFIX).fasta
+EXCLUDE = $(PREFIX).exclude.seqs
+SCAFF   = $(PREFIX).scaff
+SCAFFFASTA = $(PREFIX).scaffold.fasta
+
+#------------------------------------------------------------------------------#
+
+INPUTS   = $(TGT) $(REF)
+OUTPUTS  = $(CONTIG) $(FASTA) $(SCAFF) $(SCAFFFASTA)
+
+#----------------------------------------PIPELINE ------------------------------#
 
 ## Building AMOS bank
-10: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(PREFIX).afg
+10: $(BINDIR)/bank-transact -c -z -b $(BANK) -m $(TGT)
 
 ## Collecting clear range sequences
-20: $(BINDIR)/dumpreads $(BANK) > $(PREFIX).seq
+20: $(BINDIR)/dumpreads $(BANK) > $(SEQS)
 
 ## Running nucmer on all reads
-30: $(NUCMER) -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
+30: $(NUCMER) --maxmatch --prefix=$(PREFIX) -l $(MINMATCH) -c $(MINCLUSTER) $(REF) $(SEQS)
 
-## Get zero coverage regions
-31: $(SHOW_COORDS) -c -l -o -r -H  $(PREFIX).delta | $(BINDIR)/getNucmerCoverage -M 0  > $(PREFIX).0cvg
+## Getting zero coverage regions
+31: $(BINDIR)/delta2cvg -M 0 < $(ALIGN) > $(CVG)
 
-## Get aligned read iid's and clrs
-32: $(BINDIR)/delta2clr -zero_cvg $(PREFIX).0cvg -read_len $(READLEN) < $(PREFIX).delta > $(PREFIX).clr
-33: awk '{print $1}' $(PREFIX).clr > $(PREFIX).seqs
-34: $(BINDIR)/updateClrRanges -i $(PREFIX).bnk $(PREFIX).clr
-35: $(BINDIR)/dumpreads -I $(PREFIX).seqs $(BANK) > $(PREFIX).seq
+## Getting aligned read iid's and clear ranges
+32: $(BINDIR)/delta2clr -zero_cvg $(CVG) < $(ALIGN) > $(CLR)
 
-## Running nucmer on aligned read clrs
-36: $(NUCMER) -l $(MINMATCH) -c $(MINCLUSTER) -b $(BREAKLEN) -g $(MAXGAP) -d $(DIAGFACTOR) --maxmatch --prefix=$(PREFIX) $(PREFIX).1con $(PREFIX).seq
+## Updating bank read clear ranges
+34: $(BINDIR)/updateClrRanges -i $(BANK) $(CLR)
 
-## Running layout: (added -r, -S options)
-40: $(BINDIR)/casm-layout -r -g $(MAXGAPLEN) -i $(MINID) -I $(MAXREPEATID) -t $(MAXTRIM) -o $(MINOVL) -U $(PREFIX).layout -C $(PREFIX).conflict -b $(BANK) -m $(MAJORITY) -M $(PREFIX).map $(PREFIX).delta
+## Collecting clear range sequences(2)
+35: $(BINDIR)/dumpreads $(BANK) > $(SEQS)
+
+## Running nucmer on aligned reads
+36: $(NUCMER) --maxmatch --prefix=$(PREFIX) -l $(MINMATCH) -c $(MINCLUSTER) $(REF) $(SEQS)
+
+## Running layout
+40: $(BINDIR)/casm-layout -r -S -t $(MAXTRIM) -o $(MINOVL) -m $(MAJORITY) -U $(LAYOUT) -C $(CONFLICT) -b $(BANK) $(ALIGN)
 
 ## Running consensus
-50: $(BINDIR)/make-consensus -B -e $(CONSERR) -b $(BANK) -w $(ALIGNWIGGLE)
+50: $(BINDIR)/make-consensus -B -e $(CONSERR) -b $(BANK) -w $(ALIGNWIGGLE) -x $(EXCLUDE)
 
 ## Outputting contigs 
-60: $(BINDIR)/bank2contig $(BANK) > $(PREFIX).contig
+60: $(BINDIR)/bank2contig $(BANK) > $(CONTIG)
 
-## Outputting contig fasta: -e added Dec17th 2007
-70: $(BINDIR)/bank2fasta -e -b $(BANK) > $(PREFIX).fasta
+## Outputting contig fasta
+70: $(BINDIR)/bank2fasta -e -b $(BANK) > $(FASTA)
 
 ## Outputting scaff
-80: $(BINDIR)/bank2scaff $(BANK) > $(PREFIX).scaff
+80: $(BINDIR)/bank2scaff $(BANK) > $(SCAFF)
 
 ## Outputting scaff fasta
-90: $(BINDIR)/bank2scaff -g $(BANK) > $(PREFIX).scaffold.fasta
-
+90: $(BINDIR)/bank2scaff -g $(BANK) > $(SCAFFFASTA)
