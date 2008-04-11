@@ -18,15 +18,13 @@ Program that computes read clear ranges based on alignment coordinates
 Usage: $PRG < delta_file [options]
 
 	INPUT:   
-		the mummer delta file
+		Mummer delta file
 		
         options:
 
 		-zero_cvg file	- File that contain zero coverage regions; 
                           reads ending in these	regions won't get trimmed
 
-		-read_len <n>	- The untrimmed read lengths; Default 32 for Solexa reads
-	
 		-h|help		- Print this help and exit;
 		-V|version	- Print the version and exit;
 		-depend		- Print the program and database dependency list;
@@ -49,7 +47,6 @@ Return Codes:   0 - on success, 1 - on failure.
 MAIN:
 {
 	my %options;
-	$options{read_len}=32;
 	my $is_zero_cvg=0;
 
 	# Configure TIGR Foundation
@@ -60,14 +57,14 @@ MAIN:
 	
 	# validate input parameters
 	my $result = $tigr_tf->TIGR_GetOptions(
-		"zero_cvg=s"	=>	\$options{zero_cvg},
-		"read_len=s"	=>	\$options{read_len}
+		"zero_cvg=s"	=>	\$options{zero_cvg}
 	);
 	
 	$tigr_tf->printUsageInfoAndExit() unless($result);
 
 	########################################################################
-		
+
+	# read zero coverage coordinates		
 	my %zero_cvg;		
 	if(defined($options{zero_cvg}))
 	{
@@ -84,9 +81,9 @@ MAIN:
 
 	########################################################################
 		
-	my ($ref,$id,$min,$max);
+	my ($ref,$id,$read_len,$min,$max);
 	
-	# read the Delta file
+	# read the alignmnet delta file
 	while(<>)
 	{	
 		#>1 gnl|ti|185591439 3256683 909
@@ -120,6 +117,7 @@ MAIN:
 			$ref=$f[0];
 			$ref=~s/>//;
 			$id=$f[1];
+			$read_len=$f[3];
 
 			undef($min);
 			undef($max);
@@ -128,37 +126,21 @@ MAIN:
 		{
 			if($zero_cvg{$ref}{$f[0]})
 			{
-				if($f[2]<$f[3]) 
-				{ 	
-					$f[2]=1;
-				}
-				else            
-				{ 
-					$f[2]=$options{read_len}; 
-				}
+				if($f[2]<$f[3]) { $f[2]=1; }
+				else            { $f[2]=$read_len; }
 			}
 
                         if($zero_cvg{$ref}{$f[1]})
                         {
-                                if($f[2]<$f[3]) 
-				{ 
-					$f[3]=$options{read_len};
-				} 
-                                else            
-				{ 
-					$f[3]=1; 
-				}
+                                if($f[2]<$f[3]) { $f[3]=$read_len; }
+                                else            { $f[3]=1; }
                         }  
 
-			if($f[2]>$f[3]) { ($f[2],$f[3])=($f[3],$f[2]); }
+			($f[2],$f[3])=($f[3],$f[2]) if($f[2]>$f[3]);
 			$f[2]--;
 
-			if(!defined($min)) { ($min,$max)=($f[2],$f[3]); }
-			else 
-			{
-				$min=$f[2] if($f[2]<$min);
-				$max=$f[3] if($f[3]>$max);
-			}
+			$min=$f[2] if(!defined($min) or $f[2]<$min);
+			$max=$f[3] if(!defined($max) or $f[3]>$max);
 		}
 	}
 

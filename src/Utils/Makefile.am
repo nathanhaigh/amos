@@ -27,7 +27,7 @@ dist_bin_SCRIPTS = \
 	preassembleFrgs.pl \
 	ktrimfrg.pl \
     translate-fasta.pl \
-	 getNucmerCoverage.pl \
+	delta2cvg.pl \
 	delta2clr.pl
 # runAmos.pl 
 
