@@ -146,6 +146,23 @@ each pipeline in the `doc' directory.
    are aligned to a finished reference sequence and their alignments are
    used to determine their layout position.
 
+   - AMOScmp-shortReads -
+   Modified version AMOScmp for assembling short reads
+   Differences compared to AMOScmp:
+     * smaller nucmer alignment cluster size (20 vs 65)
+     * smaller make-consensus alignment wiggle value (2 vs 15)
+
+   - AMOScmp-shortReads-alignmentTrimmed -
+   Very similar to AMOScmp-shortReads but it does a reference based alignment 
+   trimming of the reads prior to the assembly. 
+   Differences compared to AMOScmp-shortReads:
+     * aligns the reads to reference using nucmer
+     * determines zero coverage regions
+     * extracts the read clear ranges from the alignment(delta) file
+     * exrtends the read clear ranges for reads adjacent to zero coverage regions
+     * updates the bank with the new clear ranges
+     * updates the alignment(delta) file with the new read lengths and clear ranges
+
    - amosvalidate -
    Amosvalidate is a validation pipeline for genome assemblies. This
    pipeline includes a collection of methods for ascertaining the
