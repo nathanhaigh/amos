@@ -1,14 +1,17 @@
+#!/fs/sz-user-supported/Linux-x86_64//bin/runAmos -C
 # `AMOScmp' - The AMOS Comparative Assembler Pipeline
 
 #--------------------------------------- SCRIPT PATHS -------------------------#
 
 BINDIR=/usr/local/bin
 NUCMER=/usr/local/bin/nucmer
+DELTAFILTER=/usr/local/bin/delta-filter
 
 #--------------------------------------- USER DEFINED VALUES ------------------#
 
-MINCLUSTER  = 20 
-MINMATCH    = 20
+MINCLUSTER  = 16
+MINMATCH    = 16
+MINLEN	    = 24
 MINOVL      = 5
 MAXTRIM     = 10
 MAJORITY    = 50 
@@ -19,11 +22,12 @@ ALIGNWIGGLE = 2
 
 TGT     = $(PREFIX).afg
 REF     = $(PREFIX).1con
-SEQS     = $(PREFIX).seq
+SEQS    = $(PREFIX).seq
 CLR     = $(PREFIX).clr
 CVG     = $(PREFIX).0cvg
 BANK    = $(PREFIX).bnk
 ALIGN   = $(PREFIX).delta
+ALIGNTMP= $(ALIGN).tmp
 LAYOUT  = $(PREFIX).layout
 CONFLICT= $(PREFIX).conflict
 CONTIG  = $(PREFIX).contig
@@ -48,23 +52,25 @@ OUTPUTS  = $(CONTIG) $(FASTA) $(SCAFF) $(SCAFFFASTA)
 ## Running nucmer on all reads
 30: $(NUCMER) --maxmatch --prefix=$(PREFIX) -l $(MINMATCH) -c $(MINCLUSTER) $(REF) $(SEQS)
 
+## Filter align file
+31: $(DELTAFILTER) -l $(MINLEN) $(ALIGN) > $(ALIGNTMP)
+32: mv $(ALIGNTMP) $(ALIGN)
+
 ## Getting zero coverage regions
-31: $(BINDIR)/delta2cvg -M 0 < $(ALIGN) > $(CVG)
+33: $(BINDIR)/delta2cvg -M 0 < $(ALIGN) > $(CVG)
 
 ## Getting aligned read iid's and clear ranges
-32: $(BINDIR)/delta2clr -zero_cvg $(CVG) < $(ALIGN) > $(CLR)
+34: $(BINDIR)/delta2clr -zero_cvg $(CVG)  < $(ALIGN) > $(CLR)
 
 ## Updating bank read clear ranges
-34: $(BINDIR)/updateClrRanges -i $(BANK) $(CLR)
+35: $(BINDIR)/updateClrRanges -i $(BANK) $(CLR)
 
-## Collecting clear range sequences(2)
-35: $(BINDIR)/dumpreads $(BANK) > $(SEQS)
-
-## Running nucmer on aligned reads
-36: $(NUCMER) --maxmatch --prefix=$(PREFIX) -l $(MINMATCH) -c $(MINCLUSTER) $(REF) $(SEQS)
+## Updating align file clear ranges
+36: $(BINDIR)/updateDeltaClr $(ALIGN) $(CLR) > $(ALIGNTMP)
+37: mv $(ALIGNTMP) $(ALIGN)
 
 ## Running layout
-40: $(BINDIR)/casm-layout -r -S -t $(MAXTRIM) -o $(MINOVL) -m $(MAJORITY) -U $(LAYOUT) -C $(CONFLICT) -b $(BANK) $(ALIGN)
+40: $(BINDIR)/casm-layout -r -t $(MAXTRIM) -o $(MINOVL) -m $(MAJORITY) -U $(LAYOUT) -C $(CONFLICT) -b $(BANK) $(ALIGN)
 
 ## Running consensus
 50: $(BINDIR)/make-consensus -B -e $(CONSERR) -b $(BANK) -w $(ALIGNWIGGLE) -x $(EXCLUDE)
