@@ -26,7 +26,8 @@ SUBDIRS += \
 	Converters \
 	Utils \
 	PerlModules \
-	Pipeline 
+    PythonModules \
+	Pipeline
 
 if BUILD_QT
 SUBDIRS += \
