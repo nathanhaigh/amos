@@ -28,7 +28,9 @@ dist_bin_SCRIPTS = \
 	ktrimfrg.pl \
     translate-fasta.pl \
 	delta2cvg.pl \
-	delta2clr.pl
+	delta2clr.pl \
+	updateDeltaClr.pl
+	
 # runAmos.pl 
 
 ##-- GLOBAL INCLUDE
