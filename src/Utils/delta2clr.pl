@@ -1,4 +1,5 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
+
  
 use strict;
 use warnings;
@@ -81,8 +82,9 @@ MAIN:
 
 	########################################################################
 		
-	my ($ref,$id,$read_len,$min,$max);
-	
+	my ($ref,$id,$read_len);
+	my (%min,%max);	
+
 	# read the alignmnet delta file
 	while(<>)
 	{	
@@ -108,19 +110,9 @@ MAIN:
 
     		if(/^>/)
     		{
-			if(defined($id))
-			{
-				print join " ",($id,$min,$max);
-				print "\n";
-			}
-
-			$ref=$f[0];
-			$ref=~s/>//;
+			$ref=$f[0]; $ref=~s/>//;
 			$id=$f[1];
 			$read_len=$f[3];
-
-			undef($min);
-			undef($max);
     		}
 		elsif(scalar(@f)==7)
 		{
@@ -139,17 +131,16 @@ MAIN:
 			($f[2],$f[3])=($f[3],$f[2]) if($f[2]>$f[3]);
 			$f[2]--;
 
-			$min=$f[2] if(!defined($min) or $f[2]<$min);
-			$max=$f[3] if(!defined($max) or $f[3]>$max);
+			$min{$id}=$f[2] if(!defined($min{$id}) or $f[2]<$min{$id});
+			$max{$id}=$f[3] if(!defined($max{$id}) or $f[3]>$max{$id});
 		}
 	}
 
-	if(defined($id))
+	foreach $id (keys %min)
 	{                                
-		print join " ",($id,$min,$max);
+		print join " ",($id,$min{$id},$max{$id});
 		print "\n"
 	}
-
 
 	exit 0;
 }

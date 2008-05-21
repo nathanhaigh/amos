@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
  
 use strict;
 use warnings;
@@ -49,70 +49,6 @@ Usage: $PRG < delta_file [options]
 my $MOREHELP = qq~
 Return Codes:   0 - on success, 1 - on failure.
 ~;
-
-sub getCoverage($$)
-{
-	my ($contig_name,$count_ref,$options_ref)=@_;
-	my %count=%$count_ref;
-	my %options=%$options_ref;
-	
-	#display clone coverage
-	my $count=0;
-	
-	my @keys=sort {$a <=> $b} keys %count;	
-	my $n=scalar(@keys);
-	 
-	foreach my $i (1..$n-1)
-	{
-		$count{$keys[$i]}+=$count{$keys[$i-1]}
-	}
-
-	if($options{merge})
-	{
-		my @del;
-		
-		if($options{m})
-		{
-			foreach my $i (1..$n-2)
-			{
-				if($count{$keys[$i-1]}>=$options{m} and $count{$keys[$i]}>=$options{m})
-				{
-					push @del,$keys[$i];
-				}
-			}
-		}
-
-                if($options{M})
-                {
-                        foreach my $i (1..$n-2)
-                        {
-				if($count{$keys[$i-1]}<=$options{M} and $count{$keys[$i]}<=$options{M})
-				{
-					push @del,$keys[$i];
-				}
-                        }
-                }
-
-		foreach (@del)
-		{
-			delete $count{$_};
-		}
-	}
-
-        @keys=sort {$a <=> $b} keys %count;
-        $n=scalar(@keys);
-
-        foreach my $i (1..$n-1)
-        {
-		next if(defined($options{m}) and $count{$keys[$i-1]}<$options{m});
-		next if(defined($options{M}) and $count{$keys[$i-1]}>$options{M});
-
-                print join "\t",($contig_name,$keys[$i-1],$keys[$i],$keys[$i]-$keys[$i-1],$count{$keys[$i-1]});
-		print "\n";
-        }
-}
-
-
 	
 ###############################################################################
 #
@@ -130,6 +66,8 @@ MAIN:
 	
 	# validate input parameters
 	my %options;
+	my %count;
+	my $ref;
 
 	my $result = $tigr_tf->TIGR_GetOptions(
 		"m=s" => \$options{m},
@@ -138,13 +76,10 @@ MAIN:
 		);
 	$tigr_tf->printUsageInfoAndExit() if (!$result);
 
-	# parse the .contig file
-	my %count;
-	my $contig_name;
-
+	############################################################
+	# parse input file
 	while(<>)
 	{
-
 	        #>Streptococcus_suis 2_14_26_F3 2007491 46
 	        #1282180 1282217 39 2 0 0 0
 	        #0
@@ -157,30 +92,38 @@ MAIN:
 		if(/^\// or /^NUCMER/) {}
 		elsif(/^>/)
 		{
-			my $id=$f[0];
-			$id=~s/>//;
+			$f[0]=~s/>//;
 
-			if(defined($contig_name) and $id ne $contig_name)
-			{
-				&getCoverage($contig_name,\%count,\%options);
-				%count=();	
-			}	
-	
-			$contig_name=$id;
-			$count{1}+=0;
-                	$count{$f[2]}+=0;
+			$ref=$f[0];
+
+			$count{$ref}{1}+=0;
+                	$count{$ref}{$f[2]}+=0;
 		}
 		elsif(scalar(@f)==7)
 		{
-			$count{$f[0]}++;
-			$count{$f[1]}--;
+			$count{$ref}{$f[0]}++;
+			$count{$ref}{$f[1]}--;
 		}
 	}
 
-	if ($contig_name)
+	#####################################################################
+
+	foreach my $ref (keys %count)
 	{	
-		&getCoverage($contig_name,\%count,\%options);
-	}
+        	my @keys=sort {$a <=> $b} keys %{$count{$ref}};
+       		my $n=scalar(@keys);
+
+        	foreach my $i (1..$n-1) 
+        	{         
+                	$count{$ref}{$keys[$i]}+=$count{$ref}{$keys[$i-1]};
+
+                	next if(defined($options{m}) and $count{$ref}{$keys[$i-1]}<$options{m});
+                	next if(defined($options{M}) and $count{$ref}{$keys[$i-1]}>$options{M});
+
+                	print join "\t",($ref,$keys[$i-1],$keys[$i],$keys[$i]-$keys[$i-1],$count{$ref}{$keys[$i-1]});
+               		print "\n";
+		}
+        }
 
 	exit 0;
 }
