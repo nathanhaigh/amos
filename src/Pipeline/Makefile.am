@@ -28,6 +28,7 @@ endif BUILD_AMOScmp
 
 if BUILD_minimus
 dist_bin_SCRIPTS += minimus.acf
+dist_bin_SCRIPTS += minimus2.acf
 endif BUILD_minimus
 
 

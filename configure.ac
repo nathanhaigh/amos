@@ -16,6 +16,8 @@ AM_INIT_AUTOMAKE(1.8)
 # declare some precious variables
 AC_ARG_VAR(PERL, [perl command])
 AC_ARG_VAR(NUCMER, [nucmer command])
+AC_ARG_VAR(DELTAFILTER, [delta-filter command])
+AC_ARG_VAR(SHOWCOORDS, [show-coords command])
 AC_SUBST(docdir, [${datadir}/doc/${PACKAGE_TARNAME}-${PACKAGE_VERSION}])
 AC_SUBST(amoslibdir, [${libdir}/AMOS])
 AC_SUBST(tigrlibdir, [${libdir}/TIGR])
@@ -32,6 +34,8 @@ AC_PROG_RANLIB
 AC_PROG_CPP
 AC_PATH_PROG(PERL, [perl], [:])
 AC_PATH_PROG(NUCMER, [nucmer], [:])
+AC_PATH_PROG(DELTAFILTER, [delta-filter], [:])
+AC_PATH_PROG(SHOWCOORDS, [show-coords], [:])
 
 # check for libraries
 AC_CHECK_LIB(m, pow)
@@ -220,6 +224,16 @@ esac
 if test x"${NUCMER}" = x":"  ||  ! test -x "${NUCMER}"; then
   echo "WARNING! nucmer was not found but is required to run AMOScmp"
   echo "   install nucmer if planning on using AMOScmp"
+fi
+
+if test x"${DELTAFILTER}" = x":"  ||  ! test -x "${DELTAFILTER}"; then
+  echo "WARNING! delta-filter was not found but is required to run AMOScmp-shortReads-alignmentTrimmed"
+  echo "   install delta-filter if planning on using AMOScmp-shortReads-alignmentTrimmed"
+fi
+
+if test x"${SHOWCOORDS}" = x":"  ||  ! test -x "${DELTAFILTER}"; then
+  echo "WARNING! show-coords was not found but is required to run minimus2"
+  echo "   install show-coords if planning on using minimus2"
 fi
 
 if test x"${PERL}" = x":"  ||  ! test -x "${PERL}"; then
