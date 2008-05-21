@@ -30,7 +30,9 @@ long int cntw = 0;             // written object count
 
 int OPT_basesperline = 70;
 
-
+// Daniela Puiu: May 7th 2008
+int    OPT_minIID=0;
+int    OPT_maxIID=0;
 
 //========================================================== Fuction Decs ====//
 //----------------------------------------------------- ParseArgs --------------
@@ -94,6 +96,12 @@ void dumpRead(Read_t & red)
            << " has no clear range sequence, skipped\n";
       return;
     }
+
+  // Daniela Puiu
+  if(!OPT_UseEIDs)
+  {
+	if(OPT_minIID && red.getIID()<=OPT_minIID || OPT_maxIID && red.getIID()>OPT_maxIID) return;
+  } 
 
   if ( OPT_UseEIDs ) { cout << ">" << red.getEID(); }
   else               { cout << ">" << red.getIID(); }
@@ -211,7 +219,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "cehrsvqE:I:L:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "cehrsvqE:I:L:m:M:")) != EOF) )
     switch (ch)
       {
         case 'c': OPT_ShowClear = true; break;
@@ -223,6 +231,9 @@ void ParseArgs (int argc, char ** argv)
         case 'r': OPT_UseRaw = true; break;
         case 'q': OPT_DumpQual = true; OPT_basesperline = 17; break;
         case 'L': OPT_basesperline = atoi(optarg); break;
+
+	case 'm': OPT_minIID = atoi(optarg); break;
+	case 'M': OPT_maxIID = atoi(optarg); break;        
 
         case 'h':
           PrintHelp (argv[0]);
@@ -267,6 +278,8 @@ void PrintHelp (const char * s)
          << "  -E file       Dump just the eids listed in file\n"
          << "  -I file       Dump just the iids listed in file\n"
          << "  -L num        Set the maximum number of bases per line (Default: 70)\n"
+         << "  -m num        Minimum IID to display (not included) (Default all; not compatible with -e,-E,-I options)\n"
+  	 << "  -M num        Maxim IID to display (included) (Default all; not compatible with -e,-E,-I options)\n"
          << "\n.KEYWORDS.\n"
          << "  amos bank, reads, converters"
          << endl;
