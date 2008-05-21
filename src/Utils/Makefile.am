@@ -29,7 +29,11 @@ dist_bin_SCRIPTS = \
     translate-fasta.pl \
 	delta2cvg.pl \
 	delta2clr.pl \
-	updateDeltaClr.pl
+	updateDeltaClr.pl \
+	nucmerAnnotate.pl \
+	nucmer2ovl.pl \
+	sort2.pl \
+	ovl2OVL.pl
 	
 # runAmos.pl 
 
