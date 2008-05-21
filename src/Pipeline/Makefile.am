@@ -11,6 +11,7 @@ dist_bin_SCRIPTS += \
 	AMOScmp-shortReads.acf \
 	AMOScmp-shortReads-alignmentTrimmed.acf \
 	minimus.acf \
+	minimus2.acf \
 	assembleRNAs.acf \
 	runCA.clean.acf \
 	runCA.meta.acf \
