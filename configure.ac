@@ -145,6 +145,7 @@ AC_CONFIG_FILES(
    src/Converters/Makefile \
    src/Utils/Makefile \
    src/PerlModules/Makefile \
+   src/PythonModules/Makefile \
    src/Pipeline/Makefile \
    src/Staden/Makefile \
    src/Staden/read/Makefile \
