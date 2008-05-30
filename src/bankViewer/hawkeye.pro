@@ -99,5 +99,5 @@ UIElements.hh
 
 
 INCLUDEPATH	+= ../AMOS ../Common ../Slice ../Staden/read ../../ ../Contig
-LIBS	+=  -L../AMOS -L../Common -L../Staden/read -L../Contig/ -lDataStore -lAMOS -lCommon -lAMOS -lCommon -lread -lz
+LIBS	+=  -L../AMOS -L../Common -L../Staden/read -L../Contig/ -L../DataStore/ -lDataStore -lAMOS -lCommon -lAMOS -lCommon -lread -lz
 
