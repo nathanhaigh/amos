@@ -1,4 +1,5 @@
 # AMOS message reader/writer
+# Contributed by Paul Harrison
 
 import re
 
