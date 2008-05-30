@@ -47,6 +47,7 @@ foreach my $filename (@ARGV)
     chomp;
 
     $_ =~ s/,avgContig,avgGap//;
+    $_ =~ s/,EUID//;
 
     if (/^\[(.+)\]$/)
     {
@@ -73,17 +74,27 @@ foreach my $filename (@ARGV)
 
       if ($val =~ /,/)
       {
-        my @vals = split /,/, $val;
-        if (scalar @vals > 2)
+        if ($tag =~ /total/)
         {
+
+        }
+        else
+        {
+          my @vals = split /,/, $val;
           pop @vals;
-          pop @vals;
+          if ($section =~ /Scaffold/)
+          {
+            pop @vals;
+            pop @vals;
+          }
 
           $val = join ",", @vals;
         }
       }
 
       $files{$filename}->{"$section.$tag"} = $val;
+
+      #print "$filename.$section.$tag: $val\n";
 
       if ($first)
       {
