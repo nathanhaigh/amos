@@ -9,8 +9,15 @@ if (!defined $tf){
     die ("Bad foundation\n");
 }
 
+if (scalar @ARGV == 0)
+{
+  $fr = new AMOS::ParseFasta(\*STDIN);
+}
+else
+{
 open(IN, $ARGV[0]) || $tf->bail("Cannot open $ARGV[0]: $!\n");
 $fr = new AMOS::ParseFasta(\*IN);
+}
 
 if (!defined $fr){
     die ("Bad reader\n");
