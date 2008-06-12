@@ -1499,6 +1499,8 @@ void ParseAlign (Mapping_t & mapping)
   ReadAlign_t * currap;
   vector<DeltaAlignment_t>::const_iterator dai;
   pair<map<string, Reference_t>::iterator, bool> insret;
+  map<AMOS::ID_t,ReadMap_t *> id2read;
+  map<AMOS::ID_t,ReadMap_t *>::iterator idm;
 
   dr . open (OPT_AlignName);
 
@@ -1526,8 +1528,11 @@ void ParseAlign (Mapping_t & mapping)
       assert (!ss . fail( ));
       ss . clear( );
 
-      //-- If a new read, push it
-      if ( currmp == NULL || id != currmp -> id )
+      //-- Find read struct
+      idm = id2read.find(id);
+
+      //-- If a new read, create it
+      if ( idm == id2read.end() )
 	{
 	  mapping . reads . push_back (new ReadMap_t( ));
 	  currmp = mapping . reads . back( );
@@ -1535,7 +1540,12 @@ void ParseAlign (Mapping_t & mapping)
 	  currmp -> len = dr . getRecord( ) . lenQ;
 	  currmp -> place = NULL;
 	  currmp -> mate . read = NULL;
+          id2read.insert(make_pair(id,currmp));
 	}
+      else
+        {
+          currmp = idm->second;
+        }
 
       //-- For all the alignments in this record
       for ( dai  = dr . getRecord( ) . aligns . begin( );
