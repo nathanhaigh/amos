@@ -40,6 +40,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Slice \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
+	-I$(top_builddir)/src/GNU \
 	-I$(top_srcdir)/src/Foundation
 
 libContigUtils_a_SOURCES = \
@@ -58,7 +59,8 @@ fattenContig_LDADD = \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 fattenContig_SOURCES = \
     ContigSequence.hh \
     ContigSequence.cc \
@@ -66,7 +68,7 @@ fattenContig_SOURCES = \
     tigrinc.cc \
     ContigFattener.hh \
     ContigFattener.cc \
-	fattenContig.cc  \
+    fattenContig.cc  \
     sw_align.hh \
     sw_alignscore.hh \
     sw_align.cc
@@ -87,7 +89,8 @@ manageContigs_LDADD = \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 manageContigs_SOURCES = \
 	manageContigs.cc 
 
@@ -125,12 +128,13 @@ splitContig_SOURCES = \
 
 ##-- trimContig
 stitchContigs_LDADD = \
-    $(top_builddir)/src/Contig/libContigUtils.a \
+	$(top_builddir)/src/Contig/libContigUtils.a \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a 
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 stitchContigs_SOURCES = \
 	stitchContigs.cc 
 
@@ -138,12 +142,13 @@ stitchContigs_SOURCES = \
 
 ##-- trimContig
 trimContig_LDADD = \
-    $(top_builddir)/src/Contig/libContigUtils.a \
+	$(top_builddir)/src/Contig/libContigUtils.a \
 	$(top_builddir)/src/Align/libAlign.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 trimContig_SOURCES = \
 	trimContig.cc 
 
@@ -154,6 +159,7 @@ zipContigs_LDADD = \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 zipContigs_SOURCES = \
 	zipContigs.cc 

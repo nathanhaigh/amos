@@ -52,6 +52,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Slice \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
+	-I$(top_builddir)/src/GNU \
 	-I$(top_srcdir)/src/Foundation
 
 
@@ -78,7 +79,8 @@ count_kmers_SOURCES = \
 frg_umd_merge_LDADD = \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
 frg_umd_merge_SOURCES = \
 	frg-umd-merge.cc
 
@@ -91,16 +93,18 @@ gap_links_SOURCES = \
 ##-- genome-complexity
 genome_complexity_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    $(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+    	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 genome_complexity_SOURCES = \
 	genome-complexity.cc
 
 ##-- genome-complexity-fast
 genome_complexity_fast_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    $(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+    	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 genome_complexity_fast_SOURCES = \
 	genome-complexity-fast.cc
 
@@ -256,8 +260,9 @@ test_align_SOURCES = \
 ##-- verify-layout
 verify_layout_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    $(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 verify_layout_SOURCES = \
 	verify-layout.cc
 

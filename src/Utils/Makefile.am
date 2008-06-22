@@ -34,7 +34,7 @@ dist_bin_SCRIPTS = \
 	nucmer2ovl.pl \
 	sort2.pl \
 	ovl2OVL.pl
-	
+
 # runAmos.pl 
 
 ##-- GLOBAL INCLUDE

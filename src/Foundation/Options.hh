@@ -11,11 +11,14 @@
 #ifndef OPTIONS_HH
 #define OPTIONS_HH 1
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <list>
 #include <map>
 #include <set>
 #include <string>
-
 #include <getopt.h>
 
 #include "Exceptions.hh"

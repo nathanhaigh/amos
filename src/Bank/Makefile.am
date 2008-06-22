@@ -7,29 +7,29 @@ bin_PROGRAMS = \
 	bank2contig  \
 	bank2coverage \
 	bank2fasta \
-    bank2scaff \
+	bank2scaff \
 	bank-clean \
-    bank-combine \
+	bank-combine \
 	bank-mapping \
 	bank-report \
 	bank-transact \
-    bank-tutorial \
-    dumpFeatures \
+	bank-tutorial \
+	dumpFeatures \
 	dumpmates \
 	dumpreads \
 	extractContig \
 	findMissingMates \
 	grow-readbank \
-    listReadPlacedStatus \
-    listGCContent \
+	listReadPlacedStatus \
+	listGCContent \
 	load-overlaps \
-    loadFeatures \
-    normalizeScaffold \
-    renameReads \
-    resetFragLibrary \
-    revScaffold \
+	loadFeatures \
+	normalizeScaffold \
+	renameReads \
+	resetFragLibrary \
+	revScaffold \
 	select-reads \
-    simplifyLibraries \
+	simplifyLibraries \
 	simpleContigLoader \
 	updateBankPositions \
 	updateClrRanges \
@@ -47,6 +47,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/Slice \
 	-I$(top_srcdir)/src/AMOS \
+	-I$(top_builddir)/src/GNU \
 	-I$(top_srcdir)/src/Foundation
 
 
@@ -197,7 +198,8 @@ dumpmates_SOURCES = \
 dumpFeatures_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
 	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
 dumpFeatures_SOURCES = \
 	dumpFeatures.cc
 

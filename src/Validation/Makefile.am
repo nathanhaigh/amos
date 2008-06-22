@@ -29,22 +29,22 @@ dist_bin_SCRIPTS = \
     listSurrogates.pl \
     suspiciousfeat2region.pl \
     find-query-breaks.pl
-    
+
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_builddir)/src/GNU \
-    -I$(top_srcdir)/src/Foundation \
-    -I$(top_srcdir)/src/Contig
+	-I$(top_srcdir)/src/Foundation \
+	-I$(top_srcdir)/src/Contig
 
 ##-- analyze-read-depth
 analyze_read_depth_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 analyze_read_depth_SOURCES = \
 	analyze-read-depth.cc
@@ -53,8 +53,8 @@ analyze_read_depth_SOURCES = \
 read_cov_plot_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 read_cov_plot_SOURCES = \
 	read-cov-plot.cc

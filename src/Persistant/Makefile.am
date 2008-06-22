@@ -29,8 +29,8 @@ AM_CPPFLAGS = \
 barcode_graph_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 barcode_graph_SOURCES = \
 	barcode-graph.cc
@@ -39,20 +39,20 @@ barcode_graph_SOURCES = \
 build_persistent_bank_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 build_persistent_bank_SOURCES = \
 	build-persistent-bank.cc
 
 ##-- auto-fix-contigs
 auto_fix_contigs_LDADD = \
-    $(top_builddir)/src/Contig/libContigUtils.a \
-    $(top_builddir)/src/Contig/libDataStore.a \
+	$(top_builddir)/src/Contig/libContigUtils.a \
+	$(top_builddir)/src/Contig/libDataStore.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 auto_fix_contigs_SOURCES = \
 	auto-fix-contigs.cc \
@@ -60,22 +60,22 @@ auto_fix_contigs_SOURCES = \
 
 ##-- persistent-fix-contigs
 persistent_fix_contigs_LDADD = \
-    $(top_builddir)/src/Contig/libContigUtils.a \
+	$(top_builddir)/src/Contig/libContigUtils.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 persistent_fix_contigs_SOURCES = \
 	persistent-fix-contigs.cc \
-    PersistentUtils.hh
+	PersistentUtils.hh
 
 ##-- persistent_read_dist
 persistent_read_dist_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 persistent_read_dist_SOURCES = \
 	persistent-read-dist.cc \
@@ -85,8 +85,8 @@ persistent_read_dist_SOURCES = \
 read_evolution_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 read_evolution_SOURCES = \
 	read-evolution.cc \
@@ -96,8 +96,8 @@ read_evolution_SOURCES = \
 gap_closure_reads_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 gap_closure_reads_SOURCES = \
 	gap-closure-reads.cc
@@ -106,10 +106,11 @@ gap_closure_reads_SOURCES = \
 ##-- mate-evolution
 mate_evolution_LDADD = \
 	$(top_builddir)/src/GNU/libGNU.a \
-    $(top_builddir)/src/Contig/libDataStore.a \
+	$(top_builddir)/src/Contig/libDataStore.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
+	$(top_builddir)/src/GNU/libGNU.a
 
 
 mate_evolution_SOURCES = \

@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "foundation_AMOS.hh"
 #include <getopt.h>
 #include <map>

@@ -1,6 +1,7 @@
 ##-- MAKE FRAGMENT FOR AMOS RULES
 include $(top_srcdir)/config/amos.mk
 
+AM_CXXFLAGS = -I$(top_builddir)/src/GNU
 
 amoslib_LIBRARIES = \
    libAMOSFoundation.a
@@ -32,7 +33,3 @@ libAMOSFoundation_a_SOURCES = \
   OptionResult.cc        \
   Options.cc             \
   AMOS_Foundation.cc
-   
-
-
-
