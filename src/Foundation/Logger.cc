@@ -58,6 +58,7 @@
  */
 
 #include "Logger.hh"
+#include <cstdlib>
 
 //! Sets default values for class
 /*! Note: Log is disabled until a filter level is set\n

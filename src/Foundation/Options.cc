@@ -26,6 +26,7 @@
  */
 
 #include "Options.hh"
+#include <cstring>
 
 //! Constructor takes command line options in standard argc, argv format
 /*! Initializes application name, filespec, and invocation

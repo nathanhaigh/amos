@@ -9,6 +9,8 @@
 #include  <vector>
 #include  <algorithm>
 #include  <cassert>
+#include  <cstring>
+
 using namespace std;
 
 const int  MAX_LINE = 1000;

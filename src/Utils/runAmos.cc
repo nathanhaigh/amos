@@ -18,6 +18,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <iostream>
+#include <cstdlib>
 
 #define MAX_STRING 256         // length of various char*s in file
 

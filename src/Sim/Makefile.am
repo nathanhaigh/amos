@@ -22,6 +22,7 @@ AM_CPPFLAGS = \
         -I$(top_srcdir)/src/Common \
         -I$(top_srcdir)/src/AMOS \
 	-I$(top_srcdir)/src/GNU \
+	-I$(top_builddir)/src/GNU \
 	-I/fs/sz-user-supported/Linux-i686/include 
 
 ##-- pyrosim

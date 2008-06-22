@@ -1,7 +1,7 @@
 #include "HistogramWindow.hh"
 #include "HistogramWidget.hh"
 #include "InsertStats.hh"
-
+#include <cstdlib>
 #include <qspinbox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>

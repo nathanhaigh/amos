@@ -34,6 +34,7 @@
  */
 
 #include "ConfigFile.hh"
+#include <cstring>
 
 //! Constructor
 /*! Creates a ConfigFile class. Also loads, parses, and resolves

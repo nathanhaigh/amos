@@ -9,6 +9,7 @@
 //! @brief OptionResult class implementation
 
 #include "OptionResult.hh"
+#include <cstdlib>
 
 //! Sets defaults for all results
 OptionResult::OptionResult(const std::string & optionHelp)

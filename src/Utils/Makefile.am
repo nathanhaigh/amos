@@ -44,14 +44,15 @@ AM_CPPFLAGS = \
 ##-- analyzeSNPs
 analyzeSNPs_CPPFLAGS = \
 	-I$(top_srcdir)/src/GNU \
+	-I$(top_builddir)/src/GNU \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_srcdir)/src/Common \
     -I$(top_srcdir)/src/Slice
 
 analyzeSNPs_LDADD = \
         $(top_builddir)/src/AMOS/libAMOS.a \
-	    $(top_builddir)/src/GNU/libGNU.a \
-	    $(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/GNU/libGNU.a \
+	$(top_builddir)/src/Common/libCommon.a \
         $(top_builddir)/src/Slice/libSlice.a
 
 analyzeSNPs_SOURCES = \
@@ -59,6 +60,7 @@ analyzeSNPs_SOURCES = \
 
 ##-- recallConsensus
 recallConsensus_CPPFLAGS = \
+	-I$(top_builddir)/src/GNU \
 	-I$(top_srcdir)/src/GNU \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_srcdir)/src/Common \
@@ -84,6 +86,7 @@ trimByOvl_SOURCES = \
 
 ##-- cvgStat
 cvgStat_CPPFLAGS = \
+	-I$(top_builddir)/src/GNU \
 	-I$(top_srcdir)/src/AMOS
 cvgStat_LDADD = \
         $(top_builddir)/src/AMOS/libAMOS.a
