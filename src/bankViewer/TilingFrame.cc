@@ -505,6 +505,8 @@ void TilingFrame::searchString(const QString & str, bool forward)
     QRegExp regex(str);
     QString qcons(m_consensus.c_str());
 
+    regex.setCaseSensitive(FALSE);
+
     int gindex = m_gindex + m_nextDiscrepancyBuffer;
 
     if (forward)
