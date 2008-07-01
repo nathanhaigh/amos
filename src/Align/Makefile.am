@@ -20,6 +20,7 @@ bin_PROGRAMS = \
 	merge-contigs \
 	missing-reads \
 	ovl-degr-dist \
+    overlap-align \
     po-align \
 	readinfo2cam \
 	running-cmp \
@@ -146,6 +147,13 @@ po_align_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 po_align_SOURCES = \
 	po-align.cc
+
+##-- overlap-align
+overlap_align_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+overlap_align_SOURCES = \
+	overlap-align.cc
 
 ##-- make-consensus
 make_consensus_LDADD = \
