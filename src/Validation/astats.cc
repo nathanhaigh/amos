@@ -34,7 +34,7 @@ string tableString;
 
 static void statsAddRow(string tag, string value)
 {
-  tableString += "<tr><td>" + tag + "</td><td>" + value + "</td></tr>";
+  tableString += "<tr><td>" + tag + "</td><td>" + value + "</td></tr>\n";
 }
 
 static void statsAddHeader(string header)
@@ -47,7 +47,7 @@ static void statsAddHeader(string header)
 static void statsAddRow(string tag, int value)
 {
   char buffer[1024];
-  sprintf(buffer, "%g", value);
+  sprintf(buffer, "%d", value);
   statsAddRow(tag, buffer);
 }
 
@@ -65,7 +65,7 @@ void computeStatistics()
   EventTime_t timer;
   if (OPT_Verbose) { cerr << "Loading AssemblyStats..."; }
 
-  tableString = "<table>";
+  tableString = "<html>\n<head></head>\n<body><table>\n";
 
   if (m_datastore->scaffold_bank.isOpen())
   {
@@ -280,7 +280,7 @@ void computeStatistics()
     statsAddRow("SingletonReads", (int) m_datastore->read_bank.getSize() - totalreads);
   }
 
-  tableString += "</table>";
+  tableString += "</table>\n";
 
   if (OPT_Verbose) { cerr << timer.str() << endl; }
 }
