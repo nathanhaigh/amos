@@ -256,7 +256,7 @@ int printSNPReport(ContigIterator_t ci)
                    (freq[i]->m_maxqv        >= SR_MINCONFLICTQV);
   }
 
-  if (foundGoodSNP)
+  if (foundGoodSNP || PRINTALL)
   {
     if (USEEID) { cout << ci.getContig().getEID() << "\t"; }
     else        { cout << ci.getContig().getIID() << "\t"; }
