@@ -53,6 +53,8 @@ struct Fragment_t {
 vector<Library_t> libraries;
 vector<long> fastasizes;
 long genomeSize = 0;
+bool circularGenome = false;
+bool pickStartEndTogether = false;
 
 void printHelpText()
 {
@@ -63,6 +65,8 @@ void printHelpText()
     "shotgunSim -C config_file file.fasta\n"
     "\n"
     "OPTIONS:\n"
+    "-r treat genome as circularized (allows mating around the genome)\n"
+    "-p pick the start and end at the same time instead of picking a start and then picking a length\n"
     "-C config_file configuration file containing experiment parameters\n"
     "-l layout.afg  output layout of reads into this file\n"
     "file.fasta     fasta sequence used as template for shotgun\n"
@@ -102,12 +106,15 @@ bool GetOptions(int argc, char ** argv)
     {"l",     1, 0, 'l'},
     {"help",  0, 0, 'h'},
     {"h",     0, 0, 'h'}, 
+    {"r",     0, 0, 'r'},
+    {"p",     0, 0, 'p'},
     {0, 0, 0, 0}
   };
   
   bool helpRequested = false;
   bool confFile = false;
   int c;
+
   while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
     switch (c){
     case 'c':
@@ -116,6 +123,12 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'l':
       globals["layoutfile"] = string(optarg);
+      break;
+    case 'r':
+      circularGenome = true;
+      break;
+    case 'p':
+      pickStartEndTogether = true;
       break;
     case 'h':
       //      printHelpText();
@@ -162,7 +175,7 @@ void parseInFile(ifstream & in)
   for (int i = 0; i < fastasizes.size(); i++){
     long tmp = fastasizes[i];
     fastasizes[i] = size;
-    size += tmp;
+    size += tmp;    
   }
   genomeSize = size;
 }
@@ -364,33 +377,52 @@ int main(int argc, char ** argv)
     //    cerr << "Library.readstdev " << libraries[i].readstdev << endl;
     
     while (totLen < target){
-      unsigned long start = gsl_rng_uniform_int(rng, genomeSize);
-      //      cerr << "gaussian stdev: " << stdev << " value: " << gsl_ran_gaussian(rng, stdev) << endl;
-      unsigned long len = mean + (unsigned long) round(gsl_ran_gaussian(rng, stdev));
-      
-      // find molecule that contains start
-      vector<long>::iterator mol = 
-	upper_bound(fastasizes.begin(), fastasizes.end(), start);
-      
-      if (len < libraries[i].readmin)
-	continue;               // inserts should be bigger than the
-				// smallest read
-
-      if (mol == fastasizes.end()) {
-	//	cerr << "at end comparing " << len << " to " << genomeSize - start <<endl;
-	if (len > genomeSize - start) // beyond end of genome
-	  continue;
-      } else {
-	//	cerr << "comparing " << start + len << " to " << *mol << endl;
-	if (len > *mol - start) // beyond end of molecule
-	  continue;
+      long start = 0;
+      unsigned long len = 0;
+      if (pickStartEndTogether == true) {
+         unsigned long numPositions  = (unsigned long) round(genomeSize / mean);
+         start = (mean * gsl_rng_uniform_int(rng, numPositions)) + gsl_rng_uniform_int(rng, mean) + (long) round(gsl_ran_gaussian(rng, stdev));
+         if (start <= 0) { 
+            continue; 
+         }
+         len = mean + (long) round(gsl_ran_gaussian(rng, stdev));
+         if (start > genomeSize)
+            continue;
+      }
+      else {
+         start = gsl_rng_uniform_int(rng, genomeSize);
+         //      cerr << "gaussian stdev: " << stdev << " value: " << gsl_ran_gaussian(rng, stdev) << endl;
+         len = mean + (unsigned long) round(gsl_ran_gaussian(rng, stdev));
       }
 
-      //      cerr << "Length is " << (unsigned long) len << " , " << start + len << endl;
+      // find molecule that contains start
+      vector<long>::iterator mol = upper_bound(fastasizes.begin(), fastasizes.end(), start);
+      
+      if (len < libraries[i].readmin)
+	     continue;               // inserts should be bigger than the
+				// smallest read
+      if (mol == fastasizes.end()) {
+      	if (len > genomeSize - start) {
+            if (len > genomeSize) 
+	           continue;
 
+            if (circularGenome == true) {
+              // make simulator circular genome so that end will be wrapped around
+              int wrappedPosition = (start + len) % genomeSize;
+              start = wrappedPosition;
+            }
+            else {
+               continue;
+            }
+         }
+      } else {
+	     if (len > *mol - start) // beyond end of molecule
+	        continue;
+      }
+      //      cerr << "Length is " << (unsigned long) len << " , " << start + len << endl;
+      
       assert (mol != fastasizes.begin());
       int idx = mol - fastasizes.begin() - 1; // where to insert fragment
-
       Fragment_t frg;
 
       vector<long>::iterator prev = mol - 1;
@@ -400,32 +432,31 @@ int main(int argc, char ** argv)
 
       // now the reads
       if (libraries[i].mean == 0){ // unpaired read
-	frg.forwlen = len;
-	frg.revlen = 0;
-	totLen += len;
+      	frg.forwlen = len;
+      	frg.revlen = 0;
+      	totLen += len;
       } else {
-	int forwlen = (int) (libraries[i].readmean 
-			     + gsl_ran_gaussian(rng, libraries[i].readstdev));
-	int revlen = (int) (libraries[i].readmean 
-			    + gsl_ran_gaussian(rng, libraries[i].readstdev));
-
-	// make sure reads are between min and max
-	while (forwlen > libraries[i].readmax || forwlen < libraries[i].readmin)
-	  forwlen = (int) (libraries[i].readmean 
-			     + gsl_ran_gaussian(rng, libraries[i].readstdev));
-
-	while (revlen > libraries[i].readmax || revlen < libraries[i].readmin)
-	  revlen = (int) (libraries[i].readmean 
-			     + gsl_ran_gaussian(rng, libraries[i].readstdev));
-
-
-	if (forwlen > len) forwlen = len;
-	if (revlen > len) revlen = len;
-	frg.forwlen = forwlen;
-	frg.revlen = revlen;
-	totLen += forwlen + revlen;
-      }
-
+      	int forwlen = (int) (libraries[i].readmean 
+      			     + gsl_ran_gaussian(rng, libraries[i].readstdev));
+      	int revlen = (int) (libraries[i].readmean 
+      			    + gsl_ran_gaussian(rng, libraries[i].readstdev));
+      
+      	// make sure reads are between min and max
+      	while (forwlen > libraries[i].readmax || forwlen < libraries[i].readmin)
+      	  forwlen = (int) (libraries[i].readmean 
+      			     + gsl_ran_gaussian(rng, libraries[i].readstdev));
+      
+      	while (revlen > libraries[i].readmax || revlen < libraries[i].readmin)
+      	  revlen = (int) (libraries[i].readmean 
+      			     + gsl_ran_gaussian(rng, libraries[i].readstdev));
+      
+      
+      	if (forwlen > len) forwlen = len;
+      	if (revlen > len) revlen = len;
+      	frg.forwlen = forwlen;
+      	frg.revlen = revlen;
+      	totLen += forwlen + revlen;
+      }      
       fragments[idx].push_back(frg);
     } // while coverage not attained
   } // for each library
@@ -483,10 +514,8 @@ int main(int argc, char ** argv)
       //     cerr << fragments[seq][f].left << " " << fragments[seq][f].right << endl;
       //     cerr << "DoingF " << fragments[seq][f].left << " " << fragments[seq][f].forwlen << endl;
       string forw = sequence.substr(fragments[seq][f].left, fragments[seq][f].forwlen);//this one always exists
-
       int doRead = 0;  // do both
       double mates = gsl_rng_uniform(rng);
-
       if (fragments[seq][f].revlen == 0 || 
 	  libraries[fragments[seq][f].libid].permates == 1 ||
 	  mates < libraries[fragments[seq][f].libid].permates)
