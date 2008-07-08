@@ -60,7 +60,13 @@ bool GetOptions(int argc, char ** argv)
   return true;
 } // GetOptions
 
-
+void closeBanks(Bank_t &library_bank, BankStream_t &frag_bank, Bank_t &link_bank, Bank_t &contig_bank) {
+  link_bank.close();
+  frag_bank.close();
+  library_bank.close();
+  contig_bank.close();
+//  mate_bank.close();
+}
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
@@ -198,6 +204,7 @@ int main(int argc, char **argv)
       ctglen[ctg.getIID()] = ctg.getLength();
     }
       //      cerr << "Read " << ti->source << " lives in contig " << ctg.getIID() << endl;;
+   contig_stream.close();
 
   // todo: replace matepair with fragment
   //Matepair_t mtp;
@@ -308,15 +315,12 @@ int main(int argc, char **argv)
       {
 	cerr << "Failed to append link " << LinkId << " to bank " << globals["bank"] 
 	     << ": " << endl << e << endl;
+   	closeBanks(library_bank, frag_bank, link_bank, contig_bank);
 	exit(1);
       }
   }
 
-  link_bank.close();
-  frag_bank.close();
-  library_bank.close();
-  contig_bank.close();
-//  mate_bank.close();
+   closeBanks(library_bank, frag_bank, link_bank, contig_bank);
 
   return(0);
 } // main
