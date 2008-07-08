@@ -5,7 +5,8 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	Bundler \
-	clk
+	clk \
+	OrientContigs
 
 dist_bin_SCRIPTS = \
 	Chainer.pl \
@@ -35,5 +36,12 @@ clk_LDADD = \
 	$(top_builddir)/src/GNU/libGNU.a
 clk_SOURCES = \
 	clk.cc
+
+OrientContigs_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
+OrientContigs_SOURCES = \
+	OrientContigs.cc
 
 ##-- END OF MAKEFILE --##
