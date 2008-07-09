@@ -40,8 +40,10 @@ string  OPT_TigrName;                   // tigr contig name
 string  OPT_UmdName;                    // umd contig name
 
 bool    OPT_Random           = false;   // randomly place ambiguous reads
+bool    OPT_OnlyUsePairs     = false;   // place only happy mate pairs
 bool    OPT_Singletons       = false;   // keep singletons
 
+int     OPT_Stdvs            = 5;       // "happy" number of stdvs from mean
 int     OPT_MinOverlap       = 10;      // minimum overlap between reads
 int     OPT_MaxTrimLen       = 20;      // maximum ignorable trim length
 int     OPT_MaxGap           = 10000;   // maximum gap in an alignment chain
@@ -52,7 +54,7 @@ float   OPT_MinCoverage      = 25.0;    // min coverage to tile
 float   OPT_MinIdentity      = 70.0;    // min identity to tile
 float   OPT_MaxCoverageDiff  =  2.0;    // max %coverage diff between 'best'
 float   OPT_MaxIdentityDiff  =  2.0;    // max %identity diff between 'best'
-float   IdyTol = 0.01;
+
 
 //============================================================= Constants ====//
 const char FORWARD_CHAR  = '+';
@@ -653,10 +655,14 @@ int main (int argc, char ** argv)
 
   //-- READ PLACEMENT
   cerr << "PLACEMENT" << endl;
-  PlaceUnambiguous (mapping);      // place unambiguous reads
-  PlaceHappyMates (mapping);       // place 'happy' matepairs
-  if ( OPT_Random )
-    PlaceRandom (mapping);         // randomly place all unplaced reads
+
+  if ( !OPT_OnlyUsePairs )
+    PlaceUnambiguous(mapping);    // place unambiguous reads
+
+  PlaceHappyMates(mapping);       // place 'happy' matepairs
+
+  if ( OPT_Random && !OPT_OnlyUsePairs )
+    PlaceRandom(mapping);         // randomly place all unplaced reads
 
   sort (mapping.reads.begin( ), mapping.reads.end( ), ReadPlaceCmp_t( ));
 
@@ -1670,8 +1676,8 @@ void ParseMates (Mapping_t & mapping)
 	//-- Set the mate offsets
 	rmp -> mate . minoff = rmp -> mate . maxoff =
 	  lib . getDistribution( ) . mean;
-	rmp -> mate . minoff -= lib . getDistribution( ) . sd * 5;
-	rmp -> mate . maxoff += lib . getDistribution( ) . sd * 5;
+	rmp -> mate . minoff -= lib . getDistribution( ) . sd * OPT_Stdvs;
+	rmp -> mate . maxoff += lib . getDistribution( ) . sd * OPT_Stdvs;
 	rmp -> mate . read -> mate . minoff = rmp -> mate . minoff;
 	rmp -> mate . read -> mate . maxoff = rmp -> mate . maxoff;
       }
@@ -1762,7 +1768,7 @@ void PlaceHappyMates (Mapping_t & mapping)
 
 
       //-- Pick the highest identity happy mate-pair or randomly
-      //   choose between many within IdyTol
+      //   choose between many within OPT_MaxIdentityDiff
       if ( ! places.empty() )
         {
           float idy;
@@ -1778,13 +1784,17 @@ void PlaceHappyMates (Mapping_t & mapping)
           for ( int i = 0; i < places.size(); ++ i )
             {
               idy = places[i].first->idy * places[i].second->idy;
-              if ( bestidy - idy <= IdyTol )
+              if ( bestidy - idy <= OPT_MaxIdentityDiff )
                 newplaces.push_back (places[i]);
             }
 
-          int i = (int)((double)newplaces.size( ) * rand( ) / (RAND_MAX + 1.0));
-          rmp  -> place = newplaces[i].first;
-          mrmp -> place = newplaces[i].second;
+          if ( newplaces.size() == 1 || OPT_Random )
+            {
+              int i =
+                (int)((double)newplaces.size( ) * rand( ) / (RAND_MAX + 1.0));
+              rmp  -> place = newplaces[i].first;
+              mrmp -> place = newplaces[i].second;
+            }
         }
     }
 }
@@ -1822,7 +1832,7 @@ void PlaceRandom (Mapping_t & mapping)
       for ( rcpi  = rmp -> best . begin( );
 	    rcpi != rmp -> best . end( ); ++ rcpi )
 	if ( IsValidChain (*rcpi, rmp) )
-          if ( bestidy - (*rcpi)->idy <= IdyTol )
+          if ( bestidy - (*rcpi)->idy <= OPT_MaxIdentityDiff )
             places . push_back (*rcpi);
 
       //-- Randomly pick a valid chain
@@ -2197,7 +2207,7 @@ void ParseArgs (int argc, char ** argv)
   optarg = NULL;
 
   while ( !errflg  &&
-  ((ch = getopt (argc, argv, "b:C:g:hi:I:m:M:o:rs:St:T:U:v:V:")) != EOF) )
+  ((ch = getopt (argc, argv, "b:C:d:g:hi:I:m:M:o:prs:St:T:U:v:V:")) != EOF) )
     switch (ch)
       {
       case 'b':
@@ -2207,6 +2217,10 @@ void ParseArgs (int argc, char ** argv)
       case 'C':
 	OPT_ConflictName = optarg;
 	break;
+
+      case 'd':
+        OPT_Stdvs = atoi(optarg);
+        break;
 
       case 'g':
 	OPT_MaxGap = atoi (optarg);
@@ -2236,6 +2250,10 @@ void ParseArgs (int argc, char ** argv)
       case 'o':
 	OPT_MinOverlap = atoi (optarg);
 	break;
+
+      case 'p':
+        OPT_OnlyUsePairs = true;
+        break;
 
       case 'r':
 	OPT_Random = true;
@@ -2296,6 +2314,8 @@ void PrintHelp (const char * s)
   cerr
     << "-b path       Set path of the AMOS bank to use\n"
     << "-C path       Output conflict positions and support counts to file\n"
+    << "-d uint       Set acceptable number of stdvs for mate-pairs, default "
+    << OPT_Stdvs << endl
     << "-g uint       Set maximum alignment gap length, default "
     << OPT_MaxGap << endl
     << "-h            Display help information\n"
@@ -2308,6 +2328,7 @@ void PrintHelp (const char * s)
     << "-M path       Output read mappings to file\n"
     << "-o uint       Set minimum overlap length for assembly, default "
     << OPT_MinOverlap << endl
+    << "-p            Only place reads with happy mate-pairs\n"
     << "-r            Randomly place repetitive reads into one of their copy\n"
     << "              locations if they cannot be placed via mate-pair info\n"
     << "-s uint       Set random generator seed to unsigned int, default\n"
