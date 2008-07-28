@@ -285,8 +285,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	my $recId = getId();
 
 	my $seqlen = length($frec);
-	$qrec =~ s/^ //;
-	my @quals = split(/ +/, $qrec);
+	$qrec =~ s/^\s+//;
+	my @quals = split(/\s+/, $qrec);
 	if ($#quals + 1 != $seqlen) {
 	    $base->bail("Fasta and quality for $fid($fidname) disagree: $seqlen vs " . sprintf("%d\n", $#quals + 1));
 	}

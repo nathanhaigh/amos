@@ -632,9 +632,9 @@ for (my $f = 0; $f <= $#seqfiles; $f++) {
 	    #	    print $fid, "\n";
 	    #	    print $qid, "\n";
 	    #	    print $qrec, "\n";
-	    $qrec =~ s/^ //;
+	    $qrec =~ s/^\s+//;
 	    #	    $qrec =~ s/ +/ /g;
-	    @quals = split(/ +/, $qrec);
+	    @quals = split(/\s+/, $qrec);
 	    #	    print join(',', @quals), "\n";
 	    if ($#quals + 1 != $seqlen) {
 		#		print join(',', @quals), "\n";
