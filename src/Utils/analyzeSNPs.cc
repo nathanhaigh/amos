@@ -392,25 +392,34 @@ int main(int argc, char **argv)
   {
     ContigIterator_t ci(ctg, &read_bank);
     contigcount++;
+    ID_t iid = ctg.getIID();
 
-    dots.update(contigcount);
-
-    while (ci.advanceNext())
+    try
     {
-      bases++;
+      dots.update(contigcount);
 
-      bool hasSNP = ci.hasSNP();
-      if (hasSNP) { snpcount++; }
-
-      if (TCOV && (hasSNP || PRINTALL))
+      while (ci.advanceNext())
       {
-        displaycount += printTCOV(ci);
-      }
+        bases++;
 
-      if (SNPREPORT && (hasSNP || PRINTALL))
-      {
-        displaycount += printSNPReport(ci);
+        bool hasSNP = ci.hasSNP();
+        if (hasSNP) { snpcount++; }
+
+        if (TCOV && (hasSNP || PRINTALL))
+        {
+          displaycount += printTCOV(ci);
+        }
+
+        if (SNPREPORT && (hasSNP || PRINTALL))
+        {
+          displaycount += printSNPReport(ci);
+        }
       }
+    }
+    catch (Exception_t & e)
+    {
+      cerr << "ERROR in contig iid" << iid << "\n" << e;
+      exit(1);
     }
   }
 
