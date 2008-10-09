@@ -24,6 +24,7 @@ dist_bin_SCRIPTS = \
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
+    olapsFromContig \
     fattenContig \
     insertGapColumn \
     manageContigs \
@@ -32,7 +33,7 @@ bin_PROGRAMS = \
     splitContig \
     stitchContigs \
     trimContig \
-	zipContigs 
+    zipContigs 
 
 
 ##-- GLOBAL INCLUDE
@@ -51,6 +52,13 @@ libDataStore_a_SOURCES = \
      CoverageStats.cc \
      Insert.cc        \
      InsertStats.cc 
+
+##-- olapsFromContig
+olapsFromContig_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a
+olapsFromContig_SOURCES = \
+	olapsFromContig.cc
 
 ##-- fattenContig
 fattenContig_LDADD = \
