@@ -12,6 +12,8 @@ using namespace std;
 
 #define PROGNAME "olapsFromContig"
 
+#define MIN(a,b) ( (a) < (b) ? (a) : (b) )
+
 //=============================================================== Globals ======
 string  OPT_BankName;                        // bank name parameter
 int     OPT_MinOlapLen = 20;                 // minimum overlap len
@@ -89,13 +91,10 @@ int main (int argc, char ** argv)
                 Size_t bHang =
                   (bti->offset + bti->getGappedLength()) -
                   (ati->offset + ati->getGappedLength());
-
                 Pos_t lOlapPos = bti->offset;
-                Pos_t rOlapPos = 
-                  ( ati->offset + ati->getGappedLength() <
-                    bti->offset + bti->getGappedLength() ) ?
-                  ati->offset + ati->getGappedLength() - 1 :
-                  bti->offset + bti->getGappedLength() - 1;
+                Pos_t rOlapPos =
+                  MIN(ati->offset + ati->getGappedLength() - 1,
+                      bti->offset + bti->getGappedLength() - 1);
                 Size_t aOlapLen = rOlapPos - lOlapPos + 1;
                 Size_t bOlapLen = rOlapPos - lOlapPos + 1;
 
@@ -110,11 +109,19 @@ int main (int argc, char ** argv)
                     Pos_t gapPos;
                     Pos_t aGapPos = MAX_POS;
                     Pos_t bGapPos = MAX_POS;
-                    if ( agi != ati->gaps.end() )
-                      aGapPos = ati->offset + *agi;
-                    if ( bgi != bti->gaps.end() )
-                      bGapPos = bti->offset + *bgi;
 
+                    //-- gap pos calculation
+                    // gapped offset + ungapped gap pos + #previous gaps + 1
+                    if ( agi != ati->gaps.end() )
+                      {
+                        aGapPos =
+                          ati->offset + *agi + (agi - ati->gaps.begin()) + 1;
+                      }
+                    if ( bgi != bti->gaps.end() )
+                      {
+                        bGapPos =
+                          bti->offset + *bgi + (bgi - bti->gaps.begin()) + 1;
+                      }
                     if ( aGapPos == bGapPos )
                       {
                         // remove double gap in overlap
