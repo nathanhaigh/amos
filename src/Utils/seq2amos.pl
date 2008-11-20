@@ -216,11 +216,11 @@ MAIN:
 			printMsg("{FRG","iid:$frg{id}","eid:$frg{id}","lib:$lib{id}","typ:I","}");
 		}
 		
-		printMsg("{RED","iid:$frg{fwd}{id}","eid:$frg{fwd}{name}","seq:",$frg{fwd}{seq},".","qlt:",$frg{fwd}{qual},".","frg:$frg{fwd}{id}","clr:0,$frg{fwd}{len}","}");
+		printMsg("{RED","iid:$frg{fwd}{id}","eid:$frg{fwd}{name}","seq:",$frg{fwd}{seq},".","qlt:",$frg{fwd}{qual},".","frg:$frg{id}","clr:0,$frg{fwd}{len}","}");
 		
 		if($frg{rev}{seq}) 
 		{
-			printMsg("{RED","iid:$frg{rev}{id}","eid:$frg{rev}{name}","seq:",$frg{rev}{seq},".","qlt:",$frg{rev}{qual},".","frg:$frg{rev}{id}","clr:0,$frg{rev}{len}","}");
+			printMsg("{RED","iid:$frg{rev}{id}","eid:$frg{rev}{name}","seq:",$frg{rev}{seq},".","qlt:",$frg{rev}{qual},".","frg:$frg{id}","clr:0,$frg{rev}{len}","}");
 		}
 
 		next;
