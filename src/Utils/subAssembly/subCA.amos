@@ -1,0 +1,111 @@
+#!/fs/sz-user-supported/Linux-x86_64/bin/runAmos -C
+
+#? subCA.amos - Pipeline for extracting a subset of scaffolds/contigs & all related
+#?              information (unitigs, reads, mate pairing) from a CA .frg & .asm file
+
+#? Usage:
+#?         subCA.amos prefix \
+#?                 \ -D ASM    = prefix.asm             : asm file
+#?                 \ -D FRG    = prefix.frg             : frg file
+#?                 \ -D ASM_FILTER = prefix.asm.filter  : 3 column TAB delim. file that contains: MSG, MSG_iid, MSG_eid 
+#?                                                        MSG=SCF|CCO|UTG
+#?                                                        MSG_iid|MSG_eid is required; missing values are represented as "."
+
+#? Input:
+#? 	prefix.asm.filter example:
+#?	#MSG	iid	eid
+#?	SCF     0       7180003881387
+#?	SCF     1       .
+#?	SCF     .       7180003881389
+#?	...
+#?	CCO     0       7180003293330
+#?	CCO     1	.
+#?	CCO     .       7180003293331
+#?	...
+
+#? Output: 
+#?         prefix.filter.asm : filtered asm file
+#?         prefix.filter.frg : filtered frg file
+#?         prefix.filter.afg : afg file
+#?         prefix.filter.bnk/: bank directory
+
+#--------------------------------------- USER DEFINED VALUES ------------------#
+
+# AMOS package directory
+BINDIR    = /fs/sz-user-supported/Linux-x86_64/bin/
+
+# script directory
+SCRIPTDIR = ~dpuiu/bin/subAssembly/
+
+ASM = $(PREFIX).asm
+FRG = $(PREFIX).frg
+
+ASM_FILTER = $(ASM).filter
+FRG_FILTER = $(FRG).filter
+
+FRG_INFO = $(FRG).info 
+FRG_MAP  = $(FRG).map
+
+ASM_INFO = $(ASM).info 
+ASM_MAP  = $(ASM).map
+
+FILTER          = $(PREFIX).filter
+FILTER_FRG      = $(FILTER).frg
+FILTER_ASM      = $(FILTER).asm
+FILTER_AFG      = $(FILTER).afg
+FILTER_BNK      = $(FILTER).bnk
+
+INPUTS   = $(FRG) $(ASM) $(ASM_FILTER)
+OUTPUTS  = $(FILTER_AFG) $(FILTER_BNK) 
+
+#------------------------------------------------------------------------------#
+
+# ## Testing input files
+# 0: test -f $(FRG) 
+# 1: test -f $(ASM) 
+# 2: test -f $(ASM_FILTER) 
+
+## Getting asm info and map 
+10: $(SCRIPTDIR)/CA2info.pl < $(ASM) > $(ASM_INFO)
+20: $(SCRIPTDIR)/CA2map.pl  < $(ASM) > $(ASM_MAP) 
+
+## Getting frg info and map 
+30: $(SCRIPTDIR)/CA2info.pl < $(FRG) > $(FRG_INFO)
+40: $(SCRIPTDIR)/CA2map.pl  < $(FRG) > $(FRG_MAP) 
+
+#------------------------------------------------------------------------------#
+
+## Getting related asm messages 
+100: $(SCRIPTDIR)/intersect2.pl $(ASM_MAP) $(ASM_FILTER) > $(ASM_FILTER).all
+
+## Getting related asm messages offset
+110: egrep "^MDI|^BAT|^ADT" $(ASM_INFO) > $(ASM_FILTER).all.info
+111: $(SCRIPTDIR)/intersect1.pl $(ASM_INFO) $(ASM_FILTER).all >> $(ASM_FILTER).all.info
+
+## Filtering asm file
+120: $(SCRIPTDIR)/subMsg.pl -f $(ASM_FILTER).all.info  < $(ASM) >  $(FILTER_ASM)
+
+#------------------------------------------------------------------------------#
+
+## Getting frg messages
+200: grep ^AFG $(ASM_FILTER).all | sed 's/AFG/FRG/' > $(FRG_FILTER)
+
+## Getting related frg messages
+210: $(SCRIPTDIR)/intersect2.pl $(FRG_MAP) $(FRG_FILTER) > $(FRG_FILTER).all
+
+## Getting related frg messages offset
+220: grep "^DST" $(FRG_INFO) > $(FRG_FILTER).all.info
+221: $(SCRIPTDIR)/intersect1.pl $(FRG_INFO) $(FRG_FILTER).all >> $(FRG_FILTER).all.info
+
+
+## Filtering frg file
+230: $(SCRIPTDIR)/subMsg.pl -f $(FRG_FILTER).all.info < $(FRG) > $(FILTER_FRG)
+
+#------------------------------------------------------------------------------#
+
+## Generating afg file
+300: $(BINDIR)/toAmos -f $(FILTER_FRG) -a $(FILTER_ASM) -o $(FILTER_AFG)
+
+## Generating bank directory
+309: rm -fr $(FILTER_BNK)
+310: $(BINDIR)/bank-transact -c -b $(FILTER_BNK) -m $(FILTER_AFG)
