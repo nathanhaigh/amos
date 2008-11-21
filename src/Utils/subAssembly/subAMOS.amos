@@ -1,4 +1,5 @@
 #!/fs/sz-user-supported/Linux-x86_64/bin/runAmos -C
+# Revision: 1.0 
 
 #? subAMOS.amos - Pipeline for extracting a subset of scaffolds/contigs & all related
 #?                information (unitigs, reads, mate pairing) from an AMOS .afg file

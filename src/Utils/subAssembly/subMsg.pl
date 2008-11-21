@@ -11,7 +11,7 @@ $| = 1;
 
 my $tigr_tf = new TIGR::Foundation;
 my $PRG = $tigr_tf->getProgramInfo('name');
-my $REV="1.0";
+my $VERSION = '$Revision$ ';
 my @DEPENDS=("TIGR::Foundation","TIGR::AsmLib");
 
 # help info
@@ -55,7 +55,7 @@ MAIN:
 	# Configure TIGR Foundation
 	$tigr_tf->setHelpInfo($HELPTEXT.$MOREHELP);
         $tigr_tf->setUsageInfo($HELPTEXT);
-        $tigr_tf->setVersionInfo($REV);
+        $tigr_tf->setVersionInfo($VERSION);
         $tigr_tf->addDependInfo(@DEPENDS);
 	
 	# validate input parameters
