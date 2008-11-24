@@ -81,9 +81,7 @@ MAIN:
 	#########################################################################
 
         # parse input
-	open(IN,$ARGV[0]) or $tigr_tf->bail($!);
-
-	while(my $rec = getCARecord(\*IN))
+	while(my $rec = getCARecord(\*STDIN))
 	{
 		my($id, $fields, $recs) = parseCARecord($rec);
 		my %fields=%$fields;
@@ -156,8 +154,6 @@ MAIN:
 	 		print $rec 
 		}
 	}
-	
-	close(IN);
 
 	exit 0;
 }
