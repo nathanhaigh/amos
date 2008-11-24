@@ -62,8 +62,7 @@ MAIN:
 		"f=s"	=>	\$options{f}
 	);
 	$tigr_tf->printUsageInfoAndExit() if (!$result);
-	$tigr_tf->printUsageInfoAndExit() if (! @ARGV);
-	
+		
 	#########################################################################
 	
 	open(IN,$options{f}) or $tigr_tf->bail("Cannot open input file".$!) ;
