@@ -7,9 +7,9 @@
 #? Usage:
 #?         subAMOS.amos prefix \
 #?                 \ -D AFG    = prefix.afg             : afg file
-#?                 \ -D AFG_FILTER = prefix.afg.filter  : 3 column TAB delim. file that contains: MSG, MSG_iid, MSG_eid 
+#?                 \ -D AFG_FILTER = prefix.afg.filter  : 3 column TAB delim. file that contains: MSG_TYPE, IID, EID
 #?                                                        MSG=SCF|CTG
-#?                                                        MSG_iid|MSG_eid is required; missing values are represented as "."
+#?                                                        IID|EID is required; missing values are represented as "."
 
 #? Input:
 #? 	prefix.afg.filter example:
@@ -29,45 +29,63 @@
 BINDIR    = /fs/sz-user-supported/Linux-x86_64/bin/
 
 # script directory
-SCRIPTDIR = ~dpuiu/bin/subAssembly
+SCRIPTDIR = ~/bin/subAssembly
 
-AFG        = $(PREFIX).afg
-AFG_FILTER = $(AFG).filter
-AFG_INFO   = $(AFG).info 
-AFG_MAP    = $(AFG).map
-
+# input files
+TGT         = $(PREFIX).afg
 FILTER      = $(PREFIX).filter
-FILTER_AFG  = $(FILTER).afg
-FILTER_BNK  = $(FILTER).bnk
+# processed input files
+INFO        = $(PREFIX).info 
+MAP         = $(PREFIX).map
 
-INPUTS     = $(AFG) $(AFG_FILTER)
-OUTPUTS    = $(FILTER_AFG) $(FILTER_BNK)
+# filtered prefix
+FILTERED     = $(PREFIX).filtered
+# filtered files
+FTGT         = $(FILTERED).afg
+FINFO        = $(FILTERED).info 
+FMAP         = $(FILTERED).map
+FBNK         = $(FILTERED).bnk
+FIID	     = $(FILTERED).iid
+
+# temporary prefix
+TMP	     = $(PREFIX).tmp
+# temporary files
+TTGT	     = $(TMP).afg
+
+INPUTS       = $(TGT) $(FILTER)
+OUTPUTS      = $(FTGT) $(FBNK)
+
 #------------------------------------------------------------------------------#
 
-# ## Testing input files
-# 0: test -f $(AFG) 
-# 1: test -f $(AFG_FILTER) 
+## Testing input files
+0: test -f $(TGT) 
+1: test -f $(FILTER) 
 
-## Getting afg info and map 
-10: $(SCRIPTDIR)/AMOS2info.pl < $(AFG) > $(AFG_INFO)
-20: $(SCRIPTDIR)/AMOS2map.pl  < $(AFG) > $(AFG_MAP) 
+## Getting message information 
+10: $(SCRIPTDIR)/AMOS2info.pl < $(TGT) > $(INFO)
+
+##  Getting id mappings
+20: $(SCRIPTDIR)/AMOS2map.pl  < $(TGT) > $(MAP) 
 
 #------------------------------------------------------------------------------#
 
-## Getting related asm messages 
-100: $(SCRIPTDIR)/intersect2.pl $(AFG_MAP) $(AFG_FILTER) > $(AFG_FILTER).all
+## Filtering messages 
+100: $(SCRIPTDIR)/intersect2.pl $(MAP) $(FILTER) > $(FMAP)
 
-## Getting related asm messages offset
-110: egrep "^UNV|^LIB" $(AFG_INFO) > $(AFG_FILTER).all.info
-111: $(SCRIPTDIR)/intersect1.pl $(AFG_INFO) $(AFG_FILTER).all >> $(AFG_FILTER).all.info
+## Retrieving message offsets
+110: egrep "^UNV|^LIB" $(INFO) > $(FINFO)
+111: $(SCRIPTDIR)/intersect1.pl $(INFO) $(FMAP) >> $(FINFO)
 
-## Filtering asm file
-120: $(SCRIPTDIR)/subMsg.pl -f $(AFG_FILTER).all.info  < $(AFG) >  $(FILTER).tmp.afg
+## Generating new AMOS output file
+120: $(SCRIPTDIR)/subMsg.pl -f $(FINFO)  < $(TGT) >  $(TTGT)
 
-## Assigning new CTG/SCF iid's staring from 1 & generating afg file
-200: cat $(AFG_FILTER).all | egrep "^CTG|^SCF" |  sort -k1 -nk2 | perl -ane 'print $F[0],"\t",$F[1],"\t",++$i,"\n";' > $(AFG_FILTER).iid
-210: $(SCRIPTDIR)/newAMOSiids.pl -f $(AFG_FILTER).iid < $(FILTER).tmp.afg > $(FILTER_AFG)
+## Assigning new CTG/SCF iid's staring from 1
+200: cat $(FMAP) | egrep "^CTG|^SCF" |  sort -k1 -nk2 | perl -ane 'print $F[0],"\t",$F[1],"\t",++$i,"\n";' > $(FIID)
 
-## Generating bank directory
-219: rm -fr $(FILTER_BNK)
-220: $(BINDIR)/bank-transact -c -b $(FILTER_BNK) -m $(FILTER_AFG)
+## Updating AMOS output file id's
+210: $(SCRIPTDIR)/newAMOSiids.pl -f $(FIID) < $(TTGT) > $(FTGT)
+211: rm $(TTGT)
+
+## Creating new bank directory
+219: rm -fr $(FBNK)
+220: $(BINDIR)/bank-transact -c -b $(FBNK) -m $(FTGT)

@@ -62,6 +62,7 @@ MAIN:
 		"f=s"	=>	\$options{f}
 	);
 	$tigr_tf->printUsageInfoAndExit() if (!$result);
+	$tigr_tf->printUsageInfoAndExit() if (! @ARGV);
 	
 	#########################################################################
 	
@@ -80,7 +81,9 @@ MAIN:
 	#########################################################################
 
         # parse input
-	while(my $rec = getCARecord(\*STDIN))
+	open(IN,$ARGV[0]) or $tigr_tf->bail($!);
+
+	while(my $rec = getCARecord(\*IN))
 	{
 		my($id, $fields, $recs) = parseCARecord($rec);
 		my %fields=%$fields;
@@ -154,6 +157,7 @@ MAIN:
 		}
 	}
 	
+	close(IN);
 
 	exit 0;
 }
