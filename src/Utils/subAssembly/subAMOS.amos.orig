@@ -7,7 +7,7 @@
 #? Usage:
 #?         subAMOS.amos prefix \
 #?                 \ -D AFG    = prefix.afg             : afg file
-#?                 \ -D SUB    = prefix.sub             : 3 column TAB delim. file that contains: MSG_TYPE, IID, EID
+#?                 \ -D FILTER = prefix.filter          : 3 column TAB delim. file that contains: MSG_TYPE, IID, EID
 #?                                                        MSG=SCF|CTG
 #?                                                        IID|EID is required; missing values are represented as "."
 
@@ -34,33 +34,32 @@ SCRIPTDIR = ~/bin/subAssembly
 # input files
 AFG         = $(PREFIX).afg
 FILTER      = $(PREFIX).filter
-
 # processed input files
 INFO        = $(PREFIX).info 
 MAP         = $(PREFIX).map
 
+# filtered prefix
+FILTERED     = $(PREFIX).filtered
 # filtered files
-SUB          = $(PREFIX).sub
-SUBTMP	     = $(SUB).tmp
-SAFG         = $(SUB).afg
-SINFO        = $(SUB).info 
-SMAP         = $(SUB).map
-
-SIID	     = $(SUB).iid
+FAFG         = $(FILTERED).afg
+FINFO        = $(FILTERED).info 
+FMAP         = $(FILTERED).map
+FBNK         = $(FILTERED).bnk
+FIID	     = $(FILTERED).iid
 
 # temporary prefix
 TMP	     = $(PREFIX).tmp
 # temporary files
 TAFG	     = $(TMP).afg
 
-INPUTS       = $(AFG)  $(FILTER)
-OUTPUTS      = $(SAFG) 
+INPUTS       = $(AFG) $(FILTER)
+OUTPUTS      = $(FAFG) $(FBNK)
 
 #------------------------------------------------------------------------------#
 
 ## Testing input files
 0: test -f $(AFG) 
-1: test -f $(SUB) 
+1: test -f $(FILTER) 
 
 ## Getting message information 
 10: $(SCRIPTDIR)/AMOS2info.pl < $(AFG) > $(INFO)
@@ -71,19 +70,22 @@ OUTPUTS      = $(SAFG)
 #------------------------------------------------------------------------------#
 
 ## Filtering messages 
-100: $(SCRIPTDIR)/intersect2.pl $(MAP) $(FILTER) > $(SUB) 
+100: $(SCRIPTDIR)/intersect2.pl $(MAP) $(FILTER) > $(FMAP)
 
 ## Retrieving message offsets
-110: egrep "^UNV|^LIB" $(INFO) > $(SINFO)
-111: $(SCRIPTDIR)/intersect1.pl $(INFO) $(SUB) >> $(SINFO)
+110: egrep "^UNV|^LIB" $(INFO) > $(FINFO)
+111: $(SCRIPTDIR)/intersect1.pl $(INFO) $(FMAP) >> $(FINFO)
 
 ## Generating new AMOS output file
-120: $(SCRIPTDIR)/subMsg.pl -f $(SINFO)  < $(AFG) >  $(TAFG)
+120: $(SCRIPTDIR)/subMsg.pl -f $(FINFO)  < $(AFG) >  $(TAFG)
 
 ## Assigning new CTG/SCF iid's staring from 1
-200: cat $(SMAP) | egrep "^CTG|^SCF" |  sort -k1 -nk2 | perl -ane 'print $F[0],"\t",$F[1],"\t",++$i,"\n";' > $(SIID)
+200: cat $(FMAP) | egrep "^CTG|^SCF" |  sort -k1 -nk2 | perl -ane 'print $F[0],"\t",$F[1],"\t",++$i,"\n";' > $(FIID)
 
 ## Updating AMOS output file id's
-210: $(SCRIPTDIR)/newAMOSiids.pl -f $(SIID) < $(TAFG) > $(SAFG)
+210: $(SCRIPTDIR)/newAMOSiids.pl -f $(FIID) < $(TAFG) > $(FAFG)
 211: rm $(TAFG)
 
+## Creating new bank directory
+219: rm -fr $(FBNK)
+220: $(BINDIR)/bank-transact -c -b $(FBNK) -m $(FAFG)

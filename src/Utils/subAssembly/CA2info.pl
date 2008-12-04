@@ -98,7 +98,7 @@ MAIN:
 		}
 		elsif($id eq "AFG")					## asm.AFG
                 {
-			$fields{acc}=~/(\d+),(\d+)/;
+			$fields{acc}=~/(\w+),(\w+)/;
 
                         print join "\t",($id,$1,".",$offset,$len);print "\n"; 
                 }
