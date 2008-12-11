@@ -5,6 +5,7 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 dist_bin_SCRIPTS = \
 	ace2contig.pl \
+    agp2amos.pl \
 	amos2frg.pl \
 	amos2mates.pl \
 	amos2sq.pl \
