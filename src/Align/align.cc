@@ -5716,7 +5716,7 @@ void  Overlap_Align
 //  and  gap_score  the extra penalty for starting a gap (negative).
 
   {
-   int  matrix_size;
+   double  matrix_size;
 
    if  (Verbose > 3)
        fprintf (stderr, "Overlap_Align:  s_len = %d  t_lo/hi/len = %d/%d/%d\n",
@@ -5726,7 +5726,8 @@ void  Overlap_Align
    assert (t_hi <= t_len);
    assert (0 <= s_len );
 
-   matrix_size = s_len * (t_len - t_lo);
+   matrix_size = double (s_len) * (t_len - t_lo);
+
    if  (t_len - t_lo <= 10 || matrix_size <= MATRIX_SIZE_LIMIT)
        Overlap_Align_Full_Matrix (s, s_len, t, t_lo, t_hi, t_len,
             match_score, mismatch_score, indel_score, gap_score, align);
