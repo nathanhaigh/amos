@@ -308,9 +308,13 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "E:Fho:v:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "aE:Fho:v:")) != EOF))
      switch  (ch)
        {
+        case  'a' :
+          Show_Alignment = true;
+          break;
+
         case  'E' :
           Error_Rate = strtod (optarg, NULL);
           break;
@@ -416,6 +420,7 @@ static void  Usage
            "from <bank-name>\n"
            "\n"
            "Options:\n"
+           "  -a       Also show alignments of overlaps \n"
            "  -E <x>   Maximum error rate for overlaps is <x>\n"
            "           e.g., -E 0.06 for 6% error rate\n"
            "  -F       Input is a fasta file\n"
