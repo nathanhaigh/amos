@@ -531,7 +531,7 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &e
                ID_t sink = 0;
                int numNeighbors;
                set<ID_t> t;
-               std:stringstream oss;
+               std::stringstream oss;
                oss << i->source << " ";
 
                if (debug >= 2) { cerr << "Checking node " << i->source << endl; }
@@ -990,7 +990,7 @@ int main(int argc, char *argv[]) {
 
                // add the edge
                if (visitedEdges[cte.getIID()] == 0) {
-                  std:stringstream oss;
+                  std::stringstream oss;
                   oss << myID << "_" << otherID;
 
                   // determine bad edges
