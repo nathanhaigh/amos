@@ -1,0 +1,690 @@
+Log for qt3to4 on Wed Mar 4 16:14:44 2009. Number of log entries: 641
+In file /Users/mschatz/build/AMOS/src/bankViewer/AssemblyStats.cc at line 4 column 19: qtextedit.h -> q3textedit.h
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/BufferedLineEdit.cc
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.cc at line 14 column 34: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.cc at line 15 column 20: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.cc at line 44 column 13: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.cc at line 51 column 13: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.cc: Added the following include directives:
+	#include <Q3PointArray> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphEdge.cc at line 7 column 51: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphEdge.cc at line 8 column 15: QCanvasLine -> Q3CanvasLine
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.cc at line 5 column 18: qwmatrix.h -> qmatrix.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.cc at line 9 column 30: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.cc at line 10 column 15: QCanvasView -> Q3CanvasView
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.cc at line 18 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.cc at line 20 column 22: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.cc: Added the following include directives:
+	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 2 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 18 column 15: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 26 column 24: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 33 column 28: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 61 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 62 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 188 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 188 column 46: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 213 column 17: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 213 column 48: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.cc at line 237 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoField.cc at line 14 column 21: qscrollview.h -> q3scrollview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoField.cc at line 138 column 18: black -> Qt::black
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoField.cc at line 164 column 20: black -> Qt::black
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoField.cc at line 271 column 16: black -> Qt::black
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoField.cc: Added the following include directives:
+	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 11 column 20: qpopupmenu.h -> q3popupmenu.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 24 column 43: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 27 column 26: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 30 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 35 column 14: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 37 column 25: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 45 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 45 column 37: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 54 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 54 column 35: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 61 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 61 column 35: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 68 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 68 column 37: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 75 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 75 column 32: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 106 column 45: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 114 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 125 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc at line 135 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.cc: Added the following include directives:
+	#include <QPixmap> 
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/ChromoStore.cc
+In file /Users/mschatz/build/AMOS/src/bankViewer/ConsensusField.cc at line 37 column 10: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/ConsensusField.cc at line 319 column 17: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/ConsensusField.cc: Added the following include directives:
+	#include <Q3PointArray> 	#include <QPaintEvent> 	#include <Q3Frame> 	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigCanvasItem.cc at line 9 column 42: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigCanvasItem.cc at line 10 column 20: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 6 column 18: qtoolbar.h -> q3toolbar.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 26 column 43: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 29 column 26: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 38 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 40 column 26: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 50 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 62 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 64 column 27: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 88 column 59: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 89 column 58: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 91 column 59: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 92 column 58: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 209 column 44: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 224 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 234 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.cc at line 244 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.cc at line 13 column 50: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.cc at line 16 column 46: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.cc at line 18 column 20: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.cc: Added the following include directives:
+	#include <Q3PointArray> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.cc at line 17 column 58: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.cc at line 20 column 54: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.cc at line 22 column 20: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.cc at line 40 column 19: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.cc: Added the following include directives:
+	#include <Q3PointArray> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 8 column 19: qgroupbox.h -> q3groupbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 9 column 19: qtextedit.h -> q3textedit.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 12 column 20: qwhatsthis.h -> q3whatsthis.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 15 column 69: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 20 column 40: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 22 column 29: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 27 column 37: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 30 column 30: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 36 column 40: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc at line 37 column 38: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.cc: Added the following include directives:
+	#include <Q3VBoxLayout> 	#include <Q3GridLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 4 column 19: qlistview.h -> q3listview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 21 column 44: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 25 column 27: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 36 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 52 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 58 column 27: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 74 column 57: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 75 column 51: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 77 column 57: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 78 column 51: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 254 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.cc at line 261 column 45: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureCanvasItem.cc at line 9 column 68: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureCanvasItem.cc at line 10 column 20: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/HistogramWidget.cc: Added the following include directives:
+	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/HistogramWindow.cc at line 11 column 14: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/HistogramWindow.cc at line 19 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/HistogramWindow.cc at line 19 column 35: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertCanvasItem.cc at line 12 column 59: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertCanvasItem.cc at line 13 column 20: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 9 column 18: qwmatrix.h -> qmatrix.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 33 column 32: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 36 column 14: QCanvasView -> Q3CanvasView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 36 column 56: WRepaintNoErase -> WNoAutoErase
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 45 column 10: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 50 column 31: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 51 column 31: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 86 column 42: QCanvasItem -> Q3CanvasItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 92 column 39: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 166 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 168 column 22: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 185 column 54: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 198 column 39: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 425 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 438 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 439 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 450 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 451 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 476 column 24: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 520 column 40: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 552 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc at line 553 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.cc: Added the following include directives:
+	#include <QWheelEvent> 	#include <QPaintEvent> 	#include <QResizeEvent> 	#include <QPixmap> 	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertPosition.cc: Added the following include directives:
+	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 11 column 18: qwmatrix.h -> qmatrix.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 14 column 16: qaccel.h -> q3accel.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 16 column 19: qtextedit.h -> q3textedit.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 17 column 15: qhbox.h -> q3hbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 122 column 25: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 174 column 7: QHBox -> Q3HBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 174 column 26: QHBox -> Q3HBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 185 column 43: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 186 column 43: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 193 column 12: QBoxLayout -> Q3BoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 193 column 37: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 260 column 8: QAccel -> Q3Accel
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 260 column 24: QAccel -> Q3Accel
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 314 column 40: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 409 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 410 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 424 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 425 column 12: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 474 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 475 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 897 column 15: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1032 column 24: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1032 column 55: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1039 column 19: QCanvasLine -> Q3CanvasLine
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1039 column 44: QCanvasLine -> Q3CanvasLine
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1049 column 24: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1049 column 55: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1056 column 36: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1121 column 24: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1121 column 54: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1136 column 24: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1136 column 55: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1451 column 26: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1451 column 57: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1522 column 10: QWMatrix -> QMatrix
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1679 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1680 column 23: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1694 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1695 column 23: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1780 column 38: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1784 column 53: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1785 column 21: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1804 column 29: QCanvasEllipse -> Q3CanvasEllipse
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1847 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1848 column 17: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1895 column 23: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc at line 1903 column 28: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.cc: Added the following include directives:
+	#include <Q3BoxLayout> 	#include <Q3VBoxLayout> 	#include <Q3PointArray> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 9 column 20: qpopupmenu.h -> q3popupmenu.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 10 column 18: qtoolbar.h -> q3toolbar.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 14 column 22: qbuttongroup.h -> q3buttongroup.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 16 column 16: qaccel.h -> q3accel.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 21 column 19: qdockarea.h -> q3dockarea.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 22 column 19: qtextedit.h -> q3textedit.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 23 column 21: qscrollview.h -> q3scrollview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 24 column 15: qvbox.h -> q3vbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 26 column 19: qgroupbox.h -> q3groupbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 28 column 21: qobjectlist.h -> qobject.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 48 column 15: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 63 column 13: QDockWindow -> Q3DockWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 63 column 42: QDockWindow -> Q3DockWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 63 column 54: QDockWindow -> Q3DockWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 74 column 13: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 74 column 43: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 75 column 41: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 77 column 42: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 86 column 53: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 93 column 10: QIconSet -> QIcon
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 94 column 10: QIconSet -> QIcon
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 95 column 10: QIconSet -> QIcon
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 339 column 12: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 339 column 40: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 368 column 13: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc at line 368 column 38: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.cc: Added the following include directives:
+	#include <Q3GridLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 12 column 19: qtextedit.h -> q3textedit.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 13 column 22: qbuttongroup.h -> q3buttongroup.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 15 column 17: qheader.h -> q3header.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 16 column 19: qlistview.h -> q3listview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 23 column 20: qwhatsthis.h -> q3whatsthis.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 26 column 20: qpopupmenu.h -> q3popupmenu.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 27 column 18: qtoolbar.h -> q3toolbar.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 57 column 71: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 58 column 17: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 67 column 41: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 73 column 36: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 75 column 29: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 78 column 39: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 91 column 38: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 96 column 43: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 114 column 38: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 119 column 43: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 137 column 39: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 139 column 31: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 146 column 33: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 151 column 38: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 168 column 40: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 170 column 31: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 177 column 37: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 181 column 42: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 208 column 40: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 210 column 32: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 237 column 45: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 242 column 50: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 257 column 38: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 269 column 47: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 274 column 52: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 291 column 30: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 308 column 35: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 312 column 40: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 322 column 35: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 344 column 49: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 349 column 54: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 364 column 28: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 376 column 40: QIconSet -> QIcon
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 384 column 26: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc at line 409 column 29: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.cc: Added the following include directives:
+	#include <Q3HBoxLayout> 	#include <Q3GridLayout> 	#include <Q3VBoxLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.cc at line 6 column 21: qfiledialog.h -> q3filedialog.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.cc at line 9 column 16: qaccel.h -> q3accel.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.cc at line 27 column 62: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.cc at line 93 column 25: QFileDialog -> Q3FileDialog
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.cc at line 107 column 25: QFileDialog -> Q3FileDialog
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 8 column 20: qpopupmenu.h -> q3popupmenu.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 26 column 40: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 29 column 23: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 36 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 39 column 27: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 55 column 57: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 56 column 57: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 58 column 57: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 59 column 57: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 146 column 45: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 178 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 189 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 219 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.cc at line 249 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/main.cc: Added the following include directives:
+	#include <QPixmap> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 9 column 18: qtoolbar.h -> q3toolbar.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 11 column 16: qaccel.h -> q3accel.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 15 column 15: qvbox.h -> q3vbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 30 column 24: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 39 column 25: QVBox -> Q3VBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 45 column 13: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 45 column 51: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 63 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 63 column 34: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 66 column 28: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 118 column 8: QAccel -> Q3Accel
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 118 column 24: QAccel -> Q3Accel
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 130 column 10: QIconSet -> QIcon
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 131 column 10: QIconSet -> QIcon
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 141 column 10: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc at line 141 column 37: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.cc: Added the following include directives:
+	#include <QPixmap> 	#include <Q3PopupMenu> 	#include <Q3VBoxLayout> 
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/NChartStats.cc
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWidget.cc: Added the following include directives:
+	#include <QPaintEvent> 	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 8 column 16: qframe.h -> q3frame.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 9 column 22: qbuttongroup.h -> q3buttongroup.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 13 column 20: qwhatsthis.h -> q3whatsthis.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 16 column 20: qpopupmenu.h -> q3popupmenu.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 17 column 18: qtoolbar.h -> q3toolbar.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 21 column 77: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 22 column 17: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 29 column 44: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 36 column 23: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 38 column 33: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 39 column 34: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 40 column 34: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 42 column 33: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 46 column 38: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc at line 61 column 36: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.cc: Added the following include directives:
+	#include <Q3GridLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindow.cc at line 8 column 22: qbuttongroup.h -> q3buttongroup.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.cc at line 14 column 8: QSocket -> Q3Socket
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.cc at line 27 column 13: QTextStream -> Q3TextStream
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.cc at line 68 column 17: QServerSocket -> Q3ServerSocket
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.cc at line 98 column 26: QTextView -> Q3TextView
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.cc: Added the following include directives:
+	#include <Q3TextStream> 	#include <QLabel> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.cc at line 6 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.cc at line 16 column 36: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.cc at line 19 column 14: QCanvasView -> Q3CanvasView
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.cc at line 19 column 56: WRepaintNoErase -> WNoAutoErase
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.cc: Added the following include directives:
+	#include <QWheelEvent> 	#include <QResizeEvent> 	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 17 column 19: qgroupbox.h -> q3groupbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 22 column 22: qbuttongroup.h -> q3buttongroup.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 26 column 20: qwhatsthis.h -> q3whatsthis.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 29 column 67: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 34 column 39: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 36 column 28: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 41 column 36: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 44 column 29: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 60 column 29: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 76 column 31: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 80 column 39: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 177 column 30: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 181 column 38: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 184 column 34: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 257 column 35: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 261 column 40: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 292 column 30: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 296 column 38: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc at line 341 column 30: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.cc: Added the following include directives:
+	#include <Q3HBoxLayout> 	#include <Q3GridLayout> 	#include <Q3VBoxLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/RangeScrollBar.cc: Added the following include directives:
+	#include <QTimerEvent> 	#include <QWheelEvent> 	#include <QPaintEvent> 	#include <QPixmap> 	#include <QMouseEvent> 	#include <QHideEvent> 	#include <QKeyEvent> 	#include <QEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc at line 25 column 12: QBoxLayout -> Q3BoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc at line 25 column 39: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc at line 32 column 30: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc at line 32 column 46: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc at line 35 column 31: AlignTop -> Qt::AlignTop
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc at line 35 column 43: AlignLeft -> Qt::AlignLeft
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc at line 37 column 24: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.cc: Added the following include directives:
+	#include <Q3VBoxLayout> 	#include <Q3Frame> 	#include <Q3BoxLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 19 column 41: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 22 column 24: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 36 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 45 column 27: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 67 column 54: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 68 column 48: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 70 column 54: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 71 column 48: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 176 column 42: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 184 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 194 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.cc at line 204 column 15: QListViewItem -> Q3ListViewItem
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/RenderSeq.cc
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 6 column 18: qtoolbar.h -> q3toolbar.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 28 column 45: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 32 column 28: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 40 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 50 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 52 column 27: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 67 column 61: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 68 column 62: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 70 column 61: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 71 column 62: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 189 column 46: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 203 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 213 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.cc at line 223 column 15: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.cc at line 8 column 19: qgroupbox.h -> q3groupbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.cc at line 13 column 20: qwhatsthis.h -> q3whatsthis.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.cc at line 16 column 75: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.cc at line 21 column 43: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.cc at line 23 column 29: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.cc at line 28 column 37: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.cc: Added the following include directives:
+	#include <Q3GridLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.cc at line 9 column 37: WStyle_Customize -> Qt::WStyle_Customize
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.cc at line 9 column 55: WStyle_NoBorder -> Qt::WStyle_NoBorder
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.cc at line 9 column 69: WStyle_Tool -> Qt::WStyle_Tool
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.cc at line 9 column 81: WWinOwnDC -> Qt::WWinOwnDC
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.cc: Added the following include directives:
+	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingField.cc at line 7 column 21: qpointarray.h -> q3pointarray.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingField.cc at line 82 column 31: WRepaintNoErase -> WNoAutoErase
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingField.cc at line 281 column 13: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingField.cc: Added the following include directives:
+	#include <QMouseEvent> 	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 10 column 21: qscrollview.h -> q3scrollview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 59 column 31: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 60 column 9: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 73 column 24: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 74 column 37: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 99 column 12: QBoxLayout -> Q3BoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 99 column 39: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc at line 189 column 8: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.cc: Added the following include directives:
+	#include <Q3BoxLayout> 	#include <QPaintEvent> 	#include <Q3Frame> 	#include <Q3VBoxLayout> 
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/UIElements.cc
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/AlignmentInfo.hh
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/AssemblyStats.hh
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/BufferedLineEdit.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.hh at line 4 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.hh at line 7 column 44: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphContig.hh at line 12 column 22: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphEdge.hh at line 4 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphEdge.hh at line 7 column 37: QCanvasLine -> Q3CanvasLine
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphEdge.hh at line 10 column 47: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.hh at line 6 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.hh at line 9 column 37: QCanvasView -> Q3CanvasView
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.hh at line 14 column 20: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphView.hh: Added the following include directives:
+	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.hh at line 4 column 21: qmainwindow.h -> q3mainwindow.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.hh at line 5 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.hh at line 6 column 19: qlistview.h -> q3listview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.hh at line 16 column 39: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.hh at line 36 column 9: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CGraphWindow.hh at line 37 column 11: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoField.hh: Added the following include directives:
+	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.hh at line 5 column 21: qmainwindow.h -> q3mainwindow.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.hh at line 6 column 19: qlistview.h -> q3listview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.hh at line 13 column 39: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.hh at line 21 column 33: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/ChromoPicker.hh at line 34 column 11: QListView -> Q3ListView
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/ChromoStore.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/ConsensusField.hh at line 9 column 16: qframe.h -> q3frame.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ConsensusField.hh at line 13 column 36: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/ConsensusField.hh: Added the following include directives:
+	#include <QMouseEvent> 	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigCanvasItem.hh at line 4 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigCanvasItem.hh at line 8 column 48: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/ContigCanvasItem.hh at line 11 column 82: QCanvas -> Q3Canvas
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/ContigPicker.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.hh at line 6 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.hh at line 9 column 50: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.hh at line 14 column 32: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.hh at line 17 column 28: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.hh at line 23 column 13: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageCanvasItem.hh: Added the following include directives:
+	#include <Q3PointArray> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.hh at line 6 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.hh at line 9 column 54: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.hh at line 15 column 36: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.hh at line 18 column 32: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.hh at line 24 column 13: QPointArray -> Q3PointArray
+In file /Users/mschatz/build/AMOS/src/bankViewer/CoverageRectCanvasItem.hh: Added the following include directives:
+	#include <Q3PointArray> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 12 column 17: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 13 column 17: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 14 column 17: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 16 column 15: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 17 column 15: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 24 column 67: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 27 column 13: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 28 column 13: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 31 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh at line 32 column 15: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/DetailWidget.hh: Added the following include directives:
+	#include <Q3GridLayout> 	#include <Q3HBoxLayout> 	#include <Q3VBoxLayout> 
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/FeatureBrowser.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureCanvasItem.hh at line 4 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureCanvasItem.hh at line 8 column 49: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/FeatureCanvasItem.hh at line 12 column 51: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/HistogramWidget.hh: Added the following include directives:
+	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/HistogramWindow.hh at line 4 column 21: qmainwindow.h -> q3mainwindow.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/HistogramWindow.hh at line 10 column 42: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertCanvasItem.hh at line 4 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertCanvasItem.hh at line 10 column 48: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertCanvasItem.hh at line 14 column 43: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 9 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 16 column 38: QCanvasView -> Q3CanvasView
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 23 column 21: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 71 column 43: QCanvasItemList -> Q3CanvasItemList
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 78 column 31: QCanvasItem -> Q3CanvasItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 84 column 18: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 85 column 18: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 86 column 13: QCanvasItem -> Q3CanvasItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh at line 87 column 13: QCanvasItem -> Q3CanvasItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertField.hh: Added the following include directives:
+	#include <QResizeEvent> 	#include <QWheelEvent> 	#include <QMouseEvent> 	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertPosition.hh: Added the following include directives:
+	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.hh at line 11 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.hh at line 155 column 9: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.hh at line 158 column 18: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.hh at line 160 column 18: QCanvasRectangle -> Q3CanvasRectangle
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.hh at line 161 column 16: QCanvasEllipse -> Q3CanvasEllipse
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWidget.hh at line 199 column 44: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.hh at line 4 column 21: qmainwindow.h -> q3mainwindow.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.hh at line 6 column 20: qpopupmenu.h -> q3popupmenu.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.hh at line 20 column 39: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.hh at line 75 column 12: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.hh at line 76 column 12: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/InsertWindow.hh at line 77 column 12: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 14 column 21: qmainwindow.h -> q3mainwindow.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 16 column 17: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 17 column 17: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 18 column 17: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 21 column 18: QActionGroup -> Q3ActionGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 22 column 14: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 23 column 16: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 27 column 15: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 28 column 18: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 30 column 15: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 31 column 19: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 38 column 40: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 43 column 68: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 43 column 88: WType_TopLevel -> Qt::WType_TopLevel
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 48 column 13: QTextEdit -> Q3TextEdit
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 51 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 55 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 59 column 13: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 60 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 64 column 13: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 65 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 71 column 13: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 76 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 82 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 86 column 13: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 89 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 96 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 99 column 13: QListView -> Q3ListView
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 106 column 14: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 107 column 12: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 124 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 125 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 127 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 128 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 129 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 131 column 15: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 132 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 133 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 134 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 135 column 15: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 136 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 137 column 15: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 138 column 15: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 139 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh at line 140 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPadBase.hh: Added the following include directives:
+	#include <Q3HBoxLayout> 	#include <Q3GridLayout> 	#include <QLabel> 	#include <Q3PopupMenu> 	#include <Q3VBoxLayout> 	#include <Q3ActionGroup> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 8 column 22: qbuttongroup.h -> q3buttongroup.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 10 column 19: qlistview.h -> q3listview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 25 column 61: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 25 column 81: WType_TopLevel -> Qt::WType_TopLevel
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 68 column 36: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 75 column 36: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 84 column 37: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 94 column 35: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 106 column 33: QListViewItem -> Q3ListViewItem
+In file /Users/mschatz/build/AMOS/src/bankViewer/LaunchPad.hh at line 129 column 13: QMainWindow -> Q3MainWindow
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/LibraryPicker.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.hh at line 6 column 21: qmainwindow.h -> q3mainwindow.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.hh at line 9 column 20: qpopupmenu.h -> q3popupmenu.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.hh at line 18 column 11: QVBox -> Q3VBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.hh at line 21 column 36: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.hh at line 96 column 12: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.hh at line 118 column 7: QVBox -> Q3VBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/MainWindow.hh: Added the following include directives:
+	#include <QLabel> 
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/NChartStats.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWidget.hh: Added the following include directives:
+	#include <QPaintEvent> 	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 14 column 21: qmainwindow.h -> q3mainwindow.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 16 column 17: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 17 column 17: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 18 column 17: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 21 column 18: QActionGroup -> Q3ActionGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 22 column 14: QToolBar -> Q3ToolBar
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 23 column 16: QPopupMenu -> Q3PopupMenu
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 25 column 12: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 26 column 18: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 29 column 43: QMainWindow -> Q3MainWindow
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 34 column 71: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 34 column 91: WType_TopLevel -> Qt::WType_TopLevel
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 38 column 10: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 39 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 42 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 48 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 49 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh at line 51 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindowBase.hh: Added the following include directives:
+	#include <Q3PopupMenu> 	#include <Q3VBoxLayout> 	#include <Q3Frame> 	#include <Q3GridLayout> 	#include <Q3HBoxLayout> 	#include <Q3ActionGroup> 
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/NChartWindow.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 4 column 17: qsocket.h -> q3socket.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 5 column 23: qserversocket.h -> q3serversocket.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 7 column 15: qvbox.h -> q3vbox.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 8 column 19: qtextview.h -> q3textview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 11 column 21: qtextstream.h -> q3textstream.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 17 column 35: QSocket -> Q3Socket
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 37 column 41: QServerSocket -> Q3ServerSocket
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 51 column 31: QVBox -> Q3VBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/NetworkCom.hh at line 63 column 13: QTextView -> Q3TextView
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.hh at line 8 column 17: qcanvas.h -> q3canvas.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.hh at line 10 column 40: QCanvasView -> Q3CanvasView
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.hh at line 16 column 23: QCanvas -> Q3Canvas
+In file /Users/mschatz/build/AMOS/src/bankViewer/OverviewField.hh: Added the following include directives:
+	#include <QWheelEvent> 	#include <QResizeEvent> 	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 20 column 17: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 21 column 17: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 22 column 17: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 24 column 15: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 30 column 18: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 38 column 66: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 41 column 13: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 46 column 13: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 61 column 13: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 70 column 16: QButtonGroup -> Q3ButtonGroup
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 75 column 13: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 81 column 13: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 84 column 15: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 85 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 86 column 15: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 87 column 15: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 88 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 89 column 15: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 90 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 91 column 15: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh at line 92 column 15: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/QueryWidget.hh: Added the following include directives:
+	#include <Q3GridLayout> 	#include <Q3HBoxLayout> 	#include <Q3VBoxLayout> 	#include <QLabel> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/RangeScrollBar.hh: Added the following include directives:
+	#include <QTimerEvent> 	#include <QWheelEvent> 	#include <QPaintEvent> 	#include <QMouseEvent> 	#include <QHideEvent> 	#include <QKeyEvent> 	#include <QEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.hh at line 6 column 21: qscrollview.h -> q3scrollview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/ReadInfo.hh at line 26 column 13: QScrollView -> Q3ScrollView
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/ReadPicker.hh
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/RenderSeq.hh
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/ScaffoldPicker.hh
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 12 column 17: QVBoxLayout -> Q3VBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 13 column 17: QHBoxLayout -> Q3HBoxLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 14 column 17: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 16 column 15: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 25 column 70: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 28 column 13: QGroupBox -> Q3GroupBox
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 35 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh at line 36 column 15: QGridLayout -> Q3GridLayout
+In file /Users/mschatz/build/AMOS/src/bankViewer/SelectionWidget.hh: Added the following include directives:
+	#include <Q3GridLayout> 	#include <Q3HBoxLayout> 	#include <Q3VBoxLayout> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.hh at line 16 column 69: AlignLeft -> Qt::AlignLeft
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.hh at line 16 column 98: black -> Qt::black
+In file /Users/mschatz/build/AMOS/src/bankViewer/SplashScreen.hh: Added the following include directives:
+	#include <QMouseEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingField.hh: Added the following include directives:
+	#include <QMouseEvent> 	#include <QPaintEvent> 
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.hh at line 6 column 16: qframe.h -> q3frame.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.hh at line 7 column 21: qscrollview.h -> q3scrollview.h
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.hh at line 20 column 32: QFrame -> Q3Frame
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.hh at line 29 column 20: WFlags -> Qt::WFlags
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.hh at line 88 column 15: QScrollView -> Q3ScrollView
+In file /Users/mschatz/build/AMOS/src/bankViewer/TilingFrame.hh: Added the following include directives:
+	#include <QPaintEvent> 
+No changes made to file /Users/mschatz/build/AMOS/src/bankViewer/UIElements.hh
+In file hawkeye.pro: Added entry QT +=  qt3support 
+

@@ -1,0 +1,381 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Hawkeye: a visual analytics tool for genome assemblies</title>
+</head>
+
+<style type="text/css">
+  h4 {
+    background-color: rgb(210,210,240);
+    padding: 0px;
+    margin: 0px;
+  }
+</style>
+
+
+
+<body>
+
+<a name="top"></a>
+
+<table width="100%" border=0>
+<tr>
+<td valign=top>
+<a href="index.html"><img src="Hawkeye.jpg" width="250" height="160"/></a><br>
+
+<br>
+<h4>Introduction</h4>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="index.html">Abstract</a><br>
+<li><a href="index.html#build">Build &amp; Installation</a><br>
+<li><a href="index.html#launching">Launching Hawkeye</a><br>
+<li><a href="index.html#options">Command Line Options</a><br>
+<li><a href="index.html#sample">Sample Assembly</a><br>
+<li><a href="index.html#contactinformation">Contact Information</a><br>
+<li><a href="index.html#acknowledgements">Acknowledgements</a><br>
+</td></tr>
+</table>
+
+
+<br>
+<h4><a href="launchpad.html">Launch Pad</a></h4>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="launchpad.html#lp-statistics">Statistics</a></li>
+<li><a href="launchpad.html#lp-features">Features</a></li>
+<li><a href="launchpad.html#lp-libraries">Libraries</a></li>
+<li><a href="launchpad.html#lp-scaffolds">Scaffolds</a></li>
+<li><a href="launchpad.html#lp-contigs">Contigs</a></li>
+<li><a href="launchpad.html#lp-reads">Reads</a></li>
+</td></tr></table>
+
+<br>
+
+<h4><a href="scaffold.html">Scaffold View</a></h4>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="scaffold.html#sc-misassembly">Mis-assembly Detection</a></li>
+<li><a href="scaffold.html#sc-main">Main Display</a></li>
+<li><a href="scaffold.html#sc-overview">Overview</a></li>
+<li><a href="scaffold.html#sc-controlpanel">Control Panel</a></li>
+</td></tr></table>
+
+<br>
+
+<h4><a href="contig.html">Contig View</a></h4>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="contig.html#barcode">SNP Barcode</a></li>
+<li><a href="contig.html#chromatogram">Raw Chromatograms</a></li>
+<li><a href="contig.html#options">Options</a></li>
+</td></tr></table>
+
+<br><br>
+<br><br>
+
+<p align="left">
+<img src="http://sourceforge.net/sflogo.php?group_id=134326&type=5"> <br>
+</p>
+
+
+
+</td>
+
+<td width="1">&nbsp;</td>
+
+
+<td>
+<h1 style="text-align: center;">Hawkeye</h1>
+<h3 style="text-align: center;">A visual analytics tool for genome assemblies.<br><br>
+<a href="http://www.cbcb.umd.edu/~mschatz">Michael Schatz</a> - 
+<a href="http://www.cbcb.umd.edu/~amp">Adam Phillippy</a><br>
+<a href="http://www.cs.umd.edu/~ben">Ben Shneiderman</a> - 
+<a href="http://www.cbcb.umd.edu/~salzberg">Steven Salzberg</a>
+</h3>
+
+<p align=center>
+Version 1.0<br>
+March 5, 2007
+</p>
+
+<p align=center>Publication: 
+<a href="http://genomebiology.com/2007/8/3/R34"><b>Schatz, M.C.</b>, Phillippy, A.M., Shneiderman, B., Salzberg, S.L.</a>&nbsp;(2007) Hawkeye: a visual analytics tool for genome assemblies. <i>Genome Biology</i> 8:R34.
+</p>
+
+
+<hr>
+
+<p>
+Genome assembly remains an inexact science. Even when accomplished with the 
+best software available, the assembly of a genome often contains numerous 
+errors, both small and large. Hawkeye is a visual analytics tool for genome 
+assembly analysis and validation, designed to aid in identifying and 
+correcting assembly errors. Hawkeye blends
+the best practices from information and scientific visualization to facilitate inspection of
+large-scale assembly data while minimizing the time needed to detect mis-assemblies and
+make accurate judgments of assembly quality. <br><br>
+
+All levels of the assembly data hierarchy
+are made accessible to users, along with summary statistics and common assembly
+metrics. A ranking component guides investigation towards likely
+mis-assemblies or interesting features to support the task at hand. Wherever possible,
+high-level overviews, dynamic filtering, and automated clustering are leveraged to focus
+attention and highlight anomalies in the data. Hawkeyes effectiveness has been proven
+on several genome projects, where it has been used both to improve quality and to
+validate the correctness of complex genomes.
+<br><br>
+
+ Hawkeye is compatible with most widely
+used assemblers, including <a href="http://www.phrap.org/">Phrap</a>, 
+<a href="http://www.broad.mit.edu/wga/">ARACHNE</a>, 
+<a href="http://wgs-assembler.sourceforge.net">Celera Assembler</a>, 
+<a href="http://www.454.com/enabling-technology/the-software.asp">Newbler</a>,
+<a href="http://amos.sourceforge.net">AMOS</a>, and assemblies deposited in the
+<a href="http://www.ncbi.nlm.nih.gov/Traces/assembly/assmbrowser.cgi">NCBI Assembly Archive</a>.
+</p>
+
+<br>
+
+<table width="100%">
+<tr>
+<td width="33%">
+<p align=center>
+<a href="launchpad.html"><img width="300" height="225" src="launchpad.png"><br>
+Hawkeye Launchpad</a>
+</p>
+</td>
+<td width="33%">
+<p align=center>
+<a href="scaffold.html"><img width="300" height="225" src="scaffold.png"><br>
+Hawkeye Scaffold</a>
+</p>
+</td>
+<td width="33%">
+<p align=center>
+<a href="contig.html"><img width="300" height="225" src="correlated.jpg"><br>
+Hawkeye Contig</a>
+</p>
+</td>
+</tr>
+</table>
+
+<br>
+
+<ul>
+<li>Click for a presentation on <a href="http://www.cbcb.umd.edu/~mschatz/Presentations/AMOS_Validation_Visualization.pdf">AMOS Assembly Validation and Visualization</a>. [1.4MB]
+
+<li>Click for a <a href="http://www.cbcb.umd.edu/~mschatz/hawkeyedemo.wmv">recorded demonstration</a> of using Hawkeye to analyze a mis-assembly. [2.2MB]
+</ul>
+
+<hr>
+
+<h2><a name="build"></a>Build &amp; Installation</h2>
+Hawkeye comes in source form with the AMOS distribution. 
+You should build the entire AMOS distribution even if you only 
+want to run Hawkeye so all of the necessary convertors and libraries 
+are available. You can download the AMOS source package from: <br>
+<a href="http://sourceforge.net/project/showfiles.php?group_id=134326">http://sourceforge.net/project/showfiles.php?group_id=134326</a>.
+<br><br>
+
+Hawkeye requires Qt 3.x is installed to run. The latest version of Qt
+is currently 3.3.6 and can be downloaded from the Trolltech website for Unix and Mac OS X:
+ <a href="http://www.trolltech.com/products/qt/downloads">http://www.trolltech.com/products/qt/downloads</a>. 
+Many linux distributions come with the Qt runtime libraries
+by default, but do not have the development package installed. 
+You must install both the runtime libraries and the development 
+package (header files) to build Hawkeye. Cygwin (Windows) is also supported
+following the directions in the INSTALL file in the AMOS
+source.  Qt 4.x is not supported at this time.<br><br>
+
+The general build process is to run './configure; make; make install'
+in the AMOS source directory. You may need to explicitly specify the Qt
+directories to configure when building AMOS with the following options:<br>
+
+<pre>
+$ configure --help
+&lt;snip&gt;
+&nbsp; --with-Qt-dir=DIR&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DIR is equal to QTDIR if you have followed the
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; installation instructions of Trolltech. Header files
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; are in DIR/include, binary utilities are in DIR/bin
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; and the library is in DIR/lib. Use the options below
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; to override these defaults
+&nbsp; --with-Qt-include-dir=DIR
+&nbsp; --with-Qt-bin-dir=DIR
+&nbsp; --with-Qt-lib-dir=DIR
+&nbsp; --with-Qt-lib=LIB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Use -lLIB to link the Qt library
+</pre>
+
+More information is available in the INSTALL file within the AMOS tarball.
+
+
+
+<br><br>
+<a href="#top">Return to top</a><br><hr>
+
+<h2><a name="launching"></a>Launching Hawkeye</h2>
+Hawkeye reads the assembly data from an AMOS bank. A bank is a special 
+directory of binary encoded files containing all information on an assembly.
+A bank is created by the AMOS assemblers directly, or by converting 
+the results of others assemblers into AMOS format. This is typically done 
+with the tools
+<a href="http://amos.sourceforge.net/docs/converters/toAmos.html">toAmos</a> 
+and <a href="">bank-transact</a>. toAmos reads the assembly files and converts 
+them to plaintext AMOS message formats, and bank-transact reads those messages
+and creates the binary encoded bank directory. See the AMOS <a href="http://amos.sourceforge.net/docs/converters/index.html">Assembly Conversion Page</a> for
+more information.
+
+<br><br>
+For example:
+
+<pre>$ toAmos -f human.frg -a human.asm -o - | bank-transact -m - -o human.bnk -c</pre>
+
+Creates the bank human.bnk from the files human.frg and human.asm, which are the input and output files
+for the <a href="http://wgs-assembler.sourceforge.net">Celera Assembler</a>.
+
+<br><br>
+
+<pre>$ toAmos -ace human.ace -o - | bank-transact -m - -o human.bnk -c</pre>
+
+Creates the bank human.bnk from an ace file, which is an output format 
+for many assemblers including Phrap, Arachne, and Newbler. Check
+your assembler's documentation for more information on creating ACE files. 
+More information on converting to AMOS is available in the <a href="http://amos.sourceforge.net/docs/converters/toAmos.html">toAmos documentation</a>.
+
+
+<br><br>
+<pre>$ tarchive2amos -o human -assembly ASSEMBLY.xml TRACEINFO.seq;
+$ bank-transact -m human.afg -b human.bnk -c</pre>
+
+Creates the bank human.bnk from an assembly archive XML file called
+ASSEMBLY.xml. Note all of the read fasta files should be concatentated
+into a single TRACEINFO.seq file, and the read qualities files should
+be concatenated into a single TRACEINFO.qual file, and the TRACEINFO.xml
+file should be present as well. More information is available in the
+<a href="http://amos.sourceforge.net/docs/converters/tarchive2amos.html">tarchive2amos documentation</a>. 
+
+<br><br>
+
+Once the bank has been built, launch the viewer by running hawkeye on the bank directory.
+This will open your assembly to the Hawkeye <a href="launchpad.html">Launch Pad</a>
+where you can see an overview of your assembly and select scaffolds or contigs
+for closer investigation:
+<pre>$ hawkeye human.bnk</pre>
+
+
+<a href="#top">Return to top</a><br><hr>
+
+<h2><a name="options"></a>Command Line Options</h2>
+
+The options available are listed by specifying -h.
+<pre>$ hawkeye -h
+Usage: hawkeye [options] [bankname [contigid [position]]]
+Options:
+  -c &lt;path&gt;   Add a chromatogram path
+  -D &lt;DB&gt;     Set the chromatogram DB
+  -T          Enable Trace Fetch cmd
+  -p &lt;port&gt;   Initialize Server on this port
+  -K &lt;kmer&gt;   Load File of kmers
+  -h          Display this help
+</pre>
+
+
+A typical execution will be "hawkeye prefix.bnk" which will load the
+assembly from the bank named prefix.bnk. Specifying a path with -c
+allows you to set a location for the viewer to find the chromatograms
+for the project. You may set multiple paths, and hawkeye will search
+each one. Similiarily, the -d option also specifies locations for the
+chromatograms, but this is for "TIGR style" naming schemes to be used
+in conjunction with the -D option. More work is under development to
+simplify chromatogram access. The -p option allows you to set a TCP port
+for Hawkeye to accept commands from, especially for integration with 
+<a href="http://mummer.sourceforge.net">mummerplot</a>.
+
+<br> <br>
+
+Note that to view chromatograms within the viewer you need to both have
+the chromatograms available, and have the chromatogram positions available 
+in the bank or in the trace files. The chromatogram positions are the 
+positions of the peaks in the traces where the base call were made. They 
+can be loaded into the bank with "updateBankPositions bankname posfile" where 
+bankname is the name of the bank and posfile is a file encoding the positions 
+for each read. Some trace file formats such as SCF have the positions 
+encoded within, and it will not be necessary to load the positions into the 
+bank.
+
+<br> <br>
+
+If your reads are in the trace archive, and you set the name (EID) 
+of the reads to be ti numbers, then you can fetch the traces 
+and chromatogram positions on the fly from the trace archive by 
+enabling the Trace Fetch Command (-T). With this enabled, 
+Hawkeye will execute the following system command to load a trace:
+
+<pre>$ curl "http://www.ncbi.nlm.nih.gov/Traces/previous/trace.fcgi?\
+            cmd=java&j=scf&val=%EID%&ti=%EID%" -s -o %TRACECACHE%/%EID%</pre>
+
+Note you need to have curl installed in your current path. If your 
+organization has its own trace server, you can replace this command
+with one for your organization, by modifying AMOS/src/bankViewer/DataStore.cc.
+More information on the Trace Fetch Command is comming soon.
+
+<br><br>
+
+Hawkeye can display k-mer coverage in addition to read or insert
+coverage in the coverage plot region. To do so, you must pre-compute
+the k-mer counts in your assembly. AMOS comes bundled with a tool
+'count-kmers' that can be used for this purpose. A typical execution
+is to count the occurencs of k-mers (k=22) in your reads, and plot those
+values. A sufficient long k-mer should unique be in your genome, so the 
+average k-mer coverage indicates the depth of read coverage, and 
+spikes in k-mer coverage indicate repetitive regions. This is displayed
+as follows:
+
+<pre>$ count-kmers -r human.bnk &gt; human.22mers
+$ hawkeye -K human.22mers human.bnk
+</pre>
+
+<a href="#top">Return to top</a><br><hr>
+
+<a name="sample"></a><h2>Sample Assembly</h2>
+
+A sample assembly is available here: <a href="http://www.cbcb.umd.edu/software/amos/gb6.small.afg.bz2">gb6.small.afg.bz2</a> (4.6MB)
+<br><br>
+The assembly is a small selection from Bacillus Anthracis
+consisting of 4 small scaffolds of 11 contigs created from 6249 reads. 
+It is in a compressed AMOS message file. Download it, and then view 
+it as follows:
+<pre>$ bunzip2 gb6.small.afg.bz2
+$ bank-transact -m gb6.small.afg -b gb6.small.bnk -c
+$ hawkeye -T gb6.small.bnk
+</pre>
+
+Specifying -T enables the trace fetch command so that traces can be viewed 
+on-the-fly from the NCBI trace archive. See <a href="#options">Command Line Options</a> 
+for more information. See the <a href="#launchpad">Launch Pad</a> documentation 
+for a description of how to navigate this assembly.
+
+<br><br>
+<a href="#top">Return to top</a><br><hr>
+
+<h2><a name="contactinformation"></a>Contact Information</h2>
+<p>
+Report bugs or ask questions by emailing &lt;amos-help [ at ] lists.sourceforge.net&gt;
+</p>
+<a href="#top">Return to top</a><br><hr>
+
+<h2><a name="acknowledgements"></a>Acknowledgements</h2>
+<p>
+This work was supported in part by NIH award R01-LM06845, the National
+Institute of Allergy and Infectious Disease under contract NIH-NIAID-DMID-
+04-34, HHSN266200400038C, and DHS/HSARPA award W81XWH-05-2-0051 to SLS.
+</p> <a href="#top">Return to top</a><br><hr>
+
+</td>
+    </tr>
+  </tbody>
+</table>
+
+
+</body>
+</html>
