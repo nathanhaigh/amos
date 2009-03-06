@@ -24,16 +24,8 @@ void SplashScreen::repaint()
   QApplication::flush();
 }
 
-#if defined(Q_WS_X11)
-void qt_wait_for_window_manager( QWidget *widget );
-#endif
-
 void SplashScreen::finish( QWidget *mainWin )
 {
-  #if defined(Q_WS_X11)
-  qt_wait_for_window_manager( mainWin );
-  #endif
-
   close();
 }
 
