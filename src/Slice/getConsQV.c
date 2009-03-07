@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <float.h>
 
 #include "Slice.h"
 
@@ -585,11 +586,21 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
     sum = pA + pC + pG + pT + pGap;
 
     
-    /*
+/*
     fprintf(stderr,
             "sum=%Lg, pA=%Lg, pC=%Lg, pG=%Lg, pT=%Lg, pGap=%Lg\n",
              sum,     pA,     pC,     pG,     pT,     pGap);
-    */
+    fprintf(stderr,  "  pr_A_A=%Lg  pr_C_A=%Lg  pr_G_A=%Lg  pr_T_A=%Lg  pr_GAP_A=%Lg\n",
+            pr_A_A, pr_C_A, pr_G_A, pr_T_A, pr_GAP_A);
+    fprintf(stderr,  "  pr_A_C=%Lg  pr_C_C=%Lg  pr_G_C=%Lg  pr_T_C=%Lg  pr_GAP_C=%Lg\n",
+            pr_A_C, pr_C_C, pr_G_C, pr_T_C, pr_GAP_C);
+    fprintf(stderr,  "  pr_A_G=%Lg  pr_C_G=%Lg  pr_G_G=%Lg  pr_T_G=%Lg  pr_GAP_G=%Lg\n",
+            pr_A_G, pr_C_G, pr_G_G, pr_T_G, pr_GAP_G);
+    fprintf(stderr,  "  pr_A_T=%Lg  pr_C_T=%Lg  pr_G_T=%Lg  pr_T_T=%Lg  pr_GAP_T=%Lg\n",
+            pr_A_T, pr_C_T, pr_G_T, pr_T_T, pr_GAP_T);
+    fprintf(stderr,  "  pr_A_GAP=%Lg  pr_C_GAP=%Lg  pr_G_GAP=%Lg  pr_T_GAP=%Lg  pr_GAP_GAP=%Lg\n",
+            pr_A_GAP, pr_C_GAP, pr_G_GAP, pr_T_GAP, pr_GAP_GAP);
+*/
     
 
     // Normalize values and computer error probabilities
@@ -605,18 +616,72 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
     }
     else
     {
-      // Sum can go to zero by floating point underflow
-      cpA = cpC = cpG = cpT = cpGap = .20;
+      // sum == 0.0 indicates underflow  will redo calculation with logs to
+      // prevent that
+      double  dist_log [5], pos_log_pr [5], qv [5], pr [5];
+      double  min;
+      int  i;
+
+      dist_log [0] = - log (dist -> freqA);
+      dist_log [1] = - log (dist -> freqC);
+      dist_log [2] = - log (dist -> freqG);
+      dist_log [3] = - log (dist -> freqT);
+      dist_log [4] = - log (dist -> freqGap);
+
+      qv [0] = (qvMultA + 0.1) / 10.0;
+      qv [1] = (qvMultC + 0.1) / 10.0;
+      qv [2] = (qvMultG + 0.1) / 10.0;
+      qv [3] = (qvMultT + 0.1) / 10.0;
+      qv [4] = (qvMultGap + 0.1) / 10.0;
+
+      min = DBL_MAX;  // used to scale the results
+      for (i = 0; i < 5; i ++)
+        {
+          pos_log_pr [i] = (200.0 < qv [i] ? 0.0 : - log (1.0 - pow (0.1, qv [i])))
+            - qv [i] + 4.0 * dist_log [i];
+          // the real value includes a term which is the sum of all the quality values
+          // except qv [i] but since that sum is the same for all terms it can be
+          // omitted since it will wash out in the scaling anyway
+
+          if (pos_log_pr [i] < min)
+            min = pos_log_pr [i];
+        }
+
+      sum = 0.0;
+      for (i = 0; i < 5; i ++)
+        {
+          pos_log_pr [i] -= min - 1;  // -1 to guarantee that all values are positive
+          pr [i] = (300.0 < pos_log_pr [i] ? 0.0 : exp (- pos_log_pr [i]));
+          sum += pr [i];
+        }
+      for (i = 0; i < 5; i ++)
+        pr [i] /= sum;
+
+      cpA = 1.0 - pr [0];
+      cpC = 1.0 - pr [1];
+      cpG = 1.0 - pr [2];
+      cpT = 1.0 - pr [3];
+      cpGap = 1.0 - pr [4];
+
+      if (0)
+        {
+          fprintf (stderr, "qvMults  A=%d  C=%d  G=%d  T=%d  Gap=%d\n",
+                   qvMultA, qvMultC, qvMultG, qvMultT, qvMultGap);
+          fprintf (stderr, "%1s  %8s  %8s  %8s  %10s\n", "i", "dist_log", "qv", "pos_l_p", "pr");
+          for (i = 0; i < 5; i ++)
+            fprintf (stderr, "%1d  %8.1f  %8.1f  %8.1f  %10e\n", i, dist_log [i], qv [i],
+                     pos_log_pr [i], pr [i]);
+        }
     }
 
     // Note: cpA + cpC + cpG + cpG + cpT + cpGap == 1
 
     
-    /*
+/*
     fprintf(stderr,
-            "sum=%Lg, cpA=%Lg, cpC=%Lg, cpG=%Lg, cpL=%Lg, cpGap=%Lg\n",
+            "sum=%Le, cpA=%Le, cpC=%Le, cpG=%Le, cpT=%Le, cpGap=%Le\n",
              sum,     cpA,     cpC,     cpG,     cpT,     cpGap);
-    */
+*/
     
 
     // Convert error probabilities into quality values
