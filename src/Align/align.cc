@@ -3861,12 +3861,19 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 //  quality values are in  q .
 
   {
+#define  USE_FULL_CONSENSUS  0
    vector <Gapped_MA_Bead_t>  active_bead;
    string  seq_column, qual_column;
+#if  USE_FULL_CONSENSUS
    libSlice_Consensus  cns;
    static libSlice_Slice  sl;
-   int  col_len;
    static int  max_len = 0;
+#else
+   unsigned int  qvsum [5];
+   unsigned int  cns_qv;
+   char  cns_ch;
+#endif
+   int  col_len;
    int  len, next;
    int  i, j, n;
 
@@ -3886,12 +3893,14 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
           }
        }
 
+#if  USE_FULL_CONSENSUS
    if  (max_len == 0)
        {
         max_len = 200;
         sl . rc = (char *) Safe_malloc (max_len, __FILE__, __LINE__);
         memset (sl . rc, 0, max_len);
        }
+#endif
 
    next = 0;
    for  (i = 0;  i < len;  i ++)
@@ -3935,23 +3944,54 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
          next ++;
         }
 
+      col_len = seq_column . length ();
+
+#if  USE_FULL_CONSENSUS
       sl . bc = (char *) seq_column . c_str ();
       sl . qv = (char *) qual_column . c_str ();
-      col_len = seq_column . length ();
       if  (col_len >= max_len)
-          {
-           max_len = Max (2 * max_len, col_len + 1);
-           sl . rc = (char *) Safe_realloc (sl . rc, max_len);
-           memset (sl . rc, 0, max_len);
-          }
+        {
+          max_len = Max (2 * max_len, col_len + 1);
+          sl . rc = (char *) Safe_realloc (sl . rc, max_len);
+          memset (sl . rc, 0, max_len);
+        }
       sl . dcov = col_len;
 
       libSlice_getConsensus (& sl, & cns, NULL, 0);
 
       consensus [i] = cns . consensus;
       con_qual [i] = MIN_QUALITY
-          + Min (cns . qvConsensus, unsigned (MAX_QUALITY_CHAR));
+        + Min (cns . qvConsensus, unsigned (MAX_QUALITY_CHAR));
+#else
+      for (j = 0; j < 5; j ++)
+        qvsum [j] = 0;
 
+      for (j = 0; j < col_len; j ++)
+        switch (tolower (seq_column [j]))
+          {
+          case 'a' :
+            qvsum [0] += qual_column [j];
+            break;
+          case 'c' :
+            qvsum [1] += qual_column [j];
+            break;
+          case 'g' :
+            qvsum [2] += qual_column [j];
+            break;
+          case 't' :
+            qvsum [3] += qual_column [j];
+            break;
+          case '-' :
+            qvsum [4] += qual_column [j];
+            break;
+            // ignore n's
+          }
+
+      libSlice_ConsensusLight (qvsum, & cns_ch, & cns_qv);
+      consensus [i] = cns_ch;
+      con_qual [i] = MIN_QUALITY + Min (cns_qv, unsigned (MAX_QUALITY_CHAR));
+#endif
+      
       if  (Verbose > 3)
           {
            printf ("%6d:  ", i);
@@ -3965,8 +4005,8 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
              printf (" %02d", (signed) qual_column [j]);
            putchar ('\n');
 
-           cout << "         cons = " << cns . consensus << "  qv = "
-                << Min (cns . qvConsensus, unsigned (MAX_QUALITY_CHAR)) << endl;
+           cout << "         cons = " << consensus [i] << "  qv = "
+                << con_qual [i] << endl;
           }
      }
 

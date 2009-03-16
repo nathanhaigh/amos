@@ -401,6 +401,8 @@ class  Multi_Alignment_t
        // alignment of each string to the consensus
 
   public:
+   const char *  getConsensus (void)
+     { return consensus . c_str (); }
    const char *  getID
        (void)
      // return the id string as a C string
