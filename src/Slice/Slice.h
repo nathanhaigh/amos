@@ -131,6 +131,11 @@ typedef struct libSlice_BaseDistribution libSlice_BaseDistribution;
 // Set if empty slices should be recalled (to gap) or not
 void libSlice_setRecallEmpty(int recallEmpty);
 
+// Calculate consensus base and quality values faster
+int libSlice_ConsensusLight (const unsigned qvSum [5],
+                             char * consensus,
+                             unsigned * cns_qv);
+
 // Internal function: Calculates the consensus and consensus quality 
 //                    values for a single slice
 int libSlice_getConsensusParam(const libSlice_Slice * s, 

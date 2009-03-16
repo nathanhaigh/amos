@@ -394,6 +394,107 @@ void libSlice_setRecallEmpty(int recallEmpty)
   m_recallEmpty = recallEmpty;
 }
 
+
+//! Lightweight calculation of consensus base and its quality value
+/*! Calculate consensus base and its quality value using simple heuristics
+ *  Similar to libSlice_getConsensusParam
+ *
+ *  @param qvSum Sum of quality values for each character ACGT-, resp.
+ *  @param consensus Set to consensus character
+ *  @param cns_qv Set to quality value of consensus
+ *  @return errorCode 0 on success.
+ */
+int libSlice_ConsensusLight (const unsigned qvSum [5],
+                             char * consensus,
+                             unsigned * cns_qv)
+{
+  const char * ALPHABET = "ACGT-";
+  unsigned  qv [5] = {0};
+  int baseCount = 0;     // number of bases seen in read
+  unsigned  alt_qv, max_qv = 0, max2_qv = 0, qv_total = 0;
+  int retval = 0;
+  int  i, mx_i;
+
+  for (i = 0; i < 5; i ++)
+    if (0 < qvSum [i])
+      {
+        qv [i] = qvSum [i];   // copy in case need to change below
+        qv_total += qv [i];
+        baseCount ++;
+        if (max_qv < qv [i])
+          {
+            max_qv = qv [i];
+            mx_i = i;
+          }
+      }
+
+  if (qv_total == 0)
+    {
+      // An empty slice is a gap (by definition)
+
+      max_qv = qv_total = qv [4] = GAP_QUALITY_VALUE_EMPTY_SLICE;
+      baseCount = 1;
+      mx_i = 4;
+    }
+
+  // consensus base is the one with the highest quality value
+  (* consensus) = ALPHABET [mx_i];
+
+  if (baseCount == 1)
+    ;  // nothing to do; max_qv has correct value
+  else if (baseCount == 2)
+    { // only two possibilities
+      max2_qv = qv_total - max_qv;
+      max_qv -= max2_qv;  // tentative quality is difference between max and 2nd max
+      alt_qv = (int) (0.5 - 10.0 * log10 (1.0 * max2_qv / qv_total));
+      // alternate is just in case difference is *REALLY* small
+      if (max_qv < alt_qv)
+        max_qv = alt_qv;
+    }
+  else
+    {
+      double  qvx [3], logp [3], pr1, sum;
+
+      // Get 2nd max qv
+      for (i = 0; i < 5; i ++)
+        if (i != mx_i && max2_qv < qv [i])
+          max2_qv = qv [i];
+
+      if (qv_total - max_qv - max2_qv < max2_qv)
+        qvx [2] = (qv_total - max_qv - max2_qv);
+      else
+        qvx [2] = max2_qv;
+      qvx [0] = max_qv / 10.0;
+      qvx [1] = max2_qv / 10.0;
+      qvx [2] /= 10.0;
+
+      for (i = 0; i < 3; i ++)
+        {
+          logp [i] = (300.0 < qvx [i] ? 0.0 : - log10 (1.0 - pow (0.1, qvx [i])));
+          logp [i] -= qvx [i];  // omitting constant term of sum of all qvx's
+                                // which is irrelevant after scaling
+          if (0 < i)
+            logp [i] -= (logp [0] - 1.0);  // scale to avoid underflow
+        }
+
+      logp [0] = 1.0;  // scaled value
+
+      sum = pr1 = 0.1;  // = pow (10.0, - logp [0]);
+      sum += (300.0 < logp [1] ? 0.0 : pow (10.0, - logp [1]));
+      sum += (300.0 < logp [2] ? 0.0 : pow (10.0, - logp [2]));
+
+      max_qv = prToQV (1.0 - (pr1 / sum));
+    }
+
+  if (max_qv < MAX_QUALITY_VALUE)
+    (* cns_qv) = max_qv;
+  else
+    (* cns_qv) = MAX_QUALITY_VALUE;
+
+  return retval;
+}
+
+
 //! Calculates the consensus quality value for a single slice
 /*! Calculates the consensus and consensus quality values for a slice using
  *  Bayes formula and the procedure from Churchill, G.A. and Waterman, M.S. 
@@ -427,6 +528,13 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
   unsigned int qvMultT   = 0;
   unsigned int qvMultGap = 0;
   
+#define  USE_OLD_WAY  0
+  // Old way computes probabilities directly but can result in underflow
+  // New way converts everything to logs and scales.  Results can be very
+  // slightly different.  Old-way code is left here to help explain the
+  // calculation
+
+#if  USE_OLD_WAY
   // consensus quality value parameters
   // current consensus base: s_i, the column of base calls above it: x_ij
   long double pr_A_A     = 1.0; // Pr(x_ij=A | s_i=A)
@@ -460,9 +568,10 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
   long double pr_GAP_GAP = 1.0;
 
   long double   pA,  pC,  pG,  pT,  pGap, sum;
-  long double  cpA, cpC, cpG, cpT, cpGap, cpConsensus;
   unsigned int qvA, qvC, qvG, qvT, qvGap;
+#endif
 
+  long double  cpA, cpC, cpG, cpT, cpGap, cpConsensus;
   char consensus;        // calculated consensus
   int baseCount = 0;     // number of bases seen in read
   unsigned int cqv = 0;  // calculated consensus quality value
@@ -497,25 +606,26 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
 
     // Just set the consensensus to be the old consensus
     (result)->consensus = s->c;
+
+    return  retval;
   }
-  else
-  {
-    if (s->dcov)
+
+  if (s->dcov)
     {
       // Loop through the bases and sum the qv for each component
       
       int j;
       for(j = 0; j < s->dcov; j++)
-      {
-        char a = toupper(s->bc[j]);
-        switch(a)
         {
-          case 'A': qvMultA += s->qv[j]; break;
-          case 'C': qvMultC += s->qv[j]; break;
-          case 'G': qvMultG += s->qv[j]; break;
-          case 'T': qvMultT += s->qv[j]; break;
+          char a = toupper(s->bc[j]);
+          switch(a)
+            {
+            case 'A': qvMultA += s->qv[j]; break;
+            case 'C': qvMultC += s->qv[j]; break;
+            case 'G': qvMultG += s->qv[j]; break;
+            case 'T': qvMultT += s->qv[j]; break;
 
-          case '-': 
+            case '-': 
               // If the gap has a qv use that, otherwise use the default
               qvMultGap += s->qv[j] ? s->qv[j] : GAP_QUALITY_VALUE;
               break;
@@ -523,90 +633,91 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
 	      //          default:
               // fprintf(stderr, "Bad input=%c\n", a);
               // Ambiguity codes cannot be processed
+            }
         }
-      }
     }
-    else
+  else
     {
       // An empty slice is a gap (by definition)
 
       qvMultGap = GAP_QUALITY_VALUE_EMPTY_SLICE;
     }
 
-    if (qvMultA)   baseCount++;
-    if (qvMultC)   baseCount++;
-    if (qvMultG)   baseCount++;
-    if (qvMultT)   baseCount++;
-    if (qvMultGap) baseCount++;
+  if (qvMultA)   baseCount++;
+  if (qvMultC)   baseCount++;
+  if (qvMultG)   baseCount++;
+  if (qvMultT)   baseCount++;
+  if (qvMultGap) baseCount++;
 
-    if (!dist) dist = &standardDistribution;
+  if (!dist) dist = &standardDistribution;
 
-    distributeQV(qvMultA, 
-                 &pr_A_A,
-                 &pr_A_C,   dist->freqC, 
-                 &pr_A_G,   dist->freqG,
-                 &pr_A_T,   dist->freqT, 
-                 &pr_A_GAP, dist->freqGap);
+#if  USE_OLD_WAY
+  distributeQV(qvMultA, 
+               &pr_A_A,
+               &pr_A_C,   dist->freqC, 
+               &pr_A_G,   dist->freqG,
+               &pr_A_T,   dist->freqT, 
+               &pr_A_GAP, dist->freqGap);
 
-    distributeQV(qvMultC, 
-                 &pr_C_C,
-                 &pr_C_A,   dist->freqA, 
-                 &pr_C_G,   dist->freqG,
-                 &pr_C_T,   dist->freqT, 
-                 &pr_C_GAP, dist->freqGap);
+  distributeQV(qvMultC, 
+               &pr_C_C,
+               &pr_C_A,   dist->freqA, 
+               &pr_C_G,   dist->freqG,
+               &pr_C_T,   dist->freqT, 
+               &pr_C_GAP, dist->freqGap);
 
-    distributeQV(qvMultG, 
-                 &pr_G_G,
-                 &pr_G_A,   dist->freqA, 
-                 &pr_G_C,   dist->freqC,
-                 &pr_G_T,   dist->freqT, 
-                 &pr_G_GAP, dist->freqGap);
+  distributeQV(qvMultG, 
+               &pr_G_G,
+               &pr_G_A,   dist->freqA, 
+               &pr_G_C,   dist->freqC,
+               &pr_G_T,   dist->freqT, 
+               &pr_G_GAP, dist->freqGap);
 
-    distributeQV(qvMultT, 
-                 &pr_T_T,
-                 &pr_T_A,   dist->freqA, 
-                 &pr_T_C,   dist->freqC,
-                 &pr_T_G,   dist->freqG, 
-                 &pr_T_GAP, dist->freqGap);
+  distributeQV(qvMultT, 
+               &pr_T_T,
+               &pr_T_A,   dist->freqA, 
+               &pr_T_C,   dist->freqC,
+               &pr_T_G,   dist->freqG, 
+               &pr_T_GAP, dist->freqGap);
 
-    distributeQV(qvMultGap, 
-                 &pr_GAP_GAP,
-                 &pr_GAP_A, dist->freqA, 
-                 &pr_GAP_C, dist->freqC,
-                 &pr_GAP_G, dist->freqG, 
-                 &pr_GAP_T, dist->freqT);
+  distributeQV(qvMultGap, 
+               &pr_GAP_GAP,
+               &pr_GAP_A, dist->freqA, 
+               &pr_GAP_C, dist->freqC,
+               &pr_GAP_G, dist->freqG, 
+               &pr_GAP_T, dist->freqT);
 
-    // Calculate raw values
-    pA   = pr_A_A   * pr_C_A   * pr_G_A   * pr_T_A   * pr_GAP_A;
-    pC   = pr_A_C   * pr_C_C   * pr_G_C   * pr_T_C   * pr_GAP_C;
-    pG   = pr_A_G   * pr_C_G   * pr_G_G   * pr_T_G   * pr_GAP_G;
-    pT   = pr_A_T   * pr_C_T   * pr_G_T   * pr_T_T   * pr_GAP_T;
-    pGap = pr_A_GAP * pr_C_GAP * pr_G_GAP * pr_T_GAP * pr_GAP_GAP;
+  // Calculate raw values
+  pA   = pr_A_A   * pr_C_A   * pr_G_A   * pr_T_A   * pr_GAP_A;
+  pC   = pr_A_C   * pr_C_C   * pr_G_C   * pr_T_C   * pr_GAP_C;
+  pG   = pr_A_G   * pr_C_G   * pr_G_G   * pr_T_G   * pr_GAP_G;
+  pT   = pr_A_T   * pr_C_T   * pr_G_T   * pr_T_T   * pr_GAP_T;
+  pGap = pr_A_GAP * pr_C_GAP * pr_G_GAP * pr_T_GAP * pr_GAP_GAP;
 
-    sum = pA + pC + pG + pT + pGap;
+  sum = pA + pC + pG + pT + pGap;
 
     
-/*
+  /*
     fprintf(stderr,
-            "sum=%Lg, pA=%Lg, pC=%Lg, pG=%Lg, pT=%Lg, pGap=%Lg\n",
-             sum,     pA,     pC,     pG,     pT,     pGap);
+    "sum=%Lg, pA=%Lg, pC=%Lg, pG=%Lg, pT=%Lg, pGap=%Lg\n",
+    sum,     pA,     pC,     pG,     pT,     pGap);
     fprintf(stderr,  "  pr_A_A=%Lg  pr_C_A=%Lg  pr_G_A=%Lg  pr_T_A=%Lg  pr_GAP_A=%Lg\n",
-            pr_A_A, pr_C_A, pr_G_A, pr_T_A, pr_GAP_A);
+    pr_A_A, pr_C_A, pr_G_A, pr_T_A, pr_GAP_A);
     fprintf(stderr,  "  pr_A_C=%Lg  pr_C_C=%Lg  pr_G_C=%Lg  pr_T_C=%Lg  pr_GAP_C=%Lg\n",
-            pr_A_C, pr_C_C, pr_G_C, pr_T_C, pr_GAP_C);
+    pr_A_C, pr_C_C, pr_G_C, pr_T_C, pr_GAP_C);
     fprintf(stderr,  "  pr_A_G=%Lg  pr_C_G=%Lg  pr_G_G=%Lg  pr_T_G=%Lg  pr_GAP_G=%Lg\n",
-            pr_A_G, pr_C_G, pr_G_G, pr_T_G, pr_GAP_G);
+    pr_A_G, pr_C_G, pr_G_G, pr_T_G, pr_GAP_G);
     fprintf(stderr,  "  pr_A_T=%Lg  pr_C_T=%Lg  pr_G_T=%Lg  pr_T_T=%Lg  pr_GAP_T=%Lg\n",
-            pr_A_T, pr_C_T, pr_G_T, pr_T_T, pr_GAP_T);
+    pr_A_T, pr_C_T, pr_G_T, pr_T_T, pr_GAP_T);
     fprintf(stderr,  "  pr_A_GAP=%Lg  pr_C_GAP=%Lg  pr_G_GAP=%Lg  pr_T_GAP=%Lg  pr_GAP_GAP=%Lg\n",
-            pr_A_GAP, pr_C_GAP, pr_G_GAP, pr_T_GAP, pr_GAP_GAP);
-*/
+    pr_A_GAP, pr_C_GAP, pr_G_GAP, pr_T_GAP, pr_GAP_GAP);
+  */
     
 
-    // Normalize values and computer error probabilities
-    // Note: Error probability is the sum of the probability of the other bases
+  // Normalize values and computer error probabilities
+  // Note: Error probability is the sum of the probability of the other bases
     
-    if (sum != 0.0)
+  if (sum != 0.0)
     {
       cpA   = (0.0 + pC  + pG  + pT  + pGap) / sum;
       cpC   = (pA  + 0.0 + pG  + pT  + pGap) / sum;
@@ -614,144 +725,188 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
       cpT   = (pA  + pC  + pG  + 0.0 + pGap) / sum;
       cpGap = (pA  + pC  + pG  + pT  + 0.0)  / sum;
     }
-    else
-    {
-      // sum == 0.0 indicates underflow  will redo calculation with logs to
-      // prevent that
-      double  dist_log [5], pos_log_pr [5], qv [5], pr [5];
-      double  min;
-      int  i;
+  else
+    cpA = cpC = cpG = cpT = cpGap = 0.2;    // old way on underflow
 
-      dist_log [0] = - log (dist -> freqA);
-      dist_log [1] = - log (dist -> freqC);
-      dist_log [2] = - log (dist -> freqG);
-      dist_log [3] = - log (dist -> freqT);
-      dist_log [4] = - log (dist -> freqGap);
-
-      qv [0] = (qvMultA + 0.1) / 10.0;
-      qv [1] = (qvMultC + 0.1) / 10.0;
-      qv [2] = (qvMultG + 0.1) / 10.0;
-      qv [3] = (qvMultT + 0.1) / 10.0;
-      qv [4] = (qvMultGap + 0.1) / 10.0;
-
-      min = DBL_MAX;  // used to scale the results
-      for (i = 0; i < 5; i ++)
-        {
-          pos_log_pr [i] = (200.0 < qv [i] ? 0.0 : - log (1.0 - pow (0.1, qv [i])))
-            - qv [i] + 4.0 * dist_log [i];
-          // the real value includes a term which is the sum of all the quality values
-          // except qv [i] but since that sum is the same for all terms it can be
-          // omitted since it will wash out in the scaling anyway
-
-          if (pos_log_pr [i] < min)
-            min = pos_log_pr [i];
-        }
-
-      sum = 0.0;
-      for (i = 0; i < 5; i ++)
-        {
-          pos_log_pr [i] -= min - 1;  // -1 to guarantee that all values are positive
-          pr [i] = (300.0 < pos_log_pr [i] ? 0.0 : exp (- pos_log_pr [i]));
-          sum += pr [i];
-        }
-      for (i = 0; i < 5; i ++)
-        pr [i] /= sum;
-
-      cpA = 1.0 - pr [0];
-      cpC = 1.0 - pr [1];
-      cpG = 1.0 - pr [2];
-      cpT = 1.0 - pr [3];
-      cpGap = 1.0 - pr [4];
-
-      if (0)
-        {
-          fprintf (stderr, "qvMults  A=%d  C=%d  G=%d  T=%d  Gap=%d\n",
-                   qvMultA, qvMultC, qvMultG, qvMultT, qvMultGap);
-          fprintf (stderr, "%1s  %8s  %8s  %8s  %10s\n", "i", "dist_log", "qv", "pos_l_p", "pr");
-          for (i = 0; i < 5; i ++)
-            fprintf (stderr, "%1d  %8.1f  %8.1f  %8.1f  %10e\n", i, dist_log [i], qv [i],
-                     pos_log_pr [i], pr [i]);
-        }
-    }
-
-    // Note: cpA + cpC + cpG + cpG + cpT + cpGap == 1
-
+  // Note: cpA + cpC + cpG + cpG + cpT + cpGap == 1
+  //**ALD This isn't true.  It is true that  pA + pC + pG + pT + pGap = 1
     
-/*
+  /*
     fprintf(stderr,
-            "sum=%Le, cpA=%Le, cpC=%Le, cpG=%Le, cpT=%Le, cpGap=%Le\n",
-             sum,     cpA,     cpC,     cpG,     cpT,     cpGap);
-*/
+    "sum=%Le, cpA=%Le, cpC=%Le, cpG=%Le, cpT=%Le, cpGap=%Le\n",
+    sum,     cpA,     cpC,     cpG,     cpT,     cpGap);
+  */
     
 
-    // Convert error probabilities into quality values
-    qvA   = prToQV(cpA);
-    qvC   = prToQV(cpC);
-    qvG   = prToQV(cpG);
-    qvT   = prToQV(cpT);
-    qvGap = prToQV(cpGap);
+  // Convert error probabilities into quality values
+  qvA   = prToQV(cpA);
+  qvC   = prToQV(cpC);
+  qvG   = prToQV(cpG);
+  qvT   = prToQV(cpT);
+  qvGap = prToQV(cpGap);
 
-    // The consensus quality value is the maximum of the quality 
-    // values for each base. The base that has the lowest probability of
-    // error is the unambiguous consensus of the slice.
+  // The consensus quality value is the maximum of the quality 
+  // values for each base. The base that has the lowest probability of
+  // error is the unambiguous consensus of the slice.
     
-    // Find the absolute winner
-    consensus = 'A'; cqv = qvA; cpConsensus = cpA;
+  // Find the absolute winner
+  consensus = 'A'; cqv = qvA; cpConsensus = cpA;
 
-    // Allow a small margin to handle floating point weirdness
-    if ((cpC - cpConsensus) < -0.000000001) 
+  // Allow a small margin to handle floating point weirdness
+  if ((cpC - cpConsensus) < -0.000000001) 
     {
       consensus = 'C'; cqv = qvC; cpConsensus = cpC;
     }
     
-    if ((cpG - cpConsensus) < -0.000000001) 
+  if ((cpG - cpConsensus) < -0.000000001) 
     {
       consensus = 'G'; cqv = qvG; cpConsensus = cpG;
     }
     
-    if ((cpT - cpConsensus) < -0.000000001) 
+  if ((cpT - cpConsensus) < -0.000000001) 
     {
       consensus = 'T'; cqv = qvT; cpConsensus = cpT;
     }
     
-    if ((cpGap-cpConsensus) < -0.000000001) 
+  if ((cpGap-cpConsensus) < -0.000000001) 
     {
       consensus = '-'; cqv=qvGap; cpConsensus = cpGap;
     }
 
-    /*
+  /*
     fprintf(stderr, "cp: A %s -\n", (cpA==cpGap)?"==":"!=");
     fprintf(stderr, "qv: A %s -\n", (qvA==qvGap)?"==":"!=");
 
     fprintf(stderr, "%Lf\n", cpGap - cpA);
-    */
+  */
 
-    (result)->qvA   = qvA;
-    (result)->qvC   = qvC;
-    (result)->qvG   = qvG;
-    (result)->qvT   = qvT;
-    (result)->qvGap = qvGap;
+  (result)->qvA   = qvA;
+  (result)->qvC   = qvC;
+  (result)->qvG   = qvG;
+  (result)->qvT   = qvT;
+  (result)->qvGap = qvGap;
 
-    (result)->cpA   = cpA;
-    (result)->cpC   = cpC;
-    (result)->cpG   = cpG;
-    (result)->cpT   = cpT;
-    (result)->cpGap = cpGap;
+  (result)->cpA   = cpA;
+  (result)->cpC   = cpC;
+  (result)->cpG   = cpG;
+  (result)->cpT   = cpT;
+  (result)->cpGap = cpGap;
 
-    (result)->qvConsensus = cqv;
+#else   // start new way
+  // Before sum could be zero because of underflow, in that case
+  // it set all cp's arbitrarily to 0.2 and the result was always a consensus
+  // base of A
 
-    // This finds all ambiguity flags
-    (result)->ambiguityFlags = 
-            libSlice_calculateAmbiguityFlags(cpA, cpC, cpG, cpT, cpGap,
-                                             highQualityThreshold,
-                                             baseCount);
-    if (doAmbiguity)
+  const char * ALPHABET = "ACGT-";
+  double  dist_a [5], dist_not [5], pos_log_pr [5], qv [5], pr [5], cp [5];
+  double  min, dist_sum, ds, sum;
+  const double ln10x = log (10) / 10.0;
+  unsigned int  iqv [5];
+  int  i, j, cns_i;
+
+  // put dist values into an array to make it easier to manipulate them
+  dist_a [0] = dist -> freqA;
+  dist_a [1] = dist -> freqC;
+  dist_a [2] = dist -> freqG;
+  dist_a [3] = dist -> freqT;
+  dist_a [4] = dist -> freqGap;
+
+  // convert quality values to negative logs of probabilities
+  qv [0] = 0.10 * qvMultA;
+  qv [1] = 0.10 * qvMultC;
+  qv [2] = 0.10 * qvMultG;
+  qv [3] = 0.10 * qvMultT;
+  qv [4] = 0.10 * qvMultGap;
+
+  // set dist_not [i] to the sum of negative logs of frequencies of
+  // characters that are not i contributing the the probability of
+  // character i, i.e., the frequency/sum terms in distributeQV
+  dist_sum = 0.0;
+  for (i = 0; i < 5; i ++)
+    dist_sum += dist_a [i];
+  for (i = 0; i < 5; i ++)
+    {
+      ds = dist_sum - dist_a [i];
+
+      dist_not [i] = 0.0;
+      for (j = 0; j < 5; j ++)
+        if (i != j && qv [j] != 0.0)
+          dist_not [i] += - log10 (dist_a [j] / ds);
+    }
+
+  min = DBL_MAX;  // used to scale the results
+  for (i = 0; i < 5; i ++)
+    {
+      if (qv [i] < 0.001)
+        pos_log_pr [i] = 0.0;
+      else if (300.0 < qv [i])
+        pos_log_pr [i] = 0.0;
+      else
+        pos_log_pr [i] =  - log10 (1.0 - pow (0.1, qv [i]));
+      pos_log_pr [i] += - qv [i] + dist_not [i];
+      // the real value includes a term which is the sum of all the quality values
+      // except qv [i] but since that sum is the same for all terms it can be
+      // omitted since it will wash out in the scaling anyway
+
+      if (pos_log_pr [i] < min)
+        {
+          min = pos_log_pr [i];
+          cns_i = i;  // the minimum neg log probability character is the consensus
+        }
+    }
+
+  sum = 0.0;
+  for (i = 0; i < 5; i ++)
+    {
+      pos_log_pr [i] -= min - 1;  // -1 to guarantee that all values are positive
+      pr [i] = (300.0 < pos_log_pr [i] ? 0.0 : pow (10.0, - pos_log_pr [i]));
+      // convert back to probabilities from neg logs
+      sum += pr [i];
+    }
+  for (i = 0; i < 5; i ++)
+    pr [i] /= sum;
+
+  for (i = 0; i < 5; i ++)
+    {
+      cp [i] = 1.0 - pr [i];
+      iqv [i] = prToQV (cp [i]);
+    }
+
+  // The consensus quality value is the maximum of the quality 
+  // values for each base. The base that has the lowest probability of
+  // error is the unambiguous consensus of the slice.
+
+  // The winner is  cns_i
+  consensus = ALPHABET [cns_i];
+  cqv = iqv [cns_i];
+  cpConsensus = cp [cns_i];
+
+      (result)->qvA   = iqv [0];
+      (result)->qvC   = iqv [1];
+      (result)->qvG   = iqv [2];
+      (result)->qvT   = iqv [3];
+      (result)->qvGap = iqv [4];
+
+      cpA = (result)->cpA   = cp [0];
+      cpC = (result)->cpC   = cp [1];
+      cpG = (result)->cpG   = cp [2];
+      cpT = (result)->cpT   = cp [3];
+      cpGap = (result)->cpGap = cp [4];
+#endif
+
+  (result)->qvConsensus = cqv;
+
+  // This finds all ambiguity flags
+  (result)->ambiguityFlags = 
+    libSlice_calculateAmbiguityFlags(cpA, cpC, cpG, cpT, cpGap,
+                                     highQualityThreshold,
+                                     baseCount);
+  if (doAmbiguity)
     {
       consensus = libSlice_convertAmbiguityFlags((result)->ambiguityFlags);
     }
 
-    (result)->consensus = consensus;
-  }
+  (result)->consensus = consensus;
 
   return retval;
 }
