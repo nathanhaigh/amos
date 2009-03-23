@@ -46,6 +46,7 @@ public slots:
   void setChromoDB(const QString & db);
 
   void loadKmers(std::string file);
+  void loadKmersFile();
 
   void newConnect(ClientSocket * s);
   void setContigLocation(QString, int);

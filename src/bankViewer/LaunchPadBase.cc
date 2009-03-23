@@ -23,6 +23,7 @@
 #include <qtoolbar.h>
 #include <qimage.h>
 #include <qpixmap.h>
+#include <qfiledialog.h>
 
 #include "NChartWidget.hh"
 static const unsigned char image1_data[] = { 
@@ -379,6 +380,8 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
 
     fileImportAction = new QAction( this, "fileImportAction" );
 
+    loadKmersAction = new QAction(this, "loadKmersAction");
+
 
     // toolbars
     Toolbar = new QToolBar( QString(""), this, DockTop ); 
@@ -412,6 +415,7 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     
     // dsommer: added import
     fileImportAction->addTo( fileMenu );
+    loadKmersAction->addTo(fileMenu);
 
     fileMenu->insertSeparator();
     fileQuitAction->addTo( fileMenu );
@@ -427,7 +431,10 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     connect( fileChromatogramPathsAction, SIGNAL( activated() ), this, SLOT( fileChromoPaths() ) );
     // dsommer: added import 
     connect( fileImportAction, SIGNAL( activated() ), this, SLOT( fileImport() ) );
+    connect(loadKmersAction, SIGNAL(activated()), this, SLOT(loadKmersFile()));
 }
+
+
 
 /*
  *  Destroys the object and frees any allocated resources
@@ -521,6 +528,10 @@ void LaunchPadBase::languageChange()
     fileImportAction->setMenuText( tr( "&Import ace" ) );
     fileImportAction->setAccel( tr( "Ctrl+I" ) );
 
+    loadKmersAction->setText(tr("Load Kmers"));
+    loadKmersAction->setMenuText(tr("Load &Kmers"));
+    loadKmersAction->setAccel(tr("Ctrl+K"));
+
     Toolbar->setLabel( tr( "Toolbar" ) );
     contigIDLabel->setText( tr( "Contig ID" ) );
     viewButton->setText( tr( "All Views" ) );
@@ -572,5 +583,10 @@ void LaunchPadBase::fileChromoPaths()
 void LaunchPadBase::fileImport()
 {
     qWarning( "LaunchPadBase::fileImport(): Not implemented yet" );
+}
+
+void LaunchPadBase::loadKmersFile()
+{
+    qWarning( "LaunchPadBase::loadKmersFile(): Not implemented yet" );
 }
 

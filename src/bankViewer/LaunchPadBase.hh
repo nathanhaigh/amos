@@ -102,6 +102,7 @@ public:
     QAction* fileQuitAction;
     QAction* fileChromatogramPathsAction;
     QAction* fileImportAction;
+    QAction* loadKmersAction;
 
 public slots:
     virtual void fileNew();
@@ -112,6 +113,7 @@ public slots:
     virtual void fileExit();
     virtual void fileChromoPaths();
     virtual void fileImport();
+    virtual void loadKmersFile();
 
 protected:
     QGridLayout* LaunchPadBaseLayout;

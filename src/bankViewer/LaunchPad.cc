@@ -100,6 +100,19 @@ void LaunchPad::fileExit()
   qApp->quit();
 }
 
+void LaunchPad::loadKmersFile()
+{
+  QString kmerfile = 
+    QFileDialog::getOpenFileName(QString::null, QString::null, 
+                                 this, "Load Kmers File", "Kmers File");
+
+  if (!kmerfile.isEmpty())
+  {
+    std::string k = kmerfile;
+    loadKmers(k);
+  }
+}
+
 
 // dsommer : added importsd
 void LaunchPad::fileImport()
