@@ -5,14 +5,15 @@
 using namespace AMOS;
 using namespace std;
 
-bool OPT_UseEIDs = 0;
-bool OPT_UseIIDs = 0;
-bool OPT_FASTA = 0;
+bool OPT_UseEIDs = false;
+bool OPT_UseIIDs = false;
+bool OPT_FASTA = false;
 int  OPT_Spacer = 100;
 int  OPT_MinGapsize = 100;
-bool OPT_UseExpected = 0;
-bool OPT_UseUngapped = 0;
+bool OPT_UseExpected = false;
+bool OPT_UseUngapped = false;
 bool OPT_CreateLinks = false;
+bool OPT_Join = false;
 
 string OPT_BankName;
 
@@ -45,6 +46,7 @@ void PrintHelp (const char * s)
        << "\n"
        << "  -f      Print the scaffold consensus sequences in multi-fasta format\n"
        << "  -g      Use the estimated gaps size to space contigs\n"
+       << "  -j      Join contigs spaced by less than 2 bp (needs -f, if G provided overrides 2)\n"
        << "  -G val  Gaps < val will have val N's between them (-g)\n"
        << "  -N val  Specify number of N's to place between contigs\n"
        << "\n.KEYWORDS.\n"
@@ -58,7 +60,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:gG:ul")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiE:I:fN:gG:ulj")) != EOF) )
   {
     switch (ch)
     {
@@ -79,6 +81,7 @@ void ParseArgs (int argc, char ** argv)
 
       case 'f': OPT_FASTA   = true;            break;
       case 'g': OPT_UseExpected = true;        break;
+      case 'j': OPT_Join = true;               break;
       case 'G': OPT_MinGapsize = atoi(optarg); break;
       case 'N': OPT_Spacer  = atoi(optarg);    break;
       case 'u': OPT_UseUngapped = true; break;
@@ -107,6 +110,8 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
 {
   vector<Tile_t> & contigs = scaff.getContigTiling();
   vector<Tile_t>::const_iterator ci;
+  int chunk = 0;
+  string names = "";
 
   sort(contigs.begin(), contigs.end(), TileOrderCmp());
 
@@ -115,6 +120,7 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
     cout << ">";
     if (OPT_UseEIDs) { cout << scaff.getEID(); }
     else             { cout << scaff.getIID(); }
+    //    if (OPT_Join) {cout << "_" << ++chunk;}
   }
 
   int bases = 0, span = 0, numcontigs = contigs.size();
@@ -127,7 +133,7 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
     if (right > span) { span = right; }
   }
 
-  if (!OPT_CreateLinks)
+  if (!OPT_CreateLinks && !OPT_Join)
   {
     cout << " " << contigs.size() << " " << bases << " " << span << endl;
   }
@@ -146,7 +152,9 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
     if (ci != contigs.begin())
     {
       leftgapsize = ci->offset - lastrightoffset;
-    }
+    } //else if (OPT_Join) {
+    //      names.append(contig_bank.getIDMap().lookupEID(ci->source));
+    //}
 
     lastrightoffset = ci->getRightOffset();
 
@@ -199,7 +207,29 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
             spaces = OPT_MinGapsize;
           }
         }
-        seq.append(spaces, 'N');
+	if (OPT_Join){
+	  if (leftgapsize <= ((OPT_MinGapsize != 100)?OPT_MinGapsize:2))
+	  {
+	    //	    cerr << "Names is: " << names << " gap is " << leftgapsize <<endl;
+	      names.append("+");
+	      names.append(contig_bank.getIDMap().lookupEID(ci->source));
+	  } else {
+	    //	    cerr << "ElseNames is: " << names << " gap is " << leftgapsize <<endl;
+	    ++chunk;
+	    cout << "_" << chunk << " " << names << endl;
+	    Fasta_Print(stdout, seq.c_str(), NULL, 60);
+	    cout << ">";
+	    if (OPT_UseEIDs) { cout << scaff.getEID(); }
+	    else             { cout << scaff.getIID(); }
+ 	    
+	    names = "";
+	    names.append(contig_bank.getIDMap().lookupEID(ci->source));
+	    seq = "";
+	  }
+	} else
+	  seq.append(spaces, 'N');
+      } else if (OPT_Join) {
+	names.append(contig_bank.getIDMap().lookupEID(ci->source));
       }
 
       contig_bank.fetch(ci->source, contig);
@@ -244,7 +274,14 @@ void printScaffold(Scaffold_t & scaff, Bank_t & contig_bank)
 
   if (OPT_FASTA)
   {
-    Fasta_Print(stdout, seq.c_str(), NULL, 60);
+    if (!OPT_Join)
+      Fasta_Print(stdout, seq.c_str(), NULL, 60);
+    else {
+      if (! seq.empty()){
+	cout << "_" << ++chunk << " " << names <<endl;
+	Fasta_Print(stdout, seq.c_str(), NULL, 60);
+      }
+    }
   }
   else if (!OPT_CreateLinks)
   {
