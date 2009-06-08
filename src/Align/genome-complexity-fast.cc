@@ -939,6 +939,15 @@ void ComputeComplexity(const string & tag, const string & seq)
   EventTime_t timecompress;
   graph.compressPaths();
   cerr << graph.nodeCount() << " nodes compressed.  " << timecompress.str(true, 8) << endl;
+
+  // Just do the compression
+  bool JUST_COMPRESS = 1;
+  if (JUST_COMPRESS)
+  {
+    graph.print();
+    return;
+  }
+
   graph.printStats();
 
   EventTime_t timetree;
