@@ -179,6 +179,51 @@ string Contig_t::getUngappedSeqString (Range_t range) const
 }
 
 
+//--------------------------------------------------- getCovStat ---------------
+double Contig_t::getCovStat(const double globalArrivalRate) const
+{
+  const float ln2=0.69314718055994530941723212145818;
+
+  assert(globalArrivalRate != -1);
+  return (getAvgRho() * globalArrivalRate) - (ln2 * (reads_m.size() -1));
+}
+
+
+//--------------------------------------------------- getAvgRho ---------------
+double Contig_t::getAvgRho( ) const
+{
+  double avgRho = 0;
+  Pos_t  lo, hi;
+  Size_t lenLo, lenHi;
+
+  if ( !reads_m . empty( ) )
+  {
+    vector<Tile_t>::const_iterator ti = reads_m . begin( );
+
+    lo = ti -> offset;
+    lenLo = ti->range.getLength();
+    hi = ti -> offset + ti -> range . getLength( );
+    lenHi = ti->range.getLength();
+
+    for ( ++ ti; ti != reads_m . end( ); ++ ti )
+    {
+      if ( ti -> offset < lo )
+        lo = ti -> offset;
+        lenLo = ti->range.getLength();
+      if ( ti -> offset + ti -> range.getLength( ) > hi )
+        hi = ti -> offset + ti -> range.getLength();
+        lenHi = ti->range.getLength();
+    }
+
+    double avgLen = (lenLo + lenHi) / 2;
+      if (avgLen < getLength()) {
+        avgRho = getLength() - avgLen;
+    }
+  }
+      
+  return avgRho;
+}
+
 
 //----------------------------------------------------- insertGapColumn --------
 void Contig_t::insertGapColumn (Pos_t gindex)

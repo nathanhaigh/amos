@@ -139,8 +139,7 @@ public:
   //! \return The gapped position
   //!
   Pos_t ungap2gap (Pos_t ungap);
-
-
+  
   //--------------------------------------------------- getGCContent --------------
   //! \brief Get the gc content of the sequence
   //!
@@ -307,6 +306,25 @@ public:
   //! \return void
   //!
   void insertGapColumn (Pos_t gindex);
+
+
+
+  //--------------------------------------------------- getCovStat -------------
+  //! \brief Get the cov stat of the sequence
+  //!
+  //! \return The coverage stat for the sequence
+  //!
+  double getCovStat(const double globalArrivalRate) const;
+
+
+
+  //--------------------------------------------------- getAvgRho --------------
+  //! \brief Get the length of the sequence with more than 1X coverage
+  //!
+  //! \return The length for the sequence
+  //!
+  double getAvgRho( ) const;
+
 
 
   //--------------------------------------------------- readMessage ------------
