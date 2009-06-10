@@ -75,6 +75,7 @@ AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
 AMOS_C_BITFIELDS
 AMOS_QT
+AMOS_BOOST
 
 # check for functions which can be replaced with libGNU modules:
 # getopt strtod strtol
@@ -118,6 +119,7 @@ AMOS_BUILD_CONDITIONAL([all], [yes])
 
 AM_CONDITIONAL(BUILD_LIBZ, [test x"${have_libz}" = x"yes"])
 AM_CONDITIONAL(BUILD_QT, [test x"${have_qt_test}" = x"yes"])
+AM_CONDITIONAL(BUILD_BOOST, [test x"${have_boost_test}" = x"yes"])
 
 # makefiles to configure
 AC_CONFIG_FILES(
@@ -249,6 +251,16 @@ if test x"${have_qt}" != x"yes"; then
 elif test x"${have_qt_test}" != x"yes"; then
   echo "WARNING! Qt3 toolkit malfunctioning but is required to run AMOS GUIs"
   echo "   try compiling GUIs manually or reinstall Qt3 toolkit to build GUIs"
+  echo "   see config.log for more information on what went wrong"
+fi
+
+if test x"${have_boost}" != x"yes"; then
+  echo "WARNING! Boost graph toolkit was not found but is required to run parts of the AMOS Scaffolder (Bambus 2)"
+  echo "   install Boost or locate Boost with configure to build Scaffolder"
+  echo "   see config.log for more information on what went wrong"
+elif test x"${have_boost_test}" != x"yes"; then
+  echo "WARNING! Boost graph toolkit malfunctioning but is required to run parts of the AMOS Scaffolder (Bambus 2)"
+  echo "   try compiling manually or reinstall Boost toolkit to build AMOS Scaffolder"
   echo "   see config.log for more information on what went wrong"
 fi
 
