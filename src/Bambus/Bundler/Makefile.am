@@ -1,11 +1,11 @@
 ##-- MAKE FRAGMENT FOR AMOS RULES
 include $(top_srcdir)/config/amos.mk
 
-
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	Bundler \
 	clk \
+	MarkRepeats	\
 	OrientContigs
 
 dist_bin_SCRIPTS = \
@@ -17,8 +17,10 @@ dist_bin_SCRIPTS = \
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
-	-I$(top_builddir)/src/GNU
-
+	-I$(top_builddir)/src/GNU \
+   $(BOOST_CXXFLAGS)  \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
+	-pedantic
 
 ##-- Bundler\
 Bundler_LDADD = \
@@ -37,11 +39,18 @@ clk_LDADD = \
 clk_SOURCES = \
 	clk.cc
 
+MarkRepeats_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
+MarkRepeats_SOURCES = \
+	Utilities_Bundler.cc MarkRepeats.cc
+
 OrientContigs_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 OrientContigs_SOURCES = \
-	OrientContigs.cc
+	Utilities_Bundler.cc OrientContigs.cc
 
 ##-- END OF MAKEFILE --##

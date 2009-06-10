@@ -32,7 +32,7 @@ void printHelpText()
     "\n"
     "USAGE:\n"
     "\n"
-    "Bundler -b[ank] <bank_name>\n"
+    "Bundler -b[ank] <bank_name> -t[ype] <comma separated list of link types to process>\n"
        << endl;
 }
 
@@ -45,6 +45,8 @@ bool GetOptions(int argc, char ** argv)
     {"h",     0, 0, 'h'},
     {"b",     1, 0, 'b'},
     {"bank",  1, 0, 'b'},
+    {"t",     1, 0, 't'},
+    {"type",  1, 0, 't'},
     {0, 0, 0, 0}
   };
   
@@ -57,6 +59,9 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'b':
       globals["bank"] = string(optarg);
+      break;
+    case 't':
+      globals["type"] = string(optarg);
       break;
     case '?':
       return false;
@@ -80,6 +85,10 @@ int main(int argc, char *argv[])
   if (globals.find("bank") == globals.end()){ // no bank was specified
     cerr << "A bank must be specified" << endl;
     exit(1);
+  }
+  
+  if (globals.find("type") == globals.end()) {
+     globals["type"] = "ALL";
   }
 
 
@@ -108,8 +117,7 @@ int main(int argc, char *argv[])
       cerr << "Failed to open edge account in bank " << globals["bank"] 
 	   << ": " << endl << e << endl;
       exit(1);
-    }
-  
+    }  
 
   Size_t ti;
   Size_t minlen, maxlen;  // contig adjacency gap range;
@@ -127,8 +135,12 @@ int main(int argc, char *argv[])
       // must reverse the link
       ctl.flip();
     } 
-    linkMap.insert(pair<pair<ID_t, ID_t>, ContigLink_t>
-		   (ctl.getContigs(), ctl));
+    
+    // make sure we accept this type
+    if (globals["type"].find(ctl.getType()) != string::npos || globals["type"].find("ALL") != string::npos) {
+       linkMap.insert(pair<pair<ID_t, ID_t>, ContigLink_t>
+   		   (ctl.getContigs(), ctl));
+    }
   }
 
   // now all the links should be in the linkMap, nicely grouped by the contigs
@@ -171,132 +183,132 @@ int main(int argc, char *argv[])
     LinkAdjacency_t bestAdj;
     int bestAdjCount = 0;
     for (map<LinkAdjacency_t, int>::iterator at = adjacencies.begin();
-	 at != adjacencies.end(); at++){
+	     at != adjacencies.end(); at++){
       if (at->second > 1){ // there are links we have to deal with
-	multimap<Size_t, LinkMap_t::iterator> begins, ends;
-	list<LinkMap_t::iterator> best;
-	list<LinkMap_t::iterator>::iterator bestEnd = best.end();
-	Size_t bestCoord;
-	int ncurrent = 0, nbest = 0;
+      	multimap<Size_t, LinkMap_t::iterator> begins, ends;
+      	list<LinkMap_t::iterator> best;
+      	list<LinkMap_t::iterator>::iterator bestEnd = best.end();
+      	Size_t bestCoord;
+      	int ncurrent = 0, nbest = 0;
+      
+      	cerr << "Doing " << at->second 
+      	     << " links of type " << at->first << endl;
+      
+      	cerr << " Found " << adjList[at->first].size() << " links " << endl;
+      
+      	assert (at->second == adjList[at->first].size());
+      
+      	for (list<LinkMap_t::iterator>::iterator 
+      	       lnks = adjList[at->first].begin();
+      	     lnks != adjList[at->first].end(); lnks++){
+      	  begins.insert(pair<Size_t, LinkMap_t::iterator> 
+      			(((**lnks).second.getSize() - 3 * (**lnks).second.getSD()), *lnks));
+      	  ends.insert(pair<Size_t, LinkMap_t::iterator>
+      		      (((**lnks).second.getSize() + 3 * (**lnks).second.getSD()), *lnks));
+   	  } // for each link
 
-	cerr << "Doing " << at->second 
-	     << " links of type " << at->first << endl;
-
-	cerr << " Found " << adjList[at->first].size() << " links " << endl;
-
-	assert (at->second == adjList[at->first].size());
-
-	for (list<LinkMap_t::iterator>::iterator 
-	       lnks = adjList[at->first].begin();
-	     lnks != adjList[at->first].end(); lnks++){
-	  begins.insert(pair<Size_t, LinkMap_t::iterator> 
-			(((**lnks).second.getSize() - 3 * (**lnks).second.getSD()), *lnks));
-	  ends.insert(pair<Size_t, LinkMap_t::iterator>
-		      (((**lnks).second.getSize() + 3 * (**lnks).second.getSD()), *lnks));
-	} // for each link
-
-	// because of the way maps work, the elements come sorted by the key
-	multimap<Size_t, LinkMap_t::iterator>::iterator bgi = begins.begin();
-	multimap<Size_t, LinkMap_t::iterator>::iterator eni = ends.begin();
+      	// because of the way maps work, the elements come sorted by the key
+      	multimap<Size_t, LinkMap_t::iterator>::iterator bgi = begins.begin();
+      	multimap<Size_t, LinkMap_t::iterator>::iterator eni = ends.begin();
 	
-	cerr << " Begins has " << begins.size() << " elements" << endl;
-	cerr << " Ends has " << ends.size() << " elements" << endl;
+	     cerr << " Begins has " << begins.size() << " elements" << endl;
+   	  cerr << " Ends has " << ends.size() << " elements" << endl;
 	
-	while (bgi != begins.end() || eni != ends.end()){
-	  if (bgi != begins.end() && bgi->first <= eni->first){
-	    Size_t bgiLend = bgi->second->second.getSize() 
-	      - 3 * bgi->second->second.getSD(),
-	      bgiRend = bgi->second->second.getSize() 
-	      + 3 * bgi->second->second.getSD();
-	    // we add to the clique
-	    ncurrent++;
-	    if (ncurrent > nbest){
-	      nbest = ncurrent;
-	      bestEnd = best.begin(); // reset best list
-	      bestCoord = bgiLend; // where the maximum occured
-	      cerr << "best coord is " << bestCoord << endl;
-	    }
-	    bgi++;
-	  } else if (eni != ends.end() && 
-		     (bgi == begins.end() || 
-		      bgi->first > eni->first)){
-	    Size_t eniLend = eni->second->second.getSize() 
-	      - 3 * eni->second->second.getSD(),
-	      eniRend = eni->second->second.getSize() 
-	      + 3 * eni->second->second.getSD();
+      	while (bgi != begins.end() || eni != ends.end()){
+	        if (bgi != begins.end() && bgi->first <= eni->first){
+	           Size_t bgiLend = bgi->second->second.getSize() 
+	              - 3 * bgi->second->second.getSD(),
+	           bgiRend = bgi->second->second.getSize() 
+	              + 3 * bgi->second->second.getSD();
+	           // we add to the clique
+	           ncurrent++;
+	           if (ncurrent > nbest){
+	              nbest = ncurrent;
+	              bestEnd = best.begin(); // reset best list
+	              bestCoord = bgiLend; // where the maximum occured
+	              cerr << "best coord is " << bestCoord << endl;
+	           }
+	           bgi++;
+            } else if (eni != ends.end() && 
+		       (bgi == begins.end() || 
+		       bgi->first > eni->first)){
+	           Size_t eniLend = eni->second->second.getSize() 
+	              - 3 * eni->second->second.getSD(),
+	           eniRend = eni->second->second.getSize() 
+	              + 3 * eni->second->second.getSD();
 
-	    if (eniLend <= bestCoord && eniRend >= bestCoord){ 
-	      // current link was in best clique
-	      best.push_front(eni->second);
-	    } else {
-	      cerr << "link " << eniLend << ", " << eniRend << " did not surround " << bestCoord << endl;
-	    }
+	           if (eniLend <= bestCoord && eniRend >= bestCoord){ 
+	              // current link was in best clique
+	              best.push_front(eni->second);
+	           } else {
+	              cerr << "link " << eniLend << ", " << eniRend << " did not surround " << bestCoord << endl;
+	           }
 
-	    // we remove from the clique
-	    ncurrent--;
-	    eni++;
-	    //	  map<Size_t, LinkMap_t::iterator>::iterator rm = ends.begin();
-	    //	  ends.erase(rm);
-	  } 
-	} // while bgi != begins.end()
-	// best is a map containing all the links in the current clique
-	at->second = nbest;
-	// keep just the good
-	//	adjList[at->first].clear();
-	cerr << "nbest is " << nbest << endl;
-	cerr << "best has " << best.size() << " records " << endl;
-	Size_t minRange, maxRange;
-	list<LinkMap_t::iterator>::iterator bg = best.begin();
-	Size_t sz = (**bg).second.getSize();
-	Size_t sd = (**bg).second.getSD();
-	minRange = sz - 3 * sd;
-	maxRange = sz + 3 * sd;
-	for (list<LinkMap_t::iterator>::iterator bi = best.begin();
-	     bi != bestEnd; bi++){
-	  bestList[at->first].push_back(*bi);
-	  sz = (**bi).second.getSize();
-	  sd = (**bi).second.getSD();
-	  if (sz - 3 * sd > minRange)
-	    minRange = sz - 3 * sd;
-	  if (sz + 3 * sd < maxRange)
-	    maxRange = sz + 3 * sd;
-	  cerr << "Clique range = " << minRange << ", " << maxRange << endl;
-	}
-	// now minRange-maxRange is the range of the clique.
-	// we can mark all links that end before minRange or start after
-	// maxRange as incorrect
-	for (list<LinkMap_t::iterator>::iterator 
+	        // we remove from the clique
+	        ncurrent--;
+	        eni++;
+	        //	  map<Size_t, LinkMap_t::iterator>::iterator rm = ends.begin();
+	        //	  ends.erase(rm);
+         } 
+	     } // while bgi != begins.end()
+         // best is a map containing all the links in the current clique
+	     at->second = nbest;
+	     // keep just the good
+	     //	adjList[at->first].clear();
+	     cerr << "nbest is " << nbest << endl;
+	     cerr << "best has " << best.size() << " records " << endl;
+	     Size_t minRange, maxRange;
+	        list<LinkMap_t::iterator>::iterator bg = best.begin();
+	     Size_t sz = (**bg).second.getSize();
+	     Size_t sd = (**bg).second.getSD();
+	     minRange = sz - 3 * sd;
+	     maxRange = sz + 3 * sd;
+	     for (list<LinkMap_t::iterator>::iterator bi = best.begin();
+	        bi != bestEnd; bi++){
+	        bestList[at->first].push_back(*bi);
+	        sz = (**bi).second.getSize();
+	        sd = (**bi).second.getSD();
+	        if (sz - 3 * sd > minRange)
+	           minRange = sz - 3 * sd;
+	        if (sz + 3 * sd < maxRange)
+	           maxRange = sz + 3 * sd;
+	        cerr << "Clique range = " << minRange << ", " << maxRange << endl;
+	     }
+	     // now minRange-maxRange is the range of the clique.
+	     // we can mark all links that end before minRange or start after
+	     // maxRange as incorrect
+	     for (list<LinkMap_t::iterator>::iterator 
 	       lnks = adjList[at->first].begin();
-	     lnks != adjList[at->first].end(); lnks++){
-	  sz = (**lnks).second.getSize();
-	  sd = (**lnks).second.getSD();
-	  if (sz + 3 * sd < minRange)
-	    cerr << "Link " << (**lnks).second.getIID() << " (" 
-		 << (**lnks).second.getSize() << ", " 
-		 << (**lnks).second.getSD() << ")"
-		 << " is too short ( < " << minRange << ")" << endl;
-	  if (sz - 3 * sd > maxRange)
-	    cerr << "Link " << (**lnks).second.getIID() << " (" 
-		 << (**lnks).second.getSize() << ", " 
-		 << (**lnks).second.getSD() << ")"
-		 << " is too long ( > " << maxRange << ")" << endl;
-	} // for each link
+	       lnks != adjList[at->first].end(); lnks++){
+	        sz = (**lnks).second.getSize();
+	        sd = (**lnks).second.getSD();
+	        if (sz + 3 * sd < minRange)
+	           cerr << "Link " << (**lnks).second.getIID() << " (" 
+		             << (**lnks).second.getSize() << ", " 
+		             << (**lnks).second.getSD() << ")"
+		             << " is too short ( < " << minRange << ")" << endl;
+	        if (sz - 3 * sd > maxRange)
+	           cerr << "Link " << (**lnks).second.getIID() << " (" 
+		             << (**lnks).second.getSize() << ", " 
+		             << (**lnks).second.getSD() << ")"
+		             << " is too long ( > " << maxRange << ")" << endl;
+        } // for each link
 	
       } else { // all links are good
-	for (list<LinkMap_t::iterator>::iterator 
-	       bi = adjList[at->first].begin();
-	     bi != adjList[at->first].end(); bi++){
-	  cerr << "Link " << (**bi).second.getIID() << " (" 
-	       << (**bi).second.getSize() << ", " 
-	       << (**bi).second.getSD() << ")"
-	       << " is just right" << endl;
-	  bestList[at->first].push_back(*bi);
-	}
+      	for (list<LinkMap_t::iterator>::iterator 
+      	       bi = adjList[at->first].begin();
+      	     bi != adjList[at->first].end(); bi++){
+      	  cerr << "Link " << (**bi).second.getIID() << " (" 
+      	       << (**bi).second.getSize() << ", " 
+      	       << (**bi).second.getSD() << ")"
+      	       << " is just right" << endl;
+      	  bestList[at->first].push_back(*bi);
+      	}
       } // if enough links exist
 
       if (at->second > bestAdjCount){
-	bestAdjCount = at->second;
-	bestAdj = at->first;
+      	bestAdjCount = at->second;
+      	bestAdj = at->first;
       }
     } // for each adjacency
     
@@ -310,30 +322,30 @@ int main(int argc, char *argv[])
     for (map<LinkAdjacency_t, int>::iterator at = adjacencies.begin();
 	 at != adjacencies.end(); at++){
       if (at->second > 1){ // there are links we have to deal with
-	ContigEdge_t cte;
-	bestAdj = at->first;
-	
-	// import adjacency info from first link
-	list<LinkMap_t::iterator>::iterator li = bestList[bestAdj].begin();
-	cte.setContigs((**li).second.getContigs());
-	cte.setAdjacency((**li).second.getAdjacency());
-
-	vector<ID_t> linkIds;
-	linkIds.reserve(bestList[bestAdj].size());  // try to keep memory low - best to prealloc
-	
-    // here we want to combine the gaussians described by the "good" links
-    // use the idea of Huson et al. RECOMB 2001
-	float newMean, newSD, p = 0, q = 0;
-	for (list<LinkMap_t::iterator>::iterator ni = bestList[bestAdj].begin();
-	     ni != bestList[bestAdj].end(); ni++){
-	  float tmp = (**ni).second.getSD();
-	  if (tmp == 0) tmp = 1; // avoid overflow errors
-	  tmp *= tmp;
-	  
-	  p += (**ni).second.getSize() / tmp;
-	  q += 1 / tmp; 
-	  linkIds.push_back((**ni).second.getIID());
-	}
+      	ContigEdge_t cte;
+      	bestAdj = at->first;
+      	
+      	// import adjacency info from first link
+      	list<LinkMap_t::iterator>::iterator li = bestList[bestAdj].begin();
+      	cte.setContigs((**li).second.getContigs());
+      	cte.setAdjacency((**li).second.getAdjacency());
+      
+      	vector<ID_t> linkIds;
+      	linkIds.reserve(bestList[bestAdj].size());  // try to keep memory low - best to prealloc
+      	
+          // here we want to combine the gaussians described by the "good" links
+          // use the idea of Huson et al. RECOMB 2001
+      	float newMean, newSD, p = 0, q = 0;
+      	for (list<LinkMap_t::iterator>::iterator ni = bestList[bestAdj].begin();
+      	     ni != bestList[bestAdj].end(); ni++){
+      	  float tmp = (**ni).second.getSD();
+      	  if (tmp == 0) tmp = 1; // avoid overflow errors
+      	  tmp *= tmp;
+      	  
+      	  p += (**ni).second.getSize() / tmp;
+      	  q += 1 / tmp; 
+      	  linkIds.push_back((**ni).second.getIID());
+   	}
 	
 	newMean = p / q;
 	newSD = 1 / sqrt(q);
@@ -348,7 +360,10 @@ int main(int argc, char *argv[])
 	// give the edge an identifier
 	cte.setIID(++EdgeId);
 	
-	edge_bank << cte;
+   if (!edge_bank.existsIID(cte.getIID())) {
+      cerr << "Writing edge link with it " << cte.getIID() << endl;
+   	edge_bank << cte;
+   }
       } // if enough links
     } // for each adjacency type
   } // for each contig pair
