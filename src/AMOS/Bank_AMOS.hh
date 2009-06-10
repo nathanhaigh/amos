@@ -343,7 +343,7 @@ protected:
     {
       I_OPEN,
       I_CREATE,
-      I_CLOSE,
+      I_CLOSE
     };
 
 
