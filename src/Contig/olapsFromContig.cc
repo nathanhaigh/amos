@@ -5,6 +5,9 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
+// Note: Some olaps can be really horrible because of unnecssary
+// gaps. Think about refining the alignments.
+
 #include "foundation_AMOS.hh"
 #include <getopt.h>
 
@@ -246,17 +249,6 @@ int main (int argc, char ** argv)
                 for ( int i = 0; i < B.size(); ++i )
                   alignB[bOff+i] = B[i];
 
-                cout << "A: ";
-                for ( int i = 0; i < aGaps.size(); ++i )
-                  cout << aGaps[i] << " ";
-                cout << "B: ";
-                for ( int i = 0; i < bGaps.size(); ++i )
-                  cout << bGaps[i] << " ";
-                cout << endl;
-
-                cout << alignA << endl;
-                cout << alignB << endl;
-
                 int olapErrs = 0;
                 for ( int i = 0; i < alignLen; ++i )
                   if ( alignA[i] == '.' || alignB[i] == '.' )
@@ -269,19 +261,36 @@ int main (int argc, char ** argv)
 
                 // skip if olap too noisy
                 if ( aOlapErr > OPT_MaxOlapErr || bOlapErr > OPT_MaxOlapErr )
-                  ; //continue;
+                  continue;
 
                 // report good overlap
-                cout
-                  << ati->source << '\t'
-                  << bti->source << '\t'
-                  << olapType    << '\t'
-                  << aOlapHang   << '\t'
-                  << bOlapHang   << '\t'
-                  << aOlapErr    << '\t'
-                  << bOlapErr    << '\n';
+                printf("%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
+                       ati->source, bti->source, olapType,
+                       aOlapHang, bOlapHang,
+                       aOlapErr*100.0,  bOlapErr*100.0);
 
-                cout << endl;
+                if ( 0 )
+                  {
+                    cout << "A: ";
+                    for ( int i = 0; i < aGaps.size(); ++i )
+                      cout << aGaps[i] << " ";
+                    cout << "B: ";
+                    for ( int i = 0; i < bGaps.size(); ++i )
+                      cout << bGaps[i] << " ";
+                    cout << endl;
+
+                    cout << alignA << endl;
+                    cout << alignB << endl;
+                   
+                    for ( int i = 1; i <= alignLen; ++i )
+                      {
+                        if ( i % 10 == 0 )
+                          putchar('|');
+                        else
+                          putchar(' ');
+                      }
+                    putchar('\n');
+                  }
               }
           }
       }
