@@ -226,6 +226,7 @@ int main (int argc, char ** argv)
                 string A = readA.getSeqString(readA.getClearRange());
                 string B = readB.getSeqString(readB.getClearRange());
 
+                // too lazy to do the math...
                 if ( ati->range.isReverse() )
                   ReverseComplement(A);
                 if ( bti->range.isReverse() )
