@@ -18,6 +18,8 @@ using namespace std;
 //=============================================================== Globals ======
 string  OPT_BankName;                        // bank name parameter
 int     OPT_MinOlapLen = 20;                 // minimum overlap len
+float   OPT_MaxOlapErr = 0.05;               // maximum overlap err
+
 
 //----------------------------------------------------- ParseArgs --------------
 //! \brief Sets the global OPT_% values from the command line arguments
@@ -63,6 +65,10 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
   
+    Bank_t readBank(Read_t::NCODE);
+    readBank.open(OPT_BankName, B_SPY);
+    Read_t readA, readB;
+
     BankStream_t contigBank(Contig_t::NCODE);
     contigBank.open(OPT_BankName, B_SPY);
     Contig_t contig;
@@ -88,8 +94,8 @@ int main (int argc, char ** argv)
                   break;
 
                 //-- Potential overlap between read A and B
-                Size_t aHang = bti->offset - ati->offset;
-                Size_t bHang =
+                Size_t aOlapHang = bti->offset - ati->offset;
+                Size_t bOlapHang =
                   (bti->offset + bti->getGappedLength()) -
                   (ati->offset + ati->getGappedLength());
                 Pos_t lOlapPos = bti->offset;
@@ -98,6 +104,8 @@ int main (int argc, char ** argv)
                       bti->offset + bti->getGappedLength() - 1);
                 Size_t aOlapLen = rOlapPos - lOlapPos + 1;
                 Size_t bOlapLen = rOlapPos - lOlapPos + 1;
+                vector<Pos_t> aGaps;
+                vector<Pos_t> bGaps;
 
                 sort(ati->gaps.begin(), ati->gaps.end());
                 sort(bti->gaps.begin(), bti->gaps.end());
@@ -111,7 +119,7 @@ int main (int argc, char ** argv)
                     Pos_t aGapPos = MAX_POS;
                     Pos_t bGapPos = MAX_POS;
 
-                    //-- gap pos calculation
+                    //-- gapped contig gap pos calculation
                     // gapped offset + ungapped gap pos + #previous gaps + 1
                     if ( agi != ati->gaps.end() )
                       {
@@ -142,22 +150,28 @@ int main (int argc, char ** argv)
                         if ( gapPos < lOlapPos )
                           {
                             // shrink a hang
-                            if ( aHang > 0 ) aHang--;
-                            else aHang++;
+                            if ( aOlapHang > 0 ) aOlapHang--;
+                            else aOlapHang++;
                           }
                         else if ( gapPos > rOlapPos )
                           {
                             // shrink b hang
-                            if ( bHang > 0 ) bHang--;
-                            else bHang++;
+                            if ( bOlapHang > 0 ) bOlapHang--;
+                            else bOlapHang++;
                           }
                         else
                           {
                             // overlap gaps
                             if ( aGapPos < bGapPos )
-                              aOlapLen--; // a gap
+                              {
+                                aOlapLen--; // a gap
+                                aGaps.push_back(*(agi-1));
+                              }
                             else
-                              bOlapLen--; // b gap
+                              {
+                                bOlapLen--; // b gap
+                                bGaps.push_back(*(bgi-1));
+                              }
                           }
                       }
                   }
@@ -165,26 +179,109 @@ int main (int argc, char ** argv)
                 // fix hangs if a is reversed
                 if ( ati->range.isReverse() )
                   {
-                    Size_t oaHang = aHang;
-                    Size_t obHang = bHang;
-                    aHang = -obHang;
-                    bHang = -oaHang;
+                    Size_t oaOlapHang = aOlapHang;
+                    Size_t obOlapHang = bOlapHang;
+                    aOlapHang = -obOlapHang;
+                    bOlapHang = -oaOlapHang;
                   }
 
-                if ( aOlapLen >= OPT_MinOlapLen && bOlapLen >= OPT_MinOlapLen )
+                // skip if olap is too short
+                if ( aOlapLen < OPT_MinOlapLen && bOlapLen < OPT_MinOlapLen )
+                  continue;
+
+                char olapType =
+                  ati->range.isReverse() == bti->range.isReverse() ? 'N' : 'I';
+
+
+                //-- Get reads and check error rate of olap
+                readBank.fetch(ati->source, readA);
+                readBank.fetch(bti->source, readB);
+
+                Size_t aLen = readA.getClearRange().getLength();
+                Size_t bLen = readB.getClearRange().getLength();
+                Size_t alignLen = aLen + aGaps.size();
+                if ( aOlapHang < 0 ) alignLen -= aOlapHang;
+                if ( bOlapHang > 0 ) alignLen += bOlapHang;
+
+                char alignA[alignLen+1];
+                char alignB[alignLen+1];
+                for ( int i = 0; i < alignLen; i++ )
                   {
-                    char olapType =
-                      ati->range.isReverse() == bti->range.isReverse()
-                      ? 'N' : 'I';
-                    cout
-                      << ati->source << '\t'
-                      << bti->source << '\t'
-                      << olapType << '\t'
-                      << aHang << '\t'
-                      << bHang << '\t'
-                      << aOlapLen << '\t'
-                      << bOlapLen << '\n';
+                    alignA[i] = '.';
+                    alignB[i] = '.';
                   }
+                alignA[alignLen] = '\0';
+                alignB[alignLen] = '\0';
+
+                int aOff = 0;
+                int bOff = 0;
+                if ( aOlapHang < 0 )
+                  aOff -= aOlapHang;
+                else
+                  bOff += aOlapHang;
+
+                string A = readA.getSeqString(readA.getClearRange());
+                string B = readB.getSeqString(readB.getClearRange());
+
+                if ( ati->range.isReverse() )
+                  ReverseComplement(A);
+                if ( bti->range.isReverse() )
+                  ReverseComplement(B);
+
+                for ( int i = 0; i < aGaps.size(); ++i )
+                  A.insert(aGaps[i]+i, 1, '-');
+                for ( int i = 0; i < bGaps.size(); ++i )
+                  B.insert(bGaps[i]+i, 1, '-');
+
+                if ( ati->range.isReverse() )
+                  ReverseComplement(A);
+                if ( bti->range.isReverse() )
+                  ReverseComplement(B);
+
+                if ( olapType == 'I' )
+                  ReverseComplement(B);
+
+                for ( int i = 0; i < A.size(); ++i )
+                  alignA[aOff+i] = A[i];
+                for ( int i = 0; i < B.size(); ++i )
+                  alignB[bOff+i] = B[i];
+
+                cout << "A: ";
+                for ( int i = 0; i < aGaps.size(); ++i )
+                  cout << aGaps[i] << " ";
+                cout << "B: ";
+                for ( int i = 0; i < bGaps.size(); ++i )
+                  cout << bGaps[i] << " ";
+                cout << endl;
+
+                cout << alignA << endl;
+                cout << alignB << endl;
+
+                int olapErrs = 0;
+                for ( int i = 0; i < alignLen; ++i )
+                  if ( alignA[i] == '.' || alignB[i] == '.' )
+                    continue;
+                  else if ( alignA[i] != alignB[i] )
+                    olapErrs++;
+
+                float aOlapErr = float(olapErrs) / float(aOlapLen);
+                float bOlapErr = float(olapErrs) / float(bOlapLen);
+
+                // skip if olap too noisy
+                if ( aOlapErr > OPT_MaxOlapErr || bOlapErr > OPT_MaxOlapErr )
+                  ; //continue;
+
+                // report good overlap
+                cout
+                  << ati->source << '\t'
+                  << bti->source << '\t'
+                  << olapType    << '\t'
+                  << aOlapHang   << '\t'
+                  << bOlapHang   << '\t'
+                  << aOlapErr    << '\t'
+                  << bOlapErr    << '\n';
+
+                cout << endl;
               }
           }
       }
@@ -210,13 +307,17 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt(argc, argv, "ho:")) != EOF) )
+  while ( !errflg && ((ch = getopt(argc, argv, "he:o:")) != EOF) )
     switch (ch)
       {
       case 'h':
         PrintHelp(PROGNAME);
         exit(EXIT_SUCCESS);
       break;
+
+      case 'e':
+        OPT_MaxOlapErr = atof(optarg);
+        break;
 
       case 'o':
         OPT_MinOlapLen = atoi(optarg);
@@ -230,6 +331,12 @@ void ParseArgs (int argc, char ** argv)
     OPT_BankName = argv[optind++];
   else
     errflg ++;
+
+  if ( OPT_MaxOlapErr < 0 || OPT_MaxOlapErr > 1 )
+    {
+      cerr << "Error: Maximum overlap error must be 0 < err < 1\n";
+      errflg++;
+    }
 
   if ( OPT_MinOlapLen <= 0 )
     {
@@ -252,6 +359,8 @@ void PrintHelp (const char * s)
   PrintUsage(s);
 
   cerr
+    << "-e float      Set maximum overlap error, default "
+    << OPT_MaxOlapErr << endl
     << "-o int        Set minimum overlap length, default "
     << OPT_MinOlapLen << endl
     << endl;
