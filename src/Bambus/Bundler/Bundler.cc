@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
 
     for (map<LinkAdjacency_t, int>::iterator at = adjacencies.begin();
 	 at != adjacencies.end(); at++){
-      if (at->second > 1){ // there are links we have to deal with
+      if (at->second >= 1){ // there are links we have to deal with
       	ContigEdge_t cte;
       	bestAdj = at->first;
       	
@@ -360,10 +360,10 @@ int main(int argc, char *argv[])
 	// give the edge an identifier
 	cte.setIID(++EdgeId);
 	
-   if (!edge_bank.existsIID(cte.getIID())) {
-      cerr << "Writing edge link with it " << cte.getIID() << endl;
-   	edge_bank << cte;
-   }
+        if (!edge_bank.existsIID(cte.getIID())) {
+           cerr << "Writing edge link with it " << cte.getIID() << endl;
+   	   edge_bank << cte;
+        }
       } // if enough links
     } // for each adjacency type
   } // for each contig pair
