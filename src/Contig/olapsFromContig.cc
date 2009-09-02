@@ -303,9 +303,10 @@ int main (int argc, char ** argv)
                 if ( olapErr > OPT_MaxOlapErr )
                   {
                     fprintf(stderr, "Redoing overlap:\n");
-                    fprintf(stderr, "%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
+                    fprintf(stderr, "%d\t%d\t%c\t%d\t%d\t%d\t%d\t%.2f\t%.2f\n",
                             ati->source, bti->source, olapType,
                             aOlapHang, bOlapHang,
+                            aOlapLen, bOlapLen,
                             olapErr*100.0,  olapErr*100.0);
 
                     string A = readA.getSeqString(readA.getClearRange());
@@ -319,14 +320,24 @@ int main (int argc, char ** argv)
                     aOlapHang = newolap.aHang;
                     bOlapHang = newolap.bHang;
                     olapErr = newolap.err;
+                    GetOlapLens(aLen, bLen,
+                                aOlapHang, bOlapHang,
+                                aOlapLen, bOlapLen);
 
-                    fprintf(stderr, "%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
+                    fprintf(stderr, "%d\t%d\t%c\t%d\t%d\t%d\t%d\t%.2f\t%.2f\n",
                             ati->source, bti->source, olapType,
                             aOlapHang, bOlapHang,
+                            aOlapLen, bOlapLen,
                             olapErr*100.0,  olapErr*100.0);
+
+                    if ( aOlapLen >= OPT_MinOlapLen &&
+                         bOlapLen >= OPT_MinOlapLen &&
+                         olapErr <= OPT_MaxOlapErr )
+                      { fprintf(stderr, "Accepted\n"); }
+                    else
+                      { fprintf(stderr, "Rejected\n"); }
                   }
 
-                GetOlapLens(aLen, bLen, aOlapHang, bOlapHang, aOlapLen, bOlapLen);
 
                 if ( aOlapLen >= OPT_MinOlapLen &&
                      bOlapLen >= OPT_MinOlapLen &&
@@ -336,11 +347,9 @@ int main (int argc, char ** argv)
                            ati->source, bti->source, olapType,
                            aOlapHang, bOlapHang,
                            olapErr*100.0,  olapErr*100.0);
-
+                    
                     if ( ++nOlaps % 10000 == 0 )
-                      {
-                        fprintf(stderr, "Processed %ld overlaps\n", nOlaps);
-                      }
+                      fprintf(stderr, "Processed %ld overlaps\n", nOlaps);
                   }
               }
           }
