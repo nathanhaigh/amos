@@ -10,6 +10,7 @@
 
 #include "foundation_AMOS.hh"
 #include <getopt.h>
+#include <stdlib.h>
 
 using namespace AMOS;
 using namespace std;
@@ -22,6 +23,13 @@ using namespace std;
 string  OPT_BankName;                        // bank name parameter
 int     OPT_MinOlapLen = 20;                 // minimum overlap len
 float   OPT_MaxOlapErr = 0.05;               // maximum overlap err
+
+//------------------------------------------------------- Overlap --------------
+//! \brief Finds best overlap between readA and readB
+//!
+//! \return void
+//!
+void Overlap(const char *A, int aLen, const char *B, int bLen);
 
 
 //----------------------------------------------------- ParseArgs --------------
@@ -60,6 +68,7 @@ struct TilingOrderCmp
 //========================================================= Function Defs ======
 int main (int argc, char ** argv)
 {
+  int debugcnt = 0;
   int exitcode = EXIT_SUCCESS;
 
   //-- Parse the command line arguments
@@ -260,17 +269,24 @@ int main (int argc, char ** argv)
                 float aOlapErr = float(olapErrs) / float(aOlapLen);
                 float bOlapErr = float(olapErrs) / float(bOlapLen);
 
-                // skip if olap too noisy
+                // if olap too noisy, try to realign
+                bool isgood = true;
                 if ( aOlapErr > OPT_MaxOlapErr || bOlapErr > OPT_MaxOlapErr )
-                  continue;
+                  {
+                    isgood = false;
+                  }
 
-                // report good overlap
+                if ( isgood ) continue;
+                debugcnt++;
+
+                // report overlap                
                 printf("%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
                        ati->source, bti->source, olapType,
                        aOlapHang, bOlapHang,
                        aOlapErr*100.0,  bOlapErr*100.0);
 
-                if ( 0 )
+                // debug: pring olap
+                if ( 1 )
                   {
                     cout << "A: ";
                     for ( int i = 0; i < aGaps.size(); ++i )
@@ -279,10 +295,10 @@ int main (int argc, char ** argv)
                     for ( int i = 0; i < bGaps.size(); ++i )
                       cout << bGaps[i] << " ";
                     cout << endl;
-
+                    
                     cout << alignA << endl;
                     cout << alignB << endl;
-                   
+                    
                     for ( int i = 1; i <= alignLen; ++i )
                       {
                         if ( i % 10 == 0 )
@@ -292,6 +308,14 @@ int main (int argc, char ** argv)
                       }
                     putchar('\n');
                   }
+
+                Overlap(readA.getSeqString(readA.getClearRange()).c_str(),
+                        readA.getClearRange().getLength(),
+                        readB.getSeqString(readB.getClearRange()).c_str(),
+                        readB.getClearRange().getLength());
+
+                if ( debugcnt == 1 )
+                  exit(EXIT_SUCCESS);
               }
           }
       }
@@ -310,9 +334,177 @@ int main (int argc, char ** argv)
 }
 
 
+//--------------------------------------------------------------- Overlap ------
+void Overlap(const char *A, int aLen, const char *B, int bLen)
+{
+  // 50% idy flat line
+  int MatchScore = +1;
+  int MismatchScore = -4;
+  int GapScore = -4;
+
+  int i,j;
+  int S[aLen][bLen];
+  char O[aLen][bLen];
+  int score, bestScore;
+  char bestOp;
+
+  S[0][0] = ( A[0] == B[0] ? MatchScore : MismatchScore );
+
+  // Fill first column
+  j = 0;
+  for ( i = 1; i < aLen; ++i )
+    {
+      // no gap penalty in first column
+      S[i][j] = ( A[i] == B[j] ? MatchScore : MismatchScore );
+      O[i][j] = '\\';
+    }
+
+  // Fill first row
+  i = 0;
+  for ( j = 1; j < bLen; ++j )
+    {
+      // no gap penalty in first row
+      S[i][j] = ( A[i] == B[j] ? MatchScore : MismatchScore );
+      O[i][j] = '\\';
+    }
+
+  // Fill interior cells
+  for ( i = 1; i < aLen-1; ++i )
+    for ( j = 1; j < bLen-1; ++j )
+      {
+        score = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
+        bestScore = score;
+        bestOp = '\\';
+
+        score = S[i][j-1] + GapScore;
+        if ( score > bestScore )
+          {
+            bestScore = score;
+            bestOp = '-';
+          }
+
+        score = S[i-1][j] + GapScore;
+        if ( score > bestScore )
+          {
+            bestScore = score;
+            bestOp = '|';
+          }
+
+        S[i][j] = bestScore;
+        O[i][j] = bestOp;
+      }
+
+  // Fill last column
+  j = bLen-1;
+  for ( i = 1; i < aLen-1; ++i )
+    {
+      score = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
+      bestScore = score;
+      bestOp = '\\';
+
+      score = S[i][j-1] + GapScore;
+      if ( score > bestScore )
+        {
+          bestScore = score;
+          bestOp = '-';
+        }
+
+      score = S[i-1][j]; // no gap penalty in last column
+      if ( score > bestScore )
+        {
+          bestScore = score;
+          bestOp = '|';
+        }
+
+      S[i][j] = bestScore;
+      O[i][j] = bestOp;
+    }
+
+  // Fill last row
+  i = aLen-1;
+  for ( j = 1; j < bLen; ++j )
+    {
+      score = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
+      bestScore = score;
+      bestOp = '\\';
+
+      score = S[i][j-1]; // no gap penalty in last row
+      if ( score > bestScore )
+        {
+          bestScore = score;
+          bestOp = '-';
+        }
+
+      score = S[i-1][j] + GapScore;
+      if ( score > bestScore )
+        {
+          bestScore = score;
+          bestOp = '|';
+        }
+
+      S[i][j] = bestScore;
+      O[i][j] = bestOp;
+    }
+
+
+  char showA[2*aLen];
+  int showACnt = 0;
+  char showB[2*bLen];
+  int showBCnt = 0;
+
+  // Backtrack
+  i = aLen-1;
+  j = bLen-1;
+  while ( i >= 0 || j >= 0 )
+    {
+      if ( i < 0 )
+        {
+          showA[showACnt++] = '-';
+          showB[showBCnt++] = B[j--];
+        }
+      else if ( j < 0 )
+        {
+          showA[showACnt++] = A[i--];
+          showB[showBCnt++] = '-';
+        }
+      else
+        {
+          switch ( O[i][j] )
+            {
+            case '\\':
+              showA[showACnt++] = A[i--];
+              showB[showBCnt++] = B[j--];
+              break;
+              
+            case '-':
+              showA[showACnt++] = '-';
+              showB[showBCnt++] = B[j--];
+              break;
+              
+            case '|':
+              showA[showACnt++] = A[i--];
+              showB[showBCnt++] = '-';
+              break;
+              
+            default:
+              fprintf(stderr,"Error: i = %d, j = %d, O = %c\n", i, j, O[i][j]);
+              exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+  for ( i = showACnt-1; i >= 0; --i )
+    putchar(showA[i]);
+  putchar('\n');
+
+  for ( i = showBCnt-1; i >= 0; --i )
+    putchar(showB[i]);
+  putchar('\n');
+}
+
 
 //------------------------------------------------------------- ParseArgs ------
-void ParseArgs (int argc, char ** argv)
+void ParseArgs (int argc, char **argv)
 {
   int ch, errflg = 0;
   optarg = NULL;
@@ -364,7 +556,7 @@ void ParseArgs (int argc, char ** argv)
 
 
 //------------------------------------------------------------- PrintHelp ------
-void PrintHelp (const char * s)
+void PrintHelp (const char *s)
 {
   PrintUsage(s);
 
@@ -383,7 +575,7 @@ void PrintHelp (const char * s)
 
 
 //------------------------------------------------------------ PrintUsage ------
-void PrintUsage (const char * s)
+void PrintUsage (const char *s)
 {
   cerr << "\nUSAGE: " << s << " [OPTION]... BANK\n";
 }
