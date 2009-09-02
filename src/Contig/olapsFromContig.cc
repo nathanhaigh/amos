@@ -9,8 +9,10 @@
 // gaps. Think about refining the alignments.
 
 #include "foundation_AMOS.hh"
+#include "amp.hh"
 #include <getopt.h>
 #include <stdlib.h>
+#include <assert.h>
 
 using namespace AMOS;
 using namespace std;
@@ -24,12 +26,46 @@ string  OPT_BankName;                        // bank name parameter
 int     OPT_MinOlapLen = 20;                 // minimum overlap len
 float   OPT_MaxOlapErr = 0.05;               // maximum overlap err
 
+
+struct TilingOrderCmp_t
+{
+  bool operator() (const Tile_t & a, const Tile_t & b)
+  { return ( a.offset < b.offset ); }
+};
+
+
+struct SimpleOverlap_t
+{
+  int aHang, bHang;
+  float err;
+};
+
+
+//--------------------------------------------------- GetOlapLens --------------
+//! \brief Returns the length of each read involved in the overlap
+//!
+//! \return void
+//!
+void GetOlapLens
+(int aLen, int bLen, int aHang, int bHang, int &aOlapLen, int &bOlapLen)
+{
+  aOlapLen = aLen;
+  bOlapLen = bLen;
+
+  if ( aHang > 0 ) aOlapLen -= aHang;
+  else bOlapLen += aHang;
+
+  if ( bHang > 0 ) bOlapLen -= bHang;
+  else aOlapLen += bHang;
+}
+
+
 //------------------------------------------------------- Overlap --------------
 //! \brief Finds best overlap between readA and readB
 //!
 //! \return void
 //!
-void Overlap(const char *A, int aLen, const char *B, int bLen);
+SimpleOverlap_t Overlap(const char *A, int aLen, const char *B, int bLen, float maxErr);
 
 
 //----------------------------------------------------- ParseArgs --------------
@@ -58,17 +94,10 @@ void PrintHelp (const char * s);
 void PrintUsage (const char * s);
 
 
-struct TilingOrderCmp
-{
-  bool operator() (const Tile_t & a, const Tile_t & b)
-  { return ( a.offset < b.offset ); }
-};
-
-
 //========================================================= Function Defs ======
 int main (int argc, char ** argv)
 {
-  int debugcnt = 0;
+  long nOlaps = 0;
   int exitcode = EXIT_SUCCESS;
 
   //-- Parse the command line arguments
@@ -85,16 +114,10 @@ int main (int argc, char ** argv)
     contigBank.open(OPT_BankName, B_SPY);
     Contig_t contig;
 
-    int nContigs = 0;
-    long long loopa = 0;
-    long long loopb = 0;
-    long long loopc = 0;
     while ( contigBank >> contig )
       {
-        //cerr << "\rContig " << ++nContigs;
-
         vector<Tile_t> & tiling = contig.getReadTiling();
-        sort(tiling.begin(), tiling.end(), TilingOrderCmp());
+        sort(tiling.begin(), tiling.end(), TilingOrderCmp_t());
 
         vector<Tile_t>::iterator ati;
         vector<Tile_t>::iterator bti;
@@ -106,16 +129,16 @@ int main (int argc, char ** argv)
                   break;
 
                 //-- Potential overlap between read A and B
-                Size_t aOlapHang = bti->offset - ati->offset;
-                Size_t bOlapHang =
+                int aOlapHang = bti->offset - ati->offset;
+                int bOlapHang =
                   (bti->offset + bti->getGappedLength()) -
                   (ati->offset + ati->getGappedLength());
                 Pos_t lOlapPos = bti->offset;
                 Pos_t rOlapPos =
                   MIN(ati->offset + ati->getGappedLength() - 1,
                       bti->offset + bti->getGappedLength() - 1);
-                Size_t aOlapLen = rOlapPos - lOlapPos + 1;
-                Size_t bOlapLen = rOlapPos - lOlapPos + 1;
+                int aOlapLen = rOlapPos - lOlapPos + 1;
+                int bOlapLen = rOlapPos - lOlapPos + 1;
                 vector<Pos_t> aGaps;
                 vector<Pos_t> bGaps;
 
@@ -191,8 +214,8 @@ int main (int argc, char ** argv)
                 // fix hangs if a is reversed
                 if ( ati->range.isReverse() )
                   {
-                    Size_t oaOlapHang = aOlapHang;
-                    Size_t obOlapHang = bOlapHang;
+                    int oaOlapHang = aOlapHang;
+                    int obOlapHang = bOlapHang;
                     aOlapHang = -obOlapHang;
                     bOlapHang = -oaOlapHang;
                   }
@@ -204,14 +227,13 @@ int main (int argc, char ** argv)
                 char olapType =
                   ati->range.isReverse() == bti->range.isReverse() ? 'N' : 'I';
 
-
                 //-- Get reads and check error rate of olap
                 readBank.fetch(ati->source, readA);
                 readBank.fetch(bti->source, readB);
 
-                Size_t aLen = readA.getClearRange().getLength();
-                Size_t bLen = readB.getClearRange().getLength();
-                Size_t alignLen = aLen + aGaps.size();
+                int aLen = readA.getClearRange().getLength();
+                int bLen = readB.getClearRange().getLength();
+                int alignLen = aLen + aGaps.size();
                 if ( aOlapHang < 0 ) alignLen -= aOlapHang;
                 if ( bOlapHang > 0 ) alignLen += bOlapHang;
 
@@ -235,91 +257,94 @@ int main (int argc, char ** argv)
                 string A = readA.getSeqString(readA.getClearRange());
                 string B = readB.getSeqString(readB.getClearRange());
 
-                // too lazy to do the math...
-                if ( ati->range.isReverse() )
-                  ReverseComplement(A);
-                if ( bti->range.isReverse() )
-                  ReverseComplement(B);
+                // lazy way to handle the reverse gap math
+                if ( ati->range.isReverse() ) ReverseComplement(A);
+                if ( bti->range.isReverse() ) ReverseComplement(B);
 
                 for ( int i = 0; i < aGaps.size(); ++i )
                   A.insert(aGaps[i]+i, 1, '-');
                 for ( int i = 0; i < bGaps.size(); ++i )
                   B.insert(bGaps[i]+i, 1, '-');
 
-                if ( ati->range.isReverse() )
-                  ReverseComplement(A);
-                if ( bti->range.isReverse() )
-                  ReverseComplement(B);
+                if ( ati->range.isReverse() ) ReverseComplement(A);
+                if ( bti->range.isReverse() ) ReverseComplement(B);
 
-                if ( olapType == 'I' )
-                  ReverseComplement(B);
+                if ( olapType == 'I' ) ReverseComplement(B);
 
                 for ( int i = 0; i < A.size(); ++i )
                   alignA[aOff+i] = A[i];
                 for ( int i = 0; i < B.size(); ++i )
                   alignB[bOff+i] = B[i];
 
+                /*
+                cout << alignA << endl;
+                cout << alignB << endl;
+                for ( int i = 1; i <= alignLen; ++i )
+                  {
+                    if ( i % 10 == 0 ) putchar('|');
+                    else putchar(' ');
+                  }
+                putchar('\n');
+                */
+
                 int olapErrs = 0;
+                int olapColumns = 0;
                 for ( int i = 0; i < alignLen; ++i )
-                  if ( alignA[i] == '.' || alignB[i] == '.' )
-                    continue;
-                  else if ( alignA[i] != alignB[i] )
-                    olapErrs++;
+                  if ( alignA[i] != '.' && alignB[i] != '.' )
+                    {
+                      olapColumns++; 
+                      if ( alignA[i] != alignB[i] )
+                        olapErrs++;
+                    }
 
-                float aOlapErr = float(olapErrs) / float(aOlapLen);
-                float bOlapErr = float(olapErrs) / float(bOlapLen);
+                float olapErr = float(olapErrs) / float(olapColumns);
 
-                // if olap too noisy, try to realign
-                bool isgood = true;
-                if ( aOlapErr > OPT_MaxOlapErr || bOlapErr > OPT_MaxOlapErr )
+                // if olap too noisy, try to realign from scratch
+                if ( olapErr > OPT_MaxOlapErr )
                   {
-                    isgood = false;
+                    fprintf(stderr, "Redoing overlap:\n");
+                    fprintf(stderr, "%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
+                            ati->source, bti->source, olapType,
+                            aOlapHang, bOlapHang,
+                            olapErr*100.0,  olapErr*100.0);
+
+                    string A = readA.getSeqString(readA.getClearRange());
+                    string B = readB.getSeqString(readB.getClearRange());
+                    if ( olapType == 'I' ) ReverseComplement(B);
+
+                    // needleman-wunsch with no end penalties
+                    SimpleOverlap_t newolap =
+                      Overlap(A.c_str(), aLen, B.c_str(), bLen, OPT_MaxOlapErr);
+
+                    aOlapHang = newolap.aHang;
+                    bOlapHang = newolap.bHang;
+                    olapErr = newolap.err;
+
+                    fprintf(stderr, "%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
+                            ati->source, bti->source, olapType,
+                            aOlapHang, bOlapHang,
+                            olapErr*100.0,  olapErr*100.0);
                   }
 
-                if ( isgood ) continue;
-                debugcnt++;
+                GetOlapLens(aLen, bLen, aOlapHang, bOlapHang, aOlapLen, bOlapLen);
 
-                // report overlap                
-                printf("%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
-                       ati->source, bti->source, olapType,
-                       aOlapHang, bOlapHang,
-                       aOlapErr*100.0,  bOlapErr*100.0);
-
-                // debug: pring olap
-                if ( 1 )
+                if ( aOlapLen >= OPT_MinOlapLen &&
+                     bOlapLen >= OPT_MinOlapLen &&
+                     olapErr <= OPT_MaxOlapErr )
                   {
-                    cout << "A: ";
-                    for ( int i = 0; i < aGaps.size(); ++i )
-                      cout << aGaps[i] << " ";
-                    cout << "B: ";
-                    for ( int i = 0; i < bGaps.size(); ++i )
-                      cout << bGaps[i] << " ";
-                    cout << endl;
-                    
-                    cout << alignA << endl;
-                    cout << alignB << endl;
-                    
-                    for ( int i = 1; i <= alignLen; ++i )
+                    printf("%d\t%d\t%c\t%d\t%d\t%.2f\t%.2f\n",
+                           ati->source, bti->source, olapType,
+                           aOlapHang, bOlapHang,
+                           olapErr*100.0,  olapErr*100.0);
+
+                    if ( ++nOlaps % 10000 == 0 )
                       {
-                        if ( i % 10 == 0 )
-                          putchar('|');
-                        else
-                          putchar(' ');
+                        fprintf(stderr, "Processed %ld overlaps\n", nOlaps);
                       }
-                    putchar('\n');
                   }
-
-                Overlap(readA.getSeqString(readA.getClearRange()).c_str(),
-                        readA.getClearRange().getLength(),
-                        readB.getSeqString(readB.getClearRange()).c_str(),
-                        readB.getClearRange().getLength());
-
-                if ( debugcnt == 1 )
-                  exit(EXIT_SUCCESS);
               }
           }
       }
-    cerr << " ... done.\n";
 
     contigBank.close();
   }
@@ -329,30 +354,27 @@ int main (int argc, char ** argv)
     exitcode = EXIT_FAILURE;
   }
   //-- END: MAIN EXCEPTION CATCH
-  
+
   return exitcode;
 }
 
 
 //--------------------------------------------------------------- Overlap ------
-void Overlap(const char *A, int aLen, const char *B, int bLen)
+SimpleOverlap_t Overlap(const char *A, int aLen, const char *B, int bLen, float maxErr)
 {
-  // 50% idy flat line
-  int MatchScore = +1;
-  int MismatchScore = -4;
-  int GapScore = -4;
+  // %maxErr flat line
+  double MatchScore = 1;
+  double MismatchScore = (double(maxErr) - MatchScore) / double(maxErr);
+  double GapScore = MismatchScore;
 
-  int i,j;
-  int S[aLen][bLen];
+  Pos_t i,j;
   char O[aLen][bLen];
-  int score, bestScore;
+  double S[aLen][bLen];
+  double score, bestScore;
   char bestOp;
 
-  S[0][0] = ( A[0] == B[0] ? MatchScore : MismatchScore );
-
   // Fill first column
-  j = 0;
-  for ( i = 1; i < aLen; ++i )
+  for ( i = 0, j = 0; i < aLen; ++i )
     {
       // no gap penalty in first column
       S[i][j] = ( A[i] == B[j] ? MatchScore : MismatchScore );
@@ -360,8 +382,7 @@ void Overlap(const char *A, int aLen, const char *B, int bLen)
     }
 
   // Fill first row
-  i = 0;
-  for ( j = 1; j < bLen; ++j )
+  for ( i = 0, j = 0; j < bLen; ++j )
     {
       // no gap penalty in first row
       S[i][j] = ( A[i] == B[j] ? MatchScore : MismatchScore );
@@ -372,8 +393,7 @@ void Overlap(const char *A, int aLen, const char *B, int bLen)
   for ( i = 1; i < aLen-1; ++i )
     for ( j = 1; j < bLen-1; ++j )
       {
-        score = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
-        bestScore = score;
+        bestScore = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
         bestOp = '\\';
 
         score = S[i][j-1] + GapScore;
@@ -398,8 +418,7 @@ void Overlap(const char *A, int aLen, const char *B, int bLen)
   j = bLen-1;
   for ( i = 1; i < aLen-1; ++i )
     {
-      score = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
-      bestScore = score;
+      bestScore = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
       bestOp = '\\';
 
       score = S[i][j-1] + GapScore;
@@ -424,8 +443,7 @@ void Overlap(const char *A, int aLen, const char *B, int bLen)
   i = aLen-1;
   for ( j = 1; j < bLen; ++j )
     {
-      score = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
-      bestScore = score;
+      bestScore = S[i-1][j-1] + ( A[i] == B[j] ? MatchScore : MismatchScore );
       bestOp = '\\';
 
       score = S[i][j-1]; // no gap penalty in last row
@@ -446,60 +464,89 @@ void Overlap(const char *A, int aLen, const char *B, int bLen)
       O[i][j] = bestOp;
     }
 
-
-  char showA[2*aLen];
-  int showACnt = 0;
-  char showB[2*bLen];
-  int showBCnt = 0;
+  /*
+  char showA[2*(aLen+bLen)];
+  char showB[2*(aLen+bLen)];
+  int showCnt = 0;
+  */
 
   // Backtrack
   i = aLen-1;
   j = bLen-1;
-  while ( i >= 0 || j >= 0 )
+  int olapErrs = 0;
+  int olapColumns = 0;
+  SimpleOverlap_t olap;
+  while ( i >= 0 && j >= 0 )
     {
-      if ( i < 0 )
+      switch ( O[i][j] )
         {
-          showA[showACnt++] = '-';
-          showB[showBCnt++] = B[j--];
-        }
-      else if ( j < 0 )
-        {
-          showA[showACnt++] = A[i--];
-          showB[showBCnt++] = '-';
-        }
-      else
-        {
-          switch ( O[i][j] )
+        case '\\':
+          if ( i == aLen - 1 )
             {
-            case '\\':
-              showA[showACnt++] = A[i--];
-              showB[showBCnt++] = B[j--];
-              break;
-              
-            case '-':
-              showA[showACnt++] = '-';
-              showB[showBCnt++] = B[j--];
-              break;
-              
-            case '|':
-              showA[showACnt++] = A[i--];
-              showB[showBCnt++] = '-';
-              break;
-              
-            default:
-              fprintf(stderr,"Error: i = %d, j = %d, O = %c\n", i, j, O[i][j]);
-              exit(EXIT_FAILURE);
+              // showCnt = 0;
+              olapErrs = 0;
+              olapColumns = 0;
+              olap.bHang = (bLen-1-j);
             }
+          if ( j == bLen - 1 )
+            {
+              // showCnt = 0;
+              olapErrs = 0;
+              olapColumns = 0;
+              olap.bHang = -(aLen-1-i);
+            }
+          /*
+          showA[showCnt] = A[i];
+          showB[showCnt] = B[j];
+          showCnt++;
+          */
+          if ( A[i] != B[j] )
+            olapErrs++;
+          olapColumns++;
+          i--; j--;
+          break;
+
+        case '-':
+          /*
+          showA[showCnt] = '.';
+          showB[showCnt] = B[j];
+          showCnt++;
+          */
+          olapErrs++;
+          olapColumns++;
+          j--;
+          break;
+
+        case '|':
+          /*
+          showA[showCnt] = A[i];
+          showB[showCnt] = '.';
+          showCnt++;
+          */
+          olapErrs++;
+          olapColumns++;
+          i--;
+          break;
+
+        default:
+          fprintf(stderr,"Error: i = %d, j = %d, O = %c\n", i, j, O[i][j]);
+          exit(EXIT_FAILURE);
         }
     }
 
-  for ( i = showACnt-1; i >= 0; --i )
+  if ( i < 0 ) olap.aHang = -(j+1);
+  if ( j < 0 ) olap.aHang =  (i+1);
+  olap.err = float(olapErrs) / float(olapColumns);
+  /*
+  for ( i = showCnt - 1; i >= 0; --i )
     putchar(showA[i]);
   putchar('\n');
-
-  for ( i = showBCnt-1; i >= 0; --i )
+  for ( i = showCnt - 1; i >= 0; --i )
     putchar(showB[i]);
   putchar('\n');
+  printf("%f\n", S[aLen-1][bLen-1]);
+  */
+  return olap;
 }
 
 
