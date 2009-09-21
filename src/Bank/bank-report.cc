@@ -38,6 +38,9 @@ set<NCode_t> OPT_ExtractCodes;               // NCodes to extract
 vector<ID_t> OPT_ExtractIIDs;                // IIDs to extract
 vector<string> OPT_ExtractEIDs;              // EIDs to extract
 
+bool    OPT_OnlyIDs = false;                 // Just print the eids and iids
+bool    OPT_Progress = true;                // Print the progress information
+
 
 
 //========================================================== Fuction Decs ====//
@@ -55,6 +58,16 @@ void ParseExtract ( );
 //! \return void
 //!
 void PrintObject (const Universal_t & obj, ID_t bid);
+
+
+
+//----------------------------------------------------- PrintObjectID ----------
+//! \brief Prints the object EEID and IID to stdout
+//!
+//! \return void
+//!
+void PrintObjectID (const Universal_t & obj, ID_t bid);
+
 
 
 //----------------------------------------------------- ParseArgs --------------
@@ -106,7 +119,8 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
-    cerr << "    0%                                            100%" << endl;
+    if (OPT_Progress)
+      cerr << "    0%                                            100%" << endl;
 
     //-- Iterate through each known object and dump if its got bank
     for ( ui = objs.begin( ); ui != objs.end( ); ++ ui )
@@ -144,7 +158,9 @@ int main (int argc, char ** argv)
               //-- Get the requested IIDs
               for ( ; ii != OPT_ExtractIIDs . end( ); ++ ii )
                 {
-                  dots . update (ii - OPT_ExtractIIDs . begin( ));
+                  if (OPT_Progress)
+                    dots . update (ii - OPT_ExtractIIDs . begin( ));
+
                   bid = bank . getIDMap( ) . lookupBID (*ii);
                   if ( bid == NULL_ID )
                     {
@@ -162,15 +178,21 @@ int main (int argc, char ** argv)
                     bank . fetch (*ii, *ui);
                   }
 
-                  PrintObject (*ui, bid);
+                  if (OPT_OnlyIDs)
+                    PrintObjectID(*ui, bid);
+                  else
+                    PrintObject (*ui, bid);
+
                   cntc ++;
                 }
 
               //-- Get the requested EIDs
               for ( ; ei != OPT_ExtractEIDs . end( ); ++ ei )
                 {
-                  dots . update ((ei - OPT_ExtractEIDs . begin( )) +
-                                 (ii - OPT_ExtractIIDs . begin( )));
+                  if (OPT_Progress)
+                    dots . update ((ei - OPT_ExtractEIDs . begin( )) +
+                                   (ii - OPT_ExtractIIDs . begin( )));
+
                   bid = bank . getIDMap( ) . lookupBID (*ei);
                   if ( bid == NULL_ID )
                     {
@@ -188,11 +210,17 @@ int main (int argc, char ** argv)
                     bank . fetch (*ei, *ui);
                   }
 
-                  PrintObject (*ui, bid);
+                  if (OPT_OnlyIDs)
+                    PrintObjectID(*ui, bid);
+                  else
+                    PrintObject (*ui, bid);
+
                   cntc ++;
                 }
 
-              dots . end( );
+              if (OPT_Progress)
+                dots . end( );
+
               bank . close( );
             }
           else
@@ -212,12 +240,20 @@ int main (int argc, char ** argv)
               //-- Get all objects
               while ( bankstream >> *ui )
                 {
-                  dots . update (++ cntd);
-                  PrintObject (*ui, bankstream . tellg( ) - 1);
+                  if (OPT_Progress)
+                    dots . update (++ cntd);
+
+                  if (OPT_OnlyIDs)
+                    PrintObjectID(*ui, bid);
+                  else
+                    PrintObject (*ui, bankstream . tellg( ) - 1);
+
                   cntc ++;
                 }
 
-              dots . end( );
+              if (OPT_Progress)
+                dots . end( );
+
               bankstream . close( );
             }
         }
@@ -296,6 +332,42 @@ void ParseExtract ( )
 }
 
 
+//----------------------------------------------------- PrintObjectID ----------
+void PrintObjectID (const Universal_t & obj, ID_t bid)
+{
+  Message_t msg;
+  ostringstream ss;
+  std::string eid_m;
+  std::string iid_m;
+  std::string type_m;
+  bool eid_ok;
+  bool iid_ok;
+
+  obj . writeMessage (msg);
+
+  if ( OPT_IsBIDs )
+    {
+      ss << bid;
+      msg . setField (F_BID, ss . str( ));
+    }
+
+  eid_ok = false;
+  iid_ok = false;
+  if ( msg . exists (F_EID) ){
+    eid_m = msg . getField (F_EID);
+    eid_ok = true;
+  }
+  if ( msg . exists (F_IID) ){
+    iid_m = msg . getField (F_IID);
+    iid_ok = true;
+  }
+  if (eid_ok & iid_ok){
+    type_m = Decode (msg . getMessageCode());
+    cout << type_m << "\t";
+    cout << eid_m << "\t";
+    cout << iid_m << endl;
+  }
+}
 
 
 //----------------------------------------------------- PrintObject ------------
@@ -324,7 +396,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "b:BE:hI:svF")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "b:BE:hI:svFpi")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -336,6 +408,9 @@ void ParseArgs (int argc, char ** argv)
         PrintBankVersion (argv[0]);
         exit (EXIT_SUCCESS);
       break;
+
+      case 'p': OPT_Progress = false; break;
+      case 'i': OPT_OnlyIDs = true; break;
 
       case 'b': OPT_BankName = optarg; break;
       case 'B': OPT_IsBIDs = true; break;
@@ -405,6 +480,8 @@ void PrintHelp (const char * s)
        << "  -E file      Report only objects matching EIDs in file\n"
        << "  -h           Display help information\n"
        << "  -I file      Report only objects matching IIDs in file\n"
+       << "  -p           Don't display progress information\n"
+       << "  -i           Display only the objects ids\n"
        << "  -s           Disregard bank locks and write permissions (spy mode)\n"
        << "  -F           Just dump the fixed store information\n"
        << "  -v           Display the compatible bank version\n"
