@@ -4,12 +4,16 @@ use strict;
 my $singletons = 0;
 my $ctgcnt = 0;
 my $degcnt = 0;
+my $totalreads = 0;
+my $dupplaced  = 0;
 
 
 sub printRead
 {
   my $readid = shift;
   my $record = shift;
+
+  $totalreads++;
 
   if (!defined $record->{FRGCTG} &&
       !defined $record->{FRGDEG})
@@ -30,10 +34,15 @@ sub printRead
 
       if ($d =~ /^clr:/)
       {
+     #   print STDERR "Reseting clr from $frgfields[$i] to $record->{AFG}\n";
         $frgfields[$i] = $record->{AFG};
       }
     }
+
+    $frg = join("\t", @frgfields);
   }
+
+  my $placed = 0;
 
   ## print frg for each ctg
   if (defined $record->{FRGCTG})
@@ -42,6 +51,7 @@ sub printRead
     {
       print "$ctgid\tCTGFRG\t$frg\n";
       $ctgcnt++;
+      $placed++;
     }
   }
 
@@ -52,7 +62,13 @@ sub printRead
     {
       print "$degid\tDEGFRG\t$frg\n";
       $degcnt++;
+      $placed++;
     }
+  }
+
+  if ($placed > 1)
+  {
+    $dupplaced++;
   }
 }
 
@@ -107,6 +123,8 @@ while (<>)
 
 printRead($readid, $record);
 
+print STDERR "reporter:counter:prepare,totalreads,$totalreads\n";
 print STDERR "reporter:counter:prepare,singletons,$singletons\n";
 print STDERR "reporter:counter:prepare,ctgreads,$ctgcnt\n";
 print STDERR "reporter:counter:prepare,degreads,$degcnt\n";
+print STDERR "reporter:counter:prepare,dupplaced,$dupplaced\n";
