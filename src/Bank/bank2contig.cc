@@ -1,7 +1,6 @@
 #include "foundation_AMOS.hh"
 #include "amp.hh"
 #include "fasta.hh"
-#include "ConfigFile.hh"
 
 using namespace AMOS;
 using namespace std;
@@ -14,7 +13,6 @@ bool OPT_Trapper = 0;
 bool OPT_SAM = 0;
 
 string OPT_BankName;
-string OPT_ConfigFile;
 
 string OPT_EIDFile;
 string OPT_IIDFile;
@@ -40,9 +38,8 @@ void PrintHelp (const char * s)
        << "  -I file     Dump just the contig iids listed in file\n"
        << "  -L          Just create a layout file (no sequence)\n"
        << "  -S          Simple Layout style\n"
-       << "  -s            SAM Format\n"
+       << "  -s          SAM Format\n"
        << "  -T          XML Format suitable for DNPTrapper\n"
-       << "  -C file     Configuration file\n\n"
        << ".KEYWORDS.\n"
        << "  converters, bank, contigs\n\n"
        << endl;
@@ -54,7 +51,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiTLsSE:I:C:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiTLsSE:I:")) != EOF) )
   {
     switch (ch)
     {
@@ -73,7 +70,6 @@ void ParseArgs (int argc, char ** argv)
       case 'L': OPT_LayoutOnly = true;   break;
       case 'E': OPT_EIDFile = optarg;    break;
       case 'I': OPT_IIDFile = optarg;    break;
-      case 'C': OPT_ConfigFile = optarg; break;
       case 'S': OPT_SimpleLayout = true; break;
       case 'T': OPT_Trapper = true;      break;
       case 's': OPT_SAM = true;          break;
@@ -469,14 +465,6 @@ int main (int argc, char ** argv)
 
   BankStream_t contig_bank(Contig_t::NCODE);
   Bank_t read_bank(Read_t::NCODE);
-
-  if (!OPT_ConfigFile.empty())
-  {
-    ConfigFile ini(OPT_ConfigFile);
-    ConfigSection * root = ini.getRootSection();
-
-    string name = root->getValue("Name");
-  }
 
   cerr << "Processing " << OPT_BankName << " at " << Date() << endl;
 
