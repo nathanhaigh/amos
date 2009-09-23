@@ -38,7 +38,7 @@ void PrintHelp (const char * s)
        << "  -I file     Dump just the contig iids listed in file\n"
        << "  -L          Just create a layout file (no sequence)\n"
        << "  -S          Simple Layout style\n"
-       << "  -s          SAM Format\n"
+       << "  -s          SAM Format (http://samtools.sf.net)\n"
        << "  -T          XML Format suitable for DNPTrapper\n"
        << ".KEYWORDS.\n"
        << "  converters, bank, contigs\n\n"
