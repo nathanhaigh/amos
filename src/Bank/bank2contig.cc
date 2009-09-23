@@ -11,6 +11,8 @@ bool OPT_SimpleLayout = false;
 bool OPT_UseEIDs = 0;
 bool OPT_UseIIDs = 0;
 bool OPT_Trapper = 0;
+bool OPT_SAM = 0;
+
 string OPT_BankName;
 string OPT_ConfigFile;
 
@@ -38,6 +40,7 @@ void PrintHelp (const char * s)
        << "  -I file     Dump just the contig iids listed in file\n"
        << "  -L          Just create a layout file (no sequence)\n"
        << "  -S          Simple Layout style\n"
+       << "  -s            SAM Format\n"
        << "  -T          XML Format suitable for DNPTrapper\n"
        << "  -C file     Configuration file\n\n"
        << ".KEYWORDS.\n"
@@ -51,7 +54,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hveiTLSE:I:C:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hveiTLsSE:I:C:")) != EOF) )
   {
     switch (ch)
     {
@@ -73,6 +76,7 @@ void ParseArgs (int argc, char ** argv)
       case 'C': OPT_ConfigFile = optarg; break;
       case 'S': OPT_SimpleLayout = true; break;
       case 'T': OPT_Trapper = true;      break;
+      case 's': OPT_SAM = true;          break;
 
       default: errflg ++;
       }
@@ -95,12 +99,153 @@ bool firstContig = true;
 
 void printContig(Contig_t & contig, Bank_t & read_bank)
 {
-
   Read_t read; 
   std::vector<Tile_t> & tiling = contig.getReadTiling();
   sort(tiling.begin(), tiling.end(), TileOrderCmp());
 
-  if (OPT_Trapper)
+  if (OPT_SAM)
+  {
+    // get the contig name
+    string contigeid = contig.getEID();
+    if (!OPT_UseEIDs || contigeid.empty())
+    {
+      char buffer[20];
+      sprintf(buffer, "%d", contig.getIID());
+      contigeid=buffer;
+    }
+
+    const string cons = contig.getSeqString();
+
+    // convert each read in the contig
+    vector<Tile_t>::const_iterator ti;
+    for (ti =  tiling.begin();
+         ti != tiling.end();
+         ti++)
+    {
+      Range_t range = ti->range;
+      bool rc = (range.begin > range.end);
+
+      // render the sequence
+      
+      read_bank.fetch(ti->source, read);
+
+      string fullseq = read.getSeqString();
+      string qualstr  = read.getQualString();
+
+      if (rc) { range.swap(); }
+      string sequence = read.getSeqString(range);
+      if (rc) { Reverse_Complement(sequence); }
+
+      Pos_t gapcount = 0;
+
+      vector<Pos_t>::const_iterator g;
+      for (g  = ti->gaps.begin();
+           g != ti->gaps.end();
+           g++)
+      {
+        sequence.insert(*g+gapcount, "-", 1);
+        gapcount++;
+      }
+
+
+      // print the record
+
+      if (OPT_UseEIDs) 
+      { 
+        string s = read_bank.lookupEID(ti->source);
+        int i = s.find(' ');
+        if (i != s.npos) { s = s.substr(0,i); }
+        cout << s;
+      }
+      else 
+      { 
+        cout << ti->source;
+      }
+
+      int flag = 0;
+      int mapqual = 255;
+
+      cout << "\t" << flag 
+           << "\t" << contigeid 
+           << "\t" << contig.gap2ungap(ti->offset)
+           << "\t" << mapqual
+           << "\t";
+
+      // now print cigar string
+      
+      int leftclip = range.begin;
+      int rightclip = fullseq.length() - range.end;
+      
+      if (rc)
+      {
+        int t = leftclip;
+        leftclip = rightclip;
+        rightclip = t;
+      }
+
+      if (leftclip)
+      {
+        cout << leftclip << 'S';
+      }
+      
+      int pos = 0;
+      int end = sequence.length();
+
+      while (pos < end)
+      {
+        bool seqgap  = (sequence[pos] == '-');
+        bool consgap = (cons[pos+ti->offset] == '-');
+
+        int  len = 1;
+        pos++;
+
+        char type    = 'M'; // match
+
+        if (seqgap && consgap) { type = 'P'; } // pad 
+        else if (seqgap)       { type = 'D'; } // deletion 
+        else if (consgap)      { type = 'I'; } // insertion
+
+        while ((pos < end) &&
+               ((sequence[pos] == '-') == seqgap) &&
+               ((cons[pos+ti->offset] == '-') == consgap))
+        {
+          pos++;
+          len++;
+        }
+
+        cout << len << type;
+      }
+
+      if (rightclip)
+      {
+        cout << rightclip << 'S';
+      }
+      
+      cout << "\t" << "*" // Mate reference sequence name
+           << "\t" << "0" // Mate position
+           << "\t" << "0"; // Insert size
+
+      // now sequence and qual
+
+      if (rc) 
+      { 
+        Reverse_Complement(fullseq); 
+        reverse(qualstr.begin(), qualstr.end());
+      }
+
+      const int SAM_QUAL_BASE = 33;
+
+      for (int i = 0; i < qualstr.length(); i++)
+      {
+        qualstr[i] = Char2Qual(qualstr[i]) + SAM_QUAL_BASE;
+      }
+
+      cout << "\t" << fullseq
+           << "\t" << qualstr 
+           << "\n";
+    }
+  }
+  else if (OPT_Trapper)
   {
     if (firstContig) { cout << "<TRAPPER>" << endl; firstContig = false;}
 
