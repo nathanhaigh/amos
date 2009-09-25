@@ -1,20 +1,30 @@
 #!/usr/bin/perl -w
 use strict;
 
+my $strictsnps = 0;
+my $weaksnps = 0;
+my $scannedbases = 0;
+
 ## Display Parameters
 my $CNS_FLANK = 50;
 my $TILING_FLANK = 10;
 my $BUFFERSIZE = 6*$CNS_FLANK;
+my $PRINT_VERBOSE = 1;
 
 ## SNP Parameters
-my $MIN_DEPTH = 2;
+
+my $TYPE_STRICT = 'S';
+my $TYPE_WEAK   = 'W';
+
 my $MIN_ALLELE_DEPTH = 2;
+my $MIN_CQV = 45;
+my $MIN_ILLUMINA = 1;
 
-my $MIN_SNP_AVG_QV = 21;
-my $MAX_SNP_HOMO = 2;
+my $STRICT_MAX_COVERAGE = 30;
+my $STRICT_MIN_ALLELE_DEPTH = 3;
+my $STRICT_MIN_CQV = 60;
 
-my $MIN_INDEL_SUM_QV = 60;
-my $MAX_INDEL_HOMO = 1; 
+my $MIN_DEPTH = $MIN_ALLELE_DEPTH*2;
 
 my @buffer;
 
@@ -58,12 +68,13 @@ sub checkSNP
 
   my $info = $buffer[$line];
 
-  return if (!defined $info->{basestr}); ## 0-coverage
-  return if (length($info->{basestr})) < $MIN_DEPTH; ## low coverage
+  ## Short circuit 0 coverage or low coverage 
+  return if (!defined $info->{basestr}); 
+  return if (length($info->{basestr})) < $MIN_DEPTH;
 
   my @bases = split //,  $info->{basestr};
   my @quals = split /:/, $info->{qualstr};
-  my @reads = split /:/, $info->{readstr};
+  my @reads = split //,  $info->{readstr};
 
   my $depth = scalar @bases;
 
@@ -72,68 +83,114 @@ sub checkSNP
   for (my $i = 0; $i < $depth; $i++)
   {
     my $b = $bases[$i];
-    $slice{$b}->{cnt}++;
-    $slice{$b}->{cqv} += $quals[$i];
-    push @{$slice{$b}->{idx}}, $i;
+
+    if ($b ne 'N')
+    {
+      $slice{$b}->{cnt}++;
+      $slice{$b}->{cqv} += $quals[$i];
+      push @{$slice{$b}->{idx}}, $i;
+    }
   }
 
-  return if scalar keys %slice < 2; ## homogenous slice
-
-  my $cns = $info->{cns};
-
-  my $issnp = 0;
-
-  my @snpbases;
-  push @snpbases, $cns;
-
-  my $chomolen = computeHomoLen($line, $cns);
-
-  my @snphomolen;
-  push @snphomolen, $chomolen;
+  ## Short circuit homogeneous slices 
+  return if scalar keys %slice < 2; 
 
   my @bases_qv = sort {$slice{$b}->{cqv} <=> $slice{$a}->{cqv}} keys %slice;
- 
+
+  my @snpbases;
+  my @strictsnpbases;
+
   foreach my $base (@bases_qv)
   {
-    if (($base ne $cns) && ($slice{$base}->{cnt} >= $MIN_ALLELE_DEPTH))
+    if ($slice{$base}->{cnt} >= $MIN_ALLELE_DEPTH)
     {
-      my $bhomolen = computeHomoLen($line, $base); 
+      my @sqv = sort {$b <=> $a}
+                map {$quals[$_]}
+                @{$slice{$base}->{idx}};
 
-      if (($base eq '-') || ($cns eq '-'))
+      $slice{$base}->{$TYPE_WEAK}->{cqv} = $sqv[0]+$sqv[1];
+
+      $slice{$base}->{homo} = computeHomoLen($line, $base);
+
+      my $illumina = 0;
+      foreach my $i (@{$slice{$base}->{idx}})
       {
-        if (($bhomolen <= $MAX_INDEL_HOMO) &&
-            ($chomolen <= $MAX_INDEL_HOMO))
-        {
-          my @sqv = sort {$b <=> $a}
-                    map {$quals[$_]}
-                    @{$slice{$base}->{idx}};
-
-          if (($sqv[0] + $sqv[1]) >= $MIN_INDEL_SUM_QV)
-          {
-            $issnp = 1;
-            push @snpbases, $base;
-            push @snphomolen, $bhomolen;
-          }
-        }
+        $illumina++ if ($reads[$i] =~ /H/);
       }
-      else
+
+      $slice{$base}->{illumina} = $illumina;
+
+      if (($depth <= $STRICT_MAX_COVERAGE) &&
+          ($slice{$base}->{cnt} >= $STRICT_MIN_ALLELE_DEPTH) &&
+          (($sqv[0]+$sqv[1]+$sqv[2]) >= $STRICT_MIN_CQV))
       {
-        if (($bhomolen <= $MAX_SNP_HOMO) &&
-            ($chomolen <= $MAX_SNP_HOMO))
-        {
-          if (($slice{$base}->{cqv} / $slice{$base}->{cnt}) >= $MIN_SNP_AVG_QV)
-          {
-            $issnp = 1;
-            push @snpbases, $base;
-            push @snphomolen, $bhomolen;
-          }
-        }
+        $slice{$base}->{$TYPE_STRICT}->{cqv} = $sqv[0]+$sqv[1]+$sqv[2];
+        push @strictsnpbases, $base;
+        push @snpbases, $base;
+      }
+      elsif (($slice{$base}->{cnt} >= $MIN_ALLELE_DEPTH) &&
+             (($sqv[0]+$sqv[1]) >= $MIN_CQV))
+      {
+        push @snpbases, $base;
       }
     }
   }
 
-  if ($issnp)
+  my $snptype;
+
+  if (scalar @strictsnpbases >= 2)
   {
+    my $isolated = 0;
+    my $confirmed = 0;
+    foreach my $base (@strictsnpbases)
+    {
+      if ($slice{$base}->{homo} == 1)
+      {
+        $isolated++;
+        last;
+      }
+      elsif($slice{$base}->{illumina} >= $MIN_ILLUMINA)
+      {
+        $confirmed++;
+      }
+    }
+
+    if ($isolated || $confirmed >= 2)
+    {
+      $snptype = $TYPE_STRICT;
+      @snpbases = @strictsnpbases;
+    }
+  }
+
+  if (!defined $snptype && (scalar @snpbases >= 2))
+  {
+    $snptype = $TYPE_WEAK;
+
+    if ((scalar @snpbases == 2) &&
+        ($snpbases[0] eq '-') ||
+        ($snpbases[1] eq '-'))
+    {
+      ## Pure Indel
+      my $confirmed = 0;
+      foreach my $base (@snpbases)
+      {
+        if($slice{$base}->{illumina} >= $MIN_ILLUMINA)
+        {
+          $confirmed++;
+        }
+      }
+
+      if ($confirmed != 2)
+      {
+        $snptype = undef;
+      }
+    }
+  }
+
+  if (defined $snptype)
+  {
+    if ($snptype eq $TYPE_STRICT) { $strictsnps++; }
+    else                          { $weaksnps++; }
     my $blen = scalar @buffer;
 
     my $lflank = "";
@@ -165,36 +222,39 @@ sub checkSNP
       }
     }
 
-    my $snpstr .= "[" . join("/", @snpbases) . "]";
-
-    print ">$info->{ctg}\t$info->{gpos}\t$info->{upos}\t$cns\t$depth\t",
+    print "$info->{ctg}\t$info->{gpos}\t$info->{upos}\t$info->{cns}\t$snptype\t$depth\t",
           join("/", @snpbases), "\t",
-          join("/", map {$slice{$_}->{cnt}} @snpbases), "\t",
-          join("/", map {$slice{$_}->{cqv}} @snpbases), "\t",
-          join("/", @snphomolen), "\t",
-          $lflank, $snpstr, $rflank, "\n";
+          join("/", map {$slice{$_}->{cnt}}  @snpbases), "\t",
+          join("/", map {$slice{$_}->{cqv}}  @snpbases), "\t",
+          join("/", map {$slice{$_}->{$snptype}->{cqv}}  @snpbases), "\t",
+          join("/", map {$slice{$_}->{homo}} @snpbases), "\t",
+          join("/", map {$slice{$_}->{illumina}} @snpbases), "\t",
+          $lflank, "[" , join("/", @snpbases), "]", $rflank, "\n";
 
-    my $pos = $line - $TILING_FLANK;
-    my $end = $line + $TILING_FLANK + 1;
-
-    if ($pos < 0) { $pos = 0; }
-    if ($end > scalar @buffer) { $end = scalar @buffer; }
-
-    while ($pos < $end)
+    if ($PRINT_VERBOSE)
     {
-      my $i = $buffer[$pos];
-      print "= ",
-            $i->{gpos}, "\t",
-            $i->{upos}, "\t",
-            $i->{cns},  "\t",
-            $i->{basestr}, "\t",
-            $i->{qualstr}, "\t", 
-            $i->{readstr}, "\n";
+      my $pos = $line - $TILING_FLANK;
+      my $end = $line + $TILING_FLANK + 1;
 
-      $pos++;
+      if ($pos < 0) { $pos = 0; }
+      if ($end > scalar @buffer) { $end = scalar @buffer; }
+
+      while ($pos < $end)
+      {
+        my $i = $buffer[$pos];
+        print "= ",
+              $i->{gpos}, "\t",
+              $i->{upos}, "\t",
+              $i->{cns},  "\t",
+              $i->{basestr}, "\t",
+              $i->{qualstr}, "\t", 
+              $i->{readstr}, "\n";
+
+        $pos++;
+      }
+
+      print "\n\n";
     }
-
-    print "\n\n";
   }
 }
 
@@ -206,6 +266,8 @@ my $line = 0;
 while (<>)
 {
   chomp;
+
+  $scannedbases++;
 
   my @vals = split /\s+/, $_;
 
@@ -220,7 +282,8 @@ while (<>)
   {
     $info->{basestr} = $vals[5];
     $info->{qualstr} = $vals[6];
-    $info->{readstr} = $vals[7];
+
+    $info->{readstr} = join "", map {substr($_,0,1)} split /:/, $vals[7];
   }
 
   if (defined $contigid && ($info->{ctg} ne $contigid))
@@ -254,4 +317,9 @@ while (<>)
     $line--;
   }
 }
+
+print STDERR "reporter:counter:asm,scannedbases,$scannedbases\n";
+print STDERR "reporter:counter:asm,strictsnps,$strictsnps\n";
+print STDERR "reporter:counter:asm,weaksnps,$weaksnps\n";
+
 
