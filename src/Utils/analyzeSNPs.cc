@@ -421,6 +421,11 @@ int main(int argc, char **argv)
       cerr << "ERROR in contig iid" << iid << "\n" << e;
       exit(1);
     }
+    catch(...)
+    {
+      cerr << "Unknown error in contig iid" << iid << "\n";
+      exit(1);
+    }
   }
 
   dots.end();
