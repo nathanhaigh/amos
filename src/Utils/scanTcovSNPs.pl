@@ -167,8 +167,7 @@ sub checkSNP
     $snptype = $TYPE_WEAK;
 
     if ((scalar @snpbases == 2) &&
-        ($snpbases[0] eq '-') ||
-        ($snpbases[1] eq '-'))
+        (($snpbases[0] eq '-') || ($snpbases[1] eq '-')))
     {
       ## Pure Indel
       my $confirmed = 0;
