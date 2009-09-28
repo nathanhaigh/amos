@@ -49,7 +49,7 @@ sub computeHomoLen
 
   my $blen = scalar @buffer;
 
-  for (my $pos = $line + 1; $pos <= $blen; $pos++)
+  for (my $pos = $line + 1; $pos < $blen; $pos++)
   {
     if ($buffer[$pos]->{basestr} !~ /$b/)
     {
