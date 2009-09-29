@@ -4,6 +4,7 @@ use strict;
 my $strictsnps = 0;
 my $weaksnps = 0;
 my $scannedbases = 0;
+my $numcontigs = 0;
 
 ## Display Parameters
 my $CNS_FLANK = 50;
@@ -262,6 +263,7 @@ sub checkSNP
 
 my $contigid;
 my $line = 0;
+my $prev = "";
 while (<>)
 {
   chomp;
@@ -299,7 +301,29 @@ while (<>)
     $line = 0;
   }
 
-  $contigid = $info->{ctg};
+  if (!defined $contigid || ($info->{ctg} ne $contigid))
+  {
+    if ($info->{gpos} != 0)
+    {
+      die "Didn't see beginning of contig $info->{ctg}\n$prev\n$_\n";
+    }
+    
+    $contigid = $info->{ctg};
+    print STDERR "Scanning $contigid\n";
+    $numcontigs++;
+  }
+  else
+  {
+    my $len = scalar @buffer;
+    my $lastpos = $buffer[$len-1]->{gpos};
+
+    if ($info->{gpos} != $lastpos+1)
+    {
+      die "File is not sorted\n$prev\n$_\n";
+    }
+  }
+
+  $prev = $_;
 
   push @buffer, $info;
   my $blen = scalar @buffer;
@@ -317,8 +341,16 @@ while (<>)
   }
 }
 
+my $blen = scalar @buffer;
+while ($line < $blen)
+{
+  checkSNP($line);
+  $line++;
+}
+
 print STDERR "reporter:counter:asm,scannedbases,$scannedbases\n";
 print STDERR "reporter:counter:asm,strictsnps,$strictsnps\n";
 print STDERR "reporter:counter:asm,weaksnps,$weaksnps\n";
+print STDERR "reporter:counter:asm,numcontigs,$numcontigs\n";
 
 
