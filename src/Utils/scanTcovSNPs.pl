@@ -305,11 +305,11 @@ while (<>)
   {
     if ($info->{gpos} != 0)
     {
-      die "Didn't see beginning of contig $info->{ctg}\n$prev\n$_\n";
+      print STDERR "Didn't see beginning of contig $info->{ctg}\n$prev\n$_\n";
     }
     
     $contigid = $info->{ctg};
-    print STDERR "Scanning $contigid\n";
+    #print STDERR "Scanning $contigid\n";
     $numcontigs++;
   }
   else
@@ -319,7 +319,7 @@ while (<>)
 
     if ($info->{gpos} != $lastpos+1)
     {
-      die "File is not sorted\n$prev\n$_\n";
+      print STDERR "File is not sorted\n$prev\n$_\n";
     }
   }
 
