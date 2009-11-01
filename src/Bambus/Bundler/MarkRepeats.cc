@@ -12,6 +12,11 @@
 #include <iterator>
 #include <iostream>
 
+#ifdef AMOS_HAVE_BOOST
+#include <boost/graph/connected_components.hpp>
+#include <boost/graph/strong_components.hpp>
+#endif //AMOS_HAVE_BOOST
+
 #include "datatypes_AMOS.hh"
 #include "Bank_AMOS.hh"
 #include "BankStream_AMOS.hh"
@@ -27,9 +32,10 @@ using namespace AMOS;
 using namespace Bundler;
 
 // constants for repeat resolution
-static const int32_t  MAX_REPEAT_SIZE   =  1000;
-static const int32_t  MAX_REPEAT_STDEV  =  4;
-static const int32_t  MAX_REPEAT_COV    =  5;
+static const int32_t  MAX_REPEAT_SIZE    =   10000;
+static const int32_t  MAX_REPEAT_STDEV   =       4;
+static const int32_t  MAX_REPEAT_COV     =       0;
+static const double   MAX_COVERAGE_ERROR =       0.05;
 
 struct config {
    string      bank;
@@ -62,7 +68,7 @@ bool GetOptions(int argc, char ** argv) {
     {0, 0, 0, 0}
   };
 
-   globals.debug = 1;
+   globals.debug = 2;
    globals.doAgressiveRepeatFinding = false;
    globals.redundancy = 1;
   
@@ -124,13 +130,13 @@ void visitAllPaths(
 
 void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) {
    // find the all-pairs shortest paths
-   cerr << "FINDING SHORTEST PATHS" << endl;
+   if (globals.debug > 2) cerr << "FINDING SHORTEST PATHS" << endl;
    
    VertexName vertexNames = get(boost::vertex_name, g);
    EdgeWeight  edgeWeights = get(boost::edge_weight, g);
    
    int32_t      numVertices = boost::num_vertices(g);
-   int32_t*     distMap     = new int32_t[numVertices];
+   double_t*    distMap     = new double_t[numVertices];
    Vertex*      predMap     = new Vertex[numVertices];
    vector<int32_t> qarray;
 
@@ -153,7 +159,7 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
       // initialize distance to the source to be 0
       distMap[source] = 0;
       while (qarray.size() != 0) {
-         int32_t min = std::numeric_limits<int>::max();
+         double_t min = std::numeric_limits<double>::max();
          Vertex minNode = boost::graph_traits<Graph>::null_vertex();
          vector<int32_t>::iterator index;
    
@@ -188,12 +194,14 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
    delete[] distMap;
    delete[] predMap;
    
-   cerr << "DONE SHORTEST PATHS" << endl;
+   if (globals.debug > 2) cerr << "DONE SHORTEST PATHS" << endl;
 
    double meanOnPath = 0, varianceOnPath = 0, stdevOnPath = 0, N = 0;
    for (hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >::iterator i = numTimesOnPath.begin(); i != numTimesOnPath.end(); i++) {
+      if (i->first == 0) { continue; }
+
       N++;
-      double delta = i->second - meanOnPath;
+      double delta = (i->second - meanOnPath);
       meanOnPath += (delta/N);
       varianceOnPath += delta * (i->second - meanOnPath);
    }
@@ -202,34 +210,45 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
 
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
       ID_t iid = vertexNames[*i.first];
-      
-      if (numTimesOnPath[iid] > meanOnPath+(MAX_REPEAT_STDEV*stdevOnPath)) {
+      if (iid == 0) continue;
+
+      if (globals.debug > 1) cerr << "CONTIG " << iid << " IS NO PATH=" << numTimesOnPath[iid] << " MEAN IS " << meanOnPath << " STDEV: " << stdevOnPath <<  endl;
+      if ((numTimesOnPath[iid] - (meanOnPath+(MAX_REPEAT_STDEV*stdevOnPath))) > 1) {
          // remove the vertices from our assembly and from the graph that is used for connected components
          repeats.insert(iid);
          boost::clear_vertex(*i.first, g);
-         boost::remove_vertex(*i.first, g);
-         
-         cerr << "CONTIG " << iid << " AND ONPATH=" << numTimesOnPath[iid] << " AND MEAN=" << meanOnPath << " AND STDEV=" << stdevOnPath << " IS A CLASS 3 REPEAT\n";
+
+         if (globals.debug > 1 ) cerr << "CONTIG " << iid << " AND ONPATH=" << numTimesOnPath[iid] << " AND MEAN=" << meanOnPath << " AND STDEV=" << stdevOnPath << " IS A CLASS 3 REPEAT\n";
       }
    }
 }
 
 void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) {
-   cerr << "FINDING CONNECTED COMPONENTS PATHS" << endl;
+   if (globals.debug > 2) cerr << "FINDING CONNECTED COMPONENTS PATHS" << endl;
+   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProperty, EdgeProperty> UndirectedGraph;
    hash_map<ID_t, vector<Contig_t>, hash<ID_t>, equal_to<ID_t> > ctgsByComponent;
+   vector<Contig_t> allContigs;
+   UndirectedGraph ug;
+   boost::copy_graph(g, ug);
 
    VertexName vertexNames = get(boost::vertex_name, g);
-   int32_t* component = new int32_t[boost::num_vertices(g)];
+   int32_t* component = new int32_t[boost::num_vertices(ug)];
 
-   boost::strong_components(g, component); 
+   boost::connected_components(ug, &component[0]);
    pair<VertexIterator, VertexIterator> i;
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
+      if (vertexNames[*i.first] == 0) continue;
+
       Contig_t ctg;
       contig_bank.fetch(vertexNames[*i.first], ctg);
-      //ctgsByComponent[component[*i.first]].push_back(ctg);
+      ctgsByComponent[component[*i.first]].push_back(ctg);
+      allContigs.push_back(ctg);
    }
 
-   cerr << "COMPUTING CONNECTED COMPONENTS COVERAGE" << endl;
+   if (globals.debug > 2) cerr << "COMPUTING CONNECTED COMPONENTS COVERAGE " << endl;
+   double globalArrivalRate = computeArrivalRate(allContigs);
+   allContigs.clear();
+   
    for (hash_map<ID_t, vector<Contig_t>, hash<ID_t>, equal_to<ID_t> >::iterator i = ctgsByComponent.begin(); i != ctgsByComponent.end(); i++) {
       double arrivalRate = computeArrivalRate(i->second);
       double mean = 0, variance = 0, stdev = 0, N = 0;
@@ -243,17 +262,27 @@ void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &rep
       }
       variance /= N;
       stdev = sqrt(variance);
-      
+
+      if (globals.debug > 2) cerr << "Processing Connected component " << i->first << " with " << i->second.size() << " elements with coverage " << mean << " and stdev " << stdev << " GLOBAL ARRIVAL: " << globalArrivalRate << " LOCAL: " << arrivalRate << endl;
       for (vector<Contig_t>::iterator j = i->second.begin(); j < i->second.end(); j++) {
          double cov = j->getCovStat(arrivalRate);
+         double globalCov = j->getCovStat(globalArrivalRate);
 
-         if (cov < mean-(2*MAX_REPEAT_STDEV*stdev) && cov <= MAX_REPEAT_COV) {
+         if (globals.debug > 1) cerr << "CONTIG " << j->getIID() << " HAS COVERAGE " << cov << " MEAN: " << mean << " STDEV:" << stdev << " SIZE " << j->getLength() << " RATIO IS " << (cov - (mean - stdev) + MAX_COVERAGE_ERROR) << endl;
+         if (((cov - (mean - stdev) + MAX_COVERAGE_ERROR/*cov*/) < 0) && j->getLength() < MAX_REPEAT_SIZE) {
+            if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getLength() << " WITH " << j->getReadTiling().size() << " READS AND COVERAGE " << cov << " IS TOO LOW" << endl;
             repeats.insert(j->getIID());
-         } else if (globals.doAgressiveRepeatFinding == true && i->second.size() == 1 && cov <= MAX_REPEAT_COV && j->getLength() < MAX_REPEAT_SIZE) {
+         } else if (i->second.size() == 1 && globalCov < MAX_REPEAT_COV) {
+             if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getLength() << " GLOBAL COVERAGE " << globalCov << " IS TOO LOW" << endl;
+            repeats.insert(j->getIID());
+         } else if (globals.doAgressiveRepeatFinding == true && globalCov <= MAX_REPEAT_COV && j->getLength() < MAX_REPEAT_SIZE) {
+             if (globals.debug > 1) cerr << "AGRESSIVE REPEAT" << cov << " IS TOO LOW" << endl;
             repeats.insert(j->getIID());
          }
       }
    }
+   
+   delete[] component;
 }
 #endif //AMOS_HAVE_BOOST
 

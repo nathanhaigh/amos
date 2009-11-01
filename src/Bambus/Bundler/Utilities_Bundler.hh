@@ -9,7 +9,6 @@
 #include <boost/utility.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/strong_components.hpp>
 #include <boost/graph/graphviz.hpp>
 #endif //AMOS_HAVE_BOOST
 
@@ -29,7 +28,7 @@ namespace Bundler
    typedef boost::property<boost::vertex_name_t, unsigned int> VertexProperty;
 
    // Edge properties
-   typedef boost::property<boost::edge_weight_t, unsigned int> EdgeProperty;
+   typedef boost::property<boost::edge_weight_t, double> EdgeProperty;
 
    // Adjacency graph using list data structure
    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProperty, EdgeProperty> Graph;
@@ -65,7 +64,7 @@ namespace Bundler
             AMOS::BankStream_t &contig_stream, AMOS::BankStream_t &edge_stream, 
             AMOS::IBankable_t *node, AMOS::IBankable_t *edge,
             int32_t redundancy);
-   
+
    bool isBadEdge(const AMOS::ContigEdge_t &cte);
    AMOS::ID_t getEdgeDestination(const AMOS::ID_t &edgeSrc, const AMOS::ContigEdge_t &cte);
    contigOrientation getOrientation(const AMOS::ID_t &contig, contigOrientation &myOrient, const AMOS::ContigEdge_t &cte);

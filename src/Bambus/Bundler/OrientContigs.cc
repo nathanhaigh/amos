@@ -44,6 +44,7 @@ struct config {
 config globals;
 
 ID_t maxContig = 0;
+HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *cte2weight = NULL;
 
 void printHelpText() {
    cerr << 
@@ -144,6 +145,25 @@ bool GetOptions(int argc, char ** argv) {
    
    return true;
 } // GetOptions
+
+struct EdgeWeightCmp
+{
+  bool operator () (const AMOS::ID_t & a, const AMOS::ID_t & b) const
+  {
+      assert(cte2weight);
+      int32_t weightA = (*cte2weight)[a];
+      assert(weightA);
+      int32_t weightB = (*cte2weight)[b];
+      assert(weightB);
+
+      if (weightA < weightB) {
+         return false;
+      }
+      else {
+         return true;
+      }
+  }
+};
 
 void swapContigs(ContigEdge_t & cte, int isReversed) {
    pair<ID_t, ID_t> ctgs;
@@ -536,10 +556,13 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &e
       hash_map<ID_t, int, hash<ID_t>, equal_to<ID_t> > visited;
       numUpdated = 0;
       itNum++;
+cerr << "BEGINNING COMPRESSION ITERATION #" << itNum << endl;
       
       for(vector<Scaffold_t>::iterator s = scaffs.begin(); s < scaffs.end(); s++) {
+         if (globals.debug >= 1) cerr << "PROCESSING SCAFFOLD " << s->getIID() << endl;
          for (vector<Tile_t>::iterator i = s->getContigTiling().begin(); i < s->getContigTiling().end(); ) {
             if (visited[i->source] == 0) {
+               if (globals.debug >= 1) cerr << "PROCESSING CONTIG " << i->source << endl;
                visited[i->source] = 1;
 
                ID_t sink = 0;
@@ -624,6 +647,7 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &e
             }
          }
       }
+     if (globals.debug >= 1) cerr << "END COMPRESSION ITERATION #" << itNum << " UPDATED: " << numUpdated << endl;
    } while (numUpdated != 0);
 }
 
@@ -704,10 +728,11 @@ int main(int argc, char *argv[]) {
        contig_stream.close();
        exit(1);
    }
-  
+ 
+   int firstCTG = 0; 
    ContigEdge_t cte;
-   hash_map<ID_t, set<ID_t>*, hash<ID_t>, equal_to<ID_t> > ctg2lnk;     // map from contig to edges
-
+   hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > ctg2lnk;     // map from contig to edges
+   cte2weight = new hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >();
    for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci; ci++) {
       edge_bank.fetch(ci->iid, cte);
 
@@ -731,17 +756,16 @@ int main(int argc, char *argv[]) {
          }
          cte.setStatus(BAD_LOW);
          edge_bank.replace(cte.getIID(), cte);
-                  
          continue;
       }
-
-      set<ID_t>* s = ctg2lnk[cte.getContigs().first];
-      if (s == NULL) { s = new set<ID_t>();};
+      (*cte2weight)[cte.getIID()] = cte.getContigLinks().size();
+      set<ID_t, EdgeWeightCmp>* s = ctg2lnk[cte.getContigs().first];
+      if (s == NULL) { s = new set<ID_t, EdgeWeightCmp>();};
       s->insert(cte.getIID());
       ctg2lnk[cte.getContigs().first] = s;
 
       s = ctg2lnk[cte.getContigs().second];
-      if (s == NULL) { s = new set<ID_t>();};
+      if (s == NULL) { s = new set<ID_t, EdgeWeightCmp>();};
       s->insert(cte.getIID());
       ctg2lnk[cte.getContigs().second] = s;
    }
@@ -754,6 +778,7 @@ int main(int argc, char *argv[]) {
    hash_map<ID_t, int, hash<ID_t>, equal_to<ID_t> > ctg2srt;               // map from contig to start position
    hash_map<ID_t, int, hash<ID_t>, equal_to<ID_t> > visited;               // contigs we've processed
    std::vector<Scaffold_t> scaffs;
+   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > ctg2scf;                    //quick lookup for which scaffold a contig belongs to
    ID_t scfIID = 0;
 
    queue<ID_t> current_nodes;
@@ -762,10 +787,12 @@ int main(int argc, char *argv[]) {
    while (contig_stream >> ctg) {
       ctg2ort[ctg.getIID()] = NONE;
       ctg2srt[ctg.getIID()] = UNINITIALIZED;
+      ctg2scf[ctg.getIID()] = UNINITIALIZED;
    }
+
+   // pull initial contig (highest weight edge) and initialize bank for subsequent processing
    contig_stream.seekg(0,BankStream_t::BEGIN);
-   
-   while (contig_stream >> ctg) {
+   while (contig_stream >> ctg) {   
       if (visited[ctg.getIID()] == 1) { continue; }
 
       Scaffold_t scaff;
@@ -780,6 +807,7 @@ int main(int argc, char *argv[]) {
             tile.offset = 0;
             tile.range.begin = 0;
             tile.range.end = ctg.getLength();
+            ctg2scf[ctg.getIID()] = scfIID;
             tiles.push_back(tile);
    
             scaff.setContigEdges(edges);
@@ -802,7 +830,6 @@ int main(int argc, char *argv[]) {
       if (globals.debug >= 2) { 
          cerr << "PUSHING NODE " << ctg.getIID() << " AND SIZE IS " << current_nodes.size() << endl;
       }
-      
       // process all the nodes in this connected component
       while (current_nodes.size() != 0) {
          ID_t myID = current_nodes.front();
@@ -810,24 +837,34 @@ int main(int argc, char *argv[]) {
 
          if (visited[myID] == 1) { continue; }
          visited[myID] = 1;
-         
-         set<ID_t>* s = ctg2lnk[myID];
-         for (set<ID_t>::iterator i = s->begin(); i != s->end(); i++) {
-            //TODO: I am not sure why there are a bunch of links with ID = 0 that the bank cannot retreive, ignore them
+
+         // keep track of max weight edge for this contig, if we drop too low, ignore it
+         int maxWeight = 0;
+         set<ID_t, EdgeWeightCmp>* s = ctg2lnk[myID];
+         for (set<ID_t, EdgeWeightCmp>::iterator i = s->begin(); i != s->end(); i++) {
+            //TODO: CA links incorporated as links with ID 0. Should they be skipped since we generate our own?
             if (*i != 0) {
                edge_bank.fetch(*i, cte);
-               
-               // TODO: again like with CTGs why are there links to contigs with id 0 that cannot be retreived?!
+
+               // TODO: CTGs with links to ID 0 indicate links to/from singletons. Incorporate singletons into assembly?
                if (cte.getContigs().first == 0 || cte.getContigs().second == 0) {
                   visitedEdges[cte.getIID()] = 1;
                   continue;
                }
-               
+
+               if (globals.debug >= 0) {
+                  cerr << "PROCESSING EDGE WITH ID " << cte.getIID() << " BETWEEN CONTIGS " << cte.getContigs().first << " AND " << cte.getContigs().second << " WEIGHT " << cte.getLinks().size() << " LAST WEIGHT WAS " << maxWeight << " AND INT VERSION OF LAST IS " << round((double)maxWeight / 4) << endl;
+               }
+
+               if ((double)cte.getLinks().size() / (double)maxWeight <= 0.15) {
+                  cerr << "SKIPPING EDGE\n";
+                  break;
+               }
+
                // push the node so it can be processed
                ID_t otherID = getEdgeDestination(myID, cte);
                // orient the node
                contigOrientation orient = getOrientation(myID, ctg2ort[myID], cte);
-
                // add the edge
                if (visitedEdges[cte.getIID()] == 0) {
                   std::stringstream oss;
@@ -851,6 +888,10 @@ int main(int argc, char *argv[]) {
                      
                      // update the edge in the bank so it is marked bad
                      cte.setStatus(BAD_ORI);
+                  }
+                  else if (ctg2scf[otherID] != UNINITIALIZED && ctg2scf[otherID] != scfIID) {
+                    badCount++;
+                    cte.setStatus(BAD_LOW);
                   }
                   else {
                      ctg2ort[otherID] = orient;
@@ -888,6 +929,7 @@ int main(int argc, char *argv[]) {
                            tile.range.end = 1;
                            tile.offset = ctg2srt[myID] - length;
                         }
+                        ctg2scf[myID] = scfIID;
                         addTile(tiles, myID, tile);
                         tile.clear();
                         
@@ -905,6 +947,7 @@ int main(int argc, char *argv[]) {
                            tile.range.end = 1;
                            tile.offset = ctg2srt[otherID] - length;
                         }
+                        ctg2scf[otherID] = scfIID;
                         addTile(tiles, otherID, tile);
                      }
                   }
@@ -915,6 +958,7 @@ int main(int argc, char *argv[]) {
                // update link information
                edge_bank.replace(*i, cte);
                if (!isBadEdge(cte)) {
+                  if (maxWeight == 0) {maxWeight = cte.getLinks().size(); }
                   current_nodes.push(otherID);
                   
                   if (globals.debug >= 2) {
@@ -931,6 +975,7 @@ int main(int argc, char *argv[]) {
          tile.range.begin = 0;
          tile.range.end = ctg.getLength();
          tiles.push_back(tile);
+         ctg2scf[ctg.getIID()] = scfIID;
       }
       
       scaff.setContigEdges(edges);
@@ -942,10 +987,12 @@ int main(int argc, char *argv[]) {
    
    // preform graph simplification
    sortContigs(scaffs, contig_bank, edge_bank);   
+   if (globals.debug >= 1) cerr << "BEGIN COMPRESSION" << endl;
    if (globals.compressMotifs == true) {
       reduceGraph(scaffs, contig_bank, edge_bank, ctg2ort);
       sortContigs(scaffs, contig_bank, edge_bank);
    }
+   if (globals.debug >= 1) cerr << "DONE COMPRESSION" << endl;
    
    // output results
    outputResults(globals.bank, contig_bank, edge_bank, scaffs, ctg2ort, DOT, globals.prefix, globals.debug);
@@ -957,9 +1004,10 @@ int main(int argc, char *argv[]) {
    contig_bank.close();
 
    // clear the edge lists
-   for (hash_map<ID_t, set<ID_t>*, hash<ID_t>, equal_to<ID_t> >::iterator i = ctg2lnk.begin(); i != ctg2lnk.end(); i++) {
+   for (hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> >::iterator i = ctg2lnk.begin(); i != ctg2lnk.end(); i++) {
       delete (i->second);
    }
+   delete(cte2weight);
    
    cerr << "Finished! Had " << goodCount << " Good links and " << badCount << " bad ones." << endl;
    return 0;

@@ -20,8 +20,8 @@ void outputLibrary(const std::string &outputPrefix, int32_t debug);
 void outputEvidenceXML(const std::string &bank, AMOS::Bank_t &contig_bank, const std::string &outputPrefix, int32_t debug);
 void outputOutXML(AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &outputPrefix, int32_t debug);
 
-void outputAGP(const std::vector<AMOS::Scaffold_t> &scaffs, const std::string& outputPrefix, int32_t debug);
-void outputDOT(AMOS::Bank_t &edge_bank,
+void outputAGP(AMOS::Bank_t &contig_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string& outputPrefix, int32_t debug);
+void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
                std::vector<AMOS::Scaffold_t> &scaffs, 
                HASHMAP::hash_map<AMOS::ID_t, contigOrientation, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >& ctg2ort,
                const std::string &outputPrefix,
@@ -32,6 +32,7 @@ void outputBAMBUS(const std::string &bank,
                const std::vector<AMOS::Scaffold_t> &scaffs, 
                const std::string &outputPrefix, 
                int32_t debug);
+
 
 struct EdgeOrderCmp
 {
@@ -58,7 +59,7 @@ struct EdgeOrderCmp
 };
 
 double computeArrivalRate(const std::vector<AMOS::Contig_t> &contigs) {
-   double result;
+   double result = 0;
    int32_t numFragments = 0;
    
    for (std::vector<AMOS::Contig_t>::const_iterator i = contigs.begin(); i < contigs.end(); i++) {
@@ -66,7 +67,9 @@ double computeArrivalRate(const std::vector<AMOS::Contig_t> &contigs) {
       result += i->getAvgRho();
       numFragments += i->getReadTiling().size();
    }
-   assert(result != 0);
+   if (result == 0) {
+      return 0;
+   }
 
    return numFragments / result;
 }
@@ -83,7 +86,11 @@ void buildGraph(
    EdgeWeight edgeWeights = get(boost::edge_weight, g);
    
    // build boost-based graph
+   // add node 0, it represents links outside of the set of contings (for example to singletons)
+   nodeToDescriptor[0] = boost::add_vertex(g);
+
    while (node_stream >> (*node)) {
+      assert(node->getIID() != 0);
       nodeToDescriptor[node->getIID()] = boost::add_vertex(g);
       vertexNames[nodeToDescriptor[node->getIID()] ] = node->getIID();
    }
@@ -91,26 +98,29 @@ void buildGraph(
 
    while (edge_stream >> (*edge)) {
       AMOS::ID_t firstNode, secondNode;
+      double_t weight = 0;
       if (dynamic_cast<AMOS::ContigEdge_t *>(edge) != NULL) {
          AMOS::ContigEdge_t* cte = dynamic_cast<AMOS::ContigEdge_t *>(edge);
-         if (cte->getContigLinks().size() < redundancy) {
+         if (cte->getContigLinks().size() < redundancy || cte->getContigLinks().size() == 0) {
             continue;
          }
          
          firstNode = cte->getContigs().first;
          secondNode = cte->getContigs().second;
+         weight = ((double)1 / cte->getContigLinks().size());
       }
       else if (dynamic_cast<AMOS::Overlap_t *>(edge) != NULL) {
          AMOS::Overlap_t* overlap = dynamic_cast<AMOS::Overlap_t*>(edge);
          firstNode = overlap->getReads().first;
          secondNode = overlap->getReads().second;
+         weight = 1;
       }
       else {
          std::cerr << "buildGraph(): error, unknown type of edge bank " << edge_stream.getType() << " skipping record" << std::endl;
          continue;
       }
       std::pair<Edge, bool> e = boost::add_edge(nodeToDescriptor[firstNode], nodeToDescriptor[secondNode], g);
-      edgeWeights[e.first] = 1;
+      edgeWeights[e.first] = weight;
    }
    edge_stream.seekg(0,AMOS::BankStream_t::BEGIN);
 
@@ -162,7 +172,9 @@ bool isBadEdge(const AMOS::ContigEdge_t &cte) {
    return false;
 }
 
-void outputAGP(const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &outputPrefix, int32_t debug) {
+void outputAGP(AMOS::Bank_t &contig_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &outputPrefix, int32_t debug) {
+   AMOS::Contig_t ctg;
+
    std::string outputFile = outputPrefix + ".agp";
    std::ofstream stream;
    stream.open(outputFile.c_str(), std::ios::out);
@@ -188,14 +200,20 @@ void outputAGP(const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &o
 
          std::string sign = "+";
          if (tileIt->range.isReverse()) { sign = "-"; }
-         
+
          stream << itScf->getIID();
          stream << "\t" << (tileIt->offset+1) << "\t" << (tileIt->offset+tileIt->range.getLength());
          stream << "\t" << counter << "\tW";
-         //if (tileIt->comment.size() == 0)
-            stream << "\t" << tileIt->source;
-         //else 
-         //   stream << "\t" << tileIt->comment;
+
+         int32_t outputID = 0;
+         if (tileIt->source <= contig_bank.getMaxIID()) {
+            contig_bank.fetch(tileIt->source, ctg);
+            if (ctg.getEID().size() != 0) {
+               stream << "\t" << ctg.getEID();
+               outputID = 1;
+            }
+         }
+         if (outputID == 0) stream << "\t" << tileIt->source;
 
          stream << "\t" << tileIt->range.getLo() << "\t" << tileIt->range.getHi();
          stream << "\t" << sign;
@@ -241,12 +259,14 @@ void outputEdges(std::ostream &stream, AMOS::Bank_t &edge_bank, AMOS::ID_t currC
    }
 }
 
-void outputDOT(AMOS::Bank_t &edge_bank,
+void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
                std::vector<AMOS::Scaffold_t> &scaffs, 
                HASHMAP::hash_map<AMOS::ID_t, contigOrientation, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >& ctg2ort,
                const std::string &outputPrefix,
                int32_t debug)
 {
+   AMOS::Contig_t ctg;
+
    std::string outputFile = outputPrefix + ".dot";
    std::ofstream stream;
    stream.open(outputFile.c_str(), std::ios::out);
@@ -269,12 +289,17 @@ void outputDOT(AMOS::Bank_t &edge_bank,
       for (std::vector<AMOS::Tile_t>::const_iterator tileIt = itScf->getContigTiling().begin(); tileIt < itScf->getContigTiling().end(); tileIt++) {
          int32_t angle = -90;
          if (tileIt->range.isReverse()) { angle = 90; }
-         
+
+         int32_t outputID = 0;
          stream << "\t" << tileIt->source << " [label=\"" ;
-         //if (tileIt->comment.size() == 0)
-            stream << tileIt->source;
-         //else 
-         //   stream << tileIt->comment;
+         if (tileIt->source <= contig_bank.getMaxIID()) {
+            contig_bank.fetch(tileIt->source, ctg);
+            if (ctg.getEID().size() != 0) { 
+	       stream << ctg.getEID();
+               outputID = 1;
+            }
+         }
+         if (outputID == 0) stream << tileIt->source;
 
          stream << " position=(" << tileIt->offset << "," << tileIt->offset + tileIt->range.getLength() - 1;
          stream << ") length=" << tileIt->range.getLength() << "\" height=0.2, fontsize=8, shape=\"house\", ";
@@ -339,8 +364,8 @@ void outputDOT(AMOS::Bank_t &edge_bank,
          }
          visited[cte.getIID()] = 1;
       }
-      stream << "}" << std::endl;
       outputEdges(stream, edge_bank, currCtg, edgeTypes, debug);
+      stream << "}" << std::endl;
    }
    stream  << "}" << std::endl;
    stream.close();
@@ -559,10 +584,10 @@ void outputResults(
 {
    switch (type) {
       case AGP:
-         outputAGP(scaffs, outputPrefix, debug);
+         outputAGP(contig_bank, scaffs, outputPrefix, debug);
          break;
       case DOT:
-         outputDOT(edge_bank, scaffs, ctg2ort, outputPrefix, debug);
+         outputDOT(contig_bank, edge_bank, scaffs, ctg2ort, outputPrefix, debug);
          break;
       case BAMBUS:
          outputBAMBUS(bank, contig_bank, edge_bank, scaffs, outputPrefix, debug);
