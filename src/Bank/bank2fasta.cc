@@ -170,16 +170,12 @@ int main(int argc, char **argv)
   globals["iid"] = "true";
   globals["eid"] = "false";
 
-  cerr << "Calling getOptions" << endl;
-
   if (! GetOptions(argc, argv)){
     cerr << "Command line parsing failed" << endl;
     printHelpText();
     exit(1);
   }
 
-  cerr << "Checking qualfile" << endl;
-  
   if (globals.find("qualfile") != globals.end()){ // have qual file will travel
     outqual.open(globals["qualfile"].c_str(), ofstream::out | ofstream::trunc);
     if (! outqual.is_open()){
@@ -187,8 +183,6 @@ int main(int argc, char **argv)
       exit(1);
     }
   }
-
-  cerr << "Opening bank" << endl;
 
   // open necessary files
   if (globals.find("bank") == globals.end()){ // no bank was specified
