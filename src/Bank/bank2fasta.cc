@@ -42,6 +42,7 @@ void printHelpText()
        << "  -E file       Dump just the contig eids listed in file\n"
        << "  -I file       Dump just the contig iids listed in file\n"
        << "  -q file       Report qualities in file\n"
+       << "-d            Show contig details (num reads, coverage) on fasta header line\n"
        << "\n.KEYWORDS.\n"
        << "  AMOS bank, Converters\n"
        << endl;
@@ -53,6 +54,7 @@ bool GetOptions(int argc, char ** argv)
   static struct option long_options[] = {
     {"help",      0, 0, 'h'},
     {"h",         0, 0, 'h'},
+    {"d",         0, 0, 'd'},
     {"b",         1, 0, 'b'},
     {"bank",      1, 0, 'b'},
     {"eid",       0, 0, 'e'},
@@ -72,6 +74,9 @@ bool GetOptions(int argc, char ** argv)
       break;
     case 'b':
       globals["bank"] = string(optarg);
+      break;
+    case 'd':
+      globals["details"] = "true";
       break;
     case 'e':
       globals["eid"] = "true";
@@ -113,6 +118,30 @@ void printFasta(const Contig_t & ctg, ofstream & qual)
       qual << ">" << ctg.getIID();
   }
 
+  if (globals.find("details") != globals.end())
+  {
+    int len = ctg.getUngappedLength();
+
+    std::vector<Tile_t>::const_iterator ti;
+    const std::vector<Tile_t> & tiling = ctg.getReadTiling();
+
+    int nreads = ctg.getReadTiling().size();
+    double covsum = 0.0;
+
+    for (ti = tiling.begin();
+         ti != tiling.end();
+         ti++)
+    {
+      covsum += ti->range.getLength();
+    }
+
+    double cov = len ? covsum / len : 0.0;
+
+    cout << " len=" << len
+         << " nreads=" << nreads
+         << " cov=" << cov;
+  }
+
   int nout = 0;
   for (int i = 0; i < seq.length(); i++)
   {
@@ -141,11 +170,15 @@ int main(int argc, char **argv)
   globals["iid"] = "true";
   globals["eid"] = "false";
 
+  cerr << "Calling getOptions" << endl;
+
   if (! GetOptions(argc, argv)){
     cerr << "Command line parsing failed" << endl;
     printHelpText();
     exit(1);
   }
+
+  cerr << "Checking qualfile" << endl;
   
   if (globals.find("qualfile") != globals.end()){ // have qual file will travel
     outqual.open(globals["qualfile"].c_str(), ofstream::out | ofstream::trunc);
@@ -154,6 +187,8 @@ int main(int argc, char **argv)
       exit(1);
     }
   }
+
+  cerr << "Opening bank" << endl;
 
   // open necessary files
   if (globals.find("bank") == globals.end()){ // no bank was specified
