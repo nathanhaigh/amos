@@ -13,11 +13,7 @@ dist_bin_SCRIPTS += \
 	minimus.acf \
 	minimus2.acf \
 	assembleRNAs.acf \
-	runCA.clean.acf \
-	runCA.meta.acf \
-	runCA.prok.acf \
-	runCA.euk.acf \
-	runCA.stub.acf
+	Minimo.acf
 endif BUILD_all
 
 if BUILD_AMOScmp
