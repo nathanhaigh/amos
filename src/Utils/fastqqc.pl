@@ -23,7 +23,7 @@ my $result = GetOptions(
 my $filename = shift @ARGV or die $USAGE;
 open(FQ, $filename) || die "Could not open .fq";
 
-print STDERR "Analyzing $cutoff reads\n";
+print STDERR "Analyzing $cutoff reads\n" if defined $cutoff;
 
 ## Initialize
 #####################################################################
