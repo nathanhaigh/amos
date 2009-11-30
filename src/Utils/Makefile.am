@@ -33,7 +33,8 @@ dist_bin_SCRIPTS = \
 	nucmerAnnotate.pl \
 	nucmer2ovl.pl \
 	sort2.pl \
-	ovl2OVL.pl
+	ovl2OVL.pl \
+    fastqqc.pl
 
 # runAmos.pl 
 
