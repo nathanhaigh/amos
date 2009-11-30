@@ -1,24 +1,22 @@
 #!/usr/bin/perl -w
-
-#
 # Calculate and print "average" quality values for each position in a
 # Solexa FASTQ file.
-# 
 
 use strict;
-use warnings;
 use Getopt::Long;
 
-my $USAGE = "fastqqc.pl [-c numreads] [-r readlen] fq\n";
+my $USAGE = "fastqqc.pl [-c numreads] [-r readlen] [-tsv] fq\n";
 
 my $readlen = 75;
 my $cutoff = undef;
 my $printqvstats = 0;
+my $dotsv = 0;
 
 my $result = GetOptions(
  "c=s"    => \$cutoff,
  "r=s"    => \$readlen,
  "qv"     => \$printqvstats,
+ "tsv"    => \$dotsv,
 );
 
 
@@ -27,64 +25,91 @@ open(FQ, $filename) || die "Could not open .fq";
 
 print STDERR "Analyzing $cutoff reads\n";
 
+## Initialize
+#####################################################################
+
 my $lines = 0;
+my $bpsum = 0;
+
 my @mins;
 my @maxs;
 my @tots;
+
+my @nsPerRead;
+my @posCnts;
 
 for (my $i = 0; $i < $readlen; $i++)
 {
   $mins[$i] = 255;
   $maxs[$i] = 0;
   $tots[$i] = 0;
+
+  $nsPerRead[$i] = 0;
+
+  $posCnts[$i]->[0] = 0; ## A
+  $posCnts[$i]->[1] = 0; ## C
+  $posCnts[$i]->[2] = 0; ## G
+  $posCnts[$i]->[3] = 0; ## T
+  $posCnts[$i]->[4] = 0; ## N
 }
 
-my %nsPerRead = ();
-my %posCnts = ();
 
+## Scan the reads
+#####################################################################
 
 my $i = 0;
-while(<FQ>) {
-	$i++;
-	next if ($i % 2) != 0;
-	if(($i % 4) == 2) {
-		# Sequence line
-		my ($as, $cs, $gs, $ts, $ns) = (0, 0, 0, 0, 0);
-		for(my $i = 0; $i < length($_) && $i < $readlen; $i++) {
-			my $c = substr($_, $i, 1);
-			if($c eq 'A') {
-				$posCnts{"A$i"}++;
-			} elsif($c eq 'C') {
-				$posCnts{"C$i"}++;
-			} elsif($c eq 'G') {
-				$posCnts{"G$i"}++;
-			} elsif($c eq 'T') {
-				$posCnts{"T$i"}++;
-			} elsif($c eq 'N') {
-				$posCnts{"N$i"}++;
-				$ns++;
-			}
-		}
-		$nsPerRead{$ns}++;
-	} else {
-		# Quality line
-		for(my $i = 0; $i < length($_) && $i < $readlen; $i++) {
-			my $oi = (ord(substr($_, $i, 1)));
-			$tots[$i] += $oi;
-			if($oi < $mins[$i]) {
-				$mins[$i] = $oi;
-			}
-			if($oi > $maxs[$i]) {
-				$maxs[$i] = $oi;
-			}
-		}
-		$lines++;
-	}
-	last if (defined $cutoff) && ($lines >= $cutoff);
+while(<FQ>) 
+{
+  $i++;
+  next if ($i % 2) != 0;
+  
+  chomp;
+  
+  if(($i % 4) == 2) 
+  {
+    # Sequence line
+    $_ = uc($_);
+    $bpsum += length($_);
+  
+    my $ns = 0;
+  
+    for(my $i = 0; $i < length($_) && $i < $readlen; $i++) 
+    {
+      my $c = substr($_, $i, 1);
+  
+      if    ($c eq 'A') { $posCnts[$i]->[0]++; }
+      elsif ($c eq 'C') { $posCnts[$i]->[1]++; }
+      elsif ($c eq 'G') { $posCnts[$i]->[2]++; }
+      elsif ($c eq 'T') { $posCnts[$i]->[3]++; }
+      else              { $posCnts[$i]->[4]++; $ns++; }
+    }
+  
+    $nsPerRead[$ns]++;
+  } 
+  else 
+  {
+    # Quality line
+    for(my $i = 0; $i < length($_) && $i < $readlen; $i++) 
+    {
+      my $oi = (ord(substr($_, $i, 1)));
+      $tots[$i] += $oi;
+  
+      if($oi < $mins[$i]) { $mins[$i] = $oi; }
+      if($oi > $maxs[$i]) { $maxs[$i] = $oi; }
+    }
+  
+    $lines++;
+  }
+  
+  last if (defined $cutoff) && ($lines >= $cutoff);
 }
 
-print "Analyzed $lines reads\n";
+my $bp = sprintf("%0.2f", $bpsum/$lines);
+print "Analyzed $lines $bp bp reads\n" if !$dotsv;
 
+
+## QV statistics
+#####################################################################
 
 if ($printqvstats)
 {
@@ -136,19 +161,66 @@ if ($printqvstats)
   print "\n";
 }
 
-print "Ns per read:\n";
-for my $k (sort {$a <=> $b} keys %nsPerRead) {
-	print "  $k: $nsPerRead{$k}\n";
+
+
+
+## Base Composition
+#####################################################################
+
+if ($dotsv)
+{
+  print "pos\t\%A\t\%C\t\%G\t\%T\t\%N\tQ\n";
+}
+else
+{
+  print "pos\t\%A  \t\%C  \t\%G  \t\%T  \t\%N  \t Q\n";
 }
 
-print "Base composition:\n";
-print "pos       A      C      G      T      N      Q\n";
-for(my $i = 0; $i < $readlen; $i++) {
-    printf "%4d  ", $i+1;
-	for my $k ('A', 'C', 'G', 'T', 'N') {
-		printf "%02.3f  ", 100*$posCnts{"$k$i"}/$lines;
-	}
-	my $q = $tots[$i] * 1.0 / $lines;
-	my $rq = int($q + 0.5) - 64;
-    printf " %4d\n", $rq;
+if ($dotsv)
+{
+  for(my $i = 0; $i < $readlen; $i++) 
+  {
+    printf "%d\t", $i+1;
+    
+    for (my $k = 0; $k < 5; $k++)
+    {
+      printf "%.1f\t", 100*$posCnts[$i]->[$k]/$lines;
+    }
+    
+    my $q = $tots[$i] * 1.0 / $lines;
+    my $rq = int($q + 0.5) - 64;
+    printf "%d\n", $rq;
+  }
+}
+else
+{
+  for(my $i = 0; $i < $readlen; $i++) 
+  {
+    printf "%4d\t", $i+1;
+    
+    for (my $k = 0; $k < 5; $k++)
+    {
+      printf "%02.1f\t", 100*$posCnts[$i]->[$k]/$lines;
+    }
+    
+    my $q = $tots[$i] * 1.0 / $lines;
+    my $rq = int($q + 0.5) - 64;
+    printf "%2d\n", $rq;
+  }
+}
+
+
+## Ns per read
+#####################################################################
+
+if (!$dotsv)
+{
+  print "Ns per read:\n";
+  for (my $k = 0; $k < $readlen; $k++)
+  {
+    if ($nsPerRead[$k])
+    {
+      printf "% 4d:%d\n", $k, $nsPerRead[$k];
+    }
+  }
 }
