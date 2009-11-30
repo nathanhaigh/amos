@@ -28,7 +28,7 @@ print STDERR "Analyzing $cutoff reads\n" if defined $cutoff;
 ## Initialize
 #####################################################################
 
-my $lines = 0;
+my $reads = 0;
 my $bpsum = 0;
 
 my @mins;
@@ -61,12 +61,19 @@ my $i = 0;
 while(<FQ>) 
 {
   $i++;
-  next if ($i % 2) != 0;
-  
-  chomp;
-  
-  if(($i % 4) == 2) 
+
+  if (($i % 4) == 1)
   {
+    die "ERROR Line $i: Expected @ but saw \"$_\"" if !/^@/;
+  }
+  elsif (($i % 4) == 3)
+  {
+    die "ERROR Line $i Expected + but saw \"$_\"" if !/^\+/;
+  }
+  elsif(($i % 4) == 2) 
+  {
+    chomp;
+
     # Sequence line
     $_ = uc($_);
     $bpsum += length($_);
@@ -98,14 +105,14 @@ while(<FQ>)
       if($oi > $maxs[$i]) { $maxs[$i] = $oi; }
     }
   
-    $lines++;
+    $reads++;
   }
   
-  last if (defined $cutoff) && ($lines >= $cutoff);
+  last if (defined $cutoff) && ($reads >= $cutoff);
 }
 
-my $bp = sprintf("%0.2f", $bpsum/$lines);
-print "Analyzed $lines $bp bp reads\n" if !$dotsv;
+my $bp = sprintf("%0.2f", $bpsum/$reads);
+print "Analyzed $reads $bp bp reads\n" if !$dotsv;
 
 
 ## QV statistics
@@ -113,14 +120,14 @@ print "Analyzed $lines $bp bp reads\n" if !$dotsv;
 
 if ($printqvstats)
 {
-# Print averages
+  # Print averages
   print "Average:\n";
   my $istr = "";
   my $i33str = "";
   my $i64str = "";
   for(my $i = 0; $i < $readlen; $i++) {
       last if $tots[$i] == 0;
-      my $q = $tots[$i] * 1.0 / $lines;
+      my $q = $tots[$i] * 1.0 / $reads;
       my $rq = int($q + 0.5);
       print chr($rq);
       $istr .= "$rq ";
@@ -130,7 +137,7 @@ if ($printqvstats)
   print "\n$istr\n\n$i33str\n\n$i64str\n";
   print "\n";
 
-# Print mins
+  # Print mins
   print "Min:\n";
   $istr = "";
   $i33str = "";
@@ -145,7 +152,7 @@ if ($printqvstats)
   print "\n$istr\n\n$i33str\n\n$i64str\n";
   print "\n";
 
-# Print maxs
+  # Print maxs
   print "Max:\n";
   $istr = "";
   $i33str = "";
@@ -169,7 +176,7 @@ if ($printqvstats)
 
 if ($dotsv)
 {
-  print "pos\t\%A\t\%C\t\%G\t\%T\t\%N\tQ\n";
+  print "pos\t\%A\t\%C\t\%G\t\%T\t\%N\tQ\tN\n";
 }
 else
 {
@@ -180,16 +187,16 @@ if ($dotsv)
 {
   for(my $i = 0; $i < $readlen; $i++) 
   {
-    printf "%d\t", $i+1;
+    printf "%d\t", $i;
     
     for (my $k = 0; $k < 5; $k++)
     {
-      printf "%.1f\t", 100*$posCnts[$i]->[$k]/$lines;
+      printf "%.1f\t", 100*$posCnts[$i]->[$k]/$reads;
     }
     
-    my $q = $tots[$i] * 1.0 / $lines;
+    my $q = $tots[$i] * 1.0 / $reads;
     my $rq = int($q + 0.5) - 64;
-    printf "%d\n", $rq;
+    printf "%d\t%d\n", $rq, $nsPerRead[$i];
   }
 }
 else
@@ -200,10 +207,10 @@ else
     
     for (my $k = 0; $k < 5; $k++)
     {
-      printf "%02.1f\t", 100*$posCnts[$i]->[$k]/$lines;
+      printf "%02.1f\t", 100*$posCnts[$i]->[$k]/$reads;
     }
     
-    my $q = $tots[$i] * 1.0 / $lines;
+    my $q = $tots[$i] * 1.0 / $reads;
     my $rq = int($q + 0.5) - 64;
     printf "%2d\n", $rq;
   }
