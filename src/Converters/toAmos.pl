@@ -1,6 +1,4 @@
 #!/usr/bin/perl
-
-
 use TIGR::Foundation;
 use AMOS::AmosLib;
 use AMOS::ParseFasta;
