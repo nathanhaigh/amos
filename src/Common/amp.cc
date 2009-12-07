@@ -1,5 +1,6 @@
 #include "amp.hh"
 #include <new>
+#include <cstdio>
 #include <iostream>
 #include <cstring>
 #include <ctime>

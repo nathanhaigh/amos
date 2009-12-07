@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "IDMap_AMOS.hh"
+#include <cstdio>
 #include <string>
 #include <sstream>
 #include <cstring>

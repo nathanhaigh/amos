@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "Message_AMOS.hh"
+#include <cstdio>
 using namespace AMOS;
 using namespace std;
 using namespace HASHMAP;
