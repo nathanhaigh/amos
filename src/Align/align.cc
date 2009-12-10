@@ -2230,12 +2230,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
          lo = Max (0, Min (curr_offset - wiggle, mid));
          hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
-
-         ////
-         // error_limit is too strict for low stringency params (20bp overlap, 50% similarity)
          error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
-         ////
-
          matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
                         0, error_limit, ali);
          matched = matched && ali . Error_Rate () <= erate;
