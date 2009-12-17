@@ -109,7 +109,7 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 ## Determining contig consensus sequences
 # Default fraction of errors allowed in alignments 0.06 (6 %).
 # Default minimum number of bases strings in multialignment must overlap is 5 bp.
-70: $(BIN_DIR)/make-consensus -b -B -o $(MIN_LEN) -e $(MAX_ERROR) -w $(ALN_WIGGLE) -v $(VERBOSE) $(BANK)
+70: $(BINDIR)/make-consensus -b -B -o $(MIN_LEN) -e $(MAX_ERROR) -w $(ALN_WIGGLE) -v $(VERBOSE) $(BANK)
 
 #----------------------------------- EXPORT SEQUENCES AND CONTIGS -------------#
 
