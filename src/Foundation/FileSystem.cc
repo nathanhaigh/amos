@@ -54,8 +54,7 @@ bool FileSystem::isCreatableFile(const char *filename)
   else
   {
     // Check to see if path was given
-
-    char * end_of_path = strrchr(filename, PATH_DELIMINATOR);
+    const char * end_of_path = strrchr(filename, PATH_DELIMINATOR);
     
     if (end_of_path)
     {
