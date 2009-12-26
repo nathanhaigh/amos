@@ -247,7 +247,7 @@ void  Vote_t :: Incr_After
 //  Add  incr_val  to the  after  count in this  Vote_t  for  ch .
 
   {
-   char  * p;
+   const char  * p;
 
    p = strchr (ALPHABET, tolower (ch));
    if  (p == NULL)
@@ -285,7 +285,7 @@ void  Vote_t :: Incr_By
 //  count for a blank.
 
   {
-   char  * p;
+   const char  * p;
 
    p = strchr (ALPHABET, tolower (ch));
    if  (p == NULL)
@@ -357,7 +357,7 @@ void  Vote_t :: Set_To
 
   {
    int  i;
-   char  * p;
+   const char * p;
 
    for  (i = 0;  i <= ALPHABET_SIZE;  i ++)
      here [i] = after [i] = 0;

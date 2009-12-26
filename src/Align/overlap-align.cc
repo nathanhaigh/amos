@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 using namespace std;
 
 inline int max2(int a, int b)
@@ -270,7 +271,8 @@ void align(const string & S,
   
   for (int k = tlen - 1; k >= 0; k--)
   {
-    printf(" %3d", trace[k].score);
+    //printf(" %3d", trace[k].score);
+    cout << setw(3) << trace[k].score << endl;
   }
   cout << endl;
 
