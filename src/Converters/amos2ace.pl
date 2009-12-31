@@ -24,10 +24,10 @@ my $HELPTEXT = q~
   amos2ace [opts] [infile1] [infile2] ...
  
 .DESCRIPTION.
-  Amos2ace reads one or more AMOS message files specified on the command line and produces 
-  a .ACE file. The message files must be provided in a "reasonable" order: the file 
-  defining a specific object must occur before a file using it. The output file name is 
-  generated from the first file on the command line unless specifically set through option 
+  Amos2ace reads one or more AMOS message files specified on the command line and produces
+  a .ACE file. The message files must be provided in a "reasonable" order: the file
+  defining a specific object must occur before a file using it. The output file name is
+  generated from the first file on the command line unless specifically set through option
   -o (see below).
 
 .OPTIONS.   
@@ -36,9 +36,9 @@ my $HELPTEXT = q~
   -p <phd_dir>    Location of the PHD directory
 
   The multiple input files must be presented in "proper" order - each message needs to
-  be defined before being referenced.  Note: the chromat_dir and phd_dir parameters are 
+  be defined before being referenced.  Note: the chromat_dir and phd_dir parameters are
   only used to provide consed with the necessary information used to display
-  chromatograms. These options are only relevant if the assembler inputs were generated 
+  chromatograms. These options are only relevant if the assembler inputs were generated
   using the phred pipeline.
 
 .KEYWORDS.
@@ -190,8 +190,9 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    my @qualvals;
 	    # .ace qualities are only assigned to unpadded bases
 	    for (my $i = 0; $i < length($qual); $i++){
-		if (substr($seq, $i, 1) ne "*"){
-		    push(@qualvals, ord(substr($qual, $i, 1)) - ord('0'));
+		my $qualval = substr($seq, $i, 1);
+		if ($qualval ne "*"){
+		    push(@qualvals, ord($qualval) - ord('0'));
 		}
 	    }
 	    for (my $i = 0; $i <= $#qualvals; $i+=50){
@@ -279,8 +280,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 			$outseq .= substr($sequence, $j, 1);
 		    }
 		    $seqAlnRng{$seqName} = sprintf("%d %d", $asml + 1, $asmr);
-		    $seqAlnClr{$seqName} = sprintf("%d %d", 
-						   (($seql < $seqr)?$seql + 1:$seql), 
+		    $seqAlnClr{$seqName} = sprintf("%d %d",
+						   (($seql < $seqr)?$seql + 1:$seql),
 						   (($seql < $seqr)?$seqr : $seqr + 1));
 		    my $off = $$sfields{off};
 		    my $ori = ($seql > $seqr) ? "C" : "U";
@@ -314,7 +315,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 			$end3 = length($outseq) - length($sequence) + $seqr;
 		    }
 		    $end5++; #all coordinates are 1 based
-		    print SEQOUT sprintf("QA %d %d %d %d\n", 
+		    print SEQOUT sprintf("QA %d %d %d %d\n",
 					 $end5, $end3, $end5, $end3);
 		    my $chrmfile = $chromodir . "$seqName";
 		    my $phdfile = "";
@@ -328,14 +329,14 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		    if (-r $phdfile){
 			$time = `$GREP TIME $phdfile`;
 			$time =~ s/TIME: //;
-		    } 
+		    }
 		    
 		    if (! defined $time){
 			if (-e $phddir) {
 			    $base->logError("Cannot stat phd file \"$phdfile\"", 1);
 			}
 			$time = localtime;
-		    } 
+		    }
 		    
 		    my $dir = ($ori eq "C") ? "rev" : "forw";
 		    
@@ -349,8 +350,8 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    my @offsets = keys  %seqOff;
 #	    print STDERR " I have ", $#offsets + 1, " offsets\n";
  	    foreach my $sequence ( sort {
-		($seqOff{$a} == $seqOff{$b}) ? 
-		    ($rend{$b} <=> $rend{$a}) : 
+		($seqOff{$a} == $seqOff{$b}) ?
+		    ($rend{$b} <=> $rend{$a}) :
 		    ($seqOff{$a} <=> $seqOff{$b})
 		} (keys %seqOff)) {
 #		print STDERR "${sequence}($seqOff{$sequence}), ";

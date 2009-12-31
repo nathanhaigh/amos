@@ -82,7 +82,7 @@ static ifstream EID_fp;
   // Pointer to file of EIDs
 
 
-static bool USE_LayoutClear = false;	// TODO: Fix AMOScmp, then this will be true
+static bool USE_LayoutClear = false;      // TODO: Fix AMOScmp, then this will be true
 
 
 static bool By_Lo_Position
@@ -136,8 +136,8 @@ int main (int argc, char *argv[])
   time_t now;
   iostream::fmtflags status;
   int contig_ct, unitig_ct;
-  list < string > eid_list;	// if layouts selected by eid
-  list < ID_t > iid_list;	// if layouts selected by iid
+  list < string > eid_list;    // if layouts selected by eid
+  list < ID_t > iid_list;      // if layouts selected by iid
 
   try
   {
@@ -156,389 +156,389 @@ int main (int argc, char *argv[])
     cerr << "Minimum overlap bases is " << Min_Overlap << endl;
 
     if (Output_Format == BANK_OUTPUT)
-      {
-	cerr << "Output will be written to the bank" << endl;
-	if (!contig_bank.exists (Bank_Name))
-	  contig_bank.create (Bank_Name);
-	else
-	  contig_bank.open (Bank_Name);
-      }
+    {
+      cerr << "Output will be written to the bank" << endl;
+      if (!contig_bank.exists (Bank_Name))
+        contig_bank.create (Bank_Name);
+      else
+        contig_bank.open (Bank_Name);
+    }
 
     if (byIID)
-      {
-	cerr << "Will only process IIDs in file specified by option -i\n";
+    {
+      cerr << "Will only process IIDs in file specified by option -i\n";
 
-	readIIDFile (IID_fp, iid_list);
-	cerr << "List size: " << iid_list.size() << endl;
+      readIIDFile (IID_fp, iid_list);
+      cerr << "List size: " << iid_list.size() << endl;
 
-	IID_fp.close ();
-      }
+      IID_fp.close ();
+    }
 
     if (byEID)
-      {
-	cerr << "Will only process EIDs in file specified by option -n\n";
-	readEIDFile (EID_fp, eid_list);
-	EID_fp.close ();
-      }
+    {
+      cerr << "Will only process EIDs in file specified by option -n\n";
+      readEIDFile (EID_fp, eid_list);
+      EID_fp.close ();
+    }
 
     gma.setPrintFlag (PRINT_WITH_DIFFS);
 
     if (Input_Format == CELERA_MSG_INPUT)
+    {
+      cerr << "Processing ";
+      if (Do_Contig_Messages)
+        cerr << "contig";
+      else
       {
-	cerr << "Processing ";
-	if (Do_Contig_Messages)
-	  cerr << "contig";
-	else
-	  {
-	    cerr << "unitig";
-	    label = "Unitig";
-	  }
-	cerr << " messages from file " << Tig_File_Name << endl;
+        cerr << "unitig";
+        label = "Unitig";
+      }
+      cerr << " messages from file " << Tig_File_Name << endl;
 
-	input_fp = File_Open (Tig_File_Name.c_str (), "r");
-	read_bank.open (Bank_Name, B_READ);
+      input_fp = File_Open (Tig_File_Name.c_str (), "r");
+      read_bank.open (Bank_Name, B_READ);
 
-	unitig_ct = contig_ct = 0;
-	while (msg.read (input_fp))
-	  {
-	    if (msg.getMsgType () == IUM_MSG && Do_Unitig_Messages)
-	      {
-		cerr << "Process unitig " << msg.getAccession () << endl;
-		Get_Strings_And_Offsets
-		  (string_list, qual_list, clr_list, tag_list, offset,
-		   msg, read_bank);
+      unitig_ct = contig_ct = 0;
+      while (msg.read (input_fp))
+      {
+        if (msg.getMsgType () == IUM_MSG && Do_Unitig_Messages)
+        {
+          cerr << "Process unitig " << msg.getAccession () << endl;
+          Get_Strings_And_Offsets
+            (string_list, qual_list, clr_list, tag_list, offset,
+            msg, read_bank);
 
-		try
-		{
-		  cid = msg.getAccession ();
-		  Multi_Align
-                    (cid, string_list, offset, Align_Wiggle, Error_Rate,
-                     Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
-		}
-		catch (AlignmentException_t)
-		{
-		  cerr << "Failed on unitig " << msg.getAccession () << endl;
-		  throw;
-		}
+          try
+          {
+            cid = msg.getAccession ();
+            Multi_Align
+              (cid, string_list, offset, Align_Wiggle, Error_Rate,
+               Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
+          }
+          catch (AlignmentException_t)
+          {
+            cerr << "Failed on unitig " << msg.getAccession () << endl;
+            throw;
+          }
 
-		Permute (qual_list, ref);
-		Permute (clr_list, ref);
+          Permute (qual_list, ref);
+          Permute (clr_list, ref);
 
-		gma.Set_Flipped (clr_list);
-		gma.Get_Positions (pos);
-		gma.Extract_IMP_Dels (del_list);
-		msg.Update_IMPs (pos, ref, del_list);
-                if (Allow_Expels)
-                  msg . Remove_Empty_IMPs ();
+          gma.Set_Flipped (clr_list);
+          gma.Get_Positions (pos);
+          gma.Extract_IMP_Dels (del_list);
+          msg.Update_IMPs (pos, ref, del_list);
+          if (Allow_Expels)
+            msg . Remove_Empty_IMPs ();
 
-		Output_Unit (label, msg.getAccession (),
-			     msg.getNumFrags (), gma, msg, string_list,
-			     qual_list, clr_list, tag_list, contig_bank);
+          Output_Unit (label, msg.getAccession (),
+            msg.getNumFrags (), gma, msg, string_list,
+            qual_list, clr_list, tag_list, contig_bank);
 
-		unitig_ct++;
-	      }
-	    if (msg.getMsgType () == ICM_MSG && Do_Contig_Messages)
-	      {
-		contig_ct++;
-	      }
-	  }
-	if (Do_Unitig_Messages)
-	  cerr << unitig_ct << " IUM messages processed" << endl;
-	if (Do_Contig_Messages)
-	  cerr << contig_ct << " ICM messages processed" << endl;
-      }				// celera input
+            unitig_ct++;
+        }
+        if (msg.getMsgType () == ICM_MSG && Do_Contig_Messages)
+        {
+          contig_ct++;
+        }
+      }
+      if (Do_Unitig_Messages)
+        cerr << unitig_ct << " IUM messages processed" << endl;
+      if (Do_Contig_Messages)
+        cerr << contig_ct << " ICM messages processed" << endl;
+    } // end of celera input
     else if (Input_Format == BANK_INPUT)
+    {
+      ID_t layout_id = 0; // we'll have to number the contigs ourselves
+      Layout_t layout;
+      vector < Ordered_Range_t > pos_list;
+      vector < int >frg_id_list;
+      list < string >::iterator eidi = eid_list.begin ();
+      list < ID_t >::iterator iidi = iid_list.begin ();
+
+      cerr << "Input is being read from the bank " << endl;
+
+      read_bank.open (Bank_Name, B_READ);
+
+      layout_bank.open (Bank_Name);
+
+      msg.setType (IUM_MSG);
+      msg.setStatus (UNASSIGNED_UNITIG);
+
+      while (true)
       {
-	ID_t layout_id = 0;	// we'll have to number the contigs ourselves
-	Layout_t layout;
-	vector < Ordered_Range_t > pos_list;
-	vector < int >frg_id_list;
-	list < string >::iterator eidi = eid_list.begin ();
-	list < ID_t >::iterator iidi = iid_list.begin ();
+        char sid[256];
 
-	cerr << "Input is being read from the bank " << endl;
+        if (byIID)
+        {
+          if (iidi == iid_list.end ())
+          {
+            break;
+          }
 
-	read_bank.open (Bank_Name, B_READ);
+          if (!layout_bank.existsIID (*iidi))
+          {
+            cerr << "IID " << *iidi << " does not exist *** !\n";
+            exit (1);
+          }
+          layout_bank.fetch (*iidi, layout);
+          iidi++;
+        }
+        else if (byEID)
+        {
+          if (eidi == eid_list.end ())
+            break;
+          if (!layout_bank.existsEID (*eidi))
+          {
+            cerr << "EID " << *eidi << " does not exist!\n";
+            exit (1);
+          }
+          layout_bank.fetch (*eidi, layout);
+          eidi++;
+        }
+        else
+        {
+          layout_bank >> layout;
+          if (layout_bank.eof ())
+            break;
+        }
 
-	layout_bank.open (Bank_Name);
+        sprintf (sid, "%ld", ++layout_id);
+        cid = string (sid);
+        ID_t lid = layout.getIID ();
+        if (lid == 0)
+        {
+          lid = layout_id;
+        }
 
-	msg.setType (IUM_MSG);
-	msg.setStatus (UNASSIGNED_UNITIG);
+        if (Verbose >= 2)
+          cerr << "Processing layout: " << cid << endl;
 
-	while (true)
-	  {
-	    char sid[256];
+        Get_Strings_And_Offsets
+          (string_list, qual_list, clr_list, tag_list, offset,
+           layout, frg_id_list, pos_list, read_bank);
 
-	    if (byIID)
-	      {
-		if (iidi == iid_list.end ())
-		{
-		  break;
-		}
+        msg.setAccession (cid);
+        msg.setIMPs (frg_id_list, pos_list);
 
-		if (!layout_bank.existsIID (*iidi))
-		  {
-		    cerr << "IID " << *iidi << " does not exist *** !\n";
-		    exit (1);
-		  }
-		layout_bank.fetch (*iidi, layout);
-		iidi++;
-	      }
-	    else if (byEID)
-	      {
-		if (eidi == eid_list.end ())
-		  break;
-		if (!layout_bank.existsEID (*eidi))
-		  {
-		    cerr << "EID " << *eidi << " does not exist!\n";
-		    exit (1);
-		  }
-		layout_bank.fetch (*eidi, layout);
-		eidi++;
-	      }
-	    else
-	      {
-		layout_bank >> layout;
-		if (layout_bank.eof ())
-		  break;
-	      }
+        // cerr << "got this far " << cid << endl;
+        try
+        {
+          Multi_Align
+            (cid, string_list, offset, Align_Wiggle, Error_Rate,
+             Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
+        }
+        catch (...)
+        {
+          cerr << "Failed on " << lid << "\'th layout/contig" << endl;
+          throw;
+        }
 
-	    sprintf (sid, "%ld", ++layout_id);
-	    cid = string (sid);
-	    ID_t lid = layout.getIID ();
-	    if (lid == 0)
-	      {
-		lid = layout_id;
-	      }
+        Permute (qual_list, ref);
+        Permute (clr_list, ref);
+        Permute (frg_id_list, ref);
 
-	    if (Verbose >= 2)
-	      cerr << "Processing layout: " << cid << endl;
+        gma.Set_Flipped (clr_list);
+        gma.Get_Positions (pos);
+        gma.Extract_IMP_Dels (del_list);
+        msg.Update_IMPs (pos, ref, del_list);
+        if (Allow_Expels)
+          msg . Remove_Empty_IMPs ();
 
-	    Get_Strings_And_Offsets
-	      (string_list, qual_list, clr_list, tag_list, offset,
-	       layout, frg_id_list, pos_list, read_bank);
+        gma.Set_Consensus_And_Qual (string_list, qual_list);
+        msg.setSequence (gma.getConsensusString ());
+        msg.setQuality (gma.getQualityString ());
+        msg.setUniLen (strlen (gma.getConsensusString ()));
 
-	    msg.setAccession (cid);
-	    msg.setIMPs (frg_id_list, pos_list);
+        Output_Unit (label, layout.getEID (),
+          msg.getNumFrags (), gma, msg, string_list,
+          qual_list, clr_list, tag_list, contig_bank);
 
-	    //              cerr << "got this far " << cid << endl;
-	    try
-	    {
-	      Multi_Align
+        // Cleanup before next layout to make valgrind happy on last layout
+        // Otherwise happens in Get_Strings_And_Offsets
+        {
+          int i, n;
+          n = string_list.size ();
+          for (i = 0; i < n; i++)
+          free (string_list[i]);
+          string_list.clear ();
+
+          n = qual_list.size ();
+          for (i = 0; i < n; i++)
+            free (qual_list[i]);
+          qual_list.clear ();
+
+          n = tag_list.size ();
+          for (i = 0; i < n; i++)
+            free (tag_list[i]);
+          tag_list.clear ();
+        }
+
+        contig_ct++;
+      }                  // while layout
+      cerr << "Processed " << layout_id << " layouts" << endl;
+    } // end of amos bank processing
+    else if (Input_Format == SIMPLE_CONTIG_INPUT
+          || Input_Format == PARTIAL_READ_INPUT)
+    {
+      char line[MAX_LINE];
+      vector < Ordered_Range_t > pos_list, seg_list;
+      vector < int >frg_id_list;
+      int fid;
+
+      input_fp = File_Open (Tig_File_Name.c_str (), "r");
+      read_bank.open (Bank_Name, B_READ);
+
+      msg.setType (IUM_MSG);
+      msg.setStatus (UNASSIGNED_UNITIG);
+
+      contig_ct = 0;
+
+      while (fgets (line, MAX_LINE, input_fp) != NULL)
+      {
+        char *p;
+
+        p = strtok (line, " \t\n");
+        if (p == NULL)
+          continue;
+
+        if (strcmp (p, "C") == 0) // line starts with 'C'
+        {
+          if (frg_id_list.size () > 0)
+          {
+            Get_Strings_And_Offsets (string_list, qual_list, clr_list,
+                                     tag_list, offset, frg_id_list,
+                                     pos_list, seg_list, read_bank);
+
+            msg.setAccession (cid);
+            msg.setIMPs (frg_id_list, pos_list);
+            try
+            {
+              Multi_Align
                 (cid, string_list, offset, Align_Wiggle, Error_Rate,
                  Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
-	    }
-	    catch (...)
-	    {
-	      cerr << "Failed on " << lid << "\'th layout/contig" << endl;
-	      throw;
-	    }
+            }
+            catch (AlignmentException_t & e)
+            {
+              int b = e.b_id ();
 
-	    Permute (qual_list, ref);
-	    Permute (clr_list, ref);
-	    Permute (frg_id_list, ref);
+              cerr << "Failed on contig " << cid << endl;
+              cerr << "Could not align string "
+                << tag_list[b] << " subscript " << b << endl;
+              throw;
+            }
+            Permute (qual_list, ref);
+            Permute (clr_list, ref);
+            Permute (frg_id_list, ref);
 
-	    gma.Set_Flipped (clr_list);
-	    gma.Get_Positions (pos);
-	    gma.Extract_IMP_Dels (del_list);
-	    msg.Update_IMPs (pos, ref, del_list);
+            gma.Set_Flipped (clr_list);
+            gma.Get_Positions (pos);
+            gma.Extract_IMP_Dels (del_list);
+            msg.Update_IMPs (pos, ref, del_list);
             if (Allow_Expels)
               msg . Remove_Empty_IMPs ();
 
-	    gma.Set_Consensus_And_Qual (string_list, qual_list);
-	    msg.setSequence (gma.getConsensusString ());
-	    msg.setQuality (gma.getQualityString ());
-	    msg.setUniLen (strlen (gma.getConsensusString ()));
+            gma.Set_Consensus_And_Qual (string_list, qual_list);
+            msg.setSequence (gma.getConsensusString ());
+            msg.setQuality (gma.getQualityString ());
+            msg.setUniLen (strlen (gma.getConsensusString ()));
 
-	    Output_Unit (label, layout.getEID (),
-			 msg.getNumFrags (), gma, msg, string_list,
-			 qual_list, clr_list, tag_list, contig_bank);
+            Output_Unit (label, msg.getAccession (),
+                         msg.getNumFrags (), gma, msg, string_list,
+                         qual_list, clr_list, tag_list, contig_bank);
 
-	    // Cleanup before next layout to make valgrind happy on last layout
-	    // Otherwise happens in Get_Strings_And_Offsets
-	    {
-	      int i, n;
-	      n = string_list.size ();
-	      for (i = 0; i < n; i++)
-		free (string_list[i]);
-	      string_list.clear ();
+            contig_ct++;
+          }
 
-	      n = qual_list.size ();
-	      for (i = 0; i < n; i++)
-		free (qual_list[i]);
-	      qual_list.clear ();
+          frg_id_list.clear ();
+          pos_list.clear ();
+          seg_list.clear ();
 
-	      n = tag_list.size ();
-	      for (i = 0; i < n; i++)
-		free (tag_list[i]);
-	      tag_list.clear ();
-	    }
+          p = strtok (NULL, " \t\n");
+          cid = p;
+        } // end of if line starts with 'C'
+        else
+        {
+          Ordered_Range_t ps;
+          int a, b;
 
-	    contig_ct++;
-	  }			// while layout
-	cerr << "Processed " << layout_id << " layouts" << endl;
-      }				// amos bank input
-    else if (Input_Format == SIMPLE_CONTIG_INPUT
-	     || Input_Format == PARTIAL_READ_INPUT)
+          fid = strtol (p, NULL, 10);
+          p = strtok (NULL, " \t\n");
+          a = strtol (p, NULL, 10);
+          p = strtok (NULL, " \t\n");
+          b = strtol (p, NULL, 10);
+          ps.setRange (a, b);
+          frg_id_list.push_back (fid);
+          pos_list.push_back (ps);
+          if (Input_Format == PARTIAL_READ_INPUT)
+          {
+            p = strtok (NULL, " \t\n");
+            a = strtol (p, NULL, 10);
+            p = strtok (NULL, " \t\n");
+            b = strtol (p, NULL, 10);
+            ps.setRange (a, b);
+            seg_list.push_back (ps);
+          }
+        }
+      } // end of while fgets
+
+      // Process the last contig here
+      if (frg_id_list.size () > 0)
       {
-	char line[MAX_LINE];
-	vector < Ordered_Range_t > pos_list, seg_list;
-	vector < int >frg_id_list;
-	int fid;
+        Get_Strings_And_Offsets (string_list, qual_list, clr_list,
+                                 tag_list, offset, frg_id_list, pos_list,
+                                 seg_list, read_bank);
 
-	input_fp = File_Open (Tig_File_Name.c_str (), "r");
-	read_bank.open (Bank_Name, B_READ);
+        if (Extra_fp != NULL)
+        {
+          fprintf (stderr,
+                   "Fasta sequence option not yet available--Ignored\n");
+          fclose (Extra_fp);
+        }
 
-	msg.setType (IUM_MSG);
-	msg.setStatus (UNASSIGNED_UNITIG);
+        msg.setAccession (cid);
+        msg.setIMPs (frg_id_list, pos_list);
+        try
+        {
+          Multi_Align
+            (cid, string_list, offset, Align_Wiggle, Error_Rate, Min_Overlap,
+             gma, &ref, &tag_list, Allow_Expels);
+        }
+        catch (AlignmentException_t & e)
+        {
+          int b = e.b_id ();
 
-	contig_ct = 0;
+          cerr << "Failed on contig " << cid << endl;
+          cerr << "Could not align string "
+            << tag_list[b] << " subscript " << b << endl;
+          throw;
+        }
 
-	while (fgets (line, MAX_LINE, input_fp) != NULL)
-	  {
-	    char *p;
+        Permute (qual_list, ref);
+        Permute (clr_list, ref);
+        Permute (frg_id_list, ref);
 
-	    p = strtok (line, " \t\n");
-	    if (p == NULL)
-	      continue;
+        gma.Set_Flipped (clr_list);
+        gma.Get_Positions (pos);
+        gma.Extract_IMP_Dels (del_list);
+        msg.Update_IMPs (pos, ref, del_list);
+        if (Allow_Expels)
+          msg . Remove_Empty_IMPs ();
 
-	    if (strcmp (p, "C") == 0)
-	      {
-		if (frg_id_list.size () > 0)
-		  {
-		    Get_Strings_And_Offsets (string_list, qual_list, clr_list,
-					     tag_list, offset, frg_id_list,
-					     pos_list, seg_list, read_bank);
+        gma.Set_Consensus_And_Qual (string_list, qual_list);
+        msg.setSequence (gma.getConsensusString ());
+        msg.setQuality (gma.getQualityString ());
+        msg.setUniLen (strlen (gma.getConsensusString ()));
 
-		    msg.setAccession (cid);
-		    msg.setIMPs (frg_id_list, pos_list);
-		    try
-		    {
-		      Multi_Align
-                        (cid, string_list, offset, Align_Wiggle, Error_Rate,
-                         Min_Overlap, gma, &ref, &tag_list, Allow_Expels);
-		    }
-		    catch (AlignmentException_t & e)
-		    {
-		      int b = e.b_id ();
+        Output_Unit (label, msg.getAccession (),
+                     msg.getNumFrags (), gma, msg, string_list,
+                     qual_list, clr_list, tag_list, contig_bank);
 
-		      cerr << "Failed on contig " << cid << endl;
-		      cerr << "Could not align string "
-			<< tag_list[b] << " subscript " << b << endl;
-		      throw;
-		    }
-		    Permute (qual_list, ref);
-		    Permute (clr_list, ref);
-		    Permute (frg_id_list, ref);
+        contig_ct++;
+      } // end of if frg_id_list.size > 0
 
-		    gma.Set_Flipped (clr_list);
-		    gma.Get_Positions (pos);
-		    gma.Extract_IMP_Dels (del_list);
-		    msg.Update_IMPs (pos, ref, del_list);
-                    if (Allow_Expels)
-                      msg . Remove_Empty_IMPs ();
-
-		    gma.Set_Consensus_And_Qual (string_list, qual_list);
-		    msg.setSequence (gma.getConsensusString ());
-		    msg.setQuality (gma.getQualityString ());
-		    msg.setUniLen (strlen (gma.getConsensusString ()));
-
-		    Output_Unit (label, msg.getAccession (),
-				 msg.getNumFrags (), gma, msg, string_list,
-				 qual_list, clr_list, tag_list, contig_bank);
-
-		    contig_ct++;
-		  }
-
-		frg_id_list.clear ();
-		pos_list.clear ();
-		seg_list.clear ();
-
-		p = strtok (NULL, " \t\n");
-		cid = p;
-	      }			// if line starts with 'C'
-	    else
-	      {
-		Ordered_Range_t ps;
-		int a, b;
-
-		fid = strtol (p, NULL, 10);
-		p = strtok (NULL, " \t\n");
-		a = strtol (p, NULL, 10);
-		p = strtok (NULL, " \t\n");
-		b = strtol (p, NULL, 10);
-		ps.setRange (a, b);
-		frg_id_list.push_back (fid);
-		pos_list.push_back (ps);
-		if (Input_Format == PARTIAL_READ_INPUT)
-		  {
-		    p = strtok (NULL, " \t\n");
-		    a = strtol (p, NULL, 10);
-		    p = strtok (NULL, " \t\n");
-		    b = strtol (p, NULL, 10);
-		    ps.setRange (a, b);
-		    seg_list.push_back (ps);
-		  }
-	      }
-	  }			// while fgets
-
-	// Process the last contig here
-	if (frg_id_list.size () > 0)
-	  {
-	    Get_Strings_And_Offsets (string_list, qual_list, clr_list,
-				     tag_list, offset, frg_id_list, pos_list,
-				     seg_list, read_bank);
-
-	    if (Extra_fp != NULL)
-	      {
-		fprintf (stderr,
-			 "Fasta sequence option not yet available--Ignored\n");
-		fclose (Extra_fp);
-	      }
-
-	    msg.setAccession (cid);
-	    msg.setIMPs (frg_id_list, pos_list);
-	    try
-	    {
-	      Multi_Align
-                (cid, string_list, offset, Align_Wiggle, Error_Rate, Min_Overlap,
-                 gma, &ref, &tag_list, Allow_Expels);
-	    }
-	    catch (AlignmentException_t & e)
-	    {
-	      int b = e.b_id ();
-
-	      cerr << "Failed on contig " << cid << endl;
-	      cerr << "Could not align string "
-		<< tag_list[b] << " subscript " << b << endl;
-	      throw;
-	    }
-
-	    Permute (qual_list, ref);
-	    Permute (clr_list, ref);
-	    Permute (frg_id_list, ref);
-
-	    gma.Set_Flipped (clr_list);
-	    gma.Get_Positions (pos);
-	    gma.Extract_IMP_Dels (del_list);
-	    msg.Update_IMPs (pos, ref, del_list);
-            if (Allow_Expels)
-              msg . Remove_Empty_IMPs ();
-
-	    gma.Set_Consensus_And_Qual (string_list, qual_list);
-	    msg.setSequence (gma.getConsensusString ());
-	    msg.setQuality (gma.getQualityString ());
-	    msg.setUniLen (strlen (gma.getConsensusString ()));
-
-	    Output_Unit (label, msg.getAccession (),
-			 msg.getNumFrags (), gma, msg, string_list,
-			 qual_list, clr_list, tag_list, contig_bank);
-
-	    contig_ct++;
-	  }			// if frg_id_list.size > 0
-
-	cerr << "Processed " << contig_ct << " contigs" << endl;
-      }				// if PARTIAL_READ_INPUT || SIMPLE_CONTIG_INPUT
+      cerr << "Processed " << contig_ct << " contigs" << endl;
+    } // end of if Input_Format == PARTIAL_READ_INPUT || SIMPLE_CONTIG_INPUT
 
     if (Input_Format != BANK_INPUT)
       fclose (input_fp);
@@ -637,64 +637,63 @@ static void Get_Strings_And_Offsets
   prev_offset = 0;
   n = msg.getNumFrags ();
   for (i = 0; i < n; i++)
+  {
+    char *tmp, tag_buff[100];
+    string seq;
+    string qual;
+    Range_t clear;
+    int this_offset;
+    int a, b, j, len, qlen;
+
+    position = frgs[i].getPosition ();
+    a = position.getBegin ();
+    b = position.getEnd ();
+
+    read_bank.fetch (frgs[i].getId (), read);
+
+    if (Use_SeqNames)
+      tag_list.push_back (strdup (read.getEID ().c_str ()));
+    else
     {
-      char *tmp, tag_buff[100];
-      string seq;
-      string qual;
-      Range_t clear;
-      int this_offset;
-      int a, b, j, len, qlen;
-
-      position = frgs[i].getPosition ();
-      a = position.getBegin ();
-      b = position.getEnd ();
-
-      read_bank.fetch (frgs[i].getId (), read);
-
-      if (Use_SeqNames)
-	tag_list.push_back (strdup (read.getEID ().c_str ()));
-      else
-	{
-	  sprintf (tag_buff, "%u", read.getIID ());
-	  tag_list.push_back (strdup (tag_buff));
-	}
-
-      clear = read.getClearRange ();
-      if (Verbose > 2)
-	cerr << read;
-      seq = read.getSeqString (clear);
-      qual = read.getQualString (clear);
-      if (b < a)
-	{
-	  Reverse_Complement (seq);
-	  reverse (qual.begin (), qual.end ());
-	  clear.swap ();
-	}
-      clr_list.push_back (clear);
-
-      len = seq.length ();
-      tmp = strdup (seq.c_str ());
-      for (j = 0; j < len; j++)
-	tmp[j] = tolower (tmp[j]);
-      s.push_back (tmp);
-
-      qlen = qual.length ();
-      if (len != qlen)
-	{
-	  sprintf
-	    (Clean_Exit_Msg_Line,
-	     "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
-	     len, qlen, read.getIID ());
-	  Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-	}
-      tmp = strdup (qual.c_str ());
-      q.push_back (tmp);
-
-      this_offset = Min (a, b);
-      offset.push_back (this_offset - prev_offset);
-      prev_offset = this_offset;
+      sprintf (tag_buff, "%u", read.getIID ());
+      tag_list.push_back (strdup (tag_buff));
     }
 
+    clear = read.getClearRange ();
+    if (Verbose > 2)
+      cerr << read;
+    seq = read.getSeqString (clear);
+    qual = read.getQualString (clear);
+    if (b < a)
+    {
+      Reverse_Complement (seq);
+      reverse (qual.begin (), qual.end ());
+      clear.swap ();
+    }
+    clr_list.push_back (clear);
+
+    len = seq.length ();
+    tmp = strdup (seq.c_str ());
+    for (j = 0; j < len; j++)
+      tmp[j] = tolower (tmp[j]);
+    s.push_back (tmp);
+
+    qlen = qual.length ();
+    if (len != qlen)
+    {
+      sprintf
+        (Clean_Exit_Msg_Line,
+         "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+         len, qlen, read.getIID ());
+      Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+    }
+    tmp = strdup (qual.c_str ());
+    q.push_back (tmp);
+
+    this_offset = Min (a, b);
+    offset.push_back (this_offset - prev_offset);
+    prev_offset = this_offset;
+  }
 
   return;
 }
@@ -742,85 +741,85 @@ static void Get_Strings_And_Offsets
 
   Sort_By_Low_Pos (fid, pos, seg);
   if (Verbose > 2)
-    {
-      int i, n;
+  {
+    int i, n;
 
-      fprintf (stderr, "After Sort_By_Low_Pos:\n");
-      n = fid.size ();
-      for (i = 0; i < n; i++)
-	fprintf (stderr, "%8d  %6d %6d\n", fid[i],
-		 pos[i].getBegin (), pos[i].getEnd ());
-    }
+    fprintf (stderr, "After Sort_By_Low_Pos:\n");
+    n = fid.size ();
+    for (i = 0; i < n; i++)
+      fprintf (stderr, "%8d  %6d %6d\n", fid[i],
+               pos[i].getBegin (), pos[i].getEnd ());
+  }
 
   prev_offset = 0;
   n = fid.size ();
   for (i = 0; i < n; i++)
+  {
+    char *tmp, tag_buff[100];
+    string seq;
+    string qual;
+    Range_t clear;
+    int this_offset;
+    int a, b, j, len, qlen;
+
+    a = pos[i].getBegin ();
+    b = pos[i].getEnd ();
+
+    read_bank.fetch (fid[i], read);
+
+    if (Use_SeqNames)
+      tag_list.push_back (strdup (read.getEID ().c_str ()));
+    else
     {
-      char *tmp, tag_buff[100];
-      string seq;
-      string qual;
-      Range_t clear;
-      int this_offset;
-      int a, b, j, len, qlen;
-
-      a = pos[i].getBegin ();
-      b = pos[i].getEnd ();
-
-      read_bank.fetch (fid[i], read);
-
-      if (Use_SeqNames)
-	tag_list.push_back (strdup (read.getEID ().c_str ()));
-      else
-	{
-	  sprintf (tag_buff, "%u", read.getIID ());
-	  tag_list.push_back (strdup (tag_buff));
-	}
-
-      clear = read.getClearRange ();
-      if (Verbose > 2)
-	cerr << read;
-      seq = read.getSeqString (clear);
-      qual = read.getQualString (clear);
-      if (partial_reads)
-	{
-	  int lo, hi;
-
-	  lo = seg[i].getBegin ();
-	  hi = seg[i].getEnd ();
-	  seq = seq.substr (lo, hi - lo);
-	  qual = qual.substr (lo, hi - lo);
-	}
-      if (b < a)
-	{
-	  Reverse_Complement (seq);
-	  reverse (qual.begin (), qual.end ());
-	  clear.swap ();
-	}
-
-      clr_list.push_back (clear);
-
-      len = seq.length ();
-      tmp = strdup (seq.c_str ());
-      for (j = 0; j < len; j++)
-	tmp[j] = tolower (tmp[j]);
-      s.push_back (tmp);
-
-      qlen = qual.length ();
-      if (len != qlen)
-	{
-	  sprintf
-	    (Clean_Exit_Msg_Line,
-	     "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
-	     len, qlen, fid[i]);
-	  Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-	}
-      tmp = strdup (qual.c_str ());
-      q.push_back (tmp);
-
-      this_offset = Min (a, b);
-      offset.push_back (this_offset - prev_offset);
-      prev_offset = this_offset;
+      sprintf (tag_buff, "%u", read.getIID ());
+      tag_list.push_back (strdup (tag_buff));
     }
+
+    clear = read.getClearRange ();
+    if (Verbose > 2)
+      cerr << read;
+    seq = read.getSeqString (clear);
+    qual = read.getQualString (clear);
+    if (partial_reads)
+    {
+      int lo, hi;
+
+      lo = seg[i].getBegin ();
+      hi = seg[i].getEnd ();
+      seq = seq.substr (lo, hi - lo);
+      qual = qual.substr (lo, hi - lo);
+    }
+    if (b < a)
+    {
+      Reverse_Complement (seq);
+      reverse (qual.begin (), qual.end ());
+      clear.swap ();
+    }
+
+    clr_list.push_back (clear);
+
+    len = seq.length ();
+    tmp = strdup (seq.c_str ());
+    for (j = 0; j < len; j++)
+      tmp[j] = tolower (tmp[j]);
+    s.push_back (tmp);
+
+    qlen = qual.length ();
+    if (len != qlen)
+    {
+      sprintf
+        (Clean_Exit_Msg_Line,
+         "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+         len, qlen, fid[i]);
+      Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+    }
+    tmp = strdup (qual.c_str ());
+    q.push_back (tmp);
+
+    this_offset = Min (a, b);
+    offset.push_back (this_offset - prev_offset);
+    prev_offset = this_offset;
+  }
 
   return;
 }
@@ -880,108 +879,106 @@ static void Get_Strings_And_Offsets
 
   sort (layout.getTiling ().begin (), layout.getTiling ().end (), cmpTile ());
 
-
-
   prev_offset = 0;
 
   for (vector < Tile_t >::iterator ti = layout.getTiling ().begin ();
        ti != layout.getTiling ().end (); ti++)
+  {
+    char *tmp, tag_buff[100];
+    string seq;
+    string qual;
+    Range_t clear;
+    int this_offset;
+    int a, b, j, len, qlen;
+
+    if (ti->range.getBegin () < ti->range.getEnd ())
+    { // forward match
+      a = ti->offset;
+      b = ti->offset + ti->range.getLength ();
+    }
+    else
     {
-      char *tmp, tag_buff[100];
-      string seq;
-      string qual;
-      Range_t clear;
-      int this_offset;
-      int a, b, j, len, qlen;
-
-      if (ti->range.getBegin () < ti->range.getEnd ())
-	{			// forward match
-	  a = ti->offset;
-	  b = ti->offset + ti->range.getLength ();
-	}
-      else
-	{
-	  a = ti->offset + ti->range.getLength ();
-	  b = ti->offset;
-	}
-
-      pos.push_back (Ordered_Range_t (a, b));
-      fid.push_back (ti->source);
-
-
-      read_bank.fetch (ti->source, read);
-
-      if (Verbose > 3)
-	{
-	  cerr << "Loading e" << read.getEID () << " i" << read.
-	    getIID () << "... ";
-	}
-
-      if (Use_SeqNames)
-	tag_list.push_back (strdup (read.getEID ().c_str ()));
-      else
-	{
-	  sprintf (tag_buff, "%u", read.getIID ());
-	  tag_list.push_back (strdup (tag_buff));
-	}
-
-      if (USE_LayoutClear)
-	{
-	  clear = ti->range;
-	  if (clear.isReverse ())
-	    {
-	      clear.swap ();
-	    }
-	}
-      else
-	{
-	  // Grab clear range from read bank
-	  clear = read.getClearRange ();
-	}
-
-      seq = read.getSeqString (clear);
-      qual = read.getQualString (clear);
-
-      if (b < a)
-	{
-	  Reverse_Complement (seq);
-	  reverse (qual.begin (), qual.end ());
-	  clear.swap ();
-	}
-
-      clr_list.push_back (clear);
-
-      len = seq.length ();
-      tmp = strdup (seq.c_str ());
-      for (j = 0; j < len; j++)
-	tmp[j] = tolower (tmp[j]);
-      s.push_back (tmp);
-
-      qlen = qual.length ();
-      if (len != qlen)
-	{
-	  sprintf
-	    (Clean_Exit_Msg_Line,
-	     "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
-	     len, qlen, ti->source);
-	  Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-	}
-      tmp = strdup (qual.c_str ());
-      q.push_back (tmp);
-
-      this_offset = Min (a, b);
-      offset.push_back (this_offset - prev_offset);
-
-      prev_offset = this_offset;
-
-      if (Verbose > 3)
-	{
-	  cerr << "ok." << endl;
-	}
+      a = ti->offset + ti->range.getLength ();
+      b = ti->offset;
     }
 
+    pos.push_back (Ordered_Range_t (a, b));
+    fid.push_back (ti->source);
+
+
+    read_bank.fetch (ti->source, read);
+
+    if (Verbose > 3)
+    {
+      cerr << "Loading e" << read.getEID () << " i" << read.
+        getIID () << "... ";
+    }
+
+    if (Use_SeqNames)
+      tag_list.push_back (strdup (read.getEID ().c_str ()));
+    else
+    {
+      sprintf (tag_buff, "%u", read.getIID ());
+      tag_list.push_back (strdup (tag_buff));
+    }
+
+    if (USE_LayoutClear)
+    {
+      clear = ti->range;
+      if (clear.isReverse ())
+      {
+        clear.swap ();
+      }
+    }
+    else
+    {
+      // Grab clear range from read bank
+      clear = read.getClearRange ();
+    }
+
+    seq = read.getSeqString (clear);
+    qual = read.getQualString (clear);
+
+    if (b < a)
+    {
+      Reverse_Complement (seq);
+      reverse (qual.begin (), qual.end ());
+      clear.swap ();
+    }
+
+    clr_list.push_back (clear);
+
+    len = seq.length ();
+    tmp = strdup (seq.c_str ());
+    for (j = 0; j < len; j++)
+      tmp[j] = tolower (tmp[j]);
+    s.push_back (tmp);
+
+    qlen = qual.length ();
+    if (len != qlen)
+    {
+      sprintf
+        (Clean_Exit_Msg_Line,
+         "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+         len, qlen, ti->source);
+      Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+    }
+    tmp = strdup (qual.c_str ());
+    q.push_back (tmp);
+
+    this_offset = Min (a, b);
+    offset.push_back (this_offset - prev_offset);
+
+    prev_offset = this_offset;
+
+    if (Verbose > 3)
+    {
+      cerr << "ok." << endl;
+    }
+  }
+
   return;
-}				// Get_Strings_And_Offsets
+} // end of Get_Strings_And_Offsets
 
 
 
@@ -1005,14 +1002,14 @@ static void Output_Unit
 
   if (Allow_Expels)
     expel_ct = gma . Print_Empty_Aligns
-      (Expel_fp, tag_list, msg . getAccession () . c_str ());
+    (Expel_fp, tag_list, msg . getAccession () . c_str ());
 
   act.setEID (id);
   switch (Output_Format)
-    {
+  {
     case MULTI_ALIGN_OUTPUT:
       cout << endl << endl << label << " #" << msg.getAccession ()
-	<< "   " << num_reads << " reads" << endl;
+        << "   " << num_reads << " reads" << endl;
       gma.Consensus_To_Lower ();
       gma.Print (stdout, string_list, 60, &tag_list);
       break;
@@ -1029,7 +1026,7 @@ static void Output_Unit
       break;
     case TIGR_CONTIG_OUTPUT:
       gma.TA_Print (stdout, string_list, clr_list, 60, &tag_list,
-		    msg.getAccession ());
+                    msg.getAccession ());
       break;
     case AMOS_OUTPUT:
       gma.Make_AMOS_Contig (clr_list, tag_list, act);
@@ -1042,10 +1039,10 @@ static void Output_Unit
       break;
     default:
       sprintf
-	(Clean_Exit_Msg_Line,
-	 "ERROR:  Bad output type = %d\n", int (Output_Format));
+        (Clean_Exit_Msg_Line,
+         "ERROR:  Bad output type = %d\n", int (Output_Format));
       Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-    }
+  }
 
   return;
 }
@@ -1062,102 +1059,102 @@ static void Parse_Command_Line (int argc, char *argv[])
   optarg = NULL;
 
   while (!errflg
-	 && ((ch = getopt (argc, argv, "aAbBcCe:E:fhi:Ln:o:PsSTuv:w:x:")) != EOF))
+      && ((ch = getopt (argc, argv, "aAbBcCe:E:fhi:Ln:o:PsSTuv:w:x:")) != EOF))
     switch (ch)
-      {
+    {
       case 'a':
-	Output_Format = MULTI_ALIGN_OUTPUT;
-	break;
+        Output_Format = MULTI_ALIGN_OUTPUT;
+        break;
 
       case 'A':
-	Output_Format = AMOS_OUTPUT;
-	break;
+        Output_Format = AMOS_OUTPUT;
+        break;
 
       case 'b':
-	Input_Format = BANK_INPUT;
-	break;
+        Input_Format = BANK_INPUT;
+        break;
 
       case 'B':
-	Output_Format = BANK_OUTPUT;
-	break;
+        Output_Format = BANK_OUTPUT;
+        break;
 
       case 'c':
-	Do_Contig_Messages = true;
-	Do_Unitig_Messages = false;
-	break;
+        Do_Contig_Messages = true;
+        Do_Unitig_Messages = false;
+        break;
 
       case 'C':
-	Input_Format = CELERA_MSG_INPUT;
-	break;
+        Input_Format = CELERA_MSG_INPUT;
+        break;
 
       case 'e':
-	Error_Rate = strtod (optarg, NULL);
-	break;
+        Error_Rate = strtod (optarg, NULL);
+        break;
 
       case 'E':
-	Extra_fp = File_Open (optarg, "r", __FILE__, __LINE__);
-	break;
+        Extra_fp = File_Open (optarg, "r", __FILE__, __LINE__);
+        break;
 
       case 'f':
-	Output_Format = ONLY_FASTA_OUTPUT;
-	break;
+        Output_Format = ONLY_FASTA_OUTPUT;
+        break;
 
       case 'h':
-	errflg = true;
-	break;
+        errflg = true;
+        break;
 
       case 'i':
-	byIID = true;
-	IID_fp.open (optarg, ifstream::in);
-	if (!IID_fp.is_open ())
-	  {
-	    cerr << "Couldn't open " << optarg << endl;
-	    exit (1);
-	  }
-	break;
+        byIID = true;
+        IID_fp.open (optarg, ifstream::in);
+        if (!IID_fp.is_open ())
+        {
+          cerr << "Couldn't open " << optarg << endl;
+          exit (1);
+        }
+        break;
 
       case 'L':
-	USE_LayoutClear = true;
-	break;
+        USE_LayoutClear = true;
+        break;
 
       case 'n':
-	byEID = true;
-	EID_fp.open (optarg, ifstream::in);
-	if (!EID_fp.is_open ())
-	  {
-	    cerr << "Couldn't open " << optarg << endl;
-	    exit (1);
-	  }
-	break;
+        byEID = true;
+        EID_fp.open (optarg, ifstream::in);
+        if (!EID_fp.is_open ())
+        {
+          cerr << "Couldn't open " << optarg << endl;
+          exit (1);
+        }
+        break;
 
       case 'o':
-	Min_Overlap = strtol (optarg, NULL, 10);
-	break;
+        Min_Overlap = strtol (optarg, NULL, 10);
+        break;
 
       case 'P':
-	Input_Format = PARTIAL_READ_INPUT;
-	break;
+        Input_Format = PARTIAL_READ_INPUT;
+        break;
 
       case 's':
-	Use_SeqNames = true;
-	break;
+        Use_SeqNames = true;
+        break;
 
       case 'S':
-	Input_Format = SIMPLE_CONTIG_INPUT;
-	break;
+        Input_Format = SIMPLE_CONTIG_INPUT;
+        break;
 
       case 'T':
-	Output_Format = TIGR_CONTIG_OUTPUT;
-	break;
+        Output_Format = TIGR_CONTIG_OUTPUT;
+        break;
 
       case 'u':
-	Do_Unitig_Messages = true;
-	Do_Contig_Messages = false;
-	break;
+        Do_Unitig_Messages = true;
+        Do_Contig_Messages = false;
+        break;
 
       case 'v':
-	Verbose = strtol (optarg, NULL, 10);
-	break;
+        Verbose = strtol (optarg, NULL, 10);
+        break;
 
       case 'w':
         Align_Wiggle = strtol (optarg, NULL, 10);
@@ -1171,35 +1168,35 @@ static void Parse_Command_Line (int argc, char *argv[])
         break;
 
       case '?':
-	fprintf (stderr, "Unrecognized option -%c\n", optopt);
+        fprintf (stderr, "Unrecognized option -%c\n", optopt);
 
       default:
-	errflg = true;
-      }
+        errflg = true;
+    }
 
-  if (Input_Format == CELERA_MSG_INPUT
-      && !Do_Unitig_Messages && !Do_Contig_Messages)
+    if (Input_Format == CELERA_MSG_INPUT
+        && !Do_Unitig_Messages && !Do_Contig_Messages)
     {
       fprintf (stderr, "\nERROR:  Must specify either -u or -c\n\n");
       errflg = true;
     }
 
-  if (errflg)
+    if (errflg)
     {
       Usage (argv[0]);
       exit (EXIT_FAILURE);
     }
 
-  if ((Input_Format == BANK_INPUT && optind > argc - 1) ||
-      (Input_Format != BANK_INPUT && optind > argc - 2))
+    if ((Input_Format == BANK_INPUT && optind > argc - 1) ||
+        (Input_Format != BANK_INPUT && optind > argc - 2))
     {
       Usage (argv[0]);
       exit (EXIT_FAILURE);
     }
 
-  if (Input_Format != BANK_INPUT)
-    Tig_File_Name = argv[optind++];
-  Bank_Name = argv[optind++];
+    if (Input_Format != BANK_INPUT)
+      Tig_File_Name = argv[optind++];
+    Bank_Name = argv[optind++];
 
   return;
 }
@@ -1230,33 +1227,33 @@ static void Sort_By_Low_Pos
     low.push_back (Min (pos[i].getBegin (), pos[i].getEnd ()));
 
   for (i = 1; i < n; i++)
+  {
+    int j;
+
+    if (low[i - 1] <= low[i])
+      continue; // already in order
+
+    save_low = low[i];
+    save_pos = pos[i];
+    save_fid = fid[i];
+    if (use_seg)
+      save_seg = seg[i];
+
+    for (j = i; j > 0 && low[j - 1] > save_low; j--)
     {
-      int j;
-
-      if (low[i - 1] <= low[i])
-	continue;		// already in order
-
-      save_low = low[i];
-      save_pos = pos[i];
-      save_fid = fid[i];
+      low[j] = low[j - 1];
+      pos[j] = pos[j - 1];
+      fid[j] = fid[j - 1];
       if (use_seg)
-	save_seg = seg[i];
-
-      for (j = i; j > 0 && low[j - 1] > save_low; j--)
-	{
-	  low[j] = low[j - 1];
-	  pos[j] = pos[j - 1];
-	  fid[j] = fid[j - 1];
-	  if (use_seg)
-	    seg[j] = seg[j - 1];
-	}
-
-      low[j] = save_low;
-      pos[j] = save_pos;
-      fid[j] = save_fid;
-      if (use_seg)
-	seg[j] = save_seg;
+        seg[j] = seg[j - 1];
     }
+
+    low[j] = save_low;
+    pos[j] = save_pos;
+    fid[j] = save_fid;
+    if (use_seg)
+      seg[j] = save_seg;
+  }
 
   return;
 }
@@ -1269,37 +1266,37 @@ static void Usage (const char *command)
 //  invoke it.
 {
   fprintf (stderr,
-	   "USAGE:  %s  <tig-file> <bank-name>\n"
-	   "\n"
-	   "Read layout information from <tig-file> describing positions\n"
-	   "of reads, and create multialignments and/or consensus sequences\n"
-	   "for them.  Read sequences are obtained from <bank-name>\n"
-	   "\n"
-	   "Options:\n"
-	   "  -a       Output alignments instead of consensus messages\n"
-	   "  -A       Output an AMOS message file\n"
-	   "  -b       Input from AMOS bank\n"
-	   "  -B       Output to an AMOS bank\n"
-	   "  -c       Process contig messages\n"
-	   "  -C       Input is Celera msg format, i.e., a .cgb or .cgw file\n"
-	   "  -e <x>   Set alignment error rate to <x>, e.g.,  -e 0.05  for 5%% error\n"
-	   "  -E <fn>  Get extra sequences to align from fasta file <fn>\n"
-	   "  -f       Output consensus only in FASTA format\n"
-	   "  -h       Print this usage message\n"
-	   "  -i <fn>  File containing list of IIDs to be processed\n"
-	   "  -L       Use clear range in layout rather than readbank (-b only)\n"
-	   "  -n <fn>  File containing list of EIDs (names) to be processed\n"
-	   "  -o <n>   Set minimum overlap bases to <n>\n"
-	   "  -P       Input is simple contig format, i.e., UMD format\n"
-	   "              using partial reads\n"
-	   "  -s       Output EID seqnames for reads instead of IID ints\n"
-	   "  -S       Input is simple contig format, i.e., UMD format\n"
-	   "  -T       Output in TIGR Assembler contig format\n"
-	   "  -u       Process unitig messages\n"
-	   "  -v <n>   Set verbose level to <n>.  Higher produces more output\n"
+         "USAGE:  %s  <tig-file> <bank-name>\n"
+         "\n"
+         "Read layout information from <tig-file> describing positions\n"
+         "of reads, and create multialignments and/or consensus sequences\n"
+         "for them.  Read sequences are obtained from <bank-name>\n"
+         "\n"
+         "Options:\n"
+         "  -a       Output alignments instead of consensus messages\n"
+         "  -A       Output an AMOS message file\n"
+         "  -b       Input from AMOS bank\n"
+         "  -B       Output to an AMOS bank\n"
+         "  -c       Process contig messages\n"
+         "  -C       Input is Celera msg format, i.e., a .cgb or .cgw file\n"
+         "  -e <x>   Set alignment error rate to <x>, e.g.,  -e 0.05  for 5%% error\n"
+         "  -E <fn>  Get extra sequences to align from fasta file <fn>\n"
+         "  -f       Output consensus only in FASTA format\n"
+         "  -h       Print this usage message\n"
+         "  -i <fn>  File containing list of IIDs to be processed\n"
+         "  -L       Use clear range in layout rather than readbank (-b only)\n"
+         "  -n <fn>  File containing list of EIDs (names) to be processed\n"
+         "  -o <n>   Set minimum overlap bases to <n>\n"
+         "  -P       Input is simple contig format, i.e., UMD format\n"
+         "              using partial reads\n"
+         "  -s       Output EID seqnames for reads instead of IID ints\n"
+         "  -S       Input is simple contig format, i.e., UMD format\n"
+         "  -T       Output in TIGR Assembler contig format\n"
+         "  -u       Process unitig messages\n"
+         "  -v <n>   Set verbose level to <n>.  Higher produces more output\n"
            "  -w <n>   Set alignment wiggle to <n>. Default is 15. Use a smaller value for Solexa reads (Example: -w 2)\n" 
-	   "  -x <fn>  Expel poor aligning reads from contigs and list them in file <fn>\n"
-	   "\n", command);
+         "  -x <fn>  Expel poor aligning reads from contigs and list them in file <fn>\n"
+         "\n", command);
 
   return;
 }

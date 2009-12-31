@@ -1800,7 +1800,7 @@ bool  Multi_Alignment_t :: Check_Subsequent_Overlaps
       hi = Min (Max (lo + 1, mid), add_offset + wiggle);
       exp_olap_len = Min (cons_len - lo, len);
 
-      error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
+      error_limit = Binomial_Cutoff (exp_olap_len, erate, BIN_CUTOFF_PROB);
       matched = Overlap_Match_VS (s [j], len, cons, cons_len, lo, hi,
                                   0, error_limit, ali);
 
@@ -2026,7 +2026,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
         }
 
       len = strlen (s [i]);
-      error_limit = Binomial_Cutoff (len, error_rate, 1e-6);
+      error_limit = Binomial_Cutoff (len, error_rate, BIN_CUTOFF_PROB);
 
       // need to adjust b_lo here because of indels ****
 
@@ -2217,12 +2217,12 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
         curr_offset = Min (cons_len, Estimate_Offset_With_Expels (i, offset, expel));
       else
         curr_offset = Min (cons_len, Estimate_Offset_Position (i, offset));
-      // where offset position hits the consensus, based on prior
-      // string alignment(s)
+        // where offset position hits the consensus, based on prior
+        // string alignment(s)
 
       min_olap = Min (min_overlap, Min (cons_len, len));
-        // reduce the minimum overlap length if the strings are too short
-        // to achieve it
+      // reduce the minimum overlap length if the strings are too short
+      // to achieve it
       mid = cons_len - min_olap;
 
       do
@@ -2230,7 +2230,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
          lo = Max (0, Min (curr_offset - wiggle, mid));
          hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
-         error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
+         error_limit = Binomial_Cutoff (exp_olap_len, erate, BIN_CUTOFF_PROB);
          matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
                         0, error_limit, ali);
          matched = matched && ali . Error_Rate () <= erate;
@@ -2287,7 +2287,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
                   hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
                   exp_olap_len = Min (prev_cons_len - lo, len);
 
-                  error_limit = Binomial_Cutoff (exp_olap_len, error_rate, 1e-6);
+                  error_limit = Binomial_Cutoff (exp_olap_len, error_rate, BIN_CUTOFF_PROB);
                   retry_worked = Overlap_Match_VS
                     (s [i], len, cons, prev_cons_len, lo, hi, 0, error_limit, ali);
                   retry_worked = retry_worked && ali . Error_Rate () <= error_rate;
@@ -4766,9 +4766,6 @@ printf ("  j = %d  k = %d\n", j, k);
   }
 
 
-
-const int  MAX_ITERATIONS = 200;
-
 void  Classify_Reads
     (const vector <Distinguishing_Column_t> & dc, int n,
      vector <char> & side, vector <int> & segment)
@@ -5684,7 +5681,6 @@ void  Multi_Align
    vector <Vote_t>  vote;
    vector <int>  s_len;
    bool  changed;
-   const int  max_refinements = 3;
    int  i, n, ct;
 
    n = s . size ();
@@ -5713,6 +5709,8 @@ void  Multi_Align
    for (i = 0; i < n; i ++)
      s_len . push_back (strlen (s [i]));
 
+   // Sort the sequence strings in s and sequence length in s_len by increasing
+   // sequence offset
    Sort_Strings_And_Offsets (s, s_len, offset, ref, tag_list);
 
    ma . setID (id);
@@ -5724,7 +5722,7 @@ void  Multi_Align
      {
       ma . Reset_From_Votes (s, offset_delta, error_rate, vote, changed);
       ct ++;
-     }  while  (ct < max_refinements && changed);
+     }  while  (ct < MAX_REFINEMENTS && changed);
 
    if  (Verbose > 3)
        ma . Print_Alignments_To_Consensus (stderr, s);
