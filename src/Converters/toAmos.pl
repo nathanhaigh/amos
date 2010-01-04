@@ -343,7 +343,7 @@ while (my ($ins, $lib) = each %seenlib){
     print OUT "eid:", $ins, "\n";
 #    }
     if (! exists $libid{$lib}){ 
-	die ("Have not seen library $lib yet: possible error in input\n");
+	$base->bail("Have not seen library \"$lib\" yet: possible error in input\n");
     }
     print OUT "lib:$libid{$lib}\n";
 
@@ -425,10 +425,10 @@ while (<TMPSEQ>){
 
 
 	if  (! exists $seqinsert{$rid}){
-	    die("Cannot find insert for $rid ($seqnames{$rid})\n");
+	    $base->bail("Cannot find insert for $rid ($seqnames{$rid})\n");
 	}
 	if (! exists $insid{$seqinsert{$rid}}){
-	    die ("cannot find insert id for insert $seqinsert{$rid}, sequence $rid, $seqnames{$rid}\n");
+	    $base->bail("cannot find insert id for insert $seqinsert{$rid}, sequence $rid, $seqnames{$rid}\n");
 	}
 	print OUT "frg:$insid{$seqinsert{$rid}}\n";
 	my ($cll, $clr) = split(' ', $seq_range{$rid});
@@ -477,10 +477,10 @@ while (<TMPCTG>){
 	    my ($len, $ren) = split(' ', $asm_range{$rid});
 	    my ($cl, $cr) = split(' ', $seq_range{$rid});
 	    if (! exists $seq_range{$rid}){
-		die ("No clear range for read $rid\n");
+		$base->bail ("No clear range for read $rid\n");
 	    }
 	    if (! exists $asm_range{$rid}){
-		die ("No asm range for read $rid\n");
+		$base->bail ("No asm range for read $rid\n");
 	    }
 	    my $tmp;
 	    if ($len > $ren){
@@ -706,10 +706,10 @@ sub parseFrgFile {
 
                 if ($key eq "frg")
                 {
-                  die "LKG References unknown frg $acc\n"
+                  $base->bail("LKG References unknown frg $acc\n")
                     if (!exists $seqlibrary{$acc});
 
-                  die "Only 2 frgs per LKG is supported: frg:$acc!\n"
+                  $base->bail("Only 2 frgs per LKG is supported: frg:$acc!\n")
                     if ($frgcount == 3);
 
                   $frgcount++;
@@ -729,14 +729,14 @@ sub parseFrgFile {
                     elsif ($liborientation{$lib} eq "O") { $inserttype{$id} = "T" }
                     else
                     {
-                      die "ERROR: Library $lib has unsupported orienation $liborientation{$lib}\n";
+                      $base->bail("ERROR: Library $lib has unsupported orienation $liborientation{$lib}\n");
                     }
                   }
                   elsif ($frgcount == 2) 
                   { 
                     $rev{$id}  = $seqids{$acc}; 
 
-                    die "ERROR: Frgs come from different libraries $frg1 [$lib1] $acc [$lib]\n"
+                    $base->bail("ERROR: Frgs come from different libraries $frg1 [$lib1] $acc [$lib]\n")
                       if ($lib ne $lib1);
                   }
                 }
@@ -852,7 +852,7 @@ sub parseFastaFile
 sub parseMatesFile {
     my $IN = shift;
 
-	print "in mates";
+	print STDERR "Processing mates\n";
 
     my @libregexp;
     my @libids;
@@ -1066,7 +1066,7 @@ sub parseAsmFile
         if ($sid eq "MPS")
         {
             if (! exists $seqids{getCAId($$sfs{mid})}){
-                die ("Have not seen sequence with id " . getCAId($$sfs{mid}));
+                $base->bail("Have not seen sequence with id " . getCAId($$sfs{mid}));
             }
 
             my $fid = $seqids{getCAId($$sfs{mid})};
@@ -1243,7 +1243,7 @@ sub parsePHDFiles {
 
     while(<$IN>) {
 	if(m/^DS CHROMAT_FILE: (\S+) PHD_FILE: (\S+)/) {
-	    open(PHD_FILE, "<../phd_dir/$2") || die("missing phd file $2");
+	    open(PHD_FILE, "<../phd_dir/$2") || $base->bail("missing phd file $2");
 	    
 	    my $seqname = $1;
 		my $pos_list;
@@ -1602,7 +1602,7 @@ sub parseContigFile {
 	    @sdels = ();
 	    $ndel = 0;
 	    if (! exists $seqids{$sname}){
-		die ("Cannot find ID for sequence $sname\n");
+		$base->bail("Cannot find ID for sequence $sname\n");
 	    } else {
 		$sid = $seqids{$sname};
 	    }
