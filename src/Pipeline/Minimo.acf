@@ -29,7 +29,7 @@
 #?     -D ACE_EXP=<n>      Export results in ACE format (0:no 1:yes, default: 1)
 #?     -D OUT_PREFIX=<s>   Prefix to use for the output file path and name
 #?
-#? Minimo v1.2. Copyright Florent Angly 2009. Under the GPL v3 open-source license.
+#? Minimo v1.3. Copyright Florent Angly 2009. Under the GPL v3 open-source license.
 #?
 
 # --------------------------------------- ARGUMENTS AND DEFAULTS ---------------#
@@ -58,8 +58,12 @@ FASTA_BASE = $(shell echo -n `dirname $(FASTA_IN\)`/`basename $(FASTA_IN\) | cut
 # Output prefix determined from user input if specified, from the fasta file otherwise
 BASE       = $(shell if [ $(OUT_PREFIX\) != "" ]; then echo -n $(OUT_PREFIX\); else echo -n $(FASTA_BASE\); fi)
 
-# Convert percentage of identity from % to fractional
-MAX_ERROR  = $(shell echo -n `echo "scale=3; 1 - $(MIN_IDENT\) / 100" | bc`)
+# Convert percentage of identity between overlaps from % to fractional
+MAX_OVL_ERROR  = $(shell echo -n `echo "scale=3; 1 - $(MIN_IDENT\) / 100" | bc`)
+
+# The error in the consensus sequence is twice the overlap error to allow
+# for independent errors from different sequences
+MAX_CONS_ERROR = $(shell echo -n `echo "scale=3; $(MAX_OVL_ERROR\) * 2" | bc`)
 
 #------------------------------------ FILENAMES ------------------------------#
 
@@ -72,7 +76,7 @@ AMOS_OUT    = $(BASE)-contigs.afg
 ACE_OUT     = $(BASE)-contigs.ace
 
 ## Printing parameters
-10: echo "Running Minimo with:\nFASTA_IN='$(FASTA_IN)'\nQUAL_IN='$(QUAL_IN)'\nGOOD_QUAL='$(GOOD_QUAL)'\nBAD_QUAL='$(BAD_QUAL)'\nMIN_LEN='$(MIN_LEN)'\nMIN_IDENT='$(MIN_IDENT)'\nMAX_ERROR='$(MAX_ERROR)'\nALN_WIGGLE='$(ALN_WIGGLE)'\nFASTA_EXP='$(FASTA_EXP)'\nBASE='$(BASE)'\nFASTA_OUT='$(FASTA_OUT)'\nQUAL_OUT='$(QUAL_OUT)'\nAMOS_OUT='$(AMOS_OUT)'\nACE_OUT='$(ACE_OUT)'\nVERBOSE='$(VERBOSE)'"
+10: echo "Running Minimo with:\nFASTA_IN='$(FASTA_IN)'\nQUAL_IN='$(QUAL_IN)'\nGOOD_QUAL='$(GOOD_QUAL)'\nBAD_QUAL='$(BAD_QUAL)'\nMIN_LEN='$(MIN_LEN)'\nMIN_IDENT='$(MIN_IDENT)'\nMAX_OVL_ERROR='$(MAX_OVL_ERROR)'\nMAX_CONS_ERROR='$(MAX_CONS_ERROR)'\nALN_WIGGLE='$(ALN_WIGGLE)'\nFASTA_EXP='$(FASTA_EXP)'\nBASE='$(BASE)'\nFASTA_OUT='$(FASTA_OUT)'\nQUAL_OUT='$(QUAL_OUT)'\nAMOS_OUT='$(AMOS_OUT)'\nACE_OUT='$(ACE_OUT)'\nVERBOSE='$(VERBOSE)'"
 
 # Required input files
 INPUTS      = $(FASTA_IN)
@@ -101,7 +105,7 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 # The minimizers (approximate k-mers) considered are 20 bp long.
 # Default minimum overlap length is 40 bp.
 # Default maximum overlap error is 0.06 (6 %).
-50: $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_ERROR) -v $(VERBOSE) $(BANK)
+50: $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -v $(VERBOSE) $(BANK)
 
 ## Forming contigs
 60: $(BINDIR)/tigger -b $(BANK)
@@ -109,7 +113,7 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 ## Determining contig consensus sequences
 # Default fraction of errors allowed in alignments 0.06 (6 %).
 # Default minimum number of bases strings in multialignment must overlap is 5 bp.
-70: $(BINDIR)/make-consensus -b -B -o $(MIN_LEN) -e $(MAX_ERROR) -w $(ALN_WIGGLE) -v $(VERBOSE) $(BANK)
+70: $(BINDIR)/make-consensus -b -B -o $(MIN_LEN) -e $(MAX_CONS_ERROR) -w $(ALN_WIGGLE) -v $(VERBOSE) $(BANK)
 
 #----------------------------------- EXPORT SEQUENCES AND CONTIGS -------------#
 
