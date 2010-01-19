@@ -81,7 +81,7 @@ bool GetOptions(int argc, char ** argv) {
    globals.initAll = false;
    globals.compressMotifs = true;
    globals.doAgressiveScaffolding = false;
-   globals.debug = 1;
+   globals.debug = 0; 
    globals.redundancy = 2;
    globals.prefix = "out";
   

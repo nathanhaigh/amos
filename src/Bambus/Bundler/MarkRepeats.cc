@@ -68,7 +68,7 @@ bool GetOptions(int argc, char ** argv) {
     {0, 0, 0, 0}
   };
 
-   globals.debug = 2;
+   globals.debug = 0;
    globals.doAgressiveRepeatFinding = false;
    globals.redundancy = 1;
   
@@ -163,7 +163,7 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
          Vertex minNode = boost::graph_traits<Graph>::null_vertex();
          vector<int32_t>::iterator index;
    
-         for (vector<int32_t>::iterator it = qarray.begin(); it != qarray.end(); it++) {
+         for (vector<int32_t>::iterator it = qarray.begin(); it < qarray.end(); it++) {
             // for all nodes we haven't processed yet, check if they have shortest next distance
             if (distMap[*it] < min) {
                min = distMap[*it];
