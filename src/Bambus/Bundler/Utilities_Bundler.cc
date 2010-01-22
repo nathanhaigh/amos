@@ -89,6 +89,7 @@ void buildGraph(
    // build boost-based graph
    // add node 0, it represents links outside of the set of contings (for example to singletons)
    nodeToDescriptor[0] = boost::add_vertex(g);
+   vertexNames[nodeToDescriptor[0] ] = 0;
 
    while (node_stream >> (*node)) {
       assert(node->getIID() != 0);
