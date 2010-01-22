@@ -805,7 +805,7 @@ int main(int argc, char *argv[]) {
             Tile_t tile;
             tile.source = ctg.getIID();
             tile.offset = 0;
-            tile.range.begin = 0;
+            tile.range.begin = 1;
             tile.range.end = ctg.getLength();
             ctg2scf[ctg.getIID()] = scfIID;
             tiles.push_back(tile);
@@ -852,7 +852,7 @@ int main(int argc, char *argv[]) {
                   continue;
                }
 
-               if (globals.debug >= 0) {
+               if (globals.debug >= 1) {
                   cerr << "PROCESSING EDGE WITH ID " << cte.getIID() << " BETWEEN CONTIGS " << cte.getContigs().first << " AND " << cte.getContigs().second << " WEIGHT " << cte.getLinks().size() << " LAST WEIGHT WAS " << maxWeight << " AND INT VERSION OF LAST IS " << round((double)maxWeight / 4) << endl;
                }
 

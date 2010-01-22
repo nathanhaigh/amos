@@ -204,7 +204,7 @@ void outputAGP(AMOS::Bank_t &contig_bank, const std::vector<AMOS::Scaffold_t> &s
          if (tileIt->range.isReverse()) { sign = "-"; }
 
          stream << itScf->getIID();
-         stream << "\t" << (tileIt->offset+1) << "\t" << (tileIt->offset+tileIt->range.getLength());
+         stream << "\t" << (tileIt->offset+1) << "\t" << (tileIt->offset+tileIt->range.getLength()+1);
          stream << "\t" << counter << "\tW";
 
          int32_t outputID = 0;
@@ -222,7 +222,7 @@ void outputAGP(AMOS::Bank_t &contig_bank, const std::vector<AMOS::Scaffold_t> &s
          stream << std::endl;
          
          counter++;
-         lastEnd = tileIt->offset+tileIt->range.getLength()+1;
+         lastEnd = tileIt->offset+tileIt->range.getLength()+1+1;
       }
    }
    
