@@ -11,19 +11,13 @@
 
 use strict;
 
-my $BAMBUS_BASE = undef;
-BEGIN {
-   $BAMBUS_BASE = "/usr/local/packages/bambus";
-}
-use lib "$BAMBUS_BASE/lib";
-
 use XML::Parser;
 use TIGR::Foundation;
 use TIGR::FASTAreader;
 use TIGR::FASTArecord;
 
 use TIGR::AsmLib;
-use DotLib;
+use AMOS::DotLib;
 
 my $base = new TIGR::Foundation;
 
