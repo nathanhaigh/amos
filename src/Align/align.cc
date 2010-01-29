@@ -2231,6 +2231,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
          hi = Min (Max (lo + 1, mid), curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
          error_limit = Binomial_Cutoff (exp_olap_len, erate, BIN_CUTOFF_PROB);
+         // Add the current read to the consensus if there is an overlap
          matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
                         0, error_limit, ali);
          matched = matched && ali . Error_Rate () <= erate;
@@ -2240,6 +2241,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
                   "Matched with wiggle = %d  error_rate = %.1f%%\n",
                   wiggle, 100.0 * ali . Error_Rate ());
 
+         // Increase the wiggle and error rate if alignment is not good enough
          if  (! matched)
              {
               if  (Verbose > 0)
@@ -2262,6 +2264,7 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
               wiggle *= 2;
               erate += 0.01;
              }
+
         }  while  (! matched && ++ attempts < MAX_ALIGN_ATTEMPTS);
 
       if (matched)

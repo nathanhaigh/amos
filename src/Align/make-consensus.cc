@@ -1294,7 +1294,7 @@ static void Usage (const char *command)
          "  -T       Output in TIGR Assembler contig format\n"
          "  -u       Process unitig messages\n"
          "  -v <n>   Set verbose level to <n>.  Higher produces more output\n"
-           "  -w <n>   Set alignment wiggle to <n>. Default is 15. Use a smaller value for Solexa reads (Example: -w 2)\n" 
+         "  -w <n>   Set alignment wiggle to <n>. Default is 15. Use a smaller value for Solexa reads (Example: -w 2)\n"
          "  -x <fn>  Expel poor aligning reads from contigs and list them in file <fn>\n"
          "\n", command);
 

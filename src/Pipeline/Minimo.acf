@@ -10,7 +10,7 @@
 #? directory where the input FASTA file is located.
 #?
 #? Usage:
-#?   Minimo FASTA_IN [options]
+#?     Minimo FASTA_IN [options]
 #?
 #? Options:
 #?     -D QUAL_IN=<file>   Input quality score file
@@ -31,6 +31,8 @@
 #?
 #? Minimo v1.3. Copyright Florent Angly 2009. Under the GPL v3 open-source license.
 #?
+
+BINDIR     = /usr/local/bin
 
 # --------------------------------------- ARGUMENTS AND DEFAULTS ---------------#
 
