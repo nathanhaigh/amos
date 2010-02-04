@@ -88,7 +88,11 @@ later. If `perl' is available from your system PATH, all is well, if
 not you will need to instruct `configure' where it is located by
 setting the environment variable PERL to the full path of `perl' (see
 the Defining Variables section in the `INSTALL' file). Some Perl
-scripts in the AMOS package also require the XML::Parser Perl module.
+scripts in the AMOS package require additional modules that you should
+install:
+   DBI (http://search.cpan.org/~timb/DBI/)
+   Statistics::Descriptive (http://search.cpan.org/~shlomif/Statistics-Descriptive-3.0100/)
+   XML::Parser (http://search.cpan.org/~msergeant/XML-Parser-2.36/)
 
    AMOScmp makes use of the NUCmer whole genome alignment utility
 which is part of the MUMmer package. If you wish to run AMOScmp, you
