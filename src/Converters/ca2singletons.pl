@@ -85,12 +85,11 @@ if (! defined $infile){
 my $record;
 my %seqnames;
 
-open(IN, $infile) ||
-    $base->bail("Cannot open $infile: $!");
+open(IN, $infile) || $base->bail("Cannot open $infile: $!");
 my $prefix = (split /\./,basename($infile))[0];
 
 if (defined $outfile){
-    open(STDOUT, ">$outfile") ||
+    open(STDOUT, ">$outfile") || 
 	$base->bail("Cannot open \"$outfile\": $!\n");
 }
 

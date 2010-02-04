@@ -25,6 +25,7 @@
 #  prior written consent of TIGR.
 
 use strict;
+use File::Spec;
 use TIGR::Foundation;
 use TIGR::FASTAreader;
 use TIGR::FASTArecord;
@@ -203,9 +204,10 @@ if (defined $db){
 } # if defined $db
 
 my $TMP = $$ . time();
-my $ctgTmp = "$TMP.CTG.TMP";
-my $seqTmp = "$TMP.SEQ.TMP";
-my $outTmp = "$TMP.OUT.TMP";
+my $dirTmp = $base->getTempDir();
+my $ctgTmp = File::Spec->catfile($dirTmp, "$TMP.CTG.TMP");
+my $seqTmp = File::Spec->catfile($dirTmp, "$TMP.SEQ.TMP");
+my $outTmp = File::Spec->catfile($dirTmp, "$TMP.OUT.TMP");
 
 open(OUT, ">$outTmp") ||
     $base->bail("Cannot open output temp \"$outTmp\" : $!");

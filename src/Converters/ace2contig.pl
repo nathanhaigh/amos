@@ -7,6 +7,7 @@
 #  Copyright @ 2002, The Institute for Genomic Research (TIGR). 
 
 use strict;
+use File::Spec;
 use AMOS::AmosLib;
 use TIGR::Foundation;
 
@@ -81,7 +82,8 @@ my $ctgRight;   # where we'll trim the contig
 my $asmLeft;
 my $asmRight;
 my $nseq;
-my $tmpfile = "tmpfile.$$";
+my $tmpdir  = $base->getTempDir();
+my $tmpfile = File::Spec->catfile($tmpdir, "tmpfile.$$");
 while (<ACE>){
     if (/^CO (\S+) (\d+) (\d+)/){
 	if (defined $ctgSeq){

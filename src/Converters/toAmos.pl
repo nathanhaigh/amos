@@ -1,12 +1,10 @@
 #!/usr/bin/perl
+use strict;
+use File::Spec;
 use TIGR::Foundation;
 use AMOS::AmosLib;
 use AMOS::ParseFasta;
 use XML::Parser;
-use POSIX qw(tmpnam);
-$ENV{TMPDIR} = ".";
-
-use strict;
 
 my $INCLUDE_SURROGATE = 0;
 my $UTG_MESSAGES = 0;
@@ -155,14 +153,14 @@ else
 }
 
 
-my $tmprefix = "tmp.$$"; #tmpnam();
-
-open(TMPSEQ, ">$tmprefix.seq") 
-    || $base->bail("Cannot open $tmprefix.seq: $!\n");
-open(TMPCTG, ">$tmprefix.ctg") 
-    || $base->bail("Cannot open $tmprefix.ctg: $!\n");
-open(TMPSCF, ">$tmprefix.scf")
-    || $base->bail("Cannot open $tmprefix.scf: $!\n");
+my $tmprefix = "tmp.$$";
+my $tmpdir   = $base->getTempDir();
+my $tmpseq   = File::Spec->catfile($tmpdir, $tmprefix.'.seq');
+my $tmpctg   = File::Spec->catfile($tmpdir, $tmprefix.'.ctg');
+my $tmpscf   = File::Spec->catfile($tmpdir, $tmprefix.'.scf');
+open(TMPSEQ, ">$tmpseq") || $base->bail("Cannot open $tmpseq: $!\n");
+open(TMPCTG, ">$tmpctg") || $base->bail("Cannot open $tmpctg: $!\n");
+open(TMPSCF, ">$tmpscf") || $base->bail("Cannot open $tmpscf: $!\n");
 
 
 #then figure out the mates
@@ -363,8 +361,8 @@ while (my ($ins, $lib) = each %seenlib){
 if (defined $posfile){
     open(POS, $posfile) || $base->bail("Cannot open $posfile: $!\n");
 }
-open(TMPSEQ, "$tmprefix.seq") 
-    || $base->bail("Cannot open $tmprefix.seq: $!\n");
+open(TMPSEQ, $tmpseq) 
+    || $base->bail("Cannot open $tmpseq: $!\n");
 
 while (<TMPSEQ>){
     if (/^\#(\d+)/){
@@ -435,18 +433,17 @@ while (<TMPSEQ>){
 	print OUT "clr:$cll,$clr\n";
 	print OUT "}\n";
     } else {
-	$base->bail("Weird error at line $. in $tmprefix.seq");
+	$base->bail("Weird error at line $. in $tmpseq");
     }
 }
 close(TMPSEQ);
 if (defined $posfile){ close(POS);}
 
-unlink("$tmprefix.seq") || $base->bail("Cannot remove $tmprefix.seq: $!\n");
+unlink($tmpseq) || $base->bail("Cannot remove $tmpseq: $!\n");
 
 # then all the contigs
 
-open(TMPCTG, "$tmprefix.ctg") 
-    || $base->bail("Cannot open $tmprefix.ctg: $!\n");
+open(TMPCTG, $tmpctg) || $base->bail("Cannot open $tmpctg: $!\n");
 
 while (<TMPCTG>){
     if (/^\#(\d+) (.)/){
@@ -510,25 +507,25 @@ while (<TMPCTG>){
 	}
 	print OUT "}\n";
     } else {
-	$base->bail("Weird error at line $. in $tmprefix.ctg");
+	$base->bail("Weird error at line $. in $tmpctg");
     }
 }
 
 close(TMPCTG);
 
-unlink("$tmprefix.ctg") || $base->bail("Cannot remove $tmprefix.ctg: $!\n");
+unlink($tmpctg) || $base->bail("Cannot remove $tmpctg: $!\n");
 
 # all the contig links
 # all the contig edges
 # and all the scaffolds
 
-if (-f "$tmprefix.scf"){
-    open(TMPSCF, "$tmprefix.scf") || $base->bail("Cannot open $tmprefix.scf:$!\n");
+if (-f $tmpscf){
+    open(TMPSCF, $tmpscf) || $base->bail("Cannot open $tmpscf:$!\n");
     while (<TMPSCF>){
 	print OUT;
     }
     close(TMPSCF);
-    unlink("$tmprefix.scf") || $base->bail("Cannot remove $tmprefix.scf: $!\n");
+    unlink($tmpscf) || $base->bail("Cannot remove $tmpscf: $!\n");
 }
 close(OUT);
 

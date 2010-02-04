@@ -31,6 +31,7 @@ assembly records and omitting component sequences and singletons.
 # =============================== Pragmas and imports ======================
 use strict;
 use IO::File;
+use File::Spec;
 use File::Basename;
 use TIGR::Foundation;
 use TIGR::FASTAreader;
@@ -54,7 +55,7 @@ my @MY_DEPENDS =
 my $NFILLER = 60;
 
 # Reference to TF object
-my $tf = new TIGR::Foundation;
+my $base = new TIGR::Foundation;
 
 # Operating modes
 my $silent = 0;              # Do not print progress messages
@@ -73,14 +74,14 @@ sub printTable($$)
   return if (! defined $filename);
   my $rh = shift;
 
-  my $fh = new IO::File "> $filename" or $tf->bail("Failed to open $filename ($!)");
+  my $fh = new IO::File "> $filename" or $base->bail("Failed to open $filename ($!)");
   foreach my $i (sort keys %$rh)
   {
     my @entries = @{$$rh{$i}};
     my $entry = join "\t",@entries;
-    $fh->print("$i\t$entry\n") or $tf->bail("Failed to write to $filename ($!)");
+    $fh->print("$i\t$entry\n") or $base->bail("Failed to write to $filename ($!)");
   }
-  $fh->close() or $tf->bail("Failed to close $filename ($!)");
+  $fh->close() or $base->bail("Failed to close $filename ($!)");
 }
 
 
@@ -98,13 +99,13 @@ MAIN:
 
   # ========================== Program Setup ==============================
   # Prepare logs
-  $tf->addDependInfo(@MY_DEPENDS);
-  $tf->setHelpInfo($HELPTEXT);
-  $tf->setVersionInfo($MY_VERSION);
-  $tf->setUsageInfo($HELPTEXT);
+  $base->addDependInfo(@MY_DEPENDS);
+  $base->setHelpInfo($HELPTEXT);
+  $base->setVersionInfo($MY_VERSION);
+  $base->setUsageInfo($HELPTEXT);
 
   # now we handle the input options
-  my $result  = $tf->TIGR_GetOptions
+  my $result  = $base->TIGR_GetOptions
                 (
                   "merge", \$merge,
                   "o=s",   \$prefix,
@@ -112,20 +113,21 @@ MAIN:
                   "filler!",   \$isFiller,
                 );
 
-  $tf->bail("Command line parsing failed") if ($result == 0);
+  $base->bail("Command line parsing failed") if ($result == 0);
 
-  $tf->printUsageInfoAndExit() if ($#ARGV != 0);
+  $base->printUsageInfoAndExit() if ($#ARGV != 0);
   $contigfile = $ARGV[0] if (defined $ARGV[0]);
-  $tf->bail("Could not open input file \'$contigfile\' ($!)") if (! -r $contigfile);
+  $base->bail("Could not open input file \'$contigfile\' ($!)") if (! -r $contigfile);
   $indexfile = "$prefix" . "_merged.index" if ($merge);
 
   # =========================== Gather Inputs =============================
-  $tf->logLocal("Filtering $contigfile", 4);
+  $base->logLocal("Filtering $contigfile", 4);
   my $ih = new IO::File("< $contigfile") 
-    or $tf->bail("Failed to open $contigfile for input");
-  my $contigtmpfile = $contigfile . ".tmp";
+    or $base->bail("Failed to open $contigfile for input");
+  my $tmpdir = $base->getTempDir();
+  my $contigtmpfile = File::Spec->catfile($tmpdir, "$contigfiletmp");
   my $oh = new IO::File("> $contigtmpfile") 
-    or $tf->bail("Failed to open $contigtmpfile for output");
+    or $base->bail("Failed to open $contigtmpfile for output");
   while (my $line = $ih->getline())
   {
     if ($line =~ m/^##/)
@@ -134,37 +136,37 @@ MAIN:
       $contig_id =~ s/##//g; 
       $Contigs{$contig_id} = 1;
       $line =~ s/^##/>/o;
-      $oh->print("$line") or $tf->bail("Failed to write $contigtmpfile for output");
+      $oh->print("$line") or $base->bail("Failed to write $contigtmpfile for output");
     }
     else
     {
       $line =~ s/^#/>/o;
       $line =~ s/\(\d+\)//o;
-      $oh->print("$line") or $tf->bail("Failed to write $contigtmpfile for output");
+      $oh->print("$line") or $base->bail("Failed to write $contigtmpfile for output");
     }
   }
-  $ih->close() or $tf->bail("Failed to close $contigfile");
-  $oh->close() or $tf->bail("Failed to close $contigtmpfile");
+  $ih->close() or $base->bail("Failed to close $contigfile");
+  $oh->close() or $base->bail("Failed to close $contigtmpfile");
 
   if (defined $asm_id  &&  ! exists $Contigs{$asm_id})
   {
-    $tf->bail("Did not find contig \'$asm_id\' in $contigfile"); 
+    $base->bail("Did not find contig \'$asm_id\' in $contigfile"); 
   }
 
-  $tf->logLocal("Reading fasta records from $contigtmpfile", 9);
+  $base->logLocal("Reading fasta records from $contigtmpfile", 9);
   my @errors = ();
-  my $fr = new TIGR::FASTAreader($tf, \@errors, $contigtmpfile);
-  $tf->bail("Error creating FASTA Reader object") if (! defined $fr);
+  my $fr = new TIGR::FASTAreader($base, \@errors, $contigtmpfile);
+  $base->bail("Error creating FASTA Reader object") if (! defined $fr);
   if ($#errors >= 0)
   {
     for my $e (@errors)
     {
       logerr("$e\n");
     }
-    $tf->bail("Invalid FASTA on input from $contigtmpfile");
+    $base->bail("Invalid FASTA on input from $contigtmpfile");
   }
   unlink $contigtmpfile or 
-    $tf->bail("Failed to remove temporary file $contigtmpfile");
+    $base->bail("Failed to remove temporary file $contigtmpfile");
 
   my $merge_data = "";
   my %INDEX = ();
@@ -175,7 +177,7 @@ MAIN:
     if (exists $Contigs{$a})  # means it's an assembly id
     {
       next if (defined $asm_id  &&  $a ne $asm_id);
-      $tf->logLocal("Found contig $a", 9);
+      $base->logLocal("Found contig $a", 9);
       my $header = $r->getHeader();
       my $data = $r->getData();
       $data =~ s/-//g;               # remove gaps
@@ -200,7 +202,7 @@ MAIN:
       else
       {
         my $r2 = new TIGR::FASTArecord($header, $data); 
-        $tf->logLocal("Found assembly record $a", 9);
+        $base->logLocal("Found assembly record $a", 9);
         $CONTIGS{$a} = $r2;
       }
     }
@@ -239,7 +241,7 @@ MAIN:
     {
       $fn = sprintf("%s.fasta", $prefix);
     }
-    $fh = new IO::File("> $fn") or $tf->bail("Could not open $fn for output");
+    $fh = new IO::File("> $fn") or $base->bail("Could not open $fn for output");
     $fh->print($s);
     $fh->close();
   }

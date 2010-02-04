@@ -43,6 +43,7 @@ logging, version reporting, and dependency checking in a simple way.
    use Cwd 'chdir';
    use Cwd 'abs_path';
    use File::Basename;
+   use File::Spec;
    use Getopt::Long;
    use IO::Handle;
    use POSIX qw(strftime);
@@ -115,6 +116,10 @@ logging, version reporting, and dependency checking in a simple way.
    sub isWritableDir($);
    sub isCreatableDir($);
    sub isCreatablePath($);
+
+   # Functional Class : temp
+   sub setTempDir($);
+   sub getTempDir();
 
    # Functional Class : date
    sub getISODate(;@);
@@ -220,6 +225,9 @@ this method returns undefined.
       $self->{start_time} = time;               # program start time
       $self->{finish_time} = undef;             # program stop time
       
+      # Set where to store temporary files
+      $self->{'temp_dir'} = $self->setTempDir();
+
       # Set a user name and a host name.
       $self->{'host_name'} = hostname();
       if ( ! defined ( $self->{'host_name'} ) ) {
@@ -253,7 +261,7 @@ this method returns undefined.
          $self->{'invocation'}, 0);
       $self->logLocal("Username: " . $self->{'user_name'}, 0);
       $self->logLocal("Hostname: " . $self->{'host_name'}, 0);
-
+\
       return $self;
    }
 
@@ -941,6 +949,38 @@ C<isCreatableDir()> are not.
    }
          
 
+# Functional Class : temp
+
+=item setTempDir($path);
+
+Set in which folder to store temporary files. If no argument is
+specified, the temporary directory is set to the system's temp
+dir (this is the default temp dir).
+
+=cut
+
+   sub setTempDir($) {
+      my $self = shift;
+      my $path = shift;
+      if (not defined $path) {
+        # Default temporary directory
+        $path = File::Spec->tmpdir();
+      }
+      $self->{'temp_dir'} = $path;
+   }
+
+=item $tmp_dir = getTempDir();
+
+Get the location of the temporary dir.
+
+=cut
+
+   sub getTempDir() {
+      my $self = shift;
+      return $self->{'temp_dir'};
+   }
+
+
 # Functional Class : date
 
 =item $date_string = getISODate($tm);
@@ -1167,7 +1207,7 @@ If that file cannot be opened, F</tmp/program_name.$process_id.log> will
 be used.  If no parameter is passed, this method does nothing.   For
 compatibility, this method accepts the second parameter as the log file.  The
 first parameter is ignored in such cases.  B<NOTE:> log files (including the
-defailt log file) with relative paths will track with program execution
+default log file) with relative paths will track with program execution
 whenever a change of directory is made.
 
 =cut

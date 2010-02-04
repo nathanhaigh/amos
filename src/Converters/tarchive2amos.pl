@@ -7,14 +7,11 @@ use AMOS::ParseFasta;
 use AMOS::AmosFoundation;
 use XML::Parser;
 use IO::Handle;
-use POSIX qw(tmpnam);
-$ENV{TMPDIR} = ".";
+use File::Spec;
 
 my $MINSEQ = 0;
 my $MAXSEQ = undef;
 my $DEFAULT_QUAL = 20;
-
-my $tmprefix = "tmp.$$";		#tmpnam();
 
 my $tag;						# XML tag
 my $library;
@@ -45,10 +42,13 @@ my @pairregexp;					# read mating regular expressions
 my $gzip = "gzip";
 
 my $base = new AMOS::AmosFoundation;
-
 if (! defined $base) {
     die ("Walk, do not run, to the nearest exit!\n");
 }
+
+my $tmprefix = "tmp.$$";
+my $tmpdir   = $base->getTempDir();
+my $tmpfile  = File::Spec->catfile($tmpdir, "$tmprefix.red");
 
 #$base->setLogLevel(1);
 
@@ -418,7 +418,7 @@ print STDERR "Processing the files\n" unless $silent;
 open(FRAG, ">$fragname") || $base->bail("Cannot open $fragname: $!");
 printFragHeader(\*FRAG);
 
-open(TMPRED, ">$tmprefix.red") || $base->bail("Cannot open $tmprefix.red: $!\n");
+open(TMPRED, ">$tmpfile") || $base->bail("Cannot open $tmpfile: $!\n");
 
 ## now we are ready to print the library information
 while (my ($lib, $mean) = each %libraries) {
@@ -765,13 +765,13 @@ if (! defined $silent) {
     print STDERR "putting it together\n";
 }
 
-if (-f "$tmprefix.red") {
-    open(TMPRED, "$tmprefix.red") || $base->bail("Cannot open $tmprefix.red:$!\n");
+if (-f $tmpfile) {
+    open(TMPRED, $tmpfile) || $base->bail("Cannot open $tmpfile:$!\n");
     while (<TMPRED>) {
         print FRAG;
     }
     close(TMPRED);
-    unlink("$tmprefix.red") || $base->bail("Cannot remove $tmprefix.red: $!\n");
+    unlink($tmpfile) || $base->bail("Cannot remove $tmpfile: $!\n");
 }
 
 ###

@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use File::Spec;
+
 $MAXSEQ = 2048;
 $MINSEQ = 64;
 $MINVEC = 100;
@@ -46,7 +48,8 @@ while (<SP>){
 }
 close(SP);
 
-$tmpfile = "tmp." . $$ . ".ktrim";
+my $tmpdir  = $base->getTempDir();
+my $tmpfile = File::Spec->catfile($tmpdir, "tmp.".$$.".ktrim");
 
 my $isCA = undef;
 

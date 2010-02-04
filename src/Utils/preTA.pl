@@ -25,6 +25,7 @@
 #  prior written consent of TIGR.
 
 use strict;
+use File::Spec;
 use TIGR::Foundation;
 use TIGR::FASTAiterator;
 use TIGR::FASTArecord;
@@ -86,13 +87,14 @@ if (! -d $PHD_DIR){
 }
 
 # step 0, generate temp file name
-my $TMP = $$ . time();
-my $TMP_PHD = "$TMP.phd_dir";
-mkdir ($TMP_PHD, $PERM) ||
-    $base->bail("Cannot create temporary phd directory \"$TMP_PHD\"");
+my $tmpdir = $base->getTempDir();
+my $tmp = $$ . time();
+my $tmp_phd = File::Spec->catfile($tmpdir, "$tmp.phd_dir");
+mkdir ($tmp_phd, $PERM) ||
+    $base->bail("Cannot create temporary phd directory \"$tmp_phd\"");
 
 # step 1, run phred
-my $phred_cmd = "$PHRED -id $CHROMO_DIR -pd $TMP_PHD";
+my $phred_cmd = "$PHRED -id $CHROMO_DIR -pd $tmp_phd";
 print STDERR "Running $phred_cmd\n";
 
 my $exit_val = system($phred_cmd);
@@ -101,7 +103,9 @@ if ($exit_val != 0){
 }
 
 # step 2, create .seq and .qual files
-my $phd2fasta_cmd = "$PHD2FASTA -id $TMP_PHD -os $TMP.seq -oq $TMP.qual";
+my $tmp_seq  = File::Spec->catfile($tmpdir, "$tmp.seq" );
+my $tmp_qual = File::Spec->catfile($tmpdir, "$tmp.qual");
+my $phd2fasta_cmd = "$PHD2FASTA -id $tmp_phd -os $tmp_seq -oq $tmp_qual";
 print STDERR "Running $phd2fasta_cmd\n";
 
 $exit_val = system($phd2fasta_cmd);
@@ -115,7 +119,9 @@ my %end3;
 my %thisset;
 my $firstTrim = 1; # we are at the first trimming stage
 
-my $lucy_cmd = "$LUCY $LUCYPARM -output $TMP.lucy.seq $TMP.lucy.qual $TMP.seq $TMP.qual";
+my $tmp_lucy_seq  = File::Spec->catfile($tmpdir, "$tmp.lucy.seq" );
+my $tmp_lucy_qual = File::Spec->catfile($tmpdir, "$tmp.lucy.qual");
+my $lucy_cmd = "$LUCY $LUCYPARM -output $tmp_lucy_seq $tmp_lucy_qual $tmp_seq $tmp_qual";
 
 my @readErr;
 my $fr = new TIGR::FASTAiterator($base, \@readErr);
@@ -129,12 +135,12 @@ if (! defined $VEC_DIR){
     }
     
     $inseqs = 0;
-#    $fr = new TIGR::FASTAiterator($base, \@readErr, "$TMP.lucy.seq");
-    if (! $fr->open("$TMP.lucy.seq")){
+#    $fr = new TIGR::FASTAiterator($base, \@readErr, $tmp_lucy_seq);
+    if (! $fr->open($tmp_lucy_seq)){
 	while (my $err = pop(@readErr)){
 	    $base->logError($err);
 	}
-	$base->bail("Could not read sequence file \"$TMP.lucy.seq\"");
+	$base->bail("Could not read sequence file \"$tmp_lucy_seq\"");
     }
     
     while ($fr->hasNext){
@@ -188,11 +194,11 @@ if (defined $VEC_DIR){
 		$base->bail("Lucy appears to have died\n");
 	    }
 	    
-	    if (! $fr->open("$TMP.lucy.seq")){
+	    if (! $fr->open($tmp_lucy_seq)){
 		while (my $err = pop(@readErr)){
 		    $base->logError($err);
 		}
-		$base->bail("Could not read sequence file \"$TMP.lucy.seq\"");
+		$base->bail("Could not read sequence file \"$tmp_lucy_seq\"");
 	    }
 	    
 	    $inseqs = 0;
@@ -239,7 +245,7 @@ if (defined $VEC_DIR){
 }
 
 # step 5, get rid of all the lucy files
-my @temps = ("$TMP.seq", "$TMP.qual", "$TMP.lucy.seq", "$TMP.lucy.qual");
+my @temps = ($tmp_seq, $tmp_qual, $tmp_lucy_seq, $tmp_lucy_qual);
 for (my $i = 0; $i <= $#temps; $i++){
     unlink($temps[$i]) || 
 	$base->logError("Cannot remove \"$temps[$i]\": $!", 1);
@@ -248,12 +254,12 @@ for (my $i = 0; $i <= $#temps; $i++){
 # step 6, move over the phd files from the temp dir to the real dir, 
 # trimming everything outside of the clear range
 print STDERR "Moving results to the output\n";
-opendir(PHD, "$TMP_PHD") || 
-    $base->bail("Cannot open temp dir \"$TMP_PHD\": $!");
+opendir(PHD, "$tmp_phd") || 
+    $base->bail("Cannot open temp dir \"$tmp_phd\": $!");
 
 while ($_ = readdir(PHD)){
     if (/\.phd\.1$/){
-	my $fname = "$TMP_PHD/$_";
+	my $fname = "$tmp_phd/$_";
 	my $ofname = "$PHD_DIR/$_";
 	$_ =~ /(.*)\.phd\.1$/;
 	my $seqname = $1;
@@ -306,6 +312,6 @@ closedir(PHD);
 
 # step 7, remove phd_dir
 print STDERR  "Cleaning up\n";
-system("rm -rf $TMP_PHD");
+system("rm -rf $tmp_phd");
 
 exit(0);

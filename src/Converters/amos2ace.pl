@@ -6,15 +6,16 @@
 #
 
 use strict;
-use TIGR::Foundation;
+use File::Spec;
 use AMOS::AmosLib;
+use TIGR::Foundation;
 
 my $base = new TIGR::Foundation;
-my $GREP = "/bin/grep";
-
 if (! defined $base){
     die ("Foundation cannot be created.  FATAL!\n");
 }
+
+my $GREP = "/bin/grep";
 
 my $VERSION = '$Revision$ ';
 $base->setVersionInfo($VERSION);
@@ -100,13 +101,13 @@ my $nReads = 0;
 
 my $fr;
 
-
 my $TMP = $$ . time();
-my $ctgTmp = "$TMP.CTG.TMP";
-my $seqTmp = "$TMP.SEQ.TMP";
-my $outTmp = "$TMP.OUT.TMP";
+my $dirTmp = $base->getTempDir();
+my $ctgTmp = File::Spec->catfile($dirTmp, "$TMP.CTG.TMP");
+my $seqTmp = File::Spec->catfile($dirTmp, "$TMP.SEQ.TMP");
+my $outTmp = File::Spec->catfile($dirTmp, "$TMP.OUT.TMP");
 
-open(OUT, ">$outTmp") ||
+open(OUT, ">$outTmp") || 
     $base->bail("Cannot open output temp \"$outTmp\" : $!");
 
 my $nseqs;     # number of sequences in this contig

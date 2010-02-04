@@ -98,8 +98,7 @@ if (defined $outfile){
 	$base->bail("Cannot open \"$outfile\": $!\n");
 }
 
-open(IN, $infile) ||
-    $base->bail("Cannot open $infile: $!");
+open(IN, $infile) || $base->bail("Cannot open $infile: $!");
 my $prefix = (split /\./,basename($infile))[0];
 
 print STDERR "first pass through asm\n";
