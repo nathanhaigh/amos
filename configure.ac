@@ -1,11 +1,8 @@
 ##-- AMOS CONFIGURE --##
 
 # initialize
-AC_PREREQ(2.59)
-AC_INIT([AMOS Assembler],
-        [2.0.8],
-        [amos-help@lists.sourceforge.net],
-        [amos])
+AC_PREREQ(2.64)
+AC_INIT([AMOS Assembler],[2.0.8],[amos-help@lists.sourceforge.net],[amos])
 AC_PREFIX_DEFAULT([`pwd`])
 AC_CONFIG_SRCDIR([src/AMOS/foundation_AMOS.hh])
 AC_CONFIG_AUX_DIR([config])
@@ -32,10 +29,15 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_CPP
-AC_PATH_PROG(PERL, [perl], [:])
 AC_PATH_PROG(NUCMER, [nucmer], [:])
 AC_PATH_PROG(DELTAFILTER, [delta-filter], [:])
 AC_PATH_PROG(SHOWCOORDS, [show-coords], [:])
+AC_PATH_PROG(PERL, [perl], [:])
+
+# check for Perl modules
+AC_PROG_PERL_MODULES(Statistics::Descriptive, LIBSTATISTICS_DESCRIPTIVE_PERL=1, LIBSTATISTICS_DESCRIPTIVE_PERL=0)
+AC_PROG_PERL_MODULES(XML::Parser, LIBXML_PARSER_PERL=1, LIBXML_PARSER_PERL=0)
+AC_PROG_PERL_MODULES(DBI, LIBDBI_PERL=1, LIBDBI_PERL=0)
 
 # check for libraries
 AC_CHECK_LIB(m, pow)
@@ -270,4 +272,15 @@ if test x"${have_libz}" != x"yes"; then
   echo "   install libz if planning on using compressed trace formats"
 fi
 
+if test x"${LIBSTATISTICS_DESCRIPTIVE_PERL}" = x"0"; then
+  echo "WARNING! Statistics::Descriptive Perl module was not found but is required to run some AMOS scripts"
+fi
+
+if test x"${LIBXML_PARSER_PERL}" = x"0"; then
+  echo "WARNING! XML::Parser Perl module was not found but is required to run some AMOS scripts"
+fi
+
+if test x"${LIBDBI_PERL}" = x"0"; then
+  echo "WARNING! DBI Perl module was not found but is required to run some AMOS scripts"
+fi
 ##-- END OF CONFIGURE --##
