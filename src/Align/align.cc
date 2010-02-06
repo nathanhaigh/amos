@@ -2262,7 +2262,9 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
                         << "  error_limit = " << error_limit << endl;
                   }
               wiggle *= 2;
-              erate += 0.01;
+              if (erate <= 0.99)
+                  erate += 0.01;
+
              }
 
         }  while  (! matched && ++ attempts < MAX_ALIGN_ATTEMPTS);
