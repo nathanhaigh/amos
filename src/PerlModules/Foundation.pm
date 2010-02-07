@@ -954,8 +954,9 @@ C<isCreatableDir()> are not.
 =item setTempDir($path);
 
 Set in which folder to store temporary files. If no argument is
-specified, the temporary directory is set to the system's temp
-dir (this is the default temp dir).
+specified, the default is to set the temporary directory to the
+system's temporary folder or to whatever the value of the
+environment variable TMPDIR is.
 
 =cut
 
