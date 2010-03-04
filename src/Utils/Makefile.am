@@ -8,7 +8,8 @@ bin_PROGRAMS = \
 	runAmos \
 	analyzeSNPs \
     recallConsensus \
-	cvgStat
+	cvgStat \
+    tagsum-reduce
 
 
 dist_bin_SCRIPTS = \
@@ -93,6 +94,10 @@ cvgStat_LDADD = \
         $(top_builddir)/src/AMOS/libAMOS.a
 cvgStat_SOURCES = \
 	cvgStat.cc
+
+##-- tagsum-reduce
+tagsum_reduce_SOURCES = \
+	tagsum-reduce.cc
 
 ##-- runAmos
 ## note: this references top_builddir because getopt.h is built if needed
