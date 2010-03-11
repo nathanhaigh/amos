@@ -10,6 +10,7 @@ bin_PROGRAMS = \
     genome-complexity-fast \
     count-kmers \
     count-qmers \
+    qmer-filter \
 	frg-umd-merge \
 	gap-links \
 	hash-overlap \
@@ -84,6 +85,10 @@ count_qmers_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 count_qmers_SOURCES = \
 	count-qmers.cc
+
+##-- qmer-filter
+qmer_filter_SOURCES = \
+	qmer-filter.cc
 
 ##-- frg-umd-merge
 frg_umd_merge_LDADD = \
