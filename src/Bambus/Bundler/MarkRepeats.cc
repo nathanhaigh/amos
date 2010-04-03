@@ -33,9 +33,11 @@ using namespace Bundler;
 
 // constants for repeat resolution
 static const int32_t  MAX_REPEAT_SIZE    =   10000;
-static const int32_t  MAX_REPEAT_STDEV   =       4;
-static const int32_t  MAX_REPEAT_COV     =       0;
+static const int32_t  MAX_REPEAT_STDEV   =       3;
+static const double   MAX_REPEAT_COV     =       0.02; 
 static const double   MAX_COVERAGE_ERROR =       0.05;
+
+HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *Bundler::cte2weight = NULL;
 
 struct config {
    string      bank;
@@ -111,7 +113,7 @@ bool GetOptions(int argc, char ** argv) {
 
 #ifdef AMOS_HAVE_BOOST
 void visitAllPaths(
-   hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >&numTimesOnPath, 
+   hash_map<ID_t, double, hash<ID_t>, equal_to<ID_t> >&numTimesOnPath, 
    Graph const&g, 
    VertexName &vertexNames,
    const Vertex* predMap,
@@ -140,7 +142,7 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
    Vertex*      predMap     = new Vertex[numVertices];
    vector<int32_t> qarray;
 
-   hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >numTimesOnPath;
+   hash_map<ID_t, double, hash<ID_t>, equal_to<ID_t> >numTimesOnPath;
 
    pair<VertexIterator, VertexIterator> i;
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
@@ -191,13 +193,18 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
       }
    }
 
+   // finally adjust our path counts by node sizes, we expect larger nodes to have more connections by chance
+   VertexLength vertexLength = get(boost::vertex_index1, g);
+   for (i = boost::vertices(g); i.first != i.second; ++i.first) {
+      numTimesOnPath[vertexNames[*i.first]] /= vertexLength[*i.first];
+   }
    delete[] distMap;
    delete[] predMap;
    
    if (globals.debug > 2) cerr << "DONE SHORTEST PATHS" << endl;
 
    double meanOnPath = 0, varianceOnPath = 0, stdevOnPath = 0, N = 0;
-   for (hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >::iterator i = numTimesOnPath.begin(); i != numTimesOnPath.end(); i++) {
+   for (hash_map<ID_t, double, hash<ID_t>, equal_to<ID_t> >::iterator i = numTimesOnPath.begin(); i != numTimesOnPath.end(); i++) {
       if (i->first == 0) { continue; }
 
       N++;
@@ -212,8 +219,8 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
       ID_t iid = vertexNames[*i.first];
       if (iid == 0) continue;
 
-      if (globals.debug > 1) cerr << "CONTIG " << iid << " IS NO PATH=" << numTimesOnPath[iid] << " MEAN IS " << meanOnPath << " STDEV: " << stdevOnPath <<  endl;
-      if ((numTimesOnPath[iid] - (meanOnPath+(MAX_REPEAT_STDEV*stdevOnPath))) > 1) {
+      if (globals.debug > 1) cerr << "CONTIG " << iid << " IS NO PATH=" << numTimesOnPath[iid] << " MEAN IS " << meanOnPath << " STDEV: " << stdevOnPath << " DELTA: " << (numTimesOnPath[iid] - (meanOnPath+(MAX_REPEAT_STDEV*stdevOnPath))) << endl;
+      if ((numTimesOnPath[iid] - (meanOnPath+(MAX_REPEAT_STDEV*stdevOnPath))) > 0) {
          // remove the vertices from our assembly and from the graph that is used for connected components
          repeats.insert(iid);
          boost::clear_vertex(*i.first, g);
@@ -268,14 +275,14 @@ void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &rep
          double cov = j->getCovStat(arrivalRate);
          double globalCov = j->getCovStat(globalArrivalRate);
 
-         if (globals.debug > 1) cerr << "CONTIG " << j->getIID() << " HAS COVERAGE " << cov << " MEAN: " << mean << " STDEV:" << stdev << " SIZE " << j->getLength() << " RATIO IS " << (cov - (mean - stdev) + MAX_COVERAGE_ERROR) << endl;
-         if (((cov - (mean - stdev) + MAX_COVERAGE_ERROR/*cov*/) < 0) && j->getLength() < MAX_REPEAT_SIZE) {
-            if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getLength() << " WITH " << j->getReadTiling().size() << " READS AND COVERAGE " << cov << " IS TOO LOW" << endl;
+         if (globals.debug > 1) cerr << "CONTIG " << j->getIID() << " HAS COVERAGE " << cov << " GLOBAL COV: " << globalCov << " MEAN: " << mean << " STDEV:" << stdev << " SIZE " << j->getUngappedLength() << " DELTA IS " << (cov + (mean - MAX_REPEAT_STDEV*stdev)) << endl;
+         if ((cov < MAX_REPEAT_COV) && j->getUngappedLength() < MAX_REPEAT_SIZE) {
+            if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getUngappedLength() << " WITH " << j->getReadTiling().size() << " READS AND COVERAGE " << cov << " IS TOO LOW" << endl;
             repeats.insert(j->getIID());
          } else if (i->second.size() == 1 && globalCov < MAX_REPEAT_COV) {
-             if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getLength() << " GLOBAL COVERAGE " << globalCov << " IS TOO LOW" << endl;
+             if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getUngappedLength() << " GLOBAL COVERAGE " << globalCov << " IS TOO LOW" << endl;
             repeats.insert(j->getIID());
-         } else if (globals.doAgressiveRepeatFinding == true && globalCov <= MAX_REPEAT_COV && j->getLength() < MAX_REPEAT_SIZE) {
+         } else if (globals.doAgressiveRepeatFinding == true && globalCov <= MAX_REPEAT_COV && j->getUngappedLength() < MAX_REPEAT_SIZE) {
              if (globals.debug > 1) cerr << "AGRESSIVE REPEAT" << cov << " IS TOO LOW" << endl;
             repeats.insert(j->getIID());
          }

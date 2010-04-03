@@ -25,7 +25,8 @@ namespace Bundler
 #ifdef AMOS_HAVE_BOOST
    /* give access to common Boost data types through our interface */
    // Vertex properties
-   typedef boost::property<boost::vertex_name_t, unsigned int> VertexProperty;
+   typedef boost::property<boost::vertex_name_t, unsigned int, 
+           boost::property<boost::vertex_index1_t, AMOS::Size_t> > VertexProperty;
 
    // Edge properties
    typedef boost::property<boost::edge_weight_t, double> EdgeProperty;
@@ -41,6 +42,7 @@ namespace Bundler
    
    // Properties
    typedef boost::property_map<Graph, boost::vertex_name_t>::type VertexName;
+   typedef boost::property_map<Graph, boost::vertex_index1_t>::type VertexLength;
    typedef boost::property_map<Graph, boost::edge_weight_t>::type EdgeWeight;
 #else
    typedef int32_t Graph;
@@ -53,10 +55,31 @@ namespace Bundler
    
    // define constants for orientation of contigs
    enum contigOrientation {FWD, REV, NONE};
-   enum edgeStatus {NULL_STATUS, BAD_LOW, BAD_RPT, BAD_ORI, BAD_DST, GOOD_EDGE};
+   enum edgeStatus {NULL_STATUS, BAD_THRESH, BAD_SKIP, BAD_RPT, BAD_ORI, BAD_SCF, BAD_DST, BAD_TRNS, GOOD_EDGE};
    enum validateNeighborType {ALL, INCOMING, OUTGOING};
 
    enum outputType{AGP, DOT, BAMBUS};
+
+   extern HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *cte2weight;
+
+   struct EdgeWeightCmp
+   {
+      bool operator () (const AMOS::ID_t & a, const AMOS::ID_t & b) const
+      {
+         assert(cte2weight);
+         int32_t weightA = (*cte2weight)[a];
+         assert(weightA);
+         int32_t weightB = (*cte2weight)[b];
+         assert(weightB);
+
+         if (weightA < weightB) {
+            return false;
+         }
+         else {
+            return true;
+         }
+      }
+   };
    
    double computeArrivalRate(const std::vector<AMOS::Contig_t> &contigs);
    void buildGraph(
@@ -65,19 +88,45 @@ namespace Bundler
             AMOS::IBankable_t *node, AMOS::IBankable_t *edge,
             int32_t redundancy);
 
+   // get edge statuses
+   // note: edge status are cached in memory so they must be updated through setEdgeStatus
+   void setEdgeStatus(AMOS::ContigEdge_t &cte, AMOS::Bank_t &edge_bank, int status);
+   bool isBadEdge(AMOS::ID_t cteID, AMOS::Bank_t &edge_bank);
    bool isBadEdge(const AMOS::ContigEdge_t &cte);
+   void checkEdgeID(const AMOS::ID_t &id);
+   void checkEdge(const AMOS::ContigEdge_t &cte);
+   void resetEdges(AMOS::Bank_t &edge_bank, edgeStatus toChange);
+   void resetEdges(AMOS::Bank_t &edge_bank, std::set<AMOS::ID_t> &edges, edgeStatus toChange);
+   
    AMOS::ID_t getEdgeDestination(const AMOS::ID_t &edgeSrc, const AMOS::ContigEdge_t &cte);
-   contigOrientation getOrientation(const AMOS::ID_t &contig, contigOrientation &myOrient, const AMOS::ContigEdge_t &cte);
+   contigOrientation getOrientation(contigOrientation &myOrient, const AMOS::ContigEdge_t &cte);
+
+   AMOS::Size_t adjustSizeBasedOnAdjacency(AMOS::LinkAdjacency_t edgeAdjacency, AMOS::Size_t gapSize, 
+                     AMOS::Size_t firstLength, AMOS::Size_t secondLength,
+                     contigOrientation firstOrient, contigOrientation secondOrient,
+                     AMOS::SD_t fudgeFactor);
+
+   AMOS::Size_t getTileOverlap(AMOS::Tile_t tileOne, AMOS::Tile_t tileTwo);
+   
+   void linearizeScaffolds(
+            std::vector<AMOS::Scaffold_t> &scaffs, 
+            AMOS::Bank_t &edge_bank, 
+            HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t, EdgeWeightCmp>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > &ctg2lnk,
+            int32_t debugLevel);
       
    void outputResults(
             const std::string &bank,
             AMOS::Bank_t &contig_bank, 
             AMOS::Bank_t &edge_bank, 
             std::vector<AMOS::Scaffold_t> &scaffs,
-            HASHMAP::hash_map<AMOS::ID_t, contigOrientation, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >& ctg2ort,
             outputType type, 
             const std::string &outputPrefix,
             int32_t debug);
+
+   void transitiveEdgeRemoval(std::vector<AMOS::Scaffold_t> &scaffs, 
+                              AMOS::Bank_t &edge_bank,
+                              HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t, EdgeWeightCmp>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >& ctg2lnk,
+                              int32_t debugLevel);
 }
 
 #endif /*UTILITIES_BUNDLER_HH_*/
