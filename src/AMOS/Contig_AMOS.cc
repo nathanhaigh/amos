@@ -192,7 +192,7 @@ double Contig_t::getCovStat(const double globalArrivalRate) const
 //--------------------------------------------------- getAvgRho ---------------
 double Contig_t::getAvgRho( ) const
 {
-  double avgRho = 0;
+  double avgRho = 1;
   Pos_t  lo, hi;
   Size_t lenLo, lenHi;
 
@@ -202,22 +202,23 @@ double Contig_t::getAvgRho( ) const
 
     lo = ti -> offset;
     lenLo = ti->range.getLength();
-    hi = ti -> offset + ti -> range . getLength( );
+    hi = ti -> offset;
     lenHi = ti->range.getLength();
-
     for ( ++ ti; ti != reads_m . end( ); ++ ti )
     {
-      if ( ti -> offset < lo )
+      if ( ti -> offset < lo || (ti->offset == lo && ti->range.getLength() < lenLo)) {
         lo = ti -> offset;
         lenLo = ti->range.getLength();
-      if ( ti -> offset + ti -> range.getLength( ) > hi )
-        hi = ti -> offset + ti -> range.getLength();
+      }
+      if ( ti -> offset > hi  || (ti->offset == hi && ti->range.getLength() < lenHi)) {
+        hi = ti -> offset;
         lenHi = ti->range.getLength();
+      }
     }
-
-    double avgLen = (lenLo + lenHi) / 2;
-      if (avgLen < getLength()) {
-        avgRho = getLength() - avgLen;
+    double avgLen = (double)(lenLo + lenHi) / 2;
+    avgRho = getUngappedLength() - avgLen;
+    if (avgRho <= 0) {
+      avgRho = 1;
     }
   }
       
