@@ -100,7 +100,7 @@ void buildGraph(
       vertexNames[nodeToDescriptor[node->getIID()] ] = node->getIID();
       if (dynamic_cast<AMOS::Contig_t *>(node) != NULL) {
          AMOS::Contig_t *ctg = dynamic_cast<AMOS::Contig_t *>(node);
-         vertexLength[nodeToDescriptor[node->getIID()] ] = ctg->getLength();
+         vertexLength[nodeToDescriptor[node->getIID()] ] = ctg->getUngappedLength();
       } else {
          vertexLength[nodeToDescriptor[node->getIID()] ] = 1;
       }
