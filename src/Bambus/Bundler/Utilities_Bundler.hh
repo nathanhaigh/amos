@@ -91,6 +91,9 @@ namespace Bundler
    // get edge statuses
    // note: edge status are cached in memory so they must be updated through setEdgeStatus
    void setEdgeStatus(AMOS::ContigEdge_t &cte, AMOS::Bank_t &edge_bank, int status);
+   void setEdgeStatus(AMOS::ContigEdge_t &cte, AMOS::Bank_t &edge_bank, int status, bool now);
+   void flushEdgeStatus(AMOS::Bank_t &edge_bank);
+
    bool isBadEdge(AMOS::ID_t cteID, AMOS::Bank_t &edge_bank);
    bool isBadEdge(const AMOS::ContigEdge_t &cte);
    void checkEdgeID(const AMOS::ID_t &id);

@@ -100,7 +100,7 @@ void buildGraph(
       vertexNames[nodeToDescriptor[node->getIID()] ] = node->getIID();
       if (dynamic_cast<AMOS::Contig_t *>(node) != NULL) {
          AMOS::Contig_t *ctg = dynamic_cast<AMOS::Contig_t *>(node);
-         vertexLength[nodeToDescriptor[node->getIID()] ] = ctg->getUngappedLength();
+         vertexLength[nodeToDescriptor[node->getIID()] ] = ctg->getLength();
       } else {
          vertexLength[nodeToDescriptor[node->getIID()] ] = 1;
       }
@@ -227,9 +227,25 @@ void checkEdge(const AMOS::ContigEdge_t &cte) {
 }
 
 void setEdgeStatus(AMOS::ContigEdge_t &cte, AMOS::Bank_t &edge_bank, int status) {
+   setEdgeStatus(cte, edge_bank, status, true);
+}
+
+void setEdgeStatus(AMOS::ContigEdge_t &cte, AMOS::Bank_t &edge_bank, int status, bool now) {
    cte2bad[cte.getIID()] = status;
    cte.setStatus(status);
-   edge_bank.replace(cte.getIID(), cte);
+   if (now == true) {
+      edge_bank.replace(cte.getIID(), cte);
+   }
+}
+
+void flushEdgeStatus(AMOS::Bank_t &edge_bank) {
+   AMOS::ContigEdge_t cte;
+
+   for (HASHMAP::hash_map<AMOS::ID_t, int, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >::iterator i = cte2bad.begin(); i != cte2bad.end(); i++) {
+      edge_bank.fetch(i->first, cte);
+      cte.setStatus(i->second);
+      edge_bank.replace(i->first, cte);
+   }
 }
 
 bool isBadEdge(AMOS::ID_t cteID, AMOS::Bank_t &edge_bank) {

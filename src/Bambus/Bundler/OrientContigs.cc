@@ -450,8 +450,8 @@ bool validateNeighbors(ID_t node, set<ID_t, EdgeWeightCmp>& neighbors, Bank_t &e
    return true;
 }
 
-ID_t findNeighborOfNeighbors(ID_t node, ID_t source, set<ID_t, EdgeWeightCmp>& neighbors, Bank_t &edge_bank, set<ID_t> &lowWeight, bool &validateLowWeight) {
-   uint32_t numNeighbors = 0;
+ID_t findNeighborOfNeighbors(ID_t node, ID_t source, set<ID_t, EdgeWeightCmp>& neighbors, Bank_t &edge_bank, set<ID_t> &lowWeight, bool &validateLowWeight, uint32_t &numNeighbors) {
+   //uint32_t numNeighbors = 0;
    ID_t sink = 0;
    ContigEdge_t cte;
    uint32_t badEdges = 0;
@@ -736,31 +736,33 @@ double mergeContigs(ID_t newIID,
 
 void validateMotif(set<ID_t> &t, ID_t source, ID_t sink, bool validateLowWeight, Bank_t &edge_bank, hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk) {
    // double check that all the nodes have no incoming/outgoing edges outside the set
-   // note that for the source we can have incoming edges and for outgoing we can have incoming
+   // note that for the source we can have incoming edges and for outgoing we can have outgoing
    for (set<ID_t>::iterator k = t.begin(); k != t.end(); k++) {
       bool validated = false;
       
-      if (*k == source) {
-         if (globals.debug >= 3) { cerr << "Validating source " << *k << endl; }
-         validated = validateNeighbors(source, *ctg2lnk[source], edge_bank, t, OUTGOING, validateLowWeight);
-      } else if (*k == sink) {
-         if (globals.debug >= 3) { cerr << "Validating sink " << *k << endl; }
-         validated = validateNeighbors(sink, *ctg2lnk[sink], edge_bank, t, INCOMING, validateLowWeight);
-      } else {
-         if (globals.debug >= 3) { cerr << "Validating node " << *k << endl; }
-         validated = validateNeighbors(*k, *ctg2lnk[*k], edge_bank, t, ALL, validateLowWeight);
-      }
-      if (validated == false) {
-         if (globals.debug >= 3) {
-            cerr << "The source is " << source << " and sink is " << sink << endl;
-            cerr << "GIVING UP ON SET ****: ";
-            for (set<ID_t>::iterator k = t.begin(); k != t.end(); k++) {
-               cerr << *k << " ";
-            }
-            cerr << endl;
+      if (*k != 0) {
+         if (*k == source) {
+            if (globals.debug >= 3) { cerr << "Validating source " << *k << endl; }
+            validated = validateNeighbors(source, *ctg2lnk[source], edge_bank, t, OUTGOING, validateLowWeight);
+         } else if (*k == sink) {
+            if (globals.debug >= 3) { cerr << "Validating sink " << *k << endl; }
+            validated = validateNeighbors(sink, *ctg2lnk[sink], edge_bank, t, INCOMING, validateLowWeight);
+         } else {
+            if (globals.debug >= 3) { cerr << "Validating node " << *k << endl; }
+            validated = validateNeighbors(*k, *ctg2lnk[*k], edge_bank, t, ALL, validateLowWeight);
          }
-         t.clear();
-         break;
+         if (validated == false) {
+            if (globals.debug >= 3) {
+               cerr << "The source is " << source << " and sink is " << sink << endl;
+               cerr << "GIVING UP ON SET ****: ";
+               for (set<ID_t>::iterator k = t.begin(); k != t.end(); k++) {
+                  cerr << *k << " ";
+               }
+               cerr << endl;
+            }
+            t.clear();
+            break;
+         }
       }
    }
 }
@@ -859,7 +861,7 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs,
                visited[i->source] = true;
 
                ID_t sink = 0;
-               uint32_t numNeighbors;
+               //uint32_t numNeighbors;
                set<ID_t> t;
                std::stringstream oss;
                uint32_t badEdges = 0;
@@ -911,10 +913,12 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs,
                         
                            // if we're the outgoing edge of the first neighbors
                            if (nextCte.getContigs().first == cte.getContigs().second) {
+                              uint32_t numNeighbors = 0;
                               ID_t otherID = getEdgeDestination(cte.getContigs().second, nextCte);
-                              neighbor = findNeighborOfNeighbors(otherID, cte.getContigs().second, *ctg2lnk[otherID], edge_bank, skippedEdges, validateSkippedEdges);
-                           
-                              if (neighbor != 0) {
+                              neighbor = findNeighborOfNeighbors(otherID, cte.getContigs().second, *ctg2lnk[otherID], edge_bank, skippedEdges, validateSkippedEdges, numNeighbors);
+
+// hack to get nodes that dead-end as motifs
+                              if (neighbor != 0 || (neighbor == 0 && numNeighbors == 0)) {
                                     if (neighbor == sink || sink == 0) {
                                        sink = neighbor;
                         
@@ -983,18 +987,20 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs,
          
                         if (cte.getContigs().first == i->source) {
                            ID_t otherID = getEdgeDestination(i->source, cte);
-                           neighbor = findNeighborOfNeighbors(otherID, i->source, *ctg2lnk[otherID], edge_bank, skippedEdges, validateSkippedEdges);
-                              if (neighbor != 0) {
-                                    if (neighbor == sink || sink == 0) {
-                                       sink = neighbor;
-                        
-                                       t.insert(sink);
-                                       t.insert(otherID);
-                                       t.insert(i->source);
-                        
-                                       oss << otherID << " ";
-                                    }         
-                              }
+                           uint32_t numNeighbors = 0;
+                           
+                           neighbor = findNeighborOfNeighbors(otherID, i->source, *ctg2lnk[otherID], edge_bank, skippedEdges, validateSkippedEdges, numNeighbors);
+                           if (neighbor != 0 || (neighbor == 0 && numNeighbors == 0)) {
+                              if (neighbor == sink || sink == 0) {
+                                 sink = neighbor;
+                  
+                                 t.insert(sink);
+                                 t.insert(otherID);
+                                 t.insert(i->source);
+                  
+                                 oss << otherID << " ";
+                              }         
+                           }
                         }
                      }
                   } else {
@@ -1154,7 +1160,7 @@ int main(int argc, char *argv[]) {
          if (globals.debug >= 0) {
             cerr << "WARNING: IGNORING EDGE " << cte.getIID() << " between " << cte.getContigs().first << " and " << cte.getContigs().second << " because one was listed as a repeat" << endl;;
          }
-         setEdgeStatus(cte, edge_bank, BAD_RPT);
+         setEdgeStatus(cte, edge_bank, BAD_RPT, false);
          continue;
       }
 
@@ -1165,7 +1171,7 @@ int main(int argc, char *argv[]) {
          if (globals.debug >= 0) { 
             cerr << "WARNING: link " << cte.getIID() << " (" << cte.getContigs().first << ", " << cte.getContigs().second << ") is too low weight: " << cte.getLinks().size() << " cutoff was: " << globals.redundancy << endl;
          }
-         setEdgeStatus(cte, edge_bank, BAD_THRESH);
+         setEdgeStatus(cte, edge_bank, BAD_THRESH, false);
          continue;
       }
       if (cte.getIID() == 0 || cte.getContigs().first == 0 || cte.getContigs().second == 0) {
@@ -1173,7 +1179,7 @@ int main(int argc, char *argv[]) {
          if (globals.debug >= 0) {
             cerr << "WARNING: link " << cte.getIID() << " (" << cte.getContigs().first << ", " << cte.getContigs().second << ") connects to a singleton, it is being ignored" << endl;
          }
-         setEdgeStatus(cte, edge_bank, BAD_THRESH);
+         setEdgeStatus(cte, edge_bank, BAD_THRESH, false);
          continue;
       }
       (*cte2weight)[cte.getIID()] = cte.getContigLinks().size();
@@ -1187,7 +1193,8 @@ int main(int argc, char *argv[]) {
       s->insert(cte.getIID());
       ctg2lnk[cte.getContigs().second] = s;
    }
-
+   flushEdgeStatus(edge_bank);
+   
    map<string, LinkAdjacency_t> ctg2edges;                                 // map from pair of contigs to edge type connecting them
                                                                            // need this so we can know that we picked an N edge and not a A edge for two contigs
    // track visisted nodes
