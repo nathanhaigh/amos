@@ -185,7 +185,7 @@ double Contig_t::getCovStat(const double globalArrivalRate) const
   const float ln2=0.69314718055994530941723212145818;
 
   assert(globalArrivalRate != -1);
-  return (getAvgRho() * globalArrivalRate) - (ln2 * (reads_m.size() -1));
+  return (getAvgRho() * (globalArrivalRate)) - (ln2 * (reads_m.size() -1));
 }
 
 
