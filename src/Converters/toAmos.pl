@@ -145,11 +145,11 @@ if (! defined $outfile){
 }
 elsif ($outfile eq "-")
 {
-  open(OUT, ">&STDOUT") || $base->bail("Can't open stdout: $!\n");
+  open(OUT, ">&STDOUT") || $base->bail("Could not write on stdout: $!\n");
 }
 else
 {
-  open(OUT, ">$outfile") || $base->bail("Cannot open $outfile: $!\n");
+  open(OUT, ">$outfile") || $base->bail("Could not write file $outfile: $!\n");
 }
 
 
@@ -158,14 +158,14 @@ my $tmpdir   = $base->getTempDir();
 my $tmpseq   = File::Spec->catfile($tmpdir, $tmprefix.'.seq');
 my $tmpctg   = File::Spec->catfile($tmpdir, $tmprefix.'.ctg');
 my $tmpscf   = File::Spec->catfile($tmpdir, $tmprefix.'.scf');
-open(TMPSEQ, ">$tmpseq") || $base->bail("Cannot open $tmpseq: $!\n");
-open(TMPCTG, ">$tmpctg") || $base->bail("Cannot open $tmpctg: $!\n");
-open(TMPSCF, ">$tmpscf") || $base->bail("Cannot open $tmpscf: $!\n");
+open(TMPSEQ, ">$tmpseq") || $base->bail("Could not write file $tmpseq: $!\n");
+open(TMPCTG, ">$tmpctg") || $base->bail("Could not write file $tmpctg: $!\n");
+open(TMPSCF, ">$tmpscf") || $base->bail("Could not write file $tmpscf: $!\n");
 
 
 #then figure out the mates
 if (defined $frgfile){
-    open(IN, $frgfile) || $base->bail("Cannot open $frgfile: $!\n");
+    open(IN, $frgfile) || $base->bail("Could not read file $frgfile: $!\n");
     parseFrgFile(\*IN);
     close(IN);
     $matesDone = 1;
@@ -173,9 +173,9 @@ if (defined $frgfile){
 }
 
 if (defined $fastafile){
-    open(IN, $fastafile) || $base->bail("Cannot open $fastafile: $!\n");
+    open(IN, $fastafile) || $base->bail("Could not read file $fastafile: $!\n");
     if (defined $qualfile){
-	open(QUAL, $qualfile) || $base->bail("Cannot open $qualfile: $!\n");
+	open(QUAL, $qualfile) || $base->bail("Could not read file $qualfile: $!\n");
 	parseFastaFile(\*IN, \*QUAL);
 	close(QUAL);
     } else {
@@ -186,21 +186,21 @@ if (defined $fastafile){
 }
 
 if (defined $posfile){
-    open(IN, $posfile) || $base->bail("Cannot open $posfile: $!\n");
+    open(IN, $posfile) || $base->bail("Could not read file $posfile: $!\n");
     parsePosFile(\*IN);
     close(IN);
 }
 
 if (defined $asmfile){
     $outprefix = $asmfile;
-    open(IN, $asmfile) || $base->bail("Cannot open $asmfile: $!\n");
+    open(IN, $asmfile) || $base->bail("Could not read file $asmfile: $!\n");
     parseAsmFile(\*IN);
     close(IN);
 }
 
 if (defined $ctgfile){
     $outprefix = $ctgfile;
-    open(IN, $ctgfile) || $base->bail("Cannot open $ctgfile: $!\n");
+    open(IN, $ctgfile) || $base->bail("Could not read file $ctgfile: $!\n");
     parseContigFile(\*IN);
     close(IN);
 }
@@ -209,23 +209,21 @@ if (defined $tasmfile) {
     die("This option is not yet fully functional\n");
     
     $outprefix = $tasmfile;
-    open(IN, $tasmfile) || $base->bail("Cannot open $tasmfile: $!\n");
+    open(IN, $tasmfile) || $base->bail("Could not read file $tasmfile: $!\n");
     parseTAsmFile(\*IN);
     close(IN);
 }
 
 if (defined $acefile){
     $outprefix = $acefile;
-    open(IN, $acefile) || $base->bail("Cannot open $acefile: $!\n");
+    open(IN, $acefile) || $base->bail("Could not read file $acefile: $!\n");
     parseACEFile(\*IN);
     close(IN);
-	if ($phd_opt) {
-		open(IN, $acefile) || $base->bail("Cannot open $acefile: $!\n");
-		parsePHDFiles(\*IN);
-		close(IN);
-	}
-
-
+    if ($phd_opt) {
+        open(IN, $acefile) || $base->bail("Could not read file $acefile: $!\n");
+        parsePHDFiles(\*IN);
+        close(IN);
+    }
 }
 
 $outprefix =~ s/\.[^.]*$//;
@@ -234,39 +232,38 @@ $outprefix =~ s/\.[^.]*$//;
 
 if (defined $traceinfofile){
     $matesDone = 1;
-    open(IN, $traceinfofile) || $base->bail("Cannot open $traceinfofile: $!\n");
+    open(IN, $traceinfofile) || $base->bail("Could not read file $traceinfofile: $!\n");
     parseTraceInfoFile(\*IN);
     close(IN);
 }
 
 if (! $matesDone && defined $matesfile) { # the mate file contains either mates
     # or regular expressions defining them
-    open(IN, $matesfile) || 
-	$base->bail("Cannot open \"$matesfile\": $!\n");
+    open(IN, $matesfile) || $base->bail("Could not read file $matesfile: $!\n");
     parseMatesFile(\*IN);
     close(IN);
 } # if mates not done defined matesfile
 
 if (defined $insertfile){
-    open(IN, $insertfile) || $base->bail("Cannot open $insertfile: $!\n");
+    open(IN, $insertfile) || $base->bail("Could not read file $insertfile: $!\n");
     parseInsertFile(\*IN);
     close(IN);
 }
 
 if (defined $libmap){
-    open(IN, $libmap) || $base->bail("Cannot open $libmap: $!\n");
+    open(IN, $libmap) || $base->bail("Could not read file $libmap: $!\n");
     parseLibMapFile(\*IN);
     close(IN);
 }
 
 if (defined $arachne_scaff){
-    open(IN, $arachne_scaff) || $base->bail("Cannot open $arachne_scaff: $!\n");
+    open(IN, $arachne_scaff) || $base->bail("Could not read file $arachne_scaff: $!\n");
     parseArachneScaff(\*IN);
     close(IN);
 }
 
 if (defined $scaffile){
-    open(IN, $scaffile) || $base->bail("Cannot open $scaffile: $!\n");
+    open(IN, $scaffile) || $base->bail("Could not read file $scaffile: $!\n");
     parseScaff(\*IN);
     close(IN);
 }
@@ -359,10 +356,9 @@ while (my ($ins, $lib) = each %seenlib){
 
 # then all the reads
 if (defined $posfile){
-    open(POS, $posfile) || $base->bail("Cannot open $posfile: $!\n");
+    open(POS, $posfile) || $base->bail("Could not read file $posfile: $!\n");
 }
-open(TMPSEQ, $tmpseq) 
-    || $base->bail("Cannot open $tmpseq: $!\n");
+open(TMPSEQ, $tmpseq) || $base->bail("Could not read file $tmpseq: $!\n");
 
 while (<TMPSEQ>){
     if (/^\#(\d+)/){
@@ -423,10 +419,10 @@ while (<TMPSEQ>){
 
 
 	if  (! exists $seqinsert{$rid}){
-	    $base->bail("Cannot find insert for $rid ($seqnames{$rid})\n");
+	    $base->bail("Could not find insert for $rid ($seqnames{$rid})\n");
 	}
 	if (! exists $insid{$seqinsert{$rid}}){
-	    $base->bail("cannot find insert id for insert $seqinsert{$rid}, sequence $rid, $seqnames{$rid}\n");
+	    $base->bail("Could not find insert ID for insert $seqinsert{$rid}, sequence $rid, $seqnames{$rid}\n");
 	}
 	print OUT "frg:$insid{$seqinsert{$rid}}\n";
 	my ($cll, $clr) = split(' ', $seq_range{$rid});
@@ -439,11 +435,11 @@ while (<TMPSEQ>){
 close(TMPSEQ);
 if (defined $posfile){ close(POS);}
 
-unlink($tmpseq) || $base->bail("Cannot remove $tmpseq: $!\n");
+unlink($tmpseq) || $base->bail("Could not remove $tmpseq: $!\n");
 
 # then all the contigs
 
-open(TMPCTG, $tmpctg) || $base->bail("Cannot open $tmpctg: $!\n");
+open(TMPCTG, $tmpctg) || $base->bail("Could not read file $tmpctg: $!\n");
 
 while (<TMPCTG>){
     if (/^\#(\d+) (.)/){
@@ -520,12 +516,12 @@ unlink($tmpctg) || $base->bail("Cannot remove $tmpctg: $!\n");
 # and all the scaffolds
 
 if (-f $tmpscf){
-    open(TMPSCF, $tmpscf) || $base->bail("Cannot open $tmpscf:$!\n");
+    open(TMPSCF, $tmpscf) || $base->bail("Could not read file $tmpscf: $!\n");
     while (<TMPSCF>){
 	print OUT;
     }
     close(TMPSCF);
-    unlink($tmpscf) || $base->bail("Cannot remove $tmpscf: $!\n");
+    unlink($tmpscf) || $base->bail("Could not read file $tmpscf: $!\n");
 }
 close(OUT);
 
@@ -1240,7 +1236,7 @@ sub parsePHDFiles {
 
     while(<$IN>) {
 	if(m/^DS CHROMAT_FILE: (\S+) PHD_FILE: (\S+)/) {
-	    open(PHD_FILE, "<../phd_dir/$2") || $base->bail("missing phd file $2");
+	    open(PHD_FILE, "<../phd_dir/$2") || $base->bail("Could not read file $2: $!\n");
 	    
 	    my $seqname = $1;
 		my $pos_list;

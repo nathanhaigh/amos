@@ -513,23 +513,23 @@ void LaunchPadBase::languageChange()
     readGCButton->setText( tr( "GC Content" ) );
     QToolTip::add( readGCButton, tr( "Display a histogram of the GC content of these reads" ) );
     tabWidget->changeTab( TabPage, tr( "Reads" ) );
-    fileOpenAction->setText( tr( "Open" ) );
-    fileOpenAction->setMenuText( tr( "&Open..." ) );
+    fileOpenAction->setText( tr( "Open Bank" ) );
+    fileOpenAction->setMenuText( tr( "&Open Bank..." ) );
     fileOpenAction->setAccel( tr( "Ctrl+O" ) );
     fileQuitAction->setText( tr( "Quit" ) );
     fileQuitAction->setMenuText( tr( "&Quit" ) );
     fileQuitAction->setAccel( tr( "Ctrl+Q" ) );
-    fileChromatogramPathsAction->setText( tr( "Chromatogram Paths" ) );
-    fileChromatogramPathsAction->setMenuText( tr( "Chromatogram &Paths..." ) );
+    fileChromatogramPathsAction->setText( tr( "Set Chromatogram Paths" ) );
+    fileChromatogramPathsAction->setMenuText( tr( "Set Chromatogram &Paths..." ) );
     fileChromatogramPathsAction->setAccel( tr( "Ctrl+P" ) );
 
     // dsommer: added import
-    fileImportAction->setText( tr( "Import ace " ) );
-    fileImportAction->setMenuText( tr( "&Import ace" ) );
+    fileImportAction->setText( tr( "Import ACE..." ) );
+    fileImportAction->setMenuText( tr( "&Import ACE..." ) );
     fileImportAction->setAccel( tr( "Ctrl+I" ) );
 
-    loadKmersAction->setText(tr("Load Kmers"));
-    loadKmersAction->setMenuText(tr("Load &Kmers"));
+    loadKmersAction->setText(tr("Open Kmers..."));
+    loadKmersAction->setMenuText(tr("Open &Kmers..."));
     loadKmersAction->setAccel(tr("Ctrl+K"));
 
     Toolbar->setLabel( tr( "Toolbar" ) );
