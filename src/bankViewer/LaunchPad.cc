@@ -123,14 +123,18 @@ void LaunchPad::fileImport()
   // if no file is selected just exit
   if (s.isEmpty()) { return; }
 
+  // quoted filenames, whitespace-safe
+  QString acefile(s);
+  QString afgfile(acefile+".afg");
+  QString bnkfile(acefile+".bnk");
+
   // convert ACE file to AFG message file using toAmos
   //QString cmd("toAmos -phd -m toAmos.mates -ace ");
   // fangly: safer to not use PHD files and mate pairs
   QString cmd("toAmos -ace ");
-  cmd.append(s);
+  cmd.append("'"+acefile+"'");
   cmd.append(" -o ");
-  cmd.append(s);
-  cmd.append(".afg");
+  cmd.append("'"+afgfile+"'");
   int r = system(cmd);
   if (r != 0)
   {
@@ -140,11 +144,9 @@ void LaunchPad::fileImport()
 
   // make a bank from the AFG message file using bank-transact
   QString cmd2("bank-transact -f -m ");
-  cmd2.append(s);
-  cmd2.append(".afg ");
+  cmd2.append("'"+afgfile+"'");
   cmd2.append(" -b ");
-  s.append(".bank");
-  cmd2.append(s);
+  cmd2.append("'"+bnkfile+"'");
   r = system(cmd2);
   if (r != 0)
   {
@@ -153,7 +155,7 @@ void LaunchPad::fileImport()
   }
 
   // conversion was successful, get bank name
-  if (!s.isEmpty()) { setBankname(s.ascii()); }
+  if (!s.isEmpty()) { setBankname(bnkfile.ascii()); }
 }
 
 void LaunchPad::setBankname(std::string bankname)
