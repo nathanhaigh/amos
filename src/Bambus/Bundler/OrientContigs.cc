@@ -282,6 +282,38 @@ LinkAdjacency_t getAdjacency(contigOrientation firstOrient, contigOrientation se
    }
 }
 
+contigOrientation getOrientationByAllEdges(ID_t nodeID, 
+                     hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> > &ctg2ort,
+                     hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk, 
+                     Bank_t &edge_bank) {
+                        
+   set<ID_t, EdgeWeightCmp>* s = ctg2lnk[nodeID];
+   ContigEdge_t cte;
+   double orientWeights[2];
+   double max = 0;
+   contigOrientation maxOrient = NONE;
+   
+   if (s == NULL || s->size() == 0) {
+      // do nothing, nothing to sum
+   }
+   else {
+      for (set<ID_t, EdgeWeightCmp>::iterator i = s->begin(); i != s->end(); i++) {
+        edge_bank.fetch(*i, cte);
+        
+        if (!isBadEdge(*i, edge_bank) && ctg2ort[getEdgeDestination(nodeID, cte)] != NONE) {
+           contigOrientation orient = getOrientation(ctg2ort[getEdgeDestination(nodeID, cte)], cte);
+           orientWeights[orient] += (*cte2weight)[(*i)];
+           if (orientWeights[orient] > max) {
+            max = orientWeights[orient];
+            maxOrient = orient;
+           }
+        }
+      }
+   }
+   
+   return maxOrient;
+}
+
 int32_t computePosition(int32_t position, int32_t size) {
    if (position == UNINITIALIZED) {
       return UNINITIALIZED;
@@ -1252,7 +1284,7 @@ int main(int argc, char *argv[]) {
             ID_t otherID = getEdgeDestination(myID, cte);
 
             // orient the node
-            contigOrientation orient = getOrientation(ctg2ort[myID], cte);
+            contigOrientation orient = getOrientationByAllEdges(otherID, ctg2ort, ctg2lnk, edge_bank);
             // add the edge
             if (visitedEdges[cte.getIID()] == 0) {
                std::stringstream oss;
@@ -1299,6 +1331,7 @@ int main(int argc, char *argv[]) {
                   contig_bank.fetch(cte.getContigs().second, second);
 
                   ctg2ort[otherID] = orient;
+cerr << "SET ORIENT FOR NODE " << otherID << " TO " << orient << endl;
                   ctg2edges[oss.str()] = cte.getAdjacency();
 
                   // only position using the good edges
@@ -1310,8 +1343,8 @@ int main(int argc, char *argv[]) {
                      setEdgeStatus(cte, edge_bank, BAD_DST);
                   } else {
                      // update the edge in the bank so it is marked good
-   		               setEdgeStatus(cte, edge_bank, GOOD_EDGE);                        
-                        goodCount++;
+   		            setEdgeStatus(cte, edge_bank, GOOD_EDGE);                        
+                     goodCount++;
 
                      // add tiling info
                      // offset is always in terms of the lowest position in scaffold of the contig, that is if we have ---> <---- then the offset of the second
