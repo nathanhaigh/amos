@@ -103,7 +103,9 @@ int main (int argc, char ** argv)
 "   -c <dist>    Cluster regions within <dist> bp\n"
 "   -I <file>    Only use list of contigs iids in file for computing average\n"
 "   -i           Print contig IIDs instead of EIDs\n"
-"   -d           Just compute the depth\n"
+"   -d           Just compute the depth. This returns a line with 4 values:\n"
+"                the minimum contig length considered, number of contigs\n"
+"                sum of contig lengths and the average contig depth\n"
 "   -l <len>     Only use contigs >= len for computing average\n"
 "   -r           Print the depth for each contig\n"
 "   -u           Use ungapped length for reports\n";
