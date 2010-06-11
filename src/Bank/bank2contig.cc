@@ -161,6 +161,11 @@ void printContig(Contig_t & contig, Bank_t & read_bank)
       int flag = 0;
       int mapqual = 255;
 
+      if (rc)
+      {
+        flag = 0x0010;
+      }
+
       cout << "\t" << flag 
            << "\t" << contigeid 
            << "\t" << contig.gap2ungap(ti->offset)
