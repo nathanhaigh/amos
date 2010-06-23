@@ -644,6 +644,7 @@ sub parseFrgFile {
 	    $seqids{$id} = $iid;
 	    my ($seql, $seqr) = split(',', $$fields{clr});
 	    $seq_range{$iid} = "$seql $seqr";
+        #print STDERR "$id $iid clr: $seql $seqr\n";
 	    print TMPSEQ "#$iid\n";
 	    print TMPSEQ "$$fields{seq}";
 	    print TMPSEQ "#\n";
@@ -1146,6 +1147,12 @@ sub parseAsmFile
       if (exists $$fields{clr})
       {
         my $acc = getCAId($$fields{acc});
+
+        if ($acc =~ /^\((\w+),(\w+)\)/)
+        {
+          $acc = $1;
+        }
+
         my $iid = $seqids{$acc};
 
         my ($seql, $seqr) = split(/,/, $$fields{clr});
@@ -1154,7 +1161,7 @@ sub parseAsmFile
         # if (!defined $seq_range{$iid} || $seq_range{$iid} ne $clrstr)
         # {
         #   my $origclr = $seq_range{$iid};
-        #   print STDERR "Updating $acc clr range from $origclr to $clrstr\n";
+        #   print STDERR "Updating $acc \"$iid\" clr range from $origclr to $clrstr\n";
         # }
 
         $seq_range{$iid} = $clrstr;
