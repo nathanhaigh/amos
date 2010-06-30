@@ -140,7 +140,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 
     while (my $record = getRecord($files[$f])){
 	my ($rec, $fields, $recs) = parseRecord($record);
-	my $nseqs;
+	my $nseqs = 0;
 	my $id = $$fields{iid};
 	$contigid = $$fields{iid};
 	
@@ -234,7 +234,13 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 		    $sequence = join('', @lines);
 		    ($seql, $seqr) = split(',', $seqclr{$$sfields{src}});
 #		    print STDERR "sequence $$sfields{src} has range $seql, $seqr\n";
-		    my @gaps = split(/\s+/, $$sfields{gap});
+
+        # TODO: It seems like the gap information is never recorded anywhere...
+        # Either record the gaps, or remove this code
+		    my @gaps;
+        if (defined $$sfields{gap}) {
+          @gaps = split(/\s+/, $$sfields{gap});
+        }
 		    my ($asml, $asmr) = split(',', $$sfields{clr});
 
 #		    print STDERR "asml and asmr are $asml $asmr\n";
@@ -348,7 +354,7 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    my $prev;
 	    my $nBS = 0;
 
-	    my @offsets = keys  %seqOff;
+	    @offsets = keys  %seqOff;
 #	    print STDERR " I have ", $#offsets + 1, " offsets\n";
  	    foreach my $sequence ( sort {
 		($seqOff{$a} == $seqOff{$b}) ?
@@ -368,7 +374,9 @@ for (my $f = 0; $f <= $#ARGV; $f++){
 	    }
 #	    print STDERR "\n";
  	    $nBS++;
- 	    print CTGOUT "BS $seqOff{$prev} $contigLen $prev\n";
+      if (defined $prev) {
+     	    print CTGOUT "BS $seqOff{$prev} $contigLen $prev\n";
+      }
 	    close(CTGOUT);
 	    
 	    print OUT "CO $contigid $contigLen $nseqs $nBS U\n";
