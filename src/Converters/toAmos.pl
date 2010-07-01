@@ -206,7 +206,8 @@ if (defined $ctgfile){
 }
 
 if (defined $tasmfile) {
-    die("This option is not yet fully functional\n");
+    
+    die("This option is not yet fully functional\n"); # TODO
     
     $outprefix = $tasmfile;
     open(IN, $tasmfile) || $base->bail("Could not read file $tasmfile: $!\n");
@@ -287,7 +288,7 @@ while (my ($sid, $sname) = each %seqnames){
 	$seqinsert{$sid} = $id;
 	$insid{$id} = $id;
 	$seenlib{$id} = $ll;
-#	$insertlib{$ll} .= "$id ";
+	#$insertlib{$ll} .= "$id ";
 	$forw{$id} = $sid;
     }
 }
@@ -363,6 +364,7 @@ open(TMPSEQ, $tmpseq) || $base->bail("Could not read file $tmpseq: $!\n");
 while (<TMPSEQ>){
     if (/^\#(\d+)/){
 	my $rid = $1;
+
 	print OUT "{RED\n";
 	print OUT "iid:$rid\n";
 	print OUT "eid:$seqnames{$rid}\n";
@@ -386,10 +388,10 @@ while (<TMPSEQ>){
 		my $line = <POS>;
 		chomp $line;
 		my ($seqname, $ver, $poss) = split('\t', $line);
-#		print "unpacking $poss\n";
+		#print "unpacking $poss\n";
 		my @poss = unpack("(a4)*", $poss);
 		@poss = map(hex, @poss);
-#		print "got $#poss pieces\n";
+		#print "got $#poss pieces\n";
 
 		print OUT "bcp:\n";
 		for (my $p = 0; $p <= $#poss; $p += 15){
@@ -397,8 +399,8 @@ while (<TMPSEQ>){
 		}
 		print OUT ".\n";
 	    }# else {
-#		print "What bcp: $rid $seqnames{$rid}\n";
-#	    }
+		#print "What bcp: $rid $seqnames{$rid}\n";
+	    #}
 	} elsif (defined $phd_opt) {
 
 	    if (exists $posidx{$rid}){
@@ -759,8 +761,7 @@ sub parseFrgFile {
 # >seqname
 # >seqname clearleft clearright
 # >seqname \d+ \d+ \d+ clearleft clearright
-sub parseFastaFile
-{
+sub parseFastaFile {
     my $seqfile = shift;
     my $qualfile = shift;
 
@@ -856,6 +857,7 @@ sub parseMatesFile {
     while (<$IN>){
 	chomp;
 	if (/^library/){
+      # line should match: library <name> <min_size> <max_size> <regexp>
 	    my @recs = split('\t', $_);
 	    if ($#recs < 3 || $#recs > 4){
 		print STDERR "Only ", $#recs + 1, " fields\n";
@@ -874,6 +876,7 @@ sub parseMatesFile {
 	} # if library
 
 	if (/^pair/){
+      # line expected to match: pair <regexp_forw> <regexp_rev>
 	    my @recs = split('\t', $_);
 	    if ($#recs != 2){
 		$base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
@@ -1018,8 +1021,7 @@ sub parseMatesFile {
 # Celera .asm
 # populates %contigs, %asm_range, %seqcontig, %contigcons
 # expects %seq_range to be populated
-sub parseAsmFile 
-{
+sub parseAsmFile {
   my $IN = shift;
 
   while (my $record = getRecord($IN))
@@ -1235,7 +1237,7 @@ sub parseTAsmFile {
 	    next;
 	}
     }
-} # parseTasmFile
+} # parseTAsmFile
 
 
 sub parsePHDFiles {
@@ -1316,7 +1318,7 @@ sub parseACEFile {
 	    $ctgnames{$iid} = $contigName;
 	    $ctgids{$contigName} = $iid;
 	    $contigLen = $2;
-#	    $contigs{$iid} = $contigLen;
+	    #$contigs{$iid} = $contigLen;
 	    $contigSeqs = $3;
 	    $inContig = 1;
 	    $seq = "";
@@ -1339,12 +1341,12 @@ sub parseACEFile {
 		print TMPCTG substr($seq, $c, 60), "\n";
 	    }
 	    print TMPCTG "#\n";
-#	    my $qual = $seq;
-#	    $qual =~ s/./X/;
-#	    # print quality values (all Xs
-#	    for (my $c = 0; $c < length($qual); $c += 60){
-#		print TMPCTG substr($qual, $c, 60), "\n";
-#	    }
+	    #my $qual = $seq;
+	    #$qual =~ s/./X/;
+	    ## print quality values (all Xs
+	    #for (my $c = 0; $c < length($qual); $c += 60){
+		#print TMPCTG substr($qual, $c, 60), "\n";
+	    #}
 
 	    next;
 	}
@@ -1415,7 +1417,7 @@ sub parseACEFile {
 	    next;
 	}
 
-	if (/^QA -?(\d+) -?(\d+) (\d+) (\d+)/){
+	if (/^QA -?(\d+) -?(\d+) -?(\d+) (\d+)/){
 	    # at this point the sequence ended
 	    my $offset = $offset{$seqName};
 	    my $cll = $3 - 1;
@@ -1423,7 +1425,7 @@ sub parseACEFile {
 	    my $end5 = $1;
 	    my $end3 = $2;
 
-	    # ACE files contain *s instead of -s
+	    # ACE files gaps are '*' instead of '-'
 	    $seq =~ s/\*/-/g;
 
 	    # shift offset to beginning of clear range
@@ -1485,7 +1487,7 @@ sub parseACEFile {
 	    # assign sequence id and populate all necessary data-structures
 	    my $seqId;
 	    if (! exists $seqids{$seqName}){
-#		print STDERR "Couldnt find id for $seqName\n";
+		#print STDERR "Couldnt find id for $seqName\n";
 		$seqId = $minSeqId++;
 		$seqids{$seqName} = $seqId;
 		$seqnames{$seqId} = $seqName;
@@ -1500,6 +1502,7 @@ sub parseACEFile {
 	        $seq_range{$seqId} = "$cll $clr";
 	    }
 	    $asm_range{$seqId} = "$asml $asmr";
+
 	    if ($readsDone == 0){ # no read info, must generate
 		my $qualdata = "";
 		$allseq =~ s/-//g;
@@ -1560,7 +1563,7 @@ sub parseContigFile {
 		print TMPCTG "#\n";
 		$arend = $alend + $slen;
 		$asm_range{$sid} = "$alend $arend";
-#		print TMPCTG "#\n";
+		#print TMPCTG "#\n";
 	    }
 	    $first = 0;
 	    $consensus = "";
@@ -1580,7 +1583,7 @@ sub parseContigFile {
 		for (my $c = 0; $c < length($consensus); $c+=60){
 		    print TMPCTG substr($consensus, $c, 60), "\n";
 		}
-#		print TMPCTG "$consensus\n";
+		#print TMPCTG "$consensus\n";
 		print TMPCTG "#\n";
 		for (my $c = 0; $c < length($consensus); $c+=60){
 		    for ($b = 0; $b < 60; $b++){
@@ -1589,7 +1592,7 @@ sub parseContigFile {
 		    }
 		    print TMPCTG "\n";
 		}
-#		print TMPCTG "\n";
+		#print TMPCTG "\n";
 	    } else {
 		print TMPCTG "#$sid\n";
 		print TMPCTG join(" ", @sdels), "\n";
@@ -1650,8 +1653,7 @@ sub parseContigFile {
 # Arachne .links scaffold file
 # assumptions: all contigs are forward
 # super ids are integers
-sub parseArachneScaff()
-{
+sub parseArachneScaff {
     my $IN = shift;
 
    # Fields in TAB delimited file
@@ -1700,8 +1702,7 @@ sub parseArachneScaff()
 
 
 # Bambus/AMOS .scaff file
-sub parseScaff()
-{
+sub parseScaff {
     my $IN = shift;
 
     # format of scaff file
@@ -1752,18 +1753,15 @@ sub parseScaff()
 ###############################################################
 # XML parser functions
 ###############################################################
-sub StartDocument
-{
+sub StartDocument {
 #    print "starting\n";
 }
 
-sub EndDocument
-{
+sub EndDocument {
 #    print "done\n";
 }
 
-sub StartTag
-{
+sub StartTag {
     $tag = lc($_[1]);
     
     if ($tag eq "trace"){
@@ -1779,8 +1777,7 @@ sub StartTag
 }
 
 
-sub EndTag
-{
+sub EndTag {
     $tag = lc($_[1]);
     if ($tag eq "trace"){
         if (! defined $seqId){
@@ -1837,8 +1834,7 @@ sub EndTag
 }
 
 
-sub Text 
-{
+sub Text {
     if (defined $tag){
         if ($tag eq "insert_size"){
             $mean = $_;
@@ -1872,9 +1868,3 @@ sub Text
         }
     }
 }
-
-sub pi
-{
-
-}
-
