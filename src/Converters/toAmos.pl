@@ -857,7 +857,7 @@ sub parseMatesFile {
     while (<$IN>){
 	chomp;
 	if (/^library/){
-      # line should match: library <name> <min_size> <max_size> <regexp>
+	    # line should match: library <name> <min_size> <max_size> <regexp>
 	    my @recs = split('\t', $_);
 	    if ($#recs < 3 || $#recs > 4){
 		print STDERR "Only ", $#recs + 1, " fields\n";
@@ -876,13 +876,13 @@ sub parseMatesFile {
 	} # if library
 
 	if (/^pair/){
-      # line expected to match: pair <regexp_forw> <regexp_rev>
+	    # line expected to match: pair <regexp_forw> <regexp_rev>
 	    my @recs = split('\t', $_);
 	    if ($#recs != 2){
 		$base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
 		next;
 	    }
-	    @pairregexp[++$#pairregexp] = "$recs[1] $recs[2]";
+	    $pairregexp[++$#pairregexp] = "$recs[1] $recs[2]";
 	    next;
 	}
 	if (/^\#/) { # comment

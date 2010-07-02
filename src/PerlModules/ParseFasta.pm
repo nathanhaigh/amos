@@ -36,6 +36,7 @@ by spaces.
 
     use strict;
 
+    # Declaration of function prototypes
     sub new();
     sub getRecord();
     sub seek();
@@ -66,21 +67,21 @@ sub new()
     $self->{linesep} = ''; 
     $self->{linesep} = $linesep if defined $linesep;
     $self->{file} = $file;
-    $self->{tell} = tell($file);
+    $self->{tell} = BASE::tell($file);
 
     $self->{buf} = <$file>;
     if (! defined $self->{buf}){
 	print STDERR "File appears empty\n";
 	return undef;
-#	die("File appears empty\n");
+	#die("File appears empty\n");
     }
     if ($self->{buf} !~ /^$self->{headsep}/){
 	print STDERR "File doesn't start with a header: $headsep\n";
 	return undef;
-#	die ("File doesn't start with a header: $headsep\n");
+	#die ("File doesn't start with a header: $headsep\n");
     }
     chomp $self->{buf};
-#    print STDERR "GOT a line $buf\n";
+    #print STDERR "GOT a line $buf\n";
     return $self;
 }
 
@@ -103,12 +104,12 @@ sub getRecord()
     }
     $head = $self->{buf};
     $head =~ s/^$self->{headsep}//;
-    $tl = tell($file);
+    $tl = BASE::tell($file);
     $self->{buf} = <$file>;
     chomp $self->{buf};
     while (defined $self->{buf} && $self->{buf} !~ /^$self->{headsep}/){
 	$data .= $self->{buf} . $self->{linesep};
-	$tl = tell($file);
+	$tl = BASE::tell($file);
 	$self->{buf} = <$file>;
 	if (defined $self->{buf}){chomp $self->{buf}};
     }
@@ -128,19 +129,19 @@ sub seek()
     my $file = $self->{file};
     my $headsep = $self->{headsep};
 
-    seek($file, $pos, 0);
+    CORE::seek($file, $pos, 0);
 
-    $self->{tell} = tell($file);
+    $self->{tell} = BASE::tell($file);
     $self->{buf} = <$file>;
     if (! defined $self->{buf}){
 	print STDERR "File appears empty\n";
 	return undef;
-#	die("File appears empty\n");
+	#die("File appears empty\n");
     }
     if ($self->{buf} !~ /^$self->{headsep}/){
 	print STDERR "File doesn't start with a header: $headsep\n";
 	return undef;
-#	die ("File doesn't start with a header: $headsep\n");
+	#die ("File doesn't start with a header: $headsep\n");
     }
     chomp $self->{buf};
 } # seek
