@@ -1501,13 +1501,15 @@ sub parseACEFile {
 	    $asm_range{$seqId} = "$asml $asmr";
 
 	    if ($readsDone == 0){ # no read info, must generate
-		my $qualdata = "";
-		$allseq =~ s/-//g;
+                # Sequence string
 		print TMPSEQ "#$seqId\n";
+		$allseq =~ s/-//g;
 		for (my $i = 0; $i <= length($allseq); $i+= 60){
 		    print TMPSEQ substr($allseq, $i, 60), "\n";
 		}
+                # Quality values
 		print TMPSEQ "#\n";
+		my $qualdata = "";
 		for (my $i = 0; $i < $cll; $i++){
 		    $qualdata .= chr(ord('0') + $BADQUAL);
 		}
@@ -1516,6 +1518,12 @@ sub parseACEFile {
 		}
 		for (my $i = $clr; $i < length($allseq); $i++){
 		    $qualdata .= chr(ord('0') + $BADQUAL);
+		}
+
+                my $seqlength  = length $allseq;
+                my $quallength = length $qualdata;
+		if ( $seqlength != $quallength ) {
+		    $base->bail("Error: There should be a quality score for each nucleotide in read $seqName, but got $seqlength nt and $quallength scores\n");
 		}
 		for (my $i = 0; $i <= length($qualdata); $i+= 60){
 		    print TMPSEQ substr($qualdata, $i, 60), "\n";
