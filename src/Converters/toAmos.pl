@@ -362,6 +362,7 @@ if (defined $posfile){
 open(TMPSEQ, $tmpseq) || $base->bail("Could not read file $tmpseq: $!\n");
 
 while (<TMPSEQ>){
+
     if (/^\#(\d+)/){
 	my $rid = $1;
 
@@ -431,7 +432,7 @@ while (<TMPSEQ>){
 	print OUT "clr:$cll,$clr\n";
 	print OUT "}\n";
     } else {
-	$base->bail("Weird error at line $. in $tmpseq");
+	$base->bail("Error: Temporary read file $tmpseq was not formatted as expected at line $.:\n$_");
     }
 }
 close(TMPSEQ);
@@ -505,7 +506,7 @@ while (<TMPCTG>){
 	}
 	print OUT "}\n";
     } else {
-	$base->bail("Weird error at line $. in $tmpctg");
+	$base->bail("Error: Temporary contig file $tmpctg was not formatted as expected at line $.:\n$_");
     }
 }
 
@@ -1311,15 +1312,13 @@ sub parseACEFile {
     my $qual = "";
     while (<$IN>){
 	if (/^CO (\S+) (\d+) (\d+)/){
+	    ($contigName, $contigLen, $contigSeqs) = ($1, $2, $3);
 	    if ($first != 1){print TMPCTG "#\n";}
 	    $first = 0;
-	    $contigName = $1;
 	    $iid = $minCtgId++;
 	    $ctgnames{$iid} = $contigName;
 	    $ctgids{$contigName} = $iid;
-	    $contigLen = $2;
 	    #$contigs{$iid} = $contigLen;
-	    $contigSeqs = $3;
 	    $inContig = 1;
 	    $seq = "";
 	    %offset = ();
@@ -1419,11 +1418,9 @@ sub parseACEFile {
 
 	if (/^QA -?(\d+) -?(\d+) -?(\d+) (\d+)/){
 	    # at this point the sequence ended
+	    my ($end5, $end3, $cll, $clr) = ($1, $2, $3, $4);
+	    $cll--;
 	    my $offset = $offset{$seqName};
-	    my $cll = $3 - 1;
-	    my $clr = $4;
-	    my $end5 = $1;
-	    my $end3 = $2;
 
 	    # ACE files gaps are '*' instead of '-'
 	    $seq =~ s/\*/-/g;
@@ -1530,7 +1527,11 @@ sub parseACEFile {
 	    next;
 	}
     } # while <$IN>
-    print TMPCTG "#\n";
+
+    if (defined $contigName) {
+      print TMPCTG "#\n";
+    } # else there were no contigs
+
 } #parseAceFile
 
 
