@@ -6,6 +6,8 @@ use AMOS::AmosLib;
 use AMOS::ParseFasta;
 use XML::Parser;
 
+my $GOODQUAL = 30;
+my $BADQUAL = 10;
 my $INCLUDE_SURROGATE = 0;
 my $UTG_MESSAGES = 0;
 
@@ -14,15 +16,16 @@ my $UTG_MESSAGES = 0;
 # 2. error if multiple sequence or multiple contig files provided
 
 my $VERSION = '$Revision$ ';
-my $HELP = q~
+my $HELP = qq~
 .USAGE.
-  toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)
-         (-c contig|-a asm [-S]|-ta tasm|-ace ace|-s fasta|-q qual) 
-         (-arachne assembly.links|-scaff file.scaff)
-         -o outfile 
-         [-i insertfile | -map dstmap]
-         [-gq goodqual] [-bq badqual]
-         [-pos posfile] [-phd]
+  toAmos -o out_file 
+        (-s fasta_reads (-q qual_file) (-gq good_qual) (-bq bad_qual))
+        (-c tigr_contig | -a celera_asm [-S][-utg] | -ta tigr_asm | -ace phrap_ace [-phd])
+        (-m bambus_mates | -x trace_xml | -f celera_frg [-acc])
+        (-arachne arachne_links | -scaff bambus_scaff)
+        (-i insert_file | -map dst_map)
+        (-pos pos_file)
+        (-id min_id)
 
 .DESCRIPTION.
   toAmos is primarily designed for converting the output of an assembly
@@ -32,26 +35,38 @@ my $HELP = q~
   AMOS-based assemblers (e.g. minimus or AMOS-cmp) use tarchive2amos. 
 
   toAmos reads the inputs specified on the command line and converts the 
-  information into AMOS message format.  The following types of 
+  information into AMOS message format. The following types of 
   information can be provided to toAmos:
-    -> Sequence and quality data (options -f, -s,  -q, -gq, or -bq)
-    -> Library and mate-pair data (options -m, -x, -f, -i,  or  -map)
-    -> Contig  data (options -c, -a, -ta, or -ace)
-    -> Scaffold data (option -a)    
+    -> Sequence and quality data: options -f, -s,  -q, -gq, or -bq
+    -> Library and mate-pair data: options -m, -x, -f, -i, or  -map
+    -> Contig  data: options -c, -a, -ta, or -ace
+    -> Scaffold data: option -a, or -arachne
 
 .OPTIONS.
-  -o <outfile> - place output in <outfile>
-  -m <matefile> - library and mate-pair information in Bambus format
-  -x <trace.xml> - ancilliary data (library, mate-pair, clear range) 
-     in Trace Archive format
-  -f <frg file> - library, mate-pair, sequence, quality, and clear 
-     range data in Celera Assembler message format
-
-
-
-  ASM File Options:
-    -S Include Surrogate Unitigs as AMOS Contigs
-    -utg Include all UTG Unitig messages as AMOS Contigs
+  -o <out_file> - output filename ('-' for standard output)
+  -s <fasta_reads> - sequence data file in FASTA format
+  -q <qual_file> - sequence quality score file in QUAL format
+  -gq <bad_qual> - minimum quality score for high-quality bases (default: $GOODQUAL)
+  -bq <good_qual> - maximum quality score for low-quality bases (default: $BADQUAL)
+  -c <tigr_contig> - provide TIGR .contig file
+  -a <celera_asm> - use Celera Assembler .asm contig file
+  -S - include the surrogate unitigs in the .asm file as AMOS contigs
+  -utg - include all UTG unitig messages in the .asm file as AMOS contigs
+  -ta <tigr_asm> - contig file in TIGR Assembler format (.tasm)
+  -ace <phrap_ace> - contig file in Phred ACE format
+  -phd - read the content of PHD file referenced in ACE files
+  -m <bambus_mates> - library and mate-pair information file in Bambus format
+  -x <trace_xml> - ancilliary data file (library, mate-pair, clear range) 
+     in Trace Archive XML format
+  -f <celera_frg> - library, mate-pair, sequence, quality, and clear 
+     range data file in Celera Assembler format
+  -acc - use accession numbers in FRG files
+  -arachne <arachne_links> - scaffold file in Arachne .links format
+  -scaff <bambus_scaff> - scaffold file in Bambus .scaff format
+  -i <insert_file> - read insert information
+  -map <dst_map> - read map information
+  -pos <pos_file> - TIGR-style .pos position file
+  -id <min_id> - start numbering contigs at this number
 
 .KEYWORDS.
   converter, universal, amos format
@@ -80,8 +95,6 @@ my $qualfile;
 my $insertfile;
 my $libmap;
 my $posfile;
-my $GOODQUAL = 30;
-my $BADQUAL = 10;
 my $byaccession = undef;
 my $phd_opt = undef;
 my $arachne_scaff = undef;
@@ -141,15 +154,15 @@ my $minCtgId = $minSeqId;  # where to start numbering contigs
 my $outprefix;
 
 if (! defined $outfile){
-    die "You must specify an output file with option -o\n";
+    die "You must specify an output AMOS AFG file with option -o\n";
 }
-elsif ($outfile eq "-")
+elsif ($outfile eq '-')
 {
-  open(OUT, ">&STDOUT") || $base->bail("Could not write on stdout: $!\n");
+  open(OUT, ">&STDOUT") || $base->bail("Could not write AMOS AFG file on stdout: $!\n");
 }
 else
 {
-  open(OUT, ">$outfile") || $base->bail("Could not write file $outfile: $!\n");
+  open(OUT, ">$outfile") || $base->bail("Could not write AMOS AFG file $outfile: $!\n");
 }
 
 
@@ -158,14 +171,13 @@ my $tmpdir   = $base->getTempDir();
 my $tmpseq   = File::Spec->catfile($tmpdir, $tmprefix.'.seq');
 my $tmpctg   = File::Spec->catfile($tmpdir, $tmprefix.'.ctg');
 my $tmpscf   = File::Spec->catfile($tmpdir, $tmprefix.'.scf');
-open(TMPSEQ, ">$tmpseq") || $base->bail("Could not write file $tmpseq: $!\n");
-open(TMPCTG, ">$tmpctg") || $base->bail("Could not write file $tmpctg: $!\n");
-open(TMPSCF, ">$tmpscf") || $base->bail("Could not write file $tmpscf: $!\n");
-
+open(TMPSEQ, ">$tmpseq") || $base->bail("Could not write temporary sequence file $tmpseq: $!\n");
+open(TMPCTG, ">$tmpctg") || $base->bail("Could not write temporary contig file $tmpctg: $!\n");
+open(TMPSCF, ">$tmpscf") || $base->bail("Could not write temporary scaffold file $tmpscf: $!\n");
 
 #then figure out the mates
 if (defined $frgfile){
-    open(IN, $frgfile) || $base->bail("Could not read file $frgfile: $!\n");
+    open(IN, $frgfile) || $base->bail("Could not read Celera Assembler FRG file $frgfile: $!\n");
     parseFrgFile(\*IN);
     close(IN);
     $matesDone = 1;
@@ -173,34 +185,36 @@ if (defined $frgfile){
 }
 
 if (defined $fastafile){
-    open(IN, $fastafile) || $base->bail("Could not read file $fastafile: $!\n");
+
+    open(IN, $fastafile) || $base->bail("Could not read FASTA file $fastafile: $!\n");
     if (defined $qualfile){
-	open(QUAL, $qualfile) || $base->bail("Could not read file $qualfile: $!\n");
+	open(QUAL, $qualfile) || $base->bail("Could not read QUAL file $qualfile: $!\n");
 	parseFastaFile(\*IN, \*QUAL);
 	close(QUAL);
     } else {
 	parseFastaFile(\*IN);
     }
+
     close(IN);
     $readsDone = 1;
 }
 
 if (defined $posfile){
-    open(IN, $posfile) || $base->bail("Could not read file $posfile: $!\n");
+    open(IN, $posfile) || $base->bail("Could not read position file $posfile: $!\n");
     parsePosFile(\*IN);
     close(IN);
 }
 
 if (defined $asmfile){
     $outprefix = $asmfile;
-    open(IN, $asmfile) || $base->bail("Could not read file $asmfile: $!\n");
+    open(IN, $asmfile) || $base->bail("Could not read Celera Assembler ASM file $asmfile: $!\n");
     parseAsmFile(\*IN);
     close(IN);
 }
 
 if (defined $ctgfile){
     $outprefix = $ctgfile;
-    open(IN, $ctgfile) || $base->bail("Could not read file $ctgfile: $!\n");
+    open(IN, $ctgfile) || $base->bail("Could not read TIGR .contig file $ctgfile: $!\n");
     parseContigFile(\*IN);
     close(IN);
 }
@@ -210,18 +224,18 @@ if (defined $tasmfile) {
     die("This option is not yet fully functional\n"); # TODO
     
     $outprefix = $tasmfile;
-    open(IN, $tasmfile) || $base->bail("Could not read file $tasmfile: $!\n");
+    open(IN, $tasmfile) || $base->bail("Could not read TIGR Assembler assembly file $tasmfile: $!\n");
     parseTAsmFile(\*IN);
     close(IN);
 }
 
 if (defined $acefile){
     $outprefix = $acefile;
-    open(IN, $acefile) || $base->bail("Could not read file $acefile: $!\n");
+    open(IN, $acefile) || $base->bail("Could not read ACE assembly file $acefile: $!\n");
     parseACEFile(\*IN);
     close(IN);
     if ($phd_opt) {
-        open(IN, $acefile) || $base->bail("Could not read file $acefile: $!\n");
+        open(IN, $acefile) || $base->bail("Could not read PHD file $acefile: $!\n");
         parsePHDFiles(\*IN);
         close(IN);
     }
@@ -233,38 +247,38 @@ $outprefix =~ s/\.[^.]*$//;
 
 if (defined $traceinfofile){
     $matesDone = 1;
-    open(IN, $traceinfofile) || $base->bail("Could not read file $traceinfofile: $!\n");
+    open(IN, $traceinfofile) || $base->bail("Could not read XML tracefile $traceinfofile: $!\n");
     parseTraceInfoFile(\*IN);
     close(IN);
 }
 
 if (! $matesDone && defined $matesfile) { # the mate file contains either mates
     # or regular expressions defining them
-    open(IN, $matesfile) || $base->bail("Could not read file $matesfile: $!\n");
+    open(IN, $matesfile) || $base->bail("Could not read Bambus mates file $matesfile: $!\n");
     parseMatesFile(\*IN);
     close(IN);
 } # if mates not done defined matesfile
 
 if (defined $insertfile){
-    open(IN, $insertfile) || $base->bail("Could not read file $insertfile: $!\n");
+    open(IN, $insertfile) || $base->bail("Could not read insert file $insertfile: $!\n");
     parseInsertFile(\*IN);
     close(IN);
 }
 
 if (defined $libmap){
-    open(IN, $libmap) || $base->bail("Could not read file $libmap: $!\n");
+    open(IN, $libmap) || $base->bail("Could not read map file $libmap: $!\n");
     parseLibMapFile(\*IN);
     close(IN);
 }
 
 if (defined $arachne_scaff){
-    open(IN, $arachne_scaff) || $base->bail("Could not read file $arachne_scaff: $!\n");
+    open(IN, $arachne_scaff) || $base->bail("Could not read Arachne scaffold file $arachne_scaff: $!\n");
     parseArachneScaff(\*IN);
     close(IN);
 }
 
 if (defined $scaffile){
-    open(IN, $scaffile) || $base->bail("Could not read file $scaffile: $!\n");
+    open(IN, $scaffile) || $base->bail("Could not read Bambus scaffold file $scaffile: $!\n");
     parseScaff(\*IN);
     close(IN);
 }
@@ -357,9 +371,9 @@ while (my ($ins, $lib) = each %seenlib){
 
 # then all the reads
 if (defined $posfile){
-    open(POS, $posfile) || $base->bail("Could not read file $posfile: $!\n");
+    open(POS, $posfile) || $base->bail("Could not read position file $posfile: $!\n");
 }
-open(TMPSEQ, $tmpseq) || $base->bail("Could not read file $tmpseq: $!\n");
+open(TMPSEQ, $tmpseq) || $base->bail("Could not read temporary sequence file $tmpseq: $!\n");
 
 while (<TMPSEQ>){
 
@@ -438,11 +452,11 @@ while (<TMPSEQ>){
 close(TMPSEQ);
 if (defined $posfile){ close(POS);}
 
-unlink($tmpseq) || $base->bail("Could not remove $tmpseq: $!\n");
+unlink($tmpseq) || $base->bail("Could not remove temporary sequence file $tmpseq: $!\n");
 
 # then all the contigs
 
-open(TMPCTG, $tmpctg) || $base->bail("Could not read file $tmpctg: $!\n");
+open(TMPCTG, $tmpctg) || $base->bail("Could not read temporary contig file $tmpctg: $!\n");
 
 while (<TMPCTG>){
     if (/^\#(\d+) (.)/){
@@ -512,19 +526,19 @@ while (<TMPCTG>){
 
 close(TMPCTG);
 
-unlink($tmpctg) || $base->bail("Cannot remove $tmpctg: $!\n");
+unlink($tmpctg) || $base->bail("Cannot remove temporary contig file $tmpctg: $!\n");
 
 # all the contig links
 # all the contig edges
 # and all the scaffolds
 
 if (-f $tmpscf){
-    open(TMPSCF, $tmpscf) || $base->bail("Could not read file $tmpscf: $!\n");
+    open(TMPSCF, $tmpscf) || $base->bail("Could not read temporary scaffold file $tmpscf: $!\n");
     while (<TMPSCF>){
 	print OUT;
     }
     close(TMPSCF);
-    unlink($tmpscf) || $base->bail("Could not read file $tmpscf: $!\n");
+    unlink($tmpscf) || $base->bail("Could not remove temporary scaffold file $tmpscf: $!\n");
 }
 close(OUT);
 
@@ -563,7 +577,7 @@ sub parseLibMapFile {
     }
 }
 
-# POSIION FILE PARSER
+# POSITION FILE PARSER
 
 # parse TIGR-style .pos file
 sub parsePosFile {
@@ -576,7 +590,7 @@ sub parsePosFile {
 	    if (! exists $seqids{$seqname}){
 		$base->bail("Have not seen sequence $seqname before processing pos file");
 	    }
-#	print "pos of $seqids{$seqname} $seqname is $pos\n";
+	    #print "pos of $seqids{$seqname} $seqname is $pos\n";
 	    $posidx{$seqids{$seqname}} = $pos;
 	}
 	$pos = tell IN;
@@ -647,7 +661,7 @@ sub parseFrgFile {
 	    $seqids{$id} = $iid;
 	    my ($seql, $seqr) = split(',', $$fields{clr});
 	    $seq_range{$iid} = "$seql $seqr";
-        #print STDERR "$id $iid clr: $seql $seqr\n";
+	    #print STDERR "$id $iid clr: $seql $seqr\n";
 	    print TMPSEQ "#$iid\n";
 	    print TMPSEQ "$$fields{seq}";
 	    print TMPSEQ "#\n";
@@ -676,7 +690,7 @@ sub parseFrgFile {
 	if (($type eq "DST") || ($type eq "LIB")){
 	    my $id = getCAId($$fields{acc});
 	    $libraries{$id} = "$$fields{mea} $$fields{std}";
-#	    $libid{$id} = $minSeqId++;
+	    #$libid{$id} = $minSeqId++;
 
             if ($FRG_VERSION == 2)
             {
@@ -687,7 +701,7 @@ sub parseFrgFile {
 	
 	if ($type eq "LKG"){
 	    my $id = $minSeqId++;
-#	    $insertlib{$$fields{dst}} .= "$id ";
+	    #$insertlib{$$fields{dst}} .= "$id ";
 
             if ($FRG_VERSION == 2)
             {
@@ -793,7 +807,7 @@ sub parseFastaFile {
 
 	my $id = $minSeqId++;
 	$seqnames{$id} = $seqname;
-#	print STDERR "got $seqname $id\n";
+	#print STDERR "got $seqname $id\n";
 	$seqids{$seqname} = $id;
 
 	# so we don't overwrite an externally provided clear range
@@ -900,7 +914,7 @@ sub parseMatesFile {
 	    next;
 	}
 	
-# make sure we've seen these sequences
+	# make sure we've seen these sequences
 	if (! defined $seqids{$recs[0]}){
 	    $base->logError("Sequence $recs[0] has no ID at line $. in \"$matesfile\"");
 	    next;
@@ -911,7 +925,7 @@ sub parseMatesFile {
 	}
 	
 	if (defined $recs[2]){
-#	    $insertlib{$recs[2]} .= "$insname ";
+	    #$insertlib{$recs[2]} .= "$insname ";
 	    $seenlib{$insname} = $recs[2];
 	} else {
 	    $base->logError("$insname has no library\n");
@@ -964,7 +978,7 @@ sub parseMatesFile {
 		$base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
 		if ($nm =~ /$libregexp[$l]/){
 		    $base->logLocal("found $libids[$l]\n", 2);
-#		    $insertlib{$libids[$l]} .= "$ins ";
+		    #$insertlib{$libids[$l]} .= "$ins ";
 		    $seenlib{$ins} = $libids[$l];
 		    $found = 1;
 		    last;
@@ -989,7 +1003,7 @@ sub parseMatesFile {
 		$base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
 		if ($nm =~ /$libregexp[$l]/){
 		    $base->logLocal("found $libids[$l]\n", 2);
-#		    $insertlib{$libids[$l]} .= "$ins ";
+		    #$insertlib{$libids[$l]} .= "$ins ";
 		    $seenlib{$ins} = $libids[$l];
 		    $found = 1;
 		    last;
@@ -1830,7 +1844,7 @@ sub EndTag {
         }
 	    
 	$seqinsert{$seqId} = $template;
-#	$insertlib{$library} .= "$template ";
+	#$insertlib{$library} .= "$template ";
 	$seenlib{$template} = $library;
 	
     
