@@ -101,6 +101,7 @@ public:
     QAction* fileOpenAction;
     QAction* fileQuitAction;
     QAction* fileChromatogramPathsAction;
+    QAction* loadAmosFileAction;
     QAction* fileImportAction;
     QAction* loadKmersAction;
 
@@ -112,6 +113,7 @@ public slots:
     virtual void filePrint();
     virtual void fileExit();
     virtual void fileChromoPaths();
+    virtual void loadAmosFile();
     virtual void fileImport();
     virtual void loadKmersFile();
 

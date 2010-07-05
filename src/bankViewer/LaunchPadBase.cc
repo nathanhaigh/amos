@@ -377,9 +377,8 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     fileOpenAction->setIconSet( QIconSet( image1 ) );
     fileQuitAction = new QAction( this, "fileQuitAction" );
     fileChromatogramPathsAction = new QAction( this, "fileChromatogramPathsAction" );
-
+    loadAmosFileAction = new QAction( this, "loadAmosFileAction" );
     fileImportAction = new QAction( this, "fileImportAction" );
-
     loadKmersAction = new QAction(this, "loadKmersAction");
 
 
@@ -408,14 +407,12 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     // menubar
     MenuBar = new QMenuBar( this, "MenuBar" );
 
-
     fileMenu = new QPopupMenu( this );
     fileOpenAction->addTo( fileMenu );
-    fileChromatogramPathsAction->addTo( fileMenu );
-    
-    // dsommer: added import
+    fileChromatogramPathsAction->addTo( fileMenu );    
+    loadAmosFileAction->addTo( fileMenu );
     fileImportAction->addTo( fileMenu );
-    loadKmersAction->addTo(fileMenu);
+    loadKmersAction->addTo( fileMenu );
 
     fileMenu->insertSeparator();
     fileQuitAction->addTo( fileMenu );
@@ -429,9 +426,9 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     connect( fileOpenAction, SIGNAL( activated() ), this, SLOT( fileOpen() ) );
     connect( fileQuitAction, SIGNAL( activated() ), this, SLOT( fileExit() ) );
     connect( fileChromatogramPathsAction, SIGNAL( activated() ), this, SLOT( fileChromoPaths() ) );
-    // dsommer: added import 
+    connect( loadAmosFileAction, SIGNAL( activated() ), this, SLOT( loadAmosFile() ) );
     connect( fileImportAction, SIGNAL( activated() ), this, SLOT( fileImport() ) );
-    connect(loadKmersAction, SIGNAL(activated()), this, SLOT(loadKmersFile()));
+    connect( loadKmersAction, SIGNAL( activated() ), this, SLOT( loadKmersFile() ) );
 }
 
 
@@ -519,11 +516,15 @@ void LaunchPadBase::languageChange()
     fileQuitAction->setText( tr( "Quit" ) );
     fileQuitAction->setMenuText( tr( "&Quit" ) );
     fileQuitAction->setAccel( tr( "Ctrl+Q" ) );
+
     fileChromatogramPathsAction->setText( tr( "Set Chromatogram Paths" ) );
     fileChromatogramPathsAction->setMenuText( tr( "Set Chromatogram &Paths..." ) );
     fileChromatogramPathsAction->setAccel( tr( "Ctrl+P" ) );
 
-    // dsommer: added import
+    loadAmosFileAction->setText( tr( "Load AFG..." ) );
+    loadAmosFileAction->setMenuText( tr( "&Load AFG..." ) );
+    loadAmosFileAction->setAccel( tr( "Ctrl+L" ) );
+
     fileImportAction->setText( tr( "Import ACE..." ) );
     fileImportAction->setMenuText( tr( "&Import ACE..." ) );
     fileImportAction->setAccel( tr( "Ctrl+I" ) );
@@ -579,7 +580,11 @@ void LaunchPadBase::fileChromoPaths()
     qWarning( "LaunchPadBase::fileChromoPaths(): Not implemented yet" );
 }
 
-// dsommer: added import 
+void LaunchPadBase::loadAmosFile()
+{
+    qWarning( "LaunchPadBase::loadAmosFile(): Not implemented yet" );
+}
+
 void LaunchPadBase::fileImport()
 {
     qWarning( "LaunchPadBase::fileImport(): Not implemented yet" );

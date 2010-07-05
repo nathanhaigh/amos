@@ -123,7 +123,7 @@ void LaunchPad::fileImport()
   // if no file is selected just exit
   if (s.isEmpty()) { return; }
 
-  // quoted filenames, whitespace-safe
+  // filenames
   QString acefile(s);
   QString afgfile(acefile+".afg");
   QString bnkfile(acefile+".bnk");
@@ -148,6 +148,31 @@ void LaunchPad::fileImport()
   cmd2.append(" -b ");
   cmd2.append("'"+bnkfile+"'");
   r = system(cmd2);
+  if (r != 0)
+  {
+    cerr << "error: bank-transact failed" << endl;
+    return;
+  }
+
+  // conversion was successful, get bank name
+  if (!s.isEmpty()) { setBankname(bnkfile.ascii()); }
+}
+
+void LaunchPad::loadAmosFile()
+{
+  QString s = QFileDialog::getOpenFileName(QString::null, "AMOS files (*.afg)",
+                       this, "Load AMOS file", "Choose an AMOS file to load");
+
+  // if no file is selected just exit
+  if (s.isEmpty()) { return; }
+
+  // make a bank from the AFG message file using bank-transact
+  QString bnkfile(s+".bnk");
+  QString cmd("bank-transact -f -m ");
+  cmd.append("'"+s+"'");
+  cmd.append(" -b ");
+  cmd.append("'"+bnkfile+"'");
+  int r = system(cmd);
   if (r != 0)
   {
     cerr << "error: bank-transact failed" << endl;
