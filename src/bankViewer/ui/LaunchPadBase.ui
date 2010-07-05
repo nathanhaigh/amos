@@ -634,6 +634,25 @@
                             </widget>
                             <widget class="QPushButton">
                                 <property name="name">
+                                    <cstring>contigCoverageButton</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>0</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="text">
+                                    <string>Fold Coverage</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Display a histogram of each contig's read fold coverage</string>
+                                </property>
+                            </widget>
+                            <widget class="QPushButton">
+                                <property name="name">
                                     <cstring>contigGCButton</cstring>
                                 </property>
                                 <property name="sizePolicy">
@@ -648,7 +667,7 @@
                                     <string>GC Content</string>
                                 </property>
                                 <property name="toolTip" stdset="0">
-                                    <string>Dispaly a histogram of the GC content of each contig</string>
+                                    <string>Display a histogram of the GC content of each contig</string>
                                 </property>
                             </widget>
                         </hbox>

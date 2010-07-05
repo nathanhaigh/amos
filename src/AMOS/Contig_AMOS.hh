@@ -309,6 +309,17 @@ public:
 
 
 
+  //--------------------------------------------------- getFoldCov -------------
+  //! \brief Get the fold coverage of the contig sequence
+  //!
+  //! Example: A 1,000 bp long contig with 100x 100bp reads has a 10x coverage.
+  //!
+  //! \return Fold coverage value
+  //!
+  double getFoldCov ( ) const;
+
+
+
   //--------------------------------------------------- getCovStat -------------
   //! \brief Get the cov stat of the sequence
   //!

@@ -1,10 +1,3 @@
-/****************************************************************************
-** Form implementation generated from reading ui file 'ui/QueryWidget.ui'
-**
-** Created by: The User Interface Compiler ($Id$)
-**
-** WARNING! All changes made in this file will be lost!
-****************************************************************************/
 
 #include "QueryWidget.hh"
 

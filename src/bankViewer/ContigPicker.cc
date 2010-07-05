@@ -33,9 +33,10 @@ public:
                  QString status,
                  QString length,
                  QString reads,
+                 QString coverage,
                  QString gccontent)
                
-    : QListViewItem(parent, id, iid, eid, status, length, reads, gccontent) {}
+    : QListViewItem(parent, id, iid, eid, status, length, reads, coverage, gccontent) {}
 
   ContigListItem(QListView * parent, 
                  QString id,
@@ -45,9 +46,13 @@ public:
                  QString offset,
                  QString length,
                  QString reads,
+                 QString coverage,
                  QString gccontent)
                
-    : QListViewItem(parent, id, iid, eid, status, offset, length, reads, gccontent) {}
+    : QListViewItem(parent, id, iid, eid, status, offset, length, reads, coverage)
+    {
+      setText(8, gccontent);
+    }
 
   ContigListItem(ContigListItem * parent, 
                  QString id,
@@ -57,9 +62,13 @@ public:
                  QString offset,
                  QString length,
                  QString reads,
+                 QString coverage,
                  QString gccontent)
                
-    : QListViewItem(parent, id, iid, eid, status, offset, length, reads, gccontent) {}
+    : QListViewItem(parent, id, iid, eid, status, offset, length, reads, coverage)
+    {
+      setText(8, gccontent);
+    }
 
   int compare(QListViewItem *i, int col,
               bool ascending ) const
@@ -69,7 +78,7 @@ public:
       return key(col,ascending).compare(i->key(col,ascending));
     }
 
-    if ((col == 7))
+    if ((col == 7 || col == 8))
     {
       double diff = atof(key(col,ascending)) - atof(i->key(col,ascending));
       if      (diff < 0) { return -1; }
@@ -94,13 +103,13 @@ void LaunchPad::initContigs()
   connect(contigIIDEdit, SIGNAL(textChanged(const QString &)),
           this,          SLOT(contigSelectIID(const QString &)));
 
+  connect(contigIIDEdit, SIGNAL(returnPressed()),
+          this,          SLOT(contigViewSelected()));
+
   connect(contigEIDEdit, SIGNAL(textChanged(const QString &)),
           this,          SLOT(contigSelectEID(const QString &)));
 
   connect(contigEIDEdit, SIGNAL(returnPressed()),
-          this,          SLOT(contigViewSelected()));
-
-  connect(contigIIDEdit, SIGNAL(returnPressed()),
           this,          SLOT(contigViewSelected()));
 
   connect(contigLengthButton, SIGNAL(clicked()),
@@ -108,6 +117,9 @@ void LaunchPad::initContigs()
 
   connect(contigReadsButton,  SIGNAL(clicked()),
           this,               SLOT(contigReadCountHistogram()));
+
+  connect(contigCoverageButton, SIGNAL(clicked()),
+          this,                 SLOT(contigCoverageHistogram()));
 
   connect(contigGCButton,     SIGNAL(clicked()),
           this,               SLOT(contigGCHistogram()));
@@ -122,6 +134,7 @@ void LaunchPad::initContigs()
   contigList->addColumn("Offset");
   contigList->addColumn("Length");
   contigList->addColumn("Reads");
+  contigList->addColumn("Coverage");
   contigList->addColumn("GC Content");
 }
 
@@ -150,8 +163,9 @@ void LaunchPad::loadContigs()
     m_datastore->contig_bank.seekg(1);
     while (m_datastore->contig_bank >> contig)
     {
-      int contiglen = contig.getLength();
-      int numreads = contig.getReadTiling().size();
+      int contiglen    = contig.getLength();
+      int numreads     = contig.getReadTiling().size();
+      double coverage  = contig.getFoldCov();     
       double gccontent = contig.getGCContent();
 
       ContigListItem * contigitem;
@@ -164,6 +178,7 @@ void LaunchPad::loadContigs()
                                       QString(""),
                                       QString::number(contiglen), 
                                       QString::number(numreads),
+                                      QString::number(coverage, 'f', 2),
                                       QString::number(gccontent, 'f', 4));
 
       if (contigid == m_datastore->m_contigId)
@@ -187,6 +202,7 @@ void LaunchPad::loadContigs()
                              QString(""),
                              QString::number(ti->offset), 	 
                              QString::number(ti->range.getLength() + ti->gaps.size()),
+                             QString(""),
                              QString(""),
                              QString("")); 	 
         }
@@ -263,6 +279,20 @@ void LaunchPad::contigReadCountHistogram()
   while (m_datastore->contig_bank >> contig)
   {
     stats->addSize(contig.getReadTiling().size());
+  }
+
+  new HistogramWindow(stats, this, "hist");
+}
+
+void LaunchPad::contigCoverageHistogram()
+{
+  InsertStats * stats = new InsertStats((string)"Contig Coverage Histogram");
+
+  AMOS::Contig_t contig;
+  m_datastore->contig_bank.seekg(1);
+  while (m_datastore->contig_bank >> contig)
+  {
+    stats->addSize(contig.getFoldCov());
   }
 
   new HistogramWindow(stats, this, "hist");

@@ -179,6 +179,25 @@ string Contig_t::getUngappedSeqString (Range_t range) const
 }
 
 
+//--------------------------------------------------- getFoldCov ---------------
+double Contig_t::getFoldCov ( ) const
+{
+  double cov = 0.0;
+  int contiglen = getLength();
+  if ( (!reads_m.empty()) && (contiglen!=0) )
+  {
+    int totreadlen = 0;
+    vector<Tile_t>::const_iterator ti;
+    for ( ti = reads_m . begin( ); ti != reads_m . end( ); ti ++ )
+    {
+        totreadlen = totreadlen + ti->range.getLength();
+    }
+    cov = (double) totreadlen / (double) contiglen;
+  }
+  return cov;
+}
+
+
 //--------------------------------------------------- getCovStat ---------------
 double Contig_t::getCovStat(const double globalArrivalRate) const
 {

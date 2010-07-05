@@ -100,6 +100,7 @@ public slots:
   void contigViewSelected();
   void contigLengthHistogram();
   void contigReadCountHistogram();
+  void contigCoverageHistogram();
   void contigGCHistogram();
 
 

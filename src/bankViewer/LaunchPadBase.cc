@@ -283,6 +283,10 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, WFlags fl )
     contigReadsButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigReadsButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroup_2Layout->addWidget( contigReadsButton );
 
+    contigCoverageButton = new QPushButton( scaffoldHistogramGroup_2, "contigCoverageButton" );
+    contigCoverageButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigCoverageButton->sizePolicy().hasHeightForWidth() ) );
+    scaffoldHistogramGroup_2Layout->addWidget( contigCoverageButton );
+
     contigGCButton = new QPushButton( scaffoldHistogramGroup_2, "contigGCButton" );
     contigGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigGCButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroup_2Layout->addWidget( contigGCButton );
@@ -492,8 +496,10 @@ void LaunchPadBase::languageChange()
     QToolTip::add( contigLengthButton, tr( "Display the distribution of the length of all contigs" ) );
     contigReadsButton->setText( tr( "Read Count" ) );
     QToolTip::add( contigReadsButton, tr( "Display a histogram of the number of reads in each contig" ) );
+    contigCoverageButton->setText( tr( "Fold Coverage" ) );
+    QToolTip::add( contigCoverageButton, tr( "Display a histogram of each contig's read fold coverage" ) );
     contigGCButton->setText( tr( "GC Content" ) );
-    QToolTip::add( contigGCButton, tr( "Dispaly a histogram of the GC content of each contig" ) );
+    QToolTip::add( contigGCButton, tr( "Display a histogram of the GC content of each contig" ) );
     QToolTip::add( contigEIDEdit, tr( "Search for a contig (or read) by EID" ) );
     QToolTip::add( contigIIDEdit, tr( "Search for a contig (or read) by IID" ) );
     buttonGroup7->setTitle( tr( "Display" ) );

@@ -75,6 +75,7 @@ public:
     QButtonGroup* scaffoldHistogramGroup_2;
     QPushButton* contigLengthButton;
     QPushButton* contigReadsButton;
+    QPushButton* contigCoverageButton;
     QPushButton* contigGCButton;
     QListView* contigList;
     QLineEdit* contigEIDEdit;
