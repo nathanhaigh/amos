@@ -67,7 +67,7 @@ sub new()
     $self->{linesep} = ''; 
     $self->{linesep} = $linesep if defined $linesep;
     $self->{file} = $file;
-    $self->{tell} = BASE::tell($file);
+    $self->{tell} = CORE::tell($file);
 
     $self->{buf} = <$file>;
     if (! defined $self->{buf}){
@@ -104,12 +104,12 @@ sub getRecord()
     }
     $head = $self->{buf};
     $head =~ s/^$self->{headsep}//;
-    $tl = BASE::tell($file);
+    $tl = CORE::tell($file);
     $self->{buf} = <$file>;
     chomp $self->{buf};
     while (defined $self->{buf} && $self->{buf} !~ /^$self->{headsep}/){
 	$data .= $self->{buf} . $self->{linesep};
-	$tl = BASE::tell($file);
+	$tl = CORE::tell($file);
 	$self->{buf} = <$file>;
 	if (defined $self->{buf}){chomp $self->{buf}};
     }
@@ -131,7 +131,7 @@ sub seek()
 
     CORE::seek($file, $pos, 0);
 
-    $self->{tell} = BASE::tell($file);
+    $self->{tell} = CORE::tell($file);
     $self->{buf} = <$file>;
     if (! defined $self->{buf}){
 	print STDERR "File appears empty\n";

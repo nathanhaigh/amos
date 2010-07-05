@@ -151,8 +151,6 @@ my %posidx;     # position of sequence in pos file
 
 my $minCtgId = $minSeqId;  # where to start numbering contigs
 
-my $outprefix;
-
 if (! defined $outfile){
     die "You must specify an output AMOS AFG file with option -o\n";
 }
@@ -185,7 +183,6 @@ if (defined $frgfile){
 }
 
 if (defined $fastafile){
-
     open(IN, $fastafile) || $base->bail("Could not read FASTA file $fastafile: $!\n");
     if (defined $qualfile){
 	open(QUAL, $qualfile) || $base->bail("Could not read QUAL file $qualfile: $!\n");
@@ -194,7 +191,6 @@ if (defined $fastafile){
     } else {
 	parseFastaFile(\*IN);
     }
-
     close(IN);
     $readsDone = 1;
 }
@@ -206,14 +202,12 @@ if (defined $posfile){
 }
 
 if (defined $asmfile){
-    $outprefix = $asmfile;
     open(IN, $asmfile) || $base->bail("Could not read Celera Assembler ASM file $asmfile: $!\n");
     parseAsmFile(\*IN);
     close(IN);
 }
 
 if (defined $ctgfile){
-    $outprefix = $ctgfile;
     open(IN, $ctgfile) || $base->bail("Could not read TIGR .contig file $ctgfile: $!\n");
     parseContigFile(\*IN);
     close(IN);
@@ -223,14 +217,12 @@ if (defined $tasmfile) {
     
     die("This option is not yet fully functional\n"); # TODO
     
-    $outprefix = $tasmfile;
     open(IN, $tasmfile) || $base->bail("Could not read TIGR Assembler assembly file $tasmfile: $!\n");
     parseTAsmFile(\*IN);
     close(IN);
 }
 
 if (defined $acefile){
-    $outprefix = $acefile;
     open(IN, $acefile) || $base->bail("Could not read ACE assembly file $acefile: $!\n");
     parseACEFile(\*IN);
     close(IN);
@@ -240,8 +232,6 @@ if (defined $acefile){
         close(IN);
     }
 }
-
-$outprefix =~ s/\.[^.]*$//;
 
 # now it's time for library and mates information
 
@@ -344,14 +334,14 @@ while (my ($lib, $range) = each %libraries){
 # then all the inserts
 while (my ($ins, $lib) = each %seenlib){
     print OUT "{FRG\n";
-#    if ($ins =~ /^\d+$/){
-#	print OUT "iid:$ins\n";
-#	$insid{$ins} = $ins;
-#    } else {
+    #if ($ins =~ /^\d+$/){
+    #	print OUT "iid:$ins\n";
+    #	$insid{$ins} = $ins;
+    #} else {
     $insid{$ins} = $minSeqId;
     print OUT "iid:", $minSeqId++, "\n";
     print OUT "eid:", $ins, "\n";
-#    }
+    #}
     if (! exists $libid{$lib}){ 
 	$base->bail("Have not seen library \"$lib\" yet: possible error in input\n");
     }
@@ -375,14 +365,32 @@ if (defined $posfile){
 }
 open(TMPSEQ, $tmpseq) || $base->bail("Could not read temporary sequence file $tmpseq: $!\n");
 
+my %reids;
 while (<TMPSEQ>){
 
     if (/^\#(\d+)/){
 	my $rid = $1;
+	my $reid;
+	if (exists $seqnames{$rid}){
+	    $reid = $seqnames{$rid};
+	}
 
+	# Check that this read ID is not already taken
+	if (exists $reids{$reid}) {
+	    $base->logError("Cannot use read ID '$reid' multiple times. Skipping it...\n", 1);
+	    $_ = <TMPSEQ>;
+	    while ($_ !~ /^\#/){ $_ = <TMPSEQ>; };
+	    $_ = <TMPSEQ>;
+	    while ($_ !~ /^\#/){ $_ = <TMPSEQ>; };
+	    next;
+	} else {
+	    $reids{$reid} = undef;
+	}
+
+	# Write RED message
 	print OUT "{RED\n";
 	print OUT "iid:$rid\n";
-	print OUT "eid:$seqnames{$rid}\n";
+	print OUT "eid:$reid\n" if defined $reid;
 	print OUT "seq:\n";
 	$_ = <TMPSEQ>;
 	while ($_ !~ /^\#/){
@@ -450,6 +458,9 @@ while (<TMPSEQ>){
     }
 }
 close(TMPSEQ);
+undef %reids;
+
+
 if (defined $posfile){ close(POS);}
 
 unlink($tmpseq) || $base->bail("Could not remove temporary sequence file $tmpseq: $!\n");
@@ -458,16 +469,34 @@ unlink($tmpseq) || $base->bail("Could not remove temporary sequence file $tmpseq
 
 open(TMPCTG, $tmpctg) || $base->bail("Could not read temporary contig file $tmpctg: $!\n");
 
+my %ceids;
 while (<TMPCTG>){
     if (/^\#(\d+) (.)/){
 	my $cid = $1;
 	my $sts = $2;
+	my $ceid;
+	if (exists $ctgnames{$cid}) {
+	    $ceid = $ctgnames{$cid};
+	}
+
+	# Check that this contig ID is not already taken
+	if (exists $ceids{$ceid}) {
+	    $base->logError("Cannot use contig ID '$ceid' multiple times. Skipping it...\n", 1);
+	    $_ = <TMPCTG>;
+	    while (/^\#(\d+)/){
+		$_ = <TMPCTG>;
+		while ($_ !~ /^\#/){ $_ = <TMPCTG>; };
+	    }
+	    next;
+	} else {
+	    $ceids{$ceid} = undef;
+	}
+
+	# Write the CTG message
 	print OUT "{CTG\n";
 	print OUT "iid:$cid\n";
 	print OUT "sts:$sts\n";
-	if (exists $ctgnames{$cid}){
-	    print OUT "eid:$ctgnames{$cid}\n";
-	}
+	print OUT "eid:$ceid\n" if defined $ceid;
 	print OUT "seq:\n";
 	$_ = <TMPCTG>;
 	while ($_ !~ /^\#/){
@@ -523,8 +552,8 @@ while (<TMPCTG>){
 	$base->bail("Error: Temporary contig file $tmpctg was not formatted as expected at line $.:\n$_");
     }
 }
-
 close(TMPCTG);
+undef %ceids;
 
 unlink($tmpctg) || $base->bail("Cannot remove temporary contig file $tmpctg: $!\n");
 
