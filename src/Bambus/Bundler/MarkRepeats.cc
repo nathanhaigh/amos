@@ -44,6 +44,8 @@ struct config {
    int32_t     debug;
    int32_t     redundancy;
    bool        doAgressiveRepeatFinding;
+   bool        noPathRepeats;
+   bool        noCoverageRepeats;
 };
 config globals;
 void printHelpText() {
@@ -51,9 +53,10 @@ void printHelpText() {
     "\n"
     "USAGE:\n"
     "\n"
-    "MarkRepeats -b[ank] <bank_name> [-agressive] [-redundancy]\n"
+    "MarkRepeats -b[ank] <bank_name> [-agressive] [-redundancy] [-noPathRepeats] [-noCoverageRepeats]\n"
     "The -redundancy option specifies the minimum number of links between two contigs before they will be scaffolded\n"    
-    "The -aggressive option will agressive identify repeats using only the size and coverage stat and not the graph structure of the contigs\n"
+    "The -aggressive option will identify repeats using only the size and coverage stat (i.e. global coverage) and not the graph structure of the contigs for the coverage repeat algorithm\n"
+    "The -noPathRepeats and -noCoverageRepeats will control which repeat algorithms are run. The default is to run both.\n"
        << endl;
 }
 
@@ -67,13 +70,17 @@ bool GetOptions(int argc, char ** argv) {
     {"agressive",          0, 0, 'R'},
     {"redundancy",         1, 0, 'p'},
     {"debug",              1, 0, 'd'},
+    {"noPathRepeats",      0, 0, 'r'},
+    {"noCoverageRepeats",  0, 0, 'c'},
     {0, 0, 0, 0}
   };
 
    globals.debug = 0;
    globals.doAgressiveRepeatFinding = false;
    globals.redundancy = 1;
-  
+   globals.noPathRepeats = false;
+   globals.noCoverageRepeats = false;
+ 
    int c;
    ifstream repeatsFile;
    ID_t repeatID;
@@ -91,6 +98,12 @@ bool GetOptions(int argc, char ** argv) {
          break;
        case 'R':
          globals.doAgressiveRepeatFinding = true;
+         break;
+       case 'r':
+         globals.noPathRepeats = true;
+         break;
+       case 'c':
+         globals.noCoverageRepeats = true;
          break;
        case 'd':
          globals.debug = atoi(optarg);
@@ -343,8 +356,12 @@ int main(int argc, char *argv[]) {
 
    set<ID_t> repeats;
 #ifdef AMOS_HAVE_BOOST
-   findShortestPathRepeats(g, contig_bank, repeats);
-   findConnectedComponentRepeats(g, contig_bank, repeats);
+   if (globals.noPathRepeats == false) {
+      findShortestPathRepeats(g, contig_bank, repeats);
+   }
+   if (globals.noCoverageRepeats == false) {
+      findConnectedComponentRepeats(g, contig_bank, repeats);
+   }
 #endif //AMOS_HAVE_BOOST
 
    for (set<ID_t>::iterator i = repeats.begin(); i != repeats.end(); i++) {

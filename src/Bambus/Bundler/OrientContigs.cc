@@ -1462,10 +1462,11 @@ cerr << "SET ORIENT FOR NODE " << otherID << " TO " << orient << endl;
 
             edgeStatus st = isEdgeConsistent(first, second, cte, ctg2ort, ctg2srt, ctg2scf);
             st = (st == GOOD_EDGE ? BAD_SKIP : st);
-            setEdgeStatus(cte, edge_bank, st);
+            setEdgeStatus(cte, edge_bank, st, false);
             if (globals.debug >= 1) { cerr << "FOR SKIPPED EDGE " << cte.getIID() << " SET EDGE STATUS TO BE " << st << endl; }
          }
       }
+      flushEdgeStatus(edge_bank);
       reduceGraph(scaffs, contig_bank, edge_bank, ctg2ort, ctg2lnk);
       sortContigs(scaffs, contig_bank, edge_bank);
       // reset the transitive edges because we may have collapsed nodes so old transitive edges are no longer transitive
