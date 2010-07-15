@@ -9,6 +9,7 @@ bin_PROGRAMS = \
     genome-complexity \
     genome-complexity-fast \
     count-kmers \
+    find-tandem \
     count-qmers \
     qmer-filter \
 	frg-umd-merge \
@@ -78,6 +79,14 @@ count_kmers_LDADD = \
 count_kmers_SOURCES = \
 	count-kmers.cc
 
+##-- find-tandem
+find_tandem_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+    $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/Foundation/libAMOSFoundation.a
+find_tandem_SOURCES = \
+	find-tandem.cc
+
 ##-- count-qmers
 count_qmers_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -112,7 +121,7 @@ genome_complexity_LDADD = \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
 	$(top_builddir)/src/GNU/libGNU.a
 genome_complexity_SOURCES = \
-	genome-complexity.cc
+	genome-complexity-fast.cc
 
 ##-- genome-complexity-fast
 genome_complexity_fast_LDADD = \
