@@ -1,22 +1,119 @@
-#include "foundation_AMOS.hh"
-#include  "delcher.hh"
-#include  "fasta.hh"
-#include  "amp.hh"
-#include "AMOS_Foundation.hh"
-
-#include  <string>
-#include  <vector>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <ctime>
+#include <sys/time.h>
 using namespace std;
-using namespace HASHMAP;
-using namespace AMOS;
 
 const int OFFSET_TABLE_SIZE = 100;
+
+string FASTA_FILE;
 
 int MIN_REPORT_LEN = 8;
 int MIN_REPORT_UNITS = 3;
 int MIN_UNIT_LEN = 1;
 int MAX_UNIT_LEN = 4;
 int FLANK = 10;
+
+// Record length of event in seconds
+class EventTime_t
+{
+public:
+
+  EventTime_t()
+  {
+    start();
+    memset(&m_end, 0, sizeof(struct timeval));
+  }
+
+  void start()
+  {
+    gettimeofday(&m_start, NULL);
+  }
+
+  void end()
+  {
+    gettimeofday(&m_end, NULL);
+  }
+
+  double length()
+  {
+    if ((m_end.tv_sec == 0) && (m_end.tv_usec == 0)) { end(); }
+    return ((m_end.tv_sec - m_start.tv_sec)*1000000.0 + (m_end.tv_usec - m_start.tv_usec)) / 1e6;
+  }
+
+  string str(bool format, int precision)
+  {
+    double r = length();
+
+    char buffer[1024];
+    sprintf(buffer, "%0.*f", precision, r);
+
+    if (format)
+    {
+      string s("[");
+      s += buffer;
+      s += "s]";
+      return s;
+    }
+
+    return buffer;
+  }
+
+
+private:
+  struct timeval m_start;
+  struct timeval m_end;
+};
+
+
+
+bool  Fasta_Read (FILE * fp, string & s, string & hdr)
+
+//  Read next fasta-format string from file  fp  (which must
+//  already be open) into string  s .  Put the faster
+//  header line (without the '>' and trailing spaces) into
+//  string  hdr .  Return  true  if a string is successfully,
+//  read; false, otherwise.
+
+  {
+   int  ch;
+
+   s . erase ();
+   hdr . erase ();
+
+   // skip till next '>' if necessary
+   while  ((ch = fgetc (fp)) != EOF && ch != '>')
+     ;
+
+   if  (ch == EOF)
+       return  false;
+
+   // skip spaces if any
+   while  ((ch = fgetc (fp)) != EOF && ch == ' ')
+     ;
+   if  (ch == EOF)
+       return  false;
+   ungetc (ch, fp);
+
+   // put rest of line into  hdr
+   while  ((ch = fgetc (fp)) != EOF && ch != '\n')
+     hdr . push_back (char (ch));
+
+   // put everything up till next '>' into  s
+   while  ((ch = fgetc (fp)) != EOF && ch != '>')
+     {
+      if  (! isspace (ch))
+          s . push_back (char (ch));
+     }
+
+   if  (ch == '>')
+       ungetc (ch, fp);
+
+   return  true;
+  }
+
 
 void findTandems(const string & seq, const string & tag)
 {
@@ -114,19 +211,12 @@ void findTandems(const string & seq, const string & tag)
     }
   }
 }
-       
 
 
 int main (int argc, char * argv [])
 {
-  int retval = 0;
-  AMOS_Foundation * tf = NULL;
 
-  try
-  {
-    string version = "Version 1.0";
-    stringstream helptext;
-
+stringstream helptext;
 helptext <<
 "Find tandem repeats\n"
 "\n"
@@ -144,82 +234,73 @@ helptext <<
 "start end total_len tandem_unit complete_units+partial left_flank+repeat+right_flank\n"
 "\n";
 
-    string fastafile;
+  bool errflg = false;
+  int ch;
 
-    tf = new AMOS_Foundation(version, helptext.str(), "", argc, argv);
-    tf->disableOptionHelp();
-    tf->getOptions()->addOptionResult("f=s", &fastafile);
-    tf->getOptions()->addOptionResult("u=i", &MIN_REPORT_UNITS);
-    tf->getOptions()->addOptionResult("l=i", &MIN_REPORT_LEN);
-    tf->getOptions()->addOptionResult("x=i", &MAX_UNIT_LEN);
-    tf->getOptions()->addOptionResult("m=i", &MIN_UNIT_LEN);
-    tf->getOptions()->addOptionResult("k=i", &FLANK);
+  optarg = NULL;
 
-    tf->handleStandardOptions();
-
-    if (fastafile.empty())
+  while (!errflg && ((ch = getopt (argc, argv, "f:u:l:x:m:k:h")) != EOF))
+  {
+    switch (ch)
     {
-      cerr << "You must specify a fasta file" << endl;
-      return 1;
+
+      case 'f': FASTA_FILE = optarg;             break; 
+      case 'u': MIN_REPORT_UNITS = atoi(optarg); break;
+      case 'l': MIN_REPORT_LEN   = atoi(optarg); break;
+      case 'x': MAX_UNIT_LEN     = atoi(optarg); break;
+      case 'm': MIN_UNIT_LEN     = atoi(optarg); break;
+      case 'k': FLANK            = atoi(optarg); break;
+
+      case '?':
+        fprintf (stderr, "Unrecognized option -%c\n", optopt);
+
+      case 'h': 
+
+      default:
+        errflg = true;
     }
 
-    if (MAX_UNIT_LEN >= OFFSET_TABLE_SIZE)
+    if (errflg)
     {
-      cerr << "Max unit size must be less than " << OFFSET_TABLE_SIZE << endl;
-      return 1;
+      cout << helptext.str();
+      exit (EXIT_FAILURE);
     }
-
-    cerr << "Processing sequences in " << fastafile << "..." << endl;
-
-    FILE * fp = fopen(fastafile.c_str(), "r");
-
-    if (!fp)
-    {
-      cerr << "Couldn't open " << fastafile << endl;
-      exit(1);
-    }
-
-    EventTime_t timer;
-
-    string s, tag;
-
-    while  (Fasta_Read (fp, s, tag))
-    {
-      findTandems(s, tag);
-    }
-
-    cerr << "finished in " << timer.length() << "s" << endl;
   }
-  catch (Exception_t & e)
+
+  if (FASTA_FILE.empty())
   {
-    cerr << "ERROR: -- Fatal AMOS Exception --\n" << e;
-    retval = 1;
-  }
-  catch (const ExitProgramNormally & e)
-  {
-    retval = 0;
-  }
-  catch (const amosException & e)
-  {
-    cerr << e << endl;
-    retval = 100;
-  }
-  catch (...)
-    {
-      cerr << "uncaught exception\n"; 
-    }
-
-  try
-  {
-    if (tf) delete tf;
-  }
-  catch (const amosException & e)
-  {
-    cerr << "amosException while deleting tf: " << e << endl;
-    retval = 105;
+    cerr << "You must specify a fasta file" << endl;
+    return 1;
   }
 
-  return retval;
+  if (MAX_UNIT_LEN >= OFFSET_TABLE_SIZE)
+  {
+    cerr << "Max unit size must be less than " << OFFSET_TABLE_SIZE << endl;
+    return 1;
+  }
+
+  cerr << "Processing sequences in " << FASTA_FILE << "..." << endl;
+
+  FILE * fp = fopen(FASTA_FILE.c_str(), "r");
+
+  if (!fp)
+  {
+    cerr << "Couldn't open " << FASTA_FILE << endl;
+    exit(1);
+  }
+
+  EventTime_t timer;
+
+  string s, tag;
+
+  while  (Fasta_Read (fp, s, tag))
+  {
+    findTandems(s, tag);
+  }
+
+  cerr << "finished in " << timer.length() << "s" << endl;
+
+  return 0;
 }
 
 
