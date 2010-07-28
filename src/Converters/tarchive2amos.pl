@@ -5,6 +5,7 @@ use strict;
 use AMOS::AmosLib;
 use AMOS::ParseFasta;
 use AMOS::AmosFoundation;
+use TIGR::Foundation;
 use XML::Parser;
 use IO::Handle;
 use File::Spec;
@@ -41,15 +42,21 @@ my @pairregexp;					# read mating regular expressions
 
 my $gzip = "gzip";
 
-my $base = new AMOS::AmosFoundation;
-if (! defined $base) {
+#getTempDir() function is located in TIGR::Foundation
+my $tigrbase = new TIGR::Foundation;
+if (! defined $tigrbase)
+{
     die ("Walk, do not run, to the nearest exit!\n");
 }
 
 my $tmprefix = "tmp.$$";
-my $tmpdir   = $base->getTempDir();
+my $tmpdir   = $tigrbase->getTempDir();
 my $tmpfile  = File::Spec->catfile($tmpdir, "$tmprefix.red");
 
+my $base = new AMOS::AmosFoundation;
+if (! defined $base) {
+    die ("Walk, do not run, to the nearest exit!\n");
+}
 #$base->setLogLevel(1);
 
 my $VERSION = '$Revision$ ';
