@@ -1,8 +1,6 @@
 ##-- MAKE FRAGMENT FOR AMOS RULES
 include $(top_srcdir)/config/amos.mk
 
-bin_PROGRAMS = \
-	toAmos_experimental
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -31,6 +29,7 @@ dist_bin_SCRIPTS = \
 	ctg2fasta.pl \
 	ctg2umdcontig.pl \
 	frg2fasta.pl \
+	frg2fastq.pl \
 	frg2ta.pl \
 	ta2ace.pl \
 	tarchive2amos.pl \
@@ -45,16 +44,5 @@ dist_bin_SCRIPTS = \
 
 ##-- GLOBAL INCLUDE
 
-##-- toAmos
-toAmos_experimental_CPPFLAGS = \
-	-I$(top_srcdir)/src/AMOS \
-	-I$(top_srcdir)/src/Common
-toAmos_experimental_LDADD = \
-        $(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
-	-lexpat
-toAmos_experimental_SOURCES = \
-        toAmos_experimental.cc
 
 ##-- END OF MAKEFILE --##
