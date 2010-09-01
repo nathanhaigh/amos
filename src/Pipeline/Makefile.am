@@ -13,7 +13,9 @@ dist_bin_SCRIPTS += \
 	minimus.acf \
 	minimus2.acf \
 	assembleRNAs.acf \
-	Minimo.acf
+	Minimo.acf \
+	gene_asm.acf
+
 endif BUILD_all
 
 if BUILD_AMOScmp
