@@ -9,8 +9,10 @@ using namespace std;
 using namespace HASHMAP;
 using namespace AMOS;
 
-int COUNT = 0;
-int LEN = 0;
+extern char **environ;
+
+long long COUNT = 0;
+long long LEN = 0;
 int BAD_CHAR = 0;
 
 // always print as "mer count" rather than meryl format
@@ -79,6 +81,7 @@ int  main (int argc, char * argv [])
     string normalizedbank;
 
     int min_count = 0;
+    int show_env = 0;
 
     tf = new AMOS_Foundation(version, helptext, "", argc, argv);
     tf->disableOptionHelp();
@@ -90,6 +93,7 @@ int  main (int argc, char * argv [])
     tf->getOptions()->addOptionResult("m=i", &min_count);
     tf->getOptions()->addOptionResult("S",   &PRINT_SIMPLE);
     tf->getOptions()->addOptionResult("l=f", &gb_limit);    
+    tf->getOptions()->addOptionResult("e",   &show_env);    
 
     tf->handleStandardOptions();
 
@@ -103,6 +107,13 @@ int  main (int argc, char * argv [])
       //exit(1);
     }
     */
+
+    if (show_env)
+    {
+      char **env;
+      for (env = environ; *env != NULL; ++env)
+        fprintf(stderr, "%s\n", *env);
+    }
 
     #ifndef BIGMER
     if (Kmer_Len > 31 || Kmer_Len < 1)
@@ -163,6 +174,7 @@ int  main (int argc, char * argv [])
       if(gb_limit > 0 && mer_table.size() > kmer_limit) {
 	// print table
 	cerr << COUNT << " sequences processed, " << LEN << " bp scanned" << endl;
+    fprintf(stderr, "reporter:counter:asm,flush,1\n");
 	PrintMers(mer_table, min_count);
 	// clear table
 	mer_table.clear();
@@ -170,6 +182,7 @@ int  main (int argc, char * argv [])
     }
 
     cerr << COUNT << " sequences processed, " << LEN << " bp scanned" << endl;
+    fprintf(stderr, "reporter:counter:asm,flush,1\n");
 
     if (BAD_CHAR)
     {
@@ -177,6 +190,9 @@ int  main (int argc, char * argv [])
     }
 
     PrintMers(mer_table, min_count);
+
+    fprintf(stderr, "reporter:counter:asm,reads_total,%ld\n", COUNT);
+    fprintf(stderr, "reporter:counter:asm,reads_bp,%ld\n",    LEN);
   }
   catch (Exception_t & e)
   {
@@ -195,6 +211,7 @@ int  main (int argc, char * argv [])
   catch (...)
     {
       cerr << "uncaught exception\n"; 
+      fprintf(stderr, "reporter:counter:asm,error,1\n");
     }
 
   try
