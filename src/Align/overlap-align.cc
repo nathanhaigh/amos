@@ -1,10 +1,17 @@
 #include <iostream>
+#include "fasta.hh"
 #include <iomanip>
 using namespace std;
 
 inline int max2(int a, int b)
 {
   return (a > b) ? a : b;
+}
+
+inline int max3(int a, int b, int c)
+{
+  int maxl = (a > b) ? a : b;
+  return (maxl > c) ? maxl : c;
 }
 
 inline int max4(int a, int b, int c, int d)
@@ -45,33 +52,44 @@ void align(const string & S,
   int m = S.length()-1;
   int n = T.length()-1;
 
-  int E[m+2][n+2];
-  int F[m+2][n+2];
-  int G[m+2][n+2];
-  int V[m+2][n+2];
+  int * E = new int[(m+2) * (n+2)];
+  int * F = new int[(m+2) * (n+2)];
+  int * G = new int[(m+2) * (n+2)];
+  int * V = new int[(m+2) * (n+2)];
 
+  if (!E || !F || !G || !V)
+  {
+    fprintf(stderr, "strings too long!\n");
+    exit(1);
+  }
+
+  fprintf(stderr, "Initializing arrays...");
 
   // initialize matrices
   for (int i = 0; i <= m; i++)
   {
     //E[i][0] = -gap_open + -gap_extension*i;
-    E[i][0] = 0;
-    F[i][0] = 0;
-    G[i][0] = 0;
-    V[i][0] = E[i][0];
+    E[i*(n+2) + 0] = 0;
+    F[i*(n+2) + 0] = 0;
+    G[i*(n+2) + 0] = 0;
+    V[i*(n+2) + 0] = E[i*(n+2)+0];
   }
+
+  fprintf(stderr, " ...");
 
   for (int j = 0; j <= n; j++)
   {
-    F[0][j] = -gap_open + -gap_extension*j;
     //F[0][j] = 0;
-    E[0][j] = 0;
-    G[0][j] = 0;
-    V[0][j] = F[0][j];
+    F[0+j] = -gap_open + -gap_extension*j;
+    E[0+j] = 0;
+    G[0+j] = 0;
+    V[0+j] = F[0+j];
   }
 
-  G[0][0] = 0;
-  V[0][0] = 0;
+  fprintf(stderr, " done.\n");
+
+  G[0] = 0;
+  V[0] = 0;
 
   int maxi = 0;
   int maxj = 0;
@@ -82,19 +100,21 @@ void align(const string & S,
   {
     for (int j = 1; j <= n; j++)
     {
-      E[i][j] = max2(E[i-1][j] - gap_extension,
-                     V[i-1][j] - gap_open - gap_extension);
+      E[i*(n+2)+j] = max2(E[(i-1)*(n+2) + j] - gap_extension,
+                          V[(i-1)*(n+2) + j] - gap_open - gap_extension);
 
-      F[i][j] = max2(F[i-1][j] - gap_extension,
-                     V[i-1][j] - gap_open - gap_extension);
+      F[i*(n+2)+j] = max2(F[(i-1)*(n+2) + j] - gap_extension,
+                          V[(i-1)*(n+2) + j] - gap_open - gap_extension);
 
-      G[i][j] = V[i-1][j-1] + s(S[i], T[j], match_score, mismatch_score);
+      G[i*(n+2)+j] = V[(i-1) * (n+2) + j-1] + s(S[i], T[j], match_score, mismatch_score);
 
-      V[i][j] = max4(E[i][j], F[i][j], G[i][j], 0);
+      V[i*(n+2)+j] = max3(E[i*(n+2) + j], 
+                          F[i*(n+2) + j], 
+                          G[i*(n+2) + j]);
 
-      if (V[i][j] > maxv)
+      if (V[i*(n+2)+j] > maxv)
       {
-        maxv = V[i][j];
+        maxv = V[i*(n+2)+j];
         maxi = i;
         maxj = j;
       }
@@ -105,39 +125,39 @@ void align(const string & S,
   // find the max along the last row (m)
   for (int j = 0; j <= n; j++)
   {
-    if (V[m][j] > maxv)
+    if (V[m*(n+2)+j] > maxv)
     {
-      maxv = V[m][j];
+      maxv = V[m*(n+2)+j];
       maxi = m;
       maxj = j;
     }
   }
 
 
-  // print the scores
-  cout << "V" << endl;
-  cout << "=======================================" << endl;
-  for (int i = 0; i <= m; i++)
-  {
-    if (i == 0)
-    {
-      cout << " \t";
-      for (int j = 0; j <= n; j++) { cout << T[j] << "\t"; }
-      cout << endl;
-    }
-  
-    cout << S[i] << "\t";
-    for (int j = 0; j <= n; j++)
-    {
-      cout << V[i][j];
-      //if (V[i][j] == maxv) { cout << "*"; }
-      if (i == maxi && j == maxj) { cout << "*"; }
-      cout << "\t";
-    }
-  
-  
-    cout << endl;
-  }
+  // // print the scores
+  // cout << "V" << endl;
+  // cout << "=======================================" << endl;
+  // for (int i = 0; i <= m; i++)
+  // {
+  //   if (i == 0)
+  //   {
+  //     cout << " \t";
+  //     for (int j = 0; j <= n; j++) { cout << T[j] << "\t"; }
+  //     cout << endl;
+  //   }
+  // 
+  //   cout << S[i] << "\t";
+  //   for (int j = 0; j <= n; j++)
+  //   {
+  //     cout << V[i][j];
+  //     //if (V[i][j] == maxv) { cout << "*"; }
+  //     if (i == maxi && j == maxj) { cout << "*"; }
+  //     cout << "\t";
+  //   }
+  // 
+  // 
+  //   cout << endl;
+  // }
   
   // cout << endl << endl;
   // cout << "E" << endl;
@@ -220,12 +240,12 @@ void align(const string & S,
 
   while (i > 0 && j > 0)
   {
-    int v = V[i][j];
+    int v = V[i*(n+2)+j];
     trace[tlen].score = v;
 
     numbasesaligned++;
 
-    if (v == G[i][j])
+    if (v == G[i*(n+2)+j])
     {
       if (S[i] == T[j])
       {
@@ -237,13 +257,13 @@ void align(const string & S,
       i--;
       j--;
     }
-    else if (v == E[i][j])
+    else if (v == E[i*(n+2)+j])
     {
       trace[tlen].s = S[i];
       trace[tlen].t = '-';
       i--;
     }
-    else if (v == F[i][j])
+    else if (v == F[i*(n+2)+j])
     {
       trace[tlen].s = '-';
       trace[tlen].t = T[j];
@@ -304,8 +324,29 @@ void align(const string & S,
 
 int main(int argc, char ** argv)
 {
-  string S = "sACAAAAATTTGGTC";
-  string T =       "sATGGTTCCATGA";
+  //string S = "sACAAAAATTTGGTC";
+  //string T =       "sATGGTTCCATGA";
+
+  if (argc < 3)
+  {
+    fprintf(stderr, "USAGE: overlap-align fasta1 fasta2\n");
+    exit(1);
+  }
+
+  FILE * f1 = fopen(argv[1], "r");
+  FILE * f2 = fopen(argv[2], "r");
+
+  if (!f1) { fprintf(stderr, "ERROR: Couldn't open %s\n", argv[1]); exit(1); }
+  if (!f2) { fprintf(stderr, "ERROR: Couldn't open %s\n", argv[2]); exit(1); }
+
+  string S, S_header;
+  string T, T_header;
+
+  Fasta_Read(f1, S, S_header);
+  Fasta_Read(f2, T, T_header);
+
+  S.insert(0, 1, 's');
+  T.insert(0, 1, 's');
   
   int match_score = 10;
   int mismatch_score = -2;
