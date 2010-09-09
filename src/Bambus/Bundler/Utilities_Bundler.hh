@@ -16,6 +16,7 @@
 #include "Contig_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
+#include <set>
 
 #include "Bank_AMOS.hh"
 #include "BankStream_AMOS.hh"
