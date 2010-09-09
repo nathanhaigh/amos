@@ -14,9 +14,11 @@ int LEN = 0;
 int BAD_CHAR = 0;
 
 int PRINT_SIMPLE = 0;
+int PRINT_STATS = 0;
 
 
 #undef BIGMER
+//#define BIGMER 1
 
 #ifdef BIGMER
 typedef vector<bool> Mer_t;
@@ -63,6 +65,7 @@ int  main (int argc, char * argv [])
 "  -k <len>   Length of kmer \n"
 "  -m <min>   Minimum count to report (default: 1)\n"
 "  -S         Print using simple nmer count format: mer count\n"
+"  -s         Just print statistics on unique mers\n";
 "\n.KEYWORDS.\n"
 "  kmers, fasta\n";
 
@@ -82,6 +85,7 @@ int  main (int argc, char * argv [])
     tf->getOptions()->addOptionResult("k=i", &Kmer_Len);
     tf->getOptions()->addOptionResult("m=i", &min_count);
     tf->getOptions()->addOptionResult("S",   &PRINT_SIMPLE);
+    tf->getOptions()->addOptionResult("s",   &PRINT_STATS);
 
     tf->handleStandardOptions();
 
@@ -439,34 +443,57 @@ static void  CountMers (const string & s, MerTable_t & mer_table)
 
 void PrintMers(const MerTable_t & mer_table, int min_count)
 {
-  cerr << mer_table.size() << " total distinct mers" << endl;
-  string mer;
-  int printed = 0;
-  int skip = 0;
-
-  MerTable_t::const_iterator fi;
-  for (fi = mer_table.begin(); fi != mer_table.end(); fi++)
+  if (PRINT_STATS)
   {
-    if (fi->second >= min_count)
+    long long unique = 0;
+
+    MerTable_t::const_iterator fi;
+    for (fi = mer_table.begin(); fi != mer_table.end(); fi++)
     {
-      MerToAscii(fi->first, mer);
-      if (PRINT_SIMPLE)
+      if (fi->second == 1)
       {
-        printf("%s\t%d\n", mer.c_str(), fi->second);
+        unique++;
+      }
+    }
+
+    cout << "n="  << COUNT
+         << " l=" << LEN
+         << " k=" << Kmer_Len
+         << " d=" << mer_table.size()
+         << " u=" << unique
+         << endl;
+  }
+  else
+  {
+    cerr << mer_table.size() << " total distinct mers" << endl;
+    string mer;
+    int printed = 0;
+    int skip = 0;
+
+    MerTable_t::const_iterator fi;
+    for (fi = mer_table.begin(); fi != mer_table.end(); fi++)
+    {
+      if (fi->second >= min_count)
+      {
+        MerToAscii(fi->first, mer);
+        if (PRINT_SIMPLE)
+        {
+          printf("%s\t%d\n", mer.c_str(), fi->second);
+        }
+        else
+        {
+          printf(">%d\n%s\n", fi->second, mer.c_str());
+        }
+        printed++;
       }
       else
       {
-        printf(">%d\n%s\n", fi->second, mer.c_str());
+        skip++;
       }
-      printed++;
     }
-    else
-    {
-      skip++;
-    }
-  }
 
-  cerr << printed << " mers occur at least " << min_count << " times" << endl;
-  cerr << "Skipped " << skip << endl;
+    cerr << printed << " mers occur at least " << min_count << " times" << endl;
+    cerr << "Skipped " << skip << endl;
+  }
 }
 
