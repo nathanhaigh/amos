@@ -169,7 +169,6 @@ bool ContigIterator_t::seek(Pos_t gindex)
 bool ContigIterator_t::hasSNP() const
 {
   TiledReadList_t::const_iterator tle;
-  TiledReadList_t::const_iterator end;
 
   char lastbase = ' ';
   for (tle = m_tilingreads.begin(); tle != m_tilingreads.end(); tle++)
