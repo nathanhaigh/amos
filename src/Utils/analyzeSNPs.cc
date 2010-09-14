@@ -237,24 +237,11 @@ void printSNPReportHeader()
 }
 
 
-int printSNPReport(ContigIterator_t ci)
+int printSNPReport(ContigIterator_t ci, 
+                   vector<BaseStats_t*> & freq, bool foundGoodSNP)
 {
-  Column_t column(ci.getColumn());
-
-  int dcov = column.m_depth;
+  int dcov   = ci.depth();
   int gindex = ci.gindex();
-
-  bool foundGoodSNP = false;
-
-  vector<BaseStats_t *> freq(column.getBaseInfo());
-
-  // start at 1 to skip the consensus, only look at conflicting bases
-  for (int i = 1; !foundGoodSNP && i < freq.size(); i++)
-  {
-    foundGoodSNP = (freq[i]->m_reads.size() >= SR_MINAGREEINGCONFLICTS) &&
-                   (freq[i]->m_cumqv        >= SR_MINAGREEINGQV) &&
-                   (freq[i]->m_maxqv        >= SR_MINCONFLICTQV);
-  }
 
   if (foundGoodSNP || PRINTALL)
   {
@@ -405,14 +392,29 @@ int main(int argc, char **argv)
         bool hasSNP = ci.hasSNP();
         if (hasSNP) { snpcount++; }
 
-        if (TCOV && (hasSNP || PRINTALL))
+        bool foundGoodSNP = false;
+
+        Column_t column(ci.getColumn());
+        vector<BaseStats_t *> freq(column.getBaseInfo());
+
+        // start at 1 to skip the consensus, only look at conflicting bases
+        for (int i = 1; !foundGoodSNP && i < freq.size(); i++)
         {
-          displaycount += printTCOV(ci);
+          foundGoodSNP = (freq[i]->m_reads.size() >= SR_MINAGREEINGCONFLICTS) &&
+                         (freq[i]->m_cumqv        >= SR_MINAGREEINGQV) &&
+                         (freq[i]->m_maxqv        >= SR_MINCONFLICTQV);
         }
 
-        if (SNPREPORT && (hasSNP || PRINTALL))
+        if ((foundGoodSNP || PRINTALL))
         {
-          displaycount += printSNPReport(ci);
+          if (TCOV)
+          {
+            displaycount += printTCOV(ci);
+          }
+          else
+          {
+            displaycount += printSNPReport(ci, freq, foundGoodSNP);
+          }
         }
       }
     }
