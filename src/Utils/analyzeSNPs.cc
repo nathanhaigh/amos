@@ -30,7 +30,7 @@ int SR_PRINTLIBS = 0;
 int SR_PRINTQUAL = 0;
 int SR_SKIPMAJOR = 0;
 
-int SR_MINAGREEINGCONFLICTS = 0;
+int SR_MINAGREEINGCONFLICTS = 1;
 int SR_MINAGREEINGQV = 0;
 int SR_MINCONFLICTQV = 0;
 
@@ -64,9 +64,9 @@ void printHelpText()
     "-l            Print libid\n"
     "-q            Print qvs\n"
     "-K            Don't print reads in majority\n"
-    "-M, -minsnps  <val> Set Minimum number of consistent disagreeing reads to report\n"
-    "-C, -cumqv    <val> Set Minimum conflicting cummulative qv to report\n"
-    "-Q, -minqv    <val> Set Minimum conflicting qv to report\n\n"
+    "-M, -minsnps  <val> Set Minimum number of consistent disagreeing reads to report (default: " << SR_MINAGREEINGCONFLICTS << ")\n"
+    "-C, -cumqv    <val> Set Minimum conflicting cummulative qv to report (default: " << SR_MINAGREEINGQV << ")\n"
+    "-Q, -minqv    <val> Set Minimum conflicting qv to report (default: " << SR_MINCONFLICTQV << ")\n\n"
 
     "General Options\n"
     "-e, -eid      Display eids\n"
