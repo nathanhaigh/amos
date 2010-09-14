@@ -237,61 +237,57 @@ void printSNPReportHeader()
 }
 
 
-int printSNPReport(ContigIterator_t ci, 
-                   vector<BaseStats_t*> & freq, bool foundGoodSNP)
+int printSNPReport(ContigIterator_t ci, vector<BaseStats_t*> & freq)
 {
   int dcov   = ci.depth();
   int gindex = ci.gindex();
 
-  if (foundGoodSNP || PRINTALL)
+  if (USEEID) { cout << ci.getContig().getEID() << "\t"; }
+  else        { cout << ci.getContig().getIID() << "\t"; }
+
+  cout << gindex+ONE_BASED_GINDEX << "\t"
+       << ci.uindex()             << "\t"
+       << ci.cons()               << "\t"
+       << dcov                    << "\t"
+       << dcov - freq[0]->m_reads.size();
+
+  int i = 0;
+  if (SR_SKIPMAJOR) { i = 1; }
+
+  for (; i < freq.size(); i++)
   {
-    if (USEEID) { cout << ci.getContig().getEID() << "\t"; }
-    else        { cout << ci.getContig().getIID() << "\t"; }
+    char base = toupper(freq[i]->m_base);
 
-    cout << gindex+ONE_BASED_GINDEX << "\t"
-         << ci.uindex()             << "\t"
-         << ci.cons()               << "\t"
-         << dcov                    << "\t"
-         << dcov - freq[0]->m_reads.size();
+    ostringstream reads;
+    ostringstream quals;
+    ostringstream libs;
 
-    int i = 0;
-    if (SR_SKIPMAJOR) { i = 1; }
-
-    for (; i < freq.size(); i++)
+    bool first = true;
+    vector<TiledReadList_t::const_iterator>::const_iterator ri;
+    for (ri = freq[i]->m_reads.begin(); ri != freq[i]->m_reads.end(); ri++)
     {
-      char base = toupper(freq[i]->m_base);
+      if (!first) { reads << ":"; quals << ":"; libs << ":"; }
+      first = false;
 
-      ostringstream reads;
-      ostringstream quals;
-      ostringstream libs;
-
-      bool first = true;
-      vector<TiledReadList_t::const_iterator>::const_iterator ri;
-      for (ri = freq[i]->m_reads.begin(); ri != freq[i]->m_reads.end(); ri++)
+      if (SR_PRINTLIBS) { libs  << frg2lib[(*ri)->m_fragid]; }
+      if (SR_PRINTQUAL) { quals << (int) (*ri)->qv(gindex);  }
+      if (SR_PRINTREAD) 
       {
-        if (!first) { reads << ":"; quals << ":"; libs << ":"; }
-        first = false;
-
-        if (SR_PRINTLIBS) { libs  << frg2lib[(*ri)->m_fragid]; }
-        if (SR_PRINTQUAL) { quals << (int) (*ri)->qv(gindex);        }
-        if (SR_PRINTREAD) 
-        {
-          if (USEEID) { reads << (*ri)->m_eid;     } else
-          if (USEIID) { reads << (*ri)->m_iid;     } else
-                      { reads << (*ri)->m_readidx; }
-        }
+        if (USEEID) { reads << (*ri)->m_eid;     } else
+        if (USEIID) { reads << (*ri)->m_iid;     } else
+                    { reads << (*ri)->m_readidx; }
       }
-
-      if (SR_PRINTBASE) { cout << "\t" << base << "(" << freq[i]->m_reads.size() << ")"; }
-      if (SR_PRINTREAD) { cout << "\t{" << reads.str() << "}"; }
-      if (SR_PRINTLIBS) { cout << "\t<" << libs.str() << ">";  }
-      if (SR_PRINTQUAL) { cout << "\t[" << quals.str() << "]"; }
     }
 
-    cout << endl;
+    if (SR_PRINTBASE) { cout << "\t" << base << "(" << freq[i]->m_reads.size() << ")"; }
+    if (SR_PRINTREAD) { cout << "\t{" << reads.str() << "}"; }
+    if (SR_PRINTLIBS) { cout << "\t<" << libs.str() << ">";  }
+    if (SR_PRINTQUAL) { cout << "\t[" << quals.str() << "]"; }
   }
 
-  return foundGoodSNP;
+  cout << endl;
+
+  return 1;
 }
 
 
@@ -413,7 +409,7 @@ int main(int argc, char **argv)
           }
           else
           {
-            displaycount += printSNPReport(ci, freq, foundGoodSNP);
+            displaycount += printSNPReport(ci, freq);
           }
         }
       }
