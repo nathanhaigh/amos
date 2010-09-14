@@ -249,6 +249,9 @@ public:
   //! Returns if there is a SNP at the current position
   bool hasSNP() const;
 
+  //! Returns depth at current position
+  int depth() const { return m_tilingreads.size(); }
+
   //! Returns the consenus at the current position
   char cons()   const { return m_consensus[m_gindex]; }
   
