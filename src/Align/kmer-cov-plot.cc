@@ -23,7 +23,7 @@ bool OPT_DisplayKmers = false;
 const int  MAX_LINE = 1000;
 typedef  long long unsigned  Mer_t;
 
-typedef hash_map<Mer_t, unsigned short, hash<unsigned long> > MerTable_t;
+typedef hash_map<Mer_t, unsigned int, hash<unsigned long> > MerTable_t;
 
 
 static Mer_t  Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
@@ -308,7 +308,7 @@ static void  Read_Mers (const char * fname, MerTable_t & mer_table)
 
   while  (Fasta_Read (fp, s, tag))
   {
-    unsigned short mercount = atoi(tag.c_str());
+    unsigned int mercount = atol(tag.c_str());
 
     if  (Kmer_Len == 0)
     {
