@@ -246,34 +246,37 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
 void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) {
    if (globals.debug > 2) cerr << "FINDING CONNECTED COMPONENTS PATHS" << endl;
    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProperty, EdgeProperty> UndirectedGraph;
-   hash_map<ID_t, vector<Contig_t>, hash<ID_t>, equal_to<ID_t> > ctgsByComponent;
-   vector<Contig_t> allContigs;
+   hash_map<ID_t, vector<Contig_t *>, hash<ID_t>, equal_to<ID_t> > ctgsByComponent;
+   vector<Contig_t *> allContigs;
    UndirectedGraph ug;
    boost::copy_graph(g, ug);
 
    VertexName vertexNames = get(boost::vertex_name, g);
    int32_t* component = new int32_t[boost::num_vertices(ug)];
 
+   // this section is very memory heavy, we load all the contigs from the bank into memory for the ctgsByComponent code
+   // if memory becomes an issue, we can instead read contigs from the bank instead
    boost::connected_components(ug, &component[0]);
    pair<VertexIterator, VertexIterator> i;
+   Contig_t *ctg;
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
       if (vertexNames[*i.first] == 0) continue;
 
-      Contig_t ctg;
-      contig_bank.fetch(vertexNames[*i.first], ctg);
-      ctgsByComponent[component[*i.first]].push_back(ctg);
+      ctg = new Contig_t();
+      contig_bank.fetch(vertexNames[*i.first], (*ctg));
       allContigs.push_back(ctg);
+      ctgsByComponent[component[*i.first]].push_back(ctg);
    }
 
    if (globals.debug > 2) cerr << "COMPUTING CONNECTED COMPONENTS COVERAGE " << endl;
    double globalArrivalRate = computeArrivalRate(allContigs);
    allContigs.clear();
    
-   for (hash_map<ID_t, vector<Contig_t>, hash<ID_t>, equal_to<ID_t> >::iterator i = ctgsByComponent.begin(); i != ctgsByComponent.end(); i++) {
+   for (hash_map<ID_t, vector<Contig_t *>, hash<ID_t>, equal_to<ID_t> >::iterator i = ctgsByComponent.begin(); i != ctgsByComponent.end(); i++) {
       double arrivalRate = computeArrivalRate(i->second);
       double mean = 0, variance = 0, stdev = 0, N = 0;
-      for (vector<Contig_t>::iterator j = i->second.begin(); j < i->second.end(); j++) {
-         double cov = j->getCovStat(arrivalRate);
+      for (vector<Contig_t *>::iterator j = i->second.begin(); j < i->second.end(); j++) {
+         double cov = (*j)->getCovStat(arrivalRate);
          
          N++;
          double delta = cov - mean;
@@ -284,21 +287,23 @@ void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &rep
       stdev = sqrt(variance);
 
       if (globals.debug > 2) cerr << "Processing Connected component " << i->first << " with " << i->second.size() << " elements with coverage " << mean << " and stdev " << stdev << " GLOBAL ARRIVAL: " << globalArrivalRate << " LOCAL: " << arrivalRate << endl;
-      for (vector<Contig_t>::iterator j = i->second.begin(); j < i->second.end(); j++) {
-         double cov = j->getCovStat(arrivalRate);
-         double globalCov = j->getCovStat(globalArrivalRate);
+      for (vector<Contig_t *>::iterator j = i->second.begin(); j < i->second.end(); j++) {
+         double cov = (*j)->getCovStat(arrivalRate);
+         double globalCov = (*j)->getCovStat(globalArrivalRate);
 
-         if (globals.debug > 1) cerr << "CONTIG " << j->getIID() << " HAS COVERAGE " << cov << " GLOBAL COV: " << globalCov << " MEAN: " << mean << " STDEV:" << stdev << " SIZE " << j->getUngappedLength() << " DELTA IS " << (cov + (mean - MAX_REPEAT_STDEV*stdev)) << endl;
-         if ((cov < MAX_REPEAT_COV) && j->getUngappedLength() < MAX_REPEAT_SIZE) {
-            if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getUngappedLength() << " WITH " << j->getReadTiling().size() << " READS AND COVERAGE " << cov << " IS TOO LOW" << endl;
-            repeats.insert(j->getIID());
+         if (globals.debug > 1) cerr << "CONTIG " << (*j)->getIID() << " HAS COVERAGE " << cov << " GLOBAL COV: " << globalCov << " MEAN: " << mean << " STDEV:" << stdev << " SIZE " << (*j)->getUngappedLength() << " DELTA IS " << (cov + (mean - MAX_REPEAT_STDEV*stdev)) << endl;
+         if ((cov < MAX_REPEAT_COV) && (*j)->getUngappedLength() < MAX_REPEAT_SIZE) {
+            if (globals.debug > 1) cerr << "CONTIG " << (*j)->getEID() << " OF SIZE " << (*j)->getUngappedLength() << " WITH " << (*j)->getReadTiling().size() << " READS AND COVERAGE " << cov << " IS TOO LOW" << endl;
+            repeats.insert((*j)->getIID());
          } else if (i->second.size() == 1 && globalCov < MAX_REPEAT_COV) {
-             if (globals.debug > 1) cerr << "CONTIG " << j->getEID() << " OF SIZE " << j->getUngappedLength() << " GLOBAL COVERAGE " << globalCov << " IS TOO LOW" << endl;
-            repeats.insert(j->getIID());
-         } else if (globals.doAgressiveRepeatFinding == true && globalCov <= MAX_REPEAT_COV && j->getUngappedLength() < MAX_REPEAT_SIZE) {
+             if (globals.debug > 1) cerr << "CONTIG " << (*j)->getEID() << " OF SIZE " << (*j)->getUngappedLength() << " GLOBAL COVERAGE " << globalCov << " IS TOO LOW" << endl;
+            repeats.insert((*j)->getIID());
+         } else if (globals.doAgressiveRepeatFinding == true && globalCov <= MAX_REPEAT_COV && (*j)->getUngappedLength() < MAX_REPEAT_SIZE) {
              if (globals.debug > 1) cerr << "AGRESSIVE REPEAT" << cov << " IS TOO LOW" << endl;
-            repeats.insert(j->getIID());
+            repeats.insert((*j)->getIID());
          }
+         // free memory the contig was using as soon as we're done with it
+         delete (*j);
       }
    }
    

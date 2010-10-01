@@ -81,8 +81,8 @@ namespace Bundler
          }
       }
    };
-   
-   double computeArrivalRate(const std::vector<AMOS::Contig_t> &contigs);
+  
+   double computeArrivalRate(const std::vector<AMOS::Contig_t *> &contigs);
    void buildGraph(
             Graph &g, 
             AMOS::BankStream_t &contig_stream, AMOS::BankStream_t &edge_stream, 

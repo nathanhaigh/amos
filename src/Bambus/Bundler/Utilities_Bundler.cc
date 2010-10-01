@@ -60,14 +60,14 @@ struct EdgeOrderCmp
   }
 };
 
-double computeArrivalRate(const std::vector<AMOS::Contig_t> &contigs) {
+double computeArrivalRate(const std::vector<AMOS::Contig_t *> &contigs) {
    double result = 0;
    int32_t numFragments = 0;
-   
-   for (std::vector<AMOS::Contig_t>::const_iterator i = contigs.begin(); i < contigs.end(); i++) {
+ 
+   for (std::vector<AMOS::Contig_t *>::const_iterator i = contigs.begin(); i < contigs.end(); i++) {
       // compute global arrival rate
-      result += i->getAvgRho();
-      numFragments += (i->getReadTiling().size() > 0 ? i->getReadTiling().size() - 1 : 0);
+      result += (*i)->getAvgRho();
+      numFragments += ((*i)->getReadTiling().size() > 0 ? (*i)->getReadTiling().size() - 1 : 0);
    }
    if (result == 0) {
       return 0;
