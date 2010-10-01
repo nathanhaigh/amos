@@ -552,7 +552,7 @@ void updateEdge(
       oldID = cte.getContigs().first;
    }
 
-   if (newTileOrient == NONE) {
+   if (newTileOrient == NONE && !isBadEdge(cte)) {
       newTileOrient = getOrientation(ctg2ort[oldID], cte);
       ctg2ort[newTile.source] = newTileOrient;
 
@@ -566,11 +566,15 @@ void updateEdge(
 
    pair<ID_t, ID_t> ctgs;
    if (updateFirst) {
-      cte.setAdjacency(getAdjacency(ctg2ort[cte.getContigs().first], ctg2ort[cte.getContigs().second], newTileOrient, ctg2ort[oldID], cte));
+      if (!isBadEdge(cte)) { 
+         cte.setAdjacency(getAdjacency(ctg2ort[cte.getContigs().first], ctg2ort[cte.getContigs().second], newTileOrient, ctg2ort[oldID], cte));
+      }
       ctgs.first = newTile.source;
       ctgs.second = oldID;
    } else {
-      cte.setAdjacency(getAdjacency(ctg2ort[cte.getContigs().first], ctg2ort[cte.getContigs().second], ctg2ort[oldID], newTileOrient, cte));
+      if (!isBadEdge(cte)) {
+         cte.setAdjacency(getAdjacency(ctg2ort[cte.getContigs().first], ctg2ort[cte.getContigs().second], ctg2ort[oldID], newTileOrient, cte));
+      }
       ctgs.first = oldID;
       ctgs.second = newTile.source;
    }
