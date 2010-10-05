@@ -23,6 +23,7 @@ bool SNPREPORT = 0;
 
 string BANKNAME;
 
+int SR_PRINT_SNPS = 0;
 int SR_PRINTBASE = 1;
 int SR_PRINTREAD = 0;
 int SR_PRINTLIBS = 0;
@@ -295,24 +296,30 @@ int main(int argc, char **argv)
           int dcov   = ci.depth();
           int gindex = ci.gindex();
 
-          if (USEEID) { cout << ci.getContig().getEID() << "\t"; }
-          else        { cout << ci.getContig().getIID() << "\t"; }
+          if (SR_PRINT_SNPS)
+          {
+            if (USEEID) { cout << ci.getContig().getEID() << "\t"; }
+            else        { cout << ci.getContig().getIID() << "\t"; }
 
-          cout << gindex+ONE_BASED_GINDEX << "\t"
-               << ci.uindex()             << "\t"
-               << ci.cons()               << "\t"
-               << dcov                    << "\t"
-               << dcov - freq[0]->m_reads.size();
+            cout << gindex+ONE_BASED_GINDEX << "\t"
+                 << ci.uindex()             << "\t"
+                 << ci.cons()               << "\t"
+                 << dcov                    << "\t"
+                 << dcov - freq[0]->m_reads.size();
+          }
 
           for (int i = 0; i < freq.size(); i++)
           {
-            cout << "\t" << (char) toupper(freq[i]->m_base) << "(" << freq[i]->m_reads.size() << ")";
+            if (SR_PRINT_SNPS)
+            {
+              cout << "\t" << (char) toupper(freq[i]->m_base) << "(" << freq[i]->m_reads.size() << ")";
+            }
 
             bool first = true;
 
             map<int, int> groupcnt;
 
-            if (SR_PRINTREAD) { cout << "\t{"; }
+            if (SR_PRINT_SNPS && SR_PRINTREAD) { cout << "\t{"; }
 
             vector<TiledReadList_t::const_iterator>::const_iterator ri;
             for (ri = freq[i]->m_reads.begin(); ri != freq[i]->m_reads.end(); ri++)
@@ -320,7 +327,7 @@ int main(int argc, char **argv)
               int groupid = getHaplotypeGroup(groups, (*ri)->m_iid);
               groupcnt[groupid]++;
 
-              if (SR_PRINTREAD)
+              if (SR_PRINT_SNPS && SR_PRINTREAD)
               {
                 if (!first) { cout << ":"; }
                 first = false;
@@ -333,21 +340,23 @@ int main(int argc, char **argv)
               }
             }
 
-            if (SR_PRINTREAD) { cout << "}"; }
+            if (SR_PRINT_SNPS && SR_PRINTREAD) { cout << "}"; }
 
             map<int,int>::iterator mi;
             int maxid  = -1;
             int maxcnt = -1;
 
-            cout << "[";
+            if (SR_PRINT_SNPS) { cout << "["; }
 
             first = true;
 
             for (mi = groupcnt.begin(); mi != groupcnt.end(); mi++)
             {
-              if (!first) { cout << ","; } first = false;
-
-              cout << mi->first << ":" << mi->second;
+              if (SR_PRINT_SNPS)
+              {
+                if (!first) { cout << ","; } first = false;
+                cout << mi->first << ":" << mi->second;
+              }
 
               if (((mi->first != -1) && (mi->second > maxcnt)) ||
                   ((mi->first == -1) && (maxid == -1)))
@@ -367,7 +376,10 @@ int main(int argc, char **argv)
               groups.push_back(newgroup);
             }
 
-            cout << "][[" << maxid << ":" << maxcnt << "]]";
+            if (SR_PRINT_SNPS)
+            {
+              cout << "][[" << maxid << ":" << maxcnt << "]]";
+            }
 
             groups[maxid].addDelta(gindex, toupper(freq[i]->m_base));
 
@@ -378,7 +390,7 @@ int main(int argc, char **argv)
             }
           }
 
-          cout << endl;
+          if (SR_PRINT_SNPS) { cout << endl; }
         }
       }
 
@@ -386,7 +398,16 @@ int main(int argc, char **argv)
       {
         cout << ">" << g << " [" << groups[g].m_loffset << ":" << groups[g].m_roffset << "] ";
 
+        cout << "(";
         bool first = true;
+        for (int i = 0; i < groups[g].m_delta.size(); i++)
+        {
+          if (!first) { cout << " "; } first = false;
+          cout << groups[g].m_delta[i].m_offset << ":" << groups[g].m_delta[i].m_base;
+        }
+        cout << ") ";
+
+        first = true;
         set<ID_t>::iterator si;
         for (si = groups[g].m_readiids.begin(); si != groups[g].m_readiids.end(); si++)
         {
