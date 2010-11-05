@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+
 use strict;
 use File::Spec;
 use TIGR::Foundation;
@@ -53,7 +54,7 @@ my $HELP = qq~
   -S - include the surrogate unitigs in the .asm file as AMOS contigs
   -utg - include all UTG unitig messages in the .asm file as AMOS contigs
   -ta <tigr_asm> - contig file in TIGR Assembler format (.tasm)
-  -ace <phrap_ace> - contig file in Phred ACE format
+  -ace <phrap_ace> - contig file in Phred ACE format (can be accompanied by -q)
   -phd - read the content of PHD file referenced in ACE files
   -m <bambus_mates> - library and mate-pair information file in Bambus format
   -x <trace_xml> - ancilliary data file (library, mate-pair, clear range) 
@@ -224,7 +225,13 @@ if (defined $tasmfile) {
 
 if (defined $acefile){
     open(IN, $acefile) || $base->bail("Could not read ACE assembly file $acefile: $!\n");
-    parseACEFile(\*IN);
+    if (defined $qualfile){
+        open(QUAL, $qualfile) || $base->bail("Cannot open $qualfile: $!\n");
+        parseACEFile(\*IN, \*QUAL);
+        close(QUAL);
+    } else {
+        parseACEFile(\*IN);
+    }
     close(IN);
     if ($phd_opt) {
         open(IN, $acefile) || $base->bail("Could not read PHD file $acefile: $!\n");
@@ -1328,6 +1335,7 @@ sub parsePHDFiles {
 # New .ACE format
 sub parseACEFile {
     my $IN = shift;
+    my $qualfile = shift;
     
     my $ctg; 
     my $len;
@@ -1353,6 +1361,19 @@ sub parseACEFile {
     my $iid;
     my $first = 1;
     my $qual = "";
+    my $qf;
+    my %qRecPos;
+    if (defined $qualfile){
+        $qf = new AMOS::ParseFasta($qualfile, '>', ' ');
+        
+        # index the records by headers and file positions
+        my $nextPos = $qf->tell();
+        while (my ($qh) = $qf->getRecord()){
+        $qh =~ /^(\S+)/; # extract short name
+        $qRecPos{$1} = $nextPos;
+        $nextPos = $qf->tell();
+        }
+    }
     while (<$IN>){
 	if (/^CO (\S+) (\d+) (\d+)/){
 	    ($contigName, $contigLen, $contigSeqs) = ($1, $2, $3);
@@ -1553,18 +1574,34 @@ sub parseACEFile {
                 # Quality values
 		print TMPSEQ "#\n";
 		my $qualdata = "";
-		for (my $i = 0; $i < $cll; $i++){
-		    $qualdata .= chr(ord('0') + $BADQUAL);
+		if (defined $qualfile){
+			$seqName =~ /^([^.]+)/;
+			my $shortName = $1;
+			if ( ! defined $qRecPos{$shortName} ){
+			$base->bail("Sequence $shortName not found in quality file\n");
+			}
+			$qf->seek($qRecPos{$shortName});
+			my ($qh, $qdata) = $qf->getRecord();
+			my @quals = split(/ +/, $qdata);
+			for (my $i = 0; $i <= $#quals; $i++){
+			if ($quals[$i] <= 0) {$quals[$i] = 1;}
+			if ($quals[$i] > 60) {$quals[$i] = 60;}
+			$qualdata .= chr(ord('0') + $quals[$i]);
+			}
+		} else {
+			for (my $i = 0; $i < $cll; $i++){
+				$qualdata .= chr(ord('0') + $BADQUAL);
+			}
+			for (my $i = $cll; $i < $clr; $i++){
+				$qualdata .= chr(ord('0') + $GOODQUAL);
+			}
+			for (my $i = $clr; $i < length($allseq); $i++){
+				$qualdata .= chr(ord('0') + $BADQUAL);
+			}
 		}
-		for (my $i = $cll; $i < $clr; $i++){
-		    $qualdata .= chr(ord('0') + $GOODQUAL);
-		}
-		for (my $i = $clr; $i < length($allseq); $i++){
-		    $qualdata .= chr(ord('0') + $BADQUAL);
-		}
-
-                my $seqlength  = length $allseq;
-                my $quallength = length $qualdata;
+		
+        my $seqlength  = length $allseq;
+        my $quallength = length $qualdata;
 		if ( $seqlength != $quallength ) {
 		    $base->bail("Error: There should be a quality score for each nucleotide in read $seqName, but got $seqlength nt and $quallength scores\n");
 		}
