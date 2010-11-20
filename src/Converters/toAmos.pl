@@ -1,6 +1,7 @@
-#!/usr/bin/perl
+#! /usr/bin/env perl
 
 use strict;
+use warnings;
 use File::Spec;
 use TIGR::Foundation;
 use AMOS::AmosLib;
@@ -45,7 +46,8 @@ my $HELP = qq~
 
 .OPTIONS.
   -o <out_file> - output filename ('-' for standard output)
-  -s <fasta_reads> - sequence data file in FASTA format
+  -s <fasta_reads> - sequence data file in FASTA format (reads names ending
+     in .1 or /1 are taken as mate pairs)
   -q <qual_file> - sequence quality score file in QUAL format
   -gq <bad_qual> - minimum quality score for high-quality bases (default: $GOODQUAL)
   -bq <good_qual> - maximum quality score for low-quality bases (default: $BADQUAL)
@@ -143,7 +145,6 @@ my %contigcons; # contig id to consensus sequence
 my %forw;       # insert to forw (rev resp) end mapping 
 my %rev; 
 my %libraries;  # libid to lib range (mean, stdev) mapping
-my %insertlib;  # lib id to insert list
 my %inserttype; # the type of insert, if undefined assume 'E'
 my %seenlib;    # insert id to lib id map
 my %seqinsert;  # sequence id to insert id map
@@ -177,7 +178,7 @@ open(TMPCTG, ">$tmpctg") || $base->bail("Could not write temporary contig file $
 open(TMPSCF, ">$tmpscf") || $base->bail("Could not write temporary scaffold file $tmpscf: $!\n");
 
 #then figure out the mates
-if (defined $frgfile){
+if (defined $frgfile) {
     open(IN, $frgfile) || $base->bail("Could not read Celera Assembler FRG file $frgfile: $!\n");
     parseFrgFile(\*IN);
     close(IN);
@@ -185,17 +186,21 @@ if (defined $frgfile){
     $readsDone = 1;
 }
 
-if (defined $fastafile){
+if (defined $fastafile) {
+    # Guess mate pairs unless a .mates files was provided
+    my $guess_mates = $matesfile ? 0 : 1;
+    # Open and parse FASTA (and QUAL) files
     open(IN, $fastafile) || $base->bail("Could not read FASTA file $fastafile: $!\n");
     if (defined $qualfile){
         open(QUAL, $qualfile) || $base->bail("Could not read QUAL file $qualfile: $!\n");
-        parseFastaFile(\*IN, \*QUAL);
+        parseFastaFile(\*IN, \*QUAL, $guess_mates);
         close(QUAL);
     } else {
-        parseFastaFile(\*IN);
+        parseFastaFile(\*IN, undef, $guess_mates);
     }
     close(IN);
     $readsDone = 1;
+    $matesDone = 1 if $guess_mates;
 }
 
 if (defined $posfile){
@@ -282,29 +287,28 @@ if (defined $scaffile){
     close(IN);
 }
 
-
 close(TMPSEQ);
 close(TMPCTG);
 close(TMPSCF);
 
+## add a dummy to hold all the unmated reads
+my $ll = $minSeqId++;
+$libraries{$ll} = '0 0'; 
+$libnames{$ll} = 'unmated';
+
 ## make sure all reads have an insert
 my %libid;
 my %insid;
-my $ll = $minSeqId++;
-$libraries{$ll} = "0 0"; # dummy library for unmated guys
-$libnames{$ll} = "unmated";
-#$libid{$ll} = $ll;
-
 while (my ($sid, $sname) = each %seqnames){
     if (! exists $seqinsert{$sid}){
         my $id = $minSeqId++;
         $seqinsert{$sid} = $id;
         $insid{$id} = $id;
         $seenlib{$id} = $ll;
-        #$insertlib{$ll} .= "$id ";
         $forw{$id} = $sid;
     }
 }
+
 
 ## here's where we output all the stuff
 
@@ -333,11 +337,16 @@ while (my ($lib, $range) = each %libraries){
     } else {
         print OUT "eid:$lib\n";
     }
-    print OUT "{DST\n";
-    print OUT "mea:$mean\n";
-    print OUT "std:$sd\n";
+
+    if (defined $mean && defined $sd) {
+        print OUT "{DST\n";
+        print OUT "mea:$mean\n";
+        print OUT "std:$sd\n";
+        print OUT "}\n";
+    }
+
     print OUT "}\n";
-    print OUT "}\n";
+
 }
 
 # then all the inserts
@@ -668,8 +677,7 @@ sub parseTraceInfoFile {
 
 
 # Celera .frg
-# populates %seqids, %seqnames, and %seq_range, %libraries, %insertlib,
-# %seenlib, %seqinsert
+# populates %seqids, %seqnames, and %seq_range, %libraries, %seenlib, %seqinsert
 sub parseFrgFile {
     my $IN = shift;
 
@@ -738,7 +746,6 @@ sub parseFrgFile {
         
         if ($type eq "LKG") {
             my $id = $minSeqId++;
-            #$insertlib{$$fields{dst}} .= "$id ";
 
             if ($FRG_VERSION == 2) {
               my $frgcount = 0;
@@ -805,14 +812,14 @@ sub parseFrgFile {
 # >seqname clearleft clearright
 # >seqname \d+ \d+ \d+ clearleft clearright
 sub parseFastaFile {
-    my $seqfile = shift;
-    my $qualfile = shift;
+    my ($seqfile, $qualfile, $guess_mates) = @_;
 
     my $pf = new AMOS::ParseFasta($seqfile);
     my $qf;
     if (defined $qualfile){
         $qf = new AMOS::ParseFasta($qualfile, '>', ' ');
     }
+    my %inserts;
     while (my ($head, $data) = $pf->getRecord()){
         my $seqname;
         my $cll;
@@ -837,6 +844,16 @@ sub parseFastaFile {
         $seqnames{$id} = $seqname;
         #print STDERR "got $seqname $id\n";
         $seqids{$seqname} = $id;
+
+        #####
+        # Detect mate pairs
+        if ($guess_mates && $seqname =~ m/^(.+)[.|]([12])$/) {
+            # Sequence names ending in .1 or .2 or /1 or /2 are mate pair
+            my $insname = $1;
+            $inserts{$insname}{$2} = $id;
+            #push @{$inserts{$insname}}, $id;
+        }
+        #####
 
         # so we don't overwrite an externally provided clear range
         if (! exists $seq_range{$id}){
@@ -882,15 +899,39 @@ sub parseFastaFile {
         }
         print TMPSEQ "#\n";
     }
+
+    # Put mated reads in a proper library
+    if ($guess_mates && scalar keys %inserts > 0) {
+        print STDERR "Processing mates\n";
+        my $insid = 1;
+        my $libname = 'mated';
+        my $inssize = ''; # insert avg size and stddev is unknown
+        $libraries{$libname} = $inssize;
+        for my $insname (keys %inserts) {
+            my %hash = %{$inserts{$insname}};
+            if (scalar keys %hash == 2) {
+                # a mate pair
+                $seqinsert{$hash{'1'}} = $insid;
+                $seqinsert{$hash{'2'}} = $insid;
+                $forw{$insid} = $hash{'1'};
+                $rev{$insid}  = $hash{'1'};
+                $seenlib{$insid} = $libname;
+                $insid{$insid} = $insid;
+                $insid++;
+                delete $inserts{$insname};
+            }
+        }
+    }
+
 }
 
 # parses BAMBUS style .mates file
 # * expects %seqids to be populated
-# * populates %libraries, %forw, %rev, %insertlib, %seenlib, %seqinsert
+# * populates %libraries, %forw, %rev, %seenlib, %seqinsert
 sub parseMatesFile {
     my $IN = shift;
 
-        print STDERR "Processing mates\n";
+    print STDERR "Processing mates\n";
 
     my @libregexp;
     my @libids;
@@ -899,7 +940,16 @@ sub parseMatesFile {
 
     while (<$IN>){
         chomp;
-        if (/^library/){
+        
+        if (/^\#/) { # comment
+            next;
+        }
+
+        elsif (/^\s*$/) { # empty line
+            next;
+        }
+
+        elsif (/^library/){
             # line should match: library <name> <min_size> <max_size> <regexp>
             my @recs = split('\t', $_);
             if ($#recs < 3 || $#recs > 4){
@@ -907,7 +957,6 @@ sub parseMatesFile {
                 $base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n", 1);
                 next;
             }
-            
             if ($#recs == 4){
                 $libregexp[++$#libregexp] = $recs[4];
                 $libids[++$#libids] = $recs[1];
@@ -918,7 +967,7 @@ sub parseMatesFile {
             next;
         } # if library
 
-        if (/^pair/){
+        elsif (/^pair/){
             # line expected to match: pair <regexp_forw> <regexp_rev>
             my @recs = split('\t', $_);
             if ($#recs != 2){
@@ -928,50 +977,40 @@ sub parseMatesFile {
             $pairregexp[++$#pairregexp] = "$recs[1] $recs[2]";
             next;
         }
-        if (/^\#/) { # comment
-            next;
-        }
-        if (/^\s*$/) { # empty line
-            next;
-        }
         
-        # now we just deal with the pair lines
-        my @recs = split('\t', $_);
-        if ($#recs < 1 || $#recs > 2){
-            $base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
-            next;
+        else {
+            # now we just deal with lines for pairs: <seq_forw> <seq_rev> <library_name>
+            my @recs = split('\t', $_);
+            if ($#recs != 2){
+                $base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
+                next;
+            }
+            # make sure we've seen these sequences
+            if (! defined $seqids{$recs[0]}){
+                $base->logError("Sequence $recs[0] has no ID at line $. in \"$matesfile\"");
+                next;
+            }
+            if (! defined $seqids{$recs[1]} ){
+                $base->logError("Sequence $recs[1] has no ID at line $. in \"$matesfile\"");
+                next;
+            }
+            if (defined $recs[2]){
+                $seenlib{$insname} = $recs[2];
+            } else {
+                $base->logError("$insname has no library\n");
+            }
+            $forw{$insname} = $seqids{$recs[0]};
+            $rev{$insname}  = $seqids{$recs[1]};
+            $seqinsert{$seqids{$recs[0]}} = $insname;
+            $seqinsert{$seqids{$recs[1]}} = $insname;
+            $insname++;
         }
-        
-        # make sure we've seen these sequences
-        if (! defined $seqids{$recs[0]}){
-            $base->logError("Sequence $recs[0] has no ID at line $. in \"$matesfile\"");
-            next;
-        }
-        if (! defined $seqids{$recs[1]} ){
-            $base->logError("Sequence $recs[1] has no ID at line $. in \"$matesfile\"");
-            next;
-        }
-        
-        if (defined $recs[2]){
-            #$insertlib{$recs[2]} .= "$insname ";
-            $seenlib{$insname} = $recs[2];
-        } else {
-            $base->logError("$insname has no library\n");
-        }
-        
-        $forw{$insname} = $seqids{$recs[0]};
-        $rev{$insname} = $seqids{$recs[1]};
-        
-        $seqinsert{$seqids{$recs[0]}} = $insname;
-        $seqinsert{$seqids{$recs[1]}} = $insname;
-        
-        $insname++;
+
     } # while <IN>
 
-    # now we have to go through all the sequences and assign them to
-    # inserts
-    while (my ($nm, $sid) = each %seqids){
-        for (my $r = 0; $r <= $#pairregexp; $r++){
+    # now we have to go through all the sequences and assign them to inserts
+    while (my ($nm, $sid) = each %seqids) {
+        for my $r (0 .. $#pairregexp){
             my ($freg, $revreg) = split(' ', $pairregexp[$r]);
             $base->logLocal("trying $freg and $revreg on $nm\n", 2);
             if ($nm =~ /$freg/){
@@ -990,7 +1029,7 @@ sub parseMatesFile {
                 }
                 last;
             }
-        } # for each pairreg
+        } # for each pairregexp
     } # while each %seqids
     
     while (my ($ins, $nm) = each %forw) {
@@ -999,14 +1038,11 @@ sub parseMatesFile {
         }
         if (! exists $seenlib{$ins}){
             my $found = 0;
-            
             $nm = $seqnames{$nm};
-
             for (my $l = 0; $l <= $#libregexp; $l++){
                 $base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
                 if ($nm =~ /$libregexp[$l]/){
                     $base->logLocal("found $libids[$l]\n", 2);
-                    #$insertlib{$libids[$l]} .= "$ins ";
                     $seenlib{$ins} = $libids[$l];
                     $found = 1;
                     last;
@@ -1018,20 +1054,18 @@ sub parseMatesFile {
             }
         }
     }
+
     while (my ($ins, $nm) = each %rev) {
         if (! exists $insid{$ins}){
             $insid{$ins} = $minSeqId++;
         }
         if (! exists $seenlib{$ins}){
             my $found = 0;
-            
             $nm = $seqnames{$nm};
-
             for (my $l = 0; $l <= $#libregexp; $l++){
                 $base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
                 if ($nm =~ /$libregexp[$l]/){
                     $base->logLocal("found $libids[$l]\n", 2);
-                    #$insertlib{$libids[$l]} .= "$ins ";
                     $seenlib{$ins} = $libids[$l];
                     $found = 1;
                     last;
@@ -1043,6 +1077,7 @@ sub parseMatesFile {
             }
         }
     }
+
 } # parseMateFile;
 
 
@@ -1902,7 +1937,6 @@ sub EndTag {
         }
             
         $seqinsert{$seqId} = $template;
-        #$insertlib{$library} .= "$template ";
         $seenlib{$template} = $library;
         
     
