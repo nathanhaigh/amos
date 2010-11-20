@@ -102,28 +102,30 @@ my $arachne_scaff = undef;
 my $scaffile = undef;
 
 my $minSeqId = 1;  # where to start numbering reads
-my $err = $base->TIGR_GetOptions("m=s"   => \$matesfile,
-				 "x=s"   => \$traceinfofile,
-				 "c=s"   => \$ctgfile,
-				 "f=s"   => \$frgfile,
-				 "a=s"   => \$asmfile,
-				 "ta=s"  => \$tasmfile,
-				 "ace=s" => \$acefile,
-				 "o=s"   => \$outfile,
-				 "i=s"   => \$insertfile,
-				 "map=s" => \$libmap,
-				 "arachne=s" => \$arachne_scaff,
-				 "scaff=s"   => \$scaffile,
-				 "gq=i"  => \$GOODQUAL,
-				 "bq=i"  => \$BADQUAL,
-				 "q=s"   => \$qualfile,
-				 "s=s"   => \$fastafile,
-				 "pos=s" => \$posfile,
-				 "id=i"  => \$minSeqId,
-				 "acc"   => \$byaccession,
-				 "phd"   => \$phd_opt,
-				 "S"     => \$INCLUDE_SURROGATE,
-				 "utg"   => \$UTG_MESSAGES);
+my $err = $base->TIGR_GetOptions(
+    "m=s"       => \$matesfile,
+    "x=s"       => \$traceinfofile,
+    "c=s"       => \$ctgfile,
+    "f=s"       => \$frgfile,
+    "a=s"       => \$asmfile,
+    "ta=s"      => \$tasmfile,
+    "ace=s"     => \$acefile,
+    "o=s"       => \$outfile,
+    "i=s"       => \$insertfile,
+    "map=s"     => \$libmap,
+    "arachne=s" => \$arachne_scaff,
+    "scaff=s"   => \$scaffile,
+    "gq=i"      => \$GOODQUAL,
+    "bq=i"      => \$BADQUAL,
+    "q=s"       => \$qualfile,
+    "s=s"       => \$fastafile,
+    "pos=s"     => \$posfile,
+    "id=i"      => \$minSeqId,
+    "acc"       => \$byaccession,
+    "phd"       => \$phd_opt,
+    "S"         => \$INCLUDE_SURROGATE,
+    "utg"       => \$UTG_MESSAGES
+);
 
 my $matesDone = 0;
 my $readsDone = 0;
@@ -186,11 +188,11 @@ if (defined $frgfile){
 if (defined $fastafile){
     open(IN, $fastafile) || $base->bail("Could not read FASTA file $fastafile: $!\n");
     if (defined $qualfile){
-	open(QUAL, $qualfile) || $base->bail("Could not read QUAL file $qualfile: $!\n");
-	parseFastaFile(\*IN, \*QUAL);
-	close(QUAL);
+        open(QUAL, $qualfile) || $base->bail("Could not read QUAL file $qualfile: $!\n");
+        parseFastaFile(\*IN, \*QUAL);
+        close(QUAL);
     } else {
-	parseFastaFile(\*IN);
+        parseFastaFile(\*IN);
     }
     close(IN);
     $readsDone = 1;
@@ -295,12 +297,12 @@ $libnames{$ll} = "unmated";
 
 while (my ($sid, $sname) = each %seqnames){
     if (! exists $seqinsert{$sid}){
-	my $id = $minSeqId++;
-	$seqinsert{$sid} = $id;
-	$insid{$id} = $id;
-	$seenlib{$id} = $ll;
-	#$insertlib{$ll} .= "$id ";
-	$forw{$id} = $sid;
+        my $id = $minSeqId++;
+        $seqinsert{$sid} = $id;
+        $insid{$id} = $id;
+        $seenlib{$id} = $ll;
+        #$insertlib{$ll} .= "$id ";
+        $forw{$id} = $sid;
     }
 }
 
@@ -327,9 +329,9 @@ while (my ($lib, $range) = each %libraries){
     print OUT "iid:$libid{$lib}\n";
 
     if (exists $libnames{$lib}){
-	print OUT "eid:$libnames{$lib}\n";
+        print OUT "eid:$libnames{$lib}\n";
     } else {
-	print OUT "eid:$lib\n";
+        print OUT "eid:$lib\n";
     }
     print OUT "{DST\n";
     print OUT "mea:$mean\n";
@@ -342,15 +344,15 @@ while (my ($lib, $range) = each %libraries){
 while (my ($ins, $lib) = each %seenlib){
     print OUT "{FRG\n";
     #if ($ins =~ /^\d+$/){
-    #	print OUT "iid:$ins\n";
-    #	$insid{$ins} = $ins;
+    #    print OUT "iid:$ins\n";
+    #    $insid{$ins} = $ins;
     #} else {
     $insid{$ins} = $minSeqId;
     print OUT "iid:", $minSeqId++, "\n";
     print OUT "eid:", $ins, "\n";
     #}
     if (! exists $libid{$lib}){ 
-	$base->bail("Have not seen library \"$lib\" yet: possible error in input\n");
+        $base->bail("Have not seen library \"$lib\" yet: possible error in input\n");
     }
     print OUT "lib:$libid{$lib}\n";
 
@@ -375,94 +377,95 @@ open(TMPSEQ, $tmpseq) || $base->bail("Could not read temporary sequence file $tm
 my %reids;
 while (<TMPSEQ>){
 
-    if (/^\#(\d+)/){
-	my $rid = $1;
-	my $reid;
-	if (exists $seqnames{$rid}){
-	    $reid = $seqnames{$rid};
-	}
-
-	# Check that this read ID is not already taken
-	if (exists $reids{$reid}) {
-	    $base->logError("Cannot use read ID '$reid' multiple times. Skipping it...\n", 1);
-	    $_ = <TMPSEQ>;
-	    while ($_ !~ /^\#/){ $_ = <TMPSEQ>; };
-	    $_ = <TMPSEQ>;
-	    while ($_ !~ /^\#/){ $_ = <TMPSEQ>; };
-	    next;
-	} else {
-	    $reids{$reid} = undef;
-	}
-
-	# Write RED message
-	print OUT "{RED\n";
-	print OUT "iid:$rid\n";
-	print OUT "eid:$reid\n" if defined $reid;
-	print OUT "seq:\n";
-	$_ = <TMPSEQ>;
-	while ($_ !~ /^\#/){
-	    print OUT;
-	    $_ = <TMPSEQ>;
-	}
-	print OUT ".\n";
-	print OUT "qlt:\n";
-	$_ = <TMPSEQ>;
-	while ($_ !~ /^\#/){
-	    print OUT;
-	    $_ = <TMPSEQ>;
-	}
-	print OUT ".\n";
-	if (defined $posfile){
-	    if (exists $posidx{$rid}){
-		seek POS, $posidx{$rid}, 0;
-		my $line = <POS>;
-		chomp $line;
-		my ($seqname, $ver, $poss) = split('\t', $line);
-		#print "unpacking $poss\n";
-		my @poss = unpack("(a4)*", $poss);
-		@poss = map(hex, @poss);
-		#print "got $#poss pieces\n";
-
-		print OUT "bcp:\n";
-		for (my $p = 0; $p <= $#poss; $p += 15){
-		    print OUT join(" ", @poss[$p .. $p + 14]), "\n";
-		}
-		print OUT ".\n";
-	    }# else {
-		#print "What bcp: $rid $seqnames{$rid}\n";
-	    #}
-	} elsif (defined $phd_opt) {
-
-	    if (exists $posidx{$rid}){
-		my $pos = $posidx{$rid};
-
-		print OUT "bcp:\n";
-		my @posn = split(' ', $pos);
-		for (my $i = 0; $i <= $#posn; $i+=15){
-		    if ($i + 14 <= $#posn){
-			print OUT join(" ", @posn[$i .. $i+14]), "\n";
-		    } else {
-			print OUT join(" ", @posn[$i .. $#posn]), "\n";
-		    }
-		}
-		print OUT ".\n";
-	    }
-	}
-
-
-	if  (! exists $seqinsert{$rid}){
-	    $base->bail("Could not find insert for $rid ($seqnames{$rid})\n");
-	}
-	if (! exists $insid{$seqinsert{$rid}}){
-	    $base->bail("Could not find insert ID for insert $seqinsert{$rid}, sequence $rid, $seqnames{$rid}\n");
-	}
-	print OUT "frg:$insid{$seqinsert{$rid}}\n";
-	my ($cll, $clr) = split(' ', $seq_range{$rid});
-	print OUT "clr:$cll,$clr\n";
-	print OUT "}\n";
-    } else {
-	$base->bail("Error: Temporary read file $tmpseq was not formatted as expected at line $.:\n$_");
+    if (not /^\#(\d+)/){
+        $base->bail("Error: Temporary read file $tmpseq was not formatted as expected at line $.:\n$_");
     }
+
+    my $rid = $1;
+    my $reid;
+    if (exists $seqnames{$rid}){
+        $reid = $seqnames{$rid};
+    }
+
+    # Check that this read ID is not already taken
+    if (exists $reids{$reid}) {
+        $base->logError("Cannot use read ID '$reid' multiple times. Skipping it...\n", 1);
+        $_ = <TMPSEQ>;
+        while ($_ !~ /^\#/){ $_ = <TMPSEQ>; };
+        $_ = <TMPSEQ>;
+        while ($_ !~ /^\#/){ $_ = <TMPSEQ>; };
+        next;
+    } else {
+        $reids{$reid} = undef;
+    }
+
+    # Write RED message
+    print OUT "{RED\n";
+    print OUT "iid:$rid\n";
+    print OUT "eid:$reid\n" if defined $reid;
+    print OUT "seq:\n";
+    $_ = <TMPSEQ>;
+    while ($_ !~ /^\#/){
+        print OUT;
+        $_ = <TMPSEQ>;
+    }
+    print OUT ".\n";
+    print OUT "qlt:\n";
+    $_ = <TMPSEQ>;
+    while ($_ !~ /^\#/){
+        print OUT;
+        $_ = <TMPSEQ>;
+    }
+    print OUT ".\n";
+    if (defined $posfile){
+        if (exists $posidx{$rid}){
+            seek POS, $posidx{$rid}, 0;
+            my $line = <POS>;
+            chomp $line;
+            my ($seqname, $ver, $poss) = split('\t', $line);
+            #print "unpacking $poss\n";
+            my @poss = unpack("(a4)*", $poss);
+            @poss = map(hex, @poss);
+            #print "got $#poss pieces\n";
+
+            print OUT "bcp:\n";
+            for (my $p = 0; $p <= $#poss; $p += 15){
+                print OUT join(" ", @poss[$p .. $p + 14]), "\n";
+            }
+            print OUT ".\n";
+        }# else {
+            #print "What bcp: $rid $seqnames{$rid}\n";
+        #}
+    } elsif (defined $phd_opt) {
+
+        if (exists $posidx{$rid}){
+            my $pos = $posidx{$rid};
+
+            print OUT "bcp:\n";
+            my @posn = split(' ', $pos);
+            for (my $i = 0; $i <= $#posn; $i+=15){
+                if ($i + 14 <= $#posn){
+                    print OUT join(" ", @posn[$i .. $i+14]), "\n";
+                } else {
+                    print OUT join(" ", @posn[$i .. $#posn]), "\n";
+                }
+            }
+            print OUT ".\n";
+        }
+    }
+
+
+    if  (! exists $seqinsert{$rid}){
+        $base->bail("Could not find insert for $rid ($seqnames{$rid})\n");
+    }
+    if (! exists $insid{$seqinsert{$rid}}){
+        $base->bail("Could not find insert ID for insert $seqinsert{$rid}, sequence $rid, $seqnames{$rid}\n");
+    }
+    print OUT "frg:$insid{$seqinsert{$rid}}\n";
+    my ($cll, $clr) = split(' ', $seq_range{$rid});
+    print OUT "clr:$cll,$clr\n";
+    print OUT "}\n";
+
 }
 close(TMPSEQ);
 undef %reids;
@@ -478,86 +481,87 @@ open(TMPCTG, $tmpctg) || $base->bail("Could not read temporary contig file $tmpc
 
 my %ceids;
 while (<TMPCTG>){
-    if (/^\#(\d+) (.)/){
-	my $cid = $1;
-	my $sts = $2;
-	my $ceid;
-	if (exists $ctgnames{$cid}) {
-	    $ceid = $ctgnames{$cid};
-	}
-
-	# Check that this contig ID is not already taken
-	if (exists $ceids{$ceid}) {
-	    $base->logError("Cannot use contig ID '$ceid' multiple times. Skipping it...\n", 1);
-	    $_ = <TMPCTG>;
-	    while (/^\#(\d+)/){
-		$_ = <TMPCTG>;
-		while ($_ !~ /^\#/){ $_ = <TMPCTG>; };
-	    }
-	    next;
-	} else {
-	    $ceids{$ceid} = undef;
-	}
-
-	# Write the CTG message
-	print OUT "{CTG\n";
-	print OUT "iid:$cid\n";
-	print OUT "sts:$sts\n";
-	print OUT "eid:$ceid\n" if defined $ceid;
-	print OUT "seq:\n";
-	$_ = <TMPCTG>;
-	while ($_ !~ /^\#/){
-	    print OUT;
-	    $_ = <TMPCTG>;
-	}
-	print OUT ".\n";
-	print OUT "qlt:\n";
-	$_ = <TMPCTG>;
-	while ($_ !~ /^\#/){
-	    print OUT;
-	    $_ = <TMPCTG>;
-	}
-	print OUT ".\n";
-	while (/^\#(\d+)/){
-	    my $rid = $1;
-	    my ($len, $ren) = split(' ', $asm_range{$rid});
-	    my ($cl, $cr) = split(' ', $seq_range{$rid});
-	    if (! exists $seq_range{$rid}){
-		$base->bail ("No clear range for read $rid\n");
-	    }
-	    if (! exists $asm_range{$rid}){
-		$base->bail ("No asm range for read $rid\n");
-	    }
-	    my $tmp;
-	    if ($len > $ren){
-		$tmp = $len;
-		$len = $ren;
-		$ren = $tmp;
-		$tmp = $cr;
-		$cr = $cl;
-		$cl = $tmp;
-	    }
-	    print OUT "{TLE\n";
-	    print OUT "src:$rid\n";
-	    print OUT "off:$len\n";
-	    print OUT "clr:$cl,$cr\n";
-	    my $deltastring;
-	    $_ = <TMPCTG>;
-	    while ($_ !~ /^\#/){
-		$deltastring .= $_;
-		$_ = <TMPCTG>;
-	    }
-	    if ($deltastring !~ /^\s*$/){
-		print OUT "gap:\n";
-		print OUT $deltastring;
-		print OUT ".\n";
-	    }
-	    print OUT "}\n";
-	}
-	print OUT "}\n";
-    } else {
-	$base->bail("Error: Temporary contig file $tmpctg was not formatted as expected at line $.:\n$_");
+    if (not /^\#(\d+) (.)/) {
+        $base->bail("Error: Temporary contig file $tmpctg was not formatted as expected at line $.:\n$_");
     }
+
+    my $cid = $1;
+    my $sts = $2;
+    my $ceid;
+    if (exists $ctgnames{$cid}) {
+        $ceid = $ctgnames{$cid};
+    }
+
+    # Check that this contig ID is not already taken
+    if (exists $ceids{$ceid}) {
+        $base->logError("Cannot use contig ID '$ceid' multiple times. Skipping it...\n", 1);
+        $_ = <TMPCTG>;
+        while (/^\#(\d+)/){
+        $_ = <TMPCTG>;
+        while ($_ !~ /^\#/){ $_ = <TMPCTG>; };
+        }
+        next;
+    } else {
+        $ceids{$ceid} = undef;
+    }
+
+    # Write the CTG message
+    print OUT "{CTG\n";
+    print OUT "iid:$cid\n";
+    print OUT "sts:$sts\n";
+    print OUT "eid:$ceid\n" if defined $ceid;
+    print OUT "seq:\n";
+    $_ = <TMPCTG>;
+    while ($_ !~ /^\#/){
+        print OUT;
+        $_ = <TMPCTG>;
+    }
+    print OUT ".\n";
+    print OUT "qlt:\n";
+    $_ = <TMPCTG>;
+    while ($_ !~ /^\#/){
+        print OUT;
+        $_ = <TMPCTG>;
+    }
+    print OUT ".\n";
+    while (/^\#(\d+)/){
+        my $rid = $1;
+        my ($len, $ren) = split(' ', $asm_range{$rid});
+        my ($cl, $cr) = split(' ', $seq_range{$rid});
+        if (! exists $seq_range{$rid}){
+            $base->bail ("No clear range for read $rid\n");
+        }
+        if (! exists $asm_range{$rid}){
+            $base->bail ("No asm range for read $rid\n");
+        }
+        my $tmp;
+        if ($len > $ren){
+            $tmp = $len;
+            $len = $ren;
+            $ren = $tmp;
+            $tmp = $cr;
+            $cr = $cl;
+            $cl = $tmp;
+        }
+        print OUT "{TLE\n";
+        print OUT "src:$rid\n";
+        print OUT "off:$len\n";
+        print OUT "clr:$cl,$cr\n";
+        my $deltastring;
+        $_ = <TMPCTG>;
+        while ($_ !~ /^\#/){
+            $deltastring .= $_;
+            $_ = <TMPCTG>;
+        }
+        if ($deltastring !~ /^\s*$/){
+            print OUT "gap:\n";
+            print OUT $deltastring;
+            print OUT ".\n";
+        }
+        print OUT "}\n";
+    }
+    print OUT "}\n";
+
 }
 close(TMPCTG);
 undef %ceids;
@@ -571,7 +575,7 @@ unlink($tmpctg) || $base->bail("Cannot remove temporary contig file $tmpctg: $!\
 if (-f $tmpscf){
     open(TMPSCF, $tmpscf) || $base->bail("Could not read temporary scaffold file $tmpscf: $!\n");
     while (<TMPSCF>){
-	print OUT;
+        print OUT;
     }
     close(TMPSCF);
     unlink($tmpscf) || $base->bail("Could not remove temporary scaffold file $tmpscf: $!\n");
@@ -597,10 +601,10 @@ sub parseInsertFile {
     my $IN = shift;
 
     while (<IN>){
-	if (/GenomicLibrary Id=\"(\S+)\" acc=\"(\d+)\"/){
-	    $libnames{$2} = $1;
-	    print STDERR "lib-id = $2; lib-name = $1\n";
-	}
+        if (/GenomicLibrary Id=\"(\S+)\" acc=\"(\d+)\"/){
+            $libnames{$2} = $1;
+            print STDERR "lib-id = $2; lib-name = $1\n";
+        }
     }
 } # parseInsertFile
 
@@ -608,8 +612,8 @@ sub parseLibMapFile {
     my $IN = shift;
 
     while (<IN>){
-	my ($id, $name) = split(' ', $_);
-	$libnames{$id} = $name;
+        my ($id, $name) = split(' ', $_);
+        $libnames{$id} = $name;
     }
 }
 
@@ -620,16 +624,16 @@ sub parsePosFile {
     my $IN = shift;
     my $pos = tell IN;
     while (<IN>){
-	chomp;
-	my ($seqname, $ver, $poss) = split('\t', $_);
-	if ($seqname ne "SequenceName"){ # skip header
-	    if (! exists $seqids{$seqname}){
-		$base->bail("Have not seen sequence $seqname before processing pos file");
-	    }
-	    #print "pos of $seqids{$seqname} $seqname is $pos\n";
-	    $posidx{$seqids{$seqname}} = $pos;
-	}
-	$pos = tell IN;
+        chomp;
+        my ($seqname, $ver, $poss) = split('\t', $_);
+        if ($seqname ne "SequenceName"){ # skip header
+            if (! exists $seqids{$seqname}){
+                $base->bail("Have not seen sequence $seqname before processing pos file");
+            }
+            #print "pos of $seqids{$seqname} $seqname is $pos\n";
+            $posidx{$seqids{$seqname}} = $pos;
+        }
+        $pos = tell IN;
     }
 } # parse TIGR-style .pos file
 
@@ -653,7 +657,7 @@ sub parseTraceInfoFile {
     my $xml = new XML::Parser(Style => 'Stream');
 
     if (! defined $xml){
-	$base->bail("Cannot create an XML parser");
+        $base->bail("Cannot create an XML parser");
     }
 
     # start parsing away.  The hashes will magically fill up
@@ -674,44 +678,42 @@ sub parseFrgFile {
     my %seqlibrary;
     my %liborientation;
 
-    while (my $record = getRecord($IN)){
-	my ($type, $fields, $recs) = parseRecord($record);
+    while (my $record = getRecord($IN)) {
+        my ($type, $fields, $recs) = parseRecord($record);
 
         if ($type eq "VER") {
           $FRG_VERSION  = $$fields{ver};
           next;
         }
 
-	if ($type eq "FRG") {
-	    my $id = getCAId($$fields{acc});
-	    my $iid = $minSeqId++;
-	    my $nm = $$fields{src};
-	    my @lines = split('\n', $nm);
-	    $nm = $lines[0]; # join('', @lines);
-	    if ($byaccession || $nm =~ /^\s*$/){
-		$seqnames{$iid} = $id;
-	    } else {
-		$seqnames{$iid} = $nm;
-		$seqids{$nm} = $iid;
-	    }
-	    $seqids{$id} = $iid;
-	    my ($seql, $seqr) = split(',', $$fields{clr});
-	    $seq_range{$iid} = "$seql $seqr";
-	    #print STDERR "$id $iid clr: $seql $seqr\n";
-	    print TMPSEQ "#$iid\n";
-	    print TMPSEQ "$$fields{seq}";
-	    print TMPSEQ "#\n";
-	    print TMPSEQ "$$fields{qlt}";
-	    print TMPSEQ "#\n";
+        if ($type eq "FRG") {
+            my $id = getCAId($$fields{acc});
+            my $iid = $minSeqId++;
+            my $nm = $$fields{src};
+            my @lines = split('\n', $nm);
+            $nm = $lines[0]; # join('', @lines);
+            if ($byaccession || $nm =~ /^\s*$/) {
+                $seqnames{$iid} = $id;
+            } else {
+                $seqnames{$iid} = $nm;
+                $seqids{$nm} = $iid;
+            }
+            $seqids{$id} = $iid;
+            my ($seql, $seqr) = split(',', $$fields{clr});
+            $seq_range{$iid} = "$seql $seqr";
+            #print STDERR "$id $iid clr: $seql $seqr\n";
+            print TMPSEQ "#$iid\n";
+            print TMPSEQ "$$fields{seq}";
+            print TMPSEQ "#\n";
+            print TMPSEQ "$$fields{qlt}";
+            print TMPSEQ "#\n";
 
-            if ($FRG_VERSION == 2)
-            {
+            if ($FRG_VERSION == 2) {
               my $lib = $$fields{lib};
               $seqlibrary{$$fields{acc}} = $lib;
 
               ## generate the unmated insert
-              if ($liborientation{$lib} eq "U")
-              {
+              if ($liborientation{$lib} eq "U") {
                 my $id = $minSeqId++;
                 $seqinsert{$iid} = $id;
                 $insid{$id} = $id;
@@ -720,39 +722,35 @@ sub parseFrgFile {
               }
             }
 
-	    next;
-	}
-	
-	if (($type eq "DST") || ($type eq "LIB")){
-	    my $id = getCAId($$fields{acc});
-	    $libraries{$id} = "$$fields{mea} $$fields{std}";
-	    #$libid{$id} = $minSeqId++;
+            next;
+        }
+        
+        if (($type eq "DST") || ($type eq "LIB")) {
+            my $id = getCAId($$fields{acc});
+            $libraries{$id} = "$$fields{mea} $$fields{std}";
+            #$libid{$id} = $minSeqId++;
 
-            if ($FRG_VERSION == 2)
-            {
+            if ($FRG_VERSION == 2) {
               $liborientation{$id} = $$fields{ori};
             }
-	    next;
-	}
-	
-	if ($type eq "LKG"){
-	    my $id = $minSeqId++;
-	    #$insertlib{$$fields{dst}} .= "$id ";
+            next;
+        }
+        
+        if ($type eq "LKG") {
+            my $id = $minSeqId++;
+            #$insertlib{$$fields{dst}} .= "$id ";
 
-            if ($FRG_VERSION == 2)
-            {
+            if ($FRG_VERSION == 2) {
               my $frgcount = 0;
               my $lib1 = undef;
               my $frg1 =  undef;
 
               ## Version 2 has 2 fields named frg, so we can't use the parseRecord results
-              foreach (split /\n/, $record)
-              {
+              foreach (split /\n/, $record) {
                 chomp;
                 my ($key, $acc) = split /:/;
 
-                if ($key eq "frg")
-                {
+                if ($key eq "frg") {
                   $base->bail("LKG References unknown frg $acc\n")
                     if (!exists $seqlibrary{$acc});
 
@@ -764,8 +762,7 @@ sub parseFrgFile {
                   my $lib = $seqlibrary{$acc};
                   $seqinsert{$seqids{$acc}} = $id;
 
-                  if ($frgcount == 1) 
-                  { 
+                  if ($frgcount == 1) {
                     $seenlib{$id} = $lib;
                     $forw{$id} = $seqids{$acc}; 
                     
@@ -774,13 +771,10 @@ sub parseFrgFile {
 
                     if ($liborientation{$lib} eq "I") {} # standard, nothing to do
                     elsif ($liborientation{$lib} eq "O") { $inserttype{$id} = "T" }
-                    else
-                    {
+                    else {
                       $base->bail("ERROR: Library $lib has unsupported orienation $liborientation{$lib}\n");
                     }
-                  }
-                  elsif ($frgcount == 2) 
-                  { 
+                  } elsif ($frgcount == 2) { 
                     $rev{$id}  = $seqids{$acc}; 
 
                     $base->bail("ERROR: Frgs come from different libraries $frg1 [$lib1] $acc [$lib]\n")
@@ -788,21 +782,19 @@ sub parseFrgFile {
                   }
                 }
               }
-            }
-            else
-            {
+            } else {
               $seenlib{$id} = $$fields{dst};
               $seqinsert{$seqids{$$fields{fg1}}} = $id;
               $seqinsert{$seqids{$$fields{fg2}}} = $id;
               $forw{$id} = $seqids{$$fields{fg1}};
               $rev{$id} = $seqids{$$fields{fg2}};
-              if ($$fields{ori} eq "O"){
-              $inserttype{$id} = "T";
+              if ($$fields{ori} eq "O") {
+                  $inserttype{$id} = "T";
               }
             }
 
-	    next;
-	}
+            next;
+        }
     }
 
 } #parseFrgFile
@@ -819,76 +811,76 @@ sub parseFastaFile {
     my $pf = new AMOS::ParseFasta($seqfile);
     my $qf;
     if (defined $qualfile){
-	$qf = new AMOS::ParseFasta($qualfile, '>', ' ');
+        $qf = new AMOS::ParseFasta($qualfile, '>', ' ');
     }
     while (my ($head, $data) = $pf->getRecord()){
-	my $seqname;
-	my $cll;
-	my $clr;
-	if ($head =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
-	    # TIGR format
-	    $seqname = $1; $cll = $2; $clr = $3;
-	} elsif ($head =~ /^(\S+)\s+(\d+)\s+(\d+)/){
-	    # just name and clear range
-	    $seqname = $1; $cll = $2; $clr = $3;
-	} elsif ($head =~ /^(\S+)/){
-	    # just name
-	    $seqname = $1;
-	}
+        my $seqname;
+        my $cll;
+        my $clr;
+        if ($head =~ /^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/){
+            # TIGR format
+            $seqname = $1; $cll = $2; $clr = $3;
+        } elsif ($head =~ /^(\S+)\s+(\d+)\s+(\d+)/){
+            # just name and clear range
+            $seqname = $1; $cll = $2; $clr = $3;
+        } elsif ($head =~ /^(\S+)/){
+            # just name
+            $seqname = $1;
+        }
 
-	if (! defined $cll){
-	    $cll = 0;
-	    $clr = length($data);
-	}
+        if (! defined $cll){
+            $cll = 0;
+            $clr = length($data);
+        }
 
-	my $id = $minSeqId++;
-	$seqnames{$id} = $seqname;
-	#print STDERR "got $seqname $id\n";
-	$seqids{$seqname} = $id;
+        my $id = $minSeqId++;
+        $seqnames{$id} = $seqname;
+        #print STDERR "got $seqname $id\n";
+        $seqids{$seqname} = $id;
 
-	# so we don't overwrite an externally provided clear range
-	if (! exists $seq_range{$id}){
-	    $seq_range{$id} = "$cll $clr";
-	} else {
-	    ($cll, $clr) = split(' ', $seq_range{$id});
-	}
-	
-	print TMPSEQ "#$id\n";
-	for (my $i = 0; $i <= length($data); $i+= 60){
-	    print TMPSEQ substr($data, $i, 60), "\n";
-	}
-	print TMPSEQ "#\n";
-	my $qualdata = "";
-	if (defined $qualfile){
-	    my ($qh, $qdata) = $qf->getRecord();
-	    if ($qh !~ /^$seqname/){
-		$base->bail("Sequence and quality records must agree: $seqname != $qh\n");
-	    }
-	    my @quals = split(' ', $qdata);
-	    if ($#quals + 1 != length($data)){
-		$base->bail(sprintf("Sequence and quality records must have same length for $seqname: %d vs %d\n", length($data), $#quals + 1));
-	    }
-	    for (my $i = 0; $i <= $#quals; $i++){
-		if ($quals[$i] <= 0) {$quals[$i] = 1;}
-		if ($quals[$i] > 60) {$quals[$i] = 60;}
-		$qualdata .= chr(ord('0') + $quals[$i]);
-	    }
-	} else {
-	    for (my $i = 0; $i < $cll; $i++){
-		$qualdata .= chr(ord('0') + $BADQUAL);
-	    }
-	    for (my $i = $cll; $i < $clr; $i++){
-		$qualdata .= chr(ord('0') + $GOODQUAL);
-	    }
-	    for (my $i = $clr; $i < length($data); $i++){
-		$qualdata .= chr(ord('0') + $BADQUAL);
-	    }
-	}
+        # so we don't overwrite an externally provided clear range
+        if (! exists $seq_range{$id}){
+            $seq_range{$id} = "$cll $clr";
+        } else {
+            ($cll, $clr) = split(' ', $seq_range{$id});
+        }
+        
+        print TMPSEQ "#$id\n";
+        for (my $i = 0; $i <= length($data); $i+= 60){
+            print TMPSEQ substr($data, $i, 60), "\n";
+        }
+        print TMPSEQ "#\n";
+        my $qualdata = "";
+        if (defined $qualfile){
+            my ($qh, $qdata) = $qf->getRecord();
+            if ($qh !~ /^$seqname/){
+                $base->bail("Sequence and quality records must agree: $seqname != $qh\n");
+            }
+            my @quals = split(' ', $qdata);
+            if ($#quals + 1 != length($data)){
+                $base->bail(sprintf("Sequence and quality records must have same length for $seqname: %d vs %d\n", length($data), $#quals + 1));
+            }
+            for (my $i = 0; $i <= $#quals; $i++){
+                if ($quals[$i] <= 0) {$quals[$i] = 1;}
+                if ($quals[$i] > 60) {$quals[$i] = 60;}
+                $qualdata .= chr(ord('0') + $quals[$i]);
+            }
+        } else {
+            for (my $i = 0; $i < $cll; $i++){
+                $qualdata .= chr(ord('0') + $BADQUAL);
+            }
+            for (my $i = $cll; $i < $clr; $i++){
+                $qualdata .= chr(ord('0') + $GOODQUAL);
+            }
+            for (my $i = $clr; $i < length($data); $i++){
+                $qualdata .= chr(ord('0') + $BADQUAL);
+            }
+        }
 
-	for (my $i = 0; $i <= length($qualdata); $i+= 60){
-	    print TMPSEQ substr($qualdata, $i, 60), "\n";
-	}
-	print TMPSEQ "#\n";
+        for (my $i = 0; $i <= length($qualdata); $i+= 60){
+            print TMPSEQ substr($qualdata, $i, 60), "\n";
+        }
+        print TMPSEQ "#\n";
     }
 }
 
@@ -898,7 +890,7 @@ sub parseFastaFile {
 sub parseMatesFile {
     my $IN = shift;
 
-	print STDERR "Processing mates\n";
+        print STDERR "Processing mates\n";
 
     my @libregexp;
     my @libids;
@@ -906,150 +898,150 @@ sub parseMatesFile {
     my $insname = 1;
 
     while (<$IN>){
-	chomp;
-	if (/^library/){
-	    # line should match: library <name> <min_size> <max_size> <regexp>
-	    my @recs = split('\t', $_);
-	    if ($#recs < 3 || $#recs > 4){
-		print STDERR "Only ", $#recs + 1, " fields\n";
-		$base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n", 1);
-		next;
-	    }
-	    
-	    if ($#recs == 4){
-		$libregexp[++$#libregexp] = $recs[4];
-		$libids[++$#libids] = $recs[1];
-	    }
-	    my $mean = ($recs[2] + $recs[3]) / 2;
-	    my $stdev = ($recs[3] - $recs[2]) / 6;
-	    $libraries{$recs[1]} = "$mean $stdev";
-	    next;
-	} # if library
+        chomp;
+        if (/^library/){
+            # line should match: library <name> <min_size> <max_size> <regexp>
+            my @recs = split('\t', $_);
+            if ($#recs < 3 || $#recs > 4){
+                print STDERR "Only ", $#recs + 1, " fields\n";
+                $base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n", 1);
+                next;
+            }
+            
+            if ($#recs == 4){
+                $libregexp[++$#libregexp] = $recs[4];
+                $libids[++$#libids] = $recs[1];
+            }
+            my $mean = ($recs[2] + $recs[3]) / 2;
+            my $stdev = ($recs[3] - $recs[2]) / 6;
+            $libraries{$recs[1]} = "$mean $stdev";
+            next;
+        } # if library
 
-	if (/^pair/){
-	    # line expected to match: pair <regexp_forw> <regexp_rev>
-	    my @recs = split('\t', $_);
-	    if ($#recs != 2){
-		$base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
-		next;
-	    }
-	    $pairregexp[++$#pairregexp] = "$recs[1] $recs[2]";
-	    next;
-	}
-	if (/^\#/) { # comment
-	    next;
-	}
-	if (/^\s*$/) { # empty line
-	    next;
-	}
-	
-	# now we just deal with the pair lines
-	my @recs = split('\t', $_);
-	if ($#recs < 1 || $#recs > 2){
-	    $base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
-	    next;
-	}
-	
-	# make sure we've seen these sequences
-	if (! defined $seqids{$recs[0]}){
-	    $base->logError("Sequence $recs[0] has no ID at line $. in \"$matesfile\"");
-	    next;
-	}
-	if (! defined $seqids{$recs[1]} ){
-	    $base->logError("Sequence $recs[1] has no ID at line $. in \"$matesfile\"");
-	    next;
-	}
-	
-	if (defined $recs[2]){
-	    #$insertlib{$recs[2]} .= "$insname ";
-	    $seenlib{$insname} = $recs[2];
-	} else {
-	    $base->logError("$insname has no library\n");
-	}
-	
-	$forw{$insname} = $seqids{$recs[0]};
-	$rev{$insname} = $seqids{$recs[1]};
-	
-	$seqinsert{$seqids{$recs[0]}} = $insname;
-	$seqinsert{$seqids{$recs[1]}} = $insname;
-	
-	$insname++;
+        if (/^pair/){
+            # line expected to match: pair <regexp_forw> <regexp_rev>
+            my @recs = split('\t', $_);
+            if ($#recs != 2){
+                $base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
+                next;
+            }
+            $pairregexp[++$#pairregexp] = "$recs[1] $recs[2]";
+            next;
+        }
+        if (/^\#/) { # comment
+            next;
+        }
+        if (/^\s*$/) { # empty line
+            next;
+        }
+        
+        # now we just deal with the pair lines
+        my @recs = split('\t', $_);
+        if ($#recs < 1 || $#recs > 2){
+            $base->logError("Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n");
+            next;
+        }
+        
+        # make sure we've seen these sequences
+        if (! defined $seqids{$recs[0]}){
+            $base->logError("Sequence $recs[0] has no ID at line $. in \"$matesfile\"");
+            next;
+        }
+        if (! defined $seqids{$recs[1]} ){
+            $base->logError("Sequence $recs[1] has no ID at line $. in \"$matesfile\"");
+            next;
+        }
+        
+        if (defined $recs[2]){
+            #$insertlib{$recs[2]} .= "$insname ";
+            $seenlib{$insname} = $recs[2];
+        } else {
+            $base->logError("$insname has no library\n");
+        }
+        
+        $forw{$insname} = $seqids{$recs[0]};
+        $rev{$insname} = $seqids{$recs[1]};
+        
+        $seqinsert{$seqids{$recs[0]}} = $insname;
+        $seqinsert{$seqids{$recs[1]}} = $insname;
+        
+        $insname++;
     } # while <IN>
 
     # now we have to go through all the sequences and assign them to
     # inserts
     while (my ($nm, $sid) = each %seqids){
-	for (my $r = 0; $r <= $#pairregexp; $r++){
-	    my ($freg, $revreg) = split(' ', $pairregexp[$r]);
-	    $base->logLocal("trying $freg and $revreg on $nm\n", 2);
-	    if ($nm =~ /$freg/){
-		$base->logLocal("got forw $1\n", 2);
-		if (! exists $forw{$1}){
-		    $forw{$1} = $sid;
-		    $seqinsert{$sid} = $1;
-		}
-		last;
-	    }
-	    if ($nm =~ /$revreg/){
-		$base->logLocal("got rev $1\n", 2);
-		if (! exists $rev{$1}){
-		    $rev{$1} = $sid;
-		    $seqinsert{$sid} = $1;
-		}
-		last;
-	    }
-	} # for each pairreg
+        for (my $r = 0; $r <= $#pairregexp; $r++){
+            my ($freg, $revreg) = split(' ', $pairregexp[$r]);
+            $base->logLocal("trying $freg and $revreg on $nm\n", 2);
+            if ($nm =~ /$freg/){
+                $base->logLocal("got forw $1\n", 2);
+                if (! exists $forw{$1}){
+                    $forw{$1} = $sid;
+                    $seqinsert{$sid} = $1;
+                }
+                last;
+            }
+            if ($nm =~ /$revreg/){
+                $base->logLocal("got rev $1\n", 2);
+                if (! exists $rev{$1}){
+                    $rev{$1} = $sid;
+                    $seqinsert{$sid} = $1;
+                }
+                last;
+            }
+        } # for each pairreg
     } # while each %seqids
     
     while (my ($ins, $nm) = each %forw) {
-	if (! exists $insid{$ins}){
-	    $insid{$ins} = $minSeqId++;
-	}
-	if (! exists $seenlib{$ins}){
-	    my $found = 0;
-	    
-	    $nm = $seqnames{$nm};
+        if (! exists $insid{$ins}){
+            $insid{$ins} = $minSeqId++;
+        }
+        if (! exists $seenlib{$ins}){
+            my $found = 0;
+            
+            $nm = $seqnames{$nm};
 
-	    for (my $l = 0; $l <= $#libregexp; $l++){
-		$base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
-		if ($nm =~ /$libregexp[$l]/){
-		    $base->logLocal("found $libids[$l]\n", 2);
-		    #$insertlib{$libids[$l]} .= "$ins ";
-		    $seenlib{$ins} = $libids[$l];
-		    $found = 1;
-		    last;
-		}
-	    }
-	    if ($found == 0){
-		$base->logError("Cannot find library for \"$nm\"");
-		next;
-	    }
-	}
+            for (my $l = 0; $l <= $#libregexp; $l++){
+                $base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
+                if ($nm =~ /$libregexp[$l]/){
+                    $base->logLocal("found $libids[$l]\n", 2);
+                    #$insertlib{$libids[$l]} .= "$ins ";
+                    $seenlib{$ins} = $libids[$l];
+                    $found = 1;
+                    last;
+                }
+            }
+            if ($found == 0){
+                $base->logError("Cannot find library for \"$nm\"");
+                next;
+            }
+        }
     }
     while (my ($ins, $nm) = each %rev) {
-	if (! exists $insid{$ins}){
-	    $insid{$ins} = $minSeqId++;
-	}
-	if (! exists $seenlib{$ins}){
-	    my $found = 0;
-	    
-	    $nm = $seqnames{$nm};
+        if (! exists $insid{$ins}){
+            $insid{$ins} = $minSeqId++;
+        }
+        if (! exists $seenlib{$ins}){
+            my $found = 0;
+            
+            $nm = $seqnames{$nm};
 
-	    for (my $l = 0; $l <= $#libregexp; $l++){
-		$base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
-		if ($nm =~ /$libregexp[$l]/){
-		    $base->logLocal("found $libids[$l]\n", 2);
-		    #$insertlib{$libids[$l]} .= "$ins ";
-		    $seenlib{$ins} = $libids[$l];
-		    $found = 1;
-		    last;
-		}
-	    }
-	    if ($found == 0){
-		$base->logError("Cannot find library for \"$nm\"");
-		next;
-	    }
-	}
+            for (my $l = 0; $l <= $#libregexp; $l++){
+                $base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
+                if ($nm =~ /$libregexp[$l]/){
+                    $base->logLocal("found $libids[$l]\n", 2);
+                    #$insertlib{$libids[$l]} .= "$ins ";
+                    $seenlib{$ins} = $libids[$l];
+                    $found = 1;
+                    last;
+                }
+            }
+            if ($found == 0){
+                $base->logError("Cannot find library for \"$nm\"");
+                next;
+            }
+        }
     }
 } # parseMateFile;
 
@@ -1238,55 +1230,55 @@ sub parseTAsmFile {
     my $consensus;
     my $iid;
     while (<$IN>){
-	if (/^sequence\s+(\w+)/){
-	    $len = length($1);
-	    $consensus = $1;
-	    next;
-	}
-	if (/^asmbl_id\s+(\w+)/){
-	    $ctg = $1;
-	    $iid = $minCtgId++;
-	    $ctgnames{$iid} = $ctg;
-	    $ctgids{$ctg} = $iid;
-	    $contigs{$iid} = $len;  # here we assume that length 
+        if (/^sequence\s+(\w+)/){
+            $len = length($1);
+            $consensus = $1;
+            next;
+        }
+        if (/^asmbl_id\s+(\w+)/){
+            $ctg = $1;
+            $iid = $minCtgId++;
+            $ctgnames{$iid} = $ctg;
+            $ctgids{$ctg} = $iid;
+            $contigs{$iid} = $len;  # here we assume that length 
                                     # was already computed
-	    next;
-	}
-	if (/^seq_name\s+(\S+)/){
-	    $sname = $1;
-	    if (! exists $seqids{$sname}){
-		$sid = $minSeqId++;
-		$seqids{$sname} = $sid;
-		$seqnames{$sid} = $sname;
-	    } else {
-		$sid = $seqids{$sname};
-	    }
+            next;
+        }
+        if (/^seq_name\s+(\S+)/){
+            $sname = $1;
+            if (! exists $seqids{$sname}){
+                $sid = $minSeqId++;
+                $seqids{$sname} = $sid;
+                $seqnames{$sid} = $sname;
+            } else {
+                $sid = $seqids{$sname};
+            }
 
-	    $seqcontig{$sid} = $iid;
-	    $contigseq{$iid} .= "$sid ";
-	    next;
-	}
-	if (/^asm_lend\s+(\d+)/){
-	    $alend = $1 - 1; # 0 based
-	    next;
-	}
-	if (/^asm_rend\s+(\d+)/){
-	    $arend = $1;
-	    next;
-	}
-	if (/^seq_lend\s+(\d+)/){
-	    $slend = $1 - 1;
-	    next;
-	}
-	if (/^seq_rend\s+(\d+)/){
-	    $srend = $1;
-	    next;
-	}
-	if (/^offset/){
-	    $seq_range{$sid} = "$slend $srend";
-	    $asm_range{$sid} = "$alend $arend";
-	    next;
-	}
+            $seqcontig{$sid} = $iid;
+            $contigseq{$iid} .= "$sid ";
+            next;
+        }
+        if (/^asm_lend\s+(\d+)/){
+            $alend = $1 - 1; # 0 based
+            next;
+        }
+        if (/^asm_rend\s+(\d+)/){
+            $arend = $1;
+            next;
+        }
+        if (/^seq_lend\s+(\d+)/){
+            $slend = $1 - 1;
+            next;
+        }
+        if (/^seq_rend\s+(\d+)/){
+            $srend = $1;
+            next;
+        }
+        if (/^offset/){
+            $seq_range{$sid} = "$slend $srend";
+            $asm_range{$sid} = "$alend $arend";
+            next;
+        }
     }
 } # parseTAsmFile
 
@@ -1295,39 +1287,39 @@ sub parsePHDFiles {
     my $IN = shift;
 
     while(<$IN>) {
-	if(m/^DS CHROMAT_FILE: (\S+) PHD_FILE: (\S+)/) {
-	    open(PHD_FILE, "<../phd_dir/$2") || $base->bail("Could not read file $2: $!\n");
-	    
-	    my $seqname = $1;
-		my $pos_list;
+        if(m/^DS CHROMAT_FILE: (\S+) PHD_FILE: (\S+)/) {
+            open(PHD_FILE, "<../phd_dir/$2") || $base->bail("Could not read file $2: $!\n");
+            
+            my $seqname = $1;
+            my $pos_list;
 
-	    while(<PHD_FILE>) {
-		if(m/BEGIN_DNA/) {
-		    my $seq;
+            while(<PHD_FILE>) {
+                if(m/BEGIN_DNA/) {
+                    my $seq;
 
-		    
-		    while(<PHD_FILE>) {
-			if(m/END_DNA/) {
-			    last;
-			}
-			chomp();
-			my ($nuc, $qual, $p) =  split;
-			$seq .= $nuc;
-			$pos_list .= " " . $p;
-		    }
-		    
-		    last;
-		}
-	    }
-	    
-	    if (! exists $seqids{$seqname}){
-			print("Have not seen sequence $seqname before processing pos file");
-	    } else {
-			# put pos into posidx
-			$posidx{$seqids{$seqname}} = $pos_list;
-	    }
-	}
-	close(PHD_FILE);
+                    
+                    while(<PHD_FILE>) {
+                        if (m/END_DNA/) {
+                            last;
+                        }
+                        chomp();
+                        my ($nuc, $qual, $p) =  split;
+                        $seq .= $nuc;
+                        $pos_list .= " " . $p;
+                    }
+                    
+                    last;
+                }
+            }
+            
+            if (! exists $seqids{$seqname}){
+                print("Have not seen sequence $seqname before processing pos file");
+            } else {
+                # put pos into posidx
+                $posidx{$seqids{$seqname}} = $pos_list;
+            }
+        }
+        close(PHD_FILE);
     }
 }
 
@@ -1375,249 +1367,249 @@ sub parseACEFile {
         }
     }
     while (<$IN>){
-	if (/^CO (\S+) (\d+) (\d+)/){
-	    ($contigName, $contigLen, $contigSeqs) = ($1, $2, $3);
-	    if ($first != 1){print TMPCTG "#\n";}
-	    $first = 0;
-	    $iid = $minCtgId++;
-	    $ctgnames{$iid} = $contigName;
-	    $ctgids{$contigName} = $iid;
-	    #$contigs{$iid} = $contigLen;
-	    $inContig = 1;
-	    $seq = "";
-	    %offset = ();
-	    next;
-	}
-	if ($inContig == 1 && /^\s*$/){ # end of contig
-	    $inContig = 0;
-	    $seq =~ s/\*/-/g;
-	    @gaps = (); 
-	    my $gap  = index($seq, "-");
-	    while ($gap != -1){
-		push(@gaps, $gap + 1);
-		$gap = index($seq, "-", $gap + 1);
-	    }
-	    $contigs{$iid} = $contigLen;
-	    # print consensus record
-	    print TMPCTG "#$iid C\n";
-	    for (my $c = 0; $c < length($seq); $c+= 60){
-		print TMPCTG substr($seq, $c, 60), "\n";
-	    }
-	    print TMPCTG "#\n";
-	    #my $qual = $seq;
-	    #$qual =~ s/./X/;
-	    ## print quality values (all Xs
-	    #for (my $c = 0; $c < length($qual); $c += 60){
-		#print TMPCTG substr($qual, $c, 60), "\n";
-	    #}
+        if (/^CO (\S+) (\d+) (\d+)/){
+            ($contigName, $contigLen, $contigSeqs) = ($1, $2, $3);
+            if ($first != 1){print TMPCTG "#\n";}
+            $first = 0;
+            $iid = $minCtgId++;
+            $ctgnames{$iid} = $contigName;
+            $ctgids{$contigName} = $iid;
+            #$contigs{$iid} = $contigLen;
+            $inContig = 1;
+            $seq = "";
+            %offset = ();
+            next;
+        }
+        if ($inContig == 1 && /^\s*$/){ # end of contig
+            $inContig = 0;
+            $seq =~ s/\*/-/g;
+            @gaps = (); 
+            my $gap  = index($seq, "-");
+            while ($gap != -1){
+                push(@gaps, $gap + 1);
+                $gap = index($seq, "-", $gap + 1);
+            }
+            $contigs{$iid} = $contigLen;
+            # print consensus record
+            print TMPCTG "#$iid C\n";
+            for (my $c = 0; $c < length($seq); $c+= 60){
+                print TMPCTG substr($seq, $c, 60), "\n";
+            }
+            print TMPCTG "#\n";
+            #my $qual = $seq;
+            #$qual =~ s/./X/;
+            ## print quality values (all Xs
+            #for (my $c = 0; $c < length($qual); $c += 60){
+                #print TMPCTG substr($qual, $c, 60), "\n";
+            #}
 
-	    next;
-	}
+            next;
+        }
 
-	if ($inSequence == 1 && $_ =~ /^\s*$/){
-	    $inSequence = 0;
-	    next;
-	}
+        if ($inSequence == 1 && $_ =~ /^\s*$/){
+            $inSequence = 0;
+            next;
+        }
 
-	if ($inContig == 1 || $inSequence == 1) {
-	    chomp;
-	    $seq .= $_;
-	    next;
-	}
+        if ($inContig == 1 || $inSequence == 1) {
+            chomp;
+            $seq .= $_;
+            next;
+        }
 
-	if (/^BQ/){
-	    $inQual = 1;
-	    $qual = "";
-	    next;
-	}
+        if (/^BQ/){
+            $inQual = 1;
+            $qual = "";
+            next;
+        }
 
-	if ($inQual == 1 && $_ =~ /^\s*$/){
-	    $inQual = 0;
-	    my $tmpqual = $qual;
-	    my $qual = "";
-	    my $q = 0;
-	    # create quality values for consensus gaps
-	    for (my $c = 0; $c < length($seq); $c++){
-		if (substr($seq, $c, 1) eq "-"){
-		    if ($q >= length($tmpqual)){
-			$q = length($tmpqual) - 1;
-		    }
-		    $qual .= substr($tmpqual, $q, 1); # next seen quality
-		} else {
-		    $qual .= substr($tmpqual, $q++, 1);
-		}
-	    }
-	    for (my $c = 0; $c < length($qual); $c += 60){
-		print TMPCTG substr($qual, $c, 60), "\n";
-	    }
-	}
+        if ($inQual == 1 && $_ =~ /^\s*$/){
+            $inQual = 0;
+            my $tmpqual = $qual;
+            my $qual = "";
+            my $q = 0;
+            # create quality values for consensus gaps
+            for (my $c = 0; $c < length($seq); $c++){
+                if (substr($seq, $c, 1) eq "-"){
+                    if ($q >= length($tmpqual)){
+                        $q = length($tmpqual) - 1;
+                    }
+                    $qual .= substr($tmpqual, $q, 1); # next seen quality
+                } else {
+                    $qual .= substr($tmpqual, $q++, 1);
+                }
+            }
+            for (my $c = 0; $c < length($qual); $c += 60){
+                print TMPCTG substr($qual, $c, 60), "\n";
+            }
+        }
 
-	if ($inQual == 1){
-	    chomp;
-	    $_ =~ s/^\s+//;
-	    my @quals = split(' ', $_);
-	    for (my $q = 0; $q <= $#quals; $q++){
-		if ($quals[$q] > 60) {$quals[$q] = 60;}
-		$qual .= chr(ord("0")+ $quals[$q]);
-	    }
-	}
-	
-	
-	if (/^AF (\S+) (\w) (-?\d+)/){
-	    # AF record contains the offset of the sequence
-	    # in the contig, 1-based.  Also indicates whether sequence
-	    # is reverse complemented
-	    $offset{$1} = $3 - 1;
-	    $rc{$1} = $2;
-	    next;
-	}
-	
-	if (/^RD (\S+)/){
-	    # indicates start of a sequence record
-	    $inSequence = 1;
-	    $seqName = $1;
-	    $seq = "";
-	    next;
-	}
+        if ($inQual == 1){
+            chomp;
+            $_ =~ s/^\s+//;
+            my @quals = split(' ', $_);
+            for (my $q = 0; $q <= $#quals; $q++){
+                if ($quals[$q] > 60) {$quals[$q] = 60;}
+                $qual .= chr(ord("0")+ $quals[$q]);
+            }
+        }
+        
+        
+        if (/^AF (\S+) (\w) (-?\d+)/){
+            # AF record contains the offset of the sequence
+            # in the contig, 1-based.  Also indicates whether sequence
+            # is reverse complemented
+            $offset{$1} = $3 - 1;
+            $rc{$1} = $2;
+            next;
+        }
+        
+        if (/^RD (\S+)/){
+            # indicates start of a sequence record
+            $inSequence = 1;
+            $seqName = $1;
+            $seq = "";
+            next;
+        }
 
-	if (/^QA -?(\d+) -?(\d+) -?(\d+) (\d+)/){
-	    # at this point the sequence ended
-	    my ($end5, $end3, $cll, $clr) = ($1, $2, $3, $4);
-	    $cll--;
-	    my $offset = $offset{$seqName};
+        if (/^QA -?(\d+) -?(\d+) -?(\d+) (\d+)/){
+            # at this point the sequence ended
+            my ($end5, $end3, $cll, $clr) = ($1, $2, $3, $4);
+            $cll--;
+            my $offset = $offset{$seqName};
 
-	    # ACE files gaps are '*' instead of '-'
-	    $seq =~ s/\*/-/g;
+            # ACE files gaps are '*' instead of '-'
+            $seq =~ s/\*/-/g;
 
-	    # shift offset to beginning of clear range
-	    # otherwise it points to the beginning of the entire sequence
-	    # shown in the file
-	    $len = length($seq);
-	    $offset += $cll;
-	    
-	    # @sdels contains the positions of gaps in the sequence
-	    my $ndel = 0;
-	    my @sdels = ();
+            # shift offset to beginning of clear range
+            # otherwise it points to the beginning of the entire sequence
+            # shown in the file
+            $len = length($seq);
+            $offset += $cll;
+            
+            # @sdels contains the positions of gaps in the sequence
+            my $ndel = 0;
+            my @sdels = ();
 
-	    my $allseq = $seq; # all the sequence (will be chopped later)
+            my $allseq = $seq; # all the sequence (will be chopped later)
 
-	    # gap positions are wrt to the clear range
-	    # in the aligned orientation
-	    $seq = substr($seq, $cll, $clr - $cll);
-	    for (my $s = 0; $s < length($seq); $s++){
+            # gap positions are wrt to the clear range
+            # in the aligned orientation
+            $seq = substr($seq, $cll, $clr - $cll);
+            for (my $s = 0; $s < length($seq); $s++){
                 if (substr($seq, $s, 1) eq "-"){
                     push @sdels, $ndel;
                 } else {
                     $ndel++;
                 }
             }
-	    if ($rc{$seqName} eq "C"){
-		$seq = reverseComplement($seq);
-		$allseq = reverseComplement($allseq);
-	    }
-	    
+            if ($rc{$seqName} eq "C"){
+                $seq = reverseComplement($seq);
+                $allseq = reverseComplement($allseq);
+            }
+            
 
-	    # if read is reversed swap cll and clr
-	    if ($rc{$seqName} eq "C"){
-		my $tmp = $len - $cll;
-		$cll = $len - $clr;
-		$clr = $tmp;
-	    }
+            # if read is reversed swap cll and clr
+            if ($rc{$seqName} eq "C"){
+                my $tmp = $len - $cll;
+                $cll = $len - $clr;
+                $clr = $tmp;
+            }
 
-	    my $pref = substr($allseq, 0, $cll); # prefix of sequence
+            my $pref = substr($allseq, 0, $cll); # prefix of sequence
 
-	    my $i = 0;
-	    my $asml = $offset;
-	    my $asmr = $asml + $clr - $cll;
+            my $i = 0;
+            my $asml = $offset;
+            my $asmr = $asml + $clr - $cll;
 
-	    while ($pref =~ /-/g) { # make $cll  ungapped
-		$cll--;
-		$clr--;
-	    }
-	    while ($seq =~ /-/g){ #make $clr ungapped
-		$clr--;
-	    }
+            while ($pref =~ /-/g) { # make $cll  ungapped
+                $cll--;
+                $clr--;
+            }
+            while ($seq =~ /-/g){ #make $clr ungapped
+                $clr--;
+            }
 
-	    # if reverse complemented, reverse the assembly range
-	    if ($rc{$seqName} eq "C"){
-		my $tmp = $asml;
-		$asml = $asmr;
-		$asmr = $tmp;
-	    }
+            # if reverse complemented, reverse the assembly range
+            if ($rc{$seqName} eq "C"){
+                my $tmp = $asml;
+                $asml = $asmr;
+                $asmr = $tmp;
+            }
         
-	    # assign sequence id and populate all necessary data-structures
-	    my $seqId;
-	    if (! exists $seqids{$seqName}){
-		#print STDERR "Couldnt find id for $seqName\n";
-		$seqId = $minSeqId++;
-		$seqids{$seqName} = $seqId;
-		$seqnames{$seqId} = $seqName;
-	    } else {
-		$seqId = $seqids{$seqName};
-	    }
-	    $seqcontig{$seqId} = $iid;
-	    $contigseq{$iid} .= "$seqId ";
-	    if ($cll > $clr) {
-		$seq_range{$seqId} = "$clr $cll";
-	    } else {
-	        $seq_range{$seqId} = "$cll $clr";
-	    }
-	    $asm_range{$seqId} = "$asml $asmr";
+            # assign sequence id and populate all necessary data-structures
+            my $seqId;
+            if (! exists $seqids{$seqName}){
+                #print STDERR "Couldnt find id for $seqName\n";
+                $seqId = $minSeqId++;
+                $seqids{$seqName} = $seqId;
+                $seqnames{$seqId} = $seqName;
+            } else {
+                $seqId = $seqids{$seqName};
+            }
+            $seqcontig{$seqId} = $iid;
+            $contigseq{$iid} .= "$seqId ";
+            if ($cll > $clr) {
+                $seq_range{$seqId} = "$clr $cll";
+            } else {
+                $seq_range{$seqId} = "$cll $clr";
+            }
+            $asm_range{$seqId} = "$asml $asmr";
 
-	    if ($readsDone == 0){ # no read info, must generate
+            if ($readsDone == 0) { # no read info, must generate
                 # Sequence string
-		print TMPSEQ "#$seqId\n";
-		$allseq =~ s/-//g;
-		for (my $i = 0; $i <= length($allseq); $i+= 60){
-		    print TMPSEQ substr($allseq, $i, 60), "\n";
-		}
+                print TMPSEQ "#$seqId\n";
+                $allseq =~ s/-//g;
+                for (my $i = 0; $i <= length($allseq); $i+= 60){
+                    print TMPSEQ substr($allseq, $i, 60), "\n";
+                }
                 # Quality values
-		print TMPSEQ "#\n";
-		my $qualdata = "";
-		if (defined $qualfile){
-			$seqName =~ /^([^.]+)/;
-			my $shortName = $1;
-			if ( ! defined $qRecPos{$shortName} ){
-			$base->bail("Sequence $shortName not found in quality file\n");
-			}
-			$qf->seek($qRecPos{$shortName});
-			my ($qh, $qdata) = $qf->getRecord();
-			my @quals = split(/ +/, $qdata);
-			for (my $i = 0; $i <= $#quals; $i++){
-			if ($quals[$i] <= 0) {$quals[$i] = 1;}
-			if ($quals[$i] > 60) {$quals[$i] = 60;}
-			$qualdata .= chr(ord('0') + $quals[$i]);
-			}
-		} else {
-			for (my $i = 0; $i < $cll; $i++){
-				$qualdata .= chr(ord('0') + $BADQUAL);
-			}
-			for (my $i = $cll; $i < $clr; $i++){
-				$qualdata .= chr(ord('0') + $GOODQUAL);
-			}
-			for (my $i = $clr; $i < length($allseq); $i++){
-				$qualdata .= chr(ord('0') + $BADQUAL);
-			}
-		}
-		
-        my $seqlength  = length $allseq;
-        my $quallength = length $qualdata;
-		if ( $seqlength != $quallength ) {
-		    $base->bail("Error: There should be a quality score for each nucleotide in read $seqName, but got $seqlength nt and $quallength scores\n");
-		}
-		for (my $i = 0; $i <= length($qualdata); $i+= 60){
-		    print TMPSEQ substr($qualdata, $i, 60), "\n";
-		}
-		print TMPSEQ "#\n";
-	    } # if $readsDone == 0
-	    print TMPCTG "#$seqId\n";
-	    print TMPCTG join (" ", @sdels), "\n";
-	    next;
-	}
+                print TMPSEQ "#\n";
+                my $qualdata = "";
+                if (defined $qualfile){
+                    $seqName =~ /^([^.]+)/;
+                    my $shortName = $1;
+                    if ( ! defined $qRecPos{$shortName} ){
+                        $base->bail("Sequence $shortName not found in quality file\n");
+                    }
+                    $qf->seek($qRecPos{$shortName});
+                    my ($qh, $qdata) = $qf->getRecord();
+                    my @quals = split(/ +/, $qdata);
+                    for (my $i = 0; $i <= $#quals; $i++){
+                        if ($quals[$i] <= 0) {$quals[$i] = 1;}
+                        if ($quals[$i] > 60) {$quals[$i] = 60;}
+                        $qualdata .= chr(ord('0') + $quals[$i]);
+                    }
+                } else {
+                    for (my $i = 0; $i < $cll; $i++){
+                         $qualdata .= chr(ord('0') + $BADQUAL);
+                    }
+                    for (my $i = $cll; $i < $clr; $i++){
+                         $qualdata .= chr(ord('0') + $GOODQUAL);
+                    }
+                    for (my $i = $clr; $i < length($allseq); $i++){
+                         $qualdata .= chr(ord('0') + $BADQUAL);
+                    }
+                }
+
+                my $seqlength  = length $allseq;
+                my $quallength = length $qualdata;
+                if ( $seqlength != $quallength ) {
+                    $base->bail("Error: There should be a quality score for each nucleotide in read $seqName, but got $seqlength nt and $quallength scores\n");
+                }
+                for (my $i = 0; $i <= length($qualdata); $i+= 60){
+                    print TMPSEQ substr($qualdata, $i, 60), "\n";
+                }
+                print TMPSEQ "#\n";
+            } # if $readsDone == 0
+            print TMPCTG "#$seqId\n";
+            print TMPCTG join (" ", @sdels), "\n";
+            next;
+        }
     } # while <$IN>
 
     if (defined $contigName) {
-      print TMPCTG "#\n";
+        print TMPCTG "#\n";
     } # else there were no contigs
 
 } #parseAceFile
@@ -1644,91 +1636,91 @@ sub parseContigFile {
     my $iid;
 
     my $first = 1;
-    while (<$IN>){
-	if (/^\#\#(\S+) \d+ (\d+)/ ){
-	    if ($first != 1){
-		print TMPCTG "#$sid\n";
-		print TMPCTG join(" ", @sdels), "\n";
-		print TMPCTG "#\n";
-		$arend = $alend + $slen;
-		$asm_range{$sid} = "$alend $arend";
-		#print TMPCTG "#\n";
-	    }
-	    $first = 0;
-	    $consensus = "";
-	    $ctg = $1;
-	    $iid = $minCtgId++;
-	    $ctgids{$ctg} = $iid;
-	    $ctgnames{$iid} = $ctg;
-	    $contigs{$iid} = $2;
-	    $incontig = 1;
-	    $slen = 0;
-	    next;
-	}
+    while (<$IN>) {
+        if (/^\#\#(\S+) \d+ (\d+)/ ) {
+            if ($first != 1){
+                print TMPCTG "#$sid\n";
+                print TMPCTG join(" ", @sdels), "\n";
+                print TMPCTG "#\n";
+                $arend = $alend + $slen;
+                $asm_range{$sid} = "$alend $arend";
+                #print TMPCTG "#\n";
+            }
+            $first = 0;
+            $consensus = "";
+            $ctg = $1;
+            $iid = $minCtgId++;
+            $ctgids{$ctg} = $iid;
+            $ctgnames{$iid} = $ctg;
+            $contigs{$iid} = $2;
+            $incontig = 1;
+            $slen = 0;
+            next;
+        }
 
-	if (/^\#(\S+)\((\S+)\) .*\{(\S+) (\S+)\} <(\S+) (\S+)>/){
-	    if ($incontig == 1){
-		print TMPCTG "#$iid C\n";
-		for (my $c = 0; $c < length($consensus); $c+=60){
-		    print TMPCTG substr($consensus, $c, 60), "\n";
-		}
-		#print TMPCTG "$consensus\n";
-		print TMPCTG "#\n";
-		for (my $c = 0; $c < length($consensus); $c+=60){
-		    for ($b = 0; $b < 60; $b++){
-			if ($b + $c >= length($consensus)){last;}
-			print TMPCTG "X";
-		    }
-		    print TMPCTG "\n";
-		}
-		#print TMPCTG "\n";
-	    } else {
-		print TMPCTG "#$sid\n";
-		print TMPCTG join(" ", @sdels), "\n";
-		$arend = $alend + $slen;
-		$asm_range{$sid} = "$alend $arend";
-		$slen = 0;
-	    }
-	    $incontig = 0;
-	    $sname = $1;
-	    @sdels = ();
-	    $ndel = 0;
-	    if (! exists $seqids{$sname}){
-		$base->bail("Cannot find ID for sequence $sname\n");
-	    } else {
-		$sid = $seqids{$sname};
-	    }
-	    
-	    $seqcontig{$sid} = $iid;
-	    $contigseq{$iid} .= "$sid ";
-	    
-	    $alend = $2;
-	    
-	    if ($3 < $4){
-		$slend = $3 - 1;
-		$srend = $4;
-	    } else {
-		$slend = $3;
-		$srend = $4 - 1;
-	    }
-	    $seq_range{$sid} = "$slend $srend";
-	    next;
-	}
+        if (/^\#(\S+)\((\S+)\) .*\{(\S+) (\S+)\} <(\S+) (\S+)>/){
+            if ($incontig == 1){
+                print TMPCTG "#$iid C\n";
+                for (my $c = 0; $c < length($consensus); $c+=60){
+                    print TMPCTG substr($consensus, $c, 60), "\n";
+                }
+                #print TMPCTG "$consensus\n";
+                print TMPCTG "#\n";
+                for (my $c = 0; $c < length($consensus); $c+=60){
+                    for ($b = 0; $b < 60; $b++){
+                        if ($b + $c >= length($consensus)){last;}
+                        print TMPCTG "X";
+                    }
+                    print TMPCTG "\n";
+                }
+                #print TMPCTG "\n";
+            } else {
+                print TMPCTG "#$sid\n";
+                print TMPCTG join(" ", @sdels), "\n";
+                $arend = $alend + $slen;
+                $asm_range{$sid} = "$alend $arend";
+                $slen = 0;
+            }
+            $incontig = 0;
+            $sname = $1;
+            @sdels = ();
+            $ndel = 0;
+            if (! exists $seqids{$sname}){
+                $base->bail("Cannot find ID for sequence $sname\n");
+            } else {
+                $sid = $seqids{$sname};
+            }
+            
+            $seqcontig{$sid} = $iid;
+            $contigseq{$iid} .= "$sid ";
+            
+            $alend = $2;
+            
+            if ($3 < $4){
+                $slend = $3 - 1;
+                $srend = $4;
+            } else {
+                $slend = $3;
+                $srend = $4 - 1;
+            }
+            $seq_range{$sid} = "$slend $srend";
+            next;
+        }
 
-	if ($incontig){
-	    chomp;
-	    $consensus .= $_;
-	} else { # sequence record
-	    chomp;
-	    $slen += length($_);
-	    for (my $s = 0; $s < length($_); $s++){
-		if (substr($_, $s, 1) eq "-"){
-		    push @sdels, $ndel;
-		} else {
-		    $ndel++;
-		}
-	    }
-	}
+        if ($incontig){
+            chomp;
+            $consensus .= $_;
+        } else { # sequence record
+            chomp;
+            $slen += length($_);
+            for (my $s = 0; $s < length($_); $s++){
+                if (substr($_, $s, 1) eq "-"){
+                    push @sdels, $ndel;
+                } else {
+                    $ndel++;
+                }
+            }
+        }
     } # while in
     # process last sequence
     print TMPCTG "#$sid\n";
@@ -1758,33 +1750,33 @@ sub parseArachneScaff {
     my $lastsuper = undef;
     my $offset = 0;
     while (<$IN>) {
-	if (/^\#/) { next;}
-	my @fields = split('\t', $_);
-	#if ($fields[0] != $lastsuper){
-	if (!defined $lastsuper || $fields[0] != $lastsuper){
-	    if  (defined $lastsuper){
-		print TMPSCF "}\n"; # close scaffold
-	    }
-	    $lastsuper = $fields[0];
-	    $offset = 0;
-	    print TMPSCF "{SCF\n";
-	    print TMPSCF "iid:$lastsuper\n";
-	    print TMPSCF "eid:$lastsuper\n";
-	}
-	my $id = "contig_".$fields[4];
-	if (! exists $ctgids{$id}) {
-	    $base->logError("Cannot find id for contig $id\n");
-	    next;
-	}
-	# print contig tile
-	print TMPSCF "{TLE\n";
-	print TMPSCF "src:$ctgids{$id}\n";
-	print TMPSCF "off:$offset\n";
-	print TMPSCF "clr:0,$contigs{$ctgids{$id}}\n";
-	print TMPSCF "}\n";
+        if (/^\#/) { next;}
+        my @fields = split('\t', $_);
+        #if ($fields[0] != $lastsuper){
+        if (!defined $lastsuper || $fields[0] != $lastsuper){
+            if  (defined $lastsuper){
+                print TMPSCF "}\n"; # close scaffold
+            }
+            $lastsuper = $fields[0];
+            $offset = 0;
+            print TMPSCF "{SCF\n";
+            print TMPSCF "iid:$lastsuper\n";
+            print TMPSCF "eid:$lastsuper\n";
+        }
+        my $id = "contig_".$fields[4];
+        if (! exists $ctgids{$id}) {
+            $base->logError("Cannot find id for contig $id\n");
+            next;
+        }
+        # print contig tile
+        print TMPSCF "{TLE\n";
+        print TMPSCF "src:$ctgids{$id}\n";
+        print TMPSCF "off:$offset\n";
+        print TMPSCF "clr:0,$contigs{$ctgids{$id}}\n";
+        print TMPSCF "}\n";
 
-	# update offset
-	$offset += $fields[5] + $fields[7];
+        # update offset
+        $offset += $fields[5] + $fields[7];
     }
     print TMPSCF "}\n"; # done here
 } #  parseArachneScaff
@@ -1802,39 +1794,39 @@ sub parseScaff {
 
     my $ps = new AMOS::ParseFasta($IN, ">", "\n");
     while (my ($head, $data) = $ps->getRecord()){
-	$head =~ /(\S+).*/;
-	my $scfnam = $1;
-	my $scfid = $minSeqId++;
+        $head =~ /(\S+).*/;
+        my $scfnam = $1;
+        my $scfid = $minSeqId++;
 
-	print TMPSCF "{SCF\n";
-	print TMPSCF "iid:$scfid\n";
-	print TMPSCF "eid:$scfnam\n";
+        print TMPSCF "{SCF\n";
+        print TMPSCF "iid:$scfid\n";
+        print TMPSCF "eid:$scfnam\n";
 
-	my $offset = 0;
-	
-	my @lines = split('\n', $data);
-	for (my $i = 0; $i <= $#lines; $i++){
-	    my @fields = split(/\s+/, $lines[$i]);
-	    
-	    if (! exists $ctgids{$fields[0]}) {
-		$base->logError("Cannot find id for contig $fields[0]\n");
-		next;
-	    }
+        my $offset = 0;
+        
+        my @lines = split('\n', $data);
+        for (my $i = 0; $i <= $#lines; $i++){
+            my @fields = split(/\s+/, $lines[$i]);
+            
+            if (! exists $ctgids{$fields[0]}) {
+                $base->logError("Cannot find id for contig $fields[0]\n");
+                next;
+            }
 
-	    # print contig tile
-	    print TMPSCF "{TLE\n";
-	    print TMPSCF "src:$ctgids{$fields[0]}\n";
-	    print TMPSCF "off:$offset\n";
-	    if ($fields[1] eq "BE"){
-		print TMPSCF "clr:0,$contigs{$ctgids{$fields[0]}}\n";
-	    } else {
-		print TMPSCF "clr:$contigs{$ctgids{$fields[0]}},0\n";
-	    }
-	    print TMPSCF "}\n";
-	    $offset += $contigs{$ctgids{$fields[0]}} + $fields[3];
-	}
+            # print contig tile
+            print TMPSCF "{TLE\n";
+            print TMPSCF "src:$ctgids{$fields[0]}\n";
+            print TMPSCF "off:$offset\n";
+            if ($fields[1] eq "BE"){
+                print TMPSCF "clr:0,$contigs{$ctgids{$fields[0]}}\n";
+            } else {
+                print TMPSCF "clr:$contigs{$ctgids{$fields[0]}},0\n";
+            }
+            print TMPSCF "}\n";
+            $offset += $contigs{$ctgids{$fields[0]}} + $fields[3];
+        }
 
-	print TMPSCF "}\n";
+        print TMPSCF "}\n";
     }
 
 } # parseScaff
@@ -1883,8 +1875,8 @@ sub EndTag {
             $base->logError("library $library has no stdev\n");
         }
 
-	if (defined $mean and defined $stdev){
-	    $libraries{$library} = "$mean $stdev";
+        if (defined $mean and defined $stdev){
+            $libraries{$library} = "$mean $stdev";
         }
 
         if (! defined $template){
@@ -1901,21 +1893,21 @@ sub EndTag {
                 $rev{$template} = $seqId;
             }
         }
-	 
+ 
         if ($end eq "F"){
             if (! exists $forw{$template} ||
                 $seqnames{$seqId} gt $seqnames{$forw{$template}}){
                 $forw{$template} = $seqId;
             }
         }
-	    
-	$seqinsert{$seqId} = $template;
-	#$insertlib{$library} .= "$template ";
-	$seenlib{$template} = $library;
-	
+            
+        $seqinsert{$seqId} = $template;
+        #$insertlib{$library} .= "$template ";
+        $seenlib{$template} = $library;
+        
     
         if (defined $clipl && defined $clipr){
-	    $seq_range{$seqId} = "$clipl $clipr";
+            $seq_range{$seqId} = "$clipl $clipr";
         }
     }
 
@@ -1931,9 +1923,9 @@ sub Text {
             $stdev = $_;
         } elsif ($tag eq "trace_name"){
             my $seqName = $_;
-	    $seqId = $minSeqId++;
-	    $seqids{$seqName} = $seqId;
-	    $seqnames{$seqId} = $seqName;
+            $seqId = $minSeqId++;
+            $seqids{$seqName} = $seqId;
+            $seqnames{$seqId} = $seqName;
         } elsif ($tag eq "library_id"){
             $library = $_;
         } elsif ($tag eq "seq_lib_id") {
