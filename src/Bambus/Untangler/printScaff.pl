@@ -31,6 +31,8 @@ my $VERSION_STRING = "$VERSION (" . '$Revision$ ' . ")";
 $base->setVersionInfo($VERSION_STRING);
 
 my $HELPTEXT = q~
+    Report statistics about a scaffold
+
     printScaff -e <evidencefile> -s <scaffile> -o <outprefix>
                -l <libconf> [-dot -page -plot -unused -phys -oo -sum] [-detail]
                -f <fasta_in> [-[no]merge] [-arachne <araprefix>]

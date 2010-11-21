@@ -24,6 +24,8 @@ my $VERSION_STRING = "$VERSION (" . '$Revision$ ' . ")";
 $base->setVersionInfo($VERSION_STRING);
 
 my $HELPTEXT = q~
+    Take a file of evidence to disambiguate a scaffold.
+
     untangle -e <evidencefile> -s <scaffile> -o <outfile>
     ~;
 
