@@ -24,6 +24,8 @@ void printHelpText()
 {
   cerr << 
     "\n"
+    "Create links between contigs using mate pair (paired-end) information\n"
+    "\n"
     "USAGE:\n"
     "\n"
     "clk -b[ank] <bank_name>\n"

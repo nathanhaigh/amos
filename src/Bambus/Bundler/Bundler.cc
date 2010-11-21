@@ -30,6 +30,8 @@ void printHelpText()
 {
   cerr << 
     "\n"
+    "Bundle links into edges among connected contigs\n"
+    "\n"
     "USAGE:\n"
     "\n"
     "Bundler -b[ank] <bank_name> -t[ype] <comma separated list of link types to process>\n"

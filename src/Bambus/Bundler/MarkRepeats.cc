@@ -51,6 +51,8 @@ config globals;
 void printHelpText() {
    cerr << 
     "\n"
+    "Find repetitive contigs and mark them as repeats\n"
+    "\n"
     "USAGE:\n"
     "\n"
     "MarkRepeats -b[ank] <bank_name> [-agressive] [-redundancy] [-noPathRepeats] [-noCoverageRepeats]\n"

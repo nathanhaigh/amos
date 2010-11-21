@@ -62,6 +62,8 @@ HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal
 void printHelpText() {
    cerr << 
     "\n"
+    "Determine contig order and orientation\n"
+    "\n"
     "USAGE:\n"
     "\n"
     "OrientContigs -b[ank] <bank_name> [-prefix] <prefix> [-all] [-noreduce] [-agressive] [-redundancy minLinks] [-repeats fileName] [-linearize] [-skip]\n"
