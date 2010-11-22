@@ -845,15 +845,13 @@ sub parseFastaFile {
         #print STDERR "got $seqname $id\n";
         $seqids{$seqname} = $id;
 
-        #####
         # Detect mate pairs
-        if ($guess_mates && $seqname =~ m/^(.+)[.|]([12])$/) {
-            # Sequence names ending in .1 or .2 or /1 or /2 are mate pair
+        if ($guess_mates && $seqname =~ m/^(.+)[.\/]([12])$/) {
+            # Sequences with names ending in .1 or .2 or /1 or /2 are mate pairs
             my $insname = $1;
             $inserts{$insname}{$2} = $id;
             #push @{$inserts{$insname}}, $id;
         }
-        #####
 
         # so we don't overwrite an externally provided clear range
         if (! exists $seq_range{$id}){
