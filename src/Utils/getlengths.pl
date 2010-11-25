@@ -9,6 +9,10 @@ if (!defined $tf){
     die ("Bad foundation\n");
 }
 
+if ($ARGV[0] eq '-h') {
+  die "Report the length of the sequences in a FASTA file. If no file is provided, standard input is used\nUSAGE: $0 [fasta_file]\n";
+}
+
 if (scalar @ARGV == 0)
 {
   $fr = new AMOS::ParseFasta(\*STDIN);

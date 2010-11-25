@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-my $USAGE = "translate.pl file.fasta [startpos stoppos]\n";
+my $USAGE = "Translate the sequences in a FASTA file between the optional given positions\nUSAGE: $0 <fasta_file> [startpos stoppos]\n";
 
 my %codon =
 (

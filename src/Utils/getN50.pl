@@ -3,9 +3,15 @@
 use TIGR::Foundation;
 use AMOS::ParseFasta;
 
+$usage = "Calculate contig statistics: number, average length and N50\nUSAGE: $0 <fasta> [genome size]\n";
+
+if ( $ARGV[0] eq '-h' ) {
+  die $usage;
+}
+
 if ( scalar(@ARGV) != 1 ) {
     if ( scalar(@ARGV) != 2 ) {
-	die "USAGE: $0 <fasta> [genome size]\n";
+	die $usage;
     } else {
 	$genomesize = $ARGV[1];
     }

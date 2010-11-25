@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 #-- Dirty script to pull out desired quality score tables
 
-if ( scalar(@ARGV) != 1 ) {
-    die "USAGE: $0 <quality file>  <  <seq name list>\n";
+if ( scalar(@ARGV) != 1 || $ARGV[0] eq '-h' ) {
+    die "Script to pull out desired quality score tables\nUSAGE: $0 <quality file>  <  <seq name list>\n";
 }
 $qualfile = $ARGV[0];
 

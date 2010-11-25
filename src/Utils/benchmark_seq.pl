@@ -22,11 +22,10 @@ if ( !defined ($tigr) ) {
     exit (1);
 }
 
-if ( scalar(@ARGV) != 3 ) {
-    print (STDERR "USAGE: $0  <taglist>  <lib map>  <fasta>\n");
+if ( scalar(@ARGV) != 3 || $ARGV[0] eq '-h' ) {
+    print (STDERR "Pull out and format sequences\nUSAGE: $0  <taglist>  <lib map>  <fasta>\n");
     exit (1);
 }
-
 
 $listfilename = $ARGV[0];
 $libfilename = $ARGV[1];
