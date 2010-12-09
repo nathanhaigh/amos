@@ -44,13 +44,13 @@ MarkRepeats_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 MarkRepeats_SOURCES = \
-	Utilities_Bundler.cc MarkRepeats.cc
+	Utilities_Bundler.cc Utilities_Bundler.hh MarkRepeats.cc
 
 OrientContigs_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 OrientContigs_SOURCES = \
-	Utilities_Bundler.cc OrientContigs.cc
+	Utilities_Bundler.cc Utilities_Bundler.hh OrientContigs.cc
 
 ##-- END OF MAKEFILE --##
