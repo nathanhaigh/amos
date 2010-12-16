@@ -22,7 +22,7 @@ file headers, file tails, components, nodes, edges, etc.
 
 =cut
 
-package DotLib;
+package AMOS::DotLib;
 
 use strict;
 
