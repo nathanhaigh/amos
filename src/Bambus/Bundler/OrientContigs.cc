@@ -373,22 +373,25 @@ int32_t computeContigPositions(
       cerr << "The first orient is " << ctg2ort[first.getIID()] << " and second is " << ctg2ort[second.getIID()] << " and link type " << cte.getAdjacency() << endl;
    }
 
-/*
+   /*
+   double weight = 0.5;
+   firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
+   secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
+   */
+
+   // go on its good reconcile it
    double weight = (double)cte.getContigLinks().size()/getTotalWeightEdge(first.getIID(), ctg2lnk, edge_bank);
    firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
    weight = (double)cte.getContigLinks().size()/getTotalWeightEdge(second.getIID(), ctg2lnk, edge_bank);
    secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
-
-   The code above was meant to better reconcile positions between edges. That is if an edge had a higher weight, it 
+   /*
+   The code above was meant to better reconcile positions between edges. That is if an edge had a higher weight, it
    would contribute more to the position. However, this is still a problem if the node is initially positioned poorly.
-   
+
    Example in B. suis: node 6 places node 170 12 bases ahead of itself (using an edge with SD 971)
                      : node 86 tries to place node 170 approximately 1100 bases (reconciled to 600) but has only an SD of 95 so it cannot be satisfied
    We need to incorporate other edge's SD when reconciling
-*/
-   double weight = 0.5;
-   firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
-   secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
+   */
 
    if (firstPosition != INVALID_EDGE && secondPosition != INVALID_EDGE) {
       ctg2srt[first.getIID()] = firstPosition;
@@ -401,6 +404,47 @@ int32_t computeContigPositions(
       return 0;
    } else {
       return INVALID_EDGE;
+   }
+}
+
+
+int32_t computeContigPositionUsingAllEdges(ID_t &myID,
+	      hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
+	      hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
+	      hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
+	      Bank_t &edge_bank, Bank_t &contig_bank, uint32_t &goodCount, uint32_t &badCount) {
+   set<ID_t, EdgeWeightCmp>* s = ctg2lnk[myID];
+   ContigEdge_t cte;
+   Contig_t first;
+   Contig_t second;
+
+   contig_bank.fetch(myID, first);
+   if (s == NULL || s->size() == 0) {
+      // do nothing, nothing to sum
+   }
+   else {
+      // should we sort the edges by SD first and then weight?
+      for (set<ID_t, EdgeWeightCmp>::iterator i = s->begin(); i != s->end(); i++) {
+         edge_bank.fetch(*i, cte);
+         contig_bank.fetch(cte.getContigs().first, first);
+         contig_bank.fetch(cte.getContigs().second, second);
+
+         if (!isBadEdge(*i, edge_bank) && ctg2ort[getEdgeDestination(myID, cte)] != NONE) {
+            if (computeContigPositions(first, second, cte, ctg2srt, ctg2ort, ctg2lnk, edge_bank) == INVALID_EDGE) {
+       	       // mark edge as bad
+               cerr << "BAD DST EDGE: " << cte.getIID() << " between " << cte.getContigs().first << " and " << cte.getContigs().second << " with dist " << cte.getSize() << " and std " << cte.getSD() << " and the orientation is " << cte.getAdjacency() << endl;
+                badCount++;
+
+                // update the edge in the bank so it is marked bad
+                setEdgeStatus(cte, edge_bank, BAD_DST);
+             } else {
+                goodCount++;
+
+                // update the edge in the bank so it is marked good
+                setEdgeStatus(cte, edge_bank, GOOD_EDGE);
+             }
+	  }
+      }
    }
 }
 
@@ -1337,21 +1381,11 @@ int main(int argc, char *argv[]) {
                   contig_bank.fetch(cte.getContigs().second, second);
 
                   ctg2ort[otherID] = orient;
-cerr << "SET ORIENT FOR NODE " << otherID << " TO " << orient << endl;
+                  cerr << "SET ORIENT FOR NODE " << otherID << " TO " << orient << endl;
                   ctg2edges[oss.str()] = cte.getAdjacency();
 
-                  // only position using the good edges
-                  if (computeContigPositions(first, second, cte, ctg2srt, ctg2ort, ctg2lnk, edge_bank) != 0) {
-                     cerr << "BAD DST EDGE: " << cte.getIID() << " between " << cte.getContigs().first << " and " << cte.getContigs().second << " with dist " << cte.getSize() << " and std " << cte.getSD() << " and the orientation is " << cte.getAdjacency() << endl;
-                     badCount++;
-                     
-                     // update the edge in the bank so it is marked bad
-                     setEdgeStatus(cte, edge_bank, BAD_DST);
-                  } else {
-                     // update the edge in the bank so it is marked good
-   		            setEdgeStatus(cte, edge_bank, GOOD_EDGE);                        
-                     goodCount++;
-
+                  computeContigPositionUsingAllEdges(myID, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank, goodCount, badCount);
+                  if (!isBadEdge(cte.getIID(), edge_bank)) {
                      // add tiling info
                      // offset is always in terms of the lowest position in scaffold of the contig, that is if we have ---> <---- then the offset of the second
                      // contig is computed from the head of the arrow, not the tail

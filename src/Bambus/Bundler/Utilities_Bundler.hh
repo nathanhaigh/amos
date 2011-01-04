@@ -1,6 +1,7 @@
 #ifndef UTILITIES_BUNDLER_HH_
 #define UTILITIES_BUNDLER_HH_
 
+#include <set>
 #include <queue>
 #include <iterator>
 
@@ -132,5 +133,4 @@ namespace Bundler
                               HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t, EdgeWeightCmp>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >& ctg2lnk,
                               int32_t debugLevel);
 }
-
 #endif /*UTILITIES_BUNDLER_HH_*/
