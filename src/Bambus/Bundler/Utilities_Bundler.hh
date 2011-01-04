@@ -82,6 +82,14 @@ namespace Bundler
          }
       }
    };
+
+   struct EdgePairCmp
+   {
+      bool operator() (const std::pair<AMOS::ID_t, uint32_t> & a, const std::pair<AMOS::ID_t, uint32_t> &b) const
+      {
+         return a.second < b.second;
+      }
+   };
   
    double computeArrivalRate(const std::vector<AMOS::Contig_t *> &contigs);
    void buildGraph(

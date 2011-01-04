@@ -19,9 +19,12 @@ bool cte2badInit = false;
 
 void outputEdge(std::ofstream &stream, AMOS::Bank_t &edge_bank, AMOS::ID_t iid, const char *start, const char *end, const char *direction);
 void outputEdges(std::ostream &stream, AMOS::Bank_t &edge_bank, AMOS::ID_t currCtg, int32_t edgeTypes[], int32_t debug);
+
+
+AMOS::ID_t translateCLKtoFRG(AMOS::Bank_t &link_bank, AMOS::ID_t linkID);
 void outputLibrary(const std::string &outputPrefix, int32_t debug);
 void outputEvidenceXML(const std::string &bank, AMOS::Bank_t &contig_bank, const std::string &outputPrefix, int32_t debug);
-void outputOutXML(AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &outputPrefix, int32_t debug);
+void outputOutXML(const std::string &bank, AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &outputPrefix, int32_t debug);
 
 void outputAGP(AMOS::Bank_t &contig_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string& outputPrefix, int32_t debug);
 void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
@@ -821,6 +824,21 @@ void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
    stream.close();
 }
 
+AMOS::ID_t translateCLKtoFRG(AMOS::Bank_t &link_bank, AMOS::ID_t linkID) {
+   // for fragment-based links, translate their ID to the source
+   AMOS::ContigLink_t clk;
+   link_bank.fetch(linkID, clk);
+
+   std::pair<AMOS::ID_t, AMOS::NCode_t> source = clk.getSource();
+   AMOS::ID_t iid = linkID;
+
+   if (source.second == AMOS::Fragment_t::NCODE) {
+     iid = source.first;
+   }
+
+   return iid;
+}
+
 void outputLibrary(const std::string &bank, const std::string &outputPrefix, int32_t debug) {
    AMOS::BankStream_t library_stream (AMOS::Library_t::NCODE);
    if (!library_stream.exists(bank)){
@@ -861,13 +879,24 @@ void outputEvidenceXML(const std::string &bank, AMOS::Bank_t &contig_bank, const
    }
    AMOS::BankStream_t frag_stream (AMOS::Fragment_t::NCODE);
    if (!frag_stream.exists(bank)){
-      std::cerr << "No library account found in bank " << bank << std::endl;
+      std::cerr << "No fragment account found in bank " << bank << std::endl;
       exit(1);
    }
    try {
       frag_stream.open(bank, AMOS::B_READ);
    } catch (AMOS::Exception_t & e) {
-      std::cerr << "Failed to open library account in bank " << bank << ": " << std::endl << e << std::endl;
+      std::cerr << "Failed to open fragment account in bank " << bank << ": " << std::endl << e << std::endl;
+      exit(1);
+   }
+   AMOS::BankStream_t link_stream (AMOS::ContigLink_t::NCODE);
+   if (!link_stream.exists(bank)){
+      std::cerr << "No contig link account found in bank " << bank << std::endl;
+      exit(1);
+   }
+   try {
+      link_stream.open(bank, AMOS::B_READ);
+   } catch (AMOS::Exception_t & e) {
+      std::cerr << "Failed to open contig link account in bank " << bank << ": " << std::endl << e << std::endl;
       exit(1);
    }
 
@@ -925,12 +954,53 @@ void outputEvidenceXML(const std::string &bank, AMOS::Bank_t &contig_bank, const
       }
       stream << "\t</CONTIG>" << std::endl;
    }
-   
+  
+   // here we output any CTE between contigs that are not the result of link data
+   AMOS::ContigLink_t clk;
+   while (link_stream >> clk) {
+      if (clk.getSource().second != AMOS::Fragment_t::NCODE) {
+         stream << "\t<LINK ID=\"link_" << clk.getIID() << "\" SIZE=\"" << clk.getSize() << "\"TYPE=\"" << clk.getType() << "\">" << std::endl;
+         std::string oriCtgA = "BE";
+         std::string oriCtgB = "BE";
+         switch (clk.getAdjacency()) {
+            case AMOS::Link_t::NORMAL:
+               oriCtgA = oriCtgB = "BE";
+               break;
+            case AMOS::Link_t::ANTINORMAL:
+               oriCtgA = oriCtgB = "EB";
+               break;
+            case AMOS::Link_t::OUTIE:
+               oriCtgA = "EB";
+               oriCtgB = "BE";
+               break;
+            case AMOS::Link_t::INNIE:
+               oriCtgA = "BE";
+               oriCtgB = "EB";
+               break;
+         };
+         stream << "\t\t<CONTIG ID=\"" << clk.getContigs().first << "\"ORI=\"" << oriCtgA << "\">" << std::endl;
+         stream << "\t\t<CONTIG ID=\"" << clk.getContigs().second << "\"ORI=\"" << oriCtgB << "\">" << std::endl;
+      }
+   }
+
    stream << "</EVIDENCE>" << std::endl;
    stream.close();   
+   link_stream.close();
 }
 
-void outputOutXML(AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &outputPrefix, int32_t debug) {
+void outputOutXML(const std::string &bank, AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string &outputPrefix, int32_t debug) {
+   AMOS::Bank_t link_bank (AMOS::ContigLink_t::NCODE);
+   if (!link_bank.exists(bank)){
+      std::cerr << "No contig link account found in bank " << bank << std::endl;
+      exit(1);
+   }
+   try {
+      link_bank.open(bank, AMOS::B_READ);
+   } catch (AMOS::Exception_t & e) {
+      std::cerr << "Failed to open contig link account in bank " << bank << ": " << std::endl << e << std::endl;
+      exit(1);
+   }
+
    std::string outputFile = outputPrefix + ".out.xml";
    std::ofstream stream;
    stream.open(outputFile.c_str(), std::ios::out);
@@ -959,7 +1029,7 @@ void outputOutXML(AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &
          if (!isBadEdge(cte)) {
             std::vector<AMOS::ID_t>::const_iterator linkIt = cte.getContigLinks().begin();
             for (; linkIt < cte.getContigLinks().end(); linkIt++) {
-               stream << "\t\t<LINK ID=\"ins_" << *linkIt << "\"" << std::endl;
+               stream << "\t\t<LINK ID=\"ins_" << translateCLKtoFRG(link_bank, *linkIt) << "\"" << std::endl;
                stream << "\tVALID=\"VALID\"" << std::endl;
                stream << "\tTAG=\"T\"" << std::endl;
                stream << "></LINK>" << std::endl;
@@ -990,7 +1060,7 @@ void outputOutXML(AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &
             status = "UNUSED";
             break;
          case BAD_DST:
-            status = "DST";
+            status = "LEN";
             break;
          case BAD_ORI:
             status = "ORI";
@@ -1004,7 +1074,7 @@ void outputOutXML(AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &
       }
       
       for (std::vector<AMOS::ID_t>::const_iterator linkIt = cte.getContigLinks().begin(); linkIt < cte.getContigLinks().end(); linkIt++) {
-         stream << "\t\t<LINK ID=\"ins_" << *linkIt << "\"" << std::endl;
+         stream << "\t\t<LINK ID=\"ins_" << translateCLKtoFRG(link_bank, *linkIt) << "\"" << std::endl;
          stream << "\t\t\tVALID=\"" << status << "\"" << std::endl;
          stream << "\t\t\tTAG=\"T\"" << std::endl;
          stream << "\t\t></LINK>" << std::endl;
@@ -1014,6 +1084,8 @@ void outputOutXML(AMOS::Bank_t &edge_bank, const std::vector<AMOS::Scaffold_t> &
    stream << "\t</UNUSED>" << std::endl;
    stream << "</GROUPING>" << std::endl;
    stream.close();
+
+   link_bank.close();
 }
 
 void outputBAMBUS(
@@ -1026,7 +1098,7 @@ void outputBAMBUS(
 {
    outputLibrary(bank, outputPrefix, debug);
    outputEvidenceXML(bank, contig_bank, outputPrefix, debug);
-   outputOutXML(edge_bank, scaffs, outputPrefix, debug);
+   outputOutXML(bank, edge_bank, scaffs, outputPrefix, debug);
 }
 
 void outputResults(

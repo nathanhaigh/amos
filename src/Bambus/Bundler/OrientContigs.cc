@@ -1,11 +1,4 @@
 //TODO: Fix How we compute positions (need to account for stddev when merging edges)
-//TODO: Fix Compute of overlap in motif, currently gaps count as an overlap but they should not
-//      once it is updated to be a gapped contig structure, use the gaps to adjust overlaps, same goes for contains
-
-// Below is fixed
-// Validate that rescue edges match length and orientation before trying to rescue them
-// Fix the missing compression of node 2338 that used to exist but is removed by transitive reduction!
-// The missing motif is due to a node being removed by the skip edges fuction. Edge 4868 between nodes 189 and 2338
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -291,7 +284,7 @@ contigOrientation getOrientationByAllEdges(ID_t nodeID,
                         
    set<ID_t, EdgeWeightCmp>* s = ctg2lnk[nodeID];
    ContigEdge_t cte;
-   double orientWeights[2];
+   double orientWeights[2] = {0, 0};
    double max = 0;
    contigOrientation maxOrient = NONE;
    
@@ -378,7 +371,6 @@ int32_t computeContigPositions(
    firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
    secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
    */
-
    // go on its good reconcile it
    double weight = (double)cte.getContigLinks().size()/getTotalWeightEdge(first.getIID(), ctg2lnk, edge_bank);
    firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
@@ -433,13 +425,9 @@ int32_t computeContigPositionUsingAllEdges(ID_t &myID,
             if (computeContigPositions(first, second, cte, ctg2srt, ctg2ort, ctg2lnk, edge_bank) == INVALID_EDGE) {
        	       // mark edge as bad
                cerr << "BAD DST EDGE: " << cte.getIID() << " between " << cte.getContigs().first << " and " << cte.getContigs().second << " with dist " << cte.getSize() << " and std " << cte.getSD() << " and the orientation is " << cte.getAdjacency() << endl;
-                badCount++;
-
                 // update the edge in the bank so it is marked bad
                 setEdgeStatus(cte, edge_bank, BAD_DST);
              } else {
-                goodCount++;
-
                 // update the edge in the bank so it is marked good
                 setEdgeStatus(cte, edge_bank, GOOD_EDGE);
              }
@@ -771,6 +759,7 @@ double mergeContigs(ID_t newIID,
       edge_bank.fetch(*i, cte);
       bool skipEdge = true;
 
+      //TODO: output the content of all motifs as well
       //TODO: don't erase the edge, remove it from tiling but then add a new edge to the tiling and bank
       // while we're at it, orient by the first edge we see to the source contig since they should all be consistent edges
       if (globals.debug >= 3) {
@@ -1282,7 +1271,8 @@ int main(int argc, char *argv[]) {
    // track visisted nodes
    hash_map<ID_t, bool, hash<ID_t>, equal_to<ID_t> > visited;              // contigs we've processed
 
-   queue<ID_t> current_nodes;
+   priority_queue<pair<ID_t, uint32_t>, vector<pair<ID_t, uint32_t> >, EdgePairCmp> current_nodes;
+   pair<ID_t, uint32_t> nodeToWeight;
 
    Scaffold_t scaff;
    std::vector<Tile_t> tiles;
@@ -1311,19 +1301,20 @@ int main(int argc, char *argv[]) {
          ctg2ort[ctg.getIID()] = FWD;
          ctg2srt[ctg.getIID()] = 0;
       }
-         
-      current_nodes.push(ctg.getIID());
+       
+      nodeToWeight.first = ctg.getIID();
+      nodeToWeight.second = MAX_SIZE;  
+      current_nodes.push(nodeToWeight);
       if (globals.debug >= 2) { 
          cerr << "PUSHING NODE " << ctg.getIID() << " AND SIZE IS " << current_nodes.size() << endl;
       }
       // process all the nodes in this connected component
       while (current_nodes.size() != 0) {
-         ID_t myID = current_nodes.front();
+         ID_t myID = current_nodes.top().first;
          current_nodes.pop();
-
-         if (visited[myID] == true) { continue; }
          visited[myID] = true;
 
+int max = 0;
          // keep track of max weight edge for this contig, if we drop too low, ignore it
          set<ID_t, EdgeWeightCmp>* s = ctg2lnk[myID];
          for (set<ID_t, EdgeWeightCmp>::iterator i = s->begin(); i != s->end(); i++) {
@@ -1332,6 +1323,31 @@ int main(int argc, char *argv[]) {
             edge_bank.fetch(*i, cte);
             checkEdge(cte);
             ID_t otherID = getEdgeDestination(myID, cte);
+
+            // do not process this edge if we have a higher weight node waiting, just add it to our queue
+            if (current_nodes.size() > 0 && current_nodes.top().second > cte.getLinks().size()) {
+               if (visitedEdges[cte.getIID()] == 0) {
+                  nodeToWeight.first = otherID;
+                  nodeToWeight.second = cte.getLinks().size();
+                  current_nodes.push(nodeToWeight);
+                }
+                continue;
+             }
+
+             // if we hit a node that is not yet initialized, try to initialize it using it's highest neighbor
+             // TODO: it would be better to implement scaffold merging instead and initialize the node since its highest initialized neighbor is not necessarely its highest neighbor
+             if (ctg2ort[myID] == NONE && visitedEdges[cte.getIID()] == 0) {
+if (max < cte.getLinks().size()) { max = cte.getLinks().size(); } 
+                if (ctg2ort[otherID] != NONE) {
+                  if (globals.debug >=2) {
+                     cerr << "WE HIT UNINITIALIZED NODE " << myID << " using edge " << cte.getIID() <<  " (" << cte.getContigs().first << ", " << cte.getContigs().second << ") AND IM BACKPEDALING TO NODE " << otherID << " THIS NODE IS " << (max-cte.getLinks().size()) << " WORSE THAN BEST UNINITIALIZED" << endl;
+                  }
+                  nodeToWeight.first = otherID;
+                  nodeToWeight.second = cte.getLinks().size(); 
+                  current_nodes.push(nodeToWeight);
+                }
+                continue;
+            }
 
             // orient the node
             contigOrientation orient = getOrientationByAllEdges(otherID, ctg2ort, ctg2lnk, edge_bank);
@@ -1381,7 +1397,6 @@ int main(int argc, char *argv[]) {
                   contig_bank.fetch(cte.getContigs().second, second);
 
                   ctg2ort[otherID] = orient;
-                  cerr << "SET ORIENT FOR NODE " << otherID << " TO " << orient << endl;
                   ctg2edges[oss.str()] = cte.getAdjacency();
 
                   computeContigPositionUsingAllEdges(myID, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank, goodCount, badCount);
@@ -1423,17 +1438,22 @@ int main(int argc, char *argv[]) {
                      }
                      ctg2scf[otherID] = scfIID;
                      addTile(tiles, otherID, tile);
+                     goodCount++; 
+                  } else {
+                     badCount++;
                   }
                }
                edges.push_back(cte.getIID());
                visitedEdges[cte.getIID()] = 1;
-            }
             
-            if (!isBadEdge(cte)) {
-               current_nodes.push(otherID);
+               if (!isBadEdge(cte)) {
+                  nodeToWeight.first = otherID;
+                  nodeToWeight.second = cte.getLinks().size();
+                  current_nodes.push(nodeToWeight);
                
-               if (globals.debug >= 2) {
-                  cerr << "PUSHING NODE " << otherID << " WHILE PROCESSING " << myID << " AND EDGE WAS " << cte.getStatus() << " AND SIZE IS " << current_nodes.size() << endl;
+                  if (globals.debug >= 2) {
+                     cerr << "PUSHING NODE " << otherID << " WHILE PROCESSING " << myID << " AND EDGE WAS " << cte.getStatus() << " AND SIZE IS " << current_nodes.size() << endl;
+                  }
                }
             }
          }

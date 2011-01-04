@@ -16,8 +16,8 @@ use TIGR::Foundation;
 use TIGR::FASTAreader;
 use TIGR::FASTArecord;
 
-use TIGR::AsmLib;
 use AMOS::DotLib;
+use TIGR::AsmLib;
 
 my $base = new TIGR::Foundation;
 
