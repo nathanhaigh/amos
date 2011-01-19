@@ -26,6 +26,20 @@ prompt reply.
 Version Release History
 =======================
 
+Version 3.0.0 - December 2010
+
+     * New version of the scaffolder, Bambus 2.0
+     * New lightweight, parametrable assembler based on Minimus, Minimo
+     * Experimental support for Qt 4 in Hawkeye
+     * Updated unitigger for Minimus, Unitigger
+     * Compute the complexity of a genome with genome-complexity (http://www.biomedcentral.com/1471-2105/11/21)
+     * Utility that can convert large fastq files into a bank, fast2amos
+     * Ability to build only core AMOS binaries with Autoconf
+     * Support for writing SAM format in bank2contig
+     * toAmos now automatically reads mate pairs in FASTA files (reads ending in /1 or .1)
+     * libSlice - correctly compute consensus even with very deep coverage
+     * Many small updates and bug fixes
+
 Version 2.0.5 - March 2008
 
      * `amosvalidate' assembly validation pipeline released
