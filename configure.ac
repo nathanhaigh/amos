@@ -10,6 +10,10 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_LIBOBJ_DIR([src/GNU])
 AM_INIT_AUTOMAKE(1.8)
 
+# allow patters relating to CA
+m4_pattern_allow([^AS_UTL])
+m4_pattern_allow([^AS_MSG])
+
 # declare some precious variables
 AC_ARG_VAR(PERL, [perl command])
 AC_ARG_VAR(NUCMER, [nucmer command])
@@ -78,6 +82,7 @@ AC_SYS_LARGEFILE
 AMOS_C_BITFIELDS
 AMOS_QT
 AMOS_BOOST
+AMOS_CA
 
 # check for functions which can be replaced with libGNU modules:
 # getopt strtod strtol

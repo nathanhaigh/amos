@@ -442,6 +442,131 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
   fi
 ])
 
+## -- AMOS LINK TO CA -------------------------------------------------------------
+# @synopsys AMOS_CA
+#  [--with-CA-dir=DIR]
+#
+# @summary Directory to use for linking against CA. Used for parsing CA output.
+#
+# The following variables are set to either "yes" or "no"
+#
+# have_ca             // if CA was found
+# have_ca_test        // if we found the CA files we need
+# 
+# Additionally, the following variables are exporteD:
+#
+# which respectively contain an -l flag for CA libraries and a -I flag for the includes.
+#
+# Options:
+#
+# --with-CA-dir=DIR: DIR is equal to $CADIR if you have followed the
+# installation instructions. Header files are in
+# DIR/../../src.
+#
+AC_DEFUN([AMOS_CA],
+[
+  AC_REQUIRE([AC_PROG_CXX])
+  AC_REQUIRE([AC_PATH_X])
+  AC_REQUIRE([AC_PATH_XTRA])
+
+  AC_MSG_CHECKING([for CA])
+
+  AC_ARG_WITH([CA-dir],
+    [  --with-CA-dir=DIR       DIR is equal to CADIR if you have followed the
+                          installation instructions. Header files are in DIR/../src])
+
+  if test x"$with_CA_dir" = x"no"; then
+    # user disabled Boost. Leave cache alone.
+    have_ca="disabled"
+  else
+    # "yes" is a bogus option
+    if test x"$with_CA_dir" = xyes; then
+      with_CA_dir=
+    fi
+    # check for some answers
+    if test x"$with_CA_dir" != x; then
+      amos_ca_dir="$with_CA_dir"
+    else
+      amos_ca_dir=
+    fi
+    have_ca=no
+    # Check whether we were supplied with the whole answer
+    if test x"$amos_ca_dir" != x; then
+	    have_ca=yes
+    fi # all $amos_ca_* are set
+  fi   # $have_ca reflects the system status
+  if test x"$have_ca" = xyes; then
+    CA_DIR="$amos_ca_dir"
+    CA_LDADD="$amos_ca_dir/lib/libCA.a"
+    CA_CXXFLAGS="-I$amos_ca_dir/../src -I$amos_ca_dir/../src/AS_MSG -I$amos_ca_dir/../src/AS_UTL -DAMOS_HAVE_CA"
+    # All variables are defined, report the result
+    AC_MSG_RESULT([$have_ca])
+  else
+    # CA was not found
+    CA_LDADD=
+    CA_CXXFLAGS=
+    CA_DIR=
+    AC_MSG_RESULT([$have_ca])
+  fi
+  AC_SUBST(CA_LDADD)
+  AC_SUBST(CA_CXXFLAGS)
+  AC_SUBST(CA_DIR)
+
+  # Check if CA can actually be used as expected
+  AC_MSG_CHECKING(whether CA works)
+  AC_CACHE_VAL(ac_cv_ca_test_result,
+  [
+    ac_cv_ca_test_result="no"
+
+    if test x"$have_ca" = xyes; then
+      cat > amos_ca_test.h << EOF
+#include <utility>
+#include "AS_MSG_pmesg.h" 
+
+EOF
+
+      cat > amos_ca_main.$ac_ext << EOF
+#include "amos_ca_test.h"
+
+int main( int argc, char **argv )
+{
+   AS_MSG_setFormatVersion(1);
+
+   GenericMesg pmesg;
+   pmesg.t = MESG_FRG;
+   if (pmesg.t == MESG_FRG) {
+      return 0;
+   } else if (pmesg.t == MESG_CCO) {
+      return 1;
+   }
+}
+EOF
+
+
+    if AC_TRY_EVAL("$CXX $CA_CXXFLAGS -c $CXXFLAGS -o amos_ca_main.o amos_ca_main.$ac_ext"); then
+      if AC_TRY_EVAL("$CXX $LIBS -o amos_ca_main amos_ca_main.o $CA_LDADD"); then
+        ac_cv_ca_test_result="yes"
+      fi
+    fi
+
+      if test "$ac_cv_ca_test_result" = "no"; then
+        echo "$as_me: failed program was:" >&AS_MESSAGE_LOG_FD()
+        sed 's/^/| /' amos_ca_main.$ac_ext >&AS_MESSAGE_LOG_FD()
+
+        # CA  does not work turn it off
+	CA_LDADD=
+        CA_CXXFLAGS=
+        CA_DIR=
+      fi
+
+    fi # if have_ca
+    
+  ])dnl AC_CACHE_VAL ac_cv_ca_test_result
+  AC_MSG_RESULT([$ac_cv_ca_test_result])
+  rm -f amos_ca_test.h amos_ca_main.$ac_ext amos_ca_main.o amos_ca_main
+
+  have_ca_test=$ac_cv_ca_test_result
+])
 
 ##-- AMOS_BOOST -------------------------------------------------------------------
 # @synopsis AMOS_BOOST
@@ -528,7 +653,7 @@ AC_DEFUN([AMOS_BOOST],
         AMOS_PATH_BOOST_DIRECT
         if test x"$amos_boost_dir" = x; then
           # Problem with finding complete Boost. Cache the known absence of Boost.
-          ac_cv_have_qt="have_boost=no"
+          ac_cv_have_boost="have_boost=no"
         else
           # Record where we found Boost for the cache.
           ac_cv_have_boost="have_boost=yes                  \
