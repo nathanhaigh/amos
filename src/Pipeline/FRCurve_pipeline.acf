@@ -1,0 +1,39 @@
+# The "FRCurve" pipeline
+
+#? Feature-Response Curve pipeline
+
+#? Usage:          
+#?      FRCurve_pipeline [params] \
+#?		-D GENOME_SIZE=<n>		- Genome size (number of bps)
+#?		-D BANK=<n>			- AMOS bank name
+#?		
+#? Output:
+#?		The Feature-Response curve (FRC) is saved in file "FRC.txt", while 
+#?		FRCs for each feature type are saved respectively in: 
+#?		"FRC_coverage.txt", "FRC_polymorphism.txt", "FRC_breakpoint.txt", 
+#?		"FRC_kmer.txt", "FRC_matepair.txt" and "FRC_misassembly.txt"
+
+#? Output file format:
+#?		Each file contains the FRCs in 3-columns format
+#?		- column 1 = feature threshold T;
+#?		- column 2 = contigs' N50 associated to the threshold T in column 1;
+#? 		- column 3 = cumulative size of the contigs whose number of features is <= T;
+#?
+
+BINDIR  	= /usr/local/bin
+
+# Genome size (number of bps)
+GENOME_SIZE = 1
+
+# Banks name
+BANK = bank.bnk
+
+#---Getting down to business---#
+
+## Running amosvalidate
+10: $(BINDIR)/amosvalidate $(BANK)
+
+## Compute Feature-Response Curve
+20: $(BINDIR)/FRCurve -g $(GENOME_SIZE) -b $(BANK)
+
+
