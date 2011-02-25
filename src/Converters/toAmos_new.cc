@@ -1012,6 +1012,7 @@ bool parseAsmFile(string fileName) {
           contig.setEID(AS_UID_toString(utg->eaccession));
           contig.setIID(minSeqID++);
           contig.setSequence(utg->consensus, utg->quality);
+
           for (int i = 0; i < utg->num_frags; i++) {
              ID_t readID = read_stream.lookupIID(AS_UID_toString(utg->f_list[i].eident));
              if (readID == NULL_ID) {
@@ -1022,8 +1023,16 @@ bool parseAsmFile(string fileName) {
              tile.source = readID;
              int start = (utg->f_list[i].position.bgn < utg->f_list[i].position.end ? utg->f_list[i].position.bgn : utg->f_list[i].position.end);
              tile.offset = start;
+             if (utg->f_list[i].position.bgn < utg->f_list[i].position.end) {
+                utg->f_list[i].position.end -= utg->f_list[i].delta_length;
+             } else {
+                utg->f_list[i].position.bgn -= utg->f_list[i].delta_length;
+             }
              tile.range.begin = utg->f_list[i].position.bgn - start;
              tile.range.end = utg->f_list[i].position.end - start;
+             for (int j = 0; j < utg->f_list[i].delta_length; j++) {
+                tile.gaps.push_back(utg->f_list[i].delta[j]);
+             }
              reads.push_back(tile);
          }
          contig.setReadTiling(reads);
@@ -1046,8 +1055,16 @@ bool parseAsmFile(string fileName) {
              tile.source = readID;
              int start = (ctg->pieces[i].position.bgn < ctg->pieces[i].position.end ? ctg->pieces[i].position.bgn : ctg->pieces[i].position.end);
              tile.offset = start;
+             if (ctg->pieces[i].position.bgn < ctg->pieces[i].position.end) {
+                ctg->pieces[i].position.end -= ctg->pieces[i].delta_length;
+             } else {
+                ctg->pieces[i].position.bgn -= ctg->pieces[i].delta_length;
+             }
              tile.range.begin = ctg->pieces[i].position.bgn - start;
              tile.range.end = ctg->pieces[i].position.end - start;
+             for (int j = 0; j < ctg->pieces[i].delta_length; j++) {
+                tile.gaps.push_back(ctg->pieces[i].delta[j]);
+             }
              reads.push_back(tile);
          }
          contig.setReadTiling(reads);
@@ -1077,7 +1094,7 @@ bool parseAsmFile(string fileName) {
           int32_t numLinks = clk->num_contributing;
           vector<ID_t> links;
           ContigLink_t ctl;
-          if (clk->overlap_type == AS_NO_OVERLAP) {
+          if (clk->overlap_type != AS_NO_OVERLAP) {
              numLinks--;
              uidseq.str("");
              uidseq << cte.getEID() << "_OVL";
