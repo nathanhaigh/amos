@@ -1220,6 +1220,7 @@ bool parseAsmFile(string fileName) {
         consensus.str("");
         qualseq.str("");
         id = line.substr(2, line.find_first_of(' ')-2);
+        readConsensus = true;
       }
       else if (curline[0] == '#') {
         readConsensus = false;
