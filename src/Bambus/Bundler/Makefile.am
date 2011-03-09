@@ -6,6 +6,7 @@ bin_PROGRAMS = \
 	Bundler \
 	clk \
 	MarkRepeats	\
+	FilterEdgesByCluster \
 	OrientContigs
 
 dist_bin_SCRIPTS = \
@@ -52,5 +53,12 @@ OrientContigs_LDADD = \
 	$(top_builddir)/src/GNU/libGNU.a
 OrientContigs_SOURCES = \
 	Utilities_Bundler.cc Utilities_Bundler.hh OrientContigs.cc
+
+FilterEdgesByCluster_LDADD = \
+        $(top_builddir)/src/Common/libCommon.a \
+        $(top_builddir)/src/AMOS/libAMOS.a \
+        $(top_builddir)/src/GNU/libGNU.a
+FilterEdgesByCluster_SOURCES = \
+        Utilities_Bundler.cc Utilities_Bundler.hh FilterEdgesByCluster.cc
 
 ##-- END OF MAKEFILE --##
