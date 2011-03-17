@@ -1,6 +1,7 @@
 ##-- SUBDIRS TO RECURSE
 SUBDIRS = \
 	Bundler \
+	Output \
 	Untangler
 
 
