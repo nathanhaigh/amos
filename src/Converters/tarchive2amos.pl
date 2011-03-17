@@ -63,6 +63,7 @@ my $VERSION = '$Revision$ ';
 $base->setVersion($VERSION);
 
 $base->setLogFile("tarchive2amos.log");
+$base->setMihaiMode();
 
 my $HELPTEXT = qq~
 .USAGE.

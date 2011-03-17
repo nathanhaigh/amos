@@ -354,6 +354,12 @@ sub getOptions
     return $getopt_code;
 }
 
+=item B<$base->setMihaiMode(); >
+
+Display log messages on stderr.
+
+=cut
+
 sub setMihaiMode
 {
     my $self = shift;
