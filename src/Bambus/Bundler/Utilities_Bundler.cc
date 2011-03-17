@@ -28,7 +28,15 @@ void outputOutXML(const std::string &bank, AMOS::Bank_t &edge_bank, const std::v
 
 void outputAGP(AMOS::Bank_t &contig_bank, const std::vector<AMOS::Scaffold_t> &scaffs, const std::string& outputPrefix, int32_t debug);
 void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
+               std::vector<AMOS::Scaffold_t> &scaffs,
+               const std::string &outputPrefix,
+               int32_t debug);
+void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
                std::vector<AMOS::Scaffold_t> &scaffs, 
+               const std::string &outputPrefix,
+               bool allEdges, int32_t debug);
+void outputMotifs(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
+               std::vector<AMOS::Scaffold_t> &motifs,
                const std::string &outputPrefix,
                int32_t debug);
 void outputBAMBUS(const std::string &bank, 
@@ -211,7 +219,6 @@ AMOS::Size_t adjustSizeBasedOnAdjacency(AMOS::LinkAdjacency_t edgeAdjacency, AMO
    if (firstOrient != expectedOrient) {
       size *= -1;
    }
-std::cerr << "PROCESSING EDGE OF LENGTH " << gapSize << " ORI " << edgeAdjacency << " AND THE SIZE IS ADJUSTED TO BE " << size << std::endl;
    return size;
 }
 
@@ -704,8 +711,17 @@ void outputEdges(std::ostream &stream, AMOS::Bank_t &edge_bank, AMOS::ID_t currC
 }
 
 void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
+               std::vector<AMOS::Scaffold_t> &scaffs,
+               const std::string &outputPrefix,
+               int32_t debug)
+{
+   outputDOT(contig_bank, edge_bank, scaffs, outputPrefix, false, debug);
+}
+
+void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
                std::vector<AMOS::Scaffold_t> &scaffs, 
                const std::string &outputPrefix,
+               bool allEdges,
                int32_t debug)
 {
    AMOS::Contig_t ctg;
@@ -767,7 +783,7 @@ void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
          AMOS::ContigEdge_t cte;
          edge_bank.fetch(*edgeIt, cte);
 
-         if (ctginscf[cte.getContigs().first] != 1 || ctginscf[cte.getContigs().second] != 1) {
+         if (allEdges == false && (ctginscf[cte.getContigs().first] != 1 || ctginscf[cte.getContigs().second] != 1)) {
             continue;
          }
 
@@ -795,21 +811,21 @@ void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
                std::cerr << "****The orient we get are " << first << " and second is " << secondCtgOrient << std::endl;
             }
             if (first == edgeFirstCtgOrient && secondCtgOrient == edgeSecondCtgOrient) {
-               edgeTypes[0] = cte.getIID();
-               
+               edgeTypes[0] = (edgeTypes[0] == 0 || !isBadEdge(cte.getIID(), edge_bank) ? cte.getIID() : edgeTypes[0]);
+ 
                if (debug >= 3) { std::cerr << "*** MAIN EDGE BETWEEN " << cte.getContigs().first << " AND " << cte.getContigs().second << " IS " << cte.getAdjacency() <<std::endl; }
             }
             else if (first != edgeFirstCtgOrient && secondCtgOrient == edgeSecondCtgOrient) {
                if (debug >= 3) { std::cerr << "*** D, S EDGE BETWEEN " << cte.getContigs().first << " AND " << cte.getContigs().second << " IS " << cte.getAdjacency() <<std::endl;}
-               edgeTypes[1] = cte.getIID();
+               edgeTypes[1] = (edgeTypes[1] == 0 || !isBadEdge(cte.getIID(), edge_bank) ? cte.getIID() : edgeTypes[1]);
             }
             else if (first == edgeFirstCtgOrient && secondCtgOrient != edgeSecondCtgOrient) {
                if (debug >= 3) { std::cerr << "*** S, D EDGE BETWEEN " << cte.getContigs().first << " AND " << cte.getContigs().second << " IS " << cte.getAdjacency() <<std::endl; }
-               edgeTypes[2] = cte.getIID();
+               edgeTypes[2] = (edgeTypes[2] == 0 || !isBadEdge(cte.getIID(), edge_bank) ? cte.getIID() : edgeTypes[2]);
             }
             else {
                if (debug >= 3) { std::cerr << "*** D, D EDGE BETWEEN " << cte.getContigs().first << " AND " << cte.getContigs().second << " IS " << cte.getAdjacency() <<std::endl; }
-               edgeTypes[3] = cte.getIID();
+               edgeTypes[3] = (edgeTypes[3] == 0 || !isBadEdge(cte.getIID(), edge_bank) ? cte.getIID() : edgeTypes[3]);
             }
          } else {
                std::cerr << "IN SCAFFOLD " << itScf->getIID() << " ENCOUNTERED EDGE " << cte.getIID() << "THAT IVE ALREADY SEEN!!" << std::endl;
@@ -821,6 +837,29 @@ void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
       stream << "}" << std::endl;
    }
    stream  << "}" << std::endl;
+   stream.close();
+}
+
+void outputMotifs(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
+               std::vector<AMOS::Scaffold_t> &motifs,
+               const std::string &outputPrefix,
+               int32_t debug)
+{
+   // output the dot file of motifs
+   outputDOT(contig_bank, edge_bank, motifs, outputPrefix + ".noreduce", true, debug);
+
+   // output the set of motifs
+   std::string outputFile = outputPrefix + ".sets"; 
+   std::ofstream stream;
+   stream.open(outputFile.c_str(), std::ios::out);
+
+   for(std::vector<AMOS::Scaffold_t>::iterator itScf = motifs.begin(); itScf < motifs.end(); itScf++) {
+      stream << itScf->getEID() << " :";
+      for (std::vector<AMOS::Tile_t>::const_iterator tileIt = itScf->getContigTiling().begin(); tileIt < itScf->getContigTiling().end(); tileIt++) {
+         stream << " " << tileIt->source; 
+      }
+      stream << std::endl;
+   }
    stream.close();
 }
 
@@ -1001,6 +1040,7 @@ void outputOutXML(const std::string &bank, AMOS::Bank_t &edge_bank, const std::v
       exit(1);
    }
 
+   HASHMAP::hash_map<AMOS::ID_t, int, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > outputLinks; 
    std::string outputFile = outputPrefix + ".out.xml";
    std::ofstream stream;
    stream.open(outputFile.c_str(), std::ios::out);
@@ -1033,6 +1073,9 @@ void outputOutXML(const std::string &bank, AMOS::Bank_t &edge_bank, const std::v
                stream << "\tVALID=\"VALID\"" << std::endl;
                stream << "\tTAG=\"T\"" << std::endl;
                stream << "></LINK>" << std::endl;
+
+               // store list of links weve output
+               outputLinks[(*linkIt)] = 1;
             }
          }
       }
@@ -1049,7 +1092,7 @@ void outputOutXML(const std::string &bank, AMOS::Bank_t &edge_bank, const std::v
       if (!isBadEdge(cte)) {
          continue;
       }
-      
+     
       switch (cte.getStatus()) {
          case BAD_THRESH:
          case BAD_RPT:
@@ -1078,13 +1121,26 @@ void outputOutXML(const std::string &bank, AMOS::Bank_t &edge_bank, const std::v
          stream << "\t\t\tVALID=\"" << status << "\"" << std::endl;
          stream << "\t\t\tTAG=\"T\"" << std::endl;
          stream << "\t\t></LINK>" << std::endl;
+
+         outputLinks[(*linkIt)] = 1;
+      }
+   }
+
+   // finally make sure all links have been output
+   for (AMOS::IDMap_t::const_iterator ci = link_bank.getIDMap().begin(); ci; ci++) {
+
+      if (outputLinks[ci->iid] != 1) {
+         stream << "\t\t<LINK ID=\"ins_" << translateCLKtoFRG(link_bank, ci->iid) << "\"" << std::endl;
+         stream << "\t\t\tVALID=\"" << "UNUSED" << "\"" << std::endl;
+         stream << "\t\t\tTAG=\"T\"" << std::endl;
+         stream << "\t\t></LINK>" << std::endl;
       }
    }
 
    stream << "\t</UNUSED>" << std::endl;
    stream << "</GROUPING>" << std::endl;
    stream.close();
-
+ 
    link_bank.close();
 }
 
@@ -1116,6 +1172,9 @@ void outputResults(
          break;
       case DOT:
          outputDOT(contig_bank, edge_bank, scaffs, outputPrefix, debug);
+         break;
+      case MOTIFS:
+         outputMotifs(contig_bank, edge_bank, scaffs, outputPrefix, debug);
          break;
       case BAMBUS:
          outputBAMBUS(bank, contig_bank, edge_bank, scaffs, outputPrefix, debug);

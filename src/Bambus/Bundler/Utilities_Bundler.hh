@@ -54,13 +54,15 @@ namespace Bundler
    static const int32_t UNINITIALIZED = -99999999;
    static const int32_t INVALID_EDGE  = -99999998;
 
-   
+   static const AMOS::Status_t MOTIF_SCAFFOLD = 'M';
+   static const AMOS::Status_t LINEAR_SCAFFOLD = 'L';
+ 
    // define constants for orientation of contigs
    enum contigOrientation {FWD, REV, NONE};
    enum edgeStatus {NULL_STATUS, BAD_THRESH, BAD_SKIP, BAD_RPT, BAD_ORI, BAD_SCF, BAD_DST, BAD_TRNS, GOOD_EDGE};
    enum validateNeighborType {ALL, INCOMING, OUTGOING};
 
-   enum outputType{AGP, DOT, BAMBUS};
+   enum outputType{AGP, DOT, MOTIFS, BAMBUS};
 
    extern HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *cte2weight;
 

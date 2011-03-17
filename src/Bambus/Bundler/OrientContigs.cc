@@ -1,5 +1,4 @@
 //TODO: Fix How we compute positions (need to account for stddev when merging edges)
-
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,6 +33,8 @@ using namespace Bundler;
 
 // constants for maximum satisfied edge
 static const int32_t  MAX_STDEV         =  3;
+static const int32_t  INITIAL_STDEV     =  3;
+static const double   STDEV_STEP_SIZE   =  0.5;
 
 struct config {
    bool        initAll;
@@ -339,12 +340,111 @@ int32_t reconcilePositions(int32_t oldPosition, int32_t newPosition, double weig
    }
 }
 
+edgeStatus isEdgeConsistent(
+                     const Contig_t &first,                     const Contig_t &second,
+                     const ContigEdge_t &cte,
+                     hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
+                     hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
+                     hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> >& ctg2scf)
+{
+   // make sure these nodes are in the same scaffold
+   if (ctg2scf[first.getIID()] != ctg2scf[second.getIID()] || ctg2scf[first.getIID()] == UNINITIALIZED) {
+      return BAD_SCF;
+   }
+
+   // check the orientation
+   if ((getOrientation(ctg2ort[first.getIID()], cte) != ctg2ort[second.getIID()]) || (getOrientation(ctg2ort[second.getIID()], cte) != ctg2ort[first.getIID()])) {
+      return BAD_ORI;
+   }
+
+   // now check the size
+   int32_t size = abs(adjustSizeBasedOnAdjacency(
+                     cte.getAdjacency(),
+                     cte.getSize(),
+                     first.getLength(),
+                     second.getLength(),
+                     ctg2ort[first.getIID()],
+                     ctg2ort[second.getIID()],
+                     cte.getSD()/* * MAX_STDEV*/));
+   size -= abs(ctg2srt[second.getIID()] - ctg2srt[first.getIID()]);
+   if (abs(size) >= (MAX_STDEV * cte.getSD())) {
+      return BAD_DST;
+   }
+
+   return GOOD_EDGE;
+}
+
+edgeStatus isEdgeConsistent(
+                     const Contig_t &first,
+                     const Contig_t &second,
+                     const ContigEdge_t &cte,
+                     hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
+                     hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt)
+{
+   hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > ctg2scf;
+   ctg2scf[first.getIID()] = ctg2scf[second.getIID()] = 1;
+
+   return isEdgeConsistent(first, second, cte, ctg2ort, ctg2srt, ctg2scf);
+}
+
+bool verifyEdgeStatus(Contig_t target, set<ID_t, EdgeWeightCmp>* s,
+              hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
+              hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
+              hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
+              Bank_t &edge_bank, Bank_t &contig_bank)
+{
+   if (s == NULL || s->size() == 0) {
+      return true;
+   }
+
+   bool result = true;
+   ID_t myID = target.getIID();
+   ContigEdge_t cte;
+   Contig_t first;
+
+   for (set<ID_t, EdgeWeightCmp>::iterator i = s->begin(); i != s->end(); i++) {
+      edge_bank.fetch(*i, cte);
+      // only use incoming edges to position ourselves on the second pass
+      if (cte.getContigs().second != myID) {
+         continue;
+      }
+
+      if (!isBadEdge(*i, edge_bank) && ctg2srt[getEdgeDestination(myID, cte)] != UNINITIALIZED) {
+         // fetch the other node
+         contig_bank.fetch(getEdgeDestination(myID, cte), first);
+
+         result = result & (isEdgeConsistent(first, target, cte, ctg2ort, ctg2srt) == GOOD_EDGE);
+         if (result == false) {
+            break;
+         }
+      }
+   }
+
+   return result;
+}
+
 int32_t computeContigPositions(
       Contig_t &first, Contig_t &second, ContigEdge_t &cte,
       hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
       hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
       hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk, 
-      Bank_t &edge_bank) {
+      Bank_t &edge_bank, double initialSD) {
+
+   Range_t nullRange(0,0);
+   Range_t overlap(10,15);
+   double sd = initialSD;
+   double stepSize = STDEV_STEP_SIZE;
+
+   int32_t firstPosition = INVALID_EDGE;
+   int32_t secondPosition = INVALID_EDGE;
+   int32_t initialFirst = INVALID_EDGE;
+   int32_t initialSecond = INVALID_EDGE;
+
+  // try moving the node both backwards and forwards as much as we can
+  for (int i = FWD; i < REV+1; i++) {
+    double adjustment = (i == FWD ? cte.getSD() : -cte.getSD());
+
+   while (nullRange != overlap && sd <= MAX_STDEV) {  
    int32_t size = adjustSizeBasedOnAdjacency(
                      cte.getAdjacency(), 
                      cte.getSize(), 
@@ -352,11 +452,11 @@ int32_t computeContigPositions(
                      second.getLength(),
                      ctg2ort[first.getIID()], 
                      ctg2ort[second.getIID()],
-                     cte.getSD()/* * MAX_STDEV*/);
+                     adjustment * sd);
    
    // compute the contig positions
-   int32_t firstPosition = computePosition(ctg2srt[second.getIID()], -size);
-   int32_t secondPosition = computePosition(ctg2srt[first.getIID()], size);
+   firstPosition = computePosition(ctg2srt[second.getIID()], -size);
+   secondPosition = computePosition(ctg2srt[first.getIID()], size);
 
    if (globals.debug >= 3) {
       cerr << "Edge between " << cte.getContigs().first << " and " << cte.getContigs().second << " and size " << cte.getSize() << " and sd " << cte.getSD() << " of type " << cte.getAdjacency() << endl;
@@ -385,6 +485,29 @@ int32_t computeContigPositions(
    We need to incorporate other edge's SD when reconciling
    */
 
+   // check for overlap
+   Range_t firstRange(firstPosition, first.getLength()+firstPosition);
+   Range_t secondRange(secondPosition, second.getLength()+secondPosition);
+   overlap = (firstRange & secondRange);
+
+   if (initialFirst == INVALID_EDGE) {
+      initialFirst = firstPosition;
+      initialSecond = secondPosition;
+   }
+
+   sd += stepSize;
+   }
+if (firstPosition != INVALID_EDGE && secondPosition != INVALID_EDGE) {
+break;
+}
+}
+
+   // if we never found a non-overlapping contig, just go back to what we started with
+   if (overlap != nullRange) {
+      firstPosition =  initialFirst;
+      secondPosition = initialSecond;
+   }
+
    if (firstPosition != INVALID_EDGE && secondPosition != INVALID_EDGE) {
       ctg2srt[first.getIID()] = firstPosition;
       ctg2srt[second.getIID()] = secondPosition;
@@ -400,11 +523,11 @@ int32_t computeContigPositions(
 }
 
 
-int32_t computeContigPositionUsingAllEdges(ID_t &myID,
+int32_t computeContigPositionUsingAllEdges(ID_t myID,
 	      hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
 	      hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
 	      hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
-	      Bank_t &edge_bank, Bank_t &contig_bank, uint32_t &goodCount, uint32_t &badCount) {
+	      Bank_t &edge_bank, Bank_t &contig_bank, double initialSD, bool allowBad) {
    set<ID_t, EdgeWeightCmp>* s = ctg2lnk[myID];
    ContigEdge_t cte;
    Contig_t first;
@@ -416,59 +539,56 @@ int32_t computeContigPositionUsingAllEdges(ID_t &myID,
    }
    else {
       // should we sort the edges by SD first and then weight?
+     int oldPosition = ctg2srt[myID];
+
+      // if we're making a second pass, reset our position and let it be computed again
+      if (allowBad == false) { 
+         ctg2srt[myID] = UNINITIALIZED;
+      }
+ 
       for (set<ID_t, EdgeWeightCmp>::iterator i = s->begin(); i != s->end(); i++) {
          edge_bank.fetch(*i, cte);
-         contig_bank.fetch(cte.getContigs().first, first);
-         contig_bank.fetch(cte.getContigs().second, second);
+         // only use incoming edges to position ourselves on the second pass
+         if (allowBad == false && cte.getContigs().second != myID) {
+            continue;
+         }
 
-         if (!isBadEdge(*i, edge_bank) && ctg2ort[getEdgeDestination(myID, cte)] != NONE) {
-            if (computeContigPositions(first, second, cte, ctg2srt, ctg2ort, ctg2lnk, edge_bank) == INVALID_EDGE) {
+         if (!isBadEdge(*i, edge_bank) && ctg2srt[getEdgeDestination(myID, cte)] != UNINITIALIZED) {
+            // fetch the other node
+            contig_bank.fetch(getEdgeDestination(myID, cte), second);
+       
+            int32_t result = (myID == cte.getContigs().first ? computeContigPositions(first, second, cte, ctg2srt, ctg2ort, ctg2lnk, edge_bank, initialSD) : computeContigPositions(second, first, cte, ctg2srt, ctg2ort, ctg2lnk, edge_bank, initialSD));
+ 
+            if (result == INVALID_EDGE) {
+               if (allowBad == false) {
+                  ctg2srt[myID] = oldPosition;
+                  break;
+               }
+
        	       // mark edge as bad
                cerr << "BAD DST EDGE: " << cte.getIID() << " between " << cte.getContigs().first << " and " << cte.getContigs().second << " with dist " << cte.getSize() << " and std " << cte.getSD() << " and the orientation is " << cte.getAdjacency() << endl;
-                // update the edge in the bank so it is marked bad
-                setEdgeStatus(cte, edge_bank, BAD_DST);
-             } else {
-                // update the edge in the bank so it is marked good
-                setEdgeStatus(cte, edge_bank, GOOD_EDGE);
-             }
-	  }
-      }
+               // update the edge in the bank so it is marked bad
+               setEdgeStatus(cte, edge_bank, BAD_DST);
+            } else {
+if (allowBad == false) {
+   if (verifyEdgeStatus(first, s, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank) == false) {
+cerr << "CANT MOVE NODES " << first.getIID() << " AND " << second.getIID() << " ANY CLOSER IT MESSES UP AN EDGE" << endl;
+      ctg2srt[myID] = oldPosition;
+      break;
    }
 }
 
-edgeStatus isEdgeConsistent(
-                     const Contig_t &first,
-                     const Contig_t &second,
-                     const ContigEdge_t &cte, 
-                     hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
-                     hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
-                     hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> >& ctg2scf)
-{
-   // make sure these nodes are in the same scaffold
-   if (ctg2scf[first.getIID()] != ctg2scf[second.getIID()] || ctg2scf[first.getIID()] == UNINITIALIZED) {
-      return BAD_SCF;
-   }
-   
-   // check the orientation
-   if ((getOrientation(ctg2ort[first.getIID()], cte) != ctg2ort[second.getIID()]) || (getOrientation(ctg2ort[second.getIID()], cte) != ctg2ort[first.getIID()])) {
-      return BAD_ORI;
-   }
 
-   // now check the size
-   int32_t size = abs(adjustSizeBasedOnAdjacency(
-                     cte.getAdjacency(), 
-                     cte.getSize(), 
-                     first.getLength(),
-                     second.getLength(),
-                     ctg2ort[first.getIID()], 
-                     ctg2ort[second.getIID()],
-                     cte.getSD()/* * MAX_STDEV*/));
-   size -= abs(ctg2srt[second.getIID()] - ctg2srt[first.getIID()]);
-   if (size >= (MAX_STDEV * cte.getSD())) {
-      return BAD_DST;
+
+               // update the edge in the bank so it is marked good
+               setEdgeStatus(cte, edge_bank, GOOD_EDGE);
+            }
+         }
+      }
+      if (ctg2srt[myID] == UNINITIALIZED) {
+         ctg2srt[myID] = oldPosition;
+      }
    }
-   
-   return GOOD_EDGE;
 }
 
 void addTile(std::vector<Tile_t> &tiles, ID_t contig, Tile_t &newTile) {
@@ -625,13 +745,21 @@ void updateEdge(
 }
 
 // replace a specified list of nodes by a single tiling
-double mergeContigs(ID_t newIID, 
+double mergeContigs(ID_t scfIID,
+                  ID_t newIID, 
+		  ID_t& maxEdgeIID,
                   set<ID_t> &toMerge, ID_t source, 
                   vector<Tile_t> &tiles, vector<ID_t> &edges, 
                   Bank_t &edge_bank, /*string comment,*/
                   hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
-                  hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk) {
+                  hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
+                  vector<Scaffold_t> &motifs,
+                  Status_t status) {
    hash_map<Pos_t, uint32_t, hash<Pos_t>, equal_to<Pos_t> > newTileGapIndex;
+   Scaffold_t motifScaffold;
+   vector<Tile_t> motifTiling;
+   vector<ID_t> motifEdges;
+ 
    Tile_t newTile;
    newTile.source = newIID;
    newTile.offset = UNINITIALIZED;
@@ -653,7 +781,9 @@ double mergeContigs(ID_t newIID,
          }
          int32_t gapSize = 0;
          bool contained = false;
-         
+        
+         // save this tile in the motif scaffold
+         motifTiling.push_back(*i);
          if (lastEnd != 0) {
             // new low contig
             if (i->offset < newTile.offset) {
@@ -759,13 +889,17 @@ double mergeContigs(ID_t newIID,
       edge_bank.fetch(*i, cte);
       bool skipEdge = true;
 
-      //TODO: output the content of all motifs as well
-      //TODO: don't erase the edge, remove it from tiling but then add a new edge to the tiling and bank
       // while we're at it, orient by the first edge we see to the source contig since they should all be consistent edges
       if (globals.debug >= 3) {
          cerr << "**EDGE: " << cte.getIID() << ": " << cte.getContigs().first << "->" << cte.getContigs().second << " AND THE ADJACENCY IS " << cte.getAdjacency() << endl;      
       }
-      
+      // store an old copy of this edge
+      ContigEdge_t oldEdge = cte;
+      std::ostringstream stream;
+      stream << maxEdgeIID++;
+      oldEdge.setIID(maxEdgeIID);
+      oldEdge.setEID(stream.str());
+cerr << "CREATED COPY OF EDGE " << cte.getIID() << " WITH ID " << oldEdge.getIID() << " FROM " << edge_bank.getIDMapSize() << endl;
       set<ID_t>::iterator it = toMerge.find(cte.getContigs().first);
       if (it != toMerge.end()) {
          // since we're the first node, adjust the size based on our distance to the end of the new contig
@@ -782,6 +916,8 @@ double mergeContigs(ID_t newIID,
       }
 
       if (skipEdge == false) {
+         edge_bank.append(oldEdge);
+         motifEdges.push_back(oldEdge.getIID());
          if (cte.getContigs().first == cte.getContigs().second) {
             if (globals.debug >= 3) { cerr << "REMOVING EDGE " << (*i) << endl; }
             edge_bank.remove(*i);
@@ -800,7 +936,16 @@ double mergeContigs(ID_t newIID,
    }
    ctg2lnk[newTile.source] = s;
    
-   //TODO: add the contig to the bank for real
+   std::ostringstream result;
+   result << newIID;
+
+   motifScaffold.setStatus(status);
+   motifScaffold.setIID(scfIID);
+   motifScaffold.setEID(result.str()); 
+   motifScaffold.setContigTiling(motifTiling);
+   motifScaffold.setContigEdges(motifEdges);
+   motifs.push_back(motifScaffold);
+
    addTile(tiles, newIID, newTile);
    return (double)totalOverlap / newTile.range.getLength();
 }
@@ -840,10 +985,12 @@ void validateMotif(set<ID_t> &t, ID_t source, ID_t sink, bool validateLowWeight,
 
 void reduceGraph(std::vector<Scaffold_t>& scaffs, 
                  Bank_t &contig_bank, 
-                 Bank_t &edge_bank, 
+                 Bank_t &edge_bank,
                  hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
-                 hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk) {
+                 hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
+                 vector<Scaffold_t> &motifs) {
    ID_t maxIID = contig_bank.getMaxIID()+1;
+   ID_t maxEdgeIID = edge_bank.getMaxIID()+1;
    uint32_t numUpdated = 0;
    uint32_t itNum = 0;
 
@@ -908,7 +1055,7 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs,
                validateMotif(t, i->source, curr, false, edge_bank, ctg2lnk);
                if (t.size() > 1) {
                   if (globals.debug >= 1) { cerr << "COLLAPSING LINEAR PATH : " << endl; }
-                  mergeContigs(maxIID++, t, i->source, s->getContigTiling(), s->getContigEdges(), edge_bank, ctg2ort, ctg2lnk);               
+                  mergeContigs(s->getIID(), maxIID++, maxEdgeIID, t, i->source, s->getContigTiling(), s->getContigEdges(), edge_bank, ctg2ort, ctg2lnk, motifs, LINEAR_SCAFFOLD);               
                } else {
                   i++;
                }
@@ -1094,7 +1241,7 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs,
                   // merge the contigs, if we were able to rescue low-weight edges, mark them
                   numUpdated++;
                   if (validateSkippedEdges) { resetEdges(edge_bank, skippedEdges, BAD_SKIP); }
-                  double overlapInMotif = mergeContigs(maxIID++, t, i->source, s->getContigTiling(), s->getContigEdges(), edge_bank, ctg2ort, ctg2lnk);
+                  double overlapInMotif = mergeContigs(s->getIID(), maxIID++, maxEdgeIID, t, i->source, s->getContigTiling(), s->getContigEdges(), edge_bank, ctg2ort, ctg2lnk, motifs, MOTIF_SCAFFOLD);
 
                   if (globals.debug >= 1) {
                      cerr << " WITH OVERLAP " << overlapInMotif << " HAS BEEN REPLACED WITH SINGLE NODE " << (maxIID-1) << endl;
@@ -1145,7 +1292,32 @@ void sortContigs(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &e
    }   
 }
 
-//TODO: Store scaffolds in bank as well as new contigs, split this code into several sections
+void compressGaps(std::vector<Scaffold_t> &scaffs,
+              hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
+              hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
+              hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
+              Bank_t &edge_bank, Bank_t &contig_bank) {
+
+   sortContigs(scaffs, contig_bank, edge_bank);
+   for(vector<Scaffold_t>::iterator s = scaffs.begin(); s < scaffs.end(); s++) {
+      Pos_t adjust = UNINITIALIZED;
+      hash_map<ID_t, Pos_t, hash<ID_t>, equal_to<ID_t> > locations;
+      hash_map<ID_t, bool, hash<ID_t>, equal_to<ID_t> > orientations;
+
+      sort(s->getContigTiling().begin(), s->getContigTiling().end(), TileOrderCmp());
+      for (vector<Tile_t>::iterator i = s->getContigTiling().begin(); i < s->getContigTiling().end(); i++) {
+         int32_t pos = ctg2srt[i->source];
+         double sd = 0;
+         while (pos == ctg2srt[i->source] && sd < INITIAL_STDEV) {
+            computeContigPositionUsingAllEdges(i->source, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank, sd, false);
+            sd++;
+         }
+         i->offset = (i->range.isReverse() ? ctg2srt[i->source] - i->range.getLength() : ctg2srt[i->source]);
+      }
+   }
+}
+
+//TODO: Store scaffolds in bank as well as new contigs (as scaffolds), split this code into several sections
 // Add class that holds the data structure we use in memory so it's not always passed around
 // Also, keep tiles on disk rather than in memory
 // RepeatFinder : find repeats and mark the contigs in the bank rather than outputting their list
@@ -1178,7 +1350,7 @@ int main(int argc, char *argv[]) {
       edge_bank.close();
       exit(1);
    }
-
+   
    Bank_t contig_bank (Contig_t::NCODE);
    BankStream_t contig_stream (Contig_t::NCODE);
    if (! contig_stream.exists(globals.bank)){
@@ -1195,21 +1367,36 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
+   Bank_t scaff_bank (Scaffold_t::NCODE);
+   if (!scaff_bank.exists(globals.bank)) {
+       scaff_bank.create(globals.bank);
+   }
+   try {
+     scaff_bank.open(globals.bank, B_READ | B_WRITE);
+   } catch (Exception_t & e) {
+       cerr << "Failed to open scaffold account in bank " << globals.bank << ": " << endl << e << endl;
+       scaff_bank.close();
+       exit(1);
+   }
+
    // initialize contig data structures
    Contig_t ctg;
+   hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > ctg2len;            // map from contig to length
    hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> > ctg2ort; // map from contig to orientation
    hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> > ctg2srt;           // map from contig to start position
    hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > ctg2scf;              //quick lookup for which scaffold a contig belongs to
+   vector<Scaffold_t> motifs;            // scaffold structures representing the simplified motifs
 
    // initialize position and orientation
    while (contig_stream >> ctg) {
       ctg2ort[ctg.getIID()] = NONE;
       ctg2srt[ctg.getIID()] = UNINITIALIZED;
       ctg2scf[ctg.getIID()] = UNINITIALIZED;
+      ctg2len[ctg.getIID()] = ctg.getLength();
    }
 
    // initialize scaffold data structure
-   ID_t scfIID = 0;
+   ID_t scfIID = 1;
    std::vector<Scaffold_t> scaffs;
 
    // initialize edge data structures
@@ -1225,6 +1412,11 @@ int main(int argc, char *argv[]) {
    // Therefore, it doesn't seem to be simpler than implementing least squares
    for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci; ci++) {
       edge_bank.fetch(ci->iid, cte);
+
+      if (isBadEdge(cte)) {
+         cerr << "Edge " << cte.getIID() << " ALREADY MARKED BAD, SKIPPING" << endl;
+         continue;
+      }
 
       if (globals.repeats.find(cte.getContigs().first) != globals.repeats.end() || 
          globals.repeats.find(cte.getContigs().second) != globals.repeats.end()) {
@@ -1339,7 +1531,7 @@ int max = 0;
              if (ctg2ort[myID] == NONE && visitedEdges[cte.getIID()] == 0) {
 if (max < cte.getLinks().size()) { max = cte.getLinks().size(); } 
                 if (ctg2ort[otherID] != NONE) {
-                  if (globals.debug >=2) {
+                  if (globals.debug >=1) {
                      cerr << "WE HIT UNINITIALIZED NODE " << myID << " using edge " << cte.getIID() <<  " (" << cte.getContigs().first << ", " << cte.getContigs().second << ") AND IM BACKPEDALING TO NODE " << otherID << " THIS NODE IS " << (max-cte.getLinks().size()) << " WORSE THAN BEST UNINITIALIZED" << endl;
                   }
                   nodeToWeight.first = otherID;
@@ -1392,14 +1584,10 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
                   badCount++;
                }
                else {
-                  Contig_t first, second;
-                  contig_bank.fetch(cte.getContigs().first, first);
-                  contig_bank.fetch(cte.getContigs().second, second);
-
                   ctg2ort[otherID] = orient;
                   ctg2edges[oss.str()] = cte.getAdjacency();
 
-                  computeContigPositionUsingAllEdges(myID, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank, goodCount, badCount);
+                  computeContigPositionUsingAllEdges(otherID, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank, INITIAL_STDEV, true);
                   if (!isBadEdge(cte.getIID(), edge_bank)) {
                      // add tiling info
                      // offset is always in terms of the lowest position in scaffold of the contig, that is if we have ---> <---- then the offset of the second
@@ -1407,7 +1595,7 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
                      Tile_t tile;
                      tile.source = myID;
                      
-                     uint32_t length = (myID == first.getIID() ? first.getLength() : second.getLength());
+                     uint32_t length = ctg2len[myID];
                      if (ctg2ort[myID] == FWD) {
                         tile.range.begin = 0;
                         tile.range.end = length;
@@ -1425,7 +1613,7 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
                      // now add the other contig's tile to the scaffold
                      tile.source = otherID;
                      
-                     length = (otherID == first.getIID() ? first.getLength() : second.getLength());
+                     length = ctg2len[otherID];
                      if (ctg2ort[otherID] == FWD) {
                         tile.range.begin = 0;
                         tile.range.end = length;
@@ -1501,6 +1689,9 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
       }
    }
 
+   // compress gap if we can
+   compressGaps(scaffs, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank);
+
    // preform graph simplification
    sortContigs(scaffs, contig_bank, edge_bank);
    transitiveEdgeRemoval(scaffs, edge_bank, ctg2lnk, globals.debug);
@@ -1527,7 +1718,7 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
          }
       }
       flushEdgeStatus(edge_bank);
-      reduceGraph(scaffs, contig_bank, edge_bank, ctg2ort, ctg2lnk);
+      reduceGraph(scaffs, contig_bank, edge_bank, ctg2ort, ctg2lnk, motifs);
       sortContigs(scaffs, contig_bank, edge_bank);
       // reset the transitive edges because we may have collapsed nodes so old transitive edges are no longer transitive
       resetEdges(edge_bank, BAD_TRNS);
@@ -1545,7 +1736,19 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
    outputResults(globals.bank, contig_bank, edge_bank, scaffs, DOT, globals.prefix, globals.debug);
    outputResults(globals.bank, contig_bank, edge_bank, scaffs, AGP, globals.prefix, globals.debug);
    outputResults(globals.bank, contig_bank, edge_bank, scaffs, BAMBUS, globals.prefix, globals.debug);
+   outputResults(globals.bank, contig_bank, edge_bank, motifs, MOTIFS, globals.prefix, globals.debug);
 
+   // finally output the motif scaffolds into the bank
+   for (vector<Scaffold_t>::iterator itScf = scaffs.begin(); itScf < scaffs.end(); itScf++) {
+      scaff_bank.append(*itScf);
+   }
+
+   // we do this last because the IDs are non-unique in the motifs until now so we can associate a motif with the original scaffold it came from
+   for(vector<Scaffold_t>::iterator itScf = motifs.begin(); itScf < motifs.end(); itScf++) {
+      itScf->setIID(atoi(itScf->getEID().c_str()));
+      scaff_bank.append(*itScf);
+   }
+ 
    // clear data
    ctg2scf.clear();
    ctg2srt.clear();
@@ -1559,6 +1762,7 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
    edge_bank.close();
    contig_stream.close();
    contig_bank.close();
+   scaff_bank.close();
 
    cerr << "Finished! Had " << goodCount << " Good links and " << badCount << " bad ones." << endl;
    return 0;

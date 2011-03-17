@@ -158,8 +158,11 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
    vector<int32_t> qarray;
 
    hash_map<ID_t, double, hash<ID_t>, equal_to<ID_t> >numTimesOnPath;
-
    pair<VertexIterator, VertexIterator> i;
+   for (i = boost::vertices(g); i.first != i.second; ++i.first) {
+      numTimesOnPath[vertexNames[*i.first]] = 0;
+   }
+
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
       Vertex source = *i.first;
       // initialize arrays     
@@ -211,6 +214,7 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
    // finally adjust our path counts by node sizes, we expect larger nodes to have more connections by chance
    VertexLength vertexLength = get(boost::vertex_index1, g);
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
+cerr << "The number of times on path for node " << vertexNames[*i.first] << " is " << numTimesOnPath[vertexNames[*i.first]] << endl;
       numTimesOnPath[vertexNames[*i.first]] /= vertexLength[*i.first];
    }
    delete[] distMap;
