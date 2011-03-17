@@ -69,7 +69,7 @@ my $HELP = qq~
   -i <insert_file> - read insert information
   -map <dst_map> - read map information
   -pos <pos_file> - TIGR-style .pos position file
-  -id <min_id> - start numbering contigs at this number
+  -id <min_id> - start numbering AMOS internal IDs at this number
 
 .KEYWORDS.
   converter, universal, amos format
@@ -217,7 +217,13 @@ if (defined $asmfile){
 
 if (defined $ctgfile){
     open(IN, $ctgfile) || $base->bail("Could not read TIGR .contig file $ctgfile: $!\n");
-    parseContigFile(\*IN);
+    if (defined $qualfile){
+        open(QUAL, $qualfile) || $base->bail("Cannot open $qualfile: $!\n");
+        parseContigFile(\*IN, \*QUAL);
+        close(QUAL);
+    } else {
+        parseContigFile(\*IN);
+    }
     close(IN);
 }
 
@@ -377,7 +383,16 @@ while (my ($ins, $lib) = each %seenlib){
     print OUT "}\n";
 }
 
-# then all the reads
+# then all the reads from file tmp.*.seq
+
+#  #internal_read_id
+#  dna
+#  dna
+#  #
+#  qual
+#  qual
+#  #
+
 if (defined $posfile){
     open(POS, $posfile) || $base->bail("Could not read position file $posfile: $!\n");
 }
@@ -484,7 +499,20 @@ if (defined $posfile){ close(POS);}
 
 unlink($tmpseq) || $base->bail("Could not remove temporary sequence file $tmpseq: $!\n");
 
-# then all the contigs
+# then all the contigs. The temporary contig file tmp.*.ctg is structured this way:
+
+#  #internal_contig_id C
+#  dna
+#  dna
+#  #
+#  qual
+#  qual
+#  #internal_read_id
+#  pos_gap_1 pos_gap_2 ...
+#  #internal_read_id
+#  pos_gap_1 ...
+
+# the reads refered to by internal_read_id are from the temporary read file tmp.*.seq
 
 open(TMPCTG, $tmpctg) || $base->bail("Could not read temporary contig file $tmpctg: $!\n");
 
@@ -515,10 +543,10 @@ while (<TMPCTG>){
 
     # Write the CTG message
     print OUT "{CTG\n";
-    print OUT "iid:$cid\n";
-    print OUT "sts:$sts\n";
-    print OUT "eid:$ceid\n" if defined $ceid;
-    print OUT "seq:\n";
+    print OUT "iid:$cid\n";                   # internal ID
+    print OUT "sts:$sts\n";                   # status (C for contig)
+    print OUT "eid:$ceid\n" if defined $ceid; # external ID
+    print OUT "seq:\n";                       # sequence
     $_ = <TMPCTG>;
     while ($_ !~ /^\#/){
         print OUT;
@@ -527,12 +555,12 @@ while (<TMPCTG>){
     print OUT ".\n";
     print OUT "qlt:\n";
     $_ = <TMPCTG>;
-    while ($_ !~ /^\#/){
+    while ($_ !~ /^\#/) {
         print OUT;
         $_ = <TMPCTG>;
     }
     print OUT ".\n";
-    while (/^\#(\d+)/){
+    while (/^\#(\d+)/) {
         my $rid = $1;
         if (! exists $seq_range{$rid}){
             $base->bail ("No clear range for read $rid\n");
@@ -1358,8 +1386,7 @@ sub parsePHDFiles {
 
 # New .ACE format
 sub parseACEFile {
-    my $IN = shift;
-    my $qualfile = shift;
+    my ($IN, $qualfile) = @_;
     
     my $ctg; 
     my $len;
@@ -1389,13 +1416,12 @@ sub parseACEFile {
     my %qRecPos;
     if (defined $qualfile){
         $qf = new AMOS::ParseFasta($qualfile, '>', ' ');
-        
         # index the records by headers and file positions
         my $nextPos = $qf->tell();
         while (my ($qh) = $qf->getRecord()){
-        $qh =~ /^(\S+)/; # extract short name
-        $qRecPos{$1} = $nextPos;
-        $nextPos = $qf->tell();
+            $qh =~ /^(\S+)/; # extract short name
+            $qRecPos{$1} = $nextPos;
+            $nextPos = $qf->tell();
         }
     }
     while (<$IN>){
@@ -1662,97 +1688,111 @@ sub parseContigFile {
     my $sid;
     my $incontig = 0;
     my $consensus = "";
+    my $read_seq = "";
     my @sdels;
     my $ndel;
     my $slen;
     my $iid;
 
-    my $first = 1;
+    my ($qualDb, $qRecPos) = _index_qual_file($qualfile);
+
+    my ($firstContig, $firstRead) = (1, 1);
+
     while (<$IN>) {
-        if (/^\#\#(\S+) \d+ (\d+)/ ) {
-            # Beginning of a new contig
-            if ($first != 1){
-                print TMPCTG "#$sid\n";
-                print TMPCTG join(" ", @sdels), "\n";
-                print TMPCTG "#\n";
-                $arend = $alend + $slen;
-                $asm_range{$sid} = "$alend $arend";
-                #print TMPCTG "#\n";
+        chomp;
+
+        if (/^#/) {
+            # New contig or read
+
+            if ( ($incontig == 0) && ($firstRead == 0) ) {
+                # End of a read. Save it!
+                _addRead( $sid, $sname, $read_seq, $slend, $srend, $qualDb, $qRecPos);
+                $read_seq = "";
             }
-            $first = 0;
-            $consensus = "";
-            $ctg = $1;
-            $iid = $minCtgId++;
-            $ctgids{$ctg} = $iid;
-            $ctgnames{$iid} = $ctg;
-            $contigs{$iid} = $2;
-            $incontig = 1;
-            $slen = 0;
-            next;
-        }
 
-        elsif (/^\#(\S+)\((\S+)\) .*\{(\S+) (\S+)\} <(\S+) (\S+)>/){
-            # Beginning of a new read (in a contig)
-            ($sname, $alend, my $clearleft, my $clearright) = ($1, $2, $3, $4);
-
-            if ($incontig == 1) {
-                print TMPCTG "#$iid C\n";
-                for (my $c = 0; $c < length($consensus); $c+=60){
-                    print TMPCTG substr($consensus, $c, 60), "\n";
+            if (/^\#\#(\S+) \d+ (\d+)/ ) {
+                # Beginning of a new contig
+                if ($firstContig != 1){
+                    print TMPCTG "#$sid\n";
+                    print TMPCTG join(" ", @sdels), "\n";
+                    print TMPCTG "#\n";
+                    $arend = $alend + $slen;
+                    $asm_range{$sid} = "$alend $arend";
+                    #print TMPCTG "#\n";
                 }
-                #print TMPCTG "$consensus\n";
-                print TMPCTG "#\n";
-                for (my $c = 0; $c < length($consensus); $c+=60){
-                    for ($b = 0; $b < 60; $b++){
-                        if ($b + $c >= length($consensus)){last;}
-                        print TMPCTG "X";
-                    }
-                    print TMPCTG "\n";
-                }
-                #print TMPCTG "\n";
-            } else {
-                print TMPCTG "#$sid\n";
-                print TMPCTG join(" ", @sdels), "\n";
-                $arend = $alend + $slen;
-                $asm_range{$sid} = "$alend $arend";
+                $firstContig = 0;
+                $consensus = "";
+                $ctg = $1;
+                $iid = $minCtgId++;
+                $ctgids{$ctg} = $iid;
+                $ctgnames{$iid} = $ctg;
+                $contigs{$iid} = $2;
+                $incontig = 1;
                 $slen = 0;
             }
-            $incontig = 0;
-            @sdels = ();
-            $ndel = 0;
-
-            # assign sequence id and populate all necessary data-structures
-            if (! exists $seqids{$sname}){
-                #$base->bail("Cannot find ID for sequence $sname\n");
-                $sid = $minSeqId++;
-                $seqids{$sname} = $sid;
-                $seqnames{$sid} = $sname;
-            } else {
-                $sid = $seqids{$sname};
+    
+            elsif (/^\#(\S+)\((\S+)\) .*\{(\S+) (\S+)\} <(\S+) (\S+)>/){
+                # Beginning of a new read (in a contig)
+                ($sname, $alend, my $clearleft, my $clearright) = ($1, $2, $3, $4);
+                $firstRead = 0;
+                if ($incontig == 1) {
+                    print TMPCTG "#$iid C\n";
+                    for (my $c = 0; $c < length($consensus); $c+=60){
+                        print TMPCTG substr($consensus, $c, 60), "\n";
+                    }
+                    #print TMPCTG "$consensus\n";
+                    print TMPCTG "#\n";
+                    for (my $c = 0; $c < length($consensus); $c+=60){
+                        for ($b = 0; $b < 60; $b++){
+                            if ($b + $c >= length($consensus)){last;}
+                            print TMPCTG "X";
+                        }
+                        print TMPCTG "\n";
+                    }
+                    #print TMPCTG "\n";
+                } else {
+                    print TMPCTG "#$sid\n";
+                    print TMPCTG join(" ", @sdels), "\n";
+                    $arend = $alend + $slen;
+                    $asm_range{$sid} = "$alend $arend";
+                    $slen = 0;
+                }
+                $incontig = 0;
+                @sdels = ();
+                $ndel = 0;
+    
+                # Assign sequence ID and populate all necessary data-structures
+                if (! exists $seqids{$sname}){
+                    #$base->bail("Cannot find ID for sequence $sname\n");
+                    $sid = $minSeqId++;
+                    $seqids{$sname} = $sid;
+                    $seqnames{$sid} = $sname;
+                } else {
+                    $sid = $seqids{$sname};
+                }
+                $seqcontig{$sid} = $iid;
+                $contigseq{$iid} .= "$sid ";
+                if ($clearleft < $clearright){
+                    $slend = $clearleft - 1;
+                    $srend = $clearright;
+                } else {
+                    $slend = $clearleft;
+                    $srend = $clearright - 1;
+                }
+                $seq_range{$sid} = "$slend $srend";
             }
-
-            $seqcontig{$sid} = $iid;
-            $contigseq{$iid} .= "$sid ";
             
-            if ($clearleft < $clearright){
-                $slend = $clearleft - 1;
-                $srend = $clearright;
-            } else {
-                $slend = $clearleft;
-                $srend = $clearright - 1;
+            else {
+                die "Internal error\n";
             }
-            $seq_range{$sid} = "$slend $srend";
-            next;
         }
-        
         else {
             if ($incontig){
                 # Contig sequence
-                chomp;
                 $consensus .= $_;
             } else {
                 # Read sequence
-                chomp;
+                $read_seq .= $_;
                 $slen += length($_);
                 for (my $s = 0; $s < length($_); $s++){
                     if (substr($_, $s, 1) eq "-"){
@@ -1770,8 +1810,77 @@ sub parseContigFile {
     print TMPCTG "#\n";
     $arend = $alend + $slen;
     $asm_range{$sid} = "$alend $arend";
+    _addRead( $sid, $sname, $read_seq, $slend, $srend, $qualDb, $qRecPos);
 
 } # parseContigFile
+
+sub _addRead {
+    my ( $readIid, $readName, $readSeq, $clrLeft, $clrRight, $qualDb, $qRecPos) = @_;
+    if ($readsDone == 0) { # no read info, must generate
+        # Sequence string
+        print TMPSEQ "#$readIid\n";
+        $readSeq =~ s/-//g;
+        for (my $i = 0; $i <= length($readSeq); $i+= 60){
+            print TMPSEQ substr($readSeq, $i, 60), "\n";
+        }
+        # Quality values
+        print TMPSEQ "#\n";
+        my $qualdata = "";
+        if (defined $qualfile){
+            $readName =~ /^([^.]+)/;
+            my $shortName = $1;
+            if ( ! defined $$qRecPos{$shortName} ){
+                $base->bail("Sequence $shortName not found in quality file\n");
+            }
+            $qualDb->seek($$qRecPos{$shortName});
+            my ($qh, $qdata) = $qualDb->getRecord();
+            my @quals = split(/ +/, $qdata);
+            for (my $i = 0; $i <= $#quals; $i++) {
+                if ($quals[$i] <= 0) {$quals[$i] = 1;}
+                if ($quals[$i] > 60) {$quals[$i] = 60;}
+                $qualdata .= chr(ord('0') + $quals[$i]);
+            }
+        } else {
+            for (my $i = 0; $i < $clrLeft; $i++){
+                $qualdata .= chr(ord('0') + $BADQUAL);
+            }
+            for (my $i = $clrLeft; $i < $clrRight; $i++){
+                $qualdata .= chr(ord('0') + $GOODQUAL);
+            }
+            for (my $i = $clrRight; $i < length($readSeq); $i++){
+                $qualdata .= chr(ord('0') + $BADQUAL);
+            }
+        }
+
+        my $seqlength  = length $readSeq;
+        my $quallength = length $qualdata;
+        if ( $seqlength != $quallength ) {
+            $base->bail("Error: There should be a quality score for each nucleotide in read $readName, but got $seqlength nt and $quallength scores\n");
+        }
+
+        for (my $i = 0; $i <= $quallength; $i+= 60){
+            print TMPSEQ substr($qualdata, $i, 60), "\n";
+        }
+        print TMPSEQ "#\n";
+    } # if $readsDone == 0
+} # _addRead
+
+sub _index_qual_file {
+    my ($qualfile) = @_;
+    my $qualDb;
+    my %qRecPos;
+    if (defined $qualfile){
+        $qualDb = new AMOS::ParseFasta($qualfile, '>', ' ');
+        # index the records by headers and file positions
+        my $nextPos = $qualDb->tell();
+        while (my ($qualHeader) = $qualDb->getRecord()){
+            $qualHeader =~ /^(\S+)/; # extract short name
+            $qRecPos{$1} = $nextPos;
+            $nextPos = $qualDb->tell();
+        }
+    }
+    return $qualDb, \%qRecPos;
+}
 
 # Arachne .links scaffold file
 # assumptions: all contigs are forward
