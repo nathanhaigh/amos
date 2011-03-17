@@ -494,8 +494,7 @@ while (<TMPCTG>){
         $base->bail("Error: Temporary contig file $tmpctg was not formatted as expected at line $.:\n$_");
     }
 
-    my $cid = $1;
-    my $sts = $2;
+    my ($cid, $sts) = ($1, $2);
     my $ceid;
     if (exists $ctgnames{$cid}) {
         $ceid = $ctgnames{$cid};
@@ -535,14 +534,14 @@ while (<TMPCTG>){
     print OUT ".\n";
     while (/^\#(\d+)/){
         my $rid = $1;
-        my ($len, $ren) = split(' ', $asm_range{$rid});
-        my ($cl, $cr) = split(' ', $seq_range{$rid});
         if (! exists $seq_range{$rid}){
             $base->bail ("No clear range for read $rid\n");
         }
+        my ($cl, $cr) = split(' ', $seq_range{$rid});
         if (! exists $asm_range{$rid}){
             $base->bail ("No asm range for read $rid\n");
         }
+        my ($len, $ren) = split(' ', $asm_range{$rid});
         my $tmp;
         if ($len > $ren){
             $tmp = $len;
@@ -1671,6 +1670,7 @@ sub parseContigFile {
     my $first = 1;
     while (<$IN>) {
         if (/^\#\#(\S+) \d+ (\d+)/ ) {
+            # Beginning of a new contig
             if ($first != 1){
                 print TMPCTG "#$sid\n";
                 print TMPCTG join(" ", @sdels), "\n";
@@ -1691,8 +1691,11 @@ sub parseContigFile {
             next;
         }
 
-        if (/^\#(\S+)\((\S+)\) .*\{(\S+) (\S+)\} <(\S+) (\S+)>/){
-            if ($incontig == 1){
+        elsif (/^\#(\S+)\((\S+)\) .*\{(\S+) (\S+)\} <(\S+) (\S+)>/){
+            # Beginning of a new read (in a contig)
+            ($sname, $alend, my $clearleft, my $clearright) = ($1, $2, $3, $4);
+
+            if ($incontig == 1) {
                 print TMPCTG "#$iid C\n";
                 for (my $c = 0; $c < length($consensus); $c+=60){
                     print TMPCTG substr($consensus, $c, 60), "\n";
@@ -1715,42 +1718,48 @@ sub parseContigFile {
                 $slen = 0;
             }
             $incontig = 0;
-            $sname = $1;
             @sdels = ();
             $ndel = 0;
+
+            # assign sequence id and populate all necessary data-structures
             if (! exists $seqids{$sname}){
-                $base->bail("Cannot find ID for sequence $sname\n");
+                #$base->bail("Cannot find ID for sequence $sname\n");
+                $sid = $minSeqId++;
+                $seqids{$sname} = $sid;
+                $seqnames{$sid} = $sname;
             } else {
                 $sid = $seqids{$sname};
             }
-            
+
             $seqcontig{$sid} = $iid;
             $contigseq{$iid} .= "$sid ";
             
-            $alend = $2;
-            
-            if ($3 < $4){
-                $slend = $3 - 1;
-                $srend = $4;
+            if ($clearleft < $clearright){
+                $slend = $clearleft - 1;
+                $srend = $clearright;
             } else {
-                $slend = $3;
-                $srend = $4 - 1;
+                $slend = $clearleft;
+                $srend = $clearright - 1;
             }
             $seq_range{$sid} = "$slend $srend";
             next;
         }
-
-        if ($incontig){
-            chomp;
-            $consensus .= $_;
-        } else { # sequence record
-            chomp;
-            $slen += length($_);
-            for (my $s = 0; $s < length($_); $s++){
-                if (substr($_, $s, 1) eq "-"){
-                    push @sdels, $ndel;
-                } else {
-                    $ndel++;
+        
+        else {
+            if ($incontig){
+                # Contig sequence
+                chomp;
+                $consensus .= $_;
+            } else {
+                # Read sequence
+                chomp;
+                $slen += length($_);
+                for (my $s = 0; $s < length($_); $s++){
+                    if (substr($_, $s, 1) eq "-"){
+                        push @sdels, $ndel;
+                    } else {
+                        $ndel++;
+                    }
                 }
             }
         }
