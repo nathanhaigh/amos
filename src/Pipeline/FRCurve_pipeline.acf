@@ -7,6 +7,15 @@
 #?		-D GENOME_SIZE=<n>		- Genome size (number of bps)
 #?		-D BANK=<n>			- AMOS bank name
 #?		
+#? Description:
+#?		The Feature-Response curve characterizes the sensitivity (coverage) of the sequence 
+#?		assembler as a function of its discrimination threshold (number of features).
+#?		Given any set of features computed by the amosvalidate pipeline, the response (quality) 
+#?		of the assembler output is analyzed as a function of the maximum number of possible 
+#? 		errors (features) allowed in the contigs. 
+#?		For more details see the wiki page at: 
+#?		http://sourceforge.net/apps/mediawiki/amos/index.php?title=FRCurve
+
 #? Output:
 #?		The Feature-Response curve (FRC) is saved in file "FRC.txt", while 
 #?		FRCs for each feature type are saved respectively in: 
