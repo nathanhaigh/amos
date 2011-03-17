@@ -138,6 +138,7 @@ AC_CONFIG_FILES(
    src/AMOS/Makefile \
    src/Bambus/Makefile \
    src/Bambus/Bundler/Makefile \
+   src/Bambus/Output/Makefile \
    src/Bambus/Untangler/Makefile \
    src/Common/Makefile \
    src/Graph/Makefile \
