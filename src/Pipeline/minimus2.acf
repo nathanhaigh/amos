@@ -2,11 +2,11 @@
 
 #? Usage:          
 #?         minimus2 prefix \
-#?		-D REFCOUNT=<n>         \       # Number of sequences is the 1st assembly ; (Required)
+#?		-D REFCOUNT=<n>         \       # Number of sequences in the 1st assembly ; (Required)
 #?		-D OVERLAP=<n> 		\       # Assembly 1 vs 2 minimum overlap (Default 40bp)
 #?		-D CONSERR=<f>		\	# Maximum consensus error (0..1) (Default 0.06)
-#?		-D MINID=<n>		\	# Minimum overlap percent identity for alignments (Defaul 94)
-#?		-D MAXTRIM=<n>			# Maximum sequence trimming length (Defaul 20bp)
+#?		-D MINID=<n>		\	# Minimum overlap percent identity for alignments (Default 94)
+#?		-D MAXTRIM=<n>			# Maximum sequence trimming length (Default 20bp)
 
 #--------------------------------------- USER DEFINED VALUES ------------------#
 
