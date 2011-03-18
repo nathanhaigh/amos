@@ -16,7 +16,7 @@ dist_bin_SCRIPTS += \
 	minimus2-blat.acf \
 	assembleRNAs.acf \
 	gene_asm.acf \
-	FRCurve_pipeline.acf
+	FRCurve.acf
 
 endif BUILD_all
 
