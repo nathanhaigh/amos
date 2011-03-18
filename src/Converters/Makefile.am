@@ -22,6 +22,7 @@ dist_bin_SCRIPTS = \
 	benchmark2ca.pl \
 	benchmark2mates.pl \
 	benchmark2ta.pl \
+	blat2nucmer.pl \
 	ca2ctg.pl \
 	ca2mates.pl \
 	ca2scaff.pl \

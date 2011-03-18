@@ -19,6 +19,7 @@ AC_ARG_VAR(PERL, [perl command])
 AC_ARG_VAR(NUCMER, [nucmer command])
 AC_ARG_VAR(DELTAFILTER, [delta-filter command])
 AC_ARG_VAR(SHOWCOORDS, [show-coords command])
+AC_ARG_VAR(BLAT, [blat command])
 AC_SUBST(docdir, [${datadir}/doc/${PACKAGE_TARNAME}-${PACKAGE_VERSION}])
 AC_SUBST(amoslibdir, [${libdir}/AMOS])
 AC_SUBST(tigrlibdir, [${libdir}/TIGR])
@@ -33,10 +34,11 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_CPP
+AC_PATH_PROG(PERL, [perl], [:])
 AC_PATH_PROG(NUCMER, [nucmer], [:])
 AC_PATH_PROG(DELTAFILTER, [delta-filter], [:])
 AC_PATH_PROG(SHOWCOORDS, [show-coords], [:])
-AC_PATH_PROG(PERL, [perl], [:])
+AC_PATH_PROG(BLAT, [blat], [:])
 
 # check for Perl modules
 AC_PROG_PERL_MODULES(Statistics::Descriptive, LIBSTATISTICS_DESCRIPTIVE_PERL=1, LIBSTATISTICS_DESCRIPTIVE_PERL=0)
@@ -233,9 +235,14 @@ case "${gcc_version}" in
   ;;
 esac
 
+if test x"${PERL}" = x":"  ||  ! test -x "${PERL}"; then
+  echo "WARNING! perl was not found but is required to run AMOS scripts"
+  echo "   install perl if planning on using AMOS scripts"
+fi
+
 if test x"${NUCMER}" = x":"  ||  ! test -x "${NUCMER}"; then
-  echo "WARNING! nucmer was not found but is required to run AMOScmp"
-  echo "   install nucmer if planning on using AMOScmp"
+  echo "WARNING! nucmer was not found but is required to run AMOScmp and minimus2"
+  echo "   install nucmer if planning on using these programs"
 fi
 
 if test x"${DELTAFILTER}" = x":"  ||  ! test -x "${DELTAFILTER}"; then
@@ -248,9 +255,9 @@ if test x"${SHOWCOORDS}" = x":"  ||  ! test -x "${DELTAFILTER}"; then
   echo "   install show-coords if planning on using minimus2"
 fi
 
-if test x"${PERL}" = x":"  ||  ! test -x "${PERL}"; then
-  echo "WARNING! perl was not found but is required to run AMOS scripts"
-  echo "   install perl if planning on using AMOS scripts"
+if test x"${BLAT}" = x":"  ||  ! test -x "${BLAT}"; then
+  echo "WARNING! BLAT was not found but is required to run minimus2-blat"
+  echo "   install BLAT if planning on using minimus2-blat"
 fi
 
 if test x"${have_qt}" != x"yes"; then

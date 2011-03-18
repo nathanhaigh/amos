@@ -11,9 +11,10 @@ dist_bin_SCRIPTS += \
 	AMOScmp-shortReads.acf \
 	AMOScmp-shortReads-alignmentTrimmed.acf \
 	minimus.acf \
-	minimus2.acf \
-	assembleRNAs.acf \
 	Minimo.acf \
+	minimus2.acf \
+	minimus2-blat.acf \
+	assembleRNAs.acf \
 	gene_asm.acf \
 	FRCurve_pipeline.acf
 
@@ -27,7 +28,9 @@ endif BUILD_AMOScmp
 
 if BUILD_minimus
 dist_bin_SCRIPTS += minimus.acf
+dist_bin_SCRIPTS += Minimo.acf
 dist_bin_SCRIPTS += minimus2.acf
+dist_bin_SCRIPTS += minimus2-blat.acf
 endif BUILD_minimus
 
 
