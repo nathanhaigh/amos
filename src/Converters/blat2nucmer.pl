@@ -111,10 +111,11 @@ sub blat2nucmer {
   open my $in, "<", $pslfile or die $!;
   while ( my $z = <$in> ) {
     my @values = split(/\t/, $z);
+    	if($values[8] =~ /\+/){#writing positive strand as is
     print
-      $values[15]."\t".
+      ($values[15]+1)."\t".#zero to one based
       $values[16]."\t|\t".
-      $values[11]."\t".
+      ($values[11]+1)."\t".#zero to one based
       $values[12]."\t|\t".
       abs($values[16]-$values[15])."\t".
       abs($values[12]-$values[11])."\t|\t".
@@ -125,6 +126,25 @@ sub blat2nucmer {
       (sprintf "%.2f",(abs($values[12]-$values[11])*100/$values[10]))."\t|\t".
       $values[13]."\t".
       $values[9]."\n";
+	}
+	elsif($values[8] =~ /\-/){#for negative strand writing qry coordinates in reverse
+    print
+      ($values[15]+1)."\t".#zero to one based
+      $values[16]."\t|\t".
+      $values[12]."\t|\t".
+      ($values[11]+1)."\t".#zero to one based
+      abs($values[16]-$values[15])."\t".
+      abs($values[12]-$values[11])."\t|\t".
+      (sprintf "%.2f",(($values[0]+$values[2]+$values[3])*100)/abs($values[12]-$values[11]))."\t|\t".
+      $values[14]."\t".
+      $values[10]."\t|\t".
+      (sprintf "%.2f",(abs($values[16]-$values[15])*100/$values[14]))."\t".
+      (sprintf "%.2f",(abs($values[12]-$values[11])*100/$values[10]))."\t|\t".
+      $values[13]."\t".
+      $values[9]."\n";
+	}
+	else{#few blocks match on positive and few on negative strand. Ignore these hits
+	}
   }
   close $in;
   return 1;
