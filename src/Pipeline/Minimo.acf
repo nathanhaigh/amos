@@ -12,7 +12,7 @@
 #?     Minimo FASTA_IN [options]
 #?
 #? Options:
-#?     -D QUAL_IN=<file>   Input quality score file
+#?     -D QUAL_IN=<file>   Input quality score file (in Phred format)
 #?     -D GOOD_QUAL=<n>    Quality score to set for bases within the clear
 #?                           range if no quality file was given (default: 30)
 #?     -D BAD_QUAL=<n>     Quality score to set for bases outside clear range
