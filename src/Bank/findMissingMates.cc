@@ -315,7 +315,11 @@ int main (int argc, char ** argv)
       }
       else if (hasovl)
       {
-        if (!OPT_MissingOnly) { cout << "t\t" << red_bank.lookupEID(ri->source) << "\t" << ri->offset << "\t" << ri->getRightOffset() << endl; }
+        if (!OPT_MissingOnly) 
+        { 
+          cout << "t\t" << red_bank.lookupEID(ri->source) 
+               << "\t" << ri->offset << "\t" << ri->getRightOffset() 
+               << "\t" << (ri->range.isReverse() ?  "R" : "F") << endl; }
       }
       
       if (OPT_USEMATES)
@@ -376,7 +380,8 @@ int main (int argc, char ** argv)
 
                 if (!OPT_MissingOnly || tli == tilelookup.end())
                 {
-                  cout << "p\t" << red_bank.lookupEID(mi->second) << "\t" << projectedStart << "\t" << projectedEnd << endl;
+                  cout << "p\t" << red_bank.lookupEID(mi->second) << "\t" << projectedStart << "\t" << projectedEnd 
+                       << "\t" << (ri->range.isReverse() ? "F" : "R") << endl;
                 }
               }
             }
