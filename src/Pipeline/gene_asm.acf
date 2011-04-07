@@ -1,4 +1,4 @@
-# `gene_asm' - Gene Assembler for human exomesgoogn
+# `gene_asm' - Gene Assembler 
 
 #--------------------------------------- USER DEFINED VALUES ------------------#
 PREF = $(strip .afg PREFIX)
@@ -11,7 +11,7 @@ BANK    = $(PREF).bnk
 CONTIG  = $(PREF).contig
 FASTA   = $(PREF).fasta
 
-INPUTS  = $(TGT)
+INPUTS  = $(TGT) $(AA)
 OUTPUTS = $(CONTIG) $(FASTA)
 
 
