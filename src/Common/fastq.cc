@@ -46,7 +46,7 @@ bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualH
      hdr.push_back (char (ch));
 
    // put everything up till '+' into  s
-   while(( ch = fgetc(fp) ) != EOF && ch != '+')
+   while(( ch = fgetc(fp) ) != EOF && ch != '\n')
      {
       if  (! isspace(ch))
           s.push_back(char (ch));
@@ -66,9 +66,9 @@ bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualH
      qualHdr.push_back (char (ch));
 
    // put all numbers up till next '@' into  q
-   while((ch = fgetc(fp)) != EOF && ch != '@')
+   while((ch = fgetc(fp)) != EOF && ch != '\n')
      {
-       q.push_back(char (val + AMOS::MIN_QUALITY));
+       q.push_back(char (ch + AMOS::MIN_QUALITY));
      }
 
    if  (ch == '@')
