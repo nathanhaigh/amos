@@ -66,22 +66,9 @@ bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualH
      qualHdr.push_back (char (ch));
 
    // put all numbers up till next '@' into  q
-   have_value = false;
-   val = 0;
    while((ch = fgetc(fp)) != EOF && ch != '@')
      {
-      if(isspace (ch))
-          {
-           if(have_value)
-               q.push_back(char (val + AMOS::MIN_QUALITY));
-           have_value = false;
-           val = 0;
-          }
-      else if  (isdigit (ch))
-          {
-           have_value = true;
-           val = 10 * val + ch - '0';
-          }
+       q.push_back(char (val + AMOS::MIN_QUALITY));
      }
 
    if  (ch == '@')
