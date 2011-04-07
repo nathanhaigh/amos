@@ -12,7 +12,8 @@ amosinclude_HEADERS = \
 	delcher.hh \
 	delta.hh \
 	fasta.hh \
-	prob.hh
+	prob.hh \
+	fastq.hh
 
 
 ##-- GLOBAL INCLUDE
@@ -26,7 +27,8 @@ libCommon_a_SOURCES = \
 	delcher.cc \
 	delta.cc \
 	fasta.cc \
-	prob.cc 
+	prob.cc  \
+	fastq.cc
 
 
 ##-- END OF MAKEFILE --##

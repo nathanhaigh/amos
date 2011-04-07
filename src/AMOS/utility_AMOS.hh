@@ -35,7 +35,7 @@
     #define HASHMAP __gnu_cxx
   #endif
 #elif __GNUC__ > 3
-  #include <ext/hash_map>
+  #include <unordered_map>
   namespace Sgi = ::__gnu_cxx;         // GCC 4.0 and later
   #define HASHMAP __gnu_cxx
 #endif

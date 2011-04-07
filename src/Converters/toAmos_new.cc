@@ -27,6 +27,7 @@ extern "C" {
 #include <string>
 #include <functional>
 #include <fasta.hh>
+#include <fastq.hh>
 #include <algorithm>
 #include "foundation_AMOS.hh"
 #include <Contig_AMOS.hh>
@@ -82,6 +83,7 @@ map<string,string>              seq2qual; // a map of all the qual file names fo
 // Function Prototypes
 //==============================================================================//
 bool parseFastaFile();
+bool parseFastqFile();
 bool parseTraceInfoFile(ifstream&);
 bool parseMatesFile(ifstream&);
 bool parseFrgFile(string);
@@ -104,7 +106,7 @@ void PrintHelp()
     cerr << "\n"
          << ".USAGE."
          << "  toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)\n"
-         << "         (-c contig|-ta tasm|-ace ace|-s fasta|-q qual)\n"
+         << "         (-c contig|-ta tasm|-ace ace|-s fasta|-q qual|-Q fastq)\n"
          << "         [-i insertfile | -map dstmap]\n"
          << "         [-gq goodqual] [-bq badqual]\n"
          << "         [-pos posfile] [-phd]\n"
@@ -159,6 +161,7 @@ bool GetOptions (int argc, char ** argv)
         {"bank",      required_argument,         0, 'b'},
         {"qual",      required_argument,         0, 'q'},
         {"seq",       required_argument,         0, 's'},
+        {"Q",         required_argument,         0, 'Q'},
         {"map",       required_argument,         0, 'M'},
         {"arachne",   required_argument,         0, 'r'},
         {"gq",        required_argument,         0, 'G'},
@@ -170,7 +173,7 @@ bool GetOptions (int argc, char ** argv)
         {0,           0,                         0, 0}
       };
       
-      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:A:i:k:q:s:M:r:G:B:p:SCU", long_options, &option_index);
+      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:A:i:k:q:s:Q:M:r:G:B:p:SCU", long_options, &option_index);
       if (ch == -1)
         break;
 
@@ -221,6 +224,9 @@ bool GetOptions (int argc, char ** argv)
           break;
         case 's':
           globals["fastafile"] = string(optarg);
+          break;
+        case 'Q':
+          globals["fastqfile"] = string(optarg);
           break;
         case 'i':
           globals["insertfile"] = string(optarg);
@@ -359,12 +365,19 @@ int main(int argc, char ** argv)
     readsDone = true;
   }
 
+  // parse fastq file
+  if (globals["fastqfile"].size() > 0) {
+    cerr << "parsing fastq file" << endl;
+    parseFastqFile();
+    readsDone = true;
+  }
+  
+
   if (! matesDone && globals["matesfile"].size() > 0) { // the mate file contains either mates
       // or regular expressions defining them.
       ifstream mates(globals["matesfile"].c_str());
       parseMatesFile(mates);
       mates.close();
-
       matesDone = true;
   }
  
@@ -432,8 +445,7 @@ FILE *fileOpen(const char *name, const char *permission) {
    if (strcasecmp(name + strlen(name) - 3, ".gz") == 0) {
       char  cmd[1024];
       sprintf(cmd, "gzip -dc %s", name);
-      errno = 0;
-      inFile = popen(cmd, permission);
+      errno = 0;      inFile = popen(cmd, permission);
       isCompressed = 1;
    } else if (strcasecmp(name + strlen(name) - 4, ".bz2") == 0) {
       char  cmd[1024];
@@ -548,6 +560,74 @@ bool parseFastaFile() {
      fileClose(qualFile);
   }
 }
+
+bool parseFastqFile() {
+  int counter = 0;
+  string tempSeqHeader;
+  string tempSeqBuff;
+  string tempQualHeader;
+  string tempQualBuff;
+  string seqname;
+  int cll = -1;
+  int clr = -1;
+  int temp1 = 0;
+  int temp2 = 0;
+  int id = 0;
+
+  FILE* fastqfile = fileOpen(globals["fastqfile"].c_str(), "r");
+
+  while (Fastq_Read(fastqfile,tempSeqBuff,tempSeqHeader,tempQualBuff,tempQualHeader) != 0) {
+    if (counter % 1000000 == 0) {
+       cerr << "Read " << counter << " reads " << endl;
+    }
+    counter++;
+    
+    stringstream seqheaderstream (stringstream::in);
+    seqheaderstream.str(tempSeqHeader.c_str());
+    seqheaderstream >> seqname;
+    if (!seqheaderstream.eof()) {
+      seqheaderstream >> temp1;
+      seqheaderstream >> temp2;
+      if (!seqheaderstream.eof()) {
+        seqheaderstream.ignore(5, ' ');
+        seqheaderstream >> cll;
+        seqheaderstream >> clr;
+      } else {
+        cll = temp1;
+        clr = temp2;
+      }
+    } else {
+      cll = 0;
+      clr = tempSeqBuff.length();
+      //cerr << "Format not recognized" << endl;
+    } 
+ 
+    // So we don't overwrite an externally provided clear range
+    if (cll == -1) {
+      cll = 0;
+      clr = tempSeqBuff.length();
+    }
+    Read_t read;
+    read.setIID(minSeqID++);
+    read.setEID(seqname);
+
+    if (tempQualBuff.length() != tempSeqBuff.length()) {
+        cerr << "Sequence and quality records must have same length for " << seqname << ": "
+             << tempSeqBuff.length() << " vs " << tempQualBuff.length() << endl;
+        return 1; 
+    }
+
+    read.setClearRange(Range_t(cll, clr));
+    read.setSequence(tempSeqBuff.c_str(), tempQualBuff.c_str());
+    read_stream.append(read);
+
+    // reset the clear ranges
+    cll = clr = -1;
+  }
+
+  fileClose(fastqfile);
+}
+
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
     stringstream ss(s);
