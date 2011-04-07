@@ -9,9 +9,9 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
-	-I$(top_builddir)/src/GNU \
-	-I$(top_builddir)/src/Bambus/Bundler \
-   	$(BOOST_CXXFLAGS)  \
+	-I$(top_srcdir)/src/GNU \
+	-I$(top_srcdir)/src/Bambus/Bundler \
+	$(BOOST_CXXFLAGS)  \
 	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
 	-pedantic
 

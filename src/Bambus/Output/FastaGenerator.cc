@@ -35,6 +35,7 @@ using namespace std;
 using namespace HASHMAP;
 using namespace AMOS;
 
+#ifdef AMOS_HAVE_BOOST
 /* give access to common Boost data types through our interface */
 // Vertex properties
 typedef boost::property<boost::vertex_name_t, uint32_t> VertexProperty;
@@ -48,6 +49,7 @@ typedef boost::graph_traits<Graph>::out_edge_iterator EdgeIterator;
 
 // Properties
 typedef boost::property_map<Graph, boost::vertex_name_t>::type VertexName;
+#endif //AMOS_HAVE_BOOST
 
 struct config {
    string      bank;
