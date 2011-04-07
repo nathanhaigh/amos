@@ -17,7 +17,7 @@
 #include  <cstring>
 
 
-const int  DEFAULT_FASTA_WIDTH = 60;
+const int  DEFAULT_FASTQ_WIDTH = 60;
   // Max number of characters to print on a FASTA data line
 
 
