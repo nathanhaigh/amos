@@ -57,7 +57,7 @@ VERBOSE    = 0
 FASTA_BASE = $(shell /bin/echo -n `dirname $(FASTA_IN\)`/`basename $(FASTA_IN\) | cut -d'.' -f1`)
 
 # Output prefix determined from user input if specified, from the fasta file otherwise
-BASE       = $(shell if [ $(OUT_PREFIX\) != "" ]; then /bin/echo -n $(OUT_PREFIX\); else /bin/echo -n $(FASTA_BASE\); fi)
+BASE       = $(shell if [ "$(OUT_PREFIX\)" != "" ]; then /bin/echo -n $(OUT_PREFIX\); else /bin/echo -n $(FASTA_BASE\); fi)
 
 # Convert percentage of identity between overlaps from % to fractional
 MAX_OVL_ERROR  = $(shell /bin/echo -n `/bin/echo "scale=3; 1 - $(MIN_IDENT\) / 100" | bc`)
@@ -96,7 +96,7 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 30: if [ -d $(BANK) ]; then /bin/echo "Warning: overwriting existing AMOS bank $(BANK)"; fi;
 
 ## Importing the FASTA and QUAL files to an AMOS bank
-40: if [ $(QUAL_IN) != "" ]; then $(BINDIR)/toAmos -s $(FASTA_IN) -q $(QUAL_IN) -gq $(GOOD_QUAL) -bq $(BAD_QUAL) -o - | $(BINDIR)/bank-transact -c -z -f -b $(BANK) -m -; else $(BINDIR)/toAmos -s $(FASTA_IN) -gq $(GOOD_QUAL) -bq $(BAD_QUAL) -o - | $(BINDIR)/bank-transact -c -z -f -b $(BANK) -m -; fi
+40: if [ "$(QUAL_IN)" != "" ]; then $(BINDIR)/toAmos -s $(FASTA_IN) -q $(QUAL_IN) -gq $(GOOD_QUAL) -bq $(BAD_QUAL) -o - | $(BINDIR)/bank-transact -c -z -f -b $(BANK) -m -; else $(BINDIR)/toAmos -s $(FASTA_IN) -gq $(GOOD_QUAL) -bq $(BAD_QUAL) -o - | $(BINDIR)/bank-transact -c -z -f -b $(BANK) -m -; fi
 
 #----------------------------------- ASSEMBLE ---------------------------------#
 
