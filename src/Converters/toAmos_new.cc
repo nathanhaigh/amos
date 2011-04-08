@@ -47,8 +47,35 @@ using namespace HASHMAP;
 //==============================================================================//
 // Globals
 //==============================================================================//
-string  OPT_BankName;                       // bank name parameter
-map<string, string> globals;                // Globals
+int GOODQUAL = 30;
+int BADQUAL = 10;
+
+int MAX_LINE_LEN = 256;
+char GAP_CHAR = '-';
+
+struct config {
+  uint32_t readSurrogates;
+  uint32_t readCCO;
+  uint32_t readUTG;
+  uint32_t fastqType;
+  uint32_t surrogateAsFragment;
+  string        posfile;
+  string        bank;
+  string        matesfile;
+  string        traceinfofile;
+  string        ctgfile;
+  string        frgfile;
+  string        asmfile;
+  string        tasmfile;
+  string        qualfile;
+  string        fastafile;
+  string        fastqfile;
+  FastqQualType fastqQualityType;
+  string        libmap;
+  uint32_t        surroageAsFragment;
+  uint32_t layoutOnly;
+};
+config globals;
 
 Bank_t lib_stream (Library_t::NCODE);
 Bank_t read_stream (Read_t::NCODE);
@@ -57,11 +84,7 @@ Bank_t frag_stream (Fragment_t::NCODE);
 Bank_t link_stream (ContigLink_t::NCODE);
 Bank_t edge_stream (ContigEdge_t::NCODE);
 Bank_t scf_stream (Scaffold_t::NCODE);
-
-int GOODQUAL = 30;
-int BADQUAL = 10;
-
-int MAX_LINE_LEN = 256;
+Bank_t layout_stream (Layout_t::NCODE);
 
 bool matesDone = false;
 bool readsDone = false;
@@ -69,19 +92,23 @@ bool contigsDone = false;
 
 int minSeqID = 1;
 int minCtgID = 1;
-// this is where all my data live
+int minScfID = 1;
 
+// this is where all my data live
+/*
 map<int,vector< string > >      insertlib;  // lib id to insert list
 map<string,char>                inserttype; // the type of insert, if undefined assume 'E'
 map<string,string>              seenlib;    // insert id to lib id map
 map<int,string>                 seqinsert;  // sequence id to insert id map
 map<int,string>                 libnames;  // lib id to lib name
 map<int,int>                    posidx;     // position of sequence in pos file
+*/
 map<string,string>              seq2qual; // a map of all the qual file names found.
 
 //==============================================================================//
 // Function Prototypes
 //==============================================================================//
+int *computeGapIndex(char *sequence, uint32_t length);
 bool parseFastaFile();
 bool parseFastqFile();
 bool parseTraceInfoFile(ifstream&);
@@ -105,13 +132,11 @@ void PrintHelp()
 {
     cerr << "\n"
          << ".USAGE."
-         << "  toAmos (-m mates|-x traceinfo.xml|-f frg|-acc)\n"
-         << "         (-c contig|-ta tasm|-ace ace|-s fasta|-q qual|-Q fastq)\n"
-         << "         [-i insertfile | -map dstmap]\n"
-         << "         [-gq goodqual] [-bq badqual]\n"
-         << "         [-pos posfile] [-phd]\n"
+         << "  toAmos (-m mates|-f frg)\n"
+         << "         (-c contig|-s fasta|-q qual|-Q fastq)\n"
+         << "         -t fastqQualtyType [SCUFL]\n"
          << ".DESCRIPTION.\n"
-         << " toAmos_experimental is designed as a replacement for the current perl script.\n"
+         << " toAmos_new is designed as a replacement for the current perl script.\n"
 	 << " It does not cover all of the formats but will encompass the main ones. \n"
          << " It inserts the output of an assembly program into the AMOS bank.\n\n"
          << " If you simply need a program to generate assembly inputs for one the\n"
@@ -119,16 +144,24 @@ void PrintHelp()
          << " toAmos reads the inputs specified on the command line and stores  the \n"
          << " information directly into the AMOS Bank.  The following types of \n"
          << " information can be provided to toAmos: \n"
-         << "   -> Sequence and quality data (options -f, -s,  -q, -gq, or -bq) \n"
-         << "   -> Library and mate-pair data (options -x, or -f) \n"
-         << "   -> Contig  data (options -c, -a, -ta, or -ace) \n"
+         << "   -> Sequence and quality data (options -f, -s,  -q) \n"
+         << "   -> Library and mate-pair data (options -m, or -f) \n"
+         << "   -> Contig  data (options -c, -a) \n"
          << "   -> Scaffold data (option -a) \n"
          << ".OPTIONS. \n"
-         << "  -o <outfile> - place output in <outfile> \n"
          << "  -m <matefile> - library and mate-pair information in Bambus format \n"
-         << "  -x <trace.xml> - ancilliary data (library, mate-pair, clear range) \n"
          << "     in Trace Archive format \n"
          << "  -b <bank> - The location where the AMOS bank will be stored.\n"
+         << "  -S - include the surrogate unitigs in the .asm file as AMOS contigs.\n"
+         << "  -C - include the contigs in the .asm file as AMOS contigs.\n"
+         << "  -U - include the unitigs in the .asm file as AMOS contigs (implies -S and turns off -C).\n"
+         << "  -F - include the surrogate unitigs as reads in the tilling for a contig. Without this option the contig may have 0-coverage regions of coverage.\n"
+         << "  -L - output only the layout, not the consensus sequence for contigs. Will not output contig links or scaffolds. Implies -F.\n"
+         << "  -t - fastq quality type. The currently supported types are";
+         for (uint32 i = 0; i < FASTQ_QUALITY_COUNT; i++) {
+            cerr << " " << FASTQ_QUALITY_NAMES[i];
+         }
+         cerr << ". The default is " << FASTQ_QUALITY_NAMES[FASTQ_DEFAULT_QUALITY_TYPE] << "\n" 
          << ".KEYWORDS. \n"
          << "  converter, amos format\n"
          << endl;
@@ -146,10 +179,11 @@ static int listed_flag;
 
 bool GetOptions (int argc, char ** argv)
 {
- 
-  globals["readSurrogates"] = "N";
-  globals["readCCO"] = "Y";
-  globals["readUTG"] = "N";
+  globals.readSurrogates = 0;
+  globals.readCCO = 1;
+  globals.readUTG = 0;
+  globals.fastqQualityType = FASTQ_DEFAULT_QUALITY_TYPE;
+  globals.surrogateAsFragment = 0;
  
   while (1)
     {
@@ -157,25 +191,29 @@ bool GetOptions (int argc, char ** argv)
       static struct option long_options[] = {
         {"help",      no_argument,      &help_flag, 1},
         {"list",      no_argument,      &listed_flag, 1},
-        {"ace",       required_argument,         0, 'A'},
         {"bank",      required_argument,         0, 'b'},
         {"qual",      required_argument,         0, 'q'},
         {"seq",       required_argument,         0, 's'},
         {"Q",         required_argument,         0, 'Q'},
         {"map",       required_argument,         0, 'M'},
-        {"arachne",   required_argument,         0, 'r'},
         {"gq",        required_argument,         0, 'G'},
         {"bq",        required_argument,         0, 'B'},
         {"pos",       required_argument,         0, 'p'},
         {"readSurrogates", no_argument,          0, 'S'},
         {"readCCO",   no_argument,               0, 'C'},
         {"readUTG",   no_argument,               0, 'U'},
+        {"surrogateUTGAsReads", no_argument,     0, 'F'},
+        {"layoutsOnly",no_argument,              0, 'L'},
+        {"fasqQuality", required_argument,       0, 't'},
         {0,           0,                         0, 0}
       };
       
-      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:A:i:k:q:s:Q:M:r:G:B:p:SCU", long_options, &option_index);
+      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:i:k:q:s:Q:M:G:B:p:SCUFLt:", long_options, &option_index);
       if (ch == -1)
         break;
+
+      string qualName;
+      uint32_t i;
 
       switch (ch)
         {
@@ -190,62 +228,72 @@ bool GetOptions (int argc, char ** argv)
           BADQUAL = atoi(optarg);
           break;
         case 'p':
-          globals["posfile"] = string(optarg);
+          globals.posfile = string(optarg);
           break;
         case 'I':
           minSeqID = atoi(optarg);
           break;
         case 'b':
-          globals["bank"] = string(optarg);
+          globals.bank = string(optarg);
           break;
         case 'm':
-          globals["matesfile"] = string(optarg);
+          globals.matesfile = string(optarg);
           break;
         case 'x':
-          globals["traceinfofile"] = string(optarg);
+          globals.traceinfofile = string(optarg);
           break;
         case 'c':
-          globals["ctgfile"] = string(optarg);
+          globals.ctgfile = string(optarg);
           break;
         case 'f':
-          globals["frgfile"] = string(optarg);
+          globals.frgfile = string(optarg);
           break;
         case 'a':
-          globals["asmfile"] = string(optarg);
-          break;
-        case 't':
-          globals["tasmfile"] = string(optarg);
-          break;
-        case 'A':
-          globals["acefile"] = string(optarg);
+          globals.asmfile = string(optarg);
           break;
         case 'q':
-          globals["qualfile"] = string(optarg);
+          globals.qualfile = string(optarg);
           break;
         case 's':
-          globals["fastafile"] = string(optarg);
+          globals.fastafile = string(optarg);
           break;
         case 'Q':
-          globals["fastqfile"] = string(optarg);
+          globals.fastqfile = string(optarg);
           break;
-        case 'i':
-          globals["insertfile"] = string(optarg);
+       case 't':
+          qualName = string(optarg);
+          transform(qualName.begin(), qualName.end(), qualName.begin(), ::toupper);
+
+          for (i = 0; i < FASTQ_QUALITY_COUNT; i++) {
+             if (qualName == FASTQ_QUALITY_NAMES[i]) {
+                globals.fastqQualityType = (FastqQualType) i;
+                break;
+              }
+          }         
+          if (i == FASTQ_QUALITY_COUNT) {
+             cerr << "Unknown fastq quality type " << optarg << " specified" << endl;
+             help_flag = TRUE;
+          }
           break;
         case 'M':
-          globals["libmap"] = string(optarg);
-          break;
-        case 'r':
-          globals["arachne_scaff"] = string(optarg);
+          globals.libmap = string(optarg);
           break;
         case 'S':
-          globals["readSurrogates"] = "Y";
+          globals.readSurrogates = 1;
           break;
         case 'U':
-          globals["readUTG"] = "Y";
-          globals["readCCO"] = "N";
+          globals.readUTG = 1;
+          globals.readCCO = 0;
           break;
         case 'C':
-          globals["readCCO"] = "Y";
+          globals.readCCO = 1;
+          break;
+       case 'F':
+          globals.surrogateAsFragment = 1;
+          break;
+       case 'L':
+          globals.surroageAsFragment = 1;
+          globals.layoutOnly = 1;
           break;
        case 'h':
           PrintHelp();
@@ -289,112 +337,119 @@ int main(int argc, char ** argv)
     exit(1);
   }
 
-  if (globals.find("bank") == globals.end()){ // No bank specified
+  if (globals.bank.length() == 0){ // No bank specified
     cerr << "A bank must be specified" << endl;
     exit(1);
   }
 
   try
     {
-      if (globals["asmfile"].length() > 0 || globals["ctgfile"].length() > 0) {
-         if (contig_stream.exists(globals["bank"])) {
+      if (globals.asmfile.length() > 0 || globals.ctgfile.length() > 0) {
+         if (contig_stream.exists(globals.bank)) {
             cerr << "Contig Bank exists; opening" << endl;;
-            contig_stream.open(globals["bank"], B_WRITE);
+            contig_stream.open(globals.bank, B_WRITE);
          } else {
             cerr << "Contig Bank doesn't exist; creating" << endl;
-            contig_stream.create(globals["bank"], B_WRITE);
+            contig_stream.create(globals.bank, B_WRITE);
+         }
+         if (globals.layoutOnly) {
+            if (layout_stream.exists(globals.bank)) {
+               layout_stream.open(globals.bank, B_WRITE);
+            }
+            else {
+               layout_stream.create(globals.bank, B_WRITE);
+            }
          }
       }
-      if (read_stream.exists(globals["bank"])) {
+      if (read_stream.exists(globals.bank)) {
         cerr << "Read bank exists; opening" << endl;
-        read_stream.open(globals["bank"], B_READ | B_WRITE);
+        read_stream.open(globals.bank, B_READ | B_WRITE);
       } else {
         cerr << "Read Bank doesn't exist; creating" << endl;
-        read_stream.create(globals["bank"], B_READ | B_WRITE);
+        read_stream.create(globals.bank, B_READ | B_WRITE);
       }
-      if (frag_stream.exists(globals["bank"])) {
+      if (frag_stream.exists(globals.bank)) {
         cerr << "frag bank exists; opening" << endl;
-        frag_stream.open(globals["bank"], B_WRITE);
+        frag_stream.open(globals.bank, B_WRITE);
       } else {
         cerr << "frag Bank doesn't exist; creating" << endl;
-        frag_stream.create(globals["bank"], B_WRITE);
+        frag_stream.create(globals.bank, B_WRITE);
       }
-      if (lib_stream.exists(globals["bank"])) {
+      if (lib_stream.exists(globals.bank)) {
         cerr << "lib bank exists; opening" << endl;
-        lib_stream.open(globals["bank"], B_WRITE);
+        lib_stream.open(globals.bank, B_WRITE);
       } else {
         cerr << "lib Bank doesn't exist; creating" << endl;
-        lib_stream.create(globals["bank"], B_WRITE);
+        lib_stream.create(globals.bank, B_WRITE);
       }
 
-      if (globals["asmfile"].length() > 0) {
-         if (scf_stream.exists(globals["bank"])) {
+      if (globals.asmfile.length() > 0) {
+         if (scf_stream.exists(globals.bank)) {
             cerr << "scf bank exists; opening" << endl;
-            scf_stream.open(globals["bank"], B_WRITE);
+            scf_stream.open(globals.bank, B_WRITE);
           } else {
              cerr << "scf Bank doesn't exist; creating" << endl;
-             scf_stream.create(globals["bank"], B_WRITE);
+             scf_stream.create(globals.bank, B_WRITE);
           }
-          if (link_stream.exists(globals["bank"])) {
+          if (link_stream.exists(globals.bank)) {
              cerr << "link bank exists; opening" << endl;
-             link_stream.open(globals["bank"], B_WRITE);
+             link_stream.open(globals.bank, B_WRITE);
           } else {
               cerr << "link Bank doesn't exist; creating" << endl;
-              link_stream.create(globals["bank"], B_WRITE);
+              link_stream.create(globals.bank, B_WRITE);
           }
-          if (edge_stream.exists(globals["bank"])) {
+          if (edge_stream.exists(globals.bank)) {
              cerr << "edge bank exists; opening" << endl;
-             edge_stream.open(globals["bank"], B_WRITE);
+             edge_stream.open(globals.bank, B_WRITE);
           } else {
              cerr << "edge Bank doesn't exist; creating" << endl;
-             edge_stream.create(globals["bank"], B_WRITE);
+             edge_stream.create(globals.bank, B_WRITE);
           }
        } 
     }
   catch (Exception_t & e)
     {    
-      cerr << "Failed to open contig account in bank " << globals["bank"]
+      cerr << "Failed to open contig account in bank " << globals.bank
            << ": " << endl << e << endl;
       exit(1);
     }
  
   // figure out the reads 
-  if (globals["fastafile"].size() > 0) {
+  if (globals.fastafile.size() > 0) {
     cerr << "parsing fasta file" << endl;
     parseFastaFile();
     readsDone = true;
   }
 
   // parse fastq file
-  if (globals["fastqfile"].size() > 0) {
+  if (globals.fastqfile.size() > 0) {
     cerr << "parsing fastq file" << endl;
     parseFastqFile();
     readsDone = true;
   }
   
-
-  if (! matesDone && globals["matesfile"].size() > 0) { // the mate file contains either mates
+  if (! matesDone && globals.matesfile.size() > 0) { // the mate file contains either mates
       // or regular expressions defining them.
-      ifstream mates(globals["matesfile"].c_str());
+      ifstream mates(globals.matesfile.c_str());
       parseMatesFile(mates);
       mates.close();
       matesDone = true;
   }
  
-  if (!readsDone && globals["frgfile"].size() > 0) {
-     parseFrgFile(globals["frgfile"]);
+  if (!readsDone && globals.frgfile.size() > 0) {
+     parseFrgFile(globals.frgfile);
      readsDone = true;
   }
  
-  if (globals["ctgfile"].size() > 0) {
-    ifstream curCtg(globals["ctgfile"].c_str());
+  if (globals.ctgfile.size() > 0) {
+    ifstream curCtg(globals.ctgfile.c_str());
     parseContigFile(curCtg);
     curCtg.close();
     contigsDone = true;
   }
 
-  if (!contigsDone && globals["asmfile"].size() > 0) {
-    parseAsmFile(globals["asmfile"]);
+  if (!contigsDone && globals.asmfile.size() > 0) {
+    parseAsmFile(globals.asmfile);
     contigsDone = true;
   }
 
@@ -414,7 +469,7 @@ int main(int argc, char ** argv)
   if (read_stream.isOpen()) {
     cerr << "ERROR: Read bank is still open " << endl;
   }
-  if (globals["asmfile"].length() > 0 || globals["ctgfile"].length() > 0) {
+  if (globals.asmfile.length() > 0 || globals.ctgfile.length() > 0) {
      cerr << "Handling contigs" << endl;
      contig_stream.close();
      if (contig_stream.isOpen()) {
@@ -422,8 +477,11 @@ int main(int argc, char ** argv)
      } else 
        cerr << "Contig stream closed." << endl;
    }
+  if (globals.layoutOnly) {
+     layout_stream.close();
+  }
 
-  if (globals["asmfile"].length() > 0) {
+  if (globals.asmfile.length() > 0) {
      link_stream.close();
      edge_stream.close();
      scf_stream.close();
@@ -482,10 +540,10 @@ bool parseFastaFile() {
   int temp2 = 0;
   int id = 0;
 
-  FILE* fastafile = fileOpen(globals["fastafile"].c_str(), "r");
+  FILE* fastafile = fileOpen(globals.fastafile.c_str(), "r");
   FILE* qualFile = NULL;
-  if (globals["qualfile"].size() > 0)
-    qualFile = fileOpen(globals["qualfile"].c_str(), "r");
+  if (globals.qualfile.size() > 0)
+    qualFile = fileOpen(globals.qualfile.c_str(), "r");
 
   while (Fasta_Read(fastafile,tempSeqBuff,tempSeqHeader) != 0) {
     if (counter % 1000000 == 0) {
@@ -524,7 +582,7 @@ bool parseFastaFile() {
     read.setEID(seqname);
    
     string tempheader;
-    if (globals["qualfile"].length() > 0) {
+    if (globals.qualfile.length() > 0) {
       Fasta_Qual_Read(qualFile,tempQualBuff,tempQualHeader);
       qualheaderstream.str(tempQualHeader.c_str());
       qualheaderstream >> tempheader;
@@ -541,11 +599,11 @@ bool parseFastaFile() {
     } else {
       tempQualBuff.clear();
       for (int i = 0; i < cll; i++) 
-        tempQualBuff += char('0' + BADQUAL);
+        tempQualBuff += char(AMOS::MIN_QUALITY + BADQUAL);
       for (int i = cll; i < clr; i++)
-        tempQualBuff += char('0' + GOODQUAL);
+        tempQualBuff += char(AMOS::MIN_QUALITY + GOODQUAL);
       for (int i = clr; i < tempSeqBuff.length(); i++)
-        tempQualBuff  += char('0' + BADQUAL);
+        tempQualBuff  += char(AMOS::MIN_QUALITY + BADQUAL);
     }
     read.setClearRange(Range_t(cll, clr));
     read.setSequence(tempSeqBuff.c_str(), tempQualBuff.c_str());
@@ -574,9 +632,9 @@ bool parseFastqFile() {
   int temp2 = 0;
   int id = 0;
 
-  FILE* fastqfile = fileOpen(globals["fastqfile"].c_str(), "r");
+  FILE* fastqfile = fileOpen(globals.fastqfile.c_str(), "r");
 
-  while (Fastq_Read(fastqfile,tempSeqBuff,tempSeqHeader,tempQualBuff,tempQualHeader) != 0) {
+  while (Fastq_Read(fastqfile,tempSeqBuff,tempSeqHeader,tempQualBuff,tempQualHeader, globals.fastqQualityType) != 0) {
     if (counter % 1000000 == 0) {
        cerr << "Read " << counter << " reads " << endl;
     }
@@ -624,6 +682,7 @@ bool parseFastqFile() {
     // reset the clear ranges
     cll = clr = -1;
   }
+  cerr << "Finished reading " << counter << " reads " << endl;
 
   fileClose(fastqfile);
 }
@@ -763,7 +822,7 @@ bool parseMatesFile(ifstream &matesFile) {
         split( splitVec, vectInput, boost::is_any_of("\t ") );
         if (splitVec.size() < 3 || splitVec.size() > 4) {
           cerr << "Only " << splitVec.size() << " fields" << endl;
-          cerr << "Improperly formated line $. in " << globals["matesfile"]
+          cerr << "Improperly formated line $. in " << globals.matesfile
                << ".\nMaybe you didn't use TABs to separate fields\n";
           continue;
         }	    
@@ -1067,19 +1126,69 @@ bool parseFrgFile(string fileName) {
    fileClose(f);
 }
 
+int *computeGapIndex(char *sequence, uint32_t length) {
+   // compute the gap index for the consensus sequence
+   int *gapIndex = (int*) safe_malloc(sizeof(int) * length);
+   int gapCounter = 0;
+   for (int i = 0; i < length; i++) {
+      if (sequence[i] == GAP_CHAR) {
+         gapCounter++;
+       }
+       gapIndex[i] = gapCounter;
+   }
+
+   return gapIndex;
+}
+
+/** 
+  * Parse Celera Assembler output file
+  * This assumes quality values are compatible between the two which they currently are
+  * Both are offset by '0' or AMOS::MIN_QUALITY
+**/
 bool parseAsmFile(string fileName) {
     GenericMesg     *pmesg             = NULL;
     FILE *f = fileOpen(fileName.c_str(), "r");
     map<ID_t, uint32_t> ctgLens;
-    bool readUTG = globals["readUTG"] == "Y";
-    bool readCCO = globals["readCCO"] == "Y";
-    bool readSurrogates = globals["readSurrogates"] == "Y";
+    bool readUTG = globals.readUTG == 1;
+    bool readCCO = globals.readCCO == 1;
+    bool readSurrogates = globals.readSurrogates == 1;
+    bool storeSurrogatesAsFragments = globals.surrogateAsFragment == 1;
+    bool storeLayoutOnly = globals.layoutOnly == 1;
 
     while (EOF != ReadProtoMesg_AS(f, &pmesg)) {
        // utg
-       if (pmesg->t == MESG_UTG && (readUTG || readSurrogates)) {
+       if (pmesg->t == MESG_UTG) {
           SnapUnitigMesg *utg = (SnapUnitigMesg *)pmesg->m;
-          if (utg->status == AS_SEP && !readSurrogates) {
+
+          if (readCCO && utg->status != AS_UNIQUE) {
+             // we need to read this unitig as a read to use it in consensus potentially
+             Read_t read;
+             read.setIID(minSeqID++);
+             read.setEID(AS_UID_toString(utg->eaccession));
+
+             // remove gaps from sequence
+             char *sequence = (char *) safe_malloc(sizeof(char) * (utg->length + 1));
+             char *qual = (char *) safe_malloc(sizeof(char) * (utg->length + 1));
+             int j = 0;
+             for (int i = 0; i < utg->length; i++) {
+                if (utg->consensus[i] != GAP_CHAR) {
+                   sequence[j] = utg->consensus[i];
+                   qual[j] = utg->quality[i];
+                   if (j > i || j >=utg->length) {
+                      AMOS_THROW("Error: The ungapped position is smaller than the gapped: " + i); 
+                   }
+                   j++;
+                } 
+             }
+             sequence[j]='\0';
+             qual[j] = '\0';
+             read.setSequence(sequence, qual);
+             read.setClearRange(Range_t(0, j));
+             read_stream.append(read);
+             safe_free(sequence);
+             safe_free(qual);
+          } 
+          if (utg->status == AS_SEP && !readSurrogates && !readUTG) {
              continue;
           }
           if (utg->status != AS_SEP && !readUTG) {
@@ -1088,20 +1197,23 @@ bool parseAsmFile(string fileName) {
 
           Contig_t contig;
           vector<Tile_t> reads;
+          vector<Tile_t> readsForLayout;
           
           contig.setEID(AS_UID_toString(utg->eaccession));
-          contig.setIID(minSeqID++);
+          contig.setIID(minCtgID++);
           contig.setSequence(utg->consensus, utg->quality);
 
+          int *gapIndex = computeGapIndex(utg->consensus, utg->length);
           for (int i = 0; i < utg->num_frags; i++) {
              ID_t readID = read_stream.lookupIID(AS_UID_toString(utg->f_list[i].eident));
              if (readID == NULL_ID) {
                 cerr << "Error fragments " << AS_UID_toString(utg->f_list[i].eident) << " are not defined" << endl;
                 continue;
              }
+             int start = (utg->f_list[i].position.bgn < utg->f_list[i].position.end ? utg->f_list[i].position.bgn : utg->f_list[i].position.end); 
+
              Tile_t tile;
              tile.source = readID;
-             int start = (utg->f_list[i].position.bgn < utg->f_list[i].position.end ? utg->f_list[i].position.bgn : utg->f_list[i].position.end);
              tile.offset = start;
              if (utg->f_list[i].position.bgn < utg->f_list[i].position.end) {
                 utg->f_list[i].position.end -= utg->f_list[i].delta_length;
@@ -1110,20 +1222,39 @@ bool parseAsmFile(string fileName) {
              }
              tile.range.begin = utg->f_list[i].position.bgn - start;
              tile.range.end = utg->f_list[i].position.end - start;
+
              for (int j = 0; j < utg->f_list[i].delta_length; j++) {
                 tile.gaps.push_back(utg->f_list[i].delta[j]);
              }
              reads.push_back(tile);
+
+             // store the ungapped tile as well if we need to save the layout
+             Tile_t layoutTile = tile;
+             layoutTile.offset = start - gapIndex[start];
+             layoutTile.gaps.clear();
+             readsForLayout.push_back(layoutTile);
          }
-         contig.setReadTiling(reads);
-         contig_stream.append(contig);
+
+         if (storeLayoutOnly == true) {
+            Layout_t lay;
+            lay.setEID(AS_UID_toString(utg->eaccession));
+            lay.setIID(minCtgID++);
+            lay.setTiling(readsForLayout);
+            layout_stream.append(lay);
+         } else  {
+            contig.setReadTiling(reads);
+            contig_stream.append(contig);
+         }
+         safe_free(gapIndex);
        } else if (pmesg->t == MESG_CCO && readCCO) {
           SnapConConMesg *ctg = (SnapConConMesg *)pmesg->m;
           Contig_t contig;
           vector<Tile_t> reads;
+          vector<Tile_t> readsForLayout;
+          int *gapIndex = (int*) computeGapIndex(ctg->consensus, ctg->length);
 
           contig.setEID(AS_UID_toString(ctg->eaccession));
-          contig.setIID(minSeqID++);
+          contig.setIID(minCtgID++);
           contig.setSequence(ctg->consensus, ctg->quality);
           for (int i = 0; i < ctg->num_pieces; i++) {
              ID_t readID = read_stream.lookupIID(AS_UID_toString(ctg->pieces[i].eident));
@@ -1133,8 +1264,10 @@ bool parseAsmFile(string fileName) {
              }
              Tile_t tile;
              tile.source = readID;
+
              int start = (ctg->pieces[i].position.bgn < ctg->pieces[i].position.end ? ctg->pieces[i].position.bgn : ctg->pieces[i].position.end);
              tile.offset = start;
+
              if (ctg->pieces[i].position.bgn < ctg->pieces[i].position.end) {
                 ctg->pieces[i].position.end -= ctg->pieces[i].delta_length;
              } else {
@@ -1142,15 +1275,60 @@ bool parseAsmFile(string fileName) {
              }
              tile.range.begin = ctg->pieces[i].position.bgn - start;
              tile.range.end = ctg->pieces[i].position.end - start;
+
              for (int j = 0; j < ctg->pieces[i].delta_length; j++) {
                 tile.gaps.push_back(ctg->pieces[i].delta[j]);
              }
+
+             Tile_t layoutTile = tile;
+             layoutTile.offset = start - gapIndex[start];
+             layoutTile.gaps.clear();
              reads.push_back(tile);
+             readsForLayout.push_back(layoutTile);
          }
-         contig.setReadTiling(reads);
+         for (int i = 0; i < ctg->num_unitigs; i++) {
+            ID_t utgID = read_stream.lookupIID(AS_UID_toString(ctg->unitigs[i].eident));
+            if (utgID == NULL_ID) {
+               // skip this unitig, if its not a read its because it was not a surrogate
+               continue;
+            }
+            Tile_t tile;
+
+            tile.source = utgID;
+
+            int start = (ctg->unitigs[i].position.bgn < ctg->unitigs[i].position.end ? ctg->unitigs[i].position.bgn : ctg->unitigs[i].position.end);
+             tile.offset = start;
+
+             if (ctg->unitigs[i].position.bgn < ctg->unitigs[i].position.end) {
+                ctg->unitigs[i].position.end -= ctg->unitigs[i].delta_length;
+             } else {
+                ctg->unitigs[i].position.bgn -= ctg->unitigs[i].delta_length;
+             }
+             tile.range.begin = ctg->unitigs[i].position.bgn - start;
+             tile.range.end = ctg->unitigs[i].position.end - start;
+
+             for (int j = 0; j < ctg->unitigs[i].delta_length; j++) {
+                tile.gaps.push_back(ctg->unitigs[i].delta[j]);
+             }
+
+             Tile_t layoutTile = tile;
+             layoutTile.offset = start - gapIndex[start];
+             reads.push_back(tile);
+             readsForLayout.push_back(layoutTile);
+         }
+         if (storeLayoutOnly == true) {
+            Layout_t lay;
+            lay.setEID(AS_UID_toString(ctg->eaccession));
+            lay.setIID(minCtgID++);
+            lay.setTiling(readsForLayout);
+            layout_stream.append(lay);
+         } else {
+            contig.setReadTiling(reads);
+            contig_stream.append(contig);
+         }
          ctgLens[contig.getIID()] = contig.getUngappedLength();
-         contig_stream.append(contig);
-       } else if (pmesg->t == MESG_CLK && readCCO) {
+         safe_free(gapIndex);
+       } else if (pmesg->t == MESG_CLK && readCCO && !storeLayoutOnly) {
           SnapContigLinkMesg *clk = (SnapContigLinkMesg *)pmesg->m;
 
           ID_t ctg1 = contig_stream.lookupIID(AS_UID_toString(clk->econtig1));
@@ -1208,12 +1386,12 @@ bool parseAsmFile(string fileName) {
           }
           cte.setContigLinks(links);
           edge_stream.append(cte);
-       }else if (pmesg->t == MESG_SCF && readCCO) {
+       }else if (pmesg->t == MESG_SCF && readCCO && !storeLayoutOnly) {
           SnapScaffoldMesg *scf = (SnapScaffoldMesg *)pmesg->m;
           Scaffold_t scaffold;
 
           scaffold.setEID(AS_UID_toString(scf->eaccession));
-          scaffold.setIID(minSeqID++);
+          scaffold.setIID(minScfID++);
           vector<Tile_t> contigs;
           int32_t offset = 0;
 

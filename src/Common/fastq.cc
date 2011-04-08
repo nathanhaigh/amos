@@ -1,17 +1,19 @@
 //  Daniel Sommer
 //
-//  File:  fastq.cc
+//  - FasqOffset[qualType] File:  fastq.cc
 //
 //  Last Modified:  April 2011
 //
 //  Routines to manipulate FASTQ format files
 
-
+#include  "exceptions_AMOS.hh"
 #include  "inttypes_AMOS.hh"
 #include  "fastq.hh"
 using namespace std;
 
-bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualHdr)
+static const char FastqOffset[] = {'@', '!'};
+
+bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualHdr, FastqQualType qualType)
 //  Read next fastq-format string from file  fp  (which must
 //  already be open) into string  s .  Put the faster
 //  header line into
@@ -27,7 +29,7 @@ bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualH
    q.erase();
    qualHdr.erase();
 
-   // skip till next '>' if necessary
+   // skip till next '@' if necessary
    while  ((ch = fgetc (fp)) != EOF && ch != '@')
      ;
 
@@ -65,10 +67,21 @@ bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualH
    while  ((ch = fgetc (fp)) != EOF && ch != '\n')
      qualHdr.push_back (char (ch));
 
-   // put all numbers up till next '@' into  q
+   // put all numbers up till newline into  q
    while((ch = fgetc(fp)) != EOF && ch != '\n')
      {
-       q.push_back(char (ch + AMOS::MIN_QUALITY));
+       // check of errors
+       int qlVal = (int)ch;
+       qlVal -= (int) FastqOffset[qualType];
+       int maxQlt = (int)AMOS::MAX_QUALITY - (int)AMOS::MIN_QUALITY;
+       if (qlVal < 0) {
+          sprintf (Clean_Exit_Msg_Line,
+                     "Failed: invalid quality value too low %c %d. Please check quality type\n", ch, qlVal);
+          throw AMOS::Exception_t(Clean_Exit_Msg_Line, __LINE__, __FILE__);
+       } else if (qlVal > maxQlt) {
+          ch = FastqOffset[qualType] + AMOS::MAX_QUALITY;
+       }
+       q.push_back(char (ch - FastqOffset[qualType] + AMOS::MIN_QUALITY));
      }
 
    if  (ch == '@')
