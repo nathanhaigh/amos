@@ -15,7 +15,6 @@ extern "C" {
 #include <getopt.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <expat.h>
 #include <ctype.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -111,7 +110,6 @@ map<string,string>              seq2qual; // a map of all the qual file names fo
 int *computeGapIndex(char *sequence, uint32_t length);
 bool parseFastaFile();
 bool parseFastqFile();
-bool parseTraceInfoFile(ifstream&);
 bool parseMatesFile(ifstream&);
 bool parseFrgFile(string);
 bool parseAsmFile(string);
@@ -119,11 +117,7 @@ bool parseContigFile(ifstream&);
 void Tokenize(const string& str,
                       vector<string>& tokens,
               const string& delimiters);
-void textHandler(void *data, const XML_Char *s, int len);
-void EndTag(void *data, const XML_Char *e1);
-void StartTag(void *data, const XML_Char *e1, const XML_Char** attr);
-void EndDocument(void *data, const XML_Char *e1);
-void StartDocument(void *data, const XML_Char *e1);
+
 
 //==============================================================================//
 // Documentation
@@ -144,7 +138,8 @@ void PrintHelp()
          << " toAmos reads the inputs specified on the command line and stores  the \n"
          << " information directly into the AMOS Bank.  The following types of \n"
          << " information can be provided to toAmos: \n"
-         << "   -> Sequence and quality data (options -f, -s,  -q) \n"
+         << "   -> Sequence and quality data (options -f, -s, -q, -Q) \n"
+         << "   -> Fastq data (options -Q, -t) \n"
          << "   -> Library and mate-pair data (options -m, or -f) \n"
          << "   -> Contig  data (options -c, -a) \n"
          << "   -> Scaffold data (option -a) \n"
@@ -158,7 +153,7 @@ void PrintHelp()
          << "  -F - include the surrogate unitigs as reads in the tilling for a contig. Without this option the contig may have 0-coverage regions of coverage.\n"
          << "  -L - output only the layout, not the consensus sequence for contigs. Will not output contig links or scaffolds. Implies -F.\n"
          << "  -t - fastq quality type. The currently supported types are";
-         for (uint32 i = 0; i < FASTQ_QUALITY_COUNT; i++) {
+         for (uint32_t i = 0; i < FASTQ_QUALITY_COUNT; i++) {
             cerr << " " << FASTQ_QUALITY_NAMES[i];
          }
          cerr << ". The default is " << FASTQ_QUALITY_NAMES[FASTQ_DEFAULT_QUALITY_TYPE] << "\n" 
@@ -1540,171 +1535,3 @@ void Tokenize(const string& str,
     }
 }
 
-/*
-// MATES PARSING FUNCTIONS
-
-// parse Trace Archive style XML files
-string tag;
-string library;
-string templateID;
-Pos_t clipl;
-Pos_t clipr;
-Pos_t mean;
-SD_t stdev;
-string end;
-int seqId;
-
-bool parseTraceInfoFile(ifstream& xmlFile) {
-  XML_Parser p = XML_ParserCreate(NULL);
-  if (! p) {
-    cerr << "Couldn't allocate memory for parser!" << endl;
-    exit(-1);
-  }
-  
-  XML_UseParserAsHandlerArg(p);
-  XML_SetElementHandler(p, StartTag, EndTag);
-  XML_SetCharacterDataHandler(p, textHandler);
-  char Buff[512];
-  for (;;) {
-    int done;
-    int len;
-    xmlFile.getline(Buff, sizeof(Buff), '\n');
-    len = strlen(Buff);
-    if (ferror(stdin))
-      cerr << "Read error" << endl;
-    done = xmlFile.eof();
-    if (! XML_Parse(p, Buff, len, done)) {
-      cerr << "Parse error at line " << XML_GetCurrentLineNumber(p) << XML_ErrorString(XML_GetErrorCode(p)) << endl;
-      exit(-1);
-    }
-    
-    if(done)
-      break;
-  }
-}
-
-
-//---------------------------------------------------------------
-// XML parser functions
-//-------------------------------------------------------------
-
-void StartTag(void *data, const XML_Char *e1, const XML_Char **attr)
-{
-  tag = string(e1);
-    
-    if (tag == "trace"){
-      library = "";
-      templateID = "";
-      clipl = -1;
-      clipr = -1;
-      mean = -1;
-      stdev = 0;
-      end = "";
-      seqId = -1;
-    }
-}
-
-
-void EndTag(void *data, const XML_Char *e1)
-{
-  tag = string(e1);
-  if (tag == "trace"){
-    if (seqId == -1){
-      cerr << "trace has no name???" << endl;
-    }
-    if (library == ""){
-      cerr << "trace " << seqId << " has no library" << endl;
-    }
-    if (mean == -1){
-      cerr << "library " << library << " has no mean" << endl;
-    } 
-    
-      if (stdev == 0){
-      cerr << "library " << library << " has no stdev" << endl;
-    }
-    
-    if (mean != -1 && stdev != 0){
-      Distribution_t newDist;
-      newDist.mean = mean;
-      newDist.sd = stdev;
-      libraries[library] = newDist;
-    }
-    if (templateID == ""){
-      cerr << "trace " << seqId << " has no template" << endl;
-    } 
-    
-    if (end == "") {
-      cerr << "trace " << seqId << " has no end\n";
-    }
-    
-    if (end[0] == 'R'){
-      if (rev.find(templateID) == rev.end() ||
-          seqnames[seqId].size() > seqnames[rev[templateID]].size())
-        {
-          rev[templateID] = seqId;
-        }
-    }
-    
-    if (end[0] == 'F'){
-      if (forw.find(templateID) != forw.end() ||
-          seqnames[seqId] > seqnames[forw[templateID]]){
-        forw[templateID] = seqId;
-      }
-    }
-    
-    seqinsert[seqId] = templateID;
-    //	insertlib{library} .= "template ";
-    seenlib[templateID] = library;
-    //    cerr << "seen library: " << templateID << " = " << library;
-    if (clipl != -1 && clipr != -1){
-      seq_range[seqId] = Range_t(clipl,clipr);
-    }
-  }
-  tag = "";
-}
-
-
-void textHandler(void *data, const XML_Char *s, int len)
-{
-  string text(s,len);
-  if (tag != ""){
-    if (tag == "insert_size"){
-      mean = atoi(text.c_str());
-      //      cerr << "mean: " << mean << endl;
-    } else if (tag == "insert_stdev"){
-      stdev = atoi(text.c_str());
-      //      cerr << "stdev: " << stdev << endl;
-    } else if (tag == "trace_name"){
-      string seqName = text;
-      //      cerr << "seqName: " << seqName << endl;
-      seqId = minSeqID++;
-      // cerr << "seqID: " << seqId << endl;
-      seqids[seqName] = seqId;
-      seqnames[seqId] = seqName;
-    } else if (tag == "library_id"){
-      library = text;
-      //cerr << "library: " << library;
-    } else if (tag == "seq_lib_id") {
-      if (library == "") {
-        library = text;
-      }
-    } else if (tag == "template_id"){
-      templateID = text;
-      //cerr << "templateID: " << templateID << endl;
-    } else if (tag == "trace_end"){
-      end = text;
-      //      cerr << "trace end: " << end << endl;
-    } else if (tag == "clip_quality_left" ||
-               tag == "clip_vector_left"){
-      if (clipl == -1 || atoi(text.c_str()) > clipl){
-        clipl = atoi(text.c_str());
-      }
-    } else if (tag == "clip_quality_right" ||
-             tag == "clip_vector_right"){
-      if (clipr == -1 || atoi(text.c_str()) < clipr){
-        clipr = atoi(text.c_str());
-      }
-    }
-  }
-}
-*/

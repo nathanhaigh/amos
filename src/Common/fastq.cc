@@ -15,13 +15,11 @@ static const char FastqOffset[] = {'@', '!'};
 
 bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualHdr, FastqQualType qualType)
 //  Read next fastq-format string from file  fp  (which must
-//  already be open) into string  s .  Put the faster
-//  header line into
+//  already be open) into string  s .  Put the fasta header line into
 //  string  hdr .  Return  true  if a string is successfully,
 //  read; false, otherwise.
 
   {
-   bool  have_value;
    int  ch, val;
 
    s.erase();
@@ -84,8 +82,6 @@ bool  Fastq_Read(FILE * fp, string & s, string & hdr, string & q, string & qualH
        q.push_back(char (ch - FastqOffset[qualType] + AMOS::MIN_QUALITY));
      }
 
-   if  (ch == '@')
-       ungetc (ch, fp);
 
    return  true;
   }
