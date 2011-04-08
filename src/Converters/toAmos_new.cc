@@ -225,9 +225,6 @@ bool GetOptions (int argc, char ** argv)
         case 'p':
           globals.posfile = string(optarg);
           break;
-        case 'I':
-          minSeqID = atoi(optarg);
-          break;
         case 'b':
           globals.bank = string(optarg);
           break;
@@ -340,6 +337,8 @@ int main(int argc, char ** argv)
   try
     {
       if (globals.asmfile.length() > 0 || globals.ctgfile.length() > 0) {
+         int maxLayout = 0;
+
          if (contig_stream.exists(globals.bank)) {
             cerr << "Contig Bank exists; opening" << endl;;
             contig_stream.open(globals.bank, B_WRITE);
@@ -354,7 +353,13 @@ int main(int argc, char ** argv)
             else {
                layout_stream.create(globals.bank, B_WRITE);
             }
+            maxLayout = layout_stream.getMaxIID();
          }
+
+         minCtgID = contig_stream.getMaxIID();
+         if (maxLayout >= minCtgID) {
+            minCtgID = maxLayout+1;
+         };
       }
       if (read_stream.exists(globals.bank)) {
         cerr << "Read bank exists; opening" << endl;
@@ -363,12 +368,22 @@ int main(int argc, char ** argv)
         cerr << "Read Bank doesn't exist; creating" << endl;
         read_stream.create(globals.bank, B_READ | B_WRITE);
       }
+
+      int maxRead = read_stream.getMaxIID();
+      if (maxRead >= minSeqID) {
+         minSeqID = maxRead+1;
+      }
       if (frag_stream.exists(globals.bank)) {
         cerr << "frag bank exists; opening" << endl;
         frag_stream.open(globals.bank, B_WRITE);
       } else {
         cerr << "frag Bank doesn't exist; creating" << endl;
         frag_stream.create(globals.bank, B_WRITE);
+
+        int maxFrg = frag_stream.getMaxIID();
+        if (maxFrg >= minSeqID) {
+           minSeqID = maxFrg + 1;
+        }
       }
       if (lib_stream.exists(globals.bank)) {
         cerr << "lib bank exists; opening" << endl;
@@ -376,6 +391,10 @@ int main(int argc, char ** argv)
       } else {
         cerr << "lib Bank doesn't exist; creating" << endl;
         lib_stream.create(globals.bank, B_WRITE);
+      }
+      int maxLib = lib_stream.getMaxIID();
+      if (maxLib >= minSeqID) {
+         minSeqID = maxLib +1;
       }
 
       if (globals.asmfile.length() > 0) {
@@ -399,6 +418,18 @@ int main(int argc, char ** argv)
           } else {
              cerr << "edge Bank doesn't exist; creating" << endl;
              edge_stream.create(globals.bank, B_WRITE);
+          }
+          int maxScf = scf_stream.getMaxIID();
+          int maxLink = link_stream.getMaxIID();
+          int maxEdge = edge_stream.getMaxIID();
+          if (maxScf >= minScfID) {
+             minScfID = maxScf + 1;
+          }
+          if (maxLink >= minScfID) { 
+             minScfID = maxLink + 1; 
+          }
+          if (maxEdge >= minScfID) {
+             minScfID = maxEdge + 1;
           }
        } 
     }
@@ -786,213 +817,6 @@ bool parseMatesFile(ifstream &matesFile) {
    }
 }
 
-/*
-bool parseMatesFile(ifstream &matesFile) {
-  cerr << "in mates";
-  vector<boost::regex> libregexp;
-  vector<int> libids;
-  vector< pair< boost::regex,boost::regex > > pairregexp;
-  stringstream insstream;
-  string insname;
-  int inscount = 1;
-  insstream << inscount;
-  insstream >> insname;
-  string temp;
-  int lineNo = 0;
-  while (!matesFile.eof()) {
-    lineNo++;
-    char peekChar = matesFile.peek();
-    if (peekChar == ' ' || peekChar == '\n' || peekChar == '\t') { // empty line
-      matesFile.ignore(256,'\n'); 
-      continue;
-    }
-    if (peekChar == 'l'){
-      matesFile >> temp;
-      if (temp == "library") {
-        typedef vector< string > split_vector_type;
-        split_vector_type splitVec;
-        char vectInput[256];
-        matesFile.getline(vectInput, 256, '\n');
-        // Line ends;
-        split( splitVec, vectInput, boost::is_any_of("\t ") );
-        if (splitVec.size() < 3 || splitVec.size() > 4) {
-          cerr << "Only " << splitVec.size() << " fields" << endl;
-          cerr << "Improperly formated line $. in " << globals.matesfile
-               << ".\nMaybe you didn't use TABs to separate fields\n";
-          continue;
-        }	    
-        if (splitVec.size() == 4){
-          libregexp.push_back(boost::regex(splitVec[4]));
-          libids.push_back(atoi(splitVec[1].c_str()));
-        }
-        Pos_t mean = (atoi(splitVec[2].c_str()) + atoi(splitVec[3].c_str())) / 2;
-        SD_t stdev = (atoi(splitVec[3].c_str()) - atoi(splitVec[2].c_str())) / 6;
-        Distribution_t dist;
-        dist.mean = mean;
-        dist.sd = stdev;
-        libraries[splitVec[1]] = dist;
-        continue;
-      }
-    } // if library
-    else if (peekChar == 'p')
-      matesFile >> temp;
-      if (temp == "pair"){
-      typedef vector< string > split_vector_type;
-      split_vector_type splitVec;
-      char vectInput[256];
-      matesFile.getline(vectInput, 256, '\n');
-      // Line ends;
-      split( splitVec, vectInput, boost::is_any_of("\t ") );
-      if (splitVec.size() != 2){
-        cerr << "Improperly formated line $. in \"$matesfile\".\nMaybe you didn't use TABs to separate fields\n";
-        continue;
-      }
-      pairregexp.push_back(pair<boost::regex,boost::regex>(boost::regex(splitVec[1]),boost::regex(splitVec[2])));
-      continue;
-    }
-    if (peekChar=='#') { // comment
-      matesFile.ignore(256,'\n');
-      continue;
-    }
-    
-    // now we just deal with the pair lines
-    typedef vector< string > split_vector_type;
-    split_vector_type splitVec;
-    char vectInput[256];
-    matesFile.getline(vectInput, 256, '\n');
-    // Line break
-    split( splitVec, vectInput, boost::is_any_of("\t ") );
-    
-    if (splitVec.size() < 1 || splitVec.size() > 2){
-      cerr << "Improperly formated line in \"" << globals["matesfile"] 
-           << "\".\nMaybe you didn't use TABs to separate fields\n";
-      continue;
-    }
-    
-    // make sure we've seen these sequences
-    if (seqids.find(splitVec[0]) == seqids.end()){
-      cerr << "Sequence " << splitVec[0] << "has no ID at line " << lineNo << " in \"" << globals["matesfile"] << "\"";
-      continue;
-    }
-    if (seqids.find(splitVec[1]) == seqids.end()){
-      cerr << "Sequence " << splitVec[1] << " has no ID at line " << lineNo << " in \" " << globals["matesfile"] << "\"";
-        continue;
-      }
-      
-      if (splitVec.size() > 1){
-        //	    insertlib[splitVec[2]].push_back(insname);
-        seenlib[insname] = splitVec[2];
-      } else {
-        cerr << insname << " has no library\n";
-      }
-      
-      forw[insname] = seqids[splitVec[0]];
-      rev[insname] = seqids[splitVec[1]];
-      
-      seqinsert[seqids[splitVec[0]]] = insname;
-      seqinsert[seqids[splitVec[1]]] = insname;
-      
-      inscount++;
-      insstream << inscount;
-      insstream >> insname;
-  } // while <IN>
-  
-  // now we have to go through all the sequences and assign them to
-  // inserts
-  map<string,int>::iterator iter;
-  
-  for(iter = seqids.begin(); iter != seqids.end(); iter++) {
-    string nm = iter->first;
-    int sid = iter->second;
-    for (int r = 0; r < pairregexp.size(); r++){
-      boost::regex freg = pairregexp[r].first;
-      boost::regex revreg = pairregexp[r].second;
-      boost::smatch results;
-      cerr << "trying " << freg << " and " << revreg << " on " << nm << endl;
-      if (regex_match(nm,results,freg)) {
-        cerr << "got forw " << results[0];
-        if (forw.find(results[1]) == forw.end()){
-          forw[results[1]] = sid;
-          seqinsert[sid] = results[1];
-        }
-        break;
-      }
-      if (regex_match(nm,results,revreg)) {
-        cerr << "got rev " << results[1] << endl;
-        if (rev.find(results[1]) == rev.end()) {
-          rev[results[1]] = sid;
-          seqinsert[sid] = results[1];
-        }
-        break;
-      }
-    } // for each pairreg
-  } // for each seqids
-  
-  
-  map<string,ID_t>::iterator iter2;
-  for(iter2 = forw.begin(); iter != seqids.end(); iter++) {
-    string ins = iter2->first;
-    string seqname;
-    ID_t nm = iter2->second;
-    insstream << ins;
-    insstream >> insname;
-    if (insid.find(insname) == insid.end()){
-      insid[insname] = minSeqID++;
-    }
-    if (seenlib.find(ins) == seenlib.end()){
-      int found = 0;
-      
-      seqname = seqnames[nm];
-      boost::smatch results;
-      for (int l = 0; l < libregexp.size(); l++){
-        local << "Trying " << libregexp[l] << " on " << seqname << "\n";
-        if (regex_match(seqname,results,libregexp[l])){
-          cerr << "found " << libids[l] << "\n";
-          // insertlib{libids[l]} .= "ins ";
-          seenlib[ins] = libids[l];
-          found = 1;
-          break;
-        }
-      }
-      if (found == 0){
-        cerr << "Cannot find library for \"" << seqname << "\"";
-        continue;
-      }
-    }
-  }
-
-  map<string,ID_t>::iterator iter3;
-  for (iter3 = rev.begin(); iter3 != rev.end(); iter3++) {
-    string nm = iter3->first;
-    ID_t ins = iter3->second;
-    insstream << ins;
-    insstream >> insname;
-    boost::smatch results;
-    if (insid.find(insname) == insid.end()){
-      insid[insname] = minSeqID++;
-    }
-    if (seenlib.find(insname) == seenlib.end()){
-      int found = 0;
-      string nm = seqnames[atoi(nm.c_str())];
-      
-      for (int l = 0; l < libregexp.size(); l++){
-        local << "Trying " << libregexp[l] << " on " << nm << endl;
-        if (regex_match(nm,results,libregexp[l])){
-          local << "found " << libids[l] << endl;
-          // insertlib{libids[l]} .= "ins ";
-          seenlib[insname] = libids[l];
-          found = 1;
-          break;
-        }
-      }
-      if (found == 0){
-        cerr << "Cannot find library for \"nm\"";
-        continue;
-      }
-    }
-  }
-} // parseMateFile;
-*/
 
 #ifdef AMOS_HAVE_CA 
 bool parseFrgFile(string fileName) {
