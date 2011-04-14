@@ -117,8 +117,8 @@ void dumpRead(Read_t & red)
 
     string quals;
 
-    if (OPT_UseRaw) { quals = red.getSeqString(); }
-    else            { quals = red.getSeqString(red.getClearRange()); }
+    if (OPT_UseRaw) { quals = red.getQualString(); }
+    else            { quals = red.getQualString(red.getClearRange()); }
 
     for (int i = 0; i < quals.length(); i++)
     {
