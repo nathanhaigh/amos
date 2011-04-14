@@ -42,7 +42,7 @@ void printHelpText()
        << "  -E file       Dump just the contig eids listed in file\n"
        << "  -I file       Dump just the contig iids listed in file\n"
        << "  -q file       Report qualities in file\n"
-       << "-d            Show contig details (num reads, coverage) on fasta header line\n"
+       << "  -d            Show contig details (num reads, coverage) on fasta header line\n"
        << "\n.KEYWORDS.\n"
        << "  AMOS bank, Converters\n"
        << endl;
