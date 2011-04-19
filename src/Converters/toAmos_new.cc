@@ -782,9 +782,21 @@ bool parseMatesFile(ifstream &matesFile) {
 
     string templateID = "";
 
-    if (frg1.find_last_of("_") != string::npos) {
-       templateID = frg1.substr(0, frg1.find_last_of("_"));
+
+    Size_t offset = 0; 
+    for (offset = 0; offset < frg1.length(); ++offset) {
+       if (frg2.length() < offset) {
+          break;
+       }
+       if (frg1[offset] != frg2[offset]) {
+          break;
+       }
     }
+    if (offset == 0) {
+       cerr << "Error fragments " << frg1 << " AND " << frg2 << " do not have any common template substring" << endl;
+       continue;
+    }
+    templateID = frg1.substr(0, offset);
     ID_t libID = lib_stream.lookupIID(name);
     if (libID == NULL_ID) {
       cerr << "Error library " << name << " is not defined" << endl;
