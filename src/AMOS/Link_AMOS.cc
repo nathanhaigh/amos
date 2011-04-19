@@ -21,7 +21,7 @@ const NCode_t Link_t::NCODE = M_LINK;
 //----------------------------------------------------- clear ------------------
 void Link_t::clear ( )
 {
-  Universal_t::clear( );
+  Oriented_t::clear( );
   nods_m . first = nods_m . second = source_m . first = NULL_ID;
   source_m . second = NULL_NCODE;
   nodtype_m = NULL_NCODE;
@@ -43,27 +43,10 @@ void Link_t::flip ( )
 }
 
 
-//----------------------------------------------------- getAdjacency -----------
-LinkAdjacency_t Link_t::getAdjacency ( ) const
-{
-  if ( flags_m . nibble & ADJACENCY_BIT )
-    {
-      switch (flags_m . nibble & ADJACENCY_BITS)
-	{
-	case NORMAL_BITS     : return NORMAL;
-	case ANTINORMAL_BITS : return ANTINORMAL;
-	case INNIE_BITS      : return INNIE;
-	case OUTIE_BITS      : return OUTIE;
-	}
-    }
-  return NULL_ADJACENCY;
-}
-
-
 //----------------------------------------------------- readMessage ------------
 void Link_t::readMessage (const Message_t & msg)
 {
-  Universal_t::readMessage (msg);
+  Oriented_t::readMessage (msg);
 
   try {
 
@@ -90,13 +73,6 @@ void Link_t::readMessage (const Message_t & msg)
           AMOS_THROW_ARGUMENT ("Invalid object type format");
         ss . clear( );
         nodtype_m = Encode (str);
-      }
-
-    if ( msg . exists (F_ADJACENCY) )
-      {
-	ss . str (msg . getField (F_ADJACENCY));
-	setAdjacency (ss . get( ));
-	ss . clear( );
       }
 
     if ( msg . exists (F_SD) )
@@ -149,7 +125,7 @@ void Link_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void Link_t::readRecord (istream & fix, istream & var)
 {
-  Universal_t::readRecord (fix, var);
+  Oriented_t::readRecord (fix, var);
 
   readLE (fix, &(nods_m . first));
   readLE (fix, &(nods_m . second));
@@ -158,14 +134,13 @@ void Link_t::readRecord (istream & fix, istream & var)
   readLE (fix, &size_m);
   readLE (fix, &(source_m . first));
   readLE (fix, &(source_m . second));
-  fix . get (type_m);
 }
 
 
 //----------------------------------------------------- readRecordFix ----------
 void Link_t::readRecordFix (istream & fix)
 {
-  Universal_t::readRecordFix (fix);
+  Oriented_t::readRecordFix (fix);
 
   readLE (fix, &(nods_m . first));
   readLE (fix, &(nods_m . second));
@@ -174,30 +149,6 @@ void Link_t::readRecordFix (istream & fix)
   readLE (fix, &size_m);
   readLE (fix, &(source_m . first));
   readLE (fix, &(source_m . second));
-  fix . get (type_m);
-}
-
-
-//----------------------------------------------------- setAdjacency -----------
-void Link_t::setAdjacency (LinkAdjacency_t adj)
-{
-  uint8_t bits = flags_m . nibble;
-  flags_m . nibble &= ~ADJACENCY_BITS;
-  flags_m . nibble |=  ADJACENCY_BIT;
-
-  switch (adj)
-    {
-    case NORMAL     : flags_m . nibble |= NORMAL_BITS;     break;
-    case ANTINORMAL : flags_m . nibble |= ANTINORMAL_BITS; break;
-    case INNIE      : flags_m . nibble |= INNIE_BITS;      break;
-    case OUTIE      : flags_m . nibble |= OUTIE_BITS;      break;
-    case NULL_ADJACENCY:
-      flags_m . nibble &= ~ADJACENCY_BIT;
-      break;
-    default:
-      flags_m . nibble = bits;
-      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency " + adj);
-    }
 }
 
 
@@ -225,7 +176,7 @@ void Link_t::setType (LinkType_t type)
 //----------------------------------------------------- writeMessage -----------
 void Link_t::writeMessage (Message_t & msg) const
 {
-  Universal_t::writeMessage (msg);
+  Oriented_t::writeMessage (msg);
 
   try {
     ostringstream ss;
@@ -242,13 +193,6 @@ void Link_t::writeMessage (Message_t & msg) const
     if ( nodtype_m != NULL_NCODE )
       {
         msg . setField (F_OBJECT, Decode (nodtype_m));
-        ss . str (NULL_STRING);
-      }
-
-    if ( getAdjacency( ) != NULL_ADJACENCY )
-      {
-        ss << getAdjacency( );
-        msg . setField (F_ADJACENCY, ss . str( ));
         ss . str (NULL_STRING);
       }
 
@@ -285,7 +229,7 @@ void Link_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Link_t::writeRecord (ostream & fix, ostream & var) const
 {
-  Universal_t::writeRecord (fix, var);
+  Oriented_t::writeRecord (fix, var);
 
   writeLE (fix, &(nods_m . first));
   writeLE (fix, &(nods_m . second));
@@ -294,5 +238,4 @@ void Link_t::writeRecord (ostream & fix, ostream & var) const
   writeLE (fix, &size_m);
   writeLE (fix, &(source_m . first));
   writeLE (fix, &(source_m . second));
-  fix . put (type_m);
 }

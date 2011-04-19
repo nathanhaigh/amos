@@ -13,8 +13,6 @@ using namespace AMOS;
 using namespace std;
 
 
-
-
 //================================================ Distribution_t ==============
 const NCode_t Distribution_t::NCODE = M_DISTRIBUTION;
 
@@ -99,6 +97,7 @@ const NCode_t Tile_t::NCODE = M_TILE;
 void Tile_t::clear ( )
 {
   source = NULL_ID;
+  source_type = NULL_NCODE;
   gaps . clear( );
   offset = 0;
   range . clear( );
@@ -116,11 +115,17 @@ void Tile_t::readMessage (const Message_t & msg)
 
     if ( msg . exists (F_SOURCE) )
       {
-	ss . str (msg . getField (F_SOURCE));
-	ss >> source;
-	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid source link format");
-	ss . clear( );
+        string str;
+
+        ss . str (msg . getField (F_SOURCE));
+        ss >> source;
+        ss . ignore( );
+        ss >> str;
+        if ( !ss  ||  str . length( ) != NCODE_SIZE )
+           source_type = NULL_NCODE;
+        else 
+           source_type = Encode(str);
+        ss . clear( );
       }
 
     if ( msg . exists (F_OFFSET) )
@@ -177,6 +182,7 @@ void Tile_t::readRecord (istream & in)
   for ( Pos_t i = 0; i < size; i ++ )
     readLE (in, &(gaps [i]));
   readLE (in, &source);
+  readLE (in, &source_type);
   readLE (in, &offset);
   readLE (in, &(range . begin));
   readLE (in, &(range . end));
@@ -194,11 +200,13 @@ void Tile_t::writeMessage (Message_t & msg) const
 
     msg . setMessageCode (Tile_t::getNCode( ));
 
-    if ( source != NULL_ID )
+    if ( source != NULL_ID)
       {
-	ss << source;
-	msg . setField (F_SOURCE, ss . str( ));
-	ss . str (NULL_STRING);
+        ss << source;
+        if (source_type != NULL_NCODE)
+           ss << ',' << Decode (source_type);
+        msg . setField (F_SOURCE, ss . str( ));
+        ss . str (NULL_STRING);
       }
 
     ss << offset;
@@ -234,6 +242,7 @@ void Tile_t::writeRecord (ostream & out) const
   for ( Pos_t i = 0; i < size; i ++ )
     writeLE (out, &(gaps [i]));
   writeLE (out, &source);
+  writeLE (out, &source_type);
   writeLE (out, &offset);
   writeLE (out, &(range . begin));
   writeLE (out, &(range . end));

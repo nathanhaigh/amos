@@ -19,7 +19,7 @@
 namespace AMOS {
 
 typedef char LinkType_t;
-typedef char LinkAdjacency_t;
+typedef Adjacency_t LinkAdjacency_t;
 
 //====================================================== Link_t ================
 //! \brief Linking information between two nodes, such as between contigs
@@ -30,7 +30,7 @@ typedef char LinkAdjacency_t;
 //! bundled together to form an Edge_t.
 //!
 //==============================================================================
-class Link_t : public Universal_t
+class Link_t : public Oriented_t
 {
 
 private:
@@ -44,14 +44,6 @@ private:
 
 
 protected:
-
-  static const uint8_t ADJACENCY_BIT   = 0x4;  //!< adjacency exists flag
-  static const uint8_t ADJACENCY_BITS  = 0x3;  //!< adjacency info mask
-  static const uint8_t NORMAL_BITS     = 0x1;
-  static const uint8_t ANTINORMAL_BITS = 0x2;
-  static const uint8_t INNIE_BITS      = 0x3;
-  static const uint8_t OUTIE_BITS      = 0x0;
-
 
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix, std::istream & var);
@@ -77,13 +69,6 @@ public:
   static const LinkType_t PHYSICAL  = 'P';
   static const LinkType_t ALIGNMENT = 'A';
   static const LinkType_t SYNTENY   = 'S';
-
-  static const LinkAdjacency_t NULL_ADJACENCY = 0;
-  static const LinkAdjacency_t NORMAL         = 'N';  //!< E,B
-  static const LinkAdjacency_t ANTINORMAL     = 'A';  //!< B,E
-  static const LinkAdjacency_t INNIE          = 'I';  //!< E,E
-  static const LinkAdjacency_t OUTIE          = 'O';  //!< B,B
-
 
   //--------------------------------------------------------- Link_t -----------
   //! \brief Constructs an empty Link_t object
@@ -133,21 +118,6 @@ public:
   //! \return void
   //!
   void flip ( );
-
-
-  //--------------------------------------------------- getAdjacency -----------
-  //! \brief Get the adjacency relation of the two nodes
-  //!
-  //! Get the adjacency information for the nodes, i.e. [N]ORMAL (EB),
-  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where, if we picture
-  //! each node as an arrow, B is the tail and E is the head. Thus EB means the
-  //! head of node1 is adjacent to the tail of node2. This may seem awkward in
-  //! a theoretical sense, but comes in handy when the nodes are directed
-  //! sequences.
-  //!
-  //! \return The pair of adjacent ends
-  //!
-  LinkAdjacency_t getAdjacency ( ) const;
 
 
   //----------------------------------------------------- getNodes -------------
@@ -233,26 +203,6 @@ public:
 
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
-
-
-  //--------------------------------------------------- setAdjacency -----------
-  //! \brief Set the adjacent ends of the two nodes
-  //!
-  //! Set the adjacency information for the nodes, i.e. [N]ORMAL (EB),
-  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where, if we picture
-  //! each node as an arrow, B is the tail and E is the head. Thus EB means the
-  //! head of node1 is adjacent to the tail of node2. This may seem awkward in
-  //! a theoretical sense, but comes in handy when the nodes are directed
-  //! sequences.
-  //!
-  //! \note Will store info in nibble portion of BankFlags
-  //!
-  //! \param adj The new adjacency of the nodes
-  //! \pre adj must be one of [NAIO]
-  //! \throws ArgumentException_t
-  //! \return void
-  //!
-  void setAdjacency (LinkAdjacency_t adj);
 
 
   //----------------------------------------------------- setNodes -------------

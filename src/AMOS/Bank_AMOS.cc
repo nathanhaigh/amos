@@ -43,7 +43,7 @@ const Size_t Bank_t::DEFAULT_BUFFER_SIZE    = 1024;
 const Size_t Bank_t::DEFAULT_PARTITION_SIZE = 1000000;
 const Size_t Bank_t::MAX_OPEN_PARTITIONS    = 20;
 
-const string Bank_t::BANK_VERSION     =  "2.8";
+const string Bank_t::BANK_VERSION     =  "3.0";
 
 const string Bank_t::FIX_STORE_SUFFIX = ".fix";
 const string Bank_t::IFO_STORE_SUFFIX = ".ifo";
@@ -55,22 +55,113 @@ const string Bank_t::TMP_STORE_SUFFIX = ".tmp";
 const char Bank_t::WRITE_LOCK_CHAR    = 'w';
 const char Bank_t::READ_LOCK_CHAR     = 'r';
 
+void Bank_t::copyFile(fstream &in, ofstream &out) {
+   in.seekg(0, std::ios::beg);
+   out << in.rdbuf();
+   out.flush();
+   return;
+
+   in.seekg(0, std::ios::beg);
+
+   char buf[1000];
+   while ( in ) {
+      in.read(buf, 1000);
+      out << buf;
+    } 
+    if ( in.bad() )
+       AMOS_THROW_IO ("Cannot create version, error copying existing data");
+}
+
+//----------------------------------------------------- nextVersion ------------
+void Bank_t::nextVersion ( )
+{
+  if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
+    AMOS_THROW_IO ("Cannot create version, bank not open for writing");
+
+   // copy all partitons and map to the next version
+   version_m++;
+   nversions_m = version_m + 1;
+   // copy size information
+   ID_t *new_nbids = new ID_t[nversions_m];
+   ID_t *new_last = new ID_t[nversions_m];
+   for (ID_t i = 0; i != nversions_m - 1; i++) {
+      new_nbids[i] = nbids_m[i];
+      new_last[i] = last_bid_m[i];
+   }
+   new_nbids[version_m] = new_nbids[version_m - 1];
+   new_last[version_m] = new_last[version_m - 1];
+   delete[] nbids_m;
+   delete[] last_bid_m;
+   nbids_m = new_nbids;
+   last_bid_m = new_last;
+
+   string new_map_name = getMapPath();
+   touchFile (new_map_name, FILE_MODE, true);
+
+   ofstream new_map (new_map_name.c_str());
+   idmap_m.write(new_map);
+   new_map.close();
+
+   // now finally copy all partitions and initialize them
+   for (ID_t i = 0; i != npartitions_m; i++) {
+      copyPartition(i);
+   }
+}
+
+void Bank_t::copyPartition(ID_t &id) {
+   if (id > npartitions_m) {
+      AMOS_THROW_IO("Invalid partition specified for copy");
+   }
+
+   vector<BankPartition_t *>* partitions = partitions_m[id];
+   BankPartition_t * partition = new BankPartition_t (buffer_size_m);
+   partitions->push_back (partition);
+
+   ostringstream ss;
+
+   ss << store_pfx_m << '.' << version_m << '.' << id << FIX_STORE_SUFFIX;
+   partition->fix_name = ss.str();
+   ss.str (NULL_STRING);
+
+   ss << store_pfx_m << '.' << version_m << '.' << id << VAR_STORE_SUFFIX;
+   partition->var_name = ss.str();
+   ss.str (NULL_STRING);
+
+   BankPartition_t * prevVersion = getPartition(id, version_m - 1);    
+   touchFile (prevVersion->fix_name, FILE_MODE, false);
+   touchFile (prevVersion->fix_name, FILE_MODE, false);
+
+   ios::openmode mode = ios::binary | ios::trunc | ios::in; 
+   touchFile (partition->fix_name, FILE_MODE, true);
+   ofstream output (partition->fix_name.c_str(), (mode | ios::out));
+   copyFile(prevVersion->fix, output);
+   output.close();
+
+   touchFile (partition->var_name, FILE_MODE, true);
+   output.open(partition->var_name.c_str(), (mode | ios::out));
+   copyFile(prevVersion->var, output);
+   output.close(); 
+}
 
 //----------------------------------------------------- addPartition -----------
 void Bank_t::addPartition (bool create)
 {
-  //-- Allocate the new partition and add it to the list
-  BankPartition_t * partition = new BankPartition_t (buffer_size_m);
-  partitions_m.push_back (partition);
+  // add this partition in all versions of the bank
+  vector<BankPartition_t *> * partitions = new vector<BankPartition_t *>();
+
+  for (Size_t i = 0; i < nversions_m; i++) {
+     //-- Allocate the new partition and add it to the list
+     BankPartition_t * partition = new BankPartition_t (buffer_size_m);
+     partitions->push_back (partition);
 
   try {
     ostringstream ss;
 
-    ss << store_pfx_m << '.' << npartitions_m << FIX_STORE_SUFFIX;
+    ss << store_pfx_m << '.' << i << '.' << npartitions_m << FIX_STORE_SUFFIX;
     partition->fix_name = ss.str();
     ss.str (NULL_STRING);
 
-    ss << store_pfx_m << '.' << npartitions_m << VAR_STORE_SUFFIX;
+    ss << store_pfx_m << '.' << i << '.' << npartitions_m << VAR_STORE_SUFFIX;
     partition->var_name = ss.str();
     ss.str (NULL_STRING);
 
@@ -83,6 +174,8 @@ void Bank_t::addPartition (bool create)
     delete partition;
     throw;
   }
+  }
+  partitions_m.push_back(partitions);
 
   //-- If partition size is unset, use the default
   if ( partition_size_m == 0 )
@@ -97,7 +190,7 @@ void Bank_t::addPartition (bool create)
 void Bank_t::append (IBankable_t & obj)
 {
   //-- Insert the ID triple into the map (may throw exception)
-  idmap_m.insert (obj.iid_m, obj.eid_m, last_bid_m + 1);
+  idmap_m.insert (obj.iid_m, obj.eid_m, last_bid_m [version_m] + 1);
 
   try {
     appendBID (obj);
@@ -109,7 +202,6 @@ void Bank_t::append (IBankable_t & obj)
   }
 }
 
-
 //----------------------------------------------------- appendBID --------------
 void Bank_t::appendBID (IBankable_t & obj)
 {
@@ -119,10 +211,10 @@ void Bank_t::appendBID (IBankable_t & obj)
     AMOS_THROW_ARGUMENT ("Cannot append, incompatible object type");
 
   //-- Add another partition if necessary
-  if ( last_bid_m == max_bid_m )
+  if ( last_bid_m [version_m] == max_bid_m )
     addPartition (true);
 
-  BankPartition_t * partition = getLastPartition();
+  BankPartition_t * partition = getLastPartition(localizeVersionBID(last_bid_m [version_m] + 1));
 
   //-- Prepare the object for append
   obj.flags_m.is_removed  = false;
@@ -151,8 +243,8 @@ void Bank_t::appendBID (IBankable_t & obj)
        partition->var.fail() )
     AMOS_THROW_IO ("Unknown file write error in append, bank corrupted");
 
-  ++ nbids_m;
-  ++ last_bid_m;
+  ++ nbids_m [version_m];
+  ++ last_bid_m [version_m];
 }
 
 
@@ -210,24 +302,32 @@ void Bank_t::clean()
     clear();
     fix_size_m       = tmpbnk.fix_size_m;
     partition_size_m = tmpbnk.partition_size_m;
-    last_bid_m       = tmpbnk.last_bid_m;
-    nbids_m          = tmpbnk.nbids_m;
+    delete[] last_bid_m;
+    last_bid_m = new ID_t[tmpbnk.nversions_m];
+    for (ID_t i = 0; i != tmpbnk.nversions_m; i++)
+       last_bid_m[i] = tmpbnk.last_bid_m[i];
+    delete[] nbids_m;
+    nbids_m = new ID_t[tmpbnk.nversions_m];
+    for (ID_t i = 0; i != tmpbnk.nversions_m; i++) 
+       nbids_m[i]          = tmpbnk.nbids_m[i];
     idmap_m          = tmpbnk.idmap_m;
-    
+     
     //-- Link back the now cleaned partitions
     for ( Size_t i = 0; i != tmpbnk.npartitions_m; ++ i )
       {
 	while ( i >= npartitions_m )
 	  addPartition (true);
 
-	unlink (partitions_m [i]->fix_name.c_str());
-	unlink (partitions_m [i]->var_name.c_str());
-	if ( link (tmpbnk.partitions_m [i]->fix_name.c_str(),
-		            partitions_m [i]->fix_name.c_str())  ||
-	     link (tmpbnk.partitions_m [i]->var_name.c_str(),
-		            partitions_m [i]->var_name.c_str()) )
-	  AMOS_THROW_IO ("Unknown file link error in clean, bank corrupted");
-      }
+        for (Size_t version = 0; version != tmpbnk.nversions_m; ++ i) {
+	   unlink ((*partitions_m [i]) [version]->fix_name.c_str());
+	   unlink ((*partitions_m [i]) [version]->var_name.c_str());
+	   if ( link ((*tmpbnk.partitions_m [i]) [version]->fix_name.c_str(),
+	   	            (*partitions_m [i]) [version]->fix_name.c_str())  ||
+	        link ((*tmpbnk.partitions_m [i]) [version]->var_name.c_str(),
+		            (* partitions_m [i]) [version]->var_name.c_str()) )
+	     AMOS_THROW_IO ("Unknown file link error in clean, bank corrupted");
+        }
+     }
   }
   catch (Exception_t) {
     if ( tmpbnk.isOpen() )
@@ -241,7 +341,33 @@ void Bank_t::clean()
 
 
 //----------------------------------------------------- clear ------------------
-void Bank_t::clear()
+void Bank_t::clear () {
+   for (Size_t version = 0; version != nversions_m; ++version) {
+      clearVersion (version, false);
+   } 
+  for ( Size_t i = 0; i != npartitions_m; ++ i )
+  {
+      delete (partitions_m[i]);
+  }
+
+  delete[] last_bid_m;
+  delete[] nbids_m;
+
+  nversions_m = 1;
+  last_bid_m    = new ID_t[nversions_m];
+  memset(last_bid_m, NULL_ID, nversions_m*sizeof(ID_t));
+  max_bid_m     = NULL_ID;
+  nbids_m       = new ID_t[nversions_m];
+  memset(nbids_m, NULL_ID, nversions_m*sizeof(ID_t));
+  npartitions_m    = 0;
+  partition_size_m = 0;
+  opened_m    .clear();
+  partitions_m.clear();
+  idmap_m     .clear();
+  idmap_m     .setType (banktype_m);
+}
+
+void Bank_t::clearVersion (Size_t &version, bool recreate)
 {
   if ( ! is_open_m ) return;
   if ( ! (mode_m & B_WRITE) )
@@ -249,23 +375,36 @@ void Bank_t::clear()
 
   //-- Close, unlink and free the partition files
   for ( Size_t i = 0; i != npartitions_m; ++ i )
-    {
-      partitions_m [i]->fix.close();
-      partitions_m [i]->var.close();
-      unlink (partitions_m [i]->fix_name.c_str());
-      unlink (partitions_m [i]->var_name.c_str());
-      delete (partitions_m [i]);
-    }
+     {
+      (*partitions_m [i]) [version]->fix.close();
+      (*partitions_m [i]) [version]->var.close();
+      unlink ((*partitions_m [i]) [version]->fix_name.c_str());
+      unlink ((*partitions_m [i]) [version]->var_name.c_str());
+      delete ((*partitions_m [i]) [version]);
 
-  last_bid_m    = NULL_ID;
-  max_bid_m     = NULL_ID;
-  nbids_m       = NULL_ID;
-  npartitions_m    = 0;
-  partition_size_m = 0;
-  opened_m    .clear();
-  partitions_m.clear();  
-  idmap_m     .clear();
-  idmap_m     .setType (banktype_m);
+      if (recreate) {
+         (*partitions_m [i]) [version] = new BankPartition_t( buffer_size_m );
+          try {
+             ostringstream ss;
+
+             ss << store_pfx_m << '.' << version << '.' << i << FIX_STORE_SUFFIX;
+             (*partitions_m [i]) [version]->fix_name = ss.str();
+             ss.str (NULL_STRING);
+
+             ss << store_pfx_m << '.' << version << '.' << i << VAR_STORE_SUFFIX;
+             (*partitions_m [i]) [version]->var_name = ss.str();
+             ss.str (NULL_STRING);
+
+             //-- Try to create/open the FIX and VAR partition files
+             touchFile ((*partitions_m [i]) [version]->fix_name, FILE_MODE, true);
+             touchFile ((*partitions_m [i]) [version]->var_name, FILE_MODE, true);
+          }
+          catch (Exception_t) {
+             delete (*partitions_m [i] ) [version];
+             throw;
+          }
+      }
+   }
 }
 
 
@@ -277,7 +416,7 @@ void Bank_t::close()
   if ( (mode_m & B_WRITE) )
     {
       //-- Flush MAP partition
-      string map_path (store_pfx_m + MAP_STORE_SUFFIX);
+      string map_path = getMapPath();
       ofstream map_stream (map_path.c_str());
       if ( ! map_stream.is_open() )
 	AMOS_THROW_IO ("Could not open bank partition, " + map_path);
@@ -290,8 +429,12 @@ void Bank_t::close()
     }
   
   //-- Close/free the partitions
-  for ( Size_t i = 0; i < npartitions_m; i ++ )
-    delete (partitions_m [i]);
+  for ( Size_t i = 0; i != npartitions_m; i ++ ) {
+    for (Size_t version = 0; version != nversions_m; version++) { 
+       delete ((*partitions_m [i]) [version]);
+    }
+    delete partitions_m[i];
+  }
 
   //-- Sync the IFO partition
   syncIFO (I_CLOSE);
@@ -320,11 +463,11 @@ void Bank_t::concat (Bank_t & s)
 
   bankstreamoff vpos;
   BankPartition_t * sp;
-  BankPartition_t * tp = getLastPartition();
+  BankPartition_t * tp = getLastPartition(version_m);
 
   //-- Set up the BID lookup table
   const IDMap_t::HashTriple_t * stp = NULL;
-  vector<const IDMap_t::HashTriple_t *> striples (s.last_bid_m + 1, stp);
+  vector<const IDMap_t::HashTriple_t *> striples (s.last_bid_m [s.version_m] + 1, stp);
   for ( IDMap_t::const_iterator idmi = s.getIDMap().begin();
         idmi != s.getIDMap().end(); ++ idmi )
     striples [idmi->bid] = idmi;
@@ -338,7 +481,7 @@ void Bank_t::concat (Bank_t & s)
   for ( Size_t i = 0; i != s.npartitions_m; ++ i )
     {
       //-- Seek to the beginning of source partition
-      sp = s.getPartition (i);
+      sp = s.getPartition (i, s.version_m);
 
       sp->fix.seekg (0);
 
@@ -362,14 +505,14 @@ void Bank_t::concat (Bank_t & s)
 
 	  //-- Get the source triple and add it to the new bank
 	  if ( (stp = striples [sbid]) != NULL )
-	    idmap_m.insert (stp->iid, stp->eid, last_bid_m + 1);
+	    idmap_m.insert (stp->iid, stp->eid, last_bid_m [version_m] + 1);
 
 	  //-- Add new partition if necessary
-	  if ( last_bid_m == max_bid_m )
+	  if ( last_bid_m [version_m] == max_bid_m )
 	    {
 	      try {
 		addPartition (true);
-		tp = getLastPartition();
+		tp = getLastPartition(version_m);
 	      }
 	      catch (Exception_t) {
 		if ( stp != NULL )
@@ -409,8 +552,8 @@ void Bank_t::concat (Bank_t & s)
 	  if ( tp->fix.fail()  ||  tp->var.fail() )
 	    AMOS_THROW_IO("Unknown file write error in concat, bank corrupted");
 
-	  ++ nbids_m;
-	  ++ last_bid_m;
+	  ++ nbids_m [version_m];
+	  ++ last_bid_m [version_m];
 	}
     }
 
@@ -447,9 +590,13 @@ void Bank_t::create (const string & dir, BankMode_t mode)
     store_pfx_m = dir + '/' + Decode (banktype_m);
     mkdir (store_dir_m.c_str(), DIR_MODE);
 
+    nversions_m = 1;
+    version_m = 0;
+    is_inplace_m = true;
+
     //-- Try to create the IFO and MAP partition files
     touchFile (store_pfx_m + IFO_STORE_SUFFIX, FILE_MODE, true);
-    touchFile (store_pfx_m + MAP_STORE_SUFFIX, FILE_MODE, true);
+    touchFile (getMapPath(), FILE_MODE, true);
 
     //-- Create the IFO partition
     syncIFO (I_CREATE);
@@ -474,7 +621,9 @@ void Bank_t::destroy()
   clear();
 
   //-- Unlink the IFO and MAP partitions
-  unlink ((store_pfx_m + MAP_STORE_SUFFIX).c_str());
+  for (Size_t i = 0; i != nversions_m; i++) {
+     unlink ((getMapPath()).c_str());
+  }
   unlink ((store_pfx_m + IFO_STORE_SUFFIX).c_str());
   unlink ((store_pfx_m + LCK_STORE_SUFFIX).c_str());
 
@@ -495,6 +644,19 @@ bool Bank_t::exists (const string & dir) const
 	   ! access (ifo_path.c_str(), R_OK) );
 }
 
+bool Bank_t::exists (const string & dir, Size_t version ) const
+{
+   //-- Return false if the type of bank is missing
+   if (!exists (dir)) {
+      return false;
+   }
+
+   //-- check for specific version
+   std::ostringstream map_path;
+   map_path << dir << '/' << Decode(banktype_m) << '.' << version << MAP_STORE_SUFFIX;
+
+   return ( ! access (map_path.str().c_str(), R_OK) );
+}
 
 //----------------------------------------------------- fetchBID ---------------
 void Bank_t::fetchBID (ID_t bid, IBankable_t & obj)
@@ -573,7 +735,7 @@ ID_t Bank_t::getMaxBID() const
 ID_t Bank_t::lookupBID (const string & eid) const
 {
   ID_t bid = idmap_m.lookupBID (eid);
-  if ( bid == NULL_ID || bid > last_bid_m )
+  if ( bid == NULL_ID || bid > last_bid_m [version_m] )
     {
       stringstream ss;
       ss << "EID '" << eid << "' does not exist in bank";
@@ -587,7 +749,7 @@ ID_t Bank_t::lookupBID (const string & eid) const
 ID_t Bank_t::lookupBID (ID_t iid) const
 {
   ID_t bid = idmap_m.lookupBID (iid);
-  if ( bid == NULL_ID || bid > last_bid_m )
+  if ( bid == NULL_ID || bid > last_bid_m [version_m] )
     {
       stringstream ss;
       ss << "IID '" << iid << "' does not exist in bank";
@@ -600,11 +762,22 @@ ID_t Bank_t::lookupBID (ID_t iid) const
 //----------------------------------------------------- init -------------------
 void Bank_t::init()
 {
+  if (last_bid_m != NULL) {
+     delete[] last_bid_m;
+  }
+  if (nbids_m != NULL) {
+     delete[] nbids_m;
+  }
+
   fix_size_m       = 0;
   is_open_m        = false;
-  last_bid_m       = NULL_ID;
+  nversions_m      = 1;
+  version_m        = 0;
+  last_bid_m       = new ID_t[nversions_m];
+  memset(last_bid_m, NULL_ID, nversions_m * sizeof(ID_t));
   max_bid_m        = NULL_ID;
-  nbids_m          = NULL_ID;
+  nbids_m          = new ID_t[nversions_m];
+  memset(nbids_m, NULL_ID, nversions_m * sizeof(ID_t));
   npartitions_m    = 0;
   partition_size_m = 0;
   opened_m    .clear();
@@ -634,7 +807,7 @@ void Bank_t::lockIFO()
 
 
 //----------------------------------------------------- open -------------------
-void Bank_t::open (const string & dir, BankMode_t mode)
+void Bank_t::open (const string & dir, BankMode_t mode, Size_t version, bool inPlace)
 {
   if ( is_open_m ) close();
 
@@ -645,23 +818,39 @@ void Bank_t::open (const string & dir, BankMode_t mode)
     store_dir_m = dir;
     store_pfx_m = dir + '/' + Decode (banktype_m);
 
-    //-- Try to open the IFO and MAP partition files
+    is_inplace_m = inPlace;
+
+    //-- Try to open the IFO partition files
     touchFile (store_pfx_m + IFO_STORE_SUFFIX, FILE_MODE, false);
-    touchFile (store_pfx_m + MAP_STORE_SUFFIX, FILE_MODE, false);
 
     //-- Read the IFO partition
     syncIFO (I_OPEN);
 
+    //-- default to opening the latest version
+    if (version < 0) {
+       version = nversions_m - 1;
+    }
+    //-- make sure user did not request an invalid version
+    if (version >= nversions_m) {
+       AMOS_THROW_IO("Invalid version for bank, specified version does not exist");
+    }
+    version_m = version;
+ 
     //-- Read the MAP partition
-    string map_path (store_pfx_m + MAP_STORE_SUFFIX);
-
+    string map_path = getMapPath();
+    touchFile (map_path, FILE_MODE, false);
     idmap_m.read(map_path);
 
+    //-- create the next version if we are going to be writing
+    if (is_inplace_m == false && (mode_m & B_WRITE) ) {
+       nextVersion();
+    }
+
     //-- Make sure nothing smells fishy
-    if ( idmap_m.getType() != banktype_m  ||
-         idmap_m.getSize() > nbids_m  ||
-	 nbids_m > last_bid_m  ||
-	 last_bid_m > max_bid_m  ||
+   if ( idmap_m.getType() != banktype_m  ||
+         idmap_m.getSize() > nbids_m [version_m]  ||
+	 nbids_m [version_m] > last_bid_m [version_m]  ||
+	 last_bid_m [version_m] > max_bid_m  ||
 	 partitions_m.size() != npartitions_m )
       AMOS_THROW_IO ("Unknown file read error in open, bank corrupted");
   }
@@ -673,9 +862,9 @@ void Bank_t::open (const string & dir, BankMode_t mode)
 
 
 //----------------------------------------------------- openPartition ----------
-Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id)
+Bank_t::BankPartition_t * Bank_t::openPartition (ID_t id, Size_t version)
 {
-  BankPartition_t * partition = partitions_m [id];
+  BankPartition_t * partition = (*partitions_m [id]) [version];
 
   //-- If already open, return it
   if ( partition->fix.is_open() )
@@ -836,8 +1025,9 @@ void Bank_t::syncIFO (IFOMode_t mode)
   
   string line;
   NCode_t banktype;
-  ID_t nbids, last_bid;
-  Size_t fix_size, npartitions, partition_size;
+  ID_t* nbids_byVersion = NULL;
+  ID_t* last_bid_byVersion = NULL;
+  Size_t fix_size, npartitions, partition_size, nversions;
   vector<string> locks;
   vector<string>::iterator vi;
 
@@ -866,18 +1056,26 @@ void Bank_t::syncIFO (IFOMode_t mode)
 	  AMOS_THROW_IO
 	    ("Could not read bank, incompatible type " + Decode (banktype));
 
+        getline (ifo_stream, line, '=');
+        ifo_stream >> nversions;           // number of versions
 	getline (ifo_stream, line, '=');
-	ifo_stream >> nbids;               // number of objects
-	getline (ifo_stream, line, '=');
-	ifo_stream >> last_bid;            // last index
-	getline (ifo_stream, line, '=');
+        nbids_byVersion = new ID_t[nversions];
+        for (ID_t i = 0; i != nversions; i++) {
+	   ifo_stream >> nbids_byVersion[i];               // number of objects
+	}
+        last_bid_byVersion = new ID_t[nversions];
+        getline (ifo_stream, line, '=');
+        for (ID_t i = 0; i != nversions; i++) {
+	   ifo_stream >> last_bid_byVersion[i];        // last index
+	}
+        getline (ifo_stream, line, '=');
 	ifo_stream >> fix_size;            // index size (in bytes)
 	getline (ifo_stream, line, '=');
 	ifo_stream >> npartitions;         // number of partitions
 	getline (ifo_stream, line, '=');
 	ifo_stream >> partition_size;      // partition size (in indices)
 	getline (ifo_stream, line, '=');   // "locks ="
-	getline (ifo_stream, line);
+        getline (ifo_stream, line);
 
 	if ( ifo_stream.fail() )
 	  AMOS_THROW_IO ("Unknown file read error in sync, bank corrupted");
@@ -898,10 +1096,17 @@ void Bank_t::syncIFO (IFOMode_t mode)
 	//-- If seeing this for the first time
 	if ( mode == I_OPEN )
 	  {
-	    nbids_m = nbids;
-	    last_bid_m = last_bid;
+            delete[] nbids_m;
+	    nbids_m = new ID_t[nversions];
+            for (ID_t i = 0; i != nversions; i++) 
+               nbids_m[i] = nbids_byVersion[i];
+	    delete[] last_bid_m;
+            last_bid_m = new ID_t[nversions];
+            for (ID_t i = 0; i != nversions; i++) 
+               last_bid_m[i] = last_bid_byVersion[i];
 	    fix_size_m = fix_size;
 	    partition_size_m = partition_size;
+            nversions_m = nversions;
 
 	    //-- Update the partition list
 	    try {
@@ -909,9 +1114,13 @@ void Bank_t::syncIFO (IFOMode_t mode)
 		addPartition (false);
 	    }
 	    catch (Exception_t) {
-	      for ( Size_t i = 0; i != npartitions_m; ++ i )
-		delete (partitions_m [i]);
-	      npartitions_m = 0;
+	      for ( Size_t i = 0; i != npartitions_m; ++ i ) {
+		for (Size_t j = 0; j != nversions; j++) { 
+                   delete ((*partitions_m [i]) [j]);
+	         }
+                 delete (partitions_m[i]);
+              }
+              npartitions_m = 0;
 	      throw;
 	    }
 	  }
@@ -969,11 +1178,18 @@ void Bank_t::syncIFO (IFOMode_t mode)
     //-- Dump memory if writing
     if ( (mode_m & B_WRITE) )
       {
-	nbids = nbids_m;
-	last_bid = last_bid_m;
+	delete[] nbids_byVersion;
+        nbids_byVersion = new ID_t[nversions_m];
+        for (ID_t i = 0; i != nversions_m; i++)
+           nbids_byVersion[i] = nbids_m[i];
+        delete[] last_bid_byVersion;
+        last_bid_byVersion = new ID_t[nversions_m];
+        for (ID_t i = 0; i != nversions_m; i++)
+          last_bid_byVersion[i] = last_bid_m[i];
 	fix_size = fix_size_m;
 	npartitions = npartitions_m;
 	partition_size = partition_size_m;
+        nversions = nversions_m;
       }
 
 
@@ -987,8 +1203,17 @@ void Bank_t::syncIFO (IFOMode_t mode)
       << "____" << Decode (banktype_m) << " BANK INFORMATION____" << endl
       << "bank version = "      << BANK_VERSION         << endl
       << "bank type = "         << banktype_m           << endl
-      << "objects = "           << nbids                << endl
-      << "indices = "           << last_bid             << endl
+      << "versions = "          << nversions            << endl
+      << "objects = ";
+      for (ID_t i = 0; i != nversions; i++) {
+           ifo_stream << nbids_byVersion[i] << "\t";
+      }
+      ifo_stream                                        << endl
+        << "indices = ";
+      for (ID_t i = 0; i != nversions; i++) {
+         ifo_stream << last_bid_byVersion[i]  << "\t";
+      }
+      ifo_stream                                        << endl
       << "bytes/index = "       << fix_size             << endl
       << "partitions = "        << npartitions          << endl
       << "indices/partition = " << partition_size       << endl
@@ -1002,6 +1227,8 @@ void Bank_t::syncIFO (IFOMode_t mode)
       AMOS_THROW_IO ("Unknown file write error in sync, bank corrupted");
     ifo_stream.close();
 
+     delete[] nbids_byVersion;
+     delete[] last_bid_byVersion;
   }
   catch (Exception_t) {
     unlockIFO();

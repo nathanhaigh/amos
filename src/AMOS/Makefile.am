@@ -12,6 +12,7 @@ amosinclude_HEADERS = \
 	ContigEdge_AMOS.hh \
     ContigIterator_AMOS.hh \
 	ContigLink_AMOS.hh \
+	Motif_AMOS.hh \
 	Contig_AMOS.hh \
 	Edge_AMOS.hh \
 	Feature_AMOS.hh \
@@ -98,6 +99,7 @@ libAMOS_a_SOURCES = \
 	ContigEdge_AMOS.cc \
     ContigIterator_AMOS.cc \
 	ContigLink_AMOS.cc \
+	Motif_AMOS.cc \
 	Contig_AMOS.cc \
 	Edge_AMOS.cc \
 	Feature_AMOS.cc \

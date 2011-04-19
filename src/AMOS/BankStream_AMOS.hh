@@ -60,7 +60,7 @@ protected:
   //--------------------------------------------------- inrange ----------------
   bool inrange()
   {
-    return ( curr_bid_m > 0  &&  curr_bid_m <= last_bid_m );
+    return ( curr_bid_m > 0  &&  curr_bid_m <= last_bid_m [version_m] );
   }
   
 
@@ -98,7 +98,7 @@ public:
   //!
   //! \param type The type of Bank to construct
   //!
-  BankStream_t (NCode_t type)
+  BankStream_t (NCode_t type )
     : Bank_t (type)
   {
     init();
@@ -248,7 +248,7 @@ public:
 
 
   //--------------------------------------------------- open -------------------
-  void open (const std::string & dir, BankMode_t mode = B_READ | B_WRITE);
+  void open (const std::string & dir, BankMode_t mode = B_READ | B_WRITE, Size_t version = OPEN_LATEST_VERSION, bool inPlace = true);
 
 
   //--------------------------------------------------- remove -----------------
@@ -283,7 +283,7 @@ public:
   //--------------------------------------------------- remove -----------------
   void removeByBID(ID_t bid)
   {
-    if (bid < 0 || bid > last_bid_m)
+    if (bid < 0 || bid > last_bid_m [version_m] )
     {
       AMOS_THROW_IO ("Cannot replaceByBID: outside valid bid range");
     }
@@ -359,7 +359,7 @@ public:
     switch ( dir )
       {
       case BEGIN: curr_bid_m = 1; break;
-      case END:   curr_bid_m = last_bid_m + 1; break;
+      case END:   curr_bid_m = last_bid_m [version_m] + 1; break;
       case CURR:  break;
       default:    AMOS_THROW ("Cannot seekg: bad bankseekdir value");
       }
@@ -427,7 +427,7 @@ public:
   //!
   ID_t tellp() const
   {
-    return last_bid_m + 1;
+    return last_bid_m [version_m] + 1;
   }
 
 

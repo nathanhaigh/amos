@@ -17,7 +17,7 @@
 
 namespace AMOS {
 
-typedef char OverlapAdjacency_t;
+typedef Adjacency_t OverlapAdjacency_t;
 
 //================================================ Overlap_t ===================
 //! \brief An overlap relation between to sequencing reads
@@ -30,7 +30,7 @@ typedef char OverlapAdjacency_t;
 //! addition to FlagA and FlagB which are inherited.
 //!
 //==============================================================================
-class Overlap_t : public Universal_t
+class Overlap_t : public Oriented_t
 {
 
 private:
@@ -43,12 +43,6 @@ private:
 
 protected:
 
-  static const uint8_t NORMAL_BITS     = 0x1;
-  static const uint8_t ANTINORMAL_BITS = 0x2;
-  static const uint8_t INNIE_BITS      = 0x3;
-  static const uint8_t OUTIE_BITS      = 0x0;
-  static const uint8_t ADJACENCY_BITS  = 0x3;  //!< adjacency info mask
-  static const uint8_t ADJACENCY_BIT   = 0x4;  //!< adjacency exists flag
   static const uint8_t FLAGC_BIT       = 0x8;  //!< C flag
 
 
@@ -109,7 +103,7 @@ public:
   //--------------------------------------------------- clear ------------------
   virtual void clear ( )
   {
-    Universal_t::clear( );
+    Oriented_t::clear( );
     score_m = 0;
     aHang_m = bHang_m = 0;
     reads_m . first = reads_m . second = NULL_ID;
@@ -128,19 +122,6 @@ public:
   //! \return void
   //!
   void flip ( );
-
-
-  //--------------------------------------------------- getAdjacency -----------
-  //! \brief Get the overlapping ends of the reads
-  //!
-  //! Get the overlap information for the reads, i.e. [N]ORMAL (EB),
-  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where B is the
-  //! beginning of the read and E is the end of the read and [N]ORMAL means
-  //! the end of read1 overlaps the beginning of read2.
-  //!
-  //! \return The pair of adjacent ends
-  //!
-  OverlapAdjacency_t getAdjacency ( ) const;
 
 
   //--------------------------------------------------- getAhang ---------------
@@ -211,24 +192,6 @@ public:
 
   //--------------------------------------------------- readMessage ------------
   virtual void readMessage (const Message_t & msg);
-
-
-  //--------------------------------------------------- setAdjacency -----------
-  //! \brief Set the overlapping ends of the reads
-  //!
-  //! Set the overlap information for the reads, i.e. [N]ORMAL (EB),
-  //! [A]NTINORMAL (BE), [I]NNIE (EE) or [O]UTIE (BB). Where B is the
-  //! beginning of the read and E is the end of the read and EB would mean
-  //! the end of read1 overlaps the beginning of read2.
-  //!
-  //! \note Will store info in nibble portion of BankFlags
-  //!
-  //! \param adj The new adjacency of the reads
-  //! \pre adj must be one of [NAIO]
-  //! \throws ArgumentException_t
-  //! \return void
-  //!
-  void setAdjacency (OverlapAdjacency_t adj);
 
 
   //--------------------------------------------------- setAhang ---------------

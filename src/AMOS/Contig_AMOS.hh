@@ -39,6 +39,7 @@ private:
   bool gapsvalid_m;                   //<! indicates if gaps_m is up to date
   std::vector<Pos_t> gaps_m;          //!< consensus gaps
   std::vector<Tile_t> reads_m;        //!< read tiling
+  ID_t scf_m;                         //!< the IID of the parent scaffold 
 
   //--------------------------------------------------- compress ---------------
   //! \brief Reimplemented from Sequence_t as private to prohibit use
@@ -81,7 +82,7 @@ public:
   //! \brief Constructs an empty Contig_t object
   //!
   Contig_t ( )
-   : gapsvalid_m(false)
+   : gapsvalid_m(false), scf_m(NULL_ID)
   {
 
   }
@@ -112,8 +113,16 @@ public:
     gaps_m . clear( );
     reads_m . clear( );
     gapsvalid_m = false;
+    scf_m = NULL_ID;
   }
 
+  void setScf(ID_t &id) {
+     scf_m = id;
+  }
+
+  ID_t getScf() {
+     return scf_m;
+  }
 
   //--------------------------------------------------- gap2ungap --------------
   //! \brief Translates a 0-based gapped position (offset) to a 1-based ungapped position (sequence coordinate)

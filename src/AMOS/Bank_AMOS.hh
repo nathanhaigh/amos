@@ -26,8 +26,7 @@
 #include <fstream>
 #include <vector>
 #include <deque>
-
-
+#include <sstream>
 
 namespace AMOS {
 
@@ -346,7 +345,6 @@ protected:
       I_CLOSE
     };
 
-
   //================================================ BankPartition_t ===========
   //! \brief A single partition of the file-based bank
   //!
@@ -361,8 +359,7 @@ protected:
 
     char * fix_buff;     //!< The fix IO buffer
     char * var_buff;     //!< The var IO buffer
-
-
+    
   public:
 
     std::string fix_name;    //!< The name of the fixed len file
@@ -383,6 +380,35 @@ protected:
 
   };
 
+
+  //--------------------------------------------------- nextVersion -----------
+  //! \brief Adds a new version to the store  
+  //!
+  //! Create datastructured for the next version of this store.
+  //! throw an exception if unable to create/open version 
+  //!
+  //! \pre There are adequate permissions in the bank directory
+  //! \post npartitions_m and max_iid_m reflect new partitioning
+  //! \throws IOException_t
+  //! \return void
+  //!
+  void nextVersion ();
+
+  Size_t localizeVersionBID (ID_t bid) {
+     return version_m;
+  }
+
+  std::string getMapPath() {
+     std::ostringstream ss;
+     ss << store_pfx_m << '.' << version_m << MAP_STORE_SUFFIX;
+     return ss.str();
+  }
+
+  void clearVersion (Size_t &version, bool recreate );
+
+  void copyPartition(ID_t &id); 
+
+  void copyFile(std::fstream &in, std::ofstream &out); 
 
   //--------------------------------------------------- addPartition -----------
   //! \brief Adds a new partition to the partition list
@@ -433,27 +459,26 @@ protected:
   //! \throws ArgumentException_t
   //! \return The requested, opened partition
   //!
-  BankPartition_t * getPartition (ID_t id)
+  BankPartition_t * getPartition (ID_t id, Size_t version)
   {
-    if ( partitions_m [id] -> fix . is_open( ) )
+    if ( (*partitions_m [id])[version] -> fix . is_open( ) )
       {
-        partitions_m [id]->fix.clear();
-        partitions_m [id]->var.clear();
-        return partitions_m [id];
+        (*partitions_m [id])[version]->fix.clear();
+        (*partitions_m [id])[version]->var.clear();
+        return (*partitions_m [id])[version];
       }
     else
-      return openPartition (id);
+      return openPartition (id, version);
   }
 
 
   //--------------------------------------------------- getLastPartition -------
   //! \brief Same as getPartition, but returns the current final partition
   //!
-  BankPartition_t * getLastPartition ( )
+  BankPartition_t * getLastPartition ( Size_t version )
   {
-    return getPartition (npartitions_m - 1);
+    return getPartition (npartitions_m - 1, version);
   }
-
 
   //--------------------------------------------------- init -------------------
   //! \brief Initializes bank variables
@@ -471,11 +496,11 @@ protected:
   //!
   BankPartition_t * localizeBID (ID_t & bid)
   {
+    Size_t version = localizeVersionBID(bid);
     ID_t pid = (-- bid) / partition_size_m;
     bid -= pid * partition_size_m;
-    return getPartition (pid);
+    return getPartition (pid, version);
   }
-
 
   //--------------------------------------------------- lockIFO ----------------
   //! \brief Obtains a file lock on the info store of the current bank
@@ -495,7 +520,7 @@ protected:
   //--------------------------------------------------- openPartition ----------
   //! \brief Do not use this function, use getPartition instead
   //!
-  BankPartition_t * openPartition (ID_t id);
+  BankPartition_t * openPartition (ID_t id, Size_t version);
 
 
   //--------------------------------------------------- removeBID --------------
@@ -602,16 +627,19 @@ protected:
   Size_t fix_size_m;         //!< size of entire fixed length record
   Size_t partition_size_m;   //!< records per disk store partition
 
-  ID_t last_bid_m;           //!< the last bank bid (1 based)
+  ID_t *last_bid_m; //!< the last bank bid (1 based);
+  ID_t *nbids_m;    //!< number of non-deleted bids:
+
   ID_t max_bid_m;            //!< maximum bid given the current partitioning
-  ID_t nbids_m;              //!< number of non-deleted bids
   Size_t npartitions_m;      //!< number of partitions
   std::deque <BankPartition_t *> opened_m;      //!< opened partitions
-  std::vector<BankPartition_t *> partitions_m;  //!< all partitions
+  std::vector<std::vector<BankPartition_t *>* > partitions_m;  //!< all partitions
 
   IDMap_t idmap_m;           //!< the IDMap IID <-> EID to BID
 
-
+  Size_t version_m;          //!<The version we're currently working on
+  Size_t nversions_m;        //!<The number of store versions operating
+  bool   is_inplace_m;       //!< Whether edits go to the current version or a subsequent one 
 public:
 
   typedef int64_t bankstreamoff;  //!< 64-bit stream offset for largefiles
@@ -630,6 +658,7 @@ public:
   static const char WRITE_LOCK_CHAR;          //!< write lock char
   static const char READ_LOCK_CHAR;           //!< read lock char
 
+  static const int32_t OPEN_LATEST_VERSION  = -1; //!< latest version
 
   //--------------------------------------------------- Bank_t -----------------
   //! \brief Constructs an empty Bank_t of objects with a certain NCode
@@ -647,23 +676,25 @@ public:
   //! \param type The type of bank to construct
   //!
   Bank_t (NCode_t type)
-    : banktype_m (type)
+    : banktype_m (type), last_bid_m(NULL), nbids_m(NULL)
   {
     init( );
     status_m = 0;
     buffer_size_m = DEFAULT_BUFFER_SIZE;
     max_partitions_m = MAX_OPEN_PARTITIONS;
+    nversions_m = 0;
   }
 
 
   //--------------------------------------------------- Bank_t -----------------
   Bank_t (const std::string & type)
-    : banktype_m (Encode(type))
+    : banktype_m (Encode(type)), last_bid_m(NULL), nbids_m(NULL)
   {
     init( );
     status_m = 0;
     buffer_size_m = DEFAULT_BUFFER_SIZE;
     max_partitions_m = MAX_OPEN_PARTITIONS;
+    nversions_m = 0;
   }
 
 
@@ -753,7 +784,7 @@ public:
   //!
   void clean ( );
 
-
+  
   //--------------------------------------------------- clear ------------------
   //! \brief Clears a bank by erasing all it's objects and its ID map
   //!
@@ -767,6 +798,23 @@ public:
   //! \return void
   //!
   void clear ( );
+
+
+  void clearCurrentVersion ( ) {
+    if (version_m != nversions_m - 1) {
+       AMOS_THROW_IO ("Can only clear latest version");
+    }
+    if (nversions_m == 1) {
+       clear();
+    } else {
+       clearVersion (version_m, true );
+    }
+    last_bid_m[version_m]    = NULL_ID;
+    nbids_m[version_m]       = NULL_ID;
+    opened_m    .clear();
+    idmap_m     .clear();
+    idmap_m     .setType (banktype_m);
+  }
 
 
   //--------------------------------------------------- close ------------------
@@ -824,7 +872,6 @@ public:
   //!
   void create (const std::string & dir, BankMode_t mode = B_READ | B_WRITE);
 
-
   //--------------------------------------------------- destroy ----------------
   //! \brief Closes and removes a bank from disk
   //!
@@ -859,7 +906,7 @@ public:
   //! \return true if IFO store exists with read permissions, else false
   //!
   bool exists (const std::string & dir) const;
-
+  bool exists (const std::string & dir, Size_t version) const;
 
   //--------------------------------------------------- existsEID --------------
   //! \brief Returns true if EID exists in the bank
@@ -985,7 +1032,7 @@ public:
   //!
   Size_t getIndexSize ( ) const
   {
-    return last_bid_m;
+    return last_bid_m [version_m];
   }
 
 
@@ -1020,7 +1067,7 @@ public:
   //!
   Size_t getSize ( ) const
   {
-    return nbids_m;
+    return nbids_m [version_m];
   }
 
 
@@ -1122,8 +1169,7 @@ public:
   //! \throws ArgumentException_t
   //! \return void
   //!
-  void open (const std::string & dir, BankMode_t mode = B_READ | B_WRITE);
-
+  void open (const std::string & dir, BankMode_t mode = B_READ | B_WRITE, Size_t version = OPEN_LATEST_VERSION, bool inPlace = true);
 
   //--------------------------------------------------- remove -----------------
   //! \brief Removes an object from the bank by its IID

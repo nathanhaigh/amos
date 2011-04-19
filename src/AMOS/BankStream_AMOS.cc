@@ -61,7 +61,7 @@ void BankStream_t::clean()
   init();
 
   const IDMap_t::HashTriple_t * tp = NULL;
-  triples_m.resize (last_bid_m + 1, tp);
+  triples_m.resize (last_bid_m [version_m] + 1, tp);
   for ( IDMap_t::const_iterator idmi = getIDMap().begin();
         idmi != getIDMap().end(); ++ idmi )
     triples_m [idmi->bid] = idmi;
@@ -76,7 +76,7 @@ void BankStream_t::concat (BankStream_t & s)
   eof_m = !inrange();
 
   const IDMap_t::HashTriple_t * tp = NULL;
-  triples_m.resize (last_bid_m + 1, tp);
+  triples_m.resize (last_bid_m [version_m] + 1, tp);
   for ( IDMap_t::const_iterator idmi = getIDMap().begin();
         idmi != getIDMap().end(); ++ idmi )
     triples_m [idmi->bid] = idmi;
@@ -122,14 +122,14 @@ BankStream_t & BankStream_t::ignore (bankstreamoff n)
 
 
 //----------------------------------------------------- open -------------------
-void BankStream_t::open (const std::string & dir, BankMode_t mode)
+void BankStream_t::open (const std::string & dir, BankMode_t mode, Size_t version, bool inPlace)
 {
-  Bank_t::open (dir, mode);
+  Bank_t::open (dir, mode, version, inPlace);
 
   init();
   
   const IDMap_t::HashTriple_t * tp = NULL;
-  triples_m.resize (last_bid_m + 1, tp);
+  triples_m.resize (last_bid_m [version_m] + 1, tp);
   for ( IDMap_t::const_iterator idmi = getIDMap().begin();
         idmi != getIDMap().end(); ++ idmi )
     triples_m [idmi->bid] = idmi;
@@ -230,14 +230,14 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
 
   //-- Insert the ID triple into the map (may throw exception)
   triples_m.push_back
-    (idmap_m.insert (obj.iid_m, obj.eid_m, last_bid_m + 1));
+    (idmap_m.insert (obj.iid_m, obj.eid_m, last_bid_m [version_m] + 1));
 
   try {
     //-- Add another partition if necessary
-    if ( last_bid_m == max_bid_m )
+    if ( last_bid_m [version_m] == max_bid_m )
       addPartition (true);
 
-    BankPartition_t * partition = getLastPartition();
+    BankPartition_t * partition = getLastPartition(localizeVersionBID(last_bid_m [version_m] + 1));
 
     //-- Prepare the object for append
     obj.flags_m.is_removed  = false;
@@ -272,8 +272,8 @@ BankStream_t & BankStream_t::operator<< (IBankable_t & obj)
       AMOS_THROW_IO
 	("Unknown file write error in stream append, bank corrupted");
 
-    ++ nbids_m;
-    ++ last_bid_m;
+    ++ nbids_m [version_m];
+    ++ last_bid_m [version_m];
   }
   catch (Exception_t) {
     triples_m.pop_back();
@@ -347,7 +347,7 @@ void BankStream_t::replace (const string & eid, IBankable_t & obj)
 //--------------------------------------------------- replaceByBID -----------
 void BankStream_t::replaceByBID(ID_t bid, IBankable_t & obj)
 {
-  if (bid < 0 || bid > last_bid_m)
+  if (bid < 0 || bid > last_bid_m [version_m] )
   {
     AMOS_THROW_IO ("Cannot replaceByBID: outside valid bid range");
   }

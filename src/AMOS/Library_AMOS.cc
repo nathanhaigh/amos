@@ -21,7 +21,7 @@ const NCode_t Library_t::NCODE = M_LIBRARY;
 //----------------------------------------------------- readMessage ------------
 void Library_t::readMessage (const Message_t & msg)
 {
-  Universal_t::readMessage (msg);
+  Oriented_t::readMessage (msg);
 
   try {
     vector<Message_t>::const_iterator i;
@@ -46,7 +46,7 @@ void Library_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void Library_t::readRecord (istream & fix, istream & var)
 {
-  Universal_t::readRecord (fix, var);
+  Oriented_t::readRecord (fix, var);
 
   dist_m . readRecord (var);
 }
@@ -54,7 +54,7 @@ void Library_t::readRecord (istream & fix, istream & var)
 //----------------------------------------------------- readRecordFix ----------
 void Library_t::readRecordFix (istream & fix)
 {
-  Universal_t::readRecordFix (fix);
+  Oriented_t::readRecordFix (fix);
 
   dist_m . clear();
 }
@@ -63,7 +63,7 @@ void Library_t::readRecordFix (istream & fix)
 //----------------------------------------------------- writeMessage -----------
 void Library_t::writeMessage (Message_t & msg) const
 {
-  Universal_t::writeMessage (msg);
+  Oriented_t::writeMessage (msg);
 
   try {
 
@@ -83,7 +83,7 @@ void Library_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Library_t::writeRecord (ostream & fix, ostream & var) const
 {
-  Universal_t::writeRecord (fix, var);
+  Oriented_t::writeRecord (fix, var);
 
   dist_m . writeRecord (var);
 }

@@ -300,7 +300,8 @@ struct Range_t
 //==============================================================================
 struct Tile_t : public IMessagable_t
 {
-  ID_t source;                //!< the source of the tile, e.g. read IID
+  ID_t source;                //!< source of the tile 
+  NCode_t source_type;        //!< the type of tile source (read, contig, or motif
   std::vector<Pos_t> gaps;    //!< the absolute gap positions
   Pos_t offset;               //!< the offset of the tile
   Range_t range;              //!< the usable range of the tile
@@ -318,6 +319,7 @@ struct Tile_t : public IMessagable_t
   Tile_t ( )
   {
     source = NULL_ID;
+    source_type = NULL_NCODE;
     offset = 0;
   }
 

@@ -322,6 +322,17 @@ void Contig_t::readMessage (const Message_t & msg)
   Sequence_t::readMessage (msg);
 
   try {
+    istringstream ss;
+
+    if ( msg . exists (F_SCAFFOLD) )
+    {
+      ss . str (msg . getField (F_SCAFFOLD));
+      ss >> scf_m;
+      if ( !ss )
+        AMOS_THROW_ARGUMENT ("Invalid fragment link format");
+      ss . clear( );
+    }
+
     vector<Message_t>::const_iterator i;
 
     for ( i  = msg . getSubMessages( ) . begin( );
@@ -349,6 +360,7 @@ void Contig_t::readRecord (istream & fix, istream & var)
   gapsvalid_m = false;
   Sequence_t::readRecord (fix, var);
 
+  readLE (fix, &scf_m);
   Size_t sizet;
   readLE (fix, &sizet);
 
@@ -364,6 +376,7 @@ void Contig_t::readRecordFix (istream & fix)
   gapsvalid_m = false;
   Sequence_t::readRecordFix (fix);
 
+  readLE (fix, &scf_m);
   Size_t sizet;
   readLE (fix, &sizet); 
 
@@ -470,8 +483,15 @@ void Contig_t::reverseComplement()
 void Contig_t::writeMessage (Message_t & msg) const
 {
   Sequence_t::writeMessage (msg);
-
   try {
+    ostringstream ss;
+    if ( scf_m != NULL_ID )
+      {
+        ss << scf_m;
+        msg . setField (F_SCAFFOLD, ss . str( ));
+        ss . str (NULL_STRING);
+      }
+
     Pos_t begin = msg . getSubMessages( ) . size( );
     msg . getSubMessages( ) . resize (begin + reads_m . size( ));
 
@@ -496,6 +516,7 @@ void Contig_t::writeMessage (Message_t & msg) const
 void Contig_t::writeRecord (ostream & fix, ostream & var) const
 {
   Sequence_t::writeRecord (fix, var);
+  writeLE (fix, &scf_m);
 
   Size_t sizet = reads_m . size( );
   writeLE (fix, &sizet);

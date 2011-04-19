@@ -35,27 +35,10 @@ void Overlap_t::flip ( )
 }
 
 
-//----------------------------------------------------- getAdjacency -----------
-OverlapAdjacency_t Overlap_t::getAdjacency ( ) const
-{
-  if ( flags_m . nibble & ADJACENCY_BIT )
-    {
-      switch (flags_m . nibble & ADJACENCY_BITS)
-        {
-        case NORMAL_BITS     : return NORMAL;
-        case ANTINORMAL_BITS : return ANTINORMAL;
-        case INNIE_BITS      : return INNIE;
-        case OUTIE_BITS      : return OUTIE;
-        }
-    }
-  return NULL_ADJACENCY;
-}
-
-
 //----------------------------------------------------- readMessage ------------
 void Overlap_t::readMessage (const Message_t & msg)
 {
-  Universal_t::readMessage (msg);
+  Oriented_t::readMessage (msg);
 
   try {
     istringstream ss;
@@ -129,7 +112,7 @@ void Overlap_t::readMessage (const Message_t & msg)
 //----------------------------------------------------- readRecord -------------
 void Overlap_t::readRecord (istream & fix, istream & var)
 {
-  Universal_t::readRecord (fix, var);
+  Oriented_t::readRecord (fix, var);
 
   readLE (fix, &aHang_m);
   readLE (fix, &bHang_m);
@@ -142,7 +125,7 @@ void Overlap_t::readRecord (istream & fix, istream & var)
 //----------------------------------------------------- readRecordFix ----------
 void Overlap_t::readRecordFix (istream & fix)
 {
-  Universal_t::readRecordFix (fix);
+  Oriented_t::readRecordFix (fix);
 
   readLE (fix, &aHang_m);
   readLE (fix, &bHang_m);
@@ -152,33 +135,10 @@ void Overlap_t::readRecordFix (istream & fix)
 }
 
 
-//----------------------------------------------------- setAdjacency -----------
-void Overlap_t::setAdjacency (OverlapAdjacency_t adj)
-{
-  uint8_t bits = flags_m . nibble;
-  flags_m . nibble &= ~ADJACENCY_BITS;
-  flags_m . nibble |=  ADJACENCY_BIT;
-
-  switch (adj)
-    {
-    case NORMAL     : flags_m . nibble |= NORMAL_BITS;     break;
-    case ANTINORMAL : flags_m . nibble |= ANTINORMAL_BITS; break;
-    case INNIE      : flags_m . nibble |= INNIE_BITS;      break;
-    case OUTIE      : flags_m . nibble |= OUTIE_BITS;      break;
-    case NULL_ADJACENCY:
-      flags_m . nibble &= ~ADJACENCY_BIT;
-      break;
-    default:
-      flags_m . nibble = bits;
-      AMOS_THROW_ARGUMENT ((string)"Invalid adjacency " + adj);
-    }
-}
-
-
 //----------------------------------------------------- writeMessage -----------
 void Overlap_t::writeMessage (Message_t & msg) const
 {
-  Universal_t::writeMessage (msg);
+  Oriented_t::writeMessage (msg);
 
   try {
     ostringstream ss;
@@ -229,7 +189,7 @@ void Overlap_t::writeMessage (Message_t & msg) const
 //----------------------------------------------------- writeRecord ------------
 void Overlap_t::writeRecord (ostream & fix, ostream & var) const
 {
-  Universal_t::writeRecord (fix, var);
+  Oriented_t::writeRecord (fix, var);
 
   writeLE (fix, &aHang_m);
   writeLE (fix, &bHang_m);

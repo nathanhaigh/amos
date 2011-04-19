@@ -14,8 +14,9 @@
 
 
 
-
 namespace AMOS {
+
+typedef Adjacency_t LibraryAdjacency_t;
 
 //================================================ Library_t ===================
 //! \brief A collection of cloned, size-controlled DNA molecules
@@ -25,16 +26,14 @@ namespace AMOS {
 //! Child fragments will point back to this object as their parent library.
 //!
 //==============================================================================
-class Library_t : public Universal_t
+class Library_t : public Oriented_t
 {
   
 private:
 
   Distribution_t dist_m;           //!< the insert fragment size distribution
 
-
 protected:
-
   //--------------------------------------------------- readRecord -------------
   virtual void readRecord (std::istream & fix, std::istream & var);
 
@@ -49,7 +48,6 @@ public:
 
   static const NCode_t NCODE;
   //!< The NCode type identifier for this object
-
 
   //--------------------------------------------------- Library_t --------------
   //! \brief Constructs an empty Library_t object
@@ -81,7 +79,7 @@ public:
   //--------------------------------------------------- clear ------------------
   virtual void clear ( )
   {
-    Universal_t::clear( );
+    Oriented_t::clear( );
     dist_m . clear( );
   }
 
