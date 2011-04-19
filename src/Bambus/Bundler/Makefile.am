@@ -2,6 +2,12 @@
 include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
+amoslib_LIBRARIES = \
+	libBundler.a
+
+amosinclude_HEADERS = \
+	Utilities_Bundler.hh
+
 bin_PROGRAMS = \
 	Bundler \
 	clk \
@@ -19,7 +25,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/Common \
 	-I$(top_srcdir)/src/AMOS \
 	-I$(top_builddir)/src/GNU \
-   $(BOOST_CXXFLAGS)  \
+	$(BOOST_CXXFLAGS)  \
 	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
 	-pedantic
 
@@ -41,24 +47,39 @@ clk_SOURCES = \
 	clk.cc
 
 MarkRepeats_LDADD = \
+	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 MarkRepeats_SOURCES = \
-	Utilities_Bundler.cc Utilities_Bundler.hh MarkRepeats.cc
+	MarkRepeats.cc
 
 OrientContigs_LDADD = \
+	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 OrientContigs_SOURCES = \
-	Utilities_Bundler.cc Utilities_Bundler.hh OrientContigs.cc
+	OrientContigs.cc
 
 FilterEdgesByCluster_LDADD = \
-        $(top_builddir)/src/Common/libCommon.a \
-        $(top_builddir)/src/AMOS/libAMOS.a \
-        $(top_builddir)/src/GNU/libGNU.a
+	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
 FilterEdgesByCluster_SOURCES = \
-        Utilities_Bundler.cc Utilities_Bundler.hh FilterEdgesByCluster.cc
+	FilterEdgesByCluster.cc
+
+##-- libBundler.a
+libBundler_a_CPPFLAGS = \
+	$(BOOST_CXXFLAGS)  \
+	-I$(top_builddir)/src/GNU \
+	-I$(top_builddir)/src/AMOS
+	## because some system headers will be built if necessary
+libBundler_a_LIBADD = \
+	$(LIBOBJS:%=$(top_builddir)/src/GNU/%) \
+	$(LIBOBJS:%=$(top_builddir)/src/AMOS/%)
+libBundler_a_SOURCES = \
+	Utilities_Bundler.cc
 
 ##-- END OF MAKEFILE --##

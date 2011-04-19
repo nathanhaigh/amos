@@ -22,6 +22,7 @@
 #include "Contig_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
+#include "Motif_AMOS.hh"
 #include "ContigIterator_AMOS.hh"
 
 #include "Utilities_Bundler.hh"
@@ -40,12 +41,10 @@ struct config {
    bool        initAll;
    bool        compressMotifs;
    bool        doAgressiveScaffolding;
-   bool        linearizeScaffolds;
    bool        skipLowWeightEdges;
    int32_t     redundancy;   
    int32_t     debug;
    string      bank;
-   string      prefix;
    set<ID_t>   repeats;  // repeat contigs to ignore (we ignore all links to them)
 };
 config globals;
@@ -60,14 +59,12 @@ void printHelpText() {
     "\n"
     "USAGE:\n"
     "\n"
-    "OrientContigs -b[ank] <bank_name> [-prefix] <prefix> [-all] [-noreduce] [-agressive] [-redundancy minLinks] [-repeats fileName] [-linearize] [-skip]\n"
-    "The -prefix option specifies the prefix to give generated output files\n"
+    "OrientContigs -b[ank] <bank_name> [-all] [-noreduce] [-agressive] [-redundancy minLinks] [-repeats fileName] [-skip]\n"
     "The -all option will force initialization of all contigs, including those that have no links to them, otherwise they remain uninitialized\n"
     "The -noreduce option will turn off search for common motifs and recursively remove them, thus simplyfing the graph\n"
     "The -agressive option will not mark edges that move a contig more than 3 STDEVS away as bad and will try to reconcile the positions\n"
     "The -redundancy option specifies the minimum number of links between two contigs before they will be scaffolded\n"
     "The -repeats option specifies a file containing a list of contig IIDs which are considered repeats and whose edges will be unused\n"
-    "The -linearize option will break non-linear scaffolds into linear ones by selecting only non-overlapping contigs to be part of a scaffold\n"
     "The -skip option will skip edges that have too low a weight relative to the weights of the other edges connecting their respective nodes. \n"
        << endl;
 }
@@ -79,13 +76,11 @@ bool GetOptions(int argc, char ** argv) {
     {"h",                  0, 0, 'h'},
     {"b",                  1, 0, 'b'},
     {"bank",               1, 0, 'b'},
-    {"prefix",             1, 0, 'p'},
     {"all",                0, 0, 'a'},
     {"noreduce",           0, 0, 'n'},
     {"agressive",          0, 0, 'A'},
     {"redundancy",         1, 0, 'R'},
     {"repeats",            1, 0, 'r'},    
-    {"linearize",          0, 0, 'l'},
     {"skip",               0, 0, 's'},
     {"debug",              1, 0, 'd'},
     {0, 0, 0, 0}
@@ -96,8 +91,6 @@ bool GetOptions(int argc, char ** argv) {
    globals.doAgressiveScaffolding = false;
    globals.debug = 1;
    globals.redundancy = 2;
-   globals.prefix = "out";
-   globals.linearizeScaffolds = false;
    globals.skipLowWeightEdges = true;
  
    int c;
@@ -111,9 +104,6 @@ bool GetOptions(int argc, char ** argv) {
          break;
       case 'b':
          globals.bank = string(optarg);
-         break;
-      case 'p':
-         globals.prefix = string(optarg);
          break;
       case 'a':
          globals.initAll = true;
@@ -140,9 +130,6 @@ bool GetOptions(int argc, char ** argv) {
            globals.repeats.insert(repeatID);
          }         
          repeatsFile.close();
-         break;
-       case 'l':
-         globals.linearizeScaffolds = true;
          break;
        case 's':
          globals.skipLowWeightEdges = false;
@@ -753,15 +740,16 @@ double mergeContigs(ID_t scfIID,
                   Bank_t &edge_bank, /*string comment,*/
                   hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
                   hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
-                  vector<Scaffold_t> &motifs,
+                  vector<Motif_t> &motifs,
                   Status_t status) {
    hash_map<Pos_t, uint32_t, hash<Pos_t>, equal_to<Pos_t> > newTileGapIndex;
-   Scaffold_t motifScaffold;
+   Motif_t motifScaffold;
    vector<Tile_t> motifTiling;
    vector<ID_t> motifEdges;
  
    Tile_t newTile;
    newTile.source = newIID;
+   newTile.source_type = Motif_t::NCODE;
    newTile.offset = UNINITIALIZED;
    newTile.range.begin = 0;
    newTile.range.end = 0;
@@ -940,7 +928,8 @@ cerr << "CREATED COPY OF EDGE " << cte.getIID() << " WITH ID " << oldEdge.getIID
    result << newIID;
 
    motifScaffold.setStatus(status);
-   motifScaffold.setIID(scfIID);
+   motifScaffold.setIID(newIID);
+   motifScaffold.setScf(scfIID);
    motifScaffold.setEID(result.str()); 
    motifScaffold.setContigTiling(motifTiling);
    motifScaffold.setContigEdges(motifEdges);
@@ -988,7 +977,7 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs,
                  Bank_t &edge_bank,
                  hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
                  hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
-                 vector<Scaffold_t> &motifs) {
+                 vector<Motif_t> &motifs) {
    ID_t maxIID = contig_bank.getMaxIID()+1;
    ID_t maxEdgeIID = edge_bank.getMaxIID()+1;
    uint32_t numUpdated = 0;
@@ -1323,7 +1312,6 @@ void compressGaps(std::vector<Scaffold_t> &scaffs,
 // RepeatFinder : find repeats and mark the contigs in the bank rather than outputting their list
 // Scaffolder   : build the initial scaffolds and save them (after topological sort and sorting)
 // Reducer      : find patterns to reduce in the build scaffolds
-// Output       : generate outputs from the bank
 // Avoid making destructive changes to the bank as a result of these operations
 
 int main(int argc, char *argv[]) {
@@ -1344,7 +1332,7 @@ int main(int argc, char *argv[]) {
       exit(1);
    }
    try {
-      edge_bank.open(globals.bank, B_READ |B_WRITE);
+      edge_bank.open(globals.bank, B_READ |B_WRITE, 0, false);
    } catch (Exception_t & e) {
       cerr << "Failed to open edge account in bank " << globals.bank << ": " << endl << e << endl;
       edge_bank.close();
@@ -1359,7 +1347,7 @@ int main(int argc, char *argv[]) {
    }
    try {
      contig_bank.open(globals.bank, B_READ);
-     contig_stream.open(globals.bank, B_READ);     
+     contig_stream.open(globals.bank, B_READ);
    } catch (Exception_t & e) {
        cerr << "Failed to open contig account in bank " << globals.bank << ": " << endl << e << endl;
        contig_bank.close();
@@ -1367,15 +1355,29 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
-   Bank_t scaff_bank (Scaffold_t::NCODE);
-   if (!scaff_bank.exists(globals.bank)) {
-       scaff_bank.create(globals.bank);
+   BankStream_t motif_stream (Motif_t::NCODE);
+   try {
+      if (! motif_stream.exists(globals.bank)){
+         motif_stream.create(globals.bank);
+      }
+      motif_stream.open(globals.bank, B_READ | B_WRITE);
+      motif_stream.clearCurrentVersion();
+   } catch (Exception_t & e) {
+       cerr << "Failed to open motif account in bank " << globals.bank << ": " << endl << e << endl;
+       motif_stream.close();
+       exit(1);
+   }
+
+   BankStream_t scaff_stream (Scaffold_t::NCODE);
+   if (!scaff_stream.exists(globals.bank)) {
+       scaff_stream.create(globals.bank);
    }
    try {
-     scaff_bank.open(globals.bank, B_READ | B_WRITE);
+     scaff_stream.open(globals.bank, B_READ | B_WRITE);
+     scaff_stream.clearCurrentVersion();
    } catch (Exception_t & e) {
        cerr << "Failed to open scaffold account in bank " << globals.bank << ": " << endl << e << endl;
-       scaff_bank.close();
+       scaff_stream.close();
        exit(1);
    }
 
@@ -1385,7 +1387,7 @@ int main(int argc, char *argv[]) {
    hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> > ctg2ort; // map from contig to orientation
    hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> > ctg2srt;           // map from contig to start position
    hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > ctg2scf;              //quick lookup for which scaffold a contig belongs to
-   vector<Scaffold_t> motifs;            // scaffold structures representing the simplified motifs
+   vector<Motif_t> motifs;            // scaffold structures representing the simplified motifs
 
    // initialize position and orientation
    while (contig_stream >> ctg) {
@@ -1594,7 +1596,8 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
                      // contig is computed from the head of the arrow, not the tail
                      Tile_t tile;
                      tile.source = myID;
-                     
+                     tile.source_type = Contig_t::NCODE;
+ 
                      uint32_t length = ctg2len[myID];
                      if (ctg2ort[myID] == FWD) {
                         tile.range.begin = 0;
@@ -1612,7 +1615,8 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
                      
                      // now add the other contig's tile to the scaffold
                      tile.source = otherID;
-                     
+                     tile.source_type = Contig_t::NCODE;
+ 
                      length = ctg2len[otherID];
                      if (ctg2ort[otherID] == FWD) {
                         tile.range.begin = 0;
@@ -1669,6 +1673,7 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
          if (ctg2ort[ctg.getIID()] == NONE && ctg2srt[ctg.getIID()] == UNINITIALIZED) {
             Tile_t tile;
             tile.source = ctg.getIID();
+            tile.source_type = Contig_t::NCODE;
             tile.offset = 0;
             tile.range.begin = 0;
             tile.range.end = ctg.getLength();
@@ -1726,29 +1731,15 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
    }
    if (globals.debug >= 1) { cerr << "DONE COMPRESSION" << endl; }
 
-   // linearize if requested
-   if (globals.linearizeScaffolds == true) {
-      linearizeScaffolds(scaffs, edge_bank, ctg2lnk, globals.debug);
-      sortContigs(scaffs, contig_bank, edge_bank);
-   }
-
-   // output results
-   outputResults(globals.bank, contig_bank, edge_bank, scaffs, DOT, globals.prefix, globals.debug);
-   outputResults(globals.bank, contig_bank, edge_bank, scaffs, AGP, globals.prefix, globals.debug);
-   outputResults(globals.bank, contig_bank, edge_bank, scaffs, BAMBUS, globals.prefix, globals.debug);
-   outputResults(globals.bank, contig_bank, edge_bank, motifs, MOTIFS, globals.prefix, globals.debug);
-
-   // finally output the motif scaffolds into the bank
+   // finally output to the bank
    for (vector<Scaffold_t>::iterator itScf = scaffs.begin(); itScf < scaffs.end(); itScf++) {
-      scaff_bank.append(*itScf);
+      scaff_stream.append(*itScf);
    }
 
-   // we do this last because the IDs are non-unique in the motifs until now so we can associate a motif with the original scaffold it came from
-   for(vector<Scaffold_t>::iterator itScf = motifs.begin(); itScf < motifs.end(); itScf++) {
-      itScf->setIID(atoi(itScf->getEID().c_str()));
-      scaff_bank.append(*itScf);
+   for(vector<Motif_t>::iterator itScf = motifs.begin(); itScf < motifs.end(); itScf++) {
+      motif_stream.append(*itScf);
    }
- 
+
    // clear data
    ctg2scf.clear();
    ctg2srt.clear();
@@ -1762,7 +1753,8 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
    edge_bank.close();
    contig_stream.close();
    contig_bank.close();
-   scaff_bank.close();
+   motif_stream.close();
+   scaff_stream.close();
 
    cerr << "Finished! Had " << goodCount << " Good links and " << badCount << " bad ones." << endl;
    return 0;

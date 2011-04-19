@@ -28,6 +28,7 @@
 #include "Contig_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
+#include "Motif_AMOS.hh"
 
 #include "Position.hh"
 
@@ -54,6 +55,7 @@ typedef boost::property_map<Graph, boost::vertex_name_t>::type VertexName;
 struct config {
    string      bank;
    int32_t     debug;
+   int32_t     version;
 };
 config globals;
 void printHelpText() {
@@ -63,7 +65,7 @@ void printHelpText() {
     "\n"
     "USAGE:\n"
     "\n"
-    "FastaGenerator -b[ank] <bank_name> \n"
+    "FastaGenerator -b[ank] <bank_name> [-version n] \n"
        << endl;
 }
 
@@ -74,13 +76,14 @@ bool GetOptions(int argc, char ** argv) {
     {"h",                  0, 0, 'h'},
     {"b",                  1, 0, 'b'},
     {"bank",               1, 0, 'b'},
+    {"version",            1, 0, 'v'},
     {0, 0, 0, 0}
   };
 
-   int c;
-   ifstream repeatsFile;
-   ID_t repeatID;
+   globals.debug = 0;
+   globals.version = Bank_t::OPEN_LATEST_VERSION;
 
+   int c;
    while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
       switch (c){
       case 'h':
@@ -88,6 +91,9 @@ bool GetOptions(int argc, char ** argv) {
          break;
       case 'b':
          globals.bank = string(optarg);
+         break;
+      case 'v':
+         globals.version = atoi(optarg);
          break;
       case '?':
          return false;
@@ -179,7 +185,7 @@ Position traverseRecursive(
 	return longest[current];
 }
 
-Position traverseSet(Scaffold_t &scf, Bank_t & contig_bank, Bank_t &edge_bank, vector<Position> &edits,
+Position traverseSet(Motif_t &scf, Bank_t & contig_bank, Bank_t &edge_bank, vector<Position> &edits,
 		hash_map<ID_t, vector<Position>, hash<AMOS::ID_t>, equal_to<AMOS::ID_t> > &paths,
 		hash_map<AMOS::ID_t, Position, hash<AMOS::ID_t>, equal_to<AMOS::ID_t> > &longest) {
 	// do a DFS traversal to find if we can skip the node
@@ -206,16 +212,16 @@ Position traverseSet(Scaffold_t &scf, Bank_t & contig_bank, Bank_t &edge_bank, v
 	return traverseRecursive(contig_bank,g, vertexNames[computeSource(g)], nodeToTile, nodeToDescriptor, visited, paths, longest, edits);
 }
 
-Position translateSetToPaths(Scaffold_t &scf, Bank_t &scaffold_bank, Bank_t &contig_bank, Bank_t &edge_bank, vector<Position>& edits) {
+Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank, vector<Position>& edits) {
 	Position result;
 	hash_map<ID_t, vector<Position>, hash<ID_t>, equal_to<ID_t> > paths;
 	hash_map<ID_t, Position, hash<ID_t>, equal_to<ID_t> > longest;
 
     for (std::vector<Tile_t>::const_iterator tileIt = scf.getContigTiling().begin(); tileIt < scf.getContigTiling().end(); tileIt++) {
-    	if (tileIt->source > contig_bank.getMaxIID()) {
-    		Scaffold_t subScf;
-    		scaffold_bank.fetch(tileIt->source, subScf);
-    		result = result.merge(translateSetToPaths(subScf, scaffold_bank, contig_bank, edge_bank, edits), edits);
+    	if (tileIt->source_type == Motif_t::NCODE) {
+    		Motif_t subScf;
+    		motif_bank.fetch(tileIt->source, subScf);
+    		result = result.merge(translateSetToPaths(subScf, motif_bank, contig_bank, edge_bank, edits), edits);
     	}
     }
     result = result.merge(traverseSet(scf, contig_bank, edge_bank, edits, paths, longest), edits);
@@ -234,10 +240,10 @@ Position translateSetToPaths(Scaffold_t &scf, Bank_t &scaffold_bank, Bank_t &con
 }
 #endif
 
-void outputScaffold(Scaffold_t &scf, Bank_t &scaffold_bank, Bank_t &contig_bank, Bank_t &edge_bank) {
+void outputMotif(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank) {
 #ifdef AMOS_HAVE_BOOST
 	vector<Position> edits;
-	Position result = translateSetToPaths(scf, scaffold_bank, contig_bank, edge_bank, edits);
+	Position result = translateSetToPaths(scf, motif_bank, contig_bank, edge_bank, edits);
 	// print the main sequence
 	Fasta_Print(stdout, result.getSequence().c_str(), result.getName().c_str());
 
@@ -294,30 +300,30 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
-   Bank_t scaffold_bank (Scaffold_t::NCODE);
-   if (! scaffold_bank.exists(globals.bank)) {
-	   cerr << "No scaffold account found in bank " << globals.bank << endl;
+   Bank_t motif_bank (Motif_t::NCODE);
+   if (! motif_bank.exists(globals.bank)) {
+	   cerr << "No motif account found in bank " << globals.bank << endl;
 	   exit(1);
    }
    try {
-	   scaffold_bank.open(globals.bank, B_READ);
+	   motif_bank.open(globals.bank, B_READ, globals.version);
    } catch (Exception_t & e) {
-	   cerr << "Failed to open scaffold account in bank " << globals.bank << " : " << endl << e << endl;
-	   scaffold_bank.close();
+	   cerr << "Failed to open motif account in bank " << globals.bank << " : " << endl << e << endl;
+	   motif_bank.close();
 	   exit(1);
    }
 
-   Scaffold_t scf;
-   for (AMOS::IDMap_t::const_iterator ci = scaffold_bank.getIDMap().begin(); ci; ci++) {
-	   scaffold_bank.fetch(ci->iid, scf);
+   Motif_t scf;
+   for (AMOS::IDMap_t::const_iterator ci = motif_bank.getIDMap().begin(); ci; ci++) {
+	   motif_bank.fetch(ci->iid, scf);
 
 	   // output fasta for motif scaffolds
 	   if (scf.getStatus() == Bundler::MOTIF_SCAFFOLD) {
-		   outputScaffold(scf, scaffold_bank, contig_bank, edge_bank);
+		   outputMotif(scf, motif_bank, contig_bank, edge_bank);
 	   }
    }
 
    edge_bank.close();
    contig_bank.close();
-   scaffold_bank.close();
+   motif_bank.close();
 }

@@ -1,5 +1,5 @@
 #ifndef UTILITIES_BUNDLER_HH_
-#define UTILITIES_BUNDLER_HH_
+#define UTILITIES_BUNDLER_HH_ 1
 
 #include <set>
 #include <queue>
@@ -62,8 +62,6 @@ namespace Bundler
    enum edgeStatus {NULL_STATUS, BAD_THRESH, BAD_SKIP, BAD_RPT, BAD_ORI, BAD_SCF, BAD_DST, BAD_TRNS, GOOD_EDGE};
    enum validateNeighborType {ALL, INCOMING, OUTGOING};
 
-   enum outputType{AGP, DOT, MOTIFS, BAMBUS};
-
    extern HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *cte2weight;
 
    struct EdgeWeightCmp
@@ -123,21 +121,6 @@ namespace Bundler
 
    AMOS::Size_t getTileOverlap(AMOS::Tile_t tileOne, AMOS::Tile_t tileTwo);
    
-   void linearizeScaffolds(
-            std::vector<AMOS::Scaffold_t> &scaffs, 
-            AMOS::Bank_t &edge_bank, 
-            HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t, EdgeWeightCmp>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > &ctg2lnk,
-            int32_t debugLevel);
-      
-   void outputResults(
-            const std::string &bank,
-            AMOS::Bank_t &contig_bank, 
-            AMOS::Bank_t &edge_bank, 
-            std::vector<AMOS::Scaffold_t> &scaffs,
-            outputType type, 
-            const std::string &outputPrefix,
-            int32_t debug);
-
    void transitiveEdgeRemoval(std::vector<AMOS::Scaffold_t> &scaffs, 
                               AMOS::Bank_t &edge_bank,
                               HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t, EdgeWeightCmp>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >& ctg2lnk,

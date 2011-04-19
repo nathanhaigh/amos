@@ -46,6 +46,7 @@ struct config {
    bool        doAgressiveRepeatFinding;
    bool        noPathRepeats;
    bool        noCoverageRepeats;
+   double      maxRepeatCoverage;
 };
 config globals;
 void printHelpText() {
@@ -82,6 +83,7 @@ bool GetOptions(int argc, char ** argv) {
    globals.redundancy = 1;
    globals.noPathRepeats = false;
    globals.noCoverageRepeats = false;
+   globals.maxRepeatCoverage = MAX_REPEAT_COV; 
  
    int c;
    ifstream repeatsFile;
@@ -214,7 +216,6 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
    // finally adjust our path counts by node sizes, we expect larger nodes to have more connections by chance
    VertexLength vertexLength = get(boost::vertex_index1, g);
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
-cerr << "The number of times on path for node " << vertexNames[*i.first] << " is " << numTimesOnPath[vertexNames[*i.first]] << endl;
       numTimesOnPath[vertexNames[*i.first]] /= vertexLength[*i.first];
    }
    delete[] distMap;
@@ -277,7 +278,22 @@ void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &rep
    if (globals.debug > 2) cerr << "COMPUTING CONNECTED COMPONENTS COVERAGE " << endl;
    double globalArrivalRate = computeArrivalRate(allContigs);
    allContigs.clear();
-   
+
+double globalMean = 0, globalVariance = 0, globalStdev = 0, globalN = 0;
+   for (hash_map<ID_t, vector<Contig_t *>, hash<ID_t>, equal_to<ID_t> >::iterator i = ctgsByComponent.begin(); i != ctgsByComponent.end(); i++) {
+      double arrivalRate = computeArrivalRate(i->second);
+      for (vector<Contig_t *>::iterator j = i->second.begin(); j < i->second.end(); j++) {
+         double cov = (*j)->getCovStat(arrivalRate);
+
+         globalN++;
+         double globalDelta = cov-globalMean;
+         globalMean+=(globalDelta/globalN);
+         globalVariance += globalDelta * (cov - globalMean);
+      }
+   }
+   globalVariance /= globalN;
+   globalStdev = sqrt(globalVariance);
+
    for (hash_map<ID_t, vector<Contig_t *>, hash<ID_t>, equal_to<ID_t> >::iterator i = ctgsByComponent.begin(); i != ctgsByComponent.end(); i++) {
       double arrivalRate = computeArrivalRate(i->second);
       double mean = 0, variance = 0, stdev = 0, N = 0;

@@ -205,7 +205,7 @@ int main(int argc, char **argv)
       //	Range_t(ti->offset, ti->offset + ti->range.end - ti->range.begin);
       ctglen[ctg.getIID()] = ctg.getLength();
     }
-      //      cerr << "Read " << ti->source << " lives in contig " << ctg.getIID() << endl;;
+    //        cerr << "Read " << ti->source << " lives in contig " << ctg.getIID() << endl;;
    contig_stream.close();
 
   // todo: replace matepair with fragment
@@ -235,16 +235,18 @@ int main(int argc, char **argv)
 
       libIDs.insert(frg.getLibrary());
       rd2lib[frg.getMatePair().first] = frg.getLibrary();
-      // cerr << "linking " << rd2ctg[mtp.getReads().first] << " and " << rd2ctg[mtp.getReads().second] << endl;
+      //cerr << "linking " << rd2ctg[mtp.getReads().first] << " and " << rd2ctg[mtp.getReads().second] << endl;
     }
   }
   
   // now we get the library information for each library
   hash_map<ID_t, pair<Pos_t, SD_t>, hash<ID_t>, equal_to<ID_t> > lib2size;
+  hash_map<ID_t, char, hash<ID_t>, equal_to<ID_t> > lib2adjacency;
   Library_t lib;
   for (set<ID_t>::iterator li = libIDs.begin(); li != libIDs.end(); li++){
     library_bank.fetch(*li, lib);
     lib2size[*li] = pair<Pos_t, SD_t> (lib.getDistribution().mean, lib.getDistribution().sd);
+    lib2adjacency[*li] = lib.getAdjacency();
   }
 
 
@@ -300,16 +302,56 @@ int main(int argc, char **argv)
     ctl.setSD(lib2size[libId].second);
     ctl.setSource(pair<ID_t, NCode_t>(rd2frg[rdA], Fragment_t::NCODE));
 
+    // this assumes the distance is always measured from the outermost points of the conitgs which could be not true for other mate types
+    Adjacency_t matePairType = lib2adjacency[libId];
 
-    if (forwA && ! forwB)
-      ctl.setAdjacency(ContigLink_t::NORMAL);
-    if (forwA && forwB)
-      ctl.setAdjacency(ContigLink_t::INNIE);
-    if (! forwA && ! forwB)
-      ctl.setAdjacency(ContigLink_t::OUTIE);
-    if (! forwA && forwB)
-      ctl.setAdjacency(ContigLink_t::ANTINORMAL);
-    
+    switch (matePairType) {
+       case Library_t::OUTIE:
+          if (forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::ANTINORMAL);
+          if (forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::OUTIE);
+          if (! forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::INNIE);
+          if (! forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::NORMAL);
+          break;
+       case Library_t::NORMAL:
+          if (forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::INNIE);
+          if (forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::NORMAL);
+          if (! forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::ANTINORMAL);
+          if (! forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::OUTIE);
+          break;
+       case Library_t::ANTINORMAL:
+          if (forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::OUTIE);
+          if (forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::ANTINORMAL);
+          if (! forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::INNIE);
+          if (! forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::NORMAL);
+          break;
+       case Library_t::NULL_ADJACENCY:
+       case Library_t::INNIE:
+          if (forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::NORMAL);
+          if (forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::INNIE);
+          if (! forwA && ! forwB)
+             ctl.setAdjacency(ContigLink_t::OUTIE);
+          if (! forwA && forwB)
+             ctl.setAdjacency(ContigLink_t::ANTINORMAL);
+          break;
+       default:
+          cerr << "Invalid library adjacency " << matePairType << endl;
+          exit(1); 
+    }; 
+
     try {
       link_bank << ctl;
       cerr << "Adding link " << LinkId << endl;
