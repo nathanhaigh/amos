@@ -24,6 +24,7 @@ dist_bin_SCRIPTS = \
 	cvgChop.pl \
 	getN50.pl \
 	getlengths.pl \
+    gccontent.pl \
 	preTA.pl \
 	pullTArchive.pl \
 	runTA.pl \
