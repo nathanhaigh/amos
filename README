@@ -57,9 +57,10 @@ packages may be modified with the following options:
    --x-includes=DIR      X include files are in DIR
    --x-libraries=DIR     X library files are in DIR
    --with-x              use the X Window System
-   --with-Boost-dir=DIR  Directory in which to find the Boost library
-   --with-Qt-dir=DIR     Directory in which to find the Qt /include,
-                         /bin, and /lib subdirectories. Use the below
+   --with-Boost-dir=DIR  Directory in which to find the ./boost folder for the
+                         Boost toolkit
+   --with-Qt-dir=DIR     Directory in which to find the Qt ./include,
+                         ./bin, and ./lib subdirectories. Use the below
                          options to override each of these defaults
                          individually.
    --with-Qt-include-dir=DIR
