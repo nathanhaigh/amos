@@ -19,7 +19,7 @@ uninstall-hook: uninstall-bin-scripts-hook
 ##   2) builds them with the below sed commands to assure the shebang and
 ##   include directives point to the correct locations, and that variable
 ##   substitution is performed as expected
-##   3) strips their suffix (e.g. ".pl")
+##   3) strips their suffix (e.g. ".pl", ".py", ".acf")
 ##
 install-bin-scripts-hook: $(dist_bin_SCRIPTS) $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
@@ -34,6 +34,13 @@ install-bin-scripts-hook: $(dist_bin_SCRIPTS) $(bin_SCRIPTS)
                 echo " configuring perl '$$b'"; \
                 echo '#!$(PERL)' > "$(DESTDIR)$(bindir)/$$b"; \
                 echo 'use lib "$(libdir)";' >> "$(DESTDIR)$(bindir)/$$b"; \
+                sed -e '1 {s|^#!.*$$||;}' \
+                    "$(DESTDIR)$(bindir)/$$f" >> "$(DESTDIR)$(bindir)/$$b" \
+                || exit 1; \
+                ;; \
+              *.py) \
+                echo " configuring python '$$b'"; \
+                echo '#!$(PYTHON)' > "$(DESTDIR)$(bindir)/$$b"; \
                 sed -e '1 {s|^#!.*$$||;}' \
                     "$(DESTDIR)$(bindir)/$$f" >> "$(DESTDIR)$(bindir)/$$b" \
                 || exit 1; \

@@ -16,6 +16,7 @@ m4_pattern_allow([^AS_MSG])
 
 # declare some precious variables
 AC_ARG_VAR(PERL, [perl command])
+AC_ARG_VAR(PYTHON, [python command])
 AC_ARG_VAR(NUCMER, [nucmer command])
 AC_ARG_VAR(DELTAFILTER, [delta-filter command])
 AC_ARG_VAR(SHOWCOORDS, [show-coords command])
@@ -35,6 +36,7 @@ AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_CPP
 AC_PATH_PROG(PERL, [perl], [:])
+AC_PATH_PROG(PYTHON, [python], [:])
 AC_PATH_PROG(NUCMER, [nucmer], [:])
 AC_PATH_PROG(DELTAFILTER, [delta-filter], [:])
 AC_PATH_PROG(SHOWCOORDS, [show-coords], [:])
@@ -238,6 +240,11 @@ esac
 if test x"${PERL}" = x":"  ||  ! test -x "${PERL}"; then
   echo "WARNING! perl was not found but is required to run AMOS scripts"
   echo "   install perl if planning on using AMOS scripts"
+fi
+
+if test x"${PYTHON}" = x":"  ||  ! test -x "${PYTHON}"; then
+  echo "WARNING! python was not found but is required to run goBambus2"
+  echo "   install python if planning on using goBambus2"
 fi
 
 if test x"${NUCMER}" = x":"  ||  ! test -x "${NUCMER}"; then

@@ -83,15 +83,16 @@ specific instructions.
 Dependencies
 ============
 
-   The AMOS package makes use of Perl (Practical Extraction and Report
-Language). Perl is available on most systems and the latest versions
-can be downloaded free of charge. AMOS requires Perl version 5.6.0 or
-later. If `perl' is available from your system PATH, all is well, if
-not you will need to instruct `configure' where it is located by
-setting the environment variable PERL to the full path of `perl' (see
-the Defining Variables section in the `INSTALL' file). Some Perl
-scripts in the AMOS package require additional modules that you should
-install:
+   The AMOS package makes use of Python and Perl (Practical Extraction
+and Report Language). Python and Perl are available on most systems
+and the latest versions can be downloaded free of charge. AMOS
+requires Perl version 5.6.0 or later. If `perl' or `python' are
+available from your system PATH, all is well, if not you will need to
+instruct `configure' where they are located by setting the
+environment variable PERL and PYTHON to the full path of `perl' and
+`python' respectively (see the Defining Variables section in the
+`INSTALL' file). Some Perl scripts in the AMOS package require
+additional modules that you should install:
    DBI (http://search.cpan.org/~timb/DBI/)
    Statistics::Descriptive (http://search.cpan.org/~shlomif/Statistics-Descriptive-3.0100/)
    XML::Parser (http://search.cpan.org/~msergeant/XML-Parser-2.36/)
@@ -185,6 +186,10 @@ each pipeline in the `doc' directory.
      * exrtends the read clear ranges for reads adjacent to zero coverage regions
      * updates the bank with the new clear ranges
      * updates the alignment(delta) file with the new read lengths and clear ranges
+
+   - goBambus2 -
+   goBambus2 is a pipeline to drive the Bambus2 modules, designed to
+   scaffold polymorphic and metagenomic data
 
    - amosvalidate -
    Amosvalidate is a validation pipeline for genome assemblies. This

@@ -5,17 +5,17 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	asmQC2 \
 	asmQC \
-    astats \
-    analyze-read-depth \
-    find-duplicate-reads \
-    cestat-cov \
-    insert-sizes \
-    listSingletonMates \
-    library-histogram \
-    list-linked-contigs \
-    scaffoldRange2Ungapped \
-    read-cov-plot \
-    FRCurve
+	astats \
+	analyze-read-depth \
+	find-duplicate-reads \
+	cestat-cov \
+	insert-sizes \
+	listSingletonMates \
+	library-histogram \
+	list-linked-contigs \
+	scaffoldRange2Ungapped \
+	read-cov-plot \
+	FRCurve
 
 
 dist_bin_SCRIPTS = \
@@ -23,13 +23,13 @@ dist_bin_SCRIPTS = \
 	fixlib.pl \
 	postCAqc.pl \
 	tiling2cam.pl \
-    cavalidate.acf \
-    amosvalidate.acf \
-    findTcovSnp.pl \
-    clusterSnps.pl \
-    listSurrogates.pl \
-    suspiciousfeat2region.pl \
-    find-query-breaks.pl
+	cavalidate.acf \
+	amosvalidate.acf \
+	findTcovSnp.pl \
+	clusterSnps.pl \
+	listSurrogates.pl \
+	suspiciousfeat2region.pl \
+	find-query-breaks.pl
 
 
 ##-- GLOBAL INCLUDE

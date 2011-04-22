@@ -20,8 +20,8 @@ if __name__ == "__main__":
     #NEED TO ADD IN OTHER USEFUL PARAMETERS, ADD IN PYTHON FILE TO BUILD SYSTEM
 
     #INPUT: CONTIGS + MATES, READS + TRACE XML, OR AMOS BANK (3 options)
-    usage = "\nrun: goBambus2.py <input reads or contigs or amos bank name> <output prefix> [options]\n"
-    usage += "eg.: goBambus2.py example.contigs myoutput --all --contigs\n"
+    usage = "\nrun: goBambus2 <input reads or contigs or amos bank name> <output prefix> [options]\n"
+    usage += "eg.: goBambus2 example.contigs myoutput --all --contigs\n"
     usage += "This script is designed to run the Bambus pipeline and takes either reads or contigs plus XML Trace Archive data as input and outputs scaffolds\n"
     usage += "For further info please contact the Bambus 2 authors: Sergey Koren and Mihai Pop\n"
     if len(sys.argv) < 3:
