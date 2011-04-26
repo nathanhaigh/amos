@@ -318,7 +318,7 @@ void Bank_t::clean()
 	while ( i >= npartitions_m )
 	  addPartition (true);
 
-        for (Size_t version = 0; version != tmpbnk.nversions_m; ++ i) {
+        for (Size_t version = 0; version != tmpbnk.nversions_m; ++ version) {
 	   unlink ((*partitions_m [i]) [version]->fix_name.c_str());
 	   unlink ((*partitions_m [i]) [version]->var_name.c_str());
 	   if ( link ((*tmpbnk.partitions_m [i]) [version]->fix_name.c_str(),
@@ -617,12 +617,14 @@ void Bank_t::destroy()
   if ( ! is_open_m  ||  ! (mode_m & B_WRITE) )
     AMOS_THROW_IO ("Cannot destroy, bank not open for writing");
 
+  Size_t nversions = nversions_m;
+
   //-- Unlink the partitions
   clear();
 
   //-- Unlink the IFO and MAP partitions
-  for (Size_t i = 0; i != nversions_m; i++) {
-     unlink ((getMapPath()).c_str());
+  for (Size_t i = 0; i != nversions; i++) {
+     unlink ((getMapPath(i)).c_str());
   }
   unlink ((store_pfx_m + IFO_STORE_SUFFIX).c_str());
   unlink ((store_pfx_m + LCK_STORE_SUFFIX).c_str());

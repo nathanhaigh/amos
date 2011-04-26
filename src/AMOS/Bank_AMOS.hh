@@ -398,10 +398,14 @@ protected:
      return version_m;
   }
 
-  std::string getMapPath() {
+  std::string getMapPath(Size_t version) {
      std::ostringstream ss;
-     ss << store_pfx_m << '.' << version_m << MAP_STORE_SUFFIX;
+     ss << store_pfx_m << '.' << version << MAP_STORE_SUFFIX;
      return ss.str();
+  }
+
+  std::string getMapPath() {
+     return getMapPath(version_m);
   }
 
   void clearVersion (Size_t &version, bool recreate );
