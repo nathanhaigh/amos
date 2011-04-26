@@ -924,7 +924,7 @@ void Bank_t::removeBID (ID_t bid)
   if ( partition->fix.fail()  ||  partition->var.fail() )
     AMOS_THROW_IO ("Unknown file error in remove, bank corrupted");
 
-  -- nbids_m;
+  -- nbids_m [version_m];
 }
 
 
