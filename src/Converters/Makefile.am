@@ -15,7 +15,7 @@ dist_bin_SCRIPTS = \
 	amos2frg.pl \
 	amos2mates.pl \
 	amos2sq.pl \
-        amos2ace.pl \
+    amos2ace.pl \
 	arachne2ctg.pl \
 	arachne2scaff.pl \
 	benchmark2arachne.pl \
@@ -23,6 +23,7 @@ dist_bin_SCRIPTS = \
 	benchmark2mates.pl \
 	benchmark2ta.pl \
 	blat2nucmer.pl \
+    blasr2coords.pl \
 	ca2ctg.pl \
 	ca2mates.pl \
 	ca2scaff.pl \
