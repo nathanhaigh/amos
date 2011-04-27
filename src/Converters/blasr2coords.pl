@@ -20,7 +20,7 @@ while (<>)
   my $qend   = $vals[9] + 1;
   my $qlen   = $vals[10];
 
-  printf("%8d %8d  | %8d %8d  | %8d %8d  | %6.02f  | %8d %8d | %6.02f %6.02f | $rname $qname\n",
+  printf("%8d %8d  | %8d %8d  | %8d %8d  | %9.02f  | %8d %8d | %8.02f %9.02f | $rname\t$qname\n",
          $rstart, $rend,
          (($qoo == 0) ? $qstart : $qend), (($qoo == 0) ? $qend : $qstart),
          $rend - $rstart, $qend - $qstart,
