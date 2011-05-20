@@ -46,6 +46,7 @@ using namespace HASHMAP;
 //==============================================================================//
 // Globals
 //==============================================================================//
+int PRINT_INTERVAL = 100000;
 int GOODQUAL = 30;
 int BADQUAL = 10;
 
@@ -71,8 +72,9 @@ struct config {
   string        fastqfile;
   FastqQualType fastqQualityType;
   string        libmap;
-  uint32_t        surroageAsFragment;
-  uint32_t layoutOnly;
+  uint32_t      surroageAsFragment;
+  uint32_t      layoutOnly;
+  uint8_t       debugLevel;
 };
 config globals;
 
@@ -179,6 +181,7 @@ bool GetOptions (int argc, char ** argv)
   globals.readUTG = 0;
   globals.fastqQualityType = FASTQ_DEFAULT_QUALITY_TYPE;
   globals.surrogateAsFragment = 0;
+  globals.debugLevel = 0;
  
   while (1)
     {
@@ -200,6 +203,7 @@ bool GetOptions (int argc, char ** argv)
         {"surrogateUTGAsReads", no_argument,     0, 'F'},
         {"layoutsOnly",no_argument,              0, 'L'},
         {"fasqQuality", required_argument,       0, 't'},
+        {"debugLevel", required_argument,        0, 'd'},
         {0,           0,                         0, 0}
       };
       
@@ -286,6 +290,9 @@ bool GetOptions (int argc, char ** argv)
        case 'L':
           globals.surroageAsFragment = 1;
           globals.layoutOnly = 1;
+          break;
+       case 'd':
+          globals.debugLevel = atoi(optarg);
           break;
        case 'h':
           PrintHelp();
@@ -572,7 +579,7 @@ bool parseFastaFile() {
     qualFile = fileOpen(globals.qualfile.c_str(), "r");
 
   while (Fasta_Read(fastafile,tempSeqBuff,tempSeqHeader) != 0) {
-    if (counter % 1000000 == 0) {
+    if (counter % PRINT_INTERVAL == 0 && globals.debugLevel > 0) {
        cerr << "Read " << counter << " reads " << endl;
     }
     counter++;
@@ -661,7 +668,7 @@ bool parseFastqFile() {
   FILE* fastqfile = fileOpen(globals.fastqfile.c_str(), "r");
 
   while (Fastq_Read(fastqfile,tempSeqBuff,tempSeqHeader,tempQualBuff,tempQualHeader, globals.fastqQualityType) != 0) {
-    if (counter % 1000000 == 0) {
+    if (counter % PRINT_INTERVAL == 0 && globals.debugLevel > 0) {
        cerr << "Read " << counter << " reads " << endl;
     }
     counter++;
@@ -835,6 +842,8 @@ bool parseFrgFile(string fileName) {
     GenericMesg     *pmesg             = NULL;
     FILE *f = fileOpen(fileName.c_str(), "r");
     map<string, string> readToLib;
+    map<string, ID_t> readToFrag;
+    uint32_t counter = 0;
 
     while (EOF != ReadProtoMesg_AS(f, &pmesg)) {
     if        (pmesg->t == MESG_DST) {
@@ -886,7 +895,13 @@ bool parseFrgFile(string fileName) {
        read.setIID(minSeqID++);
        read.setClearRange(Range_t(fmesg->clear_rng.bgn, fmesg->clear_rng.end));
        read.setSequence(fmesg->sequence, fmesg->quality);
+       readToFrag[read.getEID()] = 0;
        read_stream.append(read);
+
+       if (counter % PRINT_INTERVAL == 0 && globals.debugLevel > 0) {
+          cerr << "Read " << counter << " fragments" << endl; 
+       }
+       counter++;
     } else if (pmesg->t == MESG_LKG) {
        LinkMesg *lmesg = (LinkMesg *)pmesg->m;
        if (lmesg->action != AS_ADD) {
@@ -925,7 +940,6 @@ bool parseFrgFile(string fileName) {
          continue;
        }
 
-
        Fragment_t frag;
        frag.setLibrary(libID);
        frag.setIID(minSeqID++);
@@ -941,10 +955,12 @@ bool parseFrgFile(string fileName) {
        Read_t read;
        read_stream.fetch(read1, read);
        read.setFragment(frag.getIID());
+       readToFrag[read.getEID()] = frag.getIID();
        read_stream.replace(read.getIID(), read);
 
        read_stream.fetch(read2, read);
        read.setFragment(frag.getIID());
+       readToFrag[read.getEID()] = frag.getIID();
        read_stream.replace(read.getIID(), read);
     } else if (pmesg->t == MESG_PLC) {
         // ignore
@@ -954,7 +970,41 @@ bool parseFrgFile(string fileName) {
         //  Ignore messages we don't understand
     }
    }
+
+   // finally create fragments for unmated reads to associate them to a library
+   for (map<string, ID_t>::iterator i = readToFrag.begin(); i != readToFrag.end(); ++i) {
+      if (i->second == 0) {
+         ID_t read1 = read_stream.lookupIID(i->first);
+         if (read1 == NULL_ID) {
+            cerr << "Cannot find record for read " << i->first << endl;
+            continue;
+         }
+
+         ID_t libID;
+         if (readToLib.find(i->first) == readToLib.end()) {
+            libID = NULL_ID;
+         } else {
+            libID = lib_stream.lookupIID(readToLib[i->first]);
+         }
+         Fragment_t frag;
+         frag.setLibrary(libID);
+         frag.setIID(minSeqID++);
+         string uid = i->first + "_frag";
+         frag.setEID(uid);
+         frag.setType(Fragment_t::INSERT);
+         frag_stream.append(frag);
+
+         // also update the reads
+         Read_t read;
+         read_stream.fetch(read1, read);
+         read.setFragment(frag.getIID());
+         readToFrag[read.getEID()] = frag.getIID();
+         read_stream.replace(read.getIID(), read);
+      }
+   }
    fileClose(f);
+
+   cerr << "Finished reading " << counter << " fragments" << endl;
 }
 
 int *computeGapIndex(char *sequence, uint32_t length) {
@@ -985,6 +1035,7 @@ bool parseAsmFile(string fileName) {
     bool readSurrogates = globals.readSurrogates == 1;
     bool storeSurrogatesAsFragments = globals.surrogateAsFragment == 1;
     bool storeLayoutOnly = globals.layoutOnly == 1;
+    uint32_t counter = 0;
 
     while (EOF != ReadProtoMesg_AS(f, &pmesg)) {
        // utg
@@ -1025,6 +1076,11 @@ bool parseAsmFile(string fileName) {
           if (utg->status != AS_SEP && !readUTG) {
              continue;
           }
+
+          if (counter % PRINT_INTERVAL == 0 && globals.debugLevel > 0) {
+             cerr << "Read " << counter << " unitigs" << endl;
+          }
+          counter++;
 
           Contig_t contig;
           vector<Tile_t> reads;
@@ -1269,6 +1325,8 @@ bool parseAsmFile(string fileName) {
           scf_stream.append(scaffold);
        }
     }
+
+    cerr << "Finished reading " << counter << " unitigs" << endl;
 }
 #else
 bool parseFrgFile(string fileName) {
