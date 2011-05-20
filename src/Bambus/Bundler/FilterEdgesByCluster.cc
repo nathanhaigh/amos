@@ -66,6 +66,7 @@ bool GetOptions(int argc, char ** argv) {
     {"bank",               1, 0, 'b'},
     {"noRemoveEdges",      0, 0, 'r'},
     {"clusters",           1, 0, 'c'},    
+    {"maxCluster",         1, 0, 'm'},
     {"debug",              1, 0, 'd'},
     {0, 0, 0, 0}
   };
@@ -78,6 +79,7 @@ bool GetOptions(int argc, char ** argv) {
    ifstream clusterFile;
    ID_t contigID;
    uint32_t clusterID;
+   bool doNotUpdate = false;
  
    while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
       switch (c){
@@ -103,6 +105,10 @@ bool GetOptions(int argc, char ** argv) {
          }         
          clusterFile.close();
          break;
+       case 'm':
+         globals.maxClusterID = atoi(optarg);
+         doNotUpdate = true;
+         break;
        case 'd':
          globals.debug = atoi(optarg);
          break;
@@ -113,7 +119,7 @@ bool GetOptions(int argc, char ** argv) {
          return false;
       }
    }
-   globals.maxClusterID++;
+   if (doNotUpdate == false) globals.maxClusterID++;
 
    // print summary
    if (globals.debug >= 1) {
@@ -285,9 +291,12 @@ cerr << "NODE " << i->first << " HAS 0 LINKS " << endl;
             }
          }
       }
+      uint32_t count = 0;
       for (set<ID_t>::iterator i = toRemove.begin(); i != toRemove.end(); i++) {
          edge_bank.remove(*i);
+         count++;
       }
+cerr << "Removed a total of " << count << " edges " << endl;
    }
 
    edge_bank.clean();

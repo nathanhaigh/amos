@@ -41,6 +41,7 @@ struct EdgeOrderCmp
   }
 };
 
+AMOS::ID_t translateCLKtoFRG(AMOS::Bank_t &link_bank, AMOS::ID_t linkID);
 void outputEdge(std::ofstream &stream, AMOS::Bank_t &edge_bank, AMOS::ID_t iid, const char *start, const char *end, const char *direction);
 void outputEdges(std::ostream &stream, AMOS::Bank_t &edge_bank, AMOS::ID_t currCtg, int32_t edgeTypes[], int32_t debug);
 

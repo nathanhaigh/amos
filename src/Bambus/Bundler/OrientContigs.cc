@@ -36,6 +36,7 @@ using namespace Bundler;
 static const int32_t  MAX_STDEV         =  3;
 static const int32_t  INITIAL_STDEV     =  3;
 static const double   STDEV_STEP_SIZE   =  0.5;
+static const double   MIN_OVL_FOR_MOTIF = 0.020;
 
 struct config {
    bool        initAll;
@@ -933,6 +934,11 @@ cerr << "CREATED COPY OF EDGE " << cte.getIID() << " WITH ID " << oldEdge.getIID
    motifScaffold.setEID(result.str()); 
    motifScaffold.setContigTiling(motifTiling);
    motifScaffold.setContigEdges(motifEdges);
+   // reset type if necessary
+   if ((double)totalOverlap / newTile.range.getLength() <= MIN_OVL_FOR_MOTIF) {
+      motifScaffold.setStatus(LINEAR_SCAFFOLD);
+   } 
+
    motifs.push_back(motifScaffold);
 
    addTile(tiles, newIID, newTile);

@@ -18,8 +18,6 @@ using namespace Bundler;
 HASHMAP::hash_map<AMOS::ID_t, int, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > cte2bad;
 bool cte2badInit = false;
 
-AMOS::ID_t translateCLKtoFRG(AMOS::Bank_t &link_bank, AMOS::ID_t linkID);
-
 double Bundler::computeArrivalRate(const std::vector<AMOS::Contig_t *> &contigs) {
    double result = 0;
    int32_t numFragments = 0;
