@@ -982,7 +982,7 @@ bool parseFrgFile(string fileName) {
 
          ID_t libID;
          if (readToLib.find(i->first) == readToLib.end()) {
-            libID = NULL_ID;
+            continue;
          } else {
             libID = lib_stream.lookupIID(readToLib[i->first]);
          }
