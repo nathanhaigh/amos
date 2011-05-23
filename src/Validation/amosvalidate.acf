@@ -1,5 +1,16 @@
 ## Validate an assembly in AMOS bank format
 
+#?
+#? Amosvalidate is a pipeline to automatically detect mis-assemblies. It takes
+#? an AMOS bank as input and calculates a battery of known and novel assembly
+#? quality metrics such as matepair happiness, correlated SNP detection, read
+#? coverage, singleton breakpoint analysis and kmer composition. The output can
+#? be visualized with Hawkeye.
+#?
+#? Usage:
+#?     amosvalidate AMOS_BANK
+#?
+
 BINDIR = /fs/sz-user-supported/Linux-x86_64/bin
 NUCMER = /fs/sz-user-supported/Linux-x86_64/bin/nucmer
 
