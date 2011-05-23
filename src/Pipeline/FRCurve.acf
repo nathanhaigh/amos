@@ -43,6 +43,6 @@ BANK = bank.bnk
 10: $(BINDIR)/amosvalidate $(BANK)
 
 ## Compute Feature-Response Curve
-20: $(BINDIR)/FRCurve -g $(GENOME_SIZE) -b $(BANK)
+20: $(BINDIR)/getFRCvalues -g $(GENOME_SIZE) -b $(BANK)
 
 

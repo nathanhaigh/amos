@@ -1,4 +1,4 @@
-#include "FRCurve.hh"
+#include "getFRCvalues.hh"
 
 /*
  * Routines for computing the Feature-Response Curve 

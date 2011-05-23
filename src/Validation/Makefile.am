@@ -15,7 +15,7 @@ bin_PROGRAMS = \
 	list-linked-contigs \
 	scaffoldRange2Ungapped \
 	read-cov-plot \
-	FRCurve
+	getFRCvalues
 
 
 dist_bin_SCRIPTS = \
@@ -160,10 +160,10 @@ scaffoldRange2Ungapped_LDADD =  \
                      $(top_builddir)/src/Common/libCommon.a   \
                      $(top_builddir)/src/AMOS/libAMOS.a
 
-##-- FRCurve
-FRCurve_LDADD = \
+##-- getFRCvalues
+getFRCvalues_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
-FRCurve_SOURCES = \
-	FRCurve.hh \
-	FRCurve.cc
+getFRCvalues_SOURCES = \
+	getFRCvalues.hh \
+	getFRCvalues.cc
