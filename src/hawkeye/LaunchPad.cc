@@ -27,7 +27,7 @@ LaunchPad::LaunchPad(QWidget* parent, const char* name, Qt::WFlags fl)
   m_insertWindow = NULL;
   m_chromoPicker = NULL;
   m_gindex = 0;
-  m_verbose = 0;
+  m_verbose = 1;
 
   m_datastore = new DataStore();
 
@@ -161,6 +161,10 @@ void LaunchPad::setBankname(std::string bankname)
       emit bankSelected();
 
       cerr << "Total Load Time: " << total.str() << endl;
+    }
+    else
+    {
+      QMessageBox::critical(this, tr("Hawkeye"), tr("Error opening bank:\n") + tr(bankname.c_str()), QMessageBox::Cancel, QMessageBox::Cancel);
     }
   }
 }
