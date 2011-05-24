@@ -89,10 +89,6 @@ public slots:
   void setMisasmFeatures(bool);
   void setOtherFeatures(bool);
 
-
-  void setPersistant(bool);
-  void setErrorRate(int);
-
   void start();
   void stopbreak();
   void left();
@@ -185,9 +181,6 @@ private:
 //   bool m_breakFeatures;
   bool m_misasmFeatures;
   bool m_otherFeatures;
-
-  bool m_persistant;
-  int m_error;
 
   int m_tilingwidth;
   float m_hscale;

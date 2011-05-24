@@ -334,28 +334,8 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(iw, SIGNAL(jumpToRead(int)),
           parent, SLOT(jumpToRead(int)));
 
-  if (s_persistant)
-  {
-    // Persistant Toolbar
-    Q3ToolBar * persistant = new Q3ToolBar(this, "persistant");
-    persistant->setLabel("Persistant");
-
-    new QLabel("Persistant", persistant, "persistlbl");
-    QCheckBox * persist = new QCheckBox(persistant, "persistantcheck");
-
-    new QLabel("Error rate", persistant, "eratelbl");
-    QSpinBox * spin = new QSpinBox(0,19,1,persistant, "eratespin");
-
-    connect(persist, SIGNAL(toggled(bool)),
-            iw,      SLOT(setPersistant(bool)));
-    connect(spin,    SIGNAL(valueChanged(int)),
-            iw,      SLOT(setErrorRate(int)));
-  }
-
   iw->initializeTiling(); // iw constructor doesn't compute anything
 }
-
-int InsertWindow::s_persistant(0);
 
 void InsertWindow::buildLibraryBox()
 {

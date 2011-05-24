@@ -159,8 +159,6 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_insertCL = NULL;
   m_readCL = NULL;
 
-  m_persistant = false;
-  m_error = 0;
   m_overviewtop = 0;
   m_overviewbottom = 1;
 
@@ -979,8 +977,13 @@ void InsertWidget::paintCanvas()
       }
     }
   }
+
+  bool doPaintCoverage = true;
+  bool doPaintContigs = true;
+  bool doPaintFeatures = true;
+  bool m_drawInserts = true;
   
-  if (1)
+  if (doPaintCoverage)
   {
     cerr << " coverage";
 
@@ -1074,7 +1077,7 @@ void InsertWidget::paintCanvas()
 
   m_overviewtop = voffset - lineheight;
 
-  if (1)
+  if (doPaintContigs)
   {
     cerr << " contigs";
     layout.clear();
@@ -1150,8 +1153,11 @@ void InsertWidget::paintCanvas()
     voffset += (layout.size() + 1) * lineheight;
   }
 
+
   if ( m_insertCovFeatures )
   {
+    cerr << " insetcovfeat";
+
     if (m_insertCL->m_curpos)
     {
       paintCoverage(m_insertCL->m_coverage, m_insertCL->m_cestat, false, m_insertCL->m_curpos,
@@ -1172,6 +1178,7 @@ void InsertWidget::paintCanvas()
 
   if ( m_readCovFeatures )
   {
+    cerr << " readcovfeat";
     if (m_readCL->m_curpos)
     {
       paintCoverage(m_readCL->m_coverage, m_readCL->m_cestat, false, m_readCL->m_curpos,
@@ -1186,12 +1193,13 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  if (1)//!m_features.empty())
+
+  if (doPaintFeatures)
   {
     cerr << " features";
     layout.clear();
 
-    int score;
+    int score = 0;
 //     int maxSNPTol = 0;
 //     int maxUnitigTol = 0;
 //     int maxQCTol = 0;
@@ -1302,7 +1310,6 @@ void InsertWidget::paintCanvas()
     }
   }
 
-  int m_drawInserts = 1;
   if (m_drawInserts)
   {
     cerr << " inserts";
@@ -1376,22 +1383,7 @@ void InsertWidget::paintCanvas()
         QColor insertcolor(UIElements::getInsertColor((*ii)->m_state));
 
 
-        if (m_persistant)
-        {
-          iitem->m_contigcolor = true;
-
-          iitem->m_alinkedread = m_datastore->getPersistantRead((*ii)->m_aid, m_error);
-          iitem->m_alinked = m_datastore->lookupContigId(iitem->m_alinkedread);
-          iitem->m_acolor = getContigColor(contigColorMap, iitem->m_alinked);
-
-          if ((*ii)->m_bid)
-          {
-            iitem->m_blinkedread = m_datastore->getPersistantRead((*ii)->m_bid, m_error);
-            iitem->m_blinked = m_datastore->lookupContigId(iitem->m_blinkedread);
-            iitem->m_bcolor = getContigColor(contigColorMap, iitem->m_blinked);
-          }
-        }
-        else if (m_colorByLibrary)
+        if (m_colorByLibrary)
         {
           insertcolor = Qt::cyan;
 
@@ -1595,20 +1587,6 @@ void InsertWidget::setPaintScaffold(bool b)
   if ( m_paintScaffold == b ) return;
   m_paintScaffold = b;
   initializeTiling();
-}
-
-void InsertWidget::setPersistant(bool b)
-{
-  if ( m_persistant == b ) return;
-  m_persistant = b;
-  paintCanvas();
-}
-
-void InsertWidget::setErrorRate(int error)
-{
-  if ( m_error == error ) return;
-  m_error = error;
-  paintCanvas();
 }
 
 void InsertWidget::setShowScaffold(bool b)

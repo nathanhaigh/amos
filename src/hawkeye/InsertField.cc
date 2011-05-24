@@ -499,6 +499,10 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
 
 void InsertField::viewportPaintEvent(QPaintEvent * e)
 {
+  cerr << "IF::viewportPaintEvent" << endl;
+  Q3CanvasView::viewportPaintEvent(e);
+  return;
+
   QRect rc = QRect(contentsX(),    contentsY(),
                    visibleWidth(), visibleHeight() );
   QRect real = inverseWorldMatrix().mapRect(rc);
@@ -506,9 +510,6 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
   updateVisibleRect();
 
   emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);
-
-  Q3CanvasView::viewportPaintEvent(e);
-
 
 
   /*

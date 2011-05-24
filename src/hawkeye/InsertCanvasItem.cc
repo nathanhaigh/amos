@@ -19,6 +19,7 @@ InsertCanvasItem::InsertCanvasItem(int x, int y, int width, int height,
 
 void InsertCanvasItem::drawShape (QPainter & p)
 {
+  //cerr << "ICI::drawShape" << endl;
   p.drawLine((int)x(),                   (int) (y()) + (int)height()-1,
              (int)x() + (int) width()-1, (int) (y()) + (int)height()-1);
 
