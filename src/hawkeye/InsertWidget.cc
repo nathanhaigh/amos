@@ -113,16 +113,8 @@ InsertWidget::InsertWidget(DataStore * datastore,
   m_contigid = 0;
   m_gstart = 0;
   m_gend = 0;
-
   m_width = 0;
-
   m_scaffoldId = 0;
-
-  m_iposition = new InsertPosition(m_datastore, m_scaffoldId, m_scaffoldName,
-                                   this, "insertposition");
-  m_icanvas = new Q3Canvas(this, "icanvas");
-  m_icanvas->setBackgroundColor(QColor(70,70,70));
-  m_icanvas->retune(128);
 
   m_paddle = NULL;
   m_ball = NULL;
@@ -169,6 +161,12 @@ InsertWidget::InsertWidget(DataStore * datastore,
 
   m_seqheight = 4;
   m_tilingwidth = 0;
+
+  m_iposition = new InsertPosition(m_datastore, m_scaffoldId, m_scaffoldName,
+                                   this, "insertposition");
+  m_icanvas = new Q3Canvas(this, "icanvas");
+  m_icanvas->setBackgroundColor(QColor(0,0,0));
+  m_icanvas->retune(128);
 
   Q3HBox * hbox = new Q3HBox(this);
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, hbox, "qcv");
@@ -1492,8 +1490,6 @@ void InsertWidget::paintCanvas()
   m_syncWithTiling = false;
   setTilingVisibleRange(m_contigid, m_gstart, m_gend);
   m_syncWithTiling = old;
-
-  m_ifield->updateVisibleRect();
 
   resizeOverview();
 

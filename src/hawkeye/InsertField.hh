@@ -57,8 +57,6 @@ public slots:
   void canvasCleared();
 
   void search(const QString & str);
-  void updateVisibleRect();
-
 
 
 protected:
@@ -81,7 +79,6 @@ private:
   DataStore * m_datastore;
   int & m_hoffset;
 
-  Q3CanvasRectangle * m_visibleRect;
   Q3CanvasRectangle * m_featrect;
   Q3CanvasItem * m_feat;
   Q3CanvasItem * m_lastsearch;

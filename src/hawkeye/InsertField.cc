@@ -50,7 +50,6 @@ InsertField::InsertField(DataStore * datastore,
   setHScrollBarMode(Q3ScrollView::AlwaysOff);
   setVScrollBarMode(Q3ScrollView::AlwaysOff);
 
-  m_visibleRect = NULL;
   m_toolstate = 0;
   setCursor(Qt::ArrowCursor);
 }
@@ -507,8 +506,6 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
                    visibleWidth(), visibleHeight() );
   QRect real = inverseWorldMatrix().mapRect(rc);
 
-  updateVisibleRect();
-
   emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);
 
 
@@ -520,32 +517,11 @@ void InsertField::viewportPaintEvent(QPaintEvent * e)
   */
 }
 
-void InsertField::updateVisibleRect()
-{
-  QRect rc = QRect(contentsX(), contentsY(), visibleWidth(), visibleHeight() );
-  QRect real = inverseWorldMatrix().mapRect(rc);
-
-  if (!m_visibleRect)
-  {
-    m_visibleRect = new Q3CanvasRectangle(0,0,100,100, canvas());
-    m_visibleRect->setPen(QPen(Qt::black));
-    m_visibleRect->setBrush(QBrush(Qt::black));
-    m_visibleRect->setZ(-1000);
-    m_visibleRect->show();
-  }
-
-  m_visibleRect->setSize(real.width(), canvas()->height());
-  m_visibleRect->move(real.x(), 0);
-  canvas()->setChanged(m_visibleRect->boundingRect());
-  canvas()->update();
-}
-
 void InsertField::canvasCleared()
 {
   m_featrect = NULL;
   m_feat = NULL;
   m_lastsearch = NULL;
-  m_visibleRect = NULL;
 }
 
 
