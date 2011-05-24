@@ -61,6 +61,13 @@ void InsertField::setScrollBars(RangeScrollBar_t * hrange,
   m_vrange = vrange;
 }
 
+void InsertField::wheelEvent(QWheelEvent * e)
+{
+  if (m_vrange)
+  {
+    QApplication::sendEvent(m_vrange, e);
+  }
+}
 
 
 void InsertField::setSelectTool()
@@ -404,13 +411,6 @@ void InsertField::processItemSelection(QString & s,
   }
 }
 
-void InsertField::wheelEvent(QWheelEvent * e)
-{
-  if (m_vrange)
-  {
-    QApplication::sendEvent(m_vrange, e);
-  }
-}
 
 
 void InsertField::contentsMousePressEvent( QMouseEvent* e )
@@ -489,27 +489,6 @@ void InsertField::contentsMousePressEvent( QMouseEvent* e )
     if (jumptoread)
       emit jumpToRead(jumptoread);
   }
-}
-
-void InsertField::viewportPaintEvent(QPaintEvent * e)
-{
-  cerr << "IF::viewportPaintEvent" << endl;
-  Q3CanvasView::viewportPaintEvent(e);
-  return;
-
-  QRect rc = QRect(contentsX(),    contentsY(),
-                   visibleWidth(), visibleHeight() );
-  QRect real = inverseWorldMatrix().mapRect(rc);
-
-  emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);
-
-
-  /*
-  QPainter p(viewport());
-  p.setPen(Qt::red);
-  p.drawText(10,10,100,20,Qt::AlignHCenter, "Hello World");
-  p.end();
-  */
 }
 
 void InsertField::canvasCleared()

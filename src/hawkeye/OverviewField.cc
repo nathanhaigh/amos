@@ -31,6 +31,8 @@ void OverviewField::contentsMousePressEvent( QMouseEvent* e )
 {
   QPoint real = inverseWorldMatrix().map(e->pos());
 
+  cerr << "center on: " << real.x() << endl;
+
   emit centerView(real.x());
 }
 

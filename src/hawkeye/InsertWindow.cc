@@ -113,34 +113,9 @@ InsertWindow::InsertWindow(DataStore * datastore,
   // Happy distance
   m_query->happyEdit->setText (QString::number(Insert::MAXSTDEV));
 
-
   // Feature filters
-//   QPalette p (m_query->palette());
-
-//   p.setColor (QColorGroup::Button, UIElements::color_insertcoverage);
-//   m_query->insertSlider->setPalette(p);
   iw->setInsertCovFeatures (m_query->insertCheck->isChecked());
-
-//   p.setColor (QColorGroup::Button, UIElements::color_readcoverage);
-//   m_query->readSlider->setPalette(p);
   iw->setReadCovFeatures (m_query->readCheck->isChecked());
-
-//   p.setColor (QColorGroup::Button, UIElements::color_featsnp);
-//   m_query->snpSlider->setPalette(p);
-//   iw->setSNPFeatures (m_query->snpCheck->isChecked());
-
-//   p.setColor (QColorGroup::Button, UIElements::color_featunitig);
-//   m_query->unitigSlider->setPalette(p);
-//   iw->setUnitigFeatures (m_query->unitigCheck->isChecked());
-
-//   p.setColor (QColorGroup::Button, UIElements::color_featcoverage);
-//   m_query->qcSlider->setPalette(p);
-//   iw->setQCFeatures (m_query->qcCheck->isChecked());
-
-//   p.setColor (QColorGroup::Button, UIElements::color_featbreak);
-//   m_query->breakSlider->setPalette(p);
-//   iw->setBreakFeatures (m_query->breakCheck->isChecked());
-
   iw->setMisasmFeatures (m_query->misasmCheck->isChecked());
   iw->setOtherFeatures (m_query->otherCheck->isChecked());
 
@@ -220,42 +195,6 @@ InsertWindow::InsertWindow(DataStore * datastore,
 
   connect(m_query->readCheck,    SIGNAL(toggled(bool)),
           iw,                    SLOT(setReadCovFeatures(bool)));
-
-//   connect(iw,                    SIGNAL(newMaxSNPTol(int)),
-//           this,                  SLOT(setMaxSNPTol(int)));
-
-//   connect(m_query->snpSlider,    SIGNAL(valueChanged(int)),
-//           iw,                    SLOT(setSNPTol(int)));
-
-//   connect(m_query->snpCheck,     SIGNAL(toggled(bool)),
-//           iw,                    SLOT(setSNPFeatures(bool)));
-
-//   connect(iw,                    SIGNAL(newMaxUnitigTol(int)),
-//           this,                  SLOT(setMaxUnitigTol(int)));
-
-//   connect(m_query->unitigSlider, SIGNAL(valueChanged(int)),
-//           iw,                    SLOT(setUnitigTol(int)));
-
-//   connect(m_query->unitigCheck,  SIGNAL(toggled(bool)),
-//           iw,                    SLOT(setUnitigFeatures(bool)));
-
-//   connect(iw,                    SIGNAL(newMaxQCTol(int)),
-//           this,                  SLOT(setMaxQCTol(int)));
-
-//   connect(m_query->qcSlider,     SIGNAL(valueChanged(int)),
-//           iw,                    SLOT(setQCTol(int)));
-
-//   connect(m_query->qcCheck,      SIGNAL(toggled(bool)),
-//           iw,                    SLOT(setQCFeatures(bool)));
-
-//   connect(iw,                    SIGNAL(newMaxBreakTol(int)),
-//           this,                  SLOT(setMaxBreakTol(int)));
-
-//   connect(m_query->breakSlider,  SIGNAL(valueChanged(int)),
-//           iw,                    SLOT(setBreakTol(int)));
-
-//   connect(m_query->breakCheck,   SIGNAL(toggled(bool)),
-//           iw,                    SLOT(setBreakFeatures(bool)));
 
   connect(m_query->misasmCheck, SIGNAL(toggled(bool)),
           iw,                   SLOT(setMisasmFeatures(bool)));

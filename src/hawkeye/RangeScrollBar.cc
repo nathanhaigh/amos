@@ -420,6 +420,8 @@ void RangeScrollBar_t::setOrientation (Qt::Orientation orientation)
 //------------------------------------------------------------- setMaxRange ----
 void RangeScrollBar_t::setMaxRange (int min, int max)
 {
+  std::cerr << "RSB::setMaxRange: " << min << " " << max << std::endl;
+
   if ( min > max )
     std::swap (min, max);
 
@@ -439,6 +441,8 @@ void RangeScrollBar_t::setMaxRange (int min, int max)
 //---------------------------------------------------------------- setRange ----
 void RangeScrollBar_t::setRange (int low, int high)
 {
+  std::cerr << "RSB::setRange: " << low << " " << high << std::endl;
+
   //-- Keep the range within bounds
   low = std::max (min_m, std::min (max_m, low));
   high = std::max (min_m, std::min (max_m, high));
@@ -448,6 +452,9 @@ void RangeScrollBar_t::setRange (int low, int high)
 
   if ( low == low_m && high == high_m )
     return;
+
+  if (low == high)
+   return;
 
   low_m = low;
   high_m = high;

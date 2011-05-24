@@ -56,7 +56,6 @@ public slots:
 
 protected:
   void contentsMousePressEvent(QMouseEvent* e);
-  void viewportPaintEvent(QPaintEvent * e);
   void wheelEvent(QWheelEvent *e);
 
 private:
