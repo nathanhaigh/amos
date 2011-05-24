@@ -99,7 +99,9 @@ UIElements.hh
 
 
 INCLUDEPATH	+= ../AMOS ../Common ../Slice ../Staden/read ../../ ../Contig
-LIBS	+=  -L../AMOS -L../Common -L../Staden/read -L../Contig/ -L../DataStore/ -lDataStore -lAMOS -lCommon -lAMOS -lCommon -lread -lz
+LIBS	+=  -L../AMOS -L../Common -L../Staden/read -L../Contig/ -lDataStore -lAMOS -lCommon -lAMOS -lCommon -lread -lz
 
 #The following line was inserted by qt3to4
 QT +=  qt3support 
+
+#CONFIG += x86_64
