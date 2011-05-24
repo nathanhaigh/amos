@@ -343,11 +343,6 @@ void InsertField::processItemSelection(QString & s,
     s += "<hr>";
 
     jump = false;
-
-    if (rightButtonDown)
-    {
-      emit showAlignments(citem->m_tile.source);
-    }
   }
   else if ((*it)->rtti() == CoverageCanvasItem::RTTI)
   {

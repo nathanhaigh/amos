@@ -171,9 +171,6 @@ InsertWidget::InsertWidget(DataStore * datastore,
   Q3HBox * hbox = new Q3HBox(this);
   m_ifield = new InsertField(datastore, m_hoffset, m_icanvas, hbox, "qcv");
 
-  connect(m_ifield, SIGNAL(showAlignments(int)),
-          parent,   SLOT(showAlignments(int)));
-
   vrange = new RangeScrollBar_t(Qt::Vertical, hbox);
 
   m_overview = new OverviewField(m_icanvas, this, "overview");

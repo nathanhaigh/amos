@@ -35,12 +35,7 @@ signals:
   void readEIDHighlighted(const QString &);
   void jumpToRead(int iid);
   void updateVisibleRange();
-
   void fieldResized();
-
-  void showAlignments(int contig_iid);
-
-
 
 public slots:
   void resizeEvent(QResizeEvent * e);
