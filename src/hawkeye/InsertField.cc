@@ -69,6 +69,20 @@ void InsertField::wheelEvent(QWheelEvent * e)
   }
 }
 
+void InsertField::viewportPaintEvent(QPaintEvent * e)	 
+{	 
+  Q3CanvasView::viewportPaintEvent(e);	 
+ 	 
+  QRect rc = QRect(contentsX(),    contentsY(),	 
+                   visibleWidth(), visibleHeight() );	 
+
+  QRect real = inverseWorldMatrix().mapRect(rc);	 
+ 	 
+  emit visibleRange(16*real.x()-m_hoffset, worldMatrix().m11()/16);	 
+
+  return;	 
+}
+
 
 void InsertField::setSelectTool()
 {

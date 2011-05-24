@@ -57,6 +57,7 @@ public slots:
 protected:
   void contentsMousePressEvent(QMouseEvent* e);
   void wheelEvent(QWheelEvent *e);
+  void viewportPaintEvent(QPaintEvent *e);
 
 private:
   void processItemSelection(QString & s,

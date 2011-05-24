@@ -295,7 +295,7 @@ void LaunchPad::showInserts()
   }
 
   m_insertWindow->show();
-  emit setTilingVisibleRange(m_datastore->m_contigId, m_gindex, m_gindex+100);
+
   if (m_tilingWindow) { m_tilingWindow->update(); }
 }
 
