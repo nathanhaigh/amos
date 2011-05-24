@@ -154,11 +154,11 @@ void ConsensusField::drawContents(QPainter * p)
 
   if (m_showUngapped)
   {
-    s += QString::number(m_ugpos[grangeStart]) + " to " + QString::number(m_ugpos[grangeEnd]);
+    s += QString::number(m_ugpos[grangeStart]) + " to " + QString::number(m_ugpos[grangeEnd]) + " of " + QString::number(m_ugpos[m_consensus.size()-1]);
   }
   else
   {
-    s += QString::number(grangeStart) + " to " + QString::number(grangeEnd);
+    s += QString::number(grangeStart)          + " to " + QString::number(grangeEnd)          + " of " + QString::number(m_consensus.size());
   }
 
   p->drawText(width/2 - 400, 2, 800, m_lineheight, Qt::AlignHCenter | Qt::AlignBottom, s);
@@ -263,7 +263,7 @@ void ConsensusField::drawContents(QPainter * p)
     }
 
     p->setPen(Qt::black);
-    int scaledfont = (int)max((int)(theight*.6), 6);
+    int scaledfont = (int)max((int)(theight*.8), 8);
     p->setFont(QFont("Helvetica", scaledfont));
 
     int nbreak = 10;
