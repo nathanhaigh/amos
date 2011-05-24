@@ -1195,36 +1195,11 @@ void InsertWidget::paintCanvas()
     layout.clear();
 
     int score = 0;
-//     int maxSNPTol = 0;
-//     int maxUnitigTol = 0;
-//     int maxQCTol = 0;
-//     int maxBreakTol = 0;
     vector<AMOS::Feature_t>::iterator fi;
     for (fi = m_features.begin(); fi != m_features.end(); fi++)
     {
       switch ( fi->getType() )
         {
-//         case AMOS::Feature_t::POLYMORPHISM:
-// //           score = extractSNPScore (*fi);
-// //           if ( score > maxSNPTol ) maxSNPTol = score;
-//           if ( !m_snpFeatures ) continue;
-//           break;
-//         case AMOS::Feature_t::UNITIG:
-// //           score = extractUnitigScore (*fi);
-// //           if ( score > maxUnitigTol ) maxUnitigTol = score;
-//           if ( !m_unitigFeatures ) continue;
-//           break;
-//         case AMOS::Feature_t::COVERAGE:
-// //           score = extractQCScore (*fi);
-// //           if ( score > maxQCTol ) maxQCTol = score;
-//           if ( !m_qcFeatures ) continue;
-//           break;
-//         case AMOS::Feature_t::BREAKPOINT:
-// //           score = extractBreakScore (*fi);
-// //           if ( score > maxBreakTol ) maxBreakTol = score;
-//           if ( !m_breakFeatures ) continue;
-//           break;
-
         case AMOS::Feature_t::COVERAGE:
         case AMOS::Feature_t::POLYMORPHISM:
         case AMOS::Feature_t::BREAKPOINT:
@@ -1272,11 +1247,6 @@ void InsertWidget::paintCanvas()
     {
       voffset += (layout.size() + 1) * lineheight;
     }
-
-//     emit newMaxSNPTol(maxSNPTol);
-//     emit newMaxUnitigTol(maxUnitigTol);
-//     emit newMaxQCTol(maxQCTol);
-//     emit newMaxBreakTol(maxBreakTol);
   }
 
   m_overviewbottom = voffset;
