@@ -392,6 +392,7 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
     contigIDLabel = new QLabel( Toolbar, "contigIDLabel" );
 
     contigIDSpin = new QSpinBox( Toolbar, "contigIDSpin" );
+    contigIDSpin->setMinimumSize( QSize(100,25));
     Toolbar->addSeparator();
 
     viewButton = new QPushButton( Toolbar, "viewButton" );
