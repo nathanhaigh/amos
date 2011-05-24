@@ -46,7 +46,7 @@ using namespace std;
 InsertWindow::InsertWindow(DataStore * datastore,
                            QWidget * parent,
                            const char * name)
-  : Q3MainWindow(parent, name),
+  : Q3MainWindow(NULL, name),
     m_datastore(datastore)
 {
   setCaption("Hawkeye : Scaffold View");

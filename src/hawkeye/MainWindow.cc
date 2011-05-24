@@ -28,7 +28,7 @@
 using namespace std;
 
 MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name )
-           : Q3MainWindow( parent, name ),
+           : Q3MainWindow( NULL, name ),
              m_datastore(datastore)
 {
   setCaption("Hawkeye : Contig View");
