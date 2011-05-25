@@ -103,10 +103,6 @@ int TilingField::getReadCov(int y)
   return -1;
 }
 
-void TilingField::mousePressEvent(QMouseEvent * /* e */)
-{
-}
-
 void TilingField::singleClick()
 {
   #if DEBUGQV
@@ -275,7 +271,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
   Q3PointArray rcflag(3);
   int tridim = theight/2;
-  int trioffset = lineheight-.75*theight;
+  int trioffset = lineheight-.75*theight-2;
 
 
   #if 0
@@ -365,14 +361,14 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
       if (PrintIID)
       {
         p.drawText(seqnamehoffset, ldcov,
-                   rchoffset-seqnamehoffset, lineheight,
+                   rchoffset-seqnamehoffset, lineheight-2,
                    Qt::AlignLeft | Qt::AlignBottom, 
                    QString::number(ri->m_read.getIID()));
       }
       else
       {
         p.drawText(seqnamehoffset, ldcov,
-                   rchoffset-seqnamehoffset, lineheight,
+                   rchoffset-seqnamehoffset, lineheight-2,
                    Qt::AlignLeft | Qt::AlignBottom, 
                    QString(ri->m_read.getEID().c_str()));
       }
@@ -505,7 +501,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
             }
 
             p.drawText(hoffset, ldcov, 
-                       m_fontsize, lineheight,
+                       m_fontsize, lineheight-2,
                        Qt::AlignHCenter | Qt::AlignBottom, s);
           }
 

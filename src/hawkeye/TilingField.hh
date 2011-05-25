@@ -27,7 +27,6 @@ public:
 
     QSizePolicy sizePolicy() const;
     void mouseDoubleClickEvent(QMouseEvent * event);
-    void mousePressEvent(QMouseEvent * event);
     void mouseReleaseEvent(QMouseEvent * event);
     void setSize(int width, int height);
 
