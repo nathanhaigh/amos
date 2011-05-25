@@ -40,11 +40,11 @@ void InsertPosition::paintEvent(QPaintEvent * e)
 {
   int linepos = 55;
 
-  QPixmap pix(width(), height());
-  pix.fill(Qt::black);
+  QPainter p(this);
 
-  QPainter p(&pix);
   p.setBrush(Qt::black);
+  p.drawRect(rect());
+
   p.setPen(Qt::white);
   p.setFont(QFont("Helvetica", 12));
 
@@ -130,11 +130,5 @@ void InsertPosition::paintEvent(QPaintEvent * e)
                  Qt::AlignHCenter | Qt::AlignBottom, pos);
     }
   }
-
-  p.end();
-
-  p.begin(this);
-  p.drawPixmap(0,0,pix);
-  p.end();
 }
 
