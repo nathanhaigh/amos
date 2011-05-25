@@ -116,21 +116,31 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
   connect(bPrevDisc, SIGNAL(clicked()),
           this,      SIGNAL(advancePrevDiscrepancy()));
 
-  Q3Accel *a = new Q3Accel( this );
-  a->connectItem(a->insertItem(Qt::Key_PageUp),   this, SLOT(jumpFGindex()) );
-  a->connectItem(a->insertItem(Qt::Key_PageDown), this, SLOT(jumpPGindex()) );
-
-  a->connectItem(a->insertItem(Qt::CTRL+Qt::Key_Plus),  this, SLOT(fontIncrease()));
-  a->connectItem(a->insertItem(Qt::CTRL+Qt::Key_Minus), this, SLOT(fontDecrease()));
-
-  a->connectItem(a->insertItem(Qt::CTRL + Qt::Key_PageUp),   bNextDisc, SLOT(animateClick()));
-  a->connectItem(a->insertItem(Qt::CTRL + Qt::Key_PageDown), bPrevDisc, SLOT(animateClick()));
-
   connect(new QShortcut(QKeySequence(tr("Ctrl+Q")), this), SIGNAL(activated()),
-                        qApp, SLOT(quit()));
+          qApp, SLOT(quit()));
 
   connect(new QShortcut(QKeySequence(tr("Ctrl+W")), this), SIGNAL(activated()),
-                        this, SLOT(close()));
+          this, SLOT(close()));
+
+  connect(new QShortcut(QKeySequence(tr("Ctrl+Shift+=")), this), SIGNAL(activated()),
+          this, SLOT(fontIncrease()));
+
+  connect(new QShortcut(QKeySequence(tr("Ctrl+-")), this), SIGNAL(activated()),
+          this, SLOT(fontDecrease()));
+
+  connect(new QShortcut(QKeySequence(tr("Ctrl+Right")), this), SIGNAL(activated()),
+          this, SLOT(jumpFGindex()));
+
+  connect(new QShortcut(QKeySequence(tr("Ctrl+Left")), this), SIGNAL(activated()),
+          this, SLOT(jumpPGindex()));
+
+  connect(new QShortcut(QKeySequence(tr("Ctrl+Shift+.")), this), SIGNAL(activated()),
+          bNextDisc, SLOT(animateClick()));
+
+  connect(new QShortcut(QKeySequence(tr("Ctrl+Shift+,")), this), SIGNAL(activated()),
+          this, SIGNAL(advancePrevDiscrepancy()));
+
+
 
   QIcon icon_fontminus(QPixmap((const char ** )fontdecrease_xpm));
   QIcon icon_fontplus(QPixmap((const char **)fontincrease_xpm));
