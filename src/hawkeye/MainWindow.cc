@@ -29,7 +29,7 @@ using namespace std;
 
 MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name )
            : Q3MainWindow( NULL, name ),
-             m_datastore(datastore)
+             m_datastore(datastore), m_parent(parent)
 {
   setCaption("Hawkeye : Contig View");
   m_gindex = 0;
@@ -126,7 +126,11 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
   a->connectItem(a->insertItem(Qt::CTRL + Qt::Key_PageUp),   bNextDisc, SLOT(animateClick()));
   a->connectItem(a->insertItem(Qt::CTRL + Qt::Key_PageDown), bPrevDisc, SLOT(animateClick()));
 
-  a->connectItem(a->insertItem(Qt::CTRL+Qt::Key_Q),       qApp, SLOT(quit()));
+  connect(new QShortcut(QKeySequence(tr("Ctrl+Q")), this), SIGNAL(activated()),
+                        qApp, SLOT(quit()));
+
+  connect(new QShortcut(QKeySequence(tr("Ctrl+W")), this), SIGNAL(activated()),
+                        this, SLOT(close()));
 
   QIcon icon_fontminus(QPixmap((const char ** )fontdecrease_xpm));
   QIcon icon_fontplus(QPixmap((const char **)fontincrease_xpm));
@@ -270,8 +274,8 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
     connect(this,    SIGNAL(advancePrevDiscrepancy()),
             tiling,    SLOT(advancePrevDiscrepancy()));
 
-    connect(tiling,         SIGNAL(highlightRead(int)),
-            parentWidget(), SIGNAL(highlightRead(int)));
+    connect(tiling,   SIGNAL(highlightRead(int)),
+            m_parent, SIGNAL(highlightRead(int)));
             
   }
 }

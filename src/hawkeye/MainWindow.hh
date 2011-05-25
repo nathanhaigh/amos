@@ -93,6 +93,7 @@ private:
   
   TilingFrame * m_tiling;
 
+  QWidget * m_parent;
   Q3PopupMenu * m_options;
   QLineEdit * m_searchedit;
   QLabel * m_offsetlabel;

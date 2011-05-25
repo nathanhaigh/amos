@@ -273,6 +273,13 @@ InsertWindow::InsertWindow(DataStore * datastore,
   connect(iw, SIGNAL(jumpToRead(int)),
           parent, SLOT(jumpToRead(int)));
 
+  connect( new QShortcut(QKeySequence(tr("Ctrl+W")), this), SIGNAL(activated()),
+           this, SLOT(close()));
+
+  connect( new QShortcut(QKeySequence(tr("Ctrl+Q")), this), SIGNAL(activated()),
+           qApp, SLOT(quit()));
+  
+
   iw->initializeTiling(); // iw constructor doesn't compute anything
 }
 

@@ -51,7 +51,6 @@ TilingField::TilingField(DataStore * datastore,
           m_fontsize(fontsize),
           m_gindex(gindex)
 {
-
   m_datastore = datastore;
   m_readnamewidth = 11;
   m_width=100;
@@ -80,7 +79,6 @@ TilingField::TilingField(DataStore * datastore,
   m_width=QApplication::desktop()->width();
   resize(m_width, 100);
   setPalette(QPalette(UIElements::color_tiling));
- // setWFlags(Qt::WNoAutoErase);
 }
 
 int TilingField::getReadCov(int y)
@@ -105,7 +103,7 @@ int TilingField::getReadCov(int y)
   return -1;
 }
 
-void TilingField::mousePressEvent(QMouseEvent *e)
+void TilingField::mousePressEvent(QMouseEvent * /* e */)
 {
 }
 
@@ -259,8 +257,8 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   {
     //cerr << "Resize: " << m_width << "x" << height << endl;
     resize(m_width, height);
-    repaint();
-    //return;
+    update();
+    return;
   }
 
   int drawtop = paintevent->rect().top();
@@ -268,11 +266,6 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
   QString s;
 
-  //QPixmap pix(m_width, height);
-  //pix.fill(this, 0, 0);
-
-  //QPainter p(&pix);
-  //p.setClipRegion(paintevent->region());
   QPainter p(this);
 
   QPen pen;
@@ -283,7 +276,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
   Q3PointArray rcflag(3);
   int tridim = theight/2;
-  int trioffset = theight/2;
+  int trioffset = lineheight-.75*theight;
 
 
   #if 0
@@ -365,6 +358,7 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
         rcflag[1]=QPoint(rchoffset,        ldcov+trioffset+tridim);
         rcflag[2]=QPoint(rchoffset+tridim, ldcov+trioffset+tridim/2);
       }
+
       p.drawPolygon(rcflag);
 
       // Seqname
@@ -668,11 +662,6 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
   p.end();
   
-  //p.begin(this);
-  //p.setClipRegion(paintevent->region());
-  //p.drawPixmap(0, 0, pix);
-  //p.end();
-
   emit setTilingVisibleRange(m_datastore->m_contigId, srangeStart, srangeEnd);
 }
 

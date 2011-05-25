@@ -105,7 +105,6 @@ void ConsensusField::toggleShowNumbers(bool doShow)
 
 #include <QtGui>
 
-//void ConsensusField::paintEvent(QPaintEvent * event)
 void ConsensusField::drawContents(QPainter * p)
 {
   int theight = max(m_fontsize, m_minheight);
@@ -118,13 +117,16 @@ void ConsensusField::drawContents(QPainter * p)
   }
 
   int width = this->width();
-  //QPixmap pix(width, height());
-  //pix.fill(this, 0,0);
 
-  //QPainter p( this);
-  //
+  QColor bgcolor = UIElements::color_tilingoffset;
+  bgcolor = bgcolor.light(150); 
+  
+  p->fillRect(rect(), bgcolor);
+
   p->setRenderHint(QPainter::Antialiasing);
   p->setRenderHint(QPainter::TextAntialiasing); 
+
+
   QPen pen;
   pen.setColor(Qt::black);
   p->setPen(pen);

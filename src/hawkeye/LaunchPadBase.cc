@@ -432,6 +432,8 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
     connect( fileChromatogramPathsAction, SIGNAL( activated() ), this, SLOT( fileChromoPaths() ) );
     // dsommer: added import 
     connect( fileImportAction, SIGNAL( activated() ), this, SLOT( fileImport() ) );
+    connect( new QShortcut(QKeySequence(tr("Ctrl+Q")), this), SIGNAL(activated()),
+             qApp, SLOT(quit()));
 }
 
 /*
