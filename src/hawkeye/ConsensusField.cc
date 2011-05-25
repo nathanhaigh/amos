@@ -111,7 +111,6 @@ void ConsensusField::drawContents(QPainter * p)
 
   if (m_consensus.empty()) 
   { 
-    //QPainter p (this);
     p->drawText(20, theight+theight/2, "No Contig Loaded");
     return;
   }
@@ -125,7 +124,6 @@ void ConsensusField::drawContents(QPainter * p)
 
   p->setRenderHint(QPainter::Antialiasing);
   p->setRenderHint(QPainter::TextAntialiasing); 
-
 
   QPen pen;
   pen.setColor(Qt::black);
@@ -339,10 +337,6 @@ void ConsensusField::drawContents(QPainter * p)
       p->drawPolygon(indicator);
     }
   }
-
-  p->end();
-  //p->begin(this);
-  //p->drawPixmap(0, 0, pix);
 }
 
 void ConsensusField::toggleHighlightDiscrepancy(bool show)
