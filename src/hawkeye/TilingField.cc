@@ -659,8 +659,6 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
       }
     }
   }
-
-  p.end();
   
   emit setTilingVisibleRange(m_datastore->m_contigId, srangeStart, srangeEnd);
 }

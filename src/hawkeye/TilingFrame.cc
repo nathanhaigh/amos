@@ -272,7 +272,7 @@ void TilingFrame::setFontSize(int fontsize )
   loadContigRange(m_gindex);
 
   emit fontSizeChanged(m_fontsize);
-  repaint();
+  update();
 }
 
 void TilingFrame::loadContigRange(int gindex)
