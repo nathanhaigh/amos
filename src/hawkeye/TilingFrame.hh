@@ -61,6 +61,7 @@ signals:
     void toggleQVColoring(bool);
     void toggleShowConsQV(bool);
     void toggleShowUngapped(bool);
+    void togglePackReads(bool);
 
 protected:
     void paintEvent(QPaintEvent *);

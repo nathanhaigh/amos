@@ -43,6 +43,7 @@ public slots:
   void toggleShowConsQV();
   void togglePolymorphismView();
   void toggleUngapped();
+  void togglePackReads();
 
   void bankChanged();
 
@@ -78,6 +79,7 @@ signals:
   void togglePolymorphismView(bool);
   void toggleQVColoring(bool);
   void toggleShowUngapped(bool);
+  void togglePackReads(bool);
   void setFontSize(int);
 
 
@@ -98,6 +100,7 @@ private:
   QLineEdit * m_searchedit;
   QLabel * m_offsetlabel;
 
+  int m_packid;              bool m_packchecked;
   int m_qvid;                bool m_qvchecked;
   int m_cqvid;               bool m_cqvchecked;
   int m_highid;              bool m_highchecked;

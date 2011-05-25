@@ -37,6 +37,7 @@ public slots:
     void toggleShowIndicator(bool show);
     void setHighlightRange(int start, int end);
     void toggleShowUngapped(bool show);
+    void togglePackReads(bool pack);
     void setReadnameWidth(int);
 
 signals:
@@ -63,6 +64,7 @@ private:
     bool m_showIndicator;
     bool m_displayQV;
     bool m_showUngapped;
+    bool m_packreads;
 
     int m_lineheight;
     int m_tilehoffset;

@@ -78,6 +78,11 @@ void ConsensusField::setFontSize(int fontsize)
   m_seqnamehoffset = gutter + framegutter;
   m_basewidth      = m_fontsize + m_basespace;
 
+  if (m_packreads)
+  {
+    m_tilehoffset = 2+framegutter;
+  }
+
   if (m_basewidth <= 0)
   {
     m_basewidth = 1/(-m_basewidth+2);
@@ -133,9 +138,12 @@ void ConsensusField::drawContents(QPainter * p)
   int displaywidth = (int)((width-m_tilehoffset)/m_basewidth);
 
 
-  p->drawText(m_seqnamehoffset, m_consoffset,
-             m_tilehoffset - m_seqnamehoffset, m_lineheight,
-             Qt::AlignLeft | Qt::AlignBottom, "Consensus");
+  if (!m_packreads)
+  {
+    p->drawText(m_seqnamehoffset, m_consoffset,
+               m_tilehoffset - m_seqnamehoffset, m_lineheight,
+               Qt::AlignLeft | Qt::AlignBottom, "Consensus");
+  }
 
   int grangeStart = m_gindex;
   int grangeEnd = min(m_gindex + displaywidth, m_consensus.size()-1);
@@ -348,6 +356,13 @@ void ConsensusField::toggleHighlightDiscrepancy(bool show)
 void ConsensusField::toggleBaseColors(bool show)
 {
   m_basecolors = show;
+  update();
+}
+
+void ConsensusField::togglePackReads(bool pack)
+{
+  m_packreads = pack;
+  setFontSize(m_fontsize);
   update();
 }
 

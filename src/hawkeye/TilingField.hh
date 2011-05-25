@@ -39,6 +39,7 @@ public slots:
     void toggleShowFullRange(bool);
     void toggleSNPColoring(bool);
     void toggleQVColoring(bool);
+    void togglePackReads(bool);
     void singleClick();
     void setReadnameWidth(int);
     int  getReadnameWidth();
@@ -82,6 +83,7 @@ private:
     bool m_lowquallower;
     bool m_basecolors;
     bool m_fullseq;
+    bool m_packreads;
 
     bool m_doubleclick;
 };

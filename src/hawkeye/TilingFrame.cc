@@ -104,9 +104,8 @@ TilingFrame::TilingFrame(DataStore * datastore,
   connect(m_tilingfield, SIGNAL(highlightRead(int)),
           this,          SIGNAL(highlightRead(int)));
 
-
-  connect(this,        SIGNAL(fontSizeChanged(int)),
-          m_consfield, SLOT(setFontSize(int)));
+  connect(this,          SIGNAL(fontSizeChanged(int)),
+          m_consfield,   SLOT(setFontSize(int)));
 
   connect(m_tilingfield, SIGNAL(setTilingVisibleRange(int, int, int)),
           this,          SIGNAL(setTilingVisibleRange(int, int, int)));
@@ -114,16 +113,22 @@ TilingFrame::TilingFrame(DataStore * datastore,
   connect(m_consfield,   SIGNAL(sortColumns(int)),
           this,          SLOT(sortColumns(int)));
 
+  connect(this,          SIGNAL(togglePackReads(bool)),
+          m_tilingfield, SLOT(togglePackReads(bool)));
+
+  connect(this,          SIGNAL(togglePackReads(bool)),
+          m_consfield,   SLOT(togglePackReads(bool)));
+
   connect(this,          SIGNAL(toggleShowUngapped(bool)),
           m_consfield,   SLOT(toggleShowUngapped(bool)));
 
-  connect(this,        SIGNAL(toggleDisplayQV(bool)),
+  connect(this,          SIGNAL(toggleDisplayQV(bool)),
           m_tilingfield, SLOT(toggleDisplayQV(bool)));
 
-  connect(this,        SIGNAL(togglePolymorphismView(bool)),
+  connect(this,          SIGNAL(togglePolymorphismView(bool)),
           m_tilingfield, SLOT(togglePolymorphismView(bool)));
 
-  connect(this,        SIGNAL(toggleQVColoring(bool)),
+  connect(this,          SIGNAL(toggleQVColoring(bool)),
           m_tilingfield, SLOT(toggleQVColoring(bool)));
 
   connect(this,        SIGNAL(toggleLowQualityLowerCase(bool)),

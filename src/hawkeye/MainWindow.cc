@@ -29,7 +29,7 @@ using namespace std;
 
 MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name )
            : Q3MainWindow( NULL, name ),
-             m_datastore(datastore), m_parent(parent)
+             m_parent(parent), m_datastore(datastore)
 {
   setCaption("Hawkeye : Contig View");
   m_gindex = 0;
@@ -66,6 +66,7 @@ MainWindow::MainWindow(DataStore * datastore, QWidget *parent, const char *name 
 
   m_options = new Q3PopupMenu(this);
   menuBar()->insertItem("&Options", m_options);
+  m_packid         = m_options->insertItem("Pac&k Reads",              this, SLOT(togglePackReads())); m_packchecked = false;
   m_namewidthid    = m_options->insertItem("Set Readname &Width",      this, SLOT(setReadnameWidth()));
   m_basecolorid    = m_options->insertItem("Color &Bases",             this, SLOT(toggleBaseColors())); m_basecolorchecked = false;
   m_showfullid     = m_options->insertItem("Show &Full Range",         this, SLOT(toggleShowFullRange())); m_showfullchecked = false;
@@ -258,6 +259,9 @@ void MainWindow::initializeTiling(TilingFrame * tiling, bool isReference)
   connect(this,      SIGNAL(toggleBaseColors(bool)),
           tiling,    SIGNAL(toggleBaseColors(bool)));
 
+  connect(this,      SIGNAL(togglePackReads(bool)),
+          tiling,    SIGNAL(togglePackReads(bool)));
+
   connect(this,      SIGNAL(toggleSNPColoring(bool)),
           tiling,    SIGNAL(toggleSNPColoring(bool)));
 
@@ -306,6 +310,14 @@ void MainWindow::setGindexRange(int a, int b)
   m_slider->setRange(a,b);
 }
 
+void MainWindow::togglePackReads()
+{
+  m_packchecked = !m_packchecked;
+  m_options->setItemChecked(m_packid, m_packchecked);
+
+  emit togglePackReads(m_packchecked);
+}
+
 void MainWindow::toggleShowFullRange()
 {
   m_showfullchecked = !m_showfullchecked;
@@ -313,8 +325,6 @@ void MainWindow::toggleShowFullRange()
 
   emit toggleShowFullRange(m_showfullchecked);
 }
-
-
 
 void MainWindow::toggleDisplayQV()
 {

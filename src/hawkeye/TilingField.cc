@@ -67,6 +67,7 @@ TilingField::TilingField(DataStore * datastore,
   m_polymorphismView = false;
   m_qvcoloring = false;
   m_doubleclick = false;
+  m_packreads = false;
 
   m_clickTimer = new QTimer(this, 0);
   connect (m_clickTimer, SIGNAL(timeout()),
@@ -189,6 +190,10 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   int rchoffset      = theight*m_readnamewidth;
   double basewidth   = m_fontsize+basespace;
 
+  if (m_packreads) { tilehoffset = 2; }
+
+  int  packgutter = m_readnamewidth; // separate reads on same row by this much
+
   if (basewidth <= 0)
   {
     basewidth = 1/((-basewidth+2));
@@ -211,6 +216,11 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   int ldcov = 0;
   int clen = m_consensus.size();
 
+  vector<int> rows;
+
+  int rowheight = lineheight;
+  if (m_displayqv) rowheight += lineheight;
+
   for (ri =  m_renderedSeqs.begin();
        ri != m_renderedSeqs.end(); 
        ri++)
@@ -228,21 +238,52 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
 
     if (hasOverlap || m_stabletiling)
     {
-      ri->m_displaystart = ldcov;
 
-      int readheight = lineheight; // seqname
-      if (m_displayqv)        { readheight += lineheight; }
-      if (ri->m_displayTrace) { readheight += m_tracespace; }
+      if (m_packreads)
+      {
+        int r;
 
-      dcov++;
-      ldcov += readheight;
-      ri->m_displayend = ldcov;
+        for (r = 0; r < (int) rows.size(); r++)
+        {
+          if (ri->m_loffset > rows[r])
+          {
+            break;
+          }
+        }
+
+        if (r >= (int) rows.size())
+        {
+          rows.push_back(0);
+        }
+
+        rows[r] = ri->m_loffset+ri->gappedLen()+packgutter;
+
+        ri->m_displaystart = r*rowheight;
+        ri->m_displayend   = (r+1)*rowheight;
+      }
+      else
+      {
+        ri->m_displaystart = ldcov;
+
+        int readheight = lineheight; // seqname
+        if (m_displayqv)        { readheight += lineheight; }
+        if (ri->m_displayTrace) { readheight += m_tracespace; }
+
+        dcov++;
+        ldcov += readheight;
+        ri->m_displayend = ldcov;
+      }
     }
     else
     {
       ri->m_displaystart = -1;
       ri->m_displayend = -1;
     }
+  }
+
+  if (m_packreads)
+  {
+    ldcov = rows.size() * lineheight;
   }
 
   // +1 takes care of 0dcov regions
@@ -280,6 +321,23 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
   cerr << "Draw top: " << drawtop << " bottom: " << drawbottom << endl;
   #endif
 
+  if (m_packreads)
+  {
+    for (int r = 0; r < rows.size(); r++)
+    {
+      QColor bgcolor = UIElements::color_tilingoffset;
+    
+      // background rectangle
+      if (r % 2) { bgcolor = bgcolor.light(175); }
+      else          { bgcolor = bgcolor.light(150); }
+
+      p.setPen(bgcolor);
+      p.setBrush(bgcolor);
+
+      p.drawRect(0, r*lineheight, m_width, lineheight);
+    }
+  }
+
   dcov = 0;
 
   for (ri =  m_renderedSeqs.begin();
@@ -316,61 +374,64 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
         continue;
       }
 
-      QColor bgcolor;
-      if (m_snpcoloring)
+      if (!m_packreads)
       {
-        bgcolor = UIElements::getSNPColoring(ri->bgcolor);
-      }
-      else
-      {
-        bgcolor = UIElements::color_tilingoffset;
-      }
-    
-      // background rectangle
-      if (dcov % 2) { bgcolor = bgcolor.light(175); }
-      else          { bgcolor = bgcolor.light(150); }
+        QColor bgcolor;
+        if (m_snpcoloring)
+        {
+          bgcolor = UIElements::getSNPColoring(ri->bgcolor);
+        }
+        else
+        {
+          bgcolor = UIElements::color_tilingoffset;
+        }
+      
+        // background rectangle
+        if (dcov % 2) { bgcolor = bgcolor.light(175); }
+        else          { bgcolor = bgcolor.light(150); }
 
-      p.setPen(bgcolor);
-      p.setBrush(bgcolor);
+        p.setPen(bgcolor);
+        p.setBrush(bgcolor);
 
-      p.drawRect(0, ldcov, m_width, readheight);
+        p.drawRect(0, ldcov, m_width, readheight);
 
-      // black pen
-      p.setPen(QPen(Qt::black));
-      p.setBrush(QBrush(Qt::black));
-      p.setFont(QFont("Helvetica", theight));
+        // black pen
+        p.setPen(QPen(Qt::black));
+        p.setBrush(QBrush(Qt::black));
+        p.setFont(QFont("Helvetica", theight));
 
-      // RC Flag
-      if (ri->m_rc)
-      {
-        rcflag[0]=QPoint(rchoffset+tridim, ldcov+trioffset);
-        rcflag[1]=QPoint(rchoffset+tridim, ldcov+trioffset+tridim);
-        rcflag[2]=QPoint(rchoffset,        ldcov+trioffset+tridim/2);
-      }
-      else
-      {
-        rcflag[0]=QPoint(rchoffset,        ldcov+trioffset);
-        rcflag[1]=QPoint(rchoffset,        ldcov+trioffset+tridim);
-        rcflag[2]=QPoint(rchoffset+tridim, ldcov+trioffset+tridim/2);
-      }
+        // RC Flag
+        if (ri->m_rc)
+        {
+          rcflag[0]=QPoint(rchoffset+tridim, ldcov+trioffset);
+          rcflag[1]=QPoint(rchoffset+tridim, ldcov+trioffset+tridim);
+          rcflag[2]=QPoint(rchoffset,        ldcov+trioffset+tridim/2);
+        }
+        else
+        {
+          rcflag[0]=QPoint(rchoffset,        ldcov+trioffset);
+          rcflag[1]=QPoint(rchoffset,        ldcov+trioffset+tridim);
+          rcflag[2]=QPoint(rchoffset+tridim, ldcov+trioffset+tridim/2);
+        }
 
-      p.drawPolygon(rcflag);
+        p.drawPolygon(rcflag);
 
-      // Seqname
-      int PrintIID = 0;
-      if (PrintIID)
-      {
-        p.drawText(seqnamehoffset, ldcov,
-                   rchoffset-seqnamehoffset, lineheight-2,
-                   Qt::AlignLeft | Qt::AlignBottom, 
-                   QString::number(ri->m_read.getIID()));
-      }
-      else
-      {
-        p.drawText(seqnamehoffset, ldcov,
-                   rchoffset-seqnamehoffset, lineheight-2,
-                   Qt::AlignLeft | Qt::AlignBottom, 
-                   QString(ri->m_read.getEID().c_str()));
+        // Seqname
+        int PrintIID = 0;
+        if (PrintIID)
+        {
+          p.drawText(seqnamehoffset, ldcov,
+                     rchoffset-seqnamehoffset, lineheight-2,
+                     Qt::AlignLeft | Qt::AlignBottom, 
+                     QString::number(ri->m_read.getIID()));
+        }
+        else
+        {
+          p.drawText(seqnamehoffset, ldcov,
+                     rchoffset-seqnamehoffset, lineheight-2,
+                     Qt::AlignLeft | Qt::AlignBottom, 
+                     QString(ri->m_read.getEID().c_str()));
+        }
       }
 
       if (hasOverlap)
@@ -668,6 +729,12 @@ void TilingField::setSize(int width, int height)
 {
   m_width = width;
   m_height = height;
+}
+
+void TilingField::togglePackReads(bool pack)
+{
+  m_packreads = pack;
+  update();
 }
 
 void TilingField::toggleHighlightDiscrepancy(bool show)
