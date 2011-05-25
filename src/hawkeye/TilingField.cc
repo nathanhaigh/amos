@@ -258,7 +258,6 @@ void TilingField::paintEvent( QPaintEvent * paintevent )
     //cerr << "Resize: " << m_width << "x" << height << endl;
     resize(m_width, height);
     update();
-    return;
   }
 
   int drawtop = paintevent->rect().top();
