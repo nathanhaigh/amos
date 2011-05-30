@@ -121,8 +121,8 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 80: $(BINDIR)/bank-report -b $(BANK) > $(AMOS_OUT)
 
 ## Exporting contigs to a FASTA and QUAL file
-#...using IIDs (EIDs are undefined for contigs)
-90: if [ $(FASTA_EXP) -eq 1 ]; then $(BINDIR)/bank2fasta -b $(BANK) -iid -q $(QUAL_OUT) > $(FASTA_OUT); fi
+#...using IIDs (EIDs are undefined for contigs) and contig details (num reads, coverage) on fasta header line
+90: if [ $(FASTA_EXP) -eq 1 ]; then $(BINDIR)/bank2fasta -b $(BANK) -iid -q $(QUAL_OUT) -d > $(FASTA_OUT); fi
 ## Listing singletons IDs
 91: if [ $(FASTA_EXP) -eq 1 ]; then $(BINDIR)/listReadPlacedStatus -S -I $(BANK) > $(SINGLE_LST); fi
 ## Exporting singletons to the FASTA file
