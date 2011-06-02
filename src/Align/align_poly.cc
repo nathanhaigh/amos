@@ -266,7 +266,6 @@ void  Vote_t :: Incr_After
 
 void  Vote_t :: Incr_Blank
     (void)
-
 //  Add 1 to the blank entry in the  here  counts of this  Vote_t .
 
   {
@@ -1844,7 +1843,7 @@ void  Multi_Alignment_t :: Reset_From_Votes
       int  lo, hi;
 
       len = strlen (s [i]);
-      error_limit = Binomial_Cutoff (len, error_rate, 1e-6);
+      error_limit = Binomial_Cutoff (len, error_rate, BIN_CUTOFF_PROB);
 
       // need to adjust b_lo here because of indels ****
 
@@ -2024,7 +2023,8 @@ void  Multi_Alignment_t :: Set_Initial_Consensus
          hi = Min (cons_len - min_overlap, curr_offset + wiggle);
          exp_olap_len = Min (cons_len - lo, len);
 
-         error_limit = Binomial_Cutoff (exp_olap_len, erate, 1e-6);
+         error_limit = Binomial_Cutoff (exp_olap_len, erate, BIN_CUTOFF_PROB);
+         // Add the current read to the consensus if there is an overlap
          matched = Overlap_Match_VS (s [i], len, cons, cons_len, lo, hi,
                         0, error_limit, ali);
          matched = matched && ali . Error_Rate () <= erate;
@@ -4075,7 +4075,8 @@ void Gapped_Multi_Alignment_t :: Make_AMOS_Contig
   int n = align . size ();
 
   vector <Tile_t> tiles;
-  for (int i = 0; i < n; i ++){
+  for (int i = 0; i < n; i ++)
+  {
     AMOS :: Tile_t tile;
     tile . source = strtol(tag [i], NULL, 10);
     if (tile.source == 0){
@@ -5391,7 +5392,7 @@ void  Multi_Align
      {
       ma . Reset_From_Votes (s, offset_delta, error_rate, vote, changed);
       ct ++;
-     }  while  (ct < 3 && changed);
+     }  while  (ct < MAX_REFINEMENTS && changed);
 
    if  (Verbose > 3)
        ma . Print_Alignments_To_Consensus (stderr, s);
