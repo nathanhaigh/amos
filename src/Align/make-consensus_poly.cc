@@ -1,11 +1,12 @@
 //  A. L. Delcher
 //
-//  File:  make-consensus.cc
+//  File:  make-consensus_poly.cc
 //
 //  Last Modified:  12 April 2004
 //
 //  Read layout information for reads in unitigs/contigs and create
-//  multialignments and/or consensus sequences for them.
+//  multialignments and/or consensus sequences for them. The alphabet
+//  supported (acgtmrwsykvhdbn) includes all ambiguities
 
 
 #include  "foundation_AMOS.hh"
@@ -1209,7 +1210,8 @@ static void  Usage
            ".DESCRIPTION.\n"
            "  Read layout information from <tig-file> describing positions\n"
            "  of reads, and create multialignments and/or consensus sequences\n"
-           "  for them.  Read sequences are obtained from <bank-name>\n"
+           "  for them.  Read sequences are obtained from <bank-name>. The\n"
+           "  alphabet supported (acgtmrwsykvhdbn) includes all ambiguities\n"
            "\n"
            ".OPTIONS.\n"
            "  -a       Output alignments instead of consensus messages\n"

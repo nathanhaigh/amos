@@ -1,9 +1,10 @@
 //
-//  File:  align.cc
+//  File:  align_poly.cc
 //
 //  Last Modified:  25 November 2002
 //
-//  Routines to do string alignments
+//  Routines to do string alignments.
+//  The alphabet supported (acgtmrwsykvhdbn) includes all ambiguities.
 
 
 #include  "align_poly.hh"

@@ -1,9 +1,10 @@
 //
-//  File:  align.h
+//  File:  align_poly.hh
 //
 //  Last Modified:  25 November 2002
 //
-//  Routines to do string alignments
+//  Routines to do string alignments.
+//  The alphabet supported (acgtmrwsykvhdbn) includes all ambiguities.
 
 
 #ifndef  __ALIGN_H_INCLUDED
