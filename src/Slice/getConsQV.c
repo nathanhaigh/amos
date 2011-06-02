@@ -18,11 +18,17 @@
 
 #include "Slice.h"
 
-//! Quality assigned to a gap when it it input as having 0 quality
+//! Quality assigned to a gap when it is input as having 0 quality
 #define GAP_QUALITY_VALUE 20
 
 //! Quality value to assign to gap in an empty slice
 #define GAP_QUALITY_VALUE_EMPTY_SLICE 1
+
+//! Quality assigned to an ambiguity during input
+#define AMBIGUITY_QUALITY_VALUE_IN 20
+
+//! Quality value to assign to an ambiguity during output
+#define AMBIGUITY_QUALITY_VALUE_OUT 1
 
 //! The default distribution of bases for distributing qv probabilities
 libSlice_BaseDistribution standardDistribution = {.20, .20, .20, .20, .20};
@@ -203,7 +209,7 @@ inline void distributeQV(int qv,
 //! Calculates ambiguity flags from Churchill and Waterman procedure
 /*! The procedure has been modified to take as a parameter the maximum number
  *  of bases that can be represented by the ambiguity code. This way if only
- *  A's and C's were seen in the read a baseCount of 2 can be pased and
+ *  A's and C's were seen in the read a baseCount of 2 can be passed and
  *  the ambiguity code will only be one of A,C, or (A || C) = M even if the 
  *  QV of M does not reach the quality threshold. Set this value to 5
  *  to be compatible with the Churchill and Waterman procedure.
@@ -282,7 +288,7 @@ char libSlice_calculateAmbiguityFlags(long double cpA,
       // a probability close to 0 to one close to 1, and it takes more bits to
       // represent a number close to 1.
       //
-      // Fortunately, at that level, the consensus should not be ambigious
+      // Fortunately, at that level, the consensus should not be ambiguous
       
       //fprintf(stdout, "floating point underflow detected in calcAmbFlags\n");
       break;
@@ -397,49 +403,77 @@ void libSlice_setRecallEmpty(int recallEmpty)
 
 //! Lightweight calculation of consensus base and its quality value
 /*! Calculate consensus base and its quality value using simple heuristics
- *  Similar to libSlice_getConsensusParam
+ *  similar to libSlice_getConsensusParam. Ambiguities in the input reads AND
+ *  in the output consensus are processed. However, to simplify, all types of
+ *  ambiguities are treated as an 'N'
  *
  *  @param qvSum Sum of quality values for each character ACGT-, resp.
- *  @param consensus Set to consensus character
+ *  @param nof_ambiguities Number of ambiguous residues in the slice
+ *  @param consensus Set to consensus character (A,C,G,T,N,or-)
  *  @param cns_qv Set to quality value of consensus
  *  @return errorCode 0 on success.
  */
 int libSlice_ConsensusLight (const unsigned qvSum [5],
+                             int nof_ambiguities,
                              char * consensus,
                              unsigned * cns_qv)
 {
-  const char * ALPHABET = "ACGT-";
-  unsigned  qv [5] = {0};
-  int baseCount = 0;     // number of bases seen in read
+  const char * ALPHABET = "ACGT-"; // N is used too
+  unsigned  qv [5] = {0};          // sum of quality scores for ACGT- resp.
+  int baseCount = 0;               // number of bases seen in read
+  int identical_qvs = 0;           // bases (ACGT) present in the slice all have same qv?
   unsigned  alt_qv, max_qv = 0, max2_qv = 0, qv_total = 0;
   int retval = 0;
   int  i, mx_i;
 
   for (i = 0; i < 5; i ++)
-    if (0 < qvSum [i])
-      {
-        qv [i] = qvSum [i];   // copy in case need to change below
-        qv_total += qv [i];
-        baseCount ++;
-        if (max_qv < qv [i])
-          {
-            max_qv = qv [i];
-            mx_i = i;
-          }
-      }
+    {
+      qv [i] = qvSum [i]; // copy original array
+      if (i < 4)
+        {
+          // N counts as A+C+G+T
+          qv [i] += nof_ambiguities * AMBIGUITY_QUALITY_VALUE_IN;
+        }
+      if (qv [i] > 0)
+        {
+          qv_total += qv [i];
+          baseCount ++;
+          if (max_qv < qv [i])
+            {
+              max_qv = qv [i];
+              mx_i = i;
+              identical_qvs = 0;
+            }
+          else if (max_qv == qv [i] && i > 0 && i < 4 )
+            {
+              identical_qvs = 1; 
+            }
+        }
+    }
 
+  // Determine consensus base
   if (qv_total == 0)
     {
-      // An empty slice is a gap (by definition)
-
+      // An empty slice is a gap
       max_qv = qv_total = qv [4] = GAP_QUALITY_VALUE_EMPTY_SLICE;
       baseCount = 1;
       mx_i = 4;
+      (* consensus) = ALPHABET [mx_i];
+    }
+  else if (identical_qvs)
+    {
+      // Equal quality values is some sort of ambiguity (N to simplify)
+      max_qv = qv_total = AMBIGUITY_QUALITY_VALUE_OUT;
+      baseCount = 1;
+      (* consensus) = 'n';
+    }
+  else
+    {
+      // Consensus base is the one with the highest quality value
+      (* consensus) = ALPHABET [mx_i];
     }
 
-  // consensus base is the one with the highest quality value
-  (* consensus) = ALPHABET [mx_i];
-
+  // Calculate consensus quality value
   if (baseCount == 1)
     ;  // nothing to do; max_qv has correct value
   else if (baseCount == 2)
@@ -495,6 +529,7 @@ int libSlice_ConsensusLight (const unsigned qvSum [5],
 }
 
 
+
 //! Calculates the consensus quality value for a single slice
 /*! Calculates the consensus and consensus quality values for a slice using
  *  Bayes formula and the procedure from Churchill, G.A. and Waterman, M.S. 
@@ -510,7 +545,7 @@ int libSlice_ConsensusLight (const unsigned qvSum [5],
  *  @param result Pointer for storing results.
  *  @param dist Table of distribution of the bases.
  *  @param highQualityThreshold Threshold for ambiguity codes.
- *  @param doAmbiguity Flag to calculte ambiguity codes.
+ *  @param doAmbiguity Flag to calculate ambiguity codes.
  *  @return errorCode 0 on sucess.
  */
 int libSlice_getConsensusParam(const libSlice_Slice *s, 
@@ -520,7 +555,7 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
                                int doAmbiguity) 
 {
   int retval = 0;
-    
+
   // quality value multiplicities
   unsigned int qvMultA   = 0; 
   unsigned int qvMultC   = 0;
@@ -624,8 +659,7 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
             case 'C': qvMultC += s->qv[j]; break;
             case 'G': qvMultG += s->qv[j]; break;
             case 'T': qvMultT += s->qv[j]; break;
-
-            case '-': 
+            case '-':
               // If the gap has a qv use that, otherwise use the default
               qvMultGap += s->qv[j] ? s->qv[j] : GAP_QUALITY_VALUE;
               break;
@@ -639,9 +673,9 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
   else
     {
       // An empty slice is a gap (by definition)
-
       qvMultGap = GAP_QUALITY_VALUE_EMPTY_SLICE;
     }
+
 
   if (qvMultA)   baseCount++;
   if (qvMultC)   baseCount++;
@@ -896,11 +930,11 @@ int libSlice_getConsensusParam(const libSlice_Slice *s,
 
   (result)->qvConsensus = cqv;
 
-  // This finds all ambiguity flags
   (result)->ambiguityFlags = 
     libSlice_calculateAmbiguityFlags(cpA, cpC, cpG, cpT, cpGap,
                                      highQualityThreshold,
                                      baseCount);
+
   if (doAmbiguity)
     {
       consensus = libSlice_convertAmbiguityFlags((result)->ambiguityFlags);

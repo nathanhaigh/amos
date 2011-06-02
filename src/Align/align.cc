@@ -1937,12 +1937,14 @@ void  Multi_Alignment_t :: Print_Alignments_To_Consensus
    con = consensus . c_str ();
 
    fprintf (fp, "\nConsensus len = %d\n", consensus . length ());
+
    for  (i = 0;  i < n;  i ++)
      {
       fprintf (fp, "\nString #%d:\n", i);
 
       align [i] . Print (fp, s [i], con);
      }
+
 
    return;
   }
@@ -3861,26 +3863,20 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
 
 //  Reset the consensus base values using the libSlice package
 //  and assign the corresponding quality for each one in the
-//  con_qual string.  Strings in alignment are in  s  and their
-//  quality values are in  q .
+//  con_qual string. All ambiguous read bases or consensus base
+//  are handled as an N. Strings in alignment are in  s  and
+// their quality values are in  q .
 
   {
-#define  USE_FULL_CONSENSUS  0
-   vector <Gapped_MA_Bead_t>  active_bead;
-   string  seq_column, qual_column;
-#if  USE_FULL_CONSENSUS
-   libSlice_Consensus  cns;
-   static libSlice_Slice  sl;
-   static int  max_len = 0;
-#else
+
    unsigned int  qvsum [5];
    unsigned int  cns_qv;
    char  cns_ch;
-#endif
+   vector <Gapped_MA_Bead_t>  active_bead;
+   string  seq_column, qual_column;
    int  col_len;
    int  len, next;
    int  i, j, n;
-
 
    len = consensus . length ();
    con_qual . resize (len);
@@ -3897,18 +3893,11 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
           }
        }
 
-#if  USE_FULL_CONSENSUS
-   if  (max_len == 0)
-       {
-        max_len = 200;
-        sl . rc = (char *) Safe_malloc (max_len, __FILE__, __LINE__);
-        memset (sl . rc, 0, max_len);
-       }
-#endif
-
+   // Take a slice at each sequence position and find its consensus
    next = 0;
    for  (i = 0;  i < len;  i ++)
      {
+
       Gapped_MA_Bead_t  b;
       vector <Gapped_MA_Bead_t> :: iterator  bp;
 
@@ -3941,35 +3930,17 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
          b . qual_ch = q [next] [b . a_pos];
          b . active = true;
          active_bead . push_back (b);
-
          seq_column . push_back (b . seq_ch);
          qual_column . push_back (b . qual_ch - MIN_QUALITY);
-
          next ++;
         }
 
-      col_len = seq_column . length ();
-
-#if  USE_FULL_CONSENSUS
-      sl . bc = (char *) seq_column . c_str ();
-      sl . qv = (char *) qual_column . c_str ();
-      if  (col_len >= max_len)
-        {
-          max_len = Max (2 * max_len, col_len + 1);
-          sl . rc = (char *) Safe_realloc (sl . rc, max_len);
-          memset (sl . rc, 0, max_len);
-        }
-      sl . dcov = col_len;
-
-      libSlice_getConsensus (& sl, & cns, NULL, 0);
-
-      consensus [i] = cns . consensus;
-      con_qual [i] = MIN_QUALITY
-        + Min (cns . qvConsensus, unsigned (MAX_QUALITY_CHAR));
-#else
-      for (j = 0; j < 5; j ++)
+      // Array of sum of quality scores in the slice for A,C,G,T,- resp.
+      for (j = 0; j < 6; j ++)
         qvsum [j] = 0;
 
+      int nof_ambiguities = 0;
+      col_len = seq_column . length ();
       for (j = 0; j < col_len; j ++)
         switch (tolower (seq_column [j]))
           {
@@ -3988,14 +3959,17 @@ void  Gapped_Multi_Alignment_t :: Set_Consensus_And_Qual
           case '-' :
             qvsum [4] += qual_column [j];
             break;
-            // ignore n's
+          default:
+            // All other bases are considered an 'N'
+            nof_ambiguities += 1;
+            break;
           }
 
-      libSlice_ConsensusLight (qvsum, & cns_ch, & cns_qv);
+      libSlice_ConsensusLight (qvsum, nof_ambiguities, & cns_ch, & cns_qv);
+
       consensus [i] = cns_ch;
       con_qual [i] = MIN_QUALITY + Min (cns_qv, unsigned (MAX_QUALITY_CHAR));
-#endif
-      
+
       if  (Verbose > 3)
           {
            printf ("%6d:  ", i);

@@ -9,7 +9,7 @@
  *  @brief Defines interface for libSlice.
  *
  *  Library of functions for determining quality values and classes on slices.
- *  Include this file to use all publically available methods and data 
+ *  Include this file to use all publicly available methods and data 
  *  structures.
  */
 
@@ -49,7 +49,7 @@ struct libSlice_Slice
   //! Null terminated list of quality values in [0..99] 
   char * qv;  
 
-  //! Null terminated list of reverse compliments in {0,1} 
+  //! Null terminated list of reverse complements in {0,1} 
   char * rc;  
 
   //! Existing consensus
@@ -133,6 +133,7 @@ void libSlice_setRecallEmpty(int recallEmpty);
 
 // Calculate consensus base and quality values faster
 int libSlice_ConsensusLight (const unsigned qvSum [5],
+                             int nof_ambiguities,                           
                              char * consensus,
                              unsigned * cns_qv);
 
@@ -194,10 +195,10 @@ int libSlice_getConsensusRange(const libSlice_Slice s[],
 
 // Calculates the consensus of an array of slice with ambiguity codes
 int libSlice_getConsensusRangeWithAmbiguity(const libSlice_Slice s[],
-                                         libSlice_Consensus results[], 
-                                         int len,  
-                                         const libSlice_BaseDistribution * dist,
-                                         int highQualityThreshold);
+                                            libSlice_Consensus results[], 
+                                            int len,  
+                                            const libSlice_BaseDistribution * dist,
+                                            int highQualityThreshold);
 
 //@}
 
@@ -251,7 +252,7 @@ char libSlice_convertAmbiguityFlags(char ambiguityFlags);
  */
 //@{
 
-// Get the compliment of a base or ambiguity code
+// Get the complement of a base or ambiguity code
 char libSlice_getCompliment(char base);
 
 // Get a version string

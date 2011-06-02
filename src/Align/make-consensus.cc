@@ -321,7 +321,6 @@ int main (int argc, char *argv[])
         msg.setAccession (cid);
         msg.setIMPs (frg_id_list, pos_list);
 
-        // cerr << "got this far " << cid << endl;
         try
         {
           Multi_Align
