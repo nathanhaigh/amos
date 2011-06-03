@@ -26,8 +26,14 @@
 #include  <unistd.h>
 
 
+#ifndef TRUE
 #define  TRUE  1
+#endif
+
+#ifndef FALSE
 #define  FALSE  0
+#endif 
+
 #ifndef  EXIT_FAILURE
   #define  EXIT_FAILURE  -1
 #endif
