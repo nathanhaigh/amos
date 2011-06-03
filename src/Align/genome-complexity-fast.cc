@@ -33,6 +33,13 @@ const char * bintoascii = "ACGT";
 int OPT_DisplaySeq = 0;
 int OPT_DisplayStarts = 0;
 int OPT_SeqToDisplay = 8;
+int OPT_DisplayStats = 0;
+int OPT_JustCompress = 0;
+
+bool SortLens(const int & a, const int & b)
+{
+  return b < a;
+}
 
 //  Return the binary equivalent of  ch .
 static unsigned  Char_To_Binary (char ch)
@@ -642,20 +649,57 @@ public:
     return mers_m.size();
   }
 
+
   void printStats()
   {
     int numNodes = nodes_m.size();
     int numEdges = 0;
+
+    long totalspan = 0;
+
+    vector<int> lengths;
+
+    long max = 0;
 
     for (NodeTable_t::iterator ni = nodes_m.begin();
          ni != nodes_m.end();
          ni++)
     {
       numEdges += (*ni)->successor_m.size();
+
+      long l = (*ni)->len();
+
+      totalspan += l;
+      lengths.push_back(l);
+
+      if (l > max) { max = l; }
     }
 
-    cerr << "n=" << numNodes << " m=" << numEdges << endl;
+    sort(lengths.begin(), lengths.end(), SortLens);
 
+    long target = totalspan/2;
+    long sum = 0;
+    int n50cnt = 0;
+
+    for (int i = 0; i < lengths.size(); i++)
+    {
+      sum += lengths[i];
+
+      if (sum >= target)
+      {
+        n50cnt = i;
+        break;
+      }
+    }
+
+    cerr << "n="          << numNodes 
+         << " m="         << numEdges 
+         << " totalspan=" << totalspan
+         << " max="       << max
+         << " mean="      << ((double) totalspan)/ ((double) numNodes)
+         << " n50="       << lengths[n50cnt]
+         << " n50cnt="    << n50cnt
+         << endl;
   }
 
   // Print graph in DOT format
@@ -932,23 +976,25 @@ void ComputeComplexity(const string & tag, const string & seq)
 
   graph.construct();
   cerr << graph.nodeCount() << " nodes.  " << timegraph.str(true, 8) << endl;
-
   graph.convertToNodes();
   graph.printStats();
 
   EventTime_t timecompress;
   graph.compressPaths();
   cerr << graph.nodeCount() << " nodes compressed.  " << timecompress.str(true, 8) << endl;
+  graph.printStats();
 
   // Just do the compression
-  bool JUST_COMPRESS = 1;
-  if (JUST_COMPRESS)
+  if (OPT_JustCompress)
   {
-    graph.print();
+    if (!OPT_DisplayStats)
+    {
+      graph.print();
+    }
+
     return;
   }
 
-  graph.printStats();
 
   EventTime_t timetree;
   graph.compressTrees();
@@ -975,9 +1021,11 @@ void ComputeComplexity(const string & tag, const string & seq)
   graph.convertNonDecisionToEdges();
 
   cerr << "Total time: " << timeall.str(true, 8) << endl;
-
-
-  graph.print();
+  
+  if (!OPT_DisplayStats)
+  {
+    graph.print();
+  }
 
   return;
 }
@@ -994,7 +1042,7 @@ int main(int argc, char ** argv)
   try
   {
     // Get standard options to work (--help, --version)
-    string version = "Version 1.0";
+    string version = "Version 1.1";
     string helptext = 
 "Compute the complexity of a genome\n"
 "\n"
@@ -1006,6 +1054,7 @@ int main(int argc, char ** argv)
 "   -p         Display the start positions and length of each sequence\n"
 "   -d         Display the sequences for edge node\n"
 "   -D <len>   Only show first and last 4 bp for sequences longer than <len>\n"
+"   -S         Just Compute graph statistics\n";
 "\n";
 
     string fastafile;
@@ -1018,6 +1067,8 @@ int main(int argc, char ** argv)
     tf->getOptions()->addOptionResult("d",   &OPT_DisplaySeq);
     tf->getOptions()->addOptionResult("p",   &OPT_DisplayStarts);
     tf->getOptions()->addOptionResult("D=i", &OPT_SeqToDisplay);
+    tf->getOptions()->addOptionResult("c",   &OPT_JustCompress);
+    tf->getOptions()->addOptionResult("S",   &OPT_DisplayStats);
     tf->handleStandardOptions();
 
     if (fastafile.empty())
@@ -1049,15 +1100,18 @@ int main(int argc, char ** argv)
     // Use Art's fasta reader
     while  (Fasta_Read (fp, s, tag))
     {
+      cout << tag << endl;
+
       if (isCircular)
       {
         // Add the first kmer_len-1 characters to end to create circularity
         s += s.substr(0, Kmer_Len-1);
-
       }
 
       // Compute the complexity for each sequence in the fasta file
       ComputeComplexity(tag, s);
+
+      cout << endl << endl;
     }
   }
   catch (Exception_t & e)
