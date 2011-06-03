@@ -1,6 +1,7 @@
 #include "ChromoField.hh"
 #include "RenderSeq.hh"
 #include <qpainter.h>
+#include <qpainterpath.h>
 #include <qpen.h>
 //Added by qt3to4:
 #include <QPaintEvent>
