@@ -13,8 +13,8 @@
 #include <boost/graph/graphviz.hpp>
 #endif //AMOS_HAVE_BOOST
 
-#include "datatypes_AMOS.hh"
 #include "Contig_AMOS.hh"
+#include "datatypes_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
 #include <set>

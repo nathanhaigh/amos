@@ -1,7 +1,7 @@
 ##-- AMOS CONFIGURE --##
 
 # initialize
-AC_PREREQ(2.59)
+AC_PREREQ([2.67])
 AC_INIT([AMOS Assembler],[3.0.0],[amos-help@lists.sourceforge.net],[amos])
 AC_PREFIX_DEFAULT([`pwd`])
 AC_CONFIG_SRCDIR([src/AMOS/foundation_AMOS.hh])

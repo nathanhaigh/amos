@@ -22,14 +22,14 @@ dist_bin_SCRIPTS = \
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/Common \
-	-I$(top_srcdir)/src/AMOS \
-	-I$(top_builddir)/src/GNU \
+	-I$(abs_top_srcdir)/src/Common \
+	-I$(abs_top_srcdir)/src/AMOS \
+	-I$(abs_top_srcdir)/src/GNU \
 	$(BOOST_CXXFLAGS)  \
 	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
 	-pedantic
 
-##-- Bundler\
+##-- Bundler
 Bundler_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
