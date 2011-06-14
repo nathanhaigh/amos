@@ -266,16 +266,6 @@ if test x"${BLAT}" = x":"  ||  ! test -x "${BLAT}"; then
   echo "   install BLAT if planning on using minimus2-blat"
 fi
 
-if test x"${have_qt}" != x"yes"; then
-  echo "WARNING! Qt3 toolkit was not found but is required to run AMOS GUIs"
-  echo "   install Qt3 or locate Qt3 with configure to build GUIs"
-  echo "   see config.log for more information on what went wrong"
-elif test x"${have_qt_test}" != x"yes"; then
-  echo "WARNING! Qt3 toolkit malfunctioning but is required to run AMOS GUIs"
-  echo "   try compiling GUIs manually or reinstall Qt3 toolkit to build GUIs"
-  echo "   see config.log for more information on what went wrong"
-fi
-
 if test x"${have_boost}" != x"yes"; then
   echo "WARNING! Boost graph toolkit was not found but is required to run parts of the AMOS Scaffolder (Bambus 2)"
   echo "   install Boost or locate Boost with configure to build Scaffolder"

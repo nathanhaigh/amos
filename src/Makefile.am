@@ -29,9 +29,9 @@ SUBDIRS += \
     PythonModules \
 	Pipeline
 
-if BUILD_QT
-SUBDIRS += hawkeye
-endif BUILD_QT
+##if BUILD_QT
+##SUBDIRS += hawkeye
+##endif BUILD_QT
 endif BUILD_all
 
 if BUILD_AMOScmp
