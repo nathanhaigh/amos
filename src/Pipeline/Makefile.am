@@ -16,7 +16,8 @@ dist_bin_SCRIPTS += \
 	minimus2-blat.acf \
 	assembleRNAs.acf \
 	gene_asm.acf \
-	FRCurve.acf
+	FRCurve.acf \
+        goBambus2.py
 
 endif BUILD_all
 
