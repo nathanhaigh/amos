@@ -42,6 +42,7 @@ install-bin-scripts-hook: $(dist_bin_SCRIPTS) $(bin_SCRIPTS)
                 echo " configuring python '$$b'"; \
                 echo '#!$(PYTHON)' > "$(DESTDIR)$(bindir)/$$b"; \
                 sed -e '1 {s|^#!.*$$||;}' \
+                sed -e 's|^AMOSDIR[ 	]*=.*$$|AMOSDIR=$(bindir)|' \
                     "$(DESTDIR)$(bindir)/$$f" >> "$(DESTDIR)$(bindir)/$$b" \
                 || exit 1; \
                 ;; \
