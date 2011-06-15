@@ -96,38 +96,95 @@ void LaunchPad::fileExit()
   qApp->quit();
 }
 
+void LaunchPad::loadKmersFile()
+{
+  QString kmerfile = 
+    QFileDialog::getOpenFileName(QString::null, "Kmers files (*.kmer)", 
+                                 this, "Load Kmers File", "Kmers File");
 
-// dsommer : added importsd
+  if (!kmerfile.isEmpty())
+  {
+    std::string k = (const char*)kmerfile;
+    loadKmers(k);
+  }
+}
+
+
 void LaunchPad::fileImport()
 {
-  QString s = QFileDialog::getOpenFileName(this, "Import ACE File");
+  QString s = QFileDialog::getOpenFileName("", "ACE files (*.ace)", this,
+                       "Import ACE file", "Choose an ACE file to import");
 
   // if no file is selected just exit
   if (s.isEmpty()) { return; }
 
-  // build toAmos string
-  QString cmd("toAmos -phd -m toAmos.mates -ace ");
-  cmd.append(s);
+  // filenames
+  QString acefile(s);
+  QString afgfile(acefile+".afg");
+  QString bnkfile(acefile+".bnk");
+
+  // convert ACE file to AFG message file using toAmos
+  //QString cmd("toAmos -phd -m toAmos.mates -ace ");
+  // fangly: safer to not use PHD files and mate pairs
+  QString cmd("toAmos -ace ");
+  cmd.append("'"+acefile+"'");
   cmd.append(" -o ");
-  cmd.append(s);
-  cmd.append(".afg");
-
-  // run toAMOS
+  cmd.append("'"+afgfile+"'");
   int r = system(cmd);
+  if (r != 0)
+  {
+    cerr << "error: toAmos failed" << endl;
+    return;
+  }
 
-  // build bank-tranact string
+  // make a bank from the AFG message file using bank-transact
   QString cmd2("bank-transact -f -m ");
-  cmd2.append(s);
-  cmd2.append(".afg ");
+  cmd2.append("'"+afgfile+"'");
   cmd2.append(" -b ");
-  s.append(".bank");
-  cmd2.append(s);
-
-  // run toAMOS
+  cmd2.append("'"+bnkfile+"'");
   r = system(cmd2);
+  if (r != 0)
+  {
+    cerr << "error: bank-transact failed" << endl;
+    return;
+  }
 
-  if (!s.isEmpty()) { setBankname(s.ascii()); }
+  // conversion was successful, get bank name
+  if (!s.isEmpty()) { setBankname(bnkfile.ascii()); }
 }
+
+
+
+
+
+
+void LaunchPad::loadAmosFile()
+{
+  QString s = QFileDialog::getOpenFileName(QString::null, "AMOS files (*.afg)",
+                                           this, "Load AMOS file", "Choose an AMOS file to load");
+
+   // if no file is selected just exit
+   if (s.isEmpty()) { return; }
+ 
+   // make a bank from the AFG message file using bank-transact
+   QString bnkfile(s+".bnk");
+   QString cmd("bank-transact -f -m ");
+   cmd.append("'"+s+"'");
+   cmd.append(" -b ");
+   cmd.append("'"+bnkfile+"'");
+   int r = system(cmd);
+   if (r != 0)
+   {
+     cerr << "error: bank-transact failed" << endl;
+     return;
+   }
+ 
+   // conversion was successful, get bank name
+   if (!s.isEmpty()) { setBankname(bnkfile.ascii()); }
+}
+
+
+
 
 void LaunchPad::setBankname(std::string bankname)
 {

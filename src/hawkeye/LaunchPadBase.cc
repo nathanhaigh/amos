@@ -287,6 +287,10 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
     contigReadsButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigReadsButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroup_2Layout->addWidget( contigReadsButton );
 
+    contigCoverageButton = new QPushButton( scaffoldHistogramGroup_2, "contigCoverageButton" );
+    contigCoverageButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigCoverageButton->sizePolicy().hasHeightForWidth() ) );
+    scaffoldHistogramGroup_2Layout->addWidget( contigCoverageButton );
+
     contigGCButton = new QPushButton( scaffoldHistogramGroup_2, "contigGCButton" );
     contigGCButton->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, contigGCButton->sizePolicy().hasHeightForWidth() ) );
     scaffoldHistogramGroup_2Layout->addWidget( contigGCButton );
@@ -383,6 +387,8 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
     fileChromatogramPathsAction = new QAction( this, "fileChromatogramPathsAction" );
 
     fileImportAction = new QAction( this, "fileImportAction" );
+    loadAmosFileAction = new QAction( this, "loadAmosFileAction" );
+    loadKmersAction = new QAction(this, "loadKmersAction");
 
 
     // toolbars
@@ -413,11 +419,11 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
 
     fileMenu = new Q3PopupMenu( this );
     fileOpenAction->addTo( fileMenu );
+    fileImportAction->addTo( fileMenu );
+    loadAmosFileAction->addTo( fileMenu );
+    loadKmersAction->addTo(fileMenu);
     fileChromatogramPathsAction->addTo( fileMenu );
     
-    // dsommer: added import
-    fileImportAction->addTo( fileMenu );
-
     fileMenu->insertSeparator();
     fileQuitAction->addTo( fileMenu );
     MenuBar->insertItem( QString(""), fileMenu, 1 );
@@ -430,8 +436,10 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
     connect( fileOpenAction, SIGNAL( activated() ), this, SLOT( fileOpen() ) );
     connect( fileQuitAction, SIGNAL( activated() ), this, SLOT( fileExit() ) );
     connect( fileChromatogramPathsAction, SIGNAL( activated() ), this, SLOT( fileChromoPaths() ) );
-    // dsommer: added import 
     connect( fileImportAction, SIGNAL( activated() ), this, SLOT( fileImport() ) );
+    connect( loadAmosFileAction, SIGNAL( activated()), this, SLOT( loadAMosFile()));
+    connect( loadKmersAction, SIGNAL(activated()), this, SLOT(loadKmersFile()));
+
     connect( new QShortcut(QKeySequence(tr("Ctrl+Q")), this), SIGNAL(activated()),
              qApp, SLOT(quit()));
 }
@@ -495,8 +503,10 @@ void LaunchPadBase::languageChange()
     QToolTip::add( contigLengthButton, tr( "Display the distribution of the length of all contigs" ) );
     contigReadsButton->setText( tr( "Read Count" ) );
     QToolTip::add( contigReadsButton, tr( "Display a histogram of the number of reads in each contig" ) );
+    contigCoverageButton->setText(tr("Fold Coverage"));
+    QToolTip::add( contigCoverageButton, tr( "Display a histogram of each contig's read fold coverage"));
     contigGCButton->setText( tr( "GC Content" ) );
-    QToolTip::add( contigGCButton, tr( "Dispaly a histogram of the GC content of each contig" ) );
+    QToolTip::add( contigGCButton, tr( "Display a histogram of the GC content of each contig" ) );
     QToolTip::add( contigEIDEdit, tr( "Search for a contig (or read) by EID" ) );
     QToolTip::add( contigIIDEdit, tr( "Search for a contig (or read) by IID" ) );
     buttonGroup7->setTitle( tr( "Display" ) );
@@ -513,20 +523,30 @@ void LaunchPadBase::languageChange()
     readGCButton->setText( tr( "GC Content" ) );
     QToolTip::add( readGCButton, tr( "Display a histogram of the GC content of these reads" ) );
     tabWidget->changeTab( TabPage, tr( "Reads" ) );
-    fileOpenAction->setText( tr( "Open" ) );
-    fileOpenAction->setMenuText( tr( "&Open..." ) );
+
+    fileOpenAction->setText( tr( "Open Bank" ) );
+    fileOpenAction->setMenuText( tr( "&Open Bank..." ) );
     fileOpenAction->setAccel( tr( "Ctrl+O" ) );
+
     fileQuitAction->setText( tr( "Quit" ) );
     fileQuitAction->setMenuText( tr( "&Quit" ) );
-    fileQuitAction->setAccel( tr( "Ctrl+Q" ) );
-    fileChromatogramPathsAction->setText( tr( "Chromatogram Paths" ) );
-    fileChromatogramPathsAction->setMenuText( tr( "Chromatogram &Paths..." ) );
-    fileChromatogramPathsAction->setAccel( tr( "Ctrl+P" ) );
+    fileQuitAction->setAccel( tr( "Ctrl+Q" ) ); 
 
-    // dsommer: added import
-    fileImportAction->setText( tr( "Import ace " ) );
-    fileImportAction->setMenuText( tr( "&Import ace" ) );
+    loadAmosFileAction->setText(tr("Import AFG..."));
+    loadAmosFileAction->setMenuText(tr("&Import AFG..."));
+    loadAmosFileAction->setAccel(tr("Ctrl+L"));
+
+    fileImportAction->setText( tr( "Import ACE..." ) );
+    fileImportAction->setMenuText( tr( "&Import ACE..." ) );
     fileImportAction->setAccel( tr( "Ctrl+I" ) );
+
+    loadKmersAction->setText(tr("Open Kmers..."));
+    loadKmersAction->setMenuText(tr("Open &Kmers..."));
+    loadKmersAction->setAccel(tr("Ctrl+K"));
+
+    fileChromatogramPathsAction->setText( tr( "Set Chromatogram Paths" ) );
+    fileChromatogramPathsAction->setMenuText( tr( "Set Chromatogram &Paths..." ) );
+    fileChromatogramPathsAction->setAccel( tr( "Ctrl+P" ) );
 
     Toolbar->setLabel( tr( "Toolbar" ) );
     contigIDLabel->setText( tr( "Contig ID" ) );
@@ -575,7 +595,16 @@ void LaunchPadBase::fileChromoPaths()
     qWarning( "LaunchPadBase::fileChromoPaths(): Not implemented yet" );
 }
 
-// dsommer: added import 
+void LaunchPadBase::loadAmosFile()
+{
+    qWarning( "LaunchPadBase::loadAmosFile(): Not implemented yet" );
+}
+
+void LaunchPadBase::loadKmersFile()
+{
+    qWarning( "LaunchPadBase::loadKmersFile(): Not implemented yet" );
+}
+
 void LaunchPadBase::fileImport()
 {
     qWarning( "LaunchPadBase::fileImport(): Not implemented yet" );

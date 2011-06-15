@@ -38,14 +38,15 @@ public slots:
   void showInserts();
   void showTiling();
 
-  // dsommer: added import
   void fileImport();
+  void loadAmosFile();
 
   void fileChromoPaths();
   void addChromoPath(const QString & path);
   void setChromoDB(const QString & db);
 
   void loadKmers(std::string file);
+  void loadKmersFile();
 
   void newConnect(ClientSocket * s);
   void setContigLocation(QString, int);
@@ -97,6 +98,7 @@ public slots:
   void contigViewSelected();
   void contigLengthHistogram();
   void contigReadCountHistogram();
+  void contigCoverageHistogram();
   void contigGCHistogram();
 
 
