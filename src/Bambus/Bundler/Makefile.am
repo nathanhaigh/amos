@@ -22,9 +22,9 @@ dist_bin_SCRIPTS = \
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
-	-I$(abs_top_srcdir)/src/Common \
-	-I$(abs_top_srcdir)/src/AMOS \
-	-I$(abs_top_srcdir)/src/GNU \
+	-I$(top_srcdir)/src/Common \
+	-I$(top_srcdir)/src/AMOS \
+	-I$(top_srcdir)/src/GNU \
 	$(BOOST_CXXFLAGS)  \
 	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
 	-pedantic
