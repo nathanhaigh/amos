@@ -45,7 +45,7 @@ if __name__ == "__main__":
     xopt_dict = {}
     for opt in opts:
         opt_dict[opt] = [""]
-
+    opt_dict["orient"] = "-linearize"
     for opt in xopts:
         xopt_dict[opt] = 0
         
@@ -53,18 +53,18 @@ if __name__ == "__main__":
         for opt in opt_dict.keys():
             opt_dict[opt] = []
         for opt in sys.argv[3:]:
-            sopt = opt.replace("-","")
-            if sopt in opt_dict.keys():
-                opt_list = sopt.split(",")
-                mopt = opt_list[0]
-                xopt = opt_list[1:]
-            
+            opt_list = opt.split(",")
+            mopt = opt_list[0]
+            mopt = mopt.replace("-", "")
+            xopt = opt_list[1:]
+
+            if mopt in opt_dict.keys():
                 if len(xopt) == 0:
                     xopt = [" "]
                 opt_dict[mopt] = xopt
             else:
                 try:
-                    xopt_dict[sopt] = 1
+                    xopt_dict[sopt] = xopt_dict[sopt] = 1
                 except KeyError:
                     pass
             
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         print "\t%s %s repeats found%s"%(BLUE,nreps,NONE)
         
     if xopt_dict["all"] == 1 or len(opt_dict["orient"]) > 0:
-        p = subprocess.Popen(AMOSDIR+"OrientContigs -b %s.bnk -repeats myreps -prefix %s  -noreduce -linearize"%(outprefix, prefix+".scaff"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+        p = subprocess.Popen(AMOSDIR+"OrientContigs -b %s -repeats myreps -prefix %s -noreduce %s"%(amosbank, prefix+".scaff", "".join(opt_dict["orient"])), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
 
         if xopt_dict["verbose"] == 1:
             print "6) running OrientContigs"
@@ -316,7 +316,8 @@ if __name__ == "__main__":
         ncontigs = contigdata.count(">")
         print "\t%s %s contigs%s"%(BLUE,ncontigs,NONE)
     if xopt_dict["all"] == 1 or len(opt_dict["printscaff"]) > 0:
-        p = subprocess.Popen(AMOSDIR+"printScaff -e %s -s %s -l %s -f %s -merge -o %s"%(prefix+".scaff.evidence.xml",prefix+".scaff.out.xml",prefix+".scaff.library",outprefix+".contigs.fasta",outprefix+".scaffold"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+        scafffile = open("%s.scaffold.fasta"%(outprefix), 'w')
+        p = subprocess.Popen(AMOSDIR+"OutputScaffolds -b %s"%(amosbank), shell=True, stdin=subprocess.PIPE, stdout=scafffile, stderr=logfile)
         if xopt_dict["verbose"] == 1:
             print "8) running printScaff"
         else:
