@@ -14,14 +14,15 @@ my $help  = 0;
 my $numreads = 10000;
 my $rc = 0;
 my $trimmean = ".1";  ## trim 10% outliers
+my $QV_TRIM = 10;
 
 my $USAGE = "pairDist.pl <options> prefix ref.fa fq1 fq2 | -samfile <samfile>\n"; 
 
 my $res = GetOptions("sam=s"   => \$samfile,
-                     "reads=n" => $numreads,
+                     "reads=n" => \$numreads,
                      "show=n"  => \$show,
                      "help"    => \$help,
-                     "rc"      => $rc);
+                     "rc"      => \$rc);
  
 if ($help)
 {
@@ -38,6 +39,7 @@ if ($help)
   print "  fq1             : path to first read\n";
   print "  fq2             : path to second read\n";
   print "  -reads <n>      : align first n reads (default: $numreads)\n";
+  print "  -rc             : reverse complement the reads before alignment\n";
   print "  -show <n>       : show details for first n pairs (default: $show)\n";
   print "\n";
   print "  -samfile <file> : Analyze previously aligned reads\n";
@@ -73,7 +75,7 @@ if (!defined $samfile)
   }
 
   runCmd("cat fq",     "$prefix.fq",    "cat $prefix.1.fq $prefix.2.fq > $prefix.fq");
-  runCmd("bwa aln",    "$prefix.sai",   "$BWA aln $ref $prefix.fq > $prefix.sai");
+  runCmd("bwa aln",    "$prefix.sai",   "$BWA aln -I -q $QV_TRIM $ref $prefix.fq > $prefix.sai");
   runCmd("bwa samse",  "$prefix.sam",   "$BWA samse -f $prefix.sam $ref $prefix.sai $prefix.fq");
   runCmd("sort sam",   "$samfile",      "grep -v '^\@' $prefix.sam | sort > $samfile");
 
@@ -184,7 +186,7 @@ sub runCmd
 
   if (! -r $outf)
   {
-    print STDERR "$desc $cmd...\n";
+    print STDERR "$desc [$cmd]...\n";
     my $rc = system($cmd);
     die $rc if $rc;
   }
