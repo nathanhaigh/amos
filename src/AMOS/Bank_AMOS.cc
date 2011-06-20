@@ -55,6 +55,8 @@ const string Bank_t::TMP_STORE_SUFFIX = ".tmp";
 const char Bank_t::WRITE_LOCK_CHAR    = 'w';
 const char Bank_t::READ_LOCK_CHAR     = 'r';
 
+const int32_t Bank_t::OPEN_LATEST_VERSION = -1;
+
 void Bank_t::copyFile(fstream &in, ofstream &out) {
    in.seekg(0, std::ios::beg);
    out << in.rdbuf();

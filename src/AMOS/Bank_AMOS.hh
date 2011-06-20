@@ -662,7 +662,7 @@ public:
   static const char WRITE_LOCK_CHAR;          //!< write lock char
   static const char READ_LOCK_CHAR;           //!< read lock char
 
-  static const int32_t OPEN_LATEST_VERSION  = -1; //!< latest version
+  static const int32_t OPEN_LATEST_VERSION;   //!< latest version
 
   //--------------------------------------------------- Bank_t -----------------
   //! \brief Constructs an empty Bank_t of objects with a certain NCode
