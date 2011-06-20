@@ -65,7 +65,7 @@ void printHelpText() {
     "\n"
     "USAGE:\n"
     "\n"
-    "FastaGenerator -b[ank] <bank_name> [-version n] \n"
+    "OutputMotifs -b[ank] <bank_name> [-version n] \n"
        << endl;
 }
 
@@ -146,13 +146,25 @@ Position traverseRecursive(
 				hash_map<ID_t, uint32_t, hash<ID_t>, equal_to<ID_t> > &visited,
 				hash_map<ID_t, vector<Position>, hash<ID_t>, equal_to<ID_t> > &paths,
 				hash_map<ID_t, Position, hash<ID_t>, equal_to<ID_t> > &longest,
-				vector<Position> &edits) {
-	Contig_t ctg;
-	contig_bank.fetch(current, ctg);
+				vector<Position> &edits,
+                                hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seq,
+				hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seqNames) {
+        // need to get offset and range for the sequence
+        Tile_t tile = nodeToTile[current];
+        Position p;
 
-	// need to get offset and range for the sequence
-	Tile_t tile = nodeToTile[current];
-	Position p(ctg.getEID(), tile.offset, tile.offset + tile.range.getLength(), ctg.getSeqString(tile.range));
+	if (tile.source_type == Contig_t::NCODE) {
+           Contig_t ctg;
+	   contig_bank.fetch(current, ctg);
+           string ungapped = ctg.getUngappedSeqString(tile.range);
+           p = Position(ctg.getEID(), tile.offset, tile.offset + tile.range.getLength(), ungapped);
+        } else if (seq.find(tile.source) != seq.end()) {
+           // get pre-made sequence
+           p = Position(seqNames[tile.source], tile.offset, tile.offset + tile.range.getLength(), seq[tile.source]);
+        } else {
+           fprintf(stderr, "Error: no sequence known for tile %d\n", tile.source);
+           assert(0);
+        }
 
 	VertexName vertexNames = get(boost::vertex_name, g);
 
@@ -167,7 +179,7 @@ Position traverseRecursive(
         } else {
         	vector<Position> myPaths;
         	for (tie(out_i, out_end) = boost::out_edges(nodeToDescriptor[current], g); out_i != out_end; ++out_i) {
-				myPaths.push_back(traverseRecursive(contig_bank, g, vertexNames[boost::target(*out_i, g)], nodeToTile, nodeToDescriptor, visited, paths, longest, edits));
+				myPaths.push_back(traverseRecursive(contig_bank, g, vertexNames[boost::target(*out_i, g)], nodeToTile, nodeToDescriptor, visited, paths, longest, edits, seq, seqNames));
 			}
 
         	Position myLongestPath;
@@ -187,7 +199,9 @@ Position traverseRecursive(
 
 Position traverseSet(Motif_t &scf, Bank_t & contig_bank, Bank_t &edge_bank, vector<Position> &edits,
 		hash_map<ID_t, vector<Position>, hash<AMOS::ID_t>, equal_to<AMOS::ID_t> > &paths,
-		hash_map<AMOS::ID_t, Position, hash<AMOS::ID_t>, equal_to<AMOS::ID_t> > &longest) {
+		hash_map<AMOS::ID_t, Position, hash<AMOS::ID_t>, equal_to<AMOS::ID_t> > &longest,
+                hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seq,
+		hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seqNames) {
 	// do a DFS traversal to find if we can skip the node
 	hash_map<ID_t, uint32_t, hash<ID_t>, equal_to<ID_t> > visited;
 	Graph g;
@@ -205,26 +219,35 @@ Position traverseSet(Motif_t &scf, Bank_t & contig_bank, Bank_t &edge_bank, vect
     for (vector<ID_t>::const_iterator edgeIt = scf.getContigEdges().begin(); edgeIt < scf.getContigEdges().end(); edgeIt++) {
     	ContigEdge_t cte;
     	edge_bank.fetch((*edgeIt), cte);
-
+        if (Bundler::isBadEdge(cte)) { 
+           continue;
+        }
+        if (nodeToDescriptor.find(cte.getContigs().first) == nodeToDescriptor.end() || nodeToDescriptor.find(cte.getContigs().second) == nodeToDescriptor.end()) {
+           continue;
+        }
     	pair<Edge, bool> e = boost::add_edge(nodeToDescriptor[cte.getContigs().first], nodeToDescriptor[cte.getContigs().second], g);
     }
 
-	return traverseRecursive(contig_bank,g, vertexNames[computeSource(g)], nodeToTile, nodeToDescriptor, visited, paths, longest, edits);
+	return traverseRecursive(contig_bank, g, vertexNames[computeSource(g)], nodeToTile, nodeToDescriptor, visited, paths, longest, edits, seq, seqNames);
 }
 
-Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank, vector<Position>& edits) {
+Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank, vector<Position>& edits, hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seq, hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seqNames) {
 	Position result;
 	hash_map<ID_t, vector<Position>, hash<ID_t>, equal_to<ID_t> > paths;
 	hash_map<ID_t, Position, hash<ID_t>, equal_to<ID_t> > longest;
 
     for (std::vector<Tile_t>::const_iterator tileIt = scf.getContigTiling().begin(); tileIt < scf.getContigTiling().end(); tileIt++) {
+	fprintf(stderr, "Processing tile %d in scf %d and tile source type is %d and motif is %d and contig is %d\n", tileIt->source, scf.getIID(), tileIt->source_type, Motif_t::NCODE, Contig_t::NCODE);
     	if (tileIt->source_type == Motif_t::NCODE) {
     		Motif_t subScf;
     		motif_bank.fetch(tileIt->source, subScf);
-    		result = result.merge(translateSetToPaths(subScf, motif_bank, contig_bank, edge_bank, edits), edits);
+    		Position subResult = translateSetToPaths(subScf, motif_bank, contig_bank, edge_bank, edits, seq, seqNames);
+                seq[tileIt->source] = subResult.getSequence();
+                seqNames[tileIt->source]  = subScf.getEID();
+                result = result.merge(subResult, edits);
     	}
     }
-    result = result.merge(traverseSet(scf, contig_bank, edge_bank, edits, paths, longest), edits);
+    result = result.merge(traverseSet(scf, contig_bank, edge_bank, edits, paths, longest, seq, seqNames), edits);
 
 	// now that we have built up the paths, add the replacements to the edit list
     for (hash_map<ID_t, vector<Position>, hash<ID_t>, equal_to<ID_t> >::iterator it = paths.begin(); it != paths.end(); it++) {
@@ -243,7 +266,9 @@ Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_ba
 void outputMotif(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank) {
 #ifdef AMOS_HAVE_BOOST
 	vector<Position> edits;
-	Position result = translateSetToPaths(scf, motif_bank, contig_bank, edge_bank, edits);
+	hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > seq;
+        hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > seqNames;
+        Position result = translateSetToPaths(scf, motif_bank, contig_bank, edge_bank, edits, seq, seqNames);
 	// print the main sequence
 	Fasta_Print(stdout, result.getSequence().c_str(), result.getName().c_str());
 

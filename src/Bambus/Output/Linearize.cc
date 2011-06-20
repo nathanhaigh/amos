@@ -287,44 +287,11 @@ int main(int argc, char *argv[]) {
       ctg2lnk[cte.getContigs().second] = s;
    }
 
-   // expand motifs if we have any
-   Motif_t mtf;
    Scaffold_t scf;
-   HASHMAP::hash_map<AMOS::ID_t, Scaffold_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > scfMap;
-   while (scf_stream >> scf) {
-      scfMap[scf.getIID()] = scf;
-   }
-
-  while (motif_stream >> mtf) {
-      scf = scfMap[mtf.getScf()];
-      vector<Tile_t> t = mtf.getContigTiling();
-      vector<ID_t> e = mtf.getContigEdges();
-     
-      vector<Tile_t> st = scf.getContigTiling();
-      vector<ID_t> se = scf.getContigEdges();
-      st.insert(st.begin(), t.begin(), t.end());
-      se.insert(se.begin(), e.begin(), e.end());
-      scf.setContigTiling(st);
-      scf.setContigEdges(se);
-      scfMap[scf.getIID()] = scf;
-   }
-
    vector<Scaffold_t> scfs;
-   for (HASHMAP::hash_map<AMOS::ID_t, Scaffold_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >::iterator it = scfMap.begin(); it != scfMap.end(); ++it) {
-      scfs.push_back(it->second);
+   while (scf_stream >> scf) {
+      scfs.push_back(scf);
    }
-
-   // remove the motif tiles as well
-   for (vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); ++it) {
-      vector<Tile_t> st = it->getContigTiling();
-      for (vector<Tile_t>::iterator tile = st.begin(); tile != st.end(); ++tile) {
-         if (tile->source_type == Motif_t::NCODE) {
-            tile = st.erase(tile);
-         }
-      }
-      it->setContigTiling(st);
-   }
-
    linearizeScaffolds(scfs, edge_bank, ctg2lnk, globals.debug);
 
    // finally clear and output the new scaffolds
@@ -332,8 +299,6 @@ int main(int argc, char *argv[]) {
    for (std::vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); it++) {
       scf_stream.append(*it);
    }
-   // since we expanded motifs, erase them from this version as well
-   motif_stream.clearCurrentVersion();
 
    edge_bank.close();
    contig_bank.close();

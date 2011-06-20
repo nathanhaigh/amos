@@ -19,6 +19,14 @@ Position::Position(std::string rangeName, uint32_t rangeStart, uint32_t rangeEnd
 	sequence = seq;
 }
 
+Position::Position(const Position &other) {
+	name = other.name;
+	start = other.start;
+	end = other.end;
+	sequence = other.sequence;
+	editType = other.editType;
+}
+
 Position Position::merge(const Position &p, std::vector<Position>& edits) {
 	Position result;
 

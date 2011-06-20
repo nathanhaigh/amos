@@ -81,6 +81,8 @@ void outputAGP(AMOS::Bank_t &contig_bank, AMOS::BankStream_t &scf_stream, const 
    stream << "# DESCRIPTION: WGS SCAFFOLDS GENERATED FROM AMOS BANK" << std::endl;
 
    AMOS::Scaffold_t scf;
+   AMOS::ID_t maxIID = contig_bank.getMaxIID();
+
    while (scf_stream >> scf) {
       int32_t counter = 0;
       int32_t lastEnd = 0;
@@ -106,7 +108,7 @@ void outputAGP(AMOS::Bank_t &contig_bank, AMOS::BankStream_t &scf_stream, const 
          stream << "\t" << counter << "\tW";
 
          int32_t outputID = 0;
-         if (tileIt->source <= contig_bank.getMaxIID()) {
+         if (tileIt->source <= maxIID) {
             contig_bank.fetch(tileIt->source, ctg);
             if (ctg.getEID().size() != 0) {
                stream << "\t" << ctg.getEID();
@@ -177,6 +179,7 @@ void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
                int32_t debug)
 {
    AMOS::Contig_t ctg;
+   AMOS::ID_t maxIID = contig_bank.getMaxIID();
 
    std::string outputFile = outputPrefix + ".dot";
    std::ofstream stream;
@@ -219,7 +222,7 @@ void outputDOT(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
 
          int32_t outputID = 0;
          stream << "\t" << tileIt->source << " [label=\"" ;
-         if (tileIt->source <= contig_bank.getMaxIID()) {
+         if (tileIt->source <= maxIID) {
             contig_bank.fetch(tileIt->source, ctg);
             if (ctg.getEID().size() != 0) { 
 	       stream << ctg.getEID();
@@ -314,6 +317,7 @@ void outputMotifs(AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank,
    // output the dot file of motifs
    AMOS::Motif_t *motif = new AMOS::Motif_t();
    outputDOT(contig_bank, edge_bank, motif, motif_stream, outputPrefix + ".noreduce", true, debug);
+   motif_stream.seekg(0,AMOS::BankStream_t::BEGIN);
 
    // output the set of motifs
    std::string outputFile = outputPrefix + ".sets"; 

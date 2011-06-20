@@ -3,9 +3,10 @@ include $(top_srcdir)/config/amos.mk
 
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
-	FastaGenerator \
+	OutputMotifs \
+	OutputScaffolds \
 	Linearize \
-	TextOutput
+	OutputResults
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -17,21 +18,31 @@ AM_CPPFLAGS = \
 	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
 	-pedantic
 
-##-- FastaGenerator\
-FastaGenerator_LDADD = \
+##-- OutputMotifs \
+OutputMotifs_LDADD = \
+	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
-FastaGenerator_SOURCES = \
-	Position.cc Position.hh FastaGenerator.cc
+OutputMotifs_SOURCES = \
+	Position.cc Position.hh OutputMotifs.cc
 
-TextOutput_LDADD = \
+##-- OutputMotifs \
+OutputScaffolds_LDADD = \
+	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
+OutputScaffolds_SOURCES = \
+	Position.cc Position.hh OutputScaffolds.cc
+
+OutputResults_LDADD = \
 	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
         $(top_builddir)/src/AMOS/libAMOS.a \
         $(top_builddir)/src/GNU/libGNU.a
-TextOutput_SOURCES = \
-        Output_Utils.cc Output_Utils.hh TextOutput.cc
+OutputResults_SOURCES = \
+        Output_Utils.cc Output_Utils.hh OutputResults.cc
 
 Linearize_LDADD = \
 	$(top_builddir)/src/Bambus/Bundler/libBundler.a \

@@ -14,6 +14,7 @@ public:
 
 	Position();
 	Position(std::string rangeName, uint32_t rangeStart, uint32_t rangeEnd, std::string seq);
+        Position(const Position &other);
 
 	Position merge(const Position& p, std::vector<Position>& edits);
 
