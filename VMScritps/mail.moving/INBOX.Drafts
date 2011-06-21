@@ -1,0 +1,227 @@
+From bryanta@twinkie  Wed Sep 08 18:47:04 2010
+Received: from 68.55.205.232
+        (SquirrelMail authenticated user bryanta)
+        by webmail.cs.umd.edu with HTTP;
+        Wed, 8 Sep 2010 18:47:04 -0400 (EDT)
+Message-ID: <51059.68.55.205.232.1283986024.squirrel@webmail.cs.umd.edu>
+In-Reply-To: <201009082202.o88M284p022308@yogurt.cs.umd.edu>
+References: <201009082202.o88M284p022308@yogurt.cs.umd.edu>
+Date: Wed, 8 Sep 2010 18:47:04 -0400 (EDT)
+Subject: Re: Meeting
+From: bryanta@cs.umd.edu
+To: mve@cs.umd.edu
+User-Agent: SquirrelMail/1.4.10a
+MIME-Version: 1.0
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+Importance: Normal
+X-IMAPbase: 1281668476 0000000010
+X-UID: 1
+Status: RO
+X-Keywords:                                                                      
+Content-Length: 524
+
+> 
+>   I'm not going to be around or reading my email for a few days, but
+> Marcelo
+> took notes during the meeting.  Maybe so he doesn't have to type them up
+> (not sure how detailed they are), you two can meet with him for a few
+> minutes tomorrow if there's at time when you're all free and he can fill
+> you
+> in.  Please check with him to see if that would work.  If not I will meet
+> with you individually on Monday.
+> 
+>   Larry
+> 
+> 
+>>   Don't forget we're meeting at 5:00 in 4185.
+>>
+>>   Thanks,
+>>
+>>   Larry
+> 
+
+From bryanta@twinkie  Sat Oct 16 15:53:42 2010
+Received: from 68.55.205.232
+        (SquirrelMail authenticated user bryanta)
+        by webmail.cs.umd.edu with HTTP;
+        Sat, 16 Oct 2010 15:53:42 -0400
+Message-ID: <fbc09912b84a018a4be004dd115d091c.squirrel@webmail.cs.umd.edu>
+In-Reply-To: <201010161848.o9GImhIb023803@yogurt.cs.umd.edu>
+References: <AANLkTikFtViegJKiZDNp-5Gc44U_+4A888TgUG5iH-2S@mail.gmail.com>
+    <201010161630.o9GGUQ64011335@yogurt.cs.umd.edu>
+    <9f8d4435a3b853c552858d5cfde57fff.squirrel@webmail.cs.umd.edu>
+    <201010161848.o9GImhIb023803@yogurt.cs.umd.edu>
+Date: Sat, 16 Oct 2010 15:53:42 -0400
+Subject: Re: Quiz 3 Grading
+From: bryanta@cs.umd.edu
+To: "Larry Herman" <larry@cs.umd.edu>
+Cc: bryanta@cs.umd.edu,
+ "J Parker" <tangerinesauce@gmail.com>,
+ jinseong.jeon@gmail.com
+User-Agent: SquirrelMail/1.4.21
+MIME-Version: 1.0
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+Importance: Normal
+X-UID: 2
+Status: RO
+X-Keywords:                                                                      
+Content-Length: 467
+
+1. if students used head to travel
+> Hi,
+> 
+>   What I wrote to Christine was that what I had in mind was that that 4
+> points would be -4 if the student had only handled even-length lists or
+> had
+> only handled odd-length lists.
+> 
+>   Larry
+> 
+> 
+>> Hi,
+>> For students who wrote like this in quizA:
+>> while (current.next != null) &&(current.next.next!=null)
+>> It will be -4/2=-2 since they only handle even length lists. Do you
+>> agree?
+>> Thanks,
+>> Bryan
+> 
+
+From bryanta@whoppers  Tue Nov 09 19:11:42 2010
+Received: from 68.55.205.232
+        (SquirrelMail authenticated user bryanta)
+        by webmail.cs.umd.edu with HTTP;
+        Tue, 9 Nov 2010 19:11:42 -0500
+Message-ID: <a4cf44cc90ab03328d85839eec17d777.squirrel@webmail.cs.umd.edu>
+In-Reply-To: <919935.85529.qm@web62107.mail.re1.yahoo.com>
+References: <919935.85529.qm@web62107.mail.re1.yahoo.com>
+Date: Tue, 9 Nov 2010 19:11:42 -0500
+Subject: Re: Questions about grade for project 1
+From: bryanta@cs.umd.edu
+To: "Alex Alberg" <alexalberg@yahoo.com>
+User-Agent: SquirrelMail/1.4.21
+MIME-Version: 1.0
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+Importance: Normal
+X-UID: 3
+Status: RO
+X-Keywords:                                                                      
+Content-Length: 517
+
+Hi Alex, 
+I prefer you come to see me during my office hours from 10am-12pm Tues and Thurs. 
+Thank you for your email.
+Regards,
+Bryan
+
+> Hello,
+> 
+> I am in CMSC132, section 101H, and I have a few questions concerning my
+> grade
+> for the coding style, and more importantly student tests sections of the
+> first
+> programming project.
+> 
+> Would it be acceptable for me to ask my questions via email, or would you
+> prefer
+> I come by during your office hours?
+> 
+> Thank you for your help,
+> Alex Alberg
+> 
+> 
+> 
+> 
+
+From bryanta@hoho  Tue Dec 07 10:01:08 2010
+Received: from 129.2.129.155
+        (SquirrelMail authenticated user bryanta)
+        by webmail.cs.umd.edu with HTTP;
+        Tue, 7 Dec 2010 10:01:08 -0500
+Message-ID: <b1607d5d535e9809cfb55b7c2e901cfa.squirrel@webmail.cs.umd.edu>
+In-Reply-To: <201012042314.oB4NEU0F032309@yogurt.cs.umd.edu>
+References: <201012041836.oB4IaLmZ011140@yogurt.cs.umd.edu>
+    <c34c72cf0799b568ec90600fc5b94023.squirrel@webmail.cs.umd.edu>
+    <201012042220.oB4MKeUu026384@yogurt.cs.umd.edu>
+    <bf219fae93b439e37d1bda48eeec080f.squirrel@webmail.cs.umd.edu>
+    <201012042314.oB4NEU0F032309@yogurt.cs.umd.edu>
+Date: Tue, 7 Dec 2010 10:01:08 -0500
+Subject: Re: Project #3 grading
+From: bryanta@cs.umd.edu
+To: "Larry Herman" <larry@cs.umd.edu>
+User-Agent: SquirrelMail/1.4.21
+MIME-Version: 1.0
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+Importance: Normal
+X-UID: 4
+Status: RO
+X-Keywords:                                                                      
+Content-Length: 981
+
+Hi, 
+I finished grading project 3 and there are some special students who violated the project's requirements.
+
+> Hi,
+> 
+>   I kind of would like to know who it was, because my answer might depend
+> on
+> how they did on the project....
+> 
+>   My tentative reply would be that if they just did a bad job, and they
+> know
+> it, and they weren't trying to fake anything (they admitted in the
+> comments
+> what was going on, so it's not like they're trying to fool us into making
+> it
+> seem like their project really worked), I would put a stern note about not
+> hardcoding, that refers to the project grading policy, but not penalize
+> further.  They should already end up losing a lot of credit for the tests.
+> 
+>   Larry
+> 
+> 
+>> Hi,
+>>
+>> What should we do about the students who hard coded the simulate method
+>> (only ever returns true or false), but have comments and commented code
+>> that indicates what they've tried but couldn't get to work?
+>>
+>> Thanks,
+>> Christine
+> 
+
+From bryanta@snickers.cs.umd.edu  Tue Feb 01 13:40:00 2011
+Received: from 129.2.129.155
+        (SquirrelMail authenticated user bryanta)
+        by webmail.cs.umd.edu with HTTP;
+        Tue, 1 Feb 2011 13:40:00 -0500
+Message-ID: <17c8d6ac05cfedf0399e587934624c25.squirrel@webmail.cs.umd.edu>
+Date: Tue, 1 Feb 2011 13:40:00 -0500
+Subject: 
+From: bryanta@cs.umd.edu
+User-Agent: SquirrelMail/1.4.21
+MIME-Version: 1.0
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+Importance: Normal
+X-UID: 9
+Status: RO
+X-Keywords:                                                                      
+Content-Length: 313
+
+Hi Jodie, 
+
+I just received w-2 form, but it just mention my stipend and the tax I pay for my stipend, it does not say anything about my fellowship and the fellowship's tax. I wonder if I can claim that fellowship's tax and Do I need another w-2 form to declare my fellowship's tax?
+
+Thank you so much.
+Dzung Ta.
+

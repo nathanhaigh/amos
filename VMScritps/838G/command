@@ -1,0 +1,7 @@
+
+CC -fPIC -fno-stack-protector -shared -nostartfiles -nodefaultlibs \
+	      -lgcc -shared -Wl,-soname,libzookie.so -o libzookie.so zookie.o \
+	      dr/lib32/release/libdynamorio.so.2.0 -m32
+
+
+CC -D_GNU_SOURCE -fPIC -Idr/include -DX86_32 -DLINUX -fno-stack-protector -o zookie.o -c zookie.c -m32

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<session>
+  <history>
+    <bookmark name=".icons" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/.icons"/>
+    <bookmark name=".nedit" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/.nedit"/>
+    <bookmark name=".Trash" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/.Trash"/>
+    <bookmark name=".gstreamer-0.10" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/.gstreamer-0.10"/>
+    <bookmark name=".adobe" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/.adobe"/>
+    <bookmark name=".gnome" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/.gnome"/>
+    <bookmark name=".mozilla" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/.mozilla"/>
+    <bookmark name="bryanta" icon="user-home" uri="file:///fs/junkfood/bryanta"/>
+  </history>
+  <window type="spatial" location="file:///fs/junkfood/bryanta"/>
+</session>

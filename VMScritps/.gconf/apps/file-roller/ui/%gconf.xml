@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<gconf>
+        <entry name="window_height" mtime="1299000277" type="int" value="480">
+        </entry>
+        <entry name="window_width" mtime="1299000277" type="int" value="600">
+        </entry>
+</gconf>

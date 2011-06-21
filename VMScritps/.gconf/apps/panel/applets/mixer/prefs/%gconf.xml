@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<gconf>
+        <entry name="vol" mtime="1287602499" schema="/schemas/apps/mixer_applet/prefs/vol" type="int" value="0">
+        </entry>
+        <entry name="mute" mtime="1287602499" schema="/schemas/apps/mixer_applet/prefs/mute" type="bool" value="false">
+        </entry>
+        <entry name="channel" mtime="1287602499" schema="/schemas/apps/mixer_applet/prefs/channel"/>
+</gconf>

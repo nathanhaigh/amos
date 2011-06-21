@@ -1,0 +1,31 @@
+<categories>
+	<category a="Anniversary" searchable="1"/>
+	<category a="Holiday" icon="/usr/share/pixmaps/evolution-data-server/category_holiday_16.png" searchable="1"/>
+	<category a="Ideas" icon="/usr/share/pixmaps/evolution-data-server/category_ideas_16.png" searchable="1"/>
+	<category a="Weather: Rain" icon="/usr/share/evolution/2.12/weather/category_weather_rain_16.png" searchable="0"/>
+	<category a="Weather: Thunderstorms" icon="/usr/share/evolution/2.12/weather/category_weather_tstorm_16.png" searchable="0"/>
+	<category a="Status" icon="/usr/share/pixmaps/evolution-data-server/category_status_16.png" searchable="1"/>
+	<category a="Holiday Cards" icon="/usr/share/pixmaps/evolution-data-server/category_holiday-cards_16.png" searchable="1"/>
+	<category a="Hot Contacts" icon="/usr/share/pixmaps/evolution-data-server/category_hot-contacts_16.png" searchable="1"/>
+	<category a="International" icon="/usr/share/pixmaps/evolution-data-server/category_international_16.png" searchable="1"/>
+	<category a="Birthday" icon="/usr/share/pixmaps/evolution-data-server/category_birthday_16.png" searchable="1"/>
+	<category a="VIP" searchable="1"/>
+	<category a="Gifts" icon="/usr/share/pixmaps/evolution-data-server/category_gifts_16.png" searchable="1"/>
+	<category a="Waiting" searchable="1"/>
+	<category a="Weather: Partly Cloudy" icon="/usr/share/evolution/2.12/weather/category_weather_partly_cloudy_16.png" searchable="0"/>
+	<category a="Key Customer" icon="/usr/share/pixmaps/evolution-data-server/category_key-customer_16.png" searchable="1"/>
+	<category a="Time &amp; Expenses" icon="/usr/share/pixmaps/evolution-data-server/category_time-and-expenses_16.png" searchable="1"/>
+	<category a="Miscellaneous" icon="/usr/share/pixmaps/evolution-data-server/category_miscellaneous_16.png" searchable="1"/>
+	<category a="Weather: Cloudy" icon="/usr/share/evolution/2.12/weather/category_weather_cloudy_16.png" searchable="0"/>
+	<category a="Business" icon="/usr/share/pixmaps/evolution-data-server/category_business_16.png" searchable="1"/>
+	<category a="Personal" icon="/usr/share/pixmaps/evolution-data-server/category_personal_16.png" searchable="1"/>
+	<category a="Suppliers" icon="/usr/share/pixmaps/evolution-data-server/category_suppliers_16.png" searchable="1"/>
+	<category a="Weather: Fog" icon="/usr/share/evolution/2.12/weather/category_weather_fog_16.png" searchable="0"/>
+	<category a="Goals/Objectives" icon="/usr/share/pixmaps/evolution-data-server/category_goals_16.png" searchable="1"/>
+	<category a="Strategies" icon="/usr/share/pixmaps/evolution-data-server/category_strategies_16.png" searchable="1"/>
+	<category a="Weather: Snow" icon="/usr/share/evolution/2.12/weather/category_weather_snow_16.png" searchable="0"/>
+	<category a="Weather: Sunny" icon="/usr/share/evolution/2.12/weather/category_weather_sun_16.png" searchable="0"/>
+	<category a="Competition" searchable="1"/>
+	<category a="Favorites" icon="/usr/share/pixmaps/evolution-data-server/category_favorites_16.png" searchable="1"/>
+	<category a="Phone Calls" icon="/usr/share/pixmaps/evolution-data-server/category_phonecalls_16.png" searchable="1"/>
+</categories>

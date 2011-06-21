@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<gconf>
+        <entry name="migrate_directories" mtime="1285185285" type="bool" value="false">
+        </entry>
+</gconf>

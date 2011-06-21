@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/layout2.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<!-- InstanceBeginEditable name="title" -->
+	<title>DOTS :: Schedules</title>
+<!-- InstanceEndEditable -->
+
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=8;FF=3;OtherUA=4" />
+        
+        <link rel="stylesheet" type="text/css" href="css/dots-layout2.css" />
+        <link rel="stylesheet" type="text/css" href="css/nav_main.css"  />
+
+		<link rel="shortcut icon" type="image/x-icon" href="dots_favicon.ico" />
+
+        <!--[if IE 6]>
+        <img src="images/ie6-msg.png" />
+         <style type="text/css">
+         		div#drop {top:42px;}
+				div#subnav{top:121px;}
+                div#content_main {width: 625px;}
+                div#content_supp {width: 369px;}
+                div#site_info_footer{width:1004px;}
+         </style>            
+         <![endif]-->          
+<!-- InstanceBeginEditable name="extra css/scripts" -->
+<style type="text/css">
+		#sched table {text-align:center;}
+		#sched td>a {color:#000}
+		#sched img{margin-top:12px;}
+		#sched p{font-size:12px;}
+		#a, #b, #c, #d {position:absolute; top: 28px; padding-left:14px;} 
+		#e, #f, #g, #h {position:absolute; top: 93px; padding-left:14px;} 
+		#i, #j, #k, #l {position:absolute; top:160px; padding-left:14px;} 
+		#m, #n, #o, #z {position:absolute; top:226px; padding-left:14px;} 
+		#q, #r, #s, #t {position:absolute; top:292px; padding-left:14px;} 
+		#u, #v, #w 	   {position:absolute; top:360px; padding-left:14px;}
+		#x, #y		   {position:absolute; top:422px; padding-left:14px;}
+		.numbers {color:#b00000; font-weight:bold}
+		 
+</style><!-- InstanceEndEditable -->
+        <!--[if lt IE 8]>
+        <script src="scripts/IE8.js"></script>
+        <![endif]-->
+
+        <script type="text/javascript" src="scripts/jquery.js"></script>
+		<!--[if lte IE 8]>        
+		<script type="text/javascript">
+		$(document).ready(function(){
+		   $("#nav > li > ul").hide();
+		   $("#nav li").hover(
+			  function(){ $(this).find("ul:first").show(); }, 
+			  function(){ $(this).find("ul:first").hide(); } 
+		   );
+		   if (document.all) {
+			  $("#nav li").hoverClass ("sfHover");
+		   }
+		});
+		$.fn.hoverClass = function(c) {
+		   return this.each(function(){
+			  $(this).hover( 
+				 function() { $(this).addClass(c);  },
+				 function() { $(this).removeClass(c); }
+			  );
+		   });
+		};
+		</script>
+    <![endif]-->
+	<script type="text/javascript" src="scripts/all-scripts.js"></script>
+
+        <!-- InstanceParam name="body_id" type="text" value="shuttle" -->
+		<!-- InstanceParam name="gradient_id" type="text" value="gradient_bottom1" -->
+	</head>
+
+
+<body id="shuttle">
+<div id="umd-frame">
+<div id="umd-frame-header">
+		<a href="http://www.umd.edu/"><img src="images/header-um-logo.gif" alt="University of Maryland" id="umd-frame-logo" /></a>
+
+	 <div id="umd-frame-header-search">
+		<form method="get" action="http://www.searchum.umd.edu/search">
+			<input type="hidden" name="site" value="UMCP"/>
+			<input type="hidden" name="client" value="UMCP"/>
+			<input type="hidden" name="proxystylesheet" value="UMCP"/>
+			<input type="hidden" name="output" value="xml_no_dtd"/>
+			
+			<input type="text" name="q" size="24" class="text" alt="input search"/>
+			<input type="image" name="as_oq" class="button1" value="site:http://transportation.umd.edu" src="images/button-dots.gif" alt="DOTS" />
+			<input type="image" name="as_oq" class="button2" value="" src="images/button-um.gif" alt="UM" />			
+		</form>
+	 </div> <!-- umd-frame-header-search -->
+	 <div id="umd-frame-header-end"></div>
+  </div> <!-- end umd-frame-header -->
+<!-- ========================================= UMD Frame Above =================================== -->	
+
+<div id="dots_outer_wrapper">
+	<noscript>
+	<p>&nbsp; This website requires JavaScript. Please turn on JavaScript if your browser supports it and reload the page.</p>
+	</noscript>
+<!-- =========== 1. Branding ============= -->
+<div id="branding">
+<img style="float:left; margin:15px 0 0 5px;" src="images/DOTS_header.gif" width="572" height="54" alt="DOTS logo" title=""/> <a href="http://www.nextbus.com/?a=umd" onclick="window.open(this.href); return false;" onkeypress="window.open(this.href); return false;"><img style="float:right; margin-top:22px; margin-right:4px;" src="images/nextbus_logo.gif" width="150" height="52" alt="NextBus logo" title="NextBus"/></a>
+</div> <!-- End branding -->
+
+<!-- ================================ 2. Navigation ================================= -->
+
+        <div id="subnav">  </div> <!-- adds sub nav menus to pages via JavaScript (scripts/icon_swap.js) -->
+
+
+    <div id="nav_main_horizontal">
+    
+        <ul id="nav"> 
+		
+
+		<li class="main"><a href="http://www.transportation.umd.edu" id="home_nav" title="Home" style="letter-spacing:1px" onmouseover="swap(true, 'H', 'home')" onmouseout="swap(false, 'H', 'home')"><img id="H" src="images/navicons/home_red.png" alt=""/> Home</a>
+		
+				<ul id="home_ul"><li style="padding:0; margin:0; height:0px; border:0;">&nbsp;</li>
+				</ul>		
+		</li>		
+
+
+
+		<li class="main"><a href="http://www.transportation.umd.edu/about.html" id="about_nav" title="" onmouseover="swap(true, 'A', 'about')" onmouseout="swap(false, 'A', 'about')"><img id="A" src="images/navicons/aboutus_red.png" alt=""/>About Us</a>
+
+				<ul id="about_ul">
+					<li><a href="http://www.transportation.umd.edu/annual.html">Annual Reports</a></li>
+					<li><a href="http://www.transportation.umd.edu/diversity.html">Diversity</a></li>
+					<li><a href="http://www.transportation.umd.edu/employment.html">Employment</a></li>
+					<li><a href="http://www.transportation.umd.edu/research.html">Research Papers</a></li>
+					<li><a href="http://www.transportation.umd.edu/contacts.html">Contact Us</a></li>
+					<li><a href="http://www.transportation.umd.edu/programs.html">Programs/Events</a></li>
+				</ul>
+		</li>
+         
+        
+		<li class="main"><a href="http://www.transportation.umd.edu/parking.html" id="park_nav" title="" onmouseover="swap(true, 'P', 'parking')" onmouseout="swap(false, 'P', 'parking')"><img id="P" src="images/navicons/parking_red.png" alt=""/> Parking</a>
+
+				<ul id="parking_ul">
+					<li><a href="http://www.transportation.umd.edu/maps.html">Parking Maps</a></li>
+					<li><a href="http://www.transportation.umd.edu/faculty.html">Faculty and Staff</a></li>
+					<li><a href="http://www.transportation.umd.edu/student.html">Student Parking</a></li>
+					<li><a href="http://www.transportation.umd.edu/mav.html">Motorist Assistance</a></li>
+					<li><a href="http://www.transportation.umd.edu/paystation.html">Digital Pay Stations</a></li>
+					<li><a href="http://www.transportation.umd.edu/chargingstation.html">Charging Stations</a></li>
+					<li><a href="http://www.transportation.umd.edu/athletic.html">Athletic Event Parking</a></li>
+					<li><a href="http://www.transportation.umd.edu/cspac.html">Clarice Smith Center</a></li> 
+					<li><a href="images/parking/PDFs/Parking Regulations 2.17.11 update.pdf" target="_blank" title="Opens a PDF">Regulations</a></li>
+				</ul>
+		</li>			
+
+
+		<li class="main"><a href="http://www.transportation.umd.edu/shuttle.html" id="shuttle_nav" title="" onmouseover="swap(true, 'S', 'shuttle')" onmouseout="swap(false, 'S', 'shuttle')"><img id="S" src="images/navicons/shuttle_red.png" alt=""/> Shuttle UM</a>
+<!-- <a href="http://www.nextbus.com/?a=wmata" onclick="window.open(this.href); return false;" onkeypress="window.open(this.href); return false;"> -->
+				<ul id="shuttle_ul">
+					<li><a href="http://www.transportation.umd.edu/nextbus.html">NextBus</a></li>
+					<li><a href="http://www.transportation.umd.edu/schedules.html">Schedules</a></li>
+					<li><a href="http://www.transportation.umd.edu/service_cal.html">Service Calendar</a></li>
+					<li><a href="http://www.transportation.umd.edu/paratransit.html">Paratransit</a></li>
+					<li><a href="http://www.transportation.umd.edu/pointsofinterest.html">Points of Interest</a></li>
+					<li><a href="http://www.transportation.umd.edu/trips.html">Trips</a></li>
+					<li><a href="http://www.transportation.umd.edu/advertising.html">Advertising</a></li>
+					<li><a href="http://www.transportation.umd.edu/niteride.html">NITE Ride</a></li>
+					<li><a href="images/Shuttle/Shuttle UM Regulations.docx" title="Opens a Word Document">Regulations</a></li>
+				</ul>
+		</li>	
+
+
+		<li class="main"><a href="http://www.transportation.umd.edu/green.html" id="green_nav" title="" onmouseover="swap(true, 'G', 'green')" onmouseout="swap(false, 'G', 'green')"><img id="G" style="vertical-align: middle; padding-bottom:8px;" src="images/navicons/turtle_red.png" alt=""/> Green Commuting</a>
+
+				<ul id="green_ul">
+					<li><a href="http://www.union.umd.edu/offCampus/transportation.htm" target="_blank">Regional Transportation</a></li>
+					<li><a href="http://www.transportation.umd.edu/scooter.html">Motorized Cycle</a></li>
+					<li><a href="http://www.transportation.umd.edu/share.html">Share The Ride</a></li>
+					<li><a href="http://www.transportation.umd.edu/bike.html">Bike</a></li>
+					<li><a href="http://www.transportation.umd.edu/walk.html">Walk</a></li>
+					<li><a href="http://www.transportation.umd.edu/incentives.html">Incentives</a></li>
+					<li><a href="http://www.transportation.umd.edu/construction.html">Tips</a></li>
+					<li><a href="http://www.transportation.umd.edu/construction.html">Sustainability &#47; BioDOTS</a></li>
+				</ul>
+		</li>	
+
+
+		<li class="main" style="margin-left:-2px;"><a href="http://www.transportation.umd.edu/reviews.html" id="appeals_nav" title="" onmouseover="swap(true, 'C', 'appeals')" onmouseout="swap(false, 'C', 'appeals')"><img id="C" src="images/navicons/appeals_red.png" alt=""/>Reviews &amp; Citations</a>
+
+				<ul id="appeals_ul">
+					<li><a href="http://www.transportation.umd.edu/pay.html">Pay Citation</a></li>
+					<li><a href="http://www.transportation.umd.edu/request.html">Request Review</a></li>
+					<li><a href="http://www.transportation.umd.edu/tow.html">Tow Info</a></li>
+				</ul>
+		</li>	
+
+
+		<li class="main"><a href="http://www.transportation.umd.edu/events.html" id="events_nav" style="border-right:none; padding-right:8px;" title="" onmouseover="swap(true, 'E', 'events')" onmouseout="swap(false, 'E', 'events')"><img id="E" src="images/navicons/events_red.png" alt=""/>Events &amp; Charters</a>
+
+				<ul id="events_ul">
+					<li><a href="http://www.transportation.umd.edu/event_req.html">Event Planning &#47;Requests</a></li>
+				    <li><a href="http://www.transportation.umd.edu/charter_req.html">Bus Charter Requests</a></li>
+				</ul>
+		</li>	
+
+   </ul> <!-- end nav -->
+        
+        <div id="drop">	</div>
+        
+    </div> <!-- End nav_main_horizontal -->
+
+<!-- ===================================== 3. Page Title ============================== -->
+
+    <div id="page_title"><!-- InstanceBeginEditable name="page title" -->    
+    	<img src="images/Shuttle/shuttle_schedule.jpg" width="1004" height="166" alt="sub Shuttle image" title="" />
+						<!-- InstanceEndEditable -->
+	</div> <!-- End page-title -->
+
+
+<!-- ===================================== 4. Content ================================ -->
+<div id="content_wrap" class="clear_children">
+
+
+	<!-- ===== Main Content ====== -->
+	<div id="content_main" class="pc cc_tallest">
+	  <!-- InstanceBeginEditable name="main content" -->
+            <table width="605" border="0" cellpadding="2" cellspacing="2" id="button" style="margin-bottom:35px">
+                	<tr>
+                    	
+                        <th width="50%" style="background-color:#FFCC33; text-align:center;" scope="col"><a href="#summer">Summer 2011 Routes</a></th>
+                  </tr>
+                </table>
+        
+        <div style="position:relative; margin-top:20px" >
+ <a name="summer" id="summer"></a>     
+<table width="605" border="0" cellpadding="2" cellspacing="2" id="sched">
+  <tr style="background-color:#FFCC33">
+    <th scope="col" colspan="3" style="text-align:center; text-transform:uppercase;">Summer 2011 Commuter Service Routes</th>
+    <th scope="col" style="text-align:center; text-transform:uppercase;background-color:#cc9900; color:#000;">Evening Routes</th>
+  </tr>
+  <tr align="center">
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/100_BPR.pdf" target="_blank">
+    <p id="a"><span class="numbers">100</span> Burtonsville <br />Park &amp; Ride</p>
+    <img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/104_CPM.pdf" target="_blank">
+    <p id="b"><span class="numbers">104</span> College Park <br />Metro</p>
+    <img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/105_CtyExp.pdf" target="_blank">
+    <p id="c"><span class="numbers">105</span> Courtyards <br />Express</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    
+  </tr>
+  <tr align="center">
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/106_GN.pdf" target="_blank">
+    <p id="e"><span class="numbers">106</span> Franklin Park <br />Greenbelt</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/107_LPR.pdf" target="_blank">
+    <p id="f"><span class="numbers">107</span> Laurel Park <br />and Ride</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/108_Adelphi.pdf" target="_blank">
+    <p id="g"><span class="numbers">108</span> Adelphi</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/116_Purple.pdf" target="_blank">
+    <p id="h"><span class="numbers">116</span> Purple</p><img src="images/gray-button-purple.png" alt="button image"/></a></td>
+  </tr>
+  <tr align="center">
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/109_RR.pdf" target="_blank">
+    <p id="i"><span class="numbers">109</span> River Road</p>
+    <img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/110_SSApt.pdf" target="_blank">
+    <p id="j"><span class="numbers">110</span> Seven Springs <br />Apartments</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/111_SSM.pdf" target="_blank">
+    <p id="k"><span class="numbers">111</span> Silver Spring</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/118_Gold.pdf" target="_blank">
+    <p id="l"><span class="numbers">118</span> Gold</p><img src="images/gray-button-gold.png" alt="button image"/></a></td>
+  </tr>
+  <tr align="center">
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/113_UTC.pdf" target="_blank">
+    <p id="m"><span class="numbers">113</span> University Town <br />Center</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/119_GS.pdf" target="_blank">
+    <p id="n"><span class="numbers">119</span> Greenbelt South</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/120_BowPR.pdf" target="_blank">
+    <p id="o"><span class="numbers">120</span> Bowie Park <br />and Ride</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    </tr>
+  <tr align="center">
+  <td><a href="images/Shuttle/Schedules pdfs/Summer 11/125_Circ.pdf" target="_blank">
+    <p id="q"><span class="numbers">125</span> The Circulator</p><img src="images/gray-button.png" alt="button image"/></a></td>
+    <td><a href="images/Shuttle/Schedules pdfs/Summer 11/126_NC.pdf" target="_blank">
+    <p id="r"><span class="numbers">126</span> New Carrollton</p><img src="images/gray-button.png" alt="button image"/></a></td>
+	<td><a href="images/Shuttle/Schedules pdfs/Summer 11/127_MGM.pdf" target="_blank">
+    <p id="r"><span class="numbers">127</span> Mazza GrandMarc</p><img src="images/gray-button.png" alt="button image"/></a></td>
+     </tr>  
+<tr align="center">
+    
+    <td>&nbsp;</td>
+  </tr>    
+</table>
+<p>Schedules open in PDF format <a href="http://get.adobe.com/reader/" target="_blank"><img src="images/pdficon_small.gif" width="17" height="17" alt="pdf icon" title="Get Adobe Reader" /></a></p>
+
+        </div>
+	  <!-- InstanceEndEditable -->
+    </div> <!-- End content_main -->
+	
+
+
+	<!-- ===== Supplementary Content ===== -->
+	<div id="content_supp" class="sc">
+	  <!-- InstanceBeginEditable name="supplementary content" -->
+		<div align="center" style="margin:0px 0 0 60px; width:375px">
+          <!--<h3>Spring 2011 Campus Connections Guide</h3>
+          <img style="margin:15px 0px 10px 0px" src="images/Shuttle/schedule_CampusConnections.png" width="125" height="190" alt="Campus Connections Cover" title="" />
+          <h3> <a href="images/Shuttle/Schedules pdfs/campus Connections/campusConnections.pdf" target="_blank">Download your copy here</a> or pick one up at our Regents Drive Garage office and The Stamp.</h3>-->
+    
+        </div>
+	 <!-- InstanceEndEditable -->
+    </div> 
+<!-- End content_supp -->
+
+</div> <!-- End content_wrap -->
+
+ 	<div id="gradient_bottom1"> </div>
+ 
+<!-- =============================== 5. Site Info Footer ======================== -->
+
+  <div id="site_info_footer">
+	
+		<p>Department of Transportation Services, Bldg #202 Regents Drive Garage, College Park, MD 20742<br />University of Maryland; Office Hours: 8:15 a.m. - 4:00 p.m.<br />
+Phone: 301-314-PARK (parking inquiries) or 301-314-2255 (transit inquiries). E-mail: <a href="mailto:transportation@umd.edu" title="email us">transportation@umd.edu</a></p>
+	
+  </div> <!-- end site_info_footer -->
+
+</div> <!-- end dots_outer_wrapper -->
+
+</div> <!-- end umd-frame -->
+	<script type="text/javascript">change_icon(); </script>
+	<script type="text/javascript" src="scripts/si-clear-children.js"></script>
+    
+<!-- OPENTRACKER HTML START -->
+<script type="text/javascript" defer="defer" src="http://server1.opentracker.net/?site=www.transportation.umd.edu"></script>
+<noscript><a href="http://www.opentracker.net" target="_blank"><img src="http://img.opentracker.net/?cmd=nojs&#38;site=www.transportation.umd.edu" alt="web monitor" border="0" /></a> </noscript>
+<!-- OPENTRACKER HTML END -->   
+<!-- InstanceBeginEditable name="extra bottom scripts" --><!-- InstanceEndEditable -->
+</body>
+<!-- InstanceEnd --></html>

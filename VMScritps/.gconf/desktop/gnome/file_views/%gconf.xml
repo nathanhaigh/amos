@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<gconf>
+        <entry name="icon_theme" mtime="1282593012" type="string">
+                <stringvalue>Bluecurve</stringvalue>
+        </entry>
+</gconf>

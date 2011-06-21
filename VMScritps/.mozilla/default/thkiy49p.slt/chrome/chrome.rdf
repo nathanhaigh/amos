@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<RDF:RDF xmlns:c="http://www.mozilla.org/rdf/chrome#"
+         xmlns:NC="http://home.netscape.com/NC-rdf#"
+         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <RDF:Description RDF:about="urn:mozilla:package:chatzilla">
+    <c:selectedSkin RDF:resource="urn:mozilla:skin:modern/1.0:chatzilla"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mozilla:package:communicator-region">
+    <c:selectedLocale RDF:resource="urn:mozilla:locale:US:communicator-region"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mozilla:package:navigator-region">
+    <c:selectedLocale RDF:resource="urn:mozilla:locale:US:navigator-region"/>
+  </RDF:Description>
+</RDF:RDF>

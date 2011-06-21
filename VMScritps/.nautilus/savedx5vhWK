@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<session>
+  <history>
+    <bookmark name="/" icon="gnome-fs-directory" uri="file:///"/>
+    <bookmark name="Computer" icon="gnome-fs-client" uri="computer:///"/>
+    <bookmark name="tinyhttpd-broken" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/tinyhttpd-broken"/>
+    <bookmark name="edit_files" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/Desktop/edit_files"/>
+    <bookmark name="bryanta" icon="user-home" uri="file:///fs/junkfood/bryanta"/>
+  </history>
+</session>
