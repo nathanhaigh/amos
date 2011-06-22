@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<session>
-  <history>
-    <bookmark name="SETUP" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/SETUP"/>
-    <bookmark name="Downloads" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/Downloads"/>
-    <bookmark name="tinyhttpd-broken" icon="gnome-fs-directory" uri="file:///fs/junkfood/bryanta/tinyhttpd-broken"/>
-    <bookmark name="bryanta" icon="user-home" uri="file:///fs/junkfood/bryanta"/>
-  </history>
-</session>

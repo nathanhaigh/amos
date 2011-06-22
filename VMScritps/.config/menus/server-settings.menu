@@ -1,8 +1,0 @@
-<!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"
-"http://www.freedesktop.org/standards/menu-spec/1.0/menu.dtd">
-
-<!-- File created by desktop-file-utils version 0.8 -->
-<Menu>
-  <Name>Applications</Name>
-  <MergeFile>/etc/xdg/menus/server-settings.menu</MergeFile>
-</Menu>

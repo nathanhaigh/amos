@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<gconf>
-        <entry name="default" mtime="1287602494" type="string">
-                <stringvalue>/usr/bin/metacity</stringvalue>
-        </entry>
-</gconf>
