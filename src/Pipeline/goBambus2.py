@@ -45,7 +45,7 @@ if __name__ == "__main__":
     xopt_dict = {}
     for opt in opts:
         opt_dict[opt] = [""]
-    opt_dict["orient"] = "-linearize"
+    opt_dict["orient"] = "-noreduce"
     for opt in xopts:
         xopt_dict[opt] = 0
         
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         print "\t%s %s repeats found%s"%(BLUE,nreps,NONE)
         
     if xopt_dict["all"] == 1 or len(opt_dict["orient"]) > 0:
-        p = subprocess.Popen(AMOSDIR+"OrientContigs -b %s -repeats myreps -prefix %s -noreduce %s"%(amosbank, prefix+".scaff", "".join(opt_dict["orient"])), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+        p = subprocess.Popen(AMOSDIR+"OrientContigs -b %s -repeats myreps %s"%(amosbank, "".join(opt_dict["orient"])), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
 
         if xopt_dict["verbose"] == 1:
             print "6) running OrientContigs"
@@ -292,6 +292,20 @@ if __name__ == "__main__":
                 print "\t\t%s...failed%s"%(RED,NONE)
                 sys.exit(1)
 
+        p = subprocess.Popen(AMOSDIR+"OutputResults -b %s -prefix %s %s"%(amosbank, prefix+".scaff"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+
+        if xopt_dict["verbose"] == 1:
+            print "6) running OutputResults"
+        else:
+            print "6) running OutputResults...",
+        sys.stdout.flush()
+        sts = os.waitpid(p.pid,0)[1]
+        if xopt_dict["verbose"] != 1:
+            if sts == 0:
+                print "\t\t%s...success%s"%(GREEN,NONE)
+            else:
+                print "\t\t%s...failed%s"%(RED,NONE)
+                sys.exit(1)
 
     if xopt_dict["all"] == 1 or len(opt_dict["2fasta"]) > 0:
         contigfile = open("%s.contigs.fasta"%(outprefix),'w')
@@ -331,4 +345,47 @@ if __name__ == "__main__":
                 print "\t\t%s...failed%s"%(RED,NONE)
                 sys.exit(1)
 
+        scafffile = open("%s.scaffold.linear.fasta"%(outprefix), 'w')
+        p = subprocess.Popen(AMOSDIR+"Linearize -b %s"%(amosbank), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+        if xopt_dict["verbose"] == 1:
+            print "9) running Linearize"
+        else:
+            print "9) running Linearize...",
+        sys.stdout.flush()
+        sts = os.waitpid(p.pid,0)[1]
+        if xopt_dict["verbose"] != 1:
+            if sts == 0:
+                print "\t\t%s...success!%s"%(GREEN,NONE)
+            else:
+                print "\t\t%s...failed%s"%(RED,NONE)
+                sys.exit(1)
 
+       p = subprocess.Popen(AMOSDIR+"OutputResults -b %s -prefix %s %s"%(amosbank, prefix+".scaff.linear"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+
+        if xopt_dict["verbose"] == 1:
+            print "10) running OutputResults"
+        else:
+            print "10) running OutputResults...",
+        sys.stdout.flush()
+        sts = os.waitpid(p.pid,0)[1]
+        if xopt_dict["verbose"] != 1:
+            if sts == 0:
+                print "\t\t%s...success%s"%(GREEN,NONE)
+            else:
+                print "\t\t%s...failed%s"%(RED,NONE)
+                sys.exit(1)
+
+        p = subprocess.Popen(AMOSDIR+"OutputScaffolds -b %s"%(amosbank), shell=True, stdin=subprocess.PIPE, stdout=scafffile, stderr=logfile)
+        if xopt_dict["verbose"] == 1:
+            print "11) running printScaff"
+        else:
+            print "11) running printScaff...",
+        sys.stdout.flush()
+        sts = os.waitpid(p.pid,0)[1]
+        if xopt_dict["verbose"] != 1:
+            if sts == 0:
+                print "\t\t%s...success!%s"%(GREEN,NONE)
+            else:
+                print "\t\t%s...failed%s"%(RED,NONE)
+                sys.exit(1)
+)
