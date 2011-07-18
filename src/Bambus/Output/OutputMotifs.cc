@@ -156,8 +156,8 @@ Position traverseRecursive(
 	if (tile.source_type == Contig_t::NCODE) {
            Contig_t ctg;
 	   contig_bank.fetch(current, ctg);
-           string ungapped = ctg.getUngappedSeqString(tile.range);
-           p = Position(ctg.getEID(), tile.offset, tile.offset + tile.range.getLength(), ungapped);
+           string gapped = ctg.getSeqString(tile.range);
+           p = Position(ctg.getEID(), tile.offset, tile.offset + tile.range.getLength(), gapped);
         } else if (seq.find(tile.source) != seq.end()) {
            // get pre-made sequence
            p = Position(seqNames[tile.source], tile.offset, tile.offset + tile.range.getLength(), seq[tile.source]);
@@ -270,7 +270,7 @@ void outputMotif(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &
         hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > seqNames;
         Position result = translateSetToPaths(scf, motif_bank, contig_bank, edge_bank, edits, seq, seqNames);
 	// print the main sequence
-	Fasta_Print(stdout, result.getSequence().c_str(), result.getName().c_str());
+	Fasta_Print(stdout, result.getUngappedSequence().c_str(), result.getName().c_str());
 
     // output the edits
     for (vector<Position>::const_iterator it = edits.begin(); it < edits.end(); it++) {
@@ -280,7 +280,7 @@ void outputMotif(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &
     			<< (it->getStart()-result.getStart()) << ", "
     			<< (it->getEnd()-result.getStart()) << ")";
 
-        Fasta_Print(stdout, it->getSequence().c_str(), header.str().c_str());
+        Fasta_Print(stdout, it->getUngappedSequence().c_str(), header.str().c_str());
     }
 #else
     cerr << "Error: the boost library cannot be found. Will not be outputting motif " << scf.getEID() << " consisting of " << scf.getContigTiling().size() << endl;

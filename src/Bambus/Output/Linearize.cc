@@ -35,7 +35,7 @@ void linearizeScaffolds(std::vector<Scaffold_t> &scaffs,
                         HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t, EdgeWeightCmp>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > &ctg2lnk,
                         int32_t debugLevel) {
    std::vector<Scaffold_t> linearScaffolds;
-   AMOS::ID_t scfIID = 0;
+   AMOS::ID_t scfIID = 1;
 
    for(std::vector<AMOS::Scaffold_t>::iterator itScf = scaffs.begin(); itScf < scaffs.end(); ++itScf) {
       HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > ctg2conflict;
@@ -57,7 +57,7 @@ cerr << "Initialize conflicts for node " << tileIt->source << endl;
                ctg2conflict[tileIt->source] = s;
             }
          }
-         for (std::vector<AMOS::Tile_t>::const_iterator tileNext = tileIt+1; tileIt < itScf->getContigTiling().end() && (tileNext->offset < tileIt->offset + (tileIt->range.getLength()-1)); ++tileNext) {
+         for (std::vector<AMOS::Tile_t>::const_iterator tileNext = tileIt+1; tileNext < itScf->getContigTiling().end() && (tileNext->offset < tileIt->offset + (tileIt->range.getLength()-1)); ++tileNext) {
             // it conflicts me
             std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
             s->insert(tileNext->source);
@@ -100,7 +100,7 @@ cerr << "Initialize conflicts for node " << tileIt->source << endl;
 
                      if (isBadEdge(cte)) { continue; }
                      AMOS::ID_t neighbor = getEdgeDestination(curr, cte);
-                     if (visited[neighbor] == 1 || inCurrScf[neighbor] == 1) { continue; }
+                     if (visited[neighbor] == 1 || inCurrScf[neighbor] == 1 || ctg2conflict[neighbor] == NULL) { continue; }
                      std::set<AMOS::ID_t> *conflicts = ctg2conflict[neighbor];
                      bool hasConflicts = false;
 
@@ -231,16 +231,16 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
-   BankStream_t motif_stream (Motif_t::NCODE);
-   if (! motif_stream.exists(globals.bank)) {
+   Bank_t motif_bank (Motif_t::NCODE);
+   if (! motif_bank.exists(globals.bank)) {
 	   cerr << "No motif account found in bank " << globals.bank << endl;
 	   exit(1);
    }
    try {
-	   motif_stream.open(globals.bank, B_READ | B_WRITE, globals.version, false);
+	   motif_bank.open(globals.bank, B_READ | B_WRITE, globals.version, false);
    } catch (Exception_t & e) {
 	   cerr << "Failed to open motif account in bank " << globals.bank << " : " << endl << e << endl;
-	   motif_stream.close();
+	   motif_bank.close();
 	   exit(1);
    }
 
@@ -291,6 +291,7 @@ int main(int argc, char *argv[]) {
    vector<Scaffold_t> scfs;
    while (scf_stream >> scf) {
       scfs.push_back(scf);
+cerr << "Adding scf id " << scf.getIID() << endl;
    }
    linearizeScaffolds(scfs, edge_bank, ctg2lnk, globals.debug);
 
@@ -299,10 +300,23 @@ int main(int argc, char *argv[]) {
    for (std::vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); it++) {
       scf_stream.append(*it);
    }
+   Motif_t mtf;
+   for (std::vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); it++) {
+      vector<Tile_t> st = it->getContigTiling();
+      ID_t scfIID = it->getIID();
+ 
+      for (vector<Tile_t>::iterator tile = st.begin(); tile != st.end(); tile++) {
+         if (tile->source_type == Motif_t::NCODE) {
+            motif_bank.fetch(tile->source, mtf);
+            mtf.setScf(scfIID);
+            motif_bank.replace(mtf.getIID(), mtf);
+         }
+      }
+   }
 
    edge_bank.close();
    contig_bank.close();
-   motif_stream.close();
+   motif_bank.close();
    scf_stream.close();
 
    delete(cte2weight);

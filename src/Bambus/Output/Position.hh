@@ -23,7 +23,8 @@ public:
 	uint32_t getStart() const;
 	uint32_t getEnd() const;
 	std::string getSequence() const;
-	PositionEditType getEditType() const;
+	std::string getUngappedSequence() const;
+        PositionEditType getEditType() const;
 
 	void setEditType(PositionEditType);
 	Position& operator= (const Position & source);

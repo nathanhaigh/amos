@@ -38,6 +38,19 @@ static const int32_t  INITIAL_STDEV     =  3;
 static const double   STDEV_STEP_SIZE   =  0.5;
 static const double   MIN_OVL_FOR_MOTIF = 0.020;
 
+hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > *global_contig_len = NULL;
+struct ContigOrderCmp
+{
+  bool operator () (const AMOS::ID_t & a, const AMOS::ID_t & b)
+  {
+      assert(global_contig_len);
+      Size_t sizeA, sizeB;
+      sizeA = (*global_contig_len)[a];
+      sizeB = (*global_contig_len)[b];
+      return (sizeA >= sizeB);
+  }
+};
+
 struct config {
    bool        initAll;
    bool        compressMotifs;
@@ -46,6 +59,7 @@ struct config {
    int32_t     redundancy;   
    int32_t     debug;
    string      bank;
+   int32_t     maxOverlap; // disallow contig overlaps
    set<ID_t>   repeats;  // repeat contigs to ignore (we ignore all links to them)
 };
 config globals;
@@ -82,6 +96,7 @@ bool GetOptions(int argc, char ** argv) {
     {"agressive",          0, 0, 'A'},
     {"redundancy",         1, 0, 'R'},
     {"repeats",            1, 0, 'r'},    
+    {"maxOverlap",         1, 0, 'o'},
     {"skip",               0, 0, 's'},
     {"debug",              1, 0, 'd'},
     {0, 0, 0, 0}
@@ -91,8 +106,9 @@ bool GetOptions(int argc, char ** argv) {
    globals.compressMotifs = true;
    globals.doAgressiveScaffolding = false;
    globals.debug = 1;
-   globals.redundancy = 2;
+   globals.redundancy = 0;
    globals.skipLowWeightEdges = true;
+   globals.maxOverlap = -1;
  
    int c;
    ifstream repeatsFile;
@@ -135,6 +151,9 @@ bool GetOptions(int argc, char ** argv) {
        case 's':
          globals.skipLowWeightEdges = false;
          break;
+       case 'o':
+         globals.maxOverlap = atoi(optarg);
+         break;
        case 'd':
          globals.debug = atoi(optarg);
          if (globals.debug < 0) { globals.debug = 0; }
@@ -152,6 +171,7 @@ bool GetOptions(int argc, char ** argv) {
       cerr << "InitAll = \t" << globals.initAll << endl;
       cerr << "Compress = \t" << globals.compressMotifs << endl;
       cerr << "AgressiveScf = \t" << globals.doAgressiveScaffolding << endl;
+      cerr << "Max Overlap = \t" << globals.maxOverlap << endl;
    }
    
    return true;
@@ -1394,6 +1414,7 @@ int main(int argc, char *argv[]) {
    hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> > ctg2srt;           // map from contig to start position
    hash_map<ID_t, ID_t, hash<ID_t>, equal_to<ID_t> > ctg2scf;              //quick lookup for which scaffold a contig belongs to
    vector<Motif_t> motifs;            // scaffold structures representing the simplified motifs
+   vector<ID_t> contigProcessingOrder;
 
    // initialize position and orientation
    while (contig_stream >> ctg) {
@@ -1401,6 +1422,7 @@ int main(int argc, char *argv[]) {
       ctg2srt[ctg.getIID()] = UNINITIALIZED;
       ctg2scf[ctg.getIID()] = UNINITIALIZED;
       ctg2len[ctg.getIID()] = ctg.getLength();
+      contigProcessingOrder.push_back(ctg.getIID());
    }
 
    // initialize scaffold data structure
@@ -1414,6 +1436,36 @@ int main(int argc, char *argv[]) {
 
    uint32_t badCount = 0, goodCount = 0;
    ContigEdge_t cte;
+
+   // try to pick a redundancy cutoff
+   double mean = 0;
+   double count = 0;
+   if (globals.redundancy == 0) {
+      for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci; ci++) {
+         edge_bank.fetch(ci->iid, cte);
+
+         if (isBadEdge(cte)) {
+            continue;
+         }
+         if (globals.maxOverlap > 0 && cte.getSize() + globals.maxOverlap < 0 && cte.getSize() < globals.maxOverlap) {
+            continue;
+         }
+         if (globals.repeats.find(cte.getContigs().first) != globals.repeats.end() ||
+               globals.repeats.find(cte.getContigs().second) != globals.repeats.end()) {
+            continue;
+         }
+         if (cte.getIID() == 0 || cte.getContigs().first == 0 || cte.getContigs().second == 0) {
+            continue;
+         }
+         if (cte.getContigLinks().size() > 0) {
+            mean += cte.getContigLinks().size();
+            count++;
+         }
+      }
+      mean /= count;
+      globals.redundancy = (uint32_t)round(mean);
+      if (globals.debug >= 1) { cerr << "Picked mean cutoff as " << mean << " rounded " << globals.redundancy << endl; }
+   }
 
    // If we wanted to process edges sequentially, we can insert a loop here
    // However, this requires a merge scaffolds function as we may see a new edge linking two separate scaffolds so all the scaffolds need to be rectified again
@@ -1433,6 +1485,13 @@ int main(int argc, char *argv[]) {
          }
          setEdgeStatus(cte, edge_bank, BAD_RPT, false);
          continue;
+      }
+
+
+     if (globals.maxOverlap > 0 && cte.getSize() + globals.maxOverlap < 0 && cte.getSize() < globals.maxOverlap) {
+        cerr << "WARNING: IGNORING EDGE " << cte.getIID() << " between " << cte.getContigs().first << " and " << cte.getContigs().second << " because it is below overlap threshold of " << globals.maxOverlap << endl;
+        setEdgeStatus(cte, edge_bank, BAD_THRESH, false);
+        continue;
       }
 
       if (cte.getContigLinks().size() < globals.redundancy) {
@@ -1479,8 +1538,13 @@ int main(int argc, char *argv[]) {
    std::vector<ID_t> edges;
    
    // pull initial contig and initialize bank for subsequent processing
-   contig_stream.seekg(0,BankStream_t::BEGIN);
-   while (contig_stream >> ctg) {
+   global_contig_len = &ctg2len;
+   stable_sort(contigProcessingOrder.begin(), contigProcessingOrder.end(), ContigOrderCmp());
+   global_contig_len = NULL;
+
+   for (vector<ID_t>::iterator iter = contigProcessingOrder.begin(); iter != contigProcessingOrder.end(); iter++) {
+      contig_bank.fetch(*iter, ctg);
+
       // if we see any contigs without any edges, make sure we allocate an empty set of edges for them
       if (ctg2lnk[ctg.getIID()] == NULL) {
          ctg2lnk[ctg.getIID()] = new set<ID_t, EdgeWeightCmp>();
@@ -1705,10 +1769,10 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
 
    // preform graph simplification
    sortContigs(scaffs, contig_bank, edge_bank);
-   transitiveEdgeRemoval(scaffs, edge_bank, ctg2lnk, globals.debug);
 
    if (globals.debug >= 1) { cerr << "BEGIN COMPRESSION" << endl; }
    if (globals.compressMotifs == true) {
+      transitiveEdgeRemoval(scaffs, edge_bank, ctg2lnk, globals.debug);
       // allow low-weight edges to be rescued
       AMOS::ContigEdge_t cte;
       for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci; ci++) {

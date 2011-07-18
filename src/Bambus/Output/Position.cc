@@ -45,8 +45,7 @@ Position Position::merge(const Position &p, std::vector<Position>& edits) {
 
 		fasta.replace(p.start - result.start, p.end - p.start, p.sequence);
 		fasta.replace(start - result.start, end - start, sequence);
-
-		if ((ovlEnd-ovlStart) > 0) {
+		if (ovlEnd > ovlStart && (ovlEnd-ovlStart) > 0) {
 			// get the real overlapping position (those not involving Ns)
 			std::string overlap = fasta.substr(ovlStart - result.start, ovlEnd - ovlStart);
 			size_t offset = 0;
@@ -95,6 +94,19 @@ uint32_t Position::getEnd() const {
 
 std::string Position::getSequence() const {
 	return sequence;
+}
+
+std::string Position::getUngappedSequence() const {
+  std::string retval;
+  retval.reserve(sequence.length());
+
+  for ( uint32_t i = 0; i < sequence.length(); i ++ )
+    {
+      if ( isalpha (sequence[i]) )
+        retval . push_back (sequence[i]);
+    }
+
+    return retval;
 }
 
 Position::PositionEditType Position::getEditType() const {

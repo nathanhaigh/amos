@@ -25,6 +25,7 @@ struct config {
    string      prefix;
    int32_t     debug;
    int32_t     version;
+   bool        outputBambus;
 };
 config globals;
 void printHelpText() {
@@ -45,6 +46,7 @@ bool GetOptions(int argc, char ** argv) {
     {"h",                  0, 0, 'h'},
     {"b",                  1, 0, 'b'},
     {"bank",               1, 0, 'b'},
+    {"bambus1",            0, 0, '1'},
     {"prefix",             1, 0, 'p'},
     {"version",            1, 0, 'v'},
     {0, 0, 0, 0}
@@ -52,6 +54,7 @@ bool GetOptions(int argc, char ** argv) {
 
    globals.prefix = "out";
    globals.version = Bank_t::OPEN_LATEST_VERSION;
+   globals.outputBambus = false;
 
    int c;
    while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
@@ -61,6 +64,9 @@ bool GetOptions(int argc, char ** argv) {
          break;
       case 'b':
          globals.bank = string(optarg);
+         break;
+      case '1':
+         globals.outputBambus = true;
          break;
       case 'p':
          globals.prefix = string(optarg);
@@ -155,9 +161,11 @@ int main(int argc, char *argv[]) {
    motif_stream.seekg(0,BankStream_t::BEGIN);
    scf_stream.seekg(0,BankStream_t::BEGIN);
 
-   outputResults(globals.bank, contig_bank, edge_bank, motif_stream, scf_stream, BAMBUS, globals.prefix, globals.debug);
-   motif_stream.seekg(0,BankStream_t::BEGIN);
-   scf_stream.seekg(0,BankStream_t::BEGIN);
+   if (globals.outputBambus == true) {
+      outputResults(globals.bank, contig_bank, edge_bank, motif_stream, scf_stream, BAMBUS, globals.prefix, globals.debug);
+      motif_stream.seekg(0,BankStream_t::BEGIN);
+      scf_stream.seekg(0,BankStream_t::BEGIN);
+   }
 
    outputResults(globals.bank, contig_bank, edge_bank, motif_stream, scf_stream, MOTIFS, globals.prefix, globals.debug);
 

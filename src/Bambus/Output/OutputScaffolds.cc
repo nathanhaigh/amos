@@ -39,6 +39,7 @@ using namespace AMOS;
 struct config {
    string      bank;
    int32_t     debug;
+   int32_t     version;
 };
 config globals;
 void printHelpText() {
@@ -59,12 +60,12 @@ bool GetOptions(int argc, char ** argv) {
     {"h",                  0, 0, 'h'},
     {"b",                  1, 0, 'b'},
     {"bank",               1, 0, 'b'},
+    {"version",            1, 0, 'v'},
     {0, 0, 0, 0}
   };
 
    int c;
-   ifstream repeatsFile;
-   ID_t repeatID;
+   globals.version = Bank_t::OPEN_LATEST_VERSION;
 
    while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
       switch (c){
@@ -73,6 +74,9 @@ bool GetOptions(int argc, char ** argv) {
          break;
       case 'b':
          globals.bank = string(optarg);
+         break;
+      case 'v':
+         globals.version = atoi(optarg);
          break;
       case '?':
          return false;
@@ -92,7 +96,6 @@ void outputScaffold(Scaffold_t &scf, Bank_t &contig_bank, Bank_t &edge_bank) {
         ID_t max = contig_bank.getMaxIID();
         vector<Position> edits;
         Position result;
-        uint32_t numGaps;
         std::ostringstream stream;
         stream << "scf" << scf.getIID();
 
@@ -104,13 +107,11 @@ void outputScaffold(Scaffold_t &scf, Bank_t &contig_bank, Bank_t &edge_bank) {
            }
            Contig_t ctg;
            contig_bank.fetch(tileIt->source, ctg);
-           string ungapped = ctg.getUngappedSeqString(tileIt->range);
-           uint32_t myGaps = ctg.getSeqString(tileIt->range).length() - ungapped.length();
-           result = result.merge(Position(ctg.getEID(), tileIt->offset - numGaps, tileIt->offset + tileIt->range.getLength() - numGaps - myGaps, ungapped), edits);
-           numGaps += myGaps;
+           string gapped = ctg.getSeqString(tileIt->range);
+           result = result.merge(Position(ctg.getEID(), tileIt->offset, tileIt->offset + tileIt->range.getLength(), gapped), edits);
        }
        // print the main sequence
-       Fasta_Print(stdout, result.getSequence().c_str(), stream.str().c_str());
+       Fasta_Print(stdout, result.getUngappedSequence().c_str(), stream.str().c_str());
 }
 
 int main(int argc, char *argv[]) {
@@ -157,7 +158,7 @@ int main(int argc, char *argv[]) {
 	   exit(1);
    }
    try {
-	   scaffold_bank.open(globals.bank, B_READ);
+	   scaffold_bank.open(globals.bank, B_READ, globals.version);
    } catch (Exception_t & e) {
 	   cerr << "Failed to open scaffold account in bank " << globals.bank << " : " << endl << e << endl;
 	   scaffold_bank.close();
@@ -170,7 +171,7 @@ int main(int argc, char *argv[]) {
            exit(1);
    }
    try {
-           motif_bank.open(globals.bank, B_READ);
+           motif_bank.open(globals.bank, B_READ, globals.version);
    } catch (Exception_t & e) {
            cerr << "Failed to open motif account in bank " << globals.bank << " : " << endl << e << endl;
            motif_bank.close();
@@ -209,9 +210,11 @@ int main(int argc, char *argv[]) {
    // remove the motif tiles as well
    for (vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); ++it) {
       vector<Tile_t> st = it->getContigTiling();
-      for (vector<Tile_t>::iterator tile = st.begin(); tile != st.end(); ++tile) {
+      for (vector<Tile_t>::iterator tile = st.begin(); tile != st.end(); ) {
          if (tile->source_type == Motif_t::NCODE) {
             tile = st.erase(tile);
+         } else {
+            ++tile;
          }
       }
       it->setContigTiling(st);
