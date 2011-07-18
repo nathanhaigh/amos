@@ -460,18 +460,18 @@ int main(int argc, char ** argv)
     parseFastqFile();
     readsDone = true;
   }
-  
+ 
+  if (!readsDone && globals.frgfile.size() > 0) {
+     parseFrgFile(globals.frgfile);
+     readsDone = true;
+  }
+ 
   if (! matesDone && globals.matesfile.size() > 0) { // the mate file contains either mates
       // or regular expressions defining them.
       ifstream mates(globals.matesfile.c_str());
       parseMatesFile(mates);
       mates.close();
       matesDone = true;
-  }
- 
-  if (!readsDone && globals.frgfile.size() > 0) {
-     parseFrgFile(globals.frgfile);
-     readsDone = true;
   }
  
   if (globals.ctgfile.size() > 0) {
@@ -738,6 +738,7 @@ vector<string> split(const string &s, char delim) {
 // parse only the non-regex mates file for now
 bool parseMatesFile(ifstream &matesFile) {
    string temp;
+   uint32_t counter = 0;
 
    while (matesFile >> temp) {
     char peekChar = temp[0];
@@ -787,8 +788,7 @@ bool parseMatesFile(ifstream &matesFile) {
     matesFile >> name;
     matesFile.ignore(MAX_LINE_LEN, '\n');
 
-    string templateID = "";
-
+    stringstream templateID(stringstream::in | stringstream::out);
 
     Size_t offset = 0; 
     for (offset = 0; offset < frg1.length(); ++offset) {
@@ -803,7 +803,8 @@ bool parseMatesFile(ifstream &matesFile) {
        cerr << "Error fragments " << frg1 << " AND " << frg2 << " do not have any common template substring" << endl;
        continue;
     }
-    templateID = frg1.substr(0, offset);
+    templateID.str(frg1.substr(0, offset));
+    templateID << "_" << counter;
     ID_t libID = lib_stream.lookupIID(name);
     if (libID == NULL_ID) {
       cerr << "Error library " << name << " is not defined" << endl;
@@ -819,7 +820,7 @@ bool parseMatesFile(ifstream &matesFile) {
     Fragment_t frag;
     frag.setLibrary(libID); 
     frag.setIID(minSeqID++);
-    frag.setEID(templateID);
+    frag.setEID(templateID.str());
     frag.setReads(std::pair<ID_t, ID_t>(read1, read2));
     frag.setType(Fragment_t::INSERT);
     frag_stream.append(frag);
@@ -833,6 +834,7 @@ bool parseMatesFile(ifstream &matesFile) {
     read_stream.fetch(read2, read);
     read.setFragment(frag.getIID());
     read_stream.replace(read.getIID(), read);
+    counter++;
    }
 }
 
@@ -841,8 +843,8 @@ bool parseMatesFile(ifstream &matesFile) {
 bool parseFrgFile(string fileName) {
     GenericMesg     *pmesg             = NULL;
     FILE *f = fileOpen(fileName.c_str(), "r");
-    map<string, string> readToLib;
-    map<string, ID_t> readToFrag;
+    map<uint64, uint64> readToLib;
+    map<uint64, ID_t> readToFrag;
     uint32_t counter = 0;
 
     while (EOF != ReadProtoMesg_AS(f, &pmesg)) {
@@ -888,14 +890,14 @@ bool parseFrgFile(string fileName) {
        }
 
        if (AS_UID_isDefined(fmesg->library_uid) == TRUE) {
-          readToLib[AS_UID_toString(fmesg->eaccession)] = AS_UID_toString(fmesg->library_uid);
+          readToLib[AS_UID_toInteger(fmesg->eaccession)] = AS_UID_toInteger(fmesg->library_uid);
        }
        Read_t read;
        read.setEID(AS_UID_toString(fmesg->eaccession));
        read.setIID(minSeqID++);
        read.setClearRange(Range_t(fmesg->clear_rng.bgn, fmesg->clear_rng.end));
        read.setSequence(fmesg->sequence, fmesg->quality);
-       readToFrag[read.getEID()] = 0;
+       readToFrag[AS_UID_toInteger(fmesg->eaccession)] = 0;
        read_stream.append(read);
 
        if (counter % PRINT_INTERVAL == 0 && globals.debugLevel > 0) {
@@ -920,11 +922,11 @@ bool parseFrgFile(string fileName) {
        if (AS_UID_isDefined(lmesg->distance) == TRUE) {
           libEID = AS_UID_toString(lmesg->distance);
        } else {
-          if (readToLib[AS_UID_toString(lmesg->frag1)] != readToLib[AS_UID_toString(lmesg->frag1)]) {
+          if (readToLib[AS_UID_toInteger(lmesg->frag1)] != readToLib[AS_UID_toInteger(lmesg->frag1)]) {
              cerr << "Fragments " << AS_UID_toString(lmesg->frag1) << " AND " << AS_UID_toString(lmesg->frag2) << " are in different libraries" << endl;
              continue;
           }
-          libEID = readToLib[AS_UID_toString(lmesg->frag1)];
+          libEID = AS_UID_toString(AS_UID_fromInteger(readToLib[AS_UID_toInteger(lmesg->frag1)]));
        }
   
        if (libEID == "0") {
@@ -955,12 +957,12 @@ bool parseFrgFile(string fileName) {
        Read_t read;
        read_stream.fetch(read1, read);
        read.setFragment(frag.getIID());
-       readToFrag[read.getEID()] = frag.getIID();
+       readToFrag[AS_UID_toInteger(lmesg->frag1)] = frag.getIID();
        read_stream.replace(read.getIID(), read);
 
        read_stream.fetch(read2, read);
        read.setFragment(frag.getIID());
-       readToFrag[read.getEID()] = frag.getIID();
+       readToFrag[AS_UID_toInteger(lmesg->frag2)] = frag.getIID();
        read_stream.replace(read.getIID(), read);
     } else if (pmesg->t == MESG_PLC) {
         // ignore
@@ -972,9 +974,9 @@ bool parseFrgFile(string fileName) {
    }
 
    // finally create fragments for unmated reads to associate them to a library
-   for (map<string, ID_t>::iterator i = readToFrag.begin(); i != readToFrag.end(); ++i) {
+   for (map<uint64, ID_t>::iterator i = readToFrag.begin(); i != readToFrag.end(); ++i) {
       if (i->second == 0) {
-         ID_t read1 = read_stream.lookupIID(i->first);
+         ID_t read1 = read_stream.lookupIID(AS_UID_toString(AS_UID_fromInteger(i->first)));
          if (read1 == NULL_ID) {
             cerr << "Cannot find record for read " << i->first << endl;
             continue;
@@ -984,7 +986,7 @@ bool parseFrgFile(string fileName) {
          if (readToLib.find(i->first) == readToLib.end()) {
             continue;
          } else {
-            libID = lib_stream.lookupIID(readToLib[i->first]);
+            libID = lib_stream.lookupIID(AS_UID_toString(AS_UID_fromInteger(readToLib[i->first])));
          }
          Fragment_t frag;
          frag.setLibrary(libID);
@@ -998,7 +1000,7 @@ bool parseFrgFile(string fileName) {
          Read_t read;
          read_stream.fetch(read1, read);
          read.setFragment(frag.getIID());
-         readToFrag[read.getEID()] = frag.getIID();
+         readToFrag[i->first] = frag.getIID();
          read_stream.replace(read.getIID(), read);
       }
    }
