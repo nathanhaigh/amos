@@ -8,50 +8,61 @@
 #? be visualized with Hawkeye.
 #?
 #? Usage:
-#?     amosvalidate AMOS_BANK
+#?     amosvalidate AMOS_BANK [options]
+#?
+#? Options:
+#?     -D CLEAR_RANGE=<n>   Use the clear range of the reads? (0:no 1:yes,
+#?                            default: 1)
 #?
 
 BINDIR = /fs/sz-user-supported/Linux-x86_64/bin
 NUCMER = /fs/sz-user-supported/Linux-x86_64/bin/nucmer
 
-PREF   = $(strip .bnk PREFIX)
-INPUTS = $(PREF).bnk
+# One mandatory argument is expected
+EXPECT 1
 
+PREF   = $(strip .bnk PREFIX)
+BANK   = $(PREF).bnk
+INPUTS = $(BANK)
+
+# Default parameters
+CLEAR_RANGE = 1
 
 ## Creating FastA
-100: $(BINDIR)/bank2fasta -b $(PREF).bnk > $(PREF).fasta
+100: $(BINDIR)/bank2fasta -b $(BANK) > $(PREF).fasta
 
 ## Analyzing mate-pairs
-300: $(BINDIR)/asmQC -b $(PREF).bnk -scaff -recompute -update -numsd 2
-310: $(BINDIR)/asmQC -b $(PREF).bnk -scaff -recompute -update -numsd 2
-320: $(BINDIR)/asmQC -b $(PREF).bnk -scaff -feat -numsd 3 -shortcvg -1 -longcvg -1
-330: $(BINDIR)/cestat-cov -i -f 4 $(PREF).bnk > $(PREF).ce.feat
-340: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).ce.feat
+300: $(BINDIR)/asmQC -b $(BANK) -scaff -recompute -update -numsd 2
+310: $(BINDIR)/asmQC -b $(BANK) -scaff -recompute -update -numsd 2
+320: $(BINDIR)/asmQC -b $(BANK) -scaff -feat -numsd 3 -shortcvg -1 -longcvg -1
+330: $(BINDIR)/cestat-cov -i -f 4 $(BANK) > $(PREF).ce.feat
+340: $(BINDIR)/loadFeatures -i $(BANK) $(PREF).ce.feat
 
 ## Analyzing SNPs
-400: $(BINDIR)/analyzeSNPs -i -b $(PREF).bnk -S -cumqv 40 -minsnps 2 -r -H > $(PREF).snps
+400: $(BINDIR)/analyzeSNPs -i -b $(BANK) -S -cumqv 40 -minsnps 2 -r -H > $(PREF).snps
 410: $(BINDIR)/clusterSnps $(PREF).snps > $(PREF).snp.feat
-420: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).snp.feat
+420: $(BINDIR)/loadFeatures -i $(BANK) $(PREF).snp.feat
 
 ## Analyzing read coverage
-500: $(BINDIR)/analyze-read-depth -i $(PREF).bnk -c 1000 -x 3 > $(PREF).depth.feat
-510: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).depth.feat
+500: $(BINDIR)/analyze-read-depth -i $(BANK) -c 1000 -x 3 > $(PREF).depth.feat
+510: $(BINDIR)/loadFeatures -i $(BANK) $(PREF).depth.feat
 
 ## Align singleton reads
-600: $(BINDIR)/listReadPlacedStatus -S -E $(PREF).bnk > $(PREF).singletons
-610: $(BINDIR)/dumpreads -E $(PREF).singletons $(PREF).bnk > $(PREF).singletons.seq
+600: $(BINDIR)/listReadPlacedStatus -S -E $(BANK) > $(PREF).singletons
+CR_CMD = $(shell if [ $(CLEAR_RANGE\) -eq 0 ]; then /bin/echo -n '-r'; fi)
+610: $(BINDIR)/dumpreads $(CR_CMD) -E $(PREF).singletons $(BANK) > $(PREF).singletons.seq
 620: $(NUCMER) --prefix=$(PREF) $(PREF).fasta $(PREF).singletons.seq
 
 ## Analyzing singleton alignment breakpoints
-700: $(BINDIR)/casm-breaks -b $(PREF).bnk -t 100 -c 2 -F $(PREF).break.fea $(PREF).delta 
-710: $(BINDIR)/bank-transact -b $(PREF).bnk -m $(PREF).break.fea
+700: $(BINDIR)/casm-breaks -b $(BANK) -t 100 -c 2 -F $(PREF).break.fea $(PREF).delta 
+710: $(BINDIR)/bank-transact -b $(BANK) -m $(PREF).break.fea
 
 ## Analyzing kmer-coverage
-800: $(BINDIR)/count-kmers -n $(PREF).bnk -m 22 > $(PREF).22.n22mers
+800: $(BINDIR)/count-kmers -n $(BANK) -m 22 > $(PREF).22.n22mers
 810: $(BINDIR)/kmer-cov -A -F -L 1000 $(PREF).22.n22mers < $(PREF).fasta > $(PREF).nkmer.feat
-820: $(BINDIR)/loadFeatures -u -i $(PREF).bnk $(PREF).nkmer.feat
+820: $(BINDIR)/loadFeatures -u -i $(BANK) $(PREF).nkmer.feat
 
 ## Combine features
-1000: $(BINDIR)/dumpFeatures -i $(PREF).bnk | sort -k1 -nk3 > $(PREF).all.feat
+1000: $(BINDIR)/dumpFeatures -i $(BANK) | sort -k1 -nk3 > $(PREF).all.feat
 1010: $(BINDIR)/suspiciousfeat2region $(PREF).all.feat > $(PREF).suspicious.feat
-1020: $(BINDIR)/loadFeatures -i $(PREF).bnk $(PREF).suspicious.feat
+1020: $(BINDIR)/loadFeatures -i $(BANK) $(PREF).suspicious.feat
