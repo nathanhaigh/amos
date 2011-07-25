@@ -310,9 +310,9 @@ void PrintHelp (const char * s)
     << "-v            Display the compatible bank version\n"
     << endl;
   cerr
-    << "Print the CE-statistic value at the beginning and end of each\n"
-    << "insert across each scaffold separated by library. If no\n"
-    << "scaffold data available, use contigs.\n\n";
+    << "Print the compression-expansion (CE) statistic value at the beginning and end \n"
+    << "of each insert across each scaffold separated by library. If no scaffold data \n"
+    << "available, use contigs.\n\n";
   return;
 }
 
