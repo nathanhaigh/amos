@@ -247,8 +247,9 @@ AC_DEFUN([AMOS_QT4],
         if test -x $amos_qt_include_dir &&
            test -x $amos_qt_bin_dir/moc &&
            test -x $amos_qt_lib_dir; then
-               have_qt4=yes
-                amos_qt_LIBS="-Wl,-rpath,$amos_qt_lib_dir -L$amos_qt_lib_dir -lQtGui -lQtOpenGL -lQtCore -lX11 -lXext -lXmu -lXt -lXi -lGLU -lGL -lpthread"
+                have_qt4=yes
+                amos_qt_LIBS="-Wl,-O1 -Wl,-rpath,$amos_qt_lib_dir -L$amos_qt_lib_dir -lQt3Support -lQtNetwork -lQtGui -lQtCore -lpng \
+                -lgobject-2.0 -lSM -lICE -lXrender -lfontconfig -lfreetype -lXext -lz -lm -lgthread-2.0"
         fi
     fi
 
@@ -365,7 +366,7 @@ EOF
       if AC_TRY_EVAL("$QT_MOC amos_qt_test.h -o moc_amos_qt_test.$ac_ext"); then
         if AC_TRY_EVAL("$CXX $QT_CXXFLAGS -c $CXXFLAGS -o moc_amos_qt_test.o moc_amos_qt_test.$ac_ext"); then
           if AC_TRY_EVAL("$CXX $QT_CXXFLAGS -c $CXXFLAGS -o amos_qt_main.o amos_qt_main.$ac_ext"); then
-            if AC_TRY_EVAL("$CXX $QT_LIBS $LIBS -o amos_qt_main amos_qt_main.o moc_amos_qt_test.o"); then
+            if AC_TRY_EVAL("$CXX $QT_LIBS $LIBS -o amos_qt_main amos_qt_main.o moc_amos_qt_test.o $QT_LIBS"); then
               ac_cv_qt_test_result="yes"
             fi
           fi
