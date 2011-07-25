@@ -1,10 +1,9 @@
 ____CTG BANK INFORMATION____
-bank version = 3.0
+bank version = 2.8
 bank type = 4674627
-versions = 1
-objects = 8	
-indices = 8	
-bytes/index = 26
+objects = 8
+indices = 8
+bytes/index = 22
 partitions = 1
 indices/partition = 1000000
 locks = 

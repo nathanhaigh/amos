@@ -1,9 +1,8 @@
 ____RED BANK INFORMATION____
-bank version = 3.0
+bank version = 2.8
 bank type = 4474194
-versions = 1
-objects = 151	
-indices = 151	
+objects = 151
+indices = 151
 bytes/index = 55
 partitions = 1
 indices/partition = 1000000
