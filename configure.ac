@@ -129,6 +129,7 @@ AC_CANONICAL_HOST
 AMOS_BUILD_CONDITIONAL([AMOScmp], [no])
 AMOS_BUILD_CONDITIONAL([minimus], [no])
 AMOS_BUILD_CONDITIONAL([Simulator], [no])
+AMOS_BUILD_CONDITIONAL([Experimental], [no])
 AMOS_BUILD_CONDITIONAL([all], [yes])
 
 AM_CONDITIONAL(BUILD_LIBZ, [test x"${have_libz}" = x"yes"])
@@ -172,6 +173,7 @@ AC_CONFIG_FILES(
    src/Foundation/Makefile \
    src/Persistant/Makefile \
    src/hawkeye/Makefile \
+   src/Experimental/Makefile \
    ]
 )
 

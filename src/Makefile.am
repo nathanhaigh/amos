@@ -13,7 +13,7 @@ SUBDIRS += \
 	Message \
 	Bank \
 	Align \
-        Tigger \
+	Tigger \
 	Compare \
 	Bambus \
 	Casm \
@@ -32,6 +32,11 @@ SUBDIRS += \
 if BUILD_QT4
 SUBDIRS += hawkeye
 endif BUILD_QT4
+
+if BUILD_Experimental
+SUBDIRS += Experimental
+endif BUILD_Experimental
+
 endif BUILD_all
 
 if BUILD_AMOScmp
