@@ -43,6 +43,7 @@ am__aclocal_m4_deps = $(top_srcdir)/config/amos.m4 \
 	$(top_srcdir)/config/getopt.m4 \
 	$(top_srcdir)/config/onceonly_2_57.m4 \
 	$(top_srcdir)/config/perlmodules.m4 \
+	$(top_srcdir)/config/pythonmodules.m4 \
 	$(top_srcdir)/config/strtod.m4 $(top_srcdir)/config/strtol.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -183,10 +184,8 @@ PERL = @PERL@
 POW_LIB = @POW_LIB@
 PYTHON = @PYTHON@
 QT_CXXFLAGS = @QT_CXXFLAGS@
-QT_DIR = @QT_DIR@
 QT_LIBS = @QT_LIBS@
 QT_MOC = @QT_MOC@
-QT_UIC = @QT_UIC@
 RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -781,6 +780,7 @@ install-bin-scripts-hook: $(dist_bin_SCRIPTS) $(bin_SCRIPTS)
                 echo " configuring python '$$b'"; \
                 echo '#!$(PYTHON)' > "$(DESTDIR)$(bindir)/$$b"; \
                 sed -e '1 {s|^#!.*$$||;}' \
+                    -e 's|^AMOSDIR[     ]*=.*$$|AMOSDIR=\"$(bindir)/\"|' \
                     "$(DESTDIR)$(bindir)/$$f" >> "$(DESTDIR)$(bindir)/$$b" \
                 || exit 1; \
                 ;; \

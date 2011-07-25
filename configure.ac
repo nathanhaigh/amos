@@ -87,7 +87,7 @@ AC_STRUCT_TM
 AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
 AMOS_C_BITFIELDS
-AMOS_QT
+AMOS_QT4
 AMOS_BOOST
 AMOS_CA
 
@@ -132,7 +132,7 @@ AMOS_BUILD_CONDITIONAL([Simulator], [no])
 AMOS_BUILD_CONDITIONAL([all], [yes])
 
 AM_CONDITIONAL(BUILD_LIBZ, [test x"${have_libz}" = x"yes"])
-AM_CONDITIONAL(BUILD_QT, [test x"${have_qt_test}" = x"yes"])
+AM_CONDITIONAL(BUILD_QT4, [test x"${have_qt4_test}" = x"yes"])
 AM_CONDITIONAL(BUILD_BOOST, [test x"${have_boost_test}" = x"yes"])
 
 # makefiles to configure
@@ -171,6 +171,7 @@ AC_CONFIG_FILES(
    src/Contig/Makefile \
    src/Foundation/Makefile \
    src/Persistant/Makefile \
+   src/hawkeye/Makefile \
    ]
 )
 
@@ -267,6 +268,16 @@ fi
 if test x"${BLAT}" = x":"  ||  ! test -x "${BLAT}"; then
   echo "WARNING! BLAT was not found but is required to run minimus2-blat"
   echo "   install BLAT if planning on using minimus2-blat"
+fi
+
+if test x"${have_qt4}" != x"yes"; then
+  echo "WARNING! Qt4 toolkit was not found but is required to run AMOS GUIs"
+  echo "   install Qt4 or locate Qt4 with configure to build GUIs"
+  echo "   see config.log for more information on what went wrong"
+elif test x"${have_qt4_test}" != x"yes"; then
+  echo "WARNING! Qt4 toolkit malfunctioning but is required to run AMOS GUIs"
+  echo "   try compiling GUIs manually or reinstall Qt4 toolkit to build GUIs"
+  echo "   see config.log for more information on what went wrong"
 fi
 
 if test x"${have_boost}" != x"yes"; then

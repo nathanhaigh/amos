@@ -60,30 +60,28 @@ fi
 ])
 
 
-##-- AMOS_QT -------------------------------------------------------------------
-# @synopsis AMOS_QT
-#  [--with-Qt-dir=DIR]
-#  [--with-Qt-include-dir=DIR]
-#  [--with-Qt-bin-dir=DIR]
-#  [--with-Qt-lib-dir=DIR]
-#  [--with-Qt-lib=LIB]
+##-- AMOS_QT4 -------------------------------------------------------------------
+# @synopsis AMOS_QT4
+#  [--with-Qt4-dir=DIR]
+#  [--with-Qt4-include-dir=DIR]
+#  [--with-Qt4-bin-dir=DIR]
+#  [--with-Qt4-lib-dir=DIR]
+#  [--with-Qt4-lib=LIB]
 #
 # @summary Search for Trolltech's Qt GUI framework.
 #
-# Modified to only search for Qt3
+# Modified to only search for Qt4
 #
 # The following variables are set to either "yes" or "no"
 #
-#   have_qt                      // if Qt was found somewhere
-#   have_qt_test                 // if Qt worked
+#   have_qt4                      // if Qt was found somewhere
+#   have_qt4_test                 // if Qt worked
 #
 # Additionally, the following variables are exported:
 #
 #   QT_CXXFLAGS
 #   QT_LIBS
 #   QT_MOC
-#   QT_UIC
-#   QT_DIR
 #
 # which respectively contain an "-I" flag pointing to the Qt include
 # directory (and "-DQT_THREAD_SUPPORT" when LIB is "qt-mt"), link
@@ -107,20 +105,20 @@ fi
 #
 # Options:
 #
-# --with-Qt-dir=DIR: DIR is equal to $QTDIR if you have followed the
+# --with-Qt4-dir=DIR: DIR is equal to $QTDIR if you have followed the
 # installation instructions of Trolltech. Header files are in
 # DIR/include, binary utilities are in DIR/bin and the library is in
 # DIR/lib.
 #
-# --with-Qt-include-dir=DIR
-# --with-Qt-bin-dir=DIR
-# --with-Qt-lib-dir=DIR
+# --with-Qt4-include-dir=DIR
+# --with-Qt4-bin-dir=DIR
+# --with-Qt4-lib-dir=DIR
 # Override the --with-Qt-dir option for specific dirs.
 #
-# --with-Qt-lib=LIB: Use -lLIB to link with the Qt library.
+# --with-Qt4-lib=LIB: Use -lLIB to link with the Qt library.
 #
 # If some option "=no" or, equivalently, a --without-Qt-* version is
-# given in stead of a --with-Qt-*, "have_qt" is set to "no" and the
+# given in stead of a --with-Qt-*, "have_qt4" is set to "no" and the
 # other variables are set to the empty string.
 #
 # @category InstalledPackages
@@ -131,85 +129,89 @@ fi
 # Copyright (C) 2001, 2002, 2003, 2005, Bastiaan Veelo
 
 # Calls AMOS_PATH_QT_DIRECT (contained in this file) as a subroutine.
-AC_DEFUN([AMOS_QT],
+AC_DEFUN([AMOS_QT4],
 [
   # THANKS! This code includes bug fixes and contributions made by:
   # Tim McClarren,
   # Dennis R. Weilert,
   # Qingning Huo.
 
-  # Custom edits for AMOS made by Adam Phillippy
+  # Custom edits for AMOS made by Adam Phillippy, Michael Schatz
 
   AC_REQUIRE([AC_PROG_CXX])
   AC_REQUIRE([AC_PATH_X])
   AC_REQUIRE([AC_PATH_XTRA])
 
-  AC_MSG_CHECKING([for Qt])
+  AC_MSG_CHECKING([for Qt4])
 
-  AC_ARG_WITH([Qt-dir],
-    [  --with-Qt-dir=DIR       DIR is equal to QTDIR if you have followed the
+  AC_ARG_WITH([Qt4-dir],
+    [  --with-Qt4-dir=DIR       DIR is equal to QTDIR if you have followed the
                           installation instructions of Trolltech. Header files
                           are in DIR/include, binary utilities are in DIR/bin
                           and the library is in DIR/lib. Use the options below
-                          to override these defaults])
-  AC_ARG_WITH([Qt-include-dir], [  --with-Qt-include-dir=DIR])
-  AC_ARG_WITH([Qt-bin-dir], [  --with-Qt-bin-dir=DIR])
-  AC_ARG_WITH([Qt-lib-dir], [  --with-Qt-lib-dir=DIR])
-  AC_ARG_WITH([Qt-lib],
-    [  --with-Qt-lib=LIB       Use -lLIB to link the Qt library])
+                          to override these defaults. On OS X, use this to set
+                          the path to the directory with the Qt frameworks.])
+  AC_ARG_WITH([Qt4-include-dir], [  --with-Qt4-include-dir=DIR])
+  AC_ARG_WITH([Qt4-bin-dir], [  --with-Qt4-bin-dir=DIR])
+  AC_ARG_WITH([Qt4-lib-dir], [  --with-Qt4-lib-dir=DIR])
+  AC_ARG_WITH([Qt4-lib],
+    [  --with-Qt4-lib=LIB       Use -lLIB to link the Qt library])
 
-  if test x"$with_Qt_dir" = x"no" ||
-     test x"$with_Qt_include_dir" = x"no" ||
-     test x"$with_Qt_bin_dir" = x"no" ||
-     test x"$with_Qt_lib_dir" = x"no" ||
-     test x"$with_Qt_lib" = x"no"; then
+  if test x"$with_Qt4_dir" = x"no" ||
+     test x"$with_Qt4_include_dir" = x"no" ||
+     test x"$with_Qt4_bin_dir" = x"no" ||
+     test x"$with_Qt4_lib_dir" = x"no" ||
+     test x"$with_Qt4_lib" = x"no"; then
     # user disabled Qt. Leave cache alone.
-    have_qt="disabled"
+    have_qt4="disabled"
   else
     # "yes" is a bogus option
-    if test x"$with_Qt_dir" = xyes; then
-      with_Qt_dir=
+    if test x"$with_Qt4_dir" = xyes; then
+      with_Qt4_dir=
     fi
-    if test x"$with_Qt_include_dir" = xyes; then
-      with_Qt_include_dir=
+    if test x"$with_Qt4_include_dir" = xyes; then
+      with_Qt4_include_dir=
     fi
-    if test x"$with_Qt_bin_dir" = xyes; then
-      with_Qt_bin_dir=
+    if test x"$with_Qt4_bin_dir" = xyes; then
+      with_Qt4_bin_dir=
     fi
-    if test x"$with_Qt_lib_dir" = xyes; then
-      with_Qt_lib_dir=
+    if test x"$with_Qt4_lib_dir" = xyes; then
+      with_Qt4_lib_dir=
     fi
-    if test x"$with_Qt_lib" = xyes; then
-      with_Qt_lib=
+    if test x"$with_Qt4_lib" = xyes; then
+      with_Qt4_lib=
     fi
+
     # check for some answers
-    if test x"$with_Qt_dir" != x; then
-      amos_qt_dir="$with_Qt_dir"
+    if test x"$with_Qt4_dir" != x; then
+      amos_qt_dir="$with_Qt4_dir"
     else
       amos_qt_dir=
     fi
-    if test x"$with_Qt_include_dir" != x; then
-      amos_qt_include_dir="$with_Qt_include_dir"
+    if test x"$with_Qt4_include_dir" != x; then
+      amos_qt_include_dir="$with_Qt4_include_dir"
     else
       amos_qt_include_dir=
     fi
-    if test x"$with_Qt_bin_dir" != x; then
-      amos_qt_bin_dir="$with_Qt_bin_dir"
+    if test x"$with_Qt4_bin_dir" != x; then
+      amos_qt_bin_dir="$with_Qt4_bin_dir"
     else
       amos_qt_bin_dir=
     fi
-    if test x"$with_Qt_lib_dir" != x; then
-      amos_qt_lib_dir="$with_Qt_lib_dir"
+    if test x"$with_Qt4_lib_dir" != x; then
+      amos_qt_lib_dir="$with_Qt4_lib_dir"
     else
       amos_qt_lib_dir=
     fi
-    if test x"$with_Qt_lib" != x; then
-      amos_qt_lib="$with_Qt_lib"
+    if test x"$with_Qt4_lib" != x; then
+      amos_qt_lib="$with_Qt4_lib"
     else
       amos_qt_lib=
     fi
+
     # No Qt unless we discover otherwise
-    have_qt=no
+    have_qt4=no
+
     # Check whether we were supplied with the whole answer
     if test x"$amos_qt_dir" != x ||
        (
@@ -218,34 +220,49 @@ AC_DEFUN([AMOS_QT],
        test x"$amos_qt_lib_dir" != x
        ); then
 
-      if test x"$amos_qt_dir" = x; then
-        amos_qt_dir="$amos_qt_bin_dir"
-      fi
-      if test x"$amos_qt_include_dir" = x; then
-        amos_qt_include_dir="$amos_qt_dir/include"
-      fi
-      if test x"$amos_qt_bin_dir" = x; then
-        amos_qt_bin_dir="$amos_qt_dir/bin"
-      fi
-      if test x"$amos_qt_lib_dir" = x; then
-        amos_qt_lib_dir="$amos_qt_dir/lib"
-      fi
-
-      if test -x $amos_qt_include_dir &&
-         test -x $amos_qt_bin_dir/moc &&
-         test -x $amos_qt_lib_dir; then
-        have_qt=yes
-        # Only search for the lib if the user did not define one already
-        if test x"$amos_qt_lib" = x; then
-          amos_qt_lib="`ls $amos_qt_lib_dir/libqt* 2>/dev/null | sed -n 1p | sed s@$amos_qt_lib_dir/lib@@ | [sed s@[.].*@@]`"
-        fi
-        amos_qt_LIBS="-L$amos_qt_lib_dir -l$amos_qt_lib $X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt -lXi $X_EXTRA_LIBS"
+      if test `uname -s` = Darwin && 
+         test -x $amos_qt_dir &&
+         test -x "$amos_qt_dir/QtCore.framework" &&
+         test -x "$amos_qt_dir/Qt3Support.framework" &&
+         test -x "$amos_qt_dir/QtGui.framework"; then
+              have_qt4=yes
+              amos_qt_LIBS="-F$amos_qt_dir -framework Qt3Support -framework QtGui -framework QtCore"
       else
-        have_qt=no
-      fi
+        if test x"$amos_qt_dir" = x; then
+          amos_qt_dir="$amos_qt_bin_dir"
+        fi
+
+        if test x"$amos_qt_include_dir" = x; then
+          amos_qt_include_dir="$amos_qt_dir/include"
+        fi
+
+        if test x"$amos_qt_bin_dir" = x; then
+          amos_qt_bin_dir="$amos_qt_dir/bin"
+        fi
+
+        if test x"$amos_qt_lib_dir" = x; then
+          amos_qt_lib_dir="$amos_qt_dir/lib"
+        fi
+
+        if test -x $amos_qt_include_dir &&
+           test -x $amos_qt_bin_dir/moc &&
+           test -x $amos_qt_lib_dir; then
+               have_qt4=yes
+                amos_qt_LIBS="-Wl,-rpath,$amos_qt_lib_dir -L$amos_qt_lib_dir -lQtGui -lQtOpenGL -lQtCore -lX11 -lXext -lXmu -lXt -lXi -lGLU -lGL -lpthread"
+        fi
+    fi
+
+    #echo "MCS 3 with_Qt4_dir: \"$with_Qt4_dir\""
+    #echo "MCS 3 amos_qt_dir: \"$amos_qt_dir\""
+    #echo "MCS 3 amos_qt_bin_dir: \"$amos_qt_bin_dir\""
+    #echo "MCS 3 amos_qt_include_dir: \"$amos_qt_include_dir\""
+    #echo "MCS 3 amos_qt_lib_dir: \"$amos_qt_lib_dir\""
+    #echo "MCS 3 have_qt4: \"$have_qt4\""
+    #echo "MCS 3 amos_qt_LIBS: \"$amos_qt_LIBS\""
+
     # Use cached value or do search
     else
-      AC_CACHE_VAL(ac_cv_have_qt,
+      AC_CACHE_VAL(ac_cv_have_qt4,
       [
         # We are not given a solution and there is no cached value
         AMOS_PATH_QT_DIRECT
@@ -255,10 +272,10 @@ AC_DEFUN([AMOS_QT],
            test x"$amos_qt_lib_dir" = x ||
            test x"$amos_qt_lib" = x; then
           # Problem with finding complete Qt. Cache the known absence of Qt.
-          ac_cv_have_qt="have_qt=no"
+          ac_cv_have_qt4="have_qt4=no"
         else
           # Record where we found Qt for the cache.
-          ac_cv_have_qt="have_qt=yes                  \
+          ac_cv_have_qt4="have_qt4=yes                  \
                        amos_qt_dir=$amos_qt_dir         \
                amos_qt_include_dir=$amos_qt_include_dir \
                    amos_qt_bin_dir=$amos_qt_bin_dir     \
@@ -267,57 +284,48 @@ AC_DEFUN([AMOS_QT],
                       amos_qt_LIBS=\"$amos_qt_LIBS\""
         fi
       ])dnl
-      eval "$ac_cv_have_qt"
+      eval "$ac_cv_have_qt4"
     fi # all $amos_qt_* are set
-  fi   # $have_qt reflects the system status
-  if test x"$have_qt" = xyes; then
-    QT_CXXFLAGS="-I$amos_qt_include_dir"
-    if test x"$amos_qt_lib" = x"qt-mt"; then
-        QT_CXXFLAGS="$QT_CXXFLAGS -DQT_THREAD_SUPPORT"
-    fi
-    QT_DIR="$amos_qt_dir"
-    QT_LIBS="$amos_qt_LIBS"
-    # If amos_qt_dir is defined, utilities are expected to be in the
-    # bin subdirectory
-    if test x"$amos_qt_dir" != x; then
-        if test -x "$amos_qt_dir/bin/uic"; then
-          QT_UIC="$amos_qt_dir/bin/uic"
-        else
-          # Old versions of Qt don't have uic
-          QT_UIC=
-        fi
-      QT_MOC="$amos_qt_dir/bin/moc"
+  fi   # $have_qt4 reflects the system status
+
+  if test x"$have_qt4" = xyes; then
+    if test `uname -s` = "Darwin" && test x"$amos_qt_dir" != x && test -x "$amos_qt_dir/QtGui.framework"; then
+      QT_CXXFLAGS="-I$amos_qt_dir/QtGui.framework/Headers/ -I$amos_qt_dir/QtCore.framework/Headers/ -I$amos_qt_dir/Qt3Support.framework/Headers/ -DQT_QT3SUPPORT_LIB -DQT3_SUPPORT -DQT_GUI_LIB -DQT_CORE_LIB -DQT_SHARED"
     else
-      # Or maybe we are told where to look for the utilities
-      if test x"$amos_qt_bin_dir" != x; then
-        if test -x "$amos_qt_bin_dir/uic"; then
-          QT_UIC="$amos_qt_bin_dir/uic"
-        else
-          # Old versions of Qt don't have uic
-          QT_UIC=
-        fi
-        QT_MOC="$amos_qt_bin_dir/moc"
-      else
-      # Last possibility is that they are in $PATH
-        QT_UIC="`which uic`"
-        QT_MOC="`which moc`"
+      QT_CXXFLAGS="-I$amos_qt_include_dir -I$amos_qt_include_dir/QtGui -I$amos_qt_include_dir/QtCore -I$amos_qt_include_dir/Qt3Support -DQT_QT3SUPPORT_LIB -DQT3_SUPPORT -DQT_GUI_LIB -DQT_CORE_LIB -DQT_SHARED"
+      if test x"$amos_qt_lib" = x"qt-mt"; then
+          QT_CXXFLAGS="$QT_CXXFLAGS -DQT_THREAD_SUPPORT"
       fi
     fi
+
+    QT_LIBS="$amos_qt_LIBS"
+    
+    # If amos_qt_dir is defined, utilities are expected to be in the
+    # bin subdirectory, else check the qt_bin dir, else check path
+    
+    if test x"$amos_qt_dir" != x && test -x $amos_qt_dir/bin/moc; then
+      QT_MOC="$amos_qt_dir/bin/moc"
+    elif test x"$amos_qt_bin_dir" != x && test -x $amos_qt_bin_dir/moc; then
+        QT_MOC="$amos_qt_bin_dir/moc"
+    else
+        QT_MOC="`which moc`"
+    fi
+
+    if test ! -x $QT_MOC; then
+       have_qt4=no
+    fi
+
     # All variables are defined, report the result
-    AC_MSG_RESULT([$have_qt])
+    AC_MSG_RESULT([$have_qt4])
   else
     # Qt was not found
     QT_CXXFLAGS=
-    QT_DIR=
     QT_LIBS=
-    QT_UIC=
     QT_MOC=
-    AC_MSG_RESULT([$have_qt])
+    AC_MSG_RESULT([$have_qt4])
   fi
   AC_SUBST(QT_CXXFLAGS)
-  AC_SUBST(QT_DIR)
   AC_SUBST(QT_LIBS)
-  AC_SUBST(QT_UIC)
   AC_SUBST(QT_MOC)
 
   # Check if Qt can actually be used as expected
@@ -326,9 +334,9 @@ AC_DEFUN([AMOS_QT],
   [
     ac_cv_qt_test_result="no"
 
-    if test x"$have_qt" = xyes; then
+    if test x"$have_qt4" = xyes; then
       cat > amos_qt_test.h << EOF
-#include <qobject.h>
+#include <QObject>
 class Test : public QObject
 {
 Q_OBJECT
@@ -343,8 +351,9 @@ signals:
 EOF
 
       cat > amos_qt_main.$ac_ext << EOF
+
 #include "amos_qt_test.h"
-#include <qapplication.h>
+#include <QApplication>
 int main( int argc, char **argv )
 {
   QApplication app( argc, argv );
@@ -368,13 +377,13 @@ EOF
         sed 's/^/| /' amos_qt_main.$ac_ext >&AS_MESSAGE_LOG_FD()
       fi
 
-    fi # if have_qt
+    fi # if have_qt4
   ])dnl AC_CACHE_VAL ac_cv_qt_test_result
   AC_MSG_RESULT([$ac_cv_qt_test_result])
   rm -f amos_qt_test.h moc_amos_qt_test.$ac_ext moc_amos_qt_test.o \
         amos_qt_main.$ac_ext amos_qt_main.o amos_qt_main
 
-  have_qt_test=$ac_cv_qt_test_result
+  have_qt4_test=$ac_cv_qt_test_result
 ])
 
 
@@ -384,6 +393,18 @@ EOF
 # amos_qt_dir amos_qt_include_dir amos_qt_bin_dir amos_qt_lib_dir amos_qt_lib
 AC_DEFUN([AMOS_PATH_QT_DIRECT],
 [
+  if test `uname -s` = Darwin && 
+     test -x "/Library/Frameworks/QtCore.framework" &&
+     test -x "/Library/Frameworks/Qt3Support.framework" &&
+     test -x "/Library/Frameworks/QtGui.framework"; then
+          amos_qt_dir=/Library/Frameworks/
+          amos_qt_lib_dir=$amos_qt_dir
+          amos_qt_lib="QtGui"
+          amos_qt_include_dir=$amos_qt_dir
+          amos_qt_bin_dir=$amos_qt_dir
+          amos_qt_LIBS="-F$amos_qt_dir -framework Qt3Support -framework QtGui -framework QtCore"
+  else
+
   if test x"$amos_qt_include_dir" = x; then
     # The following header file is expected to define QT_VERSION_STR.
     qt_direct_test_header=qglobal.h
@@ -439,6 +460,7 @@ AC_DEFUN([AMOS_PATH_QT_DIRECT],
       amos_qt_lib="`ls $amos_qt_lib_dir/libqt* 2>/dev/null | sed -n 1p | sed s@$amos_qt_lib_dir/lib@@ | [sed s@[.].*@@]`"
     fi
     amos_qt_LIBS="-L$amos_qt_lib_dir -l$amos_qt_lib $X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt -lXi $X_EXTRA_LIBS"
+  fi
   fi
 ])
 
