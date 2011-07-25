@@ -3,7 +3,7 @@ cd /
 cd Users/amos/
 cd amos/
 
-./bootstrap > /Users/amos/macOS.log
+./bootstrap >> /Users/amos/macOS.log
 if [ $? -ne 0 ]
 then
 cp /Users/amos/macOS.log /Users/amos/macOS_Failed.log
