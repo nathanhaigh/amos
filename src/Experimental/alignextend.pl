@@ -1,0 +1,232 @@
+#!/usr/bin/perl -w
+use strict;
+
+$|=1;
+
+my $USAGE = "alignextend.pl prefix ref fq1 fq2 doflip\n";
+
+my $READLEN = 100;
+my $MAPQ_THRESHOLD = 37;
+
+$ENV{LC_ALL}="C";
+
+sub runCmd
+{
+  my $desc = $_[0];
+  my $outf = $_[1];
+  my $cmd  = $_[2];
+
+  if (! -r $outf)
+  {
+    print "$desc: $cmd...\n";
+    my $rc = system($cmd);
+    die $rc if $rc;
+  }
+}
+
+sub sam2bed
+{
+  my $samfile = shift;
+  my $bedfile = shift;
+
+  return if -r $bedfile;
+
+  open SAM, "< $samfile" or die "Can't open $samfile ($!)\n";
+  open BED, "> $bedfile" or die "Can't open $bedfile ($!)\n";
+
+  my %scafflen;
+
+  print  "Running sam2bed $samfile...\n";
+  my $rdcnt = 0;
+  my $goodrdcnt = 0;
+  my $scaffcnt = 0;
+
+  while (<SAM>)
+  {
+    chomp;
+
+    if (/^\@SQ/)
+    {
+      my ($tag, $sn, $ln) = split /\s+/, $_;
+      my ($snt,$scaffid) = split /:/, $sn;
+      my ($lnt,$scafflen) = split /:/, $ln;
+
+      $scafflen{$scaffid} = $scafflen;
+      $scaffcnt++;
+
+      next;
+    }
+    elsif (/^\@/)
+    {
+      ## other headers, pg, etc
+      next;
+    }
+
+    $rdcnt++;
+
+    my ($name, $flag, $rname, $pos, $mapq, $cigar, $rnext, $pnext, $tlen, $seq, $qual, $attr) = split /\s+/, $_;
+
+    my $base = substr($name, 0, -2); ## trim _1 or _2
+    my $iidx  = substr($name, -1, 1);
+
+    next if $rname eq '*';
+    next if $mapq < $MAPQ_THRESHOLD;
+
+    my $scafflen = $scafflen{$rname};
+
+    if ($flag == 0)
+    {
+      my $startpos = $pos-1;  ## BED is 0-based
+      my $endpos = $startpos + $READLEN - 1;
+
+      if ($endpos >= $scafflen) { $endpos = $scafflen-1;}
+
+      print BED "$rname\t$pos\t$endpos\t$base/$iidx\t1\t+\n"; ## Forward Strand
+      $goodrdcnt++;
+    }
+    elsif ($flag == 16)
+    {
+      my $endpos = $pos+length($seq)-1-1; ## BED is 0-based
+      my $startpos = $endpos - $READLEN+1;
+
+      if ($startpos <= 0) { $startpos = 0; }
+
+      print BED "$rname\t$startpos\t$endpos\t$base/$iidx\t1\t-\n"; ## Reverse Strand
+      $goodrdcnt++;
+    }
+  }
+
+  my $percgood = sprintf("%0.02f", 100*$goodrdcnt / $rdcnt);
+
+  print "Loaded: $scaffcnt scaffolds\n";
+  print "Printed $goodrdcnt of $rdcnt reads ($percgood%)\n";
+}
+
+sub matchSFA
+{
+  my $sfa1 = $_[0];
+  my $sfa2 = $_[1];
+  my $fq1  = $_[2];
+  my $fq2  = $_[3];
+
+  open SFA1, "< $sfa1" or die "Can't open $sfa1 ($!)\n";
+  open SFA2, "< $sfa2" or die "Can't open $sfa2 ($!)\n";
+
+  open FQ1, "> $fq1" or die "Can't open $fq1 ($!)\n";
+  open FQ2, "> $fq2" or die "Can't open $fq2 ($!)\n";
+
+  my %sfa1;
+  my %sfa2;
+
+  print "matchSFA\n";
+  print " scanning $sfa1... ";
+
+  my $cnt = 0;
+
+  while (<SFA1>)
+  {
+    chomp;
+    my ($name, $seq) = split /\t/, $_;
+
+    my $base = substr($name, 0, -2); ## trim /1 or /2
+    my $iidx = substr($name, -1, 1);
+
+    $sfa1{$base}++;
+    $cnt++;
+  }
+
+  close SFA1;
+
+  print "$cnt reads\n";
+
+  $cnt = 0;
+  my $printed = 0;
+
+  print " printing $fq2... ";
+
+  while (<SFA2>)
+  {
+    chomp;
+    my ($name, $seq) = split /\t/, $_;
+
+    my $base = substr($name, 0, -2); ## trim /1 or /2
+    my $iidx  = substr($name, -1, 1);
+
+    $cnt++;
+
+    if (exists $sfa1{$base})
+    {
+      $printed++;
+      $sfa2{$base}++;
+      my $q = '^' x length($seq);
+      print FQ2 "\@$name\n$seq\n+\n$q\n";
+    }
+  }
+
+  print "printed $printed of $cnt\n";
+
+  open SFA1, "< $sfa1" or die "Can't open $sfa1 ($!)\n";
+
+  $cnt = 0;
+  $printed = 0;
+
+  print " printing $fq1... ";
+  
+  while (<SFA1>)
+  {
+    chomp;
+    my ($name, $seq) = split /\t/, $_;
+
+    my $base = substr($name, 0, -2); ## trim /1 or /2
+    my $iidx  = substr($name, -1, 1);
+
+    $cnt++;
+
+    if (exists $sfa2{$base})
+    {
+      $printed++;
+      my $q = '^' x length($seq);
+      print FQ1 "\@$name\n$seq\n+\n$q\n";
+    }
+  }
+
+  print "printed $printed of $cnt\n";
+}
+
+
+my $prefix = $ARGV[0] or die $USAGE;
+my $ref    = $ARGV[1] or die $USAGE;
+my $fq1    = $ARGV[2] or die $USAGE;
+my $fq2    = $ARGV[3] or die $USAGE;
+my $doflip = $ARGV[4] or die $USAGE;
+
+foreach my $idx (1..2)
+{
+  print "idx: $idx\n";
+
+  my $fq = ($idx == 1) ? $fq1 : $fq2;
+  my $samfile = "$prefix.$idx.sam";
+  my $bedfile = "$prefix.$idx.bed";
+
+  if ($doflip)
+  {
+    runCmd("flip tr fq", "$prefix.$idx.fq", "fastx_reverse_complement < $fq | tr '/' '_' > $prefix.$idx.fq");
+  }
+  else
+  {
+    runCmd("tr fq",   "$prefix.$idx.fq",  "tr '/' '_' < $fq > $prefix.$idx.fq");
+  }
+
+  runCmd("bwa aln",    "$prefix.$idx.sai",   "bwa aln $ref $prefix.$idx.fq > $prefix.$idx.sai");
+  runCmd("bwa samse",  "$prefix.$idx.sam",   "bwa samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq");
+
+  sam2bed($samfile, $bedfile);
+
+  runCmd("fastaFromBed", "$prefix.$idx.sfa",  "fastaFromBed -s -name -tab -fi $ref -bed $bedfile -fo $prefix.$idx.sfa");
+  runCmd("sort sfa",     "$prefix.$idx.sfa.s", "sort -k1,1 $prefix.$idx.sfa > $prefix.$idx.sfa.s");
+
+  print "\n";
+}
+
+matchSFA("$prefix.1.sfa.s", "$prefix.2.sfa.s", "$prefix.1e.fq", "$prefix.2e.fq");
+
