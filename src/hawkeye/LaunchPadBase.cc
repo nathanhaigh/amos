@@ -437,7 +437,7 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
     connect( fileQuitAction, SIGNAL( activated() ), this, SLOT( fileExit() ) );
     connect( fileChromatogramPathsAction, SIGNAL( activated() ), this, SLOT( fileChromoPaths() ) );
     connect( fileImportAction, SIGNAL( activated() ), this, SLOT( fileImport() ) );
-    connect( loadAmosFileAction, SIGNAL( activated()), this, SLOT( loadAMosFile()));
+    connect( loadAmosFileAction, SIGNAL( activated()), this, SLOT( loadAmosFile()));
     connect( loadKmersAction, SIGNAL(activated()), this, SLOT(loadKmersFile()));
 
     connect( new QShortcut(QKeySequence(tr("Ctrl+Q")), this), SIGNAL(activated()),
