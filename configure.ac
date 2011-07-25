@@ -171,7 +171,6 @@ AC_CONFIG_FILES(
    src/Staden/progs/Makefile \
    src/Contig/Makefile \
    src/Foundation/Makefile \
-   src/Persistant/Makefile \
    src/hawkeye/Makefile \
    src/Experimental/Makefile \
    ]

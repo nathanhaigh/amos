@@ -22,7 +22,6 @@ SUBDIRS += \
 	Staden \
     Contig \
 	Validation \
-    Persistant \
 	Converters \
 	Utils \
 	PerlModules \

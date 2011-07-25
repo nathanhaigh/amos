@@ -7,7 +7,6 @@ bin_PROGRAMS = \
 	trimByOvl \
 	runAmos \
 	analyzeSNPs \
-	analyzeHaplotypes \
     recallConsensus \
 	cvgStat \
     tagsum-reduce
@@ -38,7 +37,8 @@ dist_bin_SCRIPTS = \
 	nucmer2ovl.pl \
 	sort2.pl \
 	ovl2OVL.pl \
-    fastqqc.pl
+    fastqqc.pl \
+    stats.pl
 
 # runAmos.pl 
 
@@ -62,23 +62,6 @@ analyzeSNPs_LDADD = \
 
 analyzeSNPs_SOURCES = \
 	analyzeSNPs.cc
-
-##-- analyzeHaplotypes
-analyzeHaplotypes_CPPFLAGS = \
-	-I$(top_srcdir)/src/GNU \
-	-I$(top_builddir)/src/GNU \
-	-I$(top_srcdir)/src/AMOS \
-	-I$(top_srcdir)/src/Common \
-    -I$(top_srcdir)/src/Slice
-
-analyzeHaplotypes_LDADD = \
-        $(top_builddir)/src/AMOS/libAMOS.a \
-	$(top_builddir)/src/GNU/libGNU.a \
-	$(top_builddir)/src/Common/libCommon.a \
-        $(top_builddir)/src/Slice/libSlice.a
-
-analyzeHaplotypes_SOURCES = \
-	analyzeHaplotypes.cc
 
 ##-- recallConsensus
 recallConsensus_CPPFLAGS = \
