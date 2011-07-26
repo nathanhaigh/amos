@@ -10,25 +10,36 @@ if (!defined $tf){
 }
 
 if ($ARGV[0] eq '-h') {
-  die "Report the length of the sequences in a FASTA file. If no file is provided, standard input is used\nUSAGE: $0 [fasta_file]\n";
+  die "Report the length of the sequences in a FASTA file. If no file is provided, standard input is used\nUSAGE: $0 [fasta_file1] [fasta_file2] ... [fasta_filen] \n";
 }
+
+sub report
+{
+  my $fr = shift;
+
+  die ("Bad reader\n")
+    if (!defined $fr);
+
+  while (($head, $body) = $fr->getRecord()){
+      $head =~ /(\S+)/;
+      $id = $1;
+      print "$id ", length($body), "\n";
+  }
+}
+
 
 if (scalar @ARGV == 0)
 {
   $fr = new AMOS::ParseFasta(\*STDIN);
+  report($fr);
 }
 else
 {
-open(IN, $ARGV[0]) || $tf->bail("Cannot open $ARGV[0]: $!\n");
-$fr = new AMOS::ParseFasta(\*IN);
+  foreach my $file (@ARGV)
+  {
+    open(IN, $file) || $tf->bail("Cannot open $file: $!\n");
+    $fr = new AMOS::ParseFasta(\*IN);
+    report($fr);
+  }
 }
 
-if (!defined $fr){
-    die ("Bad reader\n");
-}
-
-while (($head, $body) = $fr->getRecord()){
-    $head =~ /(\S+)/;
-    $id = $1;
-    print "$id ", length($body), "\n";
-}
