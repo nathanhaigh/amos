@@ -2,13 +2,13 @@
 cd c:
 cd /home/bryanta/
 cd amos/
-./bootstrap > /cygdrive/c/cygwin/win7Last.log
+./bootstrap > /cygdrive/c/cygwin/win7_updateLast.log
 if [ $? -ne 0 ]
 then
-cp /cygdrive/c/cygwin/win7Last.log /cygdrive/c/cygwin/win7Last_Failed.log
-echo "FAILED: ./bootstrap" >> /cygdrive/c/cygwin/win7Last_Failed.log
+cp /cygdrive/c/cygwin/win7_updateLast.log /cygdrive/c/cygwin/win7_updateLast_Failed.log
+echo "FAILED: ./bootstrap" >> /cygdrive/c/cygwin/win7_updateLast_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /cygdrive/c/cygwin/win7Last_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /cygdrive/c/cygwin/win7_updateLast_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -16,13 +16,13 @@ EOD
 shutdown /s
 fi
 
-./configure --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/win7Last.log
+./configure --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/win7_updateLast.log
 if [ $? -ne 0 ]
 then
-cp /cygdrive/c/cygwin/win7Last.log /cygdrive/c/cygwin/win7Last_Failed.log
-echo "FAILED: ./configure" >> /cygdrive/c/cygwin/win7Last_Failed.log
+cp /cygdrive/c/cygwin/win7_updateLast.log /cygdrive/c/cygwin/win7_updateLast_Failed.log
+echo "FAILED: ./configure" >> /cygdrive/c/cygwin/win7_updateLast_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /cygdrive/c/cygwin/win7Last_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /cygdrive/c/cygwin/win7_updateLast_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -30,13 +30,13 @@ EOD
 shutdown /s
 fi
 
-make >> /cygdrive/c/cygwin/win7Last.log 
+make >> /cygdrive/c/cygwin/win7_updateLast.log 
 if [ $? -ne 0 ]
 then
-cp /cygdrive/c/cygwin/win7Last.log /cygdrive/c/cygwin/win7Last_Failed.log
-echo "FAILED: make" >> /cygdrive/c/cygwin/win7Last_Failed.log
+cp /cygdrive/c/cygwin/win7_updateLast.log /cygdrive/c/cygwin/win7_updateLast_Failed.log
+echo "FAILED: make" >> /cygdrive/c/cygwin/win7_updateLast_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /cygdrive/c/cygwin/win7Last_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /cygdrive/c/cygwin/win7_updateLast_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -44,13 +44,13 @@ EOD
 shutdown /s
 fi
 
-make install >> /cygdrive/c/cygwin/win7Last.log
+make install >> /cygdrive/c/cygwin/win7_updateLast.log
 if [ $? -ne 0 ]
 then
-cp /cygdrive/c/cygwin/win7Last.log /cygdrive/c/cygwin/win7Last_Failed.log
-echo "FAILED: make install" >> /cygdrive/c/cygwin/win7Last_Failed.log
+cp /cygdrive/c/cygwin/win7_updateLast.log /cygdrive/c/cygwin/win7_updateLast_Failed.log
+echo "FAILED: make install" >> /cygdrive/c/cygwin/win7_updateLast_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /cygdrive/c/cygwin/win7Last_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /cygdrive/c/cygwin/win7_updateLast_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -59,14 +59,14 @@ shutdown /s
 fi
 ln -s /usr/local/AMOS/bin/* /usr/local/bin/
 now=$(date +"%y%m%d")
-echo "SUCCESS: complete log stored on http://sauron.cs.umd.edu/$now" >> /cygdrive/c/cygwin/win7Last.log
+echo "SUCCESS: complete log stored on http://sauron.cs.umd.edu/$now" >> /cygdrive/c/cygwin/win7_updateLast.log
 /usr/bin/expect <<EOD
-spawn scp /cygdrive/c/cygwin/win7Last.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /cygdrive/c/cygwin/win7_updateLast.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
 EOD
-rm /cygdrive/c/cygwin/win7Last.log
+rm /cygdrive/c/cygwin/win7_updateLast.log
 
 shutdown /s
 

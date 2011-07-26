@@ -3,13 +3,13 @@ cd /
 cd home/bryanta/
 cd amos/
 
-./bootstrap > /home/bryanta/ubuntuFirst.log
+./bootstrap > /home/bryanta/ubuntu10.10.log
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/ubuntuFirst.log /home/bryanta/ubuntuFirst_Failed.log
-echo "FAILED: ./bootstrap" >> /home/bryanta/ubuntuFirst_Failed.log
+cp /home/bryanta/ubuntu10.10.log /home/bryanta/ubuntu10.10_Failed.log
+echo "FAILED: ./bootstrap" >> /home/bryanta/ubuntu10.10_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/ubuntuFirst_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /home/bryanta/ubuntu10.10_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -17,13 +17,13 @@ EOD
 echo "1234561" | sudo -S shutdown -h now
 fi
 
-./configure --prefix=/usr/local/AMOS >> /home/bryanta/ubuntuFirst.log
+./configure --prefix=/usr/local/AMOS >> /home/bryanta/ubuntu10.10.log
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/ubuntuFirst.log /home/bryanta/ubuntuFirst_Failed.log
-echo "FAILED: ./configure" >> /home/bryanta/ubuntuFirst_Failed.log
+cp /home/bryanta/ubuntu10.10.log /home/bryanta/ubuntu10.10_Failed.log
+echo "FAILED: ./configure" >> /home/bryanta/ubuntu10.10_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/ubuntuFirst_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /home/bryanta/ubuntu10.10_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -31,13 +31,13 @@ EOD
 echo "1234561" | sudo -S shutdown -h now
 fi
 
-make >> /home/bryanta/ubuntuFirst.log
+make >> /home/bryanta/ubuntu10.10.log
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/ubuntuFirst.log /home/bryanta/ubuntuFirst_Failed.log
-echo "FAILED: make" >> /home/bryanta/ubuntuFirst_Failed.log
+cp /home/bryanta/ubuntu10.10.log /home/bryanta/ubuntu10.10_Failed.log
+echo "FAILED: make" >> /home/bryanta/ubuntu10.10_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/ubuntuFirst_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /home/bryanta/ubuntu10.10_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -45,13 +45,13 @@ EOD
 echo "1234561" | sudo -S shutdown -h now
 fi
 
-make check >> /home/bryanta/ubuntuFirst.log
+make check >> /home/bryanta/ubuntu10.10.log
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/ubuntuFirst.log /home/bryanta/ubuntuFirst_Failed.log
-echo "FAILED: make check" >> /home/bryanta/ubuntuFirst_Failed.log
+cp /home/bryanta/ubuntu10.10.log /home/bryanta/ubuntu10.10_Failed.log
+echo "FAILED: make check" >> /home/bryanta/ubuntu10.10_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/ubuntuFirst_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /home/bryanta/ubuntu10.10_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -59,13 +59,13 @@ EOD
 echo "1234561" | sudo -S shutdown -h now
 fi
 
-echo "1234561" | sudo -S make install >> /home/bryanta/ubuntuFirst.log
+echo "1234561" | sudo -S make install >> /home/bryanta/ubuntu10.10.log
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/ubuntuFirst.log /home/bryanta/ubuntuFirst_Failed.log
-echo "FAILED: make install" >> /home/bryanta/ubuntuFirst_Failed.log
+cp /home/bryanta/ubuntu10.10.log /home/bryanta/ubuntu10.10_Failed.log
+echo "FAILED: make install" >> /home/bryanta/ubuntu10.10_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/ubuntuFirst_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /home/bryanta/ubuntu10.10_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
@@ -76,16 +76,16 @@ fi
 echo "1234561" | sudo -S ln -s /usr/local/AMOS/bin/* /usr/local/bin/
 echo "sending log to walnut..."
 now=$(date +"%y%m%d")
-echo "SUCCESS: complete log stored on http://sauron.cs.umd.edu/$now" >> /home/bryanta/ubuntuFirst.log
+echo "SUCCESS: complete log stored on http://sauron.cs.umd.edu/$now" >> /home/bryanta/ubuntu10.10.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/ubuntuFirst.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /home/bryanta/ubuntu10.10.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
 EOD
 
 echo "deleting log..."
-rm /home/bryanta/ubuntuFirst.log
+rm /home/bryanta/ubuntu10.10.log
 
 echo "shutting down..."
 echo "1234561" | sudo -S shutdown -h now
