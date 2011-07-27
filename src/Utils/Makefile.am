@@ -38,7 +38,8 @@ dist_bin_SCRIPTS = \
 	sort2.pl \
 	ovl2OVL.pl \
     fastqqc.pl \
-    stats.pl
+    stats.pl \
+    revFasta.pl
 
 # runAmos.pl 
 
