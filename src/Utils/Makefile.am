@@ -38,6 +38,7 @@ dist_bin_SCRIPTS = \
 	sort2.pl \
 	ovl2OVL.pl \
     fastqqc.pl \
+    fastq_to_fasta_fast.pl \
     stats.pl \
     revFasta.pl
 
