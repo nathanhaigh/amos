@@ -39,6 +39,7 @@ dist_bin_SCRIPTS = \
 	ovl2OVL.pl \
     fastqqc.pl \
     fastq_to_fasta_fast.pl \
+    fixfastq.pl \
     stats.pl \
     revFasta.pl
 
