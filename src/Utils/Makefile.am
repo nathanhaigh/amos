@@ -43,6 +43,7 @@ dist_bin_SCRIPTS = \
     fastqqc.pl \
     fastq_to_fasta_fast.pl \
     fixfastq.pl \
+    fastq_rename.pl \
     stats.pl \
     revFasta.pl
 
