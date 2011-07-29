@@ -31,7 +31,16 @@ fi
 
 if [ $1 == ubuntu ]
 then   
-   echo "1234561" | sudo -S apt-get -y install ssh expect git git-svn wget ash coreutils gawk gcc automake mummer mummer-doc libboost-dev g++ libstatistics-descriptive-perl libdbi-perl
+/usr/bin/expect <<EOD
+spawn cpan
+expect "Would you like me to configure as much as possible automatically?"
+send "yes\r"
+expect eof
+EOD
+cpan DBI
+exit
+    echo "1234561" | sudo -S apt-get -y install git libstatistics-descriptive-perl libdbi-perl 
+    echo "1234561" | sudo -S apt-get -y install ssh expect git-svn wget ash coreutils gawk gcc automake mummer mummer-doc libboost-dev g++ 
 fi
 
 if [[ $1 == fedora || $1 == centos ]]
@@ -92,11 +101,11 @@ then
    fi
   
    cp nucmer delta-filter.exe delta-filter show-coords show-coords.exe /usr/local/bin/
-   chmod 750 /usr/local/bin/nucmer
-   chmod 750 /usr/local/bin/delta-filter
-   chmod 750 /usr/local/bin/delta-filter.exe
-   chmod 750 /usr/local/bin/show-coords.exe
-   chmod 750 /usr/local/bin/show-coords
+   chmod 755 /usr/local/bin/nucmer
+   chmod 755 /usr/local/bin/delta-filter
+   chmod 755 /usr/local/bin/delta-filter.exe
+   chmod 755 /usr/local/bin/show-coords.exe
+   chmod 755 /usr/local/bin/show-coords
    NUCMER=/usr/local/bin/nucmer
    export NUCMER
    cd ..
@@ -131,19 +140,19 @@ echo "installing BLAT..."
        echo "1234561" | sudo -S chmod 777 /usr/local/bin/
    fi
    mv 11.ooc blat faToNib faToTwoBit gfClient gfServer nibFrag pslPretty pslReps pslSort twoBitInfo twoBitToFa webBlat /usr/local/bin/
-   chmod 750 /usr/local/bin/11.ooc 
-   chmod 750 /usr/local/bin/blat 
-   chmod 750 /usr/local/bin/faToNib
-   chmod 750 /usr/local/bin/faToTwoBit 
-   chmod 750 /usr/local/bin/gfClient 
-   chmod 750 /usr/local/bin/gfServer 
-   chmod 750 /usr/local/bin/nibFrag 
-   chmod 750 /usr/local/bin/pslPretty 
-   chmod 750 /usr/local/bin/pslReps 
-   chmod 750 /usr/local/bin/pslSort 
-   chmod 750 /usr/local/bin/twoBitInfo 
-   chmod 750 /usr/local/bin/twoBitToFa 
-   chmod 750 /usr/local/bin/webBlat
+   chmod 755 /usr/local/bin/11.ooc 
+   chmod 755 /usr/local/bin/blat 
+   chmod 755 /usr/local/bin/faToNib
+   chmod 755 /usr/local/bin/faToTwoBit 
+   chmod 755 /usr/local/bin/gfClient 
+   chmod 755 /usr/local/bin/gfServer 
+   chmod 755 /usr/local/bin/nibFrag 
+   chmod 755 /usr/local/bin/pslPretty 
+   chmod 755 /usr/local/bin/pslReps 
+   chmod 755 /usr/local/bin/pslSort 
+   chmod 755 /usr/local/bin/twoBitInfo 
+   chmod 755 /usr/local/bin/twoBitToFa 
+   chmod 755 /usr/local/bin/webBlat
    wget http://hgwdev.cse.ucsc.edu/~kent/exe/data/4.pooc
    wget http://hgwdev.cse.ucsc.edu/~kent/exe/data/5.pooc
    wget http://hgwdev.cse.ucsc.edu/~kent/exe/data/10.ooc
@@ -157,16 +166,16 @@ echo "installing BLAT..."
    wget http://hgwdev.cse.ucsc.edu/~kent/exe/data/mouse11.ooc
    mv *.pooc /usr/local/bin/
    mv *.ooc /usr/local/bin/
-   chmod 750 /usr/local/bin/4.pooc
-   chmod 750 /usr/local/bin/5.pooc
-   chmod 750 /usr/local/bin/10.ooc
-   chmod 750 /usr/local/bin/10empty.ooc
-   chmod 750 /usr/local/bin/11.fat.ooc
-   chmod 750 /usr/local/bin/11.ooc
-   chmod 750 /usr/local/bin/11empty.ooc
-   chmod 750 /usr/local/bin/12.ooc
-   chmod 750 /usr/local/bin/12r.ooc
-   chmod 750 /usr/local/bin/hg17_11.ooc
-   chmod 750 /usr/local/bin/mouse11.ooc
+   chmod 755 /usr/local/bin/4.pooc
+   chmod 755 /usr/local/bin/5.pooc
+   chmod 755 /usr/local/bin/10.ooc
+   chmod 755 /usr/local/bin/10empty.ooc
+   chmod 755 /usr/local/bin/11.fat.ooc
+   chmod 755 /usr/local/bin/11.ooc
+   chmod 755 /usr/local/bin/11empty.ooc
+   chmod 755 /usr/local/bin/12.ooc
+   chmod 755 /usr/local/bin/12r.ooc
+   chmod 755 /usr/local/bin/hg17_11.ooc
+   chmod 755 /usr/local/bin/mouse11.ooc
    cd ..
 
