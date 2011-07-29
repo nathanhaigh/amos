@@ -39,6 +39,7 @@ dist_bin_SCRIPTS = \
 	ovl2OVL.pl \
     fasta_select_len.pl \
     fasta_filter_raw.pl \
+    fasta_to_fastq.pl \
     fastqqc.pl \
     fastq_to_fasta_fast.pl \
     fixfastq.pl \
