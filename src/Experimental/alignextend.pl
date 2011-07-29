@@ -220,7 +220,12 @@ sub matchSFA
     {
       $printed++;
       $sfa2{$base}++;
-      my $q = '^' x length($seq);
+
+      my $q;
+
+      if ($QV_ILLUMINA) { $q = 'a' x length($seq); }
+      else              { $q = 'A' x length($seq); }
+
       print FQ2 "\@$name\n$seq\n+\n$q\n";
     }
   }
@@ -247,7 +252,12 @@ sub matchSFA
     if (exists $sfa2{$base})
     {
       $printed++;
-      my $q = '^' x length($seq);
+
+      my $q;
+
+      if ($QV_ILLUMINA) { $q = 'a' x length($seq); }
+      else              { $q = 'A' x length($seq); }
+
       print FQ1 "\@$name\n$seq\n+\n$q\n";
     }
   }
