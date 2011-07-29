@@ -28,6 +28,12 @@ dist_bin_SCRIPTS = \
   aligndist.pl \
   alignextend.pl \
   aligncestat.pl \
+  blasr_alignquality.pl \
+  coords_best.pl \
+  coords_depth.pl \
+  fastq_to_mates.pl \
+  persistent-unitig.pl \
+  link2reads.pl \
   ctg_gc.pl \
   draw_hist.R \
   rec.sh \
