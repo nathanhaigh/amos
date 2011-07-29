@@ -37,6 +37,8 @@ dist_bin_SCRIPTS = \
 	nucmer2ovl.pl \
 	sort2.pl \
 	ovl2OVL.pl \
+    fasta_select_len.pl \
+    fasta_filter_raw.pl \
     fastqqc.pl \
     fastq_to_fasta_fast.pl \
     fixfastq.pl \

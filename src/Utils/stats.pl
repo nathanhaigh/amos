@@ -3,7 +3,7 @@ use strict;
 use Getopt::Long;
 use Statistics::Descriptive;
 
-my $target        = undef;
+my $genomelen     = undef;
 my $bigcutoffs    = undef;
 my $computemedian = undef;
 my $trimmean      = undef;
@@ -15,7 +15,7 @@ my $fields        = undef;
 my $helpflag = 0;
 my $result = GetOptions(
  "h"              => \$helpflag,
- "n50=s"          => \$target,
+ "n50=s"          => \$genomelen,
  "big=s"          => \$bigcutoffs,
  "median"         => \$computemedian,
  "trimmean=s"     => \$trimmean,
@@ -26,11 +26,9 @@ my $result = GetOptions(
 );
 
 
-$target /= 2 if (defined $target);
-
 if ($helpflag)
 {
-   die "stats.pl [-f f1,f2,fn] [-n50 int] [-big s1,s2,sn] [-median] [-trimmean frac] [-hist buckets] [-cdf t1:t2:t3] [-percentiles p1:p2:p3]\n";
+   die "stats.pl [-f f1,f2,fn] [-n50 int] [-big s1,s2,sn] [-median] [-trimmean frac] [-hist buckets] [-cdf t1,t2,t3] [-percentiles p1,p2,p3]\n";
 }
 
 my @stats;
@@ -117,9 +115,11 @@ for (my $i = 0; $i < scalar @stats; $i++)
 
   my @arr = sort {$b <=> $a} $stats[$i]->get_data();
 
-  if (!defined $target)
+  my $n50target = $stats[$i]->sum()/2;
+
+  if (defined $genomelen)
   {
-    $target = $stats[$i]->sum()/2;
+    $n50target = $genomelen / 2;
   }
 
   my $sum = 0;
@@ -135,7 +135,7 @@ for (my $i = 0; $i < scalar @stats; $i++)
     $j++;
 
     $sum += $s;
-    if (($sum >= $target) && (!defined $n50))
+    if (($sum >= $n50target) && (!defined $n50))
     {
       $n50 = $s;
       $n50cnt = $j;
@@ -157,6 +157,12 @@ for (my $i = 0; $i < scalar @stats; $i++)
   print " sum=",$stats[$i]->sum();
   print " n50=$n50 n50cnt=$n50cnt";
 
+  if (defined $genomelen)
+  {
+    my $cov = sprintf("%0.02f", $stats[$i]->sum() / $genomelen);
+    print " cov=$cov";
+  }
+
   if (defined $bigcutoffs)
   {
     foreach my $t (sort {$a <=> $b} keys %bigstats)
@@ -164,7 +170,15 @@ for (my $i = 0; $i < scalar @stats; $i++)
       my $s = $bigstats{$t}->{sum};
       my $c = $bigstats{$t}->{cnt};
 
-      print " #>$t=$c s>$t=$s";
+      if (defined $genomelen)
+      {
+        my $cov = sprintf("%0.02f", $s / $genomelen);
+        print " #>$t=$c s>$t=$s c>$t=$cov";
+      }
+      else
+      {
+        print " #>$t=$c s>$t=$s";
+      }
     }
   }
 
@@ -192,7 +206,7 @@ for (my $i = 0; $i < scalar @stats; $i++)
 
   if (defined $cdf)
   {
-    my @breakpoints = sort {$a <=> $b} split /:/,$cdf;
+    my @breakpoints = sort {$a <=> $b} split /,/,$cdf;
     my $num = $stats[$i]->count();
 
     my $numbreakpoints = scalar @breakpoints;
@@ -228,7 +242,7 @@ for (my $i = 0; $i < scalar @stats; $i++)
 
   if (defined $percentiles)
   {
-    my @percentiles = sort {$a <=> $b} split /:/, $percentiles;
+    my @percentiles = sort {$a <=> $b} split /,/, $percentiles;
 
     print "Percentiles\n";
 
