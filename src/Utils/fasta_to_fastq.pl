@@ -1,7 +1,24 @@
 #!/usr/bin/perl -w
 use strict;
+use Getopt::Long;
 
 my $QV = "^";
+
+my $USAGE = "fasta_to_fastq [options] reads.fa > reads.fq";
+my $help;
+
+my $res = GetOptions("help"      => \$help,
+                     "qv=n"      => \$QV);
+ 
+if ($help || !$res)
+{
+  print $USAGE;
+  print "\n";
+  print "Convert fasta sequences to fastq, assigning fake quality values for the bases\n";
+  print "Options\n";
+  print "  -qv <q> : Assign this as the fake quality values (default: \'$QV\')\n";
+  exit 0;
+}
 
 my $header = undef;
 my $seq    = undef;
