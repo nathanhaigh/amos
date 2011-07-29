@@ -27,11 +27,13 @@ bin_PROGRAMS = \
 dist_bin_SCRIPTS = \
   aligndist.pl \
   alignextend.pl \
+  aligncestat.pl \
   ctg_gc.pl \
   draw_hist.R \
   rec.sh \
   SOAPdenovo_mapscaff.sh \
   SOAPdenovo_prepare.sh \
+  fasta_filter_raw.pl \
   splitscafffa.pl \
   zipalign.pl \
   autoJoiner.pl \
