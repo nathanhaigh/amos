@@ -12,8 +12,14 @@ fi
 if [[ $1 == Windows7 || $1 == WindowsXP ]]
 then
    echo "installing CPAN..."
-   chmod +x install_cpan.sh
-   ./install_cpan.sh
+/usr/bin/expect <<EOD
+spawn cpan
+expect "Would you like me to configure as much as possible automatically?"
+
+send "yes\r"
+expect eof
+EOD
+
    cpan DBI
    echo "installing ssh server..." 
    if [ $1 == Windows7 ]
@@ -30,22 +36,14 @@ then
 fi
 
 if [ $1 == ubuntu ]
-then   
-/usr/bin/expect <<EOD
-spawn cpan
-expect "Would you like me to configure as much as possible automatically?"
-send "yes\r"
-expect eof
-EOD
-cpan DBI
-exit
+then
     echo "1234561" | sudo -S apt-get -y install git libstatistics-descriptive-perl libdbi-perl 
-    echo "1234561" | sudo -S apt-get -y install ssh expect git-svn wget ash coreutils gawk gcc automake mummer mummer-doc libboost-dev g++ 
+    echo "1234561" | sudo -S apt-get -y install ssh expect git-svn wget ash coreutils gawk gcc automake mummer mummer-doc libboost-dev g++ libqt4-core libqt4-dev libqt4-gui qt4-dev-tools
 fi
 
 if [[ $1 == fedora || $1 == centos ]]
 then
-    echo "1234561" | sudo -S yum -y install ssh expect git curl-devel wget automake boost boost-devel libXmu libXmu-devel libXi libXi-devel expat expat-devel gettext-devel openssl-devel zlib-devel g++ perl-Statistics-Descriptive.noarch perl-Statistics-Descriptive-2.6-2.el5.1.noarch.rpm tcsh openssh.i386 openssh-clients.i386 openssh-server.i386 openssh.i686 openssh-clients.i686 openssh-server.i686 perl-XML-Parser.i386 perl-XML-Parser.i686 perl-DBI.i386 perl-DBI.i686
+    echo "1234561" | sudo -S yum -y install ssh expect git curl-devel wget automake boost boost-devel libXmu libXmu-devel libXi libXi-devel expat expat-devel gettext-devel openssl-devel zlib-devel g++ perl-Statistics-Descriptive.noarch perl-Statistics-Descriptive-2.6-2.el5.1.noarch.rpm tcsh openssh.i386 openssh-clients.i386 openssh-server.i386 openssh.i686 openssh-clients.i686 openssh-server.i686 perl-XML-Parser.i386 perl-XML-Parser.i686 perl-DBI.i386 perl-DBI.i686 qt4.i386 qt4-devel.i386 qt.i686 qt-devel.i686 qt-x11.i686 qt-creator.i686
 fi
 
 if [ $1 == centos ]
