@@ -72,8 +72,6 @@ if (($showdetails > 0) && ($showdist > 0))
   die "ERROR: Can't show details and distances at the same time\n";
 }
 
-$QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
-
 ## Align Reads
 ###############################################################################
 
@@ -112,6 +110,8 @@ if (!defined $samfile)
     $TC1 .= " | $FASTQ_RENAME -tr '/'";
     $TC2 .= " | $FASTQ_RENAME -tr '/'";
   }
+
+  $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
 
   runCmd("prepare fq1",   "$prefix.1.fq",  "head -$nl $fq1 $TC1 > $prefix.1.fq", 1);
   runCmd("prepare fq2",   "$prefix.2.fq",  "head -$nl $fq2 $TC2 > $prefix.2.fq", 1);
