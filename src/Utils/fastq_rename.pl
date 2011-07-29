@@ -24,10 +24,10 @@ my $res = GetOptions("help"      => \$help,
 if ($help || !$res)
 {
   print $USAGE;
+  print "  Rename the reads in a fastq file to become <prefix> [number or name] <suffix>\n";
+  print "  If not renumbering, use -tr to replace characters with -trc in name\n";
   print "\n";
-  print "Rename the reads in a fastq file to become <prefix> [number or name] <suffix>\n";
-  print "If not renumbering, use -tr to replace characters with -trc\n";
-  print "Options\n";
+  print "Options:\n";
   print "  -prefix <str> : add prefix to each readname\n";
   print "  -renum        : replace the readname as a sequential number 1,2,...,E,F,10,11...\n";
   print "  -tr <str>     : replace these characters in the readname\n";
@@ -46,11 +46,13 @@ while (<>)
 
   if ($RENUM)
   {
-    print "\@$PREFIX%X$SUFFIX\n", $c;
+    printf "\@$PREFIX%X$SUFFIX\n", $c;
   }
   else
   {
     chomp;
+
+    $_ = substr($_,1); ## skip the leading '@'
     $_ =~ s/$TR_INPUT/$TR_OUTPUT/g if (defined $TR_INPUT);
     print "\@$PREFIX$_$SUFFIX\n";
   }
