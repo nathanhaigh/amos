@@ -1,14 +1,68 @@
 #!/usr/bin/perl -w
 use strict;
+use Getopt::Long;
 
 $|=1;
-
-my $USAGE = "alignextend.pl prefix ref fq1 fq2 doflip\n";
-
-my $READLEN = 100;
-my $MAPQ_THRESHOLD = 37;
-
 $ENV{LC_ALL}="C";
+
+## Paths to binaries
+my $BWA            = "bwa";
+my $FASTX_RC       = "fastx_reverse_complement";
+my $FASTA_FROM_BED = "fastaFromBed";
+
+## Options
+my $RC = 0;
+my $READLEN = 100;
+my $MAPQ_THRESHOLD = 20;
+
+my $QV_TRIM = 10;
+my $QV_ILLUMINA;
+
+my $USAGE = "alignextend [options] prefix ref.fa fq1 fq2\n";
+my $help;
+
+my $res = GetOptions("help"      => \$help,
+                     "rc"        => \$RC,
+                     "qv=n"      => \$QV_TRIM,
+                     "len=n"     => \$READLEN,
+                     "mapq=n"    => \$MAPQ_THRESHOLD,
+                     "I"         => \$QV_ILLUMINA);
+ 
+if ($help)
+{
+  print $USAGE;
+  print "\n";
+  print "Align (very) short reads to a draft assembly, and extend reads that map unambiguously\n";
+  print "with the sequence of the contig on the 3' end\n";
+  print "\n";
+  print "Required\n";
+  print "  prefix     : prefix for output files\n";
+  print "  ref.fa     : path to reference genome (must be indexed with bwa)\n";
+  print "  fq1        : path to first read\n";
+  print "  fq2        : path to second read\n";
+  print "\n";
+  print "Options\n";
+  print "  -rc        : reverse complement the reads before alignment\n";
+  print "  -qv <n>    : bwa quality soft quality trim (default: $QV_TRIM)\n";
+  print "  -I         : read quality values are Illumina format\n";
+  print "  -len <n>   : extend to this length (default: $READLEN)\n";
+  print "  -mapq <n>  : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
+  exit 0;
+ }
+
+
+my $prefix = $ARGV[0] or die $USAGE;
+my $ref    = $ARGV[1] or die $USAGE;
+my $fq1    = $ARGV[2] or die $USAGE;
+my $fq2    = $ARGV[3] or die $USAGE;
+
+
+$QV_ILLUMINA = (defined $QV_ILLUMINA) ? "-I" : "";
+
+
+
+## runCmd
+###############################################################################
 
 sub runCmd
 {
@@ -23,6 +77,10 @@ sub runCmd
     die $rc if $rc;
   }
 }
+
+
+## sam2bed
+###############################################################################
 
 sub sam2bed
 {
@@ -101,6 +159,10 @@ sub sam2bed
   print "Loaded: $scaffcnt scaffolds\n";
   print "Printed $goodrdcnt of $rdcnt reads ($percgood%)\n";
 }
+
+
+## matchSFA
+###############################################################################
 
 sub matchSFA
 {
@@ -194,11 +256,8 @@ sub matchSFA
 }
 
 
-my $prefix = $ARGV[0] or die $USAGE;
-my $ref    = $ARGV[1] or die $USAGE;
-my $fq1    = $ARGV[2] or die $USAGE;
-my $fq2    = $ARGV[3] or die $USAGE;
-my $doflip = $ARGV[4] or die $USAGE;
+## Align the reads
+###############################################################################
 
 foreach my $idx (1..2)
 {
@@ -208,25 +267,29 @@ foreach my $idx (1..2)
   my $samfile = "$prefix.$idx.sam";
   my $bedfile = "$prefix.$idx.bed";
 
-  if ($doflip)
+  if ($RC)
   {
-    runCmd("flip tr fq", "$prefix.$idx.fq", "fastx_reverse_complement < $fq | tr '/' '_' > $prefix.$idx.fq");
+    runCmd("flip tr fq", "$prefix.$idx.fq", "$FASTX_RC < $fq | tr '/' '_' > $prefix.$idx.fq");
   }
   else
   {
     runCmd("tr fq",   "$prefix.$idx.fq",  "tr '/' '_' < $fq > $prefix.$idx.fq");
   }
 
-  runCmd("bwa aln",    "$prefix.$idx.sai",   "bwa aln $ref $prefix.$idx.fq > $prefix.$idx.sai");
-  runCmd("bwa samse",  "$prefix.$idx.sam",   "bwa samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq");
+  runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq > $prefix.$idx.sai");
+  runCmd("bwa samse",  "$prefix.$idx.sam",   "$BWA samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq");
 
   sam2bed($samfile, $bedfile);
 
-  runCmd("fastaFromBed", "$prefix.$idx.sfa",  "fastaFromBed -s -name -tab -fi $ref -bed $bedfile -fo $prefix.$idx.sfa");
+  runCmd("fastaFromBed", "$prefix.$idx.sfa",  "$FASTA_FROM_BED -s -name -tab -fi $ref -bed $bedfile -fo $prefix.$idx.sfa");
   runCmd("sort sfa",     "$prefix.$idx.sfa.s", "sort -k1,1 $prefix.$idx.sfa > $prefix.$idx.sfa.s");
 
   print "\n";
 }
+
+
+## Create the matched extended pairs
+###############################################################################
 
 matchSFA("$prefix.1.sfa.s", "$prefix.2.sfa.s", "$prefix.1e.fq", "$prefix.2e.fq");
 
