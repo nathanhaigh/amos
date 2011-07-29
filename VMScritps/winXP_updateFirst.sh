@@ -14,6 +14,7 @@ send "123\r"
 expect eof
 EOD
 shutdown /s
+sleep 180
 fi
 
 ./configure --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/winXP_updateFirst.log
@@ -28,6 +29,7 @@ send "123\r"
 expect eof
 EOD
 shutdown /s
+sleep 180
 fi
 
 make >> /cygdrive/c/cygwin/winXP_updateFirst.log 
@@ -42,6 +44,7 @@ send "123\r"
 expect eof
 EOD
 shutdown /s
+sleep 180
 fi
 
 make install >> /cygdrive/c/cygwin/winXP_updateFirst.log
@@ -56,6 +59,7 @@ send "123\r"
 expect eof
 EOD
 shutdown /s
+sleep 180
 fi
 now=$(date +"%y%m%d")
 echo "SUCCESS: complete log stored on http://sauron.cs.umd.edu/$now" >> /cygdrive/c/cygwin/winXP_updateFirst.log
