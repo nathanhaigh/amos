@@ -123,6 +123,7 @@ for (my $i = 0; $i < scalar @stats; $i++)
   }
 
   my $sum = 0;
+  my $sumsq = 0;
   my $n50 = undef;
   my $n50cnt = undef;
   my $j = 0;
@@ -134,7 +135,9 @@ for (my $i = 0; $i < scalar @stats; $i++)
     #if ($j < 5) { print " $s"; }
     $j++;
 
+    $sumsq += ($s * $s);
     $sum += $s;
+
     if (($sum >= $n50target) && (!defined $n50))
     {
       $n50 = $s;
@@ -159,8 +162,16 @@ for (my $i = 0; $i < scalar @stats; $i++)
 
   if (defined $genomelen)
   {
+    my $f = sprintf("%0.02f", $sumsq / $genomelen);
+    print " f=$f";
+
     my $cov = sprintf("%0.02f", $stats[$i]->sum() / $genomelen);
     print " cov=$cov";
+  }
+  else
+  {
+    my $f = sprintf("%0.02f", $sumsq / $stats[$i]->sum());
+    print " f=$f";
   }
 
   if (defined $bigcutoffs)
