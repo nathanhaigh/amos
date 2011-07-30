@@ -18,7 +18,7 @@ EOD
 echo "1234561" | sudo -S shutdown -h now
 fi
 
-./configure --prefix=/usr/local/AMOS >> /home/bryanta/fedora15.log
+./configure --with-Qt4-dir=/usr/share/qt4 --prefix=/usr/local/AMOS >> /home/bryanta/fedora15.log
 if [ $? -ne 0 ]
 then
 cp /home/bryanta/fedora15.log /home/bryanta/fedora15_Failed.log
@@ -45,6 +45,24 @@ expect eof
 EOD
 echo "1234561" | sudo -S shutdown -h now
 fi
+
+cd src/hawkeye/
+qmake
+make >> /home/bryanta/fedora15.log
+if [ $? -ne 0 ]
+then
+cp /home/bryanta/fedora15.log /home/bryanta/fedora15_Failed.log
+echo "FAILED: src/hawkeye make" >> /home/bryanta/fedora15_Failed.log
+/usr/bin/expect <<EOD
+spawn scp /home/bryanta/fedora15_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+expect "ssh@sauron.cs.umd.edu's password:"
+send "123\r"
+expect eof
+EOD
+echo "1234561" | sudo -S shutdown -h now
+fi
+cd ..
+cd ..
 
 make check >> /home/bryanta/fedora15.log
 if [ $? -ne 0 ]
