@@ -46,7 +46,7 @@ void Read_t::readMessage (const Message_t & msg)
 	ss . str (msg . getField (F_FRAGMENT));
 	ss >> frag_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid fragment link format");
+	  AMOS_THROW_ARGUMENT ((string) "Invalid fragment link format: " + msg.getField(F_FRAGMENT));
 	ss . clear( );
       }
 
@@ -64,7 +64,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss . ignore( );
         ss >> clear_m . end;
         if ( !ss )
-          AMOS_THROW_ARGUMENT ("Invalid clear range format");
+          AMOS_THROW_ARGUMENT ((string) "Invalid clear range format: " + msg.getField(F_CLEAR));
 	ss . clear( );
       }
 
@@ -75,7 +75,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss . ignore( );
         ss >> vclear_m . end;
         if ( !ss )
-          AMOS_THROW_ARGUMENT ("Invalid vector clear range format");
+          AMOS_THROW_ARGUMENT ((string) "Invalid vector clear range format: " + msg.getField(F_VECTORCLEAR));
 	ss . clear( );
       }
 
@@ -86,7 +86,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss . ignore( );
         ss >> qclear_m . end;
         if ( !ss )
-          AMOS_THROW_ARGUMENT ("Invalid quality clear range format");
+          AMOS_THROW_ARGUMENT ((string) "Invalid quality clear range format: " + msg.getField(F_QUALITYCLEAR));
 	ss . clear( );
       }
 
@@ -102,7 +102,7 @@ void Read_t::readMessage (const Message_t & msg)
           }
 
         if ( !ss . eof( ) )
-          AMOS_THROW_ARGUMENT ("Invalid base call position format");
+          AMOS_THROW_ARGUMENT ((string) "Invalid base call position format: " + msg.getField(F_BASEPOSITION));
         ss . clear( );
       }
 
@@ -111,7 +111,7 @@ void Read_t::readMessage (const Message_t & msg)
         ss . str (msg . getField (F_POSITION));
 	ss >> pos_m;
 	if ( !ss )
-	  AMOS_THROW_ARGUMENT ("Invalid fragment position format");
+	  AMOS_THROW_ARGUMENT ((string) "Invalid fragment position format: " + msg.getField(F_POSITION));
 	ss . clear( );
       }
   }
