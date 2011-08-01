@@ -9,21 +9,29 @@ $ENV{LC_ALL}="C";
 my $BWA            = "bwa";
 my $FASTX_RC       = "fastx_reverse_complement";
 my $FASTA_FROM_BED = "fastaFromBed";
+my $FASTQ_RENAME   = "fastq_rename";
+my $FASTX_TRIM     = "fastx_trimmer";
 
 ## Options
 my $RC = 0;
 my $READLEN = 100;
 my $MAPQ_THRESHOLD = 20;
+my $numreads = 1000000;
 
+my $HARD_TRIM = 0;
 my $QV_TRIM = 10;
 my $QV_ILLUMINA;
+my $ADD_SUFFIX = 0;
 
 my $USAGE = "alignextend [options] prefix ref.fa fq1 fq2\n";
 my $help;
 
 my $res = GetOptions("help"      => \$help,
+                     "reads=n"   => \$numreads,
+                     "suffix"    => \$ADD_SUFFIX,
                      "rc"        => \$RC,
                      "qv=n"      => \$QV_TRIM,
+                     "trim=n"    => \$HARD_TRIM,
                      "len=n"     => \$READLEN,
                      "mapq=n"    => \$MAPQ_THRESHOLD,
                      "I"         => \$QV_ILLUMINA);
@@ -42,8 +50,11 @@ if ($help)
   print "  fq2        : path to second read\n";
   print "\n";
   print "Options\n";
+  print "  -reads <n> : align first m reads (default: $numreads)\n";
+  print "  -suffix    : Add /1 and /2 suffix to reads\n";
   print "  -rc        : reverse complement the reads before alignment\n";
   print "  -qv <n>    : bwa quality soft quality trim (default: $QV_TRIM)\n";
+  print "  -trim <n>  : hard trim 3' value (default: $HARD_TRIM)\n";
   print "  -I         : read quality values are Illumina format\n";
   print "  -len <n>   : extend to this length (default: $READLEN)\n";
   print "  -mapq <n>  : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
@@ -70,7 +81,7 @@ sub runCmd
   my $outf = $_[1];
   my $cmd  = $_[2];
 
-  if (! -r $outf)
+  #if (! -r $outf)
   {
     print "$desc: $cmd...\n";
     my $rc = system($cmd);
@@ -277,14 +288,23 @@ foreach my $idx (1..2)
   my $samfile = "$prefix.$idx.sam";
   my $bedfile = "$prefix.$idx.bed";
 
+  my $nl = $numreads * 4; ## 4 lines per reads in a fastq
+
+  my $TRIM_CMD = "";
+  $TRIM_CMD  = " | $FASTX_TRIM -t $HARD_TRIM" if ($HARD_TRIM > 0);
+
   if ($RC)
   {
-    runCmd("flip tr fq", "$prefix.$idx.fq", "$FASTX_RC < $fq | tr '/' '_' > $prefix.$idx.fq");
+    $TRIM_CMD .= " | $FASTX_RC -Q ";
+    if ($QV_ILLUMINA) { $TRIM_CMD .= "64"; } else { $TRIM_CMD .= "33"; }
   }
-  else
-  {
-    runCmd("tr fq",   "$prefix.$idx.fq",  "tr '/' '_' < $fq > $prefix.$idx.fq");
-  }
+
+  if ($ADD_SUFFIX) { $TRIM_CMD .= " | $FASTQ_RENAME -suffix _$idx"; }
+  else             { $TRIM_CMD .= " | $FASTQ_RENAME -tr '/'"; }
+
+  $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
+
+  runCmd("prepare fq",   "$prefix.$idx.fq",  "head -$nl $fq $TRIM_CMD > $prefix.$idx.fq");
 
   runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq > $prefix.$idx.sai");
   runCmd("bwa samse",  "$prefix.$idx.sam",   "$BWA samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq");
