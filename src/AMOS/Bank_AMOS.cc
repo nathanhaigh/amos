@@ -740,11 +740,7 @@ ID_t Bank_t::lookupBID (const string & eid) const
 {
   ID_t bid = idmap_m.lookupBID (eid);
   if ( bid == NULL_ID || bid > last_bid_m [version_m] )
-    {
-      stringstream ss;
-      ss << "EID '" << eid << "' does not exist in bank";
-      AMOS_THROW_ARGUMENT (ss.str());
-    }
+      AMOS_THROW_ARGUMENT ((string) "ERROR: lookupBID EID not found: " + eid);
   return bid;
 }
 
