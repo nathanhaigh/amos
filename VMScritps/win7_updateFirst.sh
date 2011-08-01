@@ -17,7 +17,7 @@ shutdown /s
 sleep 180
 fi
 
-./configure --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/$1.log
+./configure --with-Qt4-dir=/cygdrive/c/cygwin/lib/qt4 --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/$1.log
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -46,6 +46,25 @@ EOD
 shutdown /s
 sleep 180
 fi
+
+cd src/hawkeye/
+qmake
+make >> /home/bryanta/$1.log
+if [ $? -ne 0 ]
+then
+cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
+echo "FAILED: src/hawkeye make" >> /cygdrive/c/cygwin/$1_Failed.log
+/usr/bin/expect <<EOD
+spawn scp /cygdrive/c/cygwin/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+expect "ssh@sauron.cs.umd.edu's password:"
+send "123\r"
+expect eof
+EOD
+shutdown /s
+sleep 180
+fi
+cd ..
+cd ..
 
 make install >> /cygdrive/c/cygwin/$1.log
 if [ $? -ne 0 ]
