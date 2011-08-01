@@ -28,7 +28,10 @@ CoverageCanvasItem::CoverageCanvasItem(int x, int y, int width, int height,
 
 void CoverageCanvasItem::drawShape (QPainter & p)
 {
+  p.save();
+
   QPen pen(QPen(m_color,1));
+  pen.setWidth(1);
   p.setPen(pen);
   p.drawPolyline(m_points);
 
@@ -42,4 +45,6 @@ void CoverageCanvasItem::drawShape (QPainter & p)
 
   p.drawLine((int)(x()),           (int)(y() + height() - m_baseLevel),
              (int)(x() + width()), (int)(y() + height() - m_baseLevel));
+
+  p.restore();
 }

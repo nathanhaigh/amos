@@ -1,9 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 //! \file
-//! \author Adam M Phillippy
-//! \date 03/08/2004
+//! \author Michael Schatz
+//! \date 2011.07.29
 //!
-//! \brief Dumps a bambus .mates file from an AMOS bank
+//! \brief Compute the ce stat along an assembly
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -27,10 +27,12 @@ using namespace AMOS;
 typedef HASHMAP::hash_map<ID_t, Tile_t *> SeqTileMap_t;
 
 //=============================================================== Globals ====//
-string OPT_BankName;                 // bank name parameter
-bool   OPT_BankSpy = false;          // read or read-only spy
+string    OPT_BankName;                 // bank name parameter
+bool      OPT_BankSpy = false;          // read or read-only spy
 double    OPT_Features = 0.0;
-bool OPT_IIDs = false;
+bool      OPT_IIDs = false;
+bool      OPT_BAM = false;
+string    CMD_SAMTOOLS = "samtools";
 
 
 DataStore * m_datastore;
@@ -111,6 +113,17 @@ void printCEStats(const std::string &id)
             }
         }
     }
+
+  vector<Insert *>::iterator i;
+              
+  for (i =  m_inserts.begin();
+               i != m_inserts.end();
+               i++)
+          {
+            delete (*i);
+          }
+              
+          m_inserts.clear();
 }
 
 
@@ -160,79 +173,85 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
-    m_datastore = new DataStore();
-    m_datastore->openBank(OPT_BankName);
+    if (OPT_BAM)
+    {
+      cerr << "processing bam: " << OPT_BankName << endl;
 
-    if ( m_datastore->scaffold_bank.isOpen() )
+
+      string cmd = CMD_SAMTOOLS;
+      cmd += " view -h ";
+      cmd += OPT_BankName;
+
+      cerr << "cmd: " << cmd << endl;
+
+      FILE * bam = popen(cmd.c_str(), "r");
+
+      if (!bam)
+      {
+        cerr << "ERROR: Couldn't exec: " << cmd << endl;
+        exit(1);
+      }
+
+      char buffer[10*1024];
+
+      while (fgets(buffer, sizeof(buffer), bam))
+      {
+        fprintf(stdout, "%s", buffer);
+      }
+
+      pclose(bam);
+    }
+    else
+    {
+      m_datastore = new DataStore();
+      m_datastore->openBank(OPT_BankName);
+
+      if ( m_datastore->scaffold_bank.isOpen() )
       {
         cerr << "Processing scaffolds... ";
         int scaffcount = 0;
         m_datastore->scaffold_bank.seekg(1);
         while (m_datastore->scaffold_bank >> scaff)
+        {
+          scaffcount++;
+          vector <Tile_t> rtiling;
+              
+          m_datastore->mapReadsToScaffold(scaff, rtiling, 1);
+          m_datastore->calculateInserts(rtiling, m_inserts, m_connectMates, 1);
+              
+          if ( OPT_IIDs )
           {
-            scaffcount++;
-            vector <Tile_t> rtiling;
-            
-            m_datastore->mapReadsToScaffold(scaff, rtiling, 1);
-            m_datastore->calculateInserts
-              (rtiling, m_inserts, m_connectMates, 1);
-            
-            if ( OPT_IIDs )
-              {
-                stringstream oss;
-                oss << scaff.getIID();
-                printCEStats(oss.str());
-              }
-            else
-              printCEStats(scaff.getEID());
-            
-            vector<Insert *>::iterator i;
-            
-            for (i =  m_inserts.begin();
-                 i != m_inserts.end();
-                 i++)
-              {
-                delete (*i);
-              }
-            
-            m_inserts.clear();
+            stringstream oss;
+            oss << scaff.getIID();
+            printCEStats(oss.str());
           }
+          else
+            printCEStats(scaff.getEID());
+              
+        }
       }
-    else if ( m_datastore->contig_bank.isOpen() )
+      else if ( m_datastore->contig_bank.isOpen() )
       {
-       cerr << "Processing contigs... ";
+        cerr << "Processing contigs... ";
         int contigcount = 0;
         m_datastore->contig_bank.seekg(1);
         while (m_datastore->contig_bank >> contig)
+        {
+          contigcount++;
+
+          m_datastore->calculateInserts(contig.getReadTiling(), m_inserts, m_connectMates, 1);            
+
+          if ( OPT_IIDs )
           {
-            contigcount++;
-
-            m_datastore->calculateInserts
-              (contig.getReadTiling(), m_inserts, m_connectMates, 1);            
-
-
-            if ( OPT_IIDs )
-              {
-                stringstream oss;
-                oss << contig.getIID();
-                printCEStats(oss.str());
-              }
-            else
-              printCEStats(contig.getEID());
-            
-            vector<Insert *>::iterator i;
-            
-            for (i =  m_inserts.begin();
-                 i != m_inserts.end();
-                 i++)
-              {
-                delete (*i);
-              }
-            
-            m_inserts.clear();
+            stringstream oss;
+            oss << contig.getIID();
+            printCEStats(oss.str());
           }
+          else
+            printCEStats(contig.getEID());
+        }
       }
-
+    }
   }
   catch (const Exception_t & e) {
     cerr << "FATAL: " << e . what( ) << endl
@@ -254,12 +273,16 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hif:sv")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hif:svB")) != EOF) )
     switch (ch)
       {
       case 'h':
         PrintHelp (argv[0]);
         exit (EXIT_SUCCESS);
+        break;
+
+      case 'B':
+        OPT_BAM = true;
         break;
 
       case 'i':
@@ -303,11 +326,12 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h            Display help information\n"
-    << "-i            Dump scaffold/contig IIDs instead of EIDs\n"
-    << "-f float      Only output CE features outside float deviations\n"
-    << "-s            Disregard bank locks and write permissions (spy mode)\n"
-    << "-v            Display the compatible bank version\n"
+    << "-h        Display help information\n"
+    << "-B        The input is a BAM file, not an AMOS bank\n"
+    << "-i        Dump scaffold/contig IIDs instead of EIDs\n"
+    << "-f float  Only output CE features outside float deviations\n"
+    << "-s        Disregard bank locks and write permissions (spy mode)\n"
+    << "-v        Display the compatible bank version\n"
     << endl;
   cerr
     << "Print the compression-expansion (CE) statistic value at the beginning and end \n"
