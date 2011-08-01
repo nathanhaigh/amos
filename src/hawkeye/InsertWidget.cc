@@ -923,7 +923,7 @@ void InsertWidget::paintCoverage(const PointArray_t & arr,
     i+= size;
 
     if (i >= arrLen) { break; }
-    i--;
+    i-=10;
   }
 }
 
