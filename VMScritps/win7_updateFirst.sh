@@ -52,10 +52,10 @@ qmake
 make >> /home/bryanta/$1.log
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: src/hawkeye make" >> /home/bryanta/$1_Failed.log
+cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
+echo "FAILED: src/hawkeye make" >> /cygdrive/c/cygwin/$1_Failed.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /cygdrive/c/cygwin/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
