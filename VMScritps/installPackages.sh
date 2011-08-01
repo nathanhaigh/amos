@@ -38,14 +38,14 @@ fi
 if [ $1 == ubuntu ]
 then
     echo "1234561" | sudo -S apt-get update
-    echo "1234561" | sudo -S apt-get -y install git libstatistics-descriptive-perl libdbi-perl libzzip-dev libzip-dev zlib1g-dev 
-    echo "1234561" | sudo -S apt-get -y install ssh expect git-svn wget ash coreutils gawk gcc automake mummer mummer-doc libboost-dev g++ libqt4-core libqt4-dev libqt4-gui qt4-dev-tools
+    echo "1234561" | sudo -S apt-get -y install git libstatistics-descriptive-perl libdbi-perl libzzip-dev libzip-dev zlib1g-dev libglib2.0-0 libglib2.0-bin libglib2.0-dev
+    echo "1234561" | sudo -S apt-get -y install ssh expect git-svn wget ash coreutils gawk gcc automake mummer mummer-doc libboost-dev g++ 
 fi
 
 if [[ $1 == fedora || $1 == centos ]]
 then
     echo "1234561" | sudo -S yum update
-    echo "1234561" | sudo -S yum -y install ssh expect git curl-devel wget automake boost boost-devel libXmu libXmu-devel libXi libXi-devel expat expat-devel gettext-devel openssl-devel zlib-devel g++ perl-Statistics-Descriptive.noarch perl-Statistics-Descriptive-2.6-2.el5.1.noarch.rpm tcsh openssh.i386 openssh-clients.i386 openssh-server.i386 openssh.i686 openssh-clients.i686 openssh-server.i686 perl-XML-Parser.i386 perl-XML-Parser.i686 perl-DBI.i386 perl-DBI.i686 qt4.i386 qt4-devel.i386 qt.i686 qt-devel.i686 qt-x11.i686 qt-creator.i686 zlib.i686 zlib-devel.i686 zlibrary-ui-qt.i686 zlib.i386 zlib-devel.i386
+    echo "1234561" | sudo -S yum -y install ssh expect git curl-devel wget automake boost boost-devel libXmu libXmu-devel libXi libXi-devel expat expat-devel gettext-devel openssl-devel zlib-devel g++ perl-Statistics-Descriptive.noarch perl-Statistics-Descriptive-2.6-2.el5.1.noarch.rpm tcsh openssh.i386 openssh-clients.i386 openssh-server.i386 openssh.i686 openssh-clients.i686 openssh-server.i686 perl-XML-Parser.i386 perl-XML-Parser.i686 perl-DBI.i386 perl-DBI.i686 zlib.i686 zlib-devel.i686 zlibrary-ui-qt.i686 zlib.i386 zlib-devel.i386 glib2.i386 glib2-devel.i386 glib2.i686 glib2-devel.i686
 fi
 
 if [ $1 == centos ]
@@ -178,4 +178,20 @@ echo "installing BLAT..."
    chmod 755 /usr/local/bin/hg17_11.ooc
    chmod 755 /usr/local/bin/mouse11.ooc
    cd ..
+   rm -rf temp/
 
+#echo "installing qt4..."
+ #  wget http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.3.tar.gz
+  # tar zvxf qt-everywhere-opensource-src-4.7.3.tar.gz
+  # cd qt-everywhere-opensource-src-4.7.3
+  # echo "yes" | ./configure -opensource
+   #make
+   #if [[ $1 == Windows7 || $1 == WindowsXP ]]
+   #then 
+    #    make install
+   #else 
+    #   echo "1234561" | sudo -S make install
+   #fi
+   #PATH=/usr/local/Trolltech/Qt-4.7.3/bin:$PATH
+   #export PATH
+   #cd ..
