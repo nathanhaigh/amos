@@ -589,7 +589,7 @@ while (<TMPCTG>){
             $deltastring .= $_;
             $_ = <TMPCTG>;
         }
-        if ($deltastring !~ /^\s*$/){
+        if (defined $deltastring && $deltastring !~ /^\s*$/){
             print OUT "gap:\n";
             print OUT $deltastring;
             print OUT ".\n";
