@@ -82,7 +82,7 @@ void InsertPosition::paintEvent(QPaintEvent * e)
 
   p.drawText(center-400, 2, 800, 25, Qt::AlignCenter, label);
 
-  int distance = (int)(100/m_scale); // 50 pixels between tick marks
+  int distance = (int)(100/m_scale); // 100 pixels between tick marks
 
   double sd = distance;
   int num = 0;
