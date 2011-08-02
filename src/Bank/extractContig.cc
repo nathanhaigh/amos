@@ -82,6 +82,25 @@ int main(int argc, char ** argv)
           }
 
           newfragment_bank.append(fragment);
+
+          ID_t mateid = 0;
+
+          if (fragment.getMatePair().first == read.getIID())
+          {
+            mateid = fragment.getMatePair().second;
+          }
+          else if (fragment.getMatePair().second == read.getIID())
+          {
+            mateid = fragment.getMatePair().first;
+          }
+
+          if (mateid != 0)
+          {
+            Read_t mate;
+            read_bank.fetch(mateid, mate);
+
+            newread_bank.append(mate);
+          }
         }
 
         newread_bank.append(read);
