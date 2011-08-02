@@ -884,6 +884,8 @@ void InsertWidget::paintCoverage(const PointArray_t & arr,
 {
   if (arr.empty()) { return; }
 
+  QPen pen(color, 1.0);
+
   int i = 0;
   while (1)
   {
@@ -913,11 +915,12 @@ void InsertWidget::paintCoverage(const PointArray_t & arr,
     }
     else
     {
-      new CoverageCanvasItem(window[0].x(), voffset,
-                             width, vheight, 
-                             libid, baseLevel,
-                             window, windowraw, copyRaw,
-                             m_icanvas, color);
+      CoverageCanvasItem * cci = new CoverageCanvasItem(window[0].x(), voffset,
+                                                        width, vheight, 
+                                                        libid, baseLevel,
+                                                        window, windowraw, copyRaw,
+                                                        m_icanvas, color);
+      cci->setPen(pen);
     }
 
     i+= size;

@@ -34,6 +34,7 @@ CoverageRectCanvasItem::CoverageRectCanvasItem(int x, int y,
 
 void CoverageRectCanvasItem::drawShape (QPainter & p)
 {
+  p.save();
   QColor shade;
   double px = x();
   double py = m_baseLevel;
@@ -56,4 +57,5 @@ void CoverageRectCanvasItem::drawShape (QPainter & p)
           py = cy;
         }
     }
+  p.restore();
 }
