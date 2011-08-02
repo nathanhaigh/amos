@@ -29,6 +29,8 @@
 #include <Q3VBoxLayout>
 #include <QtGui>
 
+#include "icons/Hawkeye.xpm"
+
 #include "NChartWidget.hh"
 static const unsigned char image1_data[] = { 
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
@@ -392,7 +394,12 @@ LaunchPadBase::LaunchPadBase( QWidget* parent, const char* name, Qt::WFlags fl )
 
 
     // toolbars
-    Toolbar = new Q3ToolBar( QString(""), this, Qt::DockTop ); 
+    Toolbar = new Q3ToolBar( QString(""), this, Qt::DockRight ); 
+
+    QLabel * logo = new QLabel(Toolbar, "logolabel");
+    QPixmap pixmap((const char **)Hawkeye_xpm);
+        
+    logo->setPixmap(pixmap.scaledToWidth(150, Qt::SmoothTransformation));
 
 
     contigIDLabel = new QLabel( Toolbar, "contigIDLabel" );

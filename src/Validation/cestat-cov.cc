@@ -31,9 +31,10 @@ string    OPT_BankName;                 // bank name parameter
 bool      OPT_BankSpy = false;          // read or read-only spy
 double    OPT_Features = 0.0;
 bool      OPT_IIDs = false;
+bool      OPT_SCAFFOLD = false;
+int       OPT_MIN_LEN = 100;
 bool      OPT_BAM = false;
 string    CMD_SAMTOOLS = "samtools";
-
 
 DataStore * m_datastore;
 int m_connectMates = 1;
@@ -66,13 +67,17 @@ void printCEStats(const std::string &id)
                 if ( li->second.m_cestat[i] * sign < 0 ||
                      fabs(li->second.m_cestat[i]) < OPT_Features )
                   {
-                    cout << id << " " << Feature_t::MATEPAIR << " " << b << " "
-                         << li->second.m_coverage[i].x() << " ";
-                    if  ( sign < 0 )
-                      cout << "CE_COMPRESS ";
-                    else
-                      cout << "CE_STRETCH ";
-                    cout << "LIB=" << li->first << endl;
+                    if (e-b >= OPT_MIN_LEN)
+                    {
+                      cout << id << " " << Feature_t::MATEPAIR << " " << b << " "
+                           << li->second.m_coverage[i].x() << " ";
+                      if  ( sign < 0 )
+                        cout << "CE_COMPRESS ";
+                      else
+                        cout << "CE_STRETCH ";
+                      cout << "LIB=" << li->first << endl;
+                    }
+
                     b = e = 0;
                   }
 
@@ -90,12 +95,15 @@ void printCEStats(const std::string &id)
 
           if ( b && e )
             {
-              cout << id << " " << Feature_t::MATEPAIR << " " << b << " " << e << " ";
-              if  ( sign < 0 )
-                cout << "CE_COMPRESS ";
-              else
-                cout << "CE_STRETCH ";
-              cout << "LIB=" << li->first << endl;
+              if (e-b >= OPT_MIN_LEN)
+              {
+                cout << id << " " << Feature_t::MATEPAIR << " " << b << " " << e << " ";
+                if  ( sign < 0 )
+                  cout << "CE_COMPRESS ";
+                else
+                  cout << "CE_STRETCH ";
+                cout << "LIB=" << li->first << endl;
+              }
               b = e = 0;
             }
         }
@@ -177,7 +185,6 @@ int main (int argc, char ** argv)
     {
       cerr << "processing bam: " << OPT_BankName << endl;
 
-
       string cmd = CMD_SAMTOOLS;
       cmd += " view -h ";
       cmd += OPT_BankName;
@@ -206,7 +213,7 @@ int main (int argc, char ** argv)
       m_datastore = new DataStore();
       m_datastore->openBank(OPT_BankName);
 
-      if ( m_datastore->scaffold_bank.isOpen() )
+    if ( OPT_SCAFFOLD && m_datastore->scaffold_bank.isOpen() )
       {
         cerr << "Processing scaffolds... ";
         int scaffcount = 0;
@@ -273,7 +280,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hif:svB")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hif:svSl:B")) != EOF) )
     switch (ch)
       {
       case 'h':
@@ -289,8 +296,16 @@ void ParseArgs (int argc, char ** argv)
         OPT_IIDs = true;
         break;
 
+      case 'S':
+        OPT_SCAFFOLD = true;
+        break;
+
       case 'f':
         OPT_Features = atof(optarg);
+        break;
+
+      case 'l':
+        OPT_MIN_LEN = atoi(optarg);
         break;
 
       case 's':
@@ -326,18 +341,19 @@ void PrintHelp (const char * s)
 {
   PrintUsage (s);
   cerr
-    << "-h        Display help information\n"
-    << "-B        The input is a BAM file, not an AMOS bank\n"
-    << "-i        Dump scaffold/contig IIDs instead of EIDs\n"
-    << "-f float  Only output CE features outside float deviations\n"
-    << "-s        Disregard bank locks and write permissions (spy mode)\n"
-    << "-v        Display the compatible bank version\n"
-    << endl;
-  cerr
     << "Print the compression-expansion (CE) statistic value at the beginning and end \n"
-    << "of each insert across each scaffold separated by library. If no scaffold data \n"
-    << "available, use contigs.\n\n";
-  return;
+    << "of each insert across each contig separated by library. If scaffold data is \n"
+    << "available and -S is specifed, compute along scaffolds.\n"
+    << "\n"
+    << "-h       Display help information\n"
+    << "-B        The input is a BAM file, not an AMOS bank\n"
+    << "-i       Dump scaffold/contig IIDs instead of EIDs\n"
+    << "-f float Only output CE features outside float deviations\n"
+    << "-l len   Only output features at least this length (default: " << OPT_MIN_LEN << ")\n"
+    << "-s       Disregard bank locks and write permissions (spy mode)\n"
+    << "-S       Consider scaffolds instead of contigs\n"
+    << "-v       Display the compatible bank version\n"
+    << endl;
 }
 
 

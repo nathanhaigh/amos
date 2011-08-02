@@ -39,10 +39,17 @@ struct SNPTilingOrderCmp
 {
   static int snpposition;
   static int contiglen;
+  static int reverse;
+
   bool operator() (const RenderSeq_t & a, const RenderSeq_t & b)
   {
     char abase = a.base(snpposition, false, contiglen);
     char bbase = b.base(snpposition, false, contiglen);
+
+    if (reverse)
+    {
+      return toupper(abase) > toupper(bbase);
+    }
 
     return toupper(abase) < toupper(bbase);
   }
@@ -50,6 +57,7 @@ struct SNPTilingOrderCmp
 
 int SNPTilingOrderCmp::snpposition(0);
 int SNPTilingOrderCmp::contiglen(0);
+int SNPTilingOrderCmp::reverse(0);
 
 
 TilingFrame::TilingFrame(DataStore * datastore, 
@@ -465,9 +473,18 @@ void TilingFrame::sortColumns(int gindex)
   }
   else
   {
-    SNPTilingOrderCmp::snpposition = gindex;
-    SNPTilingOrderCmp::contiglen = m_consensus.length();
-    stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SNPTilingOrderCmp());
+    if (SNPTilingOrderCmp::snpposition == gindex)
+    {
+      SNPTilingOrderCmp::reverse = !SNPTilingOrderCmp::reverse;
+      stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SNPTilingOrderCmp());
+    }
+    else
+    {
+      SNPTilingOrderCmp::snpposition = gindex;
+      SNPTilingOrderCmp::contiglen = m_consensus.length();
+      SNPTilingOrderCmp::reverse = 0;
+      stable_sort(m_renderedSeqs.begin(), m_renderedSeqs.end(), SNPTilingOrderCmp());
+    }
 
     for (vi =  m_renderedSeqs.begin();
          vi != m_renderedSeqs.end();

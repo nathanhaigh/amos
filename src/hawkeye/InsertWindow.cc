@@ -76,6 +76,7 @@ InsertWindow::InsertWindow(DataStore * datastore,
   queryView->setResizePolicy (Q3ScrollView::AutoOneFit);
   queryView->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   queryView->setHScrollBarMode(Q3ScrollView::AlwaysOff);
+  queryView->setVScrollBarMode(Q3ScrollView::AlwaysOff);
   m_query = new QueryWidget (queryView, "queries");
   queryView->addChild (m_query);
   sidedock->boxLayout()->addWidget(queryView, 10);
