@@ -2,7 +2,7 @@
 cd c:
 cd /home/bryanta/
 cd amos/
-./bootstrap > /cygdrive/c/cygwin/$1.log
+./bootstrap &> /cygdrive/c/cygwin/$1.log
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -17,7 +17,7 @@ shutdown /s
 sleep 180
 fi
 
-./configure --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/$1.log
+./configure --prefix=/usr/local/AMOS &>> /cygdrive/c/cygwin/$1.log
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -32,7 +32,7 @@ shutdown /s
 sleep 180
 fi
 
-make >> /cygdrive/c/cygwin/$1.log 
+make &>> /cygdrive/c/cygwin/$1.log 
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -47,7 +47,7 @@ shutdown /s
 sleep 180
 fi
 
-make install >> /cygdrive/c/cygwin/$1.log
+make install &>> /cygdrive/c/cygwin/$1.log
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
