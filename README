@@ -59,20 +59,20 @@ packages may be modified with the following options:
    --with-x              use the X Window System
    --with-Boost-dir=DIR  Directory in which to find the ./boost folder for the
                          Boost toolkit
-   --with-Qt-dir=DIR     Directory in which to find the Qt ./include,
+   --with-Qt4-dir=DIR     Directory in which to find the Qt ./include,
                          ./bin, and ./lib subdirectories. Use the below
                          options to override each of these defaults
                          individually.
-   --with-Qt-include-dir=DIR
-   --with-Qt-bin-dir=DIR
-   --with-Qt-lib-dir=DIR
-   --with-Qt-lib=LIB     Use -lLIB to link with the Qt library
+   --with-Qt4-include-dir=DIR
+   --with-Qt4-bin-dir=DIR
+   --with-Qt4-lib-dir=DIR
+   --with-Qt4-lib=LIB     Use -lLIB to link with the Qt library
 
 For example, to build AMOS with its GUIs on an AMD opteron running
-SuSE linux where Qt3 is installed in /usr/lib/qt3 we type:
+SuSE linux where Qt4 is installed in /usr/lib/qt4 we type:
 
-  `configure --with-Qt-dir=/usr/lib/qt3
-             --with-Qt-lib-dir=/usr/lib/qt3/lib64'
+  `configure --with-Qt4-dir=/usr/lib/qt4
+             --with-Qt4-lib-dir=/usr/lib/qt4/lib64'
 
 The second option is necessary to identify the 64-bit library for
 compilation instead of the standard 32-bit library.
@@ -113,15 +113,16 @@ steps 600-710 with '#' in the `amosvalidate' script.
 
    The minimus2-blat pipeline relies on BLAT instead of nucmer.
 
-   The AMOS assembly viewer Hawkeye relies on X windows and the Qt3 
+   The AMOS assembly viewer Hawkeye relies on X windows and the Qt4 
 toolkit. Note that the Qt toolkit is somewhat volatile, so it is 
-important to install Qt3 and not a newer or older version. If Qt is not 
+important to install Qt4 and not a newer or older version. If Qt is not 
 centrally installed on your system, you will need to do so to make 
 use of this graphical viewer. The configure script should be able 
 to identify most standard Qt installations, however you may need 
-to set the `--with-Qt-dir' configure option to the location of 
+to set the `--with-Qt4-dir' configure option to the location of 
 your Qt package. If all else fails, you may have to build the
-viewer independently. If so, the source resides in AMOS/src/bankViewer.
+viewer independently. If so, make AMOS without hawkeye, and then
+cd into the src/hawkeye directory, run 'qmake', and then 'make'.
 
 
 Documentation
@@ -211,4 +212,4 @@ each pipeline in the `doc' directory.
    mis-assemblies and make accurate judgments of assembly quality.
 
 
-March 2011
+August 2011

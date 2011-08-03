@@ -25,26 +25,29 @@ bin_PROGRAMS = \
 
 
 dist_bin_SCRIPTS = \
+  aj_evaluateSequenceOverlaps.pl \
+  aj_joinContigs.pl \
+  aj_lowcomplexityfilter.pl \
+  aj_scaff2amos.pl \
+  aj_scaff2fasta.pl \
+  aligncestat.pl \
   aligndist.pl \
   alignextend.pl \
-  aligncestat.pl \
+  autoJoiner.pl \
   blasr_alignquality.pl \
   coords_best.pl \
   coords_depth.pl \
-  fastq_to_mates.pl \
-  persistent-unitig.pl \
-  link2reads.pl \
   ctg_gc.pl \
-  draw_hist.R \
-  rec.sh \
-  SOAPdenovo_mapscaff.sh \
-  SOAPdenovo_prepare.sh \
   fasta_filter_raw.pl \
-  splitscafffa.pl \
-  zipalign.pl \
-  autoJoiner.pl \
+  fastq_to_mates.pl \
+  filterfastadups.pl \
+  link2reads.pl \
   persistent-assembly.pl \
-  persistent-fix.pl
+  persistent-fix.pl \
+  persistent-plot-breaks.pl \
+  persistent-unitig.pl \
+  splitscafffa.pl \
+  zipalign.pl
 
 
 ##-- GLOBAL INCLUDE
