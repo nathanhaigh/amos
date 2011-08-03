@@ -28,14 +28,14 @@ Users=(amos)
 #update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
 #shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
 
-VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
-VMs_OS=(Ubuntu RedHat)
-VMs_ssh_port=(2226 2234)
-VMs_controller=(PIIX4 PIIX4)
-VMs_nictype=(82540EM 82540EM)
-VMs_nic=(e1000 e1000)
-update_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update")  
-shutdown_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now") 
+VMs=(win7_updateFirst_Qt4 ubuntu10.10 centos-5.5-i386-server_Qt4)
+VMs_OS=(Windows7 Ubuntu RedHat)
+VMs_ssh_port=(2229 2226 2234)
+VMs_controller=(PIIX4 PIIX4 PIIX4)
+VMs_nictype=(82540EM 82540EM 82540EM)
+VMs_nic=(e1000 e1000 e1000)
+update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update")  
+shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now") 
 Git_cmd="git clone git://amos.git.sourceforge.net/gitroot/amos/amos"
 
 ################################
