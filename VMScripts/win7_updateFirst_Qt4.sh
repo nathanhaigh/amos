@@ -2,7 +2,7 @@
 cd c:
 cd /home/bryanta/
 cd amos/
-./bootstrap &> /cygdrive/c/cygwin/$1.log
+./bootstrap > /cygdrive/c/cygwin/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -17,7 +17,7 @@ shutdown /s
 sleep 180
 fi
 
-./configure --with-Qt4-dir=/cygdrive/c/cygwin/lib/qt4 --prefix=/usr/local/AMOS &>> /cygdrive/c/cygwin/$1.log
+./configure --with-Qt4-dir=/cygdrive/c/cygwin/lib/qt4 --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -32,7 +32,7 @@ shutdown /s
 sleep 180
 fi
 
-make &>> /cygdrive/c/cygwin/$1.log 
+make >> /cygdrive/c/cygwin/$1.log 2>&1 
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -49,7 +49,7 @@ fi
 
 cd src/hawkeye/
 qmake
-make &>> /home/bryanta/$1.log
+make >> /home/bryanta/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -66,7 +66,7 @@ fi
 cd ..
 cd ..
 
-make install &>> /cygdrive/c/cygwin/$1.log
+make install >> /cygdrive/c/cygwin/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log

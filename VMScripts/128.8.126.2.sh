@@ -3,7 +3,7 @@ cd /
 cd Users/amos/
 cd amos/
 
-./bootstrap &> /Users/amos/$1.log
+./bootstrap > /Users/amos/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /Users/amos/$1.log /Users/amos/$1_Failed.log
@@ -17,7 +17,7 @@ EOD
 exit
 fi
 
-./configure --prefix=/usr/local/AMOS &>> /Users/amos/$1.log
+./configure --prefix=/usr/local/AMOS >> /Users/amos/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /Users/amos/$1.log /Users/amos/$1_Failed.log
@@ -31,7 +31,7 @@ EOD
 exit
 fi
 
-make &>> /Users/amos/$1.log
+make >> /Users/amos/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /Users/amos/$1.log /Users/amos/$1_Failed.log
@@ -45,7 +45,7 @@ EOD
 exit
 fi
 
-make check &>> /Users/amos/$1.log
+make check >> /Users/amos/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /Users/amos/$1.log /Users/amos/$1_Failed.log
@@ -59,7 +59,7 @@ EOD
 exit
 fi
 
-echo "AMOS" | sudo -S make install &>> /Users/amos/$1.log
+echo "AMOS" | sudo -S make install >> /Users/amos/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /Users/amos/$1.log /Users/amos/$1_Failed.log
