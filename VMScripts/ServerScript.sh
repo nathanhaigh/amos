@@ -13,29 +13,29 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=(128.8.126.2)
-Users=(amos)
+PhMs=()
+Users=()
 
 ###################################
 # VM Configuration
 ###################################
-#VMs=(win7_updateFirst ubuntu10.10 winXP_updateFirst fedora15 win7_updateLast centos-5.5-i386-server winXP_updateLast win7_updateFirst_Qt4 ubuntu10.10_Qt4 winXP_updateFirst_Qt4 fedora15_Qt4 win7_updateLast_Qt4 centos-5.5-i386-server_Qt4 winXP_updateLast_Qt4)
-#VMs_OS=(Windows7 Ubuntu WindowsXP Fedora Windows7 RedHat WindowsXP Windows7 Ubuntu WindowsXP Fedora Windows7 RedHat WindowsXP)
-#VMs_ssh_port=(2222 2226 2224 2227 2223 2228 2225 2229 2230 2231 2232 2233 2234 2235)
-#VMs_controller=(PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3)
-#VMs_nictype=(82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973 82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973)
-#VMs_nic=(e1000 e1000 pcnet e1000 e1000 e1000 pcnet e1000 e1000 pcnet e1000 e1000 e1000 pcnet)
-#update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
-#shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
+VMs=(win7_updateFirst ubuntu10.10 winXP_updateFirst fedora15 win7_updateLast centos-5.5-i386-server winXP_updateLast win7_updateFirst_Qt4 ubuntu10.10_Qt4 winXP_updateFirst_Qt4 fedora15_Qt4 win7_updateLast_Qt4 centos-5.5-i386-server_Qt4 winXP_updateLast_Qt4)
+VMs_OS=(Windows7 Ubuntu WindowsXP Fedora Windows7 RedHat WindowsXP Windows7 Ubuntu WindowsXP Fedora Windows7 RedHat WindowsXP)
+VMs_ssh_port=(2222 2226 2224 2227 2223 2228 2225 2229 2230 2231 2232 2233 2234 2235)
+VMs_controller=(PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3)
+VMs_nictype=(82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973 82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973)
+VMs_nic=(e1000 e1000 pcnet e1000 e1000 e1000 pcnet e1000 e1000 pcnet e1000 e1000 e1000 pcnet)
+update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
+shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
 
-VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
-VMs_OS=(Ubuntu RedHat)
-VMs_ssh_port=(2226 2234)
-VMs_controller=(PIIX4 PIIX4)
-VMs_nictype=(82540EM 82540EM)
-VMs_nic=(e1000 e1000)
-update_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update")  
-shutdown_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now") 
+#VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
+#VMs_OS=(Ubuntu RedHat)
+#VMs_ssh_port=(2226 2234)
+#VMs_controller=(PIIX4 PIIX4)
+#VMs_nictype=(82540EM 82540EM)
+#VMs_nic=(e1000 e1000)
+#update_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update")  
+#shutdown_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now") 
 Git_cmd="git clone git://amos.git.sourceforge.net/gitroot/amos/amos"
 
 ################################
@@ -46,8 +46,10 @@ ssh_command ()
 {
 /usr/bin/expect <<EOD
 spawn ssh -l bryanta -p $1 localhost $2
-expect "bryanta@localhost's password:"
-send "1234561\r"
+expect {
+-re "Are you sure you want to continue connecting" { send "yes\r" }
+-re "bryanta@localhost's password:" { send "1234561\r" }
+}
 expect eof
 EOD
 }
