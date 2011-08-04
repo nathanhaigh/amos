@@ -30,7 +30,8 @@ Version 3.1.0 - August 2011
      * Versioning of AMOS Banks -- all old banks require rebulding
      * Added FRCurve pipeline for comparing multiple assemblies of the same data: http://amos.sf.net/frcurve/
      * New version of Hawkeye using Qt 4 (removed Qt 3 version completely)
-     * Moved undocumented/prototype code into Experimental directory. Use configure -enable-Experimental to build
+     * make-consensus now handles ambiguous N bases (reported by Mark Rose).
+     * Moved undocumented/prototype code into Experimental directory. Use configure --enable-Experimental to build
      * Many small updates and bug fixes
 
 Version 3.0.0 - December 2010

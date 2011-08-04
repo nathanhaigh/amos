@@ -111,27 +111,27 @@ AC_DEFUN([AMOS_QT4],
 
   AC_MSG_CHECKING([for Qt4])
 
-  AC_ARG_WITH([qt4-qmake], [  --with-qt4-qmake=CMD])
+  AC_ARG_WITH([qmake-qt4], [  --with-qmake-qt4=CMD    path to qmake])
   
-  if test x"$with_qt4_qmake" = x"no"; then
+  if test x"$with_qmake_qt4" = x"no"; then
     have_qt4="disabled"
   else
     have_qt4=no
 
-    if test x"$with_qt4_qmake" = x"yes"; then
-      with_qt4_qmake=
+    if test x"$with_qmake_qt4" = x"yes"; then
+      with_qmake_qt4=
     fi
 
-    if test x"$with_qt4_qmake" = x; then
-      with_qt4_qmake="`which qmake`"
+    if test x"$with_qmake_qt4" = x; then
+      with_qmake_qt4="`which qmake`"
     fi
 
-    if test x"$with_qt4_qmake" != x; then
-       if test -x $with_Qt4_qmake; then
+    if test x"$with_qmake_qt4" != x; then
+       if test -x $with_qmake_qt4; then
          if test `uname` == "Darwin"; then
-           with_qt4_qmake="$with_qt4_qmake -spec macx-g++"
+           with_qmake_qt4="$with_qmake_qt4 -spec macx-g++"
          fi
-         QT_QMAKE=$with_qt4_qmake
+         QT_QMAKE=$with_qmake_qt4
          have_qt4=yes
        fi
     fi
@@ -414,7 +414,7 @@ AC_DEFUN([AMOS_BOOST],
   AC_MSG_CHECKING([for Boost])
 
   AC_ARG_WITH([Boost-dir],
-    [  --with-Boost-dir=DIR       DIR is equal to BoostDIR if you have followed the
+    [  --with-Boost-dir=DIR    DIR is equal to BoostDIR if you have followed the
                           installation instructions. Header files are in DIR/boost])
 
   if test x"$with_Boost_dir" = x"no"; then
