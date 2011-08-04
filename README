@@ -59,23 +59,7 @@ packages may be modified with the following options:
    --with-x              use the X Window System
    --with-Boost-dir=DIR  Directory in which to find the ./boost folder for the
                          Boost toolkit
-   --with-Qt4-dir=DIR     Directory in which to find the Qt ./include,
-                         ./bin, and ./lib subdirectories. Use the below
-                         options to override each of these defaults
-                         individually.
-   --with-Qt4-include-dir=DIR
-   --with-Qt4-bin-dir=DIR
-   --with-Qt4-lib-dir=DIR
-   --with-Qt4-lib=LIB     Use -lLIB to link with the Qt library
-
-For example, to build AMOS with its GUIs on an AMD opteron running
-SuSE linux where Qt4 is installed in /usr/lib/qt4 we type:
-
-  `configure --with-Qt4-dir=/usr/lib/qt4
-             --with-Qt4-lib-dir=/usr/lib/qt4/lib64'
-
-The second option is necessary to identify the 64-bit library for
-compilation instead of the standard 32-bit library.
+   --with-qmake-qt4=DIR  Path to qmake using Qt version 4.x
 
 Please see the INSTALL file for more information and Cygwin and OS X
 specific instructions.
@@ -119,7 +103,7 @@ important to install Qt4 and not a newer or older version. If Qt is not
 centrally installed on your system, you will need to do so to make 
 use of this graphical viewer. The configure script should be able 
 to identify most standard Qt installations, however you may need 
-to set the `--with-Qt4-dir' configure option to the location of 
+to set the `--with-qmake-qt4' configure option to the location of 
 your Qt package. If all else fails, you may have to build the
 viewer independently. If so, make AMOS without hawkeye, and then
 cd into the src/hawkeye directory, run 'qmake', and then 'make'.
