@@ -13,8 +13,8 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=()
-Users=()
+PhMs=(128.8.126.2)
+Users=(amos)
 
 ###################################
 # VM Configuration
@@ -88,6 +88,7 @@ cd "$Path_to_VBoxManage"
 ##############################
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
+  ssh ${Users[$i]}@${PhMs[$i]} "rm -rf amos/" 
   ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
   echo "sent git"
   echo "sleeping for 5 mins to complete git..."
@@ -117,7 +118,7 @@ do
         echo "Waiting for starting VM..."
 	sleep 180
         echo "Registering ssh public key..."
-        ssh_command ssh_command ${VMs_ssh_port[$firstVM]} ""
+        ssh_command ${VMs_ssh_port[$firstVM]} ""
         sleep 120
 	echo "Sending update command..."
 	echo ${update_cmd[$firstVM]}
@@ -135,7 +136,7 @@ do
             echo "Waiting for starting VM..."
 	    sleep 180
             echo "Registering ssh public key..."
-            ssh_command ssh_command ${VMs_ssh_port[$secondVM]} ""
+            ssh_command ${VMs_ssh_port[$secondVM]} ""
             sleep 120
 	    echo "Sending update command..."
 	    echo ${update_cmd[$secondVM]}
@@ -153,7 +154,7 @@ do
             echo "Waiting for starting VM..."
 	    sleep 180
             echo "Registering ssh public key..."
-            ssh_command ssh_command ${VMs_ssh_port[$thirdVM]} ""
+            ssh_command ${VMs_ssh_port[$thirdVM]} ""
             sleep 120
 	    echo "Sending update command..."
 	    echo ${update_cmd[$thirdVM]}
@@ -179,7 +180,7 @@ do
         fi	
 
         echo "Wating for shutting down VM..."
-	sleep 3600
+	sleep 1800
 
 	cd $Path_to_VMs
 	echo "Copying VM back to Walnut..."
@@ -202,10 +203,13 @@ do
         fi
 
         cd $home_dir 
-        rm -rf amos/ 
+        mkdir tempp
+        cd tempp 
         git clone git://amos.git.sourceforge.net/gitroot/amos/amos	
         if [ $? -ne 0 ]
         then  	
+           cd ..
+           rm -rf tempp
            echo "FAILED: git error" >> "$logs_dir"${VMs[$firstVM]}_Failed.log	
            if [ $secondVM -lt $num_of_VMs ]
            then
@@ -216,6 +220,8 @@ do
             echo "FAILED: git error" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
            fi
         else 	
+           cd ..
+           rm -rf tempp
            echo "ok to git" 
            ssh_command ${VMs_ssh_port[$firstVM]} "rm -rf amos/" 
            ssh_command ${VMs_ssh_port[$firstVM]} "$Git_cmd"
@@ -346,11 +352,11 @@ done
 echo "Sending email to group..."
 if [ $count1 != '0' ]
 then
-	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
 fi
 if [ $count1 == '0' ]
 then
-	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
 fi
 echo "Email sent"
 rm -f log.txt
