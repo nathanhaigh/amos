@@ -18,7 +18,7 @@ EOD
 echo "1234561" | sudo -S /sbin/shutdown -h now
 fi
 
-./configure --with-qmake-qt4=/usr/lib/qt4/qmake --prefix=/usr/local/AMOS >> /home/bryanta/$1.log 2>&1
+./configure --with-qmake-qt4=/usr/lib/qt4/bin/qmake --prefix=/usr/local/AMOS >> /home/bryanta/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log

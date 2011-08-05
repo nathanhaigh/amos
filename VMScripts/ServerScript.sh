@@ -93,7 +93,7 @@ do
   echo "sent git"
   echo "sleeping for 5 mins to complete git..."
   sleep 300
-  ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh /home/${Users[$i]}/"
+  ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh /Users/${Users[$i]}/"
   ssh ${Users[$i]}@${PhMs[$i]} "chmod +x ${PhMs[$i]}.sh"
   ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}"
 done
