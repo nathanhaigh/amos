@@ -186,7 +186,10 @@ EOF
      if AC_TRY_EVAL("$QT_QMAKE amos_qt.pro -o amos_qt.qmake"); then
        ## get the make flags from the qmake derived Makefile
        QT_CXXFLAGS=`grep ^DEFINES amos_qt.qmake | cut -f2 -d'='`
-       QT_INC=`grep ^INCPATH amos_qt.qmake | cut -f2 -d'='`
+
+       ## rewrite relative paths to become absolute
+       CWD=`pwd`
+       QT_INC=`grep ^INCPATH amos_qt.qmake | cut -f2 -d'=' | sed "s^-I../^-I$CWD/../^g"`
        QT_CXXFLAGS="$QT_CXXFLAGS $QT_INC"
 
        QT_LIBS=`grep ^LIBS amos_qt.qmake | cut -f2 -d'='`
