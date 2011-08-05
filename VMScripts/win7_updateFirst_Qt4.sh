@@ -17,7 +17,7 @@ shutdown /s
 sleep 180
 fi
 
-./configure --with-Qt4-dir=/cygdrive/c/cygwin/lib/qt4 --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/$1.log 2>&1
+./configure --with-qmake-qt4=/cygdrive/c/cygwin/lib/qt4/bin/qmake --prefix=/usr/local/AMOS >> /cygdrive/c/cygwin/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
@@ -48,8 +48,8 @@ sleep 180
 fi
 
 cd src/hawkeye/
-qmake
-make >> /home/bryanta/$1.log 2>&1
+qmake >> /cygdrive/c/cygwin/$1.log 2>&1
+make >> /cygdrive/c/cygwin/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log

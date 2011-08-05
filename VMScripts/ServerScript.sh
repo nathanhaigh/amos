@@ -27,7 +27,7 @@ VMs_nictype=(82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973 82540EM 8
 VMs_nic=(e1000 e1000 pcnet e1000 e1000 e1000 pcnet e1000 e1000 pcnet e1000 e1000 e1000 pcnet)
 update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
 shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
-
+reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
 #VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
 #VMs_OS=(Ubuntu RedHat)
 #VMs_ssh_port=(2226 2234)
@@ -164,17 +164,29 @@ do
 
 	echo "Waiting for updating..."
 	sleep 3600
-
+        
+        echo "Sending restart command..."
+	echo ${reboot_cmd[$firstVM]}
+	ssh_command ${VMs_ssh_port[$firstVM]} "${reboot_cmd[$firstVM]}"
+        sleep 180
 	echo "Sending shutdown command..."
 	echo ${shutdown_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "${shutdown_cmd[$firstVM]}"
 	if [ $secondVM -lt $num_of_VMs ]
         then
+            echo "Sending restart command..."
+	    echo ${reboot_cmd[$secondVM]}
+            sleep 180	
+            ssh_command ${VMs_ssh_port[$secondVM} "${reboot_cmd[$secondVM]}"
             echo ${shutdown_cmd[$secondVM]}
 	    ssh_command ${VMs_ssh_port[ $secondVM]} "${shutdown_cmd[$secondVM]}"
         fi	
         if [ $thirdVM -lt $num_of_VMs ]
         then
+            echo "Sending restart command..."
+	    echo ${reboot_cmd[$thirdVM]}
+	    sleep 180
+            ssh_command ${VMs_ssh_port[$thirdVM} "${reboot_cmd[$thirdVM]}"
             echo ${shutdown_cmd[$thirdVM]}
 	    ssh_command ${VMs_ssh_port[$thirdVM]} "${shutdown_cmd[$thirdVM]}"
         fi	
