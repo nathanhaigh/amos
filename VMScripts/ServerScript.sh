@@ -176,8 +176,8 @@ do
         then
             echo "Sending restart command..."
 	    echo ${reboot_cmd[$secondVM]}
-            sleep 180	
             ssh_command ${VMs_ssh_port[$secondVM} "${reboot_cmd[$secondVM]}"
+            sleep 180	
             echo ${shutdown_cmd[$secondVM]}
 	    ssh_command ${VMs_ssh_port[ $secondVM]} "${shutdown_cmd[$secondVM]}"
         fi	
@@ -185,8 +185,8 @@ do
         then
             echo "Sending restart command..."
 	    echo ${reboot_cmd[$thirdVM]}
-	    sleep 180
             ssh_command ${VMs_ssh_port[$thirdVM} "${reboot_cmd[$thirdVM]}"
+            sleep 180
             echo ${shutdown_cmd[$thirdVM]}
 	    ssh_command ${VMs_ssh_port[$thirdVM]} "${shutdown_cmd[$thirdVM]}"
         fi	
