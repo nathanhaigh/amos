@@ -3,9 +3,21 @@ cd /
 cd home/bryanta/
 cd amos/
 
+./bootstrap > /home/bryanta/$1.log 2>&1
+if [ $? -ne 0 ]
+then
+cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
+echo "FAILED: ./bootstrap" >> /home/bryanta/$1_Failed.log
+/usr/bin/expect <<EOD
+spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+expect "ssh@sauron.cs.umd.edu's password:"
+send "123\r"
+expect eof
+EOD
+echo "1234561" | sudo -S shutdown -h now
+fi
 
-
-./configure --with-Qt4-dir=/usr/share/qt4 --prefix=/usr/local/AMOS > /home/bryanta/$1.log 2>&1
+./configure --with-Qt4-dir=/usr/share/qt4 --prefix=/usr/local/AMOS >> /home/bryanta/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
@@ -34,7 +46,7 @@ echo "1234561" | sudo -S shutdown -h now
 fi
 
 cd src/hawkeye/
-qmake >> /home/bryanta/$1.log 2>&1
+qmake
 make >> /home/bryanta/$1.log 2>&1
 if [ $? -ne 0 ]
 then
