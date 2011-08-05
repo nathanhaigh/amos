@@ -93,7 +93,7 @@ echo "1234561" | sudo -S /sbin/shutdown -h now
 fi
 echo "1234561" | su -c "ln -s /usr/local/AMOS/bin/* /usr/local/bin/"
 now=$(date +"%y%m%d")
-echo "SUCCESS: complete log stored on http://sauron.cs.umd.edu/$now" >> /home/bryanta/$1.log
+echo "SUCCESS:" >> /home/bryanta/$1.log
 /usr/bin/expect <<EOD
 spawn scp /home/bryanta/$1.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"

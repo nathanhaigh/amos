@@ -81,7 +81,7 @@ shutdown /s
 sleep 180
 fi
 now=$(date +"%y%m%d")
-echo "SUCCESS: complete log stored on http://sauron.cs.umd.edu/$now" >> /cygdrive/c/cygwin/$1.log
+echo "SUCCESS:" >> /cygdrive/c/cygwin/$1.log
 /usr/bin/expect <<EOD
 spawn scp /cygdrive/c/cygwin/$1.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"

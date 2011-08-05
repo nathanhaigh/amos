@@ -298,7 +298,8 @@ sleep 300
 
 echo "combining VMs log files..."
 date > log.txt
-echo "*** Complete logs stored on sauron.cs.umd.edu" >> log.txt
+now=$(date +"%y%m%d")
+echo "*** Complete logs stored on http://sauron.cs.umd.edu/$now" >> log.txt
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
