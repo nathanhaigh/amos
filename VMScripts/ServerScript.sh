@@ -88,6 +88,7 @@ cd "$Path_to_VBoxManage"
 ##############################
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
+  ssh ${Users[$i]}@${PhMs[$i]} "rm -rf ${PhMs[$i]}*" 
   ssh ${Users[$i]}@${PhMs[$i]} "rm -rf amos/" 
   ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
   echo "sent git"
