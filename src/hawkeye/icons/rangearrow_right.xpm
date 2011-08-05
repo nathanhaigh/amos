@@ -1,5 +1,5 @@
 /* XPM */
-static char *rangearrow_right[] = {
+static const char *rangearrow_right[] = {
 /* columns rows colors chars-per-pixel */
 "15 15 26 1",
 "  c #222222",

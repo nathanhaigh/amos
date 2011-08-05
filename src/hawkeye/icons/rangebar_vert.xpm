@@ -1,5 +1,5 @@
 /* XPM */
-static char *rangebar_vert[] = {
+static const char *rangebar_vert[] = {
 /* columns rows colors chars-per-pixel */
 "15 15 16 1",
 "  c #517191",

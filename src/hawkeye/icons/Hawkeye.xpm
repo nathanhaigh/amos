@@ -1,5 +1,5 @@
 /* XPM */
-static char *Hawkeye_xpm[] = {
+static const char *Hawkeye_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "450 300 256 2",
 "   c #000000",
