@@ -203,10 +203,13 @@ do
         fi
 
         cd $home_dir 
-        rm -rf amos/ 
+        mkdir tempp
+        cd tempp 
         git clone git://amos.git.sourceforge.net/gitroot/amos/amos	
         if [ $? -ne 0 ]
         then  	
+           cd ..
+           rm -rf tempp
            echo "FAILED: git error" >> "$logs_dir"${VMs[$firstVM]}_Failed.log	
            if [ $secondVM -lt $num_of_VMs ]
            then
@@ -217,6 +220,8 @@ do
             echo "FAILED: git error" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
            fi
         else 	
+           cd ..
+           rm -rf tempp
            echo "ok to git" 
            ssh_command ${VMs_ssh_port[$firstVM]} "rm -rf amos/" 
            ssh_command ${VMs_ssh_port[$firstVM]} "$Git_cmd"
