@@ -4,23 +4,15 @@ contact: <amos-help@lists.sourceforge.net>
 
 AMOS Assembler NEWS
 ===================
-
-   The first release of the AMOS (A Modular Open Source) Assembler is
-now available for download.  Version 1.2.3 is the first version to be
-released under the OSI Artistic License (see `COPYING') and freely
-available to the public for download.  The AMOS project is still in
-its early development stages, and everyone interested in improving
-this project is strongly encouraged to contact us. See the project
-website for more details.
-
-   Currently the AMOS release comes with only _very_ limited user
-documentation, and almost nil developer documentation.  We understand
-that free software is useless without the proper documentation, so we
-are working hard to make a comprehensive HTML users manual for the
-entire project so stay tuned (see AMOS website). In the meantime, we
-will be more than happy to provide support and "virtual" documentation
-via email.  PLEASE, do not hesitate to contact us; you will receive a
-prompt reply.
+The AMOS consortium is committed to the development of open-source whole genome 
+assembly software. The project acronym (AMOS) represents our primary goal -- to 
+produce A Modular, Open-Source whole genome assembler. Open-source so that everyone 
+is welcome to contribute and help build outstanding assembly tools, and modular in 
+nature so that new contributions can be easily inserted into an existing assembly 
+pipeline. This modular design will foster the development of new assembly algorithms 
+and allow the AMOS project to continually grow and improve in hopes of eventually 
+becoming a widely accepted and deployed assembly infrastructure. In this sense, 
+AMOS is both a design philosophy and a software system.
 
 
 Version Release History
@@ -30,7 +22,8 @@ Version 3.1.0 - August 2011
      * Versioning of AMOS Banks -- all old banks require rebulding
      * Added FRCurve pipeline for comparing multiple assemblies of the same data: http://amos.sf.net/frcurve/
      * New version of Hawkeye using Qt 4 (removed Qt 3 version completely)
-     * Moved undocumented/prototype code into Experimental directory. Use configure -enable-Experimental to build
+     * make-consensus now handles ambiguous N bases (reported by Mark Rose).
+     * Moved undocumented/prototype code into Experimental directory. Use configure --enable-Experimental to build
      * Many small updates and bug fixes
 
 Version 3.0.0 - December 2010

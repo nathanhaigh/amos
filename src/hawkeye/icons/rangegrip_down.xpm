@@ -1,5 +1,5 @@
 /* XPM */
-static char *rangegrip_down[] = {
+static const char *rangegrip_down[] = {
 /* columns rows colors chars-per-pixel */
 "15 5 14 1",
 "  c #517192",

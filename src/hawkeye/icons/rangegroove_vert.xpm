@@ -1,5 +1,5 @@
 /* XPM */
-static char *rangegroove_vert[] = {
+static const char *rangegroove_vert[] = {
 /* columns rows colors chars-per-pixel */
 "15 15 8 1",
 "  c #837968",

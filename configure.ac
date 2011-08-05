@@ -2,7 +2,7 @@
 
 # initialize
 AC_PREREQ([2.59])
-AC_INIT([AMOS Assembler],[3.1.0-rc1],[amos-help@lists.sourceforge.net],[amos])
+AC_INIT([AMOS Assembler],[3.1.0-rc2],[amos-help@lists.sourceforge.net],[amos])
 AC_PREFIX_DEFAULT([`pwd`])
 AC_CONFIG_SRCDIR([src/AMOS/foundation_AMOS.hh])
 AC_CONFIG_AUX_DIR([config])
@@ -43,7 +43,7 @@ AC_PATH_PROG(SHOWCOORDS, [show-coords], [:])
 AC_PATH_PROG(BLAT, [blat], [:])
 
 # initialize Python
- AC_PROG_PYTHON()
+# AC_PROG_PYTHON()
 
 # check for Perl modules
 AC_PROG_PERL_MODULES(Statistics::Descriptive, LIBSTATISTICS_DESCRIPTIVE_PERL=1, LIBSTATISTICS_DESCRIPTIVE_PERL=0)

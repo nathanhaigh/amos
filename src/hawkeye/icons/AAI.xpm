@@ -1,5 +1,5 @@
 /* XPM */
-static char * AAI_xpm[] = {
+static const char * AAI_xpm[] = {
 "400 289 257 2",
 "  	c None",
 ". 	c #6668C4",

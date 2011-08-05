@@ -1,5 +1,5 @@
 /* XPM */
-static char *rangebar_horiz[] = {
+static const char *rangebar_horiz[] = {
 /* columns rows colors chars-per-pixel */
 "15 15 16 1",
 "  c #517191",
