@@ -47,25 +47,6 @@ shutdown /s
 sleep 180
 fi
 
-cd src/hawkeye/
-qmake >> /cygdrive/c/cygwin/$1.log 2>&1
-make >> /cygdrive/c/cygwin/$1.log 2>&1
-if [ $? -ne 0 ]
-then
-cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
-echo "FAILED: src/hawkeye make" >> /cygdrive/c/cygwin/$1_Failed.log
-/usr/bin/expect <<EOD
-spawn scp /cygdrive/c/cygwin/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
-expect "ssh@sauron.cs.umd.edu's password:"
-send "123\r"
-expect eof
-EOD
-shutdown /s
-sleep 180
-fi
-cd ..
-cd ..
-
 make install >> /cygdrive/c/cygwin/$1.log 2>&1
 if [ $? -ne 0 ]
 then
