@@ -15,8 +15,8 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=()
-Users=()
+PhMs=(128.8.126.2)
+Users=(amos)
 
 ###################################
 # VM Configuration
