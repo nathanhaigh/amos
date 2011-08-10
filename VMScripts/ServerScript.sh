@@ -369,12 +369,12 @@ echo "Sending email to group..."
 if [ $count1 != '0' ]
 then
 #	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
-        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t $To_Email -cc $Group_Emails
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 if [ $count1 == '0' ]
 then
 #	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
-        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t $To_Email -cc $Group_Emails
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 echo "Email sent"
 rm -f log.txt
