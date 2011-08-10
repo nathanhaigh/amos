@@ -28,6 +28,7 @@ VMs_controller=(PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX3 PIIX
 VMs_nictype=(82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973 82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973)
 VMs_nic=(e1000 e1000 pcnet e1000 e1000 e1000 pcnet e1000 e1000 pcnet e1000 e1000 e1000 pcnet)
 update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
+upgrade_cmd=("" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "")  
 shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
 reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
 #VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
@@ -127,7 +128,11 @@ do
 	echo ${update_cmd[$firstVM]}
 	eval cmd=\${update_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "$cmd"
-        
+        sleep 120
+        echo "Sending upgrade command..."
+	echo ${upgrade_cmd[$firstVM]}
+	eval cmd1=\${upgrade_cmd[$firstVM]}
+	ssh_command ${VMs_ssh_port[$firstVM]} "$cmd1"
         if [ $secondVM -lt $num_of_VMs ]
         then
             unregister_VM ${VMs[$secondVM]}         
@@ -145,6 +150,11 @@ do
 	    echo ${update_cmd[$secondVM]}
 	    eval cmd=\${update_cmd[$secondVM]}
 	    ssh_command ${VMs_ssh_port[$secondVM]} "$cmd"
+            sleep 120
+            echo "Sending upgrade command..."
+	    echo ${upgrade_cmd[$secondVM]}
+	    eval cmd1=\${upgrade_cmd[$secondVM]}
+	    ssh_command ${VMs_ssh_port[$secondVM]} "$cmd1"
         fi	
         if [ $thirdVM -lt $num_of_VMs ]
         then
@@ -163,6 +173,11 @@ do
 	    echo ${update_cmd[$thirdVM]}
 	    eval cmd=\${update_cmd[$thirdVM]}
 	    ssh_command ${VMs_ssh_port[$thirdVM]} "$cmd"
+            sleep 120
+	    echo "Sending upgrade command..."
+	    echo ${upgrade_cmd[$thirdVM]}
+	    eval cmd1=\${upgrade_cmd[$thirdVM]}
+	    ssh_command ${VMs_ssh_port[$thirdVM]} "$cmd1"
         fi	
 
 	echo "Waiting for updating..."
@@ -307,7 +322,7 @@ for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
   case "${PhMs[$i]}" in
-  "128.8.126.2") echo MAC OS >> log.txt
+  "128.8.126.2") echo MAC OS WITH HAWKEYE >> log.txt
                  ;;
   esac 
   echo ============================= >> log.txt
