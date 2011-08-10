@@ -24,8 +24,8 @@
 #include "Bank_AMOS.hh"
 #include "BankStream_AMOS.hh"
 
-#include "Utilities_Bundler.hh"
 #include "Contig_AMOS.hh"
+#include "ContigIterator_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
 #include "Motif_AMOS.hh"
@@ -218,6 +218,7 @@ int main(int argc, char *argv[]) {
          }
       }
       it->setContigTiling(st);
+      sort(it->getContigTiling().begin(), it->getContigTiling().end(), TileOrderCmp());
    }
 
    for (vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); ++it) {
