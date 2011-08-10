@@ -24,11 +24,12 @@
 #include "Bank_AMOS.hh"
 #include "BankStream_AMOS.hh"
 
-#include "Utilities_Bundler.hh"
 #include "Contig_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
 #include "Motif_AMOS.hh"
+
+#include "Utilities_Bundler.hh"
 
 #include "Position.hh"
 
@@ -237,7 +238,6 @@ Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_ba
 	hash_map<ID_t, Position, hash<ID_t>, equal_to<ID_t> > longest;
 
     for (std::vector<Tile_t>::const_iterator tileIt = scf.getContigTiling().begin(); tileIt < scf.getContigTiling().end(); tileIt++) {
-	fprintf(stderr, "Processing tile %d in scf %d and tile source type is %d and motif is %d and contig is %d\n", tileIt->source, scf.getIID(), tileIt->source_type, Motif_t::NCODE, Contig_t::NCODE);
     	if (tileIt->source_type == Motif_t::NCODE) {
     		Motif_t subScf;
     		motif_bank.fetch(tileIt->source, subScf);
