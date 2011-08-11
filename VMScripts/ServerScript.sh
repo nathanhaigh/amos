@@ -86,6 +86,11 @@ cd "$Path_to_VBoxManage"
 ./VBoxManage startvm $1
 }
 
+poweroff_VM()
+{
+cd "$Path_to_VBoxManage"
+./VBoxManage controlvm $1 poweroff
+}
 ##############################
 # Invoke all Physical Machines
 ##############################
@@ -182,7 +187,6 @@ do
 
 	echo "Waiting for updating..."
 	sleep 3600
-        
         echo "Sending restart command..."
 	echo ${reboot_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "${reboot_cmd[$firstVM]}"
@@ -211,6 +215,15 @@ do
 
         echo "Wating for shutting down VM..."
 	sleep 1800
+        poweroff_VM ${VMs[$firstVM]} 
+        if [ $secondVM -lt $num_of_VMs ]
+        then
+            poweroff_VM ${VMs[$secondVM]}
+        fi
+        if [ $thirdVM -lt $num_of_VMs ]
+        then 
+            poweroff_VM ${VMs[$thirdVM]}
+        fi
 
 	cd $Path_to_VMs
 	echo "Copying VM back to Walnut..."
@@ -241,13 +254,16 @@ do
            cd ..
            rm -rf tempp
            echo "FAILED: git error" >> "$logs_dir"${VMs[$firstVM]}_Failed.log	
+           poweroff_VM ${VMs[$firstVM]} 
            if [ $secondVM -lt $num_of_VMs ]
            then
                echo "FAILED: git error" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
+               poweroff_VM ${VMs[$secondVM]}
            fi	
            if [ $thirdVM -lt $num_of_VMs ]
            then
             echo "FAILED: git error" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
+            poweroff_VM ${VMs[$thirdVM]}
            fi
         else 	
            cd ..
@@ -290,7 +306,31 @@ do
                echo "VM script was run"
            fi
         fi	
-	sleep 1800
+	sleep 3600
+        # build for a long time
+        cd "$Path_to_VBoxManage"
+        ./VBoxManage controlvm ${VMs[$firstVM]} poweroff
+        if [ $? -eq 0 ]
+        then
+            echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$firstVM]}_Failed.log
+        fi
+
+        if [ $secondVM -lt $num_of_VMs ]
+        then
+            ./VBoxManage controlvm ${VMs[$secondVM]} poweroff
+            if [ $? -eq 0 ]
+              then
+                  echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
+            fi
+        fi
+        if [ $thirdVM -lt $num_of_VMs ]
+        then 
+            ./VBoxManage controlvm ${VMs[$thirdVM]} poweroff
+            if [ $? -eq 0 ]
+              then
+                  echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
+            fi
+        fi
         let "firstVM= firstVM + 3"
 done
 
