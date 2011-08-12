@@ -35,6 +35,7 @@ dist_bin_SCRIPTS = \
   alignextend.pl \
   autoJoiner.pl \
   blasr_alignquality.pl \
+  bwape.pl \
   coords_best.pl \
   coords_depth.pl \
   ctg_gc.pl \
