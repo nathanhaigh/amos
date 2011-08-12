@@ -15,6 +15,7 @@
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
 #include "Motif_AMOS.hh"
+
 #include "Utilities_Bundler.hh"
 
 using namespace std;
@@ -47,7 +48,6 @@ void linearizeScaffolds(std::vector<Scaffold_t> &scaffs,
 
          std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
          if (s == NULL) { s = new std::set<AMOS::ID_t>(); ctg2conflict[tileIt->source] = s;}
-cerr << "Initialize conflicts for node " << tileIt->source << endl;
 
          for (std::vector<AMOS::Tile_t>::const_iterator tilePrev = itScf->getContigTiling().begin(); tilePrev < tileIt; ++tilePrev) {
             if (tilePrev->offset + (tilePrev->range.getLength() - 1) > tileIt->offset) {
@@ -291,7 +291,6 @@ int main(int argc, char *argv[]) {
    vector<Scaffold_t> scfs;
    while (scf_stream >> scf) {
       scfs.push_back(scf);
-cerr << "Adding scf id " << scf.getIID() << endl;
    }
    linearizeScaffolds(scfs, edge_bank, ctg2lnk, globals.debug);
 

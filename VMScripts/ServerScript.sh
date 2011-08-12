@@ -9,6 +9,8 @@ Path_to_VMs="E:\BRYANTA\VMs"
 home_dir=/home/bryanta
 logs_dir=C:/Program\ \Files\ \(x86\)/ICW/home/ssh/VMlogs/
 emailClient_dir="C:\Users\bryanta\Downloads\sendEmail-v156-notls"
+CC_Emails=bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
+To_Email=dungtq1387@gmail.com
 Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
@@ -26,8 +28,9 @@ VMs_controller=(PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX3 PIIX
 VMs_nictype=(82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973 82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973)
 VMs_nic=(e1000 e1000 pcnet e1000 e1000 e1000 pcnet e1000 e1000 pcnet e1000 e1000 e1000 pcnet)
 update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
+upgrade_cmd=("" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "")  
 shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
-reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
+reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
 #VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
 #VMs_OS=(Ubuntu RedHat)
 #VMs_ssh_port=(2226 2234)
@@ -83,6 +86,11 @@ cd "$Path_to_VBoxManage"
 ./VBoxManage startvm $1
 }
 
+poweroff_VM()
+{
+cd "$Path_to_VBoxManage"
+./VBoxManage controlvm $1 poweroff
+}
 ##############################
 # Invoke all Physical Machines
 ##############################
@@ -125,7 +133,11 @@ do
 	echo ${update_cmd[$firstVM]}
 	eval cmd=\${update_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "$cmd"
-        
+        sleep 120
+        echo "Sending upgrade command..."
+	echo ${upgrade_cmd[$firstVM]}
+	eval cmd1=\${upgrade_cmd[$firstVM]}
+	ssh_command ${VMs_ssh_port[$firstVM]} "$cmd1"
         if [ $secondVM -lt $num_of_VMs ]
         then
             unregister_VM ${VMs[$secondVM]}         
@@ -143,6 +155,11 @@ do
 	    echo ${update_cmd[$secondVM]}
 	    eval cmd=\${update_cmd[$secondVM]}
 	    ssh_command ${VMs_ssh_port[$secondVM]} "$cmd"
+            sleep 120
+            echo "Sending upgrade command..."
+	    echo ${upgrade_cmd[$secondVM]}
+	    eval cmd1=\${upgrade_cmd[$secondVM]}
+	    ssh_command ${VMs_ssh_port[$secondVM]} "$cmd1"
         fi	
         if [ $thirdVM -lt $num_of_VMs ]
         then
@@ -161,15 +178,19 @@ do
 	    echo ${update_cmd[$thirdVM]}
 	    eval cmd=\${update_cmd[$thirdVM]}
 	    ssh_command ${VMs_ssh_port[$thirdVM]} "$cmd"
+            sleep 120
+	    echo "Sending upgrade command..."
+	    echo ${upgrade_cmd[$thirdVM]}
+	    eval cmd1=\${upgrade_cmd[$thirdVM]}
+	    ssh_command ${VMs_ssh_port[$thirdVM]} "$cmd1"
         fi	
 
 	echo "Waiting for updating..."
 	sleep 3600
-        
         echo "Sending restart command..."
 	echo ${reboot_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "${reboot_cmd[$firstVM]}"
-        sleep 180
+        sleep 600
 	echo "Sending shutdown command..."
 	echo ${shutdown_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "${shutdown_cmd[$firstVM]}"
@@ -177,8 +198,8 @@ do
         then
             echo "Sending restart command..."
 	    echo ${reboot_cmd[$secondVM]}
-            ssh_command ${VMs_ssh_port[$secondVM} "${reboot_cmd[$secondVM]}"
-            sleep 180	
+            ssh_command ${VMs_ssh_port[$secondVM]} "${reboot_cmd[$secondVM]}"
+            sleep 600	
             echo ${shutdown_cmd[$secondVM]}
 	    ssh_command ${VMs_ssh_port[ $secondVM]} "${shutdown_cmd[$secondVM]}"
         fi	
@@ -186,14 +207,23 @@ do
         then
             echo "Sending restart command..."
 	    echo ${reboot_cmd[$thirdVM]}
-            ssh_command ${VMs_ssh_port[$thirdVM} "${reboot_cmd[$thirdVM]}"
-            sleep 180
+            ssh_command ${VMs_ssh_port[$thirdVM]} "${reboot_cmd[$thirdVM]}"
+            sleep 600
             echo ${shutdown_cmd[$thirdVM]}
 	    ssh_command ${VMs_ssh_port[$thirdVM]} "${shutdown_cmd[$thirdVM]}"
         fi	
 
         echo "Wating for shutting down VM..."
 	sleep 1800
+        poweroff_VM ${VMs[$firstVM]} 
+        if [ $secondVM -lt $num_of_VMs ]
+        then
+            poweroff_VM ${VMs[$secondVM]}
+        fi
+        if [ $thirdVM -lt $num_of_VMs ]
+        then 
+            poweroff_VM ${VMs[$thirdVM]}
+        fi
 
 	cd $Path_to_VMs
 	echo "Copying VM back to Walnut..."
@@ -224,13 +254,16 @@ do
            cd ..
            rm -rf tempp
            echo "FAILED: git error" >> "$logs_dir"${VMs[$firstVM]}_Failed.log	
+           poweroff_VM ${VMs[$firstVM]} 
            if [ $secondVM -lt $num_of_VMs ]
            then
                echo "FAILED: git error" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
+               poweroff_VM ${VMs[$secondVM]}
            fi	
            if [ $thirdVM -lt $num_of_VMs ]
            then
             echo "FAILED: git error" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
+            poweroff_VM ${VMs[$thirdVM]}
            fi
         else 	
            cd ..
@@ -274,6 +307,30 @@ do
            fi
         fi	
 	sleep 3600
+        # build for a long time
+        cd "$Path_to_VBoxManage"
+        ./VBoxManage controlvm ${VMs[$firstVM]} poweroff
+        if [ $? -eq 0 ]
+        then
+            echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$firstVM]}_Failed.log
+        fi
+
+        if [ $secondVM -lt $num_of_VMs ]
+        then
+            ./VBoxManage controlvm ${VMs[$secondVM]} poweroff
+            if [ $? -eq 0 ]
+              then
+                  echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
+            fi
+        fi
+        if [ $thirdVM -lt $num_of_VMs ]
+        then 
+            ./VBoxManage controlvm ${VMs[$thirdVM]} poweroff
+            if [ $? -eq 0 ]
+              then
+                  echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
+            fi
+        fi
         let "firstVM= firstVM + 3"
 done
 
@@ -305,7 +362,7 @@ for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
   case "${PhMs[$i]}" in
-  "128.8.126.2") echo MAC OS >> log.txt
+  "128.8.126.2") echo MAC OS WITH HAWKEYE >> log.txt
                  ;;
   esac 
   echo ============================= >> log.txt
@@ -366,11 +423,13 @@ done
 echo "Sending email to group..."
 if [ $count1 != '0' ]
 then
-	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+#	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 if [ $count1 == '0' ]
 then
-	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+#	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 echo "Email sent"
 rm -f log.txt
