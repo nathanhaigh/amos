@@ -70,6 +70,9 @@ my $fq2    = $ARGV[3] or die $USAGE;
 
 $QV_ILLUMINA = (defined $QV_ILLUMINA) ? "-I" : "";
 
+die "Cant read $fq1" if (! -r $fq1);
+die "Cant read $fq2" if (! -r $fq2);
+
 
 
 ## runCmd
@@ -289,6 +292,7 @@ foreach my $idx (1..2)
   my $bedfile = "$prefix.$idx.bed";
 
   my $nl = $numreads * 4; ## 4 lines per reads in a fastq
+  my $headcmd = ($numreads>0) ?  "head -$nl" : "cat";
 
   my $TRIM_CMD = "";
   $TRIM_CMD  = " | $FASTX_TRIM -t $HARD_TRIM" if ($HARD_TRIM > 0);
@@ -304,7 +308,7 @@ foreach my $idx (1..2)
 
   $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
 
-  runCmd("prepare fq",   "$prefix.$idx.fq",  "head -$nl $fq $TRIM_CMD > $prefix.$idx.fq");
+  runCmd("prepare fq",   "$prefix.$idx.fq",  "$headcmd $fq $TRIM_CMD > $prefix.$idx.fq");
 
   runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq > $prefix.$idx.sai");
   runCmd("bwa samse",  "$prefix.$idx.sam",   "$BWA samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq");
