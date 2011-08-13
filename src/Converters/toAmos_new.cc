@@ -803,8 +803,9 @@ bool parseMatesFile(ifstream &matesFile) {
        cerr << "Error fragments " << frg1 << " AND " << frg2 << " do not have any common template substring" << endl;
        continue;
     }
-    templateID.str(frg1.substr(0, offset));
+    templateID << frg1.substr(0, offset);
     templateID << "_" << counter;
+
     ID_t libID = lib_stream.lookupIID(name);
     if (libID == NULL_ID) {
       cerr << "Error library " << name << " is not defined" << endl;
