@@ -15,8 +15,8 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=(128.8.126.2)
-Users=(amos)
+PhMs=()
+Users=()
 
 ###################################
 # VM Configuration
@@ -28,7 +28,7 @@ VMs_controller=(PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX3 PIIX
 VMs_nictype=(82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973 82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973)
 VMs_nic=(e1000 e1000 pcnet e1000 e1000 e1000 pcnet e1000 e1000 pcnet e1000 e1000 e1000 pcnet)
 update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
-upgrade_cmd=("" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "")  
+upgrade_cmd=("echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending update command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command")  
 shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
 reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
 #VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
@@ -54,6 +54,8 @@ expect {
 -re "bryanta@localhost's password:" { send "1234561\r" }
 }
 expect eof
+catch wait result
+exit [lindex \$result 3]
 EOD
 }
 
@@ -77,7 +79,7 @@ cd "$Path_to_VBoxManage"
 echo "Deleting the old $1..."
 ./VBoxManage unregistervm $1
 rm -rf "$Path_to_VB_dir\\$1"
-rm -f "$Path_to_VMs\WalnutLast\\$1.vdi" 
+#rm -f "$Path_to_VMs\WalnutLast\\$1.vdi" 
 }
 
 invoke_VM ()
@@ -101,7 +103,7 @@ do
   ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
   echo "sent git"
   echo "sleeping for 5 mins to complete git..."
-  sleep 300
+  sleep 600
   ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh /Users/${Users[$i]}/"
   ssh ${Users[$i]}@${PhMs[$i]} "chmod +x ${PhMs[$i]}.sh"
   ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}"
@@ -127,7 +129,7 @@ do
         echo "Waiting for starting VM..."
 	sleep 180
         echo "Registering ssh public key..."
-        ssh_command ${VMs_ssh_port[$firstVM]} ""
+        ssh_command ${VMs_ssh_port[$firstVM]} "echo Registering ssh key"
         sleep 120
 	echo "Sending update command..."
 	echo ${update_cmd[$firstVM]}
@@ -149,7 +151,7 @@ do
             echo "Waiting for starting VM..."
 	    sleep 180
             echo "Registering ssh public key..."
-            ssh_command ${VMs_ssh_port[$secondVM]} ""
+            ssh_command ${VMs_ssh_port[$secondVM]} "echo Registering ssh key"
             sleep 120
 	    echo "Sending update command..."
 	    echo ${update_cmd[$secondVM]}
@@ -172,7 +174,7 @@ do
             echo "Waiting for starting VM..."
 	    sleep 180
             echo "Registering ssh public key..."
-            ssh_command ${VMs_ssh_port[$thirdVM]} ""
+            ssh_command ${VMs_ssh_port[$thirdVM]} "echo Registering ssh key"
             sleep 120
 	    echo "Sending update command..."
 	    echo ${update_cmd[$thirdVM]}
@@ -190,7 +192,7 @@ do
         echo "Sending restart command..."
 	echo ${reboot_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "${reboot_cmd[$firstVM]}"
-        sleep 600
+        sleep 900
 	echo "Sending shutdown command..."
 	echo ${shutdown_cmd[$firstVM]}
 	ssh_command ${VMs_ssh_port[$firstVM]} "${shutdown_cmd[$firstVM]}"
@@ -199,7 +201,7 @@ do
             echo "Sending restart command..."
 	    echo ${reboot_cmd[$secondVM]}
             ssh_command ${VMs_ssh_port[$secondVM]} "${reboot_cmd[$secondVM]}"
-            sleep 600	
+            sleep 900	
             echo ${shutdown_cmd[$secondVM]}
 	    ssh_command ${VMs_ssh_port[ $secondVM]} "${shutdown_cmd[$secondVM]}"
         fi	
@@ -208,13 +210,13 @@ do
             echo "Sending restart command..."
 	    echo ${reboot_cmd[$thirdVM]}
             ssh_command ${VMs_ssh_port[$thirdVM]} "${reboot_cmd[$thirdVM]}"
-            sleep 600
+            sleep 900
             echo ${shutdown_cmd[$thirdVM]}
 	    ssh_command ${VMs_ssh_port[$thirdVM]} "${shutdown_cmd[$thirdVM]}"
         fi	
 
         echo "Wating for shutting down VM..."
-	sleep 1800
+	sleep 900
         poweroff_VM ${VMs[$firstVM]} 
         if [ $secondVM -lt $num_of_VMs ]
         then
@@ -273,7 +275,7 @@ do
            ssh_command ${VMs_ssh_port[$firstVM]} "$Git_cmd"
            echo "sent git"
 	   echo "waitting for git to complete..." 
-	   sleep 300
+	   sleep 600
 	   ssh_command ${VMs_ssh_port[$firstVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$firstVM]}.sh /home/bryanta/"
 	   echo "VM script was copied to home directory"
 	   ssh_command ${VMs_ssh_port[$firstVM]} "chmod +x ${VMs[$firstVM]}.sh"
@@ -285,7 +287,7 @@ do
 	       ssh_command ${VMs_ssh_port[$secondVM]} "$Git_cmd"
 	       echo "sent git"
 	       echo "sleep for 5 mins to complete git" 
-	       sleep 300
+	       sleep 600
 	       ssh_command ${VMs_ssh_port[$secondVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$secondVM]}.sh /home/bryanta/"
 	       echo "VM script was copied to home directory"
 	       ssh_command ${VMs_ssh_port[$secondVM]} "chmod +x ${VMs[$secondVM]}.sh"
@@ -298,7 +300,7 @@ do
 	       ssh_command ${VMs_ssh_port[$thirdVM]} "$Git_cmd"
 	       echo "sent git"
 	       echo "sleep for 5 mins to complete git" 
-	       sleep 300
+	       sleep 600
 	       ssh_command ${VMs_ssh_port[$thirdVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$thirdVM]}.sh /home/bryanta/"
 	       echo "VM script was copied to home directory"
 	       ssh_command ${VMs_ssh_port[$thirdVM]} "chmod +x ${VMs[$thirdVM]}.sh"
@@ -306,13 +308,13 @@ do
                echo "VM script was run"
            fi
         fi	
-	sleep 3600
+	sleep 7200
         # build for a long time
         cd "$Path_to_VBoxManage"
         ./VBoxManage controlvm ${VMs[$firstVM]} poweroff
         if [ $? -eq 0 ]
         then
-            echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$firstVM]}_Failed.log
+            echo "FAILED: This VM took longer than expected to finish" >> "$logs_dir"${VMs[$firstVM]}_Failed.log
         fi
 
         if [ $secondVM -lt $num_of_VMs ]
@@ -320,7 +322,7 @@ do
             ./VBoxManage controlvm ${VMs[$secondVM]} poweroff
             if [ $? -eq 0 ]
               then
-                  echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
+                  echo "FAILED: This VM took longer than expected to finish" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
             fi
         fi
         if [ $thirdVM -lt $num_of_VMs ]
@@ -328,7 +330,7 @@ do
             ./VBoxManage controlvm ${VMs[$thirdVM]} poweroff
             if [ $? -eq 0 ]
               then
-                  echo "FAILED: This VM took longer time than expected time to complete" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
+                  echo "FAILED: This VM took longer than expected to finish" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
             fi
         fi
         let "firstVM= firstVM + 3"
