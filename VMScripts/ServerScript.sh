@@ -15,8 +15,8 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=()
-Users=()
+PhMs=(128.8.126.2)
+Users=(amos)
 
 ###################################
 # VM Configuration
@@ -31,14 +31,6 @@ update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"123
 upgrade_cmd=("echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending update command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command")  
 shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
 reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
-#VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
-#VMs_OS=(Ubuntu RedHat)
-#VMs_ssh_port=(2226 2234)
-#VMs_controller=(PIIX4 PIIX4)
-#VMs_nictype=(82540EM 82540EM)
-#VMs_nic=(e1000 e1000)
-#update_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update")  
-#shutdown_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now") 
 Git_cmd="git clone git://amos.git.sourceforge.net/gitroot/amos/amos"
 
 ################################
@@ -79,7 +71,7 @@ cd "$Path_to_VBoxManage"
 echo "Deleting the old $1..."
 ./VBoxManage unregistervm $1
 rm -rf "$Path_to_VB_dir\\$1"
-#rm -f "$Path_to_VMs\WalnutLast\\$1.vdi" 
+rm -f "$Path_to_VMs\WalnutLast\\$1.vdi" 
 }
 
 invoke_VM ()
