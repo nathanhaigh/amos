@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Minimus Test Case 1
+#  Assembly of the influenza virus
+minimus influenza-A.afg
