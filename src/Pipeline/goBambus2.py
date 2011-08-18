@@ -45,7 +45,6 @@ if __name__ == "__main__":
     xopt_dict = {}
     for opt in opts:
         opt_dict[opt] = [""]
-    opt_dict["orient"] = "-noreduce"
     for opt in xopts:
         xopt_dict[opt] = 0
         
@@ -64,7 +63,7 @@ if __name__ == "__main__":
                 opt_dict[mopt] = xopt
             else:
                 try:
-                    xopt_dict[sopt] = xopt_dict[sopt] = 1
+                    xopt_dict[mopt] = xopt_dict[opt] = 1
                 except KeyError:
                     pass
             
@@ -277,6 +276,8 @@ if __name__ == "__main__":
         print "\t%s %s repeats found%s"%(BLUE,nreps,NONE)
         
     if xopt_dict["all"] == 1 or len(opt_dict["orient"]) > 0:
+        if len("".join(opt_dict["orient"]).strip()) == 0:
+           opt_dict["orient"] = "-noreduce"
         p = subprocess.Popen(AMOSDIR+"OrientContigs -b %s -repeats myreps %s"%(amosbank, "".join(opt_dict["orient"])), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
 
         if xopt_dict["verbose"] == 1:
@@ -292,7 +293,7 @@ if __name__ == "__main__":
                 print "\t\t%s...failed%s"%(RED,NONE)
                 sys.exit(1)
 
-        p = subprocess.Popen(AMOSDIR+"OutputResults -b %s -prefix %s %s"%(amosbank, prefix+".scaff"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+        p = subprocess.Popen(AMOSDIR+"OutputResults -b %s -prefix %s"%(amosbank, prefix+".scaff"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
 
         if xopt_dict["verbose"] == 1:
             print "6) running OutputResults"
@@ -360,7 +361,7 @@ if __name__ == "__main__":
                 print "\t\t%s...failed%s"%(RED,NONE)
                 sys.exit(1)
 
-       p = subprocess.Popen(AMOSDIR+"OutputResults -b %s -prefix %s %s"%(amosbank, prefix+".scaff.linear"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
+        p = subprocess.Popen(AMOSDIR+"OutputResults -b %s -prefix %s"%(amosbank, prefix+".scaff.linear"), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
 
         if xopt_dict["verbose"] == 1:
             print "10) running OutputResults"
@@ -388,4 +389,3 @@ if __name__ == "__main__":
             else:
                 print "\t\t%s...failed%s"%(RED,NONE)
                 sys.exit(1)
-)
