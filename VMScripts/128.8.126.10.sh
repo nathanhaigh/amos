@@ -17,7 +17,7 @@ EOD
 exit
 fi
 
-./configure --prefix=/usr/local/AMOS >> /Users/amos/$1.log 2>&1
+./configure --with-qmake-qt4=/sw/lib/qt4-x11/bin/qmake --prefix=/usr/local/AMOS >> /Users/amos/$1.log 2>&1
 if [ $? -ne 0 ]
 then
 cp /Users/amos/$1.log /Users/amos/$1_Failed.log
