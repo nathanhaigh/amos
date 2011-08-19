@@ -62,6 +62,22 @@ shutdown /s
 sleep 180
 fi
 ln -s /usr/local/AMOS/bin/* /usr/local/bin/
+export PATH=$PATH:/usr/local/AMOS/bin
+cd test/
+./test.sh >> /cygdrive/c/cygwin/$1.log 2>&1
+if [ $? -ne 0 ]
+then
+cp /cygdrive/c/cygwin/$1.log /cygdrive/c/cygwin/$1_Failed.log
+echo "FAILED: tesh.sh" >> /cygdrive/c/cygwin/$1_Failed.log
+/usr/bin/expect <<EOD
+spawn scp /cygdrive/c/cygwin/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+expect "ssh@sauron.cs.umd.edu's password:"
+send "123\r"
+expect eof
+EOD
+shutdown /s
+sleep 180
+fi
 now=$(date +"%y%m%d")
 echo "SUCCESS:" >> /cygdrive/c/cygwin/$1.log
 /usr/bin/expect <<EOD
