@@ -11,9 +11,7 @@ my $help  = 0;
 my $prefix = "out";
 
 my $make_bam     = 0;
-my $make_bai     = 0;
 my $make_sbam    = 0;
-my $make_sbai    = 0;
 my $use_illumina = 0;
 my $QV_TRIM = 10;
 
@@ -22,9 +20,7 @@ my $USAGE = "bwape <options> ref.fa fq1 fq2\n";
 my $res = GetOptions("help"      => \$help,
                      "prefix=s"  => \$prefix,
                      "bam"       => \$make_bam,
-                     "bai"       => \$make_bai,
                      "sbam"      => \$make_sbam,
-                     "sbai"      => \$make_sbai,
                      "I"         => \$use_illumina,
                      "qv=s"      => \$QV_TRIM,
                      );
@@ -44,9 +40,7 @@ if ($help || !$res)
   print "Options\n";
   print "  -prefix <name> : prefix for sam/bam file (default: $prefix)\n";
   print "  -bam           : convert results to bam\n";
-  print "  -bai           : convert results to indexed bam\n";
   print "  -sbam          : make sorted bam\n";
-  print "  -sbai          : make sorted indexed bam\n";
   print "  -I             : reads use Illumina Fastq format (Q64)\n";
   print "  -qv <val>      : bwa quality value trim level (defailt: $QV_TRIM)\n";
   exit 0;
@@ -65,17 +59,20 @@ my $QV_ILLUMINA = ($use_illumina) ? "-I" : "";
 runCmd("bwa index",  "$ref.sa",       "$BWA index $ref");
 runCmd("bwa aln 1",  "$prefix.1.sai", "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $fq1 > $prefix.1.sai", 1);
 runCmd("bwa aln 2",  "$prefix.2.sai", "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $fq2 > $prefix.2.sai", 1);
-runCmd("bwa sampe",  "$prefix.sam",   "$BWA sampe -f $prefix.sam $ref $prefix.1.sai $prefix.2.sai $prefix.1.fq $prefix.2.fq", 1);
+runCmd("bwa sampe",  "$prefix.sam",   "$BWA sampe -f $prefix.sam $ref $prefix.1.sai $prefix.2.sai $fq1 $fq2", 1);
 
-if ($make_bam || $make_bai || $make_sbam || $make_sbai)
+if ($make_bam || $make_sbam)
 {
   runCmd("sam2bam",   "$prefix.bam",     "$SAMTOOLS view -Sb $prefix.sam -o $prefix.bam", 1);
-  runCmd("sam index", "$prefix.bam.bai", "$SAMTOOLS index $prefix.bam", 1) if ($make_bai);
 
   if ($make_sbam)
   {
     runCmd("sam sort",  "$prefix.s.bam",     "$SAMTOOLS sort $prefix.bam $prefix.s", 1);
-    runCmd("sam index", "$prefix.s.bam.bai", "$SAMTOOLS index $prefix.s.bam", 1) if ($make_sbai);
+    runCmd("sam index", "$prefix.s.bam.bai", "$SAMTOOLS index $prefix.s.bam", 1);
+  }
+  else
+  {
+    runCmd("sam index", "$prefix.bam.bai", "$SAMTOOLS index $prefix.bam", 1);
   }
 }
 

@@ -38,6 +38,7 @@ dist_bin_SCRIPTS = \
   bwape.pl \
   coords_best.pl \
   coords_depth.pl \
+  coords2scafflinks.pl \
   ctg_gc.pl \
   fasta_filter_raw.pl \
   fastq_to_mates.pl \
