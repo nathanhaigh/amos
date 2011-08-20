@@ -88,6 +88,7 @@ send "123\r"
 expect eof
 EOD
 echo "1234561" | sudo -S /sbin/shutdown -h now
+sleep 180
 fi
 
 now=$(date +"%y%m%d")

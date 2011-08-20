@@ -88,6 +88,7 @@ send "123\r"
 expect eof
 EOD
 echo "1234561" | sudo -S shutdown -h now
+sleep 180
 fi
 
 echo "sending log to walnut..."
