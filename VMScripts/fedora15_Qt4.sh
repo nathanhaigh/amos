@@ -80,7 +80,7 @@ cd test/
 if [ $? -ne 0 ]
 then
 cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: tesh.sh" >> /home/bryanta/f$1_Failed.log
+echo "FAILED: tesh.sh" >> /home/bryanta/$1_Failed.log
 /usr/bin/expect <<EOD
 spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
