@@ -15,8 +15,8 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=(128.8.126.2)
-Users=(amos)
+PhMs=(128.8.126.2 128.8.126.10)
+Users=(amos amos)
 
 ###################################
 # VM Configuration
@@ -85,6 +85,64 @@ poweroff_VM()
 cd "$Path_to_VBoxManage"
 ./VBoxManage controlvm $1 poweroff
 }
+
+run_VM()
+{
+	unregister_VM ${VMs[$1]}         
+        echo "Copying the lated update VM from walnut..."
+	cd "$Path_to_VMs"
+	scp -r $Path_to_Storage${VMs[$1]}.vdi WalnutLast/
+	register_VM ${VMs[$1]} ${VMs_OS[$1]} ${VMs_nictype[$1]} ${VMs_controller[$1]} ${VMs_ssh_port[$1]} ${VMs_nic[$1]}
+        invoke_VM ${VMs[$1]}	
+        echo "Waiting for starting VM..."
+	sleep 180
+        echo "Registering ssh public key..."
+        ssh_command ${VMs_ssh_port[$1]} "echo Registering ssh key"
+        sleep 180
+	echo "Sending update command..."
+	echo ${update_cmd[$1]}
+	eval cmd=\${update_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "$cmd"
+        sleep 900
+        echo "Sending upgrade command..."
+	echo ${upgrade_cmd[$1]}
+	eval cmd1=\${upgrade_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "$cmd1"
+        echo "Waiting for updating..."
+	sleep 3600
+        echo "Sending restart command..."
+	echo ${reboot_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "${reboot_cmd[$1]}"
+        sleep 900
+	echo "Sending shutdown command..."
+	echo ${shutdown_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "${shutdown_cmd[$1]}"
+	echo "Wating for shutting down VM..."
+	sleep 900
+        poweroff_VM ${VMs[$1]} 
+        cd $Path_to_VMs
+	echo "Copying VM back to Walnut..."
+	scp WalnutLast/${VMs[$1]}.vdi $Path_to_Storage        
+        invoke_VM ${VMs[$1]} 
+        sleep 180 
+        ssh_command ${VMs_ssh_port[$1]} "rm -rf amos/" 
+        ssh_command ${VMs_ssh_port[$1]} "$Git_cmd"
+        if [ $? -ne 0 ]
+           then  	
+              echo "FAILED: git error" >> "$logs_dir"${VMs[$1]}_Failed.log	
+              poweroff_VM ${VMs[$1]} 
+           else 	
+              echo "sent git"
+	      echo "waitting for git to complete..." 
+	      sleep 300
+	      ssh_command ${VMs_ssh_port[$1]} "cp /home/bryanta/amos/VMScripts/${VMs[$1]}.sh /home/bryanta/"
+	      echo "VM script was copied to home directory"
+	      ssh_command ${VMs_ssh_port[$1]} "chmod +x ${VMs[$1]}.sh"
+	      ssh_command ${VMs_ssh_port[$1]} "./${VMs[$1]}.sh ${VMs[$1]}"
+	      echo "VM script was run"
+       fi	
+	
+}
 ##############################
 # Invoke all Physical Machines
 ##############################
@@ -94,11 +152,11 @@ do
   ssh ${Users[$i]}@${PhMs[$i]} "rm -rf amos/" 
   ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
   echo "sent git"
-  echo "sleeping for 5 mins to complete git..."
-  sleep 600
+  echo "sleeping for several mins to complete git..."
+  sleep 300
   ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh /Users/${Users[$i]}/"
   ssh ${Users[$i]}@${PhMs[$i]} "chmod +x ${PhMs[$i]}.sh"
-  ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}"
+  ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}" &
 done
 
 ##############################
@@ -111,196 +169,18 @@ firstVM=0
 while [ $firstVM -lt $num_of_VMs ]
 do
         let "secondVM= firstVM + 1"
-        let "thirdVM= firstVM + 2"	
-        unregister_VM ${VMs[$firstVM]}         
-        echo "Copying the lated update VM from walnut..."
-	cd "$Path_to_VMs"
-	scp -r $Path_to_Storage${VMs[$firstVM]}.vdi WalnutLast/
-	register_VM ${VMs[$firstVM]} ${VMs_OS[$firstVM]} ${VMs_nictype[$firstVM]} ${VMs_controller[$firstVM]} ${VMs_ssh_port[$firstVM]} ${VMs_nic[$firstVM]}
-        invoke_VM ${VMs[$firstVM]}	
-        echo "Waiting for starting VM..."
-	sleep 180
-        echo "Registering ssh public key..."
-        ssh_command ${VMs_ssh_port[$firstVM]} "echo Registering ssh key"
-        sleep 120
-	echo "Sending update command..."
-	echo ${update_cmd[$firstVM]}
-	eval cmd=\${update_cmd[$firstVM]}
-	ssh_command ${VMs_ssh_port[$firstVM]} "$cmd"
-        sleep 120
-        echo "Sending upgrade command..."
-	echo ${upgrade_cmd[$firstVM]}
-	eval cmd1=\${upgrade_cmd[$firstVM]}
-	ssh_command ${VMs_ssh_port[$firstVM]} "$cmd1"
+        let "thirdVM= firstVM + 2"
+        run_VM $firstVM &	
         if [ $secondVM -lt $num_of_VMs ]
         then
-            unregister_VM ${VMs[$secondVM]}         
-            echo "Copying the lated update VM from walnut..."
-	    cd "$Path_to_VMs"
-	    scp -r $Path_to_Storage${VMs[$secondVM]}.vdi WalnutLast/
-	    register_VM ${VMs[$secondVM]} ${VMs_OS[$secondVM]} ${VMs_nictype[$secondVM]} ${VMs_controller[$secondVM]} ${VMs_ssh_port[$secondVM]} ${VMs_nic[$secondVM]}
-            invoke_VM ${VMs[$secondVM]}	
-            echo "Waiting for starting VM..."
-	    sleep 180
-            echo "Registering ssh public key..."
-            ssh_command ${VMs_ssh_port[$secondVM]} "echo Registering ssh key"
-            sleep 120
-	    echo "Sending update command..."
-	    echo ${update_cmd[$secondVM]}
-	    eval cmd=\${update_cmd[$secondVM]}
-	    ssh_command ${VMs_ssh_port[$secondVM]} "$cmd"
-            sleep 120
-            echo "Sending upgrade command..."
-	    echo ${upgrade_cmd[$secondVM]}
-	    eval cmd1=\${upgrade_cmd[$secondVM]}
-	    ssh_command ${VMs_ssh_port[$secondVM]} "$cmd1"
+            run_VM $secondVM &
         fi	
         if [ $thirdVM -lt $num_of_VMs ]
         then
-            unregister_VM ${VMs[$thirdVM]}         
-            echo "Copying the lated update VM from walnut..."
-	    cd "$Path_to_VMs"
-	    scp -r $Path_to_Storage${VMs[$thirdVM]}.vdi WalnutLast/
-	    register_VM ${VMs[$thirdVM]} ${VMs_OS[$thirdVM]} ${VMs_nictype[$thirdVM]} ${VMs_controller[$thirdVM]} ${VMs_ssh_port[$thirdVM]} ${VMs_nic[$thirdVM]}
-            invoke_VM ${VMs[$thirdVM]}	
-            echo "Waiting for starting VM..."
-	    sleep 180
-            echo "Registering ssh public key..."
-            ssh_command ${VMs_ssh_port[$thirdVM]} "echo Registering ssh key"
-            sleep 120
-	    echo "Sending update command..."
-	    echo ${update_cmd[$thirdVM]}
-	    eval cmd=\${update_cmd[$thirdVM]}
-	    ssh_command ${VMs_ssh_port[$thirdVM]} "$cmd"
-            sleep 120
-	    echo "Sending upgrade command..."
-	    echo ${upgrade_cmd[$thirdVM]}
-	    eval cmd1=\${upgrade_cmd[$thirdVM]}
-	    ssh_command ${VMs_ssh_port[$thirdVM]} "$cmd1"
-        fi	
-
-	echo "Waiting for updating..."
-	sleep 3600
-        echo "Sending restart command..."
-	echo ${reboot_cmd[$firstVM]}
-	ssh_command ${VMs_ssh_port[$firstVM]} "${reboot_cmd[$firstVM]}"
-        sleep 900
-	echo "Sending shutdown command..."
-	echo ${shutdown_cmd[$firstVM]}
-	ssh_command ${VMs_ssh_port[$firstVM]} "${shutdown_cmd[$firstVM]}"
-	if [ $secondVM -lt $num_of_VMs ]
-        then
-            echo "Sending restart command..."
-	    echo ${reboot_cmd[$secondVM]}
-            ssh_command ${VMs_ssh_port[$secondVM]} "${reboot_cmd[$secondVM]}"
-            sleep 900	
-            echo ${shutdown_cmd[$secondVM]}
-	    ssh_command ${VMs_ssh_port[ $secondVM]} "${shutdown_cmd[$secondVM]}"
-        fi	
-        if [ $thirdVM -lt $num_of_VMs ]
-        then
-            echo "Sending restart command..."
-	    echo ${reboot_cmd[$thirdVM]}
-            ssh_command ${VMs_ssh_port[$thirdVM]} "${reboot_cmd[$thirdVM]}"
-            sleep 900
-            echo ${shutdown_cmd[$thirdVM]}
-	    ssh_command ${VMs_ssh_port[$thirdVM]} "${shutdown_cmd[$thirdVM]}"
-        fi	
-
-        echo "Wating for shutting down VM..."
-	sleep 900
-        poweroff_VM ${VMs[$firstVM]} 
-        if [ $secondVM -lt $num_of_VMs ]
-        then
-            poweroff_VM ${VMs[$secondVM]}
-        fi
-        if [ $thirdVM -lt $num_of_VMs ]
-        then 
-            poweroff_VM ${VMs[$thirdVM]}
-        fi
-
-	cd $Path_to_VMs
-	echo "Copying VM back to Walnut..."
-	scp WalnutLast/${VMs[$firstVM]}.vdi $Path_to_Storage        
-        invoke_VM ${VMs[$firstVM]} 
-        sleep 180 
-        if [ $secondVM -lt $num_of_VMs ]
-        then
-            cd $Path_to_VMs
-            scp WalnutLast/${VMs[$secondVM]}.vdi $Path_to_Storage        
-            invoke_VM ${VMs[$secondVM]} 
-            sleep 180
-        fi	
-        if [ $thirdVM -lt $num_of_VMs ]
-        then
-            cd $Path_to_VMs
-            scp WalnutLast/${VMs[$thirdVM]}.vdi $Path_to_Storage        
-            invoke_VM ${VMs[$thirdVM]} 
-            sleep 180
-        fi
-
-        cd $home_dir 
-        mkdir tempp
-        cd tempp 
-        git clone git://amos.git.sourceforge.net/gitroot/amos/amos	
-        if [ $? -ne 0 ]
-        then  	
-           cd ..
-           rm -rf tempp
-           echo "FAILED: git error" >> "$logs_dir"${VMs[$firstVM]}_Failed.log	
-           poweroff_VM ${VMs[$firstVM]} 
-           if [ $secondVM -lt $num_of_VMs ]
-           then
-               echo "FAILED: git error" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
-               poweroff_VM ${VMs[$secondVM]}
-           fi	
-           if [ $thirdVM -lt $num_of_VMs ]
-           then
-            echo "FAILED: git error" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
-            poweroff_VM ${VMs[$thirdVM]}
-           fi
-        else 	
-           cd ..
-           rm -rf tempp
-           echo "ok to git" 
-           ssh_command ${VMs_ssh_port[$firstVM]} "rm -rf amos/" 
-           ssh_command ${VMs_ssh_port[$firstVM]} "$Git_cmd"
-           echo "sent git"
-	   echo "waitting for git to complete..." 
-	   sleep 600
-	   ssh_command ${VMs_ssh_port[$firstVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$firstVM]}.sh /home/bryanta/"
-	   echo "VM script was copied to home directory"
-	   ssh_command ${VMs_ssh_port[$firstVM]} "chmod +x ${VMs[$firstVM]}.sh"
-	   ssh_command ${VMs_ssh_port[$firstVM]} "./${VMs[$firstVM]}.sh ${VMs[$firstVM]}"
-	   echo "VM script was run"
-           if [ $secondVM -lt $num_of_VMs ]
-           then
-               ssh_command ${VMs_ssh_port[$secondVM]} "rm -rf amos/" 
-	       ssh_command ${VMs_ssh_port[$secondVM]} "$Git_cmd"
-	       echo "sent git"
-	       echo "sleep for 5 mins to complete git" 
-	       sleep 600
-	       ssh_command ${VMs_ssh_port[$secondVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$secondVM]}.sh /home/bryanta/"
-	       echo "VM script was copied to home directory"
-	       ssh_command ${VMs_ssh_port[$secondVM]} "chmod +x ${VMs[$secondVM]}.sh"
-	       ssh_command ${VMs_ssh_port[$secondVM]} "./${VMs[$secondVM]}.sh ${VMs[$secondVM]}"
-               echo "VM script was run"
-           fi	
-           if [ $thirdVM -lt $num_of_VMs ]
-           then
-               ssh_command ${VMs_ssh_port[$thirdVM]} "rm -rf amos/" 
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "$Git_cmd"
-	       echo "sent git"
-	       echo "sleep for 5 mins to complete git" 
-	       sleep 600
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$thirdVM]}.sh /home/bryanta/"
-	       echo "VM script was copied to home directory"
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "chmod +x ${VMs[$thirdVM]}.sh"
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "./${VMs[$thirdVM]}.sh ${VMs[$thirdVM]}"
-               echo "VM script was run"
-           fi
-        fi	
-	sleep 7200
+            run_VM $thirdVM & 
+        fi	    
+        # sleep for 5hs	
+        sleep 18000
         # build for a long time
         cd "$Path_to_VBoxManage"
         ./VBoxManage controlvm ${VMs[$firstVM]} poweroff
@@ -356,8 +236,10 @@ for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
   case "${PhMs[$i]}" in
-  "128.8.126.2") echo MAC OS WITH HAWKEYE >> log.txt
+  "128.8.126.2") echo MAC OS >> log.txt
                  ;;
+  "128.8.126.10") echo MAC OS WITH HAWKEYE >> log.txt
+                  ;; 
   esac 
   echo ============================= >> log.txt
   cat "$logs_dir"${PhMs[$i]}_Failed.log | tail -1 >> log.txt
