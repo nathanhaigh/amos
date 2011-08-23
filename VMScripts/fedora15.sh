@@ -1,106 +1,75 @@
 #!/bin/sh
-
+VMUser=bryanta
+VMpassword="1234561"
+VMHomeDir=home/bryanta/
+#######################
+Failed_log()
+{
+cp /$VMHomeDir$1.log /$VMHomeDir$1_Failed.log
+echo "FAILED: $2" >> /$VMHomeDir$1_Failed.log
+/usr/bin/expect <<EOD
+spawn scp /$VMHomeDir$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
+expect "ssh@sauron.cs.umd.edu's password:"
+send "123\r"
+expect eof
+EOD
+echo $VMpassword | sudo -S shutdown -h now
+sleep 180
+}
+#######################
 cd /
-cd home/bryanta/
+cd $VMHomeDir
 cd amos/
 
-./bootstrap > /home/bryanta/$1.log 2>&1
+./bootstrap > /$VMHomeDir$1.log 2>&1
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: ./bootstrap" >> /home/bryanta/$1_Failed.log
-/usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
-expect "ssh@sauron.cs.umd.edu's password:"
-send "123\r"
-expect eof
-EOD
-echo "1234561" | sudo -S shutdown -h now
+Failed_log $1 "./bootstrap"
 fi
 
-./configure --prefix=/usr/local/AMOS >> /home/bryanta/$1.log 2>&1
+./configure --prefix=/usr/local/AMOS >> /$VMHomeDir$1.log 2>&1
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: ./configure" >> /home/bryanta/$1_Failed.log
-/usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
-expect "ssh@sauron.cs.umd.edu's password:"
-send "123\r"
-expect eof
-EOD
-echo "1234561" | sudo -S shutdown -h now
+Failed_log $1 "./configure"
 fi
 
-make >> /home/bryanta/$1.log 2>&1
+make >> /$VMHomeDir$1.log 2>&1
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: make" >> /home/bryanta/$1_Failed.log
-/usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
-expect "ssh@sauron.cs.umd.edu's password:"
-send "123\r"
-expect eof
-EOD
-echo "1234561" | sudo -S shutdown -h now
+Failed_log $1 "make"
 fi
 
-make check >> /home/bryanta/$1.log 2>&1
+make check >> /$VMHomeDir$1.log 2>&1
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: make check" >> /home/bryanta/$1_Failed.log
-/usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
-expect "ssh@sauron.cs.umd.edu's password:"
-send "123\r"
-expect eof
-EOD
-echo "1234561" | sudo -S shutdown -h now
+Failed_log $1 "make check"
 fi
 
-echo "1234561" | su -c "make install >> /home/bryanta/$1.log 2>&1"
+echo $VMpassword | su -c "make install >> /$VMHomeDir$1.log 2>&1"
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: make install" >> /home/bryanta/f$1_Failed.log
-/usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
-expect "ssh@sauron.cs.umd.edu's password:"
-send "123\r"
-expect eof
-EOD
-echo "1234561" | sudo -S shutdown -h now
+Failed_log $1 "make install"
 fi
-echo "1234561" | su -c "ln -s /usr/local/AMOS/bin/* /usr/local/bin/"
+echo $VMpassword | su -c "ln -s /usr/local/AMOS/bin/* /usr/local/bin/"
+
 export PATH=$PATH:/usr/local/AMOS/bin
 cd test/
-./test.sh >> /home/bryanta/$1.log 2>&1
+./test.sh >> /$VMHomeDir$1.log 2>&1
 if [ $? -ne 0 ]
 then
-cp /home/bryanta/$1.log /home/bryanta/$1_Failed.log
-echo "FAILED: tesh.sh" >> /home/bryanta/$1_Failed.log
-/usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1_Failed.log ssh@sauron.cs.umd.edu:VMlogs
-expect "ssh@sauron.cs.umd.edu's password:"
-send "123\r"
-expect eof
-EOD
-echo "1234561" | sudo -S shutdown -h now
-sleep 180
+Failed_log $1 "test.sh"
 fi
 
 echo "sending log to walnut..."
 now=$(date +"%y%m%d")
-echo "SUCCESS:" >> /home/bryanta/$1.log
+echo "SUCCESS:" >> /$VMHomeDir$1.log
 /usr/bin/expect <<EOD
-spawn scp /home/bryanta/$1.log ssh@sauron.cs.umd.edu:VMlogs
+spawn scp /$VMHomeDir$1.log ssh@sauron.cs.umd.edu:VMlogs
 expect "ssh@sauron.cs.umd.edu's password:"
 send "123\r"
 expect eof
 EOD
 echo "deletting log..."
-rm /home/bryanta/$1.log
+rm /$VMHomeDir$1.log
 echo "shutting down..."
-echo "1234561" | sudo -S shutdown -h now
+echo $VMpassword | sudo -S shutdown -h now
