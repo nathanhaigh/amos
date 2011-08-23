@@ -12,25 +12,21 @@
 #include <iterator>
 #include <iostream>
 
-#ifdef AMOS_HAVE_BOOST
-#include <boost/config.hpp>
-#include <boost/utility.hpp>
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#endif //AMOS_HAVE_BOOST
-
 #include "fasta.hh"
 #include "datatypes_AMOS.hh"
 #include "Bank_AMOS.hh"
 #include "BankStream_AMOS.hh"
 
-#include "Utilities_Bundler.hh"
 #include "Contig_AMOS.hh"
+#include "ContigIterator_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
 #include "Motif_AMOS.hh"
 
+#include "Utilities_Bundler.hh"
+
 #include "Position.hh"
+#include "Motif_Utils.hh"
 
 using namespace std;
 using namespace HASHMAP;
@@ -92,7 +88,11 @@ bool GetOptions(int argc, char ** argv) {
    return true;
 } // GetOptions
 
-void outputScaffold(Scaffold_t &scf, Bank_t &contig_bank, Bank_t &edge_bank) {
+void outputScaffold(
+   Scaffold_t &scf, 
+   Bank_t &contig_bank, Bank_t &edge_bank,
+   HASHMAP::hash_map<AMOS::ID_t, string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > &motifSeq,
+   HASHMAP::hash_map<AMOS::ID_t, string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > &motifName) {
         ID_t max = contig_bank.getMaxIID();
         vector<Position> edits;
         Position result;
@@ -101,14 +101,22 @@ void outputScaffold(Scaffold_t &scf, Bank_t &contig_bank, Bank_t &edge_bank) {
 
         for (std::vector<Tile_t>::const_iterator tileIt = scf.getContigTiling().begin(); tileIt < scf.getContigTiling().end(
 ); tileIt++) {
+           string gapped;
+           string eid;
            if (tileIt->source > max) {
-              cerr << "Error: unknown contig id " << tileIt->source << endl;
-              exit(1);
+              if (motifSeq.find(tileIt->source) == motifSeq.end()) {
+                 cerr << "Error: unknown contig id " << tileIt->source << endl;
+                 exit(1);
+               }
+               gapped = motifSeq[tileIt->source];
+               eid = motifName[tileIt->source];
+           } else {
+              Contig_t ctg;
+              contig_bank.fetch(tileIt->source, ctg);
+              gapped = ctg.getSeqString(tileIt->range);
+              eid = ctg.getEID();
            }
-           Contig_t ctg;
-           contig_bank.fetch(tileIt->source, ctg);
-           string gapped = ctg.getSeqString(tileIt->range);
-           result = result.merge(Position(ctg.getEID(), tileIt->offset, tileIt->offset + tileIt->range.getLength(), gapped), edits);
+           result = result.merge(Position(eid, tileIt->offset, tileIt->offset + tileIt->range.getLength(), gapped), edits);
        }
        // print the main sequence
        Fasta_Print(stdout, result.getUngappedSequence().c_str(), stream.str().c_str());
@@ -181,47 +189,19 @@ int main(int argc, char *argv[]) {
    // first expand motifs if we have any
    Motif_t mtf;
    Scaffold_t scf;
-   HASHMAP::hash_map<AMOS::ID_t, Scaffold_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > scfMap;
-   for (AMOS::IDMap_t::const_iterator ci = scaffold_bank.getIDMap().begin(); ci; ci++) {
-      scaffold_bank.fetch(ci->iid, scf);
-      scfMap[scf.getIID()] = scf;
-   }
+   string name;
+   HASHMAP::hash_map<AMOS::ID_t, string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > motifSeq;
+   HASHMAP::hash_map<AMOS::ID_t, string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > motifName;
 
    for (AMOS::IDMap_t::const_iterator ci = motif_bank.getIDMap().begin(); ci; ci++) {
       motif_bank.fetch(ci->iid, mtf);
-      scf = scfMap[mtf.getScf()];
-      vector<Tile_t> t = mtf.getContigTiling();
-      vector<ID_t> e = mtf.getContigEdges();
-    
-      vector<Tile_t> st = scf.getContigTiling();
-      vector<ID_t> se = scf.getContigEdges();
-      st.insert(st.begin(), t.begin(), t.end());
-      se.insert(se.begin(), e.begin(), e.end());
-      scf.setContigTiling(st);
-      scf.setContigEdges(se);
-      scfMap[scf.getIID()] = scf;
+      motifSeq[ci->iid] = Bundler::outputMotif(name, mtf, motif_bank, contig_bank, edge_bank, false);
+      motifName[ci->iid] = name;
    }
 
-   vector<Scaffold_t> scfs;
-   for (HASHMAP::hash_map<AMOS::ID_t, Scaffold_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >::iterator it = scfMap.begin(); it != scfMap.end(); ++it) {
-      scfs.push_back(it->second);
-   }
-
-   // remove the motif tiles as well
-   for (vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); ++it) {
-      vector<Tile_t> st = it->getContigTiling();
-      for (vector<Tile_t>::iterator tile = st.begin(); tile != st.end(); ) {
-         if (tile->source_type == Motif_t::NCODE) {
-            tile = st.erase(tile);
-         } else {
-            ++tile;
-         }
-      }
-      it->setContigTiling(st);
-   }
-
-   for (vector<Scaffold_t>::iterator it = scfs.begin(); it != scfs.end(); ++it) {
-      outputScaffold((*it), contig_bank, edge_bank);
+   for (AMOS::IDMap_t::const_iterator ci = scaffold_bank.getIDMap().begin(); ci; ci++) {
+      scaffold_bank.fetch(ci->iid, scf);
+      outputScaffold(scf, contig_bank, edge_bank, motifSeq, motifName);
    }
 
    edge_bank.close();

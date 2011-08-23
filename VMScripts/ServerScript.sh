@@ -9,12 +9,14 @@ Path_to_VMs="E:\BRYANTA\VMs"
 home_dir=/home/bryanta
 logs_dir=C:/Program\ \Files\ \(x86\)/ICW/home/ssh/VMlogs/
 emailClient_dir="C:\Users\bryanta\Downloads\sendEmail-v156-notls"
+CC_Emails=bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
+To_Email=dungtq1387@gmail.com
 Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=(128.8.126.2)
-Users=(amos)
+PhMs=(128.8.126.2 128.8.126.10)
+Users=(amos amos)
 
 ###################################
 # VM Configuration
@@ -26,16 +28,9 @@ VMs_controller=(PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX3 PIIX
 VMs_nictype=(82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973 82540EM 82540EM Am79C973 82540EM 82540EM 82540EM Am79C973)
 VMs_nic=(e1000 e1000 pcnet e1000 e1000 e1000 pcnet e1000 e1000 pcnet e1000 e1000 e1000 pcnet)
 update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe /UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update" "/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow")  
+upgrade_cmd=("echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending update command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command")  
 shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
-
-#VMs=(ubuntu10.10 centos-5.5-i386-server_Qt4)
-#VMs_OS=(Ubuntu RedHat)
-#VMs_ssh_port=(2226 2234)
-#VMs_controller=(PIIX4 PIIX4)
-#VMs_nictype=(82540EM 82540EM)
-#VMs_nic=(e1000 e1000)
-#update_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \update" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \update")  
-#shutdown_cmd=("echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now") 
+reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
 Git_cmd="git clone git://amos.git.sourceforge.net/gitroot/amos/amos"
 
 ################################
@@ -51,6 +46,8 @@ expect {
 -re "bryanta@localhost's password:" { send "1234561\r" }
 }
 expect eof
+catch wait result
+exit [lindex \$result 3]
 EOD
 }
 
@@ -83,19 +80,83 @@ cd "$Path_to_VBoxManage"
 ./VBoxManage startvm $1
 }
 
+poweroff_VM()
+{
+cd "$Path_to_VBoxManage"
+./VBoxManage controlvm $1 poweroff
+}
+
+run_VM()
+{
+	unregister_VM ${VMs[$1]}         
+        echo "Copying the lated update VM from walnut..."
+	cd "$Path_to_VMs"
+	scp -r $Path_to_Storage${VMs[$1]}.vdi WalnutLast/
+	register_VM ${VMs[$1]} ${VMs_OS[$1]} ${VMs_nictype[$1]} ${VMs_controller[$1]} ${VMs_ssh_port[$1]} ${VMs_nic[$1]}
+        invoke_VM ${VMs[$1]}	
+        echo "Waiting for starting VM..."
+	sleep 180
+        echo "Registering ssh public key..."
+        ssh_command ${VMs_ssh_port[$1]} "echo Registering ssh key"
+        sleep 180
+	echo "Sending update command..."
+	echo ${update_cmd[$1]}
+	eval cmd=\${update_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "$cmd"
+        sleep 900
+        echo "Sending upgrade command..."
+	echo ${upgrade_cmd[$1]}
+	eval cmd1=\${upgrade_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "$cmd1"
+        echo "Waiting for updating..."
+	sleep 3600
+        echo "Sending restart command..."
+	echo ${reboot_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "${reboot_cmd[$1]}"
+        sleep 900
+	echo "Sending shutdown command..."
+	echo ${shutdown_cmd[$1]}
+	ssh_command ${VMs_ssh_port[$1]} "${shutdown_cmd[$1]}"
+	echo "Wating for shutting down VM..."
+	sleep 900
+        poweroff_VM ${VMs[$1]} 
+        cd $Path_to_VMs
+	echo "Copying VM back to Walnut..."
+	scp WalnutLast/${VMs[$1]}.vdi $Path_to_Storage        
+        invoke_VM ${VMs[$1]} 
+        sleep 180 
+        ssh_command ${VMs_ssh_port[$1]} "rm -rf amos/" 
+        ssh_command ${VMs_ssh_port[$1]} "$Git_cmd"
+        if [ $? -ne 0 ]
+           then  	
+              echo "FAILED: git error" >> "$logs_dir"${VMs[$1]}_Failed.log	
+              poweroff_VM ${VMs[$1]} 
+           else 	
+              echo "sent git"
+	      echo "waitting for git to complete..." 
+	      sleep 300
+	      ssh_command ${VMs_ssh_port[$1]} "cp /home/bryanta/amos/VMScripts/${VMs[$1]}.sh /home/bryanta/"
+	      echo "VM script was copied to home directory"
+	      ssh_command ${VMs_ssh_port[$1]} "chmod +x ${VMs[$1]}.sh"
+	      ssh_command ${VMs_ssh_port[$1]} "./${VMs[$1]}.sh ${VMs[$1]}"
+	      echo "VM script was run"
+       fi	
+	
+}
 ##############################
 # Invoke all Physical Machines
 ##############################
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
+  ssh ${Users[$i]}@${PhMs[$i]} "rm -rf ${PhMs[$i]}*" 
   ssh ${Users[$i]}@${PhMs[$i]} "rm -rf amos/" 
   ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
   echo "sent git"
-  echo "sleeping for 5 mins to complete git..."
+  echo "sleeping for several mins to complete git..."
   sleep 300
-  ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh /home/${Users[$i]}/"
+  ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh /Users/${Users[$i]}/"
   ssh ${Users[$i]}@${PhMs[$i]} "chmod +x ${PhMs[$i]}.sh"
-  ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}"
+  ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}" &
 done
 
 ##############################
@@ -108,159 +169,42 @@ firstVM=0
 while [ $firstVM -lt $num_of_VMs ]
 do
         let "secondVM= firstVM + 1"
-        let "thirdVM= firstVM + 2"	
-        unregister_VM ${VMs[$firstVM]}         
-        echo "Copying the lated update VM from walnut..."
-	cd "$Path_to_VMs"
-	scp -r $Path_to_Storage${VMs[$firstVM]}.vdi WalnutLast/
-	register_VM ${VMs[$firstVM]} ${VMs_OS[$firstVM]} ${VMs_nictype[$firstVM]} ${VMs_controller[$firstVM]} ${VMs_ssh_port[$firstVM]} ${VMs_nic[$firstVM]}
-        invoke_VM ${VMs[$firstVM]}	
-        echo "Waiting for starting VM..."
-	sleep 180
-        echo "Registering ssh public key..."
-        ssh_command ${VMs_ssh_port[$firstVM]} ""
-        sleep 120
-	echo "Sending update command..."
-	echo ${update_cmd[$firstVM]}
-	eval cmd=\${update_cmd[$firstVM]}
-	ssh_command ${VMs_ssh_port[$firstVM]} "$cmd"
-        
+        let "thirdVM= firstVM + 2"
+        run_VM $firstVM &	
         if [ $secondVM -lt $num_of_VMs ]
         then
-            unregister_VM ${VMs[$secondVM]}         
-            echo "Copying the lated update VM from walnut..."
-	    cd "$Path_to_VMs"
-	    scp -r $Path_to_Storage${VMs[$secondVM]}.vdi WalnutLast/
-	    register_VM ${VMs[$secondVM]} ${VMs_OS[$secondVM]} ${VMs_nictype[$secondVM]} ${VMs_controller[$secondVM]} ${VMs_ssh_port[$secondVM]} ${VMs_nic[$secondVM]}
-            invoke_VM ${VMs[$secondVM]}	
-            echo "Waiting for starting VM..."
-	    sleep 180
-            echo "Registering ssh public key..."
-            ssh_command ${VMs_ssh_port[$secondVM]} ""
-            sleep 120
-	    echo "Sending update command..."
-	    echo ${update_cmd[$secondVM]}
-	    eval cmd=\${update_cmd[$secondVM]}
-	    ssh_command ${VMs_ssh_port[$secondVM]} "$cmd"
+            run_VM $secondVM &
         fi	
         if [ $thirdVM -lt $num_of_VMs ]
         then
-            unregister_VM ${VMs[$thirdVM]}         
-            echo "Copying the lated update VM from walnut..."
-	    cd "$Path_to_VMs"
-	    scp -r $Path_to_Storage${VMs[$thirdVM]}.vdi WalnutLast/
-	    register_VM ${VMs[$thirdVM]} ${VMs_OS[$thirdVM]} ${VMs_nictype[$thirdVM]} ${VMs_controller[$thirdVM]} ${VMs_ssh_port[$thirdVM]} ${VMs_nic[$thirdVM]}
-            invoke_VM ${VMs[$thirdVM]}	
-            echo "Waiting for starting VM..."
-	    sleep 180
-            echo "Registering ssh public key..."
-            ssh_command ${VMs_ssh_port[$thirdVM]} ""
-            sleep 120
-	    echo "Sending update command..."
-	    echo ${update_cmd[$thirdVM]}
-	    eval cmd=\${update_cmd[$thirdVM]}
-	    ssh_command ${VMs_ssh_port[$thirdVM]} "$cmd"
-        fi	
-
-	echo "Waiting for updating..."
-	sleep 3600
-
-	echo "Sending shutdown command..."
-	echo ${shutdown_cmd[$firstVM]}
-	ssh_command ${VMs_ssh_port[$firstVM]} "${shutdown_cmd[$firstVM]}"
-	if [ $secondVM -lt $num_of_VMs ]
+            run_VM $thirdVM & 
+        fi	    
+        # sleep for 5hs	
+        sleep 18000
+        # build for a long time
+        cd "$Path_to_VBoxManage"
+        ./VBoxManage controlvm ${VMs[$firstVM]} poweroff
+        if [ $? -eq 0 ]
         then
-            echo ${shutdown_cmd[$secondVM]}
-	    ssh_command ${VMs_ssh_port[ $secondVM]} "${shutdown_cmd[$secondVM]}"
-        fi	
-        if [ $thirdVM -lt $num_of_VMs ]
-        then
-            echo ${shutdown_cmd[$thirdVM]}
-	    ssh_command ${VMs_ssh_port[$thirdVM]} "${shutdown_cmd[$thirdVM]}"
-        fi	
-
-        echo "Wating for shutting down VM..."
-	sleep 1800
-
-	cd $Path_to_VMs
-	echo "Copying VM back to Walnut..."
-	scp WalnutLast/${VMs[$firstVM]}.vdi $Path_to_Storage        
-        invoke_VM ${VMs[$firstVM]} 
-        sleep 180 
-        if [ $secondVM -lt $num_of_VMs ]
-        then
-            cd $Path_to_VMs
-            scp WalnutLast/${VMs[$secondVM]}.vdi $Path_to_Storage        
-            invoke_VM ${VMs[$secondVM]} 
-            sleep 180
-        fi	
-        if [ $thirdVM -lt $num_of_VMs ]
-        then
-            cd $Path_to_VMs
-            scp WalnutLast/${VMs[$thirdVM]}.vdi $Path_to_Storage        
-            invoke_VM ${VMs[$thirdVM]} 
-            sleep 180
+            echo "FAILED: This VM took longer than expected to finish" >> "$logs_dir"${VMs[$firstVM]}_Failed.log
         fi
 
-        cd $home_dir 
-        mkdir tempp
-        cd tempp 
-        git clone git://amos.git.sourceforge.net/gitroot/amos/amos	
-        if [ $? -ne 0 ]
-        then  	
-           cd ..
-           rm -rf tempp
-           echo "FAILED: git error" >> "$logs_dir"${VMs[$firstVM]}_Failed.log	
-           if [ $secondVM -lt $num_of_VMs ]
-           then
-               echo "FAILED: git error" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
-           fi	
-           if [ $thirdVM -lt $num_of_VMs ]
-           then
-            echo "FAILED: git error" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
-           fi
-        else 	
-           cd ..
-           rm -rf tempp
-           echo "ok to git" 
-           ssh_command ${VMs_ssh_port[$firstVM]} "rm -rf amos/" 
-           ssh_command ${VMs_ssh_port[$firstVM]} "$Git_cmd"
-           echo "sent git"
-	   echo "waitting for git to complete..." 
-	   sleep 300
-	   ssh_command ${VMs_ssh_port[$firstVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$firstVM]}.sh /home/bryanta/"
-	   echo "VM script was copied to home directory"
-	   ssh_command ${VMs_ssh_port[$firstVM]} "chmod +x ${VMs[$firstVM]}.sh"
-	   ssh_command ${VMs_ssh_port[$firstVM]} "./${VMs[$firstVM]}.sh ${VMs[$firstVM]}"
-	   echo "VM script was run"
-           if [ $secondVM -lt $num_of_VMs ]
-           then
-               ssh_command ${VMs_ssh_port[$secondVM]} "rm -rf amos/" 
-	       ssh_command ${VMs_ssh_port[$secondVM]} "$Git_cmd"
-	       echo "sent git"
-	       echo "sleep for 5 mins to complete git" 
-	       sleep 300
-	       ssh_command ${VMs_ssh_port[$secondVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$secondVM]}.sh /home/bryanta/"
-	       echo "VM script was copied to home directory"
-	       ssh_command ${VMs_ssh_port[$secondVM]} "chmod +x ${VMs[$secondVM]}.sh"
-	       ssh_command ${VMs_ssh_port[$secondVM]} "./${VMs[$secondVM]}.sh ${VMs[$secondVM]}"
-               echo "VM script was run"
-           fi	
-           if [ $thirdVM -lt $num_of_VMs ]
-           then
-               ssh_command ${VMs_ssh_port[$thirdVM]} "rm -rf amos/" 
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "$Git_cmd"
-	       echo "sent git"
-	       echo "sleep for 5 mins to complete git" 
-	       sleep 300
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "cp /home/bryanta/amos/VMScripts/${VMs[$thirdVM]}.sh /home/bryanta/"
-	       echo "VM script was copied to home directory"
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "chmod +x ${VMs[$thirdVM]}.sh"
-	       ssh_command ${VMs_ssh_port[$thirdVM]} "./${VMs[$thirdVM]}.sh ${VMs[$thirdVM]}"
-               echo "VM script was run"
-           fi
-        fi	
-	sleep 3600
+        if [ $secondVM -lt $num_of_VMs ]
+        then
+            ./VBoxManage controlvm ${VMs[$secondVM]} poweroff
+            if [ $? -eq 0 ]
+              then
+                  echo "FAILED: This VM took longer than expected to finish" >> "$logs_dir"${VMs[$secondVM]}_Failed.log
+            fi
+        fi
+        if [ $thirdVM -lt $num_of_VMs ]
+        then 
+            ./VBoxManage controlvm ${VMs[$thirdVM]} poweroff
+            if [ $? -eq 0 ]
+              then
+                  echo "FAILED: This VM took longer than expected to finish" >> "$logs_dir"${VMs[$thirdVM]}_Failed.log
+            fi
+        fi
         let "firstVM= firstVM + 3"
 done
 
@@ -286,13 +230,16 @@ sleep 300
 
 echo "combining VMs log files..."
 date > log.txt
-echo "*** Complete logs stored on sauron.cs.umd.edu" >> log.txt
+now=$(date +"%y%m%d")
+echo "*** Complete logs stored on http://sauron.cs.umd.edu/$now" >> log.txt
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
   case "${PhMs[$i]}" in
   "128.8.126.2") echo MAC OS >> log.txt
                  ;;
+  "128.8.126.10") echo MAC OS WITH HAWKEYE >> log.txt
+                  ;; 
   esac 
   echo ============================= >> log.txt
   cat "$logs_dir"${PhMs[$i]}_Failed.log | tail -1 >> log.txt
@@ -352,11 +299,13 @@ done
 echo "Sending email to group..."
 if [ $count1 != '0' ]
 then
-	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
+#	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 if [ $count1 == '0' ]
 then
-	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
+#	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 echo "Email sent"
 rm -f log.txt

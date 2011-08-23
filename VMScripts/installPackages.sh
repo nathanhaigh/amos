@@ -57,6 +57,19 @@ then
    echo "1234561" | sudo -S make prefix=/usr/local install
    cd ..
 fi
+
+if [ $1 == 128.8.126.2 ]
+then
+    curl http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.3.tar.gz -o gt-everywhere-opensource-src-4.7.3.tar.gz
+    tar zvxf gt-everywhere-opensource-src-4.7.3.tar.gz
+    cd gt-everywhere-opensource-src-4.7.3
+    echo "yes" | ./configure -opensource
+    make
+    make -j1 install
+    cd ..
+    echo "PATH=$PATH:/usr/local/Trolltech/Qt-4.7.3/bin" >> .profile
+    echo "export PATH" >> .profile
+fi
 ##########################
 # install common packages
 ##########################

@@ -25,7 +25,7 @@ OutputMotifs_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 OutputMotifs_SOURCES = \
-	Position.cc Position.hh OutputMotifs.cc
+	Position.cc Position.hh Motif_Utils.cc Motif_Utils.hh OutputMotifs.cc
 
 ##-- OutputMotifs \
 OutputScaffolds_LDADD = \
@@ -34,7 +34,7 @@ OutputScaffolds_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 OutputScaffolds_SOURCES = \
-	Position.cc Position.hh OutputScaffolds.cc
+	Position.cc Position.hh Motif_Utils.cc Motif_Utils.hh OutputScaffolds.cc
 
 OutputResults_LDADD = \
 	$(top_builddir)/src/Bambus/Bundler/libBundler.a \

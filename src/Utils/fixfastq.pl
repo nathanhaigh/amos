@@ -18,6 +18,7 @@ my $trimqb = 0;
 
 while (<>)
 {
+  die if (substr($_,0,1) != '@');
   print $_;
   my $s = <>;  chomp $s;
   my $h2 = <>; chomp $h2;
