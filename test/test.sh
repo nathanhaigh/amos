@@ -8,4 +8,5 @@ for case in $cases;
 do
     ./$case
 done
+cat *.runAmos.log
 
