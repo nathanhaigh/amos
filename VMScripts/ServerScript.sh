@@ -17,6 +17,7 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 PhMs=(128.8.126.2 128.8.126.10)
 Users=(amos amos)
+HomeDir=(/Users/amos/ /Users/amos/)
 
 ###################################
 # VM Configuration
@@ -154,7 +155,7 @@ do
   echo "sent git"
   echo "sleeping for several mins to complete git..."
   sleep 300
-  ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh /Users/${Users[$i]}/"
+  ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh ${HomeDir[$i]}"
   ssh ${Users[$i]}@${PhMs[$i]} "chmod +x ${PhMs[$i]}.sh"
   ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}" &
 done
@@ -244,6 +245,7 @@ do
   echo ============================= >> log.txt
   cat "$logs_dir"${PhMs[$i]}_Failed.log | tail -1 >> log.txt
   cat "$logs_dir"${PhMs[$i]}.log | tail -1 >> log.txt
+  echo                               >> log.txt
 done
 for (( i = 0; i < ${#VMs[$i]}; i++ ))
 do
@@ -281,6 +283,7 @@ do
   echo ============================= >> log.txt
   cat "$logs_dir"${VMs[$i]}_Failed.log | tail -1 >> log.txt
   cat "$logs_dir"${VMs[$i]}.log | tail -1 >> log.txt
+  echo                               >> log.txt
 done
 
 ################################
@@ -299,12 +302,10 @@ done
 echo "Sending email to group..."
 if [ $count1 != '0' ]
 then
-#	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
         ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 if [ $count1 == '0' ]
 then
-#	./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t dungtq1387@gmail.com -cc bryanta@cs.umd.edu
         ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t $To_Email -cc $CC_Emails
 fi
 echo "Email sent"
