@@ -51,6 +51,7 @@ typedef boost::graph_traits<Graph>::out_edge_iterator EdgeIterator;
 typedef boost::property_map<Graph, boost::vertex_name_t>::type VertexName;
 #endif //AMOS_HAVE_BOOST
 
+#ifdef AMOS_HAVE_BOOST
 Vertex computeSource(Graph g); 
 Position traverseRecursive(
                                 Bank_t &contig_bank,
@@ -70,8 +71,6 @@ Position translateSetToPaths(
    vector<Position>& edits, hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seq,
    hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seqNames);
 
-
-#ifdef AMOS_HAVE_BOOST
 Vertex computeSource(Graph g) {
 	Vertex source;
 	uint32_t counter = 0;
@@ -221,45 +220,6 @@ Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_ba
 	}
 
 	return result;
-}
-#else
-Vertex computeSource(Graph g);
-Position traverseRecursive(
-                                Bank_t &contig_bank,
-                                Graph g,
-                                ID_t current,
-                                hash_map<ID_t, Tile_t, hash<ID_t>, equal_to<ID_t> >& nodeToTile,
-                                hash_map<ID_t, Vertex, hash<ID_t>, equal_to<ID_t> >& nodeToDescriptor,
-                                hash_map<ID_t, uint32_t, hash<ID_t>, equal_to<ID_t> > &visited,
-                                hash_map<ID_t, vector<Position>, hash<ID_t>, equal_to<ID_t> > &paths,
-                                hash_map<ID_t, Position, hash<ID_t>, equal_to<ID_t> > &longest,
-                                vector<Position> &edits,
-                                hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seq,
-                                hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seqNames) {
-   std::cerr << "Error boost library was not available when compiling, cannot output motifs" << std::endl;
-}
-
-Position traverseRecursive(
-                                Bank_t &contig_bank,
-                                Graph g,
-                                ID_t current,
-                                hash_map<ID_t, Tile_t, hash<ID_t>, equal_to<ID_t> >& nodeToTile,
-                                hash_map<ID_t, Vertex, hash<ID_t>, equal_to<ID_t> >& nodeToDescriptor,
-                                hash_map<ID_t, uint32_t, hash<ID_t>, equal_to<ID_t> > &visited,
-                                hash_map<ID_t, vector<Position>, hash<ID_t>, equal_to<ID_t> > &paths,
-                                hash_map<ID_t, Position, hash<ID_t>, equal_to<ID_t> > &longest,
-                                vector<Position> &edits,
-                                hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seq,
-                                hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seqNames) {
-   std::cerr << "Error boost library was not available when compiling, cannot output motifs" << std::endl;
-}
-
-Position translateSetToPaths(
-   Motif_t &scf,
-   Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank,
-   vector<Position>& edits, hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seq,
-   hash_map<ID_t, string, hash<ID_t>, equal_to<ID_t> > &seqNames) {
-   std::cerr << "Error boost library was not available when compiling, cannot output motifs" << std::endl;
 }
 #endif
 
