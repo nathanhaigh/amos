@@ -15,7 +15,8 @@ Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=(128.8.126.2 128.8.126.10)
+PhMs=(128.8.126.2 128.8.126.10) 
+PhMs_name_on_log=("MAC OS" "MAC OS WITH HAWKEYE")
 Users=(amos amos)
 HomeDir=(/Users/amos/ /Users/amos/)
 
@@ -23,6 +24,7 @@ HomeDir=(/Users/amos/ /Users/amos/)
 # VM Configuration
 ###################################
 VMs=(win7_updateFirst ubuntu10.10 winXP_updateFirst fedora15 win7_updateLast centos-5.5-i386-server winXP_updateLast win7_updateFirst_Qt4 ubuntu10.10_Qt4 winXP_updateFirst_Qt4 fedora15_Qt4 win7_updateLast_Qt4 centos-5.5-i386-server_Qt4 winXP_updateLast_Qt4)
+VMs_name_on_log=("WIN 7 UPDATE FIRST" "UBUNTU 10.10" "WIN XP UPDATE FIRST" "FEDORA 15" "WIN 7 UPDATE LAST" "CENT OS 5.5" "WIN XP UPDATE LAST" "WIN 7 UPDATE FIRST WITH HAWKEYE" "UBUNTU 10.10 WITH HAWKEYE" "WIN XP UPDATE FIRST WITH HAWKEYE" "FEDORA 15 WITH HAWKEYE" "WIN 7 UPDATE LAST WITH HAWKEYE" "CENT OS 5.5 WITH HAWKEYE" "WIN XP UPDATE LAST WITH HAWKEYE")
 VMs_OS=(Windows7 Ubuntu WindowsXP Fedora Windows7 RedHat WindowsXP Windows7 Ubuntu WindowsXP Fedora Windows7 RedHat WindowsXP)
 VMs_ssh_port=(2222 2226 2224 2227 2223 2228 2225 2229 2230 2231 2232 2233 2234 2235)
 VMs_controller=(PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX3 PIIX4 PIIX4 PIIX4 PIIX3)
@@ -151,6 +153,7 @@ for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   ssh ${Users[$i]}@${PhMs[$i]} "rm -rf ${PhMs[$i]}*" 
   ssh ${Users[$i]}@${PhMs[$i]} "rm -rf amos/" 
+  ssh ${Users[$i]}@${PhMs[$i]} "rm -rf *.log" 
   ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
   echo "sent git"
   echo "sleeping for several mins to complete git..."
@@ -236,12 +239,13 @@ echo "*** Complete logs stored on http://sauron.cs.umd.edu/$now" >> log.txt
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
-  case "${PhMs[$i]}" in
-  "128.8.126.2") echo MAC OS >> log.txt
-                 ;;
-  "128.8.126.10") echo MAC OS WITH HAWKEYE >> log.txt
-                  ;; 
-  esac 
+  #case "${PhMs[$i]}" in
+  #"128.8.126.2") echo MAC OS >> log.txt
+  #               ;;
+  #"128.8.126.10") echo MAC OS WITH HAWKEYE >> log.txt
+  #                ;; 
+  #esac
+  echo ${PhMs_name_on_log[$i]} >> log.txt
   echo ============================= >> log.txt
   cat "$logs_dir"${PhMs[$i]}_Failed.log | tail -1 >> log.txt
   cat "$logs_dir"${PhMs[$i]}.log | tail -1 >> log.txt
@@ -250,36 +254,37 @@ done
 for (( i = 0; i < ${#VMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
-  case "${VMs[$i]}" in
-  "winXP_updateFirst") echo WIN XP UPDATE FIRST >> log.txt
-                       ;;
-  "winXP_updateLast")  echo WIN XP UPDATE LAST >> log.txt
-                       ;;
-  "win7_updateFirst")  echo WIN 7 UPDATE FIRST >> log.txt
-                       ;;
-  "win7_updateLast")   echo WIN 7 UPDATE LAST >> log.txt
-                       ;;
-  "ubuntu10.10")       echo UBUNTU 10.10      >> log.txt
-                       ;;
-  "fedora15")          echo FEDORA 15         >> log.txt
-                       ;;
-  "centos-5.5-i386-server") echo CENT OS 5.5  >> log.txt 
-                            ;;
-  "winXP_updateFirst_Qt4") echo WIN XP UPDATE FIRST WITH HAWKEYE >> log.txt
-                       ;;
-  "winXP_updateLast_Qt4")  echo WIN XP UPDATE LAST WITH HAWKEYE >> log.txt
-                       ;;
-  "win7_updateFirst_Qt4")  echo WIN 7 UPDATE FIRST WITH HAWKEYE >> log.txt
-                       ;;
-  "win7_updateLast_Qt4")   echo WIN 7 UPDATE LAST WITH HAWKEYE >> log.txt
-                       ;;
-  "ubuntu10.10_Qt4")       echo UBUNTU 10.10 WITH HAWKEYE      >> log.txt
-                       ;;
-  "fedora15_Qt4")          echo FEDORA 15 WITH HAWKEYE         >> log.txt
-                       ;;
-  "centos-5.5-i386-server_Qt4") echo CENT OS 5.5 WITH HAWKEYE  >> log.txt 
-                            ;;
-  esac 
+  #case "${VMs[$i]}" in
+  #"winXP_updateFirst") echo WIN XP UPDATE FIRST >> log.txt
+  #                     ;;
+  #"winXP_updateLast")  echo WIN XP UPDATE LAST >> log.txt
+  #                     ;;
+  #"win7_updateFirst")  echo WIN 7 UPDATE FIRST >> log.txt
+  #                     ;;
+  #"win7_updateLast")   echo WIN 7 UPDATE LAST >> log.txt
+  #                     ;;
+  #"ubuntu10.10")       echo UBUNTU 10.10      >> log.txt
+  #                     ;;
+  #"fedora15")          echo FEDORA 15         >> log.txt
+  #                    ;;
+  #"centos-5.5-i386-server") echo CENT OS 5.5  >> log.txt 
+  #                          ;;
+  #"winXP_updateFirst_Qt4") echo WIN XP UPDATE FIRST WITH HAWKEYE >> log.txt
+  #                     ;;
+  #"winXP_updateLast_Qt4")  echo WIN XP UPDATE LAST WITH HAWKEYE >> log.txt
+  #                     ;;
+  #"win7_updateFirst_Qt4")  echo WIN 7 UPDATE FIRST WITH HAWKEYE >> log.txt
+  #                     ;;
+  #"win7_updateLast_Qt4")   echo WIN 7 UPDATE LAST WITH HAWKEYE >> log.txt
+  #                     ;;
+  #"ubuntu10.10_Qt4")       echo UBUNTU 10.10 WITH HAWKEYE      >> log.txt
+  #                     ;;
+  #"fedora15_Qt4")          echo FEDORA 15 WITH HAWKEYE         >> log.txt
+  #                     ;;
+  #"centos-5.5-i386-server_Qt4") echo CENT OS 5.5 WITH HAWKEYE  >> log.txt 
+  #                          ;;
+  #esac 
+  echo ${VMs_name_on_log[$i]} >> log.txt
   echo ============================= >> log.txt
   cat "$logs_dir"${VMs[$i]}_Failed.log | tail -1 >> log.txt
   cat "$logs_dir"${VMs[$i]}.log | tail -1 >> log.txt
