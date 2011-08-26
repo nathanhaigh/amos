@@ -1,10 +1,14 @@
 #!/bin/bash
-if [ -z "$1" || -z "$2" ]
+if [ -z "$1" ]
 then
-   echo "Usage: $1 <OS name: Windows7/WindowsXP/ubuntu/fedora/centos/MacOS> $2 <password>"
+   echo "Usage: $1 <OS name: Windows7/WindowsXP/ubuntu/fedora/centos/MacOS>" 
    exit 1 
 fi
-
+if [ -z "$2" ]
+then
+   echo "Usage: $2 <password>"
+   exit 1
+fi
 #####################################
 # install diff packages for diff OSes
 #####################################
