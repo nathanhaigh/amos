@@ -1,7 +1,7 @@
 #!/bin/bash
-if [ -z "$1" ]
+if [ -z "$1" || -z "$2" ]
 then
-   echo "Usage: $1 <OS name: Windows7/WindowsXP/ubuntu/fedora/centos>"
+   echo "Usage: $1 <OS name: Windows7/WindowsXP/ubuntu/fedora/centos/MacOS> $2 <password>"
    exit 1 
 fi
 
@@ -58,18 +58,6 @@ then
    cd ..
 fi
 
-if [ $1 == 128.8.126.2 ]
-then
-    curl http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.3.tar.gz -o gt-everywhere-opensource-src-4.7.3.tar.gz
-    tar zvxf gt-everywhere-opensource-src-4.7.3.tar.gz
-    cd gt-everywhere-opensource-src-4.7.3
-    echo "yes" | ./configure -opensource
-    make
-    make -j1 install
-    cd ..
-    echo "PATH=$PATH:/usr/local/Trolltech/Qt-4.7.3/bin" >> .profile
-    echo "export PATH" >> .profile
-fi
 ##########################
 # install common packages
 ##########################
@@ -84,7 +72,7 @@ EOD
 rm -f ssh_reg.txt
 
 echo "installing wget..."
-if [[ $1 != Windows7 && $1 != WindowsXP ]]
+if [[ $1 != Windows7 && $1 != WindowsXP && $1 != MacOS ]]
 then
    if [ $1 == ubuntu ]
    then
@@ -103,12 +91,18 @@ then
    if [[ $1 == Windows7 || $1 == WindowsXP ]]
    then 
        make install
+   elif [[ $1 == MacOS ]]
+   then
+	echo $2 | sudo -S make install
    else 
        echo "1234561" | sudo -S make install
    fi
    if [[ $1 == Windows7 || $1 == WindowsXP ]]
    then 
         chmod 777 /usr/local/bin/
+   elif [[ $1 == MacOS ]]
+   then
+	echo $2 | sudo -S chmod 777 /usr/local/bin/
    else 
        echo "1234561" | sudo -S chmod 777 /usr/local/bin/
    fi
@@ -135,6 +129,9 @@ then
    if [[ $1 == Windows7 || $1 == WindowsXP ]]
    then 
         make install
+   elif [[ $1 == MacOS ]]
+   then
+	echo $2 | sudo -S make install
    else 
        echo "1234561" | sudo -S make install
    fi
@@ -149,6 +146,9 @@ echo "installing BLAT..."
    if [[ $1 == Windows7 || $1 == WindowsXP ]]
    then 
         chmod 777 /usr/local/bin/
+   elif [[ $1 == MacOS ]]
+   then
+	echo $2 | sudo -S chmod 777 /usr/local/bin/
    else 
        echo "1234561" | sudo -S chmod 777 /usr/local/bin/
    fi
