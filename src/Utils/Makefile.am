@@ -36,6 +36,7 @@ dist_bin_SCRIPTS = \
 	nucmerAnnotate.pl \
 	nucmer2ovl.pl \
 	sort2.pl \
+    sidebyside.pl \
 	ovl2OVL.pl \
     fasta_select_len.pl \
     fasta_to_fastq.pl \
