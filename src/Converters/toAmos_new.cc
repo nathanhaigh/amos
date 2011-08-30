@@ -992,7 +992,8 @@ bool parseFrgFile(string fileName) {
          Fragment_t frag;
          frag.setLibrary(libID);
          frag.setIID(minSeqID++);
-         string uid = i->first + "_frag";
+         string uid = AS_UID_toString(AS_UID_fromInteger(i->first));
+         uid += "_frag";
          frag.setEID(uid);
          frag.setType(Fragment_t::INSERT);
          frag_stream.append(frag);

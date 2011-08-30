@@ -87,13 +87,13 @@ if __name__ == "__main__":
         contig_file = os.getcwd() + "/" + prefix +".contig"
         afg_file = os.getcwd() + "/" + outprefix +".afg"
         bank_file = os.getcwd() + "/" + outprefix +".bnk"
-        if not os.path.exists(mate_file):
+        if not os.path.exists(mate_file) and not os.path.exists(afg_file):
            print "mate pair info not present!"
            sys.exit(1)
-        if not os.path.exists(contig_file):
+        if not os.path.exists(contig_file) and not os.path.exists(afg_file):
            print "contig info not present!"
            sys.exit(1)
-        if not os.path.exists(afg_file) or 1:
+        if not os.path.exists(afg_file) or 0:
             p = subprocess.Popen(AMOSDIR+"toAmos -o %s.afg -s %s -m %s -c %s"%(outprefix,sys.argv[1], mate_file, contig_file), shell=True, stdin=subprocess.PIPE, stdout=vtext, stderr=logfile)
 
             if xopt_dict["verbose"] == 1:

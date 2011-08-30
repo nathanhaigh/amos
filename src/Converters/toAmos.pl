@@ -939,7 +939,7 @@ sub parseFastaFile {
                 $seqinsert{$hash{'1'}} = $insid;
                 $seqinsert{$hash{'2'}} = $insid;
                 $forw{$insid} = $hash{'1'};
-                $rev{$insid}  = $hash{'1'};
+                $rev{$insid}  = $hash{'2'};
                 $seenlib{$insid} = $libname;
                 $insid{$insid} = $insid;
                 $insid++;
