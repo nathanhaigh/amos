@@ -53,17 +53,17 @@ then
   if [ ! -r $PREFIX.scafSeq.ctg.fa ]
   then
     echo " splitscaff"
-    splitscafffa.pl $PREFIX.scafSeq > $PREFIX.scafSeq.ctg.fa
+    splitscafffa $PREFIX.scafSeq > $PREFIX.scafSeq.ctg.fa
   fi
 
   echo " scanning"
 
-  echo -n "Scaffolds "                                                 >  $PREFIX.scafSeq.stats
-  getlengths $PREFIX.scafSeq | stats.pl -f 2 -big 100,500,1000         >> $PREFIX.scafSeq.stats
-  echo -n "Contigs "                                                   >> $PREFIX.scafSeq.stats
-  getlengths $PREFIX.scafSeq.ctg.fa | stats.pl -f 2 -big 100,500,1000  >> $PREFIX.scafSeq.stats
-  echo -n "Unitigs "                                                   >> $PREFIX.scafSeq.stats
-  getlengths $PREFIX.contig | stats.pl -f 2 -big 100,500,1000          >> $PREFIX.scafSeq.stats
+  echo -n "Scaffolds "                                              >  $PREFIX.scafSeq.stats
+  getlengths $PREFIX.scafSeq | stats -f 2 -big 100,500,1000         >> $PREFIX.scafSeq.stats
+  echo -n "Contigs "                                                >> $PREFIX.scafSeq.stats
+  getlengths $PREFIX.scafSeq.ctg.fa | stats -f 2 -big 100,500,1000  >> $PREFIX.scafSeq.stats
+  echo -n "Unitigs "                                                >> $PREFIX.scafSeq.stats
+  getlengths $PREFIX.contig | stats -f 2 -big 100,500,1000          >> $PREFIX.scafSeq.stats
 
   cat $PREFIX.scafSeq.stats
 fi
