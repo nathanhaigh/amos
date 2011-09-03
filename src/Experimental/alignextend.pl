@@ -17,6 +17,7 @@ my $RC = 0;
 my $READLEN = 100;
 my $MAPQ_THRESHOLD = 20;
 my $numreads = 10000000000;
+my $THREADS = 1;
 
 my $HARD_TRIM = 0;
 my $QV_TRIM = 10;
@@ -39,6 +40,7 @@ my $res = GetOptions("help"      => \$help,
                      "rc"        => \$RC,
                      "qv=n"      => \$QV_TRIM,
                      "trim=n"    => \$HARD_TRIM,
+                     "threads=n" => \$THREADS,
                      "len=n"     => \$READLEN,
                      "mapq=n"    => \$MAPQ_THRESHOLD,
                      "I"         => \$QV_ILLUMINA,
@@ -56,27 +58,29 @@ if ($help)
   print "with the sequence of the contig on the 3' end\n";
   print "\n";
   print "Required\n";
-  print "  prefix     : prefix for output files\n";
-  print "  ref.fa     : path to reference genome\n";
-  print "  fq1        : path to first read\n";
-  print "  fq2        : path to second read\n";
+  print "  prefix      : prefix for output files\n";
+  print "  ref.fa      : path to reference genome\n";
+  print "  fq1         : path to first read\n";
+  print "  fq2         : path to second read\n";
   print "\n";
   print "Options\n";
-  print "  -reads <n> : align first m reads (default: $numreads)\n";
-  print "  -suffix    : Add /1 and /2 suffix to reads\n";
-  print "  -rc        : reverse complement the reads before alignment\n";
-  print "  -qv <n>    : bwa quality soft quality trim (default: $QV_TRIM)\n";
-  print "  -trim <n>  : hard trim 3' value (default: $HARD_TRIM)\n";
-  print "  -I         : read quality values are Illumina format\n";
-  print "  -q <n>     : quality value to assign to read bases (default: $QV_READ)\n";
-  print "  -len <n>   : extend to this length (default: $READLEN)\n";
+  print "  -reads <n>  : align first m reads (default: $numreads)\n";
+  print "  -suffix     : Add /1 and /2 suffix to reads\n";
+  print "  -rc         : reverse complement the reads before alignment\n";
+  print "  -qv <n>     : bwa quality soft quality trim (default: $QV_TRIM)\n";
+  print "  -thread <n> : number of threads for bwa (default: $THREADS)\n";
+  print "  -trim <n>   : hard trim 3' value (default: $HARD_TRIM)\n";
+  print "  -I          : read quality values are Illumina format\n";
+  print "  -q <n>      : quality value to assign to read bases (default: $QV_READ)\n";
+  print "  -len <n>    : extend to this length (default: $READLEN)\n";
   print "\n";
   print "Filtering\n";
-  print "  -mapq <n>  : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
-  print "  -check     : Only accept alignments with proper orientation and distance\n";
-  print "  -min <n>   : Only accept alignments at least this far apart (default: $MIN_DIST)\n";
-  print "  -max <n>   : Only accept alignments less than this far apart (default: $MAX_DIST)\n";
-  print "  -dup <n>   : Filter duplicates with coordinates within this distance (default: $DUP_WIGGLE)\n";
+  print "  -mapq <n>   : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
+  print "  -check      : Only accept alignments with proper orientation and distance\n";
+  print "  -min <n>    : Only accept alignments at least this far apart (default: $MIN_DIST)\n";
+  print "  -max <n>    : Only accept alignments less than this far apart (default: $MAX_DIST)\n";
+  print "  -dup <n>    : Filter duplicates with coordinates within this distance (default: $DUP_WIGGLE)\n";
+
   exit 0;
 }
 
@@ -134,7 +138,7 @@ foreach my $idx (1..2)
 
   runCmd("prepare fq",   "$prefix.$idx.fq",  "$headcmd $fq $TRIM_CMD > $prefix.$idx.fq");
 
-  runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq > $prefix.$idx.sai");
+  runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln -t $THREADS $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq -f $prefix.$idx.sai >& $prefix.$idx.sai.log");
   runCmd("bwa samse",  "$prefix.$idx.sam",   "$BWA samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq");
 
   sam2bed($samfile, $bedfile);
@@ -184,7 +188,7 @@ sub sam2bed
 
   my %reflen;
 
-  print "sam2bed $samfile...\n";
+  print "\nsam2bed $samfile...\n";
 
   my $rdcnt = 0;
   my $goodrdcnt = 0;
@@ -232,9 +236,9 @@ sub sam2bed
       my $startpos = $pos-1;  ## BED is 0-based
       my $endpos = $startpos + $READLEN - 1;
 
-      if ($endpos >= $reflen) 
+      if ($endpos > $reflen) 
       { 
-        $endpos   = $reflen-1;
+        $endpos   = $reflen;
         $startpos = $reflen-$READLEN;
         if ($startpos < 0) { $startpos = 0; }
       }
@@ -252,11 +256,11 @@ sub sam2bed
       { 
         $startpos = 0; 
         $endpos = $READLEN;
+      }
 
-        if ($endpos >= $reflen)
-        {
-          $endpos = $reflen-1;
-        }
+      if ($endpos > $reflen)
+      {
+        $endpos = $reflen;
       }
 
       print BED "$rname\t$startpos\t$endpos\t$base/$iidx\t1\t-\n";
