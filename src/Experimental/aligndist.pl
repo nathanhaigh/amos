@@ -29,8 +29,8 @@ my $USAGE = "aligndist <options> prefix ref.fa fq1 fq2 | -samfile <samfile>\n";
 my $res = GetOptions("help"      => \$help,
                      "sam=s"     => \$samfile,
                      "reads=n"   => \$numreads,
-                     "dist=n"    => \$showdist,
-                     "details=n" => \$showdetails,
+                     "dist"      => \$showdist,
+                     "details"   => \$showdetails,
                      "rc"        => \$RC,
                      "I"         => \$QV_ILLUMINA,
                      "suffix"    => \$ADD_SUFFIX,
@@ -56,8 +56,8 @@ if ($help || !$res)
   print "Options\n";
   print "  -suffix         : Add /1 and /2 suffix to reads\n";
   print "  -reads <n>      : align first n reads (default: $numreads)\n";
-  print "  -dist <n>       : show the distance for the first n pairs (default: $showdist)\n";
-  print "  -details <n>    : show details for first n pairs (default: $showdetails)\n";
+  print "  -dist           : show the individual distances for the pairs\n";
+  print "  -details        : show details for the pairs\n";
   print "  -rc             : reverse complement the reads before alignment\n";
   print "  -qv <n>         : bwa quality soft quality trim (default: $QV_TRIM)\n";
   print "  -I              : quality values are Illumina format\n";
@@ -67,7 +67,7 @@ if ($help || !$res)
   exit 0;
 }
 
-if (($showdetails > 0) && ($showdist > 0))
+if ($showdetails && $showdist)
 {
   die "ERROR: Can't show details and distances at the same time\n";
 }
@@ -165,7 +165,7 @@ while (<SAM>)
 
 my $stats = Statistics::Descriptive::Full->new();
 
-if ($showdetails > 0)
+if ($showdetails)
 {
   print "#base\t|\trid\t|\ts1\te1\tf1\t|\ts2\te2\tf2\t||\td\t||\tfull1\t||\tfull2\n";
 }
@@ -192,15 +192,13 @@ foreach my $base (keys %match)
 
       if (defined $d)
       {
-        if ($showdetails != 0)
+        if ($showdetails)
         {
           print "$base\t|\t$rid\t|\t$s1\t$e1\t$f1\t|\t$s2\t$e2\t$f2\t||\t$d\t||\t$full1\t||\t$full2\n";
-          $showdetails--;
         }
-        elsif ($showdist != 0)
+        elsif ($showdist)
         {
           print "$d\n";
-          $showdist--;
         }
 
         $stats->add_data($d);
