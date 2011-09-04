@@ -100,6 +100,8 @@ $QV_ILLUMINA = (defined $QV_ILLUMINA) ? "-I" : "";
 die "Cant read $fq1" if (! -r $fq1);
 die "Cant read $fq2" if (! -r $fq2);
 
+print "Running $0 @ARGV\n";
+
 if (! -r "$ref.sa")
 {
   ## Index genome
@@ -366,7 +368,9 @@ sub matchBed
         }
       }
 
-      if ($doprint) { $printed++;
+      if ($doprint) 
+      { 
+        $printed++;
         print BEDPE "$base\t$ref1\t$s1\t$e1\t$d1\t$ref2\t$s2\t$e2\t$d2\n";
       }
     }
