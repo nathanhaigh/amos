@@ -3,7 +3,6 @@ use strict;
 use Getopt::Long;
 
 $|=1;
-$ENV{LC_ALL}="C";
 
 ## Paths to binaries
 my $BWA            = "bwa";
@@ -15,13 +14,13 @@ my $FASTX_TRIM     = "fastx_trimmer";
 ## Options
 my $RC = 0;
 my $READLEN = 100;
-my $MAPQ_THRESHOLD = 20;
-my $numreads = 10000000000;
+my $MAPQ_THRESHOLD = 0;
+my $numreads = 0;
 my $THREADS = 1;
 
 my $HARD_TRIM = 0;
 my $QV_TRIM = 10;
-my $QV_ILLUMINA;
+my $QV_ILLUMINA = 0;
 my $QV_READ = 30;
 my $ADD_SUFFIX = 0;
 
@@ -31,8 +30,12 @@ my $MAX_DIST = 0;
 
 my $DUP_WIGGLE = 2;
 
+my $stage = "all";
+
 my $USAGE = "alignextend [options] prefix ref.fa fq1 fq2\n";
 my $help;
+
+my $arguments = join(" ", @ARGV);
 
 my $res = GetOptions("help"      => \$help,
                      "reads=n"   => \$numreads,
@@ -48,14 +51,16 @@ my $res = GetOptions("help"      => \$help,
                      "check"     => \$CHECK_DIST,
                      "max=n"     => \$MAX_DIST,
                      "min=n"     => \$MIN_DIST,
-                     "dup=n"     => \$DUP_WIGGLE);
+                     "dup=n"     => \$DUP_WIGGLE,
+                     "stage=s"   => \$stage);
  
 if ($help)
 {
   print $USAGE;
   print "\n";
-  print "Align (very) short reads to a draft assembly, and extend reads that map unambiguously\n";
-  print "with the sequence of the contig on the 3' end\n";
+  print "Align (very) short reads to a draft assembly, and extend reads on their 3' end with the sequence\n";
+  print "to where they align. This is especially for extending short mate-pair reads into long reads for\n";
+  print "scaffolding.\n";
   print "\n";
   print "Required\n";
   print "  prefix      : prefix for output files\n";
@@ -64,95 +69,131 @@ if ($help)
   print "  fq2         : path to second read\n";
   print "\n";
   print "Options\n";
-  print "  -reads <n>  : align first m reads (default: $numreads)\n";
+  print " -stage <s>   : stage to start at [align,match,rmdup,genreads] (default: $stage)\n";
+  print "\n";
+  print "align: align reads to assembly\n";
+  print "  -reads <n>  : align first n pairs (default: $numreads)\n";
   print "  -suffix     : Add /1 and /2 suffix to reads\n";
   print "  -rc         : reverse complement the reads before alignment\n";
   print "  -qv <n>     : bwa quality soft quality trim (default: $QV_TRIM)\n";
   print "  -thread <n> : number of threads for bwa (default: $THREADS)\n";
   print "  -trim <n>   : hard trim 3' value (default: $HARD_TRIM)\n";
   print "  -I          : read quality values are Illumina format\n";
-  print "  -q <n>      : quality value to assign to read bases (default: $QV_READ)\n";
-  print "  -len <n>    : extend to this length (default: $READLEN)\n";
   print "\n";
-  print "Filtering\n";
+  print "match: select pairs that align and are correctly separated\n";
   print "  -mapq <n>   : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
   print "  -check      : Only accept alignments with proper orientation and distance\n";
   print "  -min <n>    : Only accept alignments at least this far apart (default: $MIN_DIST)\n";
   print "  -max <n>    : Only accept alignments less than this far apart (default: $MAX_DIST)\n";
+  print "\n";
+  print "rmdup: remove duplicates\n";
   print "  -dup <n>    : Filter duplicates with coordinates within this distance (default: $DUP_WIGGLE)\n";
+  print "\n";
+  print "genreads: extract new reads\n";
+  print "  -q <n>      : quality value to assign to read bases (default: $QV_READ)\n";
+  print "  -len <n>    : extend to this length (default: $READLEN)\n";
 
   exit 0;
 }
 
+my %validstages;
+$validstages{align} = 1;
+$validstages{match} = 1;
+$validstages{rmdup} = 1;
+$validstages{genreads} = 1;
+$validstages{all} = 1;
+
+
+if ($MAX_DIST > 0) { $CHECK_DIST = 1; }
 if (($CHECK_DIST) && ($MAX_DIST == 0))
 {
-  print "ERROR: checking distance, but max=0\n";
-  exit 0;
+  die "ERROR: checking distance, but max=0\n";
+}
+
+if (!exists $validstages{$stage})
+{
+  die "Unknown stage: $stage\n";
 }
 
 my $prefix = $ARGV[0] or die $USAGE;
 my $ref    = $ARGV[1] or die $USAGE;
-my $fq1    = $ARGV[2] or die $USAGE;
-my $fq2    = $ARGV[3] or die $USAGE;
 
 $QV_ILLUMINA = (defined $QV_ILLUMINA) ? "-I" : "";
 
-die "Cant read $fq1" if (! -r $fq1);
-die "Cant read $fq2" if (! -r $fq2);
-
-print "Running $0 @ARGV\n";
-
-if (! -r "$ref.sa")
-{
-  ## Index genome
-  runCmd("bwa index", "$ref.sa", "bwa index $ref");
-  print "\n";
-}
-
+print "Running $0 $arguments\n";
 
 ## Align the reads
 ###############################################################################
 
-foreach my $idx (1..2)
+if (($stage eq "all") || ($stage eq "align"))
 {
-  print "aligning reads: $idx\n";
+  my $fq1    = $ARGV[2] or die $USAGE;
+  my $fq2    = $ARGV[3] or die $USAGE;
 
-  my $fq = ($idx == 1) ? $fq1 : $fq2;
-  my $samfile = "$prefix.$idx.sam";
-  my $bedfile = "$prefix.$idx.bed";
+  die "Cant read $fq1" if (! -r $fq1);
+  die "Cant read $fq2" if (! -r $fq2);
 
-  my $nl = $numreads * 4; ## 4 lines per reads in a fastq
-  my $headcmd = ($numreads>0) ?  "head -$nl" : "cat";
-
-  my $TRIM_CMD = "";
-  $TRIM_CMD  = " | $FASTX_TRIM -t $HARD_TRIM" if ($HARD_TRIM > 0);
-
-  if ($RC)
+  if (! -r "$ref.sa")
   {
-    $TRIM_CMD .= " | $FASTX_RC -Q ";
-    if ($QV_ILLUMINA) { $TRIM_CMD .= "64"; } else { $TRIM_CMD .= "33"; }
+    ## Index genome
+    runCmd("bwa index", "$ref.sa", "bwa index $ref");
+    print "\n";
   }
 
-  if ($ADD_SUFFIX) { $TRIM_CMD .= " | $FASTQ_RENAME -suffix _$idx"; }
-  else             { $TRIM_CMD .= " | $FASTQ_RENAME -tr '/'"; }
+  foreach my $idx (1..2)
+  {
+    print "aligning reads: $idx\n";
 
-  $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
+    my $fq = ($idx == 1) ? $fq1 : $fq2;
+    my $samfile = "$prefix.$idx.sam";
+    my $bedfile = "$prefix.$idx.bed";
 
-  runCmd("prepare fq",   "$prefix.$idx.fq",  "$headcmd $fq $TRIM_CMD > $prefix.$idx.fq");
+    my $nl = $numreads * 4; ## 4 lines per reads in a fastq
+    my $headcmd = ($numreads>0) ?  "head -$nl" : "cat";
 
-  runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln -t $THREADS $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq -f $prefix.$idx.sai >& $prefix.$idx.sai.log");
-  runCmd("bwa samse",  "$prefix.$idx.sam",   "$BWA samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq >& $prefix.idx.sam.log");
+    my $TRIM_CMD = "";
+    $TRIM_CMD  = " | $FASTX_TRIM -t $HARD_TRIM" if ($HARD_TRIM > 0);
 
-  sam2bed($samfile, $bedfile);
+    if ($RC)
+    {
+      $TRIM_CMD .= " | $FASTX_RC -Q ";
+      if ($QV_ILLUMINA) { $TRIM_CMD .= "64"; } else { $TRIM_CMD .= "33"; }
+    }
 
-  print "\n";
+    if ($ADD_SUFFIX) { $TRIM_CMD .= " | $FASTQ_RENAME -suffix _$idx"; }
+    else             { $TRIM_CMD .= " | $FASTQ_RENAME -tr '/'"; }
+
+    $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
+
+    runCmd("prepare fq",   "$prefix.$idx.fq",  "$headcmd $fq $TRIM_CMD > $prefix.$idx.fq");
+
+    runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln -t $THREADS $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq -f $prefix.$idx.sai >& $prefix.$idx.sai.log");
+    runCmd("bwa samse",  "$prefix.$idx.sam",   "$BWA samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq >& $prefix.idx.sam.log");
+
+    sam2bed($samfile, $bedfile);
+
+    print "\n";
+  }
 }
 
-matchBed("$prefix.1.bed", "$prefix.2.bed", "$prefix.bedpe");
 
-filterDups("$prefix.bedpe", "$prefix.rmdup.bedpe");
+if (($stage eq "all") || ($stage eq "match"))
+{
+  $stage="all";
+  matchBed("$prefix.1.bed", "$prefix.2.bed", "$prefix.bedpe");
+}
 
-genReads("$prefix.rmdup.bedpe", "$prefix.1e.fq", "$prefix.2e.fq");
+if (($stage eq "all") || ($stage eq "rmdup"))
+{
+  $stage = "all";
+  filterDups("$prefix.bedpe", "$prefix.rmdup.bedpe");
+}
+
+if (($stage eq "all") || ($stage eq "genreads"))
+{
+  $stage = "all";
+  genReads("$prefix.rmdup.bedpe", "$prefix.1e.fq", "$prefix.2e.fq");
+}
 
 exit 0;
 
@@ -296,11 +337,11 @@ sub matchBed
 
   my %coords;
 
-  my $cnt = 0;
+  my $cnt1 = 0;
 
   while (<BED1>)
   {
-    $cnt++;
+    $cnt1++;
     chomp;
     my ($ref, $s, $e, $name, $j, $d) = split /\s+/, $_;
 
@@ -315,9 +356,9 @@ sub matchBed
     $coords{$base} = $rec;
   }
 
-  print "$cnt reads\n";
+  print "$cnt1 reads\n";
 
-  $cnt = 0;
+  my $cnt2 = 0;
 
   my $printed = 0;
   my $matched = 0;
@@ -326,7 +367,7 @@ sub matchBed
 
   while (<BED2>)
   {
-    $cnt++;
+    $cnt2++;
 
     chomp;
     my ($ref2, $s2, $e2, $name, $j, $d2) = split /\s+/, $_;
@@ -378,12 +419,16 @@ sub matchBed
 
   close BEDPE;
 
+  my $perc1 = sprintf("%0.02f", 100*$matched / $cnt1);
+  my $perc2 = sprintf("%0.02f", 100*$matched / $cnt2);
+
   print "$cnt reads\n";
-  print " matched: $matched\n";
+  print " matched: $matched ($perc1% of fq1 $perc2% of fq2\n";
 
   if ($CHECK_DIST)
   {
-    print " passed: $printed of $matched\n";
+    my $percp = sprintf("%0.02f", 100*$printed / $matched);
+    print " passed: $printed of $matched ($percp%)\n";
   }
 
   print "\n";
@@ -439,7 +484,6 @@ sub filterDups
 
   print " loaded $loaded alignments\n";
 
-  my $duplicates = 0;
   my $printed = 0;
 
   ## for each reference sequence
@@ -481,11 +525,7 @@ sub filterDups
     {
       my $ai = $aligns[$i];
 
-      if ($ai->[9])
-      {
-        $duplicates++;
-      }
-      else
+      if (!$ai->[9])
       {
         $printed++;
         print CLEAN join("\t", @{$ai}[0..8]), "\n";
@@ -493,7 +533,8 @@ sub filterDups
     }
   }
 
-  print " kept $printed removed $duplicates\n";
+  my $percp = sprintf("%0.02f", 100*$printed / $loaded);
+  print " kept $printed non-duplicates ($percp%)\n";
   print "\n";
 
   close CLEAN;
@@ -534,9 +575,9 @@ sub genReads
   print "$loaded pairs read\n";
 
   runCmd("fastaFromBed 1", "$fq1.sfa", "$FASTA_FROM_BED -fi $ref -bed $fq1.bed -fo $fq1.sfa -name -tab -s");
-  runCmd("fastaFromBed 2", "$fq2.sfa", "$FASTA_FROM_BED -fi $ref -bed $fq2.bed -fo $fq2.sfa -name -tab -s");
-
   sfa2fq("$fq1.sfa", $fq1);
+
+  runCmd("fastaFromBed 2", "$fq2.sfa", "$FASTA_FROM_BED -fi $ref -bed $fq2.bed -fo $fq2.sfa -name -tab -s");
   sfa2fq("$fq2.sfa", $fq2);
 }
 
