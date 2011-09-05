@@ -422,7 +422,7 @@ sub matchBed
   my $perc1 = sprintf("%0.02f", 100*$matched / $cnt1);
   my $perc2 = sprintf("%0.02f", 100*$matched / $cnt2);
 
-  print "$cnt reads\n";
+  print "$cnt2 reads\n";
   print " matched: $matched ($perc1% of fq1 $perc2% of fq2\n";
 
   if ($CHECK_DIST)
