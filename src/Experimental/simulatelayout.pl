@@ -1,6 +1,7 @@
-#!/usr/bin/perl -w
+#!/opt/local/bin/perl -w
 use strict;
 use POSIX;
+use Math::Random;
 use Getopt::Long;
 
 $| = 1;
@@ -10,6 +11,7 @@ my $USAGE = "ovlsimulate [options] [-numreads n] [-erate e] [-cov c] -readlen l\
 my $help;
 
 my $V = 0;
+my $showlay = 0;
 my $showseedhist = 0;
 my $minovl       = 20;
 my $readlen      = undef;
@@ -21,7 +23,9 @@ my $covdisp      = 10;
 
 my $res = GetOptions("help"       => \$help,
                      "verbose"    => \$V,
+                     "showlayout" => \$showlay,
                      "readlen=n"  => \$readlen,
+                     "numreads=n" => \$numreads,
                      "erate=s"    => \$erate,
                      "cov=n"      => \$covdisp,
                      "covstart=n" => \$covstart,
@@ -29,7 +33,7 @@ my $res = GetOptions("help"       => \$help,
                      "minovl=n"   => \$minovl,
                      "seedhist"   => \$showseedhist);
  
-if ($help)
+if ($help || !$res)
 {
   print $USAGE;
   print "\n";
@@ -44,6 +48,7 @@ if ($help)
   print "\n";
   print "Options\n";
   print "  -verbose       : be verbose\n";
+  print "  -showlayout    : show layout\n";
   print "  -seedhist      : display the histogram of max overlap seed length\n";
   print "  -cov <n>       : use this single coverage level (default: $covdisp)\n";
   print "  -covstart <s>  : compute range of coverage values with this lower bound\n";
@@ -51,7 +56,6 @@ if ($help)
   exit 0;
 }
 
-srand(12345);
 
 die $USAGE if !defined $readlen;
 
@@ -73,10 +77,13 @@ if (!defined $covstart)
 
 for (my $cov = $covstart; $cov <= $covend; $cov++)
 {
+  srand(12345);
+  random_seed_from_phrase(12345);
+
   my $arate = int($readlen / $cov);
   my $span = int(($numreads-1) * $arate + $readlen);
 
-  if ($V)
+  if ($V || $showlay)
   {
     print "Simulating $numreads reads rl=$readlen span=$span cov=$cov arate=$arate erate=$erate minovl=$minovl\n";
     print "pos : "; for (my $p = 0; $p < $span; $p++) { my $i = ($p/100) % 10; print $i; } print "\n";
@@ -105,7 +112,7 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
 
     for (my $i = $start; $i < $end; $i++) 
     { 
-      my $adderr = rand() <= $erate;
+      my $adderr = random_uniform() <= $erate;
       $totalbp++;
 
       if ($adderr)
@@ -122,7 +129,7 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
       }
     }
 
-    if ($V)
+    if ($V || $showlay)
     {
       printf ("% 4d: ", $r); print " " x $start; print join("", @{$matrix[$r]}); print "\n";
     }
@@ -133,7 +140,7 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
   my $goodspan = 0;
   my $goodcovbad = 0;
 
-  if ($V) { print "\ncns : ";  }
+  if ($V || $showlay) { print "\ncns : ";  }
 
   for (my $p = 0; $p < $span; $p++) 
   { 
@@ -147,16 +154,16 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
       $hasgood = 1;
     }
 
-    if ($cns[$p]->{X} > $cns[$p]->{M})
+    if ($cns[$p]->{X} >= $cns[$p]->{M})
     {
       $c = "x"; $cnsbad++;
       if ($hasgood) { $c = "X"; $goodcovbad++; }
     }
 
-    if ($V) { print $c; }
+    if ($V || $showlay) { print $c; }
   } 
 
-  if ($V) { print "\n"; }
+  if ($V || $showlay) { print "\n"; }
 
 
   my $ovlshould = 0;
