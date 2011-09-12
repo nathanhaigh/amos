@@ -48,6 +48,7 @@ dist_bin_SCRIPTS = \
   persistent-fix.pl \
   persistent-plot-breaks.pl \
   persistent-unitig.pl \
+  simulatelayout.pl \
   splitscafffa.pl \
   zipalign.pl
 
