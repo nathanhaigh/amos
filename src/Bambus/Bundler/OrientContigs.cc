@@ -57,6 +57,7 @@ struct config {
    bool        doAgressiveScaffolding;
    bool        skipLowWeightEdges;
    int32_t     redundancy;   
+   int32_t     minRedundancy;
    int32_t     debug;
    string      bank;
    int32_t     maxOverlap; // disallow contig overlaps
@@ -95,6 +96,7 @@ bool GetOptions(int argc, char ** argv) {
     {"noreduce",           0, 0, 'n'},
     {"agressive",          0, 0, 'A'},
     {"redundancy",         1, 0, 'R'},
+    {"minRedundancy",      1, 0, 'm'},
     {"repeats",            1, 0, 'r'},    
     {"maxOverlap",         1, 0, 'o'},
     {"skip",               0, 0, 's'},
@@ -107,6 +109,7 @@ bool GetOptions(int argc, char ** argv) {
    globals.doAgressiveScaffolding = false;
    globals.debug = 1;
    globals.redundancy = 0;
+   globals.minRedundancy = 1;
    globals.skipLowWeightEdges = true;
    globals.maxOverlap = -1;
  
@@ -134,6 +137,10 @@ bool GetOptions(int argc, char ** argv) {
       case 'R':
          globals.redundancy = atoi(optarg);
          if (globals.redundancy < 0) { globals.redundancy = 0; }
+         break;
+      case 'm':
+         globals.minRedundancy = atoi(optarg);
+         if (globals.minRedundancy < 1) { globals.minRedundancy = 1; }
          break;
       case 'r':
          // read file here
@@ -1464,6 +1471,7 @@ int main(int argc, char *argv[]) {
       }
       mean /= count;
       globals.redundancy = (uint32_t)round(mean);
+      globals.redundancy = (globals.minRedundancy > globals.redundancy ? globals.minRedundancy : globals.redundancy);
       if (globals.debug >= 1) { cerr << "Picked mean cutoff as " << mean << " rounded " << globals.redundancy << endl; }
    }
 
