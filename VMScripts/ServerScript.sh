@@ -9,16 +9,17 @@ Path_to_VMs="E:\BRYANTA\VMs"
 home_dir=/home/bryanta
 logs_dir=C:/Program\ \Files\ \(x86\)/ICW/home/ssh/VMlogs/
 emailClient_dir="C:\Users\bryanta\Downloads\sendEmail-v156-notls"
-CC_Emails=bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
-To_Email=dungtq1387@gmail.com
+CC_Emails=dungtq1387@gmail.com,bryanta@cs.umd.edu,atif@cs.umd.edu,mpop@umiacs.umd.edu,dsommer@umiacs.umd.edu
+#CC_Emails=bryanta@cs.umd.edu
+#To_Email=dungtq1387@gmail.com
 Path_to_Storage=bryanta@walnut.umiacs.umd.edu:/scratch1/bryanta/WalnutLast/
 ###################################
 # Physical Machines Configuration
 ###################################
-PhMs=(128.8.126.2 128.8.126.10) 
-PhMs_name_on_log=("MAC OS" "MAC OS WITH HAWKEYE")
-Users=(amos amos)
-HomeDir=(/Users/amos/ /Users/amos/)
+PhMs=(128.8.126.2) 
+PhMs_name_on_log=("MAC OS")
+Users=(amos)
+HomeDir=(/Users/amos/)
 
 ###################################
 # VM Configuration
@@ -34,8 +35,8 @@ update_cmd=("/cygdrive/c/Windows/System32/wuauclt.exe\ \/UpdateNow" "echo\ \"123
 upgrade_cmd=("echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ apt-get\ \-y\ \upgrade" "echo Sending update command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \yum\ \-y\ \upgrade" "echo Sending upgrade command")  
 shutdown_cmd=("shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \shutdown\ \-h\ now" "shutdown /s" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ \/sbin/shutdown\ \-h\ now" "shutdown /s") 
 reboot_cmd=("shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r" "shutdown /r" "echo\ \"1234561\"\ \|\ \sudo\ \-S\ reboot" "shutdown /r" "reboot" "shutdown /r" "reboot" "shutdown /r")
-Git_cmd="git clone git://amos.git.sourceforge.net/gitroot/amos/amos"
-
+#Git_cmd="git clone git://amos.git.sourceforge.net/gitroot/amos/amos"
+Git_cmd="scp -r ssh@sauron.cs.umd.edu:VMlogs/amos ."
 ################################
 # ssh and invoke VM functions
 ################################
@@ -102,32 +103,32 @@ run_VM()
         echo "Registering ssh public key..."
         ssh_command ${VMs_ssh_port[$1]} "echo Registering ssh key"
         sleep 180
-	echo "Sending update command..."
-	echo ${update_cmd[$1]}
-	eval cmd=\${update_cmd[$1]}
-	ssh_command ${VMs_ssh_port[$1]} "$cmd"
-        sleep 900
-        echo "Sending upgrade command..."
-	echo ${upgrade_cmd[$1]}
-	eval cmd1=\${upgrade_cmd[$1]}
-	ssh_command ${VMs_ssh_port[$1]} "$cmd1"
-        echo "Waiting for updating..."
-	sleep 3600
-        echo "Sending restart command..."
-	echo ${reboot_cmd[$1]}
-	ssh_command ${VMs_ssh_port[$1]} "${reboot_cmd[$1]}"
-        sleep 900
-	echo "Sending shutdown command..."
-	echo ${shutdown_cmd[$1]}
-	ssh_command ${VMs_ssh_port[$1]} "${shutdown_cmd[$1]}"
-	echo "Wating for shutting down VM..."
-	sleep 900
-        poweroff_VM ${VMs[$1]} 
-        cd $Path_to_VMs
-	echo "Copying VM back to Walnut..."
-	scp WalnutLast/${VMs[$1]}.vdi $Path_to_Storage        
-        invoke_VM ${VMs[$1]} 
-        sleep 180 
+       echo "Sending update command..."
+       echo ${update_cmd[$1]}
+       eval cmd=\${update_cmd[$1]}
+       ssh_command ${VMs_ssh_port[$1]} "$cmd"
+       sleep 900
+       echo "Sending upgrade command..."
+       echo ${upgrade_cmd[$1]}
+       eval cmd1=\${upgrade_cmd[$1]}
+       ssh_command ${VMs_ssh_port[$1]} "$cmd1"
+       echo "Waiting for updating..."
+       sleep 3600
+       echo "Sending restart command..."
+       echo ${reboot_cmd[$1]}
+       ssh_command ${VMs_ssh_port[$1]} "${reboot_cmd[$1]}"
+       sleep 900
+       echo "Sending shutdown command..."
+       echo ${shutdown_cmd[$1]}
+       ssh_command ${VMs_ssh_port[$1]} "${shutdown_cmd[$1]}"
+       echo "Wating for shutting down VM..."
+       sleep 900
+       poweroff_VM ${VMs[$1]} 
+       cd $Path_to_VMs
+       echo "Copying VM back to Walnut..."
+       scp WalnutLast/${VMs[$1]}.vdi $Path_to_Storage        
+       invoke_VM ${VMs[$1]} 
+       sleep 180 
         ssh_command ${VMs_ssh_port[$1]} "rm -rf amos/" 
         ssh_command ${VMs_ssh_port[$1]} "$Git_cmd"
         if [ $? -ne 0 ]
@@ -137,7 +138,7 @@ run_VM()
            else 	
               echo "sent git"
 	      echo "waitting for git to complete..." 
-	      sleep 300
+	      sleep 600
 	      ssh_command ${VMs_ssh_port[$1]} "cp /home/bryanta/amos/VMScripts/${VMs[$1]}.sh /home/bryanta/"
 	      echo "VM script was copied to home directory"
 	      ssh_command ${VMs_ssh_port[$1]} "chmod +x ${VMs[$1]}.sh"
@@ -146,27 +147,57 @@ run_VM()
        fi	
 	
 }
+#################################################
+# Checkout AMOS and prepare for copying to slaves
+#################################################
+cd $home_dir
+cd amos
+past_commit=$(git log --format=format:%H -1)
+past_email=$(git log --format=format:%ae -1)
+cd ..
+rm -rf amos
+git clone git://amos.git.sourceforge.net/gitroot/amos/amos
+sleep 300
+cp -r amos "$logs_dir"
+sleep 300
+cd amos
+current_commit=$(git log --format=format:%H -1)
+LastCommit_Email=$(git log --format=format:%ae $past_commit..$current_commit)
+LastCommit_Email=$(echo $LastCommit_Email | sed 's/ /,/g')
+if [ -z $LastCommit_Email ]
+then
+ LastCommit_Email=${past_email}
+fi
+
 ##############################
 # Invoke all Physical Machines
 ##############################
+cd "$logs_dir"
+
+rm -f *.log *.txt
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   ssh ${Users[$i]}@${PhMs[$i]} "rm -rf ${PhMs[$i]}*" 
-  ssh ${Users[$i]}@${PhMs[$i]} "rm -rf amos/" 
-  ssh ${Users[$i]}@${PhMs[$i]} "rm -rf *.log" 
-  ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
-  echo "sent git"
-  echo "sleeping for several mins to complete git..."
-  sleep 300
-  ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh ${HomeDir[$i]}"
-  ssh ${Users[$i]}@${PhMs[$i]} "chmod +x ${PhMs[$i]}.sh"
-  ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}" &
+  if [ $? -ne 0 ]
+           then  	
+              echo "FAILED: Could not ssh to this machine" >> "$logs_dir"${PhMs[$i]}_Failed.log	
+           else 	
+              ssh ${Users[$i]}@${PhMs[$i]} "rm -rf amos/" 
+  	      ssh ${Users[$i]}@${PhMs[$i]} "rm -rf *.log *.sh" 
+              ssh ${Users[$i]}@${PhMs[$i]} "$Git_cmd" 
+              echo "sent git"
+              echo "sleeping for several mins to complete git..."
+              sleep 600
+              ssh ${Users[$i]}@${PhMs[$i]} "cp amos/VMScripts/${PhMs[$i]}.sh ${HomeDir[$i]}"
+              ssh ${Users[$i]}@${PhMs[$i]} "chmod +x ${PhMs[$i]}.sh"
+              ssh ${Users[$i]}@${PhMs[$i]} "./${PhMs[$i]}.sh ${PhMs[$i]}" &
+  fi	
+  
 done
 
 ##############################
 # Invoke all VMs
 ##############################
-
 mkdir "$Path_to_VMs\WalnutLast"
 num_of_VMs=${#VMs[@]}
 firstVM=0
@@ -184,7 +215,7 @@ do
             run_VM $thirdVM & 
         fi	    
         # sleep for 5hs	
-        sleep 18000
+        sleep 18600
         # build for a long time
         cd "$Path_to_VBoxManage"
         ./VBoxManage controlvm ${VMs[$firstVM]} poweroff
@@ -234,17 +265,14 @@ sleep 300
 
 echo "combining VMs log files..."
 date > log.txt
+echo                 >> log.txt
+echo "According to the git log, you are the last people who made a commit to the git repository. Below are the build results of your changes from our AMOS daily build system." >> log.txt
+echo                 >> log.txt
 now=$(date +"%y%m%d")
 echo "*** Complete logs stored on http://sauron.cs.umd.edu/$now" >> log.txt
 for (( i = 0; i < ${#PhMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
-  #case "${PhMs[$i]}" in
-  #"128.8.126.2") echo MAC OS >> log.txt
-  #               ;;
-  #"128.8.126.10") echo MAC OS WITH HAWKEYE >> log.txt
-  #                ;; 
-  #esac
   echo ${PhMs_name_on_log[$i]} >> log.txt
   echo ============================= >> log.txt
   cat "$logs_dir"${PhMs[$i]}_Failed.log | tail -1 >> log.txt
@@ -254,36 +282,6 @@ done
 for (( i = 0; i < ${#VMs[$i]}; i++ ))
 do
   echo ============================= >> log.txt
-  #case "${VMs[$i]}" in
-  #"winXP_updateFirst") echo WIN XP UPDATE FIRST >> log.txt
-  #                     ;;
-  #"winXP_updateLast")  echo WIN XP UPDATE LAST >> log.txt
-  #                     ;;
-  #"win7_updateFirst")  echo WIN 7 UPDATE FIRST >> log.txt
-  #                     ;;
-  #"win7_updateLast")   echo WIN 7 UPDATE LAST >> log.txt
-  #                     ;;
-  #"ubuntu10.10")       echo UBUNTU 10.10      >> log.txt
-  #                     ;;
-  #"fedora15")          echo FEDORA 15         >> log.txt
-  #                    ;;
-  #"centos-5.5-i386-server") echo CENT OS 5.5  >> log.txt 
-  #                          ;;
-  #"winXP_updateFirst_Qt4") echo WIN XP UPDATE FIRST WITH HAWKEYE >> log.txt
-  #                     ;;
-  #"winXP_updateLast_Qt4")  echo WIN XP UPDATE LAST WITH HAWKEYE >> log.txt
-  #                     ;;
-  #"win7_updateFirst_Qt4")  echo WIN 7 UPDATE FIRST WITH HAWKEYE >> log.txt
-  #                     ;;
-  #"win7_updateLast_Qt4")   echo WIN 7 UPDATE LAST WITH HAWKEYE >> log.txt
-  #                     ;;
-  #"ubuntu10.10_Qt4")       echo UBUNTU 10.10 WITH HAWKEYE      >> log.txt
-  #                     ;;
-  #"fedora15_Qt4")          echo FEDORA 15 WITH HAWKEYE         >> log.txt
-  #                     ;;
-  #"centos-5.5-i386-server_Qt4") echo CENT OS 5.5 WITH HAWKEYE  >> log.txt 
-  #                          ;;
-  #esac 
   echo ${VMs_name_on_log[$i]} >> log.txt
   echo ============================= >> log.txt
   cat "$logs_dir"${VMs[$i]}_Failed.log | tail -1 >> log.txt
@@ -307,11 +305,11 @@ done
 echo "Sending email to group..."
 if [ $count1 != '0' ]
 then
-        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t $To_Email -cc $CC_Emails
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] FAILED -o message-file=log.txt -t $LastCommit_Email -cc $CC_Emails
 fi
 if [ $count1 == '0' ]
 then
-        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t $To_Email -cc $CC_Emails
+        ./sendEmail -f bryanta@sauron.cs.umd.edu -u [AMOS Daily Build] SUCCESS -o message-file=log.txt -t $LastCommit_Email -cc $CC_Emails
 fi
 echo "Email sent"
 rm -f log.txt
@@ -319,6 +317,7 @@ cd "$logs_dir"
 mkdir `date +%y%m%d`
 mv *.log `date +%y%m%d`/ 
 mv log.txt `date +%y%m%d`/
+rm -rf "$logs_dir"amos
 exit
 
 
