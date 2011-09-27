@@ -118,8 +118,6 @@ if (!exists $validstages{$stage})
 my $prefix = $ARGV[0] or die $USAGE;
 my $ref    = $ARGV[1] or die $USAGE;
 
-$QV_ILLUMINA = (defined $QV_ILLUMINA) ? "-I" : "";
-
 print "Running $0 $arguments\n";
 
 ## Align the reads
