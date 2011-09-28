@@ -40,6 +40,7 @@ dist_bin_SCRIPTS = \
   coords_depth.pl \
   coords2scafflinks.pl \
   ctg_gc.pl \
+  extractFasta.pl \
   fasta_filter_raw.pl \
   fastq_to_mates.pl \
   filterfastadups.pl \
