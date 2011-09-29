@@ -14,11 +14,13 @@ my $help;
 my $start;
 my $end;
 my $name;
+my $rc = 0;
 
 my $res = GetOptions("help"      => \$help,
                      "x=s"       => \$start,
                      "y=s"       => \$end,
-                     "i=s"       => \$name);
+                     "i=s"       => \$name,
+                     "rc"        => \$rc);
  
 if ($help)
 {
@@ -31,6 +33,9 @@ if ($help)
   print "  -x <pos>    : starting position\n";
   print "  -y <pos>    : ending position\n";
   print "  -i <name>   : name of sequence\n";
+  print "\n";
+  print "Options\n";
+  print "  -rc         : reverse complement sequence\n";
   exit 0;
 }
 
@@ -48,9 +53,12 @@ if (! -r $ref)
 
 my $outname = "extractFasta.$$.fa";
 
-open (FABED, "| $FASTA_FROM_BED -fi $ref -bed - -fo $outname")
+open (FABED, "| $FASTA_FROM_BED -fi $ref -bed - -fo $outname -s")
  or die "Can't open pipe to $FASTA_FROM_BED ($!)\n";
-print FABED "$name\t$start\t$end\n";
+
+if ($rc) { print FABED "$name\t$start\t$end\treg\t1\t-\n"; }
+else     { print FABED "$name\t$start\t$end\treg\t1\t+\n"; }
+
 close FABED;
 
 open FA, "< $outname" or die "Can't open $outname ($!)\n";
