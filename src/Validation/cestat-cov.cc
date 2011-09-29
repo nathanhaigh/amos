@@ -33,8 +33,9 @@ double    OPT_Features = 0.0;
 bool      OPT_IIDs = false;
 bool      OPT_SCAFFOLD = false;
 int       OPT_MIN_LEN = 100;
-bool      OPT_BAM = false;
-string    CMD_SAMTOOLS = "samtools";
+bool      OPT_BEDPE = false;
+bool      OPT_SHOW_DIST = false;
+bool      OPT_COMPUTE_MEAN = false;
 
 DataStore * m_datastore;
 int m_connectMates = 1;
@@ -44,6 +45,10 @@ InsertList_t m_inserts;
 
 int m_coveragePlot = 0;
 int m_cestats = 1;
+
+double mean  = 2244;
+double stdev = 250;
+double range = 8;
 
 void printCEStats(const std::string &id)
 {
@@ -161,6 +166,121 @@ void PrintHelp (const char * s);
 //!
 void PrintUsage (const char * s);
 
+struct insert
+{
+  insert(long ll, long rr) : l(ll), r(rr) { }
+  int dist() const { return r - l; }
+
+  long l;
+  long r;
+};
+
+bool sortl(const struct insert & i, const struct insert & j)
+{
+  return i.l < j.l;
+}
+
+struct sortr
+{
+  bool operator() (const struct insert & i, const struct insert & j)
+  {
+    return i.r > j.r;
+  }
+};
+
+double Z(double sum, int n)
+{
+  if (n == 0) { return 0; }
+  return ((sum/n) - mean) / (stdev / sqrt(n));
+}
+
+void printZ(const string & label, long pos, double sum, int n)
+{
+  cout << label << "\t" << pos << "\t"
+       << setiosflags(ios::fixed) << setprecision(3) << Z(sum, n) << "\t" 
+       << n << endl;
+}
+
+
+void computeCE(const string & id, vector<insert> & inserts)
+{
+  sort(inserts.begin(), inserts.end(), sortl);
+
+  priority_queue<insert, vector<insert>, sortr> ends;
+
+  double sum = 0;
+  int n = inserts.size();
+
+  if (OPT_COMPUTE_MEAN)
+  {
+    for (int i = 0; i < n; i++)
+    {
+      sum += inserts[i].dist();
+    }
+
+    double cmean = sum/n;
+    cerr << "computed mean: " << cmean << " n: " << n;
+
+    sum = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+      double diff = inserts[i].dist() - cmean;
+      sum += diff * diff;
+    }
+
+    double cstdev = sqrt(sum / n);
+    cerr << " computed stdev: " << cstdev << endl;
+  }
+
+
+  sum = 0;
+
+  cout << ">" << id << " ce" << endl;
+  printZ(id, 1, sum, 0);
+
+  for (int i = 0; i < n; i++)
+  {
+    while ((!ends.empty()) && (ends.top().r <= inserts[i].l))
+    {
+      insert e = ends.top();
+
+      printZ(id, e.r, sum, ends.size());
+
+      ends.pop();
+      sum -= e.dist();
+
+      printZ(id, e.r, sum, ends.size());
+    }
+
+    printZ(id, inserts[i].l, sum, ends.size());
+    //cout << inserts[i].l << "\t" << inserts[i].r << "\t" << inserts[i].dist() << endl;
+
+    ends.push(inserts[i]);
+    sum += inserts[i].dist();
+
+    printZ(id, inserts[i].l, sum, ends.size());
+  }
+
+  while (!ends.empty())
+  {
+    insert e = ends.top();
+    printZ(id, e.r, sum, ends.size());
+
+    ends.pop();
+    sum -= e.dist();
+
+    printZ(id, e.r, sum, ends.size());
+  }
+
+  inserts.clear();
+
+  if (sum != 0)
+  {
+    cerr << "ERROR: sum != 0" << endl;
+  }
+}
+
 
 
 //========================================================= Function Defs ====//
@@ -171,7 +291,6 @@ int main (int argc, char ** argv)
   Fragment_t frg;
   Library_t lib;
 
-
   Scaffold_t scaff;
   Contig_t contig;
 
@@ -181,32 +300,99 @@ int main (int argc, char ** argv)
   //-- BEGIN: MAIN EXCEPTION CATCH
   try {
 
-    if (OPT_BAM)
+    if (OPT_BEDPE)
     {
-      cerr << "processing bam: " << OPT_BankName << endl;
+      cerr << "processing bedpe: " << OPT_BankName << endl;
 
-      string cmd = CMD_SAMTOOLS;
-      cmd += " view -h ";
-      cmd += OPT_BankName;
+      FILE * bedpe = fopen(OPT_BankName.c_str(), "r");
 
-      cerr << "cmd: " << cmd << endl;
-
-      FILE * bam = popen(cmd.c_str(), "r");
-
-      if (!bam)
+      if (!bedpe)
       {
-        cerr << "ERROR: Couldn't exec: " << cmd << endl;
+        cerr << "ERROR: Couldn't open bedpe:" << OPT_BankName << endl;
         exit(1);
       }
 
-      char buffer[10*1024];
+      char templateid [1024];
+      char seq1 [1024];
+      char seq2 [1024];
+      long s1, e1, s2, e2;
+      char ds1 [1024], ds2[1024];
 
-      while (fgets(buffer, sizeof(buffer), bam))
+      string lastref;
+      string curref;
+      string ref2;
+
+      char d1, d2;
+
+      long t;
+      char u;
+
+      cerr << "acceptable range: " << mean - range * stdev << " - " << mean + range * stdev << endl;
+
+      vector<insert> inserts;
+
+      while (fscanf(bedpe, "%s%s%ld%ld%s%s%ld%ld%s", 
+                    templateid, seq1, &s1, &e1, ds1, seq2, &s2, &e2, ds2) == 9)
       {
-        fprintf(stdout, "%s", buffer);
+        curref = seq1;
+
+        if (curref != lastref)
+        {
+          if (lastref != "")
+          {
+            computeCE(lastref, inserts);
+          }
+
+          lastref = curref;
+
+          if (OPT_SHOW_DIST)
+          {
+            cout << ">" << curref << endl;
+          }
+        }
+
+        ref2 = seq2;
+
+        if (ref2 == curref)
+        {
+          d1 = ds1[0];
+          d2 = ds2[0];
+
+          if (d2 == '+')
+          {
+            t = s2; s2 = s1; s1 = t;
+            t = e2; e2 = e1; e1 = t;
+            u = d2; d2 = d1; d1 = u;
+          }
+
+          if ((d1 == '+') && (d2 == '-'))
+          {
+            int dist = e2 - s1;
+
+            if (abs(mean - dist) <= (range * stdev))
+            {
+              if (OPT_SHOW_DIST)
+              {
+                cout << templateid << "\t" 
+                     << seq1 << "\t" << s1 << "\t" << e1 << "\t" << d1 << "\t|\t"
+                     << seq2 << "\t" << s2 << "\t" << e2 << "\t" << d2 << "\t|\t"
+                     << dist << endl;
+              }
+
+              insert i(s1, e2);
+              inserts.push_back(i);
+            }
+          }
+        }
       }
 
-      pclose(bam);
+      fclose(bedpe);
+
+      if (lastref != "")
+      {
+        computeCE(lastref, inserts);
+      }
+
     }
     else
     {
@@ -289,7 +475,7 @@ void ParseArgs (int argc, char ** argv)
         break;
 
       case 'B':
-        OPT_BAM = true;
+        OPT_BEDPE = true;
         break;
 
       case 'i':
@@ -346,7 +532,7 @@ void PrintHelp (const char * s)
     << "available and -S is specifed, compute along scaffolds.\n"
     << "\n"
     << "-h       Display help information\n"
-    << "-B        The input is a BAM file, not an AMOS bank\n"
+    << "-B       The input is a BEDPE file, not an AMOS bank\n"
     << "-i       Dump scaffold/contig IIDs instead of EIDs\n"
     << "-f float Only output CE features outside float deviations\n"
     << "-l len   Only output features at least this length (default: " << OPT_MIN_LEN << ")\n"
