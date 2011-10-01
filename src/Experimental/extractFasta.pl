@@ -1,4 +1,5 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
+
 use strict;
 use Getopt::Long;
 
@@ -15,11 +16,13 @@ my $start;
 my $end;
 my $name;
 my $rc = 0;
+my $SKIP_HEADER = 0;
 
 my $res = GetOptions("help"      => \$help,
                      "x=s"       => \$start,
                      "y=s"       => \$end,
                      "i=s"       => \$name,
+                     "skip"      => \$SKIP_HEADER,
                      "rc"        => \$rc);
  
 if ($help)
@@ -36,6 +39,7 @@ if ($help)
   print "\n";
   print "Options\n";
   print "  -rc         : reverse complement sequence\n";
+  print "  -skip       : dont print fasta header\n";
   exit 0;
 }
 
@@ -62,7 +66,11 @@ else     { print FABED "$name\t$start\t$end\treg\t1\t+\n"; }
 close FABED;
 
 open FA, "< $outname" or die "Can't open $outname ($!)\n";
-while (<FA>) { print $_; }
+while (<FA>) 
+{ 
+  next if ($SKIP_HEADER && />/);
+  print $_; 
+}
 close FA;
 
 unlink $outname;
