@@ -29,7 +29,7 @@ namespace AMOS {
 class Scaffold_t : public Universal_t
 {
 
-private:
+protected:
 
   std::vector<Tile_t> contigs_m;   //!< contig tiling
   std::vector<ID_t> edges_m;       //!< list of contig edges

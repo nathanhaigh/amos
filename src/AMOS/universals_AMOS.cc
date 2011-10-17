@@ -31,6 +31,7 @@ UniversalSet_t::UniversalSet_t ( )
   objs_m . push_back (new Layout_t( ));
   objs_m . push_back (new Contig_t( ));
   objs_m . push_back (new Scaffold_t( ));
+  objs_m . push_back (new Motif_t( ));
   objs_m . push_back (new Link_t( ));
   objs_m . push_back (new ContigLink_t( ));
   objs_m . push_back (new ScaffoldLink_t( ));

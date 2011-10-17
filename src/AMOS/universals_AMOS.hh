@@ -27,6 +27,7 @@
 #include "ScaffoldEdge_AMOS.hh"
 #include "ScaffoldLink_AMOS.hh"
 #include "Scaffold_AMOS.hh"
+#include "Motif_AMOS.hh"
 #include "Sequence_AMOS.hh"
 #include "Universal_AMOS.hh"
 

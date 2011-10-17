@@ -60,6 +60,8 @@ void Motif_t::readRecordFix (istream & fix)
 //----------------------------------------------------- writeMessage -----------
 void Motif_t::writeMessage (Message_t & msg) const
 {
+  Universal_t::writeMessage (msg);
+
   try {
     ostringstream ss;
     if ( scf_m != NULL_ID )
@@ -68,8 +70,31 @@ void Motif_t::writeMessage (Message_t & msg) const
         msg . setField (F_SCAFFOLD, ss . str( ));
         ss . str (NULL_STRING);
       }
+    Pos_t begin = msg . getSubMessages( ) . size( );
+    msg . getSubMessages( ) . resize (begin + contigs_m . size( ));
 
-    Scaffold_t::writeMessage (msg);
+    msg . setMessageCode (Motif_t::NCODE);
+
+    if ( !edges_m . empty( ) )
+      {
+        string s;
+        vector<ID_t>::const_iterator evi;
+
+        for ( evi = edges_m . begin( ); evi != edges_m . end( ); evi ++ )
+          {
+            ss << *evi << endl;
+            s . append (ss . str( ));
+            ss . str (NULL_STRING);
+          }
+        msg . setField (F_EDGE, s);
+      }
+
+    if ( !contigs_m . empty( ) )
+      {
+        vector<Tile_t>::const_iterator tvi;
+        for ( tvi = contigs_m . begin( ); tvi != contigs_m . end( ); ++ tvi )
+          tvi -> writeMessage (msg . getSubMessages( ) [begin ++]);
+      }
   }
   catch (ArgumentException_t) {
 
@@ -77,7 +102,6 @@ void Motif_t::writeMessage (Message_t & msg) const
     throw;
   }
 }
-
 
 //----------------------------------------------------- writeRecord ------------
 void Motif_t::writeRecord (ostream & fix, ostream & var) const
