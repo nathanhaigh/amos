@@ -5,6 +5,7 @@
 
 #include "Bank_AMOS.hh"
 #include "BankStream_AMOS.hh"
+#include "align.hh"
 
 namespace Bundler
 {

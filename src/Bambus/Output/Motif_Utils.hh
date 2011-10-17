@@ -11,5 +11,8 @@ namespace Bundler
 {
    std::string outputMotif(std::string &name, AMOS::Motif_t &scf, AMOS::Bank_t &motif_bank, AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank);
    std::string outputMotif(std::string &name, AMOS::Motif_t &scf, AMOS::Bank_t &motif_bank, AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank, bool print);
+
+   std::string getTileSequence(AMOS::Bank_t &contig_bank, AMOS::Bank_t &motif_bank, AMOS::Bank_t &edge_bank, AMOS::ID_t max, AMOS::ID_t source, AMOS::Range_t range); 
+   std::string getTileSequence(AMOS::Bank_t &contig_bank, AMOS::Bank_t &motif_bank, AMOS::Bank_t &edge_bank, AMOS::ID_t max, AMOS::ID_t source, AMOS::Range_t range, std::string &eid);
 }
 #endif

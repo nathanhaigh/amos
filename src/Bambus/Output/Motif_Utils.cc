@@ -52,6 +52,24 @@ typedef boost::property_map<Graph, boost::vertex_name_t>::type VertexName;
 #endif //AMOS_HAVE_BOOST
 
 #ifdef AMOS_HAVE_BOOST
+HASHMAP::hash_map<AMOS::ID_t, std::string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *motifSeq = NULL;
+HASHMAP::hash_map<AMOS::ID_t, std::string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *motifName = NULL;
+
+void getMotifsFromBank(AMOS::Bank_t &motif_bank, AMOS::Bank_t &contig_bank, AMOS::Bank_t &edge_bank) {
+   // get motif sequence
+   AMOS::Motif_t mtf;
+   AMOS::Scaffold_t scf;
+   std::string name;
+   motifSeq = new HASHMAP::hash_map<AMOS::ID_t, std::string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >();
+   motifName = new HASHMAP::hash_map<AMOS::ID_t, std::string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >();
+
+   for (AMOS::IDMap_t::const_iterator ci = motif_bank.getIDMap().begin(); ci; ci++) {
+      motif_bank.fetch(ci->iid, mtf);
+      (*motifSeq)[ci->iid] = Bundler::outputMotif(name, mtf, motif_bank, contig_bank, edge_bank, false);
+      (*motifName)[ci->iid] = name;
+   }
+}
+
 Vertex computeSource(Graph g); 
 Position traverseRecursive(
                                 Bank_t &contig_bank,
@@ -144,11 +162,10 @@ Position traverseRecursive(
 			}
 
         	Position myLongestPath;
-        	for (vector<Position>::const_iterator i = myPaths.begin(); i < myPaths.end(); i++) {
+        	for (vector<Position>::iterator i = myPaths.begin(); i < myPaths.end(); i++) {
         		Position merged = p.merge(*i, edits);
         		paths[current].push_back(merged);
-
-        		if (myLongestPath.getSequence().size() == 0 || merged.getLength() > myLongestPath.getLength()) {
+        		if (myLongestPath.getSequence().size() == 0 || merged.getUngappedLength() > myLongestPath.getUngappedLength()) {
         			myLongestPath = merged;
         		}
         	}
@@ -201,15 +218,15 @@ Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_ba
     	if (tileIt->source_type == Motif_t::NCODE) {
     		Motif_t subScf;
     		motif_bank.fetch(tileIt->source, subScf);
-    		Position subResult = translateSetToPaths(subScf, motif_bank, contig_bank, edge_bank, edits, seq, seqNames);
+                Position subResult = translateSetToPaths(subScf, motif_bank, contig_bank, edge_bank, edits, seq, seqNames);
                 seq[tileIt->source] = subResult.getSequence();
                 seqNames[tileIt->source]  = subScf.getEID();
-                result = result.merge(subResult, edits);
     	}
     }
-    result = result.merge(traverseSet(scf, contig_bank, edge_bank, edits, paths, longest, seq, seqNames), edits);
+    Position p = traverseSet(scf, contig_bank, edge_bank, edits, paths, longest, seq, seqNames);
+    result = result.merge(p, edits);
 
-	// now that we have built up the paths, add the replacements to the edit list
+    // now that we have built up the paths, add the replacements to the edit list
     for (hash_map<ID_t, vector<Position>, hash<ID_t>, equal_to<ID_t> >::iterator it = paths.begin(); it != paths.end(); it++) {
     	for (vector<Position>::iterator ctg = it->second.begin(); ctg < it->second.end(); ctg++) {
     		if ((*ctg) != (longest[it->first])) {
@@ -218,13 +235,43 @@ Position translateSetToPaths(Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_ba
 			}
 		}
 	}
-
 	return result;
 }
 #endif
 
 namespace Bundler
 {
+std::string getTileSequence(AMOS::Bank_t &contig_bank, AMOS::Bank_t &motif_bank, AMOS::Bank_t &edge_bank, AMOS::ID_t max, AMOS::ID_t source, AMOS::Range_t range) {
+   std::string eid;
+   return getTileSequence(contig_bank, motif_bank, edge_bank, max, source, range, eid);
+}
+
+std::string getTileSequence(AMOS::Bank_t &contig_bank, AMOS::Bank_t &motif_bank, AMOS::Bank_t &edge_bank, AMOS::ID_t max, AMOS::ID_t source, AMOS::Range_t range, std::string &eid) {
+#ifdef AMOS_HAVE_BOOST
+   if (motifName == NULL) {
+      getMotifsFromBank(motif_bank, contig_bank, edge_bank);
+   }
+
+   if (source > max) {
+      if (motifSeq->find(source) == motifSeq->end()) {
+         cerr << "Error: unknown contig id " << source << endl;
+         exit(1);
+      }
+      eid = (*motifName)[source];
+      return (*motifSeq)[source];
+   } else {
+      AMOS::Contig_t ctg;
+      contig_bank.fetch(source, ctg);
+      eid = ctg.getEID();
+      return ctg.getSeqString(range);
+   }
+#else
+    cerr << "Error: the boost library cannot be found. Will not be outputting motif " << scf.getEID() << " consisting of " << scf.getContigTiling().size() << endl;
+
+   return "";
+#endif
+}
+
 string outputMotif(string &name, Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank, bool print) {
 #ifdef AMOS_HAVE_BOOST
         vector<Position> edits;
@@ -237,9 +284,9 @@ string outputMotif(string &name, Motif_t &scf, Bank_t &motif_bank, Bank_t &conti
     // output the edits
     for (vector<Position>::const_iterator it = edits.begin(); it < edits.end(); it++) {
         stringstream header;
-        header << it->getName() << " "
-                        << (it->getEditType() == Position::REPLACE ? "REPLACE" : "EDIT") << " RANGE ("
-                        << (it->getStart()-result.getStart()) << ", "
+        header << result.getName() /*it->getName()*/ << "_"
+                        << (it->getEditType() == Position::REPLACE ? "REPLACE" : "EDIT") << "_RANGE_("
+                        << (it->getStart()-result.getStart()) << "_"
                         << (it->getEnd()-result.getStart()) << ")";
 
         if (print) Fasta_Print(stdout, it->getUngappedSequence().c_str(), header.str().c_str());

@@ -16,12 +16,14 @@ public:
 	Position(std::string rangeName, uint32_t rangeStart, uint32_t rangeEnd, std::string seq);
         Position(const Position &other);
 
-	Position merge(const Position& p, std::vector<Position>& edits);
+	Position merge(Position& p, std::vector<Position>& edits);
 
+        uint32_t getUngappedLength() const;
 	uint32_t getLength() const;
 	std::string getName() const;
 	uint32_t getStart() const;
 	uint32_t getEnd() const;
+        uint32_t getOldEnd() const;
 	std::string getSequence() const;
 	std::string getUngappedSequence() const;
         PositionEditType getEditType() const;
@@ -33,8 +35,10 @@ private:
 	std::string sequence;
 	uint32_t start;
 	uint32_t end;
+        uint32_t oldEnd;
 	std::string name;
 	PositionEditType editType;
+        uint32_t numGaps;
 };
 
 bool operator== (const Position & a, const Position & b);

@@ -17,6 +17,10 @@
 #include "Motif_AMOS.hh"
 
 #include "Utilities_Bundler.hh"
+#include "Output_Utils.hh"
+
+#include "Motif_Utils.hh"
+#include "Align_Utils.hh"
 
 using namespace std;
 using namespace HASHMAP;
@@ -32,11 +36,17 @@ struct config {
 HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *Bundler::cte2weight = NULL;
 
 void linearizeScaffolds(std::vector<Scaffold_t> &scaffs, 
+                        AMOS::Bank_t &motif_bank,
                         AMOS::Bank_t &edge_bank,
+                        AMOS::Bank_t &contig_bank,
                         HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t, EdgeWeightCmp>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > &ctg2lnk,
                         int32_t debugLevel) {
    std::vector<Scaffold_t> linearScaffolds;
    AMOS::ID_t scfIID = 1;
+   Alignment_t ali;
+   bool contained = false;
+   ID_t max = contig_bank.getMaxIID();
+   std::map<std::pair<AMOS::ID_t, AMOS::ID_t>, bool> checkedPairs;
 
    for(std::vector<AMOS::Scaffold_t>::iterator itScf = scaffs.begin(); itScf < scaffs.end(); ++itScf) {
       HASHMAP::hash_map<AMOS::ID_t, std::set<AMOS::ID_t>*, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > ctg2conflict;
@@ -48,20 +58,46 @@ void linearizeScaffolds(std::vector<Scaffold_t> &scaffs,
 
          std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
          if (s == NULL) { s = new std::set<AMOS::ID_t>(); ctg2conflict[tileIt->source] = s;}
+         string currCtg = Bundler::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileIt->source, tileIt->range);
 
          for (std::vector<AMOS::Tile_t>::const_iterator tilePrev = itScf->getContigTiling().begin(); tilePrev < tileIt; ++tilePrev) {
             if (tilePrev->offset + (tilePrev->range.getLength() - 1) > tileIt->offset) {
+               bool aligns = false;
+               std::pair<AMOS::ID_t, AMOS::ID_t> ctgPair(Min(tileIt->source, tilePrev->source), Max(tileIt->source, tilePrev->source));
+               if (checkedPairs.find(ctgPair) == checkedPairs.end()) {
+                  string otherCtg = Bundler::getTileSequence(contig_bank, motif_bank, edge_bank, max, tilePrev->source, tilePrev->range);
+                  aligns = Bundler::hasValidOverlap(currCtg, otherCtg, Min(tileIt->offset, tilePrev->offset), tileIt->offset, tileIt->offset + tileIt->range.getLength() - 1, tilePrev->offset, tilePrev->offset + tilePrev->range.getLength() - 1, contained, ali); 
+                  checkedPairs[ctgPair] = aligns;
+               } else {
+                  aligns = checkedPairs[ctgPair];
+               }
+
                // it conflicts me
-               std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
-               s->insert(tilePrev->source);
-               ctg2conflict[tileIt->source] = s;
+               if (!aligns) {
+                  std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
+                  s->insert(tilePrev->source);
+                  ctg2conflict[tileIt->source] = s;
+               }
             }
          }
          for (std::vector<AMOS::Tile_t>::const_iterator tileNext = tileIt+1; tileNext < itScf->getContigTiling().end() && (tileNext->offset < tileIt->offset + (tileIt->range.getLength()-1)); ++tileNext) {
+            bool aligns = false;
+            std::pair<AMOS::ID_t, AMOS::ID_t> ctgPair(Min(tileIt->source, tileNext->source), Max(tileIt->source, tileNext->source));
+
+            if (checkedPairs.find(ctgPair) == checkedPairs.end()) {
+               string otherCtg = Bundler::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileNext->source, tileNext->range);
+               aligns = Bundler::hasValidOverlap(currCtg, otherCtg, Min(tileIt->offset, tileNext->offset), tileIt->offset, tileIt->offset + tileIt->range.getLength() - 1, tileNext->offset, tileNext->offset + tileNext->range.getLength() - 1, contained, ali);
+               checkedPairs[ctgPair] = aligns;
+            } else {
+               aligns = checkedPairs[ctgPair];
+            }
+
             // it conflicts me
-            std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
-            s->insert(tileNext->source);
-            ctg2conflict[tileIt->source] = s;
+            if (!aligns) {
+               std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
+               s->insert(tileNext->source);
+               ctg2conflict[tileIt->source] = s;
+            }
          }
       }
 
@@ -79,6 +115,7 @@ void linearizeScaffolds(std::vector<Scaffold_t> &scaffs,
                done = false;
 
                HASHMAP::hash_map<AMOS::ID_t, int, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > inCurrScf;
+               bool scfBroken = false;
                inCurrScf[tileIt->source] = 1;
 
                std::queue<AMOS::ID_t> current_nodes;
@@ -111,18 +148,29 @@ void linearizeScaffolds(std::vector<Scaffold_t> &scaffs,
                         } 
                      }
 
+                     // after we have found a conflict in a contig, all subsequent contigs should be split off too
                      if (hasConflicts) {
                         setEdgeStatus(cte, edge_bank, BAD_RPT, false);
-                     } else {
+                        scfBroken = true;
+                     } else if (!scfBroken){
                         current_nodes.push(neighbor);
                         inCurrScf[neighbor] = 1;
                      }
                   } // neighbors loop
                } // current connected set of nodes
 
+               bool first = true;
+               int32_t offset = 0;
                // loop through all the contigs and edges to see if they should be assigned to the current scaffold
-               for (std::vector<AMOS::Tile_t>::const_iterator scfTiles = itScf->getContigTiling().begin(); scfTiles < itScf->getContigTiling().end(); ++scfTiles) {
-                  if (inCurrScf[scfTiles->source] == 1) { tiles.push_back(*scfTiles); }
+               for (std::vector<AMOS::Tile_t>::iterator scfTiles = itScf->getContigTiling().begin(); scfTiles < itScf->getContigTiling().end(); ++scfTiles) {
+                  if (inCurrScf[scfTiles->source] == 1) { 
+                     if (first) { 
+                        offset = scfTiles->offset;
+                        first = false;
+                     }
+                     scfTiles->offset -= offset;
+                     tiles.push_back(*scfTiles); 
+                  }
                }
                for (std::vector<AMOS::ID_t>::const_iterator edgeIt = itScf->getContigEdges().begin(); edgeIt < itScf->getContigEdges().end(); ++edgeIt) {
                   edge_bank.fetch(*edgeIt, cte);
@@ -292,7 +340,7 @@ int main(int argc, char *argv[]) {
    while (scf_stream >> scf) {
       scfs.push_back(scf);
    }
-   linearizeScaffolds(scfs, edge_bank, ctg2lnk, globals.debug);
+   linearizeScaffolds(scfs, motif_bank, edge_bank, contig_bank, ctg2lnk, globals.debug);
 
    // finally clear and output the new scaffolds
    scf_stream.clearCurrentVersion();
