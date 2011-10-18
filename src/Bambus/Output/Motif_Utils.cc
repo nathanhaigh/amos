@@ -51,7 +51,6 @@ typedef boost::graph_traits<Graph>::out_edge_iterator EdgeIterator;
 typedef boost::property_map<Graph, boost::vertex_name_t>::type VertexName;
 #endif //AMOS_HAVE_BOOST
 
-#ifdef AMOS_HAVE_BOOST
 HASHMAP::hash_map<AMOS::ID_t, std::string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *motifSeq = NULL;
 HASHMAP::hash_map<AMOS::ID_t, std::string, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *motifName = NULL;
 
@@ -70,6 +69,7 @@ void getMotifsFromBank(AMOS::Bank_t &motif_bank, AMOS::Bank_t &contig_bank, AMOS
    }
 }
 
+#ifdef AMOS_HAVE_BOOST
 Vertex computeSource(Graph g); 
 Position traverseRecursive(
                                 Bank_t &contig_bank,
@@ -247,29 +247,28 @@ std::string getTileSequence(AMOS::Bank_t &contig_bank, AMOS::Bank_t &motif_bank,
 }
 
 std::string getTileSequence(AMOS::Bank_t &contig_bank, AMOS::Bank_t &motif_bank, AMOS::Bank_t &edge_bank, AMOS::ID_t max, AMOS::ID_t source, AMOS::Range_t range, std::string &eid) {
-#ifdef AMOS_HAVE_BOOST
    if (motifName == NULL) {
       getMotifsFromBank(motif_bank, contig_bank, edge_bank);
    }
 
    if (source > max) {
+#ifdef AMOS_HAVE_BOOST
       if (motifSeq->find(source) == motifSeq->end()) {
          cerr << "Error: unknown contig id " << source << endl;
          exit(1);
       }
       eid = (*motifName)[source];
       return (*motifSeq)[source];
+#else
+   cerr << "Error: the boost library cannot be found. Will not be outputting tile " << source << endl;
+   return "";
+#endif
    } else {
       AMOS::Contig_t ctg;
       contig_bank.fetch(source, ctg);
       eid = ctg.getEID();
       return ctg.getSeqString(range);
    }
-#else
-    cerr << "Error: the boost library cannot be found. Will not be outputting motif " << scf.getEID() << " consisting of " << scf.getContigTiling().size() << endl;
-
-   return "";
-#endif
 }
 
 string outputMotif(string &name, Motif_t &scf, Bank_t &motif_bank, Bank_t &contig_bank, Bank_t &edge_bank, bool print) {
@@ -295,7 +294,7 @@ string outputMotif(string &name, Motif_t &scf, Bank_t &motif_bank, Bank_t &conti
     name = result.getName();
     return result.getSequence();
 #else
-    cerr << "Error: the boost library cannot be found. Will not be outputting motif " << scf.getEID() << " consisting of " << scf.getContigTiling().size() << endl;
+    cerr << "Error: the boost library cannot be found. Will not be outputting motif " << scf.getEID() << " consisting of " << scf.getContigTiling().size() << " nodes" << endl;
 
    return "";
 #endif
