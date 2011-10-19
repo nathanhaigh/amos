@@ -5,6 +5,7 @@
 #include <getopt.h>
 
 #include <set>
+#include <map>
 #include <vector>
 
 #include "datatypes_AMOS.hh"
