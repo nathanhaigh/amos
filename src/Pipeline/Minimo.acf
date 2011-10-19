@@ -3,10 +3,10 @@
 #?
 #? Minimo is a de novo assembler based on the AMOS infrastructure. Minimo uses a
 #? conservative overlap-layout-consensus algorithm to avoid mis-assemblies and
-#? can be applied to short reads. The input is a FASTA file and there are options
-#? to control the stringency of the assembly and the processing of the quality
-#? scores. By default, the results are in the AMOS format and written to the
-#? directory where the input FASTA file is located.
+#? can be applied to short read or strand-specific assemblies. The input is a
+#? FASTA file and there are options to control the stringency of the assembly
+#? and the processing of the quality scores. By default, the results are in the
+#? AMOS format and written to the directory where the input FASTA file is located.
 #?
 #? Usage:
 #?     Minimo FASTA_IN [options]
