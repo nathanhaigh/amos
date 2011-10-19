@@ -34,6 +34,8 @@ static int  Minimizer_Window_Len = 20;
   // Length of window from which a minimizer is extracted
 static int  Min_Overlap_Len = DEFAULT_MIN_OVERLAP_LEN;
   // Minimum number of bases by which two sequences must overlap
+bool Strand_Specific = false;
+  // Do not consider the reverse-complement of the reads
 static string IIDFile = ""; 
   // List of IID to be overlapped
 bool selectIIDs = false;
@@ -77,6 +79,7 @@ int  main
            << Error_Rate << endl;
       cerr . setf (status);
       cerr << "Minimum overlap bases is " << Min_Overlap_Len << endl;
+      cerr << "Be strand-specific: " << Strand_Specific << endl;
 
       if  (FASTA_Input)
           {
@@ -138,7 +141,10 @@ int  main
 
       Find_Fwd_Overlaps (string_list, hash_table, id_list, overlap_bank);
 
-      Find_Rev_Overlaps (string_list, hash_table, id_list, overlap_bank);
+      if (! Strand_Specific) {
+          // Look for matches in the reverse-complement of the reads
+          Find_Rev_Overlaps (string_list, hash_table, id_list, overlap_bank);
+      }
 
       overlap_bank . close( );
      }
@@ -985,7 +991,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:x:s:I:E:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:x:sI:E:")) != EOF))
      switch  (ch)
        {
         case  'A' :
@@ -1022,6 +1028,10 @@ static void  Parse_Command_Line
 
         case  'x' :
           Error_Rate = strtod (optarg, NULL);
+          break;
+
+        case  's' :
+          Strand_Specific = true;
           break;
 
         case 'I' :
@@ -1165,15 +1175,19 @@ static void  Usage
            "    * overlap error percentage\n"
            "\n"
            ".OPTIONS.\n"
-           "  -A       Output AMOS-format messages instead of default\n"
-           "  -B       Output to AMOS bank instead of default\n"
-           "  -b <n>   Use <n> as lowest read index (0 based inclusive)\n"
-           "  -e <n>   Use <n> as highest read index (0 based exclusive)\n"
-           "  -F       Input is from multi-fasta file <input-name>\n"
-           "  -h       Print this usage message\n"
-           "  -o <n>   Set minimum overlap length to <n>\n"
-           "  -v <n>   Set verbose level to <n>. Higher produces more output.\n"
-           "  -x <d>   Set maximum error rate to <d>.  E.g., 0.06 is 6%% error\n"
+           "  -A        Output AMOS-format messages instead of default\n"
+           "  -B        Output to AMOS bank instead of default\n"
+           "  -b <n>    Use <n> as lowest read index (0 based inclusive)\n"
+           "  -e <n>    Use <n> as highest read index (0 based exclusive)\n"
+           "  -F        Input is from multi-fasta file <input-name>\n"
+           "  -h        Print this usage message\n"
+           "  -o <n>    Set minimum overlap length to <n>\n"
+           "  -v <n>    Set verbose level to <n>. Higher produces more output.\n"
+           "  -x <d>    Set maximum error rate to <d>.  E.g., 0.06 is 6%% error\n"
+           "  -s        Be strand-specific: find matches only in the forward \n"
+           "            orientation of the reads instead of in their forward and\n"
+           "            reverse orientations. Useful for transcripts and other\n"
+           "            directional sequence datasets.\n"
            "  -I <file> Build overlaps only for reads whose IIDs are in <file>\n"
            "  -E <file> Build overlaps only for reads whose EIDs are in <file>\n"
            "\n"
