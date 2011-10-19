@@ -22,13 +22,15 @@
 #?                           default: 35)
 #?     -D MIN_IDENT=<d>    Minimum contig overlap identity percentage (between 0
 #?                           and 100 %, default: 98)
+#?     -D STRAND_SPEC=<n>  Do a strand-specific assembly (e.g. for transcripts)
+#?                           (0:no 1:yes, default: 0)
 #?     -D ALN_WIGGLE=<d>   Alignment wiggle value (from 2 for short reads to 15 for
 #?                           long reads, default: 2)
 #?     -D FASTA_EXP=<n>    Export results in FASTA format (0:no 1:yes, default: 0)
 #?     -D ACE_EXP=<n>      Export results in ACE format (0:no 1:yes, default: 0)
 #?     -D OUT_PREFIX=<s>   Prefix to use for the output file path and name
 #?
-#? Minimo v1.6. Copyright Florent Angly 2010. Under the GPL v3 open-source license.
+#? Minimo v1.7 Copyright Florent Angly 2010. Under the GPL v3 open-source license.
 #?
 
 BINDIR     = /usr/local/bin
@@ -40,15 +42,16 @@ EXPECT 1
 FASTA_IN   = $(PREFIX)
 
 # Defaults parameters
-QUAL_IN    = ""
-GOOD_QUAL  = 30
-BAD_QUAL   = 10
-MIN_LEN    = 35
-MIN_IDENT  = 98
-ALN_WIGGLE = 2
-FASTA_EXP  = 0
-ACE_EXP    = 0
-OUT_PREFIX = ""
+QUAL_IN     = ""
+GOOD_QUAL   = 30
+BAD_QUAL    = 10
+MIN_LEN     = 35
+MIN_IDENT   = 98
+STRAND_SPEC = 0
+ALN_WIGGLE  = 2
+FASTA_EXP   = 0
+ACE_EXP     = 0
+OUT_PREFIX  = ""
 
 # Verbosity level (from 0 to ??)
 VERBOSE    = 0
@@ -76,7 +79,7 @@ AMOS_OUT    = $(BASE)-contigs.afg
 ACE_OUT     = $(BASE)-contigs.ace
 
 ## Printing parameters
-10: /bin/echo "Running Minimo with:\nFASTA_IN='$(FASTA_IN)'\nQUAL_IN='$(QUAL_IN)'\nGOOD_QUAL='$(GOOD_QUAL)'\nBAD_QUAL='$(BAD_QUAL)'\nMIN_LEN='$(MIN_LEN)'\nMIN_IDENT='$(MIN_IDENT)'\nMAX_OVL_ERROR='$(MAX_OVL_ERROR)'\nMAX_CONS_ERROR='$(MAX_CONS_ERROR)'\nALN_WIGGLE='$(ALN_WIGGLE)'\nFASTA_EXP='$(FASTA_EXP)'\nBASE='$(BASE)'\nFASTA_OUT='$(FASTA_OUT)'\nQUAL_OUT='$(QUAL_OUT)'\nAMOS_OUT='$(AMOS_OUT)'\nACE_OUT='$(ACE_OUT)'\nVERBOSE='$(VERBOSE)'"
+10: /bin/echo "Running Minimo with:\nFASTA_IN='$(FASTA_IN)'\nQUAL_IN='$(QUAL_IN)'\nGOOD_QUAL='$(GOOD_QUAL)'\nBAD_QUAL='$(BAD_QUAL)'\nMIN_LEN='$(MIN_LEN)'\nMIN_IDENT='$(MIN_IDENT)'\nMAX_OVL_ERROR='$(MAX_OVL_ERROR)'\nMAX_CONS_ERROR='$(MAX_CONS_ERROR)'\nSTRAND_SPEC='$(STRAND_SPEC)'\nALN_WIGGLE='$(ALN_WIGGLE)'\nFASTA_EXP='$(FASTA_EXP)'\nBASE='$(BASE)'\nFASTA_OUT='$(FASTA_OUT)'\nQUAL_OUT='$(QUAL_OUT)'\nAMOS_OUT='$(AMOS_OUT)'\nACE_OUT='$(ACE_OUT)'\nVERBOSE='$(VERBOSE)'"
 
 # Required input files
 INPUTS      = $(FASTA_IN)
@@ -104,7 +107,7 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 # The minimizers (approximate k-mers) considered are 20 bp long.
 # Default minimum overlap length is 40 bp.
 # Default maximum overlap error is 0.06 (6 %).
-50: $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -v $(VERBOSE) $(BANK)
+50: if [ $(STRAND_SPEC) -eq 1 ]; then $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -s -v $(VERBOSE) $(BANK); else $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -v $(VERBOSE) $(BANK); fi
 
 ## Forming contigs
 60: $(BINDIR)/tigger -b $(BANK)
