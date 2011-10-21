@@ -46,6 +46,7 @@ dist_bin_SCRIPTS = \
   fastq_to_mates.pl \
   filterfastadups.pl \
   link2reads.pl \
+  patchassembly.pl \
   persistent-assembly.pl \
   persistent-fix.pl \
   persistent-plot-breaks.pl \

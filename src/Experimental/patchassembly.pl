@@ -57,7 +57,7 @@ my %coords;
 
 my $coordcnt = 0;
 
-print STDERR "Loading alignment coordinates from $coords... ";
+print "Loading alignment coordinates from $coords... ";
 
 open COORDS, "< $coords"
   or die "Can't open $coords ($!)\n";
@@ -85,14 +85,14 @@ while (<COORDS>)
 
   push @{$coords{$ref}->{$patch}}, $c;
 
- # print STDERR "$ref\t$patch\t$c->{rstart}\t$c->{rend}\t$c->{qstart}\t$c->{qend}\t||$_\n";   
+ # print "$ref\t$patch\t$c->{rstart}\t$c->{rend}\t$c->{qstart}\t$c->{qend}\t||$_\n";   
 
  #  die if $coordcnt > 10;
 }
 
 close COORDS;
 
-print STDERR "loaded $coordcnt coordinates\n";
+print "loaded $coordcnt coordinates\n";
 
 
 ## Load reference lengths
@@ -103,14 +103,14 @@ my $lencnt = 0;
 
 if (-r "$reffa.lens")
 {
-  print STDERR "Loading reference lengths from $reffa.lens... ";
+  print "Loading reference lengths from $reffa.lens... ";
 
   open LENS, "$reffa.lens"
     or die "Can't open $reffa.lens ($!)\n";
 }
 else
 {
-  print STDERR "Loading reference lengths from $reffa... ";
+  print "Loading reference lengths from $reffa... ";
 
   open LENS, "getlengths $reffa |"
     or die "Can't open pipe to getlengths ($!)\n";
@@ -127,7 +127,7 @@ while (<LENS>)
 
 close LENS;
 
-print STDERR "loaded $lencnt reference sequence lengths\n";
+print "loaded $lencnt reference sequence lengths\n";
 
 
 
@@ -173,18 +173,18 @@ while (<REGIONS>)
 
   if ($pend < $pstart)
   {
-    print STDERR "Negative gap: $_\n";
+    print  "Negative gap: $_\n";
 
     my $coordref = $coords{$refseq}->{$patch};
 
     foreach my $c (@$coordref)
     {
-       print STDERR "$refseq\t$patch\t$c->{rstart}\t$c->{rend}\t$c->{qstart}\t$c->{qend}\t||$_\n";   
+       print "$refseq\t$patch\t$c->{rstart}\t$c->{rend}\t$c->{qstart}\t$c->{qend}\t||$_\n";   
     }
 
     if (scalar @$coordref != 2)
     {
-      print STDERR "complex negative gap! puntting!!!\n";
+      print "complex negative gap! puntting!!!\n";
 
       extractRegion($lastseq, $lastpos, $rend, "+", $reffa);
       $lastpos = $rend;
@@ -210,7 +210,7 @@ while (<REGIONS>)
       die if ($poo && ($qoo eq "+"));
       die if (!$poo && ($qoo eq "-"));
 
-      print STDERR "replacing  $refseq:[$rs - $re] with $patch:[$qs - $qe]:$qoo\n";
+      print "replacing  $refseq:[$rs - $re] with $patch:[$qs - $qe]:$qoo\n";
 
       extractRegion($lastseq, $lastpos, $rs, "+", $reffa);
       extractRegion($patch, $qs-1, $qe, $qoo, $patches);
