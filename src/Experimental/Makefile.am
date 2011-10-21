@@ -36,6 +36,7 @@ dist_bin_SCRIPTS = \
   autoJoiner.pl \
   blasr_alignquality.pl \
   bwape.pl \
+  check_ce.pl \
   coords_best.pl \
   coords_depth.pl \
   coords2scafflinks.pl \
