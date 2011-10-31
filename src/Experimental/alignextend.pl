@@ -158,8 +158,8 @@ if (($stage eq "all") || ($stage eq "align"))
       if ($QV_ILLUMINA) { $TRIM_CMD .= "64"; } else { $TRIM_CMD .= "33"; }
     }
 
-    if ($ADD_SUFFIX) { $TRIM_CMD .= " | $FASTQ_RENAME -suffix _$idx"; }
-    else             { $TRIM_CMD .= " | $FASTQ_RENAME -tr '/'"; }
+    if ($ADD_SUFFIX) { $TRIM_CMD .= " | $FASTQ_RENAME -clean -suffix _$idx"; }
+    else             { $TRIM_CMD .= " | $FASTQ_RENAME -clean -tr '/'"; }
 
     $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
 

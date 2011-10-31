@@ -102,8 +102,8 @@ if (!defined $samfile)
 
   if ($ADD_SUFFIX)
   {
-    $TC1 .= " | $FASTQ_RENAME -clean -tr ' ' -suffix _1";
-    $TC2 .= " | $FASTQ_RENAME -clean -tr ' ' -suffix _2";
+    $TC1 .= " | $FASTQ_RENAME -clean -suffix _1";
+    $TC2 .= " | $FASTQ_RENAME -clean -suffix _2";
   }
   else
   {
