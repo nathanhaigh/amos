@@ -8,6 +8,7 @@ my $PREFIX = "";
 my $SUFFIX = "";
 my $TR_INPUT;
 my $TR_OUTPUT = "_";
+my $CLEAN = 0;
 
 my $USAGE = "fastq_rename [options] orig.fq > new.fq\n";
 
@@ -17,6 +18,7 @@ my $res = GetOptions("help"      => \$help,
                      "renum"     => \$RENUM,
                      "prefix=s"  => \$PREFIX,
                      "suffix=s"  => \$SUFFIX,
+                     "clean"     => \$CLEAN,
                      "tr=s"      => \$TR_INPUT,
                      "tr_out=s"  => \$TR_OUTPUT,
                      );
@@ -30,6 +32,7 @@ if ($help || !$res)
   print "Options:\n";
   print "  -prefix <str> : add prefix to each readname\n";
   print "  -renum        : replace the readname as a sequential number 1,2,...,E,F,10,11...\n";
+  print "  -clean        : clean the sequence name by removing sequence after first space\n";
   print "  -tr <str>     : replace these characters in the readname\n";
   print "  -trc <str>    : when replacing, replace with this (default: $TR_OUTPUT)\n";
   print "  -suffix <str> : add suffix to each readname\n";
@@ -51,6 +54,11 @@ while (<>)
   else
   {
     chomp;
+
+    if ($CLEAN)
+    {
+      $_ = (split('\s', $_))[0];
+    }
 
     $_ = substr($_,1); ## skip the leading '@'
     $_ =~ s/$TR_INPUT/$TR_OUTPUT/g if (defined $TR_INPUT);
