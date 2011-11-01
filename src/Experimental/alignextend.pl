@@ -134,7 +134,7 @@ if (($stage eq "all") || ($stage eq "align"))
   if (! -r "$ref.sa")
   {
     ## Index genome
-    runCmd("bwa index", "$ref.sa", "bwa index $ref");
+    runCmd("bwa index", "$ref.sa", "$BWA index $ref");
     print "\n";
   }
 
