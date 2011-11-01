@@ -50,7 +50,8 @@ while (<>)
     my $q = $vals[0];
 
     print "asm_flag=1\n";
-    print "q=$q\n";
+    if (defined $path) { print "q=$path/$q\n"; }
+    else               { print "q=$q\n"; }
   }
   else
   {
