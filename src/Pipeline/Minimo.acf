@@ -30,7 +30,7 @@
 #?     -D ACE_EXP=<n>      Export results in ACE format (0:no 1:yes, default: 0)
 #?     -D OUT_PREFIX=<s>   Prefix to use for the output file path and name
 #?
-#? Minimo v1.7 Copyright Florent Angly 2010. Under the GPL v3 open-source license.
+#? Minimo v1.8 Copyright Florent Angly 2010. Under the GPL v3 open-source license.
 #?
 
 BINDIR     = /usr/local/bin
