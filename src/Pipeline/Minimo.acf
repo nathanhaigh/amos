@@ -110,7 +110,7 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 50: if [ $(STRAND_SPEC) -eq 1 ]; then $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -s -v $(VERBOSE) $(BANK); else $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -v $(VERBOSE) $(BANK); fi
 
 ## Forming contigs
-60: $(BINDIR)/tigger -b $(BANK)
+60: $(BINDIR)/tigger -b $(BANK) -v $(VERBOSE)
 
 ## Determining contig consensus sequences
 # Default fraction of errors allowed in alignments 0.06 (6 %).
