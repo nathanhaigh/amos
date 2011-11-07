@@ -135,7 +135,7 @@ static void parse_command_line(int argc, char* argv[]) {
 
   optarg = NULL;
 
-  while (!errflg && ((ch = getopt(argc, argv, "r:l:b:hgvs")) != EOF)) {
+  while (!errflg && ((ch = getopt(argc, argv, "r:l:b:hgv:s")) != EOF)) {
     switch  (ch) {
 
     case 's' :
@@ -168,7 +168,10 @@ static void parse_command_line(int argc, char* argv[]) {
       break;
 
     case 'v':
-      VERBOSE = true;
+      if ( strtol(optarg, NULL, 10) >= 1 ){
+        // Set verbose to true if the verbose level is 1 or more
+        VERBOSE = true;
+      }
       break;
       
     case '?' :
@@ -200,7 +203,7 @@ static void parse_command_line(int argc, char* argv[]) {
     cerr << " Options: " << endl;
     cerr << "   -g       Create the graph file 'fullgraph.dot' " << endl;
     //cerr << "   -s       Use the single (???) mode " << endl;
-    cerr << "   -v       Be verbose" << endl;
+    cerr << "   -v <n>   Verbose level" << endl;
     cerr << "   -h       Print this usage message " << endl;
     exit(EXIT_FAILURE);
   }

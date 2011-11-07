@@ -189,7 +189,7 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
       
       if(VERBOSE) {
 		cout << " -> " << read_tile->id << " len " << read_tile->len;
-		cout << " (" << read_tile->start << "," << read_tile->end << ") ";
+		cout << " (" << read_tile->start << "," << read_tile->end << ") " << endl;
       }
 
       tiles.push_back(tile);
