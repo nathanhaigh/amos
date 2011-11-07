@@ -14,6 +14,7 @@ my $make_bam     = 0;
 my $make_sbam    = 0;
 my $use_illumina = 0;
 my $QV_TRIM = 10;
+my $threads = 1;
 
 my $USAGE = "bwape <options> ref.fa fq1 fq2\n"; 
 
@@ -23,6 +24,7 @@ my $res = GetOptions("help"      => \$help,
                      "sbam"      => \$make_sbam,
                      "I"         => \$use_illumina,
                      "qv=s"      => \$QV_TRIM,
+                     "t=s"       => \$threads,
                      );
  
 if ($help || !$res)
@@ -43,6 +45,7 @@ if ($help || !$res)
   print "  -sbam          : make sorted bam\n";
   print "  -I             : reads use Illumina Fastq format (Q64)\n";
   print "  -qv <val>      : bwa quality value trim level (defailt: $QV_TRIM)\n";
+  print "  -t <threads>   : threads for bwa aln (default $threads)\n";
   exit 0;
 }
 
@@ -57,8 +60,8 @@ my $samfile = "$prefix.sam";
 my $QV_ILLUMINA = ($use_illumina) ? "-I" : "";
 
 runCmd("bwa index",  "$ref.sa",       "$BWA index $ref");
-runCmd("bwa aln 1",  "$prefix.1.sai", "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $fq1 > $prefix.1.sai", 1);
-runCmd("bwa aln 2",  "$prefix.2.sai", "$BWA aln $QV_ILLUMINA -q $QV_TRIM $ref $fq2 > $prefix.2.sai", 1);
+runCmd("bwa aln 1",  "$prefix.1.sai", "$BWA aln $QV_ILLUMINA -t $threads -q $QV_TRIM $ref $fq1 > $prefix.1.sai", 1);
+runCmd("bwa aln 2",  "$prefix.2.sai", "$BWA aln $QV_ILLUMINA -t $threads -q $QV_TRIM $ref $fq2 > $prefix.2.sai", 1);
 runCmd("bwa sampe",  "$prefix.sam",   "$BWA sampe -f $prefix.sam $ref $prefix.1.sai $prefix.2.sai $fq1 $fq2", 1);
 
 if ($make_bam || $make_sbam)

@@ -45,7 +45,7 @@ if ($help || !$res)
   print "  Compute the distance between paired end reads by individually aligning them\n";
   print "  to a reference genome or draft assembly. Aligns just the first <numreads>\n";
   print "  and compute summary statistics on the unambiguous alignments to the same\n";
-  print "  contig/scaffold/chromosome. Use -samfile if reads are already aligned.\n";
+  print "  contig/scaffold/chromosome. Use -sam if reads are already aligned.\n";
   print "\n";
   print "Required\n";
   print "  prefix          : prefix for output files\n";
@@ -62,7 +62,7 @@ if ($help || !$res)
   print "  -qv <n>         : bwa quality soft quality trim (default: $QV_TRIM)\n";
   print "  -I              : quality values are Illumina format\n";
   print "  -trim <n>       : hard trim 3' value (default: $HARD_TRIM)\n";
-  print "  -samfile <file> : Analyze previously aligned reads\n";
+  print "  -sam <file> : Analyze previously aligned reads\n";
 
   exit 0;
 }
@@ -102,13 +102,13 @@ if (!defined $samfile)
 
   if ($ADD_SUFFIX)
   {
-    $TC1 .= " | $FASTQ_RENAME -suffix _1";
-    $TC2 .= " | $FASTQ_RENAME -suffix _2";
+    $TC1 .= " | $FASTQ_RENAME -clean -suffix _1";
+    $TC2 .= " | $FASTQ_RENAME -clean -suffix _2";
   }
   else
   {
-    $TC1 .= " | $FASTQ_RENAME -tr '/'";
-    $TC2 .= " | $FASTQ_RENAME -tr '/'";
+    $TC1 .= " | $FASTQ_RENAME -clean -tr '/ '";
+    $TC2 .= " | $FASTQ_RENAME -clean -tr '/ '";
   }
 
   $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
