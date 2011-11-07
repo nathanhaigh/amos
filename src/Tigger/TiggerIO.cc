@@ -39,13 +39,13 @@ void get_amos_reads(const string p_bankdir) {
       bank.open(p_bankdir, B_READ);
 
       if(bank.empty()) {
-	cerr << p_bankdir << " bank is empty" << endl;
-	return;
+        cerr << p_bankdir << " bank is empty" << endl;
+        return;
       }
       
       while(bank >> amos_read) {
-	tigger.add_read(amos_read);
-	readCount++;
+        tigger.add_read(amos_read);
+        readCount++;
       }
       
       bank.close(); 
@@ -69,18 +69,18 @@ void get_amos_overlaps(const string p_bankdir) {
       cout << " Pulling overlaps from bank " << p_bankdir << endl;
       bank.open(p_bankdir, B_READ);
       if(bank.empty()) {
-	cout << " bank is empty" << endl;
-	return;
+        cout << " bank is empty" << endl;
+        return;
       }
       
       while(bank >> amos_overlap) {
-//	if(VERBOSE) {
-//	  amos_overlap.writeMessage(msg);
-//	  msg.write(cout);
-//	}
+//        if(VERBOSE) {
+//          amos_overlap.writeMessage(msg);
+//          msg.write(cout);
+//        }
 
-	tigger.add_overlap(amos_overlap);
-	overlapCount++;
+        tigger.add_overlap(amos_overlap);
+        overlapCount++;
       }
       
       bank.close();
@@ -104,7 +104,7 @@ void get_umd_overlaps(const char* p_file) {
   Overlap* olap = new Overlap();
 
   while(olaps >> olap->ridA >> olap->ridB >> olap->ori >> olap->ahang \
-	>> olap->bhang >> alen >> blen >> alin_score >> errors >> percent) {
+        >> olap->bhang >> alen >> blen >> alin_score >> errors >> percent) {
     tigger.add_overlap(olap);
     olap = new Overlap();
   }
@@ -137,9 +137,10 @@ static void parse_command_line(int argc, char* argv[]) {
 
   while (!errflg && ((ch = getopt(argc, argv, "r:l:b:hgvs")) != EOF)) {
     switch  (ch) {
-	case 's' :
-	  SINGLE = true;
-	  break;
+
+    case 's' :
+      SINGLE = true;
+      break;
 
     case 'b' :
       AMOS_mode = true;
@@ -178,7 +179,7 @@ static void parse_command_line(int argc, char* argv[]) {
     }
   }
   
-  if(AMOS_mode	&&  (rflg || lflg)) {
+  if(AMOS_mode  &&  (rflg || lflg)) {
     cerr << " Can't use AMOS and UMD together " << endl;
     errflg = true;
   }
@@ -188,13 +189,19 @@ static void parse_command_line(int argc, char* argv[]) {
     errflg = true;
   }
 
-  if(!AMOS_mode	 &&  !UMD_mode) {
+  if(!AMOS_mode  &&  !UMD_mode) {
     cerr << " Need to provide either an AMOS bank or UMD files " << endl;
     errflg = true;
   }
 
   if(errflg) {
-    cerr << " Usage: tigger -b <AMOS Bank> -r <UMD reads> -l <UMD overlaps> " << endl;
+    cerr << " Usage: tigger [options] -b <AMOS Bank> " << endl;
+    cerr << "    or: tigger [options] -r <UMD reads> -l <UMD overlaps> " << endl;
+    cerr << " Options: " << endl;
+    cerr << "   -g       Create the graph file 'fullgraph.dot' " << endl;
+    //cerr << "   -s       Use the single (???) mode " << endl;
+    cerr << "   -v       Be verbose" << endl;
+    cerr << "   -h       Print this usage message " << endl;
     exit(EXIT_FAILURE);
   }
 
