@@ -1,4 +1,7 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
 use AMOS;
 
 my $bankpath = shift @ARGV;
@@ -27,7 +30,7 @@ else
 my $cons = $ctg->getSeqString();
 print "Cons: $cons\n";
 
-print "Consenus Length: ", length($cons), "\n";
+print "Consensus Length: ", length($cons), "\n";
 
 
 
