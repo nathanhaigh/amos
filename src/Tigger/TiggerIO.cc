@@ -201,7 +201,7 @@ static void parse_command_line(int argc, char* argv[]) {
     cerr << " Usage: tigger [options] -b <AMOS Bank> " << endl;
     cerr << "    or: tigger [options] -r <UMD reads> -l <UMD overlaps> " << endl;
     cerr << " Options: " << endl;
-    cerr << "   -g       Create the graph file 'fullgraph.dot' " << endl;
+    cerr << "   -g       Write contig graphs as dot files (fullgraph.dot and Contig-*.dot) " << endl;
     //cerr << "   -s       Use the single (???) mode " << endl;
     cerr << "   -v <n>   Verbose level" << endl;
     cerr << "   -h       Print this usage message " << endl;
