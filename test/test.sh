@@ -11,7 +11,7 @@ do
     return=$?
     if [ $return -ne 0 ]
     then
-       $final_result=$return
+       final_result=$return
     fi
 done
 
