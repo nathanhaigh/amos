@@ -176,30 +176,30 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
 
       if(read_tile->start < read_tile->end) {
 
-		tile.offset = read_tile->start;
-		tile.range = read_tile->range;
+        tile.offset = read_tile->start;
+        tile.range = read_tile->range;
 
       } else {
 
-		tile.range = read_tile->range;
-		tile.range.swap();
-		tile.offset = read_tile->end;
-		
+        tile.range = read_tile->range;
+        tile.range.swap();
+        tile.offset = read_tile->end;
+
       }
       
       if(VERBOSE) {
-		cout << " -> " << read_tile->id << " len " << read_tile->len;
-		cout << " (" << read_tile->start << "," << read_tile->end << ") ";
+        cout << " -> " << read_tile->id << " len " << read_tile->len
+             << " (" << read_tile->start << "," << read_tile->end << ") " << endl;
       }
 
       tiles.push_back(tile);
     }
 
-	if(tiles.size() > 1) {
-	  amos_ctg.setTiling(tiles);
+    if(tiles.size() > 1) {
+      amos_ctg.setTiling(tiles);
   
-	  bank << amos_ctg;
-	}
+      bank << amos_ctg;
+    }
   }
   
   bank.close();
@@ -238,30 +238,30 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
 
 //       if(read_tile->start < read_tile->end) {
 
-// 		tile.offset = read_tile->start;
-// 		tile.range = read_tile->range;
+//         tile.offset = read_tile->start;
+//         tile.range = read_tile->range;
 
 //       } else {
 
-// 		tile.range = read_tile->range;
-// 		tile.range.swap();
-// 		tile.offset = read_tile->end;
-		
+//         tile.range = read_tile->range;
+//         tile.range.swap();
+//         tile.offset = read_tile->end;
+
 //       }
       
 //       if(VERBOSE) {
-// 		cout << " -> " << read_tile->id << " len " << read_tile->len;
-// 		cout << " (" << read_tile->start << "," << read_tile->end << ") ";
+//         cout << " -> " << read_tile->id << " len " << read_tile->len;
+//         cout << " (" << read_tile->start << "," << read_tile->end << ") ";
 //       }
 
 //       tiles.push_back(tile);
 //     }
 
-// 	if(tiles.size() > 1) {
-// 	  layout.setTiling(tiles);
+//     if(tiles.size() > 1) {
+//       layout.setTiling(tiles);
   
-// 	  bank << layout;
-// 	}
+//       bank << layout;
+//     }
 //   }
   
 //   bank.close();
@@ -283,13 +283,13 @@ void Unitigger::hide_containment(IGraph* g) {
       node = edge->getTarget();
       read = (Read*) node->getElement();
       if(read->id != olap->ridB) {
-	cerr << " Error overlap B id " << olap->ridB << " doesn't match read id " << read->id << endl;
+        cerr << " Error overlap B id " << olap->ridB << " doesn't match read id " << read->id << endl;
       }
 
       // only add the node once to the containment queue
       if(!node->getHidden()) {
-	//	cout << " add node to containment " << node->getKey() << endl;
-	containment.push(edge);
+        //cout << " add node to containment " << node->getKey() << endl;
+        containment.push(edge);
       }
       node->setHidden(true);
     }
@@ -320,10 +320,10 @@ void Unitigger::add_containment() {
       con_node = edge->getTarget();
       
       if(con_node->getKey() == ovl->ridA) {
-		node = con_node;
-		con_node = edge->getSource();
+        node = con_node;
+        con_node = edge->getSource();
       } else {
-		node = edge->getSource();
+        node = edge->getSource();
       }
       
       vector< Contig* >::iterator contig_iter = contigs.begin();
@@ -334,26 +334,26 @@ void Unitigger::add_containment() {
       // TODO : for a large number of contigs, 
       // finding the right contig can be very, very slow
       for( ; contig_iter != contigs.end(); ++contig_iter) {
-		Contig* c = (*contig_iter);
-		if(c->sg->contains(node)) {
-		  pass_count++;
-		  c->sg->add_edge(edge);
-		  con_node->setNodeHidden(false);
-		  edge->setHidden(false);
-		  edge->setColor("purple");
-		  con_node->setColor("purple");
-		  added = true;
-		  break;
-		}
+        Contig* c = (*contig_iter);
+        if(c->sg->contains(node)) {
+          pass_count++;
+          c->sg->add_edge(edge);
+          con_node->setNodeHidden(false);
+          edge->setHidden(false);
+          edge->setColor("purple");
+          con_node->setColor("purple");
+          added = true;
+          break;
+        }
       }
       
       // TODO: fix if read contains self
       if(!added) {
-		//cout << " not added  " << con_node->getKey() << " " << node->getKey() << endl;
-		containment.push(edge);
+        //cout << " not added  " << con_node->getKey() << " " << node->getKey() << endl;
+        containment.push(edge);
       }
     } // for containment size
-	
+    
     cout << pass_count << " containment reads added back on this pass " << endl;
     count += pass_count;
     cout << " sub-total contained reads unhidden " << count << endl;
@@ -363,11 +363,11 @@ void Unitigger::add_containment() {
       //      cout << " queue contains: " << endl;
       //      cout << " [ read1, read2, overlap ]" << endl;
       while(!containment.empty()) {
-	IEdge* e2 = containment.front();
-	containment.pop();
-	int read1 = edge->getTarget()->getKey();
-	int read2 = edge->getSource()->getKey();
-	//	cout << "[ " << read1 << ", " << read2 << ", " << e2->getKey() << " ]" << endl;
+        IEdge* e2 = containment.front();
+        containment.pop();
+        int read1 = edge->getTarget()->getKey();
+        int read2 = edge->getSource()->getKey();
+        //cout << "[ " << read1 << ", " << read2 << ", " << e2->getKey() << " ]" << endl;
       }
     }
 
@@ -403,149 +403,149 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
       list < IEdge* > inc_edges;
       
       while(!q.empty()) {
-	cur_node = q.front();
-	q.pop();
-	depth = cur_node->getDepth();
-	cur_node->setFlags(2); // black
+        cur_node = q.front();
+        q.pop();
+        depth = cur_node->getDepth();
+        cur_node->setFlags(2); // black
 
-	// go over each child and mark/queue
-	inc_edges = g->incident_edges(cur_node);
-	for(edgeListIter iter = inc_edges.begin(); iter != inc_edges.end(); ++iter) {
-	  cur_edge = (*iter);
-	  child = cur_edge->opposite(cur_node);
+        // go over each child and mark/queue
+        inc_edges = g->incident_edges(cur_node);
+        for(edgeListIter iter = inc_edges.begin(); iter != inc_edges.end(); ++iter) {
+          cur_edge = (*iter);
+          child = cur_edge->opposite(cur_node);
 
-	  if(child == NULL) {
-	    cout << " ERROR null node in graph " << endl;
-	    exit(1);
-	  }
-	  
-	  if(child->getFlags() == 0) { // hasn't  been visited
-	    child->setDepth(depth + 1);
-	    child->setFlags(1); // gray
-	    parents[child->getKey()] = cur_edge;
-	    q.push(child);  // push onto gray queue
+          if(child == NULL) {
+            cout << " ERROR null node in graph " << endl;
+            exit(1);
+          }
+          
+          if(child->getFlags() == 0) { // hasn't  been visited
+            child->setDepth(depth + 1);
+            child->setFlags(1); // gray
+            parents[child->getKey()] = cur_edge;
+            q.push(child);  // push onto gray queue
 
-	    child->setParent(cur_node->getKey());
-	    children.push(child); // this nodes children
-	    //	    cout << " " << child->getKey();
-
-
-	  } else if(child->getFlags() == 1) {
-	    if(child->getParent() == -1) {
-	      child->setParent(cur_node->getKey());
-	      children.push(child);
-	      //	      cout << " " << child->getKey();
-	    } else {
-	      //	      cout << " " << child->getKey() << "(dup)";
-	    }
-
-	    parents[child->getKey()] = cur_edge;
-
-	  } else { // flags should be 2/black
-	    //	    cout << " " << child->getKey() << "(done)";
-
-	  }
-	}
+            child->setParent(cur_node->getKey());
+            children.push(child); // this nodes children
+            //cout << " " << child->getKey();
 
 
-	// look for transitive edges
-	//cout << endl << " start looking for 3 cycles for children of node " << cur_node->getKey() << endl;
-	while(! children.empty()) {
-	  IEdge* grand_edge;
-	  INode* grand_node = children.front();
-	  children.pop();
-	  INode* node2;
-	  
-	  list< IEdge* > grand = g->incident_edges(grand_node);
-	  for(edgeListIter iter = grand.begin(); iter != grand.end(); ++iter) {
-	    grand_edge = (*iter);
-	    node2 = grand_edge->opposite(grand_node);
-	    
-	    if(node2->getFlags() != 2) {
-	      // check for transitive link
-	      if(node2->getParent() == grand_node->getParent()) {
-		int pkey = grand_node->getParent();
-		int gkey = grand_node->getKey();
-		int nkey = node2->getKey();
-		bool suffix1;
-		bool suffix2;
-		
-		if(VERBOSE) {
-		  cout << " found transitive link between ";
-		  cout << pkey << " ";
-		  cout << gkey << " " << nkey << endl;
-		}
-		
-		Overlap* o1 = (Overlap *)grand_edge->getElement();
-		Overlap* o2 = (Overlap *)parents[grand_node->getKey()]->getElement();
-		Overlap* o3 = (Overlap *)parents[node2->getKey()]->getElement();
+          } else if(child->getFlags() == 1) {
+            if(child->getParent() == -1) {
+              child->setParent(cur_node->getKey());
+              children.push(child);
+              //cout << " " << child->getKey();
+            } else {
+              //cout << " " << child->getKey() << "(dup)";
+            }
 
-		if(o2->ridA == pkey) {
-		  suffix1 = o2->asuffix;
-		} else if(o2->ridB == pkey) {
-		  suffix1 = o2->bsuffix;
-		}
-		
-		if(o3->ridA == pkey) {
-		  suffix2 = o3->asuffix;
-		} else if(o3->ridB == pkey) {
-		  suffix2 = o3->bsuffix;
-		}
-		
-		if(suffix1 != suffix2) {
-		  trans.push(grand_edge);
-		}
-		
-		if(o1->ridA == gkey) {
-		  suffix1 = o1->asuffix;
-		} else if(o1->ridB == gkey) {
-		  suffix1 = o1->bsuffix;
-		}
-		
-		if(o2->ridA == gkey) {
-		  suffix2 = o2->asuffix;
-		} else if(o2->ridB == gkey) {
-		  suffix2 = o2->bsuffix;
-		}
-		
-		if(suffix1 != suffix2) {
-		  trans.push(parents[node2->getKey()]);
-		}
-		
-		
-		if(o1->ridA == nkey) {
-		  suffix1 = o1->asuffix;
-		} else if(o1->ridB == nkey) {
-		  suffix1 = o1->bsuffix;
-		}
-		
-		if(o3->ridA == nkey) {
-		  suffix2 = o3->asuffix;
-		} else if(o3->ridB == nkey) {
-		  suffix2 = o3->bsuffix;
-		}
-		
-		if(suffix1 != suffix2) {
-		  trans.push(parents[grand_node->getKey()]);
-		}
-				
-		
-	      }
-	    } // end transitive check for node2
-	    
-	  }
-	  grand_node->setParent(-1);
-	}
+            parents[child->getKey()] = cur_edge;
+
+          } else { // flags should be 2/black
+            //cout << " " << child->getKey() << "(done)";
+
+          }
+        }
+
+
+        // look for transitive edges
+        //cout << endl << " start looking for 3 cycles for children of node " << cur_node->getKey() << endl;
+        while(! children.empty()) {
+          IEdge* grand_edge;
+          INode* grand_node = children.front();
+          children.pop();
+          INode* node2;
+          
+          list< IEdge* > grand = g->incident_edges(grand_node);
+          for(edgeListIter iter = grand.begin(); iter != grand.end(); ++iter) {
+            grand_edge = (*iter);
+            node2 = grand_edge->opposite(grand_node);
+            
+            if(node2->getFlags() != 2) {
+              // check for transitive link
+              if(node2->getParent() == grand_node->getParent()) {
+                int pkey = grand_node->getParent();
+                int gkey = grand_node->getKey();
+                int nkey = node2->getKey();
+                bool suffix1;
+                bool suffix2;
+                
+                if(VERBOSE) {
+                  cout << " found transitive link between ";
+                  cout << pkey << " ";
+                  cout << gkey << " " << nkey << endl;
+                }
+                
+                Overlap* o1 = (Overlap *)grand_edge->getElement();
+                Overlap* o2 = (Overlap *)parents[grand_node->getKey()]->getElement();
+                Overlap* o3 = (Overlap *)parents[node2->getKey()]->getElement();
+
+                if(o2->ridA == pkey) {
+                  suffix1 = o2->asuffix;
+                } else if(o2->ridB == pkey) {
+                  suffix1 = o2->bsuffix;
+                }
+                
+                if(o3->ridA == pkey) {
+                  suffix2 = o3->asuffix;
+                } else if(o3->ridB == pkey) {
+                  suffix2 = o3->bsuffix;
+                }
+                
+                if(suffix1 != suffix2) {
+                  trans.push(grand_edge);
+                }
+                
+                if(o1->ridA == gkey) {
+                  suffix1 = o1->asuffix;
+                } else if(o1->ridB == gkey) {
+                  suffix1 = o1->bsuffix;
+                }
+                
+                if(o2->ridA == gkey) {
+                  suffix2 = o2->asuffix;
+                } else if(o2->ridB == gkey) {
+                  suffix2 = o2->bsuffix;
+                }
+                
+                if(suffix1 != suffix2) {
+                  trans.push(parents[node2->getKey()]);
+                }
+                
+                
+                if(o1->ridA == nkey) {
+                  suffix1 = o1->asuffix;
+                } else if(o1->ridB == nkey) {
+                  suffix1 = o1->bsuffix;
+                }
+                
+                if(o3->ridA == nkey) {
+                  suffix2 = o3->asuffix;
+                } else if(o3->ridB == nkey) {
+                  suffix2 = o3->bsuffix;
+                }
+                
+                if(suffix1 != suffix2) {
+                  trans.push(parents[grand_node->getKey()]);
+                }
+
+
+              }
+            } // end transitive check for node2
+            
+          }
+          grand_node->setParent(-1);
+        }
       }
       
       int count = 0;
       // hide transitive edges
       while(! trans.empty()) {
-	if(! trans.front()->getHidden()) {
-	  count++;
-	}
-	trans.front()->setHidden(true);
-	trans.pop();
+        if(! trans.front()->getHidden()) {
+          count++;
+        }
+        trans.front()->setHidden(true);
+        trans.pop();
       }
       
     }
@@ -667,15 +667,15 @@ Contig* Unitigger::walk(INode* p_node) {
   if(pmatch == 1) { // we can walk off the prefix overlap
     node2 = p_node;
     edge = prefix;
-	
+
     while(edge != NULL) {
       node2 = edge->opposite(node2);
       if(node2 != p_node) {
-		//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
-		edge = walk_edge(edge, node2, ctg);
+         //cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
+         edge = walk_edge(edge, node2, ctg);
       } else {
-		edge = NULL;
-		smatch = 0;
+        edge = NULL;
+        smatch = 0;
       }
     }
   }
@@ -684,14 +684,14 @@ Contig* Unitigger::walk(INode* p_node) {
   if(smatch == 1) { // we can walk off the suffix overlap
     node2 = p_node; // start node
     edge = suffix; // start at suffix edge
-	
+
     while(edge != NULL) {
       node2 = edge->opposite(node2);
       if(node2 != p_node) {
-		//	cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
-		edge = walk_edge(edge, node2, ctg);
+        //cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
+        edge = walk_edge(edge, node2, ctg);
       } else {
-		edge = NULL;
+        edge = NULL;
       }
     }
   }
@@ -726,11 +726,11 @@ void Unitigger::layout_contig(Contig* ctg) {
     if(ovl->type != 'C') {
       count++;
       if(isSuffix(read, ovl)) {
-		read->start = 0;
-		read->end = (read->len);
+        read->start = 0;
+        read->end = (read->len);
       } else {
-		read->start = (read->len);
-		read->end = 0;
+        read->start = (read->len);
+        read->end = 0;
       }
     }
 
@@ -751,16 +751,16 @@ void Unitigger::layout_contig(Contig* ctg) {
     cur_node = q.front();
     q.pop();
     cur_node->setFlags(2); // black
-	
+
     // go over each child and mark/queue
     list< IEdge* > inc_edges = ctg->sg->incident_edges(cur_node);
     for(edgeListIter iter = inc_edges.begin(); iter != inc_edges.end(); ++iter) {
       cur_edge = (*iter);
       INode* child = cur_edge->opposite(cur_node);
-      if(child->getFlags() == 0) { // hasn't  been visited
-		child->setFlags(1); // gray
-		q.push(child);
-		layout_read(cur_edge, child);
+      if(child->getFlags() == 0) { // hasn't been visited
+        child->setFlags(1); // gray
+        q.push(child);
+        layout_read(cur_edge, child);
       }
     }
   }
@@ -795,13 +795,13 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
 
       if(olap->ori == 'N') {
 
-	lay_read->start = set_read->start + ahang;
-	lay_read->end = lay_read->start + len;
+        lay_read->start = set_read->start + ahang;
+        lay_read->end = lay_read->start + len;
 
-      } else {	// innie
+      } else { // innie
 
-	lay_read->end = set_read->start + ahang;
-	lay_read->start = lay_read->end + len;
+        lay_read->end = set_read->start + ahang;
+        lay_read->start = lay_read->end + len;
       }
 
 
@@ -828,11 +828,11 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
     if(olap->type == 'C') {
 
       if(olap->ori == 'N') {
-	lay_read->start = set_read->start - ahang;
-	lay_read->end = lay_read->start + len;
-      } else {	// innie
-	lay_read->start = set_read->end - ahang;
-	lay_read->start = lay_read->end + len;
+        lay_read->start = set_read->start - ahang;
+        lay_read->end = lay_read->start + len;
+      } else { // innie
+        lay_read->start = set_read->end - ahang;
+        lay_read->start = lay_read->end + len;
       }
 
     } else if(olap->type == 'R') {
