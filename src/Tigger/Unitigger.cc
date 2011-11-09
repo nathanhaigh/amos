@@ -241,6 +241,7 @@ void Unitigger::hide_containment(IGraph* g) {
     olap = (Overlap *)edge->getElement();
     
     if(olap->type == 'C') {
+      // this is a containment overlap
       node = edge->getTarget();
       read = (Read*) node->getElement();
       if(read->id != olap->ridB) {
@@ -352,8 +353,8 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
     INode* root_node = (*nodeIter).second;
     int depth = 1;
 
-    // look for one that isn't hidden and hasn't been visited by BFS
-    // use as root for BFS
+    // look for a node that is not hidden and has not been visited by breadth-
+    // first search (BFS) and use it as root for BFS
     if((! root_node->getHidden()) && root_node->getDepth() == 0) {
       root_node->setDepth(depth);
       root_node->setFlags(1);
@@ -388,25 +389,18 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
             q.push(child);  // push onto gray queue
 
             child->setParent(cur_node->getKey());
-            children.push(child); // this nodes children
-            //cout << " " << child->getKey();
-
+            children.push(child); // this node's children
 
           } else if(child->getFlags() == 1) {
             if(child->getParent() == -1) {
               child->setParent(cur_node->getKey());
               children.push(child);
-              //cout << " " << child->getKey();
-            } else {
-              //cout << " " << child->getKey() << "(dup)";
             }
 
             parents[child->getKey()] = cur_edge;
 
-          } else { // flags should be 2/black
-            //cout << " " << child->getKey() << "(done)";
+          } // else flags should be 2 (black)
 
-          }
         }
 
 
@@ -705,7 +699,6 @@ void Unitigger::layout_contig(Contig* ctg) {
 
   // now that the first read is set 
   // go through whole contig
-
   INode* cur_node;
   IEdge* cur_edge;
   q.push(first_node);
