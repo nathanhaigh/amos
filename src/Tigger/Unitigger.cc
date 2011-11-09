@@ -188,12 +188,13 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
   vector< Contig* >::iterator contig_iter = contigs.begin();
   for( ; contig_iter != contigs.end(); ++contig_iter) {
     Contig* ctg = (*contig_iter);
+    SubGraph* sg = ctg->sg;
     Tile_t tile;
     Layout_t amos_ctg;
     vector<Tile_t> tiles;
 
     // loop over every node in subgraph
-    for(INodeIterator nodeIter = ctg->sg->nodes_begin(); nodeIter != ctg->sg->nodes_end(); ++nodeIter) {
+    for(INodeIterator nodeIter = sg->nodes_begin(); nodeIter != sg->nodes_end(); ++nodeIter) {
       INode* node = (*nodeIter).second;
       Read* read_tile = (Read*) node->getElement();
       tile.source = read_tile->id;
@@ -293,10 +294,11 @@ void Unitigger::add_containment() {
 
       // TODO: finding the right contig is very slow for a large number of contigs
       for( ; contig_iter != contigs.end(); ++contig_iter) {
-        Contig* c = (*contig_iter);
-        if(c->sg->contains(node)) {
+        Contig* ctg = (*contig_iter);
+        SubGraph* sg = ctg->sg;
+        if(sg->contains(node)) {
           pass_count++;
-          c->sg->add_edge(edge);
+          sg->add_edge(edge);
           con_node->setNodeHidden(false);
           edge->setHidden(false);
           edge->setColor("purple");
@@ -660,7 +662,8 @@ Contig* Unitigger::walk(INode* p_node) {
 
 
 void Unitigger::layout_contig(Contig* ctg) {
-  INode* first_node = ctg->sg->get_node(ctg->start_node);
+  SubGraph* sg = ctg->sg;
+  INode* first_node = sg->get_node(ctg->start_node);
   Read* read = (Read*) first_node->getElement();
 
   IEdge* edge;
@@ -671,9 +674,9 @@ void Unitigger::layout_contig(Contig* ctg) {
   read->start = 0;
   read->end = read->len;
 
-  ctg->sg->clear_flags();
+  sg->clear_flags();
 
-  list< IEdge* > edges = ctg->sg->incident_edges(first_node);
+  list< IEdge* > edges = sg->incident_edges(first_node);
 
   // loop over edges
   // find no containment edge
@@ -713,7 +716,7 @@ void Unitigger::layout_contig(Contig* ctg) {
     cur_node->setFlags(2); // black
 
     // go over each child and mark/queue
-    list< IEdge* > inc_edges = ctg->sg->incident_edges(cur_node);
+    list< IEdge* > inc_edges = sg->incident_edges(cur_node);
     for(edgeListIter iter = inc_edges.begin(); iter != inc_edges.end(); ++iter) {
       cur_edge = (*iter);
       INode* child = cur_edge->opposite(cur_node);
@@ -835,10 +838,11 @@ void Unitigger::output_contig_graphs() {
 
   vector< Contig* >::iterator contig_iter = contigs.begin();
   for(int i = 0; contig_iter != contigs.end(); ++contig_iter) {
-    Contig* c = (*contig_iter);
+    Contig* ctg = (*contig_iter);
+    SubGraph* sg = ctg->sg;
     sprintf(buffer, "Contig-%d.dot", i++);
-    if(c->sg->num_nodes() > 1) {
-      c->sg->create_dot_file(buffer);
+    if(sg->num_nodes() > 1) {
+      sg->create_dot_file(buffer);
     }
   }
 }
