@@ -248,12 +248,12 @@ void Unitigger::hide_containment(IGraph* g) {
         cerr << " Error overlap B id " << olap->ridB << " doesn't match read id " << read->id << endl;
       }
 
-      // only add the node once to the containment queue
+      // only add the edge once to the containment queue (and hide the node)
       if(!node->getHidden()) {
-        //cout << " add node to containment " << node->getKey() << endl;
         containment.push(edge);
+        node->setHidden(true);
       }
-      node->setHidden(true);
+
     }
   }
 
