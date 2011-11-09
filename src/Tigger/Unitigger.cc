@@ -268,7 +268,6 @@ void Unitigger::add_containment() {
   Overlap* ovl;
   int count = 0;
 
-
   while(!containment.empty()) {
     int size = containment.size();
     int pass_count = 0;
@@ -588,7 +587,8 @@ IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg) {
 
 Contig* Unitigger::walk(INode* p_node) {
   Contig* ctg = new Contig();
-  ctg->sg = new SubGraph(*graph, "Contig");
+  SubGraph* sg = new SubGraph(*graph, "Contig");
+  ctg->sg = sg;
   ctg->start_node = p_node->getKey();
 
   IEdge* edge;
@@ -600,7 +600,7 @@ Contig* Unitigger::walk(INode* p_node) {
   int pmatch = 0;
 
   // loop through all edges, checking if we can walk from this node
-  list< IEdge* > edges =  graph->incident_edges(p_node);
+  list< IEdge* > edges = graph->incident_edges(p_node);
   for(edgeListIter iter = edges.begin(); iter != edges.end(); ++iter) {
     edge = (*iter);
     ovl = (Overlap*) edge->getElement();
@@ -615,7 +615,7 @@ Contig* Unitigger::walk(INode* p_node) {
 
   }
 
-  ctg->sg->add_node(p_node);
+  sg->add_node(p_node);
   p_node->setFlags(1);
 
   INode* node2;
@@ -697,7 +697,7 @@ void Unitigger::layout_contig(Contig* ctg) {
     cerr << " *******Error: First read had more than one non-containment overlap for layout " << endl;
   }
 
-  // now that the first read is set 
+  // now that the first read is set
   // go through whole contig
   INode* cur_node;
   IEdge* cur_edge;
