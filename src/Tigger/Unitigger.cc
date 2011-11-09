@@ -33,42 +33,66 @@ void Unitigger::error(const char* m, const char* c) {
 
 
 void Unitigger::add_overlap(Overlap* p_olap) {
-  
-  // convert AMOS adjacency info to Gene's from paper
-  // determine overlap dovetail type
+  // convert AMOS adjacency info (ahang, bhang, orientation) to Gene's adjacency
+  // from the paper (asuffix, bsuffix, type)
+
   if((p_olap->ahang >= 0) && (p_olap->bhang <= 0)) {
+    // Full overlap (contained)
+    // A: ---------------
+    //        |||||||
+    // B:     -------
     p_olap->type = 'C';
     p_olap->asuffix = false;
     p_olap->bsuffix = false;
 
   } else if((p_olap->ahang <= 0) && (p_olap->bhang >= 0)) {
+    // Full overlap (contained)
+    // A:     -------
+    //        |||||||
+    // B: ---------------
     p_olap->type = 'C';
     p_olap->asuffix = false;
     p_olap->bsuffix = false;
-    p_olap->flip();
+    p_olap->flip(); // switch read A and B
 
   } else if(p_olap->ori == 'N') {
 
     if(p_olap->ahang >= 0) {
+      // Full overlap with reads oriented normally (regular dovetail)
+      // A: ---------->
+      //        |||||||
+      // B:     ---------->
       p_olap->type = 'R';
       p_olap->asuffix = true;
       p_olap->bsuffix = false;
 
-    } else {   // ahang is negative
+    } else { // ahang < 0
+      // Full overlap with reads oriented normally (regular dovetail) 
+      // A:     ---------->
+      //        |||||||
+      // B: ---------->
       p_olap->type = 'R';
       p_olap->asuffix = false;
       p_olap->bsuffix = true;
-      p_olap->flip();
+      p_olap->flip(); // switch read A and B
 
     }
   } else {   // ori == 'I'
 
-    if(p_olap->ahang >= 0) { // suffix
+    if(p_olap->ahang >= 0) {
+      // Full overlap with reads in innie orientation (suffix dovetail)
+      // A: ---------->
+      //        |||||||
+      // B:     <----------
       p_olap->type = 'S';
       p_olap->asuffix = true;
       p_olap->bsuffix = true;
 
-    } else {   // ahang is negative, prefix
+    } else {   // ahang < 0
+      // Full overlap with reads in innie orientation (prefix dovetail)
+      // A:     <----------
+      //        |||||||
+      // B: ---------->
       p_olap->type = 'P';
       p_olap->asuffix = false;
       p_olap->bsuffix = false;
@@ -144,6 +168,7 @@ void Unitigger::output_umd_contigs(IGraph* g, INode* p_node) {
   }
 }
 
+
 void Unitigger::output_amos_contigs(const string p_bankdir) {
   Message_t msg;
   BankStream_t bank(Layout_t::NCODE);
@@ -171,16 +196,13 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
     for(INodeIterator nodeIter = ctg->sg->nodes_begin(); nodeIter != ctg->sg->nodes_end(); ++nodeIter) {
       INode* node = (*nodeIter).second;
       Read* read_tile = (Read*) node->getElement();
-      
       tile.source = read_tile->id;
 
       if(read_tile->start < read_tile->end) {
-
         tile.offset = read_tile->start;
         tile.range = read_tile->range;
 
       } else {
-
         tile.range = read_tile->range;
         tile.range.swap();
         tile.offset = read_tile->end;
@@ -204,68 +226,6 @@ void Unitigger::output_amos_contigs(const string p_bankdir) {
   
   bank.close();
 }
-
-
-// void Unitigger::output_amos_layout(const string p_bankdir) {
-//   Message_t msg;
-//   BankStream_t bank(Layout_t::NCODE);
-
-//   try {
-//     if(!bank.exists(p_bankdir)) {
-//       bank.create(p_bankdir);
-//     } else {
-//       bank.open(p_bankdir);
-//     }
-//     cout << " Writing layouts to bank " << p_bankdir << endl;
-//   } catch (Exception_t &e) {
-//     cerr << "Exception while writing layouts : " << e << endl;
-//     exit(127);
-//   }
-
-//   vector< Contig* >::iterator contig_iter = contigs.begin();
-//   for( ; contig_iter != contigs.end(); ++contig_iter) {
-//     Contig* ctg = (*contig_iter);
-//     Tile_t tile;
-//     Layout_t layout;
-//     vector<Tile_t> tiles;
-
-//     // loop over every node in subgraph
-//     for(INodeIterator nodeIter = ctg->sg->nodes_begin(); nodeIter != ctg->sg->nodes_end(); ++nodeIter) {
-//       INode* node = (*nodeIter).second;
-//       Read* read_tile = (Read*) node->getElement();
-      
-//       tile.source = read_tile->id;
-
-//       if(read_tile->start < read_tile->end) {
-
-//         tile.offset = read_tile->start;
-//         tile.range = read_tile->range;
-
-//       } else {
-
-//         tile.range = read_tile->range;
-//         tile.range.swap();
-//         tile.offset = read_tile->end;
-
-//       }
-      
-//       if(VERBOSE) {
-//         cout << " -> " << read_tile->id << " len " << read_tile->len;
-//         cout << " (" << read_tile->start << "," << read_tile->end << ") ";
-//       }
-
-//       tiles.push_back(tile);
-//     }
-
-//     if(tiles.size() > 1) {
-//       layout.setTiling(tiles);
-  
-//       bank << layout;
-//     }
-//   }
-  
-//   bank.close();
-// }
 
 
 void Unitigger::hide_containment(IGraph* g) {
@@ -329,10 +289,9 @@ void Unitigger::add_containment() {
       vector< Contig* >::iterator contig_iter = contigs.begin();
       bool added = false;
 
-      //      cout << " start looking for contig that contains read " << node->getKey() << endl;
-      //
-      // TODO : for a large number of contigs, 
-      // finding the right contig can be very, very slow
+      // cout << " start looking for contig that contains read " << node->getKey() << endl;
+
+      // TODO: finding the right contig is very slow for a large number of contigs
       for( ; contig_iter != contigs.end(); ++contig_iter) {
         Contig* c = (*contig_iter);
         if(c->sg->contains(node)) {
@@ -374,6 +333,7 @@ void Unitigger::add_containment() {
   } 
   cout << " total contained reads unhidden " << count << endl;
 }
+
 
 // TODO: refactor 
 // TODO: better handle two distinct overlaps between reads
@@ -560,7 +520,7 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 bool Unitigger::isSuffix(Read* read, Overlap* ovl) {
   if(read->id == ovl->ridA) return ovl->asuffix;
   if(read->id == ovl->ridB) return ovl->bsuffix;
-  // TODO: should through exception?
+  // TODO: should throw exception?
   return false;
 }
 
@@ -581,6 +541,7 @@ void Unitigger::find_chunks() {
   cout << " number of contigs " << contigs.size() << endl;
 }
 
+
 //
 // 1. add edge and node to subgraph if valid
 // 2. return null if no more edges
@@ -597,8 +558,7 @@ IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg) {
   
   e->setHidden(true);
 
-  // loop through all edges, checking if we can walk
-  // from this node
+  // loop through all edges, checking if we can walk from this node
   list< IEdge* > edges =  graph->incident_edges(n);
   for(edgeListIter iter = edges.begin(); iter != edges.end(); ++iter) {
     IEdge* oedge = (*iter);
@@ -634,6 +594,7 @@ Contig* Unitigger::walk(INode* p_node) {
   Contig* ctg = new Contig();
   ctg->sg = new SubGraph(*graph, "Contig");
   ctg->start_node = p_node->getKey();
+
   IEdge* edge;
   IEdge* prefix;
   IEdge* suffix;
@@ -641,10 +602,8 @@ Contig* Unitigger::walk(INode* p_node) {
   Read* read = (Read*) p_node->getElement();
   int smatch = 0;
   int pmatch = 0;
-  
 
-  // loop through all edges, checking if we can walk
-  // from this node
+  // loop through all edges, checking if we can walk from this node
   list< IEdge* > edges =  graph->incident_edges(p_node);
   for(edgeListIter iter = edges.begin(); iter != edges.end(); ++iter) {
     edge = (*iter);
@@ -703,6 +662,7 @@ Contig* Unitigger::walk(INode* p_node) {
 void Unitigger::layout_contig(Contig* ctg) {
   INode* first_node = ctg->sg->get_node(ctg->start_node);
   Read* read = (Read*) first_node->getElement();
+
   IEdge* edge;
   Overlap* ovl;
   int count = 0;
@@ -723,7 +683,7 @@ void Unitigger::layout_contig(Contig* ctg) {
     edge = (*iter);
     ovl = (Overlap*) edge->getElement();
 
-    if(ovl->type != 'C') {
+    if(ovl->type != 'C') { // process dovetail, not containments
       count++;
       if(isSuffix(read, ovl)) {
         read->start = 0;
@@ -770,11 +730,10 @@ void Unitigger::layout_contig(Contig* ctg) {
 
 // need start node and sub-graph
 void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
+
+  Read* lay_read = (Read*) p_node->getElement(); // read to layout
+  Read* set_read = (Read*) p_edge->opposite(p_node)->getElement(); // fixed read to layout against
   Overlap* olap = (Overlap*) p_edge->getElement();
-  // read that should be set
-  Read* lay_read = (Read*) p_node->getElement(); 
-  // read to layout
-  Read* set_read = (Read*) p_edge->opposite(p_node)->getElement();
 
   if(VERBOSE) {
     cout << " layout read " << lay_read->id << " against " << set_read->id << endl;
@@ -827,10 +786,10 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
 
     if(olap->type == 'C') {
 
-      if(olap->ori == 'N') {
+      if(olap->ori == 'N') { // normal orientation
         lay_read->start = set_read->start - ahang;
         lay_read->end = lay_read->start + len;
-      } else { // innie
+      } else { // innie orientation
         lay_read->start = set_read->end - ahang;
         lay_read->start = lay_read->end + len;
       }
@@ -870,6 +829,7 @@ void Unitigger::layout_read(IEdge* p_edge, INode* p_node) {
   
 }
 
+
 void Unitigger::output_contig_graphs() {
   char buffer[30];
 
@@ -887,18 +847,24 @@ void Unitigger::output_contig_graphs() {
 void Unitigger::calc_contigs() {
 
   //
-  // Step 1. handle containment edges
+  // Step 1. Remove containment edges
+  // Reads completely contained within other reads are removed from the graph.
   //
   hide_containment((IGraph*) graph);
 
   //
-  // Step 2. transitive edges
+  // Step 2. Reduce transitive edges
+  // For any set of three reads A, B, and C, if the overlap between A and C can
+  // be inferred from the overlaps between reads A and B, and B and C, this
+  // overlap is removed from the graph.
   //
   hide_transitive_overlaps((IGraph*) graph);
 
-
   //
-  // Step 3. Chunking
+  // Step 3. Unique-join collapsing (chunking)
+  // Every simple path in the graph (paths that contain no branches, i.e. all
+  // the nodes have in- and out-degrees equal to 1) are collapsed into a single
+  // vertex. Each such vertex represents an individual unitig.
   //
   find_chunks();
 
@@ -906,6 +872,7 @@ void Unitigger::calc_contigs() {
 
   //
   // Step 4. Layout
+  // Calculate the position of the reads in each config
   //
   vector< Contig* >::iterator contig_iter = contigs.begin();
   contig_iter = contigs.begin();

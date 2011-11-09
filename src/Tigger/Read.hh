@@ -23,9 +23,9 @@
 class Read {
 public:
   int id;
-  int len;  // of clear range
-  int start; // in layout or contig
-  int end; // in layout or contig
+  int len;   // length of read clear range
+  int start; // start position of read in layout or contig
+  int end;   // end position of read in layout or contig
   AMOS::Range_t range;
 
   Read(int p_id, int p_len, int p_start = -1, int p_end = -1) 
