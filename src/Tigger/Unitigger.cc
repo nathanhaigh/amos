@@ -402,7 +402,6 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
 
         }
 
-
         // look for transitive edges
         //cout << endl << " start looking for 3 cycles for children of node " << cur_node->getKey() << endl;
         while(! children.empty()) {
@@ -484,7 +483,6 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
                   trans.push(parents[grand_node->getKey()]);
                 }
 
-
               }
             } // end transitive check for node2
             
@@ -506,7 +504,6 @@ void Unitigger::hide_transitive_overlaps(IGraph* g) {
     }
 
   }
-
 
   g->clear_flags();
 }
@@ -541,7 +538,7 @@ void Unitigger::find_chunks() {
 // 1. add edge and node to subgraph if valid
 // 2. return null if no more edges
 //
-IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg) {
+IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg, int edgeIsSuffix = 1) {
   SubGraph* sg = ctg->sg;
   Read* read = (Read*) n->getElement();
   Overlap* in_ovl = (Overlap*) e->getElement();
@@ -574,7 +571,14 @@ IEdge* Unitigger::walk_edge(IEdge* e, INode* n, Contig* ctg) {
     sg->add_edge(e);
     e->setFlags(1);
     n->setFlags(1);
-    ctg->start_node = n->getKey();
+
+    // Keep track of contig direction
+    if(edgeIsSuffix) {
+      ctg->end_node = n->getKey();
+    } else {
+      ctg->start_node = n->getKey();
+    }
+
   }
   
   if((omatch == 1) && (imatch == 0)) {
@@ -590,6 +594,7 @@ Contig* Unitigger::walk(INode* p_node) {
   SubGraph* sg = new SubGraph(*graph, "Contig");
   ctg->sg = sg;
   ctg->start_node = p_node->getKey();
+  ctg->end_node = p_node->getKey();
 
   IEdge* edge;
   IEdge* prefix;
@@ -619,7 +624,7 @@ Contig* Unitigger::walk(INode* p_node) {
   p_node->setFlags(1);
 
   INode* node2;
-  if(pmatch == 1) { // we can walk off the prefix overlap
+  if(pmatch == 1) { // we can walk up off the prefix overlap
     node2 = p_node;
     edge = prefix;
 
@@ -627,16 +632,17 @@ Contig* Unitigger::walk(INode* p_node) {
       node2 = edge->opposite(node2);
       if(node2 != p_node) {
          //cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
-         edge = walk_edge(edge, node2, ctg);
-      } else {
+         edge = walk_edge(edge, node2, ctg, 0);
+      } else { // node2 == p_node
+        // A loop was done and we are back to the node we started off with. So, 
+        // no need to walk down off the suffixes
         edge = NULL;
         smatch = 0;
       }
     }
   }
 
-
-  if(smatch == 1) { // we can walk off the suffix overlap
+  if(smatch == 1) { // we can walk down off the suffix overlap
     node2 = p_node; // start node
     edge = suffix; // start at suffix edge
 
@@ -644,7 +650,7 @@ Contig* Unitigger::walk(INode* p_node) {
       node2 = edge->opposite(node2);
       if(node2 != p_node) {
         //cout << " walk edge " << edge->getKey() << " with node " << node2->getKey() << endl;
-        edge = walk_edge(edge, node2, ctg);
+        edge = walk_edge(edge, node2, ctg, 1);
       } else {
         edge = NULL;
       }
@@ -680,7 +686,7 @@ void Unitigger::layout_contig(Contig* ctg) {
     edge = (*iter);
     ovl = (Overlap*) edge->getElement();
 
-    if(ovl->type != 'C') { // process dovetail, not containments
+    if(ovl->type != 'C') { // can walk through dovetails, not containments
       count++;
       if(isSuffix(read, ovl)) {
         read->start = 0;

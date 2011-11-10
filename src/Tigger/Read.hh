@@ -22,7 +22,7 @@
  */
 class Read {
 public:
-  int id;
+  int id;    // read ID
   int len;   // length of read clear range
   int start; // start position of read in layout or contig
   int end;   // end position of read in layout or contig

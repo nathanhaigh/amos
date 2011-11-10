@@ -27,6 +27,14 @@ public:
   // ID of read A and B respectively
 
   bool asuffix, bsuffix;
+  // asuffix: means that the 3' end (the suffix) of read A leads into read B
+  // bsuffix: same thing as asuffix but for read B
+  // Example:
+  //   A: ---------->
+  //          |||||||
+  //   B:     ---------->
+  //   asuffix is 1
+  //   bsuffix is 0
 
   char ori;
   // Read orientation:
