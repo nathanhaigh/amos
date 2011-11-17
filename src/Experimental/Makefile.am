@@ -25,6 +25,9 @@ bin_PROGRAMS = \
 
 
 dist_bin_SCRIPTS = \
+  SOAPdenovo_readlist_to_config.pl \
+  SOAPdenovo_mapscaff.sh \
+  SOAPdenovo_prepare.sh \
   aj_evaluateSequenceOverlaps.pl \
   aj_joinContigs.pl \
   aj_lowcomplexityfilter.pl \
@@ -36,15 +39,17 @@ dist_bin_SCRIPTS = \
   autoJoiner.pl \
   blasr_alignquality.pl \
   bwape.pl \
+  check_ce.pl \
   coords_best.pl \
   coords_depth.pl \
   coords2scafflinks.pl \
   ctg_gc.pl \
   extractFasta.pl \
   fasta_filter_raw.pl \
+  fasta_filter_dups.pl \
   fastq_to_mates.pl \
-  filterfastadups.pl \
   link2reads.pl \
+  patchassembly.pl \
   persistent-assembly.pl \
   persistent-fix.pl \
   persistent-plot-breaks.pl \

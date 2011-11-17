@@ -281,7 +281,7 @@ struct Range_t
 
 
 //================================================ Tile_t ======================
-//! \brief A singe sequence's location and orientation in a larger sequence
+//! \brief A single sequence's location and orientation in a larger sequence
 //!
 //! A tiled sequence, like a read in a contig, or a contig in a scaffold. For
 //! explanation purposes, let us assume we are dealing with an underlying read

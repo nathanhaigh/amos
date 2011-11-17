@@ -28,7 +28,7 @@ bool Graph::contains(IEdge* p_edge) {
 
 // INode Methods
 ////////////////
-// TODO: need to fix degree for subgraphes
+// TODO: need to fix degree for subgraphs
 
 int Graph::degree(INode* p_node) const {
   return p_node->degree();
