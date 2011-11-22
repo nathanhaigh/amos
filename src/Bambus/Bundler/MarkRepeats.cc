@@ -3,6 +3,7 @@
 #endif
 
 #include <getopt.h>
+#include <stdlib.h>
 #include <math.h>
 #include <limits>
 #include <string>
@@ -12,9 +13,21 @@
 #include <iterator>
 #include <iostream>
 
+#include <sys/time.h>
+
+#ifdef AMOS_HAVE_OPENMP
+#include <omp.h>
+#endif
+
 #ifdef AMOS_HAVE_BOOST
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/strong_components.hpp>
+#include <boost/interprocess/detail/atomic.hpp>
+
+#include <boost/random.hpp>
+#include <boost/graph/small_world_generator.hpp>
+#include <boost/graph/erdos_renyi_generator.hpp>
+#include <boost/graph/betweenness_centrality.hpp>
 #endif //AMOS_HAVE_BOOST
 
 #include "datatypes_AMOS.hh"
@@ -36,6 +49,11 @@ static const int32_t  MAX_REPEAT_SIZE    =   10000;
 static const int32_t  MAX_REPEAT_STDEV   =       3;
 static const double   MAX_REPEAT_COV     =       0.02;
 static const double   MAX_COVERAGE_ERROR =       0.05;
+static const int32_t  MAX_K              =       4;
+
+#ifdef AMOS_HAVE_BOOST
+static const uint32_t MAX_VALUE     = numeric_limits<uint32_t>::max();
+#endif
 
 HASHMAP::hash_map<AMOS::ID_t, int32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > *Bundler::cte2weight = NULL;
 
@@ -47,6 +65,10 @@ struct config {
    bool        noPathRepeats;
    bool        noCoverageRepeats;
    double      maxRepeatCoverage;
+   bool        weighted;
+   bool        test;
+   int32_t     numThreads;
+   int32_t     kPath;
 };
 config globals;
 void printHelpText() {
@@ -75,6 +97,10 @@ bool GetOptions(int argc, char ** argv) {
     {"debug",              1, 0, 'd'},
     {"noPathRepeats",      0, 0, 'r'},
     {"noCoverageRepeats",  0, 0, 'c'},
+    {"weightedPath",       0, 0, 'w'},
+    {"test",               0, 0, 'T'},
+    {"threads",            1, 0, 't'},
+    {"kPath",              1, 0, 'k'},
     {0, 0, 0, 0}
   };
 
@@ -84,6 +110,10 @@ bool GetOptions(int argc, char ** argv) {
    globals.noPathRepeats = false;
    globals.noCoverageRepeats = false;
    globals.maxRepeatCoverage = MAX_REPEAT_COV; 
+   globals.test = false;
+   globals.weighted = false;
+   globals.numThreads = 1;
+   globals.kPath = 0;
  
    int c;
    ifstream repeatsFile;
@@ -112,6 +142,25 @@ bool GetOptions(int argc, char ** argv) {
        case 'd':
          globals.debug = atoi(optarg);
          break;
+       case 'w':
+         globals.weighted = true;
+         break;
+       case 'T':
+         globals.test = true;
+         break;
+      case 't':
+         globals.numThreads = atoi(optarg);
+         if (globals.numThreads <= 0) globals.numThreads = 1;
+#ifdef AMOS_HAVE_OPENMP
+         if (globals.numThreads > omp_get_max_threads()) { globals.numThreads = omp_get_max_threads(); }
+#endif
+cerr << "The threads is set to " << globals.numThreads << endl;
+         break;
+      case 'k':
+         globals.kPath = atoi(optarg);
+         if (globals.kPath < 0) globals.kPath = 0;
+         if (globals.kPath > MAX_K) globals.kPath = MAX_K;
+         break;
       case '?':
          return false;
       }
@@ -128,10 +177,210 @@ bool GetOptions(int argc, char ** argv) {
    return true;
 } // GetOptions
 
+double inline W (uint32_t k, uint32_t d, uint32_t w, uint32_t** sigma) {
+   if (k == 0) {
+      return pow(sigma[0][w], d);
+   } else {
+      uint32_t sum = 0;
+      uint32_t i = 0;
+      for (i = 1; i <=k; i++) {
+         sum = sum - sigma[i][w] * W(k - i, d - 1, w, sigma);
+      }
+      return sum;
+   }
+}
+
 #ifdef AMOS_HAVE_BOOST
+double* findShortestPathRepeatsParallel(Graph &g, int K) {
+  if (K > MAX_K) {
+     cerr << "Error: Maximum allowed k-max path is " << MAX_K << endl;
+     K = MAX_K;
+  }
+  K++;
+
+  int32_t      numVertices = boost::num_vertices(g);
+  int32_t      numEdges = boost::num_edges(g);
+  double *       B     = new double[numVertices];
+  double **      delta = new double*[K];
+  uint32_t **    sigma = new uint32_t*[K];
+  uint32_t *     sigmaSums = new uint32_t[numVertices];
+  uint32_t *     dist  = new uint32_t[numVertices];
+  uint32_t **    S     = new uint32_t*[numVertices];
+  uint32_t *     S_count = new uint32_t[numVertices];
+  uint32_t **    child_count = new uint32_t*[K];
+  uint32_t ***   child   = new uint32_t**[K];
+
+  for (int k = 0; k < K; k++) {
+     child_count[k] = new uint32_t[numVertices];
+     child[k] = new uint32_t*[numVertices];
+     sigma[k] = new uint32_t[numVertices];
+     delta[k] = new double[numVertices];
+  }
+
+  Vertex v,w;
+  EdgeIterator out_i, out_end;
+  uint32_t sw, distW, deltaW, p;
+  int j, d, di, dj;
+  double dsw;
+
+  #pragma omp parallel for private(j) schedule(static) collapse(2)
+  for (int k = 0; k < K; k++) {
+     for (j = 0; j < numVertices; j++) {
+        child[k][j] = new uint32_t[numEdges];
+        if (k == 0) {
+           B[j] = 0;
+           S[j] = new uint32_t[numVertices];
+        }
+     }
+  }
+
+  timeval start;
+  timeval end;
+  gettimeofday(&start, 0);
+
+  for (int s = 0; s < numVertices; s++) {
+     #pragma omp parallel for private(j) schedule(static) collapse(2)
+     for (int k = 0; k < K; k++) {
+        for (int j = 0; j < numVertices; j++) {
+           child_count[k][j] = 0;
+           sigma[k][j] = delta[k][j] = 0;
+
+           if (k == 0) {
+              dist[j] = MAX_VALUE;
+              sigmaSums[j] = 0;
+              S_count[j] = 0;
+           }
+        }
+     }
+     uint32_t phase = 0;
+     sigma[0][s] = 1;
+     dist[s] = 0;
+     S[phase][0] = s;
+     S_count[phase] = 1;
+     uint32_t count = 1;
+
+     while (count > 0) {
+        S_count[phase+1] = count = 0;
+        #pragma omp parallel for private (v, w, distW, deltaW, p, out_i, out_end) schedule(dynamic)
+        for (int i = 0; i < S_count[phase]; i++) { // parallel
+           v = S[phase][i];
+           for (tie(out_i, out_end) = boost::out_edges(v, g); out_i != out_end; ++out_i) { // parallel
+              w = boost::target(*out_i, g);
+              distW = boost::interprocess::detail::atomic_cas32(&dist[w], phase+1, MAX_VALUE);
+              deltaW = dist[v] - distW + 1;
+              if (distW == MAX_VALUE) {
+                 p = boost::interprocess::detail::atomic_add32(&S_count[phase+1], 1);
+                 boost::interprocess::detail::atomic_add32(&count, 1);
+                 assert(p < numVertices);
+                 assert(phase < numVertices - 1);
+                 S[phase+1][p] = w;
+                 distW = phase + 1;
+                 deltaW = dist[v] - distW + 1;
+              } 
+              if (deltaW  < K) {
+                 p = boost::interprocess::detail::atomic_add32(&child_count[deltaW][v], 1);
+                 assert(p < numEdges);
+                 assert(v < numVertices);
+                 assert(deltaW < K);
+                 child[deltaW][v][p] = w;
+              }
+              if (deltaW <= min(K-1, 1)) {
+                 boost::interprocess::detail::atomic_add32(&sigma[deltaW][w], sigma[0][v]);
+              }
+           }
+        } 
+        phase = phase + 1;
+     }
+
+     for (int k = 1; k < K; k++) {
+        for (int i = 0; i < phase; i++) {
+           #pragma omp parallel for private(v, w, j, d, dj) schedule(dynamic)
+           for (j = 0; j < S_count[i]; j++) { //parallel
+              v = S[i][j];
+              for (d = 0; d < child_count[0][v]; d++) { //parallel
+                 w = child[0][v][d];
+                 boost::interprocess::detail::atomic_add32(&sigma[k][w], sigma[k][v]);
+              }
+              if (k < (K-1)) {
+                 for (dj = 1; dj <= k+1; dj++) { //parallel
+                    for (d = 0; d < child_count[dj][v]; d++) { //parallel
+                       w = child[dj][v][d];
+                       boost::interprocess::detail::atomic_add32(&sigma[k+1][w], sigma[k+1-dj][v]);
+                    }
+                 }
+              }
+           }
+        }
+     }
+
+     #pragma omp parallel for private(j) schedule(static) collapse(2)
+     for (int k = 0; k < K; k++) {
+        for (j = 0; j < numVertices; j++) {
+           boost::interprocess::detail::atomic_add32(&sigmaSums[j], sigma[k][j]);
+        }
+     }
+
+     phase = phase - 1;
+     for (int k = 0; k < K; k++) {
+        p = phase;
+        for ( ; p > 0; p--) {
+           #pragma omp parallel for private(v, w, d, j, di, dj) schedule(dynamic)
+           for (int i = 0; i < S_count[p]; i++) { // parallel
+              v = S[p][i];
+              for (d = 0; d <= k; d++) { // parallel
+                 for (j = 0; j < child_count[d][v]; j++) { ///parallel
+                    w = child[d][v][j];
+                    for (di = 0; di <= (k-d); di++) {
+                       uint32_t sum = 0;
+                       uint32_t e = k - d - di;
+                       for (dj = 0; dj <= e; dj++) {
+                          sum += W(e - dj, e, w, sigma) * sigma[dj][v];
+                       }
+                       delta[k][v] += (sigma[0][w] == 0 ? 0 : (sum * (delta[di][w] / pow(sigma[0][w], e+1))));
+                    }
+                    delta[k][v] += (sigmaSums[w] == 0 ? 0 : (double)sigma[k - d][v] / ((double)sigmaSums[w]));
+                 }
+              }
+              B[v] += delta[k][v];
+           }
+        }
+     }
+  }
+
+  gettimeofday(&end, 0);
+  double totaltime = (((double)(end.tv_sec-start.tv_sec)) + ((double)(end.tv_usec-start.tv_usec))*1.0e-6);
+  cerr << "Elapsed time is " << totaltime << endl;
+
+  delete[] sigmaSums;
+  delete[] dist;
+  delete[] S_count;
+  #pragma opm parallel for private(j) schedule(static) collapse(2)
+  for (int k = 0; k < K; k++) {
+     for (j = 0; j < numVertices; j++) {
+        if (k == 0) delete[] S[j];
+        delete[] child[k][j];
+     }
+     delete[] child[k];
+     delete[] sigma[k];
+     delete[] delta[k];
+     delete[] child_count[k];
+  }
+  delete[] S;
+  delete[] child;
+  delete[] child_count;
+  delete[] sigma;
+  delete[] delta;
+
+  return B;
+}
+
+double* findShortestPathRepeatsParallel(Graph &g) {
+  return findShortestPathRepeatsParallel(g, 0);
+}
+
 void visitAllPaths(
-   hash_map<ID_t, double, hash<ID_t>, equal_to<ID_t> >&numTimesOnPath, 
-   Graph const&g, 
+   double *numTimesOnPath,
+   Graph const&g,
    VertexName &vertexNames,
    const Vertex* predMap,
    Vertex const i,
@@ -147,10 +396,55 @@ void visitAllPaths(
    }
 }
 
-void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) {
-   // find the all-pairs shortest paths
-   if (globals.debug > 2) cerr << "FINDING SHORTEST PATHS" << endl;
-   
+void testShortestPaths() {
+  typedef boost::rand48 RandomGenerator;
+  RandomGenerator gen;
+
+  size_t N = 100;
+  size_t M = 100;
+  double p = 0.05;
+  double* B = NULL;
+  Graph g;
+
+  timeval start;
+  timeval end;
+
+  for (int i = 0; i < 100; i++) {
+    if (i % 2 == 0) {
+       g = Graph(boost::erdos_renyi_iterator<RandomGenerator, Graph>(gen, N, p), boost::erdos_renyi_iterator<RandomGenerator, Graph>(), 100);
+       gettimeofday(&start, 0);
+       B = findShortestPathRepeatsParallel(g, 0);
+    }
+    else {
+       g = Graph(boost::small_world_iterator<RandomGenerator, Graph>(gen, N, M, p), boost::small_world_iterator<RandomGenerator, Graph>(), 100);
+       gettimeofday(&start, 0);
+       B = findShortestPathRepeatsParallel(g, 0);
+    }
+    gettimeofday(&end, 0);
+    double totaltime = (((double)(end.tv_sec-start.tv_sec)) + ((double)(end.tv_usec-start.tv_usec))*1.0e-6);
+    cerr << "Parallel program done in " << totaltime << endl;
+
+    int32_t      numVertices = boost::num_vertices(g);
+    std::vector<double> centrality(numVertices);
+    // compute centrality using known algorithm
+    gettimeofday(&start, 0);
+    brandes_betweenness_centrality(g,
+      boost::centrality_map(boost::make_iterator_property_map(centrality.begin(), get(boost::vertex_index, g), double())));
+    gettimeofday(&end, 0);
+    totaltime = (((double)(end.tv_sec-start.tv_sec)) + ((double)(end.tv_usec-start.tv_usec))*1.0e-6);
+    cerr << "Elapsed time linear is " << totaltime << endl;
+
+    for (int i = 0; i < numVertices; i++) {
+       if (abs(centrality[i] - B[i]) > 0.001) {
+          cerr << "Error: incorrectly computed centrality for node " << i << " should be: " << centrality[i] << " and instead it is: " << B[i] << endl;
+          assert(0);
+       }
+    }
+    delete[] B;
+  }
+}
+
+double* computeShortestPaths(Graph &g) {
    VertexName vertexNames = get(boost::vertex_name, g);
    EdgeWeight  edgeWeights = get(boost::edge_weight, g);
    
@@ -159,11 +453,15 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
    Vertex*      predMap     = new Vertex[numVertices];
    vector<int32_t> qarray;
 
-   hash_map<ID_t, double, hash<ID_t>, equal_to<ID_t> >numTimesOnPath;
+   double *numTimesOnPath = new double[numVertices];
    pair<VertexIterator, VertexIterator> i;
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
       numTimesOnPath[vertexNames[*i.first]] = 0;
    }
+
+  timeval start;
+  timeval end;
+  gettimeofday(&start, 0);
 
    for (i = boost::vertices(g); i.first != i.second; ++i.first) {
       Vertex source = *i.first;
@@ -212,25 +510,51 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
          visitAllPaths(numTimesOnPath, g, vertexNames, predMap, source, *j.first);
       }
    }
+   gettimeofday(&end, 0);
+   double totaltime = (((double)(end.tv_sec-start.tv_sec)) + ((double)(end.tv_usec-start.tv_usec))*1.0e-6);
+   cerr << "Elapsed time is " << totaltime << endl;
+
+   delete[] distMap;
+   delete[] predMap;
+
+   return numTimesOnPath;
+}
+
+// compute shortest paths using one of the specified methods
+void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) {
+   // find the all-pairs shortest paths
+   timeval start;
+   timeval end;
+   if (globals.debug > 2) cerr << "FINDING SHORTEST PATHS" << endl;
+   gettimeofday(&start, 0);
+
+   double* numTimesOnPath;
+   //if (globals.numThreads > 1) {
+      // compute in parallel
+      numTimesOnPath = findShortestPathRepeatsParallel(g, globals.kPath);
+   //} else {
+   //   numTimesOnPath = computeShortestPaths(g);
+   //}
 
    // finally adjust our path counts by node sizes, we expect larger nodes to have more connections by chance
    VertexLength vertexLength = get(boost::vertex_index1, g);
-   for (i = boost::vertices(g); i.first != i.second; ++i.first) {
+   VertexName vertexNames = get(boost::vertex_name, g);
+   int32_t      numVertices = boost::num_vertices(g);
+   pair<VertexIterator, VertexIterator> i;
+   for(i = boost::vertices(g); i.first != i.second; ++i.first) {
       numTimesOnPath[vertexNames[*i.first]] /= vertexLength[*i.first];
    }
-   delete[] distMap;
-   delete[] predMap;
-   
-   if (globals.debug > 2) cerr << "DONE SHORTEST PATHS" << endl;
+
+   gettimeofday(&end, 0);
+   double totaltime = (((double)(end.tv_sec-start.tv_sec)) + ((double)(end.tv_usec-start.tv_usec))*1.0e-6);
+   if (globals.debug > 2) cerr << "DONE SHORTEST PATHS in " << totaltime << " seconds" << endl;
 
    double meanOnPath = 0, varianceOnPath = 0, stdevOnPath = 0, N = 0;
-   for (hash_map<ID_t, double, hash<ID_t>, equal_to<ID_t> >::iterator i = numTimesOnPath.begin(); i != numTimesOnPath.end(); i++) {
-      if (i->first == 0) { continue; }
-
+   for (int j = 1; j < numVertices; j++) {
       N++;
-      double delta = (i->second - meanOnPath);
+      double delta = (numTimesOnPath[j] - meanOnPath);
       meanOnPath += (delta/N);
-      varianceOnPath += delta * (i->second - meanOnPath);
+      varianceOnPath += delta * (numTimesOnPath[j] - meanOnPath);
    }
    varianceOnPath /= N;
    stdevOnPath = sqrt(varianceOnPath);
@@ -248,6 +572,8 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
          if (globals.debug > 1 ) cerr << "CONTIG " << iid << " AND ONPATH=" << numTimesOnPath[iid] << " AND MEAN=" << meanOnPath << " AND STDEV=" << stdevOnPath << " IS A CLASS 3 REPEAT\n";
       }
    }
+
+   delete[] numTimesOnPath;
 }
 
 void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) {
@@ -339,7 +665,18 @@ int main(int argc, char *argv[]) {
       printHelpText();
       exit(1);
    }
-  
+
+#ifdef AMOS_HAVE_OPENMP
+   omp_set_dynamic(false);
+   omp_set_nested(true);
+   omp_set_num_threads(globals.numThreads);
+#endif
+
+   if (globals.test == true) {
+      testShortestPaths();
+      return 0;
+   }
+
    if (globals.bank == ""){ // no bank was specified
       cerr << "A bank must be specified" << endl;
       exit(1);
@@ -377,7 +714,7 @@ int main(int argc, char *argv[]) {
    Graph g;
    Contig_t ctg;
    ContigEdge_t cte;
-   buildGraph(g, contig_stream, edge_stream, &ctg, &cte, globals.redundancy);
+   buildGraph(g, contig_stream, edge_stream, &ctg, &cte, globals.redundancy, globals.weighted);
    edge_stream.close();
    contig_stream.close();
 

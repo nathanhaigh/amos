@@ -46,7 +46,12 @@ clk_LDADD = \
 clk_SOURCES = \
 	clk.cc
 
+MarkRepeats_CPPFLAGS =\
+	$(AM_CPPFLAGS) \
+	$(OPENMP_CXXFLAGS)
+
 MarkRepeats_LDADD = \
+	$(OPENMP_LDFLAGS) \
 	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
