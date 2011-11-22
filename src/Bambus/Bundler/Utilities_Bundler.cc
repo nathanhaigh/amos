@@ -39,7 +39,7 @@ void Bundler::buildGraph(
             Bundler::Graph &g, 
             AMOS::BankStream_t &node_stream, AMOS::BankStream_t &edge_stream, 
             AMOS::IBankable_t *node, AMOS::IBankable_t *edge,
-            int32_t redundancy) {
+            int32_t redundancy, bool weighted) {
    // build boost-based graph   
    HASHMAP::hash_map<AMOS::ID_t, Vertex, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> > nodeToDescriptor;
    VertexName vertexNames = get(boost::vertex_name, g);
@@ -76,7 +76,7 @@ void Bundler::buildGraph(
          
          firstNode = cte->getContigs().first;
          secondNode = cte->getContigs().second;
-         weight = 1;/*((double)1 / cte->getContigLinks().size());*/
+         weight = (weighted ? ((double)1 / cte->getContigLinks().size()) : 1);
       }
       else if (dynamic_cast<AMOS::Overlap_t *>(edge) != NULL) {
          AMOS::Overlap_t* overlap = dynamic_cast<AMOS::Overlap_t*>(edge);
@@ -98,7 +98,7 @@ void Bundler::buildGraph(
             Bundler::Graph &g, 
             AMOS::BankStream_t &node_stream, AMOS::BankStream_t &edge_stream, 
             AMOS::IBankable_t *node, AMOS::IBankable_t *edge,
-            int32_t redundancy) {
+            int32_t redundancy, bool weighted) {
    std::cerr << "Unable to build graph. Boost library is required. Please double check your installation and recompile AMOS" << std::endl;
 }
 #endif //AMOS_HAVE_BOOST
@@ -228,7 +228,7 @@ bool Bundler::isBadEdge(const AMOS::ContigEdge_t &cte) {
 
 void Bundler::resetEdges(AMOS::Bank_t &edge_bank, edgeStatus toChange) {
    AMOS::ContigEdge_t cte;
-   for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci; ci++) {
+   for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci != edge_bank.getIDMap().end(); ci++) {
       edge_bank.fetch(ci->iid, cte);
 
       if (cte.getStatus() == toChange) {
