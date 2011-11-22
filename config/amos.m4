@@ -573,5 +573,95 @@ AC_DEFUN([AMOS_PATH_BOOST_DIRECT],
   fi # test $amos_boost_include_dir
 ])
 
+##-- AMOS_OPENMP -------------------------------------------------------------------
+# @synopsis AMOS_OPENMP
+#
+# @summary Search for OpenMP extensions
+#
+#
+# The following variables are set to either "yes" or "no"
+#
+#   have_openmp_test                 // if OpenMP worked
+#
+# Additionally, the following variables are exported:
+#
+#   OPENMP_CXXFLAGS
+#
+# directory (and "-DAMOS_HAVE_OPENMP").
+#
+# Example lines for Makefile.in:
+#
+#   CXXFLAGS = @OPENMP_CXXFLAGS@
+#
+# After the variables have been set, a trial compile and link is
+# performed to check the correct functioning of the meta object
+# compiler. This test may fail when the different detected elements
+# stem from different releases of the Boost framework. In that case, an
+# error message is emitted and configure stops.
+#
+# No common variables such as $LIBS or $CFLAGS are polluted.
+#
+# Options:
+#
+
+AC_DEFUN([AMOS_OPENMP],
+[
+  AC_REQUIRE([AC_PROG_CXX])
+  AC_REQUIRE([AC_PATH_X])
+  AC_REQUIRE([AC_PATH_XTRA])
+
+  AC_MSG_CHECKING([for OpenMP])
+
+  OPENMP_CXXFLAGS="-fopenmp -DAMOS_HAVE_OPENMP"
+  OPENMP_LDFLAGS="-lgomp"
+  # All variables are defined, report the result
+  AC_SUBST(OPENMP_CXXFLAGS)
+  AC_SUBST(OPENMP_LDFLAGS)
+
+  AC_CACHE_VAL(ac_cv_openmp_test_result,
+  [
+    ac_cv_openmp_test_result="no"
+
+    cat > amos_openmp_test.h << EOF
+#include <utility>
+#include <omp.h>
+#include <stdio.h>
+EOF
+
+   cat > amos_openmp_main.$ac_ext << EOF
+#include "amos_openmp_test.h"
+
+int main( int argc, char **argv )
+{	
+	fprintf(stderr, "The maximum number of threads is %d\n", omp_get_max_threads());
+	#pragma omp parallel for
+        for (int i = 0; i < 100; i++) {
+          fprintf(stderr, "Hello from thread %d on value %d\n", omp_get_thread_num(), i); 
+        }
+}
+EOF
+
+
+    if AC_TRY_EVAL("$CXX $OPENMP_CXXFLAGS -c $CXXFLAGS -o amos_openmp_main.o amos_openmp_main.$ac_ext"); then
+      if AC_TRY_EVAL("$CXX $OPENMP_LDFLAGS $LIBS -o amos_openmp_main amos_openmp_main.o"); then
+        ac_cv_openmp_test_result="yes"
+      fi
+    fi
+
+      if test "$ac_cv_openmp_test_result" = "no"; then
+        echo "$as_me: failed program was:" >&AS_MESSAGE_LOG_FD()
+        sed 's/^/| /' amos_openmp_main.$ac_ext >&AS_MESSAGE_LOG_FD()
+
+	# OpenMP does not work turn it off
+	OPENMP_CXXFLAGS=
+	OPENMP_LDFLAGS=
+      fi
+
+  ])dnl AC_CACHE_VAL ac_cv_openmp_test_result
+  AC_MSG_RESULT([$ac_cv_openmp_test_result])
+  rm -f amos_openmp_test.h amos_openmp_main.$ac_ext amos_openmp_main.o amos_openmp_main
+
+  have_openmp_test=$ac_cv_boost_test_result
+])
 
 ##-- END OF m4 --##
