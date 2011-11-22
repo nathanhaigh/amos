@@ -20,10 +20,12 @@ my $numreads     = 100;
 my $covstart     = undef;
 my $covend       = undef;
 my $covdisp      = 10;
+my $showexactlen = 0;
 
 my $res = GetOptions("help"       => \$help,
                      "verbose"    => \$V,
                      "showlayout" => \$showlay,
+                     "distlen"    => \$showexactlen,
                      "readlen=n"  => \$readlen,
                      "numreads=n" => \$numreads,
                      "erate=s"    => \$erate,
@@ -49,6 +51,7 @@ if ($help || !$res)
   print "Options\n";
   print "  -verbose       : be verbose\n";
   print "  -showlayout    : show layout\n";
+  print "  -distlen       : display the historgram of the distance between errors\n";
   print "  -seedhist      : display the histogram of max overlap seed length\n";
   print "  -cov <n>       : use this single coverage level (default: $covdisp)\n";
   print "  -covstart <s>  : compute range of coverage values with this lower bound\n";
@@ -165,7 +168,6 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
 
   if ($V || $showlay) { print "\n"; }
 
-
   my $ovlshould = 0;
   my $ovlhas    = 0;
 
@@ -238,7 +240,7 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
           if ($V) { print " -$maxsl"; }
         }
 
-        $maxseed[$sl]++;
+        $maxseed[$maxsl]++;
       }
     }
 
@@ -252,9 +254,43 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
 
   print "numread\t$numreads\tcov\t$cov\tspan\t$span\tarate\t$arate\terate\t$erate\temperate\t$emperate\tcnserr\t$goodcoverate\tminovl\t$minovl\tovlshould\t$ovlshould\tovlrate\t$ovlrate\n";
 
+  if ($showexactlen)
+  {
+    my @exactlens;
+
+    for (my $r = 0; $r < $numreads; $r++)
+    {
+      my $dist = 0;
+      for (my $i = 0; $i < scalar @{$matrix[$r]}; $i++)
+      {
+        if ($matrix[$r]->[$i] eq ".")
+        {
+          $dist++;
+        }
+        else
+        {
+          $exactlens[$dist]++;
+          $dist=0;
+        }
+      }
+      $exactlens[$dist]++;
+    }
+
+    print "Exact Match Dist\n";
+
+    foreach my $s (0..(scalar @exactlens - 1))
+    {
+      my $c = (defined $exactlens[$s]) ? $exactlens[$s] : 0;
+      print "$s\t$c\n";
+    }
+  }
+
+
   if ($showseedhist)
   {
-    foreach my $ms (0..scalar @maxseed)
+    print "Seed length hist\n";
+
+    foreach my $ms (0..(scalar @maxseed - 1))
     {
       my $cnt = (defined $maxseed[$ms]) ? $maxseed[$ms] : 0;
       print "$ms\t$cnt\n";

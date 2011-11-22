@@ -34,6 +34,8 @@ static int  Minimizer_Window_Len = 20;
   // Length of window from which a minimizer is extracted
 static int  Min_Overlap_Len = DEFAULT_MIN_OVERLAP_LEN;
   // Minimum number of bases by which two sequences must overlap
+bool Strand_Specific = false;
+  // Do not consider the reverse-complement of the reads
 static string IIDFile = ""; 
   // List of IID to be overlapped
 bool selectIIDs = false;
@@ -77,68 +79,72 @@ int  main
            << Error_Rate << endl;
       cerr . setf (status);
       cerr << "Minimum overlap bases is " << Min_Overlap_Len << endl;
+      cerr << "Be strand-specific: " << Strand_Specific << endl;
 
       if  (FASTA_Input)
           {
-	    Read_Fasta_Strings (string_list, id_list, tag_list, Input_Name);
+            Read_Fasta_Strings (string_list, id_list, tag_list, Input_Name);
           }
         else
           {
-	   if (selectIIDs){
-	     vector<ID_t> sel_list;
-	     ID_t iid;
-	     ifstream selfile(IIDFile.c_str());
-	     if (! selfile.is_open()) {
-	       cerr << "Could not open IID file " << IIDFile << endl;
-	       exit(1);
-	     }
-	     
-	     while (selfile >> iid)
-	       sel_list.push_back(iid);
-	    
-	     Bank_t read_bank (Read_t::NCODE);
-	     read_bank . open(Input_Name, B_READ);
-	     Get_Strings_From_Bank_ByID(string_list, qual_list, clr_list, 
-					id_list, tag_list, read_bank, sel_list);
-	     read_bank . close ();
-	   } else if (selectEIDs) {
-	     vector<string> sel_list;
-	     string eid;
-	     ifstream selfile(IIDFile.c_str());
-	     if (! selfile.is_open()) {
-	       cerr << "Could not open IID file " << IIDFile << endl;
-	       exit(1);
-	     }
-	     
-	     while (selfile >> eid)
-	       sel_list.push_back(eid);
-	    
-	     Bank_t read_bank (Read_t::NCODE);
-	     read_bank . open(Input_Name, B_READ);
-	     Get_Strings_From_Bank_ByEID(string_list, qual_list, clr_list, 
-					id_list, tag_list, read_bank, sel_list);
-	     read_bank . close ();
-	   } else {
-	     read_bank . open (Input_Name, B_READ);
-	     Get_Strings_From_Bank (string_list, qual_list, clr_list,
-				    id_list, tag_list, read_bank);
-	     read_bank . close ();
-	   }
+           if (selectIIDs){
+             vector<ID_t> sel_list;
+             ID_t iid;
+             ifstream selfile(IIDFile.c_str());
+             if (! selfile.is_open()) {
+               cerr << "Could not open IID file " << IIDFile << endl;
+               exit(1);
+             }
+             
+             while (selfile >> iid)
+               sel_list.push_back(iid);
+            
+             Bank_t read_bank (Read_t::NCODE);
+             read_bank . open(Input_Name, B_READ);
+             Get_Strings_From_Bank_ByID(string_list, qual_list, clr_list, 
+                                        id_list, tag_list, read_bank, sel_list);
+             read_bank . close ();
+           } else if (selectEIDs) {
+             vector<string> sel_list;
+             string eid;
+             ifstream selfile(IIDFile.c_str());
+             if (! selfile.is_open()) {
+               cerr << "Could not open IID file " << IIDFile << endl;
+               exit(1);
+             }
+             
+             while (selfile >> eid)
+               sel_list.push_back(eid);
+            
+             Bank_t read_bank (Read_t::NCODE);
+             read_bank . open(Input_Name, B_READ);
+             Get_Strings_From_Bank_ByEID(string_list, qual_list, clr_list, 
+                                        id_list, tag_list, read_bank, sel_list);
+             read_bank . close ();
+           } else {
+             read_bank . open (Input_Name, B_READ);
+             Get_Strings_From_Bank (string_list, qual_list, clr_list,
+                                    id_list, tag_list, read_bank);
+             read_bank . close ();
+           }
 
-	   if ( AMOS_Bank_Output )
-	     {
-	       if ( overlap_bank . exists (Input_Name) )
-		 overlap_bank . open (Input_Name);
-	       else
-		 overlap_bank . create (Input_Name);
-	     }
+           if ( AMOS_Bank_Output )
+             {
+               if ( overlap_bank . exists (Input_Name) )
+                 overlap_bank . open (Input_Name);
+               else
+                 overlap_bank . create (Input_Name);
+             }
           }
 
       Map_Minimizers (string_list, hash_table);
 
       Find_Fwd_Overlaps (string_list, hash_table, id_list, overlap_bank);
 
-      Find_Rev_Overlaps (string_list, hash_table, id_list, overlap_bank);
+      if (! Strand_Specific) {
+          // Look for matches in the reverse-complement of the reads
+          Find_Rev_Overlaps (string_list, hash_table, id_list, overlap_bank);
+      }
 
       overlap_bank . close( );
      }
@@ -586,7 +592,7 @@ static void  Get_Strings_From_Bank
 
       clear = read . getClearRange ();
       if  (Verbose > 2)
-	cerr << read;
+        cerr << read;
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
       clr_list . push_back (clear);
@@ -601,7 +607,7 @@ static void  Get_Strings_From_Bank
       if  (len != qlen)
           {
            sprintf (Clean_Exit_Msg_Line,
-	    "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+            "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
             len, qlen, read . getIID( ));
            Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
           }
@@ -658,8 +664,8 @@ static void  Get_Strings_From_Bank_ByID
    for (int idx = 0; idx < sel_list.size(); idx++)
      {
        if (! read_bank.existsIID(sel_list[idx])){
-	 cerr << "IID " << sel_list[idx] << " does not exist in bank!\n";
-	 exit(1);
+         cerr << "IID " << sel_list[idx] << " does not exist in bank!\n";
+         exit(1);
        }
       read_bank.fetch(sel_list[idx], read); 
       id_list . push_back (read . getIID());
@@ -667,7 +673,7 @@ static void  Get_Strings_From_Bank_ByID
 
       clear = read . getClearRange ();
       if  (Verbose > 2)
-	cerr << read;
+        cerr << read;
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
       clr_list . push_back (clear);
@@ -682,7 +688,7 @@ static void  Get_Strings_From_Bank_ByID
       if  (len != qlen)
           {
            sprintf (Clean_Exit_Msg_Line,
-	    "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+            "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
             len, qlen, read . getIID( ));
            Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
           }
@@ -738,8 +744,8 @@ static void  Get_Strings_From_Bank_ByEID
    for (int idx = 0; idx < sel_list.size(); idx++)
      {
        if (! read_bank.existsEID(sel_list[idx].c_str())){
-	 cerr << "EID " << sel_list[idx] << " does not exist in bank!\n";
-	 exit(1);
+         cerr << "EID " << sel_list[idx] << " does not exist in bank!\n";
+         exit(1);
        }
       read_bank.fetch(sel_list[idx].c_str(), read); 
       id_list . push_back (read . getIID());
@@ -747,7 +753,7 @@ static void  Get_Strings_From_Bank_ByEID
 
       clear = read . getClearRange ();
       if  (Verbose > 2)
-	cerr << read;
+        cerr << read;
       seq = read . getSeqString (clear);
       qual = read . getQualString (clear);
       clr_list . push_back (clear);
@@ -762,7 +768,7 @@ static void  Get_Strings_From_Bank_ByEID
       if  (len != qlen)
           {
            sprintf (Clean_Exit_Msg_Line,
-	    "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
+            "ERROR:  Sequence length (%d) != quality length (%d) for read %d\n",
             len, qlen, read . getIID( ));
            Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
           }
@@ -934,37 +940,37 @@ static void  Output
         std :: pair <ID_t, ID_t>  read_pair;
 
         if  (olap . flipped)
-	  ovl . setAdjacency (Overlap_t :: INNIE);
-	else
-	  ovl . setAdjacency (Overlap_t :: NORMAL);
+          ovl . setAdjacency (Overlap_t :: INNIE);
+        else
+          ovl . setAdjacency (Overlap_t :: NORMAL);
         read_pair . first = olap . a_id;
         read_pair . second = olap . b_id;
         ovl . setReads (read_pair);
         ovl . setAhang (olap . a_hang);
         ovl . setBhang (olap . b_hang);
 
-	if ( AMOS_Bank_Output )
-	  {
-	    overlap_bank << ovl;
-	  }
-	else // AMOS_Message_Output
-	  {
-	    Message_t  msg;
-	    ovl . writeMessage (msg);
-	    msg . write (cout);
-	  }
+        if ( AMOS_Bank_Output )
+          {
+            overlap_bank << ovl;
+          }
+        else // AMOS_Message_Output
+          {
+            Message_t  msg;
+            ovl . writeMessage (msg);
+            msg . write (cout);
+          }
       }
     else
       {
         char  line [MAX_LINE];
         
         sprintf (line, "%5d %5d  %c %5d %5d  %5d %5d  %5d  %3d  %4.2f\n",
-		 olap . a_id, olap . b_id, olap . flipped ? 'I' : 'N',
-		 olap . a_hang, olap . b_hang,
-		 olap . a_olap_len, olap . b_olap_len, olap . score,
-		 olap . errors,
-		 200.0 * olap . errors
-		 / (olap . a_olap_len + olap . b_olap_len));
+                 olap . a_id, olap . b_id, olap . flipped ? 'I' : 'N',
+                 olap . a_hang, olap . b_hang,
+                 olap . a_olap_len, olap . b_olap_len, olap . score,
+                 olap . errors,
+                 200.0 * olap . errors
+                 / (olap . a_olap_len + olap . b_olap_len));
         os << line;
       }
 
@@ -985,7 +991,7 @@ static void  Parse_Command_Line
 
    optarg = NULL;
 
-   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:x:I:E:")) != EOF))
+   while (!errflg && ((ch = getopt (argc, argv, "ABb:e:Fho:v:x:sI:E:")) != EOF))
      switch  (ch)
        {
         case  'A' :
@@ -994,7 +1000,7 @@ static void  Parse_Command_Line
 
         case  'B' :
           AMOS_Bank_Output = true;
-	  break;
+          break;
 
         case  'b' :
           Lo_ID = strtol (optarg, NULL, 10);
@@ -1014,7 +1020,7 @@ static void  Parse_Command_Line
 
         case  'o' :
           Min_Overlap_Len = strtol (optarg, NULL, 10);
-	  break;
+          break;
 
         case  'v' :
           Verbose = strtol (optarg, NULL, 10);
@@ -1023,16 +1029,20 @@ static void  Parse_Command_Line
         case  'x' :
           Error_Rate = strtod (optarg, NULL);
           break;
-	  
-       case 'I' :
-	 IIDFile = string(optarg);
-	 selectIIDs = true;
-	 break;
 
-       case 'E' :
-	 IIDFile = string(optarg);
-	 selectEIDs = true;
-	 break;
+        case  's' :
+          Strand_Specific = true;
+          break;
+
+        case 'I' :
+          IIDFile = string(optarg);
+          selectIIDs = true;
+          break;
+
+        case 'E' :
+          IIDFile = string(optarg);
+          selectEIDs = true;
+          break;
 
         case  '?' :
           fprintf (stderr, "Unrecognized option -%c\n", optopt);
@@ -1096,17 +1106,17 @@ static void  Read_Fasta_Strings
    while  (Fasta_Read (fp, seq, hdr))
      {
        if ( cnt >= Lo_ID  &&  cnt < Hi_ID )
-	 {
-	   tmp = strdup (seq . c_str ());
-	   len = seq . length ();
-	   for  (j = 0;  j < len;  j ++)
-	     tmp [j] = tolower (tmp [j]);
-	   s . push_back (tmp);
-	   
-	   sscanf (hdr . c_str (), "%s", tag);
-	   tag_list . push_back (strdup (tag));
-	   id_list . push_back (cnt);
-	 }
+         {
+           tmp = strdup (seq . c_str ());
+           len = seq . length ();
+           for  (j = 0;  j < len;  j ++)
+             tmp [j] = tolower (tmp [j]);
+           s . push_back (tmp);
+           
+           sscanf (hdr . c_str (), "%s", tag);
+           tag_list . push_back (strdup (tag));
+           id_list . push_back (cnt);
+         }
        ++ cnt;
      }
 
@@ -1165,15 +1175,19 @@ static void  Usage
            "    * overlap error percentage\n"
            "\n"
            ".OPTIONS.\n"
-           "  -A       Output AMOS-format messages instead of default\n"
-           "  -B       Output to AMOS bank instead of default\n"
-           "  -b <n>   Use <n> as lowest read index (0 based inclusive)\n"
-           "  -e <n>   Use <n> as highest read index (0 based exclusive)\n"
-           "  -F       Input is from multi-fasta file <input-name>\n"
-           "  -h       Print this usage message\n"
-           "  -o <n>   Set minimum overlap length to <n>\n"
-           "  -v <n>   Set verbose level to <n>. Higher produces more output.\n"
-           "  -x <d>   Set maximum error rate to <d>.  E.g., 0.06 is 6%% error\n"
+           "  -A        Output AMOS-format messages instead of default\n"
+           "  -B        Output to AMOS bank instead of default\n"
+           "  -b <n>    Use <n> as lowest read index (0 based inclusive)\n"
+           "  -e <n>    Use <n> as highest read index (0 based exclusive)\n"
+           "  -F        Input is from multi-fasta file <input-name>\n"
+           "  -h        Print this usage message\n"
+           "  -o <n>    Set minimum overlap length to <n>\n"
+           "  -v <n>    Set verbose level to <n>. Higher produces more output.\n"
+           "  -x <d>    Set maximum error rate to <d>.  E.g., 0.06 is 6%% error\n"
+           "  -s        Be strand-specific: find matches only in the forward \n"
+           "            orientation of the reads instead of in their forward and\n"
+           "            reverse orientations. Useful for transcripts and other\n"
+           "            directional sequence datasets.\n"
            "  -I <file> Build overlaps only for reads whose IIDs are in <file>\n"
            "  -E <file> Build overlaps only for reads whose EIDs are in <file>\n"
            "\n"
@@ -1303,7 +1317,7 @@ void  Minimizer_t :: Advance
              for  (i = 1;  i < signature_ct - 1;  i ++)
                delay [i] -= delay [0];
              delay [signature_ct - 1] =
-	       window_len - signature_len - window_offset;
+               window_len - signature_len - window_offset;
             }
         delay [0] = 0;
        }
@@ -1317,7 +1331,7 @@ void  Minimizer_t :: Advance
             window_offset = window_len - signature_len;
           else
             delay [signature_ct - 1] =
-	      window_len - signature_len - window_offset;
+              window_len - signature_len - window_offset;
        }
 
    return;

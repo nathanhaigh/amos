@@ -1,4 +1,5 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
+
 use strict;
 
 use AMOS::AmosFoundation;
@@ -209,7 +210,7 @@ foreach my $deltafile (@ARGV)
         {
           print ">$align->{rid}\t$align->{qid}\t";
           print "[$lastalign->{rend},$align->{rstart}]\t$rdist\t";
-          print "[$s,$e]\t$qdist\t";
+          print "[$s,$e]:$align->{qrc}\t$qdist\t";
           print "|\t$delta\n";
 
           printAlignment($lastalign); print "\n";

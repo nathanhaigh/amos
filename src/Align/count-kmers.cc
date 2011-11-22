@@ -15,6 +15,7 @@ int BAD_CHAR = 0;
 
 int PRINT_SIMPLE = 0;
 int PRINT_STATS = 0;
+int FORWARD_ONLY = 0;
 
 
 #undef BIGMER
@@ -64,6 +65,7 @@ int  main (int argc, char * argv [])
 "  -n <bnk>   Report normalized counts (readmercount/contigmercount)\n"
 "  -k <len>   Length of kmer \n"
 "  -m <min>   Minimum count to report (default: 1)\n"
+"  -F         Only count the forward strand\n"
 "  -S         Print using simple nmer count format: mer count\n"
 "  -s         Just print statistics on unique mers\n";
 "\n.KEYWORDS.\n"
@@ -86,6 +88,7 @@ int  main (int argc, char * argv [])
     tf->getOptions()->addOptionResult("m=i", &min_count);
     tf->getOptions()->addOptionResult("S",   &PRINT_SIMPLE);
     tf->getOptions()->addOptionResult("s",   &PRINT_STATS);
+    tf->getOptions()->addOptionResult("F",   &FORWARD_ONLY);
 
     tf->handleStandardOptions();
 
@@ -421,7 +424,7 @@ static void  CountMers (const string & s, MerTable_t & mer_table)
      MerToAscii(fwd_mer, f);
      MerToAscii(rev_mer, r);
 
-     if (f < r)
+     if ((FORWARD_ONLY) || (f < r))
      {
        fi = mer_table.find(fwd_mer);
        if (fi == mer_table.end()) { fi=mer_table.insert(make_pair(fwd_mer,0)).first; }
