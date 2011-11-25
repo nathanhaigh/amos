@@ -383,15 +383,16 @@ int main(int argc, char ** argv)
       if (frag_stream.exists(globals.bank)) {
         cerr << "frag bank exists; opening" << endl;
         frag_stream.open(globals.bank, B_WRITE);
-      } else {
-        cerr << "frag Bank doesn't exist; creating" << endl;
-        frag_stream.create(globals.bank, B_WRITE);
 
         int maxFrg = frag_stream.getMaxIID();
         if (maxFrg >= minSeqID) {
            minSeqID = maxFrg + 1;
         }
+      } else {
+        cerr << "frag Bank doesn't exist; creating" << endl;
+        frag_stream.create(globals.bank, B_WRITE);
       }
+
       if (lib_stream.exists(globals.bank)) {
         cerr << "lib bank exists; opening" << endl;
         lib_stream.open(globals.bank, B_WRITE);
@@ -1354,10 +1355,9 @@ bool parseAsmFile(string fileName) {
     string line;
     bool first = true;
     bool readConsensus = true;
- 
+
     while (curCtg.getline(curline, MAX_LINE_LEN, '\n')) {
       line = curline;
-
       if (curline[0] == '#' && curline[1] == '#') {
         if (!first) {
           ctg.setEID(id);
@@ -1402,7 +1402,7 @@ bool parseAsmFile(string fileName) {
          qualseq << qual;
       }    
     } // while in
-   
+ 
     // output last sequence 
     if (reads.size() != 0) {
           ctg.setEID(id);
