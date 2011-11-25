@@ -673,7 +673,11 @@ int main(int argc, char *argv[]) {
 #endif
 
    if (globals.test == true) {
+#ifdef AMOS_HAVE_BOOST
+#ifdef AMOS_HAVE_OPENMP
       testShortestPaths();
+#endif
+#endif
       return 0;
    }
 

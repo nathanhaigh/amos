@@ -486,6 +486,7 @@ AC_DEFUN([AMOS_BOOST],
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/interprocess/detail/atomic.hpp>
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
@@ -513,6 +514,10 @@ int main( int argc, char **argv )
    for (iter = boost::vertices(g); iter.first != iter.second; ++iter.first) {
 		Vertex source = *iter.first;
 	}
+
+        // preform atomic op
+        uint32_t j = 0;
+        boost::interprocess::detail::atomic_add32(&j, 1);
 }
 EOF
 
