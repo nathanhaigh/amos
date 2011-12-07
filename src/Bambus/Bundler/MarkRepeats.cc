@@ -45,6 +45,7 @@ using namespace AMOS;
 using namespace Bundler;
 
 // constants for repeat resolution
+static const uint32_t MIN_PARALLEL_SIZE  = 500000000;
 static const int32_t  MAX_REPEAT_SIZE    =   10000;
 static const int32_t  MAX_REPEAT_STDEV   =       3;
 static const double   MAX_REPEAT_COV     =       0.02;
@@ -69,6 +70,7 @@ struct config {
    bool        test;
    int32_t     numThreads;
    int32_t     kPath;
+   bool        runOriginal;
 };
 config globals;
 void printHelpText() {
@@ -101,6 +103,7 @@ bool GetOptions(int argc, char ** argv) {
     {"test",               0, 0, 'T'},
     {"threads",            1, 0, 't'},
     {"kPath",              1, 0, 'k'},
+    {"original",        0, 0, 'o'},
     {0, 0, 0, 0}
   };
 
@@ -114,6 +117,7 @@ bool GetOptions(int argc, char ** argv) {
    globals.weighted = false;
    globals.numThreads = 1;
    globals.kPath = 0;
+   globals.runOriginal = false;
  
    int c;
    ifstream repeatsFile;
@@ -154,12 +158,15 @@ bool GetOptions(int argc, char ** argv) {
 #ifdef AMOS_HAVE_OPENMP
          if (globals.numThreads > omp_get_max_threads()) { globals.numThreads = omp_get_max_threads(); }
 #endif
-cerr << "The threads is set to " << globals.numThreads << endl;
+         if (globals.debug > 1) { cerr << "The threads is set to " << globals.numThreads << endl; }
          break;
       case 'k':
          globals.kPath = atoi(optarg);
          if (globals.kPath < 0) globals.kPath = 0;
          if (globals.kPath > MAX_K) globals.kPath = MAX_K;
+         break;
+      case 'o':
+         globals.runOriginal = true;
          break;
       case '?':
          return false;
@@ -349,7 +356,7 @@ double* findShortestPathRepeatsParallel(Graph &g, int K) {
 
   gettimeofday(&end, 0);
   double totaltime = (((double)(end.tv_sec-start.tv_sec)) + ((double)(end.tv_usec-start.tv_usec))*1.0e-6);
-  cerr << "Elapsed time is " << totaltime << endl;
+  cerr << "Elapsed time threaded is " << totaltime << endl;
 
   delete[] sigmaSums;
   delete[] dist;
@@ -529,17 +536,45 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
    gettimeofday(&start, 0);
 
    double* numTimesOnPath;
-   //if (globals.numThreads > 1) {
-      // compute in parallel
+   int32_t      numVertices = boost::num_vertices(g);
+   int32_t      numEdges = boost::num_edges(g);
+
+   if (globals.debug > 3) {
+      double minNeighbors = numVertices;
+      double maxNeighbors = 0;
+      double meanOnPath = 0, varianceOnPath = 0, stdevOnPath = 0, N = 0;
+      for(pair<VertexIterator, VertexIterator> i = boost::vertices(g); i.first != i.second; ++i.first) {
+         uint32_t out = boost::out_degree(*i.first, g);
+         if (out < minNeighbors) { minNeighbors = out; }
+         if (out > maxNeighbors) { maxNeighbors = out; } 
+         N++;
+         double delta = (out - meanOnPath);
+         meanOnPath += (delta/N);
+         varianceOnPath += delta * (out - meanOnPath);
+      }
+      varianceOnPath /= N;
+      stdevOnPath = sqrt(varianceOnPath);
+      cerr << "The graph with " << numVertices << " nodes and " << numEdges << " edges has min " << minNeighbors << " max neighbors " << maxNeighbors << " mean " << meanOnPath << "+-" << stdevOnPath << endl;
+   }
+
+   if (globals.runOriginal) {
+      if (globals.debug > 1) { cerr << "Using linear repeat detection" << endl; }
+      numTimesOnPath = computeShortestPaths(g);
+   } else {
+      if ((numVertices * numEdges) <= MIN_PARALLEL_SIZE) {
+         if (globals.debug > 1) { cerr << "Using 1 thread" << endl; }
+         globals.numThreads = 1;
+      }
+      else {
+         // compute in parallel
+         if (globals.debug > 1) { cerr << "Using parallel repeat detection" << endl; }
+      }
       numTimesOnPath = findShortestPathRepeatsParallel(g, globals.kPath);
-   //} else {
-   //   numTimesOnPath = computeShortestPaths(g);
-   //}
+   }
 
    // finally adjust our path counts by node sizes, we expect larger nodes to have more connections by chance
    VertexLength vertexLength = get(boost::vertex_index1, g);
    VertexName vertexNames = get(boost::vertex_name, g);
-   int32_t      numVertices = boost::num_vertices(g);
    pair<VertexIterator, VertexIterator> i;
    for(i = boost::vertices(g); i.first != i.second; ++i.first) {
       numTimesOnPath[vertexNames[*i.first]] /= vertexLength[*i.first];
