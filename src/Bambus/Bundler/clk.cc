@@ -307,6 +307,7 @@ int main(int argc, char **argv)
 
     switch (matePairType) {
        case Library_t::OUTIE:
+          ctl.setSize(lib2size[libId].first - (lenA - adjA) - (lenB - adjB));
           if (forwA && ! forwB)
              ctl.setAdjacency(ContigLink_t::ANTINORMAL);
           if (forwA && forwB)
@@ -317,6 +318,7 @@ int main(int argc, char **argv)
              ctl.setAdjacency(ContigLink_t::NORMAL);
           break;
        case Library_t::NORMAL:
+          ctl.setSize(lib2size[libId].first - adjA - (lenB - adjB));
           if (forwA && ! forwB)
              ctl.setAdjacency(ContigLink_t::INNIE);
           if (forwA && forwB)
@@ -327,6 +329,7 @@ int main(int argc, char **argv)
              ctl.setAdjacency(ContigLink_t::OUTIE);
           break;
        case Library_t::ANTINORMAL:
+          ctl.setSize(lib2size[libId].first - (lenA - adjA) - adjB);
           if (forwA && ! forwB)
              ctl.setAdjacency(ContigLink_t::OUTIE);
           if (forwA && forwB)
