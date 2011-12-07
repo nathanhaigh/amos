@@ -57,7 +57,7 @@ bool GetOptions(int argc, char ** argv) {
 
    globals.debug = 0;
    globals.version = Bank_t::OPEN_LATEST_VERSION;
-   globals.allMotifs = FALSE;
+   globals.allMotifs = false;
 
    int c;
    while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
@@ -72,7 +72,7 @@ bool GetOptions(int argc, char ** argv) {
          globals.version = atoi(optarg);
          break;
       case 'a':
-         globals.allMotifs = TRUE;
+         globals.allMotifs = true;
          break;
       case '?':
          return false;
