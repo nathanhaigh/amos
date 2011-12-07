@@ -340,9 +340,8 @@ int32_t reconcilePositions(int32_t oldPosition, int32_t newPosition, double weig
       return newPosition;
    } else {
       int32_t adjustedPosition = (int32_t) round((oldPosition * (1 - weight)) + (newPosition * (weight)));
-      double dist = abs(adjustedPosition-newPosition);
-
-      if (dist > MAX_STDEV*stdev) {
+      double dist = abs(adjustedPosition-oldPosition);
+      if (dist > (MAX_STDEV)*stdev) {
          if (globals.doAgressiveScaffolding == true) {
             // this would move us too far, compromise and move to max dist away
             adjustedPosition = adjustedPosition>newPosition ? newPosition + MAX_STDEV*stdev : newPosition + -1*MAX_STDEV*stdev;
@@ -457,10 +456,10 @@ int32_t computeContigPositions(
 
   // try moving the node both backwards and forwards as much as we can
   for (int i = FWD; i < REV+1; i++) {
-    double adjustment = (i == FWD ? cte.getSD() : -cte.getSD());
+     double adjustment = (i == FWD ? cte.getSD() : -cte.getSD());
 
-   while (nullRange != overlap && sd <= MAX_STDEV) {  
-   int32_t size = adjustSizeBasedOnAdjacency(
+     while (nullRange != overlap && sd <= MAX_STDEV) {  
+        int32_t size = adjustSizeBasedOnAdjacency(
                      cte.getAdjacency(), 
                      cte.getSize(), 
                      first.getLength(),
@@ -469,53 +468,51 @@ int32_t computeContigPositions(
                      ctg2ort[second.getIID()],
                      adjustment * sd);
    
-   // compute the contig positions
-   firstPosition = computePosition(ctg2srt[second.getIID()], -size);
-   secondPosition = computePosition(ctg2srt[first.getIID()], size);
+         // compute the contig positions
+         firstPosition = computePosition(ctg2srt[second.getIID()], -size);
+         secondPosition = computePosition(ctg2srt[first.getIID()], size);
 
-   if (globals.debug >= 3) {
-      cerr << "Edge between " << cte.getContigs().first << " and " << cte.getContigs().second << " and size " << cte.getSize() << " and sd " << cte.getSD() << " of type " << cte.getAdjacency() << endl;
-      cerr << "The adjusted size of the edge is " << size << endl;
-      cerr << "I am positioning " << first.getIID() << " at " << firstPosition << " and " << second.getIID() << " at " << secondPosition << endl;
-      cerr << "Currently they are positioned at " << ctg2srt[first.getIID()] << " and " << ctg2srt[second.getIID()] << endl;
-      cerr << "The first orient is " << ctg2ort[first.getIID()] << " and second is " << ctg2ort[second.getIID()] << " and link type " << cte.getAdjacency() << endl;
+         if (globals.debug >= 3) {
+            cerr << "Edge between " << cte.getContigs().first << " and " << cte.getContigs().second << " and size " << cte.getSize() << " and sd " << cte.getSD() << " of type " << cte.getAdjacency() << endl;
+            cerr << "The adjusted size of the edge is " << size << endl;
+            cerr << "I am positioning " << first.getIID() << " at " << firstPosition << " and " << second.getIID() << " at " << secondPosition << endl;
+            cerr << "Currently they are positioned at " << ctg2srt[first.getIID()] << " and " << ctg2srt[second.getIID()] << endl;
+            cerr << "The first orient is " << ctg2ort[first.getIID()] << " and second is " << ctg2ort[second.getIID()] << " and link type " << cte.getAdjacency() << endl;
+         }
+
+         /*
+         double weight = 0.5;
+         firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
+         secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
+         */
+         // go on its good reconcile it
+         double weight = (double)cte.getContigLinks().size()/getTotalWeightEdge(first.getIID(), ctg2lnk, edge_bank);
+         firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
+         weight = (double)cte.getContigLinks().size()/getTotalWeightEdge(second.getIID(), ctg2lnk, edge_bank);
+         secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
+         /*
+         The above was meant to better reconcile positions between edges. That is if an edge had a higher weight, it
+         would contribute more to position. However, this is still a problem if the node is initially positioned poorly.
+         Example in B. suis: node 6 places node 170 12 bases ahead of itself (using an edge with SD 971)
+           : node 86 tries to place node 170 approximately 1100 bases (reconciled to 600) but has only an SD of 95 so it cannot be satisfied
+         We need to incorporate other edge's SD when reconciling
+         */
+
+         // check for overlap
+         Range_t firstRange(firstPosition, first.getLength()+firstPosition);
+         Range_t secondRange(secondPosition, second.getLength()+secondPosition);
+         overlap = (firstRange & secondRange);
+
+        if (initialFirst == INVALID_EDGE) {
+           initialFirst = firstPosition;
+           initialSecond = secondPosition;
+        }
+        sd += stepSize;
+     }
+     if (firstPosition != INVALID_EDGE && secondPosition != INVALID_EDGE) {
+        break;
+      }
    }
-
-   /*
-   double weight = 0.5;
-   firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
-   secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
-   */
-   // go on its good reconcile it
-   double weight = (double)cte.getContigLinks().size()/getTotalWeightEdge(first.getIID(), ctg2lnk, edge_bank);
-   firstPosition = reconcilePositions(ctg2srt[first.getIID()], firstPosition, weight, cte.getSD());
-   weight = (double)cte.getContigLinks().size()/getTotalWeightEdge(second.getIID(), ctg2lnk, edge_bank);
-   secondPosition = reconcilePositions(ctg2srt[second.getIID()], secondPosition, weight, cte.getSD());
-   /*
-   The code above was meant to better reconcile positions between edges. That is if an edge had a higher weight, it
-   would contribute more to the position. However, this is still a problem if the node is initially positioned poorly.
-
-   Example in B. suis: node 6 places node 170 12 bases ahead of itself (using an edge with SD 971)
-                     : node 86 tries to place node 170 approximately 1100 bases (reconciled to 600) but has only an SD of 95 so it cannot be satisfied
-   We need to incorporate other edge's SD when reconciling
-   */
-
-   // check for overlap
-   Range_t firstRange(firstPosition, first.getLength()+firstPosition);
-   Range_t secondRange(secondPosition, second.getLength()+secondPosition);
-   overlap = (firstRange & secondRange);
-
-   if (initialFirst == INVALID_EDGE) {
-      initialFirst = firstPosition;
-      initialSecond = secondPosition;
-   }
-
-   sd += stepSize;
-   }
-if (firstPosition != INVALID_EDGE && secondPosition != INVALID_EDGE) {
-break;
-}
-}
 
    // if we never found a non-overlapping contig, just go back to what we started with
    if (overlap != nullRange) {
@@ -523,7 +520,20 @@ break;
       secondPosition = initialSecond;
    }
 
+   double placedDistance = adjustSizeBasedOnAdjacency(
+                     cte.getAdjacency(),
+                     cte.getSize(),                     
+                     first.getLength(),                     
+                     second.getLength(),
+                     ctg2ort[first.getIID()],
+                     ctg2ort[second.getIID()],
+                     0);
+   placedDistance -= secondPosition - firstPosition;
+   double adjustedVersusSD = abs((double)placedDistance / cte.getSD());
    if (firstPosition != INVALID_EDGE && secondPosition != INVALID_EDGE) {
+      if (adjustedVersusSD > MAX_STDEV) {
+         return INVALID_EDGE;
+      }
       ctg2srt[first.getIID()] = firstPosition;
       ctg2srt[second.getIID()] = secondPosition;
 
@@ -585,15 +595,13 @@ int32_t computeContigPositionUsingAllEdges(ID_t myID,
                // update the edge in the bank so it is marked bad
                setEdgeStatus(cte, edge_bank, BAD_DST);
             } else {
-if (allowBad == false) {
-   if (verifyEdgeStatus(first, s, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank) == false) {
-cerr << "CANT MOVE NODES " << first.getIID() << " AND " << second.getIID() << " ANY CLOSER IT MESSES UP AN EDGE" << endl;
-      ctg2srt[myID] = oldPosition;
-      break;
-   }
-}
-
-
+               if (allowBad == false) {
+                  if (verifyEdgeStatus(first, s, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank) == false) {
+                     cerr << "CANT MOVE NODES " << first.getIID() << " AND " << second.getIID() << " ANY CLOSER IT MESSES UP AN EDGE" << endl;
+                     ctg2srt[myID] = oldPosition;
+                     break;
+                  }
+               }
 
                // update the edge in the bank so it is marked good
                setEdgeStatus(cte, edge_bank, GOOD_EDGE);
@@ -1471,7 +1479,7 @@ int main(int argc, char *argv[]) {
       }
       mean /= count;
       globals.redundancy = (uint32_t)round(mean);
-      globals.redundancy = (globals.minRedundancy > globals.redundancy ? globals.minRedundancy : globals.redundancy);
+      globals.redundancy = (globals.redundancy < globals.minRedundancy ? globals.minRedundancy : globals.redundancy);
       if (globals.debug >= 1) { cerr << "Picked mean cutoff as " << mean << " rounded " << globals.redundancy << endl; }
    }
 
@@ -1803,10 +1811,10 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
       flushEdgeStatus(edge_bank);
       reduceGraph(scaffs, contig_bank, edge_bank, ctg2ort, ctg2lnk, motifs);
       sortContigs(scaffs, contig_bank, edge_bank);
-      // reset the transitive edges because we may have collapsed nodes so old transitive edges are no longer transitive
-      resetEdges(edge_bank, BAD_TRNS);
-      transitiveEdgeRemoval(scaffs, edge_bank, ctg2lnk, globals.debug);
    }
+   // reset the transitive edges because we may have collapsed nodes so old transitive edges are no longer transitive
+   //resetEdges(edge_bank, BAD_TRNS);
+   //transitiveEdgeRemoval(scaffs, edge_bank, ctg2lnk, globals.debug);
    if (globals.debug >= 1) { cerr << "DONE COMPRESSION" << endl; }
 
    // finally output to the bank
