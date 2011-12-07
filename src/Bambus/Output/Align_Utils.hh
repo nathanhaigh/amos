@@ -5,7 +5,7 @@
 
 #include "align.hh"
 
-namespace Bundler
+namespace Output 
 {
 
    static const char  SCAFFOLD_GAP_CHAR = 'N';

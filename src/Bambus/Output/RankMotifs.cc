@@ -6,10 +6,6 @@
 #include <math.h>
 #include <limits>
 #include <string>
-#include <map>
-#include <set>
-#include <queue>
-#include <iterator>
 #include <iostream>
 
 #include "fasta.hh"
@@ -18,32 +14,32 @@
 #include "BankStream_AMOS.hh"
 
 #include "Contig_AMOS.hh"
-#include "ContigIterator_AMOS.hh"
 #include "ContigEdge_AMOS.hh"
 #include "Scaffold_AMOS.hh"
 #include "Motif_AMOS.hh"
 
-#include "Position.hh"
-#include "Motif_Sequence.hh"
+#include "Utilities_Bundler.hh"
+#include "Motif_Utils.hh"
 
 using namespace std;
-using namespace HASHMAP;
 using namespace AMOS;
+using namespace Output;
 
 struct config {
    string      bank;
    int32_t     debug;
    int32_t     version;
+   bool        allMotifs;
 };
 config globals;
 void printHelpText() {
    cerr <<
     "\n"
-    "Output fasta sequence for Bambus scaffolds\n"
+    "Output a ranking of motifs by significance\n"
     "\n"
     "USAGE:\n"
     "\n"
-    "OutputScaffolds -b[ank] <bank_name> \n"
+    "RankMotifs -b[ank] <bank_name> [-version n] \n"
        << endl;
 }
 
@@ -55,12 +51,15 @@ bool GetOptions(int argc, char ** argv) {
     {"b",                  1, 0, 'b'},
     {"bank",               1, 0, 'b'},
     {"version",            1, 0, 'v'},
+    {"all",                0, 0, 'a'},
     {0, 0, 0, 0}
   };
 
-   int c;
+   globals.debug = 0;
    globals.version = Bank_t::OPEN_LATEST_VERSION;
+   globals.allMotifs = false;
 
+   int c;
    while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
       switch (c){
       case 'h':
@@ -71,6 +70,9 @@ bool GetOptions(int argc, char ** argv) {
          break;
       case 'v':
          globals.version = atoi(optarg);
+         break;
+      case 'a':
+         globals.allMotifs = true;
          break;
       case '?':
          return false;
@@ -86,26 +88,6 @@ bool GetOptions(int argc, char ** argv) {
    return true;
 } // GetOptions
 
-void outputScaffold(
-   Scaffold_t &scf, 
-   Bank_t &contig_bank, Bank_t &motif_bank, Bank_t &edge_bank
-   ) {
-        ID_t max = contig_bank.getMaxIID();
-        vector<Position> edits;
-        Position result;
-        std::ostringstream stream;
-        stream << "scf" << scf.getIID();
-
-        for (std::vector<Tile_t>::const_iterator tileIt = scf.getContigTiling().begin(); tileIt < scf.getContigTiling().end(
-); tileIt++) {
-           string eid;
-           string gapped = Output::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileIt->source, tileIt->range, eid);
-           Position p(eid, tileIt->offset, tileIt->offset + tileIt->range.getLength(), gapped);
-           result = result.merge(p, edits);
-       }
-       // print the main sequence
-       Fasta_Print(stdout, result.getUngappedSequence().c_str(), stream.str().c_str());
-}
 
 int main(int argc, char *argv[]) {
    if (!GetOptions(argc, argv)){
@@ -125,7 +107,7 @@ int main(int argc, char *argv[]) {
       exit(1);
    }
    try {
-           edge_bank.open(globals.bank, B_READ);
+	   edge_bank.open(globals.bank, B_READ);
    } catch (Exception_t & e) {
       cerr << "Failed to open edge account in bank " << globals.bank << ": " << endl << e << endl;
       edge_bank.close();
@@ -145,41 +127,45 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
-   Bank_t scaffold_bank (Scaffold_t::NCODE);
-   if (! scaffold_bank.exists(globals.bank)) {
-	   cerr << "No scaffold account found in bank " << globals.bank << endl;
-	   exit(1);
-   }
-   try {
-	   scaffold_bank.open(globals.bank, B_READ, globals.version);
-   } catch (Exception_t & e) {
-	   cerr << "Failed to open scaffold account in bank " << globals.bank << " : " << endl << e << endl;
-	   scaffold_bank.close();
-	   exit(1);
-   }
-
    Bank_t motif_bank (Motif_t::NCODE);
    if (! motif_bank.exists(globals.bank)) {
-           cerr << "No motif account found in bank " << globals.bank << endl;
-           exit(1);
+	   cerr << "No motif account found in bank " << globals.bank << endl;
+	   exit(1);
    }
    try {
-           motif_bank.open(globals.bank, B_READ, globals.version);
+	   motif_bank.open(globals.bank, B_READ, globals.version);
    } catch (Exception_t & e) {
-           cerr << "Failed to open motif account in bank " << globals.bank << " : " << endl << e << endl;
-           motif_bank.close();
-           exit(1);
+	   cerr << "Failed to open motif account in bank " << globals.bank << " : " << endl << e << endl;
+	   motif_bank.close();
+	   exit(1);
    }
 
-   Scaffold_t scf;
-   for (AMOS::IDMap_t::const_iterator ci = scaffold_bank.getIDMap().begin(); ci; ci++) {
-      scaffold_bank.fetch(ci->iid, scf);
-      outputScaffold(scf, contig_bank, motif_bank, edge_bank);
+   Motif_t scf;
+   string name;
+   set<MotifStats, MotifOrderCmp> motifs;
+   MotifStats stat;
+   for (AMOS::IDMap_t::const_iterator ci = motif_bank.getIDMap().begin(); ci; ci++) {
+        motif_bank.fetch(ci->iid, scf);
+        if (scf.getStatus() != Bundler::MOTIF_SCAFFOLD && !globals.allMotifs) {
+           continue;
+        }
+   	Output::getMotifStats(scf, edge_bank, stat);
+
+   	// now store the info on the motif
+   	stat.name = scf.getEID();
+        if (stat.name == "") { stat.name = scf.getIID(); } 
+        motifs.insert(stat);
    }
 
+   // sort the motifs using the above info
    edge_bank.close();
    contig_bank.close();
    motif_bank.close();
-   scaffold_bank.close();
-   motif_bank.close();
+
+   // output the ranking
+   uint32_t counter = 0;
+   for (set<MotifStats, MotifOrderCmp>::iterator iter = motifs.begin(); iter != motifs.end(); iter++) {
+      cout << "Motif Rank #" << counter << " name: " << iter->name << " sinks: " << iter->numSinks << " edge vs nodes: " << iter->edgeRatio << " overlap:" << iter->overlapRatio << " min edge: " << iter->minWeight << " length: " << iter->length << " total weight " << iter->totalWeight << endl; 
+      counter++;
+   }
 }

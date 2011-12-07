@@ -19,6 +19,7 @@
 #include "Motif_AMOS.hh"
 
 #include "Utilities_Bundler.hh"
+#include "Motif_Sequence.hh"
 #include "Motif_Utils.hh"
 
 using namespace std;
@@ -28,6 +29,7 @@ struct config {
    string      bank;
    int32_t     debug;
    int32_t     version;
+   bool        allMotifs;
 };
 config globals;
 void printHelpText() {
@@ -49,11 +51,13 @@ bool GetOptions(int argc, char ** argv) {
     {"b",                  1, 0, 'b'},
     {"bank",               1, 0, 'b'},
     {"version",            1, 0, 'v'},
+    {"allMotifs",          0, 0, 'a'},
     {0, 0, 0, 0}
   };
 
    globals.debug = 0;
    globals.version = Bank_t::OPEN_LATEST_VERSION;
+   globals.allMotifs = FALSE;
 
    int c;
    while ((c = getopt_long_only(argc, argv, "", long_options, &option_index))!= -1){
@@ -66,6 +70,9 @@ bool GetOptions(int argc, char ** argv) {
          break;
       case 'v':
          globals.version = atoi(optarg);
+         break;
+      case 'a':
+         globals.allMotifs = TRUE;
          break;
       case '?':
          return false;
@@ -133,15 +140,25 @@ int main(int argc, char *argv[]) {
 	   exit(1);
    }
 
+   set<Output::MotifStats, Output::MotifOrderCmp> motifs;
    Motif_t scf;
-   string name;
+   Output::MotifStats stat;
    for (AMOS::IDMap_t::const_iterator ci = motif_bank.getIDMap().begin(); ci; ci++) {
-	   motif_bank.fetch(ci->iid, scf);
+        motif_bank.fetch(ci->iid, scf);
+        if (scf.getStatus() != Bundler::MOTIF_SCAFFOLD && !globals.allMotifs) {
+           continue;
+        }
+        Output::getMotifStats(scf, edge_bank, stat);
 
-	   // output fasta for motif scaffolds
-	   if (scf.getStatus() == Bundler::MOTIF_SCAFFOLD) {
-		   Bundler::outputMotif(name, scf, motif_bank, contig_bank, edge_bank);
-	   }
+        // now store the info on the motif
+        stat.name = scf.getEID();
+        if (stat.name == "") { stat.name = scf.getIID(); }
+        motifs.insert(stat);
+   }
+
+   string name;
+   for (set<Output::MotifStats, Output::MotifOrderCmp>::const_iterator i = motifs.begin(); i != motifs.end(); i++) {
+	   Output::outputMotif(name, scf, motif_bank, contig_bank, edge_bank);
    }
 
    edge_bank.close();

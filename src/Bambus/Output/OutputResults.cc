@@ -18,7 +18,7 @@
 using namespace std;
 using namespace HASHMAP;
 using namespace AMOS;
-using namespace Bundler;
+using namespace Output;
 
 struct config {
    string      bank;
