@@ -5,12 +5,14 @@ use Getopt::Long;
 ## Options
 my $help  = 0;
 my $MIN_ALIGN_LEN = 1000;
+my $MASK_BP = 0;
 my $VERBOSE = 0;
 
 my $USAGE = "blasr_alignquality <options> m0alignments\n"; 
 
 my $res = GetOptions("help"      => \$help,
                      "min=s"     => \$MIN_ALIGN_LEN,
+                     "mask=s"    => \$MASK_BP,
                      "verbose"   => \$VERBOSE,
                      );
  
@@ -21,13 +23,22 @@ if ($help || !$res)
   print "  Scan blasr alignments (-m 0) and compute statistics on the quality.\n";
   print "\n";
   print "Options\n";
-  print "  -min <len> : minimum alignment length to process (default: $MIN_ALIGN_LEN)\n";
-  print "  -verbose   : be verbose when parsing\n";
+  print "  -min <len>  : minimum alignment length to process (default: $MIN_ALIGN_LEN)\n";
+  print "  -mask <len> : don't consider the first or last len bp (default: $MASK_BP)\n";
+  print "  -verbose    : be verbose when parsing\n";
   exit 0;
 }
 
 
 my %stats;
+$stats{all}  = 0;
+$stats{good} = 0;
+$stats{len}  = 0 ;
+$stats{m}    = 0;
+$stats{s}    = 0;
+$stats{i}    = 0;
+$stats{d}    = 0;
+
 my %dist;
 
 my $curMatch;
@@ -94,13 +105,13 @@ sub processDist
       print "d: ";
     }
 
-    my $idx = 0;
-    while (($idx < $ml) && ($mchr[$idx] eq "|")) { $idx++; $alignedbases[$astart+$idx]++; }
+    my $idx = $MASK_BP;
+    while (($idx < $ml - $MASK_BP) && ($mchr[$idx] eq "|")) { $idx++; $alignedbases[$astart+$idx]++; }
 
     my $d = -1;
     $idx++;
 
-    while ($idx < $ml)
+    while ($idx < $ml-$MASK_BP)
     {
       $d++;
       $alignedbases[$astart+$idx]++;
@@ -113,6 +124,8 @@ sub processDist
       }
       $idx++;
     }
+
+    if ($d>-1) { $dist{$d}++; }
 
     print "\n" if ($VERBOSE);
   }
@@ -212,10 +225,10 @@ my $del   = $stats{d};
 
 my $sum = $match + $mis + $ins + $del;
 
-my $mr = $match / $sum;
-my $sr = $mis / $sum;
-my $ir = $ins / $sum;
-my $dr = $del / $sum;
+my $mr = ($sum) ? $match / $sum : 0;
+my $sr = ($sum) ? $mis / $sum   : 0;
+my $ir = ($sum) ? $ins / $sum   : 0;
+my $dr = ($sum) ? $del / $sum   : 0;
 
 print "alignments:\t$good\t$all\n";
 print "len:\t$len\t$sum\n";
