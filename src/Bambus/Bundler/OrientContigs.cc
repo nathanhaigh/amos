@@ -340,7 +340,7 @@ int32_t reconcilePositions(int32_t oldPosition, int32_t newPosition, double weig
       return newPosition;
    } else {
       int32_t adjustedPosition = (int32_t) round((oldPosition * (1 - weight)) + (newPosition * (weight)));
-      double dist = abs(adjustedPosition-oldPosition);
+      double dist = fabs(adjustedPosition-oldPosition);
       if (dist > (MAX_STDEV)*stdev) {
          if (globals.doAgressiveScaffolding == true) {
             // this would move us too far, compromise and move to max dist away
@@ -372,7 +372,7 @@ edgeStatus isEdgeConsistent(
    }
 
    // now check the size
-   int32_t size = abs(adjustSizeBasedOnAdjacency(
+   int32_t size = fabs(adjustSizeBasedOnAdjacency(
                      cte.getAdjacency(),
                      cte.getSize(),
                      first.getLength(),
@@ -529,7 +529,7 @@ int32_t computeContigPositions(
                      ctg2ort[second.getIID()],
                      0);
    placedDistance -= secondPosition - firstPosition;
-   double adjustedVersusSD = abs((double)placedDistance / cte.getSD());
+   double adjustedVersusSD = fabs((double)placedDistance / cte.getSD());
    if (firstPosition != INVALID_EDGE && secondPosition != INVALID_EDGE) {
       if (adjustedVersusSD > MAX_STDEV) {
          return INVALID_EDGE;
