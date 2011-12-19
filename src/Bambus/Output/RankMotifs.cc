@@ -19,11 +19,11 @@
 #include "Motif_AMOS.hh"
 
 #include "Utilities_Bundler.hh"
-#include "Motif_Sequence.hh"
 #include "Motif_Utils.hh"
 
 using namespace std;
 using namespace AMOS;
+using namespace Output;
 
 struct config {
    string      bank;
@@ -35,11 +35,11 @@ config globals;
 void printHelpText() {
    cerr <<
     "\n"
-    "Output fasta sequence for Bambus motifs along with alternate sequence\n"
+    "Output a ranking of motifs by significance\n"
     "\n"
     "USAGE:\n"
     "\n"
-    "OutputMotifs -b[ank] <bank_name> [-version n] \n"
+    "RankMotifs -b[ank] <bank_name> [-version n] \n"
        << endl;
 }
 
@@ -51,7 +51,7 @@ bool GetOptions(int argc, char ** argv) {
     {"b",                  1, 0, 'b'},
     {"bank",               1, 0, 'b'},
     {"version",            1, 0, 'v'},
-    {"allMotifs",          0, 0, 'a'},
+    {"all",                0, 0, 'a'},
     {0, 0, 0, 0}
   };
 
@@ -140,28 +140,32 @@ int main(int argc, char *argv[]) {
 	   exit(1);
    }
 
-   set<Output::MotifStats, Output::MotifOrderCmp> motifs;
    Motif_t scf;
-   Output::MotifStats stat;
+   string name;
+   set<MotifStats, MotifOrderCmp> motifs;
+   MotifStats stat;
    for (AMOS::IDMap_t::const_iterator ci = motif_bank.getIDMap().begin(); ci; ci++) {
         motif_bank.fetch(ci->iid, scf);
         if (scf.getStatus() != Bundler::MOTIF_SCAFFOLD && !globals.allMotifs) {
            continue;
         }
-        Output::getMotifStats(scf, edge_bank, stat);
+   	Output::getMotifStats(scf, edge_bank, stat);
 
-        // now store the info on the motif
-        stat.name = scf.getEID();
-        if (stat.name == "") { stat.name = scf.getIID(); }
+   	// now store the info on the motif
+   	stat.name = scf.getEID();
+        if (stat.name == "") { stat.name = scf.getIID(); } 
         motifs.insert(stat);
    }
 
-   string name;
-   for (set<Output::MotifStats, Output::MotifOrderCmp>::const_iterator i = motifs.begin(); i != motifs.end(); i++) {
-	   Output::outputMotif(name, scf, motif_bank, contig_bank, edge_bank);
-   }
-
+   // sort the motifs using the above info
    edge_bank.close();
    contig_bank.close();
    motif_bank.close();
+
+   // output the ranking
+   uint32_t counter = 0;
+   for (set<MotifStats, MotifOrderCmp>::iterator iter = motifs.begin(); iter != motifs.end(); iter++) {
+      cout << "Motif Rank #" << counter << " name: " << iter->name << " sinks: " << iter->numSinks << " edge vs nodes: " << iter->edgeRatio << " overlap:" << iter->overlapRatio << " min edge: " << iter->minWeight << " length: " << iter->length << " total weight " << iter->totalWeight << endl; 
+      counter++;
+   }
 }

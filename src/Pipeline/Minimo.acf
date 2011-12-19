@@ -30,7 +30,7 @@
 #?     -D ACE_EXP=<n>      Export results in ACE format (0:no 1:yes, default: 0)
 #?     -D OUT_PREFIX=<s>   Prefix to use for the output file path and name
 #?
-#? Minimo v1.7 Copyright Florent Angly 2010. Under the GPL v3 open-source license.
+#? Minimo v1.8 Copyright Florent Angly 2010. Under the GPL v3 open-source license.
 #?
 
 BINDIR     = /usr/local/bin
@@ -110,7 +110,7 @@ OUTPUTS     = $(FASTA_OUT) $(QUAL_OUT) $(AMOS_OUT) $(ACE_OUT)
 50: if [ $(STRAND_SPEC) -eq 1 ]; then $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -s -v $(VERBOSE) $(BANK); else $(BINDIR)/hash-overlap -B -o $(MIN_LEN) -x $(MAX_OVL_ERROR) -v $(VERBOSE) $(BANK); fi
 
 ## Forming contigs
-60: $(BINDIR)/tigger -b $(BANK)
+60: $(BINDIR)/tigger -b $(BANK) -v $(VERBOSE)
 
 ## Determining contig consensus sequences
 # Default fraction of errors allowed in alignments 0.06 (6 %).

@@ -30,7 +30,7 @@ Position::Position(std::string rangeName, uint32_t rangeStart, uint32_t rangeEnd
         }
         numGaps = 0;
         for ( uint32_t i = 0; i < sequence.length(); i ++ ) {
-        	if ( !isalpha (sequence[i]) || sequence[i] == Bundler::SCAFFOLD_GAP_CHAR) {
+        	if ( !isalpha (sequence[i]) || sequence[i] == Output::SCAFFOLD_GAP_CHAR) {
 			numGaps++;
 		}
 	}
@@ -84,20 +84,20 @@ Position Position::merge(Position &p, std::vector<Position>& edits) {
                 Alignment_t ali;
                 bool contained = false;
                 bool aligns = false;
-                if ((ovlEnd > ovlStart && (ovlEnd-ovlStart) > 0) || (ovlEnd <=ovlStart && ((int32_t)(ovlEnd-ovlStart)+2*Bundler::OVL_WIGGLE) > 0)) {
-                   aligns = Bundler::hasValidOverlap(p.sequence, sequence, result.start, p.start, p.end, start, end, contained, ali);
+                if ((ovlEnd > ovlStart && (ovlEnd-ovlStart) > 0) || (ovlEnd <=ovlStart && ((int32_t)(ovlEnd-ovlStart)+2*Output::OVL_WIGGLE) > 0)) {
+                   aligns = Output::hasValidOverlap(p.sequence, sequence, result.start, p.start, p.end, start, end, contained, ali);
                    if (aligns == false && ovlEnd > ovlStart) { // not an overlap
                       if (contained) {
                           merge = false;
                       } else {
-                         result.end += (ovlEnd - ovlStart)+Bundler::MIN_OVERLAP;
+                         result.end += (ovlEnd - ovlStart)+Output::MIN_OVERLAP;
                          if (p.start == ovlStart) {
-                            p.start += (ovlEnd-ovlStart)+Bundler::MIN_OVERLAP;
-                            p.end   += (ovlEnd-ovlStart)+Bundler::MIN_OVERLAP;
+                            p.start += (ovlEnd-ovlStart)+Output::MIN_OVERLAP;
+                            p.end   += (ovlEnd-ovlStart)+Output::MIN_OVERLAP;
                             ovlStart = ovlEnd = p.start;
                          } else if (start == ovlStart) {
-                            start += (ovlEnd - ovlStart)+Bundler::MIN_OVERLAP;
-                            end   += (ovlEnd - ovlStart)+Bundler::MIN_OVERLAP;
+                            start += (ovlEnd - ovlStart)+Output::MIN_OVERLAP;
+                            end   += (ovlEnd - ovlStart)+Output::MIN_OVERLAP;
                             ovlStart = ovlEnd = start;
                          }
                       } 

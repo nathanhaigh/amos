@@ -23,10 +23,8 @@
 #include "Scaffold_AMOS.hh"
 #include "Motif_AMOS.hh"
 
-#include "Utilities_Bundler.hh"
-
 #include "Position.hh"
-#include "Motif_Utils.hh"
+#include "Motif_Sequence.hh"
 
 using namespace std;
 using namespace HASHMAP;
@@ -101,7 +99,7 @@ void outputScaffold(
         for (std::vector<Tile_t>::const_iterator tileIt = scf.getContigTiling().begin(); tileIt < scf.getContigTiling().end(
 ); tileIt++) {
            string eid;
-           string gapped = Bundler::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileIt->source, tileIt->range, eid);
+           string gapped = Output::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileIt->source, tileIt->range, eid);
            Position p(eid, tileIt->offset, tileIt->offset + tileIt->range.getLength(), gapped);
            result = result.merge(p, edits);
        }

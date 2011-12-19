@@ -67,7 +67,7 @@ public:
   void output_contig_graphs();
 
   Contig* walk(INode* p_node);
-  IEdge* walk_edge(IEdge* e, INode* n, Contig* ctg);
+  IEdge* walk_edge(IEdge* e, INode* n, Contig* ctg, int edgeIsSuffix);
 
   bool isSuffix(Read* read, Overlap* ovl);
 

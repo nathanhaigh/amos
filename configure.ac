@@ -90,6 +90,7 @@ AMOS_C_BITFIELDS
 AMOS_QT4
 AMOS_BOOST
 AMOS_CA
+AMOS_OPENMP
 
 # check for functions which can be replaced with libGNU modules:
 # getopt strtod strtol

@@ -24,7 +24,8 @@ class Contig {
 public:
 
   SubGraph* sg;
-  int start_node;
+
+  int start_node, end_node; // ID of node that starts and end the contig respectively
 
 };
 
