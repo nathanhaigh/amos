@@ -375,6 +375,9 @@ target_alias = @target_alias@
 tigrincludedir = @tigrincludedir@
 tigrlibdir = @tigrlibdir@
 dist_bin_SCRIPTS = \
+  SOAPdenovo_readlist_to_config.pl \
+  SOAPdenovo_mapscaff.sh \
+  SOAPdenovo_prepare.sh \
   aj_evaluateSequenceOverlaps.pl \
   aj_joinContigs.pl \
   aj_lowcomplexityfilter.pl \
