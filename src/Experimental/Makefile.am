@@ -49,6 +49,7 @@ dist_bin_SCRIPTS = \
   fasta_filter_dups.pl \
   fastq_to_mates.pl \
   link2reads.pl \
+  matchpairs.pl \
   patchassembly.pl \
   persistent-assembly.pl \
   persistent-fix.pl \
