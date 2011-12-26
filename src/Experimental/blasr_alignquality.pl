@@ -20,7 +20,7 @@ if ($help || !$res)
 {
   print $USAGE;
   print "\n";
-  print "  Scan blasr alignments (-m 0) and compute statistics on the quality.\n";
+  print "  Scan blasr alignments (blasr -m 0) and compute statistics on the quality.\n";
   print "\n";
   print "Options\n";
   print "  -min <len>  : minimum alignment length to process (default: $MIN_ALIGN_LEN)\n";
