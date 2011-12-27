@@ -7,6 +7,7 @@ my $help  = 0;
 my $MIN_ALIGN_LEN = 1000;
 my $MASK_BP = 0;
 my $VERBOSE = 0;
+my $reffile = undef;
 
 my $USAGE = "blasr_alignquality <options> m0alignments\n"; 
 
@@ -14,6 +15,7 @@ my $res = GetOptions("help"      => \$help,
                      "min=s"     => \$MIN_ALIGN_LEN,
                      "mask=s"    => \$MASK_BP,
                      "verbose"   => \$VERBOSE,
+                     "ref=s"     => \$reffile,
                      );
  
 if ($help || !$res)
@@ -23,12 +25,39 @@ if ($help || !$res)
   print "  Scan blasr alignments (blasr -m 0) and compute statistics on the quality.\n";
   print "\n";
   print "Options\n";
-  print "  -min <len>  : minimum alignment length to process (default: $MIN_ALIGN_LEN)\n";
-  print "  -mask <len> : don't consider the first or last len bp (default: $MASK_BP)\n";
-  print "  -verbose    : be verbose when parsing\n";
+  print "  -min <len>         : minimum alignment length to process (default: $MIN_ALIGN_LEN)\n";
+  print "  -mask <len>        : don't consider the first or last len bp (default: $MASK_BP)\n";
+  print "  -ref <ref.len.txt> : compute accuracy with respect to the reference in the specified regions\n";
+  print "  -verbose           : be verbose when parsing\n";
   exit 0;
 }
 
+
+## Load the reference ids of interest
+#####################################################################
+
+my %refinfo;
+my @refseqs;
+
+if (defined $reffile)
+{
+  open LENS, "< $reffile" or die "Can't open $reffile ($!)\n";
+
+  while (<LENS>)
+  {
+    chomp;
+    my ($ref, $len) = split /\s+/, $_;
+    $refinfo{$ref}->{len} = $len;
+
+    push @refseqs, $ref;
+  }
+
+  close LENS;
+}
+
+
+## Initialize the stats
+#####################################################################
 
 my %stats;
 $stats{all}  = 0;
@@ -50,6 +79,10 @@ my $curLen;
 my $astart;
 my $aend;
 
+my $tstart;
+my $tend;
+my $target;
+
 my $qrystr;
 my $matchstr;
 my $refstr;
@@ -68,6 +101,8 @@ for (my $i = 0; $i < $maxreadlen; $i++)
 }
 
 
+## Process an alignment
+#####################################################################
 
 sub processDist
 {
@@ -95,7 +130,6 @@ sub processDist
     my @mchr = split //, $matchstr;
     my $ml = scalar @mchr;
 
-
     if ($VERBOSE)
     {
       print "l: $curLen m: $curMatch s: $curMis i: $curIns d: $curDel\n";
@@ -106,7 +140,18 @@ sub processDist
     }
 
     my $idx = $MASK_BP;
-    while (($idx < $ml - $MASK_BP) && ($mchr[$idx] eq "|")) { $idx++; $alignedbases[$astart+$idx]++; }
+    while (($idx < $ml - $MASK_BP) && ($mchr[$idx] eq "|")) 
+    { 
+      $alignedbases[$astart+$idx]++; 
+
+      if ((defined $reffile) && exists $refinfo{$target})
+      {
+        $refinfo{$target}->{depth}->[$tstart+$idx]++;
+        $refinfo{$target}->{cor}->[$tstart+$idx]++;
+      }
+
+      $idx++; 
+    }
 
     my $d = -1;
     $idx++;
@@ -116,12 +161,25 @@ sub processDist
       $d++;
       $alignedbases[$astart+$idx]++;
 
+      if ((defined $reffile) && exists $refinfo{$target})
+      {
+        $refinfo{$target}->{depth}->[$tstart+$idx]++;
+      }
+
       if ($mchr[$idx] eq " ") 
       { 
         $errorbases[$astart+$idx]++;
         print " $d" if ($VERBOSE); 
         $dist{$d}++; $d = -1; 
       }
+      else
+      {
+        if ((defined $reffile) && exists $refinfo{$target})
+        {
+          $refinfo{$target}->{cor}->[$tstart+$idx]++;
+        }
+      }
+
       $idx++;
     }
 
@@ -137,18 +195,30 @@ sub processDist
   $refstr = "";
 }
 
+
+
+## Scan the alignments
+#####################################################################
+
+print STDERR "Scanning alignments... ";
+my $aligncnt = 0;
+
 while (<>)
 {
   next if (/^\s*$/);
 
-  if    (/nMatch: (\d+)/)    { processDist(); $curMatch = $1;}
-  elsif (/nMisMatch: (\d+)/) { $curMis = $1; }
-  elsif (/nIns: (\d+)/)      { $curIns = $1; }
-  elsif (/nDel: (\d+)/)      { $curDel = $1; }
-  elsif (/QueryRange: (\d+) -> (\d+)/) { $astart = $1; $aend = $2; $curLen = $aend - $astart;}
-  elsif (/TargetRange:/)     { $inAlign = 1; }
+  if    (/nMatch: (\d+)/)      { processDist(); $curMatch = $1;}
+  elsif (/nMisMatch: (\d+)/)   { $curMis = $1; }
+  elsif (/nIns: (\d+)/)        { $curIns = $1; }
+  elsif (/nDel: (\d+)/)        { $curDel = $1; }
+  elsif (/Target: (\S+)/)      { $target = $1; }
+  elsif (/QueryRange: (\d+) -> (\d+)/)  { $astart = $1; $aend = $2; $curLen = $aend - $astart;}
+  elsif (/TargetRange: (\d+) -> (\d+)/) { $tstart = $1; $tend = $2; $inAlign = 1; }
   elsif ($inAlign)
   {
+    $aligncnt++;
+    if ($aligncnt % 1000 == 0) { print STDERR "."; }
+
     my $qrystrs = $_;
     my $markers = <>;
     my $refstrs = <>; 
@@ -210,6 +280,14 @@ while (<>)
 
 processDist();
 
+print STDERR " $aligncnt total alignments\n";
+
+
+
+
+## Process the overall stats
+#####################################################################
+
 print "========================================================================\n" if $VERBOSE;
 print "========================================================================\n" if $VERBOSE;
 print "\n" if $VERBOSE;
@@ -240,6 +318,9 @@ print "del:\t$del\t$dr\n";
 print "\n";
 
 
+## Histogram of seed lengths
+#####################################################################
+
 print "seed len\n";
 foreach my $d (sort {$a <=> $b} keys %dist)
 {
@@ -249,7 +330,12 @@ foreach my $d (sort {$a <=> $b} keys %dist)
 
 print "\n";
 
-print "aligned bases\n";
+
+
+## Print the fraction of correct aligned bases
+#####################################################################
+
+print "erroneous aligned bases\n";
 
 for (my $i = 0; $i < $maxreadlen; $i++)
 {
@@ -263,6 +349,28 @@ for (my $i = 0; $i < $maxreadlen; $i++)
 
 
 
+## Print quality with respect to the reference
+#####################################################################
 
+if (defined $reffile)
+{
+  print "\n\n";
+  print "reference coverage and accuracy\n";
 
+  my $gpos = 0;
+
+  foreach my $ref (@refseqs)
+  {
+    my $l = $refinfo{$ref}->{len};
+
+    for (my $i = 1; $i <= $l; $i++)
+    {
+      my $depth = (exists $refinfo{$ref}->{depth}->[$i]) ? $refinfo{$ref}->{depth}->[$i] : 0;
+      my $cor   = (exists $refinfo{$ref}->{cor}->[$i])   ? $refinfo{$ref}->{cor}->[$i]   : 0;
+
+      print "$gpos\t$ref\t$depth\t$cor\n";
+      $gpos++;
+    }
+  }
+}
 
