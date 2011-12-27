@@ -1,16 +1,28 @@
 #!/usr/bin/perl -w
 use strict;
 
-my $PERC_ALEN=.95;
+my $USAGE = "coords_depth.pl lens <coords> > seq.depth";
 
-my $depth;
-my $seq = "";
+my %depth;
+my %lens;
+my @seqs;
 
-sub printDepth
+my $lensfile = shift @ARGV or die $USAGE;
+
+open LENS, "< $lensfile" or die "Can't open $lensfile ($!)\n";
+
+my $gpos = 0;
+
+while (<LENS>)
 {
-  return if !defined $seq || $seq eq "";
+  chomp;
+  my ($seqid, $len) = split /\s+/, $_;
 
-  print "$seq\t", join(",",@$depth), "\n";
+  push @seqs, $seqid;
+  $lens{$seqid} = $len;
+
+  print "#$gpos\t$seqid\t$len\n";
+  $gpos+=$len;
 }
 
 while (<>)
@@ -35,32 +47,28 @@ while (<>)
 
   my $cur    = $fields[17];
 
-  if ($seq ne $cur)
-  {
-    printDepth();
-
-    $seq = $cur;
-    $depth = undef;
-
-    for (my $i = 0; $i < $curlen; $i++)
-    {
-      $depth->[$i] = 0;
-    }
-  }
-
   my $dir = ($qstart < $qend) ? "f" : "r";
 
-  if ((($dir eq "r") && ($start <= 5)) || 
-      (($dir eq "f") && ($curlen-$end <= 5)) ||
-      ($qalen >= $qlen*$PERC_ALEN))
+  for (my $i = $start; $i <= $end; $i++)
   {
-    # print "$_\n";
-
-    for (my $i = $start; $i <= $end; $i++)
-    {
-      $depth->[$i-1]++;
-    }
+    $depth{$cur}->[$i]++;
   }
 }
 
-printDepth();
+$gpos = 0;
+
+foreach my $seqid (@seqs)
+{
+  my $l = $lens{$seqid};
+
+  for (my $p = 1; $p < $l; $p++)
+  {
+    my $d = 0;
+    $d = $depth{$seqid}->[$p] if (exists $depth{$seqid}->[$p]);
+
+    print "$gpos\t$seqid\t$p\t$d\n";
+
+    $gpos++;
+  }
+}
+
