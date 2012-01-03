@@ -107,8 +107,8 @@ if (!defined $samfile)
   }
   else
   {
-    $TC1 .= " | $FASTQ_RENAME -clean -tr '/ '";
-    $TC2 .= " | $FASTQ_RENAME -clean -tr '/ '";
+    $TC1 .= " | $FASTQ_RENAME -clean -tr '/'";
+    $TC2 .= " | $FASTQ_RENAME -clean -tr '/'";
   }
 
   $QV_ILLUMINA = ($QV_ILLUMINA) ? "-I" : "";
