@@ -1,4 +1,5 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
+
 use strict;
 use Getopt::Long;
 
@@ -20,7 +21,7 @@ my $res = GetOptions("help"      => \$help,
                      "suffix=s"  => \$SUFFIX,
                      "clean"     => \$CLEAN,
                      "tr=s"      => \$TR_INPUT,
-                     "tr_out=s"  => \$TR_OUTPUT,
+                     "trc=s"     => \$TR_OUTPUT,
                      );
  
 if ($help || !$res)
@@ -37,6 +38,11 @@ if ($help || !$res)
   print "  -trc <str>    : when replacing, replace with this (default: $TR_OUTPUT)\n";
   print "  -suffix <str> : add suffix to each readname\n";
   exit 0;
+}
+
+if (defined $TR_INPUT)
+{
+  print STDERR "replacing \"$TR_INPUT\" with \"$TR_OUTPUT\"\n";
 }
 
 my $c = 0;

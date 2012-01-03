@@ -38,6 +38,7 @@ dist_bin_SCRIPTS = \
   alignextend.pl \
   autoJoiner.pl \
   blasr_alignquality.pl \
+  blasr_cns_accuracy.pl \
   bwape.pl \
   check_ce.pl \
   coords_best.pl \
