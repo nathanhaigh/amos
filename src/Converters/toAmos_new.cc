@@ -62,6 +62,10 @@ struct config {
   string        posfile;
   string        bank;
   string        matesfile;
+  string        libname;
+  uint32_t      interleaved;
+  uint32_t      min;
+  uint32_t      max;
   string        traceinfofile;
   string        ctgfile;
   string        frgfile;
@@ -112,6 +116,7 @@ map<string,string>              seq2qual; // a map of all the qual file names fo
 int *computeGapIndex(char *sequence, uint32_t length);
 bool parseFastaFile();
 bool parseFastqFile();
+bool parseFastqFileInterleaved(int min, int max, string libname);
 bool parseMatesFile(ifstream&);
 bool parseFrgFile(string);
 bool parseAsmFile(string);
@@ -128,7 +133,7 @@ void PrintHelp()
 {
     cerr << "\n"
          << ".USAGE."
-         << "  toAmos (-m mates|-f frg)\n"
+         << "  toAmos_new (-m mates|-f frg)\n"
          << "         (-c contig|-s fasta|-q qual|-Q fastq)\n"
          << "         -t fastqQualtyType [SCUFL]\n"
          << ".DESCRIPTION.\n"
@@ -145,15 +150,26 @@ void PrintHelp()
          << "   -> Library and mate-pair data (options -m, or -f) \n"
          << "   -> Contig  data (options -c, -a) \n"
          << "   -> Scaffold data (option -a) \n"
+         << " *NEW* If using interleaved fastq file no need to specify mates files,\n"
+         << "       these can be extract by specifying the following:\n"
+         << "   -> Interleaved flag (-i) \n"
+         << "   -> Sequence data (-Q) \n"
+         << "   -> Library name/Identifier (-I) \n"
+         << "   -> Library min (-N) \n"
+         << "   -> Library max (-X) \n"
          << ".OPTIONS. \n"
          << "  -m <matefile> - library and mate-pair information in Bambus format \n"
-         << "     in Trace Archive format \n"
+         << "     in Trace Archive format (not compatible with -i option) \n"
          << "  -b <bank> - The location where the AMOS bank will be stored.\n"
          << "  -S - include the surrogate unitigs in the .asm file as AMOS contigs.\n"
          << "  -C - include the contigs in the .asm file as AMOS contigs.\n"
          << "  -U - include the unitigs in the .asm file as AMOS contigs (implies -S and turns off -C).\n"
          << "  -F - include the surrogate unitigs as reads in the tilling for a contig. Without this option the contig may have 0-coverage regions of coverage.\n"
          << "  -L - output only the layout, not the consensus sequence for contigs. Will not output contig links or scaffolds. Implies -F.\n"
+         << "  -i - fastq file is interleaved, parse mates from this file (mutually exclusive with -m option)\n"
+         << "  -I - lib Identifier\n"
+         << "  -N - min insert length\n"
+         << "  -X - max insert length\n"
          << "  -t - fastq quality type. The currently supported types are";
          for (uint32_t i = 0; i < FASTQ_QUALITY_COUNT; i++) {
             cerr << " " << FASTQ_QUALITY_NAMES[i];
@@ -182,7 +198,7 @@ bool GetOptions (int argc, char ** argv)
   globals.fastqQualityType = FASTQ_DEFAULT_QUALITY_TYPE;
   globals.surrogateAsFragment = 0;
   globals.debugLevel = 0;
- 
+  globals.libname = "lib1";
   while (1)
     {
       int ch, option_index = 0;
@@ -192,6 +208,10 @@ bool GetOptions (int argc, char ** argv)
         {"bank",      required_argument,         0, 'b'},
         {"qual",      required_argument,         0, 'q'},
         {"seq",       required_argument,         0, 's'},
+        {"interleaved",      no_argument,         0, 'i'},
+        {"max",      required_argument,         0, 'X'},
+        {"min",      required_argument,         0, 'N'},
+        {"libname",      required_argument,         0, 'I'},
         {"Q",         required_argument,         0, 'Q'},
         {"map",       required_argument,         0, 'M'},
         {"gq",        required_argument,         0, 'G'},
@@ -207,7 +227,7 @@ bool GetOptions (int argc, char ** argv)
         {0,           0,                         0, 0}
       };
       
-      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:i:k:q:s:Q:M:G:B:p:SCUFLt:", long_options, &option_index);
+      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:iI:k:q:s:Q:M:G:B:p:SCUFLt:", long_options, &option_index);
       if (ch == -1)
         break;
 
@@ -252,6 +272,18 @@ bool GetOptions (int argc, char ** argv)
           break;
         case 's':
           globals.fastafile = string(optarg);
+          break;
+        case 'i':
+          globals.interleaved = 1;
+          break;
+        case 'I':
+          globals.libname = string(optarg);
+          break;
+        case 'X':
+          globals.max = atoi(optarg);
+          break;
+        case 'N':
+          globals.min = atoi(optarg);
           break;
         case 'Q':
           globals.fastqfile = string(optarg);
@@ -458,7 +490,14 @@ int main(int argc, char ** argv)
   // parse fastq file
   if (globals.fastqfile.size() > 0) {
     cerr << "parsing fastq file" << endl;
-    parseFastqFile();
+    if (globals.interleaved)
+    {
+      parseFastqFileInterleaved(globals.min,globals.max,globals.libname);
+    }
+    else
+    {   
+      parseFastqFile();
+    }
     readsDone = true;
   }
  
@@ -653,6 +692,183 @@ bool parseFastaFile() {
   }
 }
 
+bool parseFastqFileInterleaved(int min,int max, string libname="lib1") {
+  int counter = 0;
+  string tempSeqHeader;
+  string tempSeqBuff;
+  string tempQualHeader;
+  string tempQualBuff;
+  string seqname;
+  string tempSeqHeader2;
+  string tempSeqBuff2;
+  string tempQualHeader2;
+  string tempQualBuff2;
+  string seqname2;
+  int cll2 = -1;
+  int clr2 = -1;
+  int cll = -1;
+  int clr = -1;
+  int temp1 = 0;
+  int temp2 = 0;
+  int temp11 = 0;
+  int temp22 = 0;
+  int id = 0;
+
+  Pos_t mean = (min + max) / 2;
+  SD_t stdev = (max - min) / 6;
+  Distribution_t dist;
+  dist.mean = mean;
+  dist.sd = stdev;
+
+  Library_t lib;
+  
+  lib.setDistribution(dist);
+  lib.setIID(minSeqID++);
+  lib.setEID(libname);
+  lib_stream.append(lib);
+
+  FILE* fastqfile = fileOpen(globals.fastqfile.c_str(), "r");
+
+  while (Fastq_Read(fastqfile,tempSeqBuff,tempSeqHeader,tempQualBuff,tempQualHeader, globals.fastqQualityType) != 0
+	 && Fastq_Read(fastqfile,tempSeqBuff2,tempSeqHeader2,tempQualBuff2,tempQualHeader2,globals.fastqQualityType) != 0) {
+    if (counter % PRINT_INTERVAL == 0 && globals.debugLevel > 0) {
+       cerr << "Read " << counter << " reads " << endl;
+    }
+    counter+=2;
+    
+    stringstream seqheaderstream (stringstream::in);
+    seqheaderstream.str(tempSeqHeader.c_str());
+    seqheaderstream >> seqname;
+    if (!seqheaderstream.eof()) {
+      seqheaderstream >> temp1;
+      seqheaderstream >> temp2;
+      if (!seqheaderstream.eof()) {
+        seqheaderstream.ignore(5, ' ');
+        seqheaderstream >> cll;
+        seqheaderstream >> clr;
+      } else {
+        cll = temp1;
+        clr = temp2;
+      }
+    } else {
+      cll = 0;
+      clr = tempSeqBuff.length();
+      //cerr << "Format not recognized" << endl;
+    } 
+ 
+    // So we don't overwrite an externally provided clear range
+    if (cll == -1) {
+      cll = 0;
+      clr = tempSeqBuff.length();
+    }
+
+    stringstream seqheaderstream2 (stringstream::in);
+    seqheaderstream2.str(tempSeqHeader2.c_str());
+    seqheaderstream2 >> seqname2;
+    if (!seqheaderstream2.eof()) {
+      seqheaderstream2 >> temp11;
+      seqheaderstream2 >> temp22;
+      if (!seqheaderstream2.eof()) {
+        seqheaderstream2.ignore(5, ' ');
+        seqheaderstream2 >> cll2;
+        seqheaderstream2 >> clr2;
+      } else {
+        cll2 = temp11;
+        clr2 = temp22;
+      }
+    } else {
+      cll2 = 0;
+      clr2 = tempSeqBuff2.length();
+      //cerr << "Format not recognized" << endl;
+    } 
+ 
+    // So we don't overwrite an externally provided clear range
+    if (cll2 == -1) {
+      cll2 = 0;
+      clr2 = tempSeqBuff2.length();
+    }
+    Read_t read1;
+    read1.setIID(minSeqID++);
+    read1.setEID(seqname);
+
+    if (tempQualBuff.length() != tempSeqBuff.length()) {
+        cerr << "Sequence and quality records must have same length for " << seqname << ": "
+             << tempSeqBuff.length() << " vs " << tempQualBuff.length() << endl;
+        return 1; 
+    }
+
+    read1.setClearRange(Range_t(cll, clr));
+    read1.setSequence(tempSeqBuff.c_str(), tempQualBuff.c_str());
+
+
+    Read_t read2;
+    read2.setIID(minSeqID++);
+    read2.setEID(seqname2);
+
+    if (tempQualBuff2.length() != tempSeqBuff2.length()) {
+        cerr << "Sequence and quality records must have same length for " << seqname2 << ": "
+             << tempSeqBuff2.length() << " vs " << tempQualBuff2.length() << endl;
+        return 1; 
+    }
+
+    read2.setClearRange(Range_t(cll2, clr2));
+    read2.setSequence(tempSeqBuff2.c_str(), tempQualBuff2.c_str());
+
+
+    // now that we've handled everything else, this must be a simple pair of reads
+    string frg1 = seqname;
+    string frg2 = seqname2;
+
+    stringstream templateID(stringstream::in | stringstream::out);
+
+    Size_t offset = 0; 
+    for (offset = 0; offset < frg1.length(); ++offset) {
+       if (frg2.length() < offset) {
+          break;
+       }
+       if (frg1[offset] != frg2[offset]) {
+          break;
+       }
+    }
+    if (offset == 0) {
+       cerr << "Error fragments " << frg1 << " AND " << frg2 << " do not have any common template substring" << endl;
+       continue;
+    }
+    templateID << frg1.substr(0, offset);
+    templateID << "_" << counter;
+
+    Fragment_t frag;
+    frag.setLibrary(lib.getIID()); 
+    //frag.setLibrary(1); 
+    frag.setIID(minSeqID++);
+    frag.setEID(templateID.str());
+    frag.setReads(std::pair<ID_t, ID_t>(read1.getIID(), read2.getIID()));
+    frag.setType(Fragment_t::INSERT);
+    frag_stream.append(frag);
+
+    // also update the reads
+    Read_t read;
+    //read_stream.fetch(read1, read);
+    read1.setFragment(frag.getIID());
+    //read_stream.replace(read.getIID(), read);
+    read_stream.append(read1);    
+
+    //read_stream.fetch(read2, read);
+    read2.setFragment(frag.getIID());
+    //read_stream.replace(read.getIID(), read);
+    read_stream.append(read2);    
+    //counter++;
+
+
+    // reset the clear ranges
+    cll = clr = -1;
+    cll2 = clr2 = -1;
+  }
+  cerr << "Finished reading " << counter << " reads " << endl;
+
+  fileClose(fastqfile);
+}
+
 bool parseFastqFile() {
   int counter = 0;
   string tempSeqHeader;
@@ -828,14 +1044,14 @@ bool parseMatesFile(ifstream &matesFile) {
     frag_stream.append(frag);
 
     // also update the reads
-    Read_t read;
-    read_stream.fetch(read1, read);
-    read.setFragment(frag.getIID());
-    read_stream.replace(read.getIID(), read);
+    //Read_t read;
+    //read_stream.fetch(read1, read);
+    //read.setFragment(frag.getIID());
+    //read_stream.replace(read.getIID(), read);
 
-    read_stream.fetch(read2, read);
-    read.setFragment(frag.getIID());
-    read_stream.replace(read.getIID(), read);
+    //read_stream.fetch(read2, read);
+    //read.setFragment(frag.getIID());
+    //read_stream.replace(read.getIID(), read);
     counter++;
    }
 }

@@ -112,7 +112,7 @@ void getMotifStats(AMOS::Motif_t &scf, Bank_t &edge_bank, MotifStats &stat) {
    return computeMotifStats(scf, edge_bank, stat);
 #else
    cerr << "Error: the boost library cannot be found. Will not be processing motif " << scf.getEID() << endl;
-   return -1;
+   return;
 #endif
 }
 void buildMotifGraph(Graph &g, hash_map<ID_t, Vertex, hash<ID_t>, equal_to<ID_t> > &nodeToDescriptor,
