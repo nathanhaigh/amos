@@ -27,6 +27,7 @@ my $ADD_SUFFIX = 0;
 my $CHECK_DIST = 0;
 my $MIN_DIST = 0;
 my $MAX_DIST = 0;
+my $ALLOW_DIFF = 0;
 
 my $DUP_WIGGLE = 2;
 
@@ -49,6 +50,7 @@ my $res = GetOptions("help"      => \$help,
                      "I"         => \$QV_ILLUMINA,
                      "q=n"       => \$QV_READ,
                      "check"     => \$CHECK_DIST,
+                     "allow"     => \$ALLOW_DIFF,
                      "max=n"     => \$MAX_DIST,
                      "min=n"     => \$MIN_DIST,
                      "dup=n"     => \$DUP_WIGGLE,
@@ -85,6 +87,7 @@ if ($help)
   print "  -check      : Only accept alignments with proper orientation and distance\n";
   print "  -min <n>    : Only accept alignments at least this far apart (default: $MIN_DIST)\n";
   print "  -max <n>    : Only accept alignments less than this far apart (default: $MAX_DIST)\n";
+  print "  -allow      : Also allow alignments to separate sequences\n";
   print "\n";
   print "rmdup: remove duplicates\n";
   print "  -dup <n>    : Filter duplicates with coordinates within this distance (default: $DUP_WIGGLE)\n";
@@ -360,6 +363,7 @@ sub matchBed
 
   my $printed = 0;
   my $matched = 0;
+  my $allowdiff = 0;
 
   print " scanning $bed2... ";
 
@@ -405,6 +409,14 @@ sub matchBed
             }
           }
         }
+        else
+        {
+          if ($ALLOW_DIFF)
+          {
+            $allowdiff++;
+            $doprint = 1;
+          }
+        }
       }
 
       if ($doprint) 
@@ -421,12 +433,12 @@ sub matchBed
   my $perc2 = sprintf("%0.02f", 100*$matched / $cnt2);
 
   print "$cnt2 reads\n";
-  print " matched: $matched ($perc1% of fq1 $perc2% of fq2\n";
+  print " matched: $matched ($perc1% of fq1 $perc2% of fq2)\n";
 
   if ($CHECK_DIST)
   {
     my $percp = sprintf("%0.02f", 100*$printed / $matched);
-    print " passed: $printed of $matched ($percp%)\n";
+    print " passed: $printed of $matched ($percp%), $allowdiff aligned to different sequences\n";
   }
 
   print "\n";
