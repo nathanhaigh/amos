@@ -416,6 +416,10 @@ sub matchBed
             $allowdiff++;
             $doprint = 1;
           }
+          else
+          {
+            $doprint = 0;
+          }
         }
       }
 
