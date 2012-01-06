@@ -28,6 +28,7 @@ my $CHECK_DIST = 0;
 my $MIN_DIST = 0;
 my $MAX_DIST = 0;
 my $ALLOW_DIFF = 0;
+my $INVALID = undef;
 
 my $DUP_WIGGLE = 2;
 
@@ -50,6 +51,7 @@ my $res = GetOptions("help"      => \$help,
                      "I"         => \$QV_ILLUMINA,
                      "q=n"       => \$QV_READ,
                      "check"     => \$CHECK_DIST,
+                     "invalid=s" => \$INVALID,
                      "allow"     => \$ALLOW_DIFF,
                      "max=n"     => \$MAX_DIST,
                      "min=n"     => \$MIN_DIST,
@@ -65,36 +67,37 @@ if ($help)
   print "scaffolding.\n";
   print "\n";
   print "Required\n";
-  print "  prefix      : prefix for output files\n";
-  print "  ref.fa      : path to reference genome\n";
-  print "  fq1         : path to first read\n";
-  print "  fq2         : path to second read\n";
+  print "  prefix       : prefix for output files\n";
+  print "  ref.fa       : path to reference genome\n";
+  print "  fq1          : path to first read\n";
+  print "  fq2          : path to second read\n";
   print "\n";
   print "Options\n";
-  print " -stage <s>   : stage to start at [align,match,rmdup,genreads] (default: $stage)\n";
+  print " -stage <s>    : stage to start at [align,match,rmdup,genreads] (default: $stage)\n";
   print "\n";
   print "align: align reads to assembly\n";
-  print "  -reads <n>  : align first n pairs (default: $numreads)\n";
-  print "  -suffix     : Add /1 and /2 suffix to reads\n";
-  print "  -rc         : reverse complement the reads before alignment\n";
-  print "  -qv <n>     : bwa quality soft quality trim (default: $QV_TRIM)\n";
-  print "  -thread <n> : number of threads for bwa (default: $THREADS)\n";
-  print "  -trim <n>   : hard trim 3' value (default: $HARD_TRIM)\n";
-  print "  -I          : read quality values are Illumina format\n";
+  print "  -reads <n>   : align first n pairs (default: $numreads)\n";
+  print "  -suffix      : Add /1 and /2 suffix to reads\n";
+  print "  -rc          : reverse complement the reads before alignment\n";
+  print "  -qv <n>      : bwa quality soft quality trim (default: $QV_TRIM)\n";
+  print "  -thread <n>  : number of threads for bwa (default: $THREADS)\n";
+  print "  -trim <n>    : hard trim 3' value (default: $HARD_TRIM)\n";
+  print "  -I           : read quality values are Illumina format\n";
   print "\n";
   print "match: select pairs that align and are correctly separated\n";
-  print "  -mapq <n>   : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
-  print "  -check      : Only accept alignments with proper orientation and distance\n";
-  print "  -min <n>    : Only accept alignments at least this far apart (default: $MIN_DIST)\n";
-  print "  -max <n>    : Only accept alignments less than this far apart (default: $MAX_DIST)\n";
-  print "  -allow      : Also allow alignments to separate sequences\n";
+  print "  -mapq <n>    : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
+  print "  -check       : Only accept alignments with proper orientation and distance\n";
+  print "  -min <n>     : Only accept alignments at least this far apart (default: $MIN_DIST)\n";
+  print "  -max <n>     : Only accept alignments less than this far apart (default: $MAX_DIST)\n";
+  print "  -allow       : Also allow alignments to separate sequences\n";
+  print "  -invalid <f> : Save invalid pairs to file f\n";
   print "\n";
   print "rmdup: remove duplicates\n";
-  print "  -dup <n>    : Filter duplicates with coordinates within this distance (default: $DUP_WIGGLE)\n";
+  print "  -dup <n>     : Filter duplicates with coordinates within this distance (default: $DUP_WIGGLE)\n";
   print "\n";
   print "genreads: extract new reads\n";
-  print "  -q <n>      : quality value to assign to read bases (default: $QV_READ)\n";
-  print "  -len <n>    : extend to this length (default: $READLEN)\n";
+  print "  -q <n>       : quality value to assign to read bases (default: $QV_READ)\n";
+  print "  -len <n>     : extend to this length (default: $READLEN)\n";
 
   exit 0;
 }
@@ -334,6 +337,13 @@ sub matchBed
   open BEDPE, "> $bedpe" or die "Can't open $bedpe ($!)\n";
 
   print "matchBed\n";
+
+  if (defined $INVALID)
+  {
+    print "  saving invalid alignments to $INVALID\n";
+    open INVALID, "> $INVALID" or die "Can't open $INVALID ($!)\n";
+  }
+
   print " scanning $bed1... ";
 
   my %coords;
@@ -427,6 +437,10 @@ sub matchBed
       { 
         $printed++;
         print BEDPE "$base\t$ref1\t$s1\t$e1\t$d1\t$ref2\t$s2\t$e2\t$d2\n";
+      }
+      elsif (defined $INVALID)
+      {
+        print INVALID "$base\t$ref1\t$s1\t$e1\t$d1\t$ref2\t$s2\t$e2\t$d2\n";
       }
     }
   }
