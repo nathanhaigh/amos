@@ -2,7 +2,7 @@
 
 #include "Align_Utils.hh"
 
-namespace Bundler
+namespace Output 
 {
 
 bool hasValidOverlap(
@@ -56,9 +56,9 @@ bool hasValidOverlap(
    }
 
    bool aligns = false;
-   int32_t numErrors = (int32_t) (roundf((Bundler::ERROR_RATE)* ((float)ovlEnd-ovlStart)));
-   if (numErrors < 0 && ovlStart >= ovlEnd) { numErrors = (int32_t)(roundf((Bundler::ERROR_RATE)*2*Bundler::OVL_WIGGLE)); }
-   int32_t gapWiggle = (ovlStart >= ovlEnd ? Bundler::OVL_WIGGLE*2 : Bundler::OVL_WIGGLE);
+   int32_t numErrors = (int32_t) (roundf((Output::ERROR_RATE)* ((float)ovlEnd-ovlStart)));
+   if (numErrors < 0 && ovlStart >= ovlEnd) { numErrors = (int32_t)(roundf((Output::ERROR_RATE)*2*Output::OVL_WIGGLE)); }
+   int32_t gapWiggle = (ovlStart >= ovlEnd ? Output::OVL_WIGGLE*2 : Output::OVL_WIGGLE);
 
    if (contained) {
       int count = 0;
@@ -79,11 +79,11 @@ bool hasValidOverlap(
    aligns = Overlap_Match_VS(second->c_str(), second->length(), first->c_str(), first->length(),
                            Max(0, (int32_t)Min(ovlStart, ovlEnd) - (int32_t)offset - gapWiggle), 
                            maxPos, //Min(maxPos, (int)Min(ovlStart, ovlEnd) - (int32_t)offset + gapWiggle),
-                           Bundler::MIN_OVERLAP, numErrors, ali);
+                           Output::MIN_OVERLAP, numErrors, ali);
 
     // check if this overlap is acceptable
     int32_t ovlSize = Min(ali.a_hi - ali.a_lo, ali.b_hi - ali.b_lo);
-    if (ovlSize < Bundler::MIN_OVERLAP || ali.errors > Bundler::ERROR_RATE*(float)(ovlSize)) {
+    if (ovlSize < Output::MIN_OVERLAP || ali.errors > Output::ERROR_RATE*(float)(ovlSize)) {
        aligns = false;
     }
     if (contained && (ali.a_hi-ali.a_lo != second->length() && ali.b_hi-ali.b_lo != first->length())) {

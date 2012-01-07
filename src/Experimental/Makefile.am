@@ -38,6 +38,7 @@ dist_bin_SCRIPTS = \
   alignextend.pl \
   autoJoiner.pl \
   blasr_alignquality.pl \
+  blasr_cns_accuracy.pl \
   bwape.pl \
   check_ce.pl \
   coords_best.pl \
@@ -49,6 +50,7 @@ dist_bin_SCRIPTS = \
   fasta_filter_dups.pl \
   fastq_to_mates.pl \
   link2reads.pl \
+  matchpairs.pl \
   patchassembly.pl \
   persistent-assembly.pl \
   persistent-fix.pl \

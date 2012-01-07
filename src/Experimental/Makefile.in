@@ -304,6 +304,8 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 NUCMER = @NUCMER@
 OBJEXT = @OBJEXT@
+OPENMP_CXXFLAGS = @OPENMP_CXXFLAGS@
+OPENMP_LDFLAGS = @OPENMP_LDFLAGS@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -375,6 +377,9 @@ target_alias = @target_alias@
 tigrincludedir = @tigrincludedir@
 tigrlibdir = @tigrlibdir@
 dist_bin_SCRIPTS = \
+  SOAPdenovo_readlist_to_config.pl \
+  SOAPdenovo_mapscaff.sh \
+  SOAPdenovo_prepare.sh \
   aj_evaluateSequenceOverlaps.pl \
   aj_joinContigs.pl \
   aj_lowcomplexityfilter.pl \
@@ -385,6 +390,7 @@ dist_bin_SCRIPTS = \
   alignextend.pl \
   autoJoiner.pl \
   blasr_alignquality.pl \
+  blasr_cns_accuracy.pl \
   bwape.pl \
   check_ce.pl \
   coords_best.pl \
@@ -396,6 +402,7 @@ dist_bin_SCRIPTS = \
   fasta_filter_dups.pl \
   fastq_to_mates.pl \
   link2reads.pl \
+  matchpairs.pl \
   patchassembly.pl \
   persistent-assembly.pl \
   persistent-fix.pl \

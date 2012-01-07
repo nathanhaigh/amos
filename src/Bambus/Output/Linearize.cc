@@ -20,7 +20,7 @@
 #include "Utilities_Bundler.hh"
 #include "Output_Utils.hh"
 
-#include "Motif_Utils.hh"
+#include "Motif_Sequence.hh"
 #include "Align_Utils.hh"
 
 using namespace std;
@@ -59,15 +59,15 @@ void linearizeScaffolds(std::vector<Scaffold_t> &scaffs,
 
          std::set<AMOS::ID_t>* s = ctg2conflict[tileIt->source];
          if (s == NULL) { s = new std::set<AMOS::ID_t>(); ctg2conflict[tileIt->source] = s;}
-         string currCtg = Bundler::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileIt->source, tileIt->range);
+         string currCtg = Output::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileIt->source, tileIt->range);
 
          for (std::vector<AMOS::Tile_t>::const_iterator tilePrev = itScf->getContigTiling().begin(); tilePrev < tileIt; ++tilePrev) {
             if (tilePrev->offset + (tilePrev->range.getLength() - 1) > tileIt->offset) {
                bool aligns = false;
                std::pair<AMOS::ID_t, AMOS::ID_t> ctgPair(Min(tileIt->source, tilePrev->source), Max(tileIt->source, tilePrev->source));
                if (checkedPairs.find(ctgPair) == checkedPairs.end()) {
-                  string otherCtg = Bundler::getTileSequence(contig_bank, motif_bank, edge_bank, max, tilePrev->source, tilePrev->range);
-                  aligns = Bundler::hasValidOverlap(currCtg, otherCtg, Min(tileIt->offset, tilePrev->offset), tileIt->offset, tileIt->offset + tileIt->range.getLength() - 1, tilePrev->offset, tilePrev->offset + tilePrev->range.getLength() - 1, contained, ali); 
+                  string otherCtg = Output::getTileSequence(contig_bank, motif_bank, edge_bank, max, tilePrev->source, tilePrev->range);
+                  aligns = Output::hasValidOverlap(currCtg, otherCtg, Min(tileIt->offset, tilePrev->offset), tileIt->offset, tileIt->offset + tileIt->range.getLength() - 1, tilePrev->offset, tilePrev->offset + tilePrev->range.getLength() - 1, contained, ali); 
                   checkedPairs[ctgPair] = aligns;
                } else {
                   aligns = checkedPairs[ctgPair];
@@ -86,8 +86,8 @@ void linearizeScaffolds(std::vector<Scaffold_t> &scaffs,
             std::pair<AMOS::ID_t, AMOS::ID_t> ctgPair(Min(tileIt->source, tileNext->source), Max(tileIt->source, tileNext->source));
 
             if (checkedPairs.find(ctgPair) == checkedPairs.end()) {
-               string otherCtg = Bundler::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileNext->source, tileNext->range);
-               aligns = Bundler::hasValidOverlap(currCtg, otherCtg, Min(tileIt->offset, tileNext->offset), tileIt->offset, tileIt->offset + tileIt->range.getLength() - 1, tileNext->offset, tileNext->offset + tileNext->range.getLength() - 1, contained, ali);
+               string otherCtg = Output::getTileSequence(contig_bank, motif_bank, edge_bank, max, tileNext->source, tileNext->range);
+               aligns = Output::hasValidOverlap(currCtg, otherCtg, Min(tileIt->offset, tileNext->offset), tileIt->offset, tileIt->offset + tileIt->range.getLength() - 1, tileNext->offset, tileNext->offset + tileNext->range.getLength() - 1, contained, ali);
                checkedPairs[ctgPair] = aligns;
             } else {
                aligns = checkedPairs[ctgPair];

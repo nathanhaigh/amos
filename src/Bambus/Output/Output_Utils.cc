@@ -13,7 +13,8 @@
 #include "Scaffold_AMOS.hh"
 #include "Motif_AMOS.hh"
 
-namespace Bundler
+using namespace Bundler;
+namespace Output 
 {
 AMOS::Bank_t *global_edge_bank = NULL;
 

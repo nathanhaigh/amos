@@ -96,7 +96,7 @@ namespace Bundler
             Graph &g, 
             AMOS::BankStream_t &contig_stream, AMOS::BankStream_t &edge_stream, 
             AMOS::IBankable_t *node, AMOS::IBankable_t *edge,
-            int32_t redundancy);
+            int32_t redundancy, bool weighted);
 
    // get edge statuses
    // note: edge status are cached in memory so they must be updated through setEdgeStatus

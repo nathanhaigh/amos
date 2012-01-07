@@ -7,7 +7,7 @@
 #include "BankStream_AMOS.hh"
 #include "align.hh"
 
-namespace Bundler
+namespace Output 
 {
    enum outputType{AGP, DOT, MOTIFS, BAMBUS};
 

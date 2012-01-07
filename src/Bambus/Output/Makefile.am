@@ -4,6 +4,7 @@ include $(top_srcdir)/config/amos.mk
 ##-- TO BE INSTALLED
 bin_PROGRAMS = \
 	OutputMotifs \
+	RankMotifs \
 	OutputScaffolds \
 	Linearize \
         OutputResults
@@ -31,7 +32,16 @@ OutputMotifs_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 OutputMotifs_SOURCES = \
-	Position.cc Position.hh Align_Utils.cc Align_Utils.hh Motif_Utils.cc Motif_Utils.hh OutputMotifs.cc
+	Position.cc Position.hh Align_Utils.cc Align_Utils.hh Motif_Utils.cc Motif_Utils.hh Motif_Sequence.cc Motif_Sequence.hh OutputMotifs.cc
+
+##-- RankMotifs \
+RankMotifs_LDADD = \
+	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
+	$(top_builddir)/src/Common/libCommon.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/GNU/libGNU.a
+RankMotifs_SOURCES = \
+	Motif_Utils.cc Motif_Utils.hh RankMotifs.cc
 
 ##-- OutputScaffolds \
 OutputScaffolds_LDADD = \
@@ -43,7 +53,7 @@ OutputScaffolds_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 OutputScaffolds_SOURCES = \
-	Position.cc Position.hh Align_Utils.cc Align_Utils.hh Motif_Utils.cc Motif_Utils.hh OutputScaffolds.cc
+	Position.cc Position.hh Align_Utils.cc Align_Utils.hh Motif_Utils.cc Motif_Utils.hh Motif_Sequence.cc Motif_Sequence.hh OutputScaffolds.cc
 
 OutputResults_LDADD = \
 	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
@@ -62,6 +72,6 @@ Linearize_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
 Linearize_SOURCES = \
-	Position.cc Position.hh Align_Utils.cc Align_Utils.hh Motif_Utils.cc Motif_Utils.hh Linearize.cc
+	Position.cc Position.hh Align_Utils.cc Align_Utils.hh Motif_Utils.cc Motif_Utils.hh Motif_Sequence.cc Motif_Sequence.hh Linearize.cc
 
 ##-- END OF MAKEFILE --##
