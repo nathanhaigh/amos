@@ -1,6 +1,32 @@
 #!/usr/bin/perl
 use strict;
 use FileHandle;
+use Getopt::Long;
+
+## Options
+my $help  = 0;
+my $USAGE = "fasta_filter_dups <options> reads.fa\n"; 
+
+my $CHECK_DUPS = 0;
+
+my $res = GetOptions("help"      => \$help,
+                     "dups"      => \$CHECK_DUPS,
+                     );
+ 
+if ($help || !$res)
+{
+  print $USAGE;
+  print "\n";
+  print " Scans a fasta file of pacbio reads and splits them SMRTcell specific files\n";
+  print " Also can remove duplicated reads while printing\n";
+  print "\n";
+  print "Required\n";
+  print "  reads.fa  : path to reference genome (must be indexed with bwa)\n";
+  print "\n";
+  print "Options\n";
+  print "  -dups     : check for duplicated reads\n";
+  exit 0;
+}
 
 my %reads;
 my %files;
@@ -13,6 +39,7 @@ my $doprint = 0;
 
 my $allreads = 0;
 my $printedreads = 0;
+
 
 while (<>)
 {
@@ -28,10 +55,11 @@ while (<>)
     my $fullname = $1;
     my @fields = split /\//, $fullname;
 
-    my $basename = $fields[0];
-    my $readid   = $fields[1];
-    my $range    = $fields[2];
-    #print "$basename $readid $range\n";
+    my $basename  = $fields[0];
+    my $readid    = $fields[1];
+    my $range     = $fields[2];
+
+   # print "$basename $readid $range\n";
 
     if ($basename ne $curbase)
     {
@@ -44,12 +72,21 @@ while (<>)
       $curbase = $basename;
     }
 
-    $doprint = 0;
-    $reads{$basename}->{$readid}->{$range}++;
+    $doprint = 1;
 
-    if ($reads{$basename}->{$readid}->{$range} == 1)
+    if ($CHECK_DUPS)
     {
-      $doprint = 1;
+      $doprint = 0;
+      $reads{$basename}->{$readid}->{$range}++;
+
+      if ($reads{$basename}->{$readid}->{$range} == 1)
+      {
+        $doprint = 1;
+        $printedreads++;
+      }
+    }
+    else
+    {
       $printedreads++;
     }
   }
