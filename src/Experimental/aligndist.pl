@@ -170,8 +170,15 @@ if ($showdetails)
   print "#base\t|\trid\t|\ts1\te1\tf1\t|\ts2\te2\tf2\t||\td\t||\tfull1\t||\tfull2\n";
 }
 
+my $misoriented = 0;
+my $totalpairs = 0;
+my $multipairs = 0;
+my $unaligned = 0;
+
 foreach my $base (keys %match)
 {
+  $totalpairs++;
+
   if (scalar @{$match{$base}} == 2)
   {
     my $i1 = $match{$base}->[0];
@@ -203,7 +210,19 @@ foreach my $base (keys %match)
 
         $stats->add_data($d);
       }
+      else
+      {
+        $misoriented++;
+      }
     }
+    else
+    {
+      $unaligned++;
+    }
+  }
+  else
+  {
+    $multipairs++;
   }
 }
 
@@ -221,7 +240,7 @@ my $stdev  = sprintf("%0.01f", $stats->standard_deviation());
 my $median=$stats->median();
 my $trim = sprintf("%0.01f", $stats->trimmed_mean($trimmean));
 
-print STDERR "## $prefix aligned pairs=$num dist: [$min, $max] $mean +/- $stdev";
+print STDERR "## $prefix total_pairs=$totalpairs multipairs=$multipairs unaligned=$unaligned misoriented=$misoriented good_pairs=$num dist: [$min, $max] $mean +/- $stdev";
 print STDERR " median=$median";
 print STDERR " trimmean=$trim";
 print STDERR "\n";
