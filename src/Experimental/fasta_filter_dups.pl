@@ -40,7 +40,6 @@ my $doprint = 0;
 my $allreads = 0;
 my $printedreads = 0;
 
-
 while (<>)
 {
   if (/>(\S+)/)
@@ -53,22 +52,18 @@ while (<>)
     }
 
     my $fullname = $1;
-    my @fields = split /\//, $fullname;
+    my ($basename, $readid, $range) = split /\//, $fullname;
 
-    my $basename  = $fields[0];
-    my $readid    = $fields[1];
-    my $range     = $fields[2];
-
-   # print "$basename $readid $range\n";
+    print "$basename $readid $range\n";
 
     if ($basename ne $curbase)
     {
       if (!exists $files{$basename})
       {
-        $files{$basename} = FileHandle->new("> $basename.fa");
+        $files{$basename}->{fh} = FileHandle->new("> $basename.fa");
       }
 
-      $curfh = $files{$basename};
+      $curfh = $files{$basename}->{fh};
       $curbase = $basename;
     }
 
@@ -82,12 +77,14 @@ while (<>)
       if ($reads{$basename}->{$readid}->{$range} == 1)
       {
         $doprint = 1;
-        $printedreads++;
       }
     }
-    else
+
+    $files{$basename}->{all}++;
+    if ($doprint)
     {
       $printedreads++;
+      $files{$basename}->{printed}++;
     }
   }
 
@@ -97,3 +94,15 @@ while (<>)
 my $numfiles = scalar keys %files;
 
 print STDERR "Printed $printedreads of $allreads into $numfiles files\n";
+
+foreach my $fn (sort keys %files)
+{
+  my $all = $files{$fn}->{all};
+  my $p   = $files{$fn}->{printed};
+
+  my $pp = sprintf("%0.02f", 100*$p/$all);
+
+  print "$fn\t$all\t$p\t$pp\n";
+}
+
+
