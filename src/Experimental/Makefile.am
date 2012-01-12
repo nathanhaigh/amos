@@ -47,6 +47,7 @@ dist_bin_SCRIPTS = \
   ctg_gc.pl \
   extractFasta.pl \
   fasta_filter_raw.pl \
+  fasta_trim.pl \
   fasta_filter_dups.pl \
   fastq_to_mates.pl \
   link2reads.pl \
