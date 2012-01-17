@@ -353,6 +353,7 @@ int main (int argc, char *argv[])
           msg.getNumFrags (), gma, msg, string_list,
           qual_list, clr_list, tag_list, contig_bank);
 
+
         // Cleanup before next layout to make valgrind happy on last layout
         // Otherwise happens in Get_Strings_And_Offsets
         {
@@ -375,7 +376,9 @@ int main (int argc, char *argv[])
 
         contig_ct++;
       }                  // while layout
+
       cerr << "Processed " << layout_id << " layouts" << endl;
+
     } // end of amos bank processing
     else if (Input_Format == SIMPLE_CONTIG_INPUT
           || Input_Format == PARTIAL_READ_INPUT)
