@@ -49,6 +49,7 @@ dist_bin_SCRIPTS = \
   fasta_filter_raw.pl \
   fasta_trim.pl \
   fasta_filter_dups.pl \
+  fasta_filter_bestsubread.pl \
   fastq_to_mates.pl \
   link2reads.pl \
   matchpairs.pl \
