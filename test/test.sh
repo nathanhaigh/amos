@@ -4,6 +4,7 @@ cd test_cases
 cases=`ls -1 *.tc`
 
 final_result=0
+test_result=0
 
 for case in $cases; 
 do
@@ -19,5 +20,6 @@ done
 if [ $final_result -ne 0 ]
 then
     cat *.runAmos.log
+    exit $test_result
 fi
 exit $final_result
