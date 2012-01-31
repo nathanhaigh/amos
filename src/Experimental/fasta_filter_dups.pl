@@ -8,9 +8,11 @@ my $help  = 0;
 my $USAGE = "fasta_filter_dups <options> reads.fa\n"; 
 
 my $CHECK_DUPS = 0;
+my $VERBOSE = 0;
 
 my $res = GetOptions("help"      => \$help,
                      "dups"      => \$CHECK_DUPS,
+                     "verbose"   => \$VERBOSE,
                      );
  
 if ($help || !$res)
@@ -25,6 +27,7 @@ if ($help || !$res)
   print "\n";
   print "Options\n";
   print "  -dups     : check for duplicated reads\n";
+  print "  -verbose  : be verbose with output\n";
   exit 0;
 }
 
@@ -40,6 +43,7 @@ my $doprint = 0;
 my $allreads = 0;
 my $printedreads = 0;
 
+
 while (<>)
 {
   if (/>(\S+)/)
@@ -54,7 +58,6 @@ while (<>)
     my $fullname = $1;
     my ($basename, $readid, $range) = split /\//, $fullname;
 
-    print "$basename $readid $range\n";
 
     if ($basename ne $curbase)
     {
@@ -79,6 +82,8 @@ while (<>)
         $doprint = 1;
       }
     }
+
+    print "$basename $readid $range $doprint\n" if $VERBOSE;
 
     $files{$basename}->{all}++;
     if ($doprint)
