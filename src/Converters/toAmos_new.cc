@@ -227,7 +227,7 @@ bool GetOptions (int argc, char ** argv)
         {0,           0,                         0, 0}
       };
       
-      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:iI:k:q:s:Q:M:G:B:p:SCUFLt:", long_options, &option_index);
+      ch = getopt_long(argc, argv, "hlb:m:c:f:x:a:t:iI:N:X:k:q:s:Q:M:G:B:p:SCUFLt:", long_options, &option_index);
       if (ch == -1)
         break;
 
@@ -1044,14 +1044,14 @@ bool parseMatesFile(ifstream &matesFile) {
     frag_stream.append(frag);
 
     // also update the reads
-    //Read_t read;
-    //read_stream.fetch(read1, read);
-    //read.setFragment(frag.getIID());
-    //read_stream.replace(read.getIID(), read);
+    Read_t read;
+    read_stream.fetch(read1, read);
+    read.setFragment(frag.getIID());
+    read_stream.replace(read.getIID(), read);
 
-    //read_stream.fetch(read2, read);
-    //read.setFragment(frag.getIID());
-    //read_stream.replace(read.getIID(), read);
+    read_stream.fetch(read2, read);
+    read.setFragment(frag.getIID());
+    read_stream.replace(read.getIID(), read);
     counter++;
    }
 }
