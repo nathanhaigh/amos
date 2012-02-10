@@ -7,6 +7,7 @@
 #include <limits>
 #include <string>
 #include <iostream>
+#include <map>
 
 #include "fasta.hh"
 #include "datatypes_AMOS.hh"
@@ -22,6 +23,7 @@
 #include "Motif_Sequence.hh"
 #include "Motif_Utils.hh"
 
+using namespace HASHMAP;
 using namespace std;
 using namespace AMOS;
 
@@ -142,7 +144,9 @@ int main(int argc, char *argv[]) {
 
    set<Output::MotifStats, Output::MotifOrderCmp> motifs;
    Motif_t scf;
+   hash_map<ID_t, Motif_t, hash<ID_t>, equal_to<ID_t> > motifLayouts;
    Output::MotifStats stat;
+   
    for (AMOS::IDMap_t::const_iterator ci = motif_bank.getIDMap().begin(); ci; ci++) {
         motif_bank.fetch(ci->iid, scf);
         if (scf.getStatus() != Bundler::MOTIF_SCAFFOLD && !globals.allMotifs) {
@@ -151,14 +155,16 @@ int main(int argc, char *argv[]) {
         Output::getMotifStats(scf, edge_bank, stat);
 
         // now store the info on the motif
+        stat.id = scf.getIID();
         stat.name = scf.getEID();
         if (stat.name == "") { stat.name = scf.getIID(); }
         motifs.insert(stat);
+
+        motifLayouts[scf.getIID()] = scf;
    }
 
-   string name;
    for (set<Output::MotifStats, Output::MotifOrderCmp>::const_iterator i = motifs.begin(); i != motifs.end(); i++) {
-	   Output::outputMotif(name, scf, motif_bank, contig_bank, edge_bank);
+	   Output::outputMotif((std::string&)i->name, motifLayouts[i->id], motif_bank, contig_bank, edge_bank);
    }
 
    edge_bank.close();

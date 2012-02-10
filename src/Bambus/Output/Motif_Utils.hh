@@ -38,6 +38,7 @@ typedef uint32_t Graph;
 
    struct MotifStats {
       std::string name;
+      AMOS::ID_t id;
       uint32_t length;
       double   overlapRatio;
       uint32_t edgeRatio;
