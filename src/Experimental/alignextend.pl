@@ -30,6 +30,8 @@ my $MAX_DIST = 0;
 my $ALLOW_DIFF = 0;
 my $INVALID = undef;
 
+my $SKIPGEN = 0;
+
 my $DUP_WIGGLE = 2;
 
 my $stage = "all";
@@ -56,7 +58,8 @@ my $res = GetOptions("help"      => \$help,
                      "max=n"     => \$MAX_DIST,
                      "min=n"     => \$MIN_DIST,
                      "dup=n"     => \$DUP_WIGGLE,
-                     "stage=s"   => \$stage);
+                     "stage=s"   => \$stage,
+                     "skipgen"   => \$SKIPGEN);
  
 if ($help)
 {
@@ -96,6 +99,7 @@ if ($help)
   print "  -dup <n>     : Filter duplicates with coordinates within this distance (default: $DUP_WIGGLE)\n";
   print "\n";
   print "genreads: extract new reads\n";
+  print "  -skipgen     : Don't extract new reads\n";
   print "  -q <n>       : quality value to assign to read bases (default: $QV_READ)\n";
   print "  -len <n>     : extend to this length (default: $READLEN)\n";
 
@@ -192,6 +196,9 @@ if (($stage eq "all") || ($stage eq "rmdup"))
   $stage = "all";
   filterDups("$prefix.bedpe", "$prefix.rmdup.bedpe");
 }
+
+
+if ($SKIPGEN) { exit 0; }
 
 if (($stage eq "all") || ($stage eq "genreads"))
 {
