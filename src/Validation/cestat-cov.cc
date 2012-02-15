@@ -327,6 +327,7 @@ int main (int argc, char ** argv)
       long t;
       char u;
 
+      cerr << "expected mean: " << OPT_CE_mean << " expected stdev: " << OPT_CE_stdev << endl;
       cerr << "acceptable range: " << OPT_CE_mean - OPT_CE_range * OPT_CE_stdev << " - " << OPT_CE_mean + OPT_CE_range * OPT_CE_stdev << endl;
 
       vector<insert> inserts;
@@ -466,7 +467,7 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hif:svSl:Bm:d:r:")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hif:svSl:Bm:d:r:R")) != EOF) )
     switch (ch)
       {
       case 'h': PrintHelp (argv[0]); exit (EXIT_SUCCESS); break;
@@ -480,6 +481,8 @@ void ParseArgs (int argc, char ** argv)
       case 'f': OPT_Features = atof(optarg); break; 
       case 'l': OPT_MIN_LEN = atoi(optarg); break;
       case 's': OPT_BankSpy = true; break; 
+      case 'R': OPT_COMPUTE_MEAN = true; break; 
+
       case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
 
 
@@ -514,6 +517,7 @@ void PrintHelp (const char * s)
     << "  -h       Display help information\n"
     << "  -v       Display the compatible bank version\n"
     << "  -s       Disregard bank locks and write permissions (spy mode)\n"
+    << "  -R       Recompute mean and stdev from data\n"
     << "\n"
     << "Bank Options\n"
     << "  -i       Dump scaffold/contig IIDs instead of EIDs\n"
