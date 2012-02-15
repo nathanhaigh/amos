@@ -40,7 +40,9 @@ if ($help || !$res)
 my $fastafile = shift @ARGV or die $USAGE;
 my $numevents = shift @ARGV or die $USAGE;
 
-srand($randseed);
+my @rr = split //, $randseed;
+my $rrr = 0; foreach (@rr) { $rrr += ord($_); } 
+srand($rrr);
 #random_set_seed_from_phrase($randseed);
 
 open REPORT, "> $prefix.report"
@@ -172,7 +174,7 @@ for (my $i = 0; $i < $numevents; $i++)
   my $type = $i % $numtypes;
   my $pos  = int(rand($totalspan));
   #my $len  = int(random_normal(1, $eventmean, $eventstdev));
-  my $len = $eventmean + ((rand()+rand()+rand()+rand()+rand()+rand()) - 3) * $eventstdev;
+  my $len = $eventmean + int(((rand()+rand()+rand()+rand()+rand()+rand()) - 3) * $eventstdev);
   my $copies = 1+int(rand($types{$type}->{maxcopies}));
 
   my $src = -1;

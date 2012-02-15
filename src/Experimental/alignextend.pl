@@ -175,7 +175,7 @@ if (($stage eq "all") || ($stage eq "align"))
 
     runCmd("prepare fq",   "$prefix.$idx.fq",  "$headcmd $fq $TRIM_CMD > $prefix.$idx.fq");
 
-    runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln -t $THREADS $QV_ILLUMINA -q $QV_TRIM $ref $prefix.$idx.fq -f $prefix.$idx.sai >& $prefix.$idx.sai.log");
+    runCmd("bwa aln",    "$prefix.$idx.sai",   "$BWA aln -t $THREADS $QV_ILLUMINA -q $QV_TRIM -f $prefix.$idx.sai $ref $prefix.$idx.fq >& $prefix.$idx.sai.log");
     runCmd("bwa samse",  "$prefix.$idx.sam",   "$BWA samse -f $samfile $ref $prefix.$idx.sai $prefix.$idx.fq >& $prefix.idx.sam.log");
 
     sam2bed($samfile, $bedfile);
