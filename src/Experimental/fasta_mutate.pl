@@ -20,7 +20,7 @@ my $res = GetOptions("help"         => \$help,
  
 if ($help || !$res)
 {
-  print $USAGE
+  print $USAGE;
   print "\n";
   print "  Mutate a reference genome to include structural variations.\n";
   print "\n";
