@@ -131,13 +131,27 @@ sub interpolate
   return $rpos + $ralen * $qdist / $qalen;
 }
 
+foreach my $qid (keys %qalignments)
+{
+  @{$qalignments{$qid}} = sort {$a->{qstart} <=> $b->{qstart}} @{$qalignments{$qid}};
+}
 
+
+
+my $preva;
+my $starti = 0;
+
+my $ctgcnt = 0;
+my $basesprinted = 0;
 
 while (<CEFILE>)
 {
   if (/^>(\S+)/)
   {
-    print STDERR "Processing $1\n";
+    $ctgcnt++;
+
+    if (($ctgcnt % 1000) == 0) { print STDERR "Processed $ctgcnt sequences\n"; }
+
     next;
   }
 
@@ -155,35 +169,62 @@ while (<CEFILE>)
   my $aprior = undef;
   my $apost  = undef;
 
-  foreach my $a (@{$qalignments{$qid}})
+  if ((defined $preva) && ($qid eq $preva->{qid}))
   {
-    if (($qpos >= $a->{qstart}) && ($qpos <= $a->{qend}))
+    if (($qpos >= $preva->{qstart}) && ($qpos <= $preva->{qend}))
     {
-      $spos = translate($qpos, $a);
-      last;
+      $spos = translate($qpos, $preva);
     }
+  }
+  else
+  {
+    $starti = 0;
+  }
 
-    if ($a->{qend} < $qpos)
+  if (!defined $spos)
+  {
+    #foreach my $a (@{$qalignments{$qid}})
+
+    my @alns = @{$qalignments{$qid}};
+
+    for (my $i = $starti; $i < scalar @alns; $i++)
     {
-      if (!defined $aprior) { $aprior = $a; }
-      else
-      {
-        my $adist = $qpos-$a->{qend};
-        my $pdist = $qpos-$aprior->{qend};
+      my $a = $alns[$i];
 
-        if ($adist < $pdist) { $aprior = $a; }
+      if (($qpos >= $a->{qstart}) && ($qpos <= $a->{qend}))
+      {
+        $spos = translate($qpos, $a);
+        $preva = $a;
+        $starti = $i;
+        last;
       }
-    }
 
-    if ($qpos < $a->{qstart})
-    {
-      if (!defined $apost) { $apost = $a; }
-      else
+      if ($a->{qend} < $qpos)
       {
-        my $adist = $a->{qstart} - $qpos;
-        my $pdist = $apost->{qstart} - $qpos;
+        if (!defined $aprior) { $aprior = $a; }
+        else
+        {
+          my $adist = $qpos-$a->{qend};
+          my $pdist = $qpos-$aprior->{qend};
 
-        if ($adist < $pdist) { $apost = $a; }
+          if ($adist < $pdist) { $aprior = $a; }
+        }
+      }
+
+      if ($qpos < $a->{qstart})
+      {
+        if (!defined $apost) 
+        { 
+          $apost = $a; 
+          last;
+        }
+        else
+        {
+          my $adist = $a->{qstart} - $qpos;
+          my $pdist = $apost->{qstart} - $qpos;
+
+          if ($adist < $pdist) { $apost = $a; }
+        }
       }
     }
   }
@@ -196,14 +237,12 @@ while (<CEFILE>)
     }
   }
 
-  if (defined $spos) { print "$spos\t$ce\t$depth\t$qid\t$qpos\n"; }
+  if (defined $spos) 
+  { 
+    $basesprinted++;
+    print "$spos\t$ce\t$depth\t$qid\t$qpos\n"; 
+  }
 }
 
 
-
-
-
-
-
-
-
+print STDERR "Processed $ctgcnt total sequences, $basesprinted bases printed\n";
