@@ -59,6 +59,11 @@ void computeMotifStats(AMOS::Motif_t &scf, Bank_t &edge_bank, MotifStats& stat) 
        if (nodeToDescriptor.find(cte.getContigs().first) == nodeToDescriptor.end() || nodeToDescriptor.find(cte.getContigs().second) == nodeToDescriptor.end()) {
           continue;
        }
+       if (boost::edge(nodeToDescriptor[cte.getContigs().first], nodeToDescriptor[cte.getContigs().second], g).second || boost::edge(nodeToDescriptor[cte.getContigs().second], nodeToDescriptor[cte.getContigs().first], g).second) {
+          // duplicate edge already exists, avoid adding it to avoid cycles
+          continue;
+       }
+
        pair<Edge, bool> e = boost::add_edge(nodeToDescriptor[cte.getContigs().first], nodeToDescriptor[cte.getContigs().second], g);
       if (stat.minWeight == 0 || stat.minWeight > cte.getContigLinks().size()) {
          stat.minWeight = cte.getContigLinks().size();

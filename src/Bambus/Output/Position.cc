@@ -59,16 +59,22 @@ Position Position::merge(Position &p, std::vector<Position>& edits) {
                 result.oldEnd = (p.oldEnd > oldEnd ? p.oldEnd : oldEnd);
 
                 // adjust position based on where we were supposed to be (preserving originally computed distance)
+                // this happens if one of the sequences we are merging has a larger overlap than we expected
+                // then it will shrink in size and we need to adjust
                 int32_t adjustSecond = 0;
                 if (p.start < start) {
-                   if (p.end != p.oldEnd) {
+                   // when p starts earlier than the current sequence and has changed in size, we need to update current
+                   // the current is only updated when it is not contained
+                   if (p.end != p.oldEnd && oldEnd > p.oldEnd) {
                       adjustSecond = (int32_t)p.end - (int32_t)p.oldEnd;
                       if ((int) start + adjustSecond < 0) { adjustSecond -= ((int)start+adjustSecond); }
                       start += adjustSecond;
                       end += adjustSecond;
                    }
                 } else {
-                   if (end != oldEnd) {
+                   // when the current starts earlier than p and has changed in size, update p
+                   // p is only updated when it is not contained
+                   if (end != oldEnd && p.oldEnd > oldEnd) {
                       adjustSecond = (int32_t)end - (int32_t)oldEnd;
                       if ((int) p.start + adjustSecond < 0) { adjustSecond -= ((int)p.start+adjustSecond); }
                       p.start += adjustSecond;
@@ -76,19 +82,20 @@ Position Position::merge(Position &p, std::vector<Position>& edits) {
                    }
                 }
                 result.end = (p.end > end ? p.end : end);
-
 		uint32_t ovlStart = (p.start > start ? p.start : start);
 		uint32_t ovlEnd = (p.end < end ? p.end : end);
 
-                // when we have an overlap or are close to one, look for it and adjust positions
+                // when we have an overlap or are close to one, use sequence alignment to find it and adjust positions
                 Alignment_t ali;
                 bool contained = false;
                 bool aligns = false;
                 if ((ovlEnd > ovlStart && (ovlEnd-ovlStart) > 0) || (ovlEnd <=ovlStart && ((int32_t)(ovlEnd-ovlStart)+2*Output::OVL_WIGGLE) > 0)) {
                    aligns = Output::hasValidOverlap(p.sequence, sequence, result.start, p.start, p.end, start, end, contained, ali);
                    if (aligns == false && ovlEnd > ovlStart) { // not an overlap
+                      // when it is contained and the nodes do not overlap, skip merging the sequence in and report it separately
                       if (contained) {
                           merge = false;
+                      // again we though they overlap but they don't, make them abut (with a small gap) instead
                       } else {
                          result.end += (ovlEnd - ovlStart)+Output::MIN_OVERLAP;
                          if (p.start == ovlStart) {
@@ -133,7 +140,6 @@ Position Position::merge(Position &p, std::vector<Position>& edits) {
                    edit.editType = Position::REPLACE;
                    edits.push_back(edit);
                 } else {
-                   assert(p.start >= start); 
                    fasta = std::string(result.end - result.start, 'N');
                    result.numGaps = fasta.length();
 
@@ -145,8 +151,17 @@ Position Position::merge(Position &p, std::vector<Position>& edits) {
                    assert(end-start == sequence.length());
                    assert(p.end-p.start == p.sequence.length());
 
-                   if (aligns)
-                      overlap = sequence.substr(ali.b_lo, sequence.length());
+                   if (aligns) {
+                      if (p.start >= start) {
+                         overlap = sequence.substr(ali.b_lo, sequence.length());
+                      } else if (p.start <= start && p.end >= end) { 
+                         overlap = sequence.substr(ali.a_lo, sequence.length());
+                      } else {
+                         cerr << "Unexpected overlap between sequences " << name << " and " << p.name << " which overlap from " << ali.a_lo << " to " << ali.b_lo << endl;
+                         assert(0);
+                         overlap = p.sequence.substr(ali.a_lo, sequence.length());
+                      }
+                   }
 
                 if (overlap.length() > 0) {
 			// get the real overlapping position (those not involving Ns)
