@@ -486,11 +486,11 @@ AC_DEFUN([AMOS_BOOST],
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graphviz.hpp>
-#if BOOST_VERSION / 100000 <= 1 && BOOST_VERSION / 100 % 1000
+#if BOOST_VERSION / 100000 <= 1 && BOOST_VERSION / 100 % 1000 < 49
 #include <boost/interprocess/detail/atomic.hpp>
 #define BOOST_ATOMIC_ADD boost::interprocess::detail::atomic_add32
 #else
-#include <boost/interprocess/ipcdetail/atomic.hpp>
+#include <boost/interprocess/detail/atomic.hpp>
 #define BOOST_ATOMIC_ADD boost::interprocess::ipcdetail::atomic_add32
 #endif
 

@@ -29,14 +29,14 @@
 #include <boost/graph/erdos_renyi_generator.hpp>
 #include <boost/graph/betweenness_centrality.hpp>
 
-#if BOOST_VERSION / 100000 <= 1 && BOOST_VERSION / 100 % 1000
+#if BOOST_VERSION / 100000 <= 1 && BOOST_VERSION / 100 % 1000 < 49
 #include <boost/interprocess/detail/atomic.hpp>
 #define BOOST_ATOMIC_ADD boost::interprocess::detail::atomic_add32
 #define BOOST_ATOMIC_CAS boost::interprocess::detail::atomic_cas32
 #else
-#include <boost/interprocess/ipcdetail/atomic.hpp>
+#include <boost/interprocess/detail/atomic.hpp>
 #define BOOST_ATOMIC_ADD boost::interprocess::ipcdetail::atomic_add32
-#define BOST_ATOMIC_CAS boost::interprocess::detail::atomic_cas32
+#define BOOST_ATOMIC_CAS boost::interprocess::ipcdetail::atomic_cas32
 #endif
 
 #endif //AMOS_HAVE_BOOST
