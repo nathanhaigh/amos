@@ -40,6 +40,7 @@ dist_bin_SCRIPTS = \
 	tarchive2ca.pl \
 	toAmos.pl \
 	toArachne.pl \
+	samtoafg.pl \
 	scaff2fasta.pl \
 	parsecasm.pl \
 	castats.pl \

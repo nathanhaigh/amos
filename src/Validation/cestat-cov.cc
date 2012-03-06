@@ -46,9 +46,9 @@ InsertList_t m_inserts;
 int m_coveragePlot = 0;
 int m_cestats = 1;
 
-double mean  = 2244;
-double stdev = 250;
-double range = 8;
+double OPT_CE_mean  = 2244;
+double OPT_CE_stdev = 250;
+double OPT_CE_range = 8;
 
 void printCEStats(const std::string &id)
 {
@@ -191,7 +191,7 @@ struct sortr
 double Z(double sum, int n)
 {
   if (n == 0) { return 0; }
-  return ((sum/n) - mean) / (stdev / sqrt(n));
+  return ((sum/n) - OPT_CE_mean) / (OPT_CE_stdev / sqrt(n));
 }
 
 void printZ(const string & label, long pos, double sum, int n)
@@ -327,7 +327,8 @@ int main (int argc, char ** argv)
       long t;
       char u;
 
-      cerr << "acceptable range: " << mean - range * stdev << " - " << mean + range * stdev << endl;
+      cerr << "expected mean: " << OPT_CE_mean << " expected stdev: " << OPT_CE_stdev << endl;
+      cerr << "acceptable range: " << OPT_CE_mean - OPT_CE_range * OPT_CE_stdev << " - " << OPT_CE_mean + OPT_CE_range * OPT_CE_stdev << endl;
 
       vector<insert> inserts;
 
@@ -369,7 +370,7 @@ int main (int argc, char ** argv)
           {
             int dist = e2 - s1;
 
-            if (abs(mean - dist) <= (range * stdev))
+            if (abs(OPT_CE_mean - dist) <= (OPT_CE_range * OPT_CE_stdev))
             {
               if (OPT_SHOW_DIST)
               {
@@ -466,42 +467,23 @@ void ParseArgs (int argc, char ** argv)
   int ch, errflg = 0;
   optarg = NULL;
 
-  while ( !errflg && ((ch = getopt (argc, argv, "hif:svSl:B")) != EOF) )
+  while ( !errflg && ((ch = getopt (argc, argv, "hif:svSl:Bm:d:r:R")) != EOF) )
     switch (ch)
       {
-      case 'h':
-        PrintHelp (argv[0]);
-        exit (EXIT_SUCCESS);
-        break;
+      case 'h': PrintHelp (argv[0]); exit (EXIT_SUCCESS); break;
 
-      case 'B':
-        OPT_BEDPE = true;
-        break;
+      case 'B': OPT_BEDPE = true; break; 
+      case 'm': OPT_CE_mean = atof(optarg); break;
+      case 'd': OPT_CE_stdev = atof(optarg); break;
+      case 'r': OPT_CE_range = atoi(optarg); break;
+      case 'i': OPT_IIDs = true; break; 
+      case 'S': OPT_SCAFFOLD = true; break; 
+      case 'f': OPT_Features = atof(optarg); break; 
+      case 'l': OPT_MIN_LEN = atoi(optarg); break;
+      case 's': OPT_BankSpy = true; break; 
+      case 'R': OPT_COMPUTE_MEAN = true; break; 
 
-      case 'i':
-        OPT_IIDs = true;
-        break;
-
-      case 'S':
-        OPT_SCAFFOLD = true;
-        break;
-
-      case 'f':
-        OPT_Features = atof(optarg);
-        break;
-
-      case 'l':
-        OPT_MIN_LEN = atoi(optarg);
-        break;
-
-      case 's':
-	OPT_BankSpy = true;
-	break;
-
-      case 'v':
-	PrintBankVersion (argv[0]);
-	exit (EXIT_SUCCESS);
-	break;
+      case 'v': PrintBankVersion (argv[0]); exit (EXIT_SUCCESS); break;
 
 
       default:
@@ -531,14 +513,23 @@ void PrintHelp (const char * s)
     << "of each insert across each contig separated by library. If scaffold data is \n"
     << "available and -S is specifed, compute along scaffolds.\n"
     << "\n"
-    << "-h       Display help information\n"
-    << "-B       The input is a BEDPE file, not an AMOS bank\n"
-    << "-i       Dump scaffold/contig IIDs instead of EIDs\n"
-    << "-f float Only output CE features outside float deviations\n"
-    << "-l len   Only output features at least this length (default: " << OPT_MIN_LEN << ")\n"
-    << "-s       Disregard bank locks and write permissions (spy mode)\n"
-    << "-S       Consider scaffolds instead of contigs\n"
-    << "-v       Display the compatible bank version\n"
+    << "General Options\n"
+    << "  -h       Display help information\n"
+    << "  -v       Display the compatible bank version\n"
+    << "  -s       Disregard bank locks and write permissions (spy mode)\n"
+    << "  -R       Recompute mean and stdev from data\n"
+    << "\n"
+    << "Bank Options\n"
+    << "  -i       Dump scaffold/contig IIDs instead of EIDs\n"
+    << "  -f float Only output CE features outside float deviations\n"
+    << "  -l len   Only output features at least this length (default: " << OPT_MIN_LEN << ")\n"
+    << "  -S       Consider scaffolds instead of contigs\n"
+    << "\n"
+    << "BEDPE Options\n"
+    << "  -B       The input is a BEDPE file, not an AMOS bank\n"
+    << "  -m mean  Use this as the library mean (default: " << OPT_CE_mean << ")\n"
+    << "  -d std   Use this as the library stdev (default: " << OPT_CE_stdev << ")\n"
+    << "  -r rng   Only use pairs that are within rng deviations from the mean (default: " << OPT_CE_range << ")\n"
     << endl;
 }
 

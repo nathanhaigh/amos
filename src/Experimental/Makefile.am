@@ -50,6 +50,7 @@ dist_bin_SCRIPTS = \
   fasta_trim.pl \
   fasta_filter_dups.pl \
   fasta_filter_bestsubread.pl \
+  fasta_mutate.pl \
   fastq_to_mates.pl \
   link2reads.pl \
   matchpairs.pl \
@@ -58,6 +59,7 @@ dist_bin_SCRIPTS = \
   persistent-fix.pl \
   persistent-plot-breaks.pl \
   persistent-unitig.pl \
+  scale_ce_plot.pl \
   simulatelayout.pl \
   splitscafffa.pl \
   zipalign.pl

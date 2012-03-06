@@ -21,11 +21,13 @@ my $covstart     = undef;
 my $covend       = undef;
 my $covdisp      = 10;
 my $showexactlen = 0;
+my $showmaxexact = 0;
 
 my $res = GetOptions("help"       => \$help,
                      "verbose"    => \$V,
                      "showlayout" => \$showlay,
                      "distlen"    => \$showexactlen,
+                     "showmax"    => \$showmaxexact,
                      "readlen=n"  => \$readlen,
                      "numreads=n" => \$numreads,
                      "erate=s"    => \$erate,
@@ -51,7 +53,8 @@ if ($help || !$res)
   print "Options\n";
   print "  -verbose       : be verbose\n";
   print "  -showlayout    : show layout\n";
-  print "  -distlen       : display the historgram of the distance between errors\n";
+  print "  -distlen       : display the histogram of the distance between errors\n";
+  print "  -showmax       : display the histogram of the per read longest error free sequence\n";
   print "  -seedhist      : display the histogram of max overlap seed length\n";
   print "  -cov <n>       : use this single coverage level (default: $covdisp)\n";
   print "  -covstart <s>  : compute range of coverage values with this lower bound\n";
@@ -281,6 +284,38 @@ for (my $cov = $covstart; $cov <= $covend; $cov++)
     foreach my $s (0..(scalar @exactlens - 1))
     {
       my $c = (defined $exactlens[$s]) ? $exactlens[$s] : 0;
+      print "$s\t$c\n";
+    }
+  }
+
+  if ($showmaxexact)
+  {
+    my @maxexactlens;
+
+    for (my $r = 0; $r < $numreads; $r++)
+    {
+      my $max = 0;
+      my $dist = 0;
+      for (my $i = 0; $i < scalar @{$matrix[$r]}; $i++)
+      {
+        if ($matrix[$r]->[$i] eq ".")
+        {
+          $dist++;
+        }
+        else
+        {
+          if ($dist > $max) { $max = $dist; }
+          $dist=0;
+        }
+      }
+      $maxexactlens[$max]++;
+    }
+
+    print "Max Exact Match Dist\n";
+
+    foreach my $s (0..(scalar @maxexactlens - 1))
+    {
+      my $c = (defined $maxexactlens[$s]) ? $maxexactlens[$s] : 0;
       print "$s\t$c\n";
     }
   }

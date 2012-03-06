@@ -24,14 +24,17 @@ my $result = GetOptions ("match=i"    => \$MIN_MATCH_LEN,
 if ($HELP || !$result)
 {
   print STDERR "\n";
-  print STDERR "alignspanners.pl [options] coords\n";
+  print STDERR "coords2scafflinks.pl [options] coords\n";
   print STDERR "\n";
   print STDERR "  -match <len>    : min match length (default: $MIN_MATCH_LEN)\n";
   print STDERR "  -overhang <len> : max overhang (default: $MAX_OVERHANG)\n";
   print STDERR "  -reads <num>    : min number of supporting reads (default: $MIN_READS)\n";
   print STDERR "  -reflen <len>   : min reference length to consider (default: $MIN_REF_LEN)\n";
-  print STDERR "  -minid <\%id>    : min percent id of alignment (default: $MIN_IDENT)\n";
+  print STDERR "  -minid <\%id>   : min percent id of alignment (default: $MIN_IDENT)\n";
   print STDERR "\n";
+  print STDERR "Bundles with good links will be printed as:\n";
+  print STDERR "++> rid1 [rlen1] -- bestoo bestcnt bestmed bestdist beststd -- rid2 [rlen2] :"; 
+  print STDERR "++ dist\too\t|\tsep\thang\t||\tprid\tpoo\tphang\t||\tcrid\tcoo\tchang\t||\tqid\n";
 
   exit 0;
 }
@@ -45,6 +48,11 @@ print "## MIN_IDENT: $MIN_IDENT\n";
 print "##\n";
 
 ## TODO: repeat checks <- read aligns equally well to multiple locations or kmer screening
+
+
+## Scan alignments, load promising ones at the ends of the sequences into memory
+## This should be a small fraction of the alignments, since most will be interior hits
+###################################################################################################
 
 my %alignments;
 my %edges;
@@ -133,6 +141,10 @@ print  "## Loaded $alnedgecnt of $alncnt alignments\n";
 print  STDERR "Loaded $alnedgecnt of $alncnt alignments\n";
 
 
+
+## Now scan the alignments in memory, and look for alignments that span between at least two sequences
+#######################################################################################################
+
 my $readcnt = 0;
 my $singletoncnt = 0;
 my $paircnt = 0;
@@ -174,7 +186,14 @@ print STDERR "Loaded $edgecnt edges from $readcnt reads, $singletoncnt singleton
 print "\n";
 
 
+## Now scan the edges between reference sequences to evalute the strength of the link
+#############################################################################################################
+
 my $ctgpaircnt = 0;
+my $candidate_links = 0;
+my $valid_links = 0;
+my $potential_bundles = 0;
+my $good_bundles = 0;
 
 foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
 {
@@ -185,8 +204,6 @@ foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
     my @qids = sort @{$edges{$rid1}->{$rid2}};
     my $qidcnt = scalar @qids;
 
-    my @goodspans;
-
     if ($qidcnt >= $MIN_READS)
     {
       $ctgpaircnt++;
@@ -196,10 +213,13 @@ foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
 
       if (($rlen1 >= $MIN_REF_LEN) && ($rlen2 >= $MIN_REF_LEN))
       {
+        my @goodspans;
+
         if (($rlen1 > $rlen2) ||
             (($rlen1 == $rlen2) && ($rid1 lt $rid2)))
         {
           print ">$rid1 [$rlen1] -- $qidcnt -- $rid2 [$rlen2]\n";
+          $candidate_links++;
 
           my $info;
           
@@ -324,6 +344,7 @@ foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
                     $span->{qid}   = $qid;
 
                     push @goodspans, $span;
+                    $valid_links++;
                   }
                 }
               }
@@ -340,6 +361,7 @@ foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
         if (scalar @goodspans)
         {
           my $numspans = scalar @goodspans;
+          $potential_bundles++;
 
           my %bundle;
           foreach my $s (@goodspans)
@@ -356,8 +378,15 @@ foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
             push @{$bundle{$s->{oo}}->{spans}}, $s;
           }
 
-
           my @oos = sort {$bundle{$b}->{cnt} <=> $bundle{$a}->{cnt}} keys %bundle;
+
+          my $STATUS = "WEAK";
+
+          if (scalar @goodspans >= $MIN_READS)
+          {
+            $STATUS = "GOOD";
+            $good_bundles++;
+          }
 
           my $bestoo  = $oos[0];
           my $bestcnt = $bundle{$oos[0]}->{cnt};
@@ -365,7 +394,7 @@ foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
           my $beststd  = sprintf("%0.02f", $bestcnt > 1 ? $bundle{$oos[0]}->{stats}->standard_deviation() : 0);
           my $bestmed  = sprintf("%0.02f", $bundle{$oos[0]}->{stats}->median());
 
-          print "++> $rid1 [$rlen1] -- $bestoo $bestcnt $bestmed $bestdist $beststd -- $rid2 [$rlen2] :"; 
+          print "++> $STATUS $rid1 [$rlen1] -- $bestoo $bestcnt $bestmed $bestdist $beststd -- $rid2 [$rlen2] :"; 
 
           foreach my $oo (@oos)
           {
@@ -393,9 +422,5 @@ foreach my $rid1 (sort {$rinfo{$b}->{len} <=> $rinfo{$a}->{len}} keys %edges)
   }
 }
 
-print STDERR "Examined $ctgpaircnt contig pairs\n";
-
-
-
-
+print STDERR "Examined $ctgpaircnt contig pairs, $candidate_links candidate links, $valid_links valid links, $potential_bundles potential bundles, $good_bundles good bundles\n";
 
