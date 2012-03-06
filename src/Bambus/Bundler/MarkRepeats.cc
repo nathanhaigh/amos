@@ -20,14 +20,25 @@
 #endif
 
 #ifdef AMOS_HAVE_BOOST
+#include <boost/version.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/strong_components.hpp>
-#include <boost/interprocess/detail/atomic.hpp>
 
 #include <boost/random.hpp>
 #include <boost/graph/small_world_generator.hpp>
 #include <boost/graph/erdos_renyi_generator.hpp>
 #include <boost/graph/betweenness_centrality.hpp>
+
+#if BOOST_VERSION / 100000 <= 1 && BOOST_VERSION / 100 % 1000
+#include <boost/interprocess/detail/atomic.hpp>
+#define BOOST_ATOMIC_ADD boost::interprocess::detail::atomic_add32
+#define BOOST_ATOMIC_CAS boost::interprocess::detail::atomic_cas32
+#else
+#include <boost/interprocess/ipcdetail/atomic.hpp>
+#define BOOST_ATOMIC_ADD boost::interprocess::ipcdetail::atomic_add32
+#define BOST_ATOMIC_CAS boost::interprocess::detail::atomic_cas32
+#endif
+
 #endif //AMOS_HAVE_BOOST
 
 #include "datatypes_AMOS.hh"
@@ -46,6 +57,7 @@ using namespace Bundler;
 
 // constants for repeat resolution
 static const uint32_t MIN_PARALLEL_SIZE  = 500000000;
+static const uint32_t PARALLEL_SCALING   = 100;
 static const int32_t  MAX_REPEAT_SIZE    =   10000;
 static const int32_t  MAX_REPEAT_STDEV   =       3;
 static const double   MAX_REPEAT_COV     =       0.02;
@@ -273,11 +285,11 @@ double* findShortestPathRepeatsParallel(Graph &g, int K) {
            v = S[phase][i];
            for (tie(out_i, out_end) = boost::out_edges(v, g); out_i != out_end; ++out_i) { // parallel
               w = boost::target(*out_i, g);
-              distW = boost::interprocess::detail::atomic_cas32(&dist[w], phase+1, MAX_VALUE);
+              distW = BOOST_ATOMIC_CAS(&dist[w], phase+1, MAX_VALUE);
               deltaW = dist[v] - distW + 1;
               if (distW == MAX_VALUE) {
-                 p = boost::interprocess::detail::atomic_add32(&S_count[phase+1], 1);
-                 boost::interprocess::detail::atomic_add32(&count, 1);
+                 p = BOOST_ATOMIC_ADD(&S_count[phase+1], 1);
+                 BOOST_ATOMIC_ADD(&count, 1);
                  assert(p < numVertices);
                  assert(phase < numVertices - 1);
                  S[phase+1][p] = w;
@@ -285,14 +297,14 @@ double* findShortestPathRepeatsParallel(Graph &g, int K) {
                  deltaW = dist[v] - distW + 1;
               } 
               if (deltaW  < K) {
-                 p = boost::interprocess::detail::atomic_add32(&child_count[deltaW][v], 1);
+                 p = BOOST_ATOMIC_ADD(&child_count[deltaW][v], 1);
                  assert(p < numEdges);
                  assert(v < numVertices);
                  assert(deltaW < K);
                  child[deltaW][v][p] = w;
               }
               if (deltaW <= min(K-1, 1)) {
-                 boost::interprocess::detail::atomic_add32(&sigma[deltaW][w], sigma[0][v]);
+                 BOOST_ATOMIC_ADD(&sigma[deltaW][w], sigma[0][v]);
               }
            }
         } 
@@ -306,13 +318,13 @@ double* findShortestPathRepeatsParallel(Graph &g, int K) {
               v = S[i][j];
               for (d = 0; d < child_count[0][v]; d++) { //parallel
                  w = child[0][v][d];
-                 boost::interprocess::detail::atomic_add32(&sigma[k][w], sigma[k][v]);
+                 BOOST_ATOMIC_ADD(&sigma[k][w], sigma[k][v]);
               }
               if (k < (K-1)) {
                  for (dj = 1; dj <= k+1; dj++) { //parallel
                     for (d = 0; d < child_count[dj][v]; d++) { //parallel
                        w = child[dj][v][d];
-                       boost::interprocess::detail::atomic_add32(&sigma[k+1][w], sigma[k+1-dj][v]);
+                       BOOST_ATOMIC_ADD(&sigma[k+1][w], sigma[k+1-dj][v]);
                     }
                  }
               }
@@ -323,7 +335,7 @@ double* findShortestPathRepeatsParallel(Graph &g, int K) {
      #pragma omp parallel for private(j) schedule(static) collapse(2)
      for (int k = 0; k < K; k++) {
         for (j = 0; j < numVertices; j++) {
-           boost::interprocess::detail::atomic_add32(&sigmaSums[j], sigma[k][j]);
+           BOOST_ATOMIC_ADD(&sigmaSums[j], sigma[k][j]);
         }
      }
 
@@ -564,6 +576,9 @@ void findShortestPathRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &repeats) 
       if ((numVertices * numEdges) <= MIN_PARALLEL_SIZE) {
          if (globals.debug > 1) { cerr << "Using 1 thread" << endl; }
          globals.numThreads = 1;
+#ifdef AMOS_HAVE_OPENMP
+         omp_set_num_threads(globals.numThreads);
+#endif
       }
       else {
          // compute in parallel
@@ -640,7 +655,7 @@ void findConnectedComponentRepeats(Graph &g, Bank_t &contig_bank, set<ID_t> &rep
    double globalArrivalRate = computeArrivalRate(allContigs);
    allContigs.clear();
 
-double globalMean = 0, globalVariance = 0, globalStdev = 0, globalN = 0;
+   double globalMean = 0, globalVariance = 0, globalStdev = 0, globalN = 0;
    for (hash_map<ID_t, vector<Contig_t *>, hash<ID_t>, equal_to<ID_t> >::iterator i = ctgsByComponent.begin(); i != ctgsByComponent.end(); i++) {
       double arrivalRate = computeArrivalRate(i->second);
       for (vector<Contig_t *>::iterator j = i->second.begin(); j < i->second.end(); j++) {
@@ -655,6 +670,15 @@ double globalMean = 0, globalVariance = 0, globalStdev = 0, globalN = 0;
    globalVariance /= globalN;
    globalStdev = sqrt(globalVariance);
 
+cerr << "The number of components is " << ctgsByComponent.size() << endl;
+
+   globals.numThreads = (globals.numThreads < (int)ctgsByComponent.size() / PARALLEL_SCALING ? globals.numThreads : (int)ctgsByComponent.size() / PARALLEL_SCALING);
+   if (globals.numThreads < 1) { globals.numThreads = 1; }
+#ifdef AMOS_HAVE_OPENMP
+   omp_set_num_threads(globals.numThreads);
+#endif
+
+   #pragma opm parallel for private(j, arrivalRate, mean, variance, stdev, N) schedule(dynamic)
    for (hash_map<ID_t, vector<Contig_t *>, hash<ID_t>, equal_to<ID_t> >::iterator i = ctgsByComponent.begin(); i != ctgsByComponent.end(); i++) {
       double arrivalRate = computeArrivalRate(i->second);
       double mean = 0, variance = 0, stdev = 0, N = 0;
@@ -677,13 +701,22 @@ double globalMean = 0, globalVariance = 0, globalStdev = 0, globalN = 0;
          if (globals.debug > 1) cerr << "CONTIG " << (*j)->getIID() << " HAS COVERAGE " << cov << " GLOBAL COV: " << globalCov << " MEAN: " << mean << " STDEV:" << stdev << " SIZE " << (*j)->getUngappedLength() << " DELTA IS " << (cov + (mean - MAX_REPEAT_STDEV*stdev)) << endl;
          if ((cov < MAX_REPEAT_COV) && (*j)->getUngappedLength() < MAX_REPEAT_SIZE) {
             if (globals.debug > 1) cerr << "CONTIG " << (*j)->getEID() << " OF SIZE " << (*j)->getUngappedLength() << " WITH " << (*j)->getReadTiling().size() << " READS AND COVERAGE " << cov << " IS TOO LOW" << endl;
-            repeats.insert((*j)->getIID());
+            #pragma omp critical
+            {
+               repeats.insert((*j)->getIID());
+            }
          } else if (i->second.size() == 1 && globalCov < MAX_REPEAT_COV) {
              if (globals.debug > 1) cerr << "CONTIG " << (*j)->getEID() << " OF SIZE " << (*j)->getUngappedLength() << " GLOBAL COVERAGE " << globalCov << " IS TOO LOW" << endl;
-            repeats.insert((*j)->getIID());
+            #pragma omp critical
+            {
+               repeats.insert((*j)->getIID());
+            }
          } else if (globals.doAgressiveRepeatFinding == true && globalCov <= MAX_REPEAT_COV && (*j)->getUngappedLength() < MAX_REPEAT_SIZE) {
              if (globals.debug > 1) cerr << "AGRESSIVE REPEAT" << cov << " IS TOO LOW" << endl;
-            repeats.insert((*j)->getIID());
+            #pragma omp critical
+            {
+               repeats.insert((*j)->getIID());
+            }
          }
          // free memory the contig was using as soon as we're done with it
          delete (*j);
