@@ -1570,7 +1570,6 @@ bool parseAsmFile(string fileName) {
     Contig_t ctg;
     vector<Tile_t> reads;
     string id;
-
     stringstream buffer(stringstream::in | stringstream::out);
     stringstream consensus(stringstream::in | stringstream::out);
     stringstream qualseq(stringstream::in | stringstream::out);
@@ -1580,7 +1579,11 @@ bool parseAsmFile(string fileName) {
     bool first = true;
     bool readConsensus = true;
 
-    while (curCtg.getline(curline, MAX_LINE_LEN, '\n')) {
+    while (!curCtg.eof()) {
+      curCtg.getline(curline, MAX_LINE_LEN, '\n');
+      if (curCtg.eof()) { break; }
+      if (curCtg.fail() && !curCtg.bad()) { curCtg.clear(); }
+
       line = curline;
       if (curline[0] == '#' && curline[1] == '#') {
         if (!first) {
