@@ -206,7 +206,7 @@ void Bundler::flushEdgeStatus(AMOS::Bank_t &edge_bank) {
 }
 
 bool Bundler::isBadEdge(AMOS::ID_t cteID, AMOS::Bank_t &edge_bank) {
-   if (cte2badInit = false) {
+   if (cte2badInit == false) {
       AMOS::ContigEdge_t cte;
       for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci; ci++) {
          edge_bank.fetch(ci->iid, cte);
