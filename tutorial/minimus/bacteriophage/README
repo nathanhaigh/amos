@@ -21,7 +21,7 @@ NOTE: This single Minimo step could be replaced by the following AMOS commands:
 Many AMOS utilities, including Minimus and Minimo, are simply text files specifying the parameters for the individual commands within the assembly pipeline. These files can be easily modified in order to adapt them to specialized settings. To view the contents of Minimo, for example, simply type:
 
 > more ‘which Minimo’
-To evaluate the quality of the assembly one can compute the N50 measure, which represents the contig length, L, such that contigs equal or longer than L contain 50% of the bases in the genome. To calculate this and other assembly statistics (also see Fig. 11.8.8), run:
+To evaluate the quality of the assembly one can compute the N50 measure, which represents the contig length, L, such that contigs equal or longer than L contain 50% of the bases in the genome. To calculate this and other assembly statistics, run:
 
 > getN50 KVP40-contigs.fa
 These numbers illustrate that the assembly is poor, given that there are still over 1000 contigs and that the N50 and average contig size are only twice the read length. This is most often the result of a combination of (a) unequal read coverage, (b) high repeat content, and (c) errors in the reads.
