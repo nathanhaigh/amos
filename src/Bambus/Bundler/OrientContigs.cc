@@ -184,7 +184,7 @@ bool GetOptions(int argc, char ** argv) {
    return true;
 } // GetOptions
 
-void swapContigs(ContigEdge_t & cte, bool isReversed) {
+void swapContigs(ContigEdge_t & cte, bool isReversed, bool secondOri, int firstLen, int secondLen) {
    pair<ID_t, ID_t> ctgs;
    ctgs.first = cte.getContigs().second;
    ctgs.second = cte.getContigs().first;
@@ -203,9 +203,17 @@ void swapContigs(ContigEdge_t & cte, bool isReversed) {
          cte.setAdjacency(ContigEdge_t::NORMAL);
       }
    } else {
+      if (cte.getAdjacency() == ContigEdge_t::ANTINORMAL) {
+         cte.setSize(-1 * (cte.getSize() + firstLen) - secondLen);
+      }
+      if (cte.getAdjacency() == ContigEdge_t::NORMAL) {
+         cte.setSize(-1 * (cte.getSize() + secondLen) - firstLen);
+      }
       if (cte.getAdjacency() == ContigEdge_t::OUTIE) {
+         cte.setSize((-1 * cte.getSize()) - firstLen - secondLen);
          cte.setAdjacency(ContigEdge_t::INNIE);
       } else if (cte.getAdjacency() == ContigEdge_t::INNIE) {
+         cte.setSize(-1 * (cte.getSize() + firstLen + secondLen));
          cte.setAdjacency(ContigEdge_t::OUTIE);
       }
    }
@@ -1286,7 +1294,10 @@ void reduceGraph(std::vector<Scaffold_t>& scaffs,
    } while (numUpdated != 0);
 }
 
-void sortContigs(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &edge_bank) {
+void sortContigs(std::vector<Scaffold_t>& scaffs, 
+              hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
+              hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > &ctg2len,
+              Bank_t &contig_bank, Bank_t &edge_bank) {
    for(vector<Scaffold_t>::iterator s = scaffs.begin(); s < scaffs.end(); s++) {
       Pos_t adjust = UNINITIALIZED;
       hash_map<ID_t, Pos_t, hash<ID_t>, equal_to<ID_t> > locations;
@@ -1304,6 +1315,7 @@ void sortContigs(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &e
             }
          }
          i->offset += adjust;
+         ctg2srt[i->source] = (i->range.isReverse() ? i->offset + i->range.getLength() : i->offset);
          locations[i->source] = i->offset;
          orientations[i->source] = i->range.isReverse();
       }
@@ -1315,7 +1327,7 @@ void sortContigs(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &e
          
          // reverse edge if necessary
          if (locations[cte.getContigs().second] <= locations[cte.getContigs().first]) {
-            swapContigs(cte, orientations[cte.getContigs().first]);
+            swapContigs(cte, orientations[cte.getContigs().first], orientations[cte.getContigs().second], ctg2len[cte.getContigs().first], ctg2len[cte.getContigs().second]);
             edge_bank.replace(*i, cte);
          }
       }
@@ -1324,11 +1336,12 @@ void sortContigs(std::vector<Scaffold_t>& scaffs, Bank_t &contig_bank, Bank_t &e
 
 void compressGaps(std::vector<Scaffold_t> &scaffs,
               hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >& ctg2srt,
+              hash_map<ID_t, Size_t, hash<ID_t>, equal_to<ID_t> > &ctg2len,
               hash_map<ID_t, contigOrientation, hash<ID_t>, equal_to<ID_t> >& ctg2ort,
               hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > &ctg2lnk,
               Bank_t &edge_bank, Bank_t &contig_bank) {
 
-   sortContigs(scaffs, contig_bank, edge_bank);
+   sortContigs(scaffs, ctg2srt, ctg2len, contig_bank, edge_bank);
    for(vector<Scaffold_t>::iterator s = scaffs.begin(); s < scaffs.end(); s++) {
       Pos_t adjust = UNINITIALIZED;
       hash_map<ID_t, Pos_t, hash<ID_t>, equal_to<ID_t> > locations;
@@ -1781,10 +1794,10 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
    }
 
    // compress gap if we can
-   compressGaps(scaffs, ctg2srt, ctg2ort, ctg2lnk, edge_bank, contig_bank);
+   compressGaps(scaffs, ctg2srt, ctg2len, ctg2ort, ctg2lnk, edge_bank, contig_bank);
 
    // preform graph simplification
-   sortContigs(scaffs, contig_bank, edge_bank);
+   sortContigs(scaffs, ctg2srt, ctg2len, contig_bank, edge_bank);
 
    if (globals.debug >= 1) { cerr << "BEGIN COMPRESSION" << endl; }
    if (globals.compressMotifs == true) {
@@ -1810,7 +1823,7 @@ if (max < cte.getLinks().size()) { max = cte.getLinks().size(); }
       }
       flushEdgeStatus(edge_bank);
       reduceGraph(scaffs, contig_bank, edge_bank, ctg2ort, ctg2lnk, motifs);
-      sortContigs(scaffs, contig_bank, edge_bank);
+      sortContigs(scaffs, ctg2srt, ctg2len, contig_bank, edge_bank);
    }
    // reset the transitive edges because we may have collapsed nodes so old transitive edges are no longer transitive
    //resetEdges(edge_bank, BAD_TRNS);
