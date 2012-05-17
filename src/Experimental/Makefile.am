@@ -28,6 +28,7 @@ dist_bin_SCRIPTS = \
   SOAPdenovo_readlist_to_config.pl \
   SOAPdenovo_mapscaff.sh \
   SOAPdenovo_prepare.sh \
+  allpaths-preparegroups.pl \
   aj_evaluateSequenceOverlaps.pl \
   aj_joinContigs.pl \
   aj_lowcomplexityfilter.pl \
