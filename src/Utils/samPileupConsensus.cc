@@ -4,6 +4,8 @@
 #include <iostream>
 #include <getopt.h>
 #include "Slice.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 //using namespace AMOS;
