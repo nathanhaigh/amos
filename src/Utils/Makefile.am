@@ -8,6 +8,7 @@ bin_PROGRAMS = \
 	runAmos \
 	analyzeSNPs \
     recallConsensus \
+	samPileupConsensus \
 	cvgStat \
     tagsum-reduce
 
@@ -88,6 +89,17 @@ recallConsensus_LDADD = \
 
 recallConsensus_SOURCES = \
 	recallConsensus.cc
+
+
+##-- samPileupConsensus
+samPileupConsensus_CPPFLAGS = \
+    -I$(top_srcdir)/src/Slice
+
+samPileupConsensus_LDADD = \
+        $(top_builddir)/src/Slice/libSlice.a
+
+samPileupConsensus_SOURCES = \
+	samPileupConsensus.cc
 
 
 ##-- trimByOvl

@@ -486,7 +486,13 @@ AC_DEFUN([AMOS_BOOST],
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graphviz.hpp>
+#if BOOST_VERSION / 100000 <= 1 && BOOST_VERSION / 100 % 1000 < 48
 #include <boost/interprocess/detail/atomic.hpp>
+#define BOOST_ATOMIC_ADD boost::interprocess::detail::atomic_add32
+#else
+#include <boost/interprocess/detail/atomic.hpp>
+#define BOOST_ATOMIC_ADD boost::interprocess::ipcdetail::atomic_add32
+#endif
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
@@ -517,7 +523,7 @@ int main( int argc, char **argv )
 
         // preform atomic op
         uint32_t j = 0;
-        boost::interprocess::detail::atomic_add32(&j, 1);
+        BOOST_ATOMIC_ADD(&j, 1);
 }
 EOF
 

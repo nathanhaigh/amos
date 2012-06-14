@@ -36,11 +36,14 @@ static const double_t MIN_CLUSTERED_NEIGHBORS = 0.50;
 static const double_t MIN_CLUSTER_PERCENT     = 0.75;
 
 struct config {
+   bool        IID;
    int32_t     debug;
    string      bank;
    int         maxClusterID;
+   HASHMAP::hash_map<uint32_t, bool, HASHMAP::hash<uint32_t>, HASHMAP::equal_to<uint32_t> >       existingClusters; // index of what clusters we have to classify things into
    bool        removeEdges;
    HASHMAP::hash_map<ID_t, uint32_t, HASHMAP::hash<AMOS::ID_t>, HASHMAP::equal_to<AMOS::ID_t> >   clusters;  // contig clusters
+   map<string, uint32_t> inputClusters;
 };
 config globals;
 
@@ -67,6 +70,7 @@ bool GetOptions(int argc, char ** argv) {
     {"noRemoveEdges",      0, 0, 'r'},
     {"clusters",           1, 0, 'c'},    
     {"maxCluster",         1, 0, 'm'},
+    {"iid",                0, 0, 'i'},
     {"debug",              1, 0, 'd'},
     {0, 0, 0, 0}
   };
@@ -74,10 +78,11 @@ bool GetOptions(int argc, char ** argv) {
    globals.debug = 1;
    globals.maxClusterID = 0;
    globals.removeEdges = true;
+   globals.IID = false;
 
    int c;
    ifstream clusterFile;
-   ID_t contigID;
+   string contigID;
    uint32_t clusterID;
    bool doNotUpdate = false;
  
@@ -89,6 +94,8 @@ bool GetOptions(int argc, char ** argv) {
       case 'b':
          globals.bank = string(optarg);
          break;
+      case 'i':
+         globals.IID = true;
       case 'c':
          // read file here
          clusterFile.open(optarg, ios::in);
@@ -97,7 +104,9 @@ bool GetOptions(int argc, char ** argv) {
             break;
          }
          while (clusterFile >> contigID >> clusterID) {
-           globals.clusters[contigID] = clusterID;
+           globals.inputClusters[contigID] = clusterID;
+           globals.existingClusters[clusterID] = true;
+cerr << "Read in node " << contigID << " in cluster " << clusterID << endl;
 
            if (clusterID > globals.maxClusterID) {
              globals.maxClusterID = clusterID;
@@ -175,8 +184,17 @@ int main(int argc, char *argv[]) {
    hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<ID_t>, equal_to<ID_t> > ctg2lnk;     // map from contig to edges
    cte2weight = new hash_map<ID_t, int32_t, hash<ID_t>, equal_to<ID_t> >();
 
-   hash_map<ID_t, double_t, hash<ID_t>, equal_to<ID_t> > ctg2percent;
+   // convert input clusters into internal IIDs, if they are already internal, do nothing otherwise stream the contigs
+   for (map<string, uint32_t>::iterator i = globals.inputClusters.begin(); i != globals.inputClusters.end(); i++) {
+      if (globals.IID) {
+         globals.clusters[atoi(i->first.c_str())] = i->second;
+      } else {
+         globals.clusters[contig_bank.lookupIID(i->first)] = i->second; 
+cerr << "Stored node " << i->first << " to be " << contig_bank.lookupIID(i->first) << " in cluster " << i->second << endl;
+      }
+   } 
 
+   hash_map<ID_t, double_t, hash<ID_t>, equal_to<ID_t> > ctg2percent;
    for (AMOS::IDMap_t::const_iterator ci = edge_bank.getIDMap().begin(); ci; ci++) {
       edge_bank.fetch(ci->iid, cte);
 
@@ -202,7 +220,6 @@ int main(int argc, char *argv[]) {
       if (s == NULL) { s = new set<ID_t, EdgeWeightCmp>();};
       s->insert(cte.getIID());
       ctg2lnk[cte.getContigs().second] = s;
-cerr << "Read in edge " << cte.getContigs().first << " AND " << cte.getContigs().second << " WEIGHT " << cte.getContigLinks().size() << endl;
     }
 
     for (hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<AMOS::ID_t>, equal_to<AMOS::ID_t> >::iterator i = ctg2lnk.begin(); i != ctg2lnk.end(); i++) {
@@ -213,14 +230,13 @@ cerr << "Read in edge " << cte.getContigs().first << " AND " << cte.getContigs()
                edge_bank.fetch(*edges, cte);
                total += cte.getContigLinks().size();
           }
-cerr << "NODE " << i->first << " HAS " << total << " LINKS" << endl;
-       } else {
-cerr << "NODE " << i->first << " HAS 0 LINKS " << endl;
        }
     }
 
    uint32_t iterations = 0;
    bool changed = true;
+   double_t *clusterPercents = new double_t[globals.maxClusterID];
+
    while (changed && iterations < MAX_ITERATIONS) {
       changed = false;
       cerr << "Iteration " << iterations++ << endl;
@@ -228,32 +244,37 @@ cerr << "NODE " << i->first << " HAS 0 LINKS " << endl;
       for (hash_map<ID_t, set<ID_t, EdgeWeightCmp>*, hash<AMOS::ID_t>, equal_to<AMOS::ID_t> >::iterator i = ctg2lnk.begin(); i != ctg2lnk.end(); i++) {
          if (i->second != NULL) {
             set<ID_t, EdgeWeightCmp>* s = i->second;
-            double_t clusterPercents[MAX_CLUSTERS];
             uint32_t totalLinks = 0;
             uint32_t allLinks = 0;
-            memset(clusterPercents, 0, MAX_CLUSTERS*sizeof(double_t));
+            memset(clusterPercents, 0, globals.maxClusterID*sizeof(double_t));
 
             // tally up weighted counts for each cluster that our neighbors vote for
             for (set<ID_t, EdgeWeightCmp>::iterator edges = s->begin(); edges != s->end(); edges++) {
 	       edge_bank.fetch(*edges, cte);
                ID_t otherID = getEdgeDestination(i->first, cte); 
+               if (globals.debug >= 3) { cerr << "Node " << i->first << " links to " << otherID << " with weight " << cte.getContigLinks().size() << endl; }
+
                if (globals.clusters[otherID] != 0 && globals.clusters[otherID] != globals.maxClusterID) {
                   totalLinks += cte.getContigLinks().size();
                   clusterPercents[globals.clusters[otherID]] += cte.getContigLinks().size(); 
+                  if (globals.debug >=3) { cerr << "Node " << i->first << " has links to cluster " << globals.clusters[otherID] << " with percent " << clusterPercents[globals.clusters[otherID]] << endl; }
                }
                allLinks += cte.getContigLinks().size();
             }
             if (globals.debug >= 3) { cerr << "For node " << i->first << " THE CLUSTER ASSIGNMENT IS " << globals.clusters[i->first] << endl; }
             double_t max = 0;
             uint32_t maxClust = 0;
-            for (uint32_t clust = 0; clust < globals.maxClusterID; clust++) {
-	       clusterPercents[clust] /= totalLinks;
-               if (max < clusterPercents[clust]) {
-                  max = clusterPercents[clust]; 
-                  maxClust = clust;
+            for (hash_map<uint32_t, bool, HASHMAP::hash<uint32_t>, HASHMAP::equal_to<uint32_t> >::iterator clust = globals.existingClusters.begin(); clust != globals.existingClusters.end(); clust++) {
+	       clusterPercents[clust->first] = (totalLinks == 0 ? 0 : clusterPercents[clust->first] / totalLinks);
+               if (max < clusterPercents[clust->first]) {
+                  max = clusterPercents[clust->first]; 
+                  maxClust = clust->first;
                }
             }
             if (globals.debug >= 3) { cerr << "Node " << i->first << " ASSINGED TO " << globals.clusters[i->first] << " HAS % LINKS TO CLUSTER " << ((double)totalLinks/allLinks) << " AND MAX LINKS " << max << " TO CLUSTER " << maxClust << endl; }
+            if (maxClust == 0) {
+               continue;
+            }
             ctg2percent[i->first] = (double)totalLinks/allLinks;
             if ((double)totalLinks/allLinks > MIN_CLUSTERED_NEIGHBORS) {
                if (max >= MIN_CLUSTER_PERCENT) {
@@ -304,7 +325,12 @@ cerr << "Removed a total of " << count << " edges " << endl;
 
    // finally output updated status for all nodes
    for (AMOS::IDMap_t::const_iterator ci = contig_bank.getIDMap().begin(); ci; ci++) {
-      cout << ci->iid << " " << globals.clusters[ci->iid] << endl; 
+      if (globals.IID) {
+         cout << ci->iid;
+      } else { 
+         cout << ci->eid;
+      }
+      cout << " " << globals.clusters[ci->iid] << endl; 
    }
 
    contig_bank.close();

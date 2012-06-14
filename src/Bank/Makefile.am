@@ -15,10 +15,12 @@ bin_PROGRAMS = \
 	bank-report \
 	bank-transact \
 	bank-tutorial \
+	bank2sam \
 	dumpFeatures \
 	dumpmates \
 	dumpreads \
 	extractContig \
+	extractScaffold \
 	findMissingMates \
 	grow-readbank \
 	listReadPlacedStatus \
@@ -120,6 +122,13 @@ bank_transact_LDADD = \
 bank_transact_SOURCES = \
 	bank-transact.cc
 
+##-- bank2sam
+bank2sam_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a \
+        $(top_builddir)/src/AMOS/libAMOS.a
+bank2sam_SOURCES = \
+	bank2sam.cc
+
 ##-- normalizeScaffold
 normalizeScaffold_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -175,6 +184,13 @@ extractContig_LDADD = \
 	$(top_builddir)/src/AMOS/libAMOS.a
 extractContig_SOURCES = \
 	extractContig.cc
+
+##-- extractScaffold
+extractScaffold_LDADD = \
+        $(top_builddir)/src/Common/libCommon.a \
+        $(top_builddir)/src/AMOS/libAMOS.a
+extractScaffold_SOURCES = \
+        extractScaffold.cc
 
 ##-- findMissingMates
 findMissingMates_LDADD = \

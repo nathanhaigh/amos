@@ -11,6 +11,10 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifdef AMOS_HAVE_CA
+#include "AS_global.h"
+#endif
+
 extern "C" {
 #include <getopt.h>
 #include <stdlib.h>
@@ -438,12 +442,21 @@ int main(int argc, char ** argv)
       }
 
       if (globals.asmfile.length() > 0) {
-         if (scf_stream.exists(globals.bank)) {
-            cerr << "scf bank exists; opening" << endl;
-            scf_stream.open(globals.bank, B_WRITE);
-          } else {
-             cerr << "scf Bank doesn't exist; creating" << endl;
-             scf_stream.create(globals.bank, B_WRITE);
+         if (globals.readCCO) {
+            if (scf_stream.exists(globals.bank)) {
+               cerr << "scf bank exists; opening" << endl;
+               scf_stream.open(globals.bank, B_WRITE);
+             } else {
+                cerr << "scf Bank doesn't exist; creating" << endl;
+                scf_stream.create(globals.bank, B_WRITE);
+             }
+             if (edge_stream.exists(globals.bank)) {
+                cerr << "edge bank exists; opening" << endl;
+                edge_stream.open(globals.bank, B_WRITE);
+             } else {
+                cerr << "edge Bank doesn't exist; creating" << endl;
+                edge_stream.create(globals.bank, B_WRITE);
+             }
           }
           if (link_stream.exists(globals.bank)) {
              cerr << "link bank exists; opening" << endl;
@@ -452,16 +465,9 @@ int main(int argc, char ** argv)
               cerr << "link Bank doesn't exist; creating" << endl;
               link_stream.create(globals.bank, B_WRITE);
           }
-          if (edge_stream.exists(globals.bank)) {
-             cerr << "edge bank exists; opening" << endl;
-             edge_stream.open(globals.bank, B_WRITE);
-          } else {
-             cerr << "edge Bank doesn't exist; creating" << endl;
-             edge_stream.create(globals.bank, B_WRITE);
-          }
-          int maxScf = scf_stream.getMaxIID();
+          int maxScf = (globals.readCCO ? scf_stream.getMaxIID() : 0);
           int maxLink = link_stream.getMaxIID();
-          int maxEdge = edge_stream.getMaxIID();
+          int maxEdge = (globals.readCCO ? edge_stream.getMaxIID() : 0);
           if (maxScf >= minScfID) {
              minScfID = maxScf + 1;
           }
@@ -556,8 +562,10 @@ int main(int argc, char ** argv)
 
   if (globals.asmfile.length() > 0) {
      link_stream.close();
-     edge_stream.close();
-     scf_stream.close();
+     if (globals.readCCO) {
+        edge_stream.close();
+        scf_stream.close();
+     }
 
      if (link_stream.isOpen() || edge_stream.isOpen() || scf_stream.isOpen()) {
         cerr << "ERROR: Scaffold, Link, or Edge stream still open" << endl;
@@ -1562,7 +1570,6 @@ bool parseAsmFile(string fileName) {
     Contig_t ctg;
     vector<Tile_t> reads;
     string id;
-
     stringstream buffer(stringstream::in | stringstream::out);
     stringstream consensus(stringstream::in | stringstream::out);
     stringstream qualseq(stringstream::in | stringstream::out);
@@ -1572,7 +1579,11 @@ bool parseAsmFile(string fileName) {
     bool first = true;
     bool readConsensus = true;
 
-    while (curCtg.getline(curline, MAX_LINE_LEN, '\n')) {
+    while (!curCtg.eof()) {
+      curCtg.getline(curline, MAX_LINE_LEN, '\n');
+      if (curCtg.eof()) { break; }
+      if (curCtg.fail() && !curCtg.bad()) { curCtg.clear(); }
+
       line = curline;
       if (curline[0] == '#' && curline[1] == '#') {
         if (!first) {
