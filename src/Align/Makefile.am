@@ -159,9 +159,13 @@ kmer_cov_SOURCES = \
 ##-- kmer-cov-plot
 kmer_cov_plot_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(JELLYFISH_LDADD)
 kmer_cov_plot_SOURCES = \
 	kmer-cov-plot.cc
+kmer_cov_plot_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	$(JELLYFISH_CPPFLAGS)
 
 ##-- overlap-align
 overlap_align_LDADD = \
