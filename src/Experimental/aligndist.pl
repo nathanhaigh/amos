@@ -89,7 +89,12 @@ if (!defined $samfile)
   my $nl = $numreads * 4; ## 4 lines per reads in a fastq
 
   my $TRIM_CMD = "";
-  $TRIM_CMD  = " | $FASTX_TRIM -t $HARD_TRIM" if ($HARD_TRIM > 0);
+
+  if ($HARD_TRIM > 0)
+  {
+    $TRIM_CMD  = " | $FASTX_TRIM -t $HARD_TRIM";
+    if (!$QV_ILLUMINA) { $TRIM_CMD .= " -Q 33"; }
+  }
 
   if ($RC)
   {
