@@ -22,6 +22,8 @@ while (<>)
 
   if    (/_R1_/)   { $doprint = 1; $path =~ s/_R1_/_R\?_/g; }
   elsif (/_R2_/)   { $skipmate = 1; }
+  elsif (/_R1\./)  { $doprint = 1; $path =~ s/_R1\./_R\?\./g; }
+  elsif (/_R2\./)  { $skipmate = 1; }
   elsif (/_RD1\./) { $doprint = 1; $path =~ s/_RD1/_RD\?/g; }
   elsif (/_RD2\./) { $skipmate = 1; }
   elsif (/_READ1/) { $doprint = 1; $path =~ s/_READ1/_READ\?/g; }
