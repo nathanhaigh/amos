@@ -14,10 +14,22 @@ sub processScaff
 
   my @sections = split /N{$NTHRESH,}/, $seq;
 
+  my $offset = 0;
+
   for (my $i = 0; $i < scalar @sections; $i++)
   {
-    print ">$scaffid\.$i\n";
+    $offset = index($seq, $sections[$i], $offset);
+
+    die "ERROR finding substring with section $i\n"  
+      if $offset == -1;
+
+    my $len = length ($sections[$i]);
+    my $end = $offset + $len;
+
+    print ">$scaffid\.$i\.$offset\.$end\n";
     print $sections[$i],"\n";
+
+    $offset += $len;
   }
 }
 
