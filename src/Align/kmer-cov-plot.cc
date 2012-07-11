@@ -412,6 +412,7 @@ int main(int argc, char *argv[])
                 std::cout << ">" << tag << std::endl;
                 print_kmer_coverage(s, *mer_table);
             }
+	    break;
         }
     case '@': {
             std::string s, hdr, q, qualHdr;
@@ -420,6 +421,7 @@ int main(int argc, char *argv[])
                 std::cout << ">" << hdr << std::endl;
                 print_kmer_coverage(s, *mer_table);
             }
+	    break;
         }
     default:
         std::cerr << "Unrecognized file type on stdin (expected FASTA or "
