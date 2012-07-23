@@ -24,6 +24,7 @@ static unsigned    kmer_len = 0;
 static const char *kmer_file_name;
 static bool        OPT_display_kmers = false;
 static bool        OPT_forward_only = false;
+static bool        OPT_jellyfish_preload = false;
 
 /* Map a DNA character, upper case or lower case, to the binary code
  * { A => 0, C => 1, G => 2, C => 3 }.
@@ -243,7 +244,11 @@ static void usage(const char *prog_name)
 "KMER_FILE may specify a Jellyfish hash table if the -j option is given.\n"
 "\n"
 "Options:\n"
-"  -k, --display-kmers  Display the actual kmer in addtion to the counts.\n"
+"  -k, --display-kmers  Display the actual kmer in addition to the counts.\n"
+"  -f, --forward-only   Display count (and kmer with -k) for the forward kmer\n"
+"                         only (default is to show forward, reverse complement,\n"
+"                         and max coverage, and both forward and reverse kmers\n"
+"                         with -k)\n"
 "  -j, --jellyfish      Use kmer counts from a jellyfish hash table.\n"
 "                         KMER_FILE specifies a hash table produced by the\n"
 "                         `jellyfish count' command.  Only available if\n"
@@ -251,22 +256,29 @@ static void usage(const char *prog_name)
 "                         hash table is optimized for memory usage and\n"
 "                         multithreaded updating, so it is slower than a\n"
 "                         normal hash table for normal lookups.\n"
-"  -f, --forward-only   Display count (and kmer with -k) for the forward kmer\n"
-"                         only (default is to show forward, reverse complement,\n"
-"                         and max coverage, and both forward and reverse kmers\n"
-"                         with -k)\n"
+"  -l, --jellyfish-preload\n"
+"                       Access the Jellyfish hash table sequentially before\n"
+"                         beginning plotting the k-mer coverage.  This can\n"
+"                         greatly improve performance on large Jellyfish\n"
+"                         files that have not been pre-loaded into the\n"
+"                         kernel's buffer cache, as they would otherwise\n"
+"                         be accessed randomly and gradually be loaded into\n"
+"                         memory by random page faults.  If you do not have\n"
+"                         enough memory to hold the entire hash table in memory,\n"
+"                         this option will not be very helpful.\n"
 "  -h, --help           Print this usage message.\n"
     ;
-    fprintf(stderr, usage_str, prog_name);
+    printf(usage_str, prog_name);
 }
 
-static const char *optstring = "kjfh";
+static const char *optstring = "kjflh";
 static const struct option longopts[] = {
-    { "display-kmers", no_argument, NULL, 'k'},
-    { "jellyfish",     no_argument, NULL, 'j'},
-    { "forward-only",  no_argument, NULL, 'f'},
-    { "help",          no_argument, NULL, 'h'},
-    { 0, 0, 0, 0},
+    {"display-kmers",     no_argument, NULL, 'k'},
+    {"jellyfish",         no_argument, NULL, 'j'},
+    {"forward-only",      no_argument, NULL, 'f'},
+    {"jellyfish-preload", no_argument, NULL, 'l'},
+    {"help",              no_argument, NULL, 'h'},
+    {0, 0, 0, 0},
 };
 
 static void parse_command_line(int argc, char *argv[])
@@ -288,6 +300,9 @@ static void parse_command_line(int argc, char *argv[])
             break;
         case 'f':
             OPT_forward_only = true;
+            break;
+        case 'l':
+            OPT_jellyfish_preload = true;
             break;
         case 'h':
         default:
@@ -324,7 +339,7 @@ static void print_kmer_coverage(const std::string & s,
     for (i = 0; ; ) {
         while (1) {
             /* Continue adding bases to the mer until a full k-mer, with no
-	     * intervening invalid k-mers, has been finished. */
+             * intervening invalid k-mers, has been finished. */
             if (i == n)
                 return;
             if (is_dna_char(s[i])) {
@@ -343,7 +358,7 @@ static void print_kmer_coverage(const std::string & s,
 
         unsigned long fcount = mer_table[fwd_mer];
 
-	/* Print the k-mer coverage at the current base in the sequence. */
+        /* Print the k-mer coverage at the current base in the sequence. */
         if (OPT_forward_only) {
             printf("%u\t%lu", i - kmer_len + 1, fcount);
         } else {
@@ -380,6 +395,8 @@ int main(int argc, char *argv[])
 #ifdef WITH_JELLYFISH
     if (OPT_jellyfish) {
         mapped_file dbf(kmer_file_name);
+        if (OPT_jellyfish_preload)
+            dbf.load();
         if (strncmp(dbf.base(), jellyfish::compacted_hash::file_type, 8) == 0) {
             mer_table = new jellyfish_mer_table_t<hash_query_t>(dbf);
         } else if (strncmp(dbf.base(), jellyfish::raw_hash::file_type, 8) == 0) {
@@ -412,16 +429,16 @@ int main(int argc, char *argv[])
                 std::cout << ">" << tag << std::endl;
                 print_kmer_coverage(s, *mer_table);
             }
-	    break;
+            break;
         }
     case '@': {
             std::string s, hdr, q, qualHdr;
             ungetc(c, stdin);
             while (Fastq_Read(stdin, s, hdr, q, qualHdr)) {
-                std::cout << ">" << hdr << std::endl;
+                std::cout << "@" << hdr << std::endl;
                 print_kmer_coverage(s, *mer_table);
             }
-	    break;
+            break;
         }
     default:
         std::cerr << "Unrecognized file type on stdin (expected FASTA or "
