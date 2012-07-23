@@ -19,7 +19,6 @@
 
 typedef unsigned long long mer_t;
 
-static mer_t       filled_mask = (mer_t)1 << (8 * sizeof(mer_t) - 1);
 static mer_t       forward_mask;
 static unsigned    kmer_len = 0;
 static const char *kmer_file_name;
