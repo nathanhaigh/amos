@@ -243,7 +243,7 @@ static void usage(const char *prog_name)
 "KMER_FILE may specify a Jellyfish hash table if the -j option is given.\n"
 "\n"
 "Options:\n"
-"  -K, --display-kmers  Display the actual kmer in addtion to the counts.\n"
+"  -k, --display-kmers  Display the actual kmer in addtion to the counts.\n"
 "  -j, --jellyfish      Use kmer counts from a jellyfish hash table.\n"
 "                         KMER_FILE specifies a hash table produced by the\n"
 "                         `jellyfish count' command.  Only available if\n"
@@ -251,17 +251,18 @@ static void usage(const char *prog_name)
 "                         hash table is optimized for memory usage and\n"
 "                         multithreaded updating, so it is slower than a\n"
 "                         normal hash table for normal lookups.\n"
-"  -f, --forward-only   Display count (and kmer with -K) for the forward kmer\n"
+"  -f, --forward-only   Display count (and kmer with -k) for the forward kmer\n"
 "                         only (default is to show forward, reverse complement,\n"
 "                         and max coverage, and both forward and reverse kmers\n"
-"                         with -K)\n"
+"                         with -k)\n"
 "  -h, --help           Print this usage message.\n"
     ;
     fprintf(stderr, usage_str, prog_name);
 }
 
+static const char *optstring = "kjfh";
 static const struct option longopts[] = {
-    { "display-kmers", no_argument, NULL, 'K'},
+    { "display-kmers", no_argument, NULL, 'k'},
     { "jellyfish",     no_argument, NULL, 'j'},
     { "forward-only",  no_argument, NULL, 'f'},
     { "help",          no_argument, NULL, 'h'},
@@ -271,9 +272,9 @@ static const struct option longopts[] = {
 static void parse_command_line(int argc, char *argv[])
 {
     int c;
-    while ((c = getopt_long(argc, argv, "hKjf", longopts, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
         switch (c) {
-        case 'K':
+        case 'k':
             OPT_display_kmers = true;
             break;
 
