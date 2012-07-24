@@ -2,376 +2,479 @@
 //
 //  File:  kmer-cov.cc
 //
-//  Last Modified:  22 March 2004
+//  Original:  22 March 2004
 //
+//  Modified by Eric Biggers: 24 June 2012
+//     Rewrote most of the code.
+//     - Added support for Jellyfish.
+//     - Added support for printing only foward kmer coverage.
+//     - Allow FASTQ input as well as FASTA.
+//     - Skip over invalid DNA characters (N's, etc.).
 
 #include "foundation_AMOS.hh"
-#include  "delcher.hh"
-#include  "fasta.hh"
+#include "delcher.hh"
+#include "fasta.hh"
+#include "fastq.hh"
+#include <getopt.h>
 
-#include  <string>
-#include  <vector>
-using namespace std;
-using namespace HASHMAP;
+typedef unsigned long long mer_t;
+
+static mer_t       forward_mask;
+static unsigned    kmer_len = 0;
+static const char *kmer_file_name;
+static bool        OPT_display_kmers = false;
+static bool        OPT_forward_only = false;
+static bool        OPT_jellyfish_preload = false;
+static bool        OPT_horizontal = false;
+
+/* Map a DNA character, upper case or lower case, to the binary code
+ * { A => 0, C => 1, G => 2, C => 3 }.
+ *
+ * C99 designated initializers do not exist in C++, too bad...
+ */
+static const unsigned char char_to_binary[256] = {
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, /* A */ 0, 4, /* C */ 1, 4, 4, 4, /* G */ 2,
+                4, 4, 4, 4, 4, 4, /* N */ 4, 4,
+        4, 4, 4, 4, /* T */ 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, /* a */ 0, 4, /* c */ 1, 4, 4, 4, /* g */ 2,
+                4, 4, 4, 4, 4, 4, /* n */ 4, 4,
+        4, 4, 4, 4, /* t */ 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+};
 
 
-#define  DEBUG  0
+static const unsigned char binary_to_char[4] = {
+    'A', 'C', 'G', 'T',
+};
 
-bool OPT_DisplayKmers = false;
-
-
-const int  MAX_LINE = 1000;
-typedef  long long unsigned  Mer_t;
-
-typedef hash_map<Mer_t, unsigned int, hash<unsigned long> > MerTable_t;
-
-
-static Mer_t  Filled_Mask = Mer_t (1) << (8 * sizeof (Mer_t) - 1);
-static Mer_t  Extract_Mask = 0;
-static Mer_t  Forward_Mask;
-static int  Kmer_Len = 0;
-static string  Kmer_File_Name;
-  // Name of file kmers
-
-static unsigned  Char_To_Binary (char ch);
-static void  Fasta_To_Binary (const string & s, Mer_t & mer);
-static void  Forward_Add_Ch (Mer_t & mer, char ch);
-static void  Reverse_Add_Ch (Mer_t & mer, char ch);
-static void  Parse_Command_Line (int argc, char * argv []);
-static void  Print_Mer_Coverage (const string & s, double & percent_covered);
-static void  Read_Mers (const char * fname, MerTable_t & mer_table);
-static void  Usage (const char * command);
-static void  Compute_Mer_Coverage (const string & s, const MerTable_t & mer_table);
-static char BinaryToAscii(char b);
-static void MerToAscii(Mer_t mer, string & s);
-
-
-
-
-int  main (int argc, char * argv [])
+static inline bool is_dna_char(char c)
 {
-  FILE  * unique_fp, * repeat_fp, * unsure_fp;
-  MerTable_t mer_table;
- 
-  string  s, tag;
-
-  Parse_Command_Line (argc, argv);
-
-  cerr << "Loading mer counts... ";
-  Read_Mers (Kmer_File_Name . c_str (), mer_table);
-  cerr << mer_table.size() << " mers loaded" << endl;
-
-  cerr << "Processing sequence... ";
-
-  int count = 0;
-
-  while  (Fasta_Read (stdin, s, tag))
-  {
-    printf (">%s\n", tag . c_str ());
-    Compute_Mer_Coverage(s, mer_table);
-    count++;
-  }
-
-  cerr << count << " sequences processed" << endl;
-
-  return  0;
+    return char_to_binary[(unsigned char)c] < 4;
 }
 
-static char BinaryToAscii(char b)
+// Add the Watson-Crick complement of @c to @mer on the left, sliding one
+// character off the right end of @mer.
+static inline mer_t reverse_add_char(mer_t mer, unsigned char c)
 {
-  switch(b)
-  {
-    case 0: return 'A';
-    case 1: return 'C';
-    case 2: return 'G';
-    case 3: return 'T';
-  }
-
-  return '*';
-}
-
-static void MerToAscii(Mer_t mer, string & s)
-{
-  s.erase();
-
-  for (int i = 0; i < Kmer_Len; i++)
-  {
-    char a = BinaryToAscii(mer & 0x3);
     mer >>= 2;
-
-    s.append(1, a);
-  }
-
-  reverse(s.begin(), s.end());
+    mer |= ((mer_t)(3 ^ char_to_binary[c]) << (2 * kmer_len - 2));
+    return mer;
 }
 
-
-
-static unsigned  Char_To_Binary
-    (char ch)
-
-//  Return the binary equivalent of  ch .
-
-  {
-   switch  (tolower (ch))
-     {
-      case  'a' :
-      case  'n' :
-      default:
-        return  0;
-      case  'c' :
-        return  1;
-      case  'g' :
-        return  2;
-      case  't' :
-        return  3;
-        /*
-      default :
-        sprintf (Clean_Exit_Msg_Line, "Bad char = %c (ASCII %u) in Char_To_Binary",
-             ch, unsigned (ch));
-        Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
-        */
-     }
-   return  0;
-  }
-
-
-
-static void  Fasta_To_Binary
-    (const string & s, Mer_t & mer)
-
-//  Convert string  s  to its binary equivalent in  mer .
-
-  {
-   int  i, n;
-
-   n = s . length ();
-   mer = 0;
-   for  (i = 0;  i < n;  i ++)
-     {
-      mer <<= 2;
-      mer |= Char_To_Binary (s [i]);
-     }
-
-   return;
-  }
-
-
-
-static void  Forward_Add_Ch
-    (Mer_t & mer, char ch)
-
-//  Add  ch  to  mer  on the right, sliding one character
-//  off the left end of  mer .
-
-  {
-   mer &= Forward_Mask;
-   mer <<= 2;
-   mer |= Char_To_Binary (ch);
-
-   return;
-  }
-
-
-
-
-
-
-static void  Parse_Command_Line
-    (int argc, char * argv [])
-
-//  Get options and parameters from command line with  argc
-//  arguments in  argv [0 .. (argc - 1)] .
-
-  {
-   bool  errflg = false;
-   int  ch;
-
-   optarg = NULL;
-
-   while  (! errflg && ((ch = getopt (argc, argv, "hK")) != EOF))
-     switch  (ch)
-       {
-
-         case 'K' : OPT_DisplayKmers = true; break;
-
-        case  'h' :
-          errflg = true;
-          break;
-
-        case  '?' :
-          fprintf (stderr, "Unrecognized option -%c\n", optopt);
-
-        default :
-          errflg = true;
-       }
-
-   if  (errflg)
-       {
-        Usage (argv [0]);
-        exit (EXIT_FAILURE);
-       }
-
-   if  (optind > argc - 1)
-       {
-        Usage (argv [0]);
-        exit (EXIT_FAILURE);
-       }
-
-   Kmer_File_Name = argv [optind ++];
-
-   return;
-  }
-
-
-
-static void  Compute_Mer_Coverage (const string & s, const MerTable_t & mer_table)
+// Add @c to @mer on the right, sliding one character off the left end of mer.
+static inline mer_t forward_add_char(mer_t mer, unsigned char c)
 {
-   Mer_t  fwd_mer = 0, rev_mer = 0;
-   int  i, j, n;
-
-   n = s . length ();
-
-   if  (n < Kmer_Len)
-   {
-     for (int i = 0; i < n; i++)
-     {
-       printf("%d 0 0\n", i);
-     }
-
-     return;
-   }
-
-   for  (i = 0;  i < Kmer_Len - 1;  i ++)
-   {
-     Forward_Add_Ch (fwd_mer, s [i]);
-     Reverse_Add_Ch (rev_mer, s [i]);
-   }
-
-   string fmer, rmer;
-   MerTable_t::const_iterator fi, ri;
-   unsigned int fcount = 0;
-   unsigned int rcount = 0;
-
-   for  (j = 0;  i < n;  i ++, j ++)
-   {
-     Forward_Add_Ch (fwd_mer, s [i]);
-     Reverse_Add_Ch (rev_mer, s [i]);
-
-     fcount = 0;
-     rcount = 0;
-
-     fi = mer_table.find(fwd_mer);
-     ri = mer_table.find(rev_mer);
-
-     if (fi != mer_table.end()) { fcount = fi->second; }
-     if (ri != mer_table.end()) { rcount = ri->second; }
-
-     unsigned int mcount = (fcount > rcount) ? fcount : rcount;
-
-     if (OPT_DisplayKmers)
-     {
-       MerToAscii(fwd_mer, fmer);
-       MerToAscii(rev_mer, rmer);
-
-       printf("%d\t%d\t%d\t%d\t%s\t%s\n", 
-              i-Kmer_Len+1, mcount, fcount, rcount, 
-              fmer.c_str(), rmer.c_str()); 
-     }
-     else
-     {
-       printf("%d\t%d\t%d\t%d\n", 
-              i-Kmer_Len+1, mcount, fcount, rcount);
-     }
-   }
-
-   return;
+    mer &= forward_mask;
+    mer <<= 2;
+    mer |= char_to_binary[c];
+    return mer;
 }
 
-
-
-static void  Read_Mers (const char * fname, MerTable_t & mer_table)
-
-//  Read kmers from file name  fname  and save them
-//  in binary form in  mer_list .  Input format is
-//  a multi-fasta file.  Mers are assumed to contain only
-//  ACGT's
-
+// Returns the binary equivalent of the kmer @s of length no greater than 31,
+// given in ASCII format.
+static inline mer_t ascii_to_mer(const char *s)
 {
-  FILE  * fp;
-  string  s, tag;
-  Mer_t  mer;
-
-  fp = File_Open (fname, "r", __FILE__, __LINE__);
-
-  mer_table . clear ();
-
-  while  (Fasta_Read (fp, s, tag))
-  {
-    unsigned int mercount = atol(tag.c_str());
-
-    if  (Kmer_Len == 0)
-    {
-      Kmer_Len = s . length ();
+    mer_t mer = 0;
+    while (*s) {
+        mer <<= 2;
+        mer |= char_to_binary[*s++];
     }
-    else if  (Kmer_Len != int (s . length ()))
-    {
-      sprintf (Clean_Exit_Msg_Line, "New kmer \"%s\" length is %d instead of %d",
-               s . c_str (), s . length (), Kmer_Len);
-      Clean_Exit (Clean_Exit_Msg_Line, __FILE__, __LINE__);
+    return mer;
+}
+
+// Translates the kmer @mer into ASCII format, writing the result into @s.  @s
+// must point to an array of length at least (kmer_len + 1) bytes.
+static inline void mer_to_ascii(mer_t mer, char *s)
+{
+    char *p = s + kmer_len;
+    *p-- = '\0';
+    while (p >= s) {
+        *p-- = binary_to_char[mer & 0x3];
+        mer >>= 2;
     }
-    Fasta_To_Binary (s, mer);
+}
 
- //  MerToAscii(mer, tag);
- //   fprintf(stderr, "orig: %s mer: %032llx asc: %s\n", s.c_str(), mer, tag.c_str());
+// Interface for a class that maps kmers to counts.
+class mer_table_t {
 
-    mer_table.insert(make_pair(mer, mercount));
-   }
+protected:
+    unsigned m_kmer_len;
+    void read_kmers(const char *kmer_file_name);
 
-   Forward_Mask = ((long long unsigned) 1 << (2 * Kmer_Len - 2)) - 1;
+public:
+    // Look up a kmer and return its count.
+    virtual unsigned long operator[](mer_t mer) const = 0;
 
-   return;
+    // Insert a (kmer, count) pair into the map.
+    virtual void insert(mer_t mer, unsigned long count) { }
+
+    // Return the number of entries in the map.
+    virtual size_t size() const = 0;
+
+    // Returns the length of the kmers in the map.
+    virtual unsigned long get_kmer_len() const { 
+        return m_kmer_len; 
+    }
+};
+
+// Read kmers and counts from file kmer_file_name and insert them into the mer
+// table. Input format is a multi-fasta file.  Mers are assumed to contain only
+// ACGT's. The tag line for each kmer must give its count.  For example:
+//
+// >12
+// ACTTCGTC
+// >7
+// TTTTAGTC
+void mer_table_t::read_kmers(const char *kmer_file_name)
+{
+    std::string s, tag;
+    FILE *fp = File_Open(kmer_file_name, "r", __FILE__, __LINE__);
+    while (Fasta_Read(fp, s, tag)) {
+        if (m_kmer_len == 0) {
+            m_kmer_len = s.length();
+        } else if (m_kmer_len != s.length()) {
+            sprintf(Clean_Exit_Msg_Line,
+                "The k-mer \"%s\" has length %u (expected %u)!",
+                s.c_str(), s.length(), m_kmer_len);
+            Clean_Exit(Clean_Exit_Msg_Line, __FILE__, __LINE__);
+        }
+        mer_t mer = ascii_to_mer(s.c_str());
+        unsigned long mer_count = strtoul(tag.c_str(), NULL, 10);
+        this->insert(mer, mer_count);
+    }
+}
+
+typedef HASHMAP::hash_map <mer_t, unsigned long, HASHMAP::hash <unsigned long> >
+        hash_map;
+
+// mer_table_t implementation that uses std::hash_map.
+class hash_map_mer_table_t : public mer_table_t {
+
+private:
+    hash_map map;
+
+public:
+    hash_map_mer_table_t(const char *filename) {
+        this->read_kmers(filename);
+    }
+
+    unsigned long operator[](mer_t mer) const {
+        hash_map::const_iterator it = map.find(mer);
+        if (it != map.end())
+            return it->second;
+        else
+            return 0;
+    }
+
+    void insert(mer_t mer, unsigned long count) {
+        map.insert(std::make_pair(mer, count));
+    }
+
+    size_t size() const {
+        return map.size();
+    }
+};
+
+#ifdef WITH_JELLYFISH
+
+#include <jellyfish/compacted_hash.hpp>
+#include <jellyfish/mer_counting.hpp>
+static bool OPT_jellyfish = false;
+
+// Assert that jellyfish is using the expected kmer representation
+static void jellyfish_check()
+{
+    const char *test_kmer = "AGTCCTTGCTTAGCATGCCG";
+    mer_t mer1 = ascii_to_mer(test_kmer);
+    mer_t mer2 = jellyfish::parse_dna::mer_string_to_binary(test_kmer, 
+                                                        strlen(test_kmer));
+    if (mer1 != mer2) {
+        std::cerr << "Jellyfish doesn't seem to be using the expected kmer "
+                    "representation!  Aborting." << std::endl;
+        exit(1);
+    }
+}
+
+// mer_table_t implementation that uses one of the hash tables from Jellyfish.
+template <typename jellyfish_hash_t>
+class jellyfish_mer_table_t : public mer_table_t {
+
+private:
+    jellyfish_hash_t map;
+
+public:
+    jellyfish_mer_table_t(mapped_file &file) :
+        map(file) { jellyfish_check(); }
+
+    unsigned long operator[](mer_t mer) const {
+        return map[mer];
+    }
+
+    size_t size() const {
+        return map.get_size();
+    }
+
+    size_t get_kmer_len() const {
+        return map.get_mer_len();
+    }
+};
+#endif // WITH_JELLYFISH
+
+
+static void usage(const char *prog_name)
+{
+    static const char *usage_str = 
+"Usage: %s KMER_FILE < (FASTA_FILE | FASTQ_FILE)\n"
+"Prints the k-mer coverage at each base in a read set or genome.\n"
+"\n"
+"The read set or genome is read as a FASTA or FASTQ file from standard input.\n"
+"KMER_FILE specifies a FASTA file that contains the k-mer counts for\n"
+"the read set or genome.  Each FASTA tag line provides a k-mer count,\n"
+"and the following sequence line provides the k-mer.  Alternatively,\n"
+"KMER_FILE may specify a Jellyfish hash table if the -j option is given.\n"
+"\n"
+"Options:\n"
+"  -k, --display-kmers  Display the actual kmer in addition to the counts.\n"
+"  -f, --forward-only   Display count (and kmer with -k) for the forward kmer\n"
+"                         only (default is to show forward, reverse complement,\n"
+"                         and max coverage, and both forward and reverse kmers\n"
+"                         with -k)\n"
+"  -j, --jellyfish      Use kmer counts from a jellyfish hash table.\n"
+"                         KMER_FILE specifies a hash table produced by the\n"
+"                         `jellyfish count' command.  Only available if\n"
+"                         compiled with jellyfish support.  Note: jellyfish's\n"
+"                         hash table is optimized for memory usage and\n"
+"                         multithreaded updating, so it is slower than a\n"
+"                         normal hash table for normal lookups.\n"
+"  -l, --jellyfish-preload\n"
+"                       Access the Jellyfish hash table sequentially before\n"
+"                         beginning plotting the k-mer coverage.  This can\n"
+"                         greatly improve performance on large Jellyfish\n"
+"                         files that have not been pre-loaded into the\n"
+"                         kernel's buffer cache, as they would otherwise\n"
+"                         be accessed randomly and gradually be loaded into\n"
+"                         memory by random page faults.  If you do not have\n"
+"                         enough memory to hold the entire hash table in memory,\n"
+"                         this option will not be very helpful.\n"
+"  -H, --horizontal     Output the information as one read per line, as the\n"
+"                         FASTA/FASTQ tag followed by the k-mer coverage\n"
+"                         values, tab-delimited.  The coverage of invalid\n"
+"                         k-mers is marked as -1.  Without -f, only the\n"
+"                         maximum coverage of the forward and reverse k-mers\n"
+"                         is printed.\n"
+"  -h, --help           Print this usage message.\n"
+    ;
+    printf(usage_str, prog_name);
+}
+
+static const char *optstring = "kjflHh";
+static const struct option longopts[] = {
+    {"display-kmers",     no_argument, NULL, 'k'},
+    {"jellyfish",         no_argument, NULL, 'j'},
+    {"forward-only",      no_argument, NULL, 'f'},
+    {"jellyfish-preload", no_argument, NULL, 'l'},
+    {"horizontal",        no_argument, NULL, 'H'},
+    {"help",              no_argument, NULL, 'h'},
+    {0, 0, 0, 0},
+};
+
+static void parse_command_line(int argc, char *argv[])
+{
+    int c;
+    while ((c = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
+        switch (c) {
+        case 'k':
+            OPT_display_kmers = true;
+            break;
+
+        case 'j':
+#ifdef WITH_JELLYFISH
+            OPT_jellyfish = true;
+#else
+            std::cerr << "ERROR: Jellyfish support not enabled" << std::endl;
+            exit(1);
+#endif
+            break;
+        case 'f':
+            OPT_forward_only = true;
+            break;
+        case 'l':
+            OPT_jellyfish_preload = true;
+            break;
+        case 'H':
+            OPT_horizontal = true;
+            break;
+        case 'h':
+        default:
+            usage(argv[0]);
+            exit((c == 'h') ? 0 : 1);
+        }
+    }
+
+    argc -= optind - 1;
+    argv += optind - 1;
+    if (argc != 2) {
+        usage(argv[0]);
+        exit(1);
+    }
+    kmer_file_name = argv[1];
+}
+
+static void write_mers(mer_t fwd_mer, mer_t rev_mer)
+{
+        char mer[kmer_len + 1];
+        mer_to_ascii(fwd_mer, mer);
+
+        putchar('\t');
+        fputs(mer, stdout);
+        if (!OPT_forward_only) {
+            mer_to_ascii(rev_mer, mer);
+            putchar('\t');
+            fputs(mer, stdout);
+        }
+}
+
+static void print_kmer_coverage(const std::string & s,
+                                const mer_table_t & mer_table)
+{
+    unsigned n = s.length();
+    unsigned i, j;
+
+    mer_t fwd_mer = 0;
+    mer_t rev_mer = 0;
+    unsigned skip_until = kmer_len - 1;
+
+    for (i = 0; ; ) {
+        while (1) {
+            /* Continue adding bases to the mer until a full k-mer, with no
+             * intervening invalid k-mers, has been finished. */
+            if (i >= n)
+                goto end;
+            if (is_dna_char(s[i])) {
+                fwd_mer = forward_add_char(fwd_mer, s[i]);
+                rev_mer = reverse_add_char(rev_mer, s[i]);
+            } else {
+                skip_until = i + kmer_len;
+            }
+            i++;
+            if (i > skip_until)
+                break;
+            if (i >= kmer_len) {
+                if (OPT_horizontal)
+                    fputs("\t-1", stdout);
+                else
+                    printf("%u\t(invalid)\n", i - kmer_len + 1);
+            }
+        }
+        skip_until = i;
+
+        unsigned long fcount = mer_table[fwd_mer];
+
+        /* Print the k-mer coverage at the current base in the sequence. */
+        if (OPT_forward_only) {
+            if (OPT_horizontal)
+                putchar('\t');
+            printf("%u\t%lu", i - kmer_len + 1, fcount);
+        } else {
+            unsigned long rcount = mer_table[rev_mer];
+            unsigned long mcount = std::max(fcount, rcount);
+            if (OPT_horizontal)
+                printf("\t%u", mcount);
+            else
+                printf("%u\t%lu\t%lu\t%lu", i - kmer_len + 1, mcount, 
+                       fcount, rcount);
+        }
+
+        if (!OPT_horizontal) {
+            if (OPT_display_kmers)
+                write_mers(fwd_mer, rev_mer);
+            putchar('\n');
+        }
+    }
+end:
+    if (OPT_horizontal) {
+        if (OPT_display_kmers)
+            write_mers(fwd_mer, rev_mer);
+        putchar('\n');
+    }
 }
 
 
 
-static void  Reverse_Add_Ch
-    (Mer_t & mer, char ch)
+int main(int argc, char *argv[])
+{
+    parse_command_line(argc, argv);
 
-//  Add the Watson-Crick complement of  ch  to  mer  on the left,
-//  sliding one character off the right end of  mer .
+    mer_table_t *mer_table;
+#ifdef WITH_JELLYFISH
+    if (OPT_jellyfish) {
+        mapped_file dbf(kmer_file_name);
+        if (OPT_jellyfish_preload)
+            dbf.load();
+        if (strncmp(dbf.base(), jellyfish::compacted_hash::file_type, 8) == 0) {
+            mer_table = new jellyfish_mer_table_t<hash_query_t>(dbf);
+        } else if (strncmp(dbf.base(), jellyfish::raw_hash::file_type, 8) == 0) {
+            mer_table = new jellyfish_mer_table_t<raw_inv_hash_query_t>(dbf);
+        } else {
+            std::cerr << kmer_file_name 
+                      << " is not a valid jellyfish hash table"
+                      << std::endl;
+            exit(1);
+        }
+    } else {
+#endif
+        mer_table = new hash_map_mer_table_t(kmer_file_name);
+#ifdef WITH_JELLYFISH
+    }
+#endif
+    kmer_len = mer_table->get_kmer_len();
+    if (kmer_len == 0) {
+        std::cerr << "Cannot use kmer length of 0!" << std::endl;
+        exit(1);
+    }
+    forward_mask = ((mer_t)1 << (2 * kmer_len - 2)) - 1;
 
-  {
-   mer >>= 2;
-   mer |= ((long long unsigned) (3 ^ Char_To_Binary (ch)) << (2 * Kmer_Len - 2));
-
-   return;
-  }
-
-
-
-static void  Usage
-    (const char * command)
-
-//  Print to stderr description of options and command line for
-//  this program.   command  is the command that was used to
-//  invoke it.
-
-  {
-   fprintf (stderr,
-           "USAGE:  kmer-cov-plot  <kmer-file>\n"
-           "\n"
-           "Read a list of short kmers (31 bases or less) from <kmer-file>\n"
-           "and a fasta file on stdin and print the kmer coverage at each \n"
-           "position (prints max (forkmercov, revkmercov))\n"
-           "\n"
-           "Options:\n"
-           "  -h      Print this usage message\n"
-           "  -K      Display the actual kmer in addtion to the counts\n"
-           "\n");
-
-   return;
-  }
-
-
-
+    int c = getchar();
+    switch (c) {
+    case '>': {
+            std::string s, tag;
+            ungetc(c, stdin);
+            while (Fasta_Read(stdin, s, tag)) {
+                putchar('>');
+                fputs(tag.c_str(), stdout);
+                if (!OPT_horizontal)
+                    putchar('\n');
+                print_kmer_coverage(s, *mer_table);
+            }
+            break;
+        }
+    case '@': {
+            std::string s, hdr, q, qualHdr;
+            ungetc(c, stdin);
+            while (Fastq_Read(stdin, s, hdr, q, qualHdr)) {
+                putchar('@');
+                fputs(hdr.c_str(), stdout);
+                if (!OPT_horizontal)
+                    putchar('\n');
+                print_kmer_coverage(s, *mer_table);
+            }
+            break;
+        }
+    default:
+        std::cerr << "Unrecognized file type on stdin (expected FASTA or "
+                     "FASTQ file)!" << std::endl;
+        return 1;
+    }
+    return 0;
+}

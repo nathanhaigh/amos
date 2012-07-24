@@ -22,8 +22,23 @@ if __name__ == "__main__":
     #INPUT: CONTIGS + MATES, READS + TRACE XML, OR AMOS BANK (3 options)
     usage = "\nrun: goBambus2.py <input reads or contigs or amos bank name> <output prefix> [options]\n"
     usage += "eg.: goBambus2.py example.contigs myoutput --all --contigs\n"
-    usage += "This script is designed to run the Bambus pipeline and takes either reads or contigs plus XML Trace Archive data as input and outputs scaffolds\n"
-    usage += "For further info please contact the Bambus 2 authors: Sergey Koren and Mihai Pop\n"
+    usage += "\nThis script is designed to run the Bambus pipeline and takes either reads or contigs plus XML Trace Archive data as input and outputs scaffolds\n"
+    usage += "\n===Main parameters===\n"
+    usage += "--all: run ALL steps (irrespective of flags)\n"
+    usage += "--contigs: indicates to start with pre-assembled contigs\n"
+    usage += "--reads: indicates to start with reads, assemble with Minimums\n"
+    usage += "--verbose: increase to full verbosity\n"
+    usage += "\n==Individual steps (enable/disable, overridden by --all)==\n"
+    usage += "\t--2amos: use toAmos, create AMOS format AFG\n"
+    usage += "\t--2fasta: create FASTA contig output\n"
+    usage += "\t--bundle: run Bambus2 bundler\n"
+    usage += "\t--clk: run Bambus2 create links binary\n"
+    usage += "\t--minimus: run Minimus to assemble reads\n"
+    usage += "\t--orient: run main Bambus2 binary, to Order & Orient contigs\n"
+    usage += "\t--printscaff: create FASTA scaffold output\n"
+    usage += "\t--reps: Run Bambus2 graph-based repeat detection binary \n"
+
+    usage += "\nFor further info please contact the Bambus 2 authors: Sergey Koren, Todd Treangen and Mihai Pop\n"
     if len(sys.argv) < 3:
         print usage
         sys.exit(1)

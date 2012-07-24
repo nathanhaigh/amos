@@ -133,7 +133,7 @@ genome_complexity_fast_SOURCES = \
 
 ##-- hash-overlap
 hash_overlap_LDADD = \
-	$(top_builddir)/src/Align/libAlign.a \
+	libAlign.a \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -159,9 +159,13 @@ kmer_cov_SOURCES = \
 ##-- kmer-cov-plot
 kmer_cov_plot_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-	$(top_builddir)/src/AMOS/libAMOS.a
+	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(JELLYFISH_LDADD)
 kmer_cov_plot_SOURCES = \
 	kmer-cov-plot.cc
+kmer_cov_plot_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	$(JELLYFISH_CPPFLAGS)
 
 ##-- overlap-align
 overlap_align_LDADD = \
@@ -172,7 +176,7 @@ overlap_align_SOURCES = \
 
 ##-- make-consensus
 make_consensus_LDADD = \
-	$(top_builddir)/src/Align/libAlign.a \
+	libAlign.a \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -182,7 +186,7 @@ make_consensus_SOURCES = \
 
 ##-- make-consensus_poly
 make_consensus_poly_LDADD = \
-	$(top_builddir)/src/Align/libAlign_poly.a \
+	libAlign_poly.a \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -192,7 +196,7 @@ make_consensus_poly_SOURCES = \
 
 ##-- maligntest
 maligntest_LDADD = \
-	$(top_builddir)/src/Align/libAlign.a \
+	libAlign.a \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -202,7 +206,7 @@ maligntest_SOURCES = \
 
 ##-- merge-contigs
 merge_contigs_LDADD = \
-	$(top_builddir)/src/Align/libAlign.a \
+	libAlign.a \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -235,7 +239,7 @@ running_cmp_SOURCES = \
 
 ##-- show-ma-asm
 show_ma_asm_LDADD = \
-	$(top_builddir)/src/Align/libAlign.a \
+	libAlign.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a
 show_ma_asm_SOURCES = \
@@ -261,7 +265,7 @@ sim_shotgun_SOURCES = \
 
 ##-- simple-overlap
 simple_overlap_LDADD = \
-	$(top_builddir)/src/Align/libAlign.a \
+	libAlign.a \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \
@@ -272,7 +276,7 @@ simple_overlap_SOURCES = \
 
 ##-- test-align
 test_align_LDADD = \
-	$(top_builddir)/src/Align/libAlign.a \
+	libAlign.a \
 	$(top_builddir)/src/CelMsg/libCelMsg.a \
 	$(top_builddir)/src/Slice/libSlice.a \
 	$(top_builddir)/src/Common/libCommon.a \

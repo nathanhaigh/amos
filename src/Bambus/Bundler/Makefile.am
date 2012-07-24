@@ -52,7 +52,7 @@ MarkRepeats_CPPFLAGS =\
 
 MarkRepeats_LDADD = \
 	$(OPENMP_LDFLAGS) \
-	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
+	libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
@@ -60,7 +60,7 @@ MarkRepeats_SOURCES = \
 	MarkRepeats.cc
 
 OrientContigs_LDADD = \
-	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
+	libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a
@@ -68,7 +68,7 @@ OrientContigs_SOURCES = \
 	OrientContigs.cc
 
 FilterEdgesByCluster_LDADD = \
-	$(top_builddir)/src/Bambus/Bundler/libBundler.a \
+	libBundler.a \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/GNU/libGNU.a

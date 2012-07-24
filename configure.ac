@@ -91,6 +91,7 @@ AMOS_QT4
 AMOS_BOOST
 AMOS_CA
 AMOS_OPENMP
+AMOS_JELLYFISH
 
 # check for functions which can be replaced with libGNU modules:
 # getopt strtod strtol
@@ -297,6 +298,10 @@ if test x"${have_libz}" != x"yes"; then
   echo "   install libz if planning on using compressed trace formats"
 fi
 
+if test x"${JELLYFISH_LDADD}" = x""; then
+  echo "WARNING! Omitting support for Jellyfish kmer counting library"
+fi
+
 if test x"${LIBSTATISTICS_DESCRIPTIVE_PERL}" = x"0"; then
   echo "WARNING! Statistics::Descriptive Perl module was not found but is required to run some AMOS scripts"
 fi
@@ -308,4 +313,5 @@ fi
 if test x"${LIBDBI_PERL}" = x"0"; then
   echo "WARNING! DBI Perl module was not found but is required to run some AMOS scripts"
 fi
+
 ##-- END OF CONFIGURE --##
