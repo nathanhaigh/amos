@@ -25,6 +25,7 @@ static const char *kmer_file_name;
 static bool        OPT_display_kmers = false;
 static bool        OPT_forward_only = false;
 static bool        OPT_jellyfish_preload = false;
+static bool        OPT_horizontal = false;
 
 /* Map a DNA character, upper case or lower case, to the binary code
  * { A => 0, C => 1, G => 2, C => 3 }.
@@ -266,17 +267,24 @@ static void usage(const char *prog_name)
 "                         memory by random page faults.  If you do not have\n"
 "                         enough memory to hold the entire hash table in memory,\n"
 "                         this option will not be very helpful.\n"
+"  -H, --horizontal     Output the information as one read per line, as the\n"
+"                         FASTA/FASTQ tag followed by the k-mer coverage\n"
+"                         values, tab-delimited.  The coverage of invalid\n"
+"                         k-mers is marked as -1.  Without -f, only the\n"
+"                         maximum coverage of the forward and reverse k-mers\n"
+"                         is printed.\n"
 "  -h, --help           Print this usage message.\n"
     ;
     printf(usage_str, prog_name);
 }
 
-static const char *optstring = "kjflh";
+static const char *optstring = "kjflHh";
 static const struct option longopts[] = {
     {"display-kmers",     no_argument, NULL, 'k'},
     {"jellyfish",         no_argument, NULL, 'j'},
     {"forward-only",      no_argument, NULL, 'f'},
     {"jellyfish-preload", no_argument, NULL, 'l'},
+    {"horizontal",        no_argument, NULL, 'H'},
     {"help",              no_argument, NULL, 'h'},
     {0, 0, 0, 0},
 };
@@ -304,6 +312,9 @@ static void parse_command_line(int argc, char *argv[])
         case 'l':
             OPT_jellyfish_preload = true;
             break;
+        case 'H':
+            OPT_horizontal = true;
+            break;
         case 'h':
         default:
             usage(argv[0]);
@@ -320,17 +331,25 @@ static void parse_command_line(int argc, char *argv[])
     kmer_file_name = argv[1];
 }
 
+static void write_mers(mer_t fwd_mer, mer_t rev_mer)
+{
+        char mer[kmer_len + 1];
+        mer_to_ascii(fwd_mer, mer);
+
+        putchar('\t');
+        fputs(mer, stdout);
+        if (!OPT_forward_only) {
+            mer_to_ascii(rev_mer, mer);
+            putchar('\t');
+            fputs(mer, stdout);
+        }
+}
+
 static void print_kmer_coverage(const std::string & s,
                                 const mer_table_t & mer_table)
 {
     unsigned n = s.length();
     unsigned i, j;
-
-    if (n < kmer_len) {
-        for (i = 0; i < n; i++)
-            printf("%d 0 0\n", i);
-        return;
-    }
 
     mer_t fwd_mer = 0;
     mer_t rev_mer = 0;
@@ -340,8 +359,8 @@ static void print_kmer_coverage(const std::string & s,
         while (1) {
             /* Continue adding bases to the mer until a full k-mer, with no
              * intervening invalid k-mers, has been finished. */
-            if (i == n)
-                return;
+            if (i >= n)
+                goto end;
             if (is_dna_char(s[i])) {
                 fwd_mer = forward_add_char(fwd_mer, s[i]);
                 rev_mer = reverse_add_char(rev_mer, s[i]);
@@ -351,8 +370,12 @@ static void print_kmer_coverage(const std::string & s,
             i++;
             if (i > skip_until)
                 break;
-            if (i >= kmer_len)
-                printf("%u\t(invalid)\n", i - kmer_len + 1);
+            if (i >= kmer_len) {
+                if (OPT_horizontal)
+                    fputs("\t-1", stdout);
+                else
+                    printf("%u\t(invalid)\n", i - kmer_len + 1);
+            }
         }
         skip_until = i;
 
@@ -360,28 +383,30 @@ static void print_kmer_coverage(const std::string & s,
 
         /* Print the k-mer coverage at the current base in the sequence. */
         if (OPT_forward_only) {
+            if (OPT_horizontal)
+                putchar('\t');
             printf("%u\t%lu", i - kmer_len + 1, fcount);
         } else {
             unsigned long rcount = mer_table[rev_mer];
             unsigned long mcount = std::max(fcount, rcount);
-            printf("%u\t%lu\t%lu\t%lu", i - kmer_len + 1, mcount, 
-                   fcount, rcount);
+            if (OPT_horizontal)
+                printf("\t%u", mcount);
+            else
+                printf("%u\t%lu\t%lu\t%lu", i - kmer_len + 1, mcount, 
+                       fcount, rcount);
         }
 
-        if (OPT_display_kmers) {
-            char mer[kmer_len + 1];
-            mer_to_ascii(fwd_mer, mer);
-
-            putchar('\t');
-            fputs(mer, stdout);
-            if (!OPT_forward_only) {
-                mer_to_ascii(rev_mer, mer);
-                putchar('\t');
-                fputs(mer, stdout);
-            }
+        if (!OPT_horizontal) {
+            if (OPT_display_kmers)
+                write_mers(fwd_mer, rev_mer);
+            putchar('\n');
         }
+    }
+end:
+    if (OPT_horizontal) {
+        if (OPT_display_kmers)
+            write_mers(fwd_mer, rev_mer);
         putchar('\n');
-        fflush(stdout);
     }
 }
 
@@ -426,7 +451,10 @@ int main(int argc, char *argv[])
             std::string s, tag;
             ungetc(c, stdin);
             while (Fasta_Read(stdin, s, tag)) {
-                std::cout << ">" << tag << std::endl;
+                putchar('>');
+                fputs(tag.c_str(), stdout);
+                if (!OPT_horizontal)
+                    putchar('\n');
                 print_kmer_coverage(s, *mer_table);
             }
             break;
@@ -435,7 +463,10 @@ int main(int argc, char *argv[])
             std::string s, hdr, q, qualHdr;
             ungetc(c, stdin);
             while (Fastq_Read(stdin, s, hdr, q, qualHdr)) {
-                std::cout << "@" << hdr << std::endl;
+                putchar('@');
+                fputs(hdr.c_str(), stdout);
+                if (!OPT_horizontal)
+                    putchar('\n');
                 print_kmer_coverage(s, *mer_table);
             }
             break;
