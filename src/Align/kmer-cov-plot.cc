@@ -26,6 +26,7 @@ static bool        OPT_display_kmers = false;
 static bool        OPT_forward_only = false;
 static bool        OPT_jellyfish_preload = false;
 static bool        OPT_horizontal = false;
+static int         OPT_ends = -1;
 
 /* Map a DNA character, upper case or lower case, to the binary code
  * { A => 0, C => 1, G => 2, C => 3 }.
@@ -272,19 +273,22 @@ static void usage(const char *prog_name)
 "                         values, tab-delimited.  The coverage of invalid\n"
 "                         k-mers is marked as -1.  Without -f, only the\n"
 "                         maximum coverage of the forward and reverse k-mers\n"
-"                         is printed.\n"
+"                         is printed.  -k cannot be used with -H.\n"
+"  -e, --ends=LEN       Only print the coverage at the first and last LEN\n"
+"                         k-mers of each read.\n"
 "  -h, --help           Print this usage message.\n"
     ;
     printf(usage_str, prog_name);
 }
 
-static const char *optstring = "kjflHh";
+static const char *optstring = "kjflHe:h";
 static const struct option longopts[] = {
     {"display-kmers",     no_argument, NULL, 'k'},
     {"jellyfish",         no_argument, NULL, 'j'},
     {"forward-only",      no_argument, NULL, 'f'},
     {"jellyfish-preload", no_argument, NULL, 'l'},
     {"horizontal",        no_argument, NULL, 'H'},
+    {"ends",              required_argument, NULL, 'e'},
     {"help",              no_argument, NULL, 'h'},
     {0, 0, 0, 0},
 };
@@ -315,12 +319,25 @@ static void parse_command_line(int argc, char *argv[])
         case 'H':
             OPT_horizontal = true;
             break;
+        case 'e':
+            OPT_ends = atoi(optarg);
+            if (OPT_ends < 1) {
+                std::cerr << "ERROR: '-e' option must be given a positive integer value" << std::endl;
+                exit(1);
+            }
+            break;
         case 'h':
         default:
             usage(argv[0]);
             exit((c == 'h') ? 0 : 1);
         }
     }
+
+    if (OPT_display_kmers && OPT_horizontal) {
+        std::cerr << "ERROR: Cannot mix options -k and -H" << std::endl;
+        exit(1);
+    }
+
 
     argc -= optind - 1;
     argv += optind - 1;
@@ -359,8 +376,11 @@ static void print_kmer_coverage(const std::string & s,
         while (1) {
             /* Continue adding bases to the mer until a full k-mer, with no
              * intervening invalid k-mers, has been finished. */
-            if (i >= n)
-                goto end;
+            if (i >= n) {
+                if (OPT_horizontal)
+                    putchar('\n');
+                return;
+            }
             if (is_dna_char(s[i])) {
                 fwd_mer = forward_add_char(fwd_mer, s[i]);
                 rev_mer = reverse_add_char(rev_mer, s[i]);
@@ -370,7 +390,7 @@ static void print_kmer_coverage(const std::string & s,
             i++;
             if (i > skip_until)
                 break;
-            if (i >= kmer_len) {
+            if (i >= kmer_len && (OPT_ends == -1 || i - kmer_len < OPT_ends)) {
                 if (OPT_horizontal)
                     fputs("\t-1", stdout);
                 else
@@ -378,6 +398,8 @@ static void print_kmer_coverage(const std::string & s,
             }
         }
         skip_until = i;
+        if (OPT_ends != -1 && !(i - kmer_len  < OPT_ends || i > n - OPT_ends))
+            continue;
 
         unsigned long fcount = mer_table[fwd_mer];
 
@@ -401,12 +423,6 @@ static void print_kmer_coverage(const std::string & s,
                 write_mers(fwd_mer, rev_mer);
             putchar('\n');
         }
-    }
-end:
-    if (OPT_horizontal) {
-        if (OPT_display_kmers)
-            write_mers(fwd_mer, rev_mer);
-        putchar('\n');
     }
 }
 
