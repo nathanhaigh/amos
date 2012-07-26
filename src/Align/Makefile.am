@@ -14,6 +14,7 @@ bin_PROGRAMS = \
     qmer-filter \
 	frg-umd-merge \
 	gap-links \
+	gc-content-plot \
 	hash-overlap \
 	kmer-count \
 	kmer-cov \
@@ -112,6 +113,14 @@ gap_links_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a
 gap_links_SOURCES = \
 	gap-links.cc
+
+##-- gc-content-plot
+gc_content_plot_LDADD = \
+	$(top_builddir)/src/Common/libCommon.a
+gc_content_plot_SOURCES = \
+	gc-content-plot.cc
+gc_content_plot_CPPFLAGS = \
+	$(AM_CPPFLAGS)
 
 ##-- genome-complexity
 genome_complexity_LDADD = \
