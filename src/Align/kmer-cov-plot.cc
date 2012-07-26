@@ -390,7 +390,7 @@ static void print_kmer_coverage(const std::string & s,
             i++;
             if (i > skip_until)
                 break;
-            if (i >= kmer_len && (OPT_ends == -1 || i - kmer_len < OPT_ends)) {
+            if (i >= kmer_len && (OPT_ends == -1 || i - kmer_len < OPT_ends || i > n - OPT_ends)) {
                 if (OPT_tabular)
                     fputs("\t-1", stdout);
                 else
