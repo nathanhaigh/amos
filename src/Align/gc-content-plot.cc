@@ -126,7 +126,7 @@ static void gc_content_plot_seq(const std::string &seq)
                     gc_count -= gc_count_tab[out_of_scope_base];
             }
             if (OPT_ends == -1 || window_start_idx < OPT_ends ||
-                                  window_start_idx >= seq.size() - OPT_ends) 
+                                  i >= seq.size() - OPT_ends)
             {
                 if (OPT_tabular)
                     printf("\t%g", gc_count);
