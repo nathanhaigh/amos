@@ -108,6 +108,9 @@ your Qt package. If all else fails, you may have to build the
 viewer independently. If so, make AMOS without hawkeye, and then
 cd into the src/hawkeye directory, run 'qmake', and then 'make'.
 
+   Finally, if you need the toAmos_new file conversion tool, you will
+need to have the Expat XML parsing library: http://expat.sourceforge.net
+
 
 Documentation
 =============

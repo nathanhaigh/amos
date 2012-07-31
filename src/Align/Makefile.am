@@ -6,12 +6,12 @@ include $(top_srcdir)/config/amos.mk
 bin_PROGRAMS = \
 	arrive \
 	arrive2 \
-    genome-complexity \
-    genome-complexity-fast \
-    count-kmers \
-    find-tandem \
-    count-qmers \
-    qmer-filter \
+	genome-complexity \
+	genome-complexity-fast \
+	count-kmers \
+	find-tandem \
+	count-qmers \
+	qmer-filter \
 	frg-umd-merge \
 	gap-links \
 	gc-content-plot \
@@ -24,7 +24,7 @@ bin_PROGRAMS = \
 	merge-contigs \
 	missing-reads \
 	ovl-degr-dist \
-    overlap-align \
+	overlap-align \
 	readinfo2cam \
 	running-cmp \
 	show-ma-asm \
@@ -32,7 +32,7 @@ bin_PROGRAMS = \
 	sim-cover2 \
 	sim-shotgun \
 	simple-overlap \
-    verify-layout
+	verify-layout
 
 amoslib_LIBRARIES = \
 	libAlign.a \
@@ -74,7 +74,7 @@ arrive2_SOURCES = \
 ##-- count-kmers
 count_kmers_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 count_kmers_SOURCES = \
 	count-kmers.cc
@@ -82,7 +82,7 @@ count_kmers_SOURCES = \
 ##-- find-tandem
 find_tandem_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 find_tandem_SOURCES = \
 	find-tandem.cc
@@ -90,7 +90,7 @@ find_tandem_SOURCES = \
 ##-- count-qmers
 count_qmers_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    $(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a
 count_qmers_SOURCES = \
 	count-qmers.cc
@@ -118,16 +118,16 @@ gap_links_SOURCES = \
 gc_content_plot_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a
 gc_content_plot_SOURCES = \
-	gc-content-plot.cc	  \
-	RangeIterator.h		  \
-	RangeIterator.cc	
+	gc-content-plot.cc \
+	RangeIterator.h \
+	RangeIterator.cc
 gc_content_plot_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 ##-- genome-complexity
 genome_complexity_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
 	$(top_builddir)/src/GNU/libGNU.a
 genome_complexity_SOURCES = \
@@ -136,7 +136,7 @@ genome_complexity_SOURCES = \
 ##-- genome-complexity-fast
 genome_complexity_fast_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
-    	$(top_builddir)/src/AMOS/libAMOS.a \
+	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(top_builddir)/src/Foundation/libAMOSFoundation.a \
 	$(top_builddir)/src/GNU/libGNU.a
 genome_complexity_fast_SOURCES = \
@@ -172,9 +172,9 @@ kmer_cov_plot_LDADD = \
 	$(top_builddir)/src/Common/libCommon.a \
 	$(top_builddir)/src/AMOS/libAMOS.a \
 	$(JELLYFISH_LDADD)
-kmer_cov_plot_SOURCES =     \
-	kmer-cov-plot.cc    \
-	RangeIterator.cc    \
+kmer_cov_plot_SOURCES = \
+	kmer-cov-plot.cc \
+	RangeIterator.cc \
 	RangeIterator.h
 kmer_cov_plot_CPPFLAGS = \
 	$(AM_CPPFLAGS) \

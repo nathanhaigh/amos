@@ -59,6 +59,12 @@ case ${LIBS} in
   have_libz=yes
   ;;
 esac
+AC_CHECK_LIB(expat, XML_ParserCreate)
+case ${LIBS} in
+  *"-lexpat "*)
+  have_libexpat=yes
+  ;;
+esac
 
 # check for headers
 AC_HEADER_DIRENT
@@ -135,6 +141,7 @@ AMOS_BUILD_CONDITIONAL([Experimental], [no])
 AMOS_BUILD_CONDITIONAL([all], [yes])
 
 AM_CONDITIONAL(BUILD_LIBZ, [test x"${have_libz}" = x"yes"])
+AM_CONDITIONAL(BUILD_LIBEXPAT, [test x"${have_libexpat}" = x"yes"])
 AM_CONDITIONAL(BUILD_QT4, [test x"${have_qt4_test}" = x"yes"])
 AM_CONDITIONAL(BUILD_BOOST, [test x"${have_boost_test}" = x"yes"])
 
@@ -296,6 +303,11 @@ fi
 if test x"${have_libz}" != x"yes"; then
   echo "WARNING! libz was not found but is required for certain read trace IO"
   echo "   install libz if planning on using compressed trace formats"
+fi
+
+if test x"${have_libexpat}" != x"yes"; then
+  echo "WARNING! libexpat was not found but is required for the toAmos_new file conversion tool"
+  echo "   install libexpat if planning on using toAmos_new"
 fi
 
 if test x"${JELLYFISH_LDADD}" = x""; then
