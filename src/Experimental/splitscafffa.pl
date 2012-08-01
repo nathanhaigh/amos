@@ -45,7 +45,7 @@ if (defined $AGPFILENAME)
     or die "Can't open $AGPFILENAME\n";
 
   print AGP "## AGP-version 2.0\n";
-  print AGP "## AGP constructed by AMOS/splitscaff.fa $ARGV[0]\n";
+  print AGP "## AGP constructed by AMOS/splitscaff.pl $ARGV[0]\n";
 }
 
 my $nscaff  = 0;
