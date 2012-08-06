@@ -61,6 +61,11 @@ sub processScaff
 
   $nscaff++;
 
+  if (defined $AGPFILENAME)
+  {
+     $scaffid = "scaffold_$nscaff";
+  }
+
   my $prevoffset = 0;
   my $partnumber = 1;
   my $start_n = -1;
@@ -76,10 +81,10 @@ sub processScaff
     die "ERROR finding substring with section $i\n"  
       if $offset == -1;
 
-    my $len = length ($sections[$i]);
-    my $end = $offset + $len;
+    my $contig_len = length ($sections[$i]);
+    my $end = $offset + $contig_len - 1; ## inclusive coords
 
-    if ($len < $MIN_CONTIG_LEN)
+    if ($contig_len < $MIN_CONTIG_LEN)
     {
       ## skip over short contigs
       next;
@@ -108,7 +113,7 @@ sub processScaff
          my $linkage        = "yes"; ## gaps linked by mate pairs
          my $linkage_type   = "paired-ends";
 
-         print AGP "scaffold_$nscaff\t$gapstart\t$gapend\t$partnumber\t$component_type\t$gaplen\t$gaptype\t$linkage\t$linkage_type\n";
+         print AGP "$scaffid\t$gapstart\t$gapend\t$partnumber\t$component_type\t$gaplen\t$gaptype\t$linkage\t$linkage_type\n";
          
          $partnumber++;
        }
@@ -119,7 +124,7 @@ sub processScaff
        my $contig_start   = $offset + 1 - $start_n;  ## 1-based coords
        my $contig_end     = $end + 1 - $start_n;     ## 1-based coords
 
-       print AGP "scaffold_$nscaff\t$contig_start\t$contig_end\t$partnumber\t$component_type\tcontig_$ncontig\t1\t$len\t$orientation\n";
+       print AGP "$scaffid\t$contig_start\t$contig_end\t$partnumber\t$component_type\tcontig_$ncontig\t1\t$contig_len\t$orientation\n";
 
        $partnumber++;
 
@@ -130,12 +135,12 @@ sub processScaff
        print ">$scaffid\.$i\.$offset\.$end\n";
     }
 
-    for (my $j = 0; $j < $len; $j += $FASTA_LEN)
+    for (my $j = 0; $j < $contig_len; $j += $FASTA_LEN)
     {
       print substr($sections[$i], $j, $FASTA_LEN), "\n";
     }
 
-    $prevoffset = $offset + $len;
+    $prevoffset = $offset + $contig_len - 1; ## last base in contig
   }
 }
 
