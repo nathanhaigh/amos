@@ -112,8 +112,10 @@ int main(int argc, char *argv[])
   try {
     if (! edge_bank.exists(globals["bank"])) 
       edge_bank.create(globals["bank"]);
-    else 
+    else { 
       edge_bank.open(globals["bank"]);
+      EdgeId = edge_bank.getMaxIID()+1;
+    }
   } catch (Exception_t & e)
     {
       cerr << "Failed to open edge account in bank " << globals["bank"] 
