@@ -675,4 +675,63 @@ EOF
   have_openmp_test=$ac_cv_boost_test_result
 ])
 
+##-- AMOS_JELLYFISH -------------------------------------------------------------------
+# @synopsis AMOS_JELLYFISH
+#  [--with-jellyfish=DIR]
+#
+#  Sets JELLYFISH_LDADD and JELLYFISH_CPPFLAGS, and defines WITH_JELLYFISH, to
+#  use for programs that use the Jellyfish kmer-counting library.
+#
+AC_DEFUN([AMOS_JELLYFISH],
+[
+AC_MSG_CHECKING([for Jellyfish])
+AC_ARG_WITH([jellyfish], 
+	[AS_HELP_STRING([--with-jellyfish], [location of Jellyfish headers])],
+	[jellyfish_dir=$withval], 
+	[jellyfish_dir=unspecified])
+if test $jellyfish_dir = unspecified; then
+	jellyfish_dir=/usr/include
+	jellyfish_unspecified=yes
+else
+	jellyfish_unspecified=no
+fi
+if ! test -f "$jellyfish_dir/jellyfish/mer_counting.hpp"; then
+	if test $jellyfish_unspecified = no; then
+		AC_MSG_ERROR([Could not find the file "$jellyfish_dir/jellyfish/compacted_hash.hpp"])
+	fi
+	JELLYFISH_LDADD=
+	JELLYFISH_CPPFLAGS=
+	AC_MSG_RESULT([not found])
+else
+	JELLYFISH_LDADD="-ljellyfish -lpthread"
+	JELLYFISH_CPPFLAGS="-I $jellyfish_dir"
+	AC_DEFINE([WITH_JELLYFISH], [1], [Define to 1 if using Jellyfish])
+	cppflags_save="$CPPFLAGS"
+	ldflags_save="$LDFLAGS"
+	CPPFLAGS="$CPPFLAGS $JELLYFISH_CPPFLAGS"
+	LDFLAGS="$LDFLAGS $JELLYFISH_LDADD"
+	AC_MSG_RESULT([$jellyfish_dir])
+	AC_MSG_CHECKING([whether Jellyfish works])
+	AC_LANG_PUSH([C++])
+	AC_LINK_IFELSE([
+		AC_LANG_PROGRAM([
+#include <jellyfish/mer_counting.hpp>
+#include <string>
+	], [
+std::string s;
+hash_query_t q(s);
+	])], , [
+		AC_MSG_RESULT([no])
+		AC_MSG_ERROR(Failed to compile program with libjellyfish! 
+	Use LDFLAGS to pass the location of the libjellyfish.so library.)
+	])
+	CPPFLAGS="$cppflags_save"
+	LDFLAGS="$ldflags_save"
+	AC_LANG_POP([C++])
+	AC_MSG_RESULT([yes])
+fi
+AC_SUBST([JELLYFISH_LDADD], ["$JELLYFISH_LDADD"])
+AC_SUBST([JELLYFISH_CPPFLAGS], ["$JELLYFISH_CPPFLAGS"])
+])
+
 ##-- END OF m4 --##

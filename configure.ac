@@ -59,6 +59,12 @@ case ${LIBS} in
   have_libz=yes
   ;;
 esac
+AC_CHECK_LIB(expat, XML_ParserCreate)
+case ${LIBS} in
+  *"-lexpat "*)
+  have_libexpat=yes
+  ;;
+esac
 
 # check for headers
 AC_HEADER_DIRENT
@@ -91,6 +97,7 @@ AMOS_QT4
 AMOS_BOOST
 AMOS_CA
 AMOS_OPENMP
+AMOS_JELLYFISH
 
 # check for functions which can be replaced with libGNU modules:
 # getopt strtod strtol
@@ -134,6 +141,7 @@ AMOS_BUILD_CONDITIONAL([Experimental], [no])
 AMOS_BUILD_CONDITIONAL([all], [yes])
 
 AM_CONDITIONAL(BUILD_LIBZ, [test x"${have_libz}" = x"yes"])
+AM_CONDITIONAL(BUILD_LIBEXPAT, [test x"${have_libexpat}" = x"yes"])
 AM_CONDITIONAL(BUILD_QT4, [test x"${have_qt4_test}" = x"yes"])
 AM_CONDITIONAL(BUILD_BOOST, [test x"${have_boost_test}" = x"yes"])
 
@@ -297,6 +305,15 @@ if test x"${have_libz}" != x"yes"; then
   echo "   install libz if planning on using compressed trace formats"
 fi
 
+if test x"${have_libexpat}" != x"yes"; then
+  echo "WARNING! libexpat was not found but is required for the toAmos_new file conversion tool"
+  echo "   install libexpat if planning on using toAmos_new"
+fi
+
+if test x"${JELLYFISH_LDADD}" = x""; then
+  echo "WARNING! Omitting support for Jellyfish kmer counting library"
+fi
+
 if test x"${LIBSTATISTICS_DESCRIPTIVE_PERL}" = x"0"; then
   echo "WARNING! Statistics::Descriptive Perl module was not found but is required to run some AMOS scripts"
 fi
@@ -308,4 +325,5 @@ fi
 if test x"${LIBDBI_PERL}" = x"0"; then
   echo "WARNING! DBI Perl module was not found but is required to run some AMOS scripts"
 fi
+
 ##-- END OF CONFIGURE --##

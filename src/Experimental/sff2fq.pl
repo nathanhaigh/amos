@@ -2,6 +2,16 @@
 use strict;
 use Getopt::Long;
 
+## Dependencies
+
+my $SFF_EXTRACT     = "sff_extract.py";      ## from http://bioinf.comav.upv.es/sff_extract/
+
+my $FASTQ_TO_FASTA  = "fastq_to_fasta_fast"; ## from AMOS
+my $FASTA_TRIM      = "fasta_trim";          ## from AMOS
+my $FASTA_FORMATTER = "fasta_formatter";     ## from AMOS
+my $FASTA_TO_FASTQ  = "fasta_to_fastq";      ## from AMOS
+
+
 
 ## Options
 my $help  = 0;
@@ -43,10 +53,9 @@ if (!defined $prefix)
 
 print STDERR "creating $prefix.1.fq and $prefix.2.fq using $MAX_LEN bp reads\n\n";
 
-runCmd("sff_extract", "$prefix.raw.fastq", "sff_extract.py -l linkerall.fa -c -Q $sfffile -o $prefix.raw");
-runCmd("convert fq1", "$prefix.1.fq",      "fastq_to_fasta_fast $prefix.raw.fastq | fasta_trim -l $MAX_LEN | fasta_formatter -t | grep '\.f' | awk '{print \">\"substr(\$1,1,length(\$1)-2)\"/1\"; print \$2}' | fasta_to_fastq > $prefix.1.fq");
-runCmd("convert fq2", "$prefix.2.fq",      "fastq_to_fasta_fast $prefix.raw.fastq | fasta_trim -l $MAX_LEN | fasta_formatter -t | grep '\.r' | awk '{print \">\"substr(\$1,1,length(\$1)-2)\"/2\"; print \$2}' | fasta_to_fastq > $prefix.2.fq");
-
+runCmd("sff_extract", "$prefix.raw.fastq", "$SFF_EXTRACT -l linkerall.fa -c -Q $sfffile -o $prefix.raw");
+runCmd("convert fq1", "$prefix.1.fq",      "$FASTQ_TO_FASTA $prefix.raw.fastq | $FASTA_TRIM -l $MAX_LEN | $FASTA_FORMATTER -t | grep '\.f' | awk '{print \">\"substr(\$1,1,length(\$1)-2)\"/1\"; print \$2}' | $FASTA_TO_FASTQ > $prefix.1.fq");
+runCmd("convert fq2", "$prefix.2.fq",      "$FASTQ_TO_FASTA $prefix.raw.fastq | $FASTA_TRIM -l $MAX_LEN | $FASTA_FORMATTER -t | grep '\.r' | awk '{print \">\"substr(\$1,1,length(\$1)-2)\"/2\"; print \$2}' | $FASTA_TO_FASTQ > $prefix.2.fq"); 
 
 ## runCmd
 ###############################################################################

@@ -1,8 +1,10 @@
 ##-- MAKE FRAGMENT FOR AMOS RULES
 include $(top_srcdir)/config/amos.mk
 
+if BUILD_LIBEXPAT
 bin_PROGRAMS = \
 	toAmos_new
+endif
 
 ##-- GLOBAL INCLUDE
 AM_CPPFLAGS = \
@@ -15,7 +17,7 @@ dist_bin_SCRIPTS = \
 	amos2frg.pl \
 	amos2mates.pl \
 	amos2sq.pl \
-    amos2ace.pl \
+	amos2ace.pl \
 	arachne2ctg.pl \
 	arachne2scaff.pl \
 	benchmark2arachne.pl \
@@ -23,7 +25,7 @@ dist_bin_SCRIPTS = \
 	benchmark2mates.pl \
 	benchmark2ta.pl \
 	blat2nucmer.pl \
-    blasr2coords.pl \
+	blasr2coords.pl \
 	ca2ctg.pl \
 	ca2mates.pl \
 	ca2scaff.pl \
@@ -49,7 +51,7 @@ dist_bin_SCRIPTS = \
 
 ##-- GLOBAL INCLUDE
 
-##-- toAmos
+##-- toAmos_new
 toAmos_new_CPPFLAGS = \
 	$(CA_CXXFLAGS) \
 	-I$(top_srcdir)/src/AMOS \
