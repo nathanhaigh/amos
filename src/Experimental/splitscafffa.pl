@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#good!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
 
@@ -8,7 +8,7 @@ my $help = 0;
 my $NTHRESH = 20;
 my $AGPFILENAME = undef;
 my $FASTA_LEN = 60;
-my $MIN_CONTIG_LEN = 100;
+my $MIN_CONTIG_LEN = 200;
 
 my $USAGE = "splitscafffa [-agp agpfile] [-n nlimit] scaff > scaff.ctg.fa\n";
 
@@ -124,11 +124,11 @@ sub processScaff
        my $contig_start   = $offset + 1 - $start_n;  ## 1-based coords
        my $contig_end     = $end + 1 - $start_n;     ## 1-based coords
 
-       print AGP "$scaffid\t$contig_start\t$contig_end\t$partnumber\t$component_type\tcontig_$ncontig\t1\t$contig_len\t$orientation\n";
+       print AGP "$scaffid\t$contig_start\t$contig_end\t$partnumber\t$component_type\tcontig_$ngoodcontig\t1\t$contig_len\t$orientation\n";
 
        $partnumber++;
 
-       print ">contig_$ncontig\n";
+       print ">contig_$ngoodcontig\n";
     }
     else
     {
