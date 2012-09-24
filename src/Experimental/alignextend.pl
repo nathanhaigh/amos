@@ -26,6 +26,8 @@ my $PAIR       = 0;
 my $THREADS     = 1;
 my $QV_TRIM     = 10;
 my $QV_ILLUMINA = 0;
+my $NOINDEX     = 0;
+my $MAXDIFF     = 0.04;
 
 ## filter
 my $CHECK_DIST     = 0;
@@ -63,6 +65,8 @@ my $res = GetOptions("help"      => \$help,
                      "qv=n"      => \$QV_TRIM,
                      "threads=n" => \$THREADS,
                      "I"         => \$QV_ILLUMINA,
+                     "noindex"   => \$NOINDEX,
+                     "maxdiff=f" => \$MAXDIFF,
 
                      # filter
                      "mapq=n"    => \$MAPQ_THRESHOLD,
@@ -71,7 +75,7 @@ my $res = GetOptions("help"      => \$help,
                      "max=n"     => \$MAX_DIST,
                      "allow"     => \$ALLOW_DIFF,
                      "invalid=s" => \$INVALID,
-		                 "unaligned" => \$UNALIGNED,
+                     "unaligned" => \$UNALIGNED,
 
                      # rmdup
                      "skiprmdup" => \$SKIPRMDUP,
@@ -116,6 +120,8 @@ if ($help)
   print "  -qv <n>      : bwa quality soft quality trim (default: $QV_TRIM)\n";
   print "  -threads <n> : number of threads for bwa (default: $THREADS)\n";
   print "  -I           : read quality values are Illumina format\n";
+  print "  -maxdiff     : -n option to bwa (max differences per alignment)\n";
+  print "  -noindex     : assembly is already indexed with bwa\n";
   print "\n";
   print "filter: select pairs that align and are correctly separated\n";
   print "  -mapq <n>    : Only trust alignment with at least this MAPQ (default: $MAPQ_THRESHOLD)\n";
@@ -152,7 +158,8 @@ my $prefix = $ARGV[0] or die $USAGE;
 my $ref    = $ARGV[1] or die $USAGE;
 
 unlink "$prefix.ref.fa" if (-e "$prefix.ref.fa");
-symlink $ref, "$prefix.ref.fa" or die "Failed to create symlink $prefix.ref.fa => $ref\n";
+symlink $ref, "$prefix.ref.fa"
+    or die "Failed to create symlink \"$prefix.ref.fa\" => \"$ref\"\n";
 $ref = "$prefix.ref.fa";
 
 print "Running $0 $arguments\n";
@@ -188,10 +195,10 @@ sub end_stage
 ###############################################################################
 PREPARE_STAGE:
 begin_stage "prepare";
-my $fq1    = $ARGV[2] or die $USAGE;
-my $fq2    = $ARGV[3] or die $USAGE;
-die "Can't read \"$fq1\"\n" if (! -r $fq1);
-die "Can't read \"$fq2\"\n" if (! -r $fq2);
+my $fq1 = $ARGV[2] or die $USAGE;
+my $fq2 = $ARGV[3] or die $USAGE;
+die "ERROR: Can't find \"$fq1\"\n" unless -r $fq1;
+die "ERROR: Can't find \"$fq2\"\n" unless -r $fq2;
 die "The -pair option is unimplemented\n" if ($PAIR);
 
 foreach my $idx (1..2)
@@ -204,12 +211,12 @@ foreach my $idx (1..2)
 
   if ($NUM_READS == 0)
   {
-    $PREPARE_CMD .= "cat $fq";
+    $PREPARE_CMD .= "cat \"$fq\"";
   }
   else
   {
     my $nl = $NUM_READS * 4; ## 4 lines per reads in a fastq
-    $PREPARE_CMD .= "head -$nl $fq";
+    $PREPARE_CMD .= "head -$nl \"$fq\"";
   }
 
   if ($HARD_TRIM > 0)
@@ -226,7 +233,7 @@ foreach my $idx (1..2)
   if ($ADD_SUFFIX) { $PREPARE_CMD .= " | $FASTQ_RENAME -clean -suffix _$idx"; }
   else             { $PREPARE_CMD .= " | $FASTQ_RENAME -clean -tr '/'"; }
 
-  $PREPARE_CMD .= "> $prefix.$idx.fq";
+  $PREPARE_CMD .= "> \"$prefix.$idx.fq\"";
 
   runCmd("prepare fq", "$prefix.$idx.fq", $PREPARE_CMD);
 }
@@ -237,20 +244,30 @@ end_stage "prepare";
 ALIGN_STAGE:
 begin_stage "align";
 
+foreach my $idx (1..2)
+{
+  die "ERROR: Can't find \"$prefix.$idx.fq\"\n" unless -r "$prefix.$idx.fq";
+}
+
 ## Index genome
-runCmd("bwa index", "$ref.sa", "$BWA index $ref");
-print "\n";
+if (! $NOINDEX)
+{
+  runCmd("bwa index", "$ref.sa", "$BWA index \"$ref\"");
+  print "\n";
+}
+
+die "ERROR: Can't find \"$ref.sa\"\n" unless -r "$ref.sa";
 
 my $bwa_qv_flag = ($QV_ILLUMINA) ? "-I" : "";
 foreach my $idx (1..2)
 {
-  print "Aligning reads $prefix.$idx.fq to $ref\n";
+  print "Aligning reads from \"$prefix.$idx.fq\" to \"$ref\"\n";
   runCmd("bwa aln", "$prefix.$idx.sai",
-         "$BWA aln -t $THREADS $bwa_qv_flag -q $QV_TRIM -f $prefix.$idx.sai "
-         . "$ref $prefix.$idx.fq >& $prefix.$idx.sai.log");
+         "$BWA aln -t $THREADS $bwa_qv_flag -q $QV_TRIM -f \"$prefix.$idx.sai\" "
+         . "-n $MAXDIFF \"$ref\" \"$prefix.$idx.fq\" >& \"$prefix.$idx.sai.log\"");
   runCmd("bwa samse", "$prefix.$idx.sam",
-         "$BWA samse -f $prefix.$idx.sam $ref $prefix.$idx.sai $prefix.$idx.fq "
-         . ">& $prefix.$idx.sam.log");
+         "$BWA samse -f \"$prefix.$idx.sam\" \"$ref\" \"$prefix.$idx.sai\" \"$prefix.$idx.fq\" "
+         . ">& \"$prefix.$idx.sam.log\"");
 }
 end_stage "align";
 
@@ -270,6 +287,7 @@ if ($SKIPRMDUP)
 else
 {
   begin_stage "rmdup";
+  die "ERROR: Can't find \"$prefix.bedpe\"\n" unless -r "$prefix.bedpe";
   filterDups("$prefix.bedpe", "$prefix.rmdup.bedpe");
   end_stage "rmdup";
 }
@@ -282,8 +300,9 @@ if ($SKIPGEN)
 else
 {
   begin_stage "genreads";
-  genReads(($SKIPRMDUP) ? "$prefix.bedpe" : "$prefix.rmdup.bedpe",
-           "$prefix.1e.fq", "$prefix.2e.fq");
+  my $bedpe = ($SKIPRMDUP) ? "$prefix.bedpe" : "$prefix.rmdup.bedpe";
+  die "ERROR: Can't find \"$bedpe\"\n" unless -r $bedpe;
+  genReads($bedpe, "$prefix.1e.fq", "$prefix.2e.fq");
   end_stage "genreads";
 }
 
@@ -405,29 +424,29 @@ sub filter_by_alignment
   my $unaligned_1_fq = shift;
   my $unaligned_2_fq = shift;
 
-  open SAM1, "$samfile1" or die "Can't open \"$samfile1\": $!\n";
-  open SAM2, "$samfile2" or die "Can't open \"$samfile2\": $!\n";
+  open SAM1, "<", $samfile1 or die "Can't open \"$samfile1\": $!\n";
+  open SAM2, "<", $samfile2 or die "Can't open \"$samfile2\": $!\n";
 
   print "Saving filtered reads to \"$bedpe\"\n";
-  open BEDPE, ">$bedpe" or die "Can't open \"$bedpe\": $!\n";
+  open BEDPE, ">", $bedpe or die "Can't open \"$bedpe\": $!\n";
 
   if (defined $unaligned_1_fq)
   {
     print "Saving unaligned reads to \"$unaligned_1_fq\"\n";
-    open UNALIGNED_1_FQ, ">$unaligned_1_fq" or die "Can't open \"$unaligned_1_fq\": $!\n";
-    open PREPARED_1_FQ, "$prepared_1_fq" or die "Can't open \"$prepared_1_fq\": $!\n";
+    open UNALIGNED_1_FQ, ">", $unaligned_1_fq or die "Can't open \"$unaligned_1_fq\": $!\n";
+    open PREPARED_1_FQ, "<", $prepared_1_fq or die "Can't open \"$prepared_1_fq\": $!\n";
   }
   if (defined $unaligned_2_fq)
   {
     print "Saving unaligned reads to \"$unaligned_2_fq\"\n";
-    open UNALIGNED_2_FQ, ">$unaligned_2_fq" or die "Can't open \"$unaligned_2_fq\": $!\n";
-    open PREPARED_2_FQ, "$prepared_2_fq" or die "Can't open \"$prepared_2_fq\": $!\n";
+    open UNALIGNED_2_FQ, ">", $unaligned_2_fq or die "Can't open \"$unaligned_2_fq\": $!\n";
+    open PREPARED_2_FQ, "<", $prepared_2_fq or die "Can't open \"$prepared_2_fq\": $!\n";
   }
 
   if (defined $INVALID)
   {
     print "Saving invalidly aligned pairs to \"$INVALID\"\n";
-    open INVALID, ">$INVALID" or die "Can't open \"$INVALID\": $!\n";
+    open INVALID, ">", $INVALID or die "Can't open \"$INVALID\": $!\n";
   }
 
   my $pair_cnt = 0;
@@ -491,14 +510,16 @@ sub filter_by_alignment
     my $base2 = substr($name2, 0, -2); ## trim _1 or _2
     if ($base1 ne $base2)
     {
-      die "Reads $name1 and $name2 in $samfile1 and $samfile2 are not from the same pair\n";
+      die "Reads \"$name1\" and \"$name2\" in \"$samfile1\" and \"$samfile2\" "
+          ."are not from the same pair\n";
     }
 
     my $iidx1 = substr($name1, -1, 1);
     my $iidx2 = substr($name2, -1, 1);
     if (!(($iidx1 eq "1" && $iidx2 eq "2") || ($iidx1 eq "2" && $iidx2 eq "1")))
     {
-      die "Reads $name1 and $name2 in $samfile1 and $samfile2 are not reads 1 and 2 of a pair\n";
+      die "Reads \"$name1\" and \"$name2\" in \"$samfile1\" and \"$samfile2\" "
+          . "are not reads 1 and 2 of a pair\n";
     }
 
     my $is_1_unaligned = (($flag1 & 0x4) || ($mapq1 < $MAPQ_THRESHOLD));
@@ -682,10 +703,10 @@ sub filterDups
   my $bedpe = shift;
   my $bedpeout = shift;
 
-  open BEDPE, "$bedpe" or die "Can't open \"$bedpe\": $!\n";
-  open CLEAN, ">$bedpeout" or die "Can't open \"$bedpeout\": $!\n";
+  open BEDPE, "<", $bedpe or die "Can't open \"$bedpe\": $!\n";
+  open RMDUP, ">", $bedpeout or die "Can't open \"$bedpeout\": $!\n";
 
-  print "scanning $bedpe for duplicates\n";
+  print "Scanning \"$bedpe\" for duplicate aligned pairs\n";
 
   my %refalign;
   my $loaded = 0;
@@ -719,9 +740,9 @@ sub filterDups
     push @{$refalign{$align->[1]}}, $align;
   }
 
-  die "Error reading $bedpe: $!\n" unless eof BEDPE;
+  die "Error reading \"$bedpe\": $!\n" unless eof BEDPE;
 
-  print " loaded $loaded alignments\n";
+  print "  Loaded $loaded aligned pairs\n";
 
   my $printed = 0;
 
@@ -767,17 +788,17 @@ sub filterDups
       if (!$ai->[9])
       {
         $printed++;
-        print CLEAN join("\t", @{$ai}[0..8]), "\n"
+        print RMDUP join("\t", @{$ai}[0..8]), "\n"
             or die "Error writing to \"$bedpeout\": $!\n";
       }
     }
   }
 
   my $percp = sprintf("%0.02f", 100*$printed / $loaded);
-  print " kept $printed non-duplicates ($percp%) in file \"$bedpeout\"\n";
+  print "  Kept $printed non-duplicates pairs ($percp%) in file \"$bedpeout\"\n";
   print "\n";
 
-  close CLEAN or die "Failed to close \"$bedpeout\": $!\n";
+  close RMDUP or die "Failed to close \"$bedpeout\": $!\n";
 }
 
 ## genReads
@@ -789,12 +810,12 @@ sub genReads
   my $fq1 = shift;
   my $fq2 = shift;
 
-  open BEDPE, "$bedpe" or die "Can't open \"$bedpe\": $!\n";
+  open BEDPE, "<", "$bedpe" or die "Can't open \"$bedpe\": $!\n";
 
-  open BED1, ">$fq1.bed" or die "Can't open \"$fq1.bed\": $!\n";
-  open BED2, ">$fq2.bed" or die "Can't open \"$fq2.bed\": $!\n";
+  open BED1, ">", "$fq1.bed" or die "Can't open \"$fq1.bed\": $!\n";
+  open BED2, ">", "$fq2.bed" or die "Can't open \"$fq2.bed\": $!\n";
 
-  print "generating reads from $bedpe... \n";
+  print "Generating reads from \"$bedpe\"... \n";
 
   my $loaded = 0;
 
@@ -816,10 +837,13 @@ sub genReads
 
   print "$loaded pairs read\n";
 
-  runCmd("fastaFromBed 1", "$fq1.sfa", "$FASTA_FROM_BED -fi $ref -bed $fq1.bed -fo $fq1.sfa -name -tab -s");
+  runCmd("fastaFromBed 1", "$fq1.sfa",
+         "$FASTA_FROM_BED -fi \"$ref\" -bed \"$fq1.bed\" -fo \"$fq1.sfa\" -name -tab -s");
+
   sfa2fq("$fq1.sfa", $fq1);
 
-  runCmd("fastaFromBed 2", "$fq2.sfa", "$FASTA_FROM_BED -fi $ref -bed $fq2.bed -fo $fq2.sfa -name -tab -s");
+  runCmd("fastaFromBed 2", "$fq2.sfa",
+         "$FASTA_FROM_BED -fi \"$ref\" -bed \"$fq2.bed\" -fo \"$fq2.sfa\" -name -tab -s");
   sfa2fq("$fq2.sfa", $fq2);
 }
 
@@ -832,14 +856,14 @@ sub sfa2fq
   my $sfa = shift;
   my $fq  = shift;
 
-  open SFA, "$sfa" or die "Can't open \"$sfa\": $!\n";
-  open FQ,  ">$fq" or die "Can't open \"$fq\": $!\n";
+  open SFA, "<", "$sfa" or die "Can't open \"$sfa\": $!\n";
+  open FQ,  ">", "$fq" or die "Can't open \"$fq\": $!\n";
 
   my $q_char = chr($QV_READ + ($QV_ILLUMINA) ? 64 : 33);
 
   my $q;
 
-  print " printing $fq... \n";
+  print " printing \"$fq\"... \n";
 
   my $cnt = 0;
 
@@ -853,7 +877,7 @@ sub sfa2fq
 
     print FQ "\@$name\n$seq\n+\n$q\n" or die "Error writing to \"$fq\": $!\n";
   }
-  die "Error reading $sfa: $!\n" unless eof SFA;
+  die "Error reading \"$sfa\": $!\n" unless eof SFA;
 
   close FQ or die "Failed to close \"$fq\": $!\n";
 
