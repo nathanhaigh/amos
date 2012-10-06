@@ -157,9 +157,14 @@ if (($CHECK_DIST) && ($MAX_DIST == 0))
 my $prefix = $ARGV[0] or die $USAGE;
 my $ref    = $ARGV[1] or die $USAGE;
 
-unlink "$prefix.ref.fa" if (-e "$prefix.ref.fa");
-symlink $ref, "$prefix.ref.fa"
-    or die "Failed to create symlink \"$prefix.ref.fa\" => \"$ref\"\n";
+die "ERROR: Can't find \"$ref\"\n" unless -r $ref;
+
+if ("$ref" ne "$prefix.ref.fa")
+{
+  unlink "$prefix.ref.fa" if (-e "$prefix.ref.fa");
+  symlink $ref, "$prefix.ref.fa"
+      or die "Failed to create symlink \"$prefix.ref.fa\" => \"$ref\"\n";
+}
 $ref = "$prefix.ref.fa";
 
 print "Running $0 $arguments\n";
@@ -510,16 +515,22 @@ sub filter_by_alignment
     my $base2 = substr($name2, 0, -2); ## trim _1 or _2
     if ($base1 ne $base2)
     {
-      die "Reads \"$name1\" and \"$name2\" in \"$samfile1\" and \"$samfile2\" "
-          ."are not from the same pair\n";
+    
+      die "ERROR: Reads \"$name1\" and \"$name2\"\n" 
+           . "in \"$samfile1\" and \"$samfile2\" are not from the same pair.\n";
     }
 
     my $iidx1 = substr($name1, -1, 1);
     my $iidx2 = substr($name2, -1, 1);
     if (!(($iidx1 eq "1" && $iidx2 eq "2") || ($iidx1 eq "2" && $iidx2 eq "1")))
     {
-      die "Reads \"$name1\" and \"$name2\" in \"$samfile1\" and \"$samfile2\" "
-          . "are not reads 1 and 2 of a pair\n";
+      my $msg =  "ERROR: Reads \"$name1\" and \"$name2\"\n"
+                  . "in \"$samfile1\" and \"$samfile2\" are not reads 1 and 2 of a pair.\n";
+      if (!$ADD_SUFFIX && ($name1 !~ /[12]$/ || $name2 !~ /[12]$/))
+      {
+        $msg .= "Perhaps you need to specify '-suffix'?\n";
+      }
+      die $msg;
     }
 
     my $is_1_unaligned = (($flag1 & 0x4) || ($mapq1 < $MAPQ_THRESHOLD));

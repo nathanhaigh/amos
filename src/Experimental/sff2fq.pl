@@ -8,7 +8,7 @@ my $SFF_EXTRACT     = "sff_extract.py";      ## from http://bioinf.comav.upv.es/
 
 my $FASTQ_TO_FASTA  = "fastq_to_fasta_fast"; ## from AMOS
 my $FASTA_TRIM      = "fasta_trim";          ## from AMOS
-my $FASTA_FORMATTER = "fasta_formatter";     ## from AMOS
+my $FASTA_FORMATTER = "fasta_formatter";     ## from fastx_toolkit
 my $FASTA_TO_FASTQ  = "fasta_to_fastq";      ## from AMOS
 
 
