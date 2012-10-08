@@ -16,6 +16,7 @@ send "123\r"
 expect eof
 EOD
 echo "1234561" | sudo -S /sbin/shutdown -h now
+sleep 180
 fi
 
 ./configure --with-qmake-qt4=/usr/lib64/qt4/bin/qmake --prefix=/usr/local/AMOS >> /home/bryanta/$1.log 2>&1
@@ -30,6 +31,7 @@ send "123\r"
 expect eof
 EOD
 echo "1234561" | sudo -S /sbin/shutdown -h now
+sleep 180
 fi
 
 make >> /home/bryanta/$1.log 2>&1
@@ -44,6 +46,7 @@ send "123\r"
 expect eof
 EOD
 echo "1234561" | sudo -S /sbin/shutdown -h now
+sleep 180
 fi
 
 make check >> /home/bryanta/$1.log 2>&1
@@ -58,6 +61,7 @@ send "123\r"
 expect eof
 EOD
 echo "1234561" | sudo -S /sbin/shutdown -h now
+sleep 180
 fi
 
 echo "1234561" | sudo -S make install >> /home/bryanta/$1.log 2>&1
@@ -72,6 +76,7 @@ send "123\r"
 expect eof
 EOD
 echo "1234561" | sudo -S /sbin/shutdown -h now
+sleep 180
 fi
 echo "1234561" | su -c "ln -s /usr/local/AMOS/bin/* /usr/local/bin/"
 export PATH=$PATH:/usr/local/AMOS/bin
