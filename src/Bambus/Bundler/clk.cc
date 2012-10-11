@@ -163,8 +163,10 @@ int main(int argc, char **argv)
   try {
     if (! link_bank.exists(globals["bank"]))
       link_bank.create(globals["bank"]);
-    else 
+    else {
       link_bank.open(globals["bank"]);
+      LinkId = link_bank.getMaxIID()+1;
+    }
   } catch (Exception_t & e)
     {
       cerr << "Failed to open link account in bank " << globals["bank"] 
