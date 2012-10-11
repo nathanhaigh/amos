@@ -2,9 +2,9 @@
 use strict;
 use Getopt::Long;
 
-my $help = 0;
-my $READLEN = 5000;
-my $COV     = 2;
+my $help    = 0;
+my $READLEN = 3000;
+my $COV     = 3;
 
 my $USAGE = "shredContigs <options> ctg.fa > ctg.shred.fa\n";
 
@@ -46,12 +46,13 @@ sub shredSeq
     my $end = $offset + $READLEN;
     $end = $seqlen if ($end > $seqlen);
 
-    print ">$seq.$offset.$offset.$end\n";
-    print "$seq\n";
+    print ">$seqid.$segment.$offset.$end\n";
+    print "$sseq\n";
 
     last if ($end == $seqlen);
 
     $offset += $delta;
+    $segment++;
   }
 }
 

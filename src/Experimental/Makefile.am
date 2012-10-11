@@ -61,6 +61,7 @@ dist_bin_SCRIPTS = \
   persistent-plot-breaks.pl \
   persistent-unitig.pl \
   scale_ce_plot.pl \
+  shredContigs.pl \
   simulatelayout.pl \
   splitscafffa.pl \
   zipalign.pl
