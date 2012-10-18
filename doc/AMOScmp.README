@@ -1,0 +1,109 @@
+AMOScmp - The AMOS Comparative Assembler
+
+
+Brief Summary
+=============
+
+   With the rapid growth in the number of sequenced genomes has come
+an increase in the number of organisms for which two or more
+closely-related species have been sequenced. This has created the
+possibility of building a comparative genome assembly algorithm, which
+can assemble a newly sequenced genome by mapping it onto a reference
+genome. The comparative assembler uses MUMmer to align each sequencing
+read to a reference genome. Given this information, the costly
+"overlap" step of assembly can be bypassed by placing each read using
+only its alignment to the reference. The consensus step can then build
+reliable contigs based on these read layouts. Such an approach
+drastically decreases the time and memory requirements for assembly,
+while producing better assemblies given a closely related reference
+genome.
+
+
+Dependencies
+============
+
+   AMOScmp requires the NUCmer whole genome alignment utility which is
+part of the MUMmer package. MUMmer is freely available and can be
+downloaded from:
+
+<http://mummer.sourceforge.net>
+
+Please follow the installation instructions in the `README' file in
+the base directory of this distribution to ensure AMOS can find and
+run `nucmer' successfully.
+
+
+Running
+=======
+
+   Either execute the AMOScmp configuration script directly from
+$bindir OR copy it to your local directory, edit it, and run it with
+the `runAmos' command interpreter. The following variables must be set
+on the command line or added to the script for the pipeline to
+operate properly:
+
+        TGT - The genome reads to map in AMOS message format
+        REF - The reference genome sequence in FASTA format
+
+`AMOScmp -D TGT=<reads> -D REF=<reference> <prefix>'
+  OR
+`runAmos -C AMOScmp -D TGT=<reads> -D REF=<reference> <prefix>'
+
+Where <prefix> will be the output file prefix, <reads> is the input
+AMOS message file, and <reference> is the input FASTA file. Check
+the `runAmos' documentation or type `runAmos --help' for details on
+operating an AMOS pipeline. The AMOScmp pipeline config file can be
+easily modified by the user to add additional processing steps.
+
+The default TGT file is <prefix>.afg and the default REF file is
+<prefix>.1con, thus if our input files are <prefix>.afg and
+<prefix>.1con we can run AMOScmp simply by typing:
+
+`AMOScmp <prefix>'
+
+
+Output
+======
+
+   Output will be a TIGR .contig file and a FASTA .fasta file. The
+TIGR contig file contains the gapped consensus and multi-alignment
+information for the assembly. Each contig sequence is preceded by a
+header line which starts with '##', followed by the gapped consensus
+sequence with gaps represented as a '-' character. Following the
+consensus is the gapped read sequence preceded by a header line
+beginning with '#'. The .fasta file contains all the contigs produced
+by AMOScmp in a multi-FASTA formatted file. These sequences will match
+the sequences in the .contig file, but without the gaps.
+
+   To obtain an ACE format representation of the assembly, we can run
+the following to obtain a <prefix>.ace file:
+
+`bank-report -b <prefix>.bnk CTG > <prefix>.ctg'
+`amos2ace <reads> <prefix>.ctg -o <prefix>.ace'
+
+Where <prefix> is the same as was used in the above section and
+<reads> is the original read input to the assembly pipeline. We can
+simply add these commands to the runAmos config file to produce an ACE
+file every time we run AMOScmp.
+
+
+Example
+=======
+
+   Assume we have a set of Trace Archive data with the names
+`reads.seq', `reads.qual' and `reads.xml' which contain the
+sequence information for a whole-genome assembly task. In addition, we
+have a closely related FASTA-formatted reference genome named
+`reference.1con'. To run the AMOScmp pipeline and generate the default
+output, we would type the following:
+
+`AMOScmp -D TGT=reads.afg -D REF=reference.1con target'
+
+This will generate the default output named `target.contig' and
+`target.fasta'. We could then generate an ACE assembly format file by
+following the instructions in the above section, substituting "target"
+for "<prefix>".
+
+
+December 2004
+

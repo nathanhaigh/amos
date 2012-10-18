@@ -1,0 +1,20 @@
+#-- List of functions and types with portable replacements
+# To use one of these functions in your code, you must:
+# 1) Add '-I$(top_builddir)/src/GNU' to your include path (CPPFLAGS)
+# 2) Link with '$(top_builddir)/src/GNU/libGNU.a' (LDADD)
+# 3) Place:
+#        #if HAVE_CONFIG_H
+#        #include "config.h"
+#        #endif
+# At the top of your source file. autoconf/automake will take care of the rest.
+#
+
+getopt.h
+getopt
+getopt_long
+getopt_long_only
+optarg
+optind
+optopt
+strtod
+strtol

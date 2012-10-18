@@ -1,0 +1,91 @@
+README
+
+1. Code 
+
+1.1 AMOS pipelines
+
+* subAMOS.amos
+Pipeline for extracting a subset of scaffolds/contigs & all related information (unitigs, reads, mate pairing) from an AMOS .afg file
+
+* subCA.amos
+Pipeline for extracting a subset of scaffolds/contigs & all related information (unitigs, reads, mate pairing) from a CA .frg & .asm file
+
+1.2 Perl scripts 
+
+* AMOS2info.pl
+Program that parses an AMOS message file (.afg) and prints out the following information in a TAB delimited format:
+  1. type
+  2. internal identifier
+  3. external identifier
+  4. offset from the beginning of the file
+  5. length
+
+Missing identifiers are replaced with "." (to keep the number of columns==5)
+
+* AMOS2map.pl
+Program that parses an AMOS message file (.afg) and prints out related message information in a TAB delimited format:
+  1. type  (parent)
+  2. internal identifier
+  3. external identifier
+
+  4. type  (child)
+  5. internal identifier
+  6. external identifier
+
+Missing identifiers are replaced with "." (to keep the number of columns==6)
+
+* CA2info.pl
+Program that parses a CA message file (.frg or .asm) and prints out the following information in a TAB delimited format:
+  1. message type
+  2. internal identifier
+  3. external identifier
+  4. offset from the beginning of the file
+  5. length
+
+Missing identifiers are replaced with "." (to keep the number of columns==5)
+
+* CA2map.pl
+Program that parses a CA message file (.frg or .asm) and prints out related message information in a TAB delimited format:
+  1. type  (parent)
+  2. internal identifier
+  3. external identifier
+
+  4. type  (child)
+  5. internal identifier
+  6. external identifier
+
+Missing identifiers are replaced with "." (to keep the number of columns==6)
+
+* intersect1.pl
+Program that filters records from one file based on record information from a second file
+
+* intersect2.pl
+Program that identifies and prints out related records from two files
+
+* newAMOSiids.pl
+Program that parses an AMOS message file and resassigns internal ids to scaffolds and contigs
+
+* subMsg.pl
+Program that filters a message file (CA,AMOS) based on the message ids
+
+2. Usage
+
+2.1 subAMOS.amos
+
+* Create AMOS file that contains all the assembly components (SCF, CTG, RED, FRG, LIB ...)
+    bank-report -b prefix.bnk/ > prefix.afg
+
+* Create filter file
+	Format: 
+		MSG_TYPE	IID	EID
+	Example
+		CTG		1	contig_1
+		CTG		2	.
+		CTG		.	contig_3
+
+* Run pipeline
+	subAMOS.amos prefix
+
+
+
+

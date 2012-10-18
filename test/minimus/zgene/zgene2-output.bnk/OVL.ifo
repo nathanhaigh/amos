@@ -1,0 +1,10 @@
+____OVL BANK INFORMATION____
+bank version = 3.0
+bank type = 5002831
+versions = 1
+objects = 779	
+indices = 779	
+bytes/index = 34
+partitions = 1
+indices/partition = 1000000
+locks = 

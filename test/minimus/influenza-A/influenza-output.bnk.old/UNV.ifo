@@ -1,0 +1,9 @@
+____UNV BANK INFORMATION____
+bank version = 2.8
+bank type = 5656149
+objects = 1
+indices = 1
+bytes/index = 14
+partitions = 1
+indices/partition = 1000000
+locks = 

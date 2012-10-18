@@ -1,0 +1,89 @@
+#!/fs/sz-user-supported/Linux-x86_64/bin/runAmos -C
+# $Revision$ 
+
+#? subAMOS.amos - Pipeline for extracting a subset of scaffolds/contigs & all related
+#?                information (unitigs, reads, mate pairing) from an AMOS .afg file
+
+#? Usage:
+#?         subAMOS.amos prefix \
+#?                 \ -D AFG    = prefix.afg             : afg file
+#?                 \ -D SUB    = prefix.sub             : 3 column TAB delim. file that contains: MSG_TYPE, IID, EID
+#?                                                        MSG=SCF|CTG
+#?                                                        IID|EID is required; missing values are represented as "."
+
+#? Input:
+#? 	prefix.afg.filter example:
+#?	#MSG	iid	eid
+#?	SCF     .     7180000001353
+#?	SCF     .     7180000001354
+#?	SCF     .     7180000001355
+#?	...
+
+#? Output: 
+#?         prefix.filter.afg : filtered afg file
+#?         prefix.filter.bnk/: bank directory
+
+#--------------------------------------- USER DEFINED VALUES ------------------#
+
+# AMOS package directory
+BINDIR    = /fs/sz-user-supported/Linux-x86_64/bin/
+
+# script directory
+SCRIPTDIR = ~/bin/subAssembly
+
+# input files
+AFG         = $(PREFIX).afg
+FILTER      = $(PREFIX).filter
+
+# processed input files
+INFO        = $(PREFIX).info 
+MAP         = $(PREFIX).map
+
+# filtered files
+SUB          = $(PREFIX).sub
+SUBTMP	     = $(SUB).tmp
+SAFG         = $(SUB).afg
+SINFO        = $(SUB).info 
+SMAP         = $(SUB).map
+
+SIID	     = $(SUB).iid
+
+# temporary prefix
+TMP	     = $(PREFIX).tmp
+# temporary files
+TAFG	     = $(TMP).afg
+
+INPUTS       = $(AFG)  $(FILTER)
+OUTPUTS      = $(SAFG) 
+
+#------------------------------------------------------------------------------#
+
+## Testing input files
+0: test -f $(AFG) 
+1: test -f $(SUB) 
+
+## Getting message information 
+10: $(SCRIPTDIR)/AMOS2info.pl < $(AFG) > $(INFO)
+
+##  Getting id mappings
+20: $(SCRIPTDIR)/AMOS2map.pl  < $(AFG) > $(MAP) 
+
+#------------------------------------------------------------------------------#
+
+## Filtering messages 
+100: $(SCRIPTDIR)/intersect2.pl $(MAP) $(FILTER) > $(SUB) 
+
+## Retrieving message offsets
+110: egrep "^UNV|^LIB" $(INFO) > $(SINFO)
+111: $(SCRIPTDIR)/intersect1.pl $(INFO) $(SUB) >> $(SINFO)
+
+## Generating new AMOS output file
+120: $(SCRIPTDIR)/subMsg.pl -f $(SINFO)  < $(AFG) >  $(TAFG)
+
+## Assigning new CTG/SCF iid's staring from 1
+200: cat $(SMAP) | egrep "^CTG|^SCF" |  sort -k1 -nk2 | perl -ane 'print $F[0],"\t",$F[1],"\t",++$i,"\n";' > $(SIID)
+
+## Updating AMOS output file id's
+210: $(SCRIPTDIR)/newAMOSiids.pl -f $(SIID) < $(TAFG) > $(SAFG)
+211: rm $(TAFG)
+

@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Hawkeye: AMOS Assembly Visual Analytics Tool</title>
+</head>
+<body>
+
+<a name="top"></a>
+
+<table width="100%" border=0>
+<tr>
+<td valign=top>
+<a href="index.html"><img src="Hawkeye.jpg" width="250" height="160"/></a><br>
+
+<h3>Table of Contents</h3>
+<a href="index.html">Abstract</a><br>
+<a href="index.html#build">Build &amp; Installation</a><br>
+<a href="index.html#launching">Launching Hawkeye</a><br>
+<a href="index.html#options">Command Line Options</a><br>
+<a href="index.html#sample">Sample Assembly</a><br>
+<a href="index.html#contactinformation">Contact Information</a><br>
+<a href="index.html#acknowledgements">Acknowledgements</a><br>
+
+
+<h3>Displays</h3>
+
+<a href="launchpad.html">Launch Pad</a><br>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="launchpad.html#lp-statistics">Statistics</a></li>
+<li><a href="launchpad.html#lp-features">Features</a></li>
+<li><a href="launchpad.html#lp-libraries">Libraries</a></li>
+<li><a href="launchpad.html#lp-scaffolds">Scaffolds</a></li>
+<li><a href="launchpad.html#lp-contigs">Contigs</a></li>
+<li><a href="launchpad.html#lp-reads">Reads</a></li>
+</td></tr></table>
+
+<br>
+
+<a href="scaffold.html">Scaffold View</a><br>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="scaffold.html#sc-misassembly">Mis-assembly Detection</a></li>
+<li><a href="scaffold.html#sc-main">Main Display</a></li>
+<li><a href="scaffold.html#sc-overview">Overview</a></li>
+<li><a href="scaffold.html#sc-controlpanel">Control Panel</a></li>
+</td></tr></table>
+
+<br>
+
+<a href="contig.html">Contig View</a><br>
+<table>
+<tr><td width="1">&nbsp;</td><td>
+<li><a href="contig.html#barcode">SNP Barcode</a></li>
+<li><a href="contig.html#chromatogram">Raw Chromatograms</a></li>
+<li><a href="contig.html#options">Options</a></li>
+</td></tr></table>
+
+<br><br>
+<br><br>
+
+<p align="left">
+<img src="http://sourceforge.net/sflogo.php?group_id=134326&type=5"> <br>
+</p>
+
+
+
+</td>
+
+<td width="1">&nbsp;</td>
+
+
+<td>
+<h1><a name="launchpad"></a>Launch Pad</h1>
+
+<p>
+The Launch Pad is the first window displayed in Hawkeye 
+and acts as an overview and portal to your assembly. Its
+tabbed interface displays high level statistics, feature,
+library, scaffold, contig, and read information. The Launch
+Pad is interactive, so that you can select a feature, scaffold,
+contig, or read, and the display will focus on that object. At the
+very top is a Menu Bar, followed by a row of controls. The Contig ID
+Spin Box allows you to jump to a particular contig, and see the
+currently active contig. The "All Views" button displays both the 
+<a href="scaffold.html#scaffold">Scaffold</a> and 
+<a href="contig.html#contig">Contig</a>
+views while the "Scaffold View" and "Contig View" buttons display
+just that view respectively. Below that is a tabbed display showing
+different aspects of your assembly, as explained below.
+</p>
+
+<a href="#top">Return to top</a><br><hr>
+
+<a name="lp-statistics"></a><h3>Statistics</h3>
+<p>The initial
+display shows high level statistics. The left side table
+has common assembly size statistics explained such as average
+and N50 scaffold and contig sizes. An explaination of these
+metrics is provided <a href="http://www.cbcb.umd.edu/research/castats.shtml">here</a>.
+To the right of this table is a graphical display of the scaffolds (top)
+and contigs (bottom). The size of the rectangles indicates the size of
+objects. The color of the rectangle indicates the number of features
+found in that scaffold or contig (red=high count, green=low count). 
+You can mouse over any rectangle to view its id, size, and feature count, 
+or double click on a rectangle to open separate 
+<a href="scaffold.html#scaffold">Scaffold</a> and
+<a href="contig.html#contig">Contig</a> displays. 
+The barchart can also be sorted
+by feature count, so that contigs will be ranked by their likelihood
+of misassembly, or as a spacefiling treemap to better utilize the space
+available. Below we can see visually there are 3 large scaffolds 
+which account for most of the bases in the assembly.
+</p>
+
+<p align=center>
+<a href="launchpad.png"><img width="300" height="250" src="launchpad.png"></a><br>
+Launch Pad Statistics Tab<br>
+(Click for full size versions)
+</p>
+
+<a href="#top">Return to top</a><br><hr>
+<a name="lp-features"></a><h3>Features</h3>
+<p>
+The next tab is labeled "Features" and displays a table of the features
+in your assembly. AMOS comes bundled with tools for creating several types
+of features for mis-assembly detection, such as high occurence of compressed
+or expanded mates, regions of correlated SNPs, or read alignment breakpoint
+positions. The feature tab allows you to see which contigs have a high
+number of features, and a report on what type of features are present. Double
+Clicking on a feature displays that region in the scaffold and
+contig windows if they are open. If they are not open, click the
+"All views", "Scaffold View", or "Contig View" to display that region. A radio
+button groups features by the contig they occur in, or the type of feature.
+Click on the column headers to sort by that column.
+</p>
+
+<p align=center>
+<a href="lp-features.png"><img width="300" height="250" src="lp-features.png"></a><br>
+Launch Pad Features Tab<br>
+</p>
+
+<a href="#top">Return to top</a><br><hr>
+<a name="lp-libraries"></a><h3>Libraries</h3>
+<p>
+The next tab is labeled "Libraries" and displays a table of the inserts
+and libraries in your assembly. The Mean and Standard Deviations columns
+reflect the sizes specified by the input files, the Inserts column is the
+number of inserts in the entire bank. Select an insert by clicking on its
+row. Then Click one of the Distribution buttons at the bottom to see a
+histogram of those values. "Insert Size" is the histogram of inserts sizes
+for inserts in contigs in the assembly; "Read Clear Range" is the histogram
+of clear range length for all reads in the library (not necessarily in a
+contig); "Read Length" is the full length of all reads in that library;
+and "GC Content" is the GC Content of all reads in that library.
+</p>
+
+<p align=center>
+<a href="lp-libraries.png"><img width="300" height="250" src="lp-libraries.png"></a>
+<a href="insertsizes.png"><img width="300" height="250" src="insertsizes.png"></a><br>
+Launch Pad Libraries Tab (left) and Insert Size Histogram (right)
+</p>
+
+<a href="#top">Return to top</a><br><hr>
+<a name="lp-scaffolds"></a><h3>Scaffolds</h3>
+<p>
+The next tab is labeled "Scaffolds" and displays a table of scaffolds in
+your assembly. Click on the column headers to sort by that column. Click
+the plus box to see which contigs are in that scaffold. Double clicking
+on any scaffold or contig displays it in the scaffold and contig windows
+if they are open. If not, click one of the view buttons to display that
+scaffold or contig. At the bottom of the table are search boxes to search
+for a scaffold or contig by name, and buttons to display the span of
+scaffolds as a barchart as on the Statistics view, or a histogram of
+contigs per scaffold.
+</p>
+
+<p align=center>
+<a href="lp-scaffolds.png"><img width="300" height="250" src="lp-scaffolds.png"></a>
+<a href="scaffoldspan.png"><img width="300" height="250" src="scaffoldspan.png"></a><br>
+Launch Pad Scaffold Tab (left) and Scaffold Span Chart (right)
+</p>
+
+<a href="#top">Return to top</a><br><hr>
+<a name="lp-contigs"></a><h3>Contigs</h3>
+<p>
+The next tab is labeled "Contigs" and displays a table of contigs in
+your assembly. Click on the column headers to sort by that column. At
+the bottom are search boxes to search for a particular contig by name.
+Next to that is a click box to also display read information for each
+contig. Note this can take a long time and use a lot of memory if your
+assembly has many reads (more than 100k reads). If the Display Reads
+checkbox is displayed, then you can expand the plus next to each contig
+to see which reads are present in each contig. Double click on a contig
+or read to display it in the scaffold or contig views if they are open,
+or double click and click on a View button at the top to display it.
+In the bottom right are buttons to display an barchart of the contig sizes,
+a histogram of reads per contig, and a plot of GC content of your reads.
+</p>
+
+<p align=center>
+<a href="lp-contigs.png"><img width="300" height="250" src="lp-contigs.png"></a>
+<a href="contigsizes.png"><img width="300" height="250" src="contigsizes.png"></a><br>
+Launch Pad Contig Tab (left) and Contig Size Chart as a treemap (right)
+</p>
+
+
+<a href="#top">Return to top</a><br><hr>
+<a name="lp-reads"></a><h3>Reads</h3>
+<p>
+The next tab is labeled "Reads" and displays a table of reads in
+the current contig. Click on the column headers to sort by the column.
+At the bottom are search boxes to search for a particular read by name.
+Next to the search boxes are buttons to display a histograms of read length
+and GC content of the reads in the current contig. Double click on a read
+to jump to that read in the scaffold or contig view.
+</p>
+
+<p align=center>
+<a href="lp-reads.png"><img width="300" height="250" src="lp-reads.png"></a>
+<a href="readlength.png"><img width="300" height="250" src="readlength.png"></a><br>
+Launch Pad Read Tab (left) and Read Length Histogram (right)
+</p>
+
+<a href="#top">Return to top</a><br><hr>
+
+</body>
+</html>

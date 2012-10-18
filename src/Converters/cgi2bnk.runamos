@@ -1,0 +1,15 @@
+#!/fs/sz-user-supported/Linux-x86_64/bin/runAmos -C
+CAPATH = /fs/szscratch/mschatz/CVS-monitor/CA-3.10/wgs-assembler/Linux64/bin
+
+INPUTS = $(PREFIX).cgi $(PREFIX).frg $(PREFIX).gkpStore $(PREFIX).frgStore
+
+
+## Terminator
+120:
+$(CAPATH)/terminator -P -g $(PREFIX).gkpStore -f $(PREFIX).frgStore -i $(PREFIX).cgi -o $(PREFIX).asm -m $(PREFIX).map
+rm $(PREFIX).cns
+.
+
+## ToBank
+130:
+toAmos -f $(PREFIX).frg -a $(PREFIX).asm -o - -utg | bank-transact -m - -b $(PREFIX).bnk -c

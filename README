@@ -1,0 +1,202 @@
+Welcome to AMOS Assembler. A Modular Open Source Assembler.
+website: <http://amos.sourceforge.net>
+contact: <amos-help@lists.sourceforge.net>
+
+   AMOS is open source software. Please see the `COPYING' file for
+details. For documentation, please refer to the Documentation
+section. For building and installation instructions please see the
+Installation section.
+
+
+Brief Summary
+=============
+
+   The AMOS consortium is committed to the development of open-source
+whole genome assembly software. The project acronym (AMOS) represents
+our primary goal -- to produce A Modular, Open-Source whole genome
+assembler. Open-source so that everyone is welcome to contribute and
+help build outstanding assembly tools, and modular in nature so that
+new contributions can be easily inserted into an existing assembly
+pipeline. This modular design will foster the development of new
+assembly algorithms and allow the AMOS project to continually grow and
+improve in hopes of eventually becoming a widely accepted and deployed
+assembly infrastructure. In this sense, AMOS is both a design
+philosophy and a software system.
+
+   Because of its modular nature, AMOS cannot be described in one
+paragraph since it is a composite of many different systems. See the
+Pipeline section for quick descriptions of each pipeline, or the
+Documentation section on where to find comprehensive documentation.
+
+
+Installation
+============
+
+   Please follow the instructions in the `INSTALL' file for building
+and installation. The `INSTALL' file is only a generic installation
+document, so any AMOS specific installation notes are listed below.
+
+   Once `make install' is issued, the installed scripts and Perl
+modules must not be moved. Thus, convince yourself of the installation
+directory beforehand and set the $PREFIX variable for `configure'
+accordingly. AMOS makes use of a few custom installation directories
+not mentioned in `INSTALL', they are as follows. $datadir, $libdir and
+$includedir are set by `configure', see `configure --help' for more
+information.
+
+   - Documentation will be installed in $datadir/doc/amos-[version]
+   - AMOS libraries and Perl modules will be installed in $libdir/AMOS
+   - TIGR libraries and Perl modules will be installed in $libdir/TIGR
+   - AMOS headers will be installed in $includedir/AMOS
+   - TIGR headers will be installed in $includedir/TIGR
+
+  In addition, certain parts of the AMOS package require the X
+windowing system along with the Qt libraries. Parameters for these
+packages may be modified with the following options:
+
+   --x-includes=DIR      X include files are in DIR
+   --x-libraries=DIR     X library files are in DIR
+   --with-x              use the X Window System
+   --with-Boost-dir=DIR  Directory in which to find the ./boost folder for the
+                         Boost toolkit
+   --with-qmake-qt4=DIR  Path to qmake using Qt version 4.x
+
+Please see the INSTALL file for more information and Cygwin and OS X
+specific instructions.
+
+Dependencies
+============
+
+   The AMOS package makes use of Python and Perl (Practical Extraction
+and Report Language). Python and Perl are available on most systems
+and the latest versions can be downloaded free of charge. AMOS
+requires Perl version 5.6.0 or later. If `perl' or `python' are
+available from your system PATH, all is well, if not you will need to
+instruct `configure' where they are located by setting the
+environment variable PERL and PYTHON to the full path of `perl' and
+`python' respectively (see the Defining Variables section in the
+`INSTALL' file). Some Perl scripts in the AMOS package require
+additional modules that you should install:
+   DBI (http://search.cpan.org/~timb/DBI/)
+   Statistics::Descriptive (http://search.cpan.org/~shlomif/Statistics-Descriptive-3.0100/)
+   XML::Parser (http://search.cpan.org/~msergeant/XML-Parser-2.36/)
+
+   AMOScmp and minimus2 make use of the NUCmer whole genome alignment
+utility which is part of the MUMmer package. If you wish to run AMOScmp,
+you will need download and install MUMmer (available for free from
+<http://mummer.sourceforge.net>). If `nucmer' is available from
+your system PATH, all is well, if not you will need to instruct
+`configure' where it is located by setting the environment variable
+NUCMER to the full path of `nucmer' (see the Defining Variables
+section in the `INSTALL' file).
+
+   The validation pipeline `amosvalidate' also depends on Nucmer, but
+it is not essential to the validation process. If you wish to run
+amosvalidate without the "alignment breakpoints" step, comment out
+steps 600-710 with '#' in the `amosvalidate' script.
+
+   The minimus2-blat pipeline relies on BLAT instead of nucmer.
+
+   The AMOS assembly viewer Hawkeye relies on X windows and the Qt4 
+toolkit. Note that the Qt toolkit is somewhat volatile, so it is 
+important to install Qt4 and not a newer or older version. If Qt is not 
+centrally installed on your system, you will need to do so to make 
+use of this graphical viewer. The configure script should be able 
+to identify most standard Qt installations, however you may need 
+to set the `--with-qmake-qt4' configure option to the location of 
+your Qt package. If all else fails, you may have to build the
+viewer independently. If so, make AMOS without hawkeye, and then
+cd into the src/hawkeye directory, run 'qmake', and then 'make'.
+
+   Finally, if you need the toAmos_new file conversion tool, you will
+need to have the Expat XML parsing library: http://expat.sourceforge.net
+
+
+Documentation
+=============
+
+   Basic documentation for the individual pipelines is located in the
+`doc' subdirectory. Comprehensive documentation can be found on
+the AMOS website <http://amos.sourceforge.net>.
+
+
+Pipeline
+========
+
+   Listed here are the current AMOS pipelines available. Source files
+for the pipelines are in `src/Pipeline' and will be installed in
+$bindir as executable scripts. Please see individual documentation for
+each pipeline in the `doc' directory.
+
+   - minimus -
+   Minimus is an assembly pipeline designed specifically for small
+   data-sets, such as the set of reads covering a specific gene. Note
+   that the code will work for larger assemblies (we have used it to
+   assemble bacterial genomes), however, due to its stringency, the
+   resulting assembly will be highly fragmented.  For large and/or
+   complex assemblies the execution of Minimus should be followed by
+   additional processing steps, such as scaffolding.
+
+   - Minimo -
+   Minimo uses the same assembly strategy as minimo but offers more
+   flexibility in the sequence input, output and processing.
+
+   - minimus2 
+   minimus2 is an assembly pipeline designed for merging two sequence sets
+   (Example: the contigs generated by two assembly processes)
+   It uses a nucmer based overlap detector instead of the hash-overlap program 
+   used by the minimus pipeline. 
+
+   - minimus2-blat
+   This pipeline performs the same function as minimus2, but uses BLAT instead
+   of nucmer for the alignments, which provides a speedup.
+
+   - AMOScmp -
+   AMOScmp provides a general overlap-layout-consensus pipeline for
+   assembly, but with a twist. The overlap phase of the process is
+   replaced with an alignment to a reference, i.e. all sequencing reads
+   are aligned to a finished reference sequence and their alignments are
+   used to determine their layout position.
+
+   - AMOScmp-shortReads -
+   Modified version AMOScmp for assembling short reads
+   Differences compared to AMOScmp:
+     * smaller nucmer alignment cluster size (20 vs 65)
+     * smaller make-consensus alignment wiggle value (2 vs 15)
+
+   - AMOScmp-shortReads-alignmentTrimmed -
+   Very similar to AMOScmp-shortReads but it does a reference based alignment 
+   trimming of the reads prior to the assembly. 
+   Differences compared to AMOScmp-shortReads:
+     * aligns the reads to reference using nucmer
+     * determines zero coverage regions
+     * extracts the read clear ranges from the alignment(delta) file
+     * exrtends the read clear ranges for reads adjacent to zero coverage regions
+     * updates the bank with the new clear ranges
+     * updates the alignment(delta) file with the new read lengths and clear ranges
+
+   - goBambus2 -
+   goBambus2 is a pipeline to drive the Bambus2 modules, designed to
+   scaffold polymorphic and metagenomic data
+
+   - amosvalidate -
+   Amosvalidate is a validation pipeline for genome assemblies. This
+   pipeline includes a collection of methods for ascertaining the
+   quality of an assembly, and examines multiple measures of assembly
+   quality to pinpoint potential mis-assemblies. Validation techniques
+   include mate-pair validation, repeat analysis, coverage analysis,
+   identification of correlated read polymorphisms, and read alignment
+   breakpoint analysis. Regions of the assembly exhibiting multiple
+   signatures of mis-assembly are flagged as suspicious and output by
+   amosvalidate for further examination.
+
+   - hawkeye -
+   Hawkeye is a visual analytics tool for genome assembly analysis and
+   validation, designed to aid in identifying and correcting assembly
+   errors. Hawkeye blends the best practices from information and
+   scientific visualization to facilitate inspection of large-scale
+   assembly data while minimizing the time needed to detect
+   mis-assemblies and make accurate judgments of assembly quality.
+
+
+August 2011

@@ -1,0 +1,114 @@
+minimus - The AMOS Lightweight Assembler
+
+
+Brief Summary
+=============
+
+  minimus is an assembly pipeline designed specifically for small
+data-sets, such as the set of reads covering a specific gene. Note that
+the code will work for larger assemblies (we have used it to assemble
+bacterial genomes), however, due to its stringency, the resulting assembly
+will be highly fragmented.  For large and/or complex assemblies the execution
+of Minimus should be followed by additional processing steps, such as
+scaffolding.
+
+Minimus follows the Overlap-Layout-Consensus paradigm and consists of
+three main modules:
+
+   * overlapper - computes the overlaps between the reads using a
+   modified version of the Smith-Waterman local alignment algorithm
+
+   * tigger - uses the read overlaps to generate the layouts of reads
+   representing individual contigs
+
+   * make-consensus - refines the layouts produced by the tigger to
+   generate accurate multiple alignments within the reads
+
+
+Dependencies
+============
+
+  None.
+
+
+Running
+=======
+
+  Either execute the minimus configuration script directly from
+$bindir OR copy it to your local directory, edit it, and run it with
+the `runAmos' command interpreter. The following variables must be set
+on the command line or added to the script for the pipeline to operate
+properly:
+
+       TGT - The target genome sequences in AMOS message format
+
+`minimus -D TGT=<target> <prefix>'
+ OR
+`runAmos -C minimus -D TGT=<target> <prefix>'
+
+Where <prefix> will be the output file prefix, and <target> is the
+input AMOS message file. Check the `runAmos' documentation or type
+`runAmos --help' for details on operating an AMOS pipeline. The
+minimus pipeline config file can be easily modified by the user to add
+additional processing steps.
+
+  In order to run minimus you need to provide an AMOS formatted file
+of the reads. Such a file (commonly with extension .afg) can be
+generated from a combination of sequence (.seq), quality (.qual), and
+Trace Archive XML (.xml) files using the `tarchive2amos' program which
+will appear in the $bindir directory upon installation.
+
+The default TGT file is <prefix>.afg, thus if our input file is
+<prefix>.afg we can run minimus simply by typing:
+
+`minimus <prefix>'
+
+
+Output
+======
+
+  Output will be a TIGR .contig file and a FastA .fasta file. The
+TIGR contig file contains the gapped consensus and multi-alignment
+information for the assembly. Each contig sequence is preceded by a
+header line which starts with '##', followed by the gapped consensus
+sequence with gaps represented as a '-' character. Following the
+consensus is the gapped read sequence preceded by a header line
+beginning with '#'. The .fasta file contains all the contigs produced
+by AMOScmp in a multi-FastA formatted file. These sequences will match
+the sequences in the .contig file, but without the gaps.
+
+  To obtain an ACE format representation of the assembly, we can run
+the following to obtain a <prefix>.ace file:
+
+`bank-report -b <prefix>.bank CTG > <prefix>.ctg'
+`amos2ace <prefix>.afg <prefix>.ctg'
+
+Where <prefix> is the same as was used in the above section and
+<prefix>.afg is the original input to the assembly pipeline. We can
+simply add these commands to the runAmos config file to produce an ACE
+file every time we run minimus.
+
+
+Example
+=======
+
+  Assume we have a set of Trace Archive data with the names
+`target.seq', `target.qual' and `target.xml' which contain the
+sequence information for a small assembly task. To run the minimus
+pipeline and generate the default output, we would type the following:
+
+`tarchive2amos -o  target.seq'
+`minimus -D TGT=target.afg target'
+
+This will generate the default output named `target.contig' and
+`target.fasta'. We could then generate an ACE assembly format file by
+following the instructions in the above section, substituting "target"
+for "<prefix>".
+
+  Minimus is now packaged with two example assemblies. The two examples
+are an Influenza A assembly and a Zebra Fish Gene assembly under the 'test'
+directory. The 'test' directory in located in the main AMOS diretory after you untar 
+the AMOS tarball.  
+
+
+November 2006

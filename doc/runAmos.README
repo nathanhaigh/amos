@@ -1,0 +1,215 @@
+runAmos - The AMOS pipeline executor
+
+
+Brief Summary
+=============
+
+   Most modern assembly programs (such as Celera Assembler or Arachne)
+consist of a series of modules, run in a pipeline fashion. The AMOS
+package includes a generic pipeline executor, runAmos, that allows
+users to define such pipelines. runAmos also includes several useful
+features: logging of the outputs of the modules, ability to start/stop
+at a specific point in the pipeline, as well as a mechanism for
+verifying the presence of the required inputs and for cleaning up the
+temporary files created during assembly.
+
+
+Running runAmos
+===============
+
+  runAmos reads the commands specified in a configuration file and
+executes them. The configuration file and output prefix are passed on
+the command line to the runAmos command interpreter as follows:
+
+runAmos [options] -C <config> [<par1> ... ]
+
+The optional command line parameters will be assigned to variables 0,
+1, ... .  In addition, when provided, the first parameter will also be
+assigned to variable PREFIX.  In the event no config file (-C
+<config>) is specified, runAmos will use the file specified in the
+environment variable AMOSCONF. This variable may be set in `bash'
+with:
+
+export AMOSCONF=/home/user/myfavorite.acf
+
+  OR in `csh' with:
+
+setenv AMOSCONF /home/user/myfavorite.acf
+
+To view the available runAmos command line options, type `runAmos -h'.
+
+The most important of these options being `-D <definition>', where
+<definition> is of the form NAME=value, e.g. `-D TGT=target.afg'. This
+allows the user to specify inputs to the pipeline by setting variables
+similar to PREFIX. See pipeline documentation for which variables
+should be defined on the command line.
+
+Runing runAmos with both command line option -h and -C will output
+help information specific to the configuration file.
+
+As runAmos executes the steps defined in a configuration file, it
+outputs to the screen the step number and the comment associated with
+each step (if specified). In addition, runAmos creates a log file
+named <prefix>.runAmos.log which contains the output (both stderr and
+stdout) of all commands run. If any of the steps fails, runAmos
+outputs an error message to stderr then exits with a code of 1.
+
+In addition, runAmos can be run implicitly from a configuration file
+using the shell's "shebang" notation.  For example, if file "test.acf"
+starts with line:
+
+#!runAmos -C
+
+attempting to execute this file (assuming the "execute" permission is
+set) will be equivalent to running:
+
+runAmos -C test.acf
+
+
+Command line options
+====================
+
+-C <config_file>  runAmos will execute the commands in <config_file>
+-s, -start <step> runAmos will begin the execution from step <step> in 
+                  the configuration file
+-e, -end <step>   runAmos will end the execution before step <step> in 
+                  the configuration file
+-clean            runAmos will remove all the files specified in the 
+                  TEMPS variable
+-ocd              runAmos will test that all files specified in the 
+                  INPUTS variable are available and exit with an error 
+                  otherwise.
+-D <var_def>      specify a variable definition (e.g. INPUTS=myfile) on 
+                  the command line. Multiple -D options may be specified 
+                  on the command line.
+
+
+Configuration file syntax
+=========================
+
+  The configuration file consists of a mixture of variable
+definitions, pipeline step definitions, and comments. 
+
+
+Variables
+---------
+
+Variables are defined as follows:
+
+VARIABLE = 50
+
+All lines following this definition will recognize $(VARIABLE) and
+replace all instances with the value assigned by the definition (50 in
+this case). The special variable PREFIX is assigned to the first
+command line parameter, as described in the above section.  In
+addition, all command line parameters are assigned to numbered
+variables $(0), $(1), ... .  $(0) and $(PREFIX) are synonymous.
+
+If you want to require a specific number of command line parameters
+you can use the EXPECT operator anywhere within the configuration file
+(preferrably towards the beginning of the file).  For example, `EXPECT 3' 
+causes runAmos to exit if fewer than 3 command line parameters are
+provided.
+
+  Special variables INPUTS and TEMPS may be specified in the
+configuration file. The first should contain the required inputs for
+the programs in the pipeline. If the `-ocd' option is provided,
+runAmos will exit with an error if any of the files in the INPUTS
+variable is not present. If the `-clean' option is provided, runAmos
+will remove any file in the current directory that is specified in the
+TEMPS variable.
+
+  runAmos provides two special functions that are useful in processing
+variables:
+
+  $(shell <shell_command>) - evaluates to the output of the command
+<shell_command>
+  $(strip <suffix> <varname>) - strips the suffix <suffix> from the
+end of the variable <varname>
+
+Within the shell operator you can use AMOS variables, however you must
+the paranthesis using the '\' character.
+
+  Examples: 
+
+DATE = $(shell date)
+FILE = test.afg
+PERMS = $(shell ls -l $(FILE\))
+PREF = $(strip .afg FILE)
+
+$(DATE) will evaluate to a string containing the current date
+$(PREF) will evaluate to the string "test"
+$(PERMS) will contain the permissions of test.afg as reported by ls
+
+
+Pipeline commands
+-----------------
+
+  Pipeline steps are defined in one of the following ways:
+
+10: runcommand $(PREFIX)
+
+  OR
+
+10:
+runcommand1 $(PREFIX)
+runcommand2 $(PREFIX)
+.
+
+In both cases the step number (10) is specified followed by a
+colon. In the first example the step consists of only one command. If
+the colon is followed by an end-of-line character, the step will
+consist of all the commands listed until a line consisting of a single
+period. Within such a multi-line step, runAmos allows the escaping of the end-of-line character using `\' to indicate the current command is continued on the next line. An example is shown below:
+
+10:
+for i in 1 2 3 4 ;do \
+echo $i; \
+done
+.
+
+Note that step numbers must be strictly increasing within the
+configuration file. runAmos will exit with an error otherwise. 
+
+The step numbers can be used as parameters to the `-s' and `-e'
+command line options, to start or end the execution at a specific step
+number.
+
+
+Comments
+--------
+
+  Comments are defined in three manners:
+
+# this is a simple comment
+ 
+OR
+
+## this is a "step" comment
+
+OR
+
+#? this is part of the config file help information
+
+In the first case, a line beginning with a single `#' character, the
+entire line is ignored by runAmos. 
+
+In the second case (line beginning with two `#' characters), the line
+is output to the screen as the step following it is being
+executed. This is useful to provide the user with a some information
+about the commands being run.
+
+In the third case (`#' followed by `?') the line is output when
+runAmos is run with both -h and -C options.
+
+
+Examples
+========
+
+   The `src/Pipeline' directory contains various AMOS configuration
+files for different pipelines. Any of these would suffice as an
+example of an AMOS config file (all files with .acf suffixes).
+
+
+March 2005
+

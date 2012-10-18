@@ -1,0 +1,10 @@
+____LAY BANK INFORMATION____
+bank version = 3.0
+bank type = 5849420
+versions = 1
+objects = 8	
+indices = 8	
+bytes/index = 18
+partitions = 1
+indices/partition = 1000000
+locks = 

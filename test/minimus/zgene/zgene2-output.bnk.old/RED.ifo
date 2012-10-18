@@ -1,0 +1,9 @@
+____RED BANK INFORMATION____
+bank version = 2.8
+bank type = 4474194
+objects = 153
+indices = 153
+bytes/index = 55
+partitions = 1
+indices/partition = 1000000
+locks = 

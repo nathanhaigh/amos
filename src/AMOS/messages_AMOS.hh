@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////////////
+//! \file
+//! \author Adam M Phillippy
+//! \date 11/13/2003
+//!
+//! \brief Include file for all of the AMOS messages
+//!
+////////////////////////////////////////////////////////////////////////////////
+
+#ifndef __messages_AMOS_HH
+#define __messages_AMOS_HH 1
+
+#include "Message_AMOS.hh"
+
+#endif // #ifndef __messages_AMOS_HH

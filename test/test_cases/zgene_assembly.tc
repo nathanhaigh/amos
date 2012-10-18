@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# minimus test case 2
+#  assembly of a Zebra Fish Gene
+minimus zgene2.afg

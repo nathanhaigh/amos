@@ -1,0 +1,124 @@
+Welcome to AMOS Assembler. A Modular Open Source Assembler.
+website: <http://amos.sourceforge.net>
+contact: <amos-help@lists.sourceforge.net>
+
+AMOS Assembler NEWS
+===================
+The AMOS consortium is committed to the development of open-source whole genome 
+assembly software. The project acronym (AMOS) represents our primary goal -- to 
+produce A Modular, Open-Source whole genome assembler. Open-source so that everyone 
+is welcome to contribute and help build outstanding assembly tools, and modular in 
+nature so that new contributions can be easily inserted into an existing assembly 
+pipeline. This modular design will foster the development of new assembly algorithms 
+and allow the AMOS project to continually grow and improve in hopes of eventually 
+becoming a widely accepted and deployed assembly infrastructure. In this sense, 
+AMOS is both a design philosophy and a software system.
+
+
+Version Release History
+=======================
+
+Version 3.1.0 - August 2011
+     * Versioning of AMOS Banks -- all old banks require rebulding
+     * Sample data available at: http://sourceforge.net/projects/amos/files/sample_data/
+     * Added FRCurve pipeline for comparing multiple assemblies of the same data: http://amos.sf.net/frcurve/
+     * New version of Hawkeye using Qt 4 (removed Qt 3 version completely)
+     * make-consensus now handles ambiguous N bases (reported by Mark Rose).
+     * Moved undocumented/prototype code into Experimental directory. Use configure --enable-Experimental to build
+     * Many small updates and bug fixes
+
+Version 3.0.0 - December 2010
+
+     * New version of the scaffolder, Bambus 2.0
+     * New lightweight, parametrable assembler based on Minimus, Minimo
+     * Experimental support for Qt 4 in Hawkeye
+     * Updated unitigger for Minimus, Unitigger
+     * Compute the complexity of a genome with genome-complexity (http://www.biomedcentral.com/1471-2105/11/21)
+     * Utility that can convert large fastq files into a bank, fast2amos
+     * Ability to build only core AMOS binaries with Autoconf
+     * Support for writing SAM format in bank2contig
+     * toAmos now automatically reads mate pairs in FASTA files (reads ending in /1 or .1)
+     * libSlice - correctly compute consensus even with very deep coverage
+     * Many small updates and bug fixes
+
+Version 2.0.5 - March 2008
+
+     * `amosvalidate' assembly validation pipeline released
+
+Version 1.3.1 - June 2005
+
+     * minor release for OSX Tiger and GCC 4.0 compatibility
+     * `AMOScmp' administrative updates
+
+Version 1.3.0 - May 2005
+
+     * `bankViewer' first version released
+        * provides GUI interface for AMOS bank browsing
+     * `libAMOS'
+        * Matepair_t replaced with extra field in Fragment_t
+        * Group_t added for object groups
+        * Link_t added for general object links
+        * Edge_t added for general object edges
+        * Index_t added for object IID indexing
+        * Feature_t object modifed to be more general
+        * Universal_t gained extra status char
+        * ReverseComplement() method added
+     * `tigger' efficiency enhancement
+     * `AmosFoundation.pm' added
+     * `libread' Staden trace IO library packaged
+
+Version 1.2.9 - February 2005
+
+     * `tarchive2amos' bug fixes
+     * `amos2ace' bug fixes
+     * `hash-overlap' self-overlap bug fixed
+     * `tigger' now ignores self-overlaps
+
+Version 1.2.8 - January 2005
+
+     * `minimus'
+        * circular contig bug fixed
+        * layout bug fixed
+        * multiple overlaps between two reads bug fixed
+     * `libAMOS'
+        * Bank_t map partition now a plaintext tab-delimited file
+        * Message_t read() bug fixed
+        * IDMap_t remove() bug fixed
+        * BankStream_t operator()>> bug fixed
+     * `bank-unlock' and `bank-clean' utilities added
+     * `bank-*' tools now report progress
+     * `toAmos' bug fix
+     * `tarchive2amos' bug fix
+     * `amos2ace' bug fix
+
+Version 1.2.7 - November 2004
+
+     * `AMOScmp'
+        * improved conflict resolution
+        * operates on an AMOS bank
+     * `libAMOS'
+        * Feature_t added to Contig_t and Scaffold_t
+        * BankSet_t, BankStreamSet_t, UniversalSet_t added
+        * read/write locks added to Bank_t
+        * Message_t iterator added
+     * documentation updated
+
+Version 1.2.6 - September 2004
+
+     * `minimus' negative offset bug fixed
+     * `make-consensus' ID swapping bug fixed
+     * `AMOScmp' won't bomb if mate information absent from the bank
+
+Version 1.2.5 - September 2004
+
+     * Added `minimus' pipeline for lightweight assembly tasks.
+     * Improved portablity.
+     * Added --enable-FEATURE options to configure for conditional
+       builds.
+
+Version 1.2.3 - August 2004
+
+     * First official release of the AMOS distribution, much work
+       yet to be done.
+     * Added `AMOScmp' comparative assembly pipeline.
+

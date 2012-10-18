@@ -1,0 +1,10 @@
+____FRG BANK INFORMATION____
+bank version = 3.0
+bank type = 4674118
+versions = 1
+objects = 79	
+indices = 79	
+bytes/index = 39
+partitions = 1
+indices/partition = 1000000
+locks = 

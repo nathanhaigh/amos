@@ -1,0 +1,401 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>AMOS Assembly Forencics</title>
+  <meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+  <style type="text/css">
+
+<!--
+
+body {
+	background-color: #FFFFFF;
+}
+
+h2 {
+	background-color: #BBBBFF;
+}
+
+h3 {
+	background-color: #CDCDEE;
+}
+
+h4 {
+	background-color: #EFEFEF;
+}
+
+code {
+	color: #CC0000;
+}
+
+td {
+	vertical-align: top;
+}
+
+.border {
+	background-image: url(/images/bgswoosh.gif);
+	background-repeat: repeat-y;
+	background-color: #FFFFFF;
+}
+
+.centered {
+	text-align: center;
+}
+
+.left {
+	text-align: left;
+}
+
+.right {
+	text-align: right;
+}
+
+-->
+
+  </style>
+</head>
+
+
+<body>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td height="100%"> 
+      <table border="0" cellpadding="0" cellspacing="0" height="100%">
+          <tbody>
+            <tr>
+              <td height="0%">&nbsp; 
+            <p align="center"><a href="#top"><img src="/images/Amostop.gif" border="0" height="289" width="125"></a><br>
+                  <a href="http://www.cbcb.umd.edu"><img src="/images/umd-logo.gif" border="0" height="119" width="125"></a><br>
+                  <img src="/images/middle1.gif" height="141" width="125"><br>
+                  <a href="http://www.tigr.org"><img src="/images/tigr-logo.gif" border="0" height="47" width="125"></a><br>
+                  <img src="/images/middle2.gif" height="141" width="125"><br>
+                  <a href="http://cruzi.cgb.ki.se"><img src="/images/ki-logo.gif" border="0" height="87" width="125"></a><br>
+                  <img src="/images/middle1.gif" height="163" width="125"><br>
+                  <a href="http://jbpc.mbl.edu/mcarthur"><img src="/images/mbl-logo.gif" align="middle" border="0" height="68" width="64"></a><br>
+                  <img src="/images/middle2.gif" height="141" width="125"><br>
+		  <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=134326&amp;type=3" alt="SourceForge.net Logo" border="0" height="37" width="125"></a>
+                </p>
+            </td>
+            </tr>
+            <tr>
+              <td class="border" height="100%"><br>
+ </td>
+            </tr>
+        </tbody>
+      </table>
+        <br>
+ </td>
+      <td style="padding: 15px;" width="100%"> 
+
+<h1 align=center>AMOS Assembly Forensics</h2>
+<p align=center>
+<a href="http://www.cbcb.umd.edu/~amp/">Adam Phillippy</a>,
+<a href="http://www.cbcb.umd.edu/~mschatz/">Michael Schatz</a>,
+<a href="http://www.cbcb.umd.edu/~mpop/">Mihai Pop</a><br>
+<a href="http://www.cbcb.umd.edu/">Center for Bioinformatics and Computational
+Biology, University of Maryland</a>
+</p>
+
+<hr>
+
+<p>
+Since the initial "draft" sequence of the human genome was released in 2001,
+it has become clear that it was not an entirely accurate reconstruction of the
+genome. Despite significant advances in sequencing and assembly since then,
+genome sequencing continues to be an inexact process. Genome finishing
+and validation have remained a largely manual and expensive process,
+and consequently, many genomes are presented as draft assemblies. Draft
+assemblies are of unknown quality and potentially contain significant
+mis-assemblies, such as collapsed repeats, sequence excision, or artificial
+rearrangements. Too often these assemblies are judged only by contig size,
+with larger contigs preferred without regard to quality, because it has been
+difficult to gauge large scale assembly quality.  </P>
+
+<p>
+Our new automated software pipeline, <i>amosvalidate</i>, addresses this deficiency
+and automatically detects mis-assemblies using a battery of known and
+novel assembly quality metrics. Instead of focusing on a single assembly
+characteristic as other validation approaches have tried, the power of our
+approach comes from leveraging multiple sources of evidence. <i>amosvalidate</i>
+statistically analyzes mate-pair orientations and separations, repeat
+content, depth-of-coverage, correlated polymorphisms in the read alignments,
+and read alignment breakpoints to identify structurally suspicious regions
+of the assembly. The suspicious regions identified by individual metrics
+are then clustered and combined to identify (with high confidence) regions
+that are mis-assembled. This approach is necessary for accurately detecting
+mis-assemblies because each of the individual characteristics has unavoidable
+natural variation, but, when considered together, have greatly increased
+analysis power. Furthermore, our pipeline can easily be adjusted to analyze
+assemblies utilizing new sequencing technologies where some metrics are
+unreliable or not available, such as base pair quality or mate pairs.  </p>
+
+<p>
+Our validation pipeline provides a robust measure of assembly quality that goes
+beyond the simple measures commonly reported. Evaluation of the pipeline has
+shown it to be highly sensitive for mis-assembly detection, and has revealed
+mis-assemblies in both draft and finished genomes. This is particularly
+troubling as scientists move away from the “gene by gene” paradigm and
+attempt to understand the global organization of genomes. Without a correct
+genome sequence or even a clear understanding of the errors present, such
+studies may draw incorrect conclusions. Our goals are to help scientists
+locate mis-assembled regions of an assembly and help them correct those
+regions by focusing their efforts where it is needed most. <i>amosvalidate</i> is
+compatible with many common assembly formats and is released open-source. </p>
+
+Pipeline stages:<br>
+1. <a href="#matepairs">Matepair Analysis</a><br>
+2. <a href="#snps">Correlated SNPs Analysis</a><br>
+3. <a href="#coverage">Read Coverage Analysis</a><br>
+4. <a href="#breakpoints">Breakpoint Analysis</a><br>
+5. <a href="#kmers">Repeat K-mer Analysis</a><br>
+6. <a href="#combiner">Feature Combiner</a><br>
+
+<br>
+
+Related tools:<br>
+<a href="http://amos.sourceforge.net/hawkeye">Hawkeye</a><br>
+<a href="http://mummer.sourceforge.net/">MUMmer</a><br>
+
+<br>
+<hr>
+
+<a name="matepairs"><h3>1. Matepair Happiness</h3></a>
+<p>Matepairs from a double barreled shotgun sequencing library should be
+oriented towards each other, and their distance apart in the assembly should
+match the library's size distribution. The tool asmQC looks for regions where
+multiple matepairs are mis-oriented or the insert coverage is low. Both can
+indicate the assembly has a rearrangement misassembly. The tool cestat-cov
+computes a per-library statistic called the CE statistic at every position
+in the assembly. The CE statistics indicates how well the mates spanning a
+positing match the library's distribution. If the mates are consistently closer
+than expected at a given position, as would occur in a collapsed repeat or
+excision from the assembly, the statistic will have a large negative value
+(ce &lt; -4). If the inserts are consistently larger than expected, such as
+from a repeat copy number expansion or other insertion event, the statistic
+will have a large positive value (ce &gt; 4)</p>
+
+<p>
+<b> cestat-cov output file: asm.ce.feat</b><br>
+Record of positions in the assembly with unusual CE statistic (|ce| &gt; 4).<br>
+Description of columns in file:<br>
+1. Contig ID<br>
+2. MATEPAIR Feature Type<br>
+3. range start<br>
+4. range end<br>
+4. CE_COMPRESS | CE_STRETCH<br>
+5. Library ID<br>
+</p>
+
+<p>
+<b>asmQC output is written directly to the bank</b><br>
+Features can be extracted with bank-report
+</p>
+
+
+<br>
+<hr>
+
+<a name="snps"><h3>2. Correlated SNP Detection</h3></a>
+<p>Correlated SNPs are positions in the genome where most of the reads are
+one base, but multiple other reads have another base. Unlike sequencing errors
+that occur at random, these correlated discrepanices can indicate the presense
+of a mis-assembly. In a haploid bacterial genome, for example, correlated SNPs
+nearly always indicate 2 copies of a near identical repeat have been collapsed
+into a single copy. In diploid or polyploid genomes, these can indicate a
+collapsed repeat, or positions where the homologous chromosomes disagree. If
+the frequency is higher than expected biologically, it is strong evidence for a
+collapsed repeat.
+</p>
+
+<p><b>analyzeSNPs output file: asm.snps</b><br>
+analyzeSNPs finds all positions in the multiple alignment that the reads
+disagree. By default, it only reports positions where there are 2 or more
+reads that disagree with the consensus (but agree with each other) and the
+sum of their quality values is at least 40<br><br>
+
+Description of columns in file:<br>
+1. Contig ID<br>
+2. Gapped position<br>
+3. Ungapped position<br>
+4. Consensus<br>
+5. Depth of coverage<br>
+6. Number of reads that disagree with the consensus<br>
+7. X(N) X=base1, N=number of reads that have base1<br>
+8. {R1,R2,RN} Read ids that have base X<br>
+9. Y(N) Y=base2, N=number of reads that have base2<br>
+10. {R1, R2, RN} Read ids that have base Y<br>
+</p>
+
+
+<p><b>clusterSNPs output file: asm.snp.feat</b><br>
+clusterSNPs scans the SNPs report generated by analyzeSNPs to find regions
+that have a high frequency of SNPs. By default, it reports all regions with
+at least 2 columns within at most 500bp of each other as found by
+analyzeSNPs.<br><br>
+
+Description of columns in file:<br>
+1. Contig ID<br>
+2. SNP Feature Type (P)<br>
+3. range start<br>
+4. range end<br>
+4. HIGH_SNP<br>
+5. The number of SNPs<br>
+6. The average distance between SNPs<br>
+</p>
+
+
+<br>
+<hr>
+
+<a name="coverage"><h3>3. Read Coverage</h3></a>
+<p>
+If the libraries have been constructed using a random shearing process, the
+reads should uniformily cover the genome at the average depth of coverage.
+Regions where the coverage is deeper than expected can indicate a collapsed
+repeat.
+</p>
+
+<p><b>analyze-read-depth output file: asm.depth.feat</b><br>
+By default, analyze-read-depth reports regions that are 3x deeper than the
+average coverage. Positions within 1000bp of each other are clustered
+together.<br>
+<br>
+Description of columns in file:<br>
+1. Contig ID<br>
+2. Coverage Feature Type (D)<br>
+3. range start<br>
+4. range end<br>
+5. Maximum depth of coverage in this range<br>
+</p>
+
+
+<br>
+<hr>
+
+<a name="breakpoints"><h3>4. Singleton Breakpoint Analysis</h3></a>
+<p>
+After an assembly is complete, there can be reads left over, called
+singletons, that are not placed in the assembly. These reads are often from
+contaiminate DNA or otherwise low quality sequence and can be safely ignored.
+However, some types of mis-assemblies can cause singletons where a portion of
+the read will align well to the contig but the rest of the read past the
+mis-assembly junction does not. If there are multiple reads that all follow
+the same pattern of partially aligning until the same position, this is
+strong evidence for mis-assembly.  </p>
+
+<p><b>listReadPlacedStatus output file: asm.singletons</b><br>
+listReadPlacedStatus can report which contig(s) a read is placed into, but in
+the pipeline simply lists which reads are singletons.
+</p>
+
+<p><b>casm-breaks output file: asm.break.fea</b><br>
+The singleton reads are then aligned to the consensus sequences of the contigs
+and then analyzed for shared breakpoints. casm-breaks reports positions where
+there are multiple reads that all have the same breakpoint pattern. Unlike some
+of the other pipeline tools, casm-breaks writes an XML like message
+file.<br><br>
+
+File Format:<br>
+<table>
+<tr> <td>{FEA </td><td><i>Feature message</i></td></tr>
+<tr> <td>typ:B </td><td> <i>Breakpoint feature</i></td></tr>
+<tr> <td>src:N,CTG </td><td><i>The breakpoint occurs in contig N </i></td></tr>
+<tr> <td>com: &lt;string&gt; </td><td><i>string linking all of the breakpoint features for a set of reads</i></td></tr>
+<tr> <td>clr:X,Y </td><td><i>Range the contig where the read aligns</i></td></tr>
+<tr> <td>} </td><td><i>End of feature</i></td></tr>
+</table>
+
+</p>
+
+
+<br>
+<hr>
+
+<a name="kmers"><h3>5. Repeat K-mer Analysis</h3></a>
+<p>
+Almost all mis-assemblies are caused by repeats, and thus it can be useful
+to find the locations of the repeats in an assembly. Furthermore, it is
+very interesting to find the locations of collapsed or expanded repeats. We
+developed a new metric, called normalized k-mer analysis, that can discover
+collapsed or expanded repeats. A k-mer is a k-length substring of a longer
+sequence. Using a sliding window across a sequence, we can catalog all k-mers
+and count the number of occurences of each. Call K_r the set of k-mers in the
+reads, and K_c the set of k-mers in the contig consensus sequences. A
+normalized k-mer count, K*, is the number of times a given k-mer q occurs in
+K_r divided by the number of times q occurs in K_c. This simple statistic
+can reveal which repeats have been mis-assembled. For example, the number
+of times the k-mers across a 2 copy repeat will be present in K_r is 2 * the depth of coverage.
+If the 2-copy repeat occurs in 2-copies in the assembly, then those kmers will
+all be present twice in K_c, and K* will be equal to the depth of coverage. If,
+however, the repeat was collapsed and occurs only once, then K_c will be 1
+across the repeat, and K* will be equal to 2*the average depth of coverage.
+
+<p><b>count-kmers output file: asm.22.n22mers</b><br>
+count-kmers can count k-mers of arbitrary length in the reads or contig
+consensus sequences, and it can compute normalized k-mers. In the forensics
+pipeline, it computes normalized k-mers where k=22 and the number of occurnces
+is at least 22 (approximately 3 * the standard depth of coverage, 8). 
+
+File format (N is the normalized k-mer count for a kmer sequence):
+&gt;N<br>
+kmersequence<br>
+</p>
+
+<p><b>kmer-cov output file: asm.nkmer.feat</b><br>
+kmer-cov maps the k-mer coverage across a sequence. In the forensics pipeline it
+reports regions at least 1000bp long covered by high frequency normalized kmers,
+i.e., the collapsed repeats in the genome.
+<br>
+Description of columns in file:<br>
+1. Contig ID<br>
+2. Coverage Feature Type (K)<br>
+3. range start<br>
+4. range end<br>
+5. Length of region<br>
+</p>
+
+
+<br>
+<hr>
+
+
+<a name="combiner"><h3>Feature Combiner</h3></a>
+<P>
+The above metrics can find many different types of mis-assemblies, but each is
+limited in type of mis-assembly it can find. Furthermore, normal statistical
+variation may introduce false positives in the analysis. For example, flagging
+every insert mate whose size is less than 2 standard deviations from the library
+mean will flag about 2.5% of the inserts even though the vast majority are
+correct. Instead we use a feature combiner to collect all of the evidence for a
+mis-assembly and output regions with multiple mis-assembly features
+present at the same region. This allows one to focus their attention on the
+regions that are most likely to be mis-assemblied. </p>
+
+<p>
+All of the features are loaded into the bank, and will then be visible within 
+<a href="http://amos.sourceforge.net/hawkeye">Hawkeye</a> for further
+inspection.
+</p>
+
+
+<p><b> suspiciousfeat2region output file: asm.suspicious.feat</b><br>
+File format:<br>
+1. Contig id<br>
+2. Mis-assembly Feature Type (A)<br>
+3. range start<br>
+4. range end<br>
+5. MISASSEMBLY<br>
+6. Number of features in the region<br>
+7. Number of feature types in the region<br>
+8. List of features separated with pipe ("|") character
+</p>
+
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>
+
+
