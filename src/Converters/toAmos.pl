@@ -167,6 +167,7 @@ else
   open(OUT, ">$outfile") || $base->bail("Could not write AMOS AFG file $outfile: $!\n");
 }
 
+my $debug_level = $base->getDebugLevel();
 
 my $tmprefix = "tmp.$$";
 my $tmpdir   = $base->getTempDir();
@@ -1037,7 +1038,7 @@ sub parseMatesFile {
     while (my ($nm, $sid) = each %seqids) {
         for my $r (0 .. $#pairregexp){
             my ($freg, $revreg) = split(' ', $pairregexp[$r]);
-            $base->logLocal("trying $freg and $revreg on $nm\n", 2);
+            $base->logLocal("trying $freg and $revreg on $nm\n", 2) if $debug_level;
             if ($nm =~ /$freg/){
                 $base->logLocal("got forw $1\n", 2);
                 if (! exists $forw{$1}){
@@ -1065,9 +1066,9 @@ sub parseMatesFile {
             my $found = 0;
             $nm = $seqnames{$nm};
             for (my $l = 0; $l <= $#libregexp; $l++){
-                $base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
+                $base->logLocal("Trying $libregexp[$l] on $nm\n", 2) if $debug_level;
                 if ($nm =~ /$libregexp[$l]/){
-                    $base->logLocal("found $libids[$l]\n", 2);
+                    $base->logLocal("found $libids[$l]\n", 2) if $debug_level;
                     $seenlib{$ins} = $libids[$l];
                     $found = 1;
                     last;
@@ -1088,9 +1089,9 @@ sub parseMatesFile {
             my $found = 0;
             $nm = $seqnames{$nm};
             for (my $l = 0; $l <= $#libregexp; $l++){
-                $base->logLocal("Trying $libregexp[$l] on $nm\n", 2);
+                $base->logLocal("Trying $libregexp[$l] on $nm\n", 2) if $debug_level;
                 if ($nm =~ /$libregexp[$l]/){
-                    $base->logLocal("found $libids[$l]\n", 2);
+                    $base->logLocal("found $libids[$l]\n", 2) if $debug_level;
                     $seenlib{$ins} = $libids[$l];
                     $found = 1;
                     last;
@@ -1562,6 +1563,7 @@ sub parseACEFile {
                 }
             }
             if ($rc{$seqName} eq "C"){
+            	# NOTE: Just use tr/// and reverse() 
                 $seq = reverseComplement($seq);
                 $allseq = reverseComplement($allseq);
             }
@@ -1580,6 +1582,10 @@ sub parseACEFile {
             my $asml = $offset;
             my $asmr = $asml + $clr - $cll;
 
+            # NOTE: Use tr/// in scalar context to cound the number of gaps:
+            #   my $pref_n_gaps = $pref =~ tr/-//;
+            #   $cll -= $pref_n_gaps;
+            #   $clr -= $seq =~ tr/-// + $pref_n_gaps;
             while ($pref =~ /-/g) { # make $cll  ungapped
                 $cll--;
                 $clr--;
@@ -1617,6 +1623,7 @@ sub parseACEFile {
             if ($readsDone == 0) { # no read info, must generate
                 # Sequence string
                 print TMPSEQ "#$seqId\n";
+                # NOTE: tr/-//d; is a quicker, more efficient to remove gaps from a string
                 $allseq =~ s/-//g;
                 for (my $i = 0; $i <= length($allseq); $i+= 60){
                     print TMPSEQ substr($allseq, $i, 60), "\n";
@@ -1639,6 +1646,10 @@ sub parseACEFile {
                         $qualdata .= chr(ord('0') + $quals[$i]);
                     }
                 } else {
+                	# NOTE: Use 'x' oeprator to repeat a character a number of times - no need to for loop:
+                	#   my $bad_chr = chr(ord('0') + $BADQUAL);
+                    #   my $good_chr = chr(ord('0') + $GOODQUAL);
+                    #   $qualdata = $bad_chr x ($cll) . $good_chr x ($clr-$cll) . $bad_chr x ($seqlength-$clr);
                     for (my $i = 0; $i < $cll; $i++){
                          $qualdata .= chr(ord('0') + $BADQUAL);
                     }
@@ -1819,6 +1830,7 @@ sub _addRead {
     if ($readsDone == 0) { # no read info, must generate
         # Sequence string
         print TMPSEQ "#$readIid\n";
+        # NOTE: tr/-//d; is a quicker, more efficient to remove gaps from a string
         $readSeq =~ s/-//g;
         for (my $i = 0; $i <= length($readSeq); $i+= 60){
             print TMPSEQ substr($readSeq, $i, 60), "\n";
